@@ -78,17 +78,17 @@ def edit_profile(request):
             instance=analyst_profile,
         )
 
-    forms_are_valid = user_form.is_valid()
-    if analyst_form is not None:
-        forms_are_valid = forms_are_valid and analyst_form.is_valid()
+    if request.method == "POST":
+        user_is_valid = user_form.is_valid()
+        analyst_is_valid = analyst_form.is_valid() if analyst_form is not None else True
 
-    if request.method == "POST" and forms_are_valid:
-        with transaction.atomic():
-            user_form.save()
-            if analyst_form is not None:
-                analyst_form.save()
-        messages.success(request, "Профиль обновлён.")
-        return redirect("cabinet:profile")
+        if user_is_valid and analyst_is_valid:
+            with transaction.atomic():
+                user_form.save()
+                if analyst_form is not None:
+                    analyst_form.save()
+            messages.success(request, "Профиль обновлён.")
+            return redirect("cabinet:profile")
 
     return render(
         request,
