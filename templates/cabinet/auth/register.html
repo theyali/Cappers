@@ -1,54 +1,127 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Регистрация — Cappers{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">{% endblock %}
 
 {% block content %}
-<section class="auth-page long-bg long-bg-2">
-    <div class="auth-card auth-card-wide">
-        <p class="eyebrow">Новый аккаунт</p>
-        <h1>Регистрация</h1>
-        <form method="post" class="auth-form auth-form-grid">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <label class="form-field">
-                <span>{{ form.username.label }}</span>
-                {{ form.username }}
-                {{ form.username.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.email.label }}</span>
-                {{ form.email }}
-                {{ form.email.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.first_name.label }}</span>
-                {{ form.first_name }}
-                {{ form.first_name.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.last_name.label }}</span>
-                {{ form.last_name }}
-                {{ form.last_name.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.role.label }}</span>
-                {{ form.role }}
-                {{ form.role.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.password1.label }}</span>
-                {{ form.password1 }}
-                {{ form.password1.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.password2.label }}</span>
-                {{ form.password2 }}
-                {{ form.password2.errors }}
-            </label>
-            <button class="submit-button form-wide" type="submit">Создать аккаунт</button>
-        </form>
-        <div class="auth-links">
-            <a href="{% url 'cabinet:login' %}">Уже есть аккаунт?</a>
+<section class="auth-stage auth-stage-register">
+    <div class="auth-shell auth-shell-register">
+        <aside class="auth-visual auth-visual-register long-bg long-bg-2" aria-hidden="true">
+            <div class="auth-visual-overlay"></div>
+            <div class="auth-visual-content">
+                <span class="auth-badge"><i></i> Cappers</span>
+                <div class="auth-visual-copy">
+                    <p class="eyebrow">Присоединяйся</p>
+                    <h2>Создай свой<br>спортивный профиль.</h2>
+                    <p>Выбери тип аккаунта сейчас — личные настройки и возможности кабинета будут адаптированы под тебя.</p>
+                </div>
+                <div class="auth-role-preview">
+                    <div>
+                        <span class="role-icon">U</span>
+                        <p><strong>Пользователь</strong><small>Подписки, лента и профиль</small></p>
+                    </div>
+                    <div>
+                        <span class="role-icon role-icon-blue">A</span>
+                        <p><strong>Аналитик</strong><small>Публичный профиль и статистика</small></p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="auth-panel">
+            <div class="auth-panel-inner auth-panel-register">
+                <a class="auth-back" href="{% url 'front:index' %}">
+                    <span>←</span> На главную
+                </a>
+
+                <div class="auth-heading">
+                    <p class="eyebrow">Новый аккаунт</p>
+                    <h1>Регистрация</h1>
+                    <p>Заполни основные данные. Всё остальное можно настроить позже в профиле.</p>
+                </div>
+
+                <form method="post" class="auth-form auth-form-modern auth-register-grid" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="auth-form-alert auth-grid-full" role="alert">
+                            <span>!</span>
+                            <div>{{ form.non_field_errors }}</div>
+                        </div>
+                    {% endif %}
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.username.label }}</span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg>
+                            {{ form.username }}
+                        </span>
+                        {{ form.username.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.email.label }}</span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></svg>
+                            {{ form.email }}
+                        </span>
+                        {{ form.email.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.first_name.label }}</span>
+                        <span class="auth-input-wrap auth-input-no-icon">{{ form.first_name }}</span>
+                        {{ form.first_name.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.last_name.label }}</span>
+                        <span class="auth-input-wrap auth-input-no-icon">{{ form.last_name }}</span>
+                        {{ form.last_name.errors }}
+                    </label>
+
+                    <label class="form-field auth-field auth-grid-full">
+                        <span class="auth-field-label">{{ form.role.label }}</span>
+                        <span class="auth-input-wrap auth-input-select">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+                            {{ form.role }}
+                        </span>
+                        <small class="auth-field-help">Тип аккаунта определяет стартовый вид личного кабинета.</small>
+                        {{ form.role.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.password1.label }}</span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
+                            {{ form.password1 }}
+                        </span>
+                        {{ form.password1.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.password2.label }}</span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
+                            {{ form.password2 }}
+                        </span>
+                        {{ form.password2.errors }}
+                    </label>
+
+                    <button class="auth-submit auth-grid-full" type="submit">
+                        <span>Создать аккаунт</span>
+                        <span class="auth-submit-arrow">→</span>
+                    </button>
+                </form>
+
+                <p class="auth-legal">Создавая аккаунт, вы подтверждаете, что указали корректные данные.</p>
+
+                <div class="auth-bottom-line">
+                    <span>Уже зарегистрированы?</span>
+                    <a href="{% url 'cabinet:login' %}">Войти</a>
+                </div>
+            </div>
         </div>
     </div>
 </section>

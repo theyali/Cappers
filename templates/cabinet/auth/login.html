@@ -1,33 +1,94 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Вход — Cappers{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">{% endblock %}
 
 {% block content %}
-<section class="auth-page long-bg long-bg-4">
-    <div class="auth-card">
-        <p class="eyebrow">Доступ к аккаунту</p>
-        <h1>Вход</h1>
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <label class="form-field">
-                <span>{{ form.username.label }}</span>
-                {{ form.username }}
-                {{ form.username.errors }}
-            </label>
-            <label class="form-field">
-                <span>{{ form.password.label }}</span>
-                {{ form.password }}
-                {{ form.password.errors }}
-            </label>
-            {% if next %}
-                <input type="hidden" name="next" value="{{ next }}">
-            {% endif %}
-            <button class="submit-button" type="submit">Войти</button>
-        </form>
-        <div class="auth-links">
-            <a href="{% url 'cabinet:password_reset' %}">Забыли пароль?</a>
-            <a href="{% url 'cabinet:register' %}">Создать аккаунт</a>
+<section class="auth-stage">
+    <div class="auth-shell auth-shell-login">
+        <aside class="auth-visual long-bg long-bg-4" aria-hidden="true">
+            <div class="auth-visual-overlay"></div>
+            <div class="auth-visual-content">
+                <span class="auth-badge"><i></i> Cappers</span>
+                <div class="auth-visual-copy">
+                    <p class="eyebrow">Твой спортивный профиль</p>
+                    <h2>Всё важное<br>в одном месте.</h2>
+                    <p>Матчи, аналитика, авторы и персональная лента — после входа всё доступно из одного кабинета.</p>
+                </div>
+                <div class="auth-mini-grid">
+                    <div class="auth-mini-card">
+                        <span>01</span>
+                        <strong>Следи</strong>
+                        <small>за любимыми авторами</small>
+                    </div>
+                    <div class="auth-mini-card auth-mini-card-accent">
+                        <span>02</span>
+                        <strong>Сохраняй</strong>
+                        <small>интересные материалы</small>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="auth-panel">
+            <div class="auth-panel-inner auth-panel-login">
+                <a class="auth-back" href="{% url 'front:index' %}" aria-label="На главную">
+                    <span>←</span> На главную
+                </a>
+
+                <div class="auth-heading">
+                    <p class="eyebrow">С возвращением</p>
+                    <h1>Войти в аккаунт</h1>
+                    <p>Введите данные, которые использовали при регистрации.</p>
+                </div>
+
+                <form method="post" class="auth-form auth-form-modern" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="auth-form-alert" role="alert">
+                            <span>!</span>
+                            <div>{{ form.non_field_errors }}</div>
+                        </div>
+                    {% endif %}
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-label">{{ form.username.label }}</span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg>
+                            {{ form.username }}
+                        </span>
+                        {{ form.username.errors }}
+                    </label>
+
+                    <label class="form-field auth-field">
+                        <span class="auth-field-row">
+                            <span class="auth-field-label">{{ form.password.label }}</span>
+                            <a href="{% url 'cabinet:password_reset' %}">Забыли пароль?</a>
+                        </span>
+                        <span class="auth-input-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
+                            {{ form.password }}
+                        </span>
+                        {{ form.password.errors }}
+                    </label>
+
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    <button class="auth-submit" type="submit">
+                        <span>Войти</span>
+                        <span class="auth-submit-arrow">→</span>
+                    </button>
+                </form>
+
+                <div class="auth-bottom-line">
+                    <span>Ещё нет аккаунта?</span>
+                    <a href="{% url 'cabinet:register' %}">Создать аккаунт</a>
+                </div>
+            </div>
         </div>
     </div>
 </section>
