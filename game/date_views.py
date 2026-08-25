@@ -2,6 +2,7 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.db.models import Case, Count, IntegerField, Value, When
+from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
@@ -92,14 +93,18 @@ def match_list(request):
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
     }
-    from django.shortcuts import render
-
     return render(request, "game/match_list.html", context)
 
 
 def _selected_date(raw_value: str | None):
-    parsed = parse_date(raw_value) if raw_value else None
-    return parsed or timezone.localdate()
+    if raw_value:
+        try:
+            parsed = parse_date(raw_value)
+        except (TypeError, ValueError):
+            parsed = None
+        if parsed is not None:
+            return parsed
+    return timezone.localdate()
 
 
 def _local_day_bounds(selected_date):
