@@ -11,6 +11,7 @@
     {% if request.resolver_match.app_name == 'game' %}
     <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/match-predictions.css' %}">
     {% endif %}
 </head>
 <body>
@@ -65,6 +66,7 @@
         data-today-date="{{ today_iso|default:'' }}"
         defer
     ></script>
+    <script src="{% static 'front/js/match-predictions.js' %}" defer></script>
     {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
