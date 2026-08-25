@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from game.models import Country, League, LeagueSeason, Match, Prediction, PredictionCoupon, Sport, Team, Venue
+from game.models import Country, League, LeagueSeason, Match, MatchOdds, Prediction, PredictionCoupon, Sport, Team, Venue
 
 
 @admin.register(Sport)
@@ -52,7 +52,7 @@ class TeamAdmin(admin.ModelAdmin):
 class MatchAdmin(admin.ModelAdmin):
     list_display = (
         "external_id",
-        "sport_code",
+        "sport",
         "sync_scope",
         "starts_at",
         "league_name",
@@ -62,19 +62,33 @@ class MatchAdmin(admin.ModelAdmin):
         "live_minute_label",
         "updated_at",
     )
-    list_filter = ("sport_code", "sync_scope", "time_status", "league_country")
+    list_filter = ("sport", "sync_scope", "time_status", "league__country")
     search_fields = (
         "=external_id",
         "slug",
-        "league_name",
-        "league_name_en",
-        "home_team_name",
-        "home_team_name_en",
-        "away_team_name",
-        "away_team_name_en",
+        "league__name",
+        "league__name_ru",
+        "home_team__name",
+        "home_team__name_ru",
+        "away_team__name",
+        "away_team__name_ru",
     )
     readonly_fields = ("created_at", "updated_at", "last_seen_at", "raw_data")
     autocomplete_fields = ("sport", "league", "league_season", "home_team", "away_team", "venue")
+
+
+@admin.register(MatchOdds)
+class MatchOddsAdmin(admin.ModelAdmin):
+    list_display = ("match", "home_win_bet", "x_bet", "away_win_bet", "goals_over_2_5", "goals_under_2_5")
+    search_fields = (
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+        "=match__external_id",
+    )
+    autocomplete_fields = ("match",)
+    readonly_fields = ("raw_data", "extra_markets")
 
 
 class PredictionInline(admin.TabularInline):
@@ -98,8 +112,10 @@ class PredictionAdmin(admin.ModelAdmin):
     list_filter = ("state_status", "market")
     search_fields = (
         "coupon__author__username",
-        "match__home_team_name",
-        "match__away_team_name",
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
         "selection",
     )
     autocomplete_fields = ("coupon", "match")

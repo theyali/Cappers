@@ -47,7 +47,7 @@
     };
 
     const initScrollableNames = (scope = document) => {
-        scope.querySelectorAll(".match-league strong, .match-league small, .match-team strong, .coupon-item-title strong, .coupon-item-title span, .coupon-pick strong").forEach((node) => {
+        scope.querySelectorAll(".match-league strong, .match-league small, .match-team strong, .match-detail-team strong, .odds-button span, .odds-button small, .coupon-item-title strong, .coupon-item-title span, .coupon-pick strong").forEach((node) => {
             if (node.dataset.scrollNameReady === "true") return;
             node.dataset.scrollNameReady = "true";
             node.addEventListener("mouseenter", () => startNameScroll(node));
@@ -58,6 +58,20 @@
     };
 
     initScrollableNames(root);
+
+    root.querySelectorAll("[data-odds-tab-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const target = button.dataset.oddsTabTarget;
+            root.querySelectorAll("[data-odds-tab-target]").forEach((tabButton) => {
+                const isActive = tabButton === button;
+                tabButton.classList.toggle("is-active", isActive);
+                tabButton.setAttribute("aria-selected", String(isActive));
+            });
+            root.querySelectorAll("[data-odds-tab-panel]").forEach((panel) => {
+                panel.classList.toggle("is-active", panel.dataset.oddsTabPanel === target);
+            });
+        });
+    });
 
     const form = root.querySelector("[data-coupon-form]");
     if (!form) return;
@@ -306,6 +320,21 @@
         saveLocalSnapshot(false);
     };
 
+    const clearCoupon = () => {
+        draftId = null;
+        items.clear();
+        itemsRoot.replaceChildren();
+        if (titleInput) titleInput.value = "";
+        if (stakeInput) stakeInput.value = "";
+        if (commentInput) commentInput.value = "";
+        try {
+            localStorage.removeItem(storageKey);
+        } catch (error) {
+            // Local storage cleanup is best-effort.
+        }
+        updateState();
+    };
+
     const responseError = (xhr, fallback) => {
         const data = xhr?.responseJSON;
         if (data?.error) return data.error;
@@ -363,13 +392,19 @@
         }
 
         request.done((result) => {
-            if (!result?.ok) return;
-            draftId = result.draft_id || null;
-            applyServerDraft(result.draft || null);
+            if (!result?.ok) {
+                setNote(result?.error || (manual ? "Не удалось сохранить купон." : "Не удалось сохранить черновик."), "error");
+                return;
+            }
             if (manual) {
-                setNote(result.message || "Купон сохранен как черновик.", "success");
-            } else if (items.size) {
-                setNote("Черновик сохранен автоматически.", "success");
+                clearCoupon();
+                setNote(result.message || "Прогноз опубликован.", "success");
+            } else {
+                draftId = result.draft_id || null;
+                applyServerDraft(result.draft || null);
+                if (items.size) {
+                    setNote("Черновик сохранен автоматически.", "success");
+                }
             }
         });
 

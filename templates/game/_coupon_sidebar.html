@@ -1,0 +1,117 @@
+{% load static %}
+
+<aside class="coupon-sidebar" aria-label="Купон прогнозов">
+    {% if can_write_coupon %}
+    <form class="coupon-panel" data-coupon-form data-no-transition>
+        {% csrf_token %}
+        <div class="coupon-head">
+            <div>
+                <p class="matches-eyebrow">Купон</p>
+                <h2>Прогноз</h2>
+            </div>
+            <div class="coupon-head-actions">
+                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть купон">
+                    <span aria-hidden="true">⌃</span>
+                </button>
+                <span class="coupon-count" data-coupon-count>0/5</span>
+            </div>
+        </div>
+
+        <div class="coupon-body" data-sidebar-body>
+            <label class="coupon-title-field">
+                <span>Название купона необязательно</span>
+                <input type="text" name="title" maxlength="160" placeholder="Сгенерируется автоматически">
+            </label>
+
+            <div class="coupon-empty" data-coupon-empty>
+                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <strong>Выберите матч</strong>
+                <p>Добавьте предстоящую игру и заполните условия прогноза.</p>
+            </div>
+
+            <div class="coupon-items" data-coupon-items></div>
+
+            <div class="coupon-shared">
+                <label class="coupon-field">
+                    <span>Сумма</span>
+                    <input type="number" name="stake" min="1" step="1" placeholder="100" data-coupon-stake>
+                </label>
+                <div class="coupon-odd">
+                    <span>Общий кф</span>
+                    <strong data-coupon-coefficient>0</strong>
+                </div>
+            </div>
+
+            <label class="coupon-field">
+                <span>Комментарий</span>
+                <textarea name="comment" maxlength="1200" placeholder="Коротко объясните логику прогноза" data-coupon-comment></textarea>
+            </label>
+
+            <div class="coupon-total">
+                <span>Возможный выигрыш</span>
+                <strong data-coupon-total>0</strong>
+            </div>
+
+            <button class="coupon-submit" type="submit" data-coupon-submit>
+                <span class="coupon-submit-label">Сделать прогноз</span>
+                <span class="coupon-submit-progress" aria-hidden="true">
+                    <span class="coupon-loader-dots"><i></i><i></i><i></i></span>
+                    <span data-coupon-submit-status>Сохраняем...</span>
+                </span>
+            </button>
+            <p class="coupon-note" data-coupon-note>
+                Заполните сумму и общий комментарий к купону.
+            </p>
+        </div>
+    </form>
+    {{ draft_coupon|json_script:"coupon-draft-data" }}
+    {% else %}
+    <section class="latest-predictions-panel" aria-label="Последние прогнозы">
+        <div class="coupon-head">
+            <div>
+                <p class="matches-eyebrow">Прогнозы</p>
+                <h2>Последние</h2>
+            </div>
+            <div class="coupon-head-actions">
+                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогнозы">
+                    <span aria-hidden="true">⌃</span>
+                </button>
+                <span class="coupon-count">{{ latest_predictions|length }}</span>
+            </div>
+        </div>
+
+        <div class="coupon-body" data-sidebar-body>
+            {% if latest_predictions %}
+            <div class="latest-predictions-list">
+                {% for prediction in latest_predictions %}
+                <a class="latest-prediction-card" href="{{ prediction.match.get_absolute_url }}">
+                    <div class="latest-prediction-top">
+                        <span class="coupon-item-ball">П</span>
+                        <div>
+                            <strong>{{ prediction.match.home_team_name }} — {{ prediction.match.away_team_name }}</strong>
+                            <small>{{ prediction.match.league_name }} · {{ prediction.match.starts_at|date:"d.m H:i" }}</small>
+                        </div>
+                    </div>
+                    <div class="latest-prediction-pick">
+                        <span>{{ prediction.market }}</span>
+                        <b>{{ prediction.selection }}</b>
+                    </div>
+                    <p>{{ prediction.comment|truncatechars:110 }}</p>
+                    <div class="latest-prediction-foot">
+                        <span>@{{ prediction.coupon.author.username }}</span>
+                        <strong>кф {{ prediction.coefficient }}</strong>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="coupon-empty latest-predictions-empty">
+                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <strong>Прогнозов пока нет</strong>
+                <p>Когда эксперты опубликуют прогнозы, они появятся здесь.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+</aside>

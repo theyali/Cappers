@@ -162,7 +162,7 @@
 
         <aside class="coupon-sidebar" aria-label="Купон прогнозов">
             {% if can_write_coupon %}
-            <form class="coupon-panel" data-coupon-form>
+            <form class="coupon-panel" data-coupon-form data-no-transition>
                 {% csrf_token %}
                 <div class="coupon-head">
                     <div>

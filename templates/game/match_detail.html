@@ -5,91 +5,198 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 {% endblock %}
 
 {% block content %}
-<section class="match-detail-page" aria-label="Страница матча">
-    <a class="match-back-link" href="{% url 'game:match_list' %}">← Все матчи</a>
+<section
+    class="match-detail-page"
+    data-coupon-page
+    data-create-url="{% url 'game:create_coupon' %}"
+    data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
+    data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
+    aria-label="Страница матча"
+>
+    <a class="match-back-link" href="{% url 'game:match_list' %}">Все матчи</a>
 
-    <article class="match-detail-card">
-        <div class="match-detail-head">
-            <div class="match-league">
-                <span class="league-mark">
-                    {% if match.league and match.league.logo %}
-                        <img src="{{ match.league.logo }}" alt="" loading="lazy">
-                    {% else %}
-                        {{ match.league_name|default:"Лига"|slice:":1" }}
-                    {% endif %}
-                </span>
-                <div>
-                    <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
-                    <small>
-                        {% if match.league_country %}{{ match.league_country }}{% else %}Футбол{% endif %}
-                    </small>
+    <div class="match-detail-shell">
+        <main class="match-detail-main">
+            <article class="match-detail-card">
+                <div class="match-detail-head">
+                    <div class="match-league">
+                        <span class="league-mark">
+                            {% if match.league and match.league.logo %}
+                                <img src="{{ match.league.logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ match.league_name|default:"Лига"|slice:":1" }}
+                            {% endif %}
+                        </span>
+                        <div>
+                            <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
+                            <small>
+                                {% if match.league_country %}{{ match.league_country }}{% else %}Футбол{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <span class="match-status match-status-{{ match.sync_scope }}">{{ match.get_sync_scope_display }}</span>
                 </div>
-            </div>
-            <span class="match-status match-status-{{ match.sync_scope }}">{{ match.get_sync_scope_display }}</span>
-        </div>
 
-        <div class="match-detail-scoreboard">
-            <div class="match-detail-team">
-                <span class="match-detail-logo">
-                    {% if match.home_team_logo %}
-                        <img src="{{ match.home_team_logo }}" alt="" loading="lazy">
+                <div class="match-detail-scoreboard">
+                    <div class="match-detail-team">
+                        <span class="match-detail-logo">
+                            {% if match.home_team_logo %}
+                                <img src="{{ match.home_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                <span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>
+                            {% endif %}
+                        </span>
+                        <strong>{{ match.home_team_name|default:"Хозяева" }}</strong>
+                        {% if match.home_team_name_en %}<small>{{ match.home_team_name_en }}</small>{% endif %}
+                    </div>
+
+                    <div class="match-detail-score">
+                        {% if match.score %}
+                            <strong>{{ match.score }}</strong>
+                        {% else %}
+                            <strong>VS</strong>
+                        {% endif %}
+                        {% if match.live_minute_label %}
+                            <span>{{ match.live_minute_label }}</span>
+                        {% elif match.starts_at %}
+                            <span>{{ match.starts_at|date:"d.m.Y H:i" }}</span>
+                        {% else %}
+                            <span>Время не указано</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="match-detail-team">
+                        <span class="match-detail-logo">
+                            {% if match.away_team_logo %}
+                                <img src="{{ match.away_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                <span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>
+                            {% endif %}
+                        </span>
+                        <strong>{{ match.away_team_name|default:"Гости" }}</strong>
+                        {% if match.away_team_name_en %}<small>{{ match.away_team_name_en }}</small>{% endif %}
+                    </div>
+                </div>
+
+                <dl class="match-detail-meta">
+                    <div>
+                        <dt>Лига EN</dt>
+                        <dd>{{ match.league_name_en|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Страна</dt>
+                        <dd>{{ match.league_country|default:"-" }}</dd>
+                    </div>
+                    <div>
+                        <dt>ID провайдера</dt>
+                        <dd>{{ match.external_id }}</dd>
+                    </div>
+                    <div>
+                        <dt>Обновлен</dt>
+                        <dd>{{ match.updated_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </article>
+
+            {% if match.sync_scope == "prematch" %}
+            <section
+                class="match-odds-panel"
+                data-match-bets
+                data-match-id="{{ match.id }}"
+                data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
+                data-league="{{ match.league_name|default:'Лига не указана' }}"
+                data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+                data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
+                aria-label="Коэффициенты матча"
+            >
+                {% if odds_tabs %}
+                <div class="odds-topbar">
+                    <div class="odds-main-tabs" role="tablist" aria-label="Разделы коэффициентов">
+                        {% for tab in odds_tabs %}
+                        <button
+                            class="odds-main-tab{% if forloop.first %} is-active{% endif %}"
+                            type="button"
+                            data-odds-tab-target="{{ tab.key }}"
+                            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                        >
+                            {{ tab.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% for tab in odds_tabs %}
+                <div class="odds-tab-panel{% if forloop.first %} is-active{% endif %}" data-odds-tab-panel="{{ tab.key }}">
+                    {% if tab.sections %}
+                        {% for section in tab.sections %}
+                        <section class="odds-section">
+                            <div class="odds-section-head">
+                                <h2>{{ section.title }}</h2>
+                                <span>{{ section.rows|length }}</span>
+                            </div>
+                            {% for row in section.rows %}
+                            <div class="odds-row">
+                                <h3>{{ row.title }}</h3>
+                                <div class="odds-grid">
+                                    {% for odd in row.odds %}
+                                    <button
+                                        class="odds-button"
+                                        type="button"
+                                        {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                            data-bet-option
+                                            data-bet-key="{{ odd.key }}"
+                                            data-market="{{ odd.market }}"
+                                            data-selection="{{ odd.selection }}"
+                                            data-coefficient="{{ odd.coefficient }}"
+                                        {% else %}
+                                            disabled
+                                        {% endif %}
+                                    >
+                                        <span>{{ odd.label }}</span>
+                                        <small>{{ odd.description }}</small>
+                                        <b>{{ odd.coefficient }}</b>
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </section>
+                        {% endfor %}
                     {% else %}
-                        <span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>
+                    <div class="odds-empty">
+                        <strong>Коэффициенты пока не пришли</strong>
+                        <p>Когда провайдер отдаст линию по этому разделу, она появится здесь.</p>
+                    </div>
                     {% endif %}
-                </span>
-                <strong>{{ match.home_team_name|default:"Хозяева" }}</strong>
-                {% if match.home_team_name_en %}<small>{{ match.home_team_name_en }}</small>{% endif %}
-            </div>
-
-            <div class="match-detail-score">
-                {% if match.score %}
-                    <strong>{{ match.score }}</strong>
+                </div>
+                {% endfor %}
                 {% else %}
-                    <strong>vs</strong>
+                <div class="odds-empty">
+                    <strong>Коэффициенты пока не пришли</strong>
+                    <p>Когда провайдер отдаст линию по этому матчу, она появится здесь.</p>
+                </div>
                 {% endif %}
-                {% if match.live_minute_label %}
-                    <span>{{ match.live_minute_label }}</span>
-                {% elif match.starts_at %}
-                    <span>{{ match.starts_at|date:"d.m.Y H:i" }}</span>
-                {% else %}
-                    <span>Время не указано</span>
-                {% endif %}
-            </div>
+            </section>
+            {% else %}
+            <section class="odds-empty match-odds-unavailable">
+                <strong>Линия закрыта</strong>
+                <p>Коэффициенты показываются только для предстоящих матчей.</p>
+            </section>
+            {% endif %}
+        </main>
 
-            <div class="match-detail-team">
-                <span class="match-detail-logo">
-                    {% if match.away_team_logo %}
-                        <img src="{{ match.away_team_logo }}" alt="" loading="lazy">
-                    {% else %}
-                        <span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>
-                    {% endif %}
-                </span>
-                <strong>{{ match.away_team_name|default:"Гости" }}</strong>
-                {% if match.away_team_name_en %}<small>{{ match.away_team_name_en }}</small>{% endif %}
-            </div>
-        </div>
-
-        <dl class="match-detail-meta">
-            <div>
-                <dt>Лига EN</dt>
-                <dd>{{ match.league_name_en|default:"-" }}</dd>
-            </div>
-            <div>
-                <dt>Страна</dt>
-                <dd>{{ match.league_country|default:"-" }}</dd>
-            </div>
-            <div>
-                <dt>ID провайдера</dt>
-                <dd>{{ match.external_id }}</dd>
-            </div>
-            <div>
-                <dt>Обновлен</dt>
-                <dd>{{ match.updated_at|date:"d.m.Y H:i" }}</dd>
-            </div>
-        </dl>
-    </article>
+        {% include "game/_coupon_sidebar.html" %}
+    </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+{% if can_write_coupon %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+{% endif %}
+<script src="{% static 'front/js/matches.js' %}"></script>
 {% endblock %}

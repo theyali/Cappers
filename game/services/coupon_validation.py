@@ -9,7 +9,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from game.models import Match
+from game.models import Match, MatchOdds, Provider
+from game.services.odds import match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
 
@@ -100,7 +101,7 @@ def _provider_scope_payload(
 ) -> tuple[list[dict[str, Any]], bool]:
     cache_seconds = max(int(getattr(settings, "COUPON_MATCH_STATE_CACHE_SECONDS", 10)), 1)
     date_key = date_value.isoformat() if date_value else "all"
-    cache_key = f"coupon:match-state:{Match.Provider.NEUROKEFF}:{scope}:{date_key}"
+    cache_key = f"coupon:match-state:{Provider.NEUROKEFF}:{scope}:{date_key}"
 
     cached: Any = None
     try:
@@ -148,6 +149,14 @@ def _refresh_local_match_state(match: Match, scope: str, payload: dict[str, Any]
         live_minute=match.live_minute,
         live_minute_label=match.live_minute_label,
         updated_at=now,
+    )
+    _refresh_match_odds(match, payload.get("odds") or {})
+
+
+def _refresh_match_odds(match: Match, payload: dict[str, Any]) -> None:
+    MatchOdds.objects.update_or_create(
+        match=match,
+        defaults=match_odds_defaults(payload),
     )
 
 

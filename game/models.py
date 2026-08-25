@@ -219,27 +219,15 @@ class Team(models.Model):
 
 
 class Match(models.Model):
-    class SportCode(models.TextChoices):
-        FOOTBALL = "football", "Футбол"
-
     class SyncScope(models.TextChoices):
         LIVE = "live", "Идет"
         PREMATCH = "prematch", "Скоро"
         FINISHED = "finished", "Завершен"
 
-    class Provider(models.TextChoices):
-        NEUROKEFF = "neurokeff", "Neurokeff"
-
     provider = models.CharField(
         max_length=32,
         choices=Provider.choices,
         default=Provider.NEUROKEFF,
-    )
-    sport_code = models.CharField(
-        max_length=32,
-        choices=SportCode.choices,
-        default=SportCode.FOOTBALL,
-        db_index=True,
     )
     sport = models.ForeignKey(
         Sport,
@@ -249,13 +237,11 @@ class Match(models.Model):
         blank=True,
     )
     external_id = models.PositiveBigIntegerField()
-    sport_external_id = models.PositiveIntegerField(default=2)
     slug = models.SlugField(max_length=320, unique=True, null=True, blank=True, db_index=True)
     sync_scope = models.CharField(max_length=16, choices=SyncScope.choices)
     time_status = models.CharField(max_length=8, blank=True)
     starts_at = models.DateTimeField(null=True, blank=True)
 
-    league_external_id = models.PositiveBigIntegerField(null=True, blank=True)
     league = models.ForeignKey(
         League,
         related_name="matches",
@@ -270,12 +256,7 @@ class Match(models.Model):
         null=True,
         blank=True,
     )
-    league_name = models.CharField(max_length=255, blank=True)
-    league_name_en = models.CharField(max_length=255, blank=True)
-    league_country = models.CharField(max_length=120, blank=True)
-    league_country_en = models.CharField(max_length=120, blank=True)
 
-    home_team_external_id = models.PositiveBigIntegerField(null=True, blank=True)
     home_team = models.ForeignKey(
         Team,
         related_name="home_matches",
@@ -283,10 +264,6 @@ class Match(models.Model):
         null=True,
         blank=True,
     )
-    home_team_name = models.CharField(max_length=255, blank=True)
-    home_team_name_en = models.CharField(max_length=255, blank=True)
-    home_team_logo = models.URLField(max_length=500, blank=True)
-    away_team_external_id = models.PositiveBigIntegerField(null=True, blank=True)
     away_team = models.ForeignKey(
         Team,
         related_name="away_matches",
@@ -294,11 +271,7 @@ class Match(models.Model):
         null=True,
         blank=True,
     )
-    away_team_name = models.CharField(max_length=255, blank=True)
-    away_team_name_en = models.CharField(max_length=255, blank=True)
-    away_team_logo = models.URLField(max_length=500, blank=True)
 
-    venue_external_id = models.PositiveBigIntegerField(null=True, blank=True)
     venue = models.ForeignKey(
         Venue,
         related_name="matches",
@@ -326,7 +299,6 @@ class Match(models.Model):
         indexes = [
             models.Index(fields=["sync_scope", "starts_at"]),
             models.Index(fields=["time_status"]),
-            models.Index(fields=["league_external_id"]),
             models.Index(fields=["sport", "starts_at"]),
             models.Index(fields=["league", "starts_at"]),
         ]
@@ -354,6 +326,111 @@ class Match(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("game:match_detail", kwargs={"slug": self.slug or self.build_slug()})
+
+    @property
+    def sport_code(self) -> str:
+        return self.sport.code if self.sport_id and self.sport else "football"
+
+    @property
+    def league_name(self) -> str:
+        return self.league.name_ru or self.league.name if self.league_id and self.league else self._raw_localized("league", "name", "ru")
+
+    @property
+    def league_name_en(self) -> str:
+        return self.league.name if self.league_id and self.league else self._raw_localized("league", "name", "en")
+
+    @property
+    def league_country(self) -> str:
+        if self.league_id and self.league and self.league.country_id and self.league.country:
+            return self.league.country.name_ru or self.league.country.name
+        return self._raw_localized("league", "country", "name", "ru")
+
+    @property
+    def league_country_en(self) -> str:
+        if self.league_id and self.league and self.league.country_id and self.league.country:
+            return self.league.country.name
+        return self._raw_localized("league", "country", "name", "en")
+
+    @property
+    def home_team_name(self) -> str:
+        return self.home_team.name_ru or self.home_team.name if self.home_team_id and self.home_team else self._raw_localized("teams", "home", "name", "ru")
+
+    @property
+    def home_team_name_en(self) -> str:
+        return self.home_team.name if self.home_team_id and self.home_team else self._raw_localized("teams", "home", "name", "en")
+
+    @property
+    def home_team_logo(self) -> str:
+        return self.home_team.logo if self.home_team_id and self.home_team else self._raw_value("teams", "home", "logo")
+
+    @property
+    def away_team_name(self) -> str:
+        return self.away_team.name_ru or self.away_team.name if self.away_team_id and self.away_team else self._raw_localized("teams", "away", "name", "ru")
+
+    @property
+    def away_team_name_en(self) -> str:
+        return self.away_team.name if self.away_team_id and self.away_team else self._raw_localized("teams", "away", "name", "en")
+
+    @property
+    def away_team_logo(self) -> str:
+        return self.away_team.logo if self.away_team_id and self.away_team else self._raw_value("teams", "away", "logo")
+
+    def _raw_value(self, *path: str) -> str:
+        value = self.raw_data if isinstance(self.raw_data, dict) else {}
+        for key in path:
+            if not isinstance(value, dict):
+                return ""
+            value = value.get(key)
+        return str(value or "")
+
+    def _raw_localized(self, *path: str) -> str:
+        preferred = path[-1]
+        value = self.raw_data if isinstance(self.raw_data, dict) else {}
+        for key in path[:-1]:
+            if not isinstance(value, dict):
+                return ""
+            value = value.get(key)
+        if isinstance(value, dict):
+            fallback = "en" if preferred == "ru" else "ru"
+            return str(value.get(preferred) or value.get(fallback) or next(iter(value.values()), "") or "")
+        return str(value or "")
+
+
+class MatchOdds(models.Model):
+    match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="odds")
+    home_win_bet = models.FloatField(null=True, blank=True)
+    x_bet = models.FloatField(null=True, blank=True)
+    away_win_bet = models.FloatField(null=True, blank=True)
+    goals_over_2_5 = models.FloatField(null=True, blank=True)
+    goals_under_2_5 = models.FloatField(null=True, blank=True)
+    fora_1_0 = models.FloatField(null=True, blank=True)
+    fora_2_0 = models.FloatField(null=True, blank=True)
+    btts_yes = models.FloatField(null=True, blank=True)
+    btts_no = models.FloatField(null=True, blank=True)
+    d_1x = models.FloatField(null=True, blank=True)
+    d_2x = models.FloatField(null=True, blank=True)
+    first_time_home_win_bet = models.FloatField(null=True, blank=True)
+    first_time_x_bet = models.FloatField(null=True, blank=True)
+    first_time_away_win_bet = models.FloatField(null=True, blank=True)
+    totals_all = models.JSONField(default=dict, blank=True)
+    double_chance_all = models.JSONField(default=dict, blank=True)
+    handicaps_all = models.JSONField(default=dict, blank=True)
+    btts_all = models.JSONField(default=dict, blank=True)
+    team_totals_all = models.JSONField(default=dict, blank=True)
+    first_half_totals_all = models.JSONField(default=dict, blank=True)
+    first_half_handicaps_all = models.JSONField(default=dict, blank=True)
+    half_time_full_time_all = models.JSONField(default=dict, blank=True)
+    exact_score_all = models.JSONField(default=dict, blank=True)
+    extra_markets = models.JSONField(default=dict, blank=True)
+    raw_data = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["home_win_bet", "x_bet", "away_win_bet"])]
+        verbose_name = "Коэффициенты"
+        verbose_name_plural = "Коэффициенты"
+
+    def __str__(self) -> str:
+        return f"Коэффициенты {self.match_id}"
 
 
 class PredictionCoupon(models.Model):

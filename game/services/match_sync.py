@@ -5,7 +5,8 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from game.models import Country, League, LeagueSeason, Match, Sport, Team, Venue
+from game.models import Country, League, LeagueSeason, Match, MatchOdds, Provider, Sport, Team, Venue
+from game.services.odds import match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 
 logger = logging.getLogger(__name__)
@@ -18,10 +19,12 @@ class MatchSyncService:
         self.provider = provider or NeurokeffSportsProvider()
 
     def sync_upcoming(self) -> dict:
-        return self._sync_scope(
+        result = self._sync_scope(
             Match.SyncScope.PREMATCH,
             self.provider.fetch_upcoming_matches(),
         )
+        result["expired"] = self._expire_past_prematches()
+        return result
 
     def sync_live(self) -> dict:
         return self._sync_scope(
@@ -50,11 +53,12 @@ class MatchSyncService:
                 logger.warning("Skipping Neurokeff match without id: %s", payload)
                 continue
 
-            _, was_created = Match.objects.update_or_create(
-                provider=Match.Provider.NEUROKEFF,
+            match, was_created = Match.objects.update_or_create(
+                provider=Provider.NEUROKEFF,
                 external_id=external_id,
                 defaults={**self._match_defaults(payload, scope_value), "last_seen_at": now},
             )
+            self._sync_odds(match, payload.get("odds") or {})
             if was_created:
                 created += 1
             else:
@@ -70,6 +74,12 @@ class MatchSyncService:
         }
         logger.info("Match sync completed: %s", result)
         return result
+
+    def _expire_past_prematches(self) -> int:
+        return Match.objects.filter(
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at__lt=timezone.now(),
+        ).update(sync_scope=Match.SyncScope.FINISHED)
 
     def _match_defaults(self, payload: dict[str, Any], scope: str) -> dict[str, Any]:
         league = payload.get("league") or {}
@@ -92,30 +102,14 @@ class MatchSyncService:
             starts_at = timezone.make_aware(starts_at, timezone.get_current_timezone())
 
         return {
-            "sport_code": Match.SportCode.FOOTBALL,
             "sport": sport,
-            "sport_external_id": self._to_int(payload.get("sport_id"), default=2),
             "sync_scope": scope,
             "time_status": str(payload.get("time_status") or ""),
             "starts_at": starts_at,
-            "league_external_id": self._to_int(league.get("id")),
             "league": league_obj,
             "league_season": league_season,
-            "league_name": self._localized(league.get("name"), "ru"),
-            "league_name_en": self._localized(league.get("name"), "en"),
-            "league_country": self._localized(country.get("name"), "ru"),
-            "league_country_en": self._localized(country.get("name"), "en"),
-            "home_team_external_id": self._to_int(home_team.get("id")),
             "home_team": home_team_obj,
-            "home_team_name": self._localized(home_team.get("name"), "ru"),
-            "home_team_name_en": self._localized(home_team.get("name"), "en"),
-            "home_team_logo": str(home_team.get("logo") or ""),
-            "away_team_external_id": self._to_int(away_team.get("id")),
             "away_team": away_team_obj,
-            "away_team_name": self._localized(away_team.get("name"), "ru"),
-            "away_team_name_en": self._localized(away_team.get("name"), "en"),
-            "away_team_logo": str(away_team.get("logo") or ""),
-            "venue_external_id": self._to_int(venue_payload.get("id")),
             "venue": venue,
             "score": str(payload.get("score") or ""),
             "live_minute": self._to_int(payload.get("live_minute")),
@@ -126,10 +120,10 @@ class MatchSyncService:
     def _sync_sport(self, payload: dict[str, Any]) -> Sport:
         sport_id = self._to_int(payload.get("sport_id"), default=2)
         sport, _ = Sport.objects.update_or_create(
-            provider=Match.Provider.NEUROKEFF,
+            provider=Provider.NEUROKEFF,
             external_id=sport_id,
             defaults={
-                "code": Match.SportCode.FOOTBALL,
+                "code": "football",
                 "name": "Football",
                 "name_ru": "Футбол",
                 "raw_data": {"sport_id": sport_id},
@@ -143,7 +137,7 @@ class MatchSyncService:
             return None
 
         country, _ = Country.objects.update_or_create(
-            provider=Match.Provider.NEUROKEFF,
+            provider=Provider.NEUROKEFF,
             external_id=external_id,
             defaults={
                 "code": str(payload.get("code") or ""),
@@ -161,7 +155,7 @@ class MatchSyncService:
             return None
 
         venue, _ = Venue.objects.update_or_create(
-            provider=Match.Provider.NEUROKEFF,
+            provider=Provider.NEUROKEFF,
             external_id=external_id,
             defaults={
                 "name": self._localized(payload.get("name"), "en"),
@@ -190,7 +184,7 @@ class MatchSyncService:
             return None
 
         league, _ = League.objects.update_or_create(
-            provider=Match.Provider.NEUROKEFF,
+            provider=Provider.NEUROKEFF,
             external_id=external_id,
             defaults={
                 "sport": sport,
@@ -246,7 +240,7 @@ class MatchSyncService:
             return None
 
         team, _ = Team.objects.update_or_create(
-            provider=Match.Provider.NEUROKEFF,
+            provider=Provider.NEUROKEFF,
             external_id=external_id,
             defaults={
                 "sport": sport,
@@ -260,6 +254,12 @@ class MatchSyncService:
             },
         )
         return team
+
+    def _sync_odds(self, match: Match, payload: dict[str, Any]) -> None:
+        MatchOdds.objects.update_or_create(
+            match=match,
+            defaults=match_odds_defaults(payload),
+        )
 
     @staticmethod
     def _localized(value: Any, preferred: str = "ru") -> str:

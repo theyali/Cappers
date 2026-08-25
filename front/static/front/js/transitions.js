@@ -38,6 +38,8 @@
     document.addEventListener("submit", (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
+        if (event.defaultPrevented) return;
+        if (form.matches("[data-no-transition]")) return;
         if (form.dataset.transitionSubmitted === "true") return;
 
         event.preventDefault();
