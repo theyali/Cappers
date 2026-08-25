@@ -9,6 +9,7 @@
     {% block extra_css %}{% endblock %}
     {% if request.resolver_match.app_name == 'game' %}
     <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
     {% endif %}
 </head>
 <body>
@@ -49,6 +50,9 @@
         <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
     </div>
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
+    {% if request.resolver_match.app_name == 'game' %}
+    <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
