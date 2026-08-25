@@ -29,7 +29,8 @@ def match_list(request):
     if active_scope not in valid_scopes:
         active_scope = "all"
 
-    selected_date = _selected_date(request.GET.get("date"))
+    today = timezone.localdate()
+    selected_date = _selected_date(request.GET.get("date"), today=today)
     day_start, day_end = _local_day_bounds(selected_date)
 
     date_matches = Match.objects.filter(
@@ -92,11 +93,12 @@ def match_list(request):
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
+        "today_iso": today.isoformat(),
     }
     return render(request, "game/match_list.html", context)
 
 
-def _selected_date(raw_value: str | None):
+def _selected_date(raw_value: str | None, *, today=None):
     if raw_value:
         try:
             parsed = parse_date(raw_value)
@@ -104,7 +106,7 @@ def _selected_date(raw_value: str | None):
             parsed = None
         if parsed is not None:
             return parsed
-    return timezone.localdate()
+    return today or timezone.localdate()
 
 
 def _local_day_bounds(selected_date):
