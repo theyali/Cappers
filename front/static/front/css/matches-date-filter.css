@@ -1,0 +1,215 @@
+.matches-date-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.matches-date-current {
+    min-width: 210px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.matches-date-current-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--text);
+    background: var(--blue);
+}
+
+.matches-date-current-icon svg,
+.matches-date-step svg,
+.matches-date-picker svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.matches-date-current-copy {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.matches-date-current-copy span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.matches-date-current-copy strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.matches-date-controls {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.matches-date-step {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, .74);
+    background: #2a2a2d;
+    transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+
+.matches-date-step:hover {
+    color: var(--text);
+    background: #343438;
+    transform: translateY(-1px);
+}
+
+.matches-date-shortcuts {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.matches-date-option {
+    min-width: 88px;
+    min-height: 42px;
+    display: grid;
+    align-content: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, .75);
+    background: #2a2a2d;
+    text-align: center;
+    transition: transform .18s ease, background .18s ease, color .18s ease;
+}
+
+.matches-date-option:hover {
+    color: var(--text);
+    background: #343438;
+    transform: translateY(-1px);
+}
+
+.matches-date-option span {
+    font-size: 12px;
+    line-height: 1.1;
+}
+
+.matches-date-option small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.1;
+}
+
+.matches-date-option.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.matches-date-option.is-active small {
+    color: rgba(19, 19, 19, .62);
+}
+
+.matches-date-picker {
+    position: relative;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    border-radius: 11px;
+    color: var(--text);
+    background: #2a2a2d;
+    cursor: pointer;
+}
+
+.matches-date-picker > span {
+    color: rgba(255, 255, 255, .76);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.matches-date-picker input {
+    width: 116px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    color: var(--yellow);
+    background: transparent;
+    color-scheme: dark;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.matches-date-picker input::-webkit-calendar-picker-indicator {
+    opacity: .7;
+    cursor: pointer;
+}
+
+.matches-date-filter a:focus-visible,
+.matches-date-picker:focus-within {
+    box-shadow: 0 0 0 2px var(--blue);
+}
+
+@media (max-width: 1120px) {
+    .matches-date-filter {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .matches-date-controls {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+}
+
+@media (max-width: 640px) {
+    .matches-date-filter {
+        padding: 10px;
+    }
+
+    .matches-date-current {
+        min-width: 0;
+    }
+
+    .matches-date-controls {
+        gap: 6px;
+    }
+
+    .matches-date-step {
+        width: 40px;
+        height: 40px;
+    }
+
+    .matches-date-option {
+        min-width: 78px;
+        min-height: 40px;
+        padding-inline: 10px;
+    }
+
+    .matches-date-picker {
+        min-height: 40px;
+    }
+
+    .matches-date-picker > span {
+        display: none;
+    }
+}
