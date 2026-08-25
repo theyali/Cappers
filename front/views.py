@@ -1,7 +1,9 @@
-from django.db.models import Count
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
 from django.shortcuts import render
 
 from cabinet.models import AnalystProfile, User
+from game.models import Prediction, PredictionCoupon
 
 
 LATEST_PREDICTIONS = [
@@ -77,6 +79,15 @@ DEMO_EXPERTS = [
 ]
 
 
+PREDICTION_STATUS_FILTERS = (
+    ("all", "Все"),
+    ("pending", "Ожидают"),
+    (Prediction.StateStatus.WIN, "Выиграли"),
+    (Prediction.StateStatus.LOSE, "Проиграли"),
+    (Prediction.StateStatus.REFUND, "Возврат"),
+)
+
+
 def _initials(name: str) -> str:
     parts = [part for part in name.split() if part]
     return "".join(part[0] for part in parts[:2]).upper() or "К"
@@ -118,3 +129,145 @@ def index(request):
         "top_experts": _top_experts(),
     }
     return render(request, "front/index.html", context)
+
+
+def predictions(request):
+    active_status = request.GET.get("status", "all")
+    valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
+    if active_status not in valid_statuses:
+        active_status = "all"
+
+    published = Prediction.objects.filter(
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    )
+    counts = published.aggregate(
+        total=Count("id"),
+        pending=Count("id", filter=Q(state_status="") | Q(state_status__isnull=True)),
+        win=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
+        lose=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
+        refund=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
+    )
+
+    queryset = published.select_related(
+        "coupon__author",
+        "coupon__author__analyst_profile",
+        "match__league",
+        "match__home_team",
+        "match__away_team",
+    )
+    if active_status == "pending":
+        queryset = queryset.filter(Q(state_status="") | Q(state_status__isnull=True))
+    elif active_status != "all":
+        queryset = queryset.filter(state_status=active_status)
+
+    paginator = Paginator(
+        queryset.order_by("-coupon__published_at", "-coupon__created_at", "-created_at"),
+        24,
+    )
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    for prediction in page_obj.object_list:
+        author = prediction.coupon.author
+        profile = getattr(author, "analyst_profile", None)
+        name = (
+            profile.display_name
+            if profile and profile.display_name
+            else author.get_full_name() or author.username
+        )
+        prediction.expert_name = name
+        prediction.expert_initials = _initials(name)
+        prediction.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
+        prediction.expert_verified = bool(profile and profile.is_verified)
+
+    count_map = {
+        "all": counts["total"],
+        "pending": counts["pending"],
+        Prediction.StateStatus.WIN: counts["win"],
+        Prediction.StateStatus.LOSE: counts["lose"],
+        Prediction.StateStatus.REFUND: counts["refund"],
+    }
+    status_tabs = [
+        {
+            "key": key,
+            "label": label,
+            "count": count_map.get(key, 0),
+        }
+        for key, label in PREDICTION_STATUS_FILTERS
+    ]
+
+    return render(
+        request,
+        "front/predictions.html",
+        {
+            "page_obj": page_obj,
+            "status_tabs": status_tabs,
+            "active_status": active_status,
+            "total_predictions": counts["total"],
+        },
+    )
+
+
+def cappers_stats(request):
+    profiles = list(
+        AnalystProfile.objects.filter(
+            is_public=True,
+            user__role=User.Role.ANALYST,
+        )
+        .select_related("user")
+        .annotate(
+            followers_count=Count("user__analyst_followers", distinct=True),
+            predictions_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            ),
+            wins_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN,
+                ),
+                distinct=True,
+            ),
+            losses_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE,
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by("-wins_count", "-followers_count", "-is_verified", "-created_at")
+    )
+
+    experts = []
+    for profile in profiles:
+        settled = profile.wins_count + profile.losses_count
+        win_rate = round(profile.wins_count / settled * 100) if settled else 0
+        name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        experts.append(
+            {
+                "name": name,
+                "username": profile.user.username,
+                "initials": _initials(name),
+                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "verified": profile.is_verified,
+                "followers": profile.followers_count,
+                "predictions": profile.predictions_count,
+                "wins": profile.wins_count,
+                "losses": profile.losses_count,
+                "win_rate": win_rate,
+            }
+        )
+
+    return render(
+        request,
+        "front/cappers_stats.html",
+        {
+            "experts": experts,
+            "experts_count": len(experts),
+        },
+    )
