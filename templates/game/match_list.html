@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -29,7 +30,13 @@
         {% endfor %}
     </nav>
 
-    <div class="matches-shell" data-coupon-page data-create-url="{% url 'game:create_coupon' %}" data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}">
+    <div
+        class="matches-shell"
+        data-coupon-page
+        data-create-url="{% url 'game:create_coupon' %}"
+        data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
+        data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
+    >
         <section class="matches-list-panel" aria-label="Список матчей">
             {% if matches %}
             <div class="matches-grid">
@@ -113,6 +120,7 @@
                         data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
                         data-league="{{ match.league_name|default:'Лига не указана' }}"
                         data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+                        data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
                     >
                         <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="home" data-market="winner" data-selection="{{ match.home_team_name|default:'Хозяева' }}" data-coefficient="{{ match.coupon_odds.home }}">
                             <span>1</span>
@@ -204,16 +212,19 @@
                         <strong data-coupon-total>0</strong>
                     </div>
 
-                    <button class="coupon-submit" type="submit">Сделать прогноз</button>
+                    <button class="coupon-submit" type="submit" data-coupon-submit>
+                        <span class="coupon-submit-label">Сделать прогноз</span>
+                        <span class="coupon-submit-progress" aria-hidden="true">
+                            <span class="coupon-loader-dots"><i></i><i></i><i></i></span>
+                            <span data-coupon-submit-status>Сохраняем...</span>
+                        </span>
+                    </button>
                     <p class="coupon-note" data-coupon-note>
-                        {% if can_write_coupon %}
-                            Заполните сумму и общий комментарий к купону.
-                        {% else %}
-                            Сохранять купоны могут только эксперты.
-                        {% endif %}
+                        Заполните сумму и общий комментарий к купону.
                     </p>
                 </div>
             </form>
+            {{ draft_coupon|json_script:"coupon-draft-data" }}
             {% else %}
             <section class="latest-predictions-panel" aria-label="Последние прогнозы">
                 <div class="coupon-head">
@@ -269,5 +280,6 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 {% endblock %}
