@@ -47,6 +47,16 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             matches.extend(self._fetch_matches("finished", date_value=match_date))
         return matches
 
+    def fetch_matches_for_scope(
+        self,
+        scope: str,
+        *,
+        date_value: date | None = None,
+    ) -> list[dict[str, Any]]:
+        if scope not in {"prematch", "live", "finished"}:
+            raise NeurokeffProviderError(f"Unsupported match scope: {scope}")
+        return self._fetch_matches(scope, date_value=date_value)
+
     def _fetch_matches(
         self,
         endpoint: str,
