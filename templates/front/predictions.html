@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Все прогнозы — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="predictions-page" aria-label="Все прогнозы">
+    <div class="predictions-hero">
+        <div>
+            <p class="predictions-eyebrow">Лента экспертов</p>
+            <h1>Все прогнозы</h1>
+            <p>Опубликованные прогнозы капперов с коэффициентами, исходами и результатами в одной ленте.</p>
+        </div>
+        <div class="predictions-total">
+            <strong>{{ total_predictions }}</strong>
+            <span>прогнозов</span>
+        </div>
+    </div>
+
+    <nav class="predictions-tabs" aria-label="Фильтр прогнозов по результату">
+        {% for tab in status_tabs %}
+        <a class="{% if active_status == tab.key %}is-active{% endif %}" href="{% url 'front:predictions' %}?status={{ tab.key }}">
+            <span>{{ tab.label }}</span>
+            <b>{{ tab.count }}</b>
+        </a>
+        {% endfor %}
+    </nav>
+
+    {% if page_obj.object_list %}
+    <div class="predictions-grid">
+        {% for prediction in page_obj.object_list %}
+        <article class="prediction-card">
+            <div class="prediction-card-head">
+                <div class="prediction-expert">
+                    <span class="prediction-expert-avatar">
+                        {% if prediction.expert_avatar_url %}
+                            <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
+                        {% else %}
+                            {{ prediction.expert_initials }}
+                        {% endif %}
+                    </span>
+                    <div class="prediction-expert-copy">
+                        <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
+                        <span>@{{ prediction.coupon.author.username }}</span>
+                    </div>
+                </div>
+
+                {% if prediction.state_status == "win" %}
+                    <span class="prediction-status prediction-status-win">Выигрыш</span>
+                {% elif prediction.state_status == "lose" %}
+                    <span class="prediction-status prediction-status-lose">Проигрыш</span>
+                {% elif prediction.state_status == "refund" %}
+                    <span class="prediction-status prediction-status-refund">Возврат</span>
+                {% else %}
+                    <span class="prediction-status">Ожидает</span>
+                {% endif %}
+            </div>
+
+            <a class="prediction-match" href="{{ prediction.match.get_absolute_url }}">
+                <div class="prediction-match-meta">
+                    <span>{{ prediction.match.league_name|default:"Лига" }}</span>
+                    {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+                </div>
+                <h2>{{ prediction.match.home_team_name }} — {{ prediction.match.away_team_name }}</h2>
+            </a>
+
+            <div class="prediction-pick">
+                <div>
+                    <small>{{ prediction.market }}</small>
+                    <strong>{{ prediction.selection }}</strong>
+                </div>
+                <b>{{ prediction.coefficient }}</b>
+            </div>
+
+            {% if prediction.comment %}
+                <p class="prediction-comment">{{ prediction.comment|truncatechars:150 }}</p>
+            {% endif %}
+
+            <div class="prediction-card-foot">
+                <span>{{ prediction.created_at|date:"d.m.Y H:i" }}</span>
+                <a href="{{ prediction.match.get_absolute_url }}">Открыть матч →</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="predictions-pagination" aria-label="Страницы прогнозов">
+        {% if page_obj.has_previous %}
+            <a href="?status={{ active_status }}&page={{ page_obj.previous_page_number }}">← Назад</a>
+        {% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?status={{ active_status }}&page={{ page_obj.next_page_number }}">Вперёд →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="predictions-empty">
+        <h2>Прогнозов пока нет</h2>
+        <p>В выбранной категории ещё нет опубликованных прогнозов.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
