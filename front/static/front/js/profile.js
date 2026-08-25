@@ -3,9 +3,54 @@
     const input = document.getElementById("avatarUploadInput");
     const status = document.getElementById("avatarUploadStatus");
 
-    if (!page || !input || !status) return;
+    if (!page) return;
 
-    const uploadUrl = page.dataset.avatarUploadUrl;
+    const tabLinks = Array.from(document.querySelectorAll("[data-profile-tab-link]"));
+    const tabPanels = Array.from(document.querySelectorAll("[data-profile-tab-panel]"));
+
+    const activateTab = (tab) => {
+        tabPanels.forEach((panel) => {
+            panel.classList.toggle("is-active", panel.dataset.profileTabPanel === tab);
+        });
+
+        tabLinks.forEach((link) => {
+            const target = new URL(link.href, window.location.href).searchParams.get("tab") || "profile";
+            link.classList.toggle("is-active", target === tab);
+        });
+    };
+
+    tabLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const url = new URL(link.href, window.location.href);
+            const tab = url.searchParams.get("tab") || "profile";
+            if (!tabPanels.some((panel) => panel.dataset.profileTabPanel === tab)) return;
+
+            event.preventDefault();
+            window.history.pushState({}, "", url);
+            activateTab(tab);
+        });
+    });
+
+    window.addEventListener("popstate", () => {
+        const tab = new URL(window.location.href).searchParams.get("tab") || "profile";
+        activateTab(tab);
+    });
+
+    document.querySelectorAll("[data-profile-list-search]").forEach((searchInput) => {
+        searchInput.addEventListener("input", () => {
+            const listName = searchInput.dataset.profileListSearch;
+            const list = document.querySelector(`[data-profile-list="${listName}"]`);
+            if (!list) return;
+
+            const query = searchInput.value.trim().toLowerCase();
+            list.querySelectorAll("[data-profile-username]").forEach((row) => {
+                row.classList.toggle(
+                    "is-hidden",
+                    query !== "" && !row.dataset.profileUsername.includes(query),
+                );
+            });
+        });
+    });
 
     const getCookie = (name) => {
         const cookies = document.cookie ? document.cookie.split(";") : [];
@@ -17,6 +62,45 @@
         }
         return "";
     };
+
+    document.querySelectorAll("[data-follow-url]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            if (button.disabled) return;
+
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Подписываем...";
+
+            try {
+                const response = await fetch(button.dataset.followUrl, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.error || "Не удалось подписаться.");
+                }
+
+                button.textContent = "Вы подписаны";
+                button.classList.add("is-muted");
+                button.removeAttribute("data-follow-url");
+            } catch (error) {
+                button.textContent = error.message || originalText;
+                window.setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 1800);
+            }
+        });
+    });
+
+    if (!input || !status) return;
+
+    const uploadUrl = page.dataset.avatarUploadUrl;
 
     const showStatus = (message, isError = false) => {
         status.textContent = message;

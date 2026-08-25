@@ -7,7 +7,6 @@
 {% block content %}
 <section class="profile-page" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">
     <div class="profile-hero long-bg long-bg-5">
-        <div class="profile-hero-shade"></div>
         <div class="profile-identity">
             <div class="profile-avatar-wrap">
                 <div class="profile-avatar" id="profileAvatar">
@@ -46,38 +45,48 @@
             </div>
         </div>
 
-        <div class="profile-completion-card">
-            <div>
-                <span>Профиль заполнен</span>
-                <strong>{{ profile_completion }}%</strong>
+        <div class="profile-hero-shade" aria-label="Статистика профиля">
+            <div class="profile-completion-card">
+                <div>
+                    <span>Профиль заполнен</span>
+                    <strong>{{ profile_completion }}%</strong>
+                </div>
+                <div class="completion-track"><i style="width: {{ profile_completion }}%"></i></div>
             </div>
-            <div class="completion-track"><i style="width: {{ profile_completion }}%"></i></div>
+
+            <div class="profile-hero-stats">
+                <a class="profile-stat-pill {% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Подписчики</span>
+                    <strong>{{ followers_count }}</strong>
+                </a>
+                <a class="profile-stat-pill {% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle><path d="m17 11 2 2 4-4"></path></svg>
+                    <span>Подписки</span>
+                    <strong>{{ following_count }}</strong>
+                </a>
+                <a class="profile-stat-pill {% if active_tab == 'predictions' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-4 4"></path></svg>
+                    <span>Прогнозы</span>
+                    <strong>{{ predictions_count }}</strong>
+                </a>
+                <div class="profile-stat-pill">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="m3 16 9 5 9-5"></path><path d="m3 12 9 5 9-5"></path></svg>
+                    <span>Роль</span>
+                    <strong>{{ request.user.get_role_display }}</strong>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="profile-stats-grid">
-        <article class="profile-stat-card block-bg block-bg-1">
-            <span>Подписчики</span>
-            <strong>{{ followers_count }}</strong>
-            <small>людей следят за профилем</small>
-        </article>
-        <article class="profile-stat-card block-bg block-bg-2">
-            <span>Подписки</span>
-            <strong>{{ following_count }}</strong>
-            <small>авторов в вашей ленте</small>
-        </article>
-        <article class="profile-stat-card block-bg block-bg-3">
-            <span>Статус</span>
-            <strong>{% if analyst_profile and analyst_profile.is_public %}Публичный{% else %}Личный{% endif %}</strong>
-            <small>{% if analyst_profile and analyst_profile.is_public %}профиль виден другим{% else %}профиль скрыт от других{% endif %}</small>
-        </article>
-        <article class="profile-stat-card profile-stat-accent block-bg block-bg-4">
-            <span>Роль</span>
-            <strong>{{ request.user.get_role_display }}</strong>
-            <small>тип аккаунта</small>
-        </article>
-    </div>
+    <nav class="profile-tabs" aria-label="Разделы профиля">
+        <a class="{% if active_tab == 'profile' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=profile" data-profile-tab-link>Профиль</a>
+        <a class="{% if active_tab == 'predictions' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>Мои прогнозы</a>
+        <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
+        <a class="{% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>Подписки</a>
+    </nav>
 
+    <section class="profile-tab-panel {% if active_tab == 'profile' %}is-active{% endif %}" id="profile-tab-profile" data-profile-tab-panel="profile">
     <div class="profile-layout">
         <form method="post" class="profile-form-card" novalidate>
             {% csrf_token %}
@@ -100,7 +109,6 @@
                 <label class="profile-field">
                     <span>Логин</span>
                     <div class="profile-readonly">@{{ request.user.username }}</div>
-                    <small>Логин нельзя изменить из профиля</small>
                 </label>
                 <label class="profile-field">
                     <span>{{ user_form.email.label }}</span>
@@ -159,17 +167,94 @@
                     <div><dt>Аккаунт</dt><dd>{% if request.user.is_active %}Активен{% else %}Отключён{% endif %}</dd></div>
                 </dl>
             </section>
-
-            {% if analyst_profile %}
-            <section class="profile-side-card profile-avatar-help block-bg block-bg-2">
-                <p class="eyebrow">Фото профиля</p>
-                <h3>Аватар</h3>
-                <p>Нажмите на кнопку камеры рядом с аватаром. Изображение загрузится без перезагрузки страницы.</p>
-                <div class="file-rules"><span>JPG</span><span>PNG</span><span>WebP</span><span>до 5 МБ</span></div>
-            </section>
-            {% endif %}
         </aside>
     </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'predictions' %}is-active{% endif %}" id="profile-tab-predictions" data-profile-tab-panel="predictions">
+        <div class="profile-list-card">
+            <div class="profile-section-heading">
+                <div>
+                    <p class="eyebrow">Прогнозы</p>
+                    <h2>Мои прогнозы</h2>
+                </div>
+            </div>
+            <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-4 4"></path></svg>
+                <p>Здесь появятся ваши прогнозы, когда раздел прогнозов будет подключён.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'followers' %}is-active{% endif %}" id="profile-tab-followers" data-profile-tab-panel="followers">
+        <div class="profile-list-card">
+            <div class="profile-list-head">
+                <div>
+                    <p class="eyebrow">Подписчики</p>
+                    <h2>Кто следит за вами</h2>
+                </div>
+                <label class="profile-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    <input type="search" placeholder="Поиск по username" data-profile-list-search="followers">
+                </label>
+            </div>
+            <div class="profile-user-list" data-profile-list="followers">
+                {% for follow in followers %}
+                    <article class="profile-user-row" data-profile-username="{{ follow.follower.username|lower }}">
+                        <div class="profile-user-avatar">{{ follow.follower.username|first|upper }}</div>
+                        <div>
+                            <strong>@{{ follow.follower.username }}</strong>
+                            <span>{{ follow.follower.get_role_display }}</span>
+                        </div>
+                        {% if request.user.is_analyst and follow.follower.is_analyst and follow.follower.id not in following_ids %}
+                            <button class="profile-row-action" type="button" data-follow-url="{% url 'cabinet:follow_analyst' follow.follower.id %}">Подписаться в ответ</button>
+                        {% elif follow.follower.id in following_ids %}
+                            <button class="profile-row-action is-muted" type="button">Вы подписаны</button>
+                        {% elif request.user.is_analyst and follow.follower.is_reader %}
+                            <button class="profile-row-action is-muted" type="button" disabled>Пользователь</button>
+                        {% endif %}
+                    </article>
+                {% empty %}
+                    <div class="profile-empty-state">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        <p>Подписчиков пока нет.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'following' %}is-active{% endif %}" id="profile-tab-following" data-profile-tab-panel="following">
+        <div class="profile-list-card">
+            <div class="profile-list-head">
+                <div>
+                    <p class="eyebrow">Подписки</p>
+                    <h2>Ваши аналитики</h2>
+                </div>
+                <label class="profile-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    <input type="search" placeholder="Поиск по username" data-profile-list-search="following">
+                </label>
+            </div>
+            <div class="profile-user-list" data-profile-list="following">
+                {% for follow in following %}
+                    <article class="profile-user-row" data-profile-username="{{ follow.analyst.username|lower }}">
+                        <div class="profile-user-avatar">{{ follow.analyst.username|first|upper }}</div>
+                        <div>
+                            <strong>@{{ follow.analyst.username }}</strong>
+                            <span>{{ follow.analyst.get_role_display }}</span>
+                        </div>
+                        <button class="profile-row-action is-muted" type="button">Вы подписаны</button>
+                    </article>
+                {% empty %}
+                    <div class="profile-empty-state">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <p>Вы пока ни на кого не подписаны.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
 </section>
 {% endblock %}
 

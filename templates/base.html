@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Cappers{% endblock %}</title>
+    <title>{% block title %}КапперХаб{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -12,8 +12,8 @@
     <header class="site-header">
         <nav class="site-nav" aria-label="Главная навигация">
             <a class="brand" href="{% url 'front:index' %}">
-                <span class="brand-mark">C</span>
-                <span>Cappers</span>
+                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <span>КапперХаб</span>
             </a>
             <div class="nav-links">
             {% if request.user.is_authenticated %}
@@ -41,6 +41,10 @@
     <main class="site-main">
         {% block content %}{% endblock %}
     </main>
+    <div class="logo-transition" aria-hidden="true">
+        <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+    </div>
+    <script src="{% static 'front/js/transitions.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

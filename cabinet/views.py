@@ -3,7 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST, require_http_methods
 
 from .forms import (
@@ -12,7 +12,7 @@ from .forms import (
     RegistrationForm,
     UserProfileForm,
 )
-from .models import AnalystProfile, User
+from .models import AnalystFollow, AnalystProfile, User
 
 
 @require_http_methods(["GET", "POST"])
@@ -74,6 +74,9 @@ def profile(request):
     analyst_profile = _get_analyst_profile(request.user)
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
+    active_tab = request.GET.get("tab", "profile")
+    if active_tab not in {"profile", "predictions", "followers", "following"}:
+        active_tab = "profile"
 
     if analyst_profile is not None:
         analyst_form = AnalystProfileForm(
@@ -99,13 +102,31 @@ def profile(request):
         else 0
     )
     following_count = request.user.analyst_follows.count()
+    following_ids = set(
+        request.user.analyst_follows.values_list("analyst_id", flat=True)
+    )
+    followers = (
+        AnalystFollow.objects.filter(analyst=request.user)
+        .select_related("follower", "follower__analyst_profile")
+        if request.user.role == User.Role.ANALYST
+        else AnalystFollow.objects.none()
+    )
+    following = AnalystFollow.objects.filter(follower=request.user).select_related(
+        "analyst",
+        "analyst__analyst_profile",
+    )
 
     context = {
         "analyst_profile": analyst_profile,
         "user_form": user_form,
         "analyst_form": analyst_form,
+        "active_tab": active_tab,
         "followers_count": followers_count,
         "following_count": following_count,
+        "followers": followers,
+        "following": following,
+        "following_ids": following_ids,
+        "predictions_count": 0,
         "profile_completion": _profile_completion(request.user, analyst_profile),
     }
     return render(request, "cabinet/profile.html", context)
@@ -147,3 +168,20 @@ def upload_avatar(request):
             "message": "Аватар обновлён.",
         }
     )
+
+
+@login_required
+@require_POST
+def follow_analyst(request, user_id):
+    analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
+    if analyst.pk == request.user.pk:
+        return JsonResponse(
+            {"ok": False, "error": "Нельзя подписаться на самого себя."},
+            status=400,
+        )
+
+    AnalystFollow.objects.get_or_create(
+        follower=request.user,
+        analyst=analyst,
+    )
+    return JsonResponse({"ok": True, "message": "Вы подписаны."})
