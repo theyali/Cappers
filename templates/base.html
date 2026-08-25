@@ -7,6 +7,9 @@
     <title>{% block title %}КапперХаб{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
     {% block extra_css %}{% endblock %}
+    {% if request.resolver_match.app_name == 'game' %}
+    <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
+    {% endif %}
 </head>
 <body>
     <header class="site-header">
