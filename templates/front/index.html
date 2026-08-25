@@ -1,105 +1,154 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Cappers{% endblock %}
+{% block title %}КапперХаб — прогнозы и эксперты{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/home.css' %}">
+{% endblock %}
 
 {% block content %}
-<section class="hero long-bg long-bg-5">
-    <div class="hero-copy">
-        <p class="eyebrow">Прогнозы в реальном времени</p>
-        <h1>Cappers</h1>
-        <p class="hero-text">
-            Темная игровая платформа для прогнозов, турниров и быстрых решений по матчам.
-        </p>
-        <div class="hero-actions">
-            <a class="button button-primary" href="{% url 'cabinet:register' %}">Начать</a>
-            <a class="button button-ghost" href="{% url 'cabinet:login' %}">Войти</a>
-        </div>
-    </div>
-
-    <div class="phone-shell" aria-label="Превью интерфейса Cappers">
-        <div class="phone-top">
-            <span>Cappers</span>
-            <strong>12.84x</strong>
-        </div>
-        <div class="odds-tape">
-            <span class="loss">1.23x</span>
-            <span class="win">3.45x</span>
-            <span class="loss">1.23x</span>
-            <span class="win">3.45x</span>
-        </div>
-        <div class="bet-panel">
-            <div class="bet-heading">
-            <span>Сумма ставки</span>
-                <div class="step-actions">
-                    <button type="button">1/2</button>
-                    <button type="button">2x</button>
-                    <button type="button">Макс</button>
-                </div>
+<section class="home-layout" aria-label="Главная лента прогнозов">
+    <div class="forecast-area">
+        <div class="home-heading">
+            <div>
+                <p class="home-eyebrow">Свежая лента</p>
+                <h1>Последние прогнозы</h1>
             </div>
-            <label class="app-field">
-                <span class="coin-dot">C</span>
-                <input type="text" value="100.00" aria-label="Сумма ставки">
-                <button type="button" aria-label="Очистить">x</button>
-            </label>
-            <label class="app-field stacked">
-                <span>Автовывод</span>
-                <input type="text" value="2.00" aria-label="Автовывод">
-            </label>
-            <button class="place-bet" type="button">
-                <strong>Сделать ставку</strong>
-                <span>Следующий раунд: 12с</span>
-            </button>
+            <div class="slider-actions" aria-label="Управление слайдером">
+                <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">←</button>
+                <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">→</button>
+            </div>
         </div>
-        <div class="phone-menu">
-            <button type="button">♠</button>
-            <button type="button">Бонусы</button>
-            <button type="button">Меню</button>
+
+        <div class="forecast-slider" data-forecast-slider>
+            <div class="forecast-track">
+                {% for prediction in latest_predictions %}
+                <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
+                    <div class="forecast-topline">
+                        <div class="forecast-expert">
+                            <span class="forecast-avatar">{{ prediction.expert_initials }}</span>
+                            <div>
+                                <strong>{{ prediction.expert }}</strong>
+                                <span>Эксперт КапперХаб</span>
+                            </div>
+                        </div>
+                        <div class="forecast-meta">
+                            <span>{{ prediction.sport }}</span>
+                            <span>{{ prediction.league }}</span>
+                        </div>
+                    </div>
+
+                    <div class="forecast-body">
+                        <div class="forecast-match-copy">
+                            <p class="forecast-label">Матч</p>
+                            <h2>{{ prediction.match }}</h2>
+                            <p class="forecast-note">{{ prediction.note }}</p>
+                        </div>
+
+                        <div class="forecast-pick-card">
+                            <span>Прогноз</span>
+                            <strong>{{ prediction.pick }}</strong>
+                            <div class="forecast-coefficient">
+                                <small>Коэффициент</small>
+                                <b>{{ prediction.coefficient }}</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="forecast-bottom">
+                        <div class="confidence-block">
+                            <div class="confidence-copy">
+                                <span>Уверенность эксперта</span>
+                                <strong>{{ prediction.confidence }}%</strong>
+                            </div>
+                            <div class="confidence-bar" aria-hidden="true">
+                                <span style="width: {{ prediction.confidence }}%"></span>
+                            </div>
+                        </div>
+                        <div class="forecast-time">
+                            <span>Начало</span>
+                            <strong>{{ prediction.starts_at }}</strong>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
+            <div class="slider-footer">
+                <div class="slider-dots" role="tablist" aria-label="Выбор прогноза">
+                    {% for prediction in latest_predictions %}
+                    <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
+                    {% endfor %}
+                </div>
+                <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
+            </div>
         </div>
     </div>
-</section>
 
-<section class="quick-stats" aria-label="Показатели">
-    <article>
-        <span>Матчи</span>
-        <strong>128</strong>
-    </article>
-    <article>
-        <span>Средний коэффициент</span>
-        <strong>2.41</strong>
-    </article>
-    <article>
-        <span>Сигналы</span>
-        <strong>34</strong>
-    </article>
-</section>
+    <aside class="home-sidebar">
+        <section class="follow-card">
+            <div class="follow-visual" aria-hidden="true">
+                <span>МО</span>
+                <span>АБ</span>
+                <span>РК</span>
+            </div>
+            <p class="home-eyebrow">Персональная лента</p>
+            <h2>Подпишись на лучших экспертов</h2>
+            <p class="follow-copy">Собери свою ленту и быстрее замечай новые прогнозы тех, кому доверяешь.</p>
+            {% if request.user.is_authenticated %}
+                <a class="home-primary-action" href="{% url 'cabinet:profile' %}?tab=following">Мои подписки <span>→</span></a>
+            {% else %}
+                <a class="home-primary-action" href="{% url 'cabinet:register' %}">Создать аккаунт <span>→</span></a>
+            {% endif %}
+        </section>
 
-<section class="game-grid">
-    <article class="feature-card block-bg block-bg-2">
-        <span class="card-kicker">Риск</span>
-        <h2>Линия риска</h2>
-        <p>Короткие сценарии по матчу с акцентом на момент входа и выход по лимиту.</p>
-    </article>
-    <article class="feature-card block-bg block-bg-3">
-        <span class="card-kicker">Аналитика</span>
-        <h2>Разбор полей</h2>
-        <p>Фильтры по турнирам, форме команд и резким движениям коэффициентов.</p>
-    </article>
-    <article class="feature-card block-bg block-bg-4">
-        <span class="card-kicker">Купон</span>
-        <h2>Быстрый купон</h2>
-        <p>Минимум действий: выбрать прогноз, подтвердить сумму, сохранить стратегию.</p>
-    </article>
-</section>
+        <section class="experts-card" id="experts">
+            <div class="experts-title-row">
+                <div>
+                    <p class="home-eyebrow">Рейтинг</p>
+                    <h2>Топовые эксперты</h2>
+                </div>
+                <span class="experts-live">LIVE</span>
+            </div>
 
-<section class="panel long-bg long-bg-3">
-    <div>
-        <p class="eyebrow">Рейтинг</p>
-        <h2>Рейтинг аналитиков и прогнозов</h2>
-        <p>
-            Визуальная система держит фокус на цифрах: темный интерфейс, яркие статусы,
-            крупные коэффициенты и желтый акцент только там, где нужно действие.
-        </p>
-    </div>
-    <a class="button button-primary" href="{% url 'cabinet:register' %}">Создать аккаунт</a>
+            <div class="experts-list">
+                {% for expert in top_experts %}
+                <div class="expert-row">
+                    <span class="expert-rank">{{ forloop.counter }}</span>
+                    <div class="expert-avatar">
+                        {% if expert.avatar_url %}
+                            <img src="{{ expert.avatar_url }}" alt="">
+                        {% else %}
+                            <span>{{ expert.initials }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="expert-copy">
+                        <div class="expert-name-line">
+                            <strong>{{ expert.name }}</strong>
+                            {% if expert.verified %}<span class="verified-mark" title="Проверенный эксперт">✓</span>{% endif %}
+                        </div>
+                        <span>@{{ expert.username }}</span>
+                    </div>
+                    <div class="expert-score">
+                        <strong>{{ expert.followers }}</strong>
+                        <span>подписчиков</span>
+                    </div>
+                    <span class="expert-arrow">›</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if request.user.is_authenticated %}
+                <a class="experts-bottom-action" href="{% url 'cabinet:profile' %}?tab=following">Мои эксперты</a>
+            {% else %}
+                <a class="experts-bottom-action" href="{% url 'cabinet:register' %}">Присоединиться</a>
+            {% endif %}
+        </section>
+    </aside>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/home.js' %}" defer></script>
 {% endblock %}
