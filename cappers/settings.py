@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_celery_beat",
+    "cabinet.apps.CabinetConfig",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,8 @@ DATABASES = {
         "DISABLE_SERVER_SIDE_CURSORS": True,
     }
 }
+
+AUTH_USER_MODEL = "cabinet.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
