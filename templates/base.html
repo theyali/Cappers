@@ -51,7 +51,12 @@
     </div>
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     {% if request.resolver_match.app_name == 'game' %}
-    <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
+    <script
+        src="{% static 'front/js/matches-date-filter.js' %}"
+        data-match-date-filter
+        data-selected-date="{{ selected_date_iso|default:'' }}"
+        defer
+    ></script>
     {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
