@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}КапперХаб{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
     {% block extra_css %}{% endblock %}
     {% if request.resolver_match.app_name == 'game' %}
     <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
@@ -15,22 +16,28 @@
 <body>
     <header class="site-header">
         <nav class="site-nav" aria-label="Главная навигация">
-            <a class="brand" href="{% url 'front:index' %}">
+            <a class="brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 <span>КапперХаб</span>
             </a>
-            <div class="nav-links">
+
+            <div class="site-nav-center">
                 <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">Футбол</a>
-            {% if request.user.is_authenticated %}
-                <a href="{% url 'cabinet:profile' %}">Профиль</a>
-                <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
-                    {% csrf_token %}
-                    <button type="submit" class="nav-button">Выйти</button>
-                </form>
-            {% else %}
-                <a href="{% url 'cabinet:login' %}">Войти</a>
-                <a class="nav-cta" href="{% url 'cabinet:register' %}">Регистрация</a>
-            {% endif %}
+                <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">Все прогнозы</a>
+                <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
+            </div>
+
+            <div class="site-nav-actions">
+                {% if request.user.is_authenticated %}
+                    <a class="nav-profile" href="{% url 'cabinet:profile' %}">Профиль</a>
+                    <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-button nav-logout">Выйти</button>
+                    </form>
+                {% else %}
+                    <a class="nav-login" href="{% url 'cabinet:login' %}">Войти</a>
+                    <a class="nav-register" href="{% url 'cabinet:register' %}">Регистрация</a>
+                {% endif %}
             </div>
         </nav>
     </header>
