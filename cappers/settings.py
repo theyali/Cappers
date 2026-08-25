@@ -89,6 +89,14 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("CACHE_URL", "redis://redis:6379/2"),
+        "KEY_PREFIX": "cappers",
+    }
+}
+
 AUTH_USER_MODEL = "cabinet.User"
 LOGIN_URL = "cabinet:login"
 LOGIN_REDIRECT_URL = "cabinet:dashboard"
@@ -167,3 +175,5 @@ NEUROKEFF_MAX_PAGES = env_int("NEUROKEFF_MAX_PAGES", 20)
 NEUROKEFF_API_TIMEOUT = env_int("NEUROKEFF_API_TIMEOUT", 20)
 NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
 NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)
+COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)
+COUPON_MATCH_STATE_CACHE_SECONDS = env_int("COUPON_MATCH_STATE_CACHE_SECONDS", 10)
