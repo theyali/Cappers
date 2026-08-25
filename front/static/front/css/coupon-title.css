@@ -1,0 +1,41 @@
+.coupon-item-top {
+    width: 100%;
+    min-width: 0;
+}
+
+.coupon-item-match {
+    width: 0;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+}
+
+.coupon-item-title {
+    width: 0;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+}
+
+.coupon-item-title strong,
+.coupon-item-title span {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    scrollbar-width: none;
+}
+
+.coupon-item-title strong::-webkit-scrollbar,
+.coupon-item-title span::-webkit-scrollbar {
+    display: none;
+}
+
+.coupon-item-actions {
+    flex: 0 0 auto;
+}
