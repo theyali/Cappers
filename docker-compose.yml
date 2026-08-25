@@ -50,20 +50,6 @@ services:
       timeout: 3s
       retries: 10
 
-  migrate:
-    build: .
-    env_file:
-      - .env
-    command: python manage.py migrate --noinput
-    volumes:
-      - .:/app
-    depends_on:
-      pgbouncer:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: "no"
-
   web:
     build: .
     env_file:
@@ -74,8 +60,15 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   celery:
     build: .
@@ -85,8 +78,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      web:
+        condition: service_healthy
       redis:
         condition: service_healthy
 
@@ -98,8 +91,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      migrate:
-        condition: service_completed_successfully
+      web:
+        condition: service_healthy
       redis:
         condition: service_healthy
 

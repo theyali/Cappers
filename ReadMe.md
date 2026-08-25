@@ -16,7 +16,7 @@
 
 ```bash
 cp .env.example .env
-docker compose up --build
+docker compose up --build -d --remove-orphans
 ```
 
 При `DEBUG=True` контейнер `web` запускает Django `runserver`.

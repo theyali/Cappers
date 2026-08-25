@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Applying database migrations..."
+python manage.py migrate --noinput
+
 case "${DEBUG:-False}" in
   True|true|TRUE|1|yes|YES)
     echo "Starting Django development server..."
