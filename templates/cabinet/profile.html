@@ -1,22 +1,176 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Профиль — Cappers{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/profile.css' %}">{% endblock %}
 
 {% block content %}
-<h1>Профиль</h1>
-<p>Логин: {{ request.user.username }}</p>
-<p>Email: {{ request.user.email }}</p>
-<p>Имя: {{ request.user.get_full_name|default:"—" }}</p>
-<p>Роль: {{ request.user.get_role_display }}</p>
+<section class="profile-page" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">
+    <div class="profile-hero long-bg long-bg-5">
+        <div class="profile-hero-shade"></div>
+        <div class="profile-identity">
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar" id="profileAvatar">
+                    {% if analyst_profile and analyst_profile.avatar %}
+                        <img src="{{ analyst_profile.avatar.url }}" alt="Аватар {{ request.user.username }}" id="profileAvatarImage">
+                    {% else %}
+                        <span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                {% if analyst_profile %}
+                    <label class="avatar-upload-button" for="avatarUploadInput" title="Изменить аватар">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3.2"></circle></svg>
+                    </label>
+                    <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
+                {% endif %}
+            </div>
 
-{% if analyst_profile %}
-    {% if analyst_profile.avatar %}
-        <img src="{{ analyst_profile.avatar.url }}" alt="Аватар" width="120">
-    {% endif %}
-    <p>Отображаемое имя: {{ analyst_profile.display_name|default:"—" }}</p>
-    <p>О себе: {{ analyst_profile.bio|default:"—" }}</p>
-    <p>Публичный профиль: {{ analyst_profile.is_public|yesno:"Да,Нет" }}</p>
-{% endif %}
+            <div class="profile-title-block">
+                <div class="profile-label-row">
+                    <span class="profile-role">{{ request.user.get_role_display }}</span>
+                    {% if analyst_profile and analyst_profile.is_verified %}
+                        <span class="verified-badge">Проверен</span>
+                    {% endif %}
+                </div>
+                <h1>
+                    {% if analyst_profile and analyst_profile.display_name %}
+                        {{ analyst_profile.display_name }}
+                    {% elif request.user.get_full_name %}
+                        {{ request.user.get_full_name }}
+                    {% else %}
+                        {{ request.user.username }}
+                    {% endif %}
+                </h1>
+                <p>@{{ request.user.username }} · на платформе с {{ request.user.date_joined|date:"d.m.Y" }}</p>
+                <div class="avatar-upload-status" id="avatarUploadStatus" aria-live="polite"></div>
+            </div>
+        </div>
 
-<a href="{% url 'cabinet:profile_edit' %}">Редактировать профиль</a>
+        <div class="profile-completion-card">
+            <div>
+                <span>Профиль заполнен</span>
+                <strong>{{ profile_completion }}%</strong>
+            </div>
+            <div class="completion-track"><i style="width: {{ profile_completion }}%"></i></div>
+        </div>
+    </div>
+
+    <div class="profile-stats-grid">
+        <article class="profile-stat-card block-bg block-bg-1">
+            <span>Подписчики</span>
+            <strong>{{ followers_count }}</strong>
+            <small>людей следят за профилем</small>
+        </article>
+        <article class="profile-stat-card block-bg block-bg-2">
+            <span>Подписки</span>
+            <strong>{{ following_count }}</strong>
+            <small>авторов в вашей ленте</small>
+        </article>
+        <article class="profile-stat-card block-bg block-bg-3">
+            <span>Статус</span>
+            <strong>{% if analyst_profile and analyst_profile.is_public %}Публичный{% else %}Личный{% endif %}</strong>
+            <small>{% if analyst_profile and analyst_profile.is_public %}профиль виден другим{% else %}профиль скрыт от других{% endif %}</small>
+        </article>
+        <article class="profile-stat-card profile-stat-accent block-bg block-bg-4">
+            <span>Роль</span>
+            <strong>{{ request.user.get_role_display }}</strong>
+            <small>тип аккаунта</small>
+        </article>
+    </div>
+
+    <div class="profile-layout">
+        <form method="post" class="profile-form-card" novalidate>
+            {% csrf_token %}
+            <div class="profile-section-heading">
+                <div>
+                    <p class="eyebrow">Настройки аккаунта</p>
+                    <h2>Личные данные</h2>
+                </div>
+                <button type="submit" class="profile-save-button">Сохранить изменения</button>
+            </div>
+
+            {% if user_form.non_field_errors or analyst_form.non_field_errors %}
+                <div class="profile-form-alert">
+                    {{ user_form.non_field_errors }}
+                    {% if analyst_form %}{{ analyst_form.non_field_errors }}{% endif %}
+                </div>
+            {% endif %}
+
+            <div class="profile-fields-grid">
+                <label class="profile-field">
+                    <span>Логин</span>
+                    <div class="profile-readonly">@{{ request.user.username }}</div>
+                    <small>Логин нельзя изменить из профиля</small>
+                </label>
+                <label class="profile-field">
+                    <span>{{ user_form.email.label }}</span>
+                    {{ user_form.email }}
+                    {{ user_form.email.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ user_form.first_name.label }}</span>
+                    {{ user_form.first_name }}
+                    {{ user_form.first_name.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ user_form.last_name.label }}</span>
+                    {{ user_form.last_name }}
+                    {{ user_form.last_name.errors }}
+                </label>
+
+                {% if analyst_form %}
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.display_name.label }}</span>
+                        {{ analyst_form.display_name }}
+                        {{ analyst_form.display_name.errors }}
+                    </label>
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.bio.label }}</span>
+                        {{ analyst_form.bio }}
+                        {{ analyst_form.bio.errors }}
+                        <small>До 2000 символов. Коротко опишите специализацию и интересы.</small>
+                    </label>
+                    <div class="profile-visibility profile-field-full">
+                        <div>
+                            <strong>Публичный профиль</strong>
+                            <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
+                        </div>
+                        <label class="switch-control">
+                            {{ analyst_form.is_public }}
+                            <span></span>
+                        </label>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="profile-mobile-save">
+                <button type="submit" class="profile-save-button">Сохранить изменения</button>
+            </div>
+        </form>
+
+        <aside class="profile-side-column">
+            <section class="profile-side-card">
+                <p class="eyebrow">Аккаунт</p>
+                <h3>Информация</h3>
+                <dl class="profile-info-list">
+                    <div><dt>Email</dt><dd>{{ request.user.email|default:"—" }}</dd></div>
+                    <div><dt>Дата регистрации</dt><dd>{{ request.user.date_joined|date:"d.m.Y" }}</dd></div>
+                    <div><dt>Последний вход</dt><dd>{% if request.user.last_login %}{{ request.user.last_login|date:"d.m.Y H:i" }}{% else %}—{% endif %}</dd></div>
+                    <div><dt>Аккаунт</dt><dd>{% if request.user.is_active %}Активен{% else %}Отключён{% endif %}</dd></div>
+                </dl>
+            </section>
+
+            {% if analyst_profile %}
+            <section class="profile-side-card profile-avatar-help block-bg block-bg-2">
+                <p class="eyebrow">Фото профиля</p>
+                <h3>Аватар</h3>
+                <p>Нажмите на кнопку камеры рядом с аватаром. Изображение загрузится без перезагрузки страницы.</p>
+                <div class="file-rules"><span>JPG</span><span>PNG</span><span>WebP</span><span>до 5 МБ</span></div>
+            </section>
+            {% endif %}
+        </aside>
+    </div>
+</section>
 {% endblock %}
+
+{% block extra_js %}<script src="{% static 'front/js/profile.js' %}" defer></script>{% endblock %}

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import AnalystProfile, User
+from .models import AnalystFollow, AnalystProfile, User
 
 
 @admin.register(User)
@@ -29,3 +29,11 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "user__email", "display_name")
     autocomplete_fields = ("user",)
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(AnalystFollow)
+class AnalystFollowAdmin(admin.ModelAdmin):
+    list_display = ("follower", "analyst", "created_at")
+    search_fields = ("follower__username", "analyst__username")
+    autocomplete_fields = ("follower", "analyst")
+    readonly_fields = ("created_at",)

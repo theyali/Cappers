@@ -17,7 +17,6 @@
             </a>
             <div class="nav-links">
             {% if request.user.is_authenticated %}
-                <a href="{% url 'cabinet:dashboard' %}">Кабинет</a>
                 <a href="{% url 'cabinet:profile' %}">Профиль</a>
                 <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
                     {% csrf_token %}
@@ -42,5 +41,6 @@
     <main class="site-main">
         {% block content %}{% endblock %}
     </main>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

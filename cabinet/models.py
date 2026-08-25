@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -51,3 +52,43 @@ class AnalystProfile(models.Model):
 
     def __str__(self) -> str:
         return self.display_name or self.user.get_full_name() or self.user.username
+
+
+class AnalystFollow(models.Model):
+    follower = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="analyst_follows",
+        verbose_name="Подписчик",
+    )
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="analyst_followers",
+        verbose_name="Аналитик",
+    )
+    created_at = models.DateTimeField("Дата подписки", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Подписка на аналитика"
+        verbose_name_plural = "Подписки на аналитиков"
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("follower", "analyst"),
+                name="unique_analyst_follow",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("analyst", "created_at"), name="follow_analyst_created_idx"),
+            models.Index(fields=("follower", "created_at"), name="follow_follower_created_idx"),
+        ]
+
+    def clean(self) -> None:
+        if self.follower_id and self.analyst_id and self.follower_id == self.analyst_id:
+            raise ValidationError("Нельзя подписаться на самого себя.")
+        if self.analyst_id and self.analyst.role != User.Role.ANALYST:
+            raise ValidationError("Подписываться можно только на аналитиков.")
+
+    def __str__(self) -> str:
+        return f"{self.follower} → {self.analyst}"

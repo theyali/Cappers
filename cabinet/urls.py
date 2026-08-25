@@ -7,10 +7,11 @@ app_name = "cabinet"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
-    path("reader/", views.reader_dashboard, name="reader_dashboard"),
-    path("analyst/", views.analyst_dashboard, name="analyst_dashboard"),
+    path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
+    path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
-    path("profile/edit/", views.edit_profile, name="profile_edit"),
+    path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
+    path("profile/avatar/", views.upload_avatar, name="avatar_upload"),
     path("register/", views.register, name="register"),
     path(
         "login/",
