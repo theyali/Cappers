@@ -1,0 +1,52 @@
+{% for prediction in predictions %}
+<article class="match-prediction-card">
+    <div class="match-prediction-head">
+        <div class="match-prediction-expert">
+            <span class="match-prediction-avatar">
+                {% if prediction.expert_avatar_url %}
+                    <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
+                {% else %}
+                    {{ prediction.expert_initials }}
+                {% endif %}
+            </span>
+            <div>
+                <strong>
+                    {{ prediction.expert_name }}
+                    {% if prediction.expert_verified %}<span class="match-prediction-verified">✓</span>{% endif %}
+                </strong>
+                <span>@{{ prediction.coupon.author.username }}</span>
+            </div>
+        </div>
+
+        {% if prediction.state_status == "win" %}
+            <span class="match-prediction-status is-win">Выигрыш</span>
+        {% elif prediction.state_status == "lose" %}
+            <span class="match-prediction-status is-lose">Проигрыш</span>
+        {% elif prediction.state_status == "refund" %}
+            <span class="match-prediction-status is-refund">Возврат</span>
+        {% else %}
+            <span class="match-prediction-status">Ожидает</span>
+        {% endif %}
+    </div>
+
+    <div class="match-prediction-pick">
+        <div>
+            <small>{{ prediction.market }}</small>
+            <strong>{{ prediction.selection }}</strong>
+        </div>
+        <div class="match-prediction-odd">
+            <span>КФ</span>
+            <b>{{ prediction.coefficient }}</b>
+        </div>
+    </div>
+
+    {% if prediction.comment %}
+    <p class="match-prediction-comment">{{ prediction.comment }}</p>
+    {% endif %}
+
+    <div class="match-prediction-foot">
+        <span>{{ prediction.created_at|date:"d.m.Y H:i" }}</span>
+        {% if prediction.coupon.title %}<strong>{{ prediction.coupon.title }}</strong>{% endif %}
+    </div>
+</article>
+{% endfor %}
