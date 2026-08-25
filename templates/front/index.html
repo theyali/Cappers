@@ -3,6 +3,103 @@
 {% block title %}Cappers{% endblock %}
 
 {% block content %}
-<h1>Cappers</h1>
-<p>Платформа спортивной аналитики и прогнозов.</p>
+<section class="hero long-bg long-bg-5">
+    <div class="hero-copy">
+        <p class="eyebrow">Прогнозы в реальном времени</p>
+        <h1>Cappers</h1>
+        <p class="hero-text">
+            Темная игровая платформа для прогнозов, турниров и быстрых решений по матчам.
+        </p>
+        <div class="hero-actions">
+            <a class="button button-primary" href="{% url 'cabinet:register' %}">Начать</a>
+            <a class="button button-ghost" href="{% url 'cabinet:login' %}">Войти</a>
+        </div>
+    </div>
+
+    <div class="phone-shell" aria-label="Превью интерфейса Cappers">
+        <div class="phone-top">
+            <span>Cappers</span>
+            <strong>12.84x</strong>
+        </div>
+        <div class="odds-tape">
+            <span class="loss">1.23x</span>
+            <span class="win">3.45x</span>
+            <span class="loss">1.23x</span>
+            <span class="win">3.45x</span>
+        </div>
+        <div class="bet-panel">
+            <div class="bet-heading">
+            <span>Сумма ставки</span>
+                <div class="step-actions">
+                    <button type="button">1/2</button>
+                    <button type="button">2x</button>
+                    <button type="button">Макс</button>
+                </div>
+            </div>
+            <label class="app-field">
+                <span class="coin-dot">C</span>
+                <input type="text" value="100.00" aria-label="Сумма ставки">
+                <button type="button" aria-label="Очистить">x</button>
+            </label>
+            <label class="app-field stacked">
+                <span>Автовывод</span>
+                <input type="text" value="2.00" aria-label="Автовывод">
+            </label>
+            <button class="place-bet" type="button">
+                <strong>Сделать ставку</strong>
+                <span>Следующий раунд: 12с</span>
+            </button>
+        </div>
+        <div class="phone-menu">
+            <button type="button">♠</button>
+            <button type="button">Бонусы</button>
+            <button type="button">Меню</button>
+        </div>
+    </div>
+</section>
+
+<section class="quick-stats" aria-label="Показатели">
+    <article>
+        <span>Матчи</span>
+        <strong>128</strong>
+    </article>
+    <article>
+        <span>Средний коэффициент</span>
+        <strong>2.41</strong>
+    </article>
+    <article>
+        <span>Сигналы</span>
+        <strong>34</strong>
+    </article>
+</section>
+
+<section class="game-grid">
+    <article class="feature-card block-bg block-bg-2">
+        <span class="card-kicker">Риск</span>
+        <h2>Линия риска</h2>
+        <p>Короткие сценарии по матчу с акцентом на момент входа и выход по лимиту.</p>
+    </article>
+    <article class="feature-card block-bg block-bg-3">
+        <span class="card-kicker">Аналитика</span>
+        <h2>Разбор полей</h2>
+        <p>Фильтры по турнирам, форме команд и резким движениям коэффициентов.</p>
+    </article>
+    <article class="feature-card block-bg block-bg-4">
+        <span class="card-kicker">Купон</span>
+        <h2>Быстрый купон</h2>
+        <p>Минимум действий: выбрать прогноз, подтвердить сумму, сохранить стратегию.</p>
+    </article>
+</section>
+
+<section class="panel long-bg long-bg-3">
+    <div>
+        <p class="eyebrow">Рейтинг</p>
+        <h2>Рейтинг аналитиков и прогнозов</h2>
+        <p>
+            Визуальная система держит фокус на цифрах: темный интерфейс, яркие статусы,
+            крупные коэффициенты и желтый акцент только там, где нужно действие.
+        </p>
+    </div>
+    <a class="button button-primary" href="{% url 'cabinet:register' %}">Создать аккаунт</a>
+</section>
 {% endblock %}

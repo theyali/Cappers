@@ -3,15 +3,32 @@
 {% block title %}Вход — Cappers{% endblock %}
 
 {% block content %}
-<h1>Вход</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    {% if next %}
-        <input type="hidden" name="next" value="{{ next }}">
-    {% endif %}
-    <button type="submit">Войти</button>
-</form>
-<p><a href="{% url 'cabinet:password_reset' %}">Забыли пароль?</a></p>
-<p>Нет аккаунта? <a href="{% url 'cabinet:register' %}">Зарегистрироваться</a></p>
+<section class="auth-page long-bg long-bg-4">
+    <div class="auth-card">
+        <p class="eyebrow">Доступ к аккаунту</p>
+        <h1>Вход</h1>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <label class="form-field">
+                <span>{{ form.username.label }}</span>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </label>
+            <label class="form-field">
+                <span>{{ form.password.label }}</span>
+                {{ form.password }}
+                {{ form.password.errors }}
+            </label>
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+            <button class="submit-button" type="submit">Войти</button>
+        </form>
+        <div class="auth-links">
+            <a href="{% url 'cabinet:password_reset' %}">Забыли пароль?</a>
+            <a href="{% url 'cabinet:register' %}">Создать аккаунт</a>
+        </div>
+    </div>
+</section>
 {% endblock %}
