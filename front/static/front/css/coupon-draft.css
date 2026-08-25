@@ -1,0 +1,84 @@
+.coupon-submit {
+    position: relative;
+    overflow: hidden;
+}
+
+.coupon-submit-label,
+.coupon-submit-progress {
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.coupon-submit-progress {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 14px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    color: var(--text);
+}
+
+.coupon-submit.is-loading .coupon-submit-label {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.coupon-submit.is-loading .coupon-submit-progress {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.coupon-loader-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.coupon-loader-dots i {
+    width: 6px;
+    height: 6px;
+    display: block;
+    border-radius: 50%;
+    background: var(--yellow);
+    animation: couponLoaderPulse .9s ease-in-out infinite;
+}
+
+.coupon-loader-dots i:nth-child(2) {
+    animation-delay: .12s;
+}
+
+.coupon-loader-dots i:nth-child(3) {
+    animation-delay: .24s;
+}
+
+.coupon-note.is-success {
+    color: var(--yellow);
+}
+
+.coupon-note.is-error {
+    color: #ff3b30;
+}
+
+@keyframes couponLoaderPulse {
+    0%, 100% {
+        opacity: .28;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .coupon-submit-label,
+    .coupon-submit-progress,
+    .coupon-loader-dots i {
+        transition: none;
+        animation: none;
+    }
+}
