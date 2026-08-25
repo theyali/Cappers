@@ -29,6 +29,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_celery_beat",
     "cabinet.apps.CabinetConfig",
+    "game.apps.GameConfig",
+    "back.apps.BackConfig",
+    "front.apps.FrontConfig",
 ]
 
 MIDDLEWARE = [
