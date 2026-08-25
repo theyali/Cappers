@@ -1,12 +1,37 @@
 (() => {
-    const feed = document.querySelector("[data-match-predictions-feed]");
-    if (!feed) return;
+    const detailMain = document.querySelector(".match-detail-page .match-detail-main");
+    if (!detailMain) return;
+
+    const endpoint = `${window.location.pathname.replace(/\/$/, "")}/predictions/`;
+    const feed = document.createElement("section");
+    feed.className = "match-predictions-feed";
+    feed.dataset.matchPredictionsFeed = "";
+    feed.dataset.url = endpoint;
+    feed.setAttribute("aria-label", "Прогнозы на матч");
+    feed.innerHTML = `
+        <div class="match-predictions-feed-head">
+            <div>
+                <p class="match-predictions-kicker">Мнения капперов</p>
+                <h2>Все прогнозы на игру</h2>
+                <p>Прогнозы подгружаются по мере прокрутки страницы, поэтому длинная лента не замедляет открытие матча.</p>
+            </div>
+            <div class="match-predictions-total">
+                <strong data-match-predictions-total>—</strong>
+                <span>прогнозов</span>
+            </div>
+        </div>
+        <div class="match-predictions-list" data-match-predictions-list></div>
+        <div class="match-predictions-loader" data-match-predictions-loader hidden>
+            <span class="match-predictions-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>Загружаем прогнозы...</span>
+        </div>
+        <div class="match-predictions-sentinel" data-match-predictions-sentinel aria-hidden="true"></div>`;
+    detailMain.append(feed);
 
     const list = feed.querySelector("[data-match-predictions-list]");
     const sentinel = feed.querySelector("[data-match-predictions-sentinel]");
     const totalNode = feed.querySelector("[data-match-predictions-total]");
     const loader = feed.querySelector("[data-match-predictions-loader]");
-    const endpoint = feed.dataset.url;
 
     let nextPage = 1;
     let isLoading = false;
@@ -14,12 +39,11 @@
     let observer = null;
 
     const showLoader = (show) => {
-        if (!loader) return;
         loader.hidden = !show;
     };
 
     const showEmpty = () => {
-        if (!list || list.children.length) return;
+        if (list.children.length) return;
         list.innerHTML = `
             <div class="match-predictions-empty">
                 <strong>Прогнозов пока нет</strong>
@@ -28,7 +52,6 @@
     };
 
     const showError = (message) => {
-        if (!list) return;
         const node = document.createElement("div");
         node.className = "match-predictions-error";
         node.innerHTML = `
@@ -38,19 +61,19 @@
         node.querySelector("span").textContent = message || "Попробуйте ещё раз.";
         node.querySelector("button").addEventListener("click", () => {
             node.remove();
+            if (observer) observer.observe(sentinel);
             loadNextPage();
         });
         list.append(node);
     };
 
     const loadNextPage = async () => {
-        if (isLoading || finished || !endpoint) return;
+        if (isLoading || finished) return;
         isLoading = true;
         showLoader(true);
 
         try {
-            const separator = endpoint.includes("?") ? "&" : "?";
-            const response = await fetch(`${endpoint}${separator}page=${nextPage}`, {
+            const response = await fetch(`${endpoint}?page=${nextPage}`, {
                 headers: { "X-Requested-With": "XMLHttpRequest" },
                 credentials: "same-origin",
             });
@@ -59,7 +82,7 @@
                 throw new Error(result.error || "Ошибка загрузки.");
             }
 
-            if (totalNode) totalNode.textContent = result.total;
+            totalNode.textContent = result.total;
             if (result.html) list.insertAdjacentHTML("beforeend", result.html);
 
             if (result.has_next) {
@@ -78,7 +101,7 @@
         }
     };
 
-    if ("IntersectionObserver" in window && sentinel) {
+    if ("IntersectionObserver" in window) {
         observer = new IntersectionObserver((entries) => {
             if (entries.some((entry) => entry.isIntersecting)) loadNextPage();
         }, { rootMargin: "320px 0px" });
