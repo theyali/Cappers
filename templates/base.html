@@ -55,6 +55,7 @@
         src="{% static 'front/js/matches-date-filter.js' %}"
         data-match-date-filter
         data-selected-date="{{ selected_date_iso|default:'' }}"
+        data-today-date="{{ today_iso|default:'' }}"
         defer
     ></script>
     {% endif %}
