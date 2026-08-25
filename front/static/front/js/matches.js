@@ -76,8 +76,9 @@
     const canWrite = root.dataset.canWrite === "true";
     const createUrl = root.dataset.createUrl;
     const staleSeconds = Number.parseInt(root.dataset.staleSeconds || "60", 10) || 60;
-    const userId = root.dataset.userId || "anonymous";
-    const storageKey = `cappers:coupon-draft:${userId}`;
+    const csrfCookie = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)?.[1] || "session";
+    const userKey = root.dataset.userId || csrfCookie;
+    const storageKey = `cappers:coupon-draft:${userKey}`;
     const items = new Map();
 
     let draftId = null;
@@ -177,7 +178,7 @@
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
     };
 
-    const saveLocalSnapshot = () => {
+    const saveLocalSnapshot = (dirty = true) => {
         if (!canWrite) return;
         const snapshot = {
             id: draftId,
@@ -185,6 +186,7 @@
             stake: stakeInput?.value || "",
             comment: commentInput?.value || "",
             items: [...items.values()],
+            dirty,
             savedAt: Date.now(),
         };
         try {
@@ -229,7 +231,7 @@
             items.delete(item.matchId);
             node.remove();
             updateState();
-            saveLocalSnapshot();
+            saveLocalSnapshot(true);
             setNote(items.size ? "Изменения сохраняются..." : "Купон пуст.");
             syncDraft(false);
         });
@@ -287,7 +289,7 @@
     const applyServerDraft = (draft) => {
         if (!draft) {
             draftId = null;
-            saveLocalSnapshot();
+            saveLocalSnapshot(false);
             return;
         }
 
@@ -301,7 +303,7 @@
             const fresh = serverItems.get(String(matchId));
             if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
         });
-        saveLocalSnapshot();
+        saveLocalSnapshot(false);
     };
 
     const responseError = (xhr, fallback) => {
@@ -310,10 +312,20 @@
         return fallback;
     };
 
+    const setSubmitLoading = (isLoading, checking = false) => {
+        submitButton.classList.toggle("is-loading", isLoading);
+        submitButton.setAttribute("aria-busy", String(isLoading));
+        if (submitStatus) {
+            submitStatus.textContent = checking ? "Проверяем матчи..." : "Сохраняем...";
+        }
+        submitButton.disabled = isLoading || !couponIsComplete();
+    };
+
     const syncDraft = (manual) => {
         if (!canWrite) return;
         if (!window.jQuery) {
             setNote("Не удалось загрузить модуль сохранения. Обновите страницу.", "error");
+            if (manual) setSubmitLoading(false);
             return;
         }
 
@@ -382,7 +394,7 @@
 
     const scheduleDraftSync = () => {
         if (!canWrite || restoring) return;
-        saveLocalSnapshot();
+        saveLocalSnapshot(true);
         if (autosaveTimer) window.clearTimeout(autosaveTimer);
         autosaveTimer = window.setTimeout(() => syncDraft(false), 500);
     };
@@ -392,15 +404,6 @@
         const seenAt = Date.parse(item.lastSeen);
         if (!Number.isFinite(seenAt)) return true;
         return Date.now() - seenAt > staleSeconds * 1000;
-    };
-
-    const setSubmitLoading = (isLoading, checking = false) => {
-        submitButton.classList.toggle("is-loading", isLoading);
-        submitButton.setAttribute("aria-busy", String(isLoading));
-        if (submitStatus) {
-            submitStatus.textContent = checking ? "Проверяем матчи..." : "Сохраняем...";
-        }
-        submitButton.disabled = isLoading || !couponIsComplete();
     };
 
     const upsertItem = (item) => {
@@ -427,7 +430,7 @@
         }
 
         updateState();
-        saveLocalSnapshot();
+        saveLocalSnapshot(true);
         syncDraft(false);
         itemsRoot.scrollIntoView({ behavior: "smooth", block: "nearest" });
     };
@@ -450,7 +453,13 @@
             localDraft = null;
         }
 
-        const draft = serverDraft || localDraft;
+        const localHasUnsavedChanges = Boolean(
+            localDraft
+            && localDraft.dirty === true
+            && Array.isArray(localDraft.items)
+            && localDraft.items.length
+        );
+        const draft = localHasUnsavedChanges ? localDraft : (serverDraft || localDraft);
         if (!draft || !Array.isArray(draft.items) || !draft.items.length) {
             restoring = false;
             updateState();
@@ -475,9 +484,13 @@
 
         restoring = false;
         updateState();
-        saveLocalSnapshot();
-        setNote(serverDraft ? "Черновик восстановлен из базы." : "Черновик восстановлен и будет сохранен.", "success");
-        if (!serverDraft && localDraft) syncDraft(false);
+        saveLocalSnapshot(localHasUnsavedChanges);
+        if (localHasUnsavedChanges) {
+            setNote("Черновик восстановлен. Сохраняем последние изменения...", "success");
+            syncDraft(false);
+        } else {
+            setNote("Черновик восстановлен из базы.", "success");
+        }
     };
 
     stakeInput?.addEventListener("input", () => {
@@ -523,7 +536,7 @@
             return;
         }
 
-        saveLocalSnapshot();
+        saveLocalSnapshot(true);
         const checking = [...items.values()].some(itemNeedsRemoteCheck);
         setSubmitLoading(true, checking);
         setNote(checking ? "Проверяем актуальное состояние матчей..." : "Сохраняем купон...");
