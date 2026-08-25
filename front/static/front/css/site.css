@@ -4,6 +4,7 @@
     --panel: #1f1f21;
     --muted: #707072;
     --yellow: #fbf110;
+    --danger: #fd1a01;
     --text: #f7f8ff;
     --soft: rgba(255, 255, 255, 0.72);
     --line: rgba(255, 255, 255, 0.12);
@@ -116,6 +117,11 @@ h2 {
 .nav-button:hover {
     color: var(--text);
     background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-links a.is-active {
+    color: var(--ink);
+    background: var(--yellow);
 }
 
 .nav-cta {
@@ -364,7 +370,7 @@ h2 {
 }
 
 .odds-tape .loss {
-    color: #ff6268;
+    color: var(--danger);
     background: rgba(153, 54, 60, 0.22);
 }
 
@@ -619,7 +625,7 @@ h2 {
     margin: 0;
     padding: 0;
     list-style: none;
-    color: #ff6268;
+    color: var(--danger);
     font-size: 13px;
     line-height: 1.35;
 }

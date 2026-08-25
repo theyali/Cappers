@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,6 +14,16 @@ def env_bool(name: str, default: bool = False) -> bool:
 
 def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
+def env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-development-key")
@@ -129,3 +140,30 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 270
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "fetch-live-football-matches": {
+        "task": "game.tasks.fetch_live_matches",
+        "schedule": timedelta(seconds=15),
+    },
+    "fetch-prematch-football-matches": {
+        "task": "game.tasks.fetch_upcoming_matches",
+        "schedule": timedelta(minutes=10),
+    },
+    "fetch-finished-football-matches": {
+        "task": "game.tasks.fetch_finished_matches",
+        "schedule": timedelta(minutes=15),
+    },
+}
+
+NEUROKEFF_API_BASE_URL = os.getenv(
+    "NEUROKEFF_API_BASE_URL",
+    "https://sports.api-neurokeff.ru/api/v2",
+)
+NEUROKEFF_API_TOKEN = os.getenv("NEUROKEFF_API_TOKEN", "")
+NEUROKEFF_FOOTBALL_SPORT_ID = env_int("NEUROKEFF_FOOTBALL_SPORT_ID", 2)
+NEUROKEFF_LANG = os.getenv("NEUROKEFF_LANG", "ru,en")
+NEUROKEFF_PAGE_SIZE = env_int("NEUROKEFF_PAGE_SIZE", 100)
+NEUROKEFF_MAX_PAGES = env_int("NEUROKEFF_MAX_PAGES", 20)
+NEUROKEFF_API_TIMEOUT = env_int("NEUROKEFF_API_TIMEOUT", 20)
+NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
+NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)

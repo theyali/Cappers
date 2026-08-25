@@ -72,7 +72,7 @@
 }
 
 .forecast-slider {
-    min-height: 594px;
+    min-height: 700px;
     display: flex;
     flex-direction: column;
     padding: 18px;
@@ -397,7 +397,7 @@
 
 .follow-card h2 {
     max-width: 330px;
-    font-size: clamp(29px, 3vw, 42px);
+    font-size: clamp(29px, 3vw, 30px);
 }
 
 .follow-copy {
