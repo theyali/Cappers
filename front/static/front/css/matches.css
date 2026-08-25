@@ -1026,7 +1026,7 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: clamp(20px, 2.4vw, 34px);
+    font-size: clamp(20px, 2.4vw, 26px);
     line-height: 1.08;
 }
 
