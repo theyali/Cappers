@@ -2,6 +2,7 @@
     const tabs = document.querySelector(".matches-page .matches-tabs");
     if (!tabs) return;
 
+    const script = document.querySelector("script[data-match-date-filter]");
     const params = new URLSearchParams(window.location.search);
     const activeScope = params.get("scope") || "all";
 
@@ -20,9 +21,14 @@
         return date;
     };
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = fromIso(params.get("date")) || new Date(today);
+    const browserToday = new Date();
+    browserToday.setHours(0, 0, 0, 0);
+    const today = fromIso(script?.dataset.todayDate) || browserToday;
+    const selectedDate = (
+        fromIso(params.get("date"))
+        || fromIso(script?.dataset.selectedDate)
+        || new Date(today)
+    );
     const selectedIso = toIso(selectedDate);
 
     const moveDate = (date, days) => {
