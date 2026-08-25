@@ -66,14 +66,25 @@
     const countNode = root.querySelector("[data-coupon-count]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
     const commentInput = root.querySelector("[data-coupon-comment]");
+    const titleInput = form.elements.title;
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
     const totalNode = root.querySelector("[data-coupon-total]");
     const noteNode = root.querySelector("[data-coupon-note]");
-    const submitButton = root.querySelector(".coupon-submit");
+    const submitButton = root.querySelector("[data-coupon-submit]");
+    const submitStatus = root.querySelector("[data-coupon-submit-status]");
     const csrfInput = form.querySelector("[name=csrfmiddlewaretoken]");
     const canWrite = root.dataset.canWrite === "true";
     const createUrl = root.dataset.createUrl;
+    const staleSeconds = Number.parseInt(root.dataset.staleSeconds || "60", 10) || 60;
+    const userId = root.dataset.userId || "anonymous";
+    const storageKey = `cappers:coupon-draft:${userId}`;
     const items = new Map();
+
+    let draftId = null;
+    let autosaveTimer = null;
+    let autosaveRequest = null;
+    let manualRequest = null;
+    let restoring = true;
 
     const toNumber = (value, fallback = 0) => {
         const parsed = Number.parseFloat(String(value || "").replace(",", "."));
@@ -81,7 +92,6 @@
     };
 
     const hasPositiveStake = () => toNumber(stakeInput?.value) > 0;
-
     const hasComment = () => (commentInput?.value || "").trim().length > 0;
 
     const couponIsComplete = () => (
@@ -89,7 +99,7 @@
         && items.size <= 5
         && hasPositiveStake()
         && hasComment()
-        && [...items.values()].every((item) => item.selection.trim().length > 0)
+        && [...items.values()].every((item) => String(item.selection || "").trim().length > 0)
     );
 
     const setNote = (message, state = "") => {
@@ -122,19 +132,26 @@
         return odd > 0 ? odd : 2;
     };
 
-    const updateState = () => {
-        root.classList.toggle("has-coupon", items.size > 0);
-        countNode.textContent = `${items.size}/5`;
-        submitButton.disabled = !canWrite || !couponIsComplete();
-        formatTotal();
-
+    const updateMatchButtons = () => {
         document.querySelectorAll("[data-match-bets]").forEach((group) => {
             const item = items.get(group.dataset.matchId);
             group.closest("[data-match-card]")?.classList.toggle("is-added", Boolean(item));
             group.querySelectorAll("[data-bet-option]").forEach((button) => {
-                button.classList.toggle("is-active", Boolean(item) && item.betKey === button.dataset.betKey);
+                const isSameSelection = Boolean(item)
+                    && item.market === button.dataset.market
+                    && item.selection === button.dataset.selection;
+                button.classList.toggle("is-active", isSameSelection);
+                if (isSameSelection) item.betKey = button.dataset.betKey;
             });
         });
+    };
+
+    const updateState = () => {
+        root.classList.toggle("has-coupon", items.size > 0);
+        countNode.textContent = `${items.size}/5`;
+        submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
+        formatTotal();
+        updateMatchButtons();
     };
 
     const buildItem = (group, option) => ({
@@ -147,12 +164,38 @@
         selection: option.dataset.selection,
         shortLabel: option.querySelector("span")?.textContent || option.dataset.selection,
         coefficient: readOdd(option.dataset.coefficient),
+        lastSeen: group.dataset.lastSeen || "",
     });
 
     const updateCouponItem = (node, item) => {
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
         node.querySelector("[data-coupon-short]").textContent = item.shortLabel;
         node.querySelector("[data-coupon-item-odd]").textContent = formatOdd(item.coefficient);
+        const titleText = node.querySelector(".coupon-item-title strong");
+        const metaText = node.querySelector(".coupon-item-title span");
+        if (titleText) titleText.textContent = item.title;
+        if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
+    };
+
+    const saveLocalSnapshot = () => {
+        if (!canWrite) return;
+        const snapshot = {
+            id: draftId,
+            title: titleInput?.value || "",
+            stake: stakeInput?.value || "",
+            comment: commentInput?.value || "",
+            items: [...items.values()],
+            savedAt: Date.now(),
+        };
+        try {
+            if (!snapshot.items.length && !snapshot.title && !snapshot.stake && !snapshot.comment) {
+                localStorage.removeItem(storageKey);
+            } else {
+                localStorage.setItem(storageKey, JSON.stringify(snapshot));
+            }
+        } catch (error) {
+            // Local storage is only a fast reload fallback; DB autosave remains primary.
+        }
     };
 
     const renderItem = (item) => {
@@ -173,9 +216,7 @@
         const title = document.createElement("div");
         title.className = "coupon-item-title";
         const titleText = document.createElement("strong");
-        titleText.textContent = item.title;
         const metaText = document.createElement("span");
-        metaText.textContent = `${item.league} · ${item.time}`;
         title.append(titleText, metaText);
         match.append(ball, title);
 
@@ -188,7 +229,9 @@
             items.delete(item.matchId);
             node.remove();
             updateState();
-            if (items.size === 0) setNote(canWrite ? "Заполните сумму и общий комментарий к купону." : "Сохранять купоны могут только эксперты.");
+            saveLocalSnapshot();
+            setNote(items.size ? "Изменения сохраняются..." : "Купон пуст.");
+            syncDraft(false);
         });
 
         const actions = document.createElement("div");
@@ -227,6 +270,139 @@
         initScrollableNames(node);
     };
 
+    const payloadFromState = (autosave) => ({
+        coupon_id: draftId,
+        autosave,
+        title: titleInput?.value || "",
+        stake: stakeInput?.value || "",
+        comment: commentInput?.value || "",
+        items: [...items.values()].map((item) => ({
+            match_id: item.matchId,
+            market: item.market,
+            selection: item.selection,
+            coefficient: item.coefficient,
+        })),
+    });
+
+    const applyServerDraft = (draft) => {
+        if (!draft) {
+            draftId = null;
+            saveLocalSnapshot();
+            return;
+        }
+
+        draftId = draft.id || draftId;
+        if (typeof draft.title === "string" && draft.title && !titleInput.value.trim()) {
+            titleInput.value = draft.title;
+        }
+
+        const serverItems = new Map((draft.items || []).map((item) => [String(item.matchId), item]));
+        items.forEach((item, matchId) => {
+            const fresh = serverItems.get(String(matchId));
+            if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
+        });
+        saveLocalSnapshot();
+    };
+
+    const responseError = (xhr, fallback) => {
+        const data = xhr?.responseJSON;
+        if (data?.error) return data.error;
+        return fallback;
+    };
+
+    const syncDraft = (manual) => {
+        if (!canWrite) return;
+        if (!window.jQuery) {
+            setNote("Не удалось загрузить модуль сохранения. Обновите страницу.", "error");
+            return;
+        }
+
+        if (autosaveTimer) {
+            window.clearTimeout(autosaveTimer);
+            autosaveTimer = null;
+        }
+
+        if (manual) {
+            if (autosaveRequest) {
+                autosaveRequest.abort();
+                autosaveRequest = null;
+            }
+            if (manualRequest) return;
+        } else if (!items.size && !draftId) {
+            return;
+        }
+
+        const request = window.jQuery.ajax({
+            url: createUrl,
+            method: "POST",
+            data: JSON.stringify(payloadFromState(!manual)),
+            contentType: "application/json; charset=UTF-8",
+            dataType: "json",
+            headers: {
+                "X-CSRFToken": csrfInput.value,
+            },
+        });
+
+        if (manual) {
+            manualRequest = request;
+        } else {
+            if (autosaveRequest) autosaveRequest.abort();
+            autosaveRequest = request;
+        }
+
+        request.done((result) => {
+            if (!result?.ok) return;
+            draftId = result.draft_id || null;
+            applyServerDraft(result.draft || null);
+            if (manual) {
+                setNote(result.message || "Купон сохранен как черновик.", "success");
+            } else if (items.size) {
+                setNote("Черновик сохранен автоматически.", "success");
+            }
+        });
+
+        request.fail((xhr, statusText) => {
+            if (statusText === "abort") return;
+            setNote(
+                responseError(xhr, manual ? "Не удалось сохранить купон." : "Не удалось сохранить черновик."),
+                "error"
+            );
+        });
+
+        request.always(() => {
+            if (manual) {
+                manualRequest = null;
+                setSubmitLoading(false);
+            } else {
+                autosaveRequest = null;
+            }
+            updateState();
+        });
+    };
+
+    const scheduleDraftSync = () => {
+        if (!canWrite || restoring) return;
+        saveLocalSnapshot();
+        if (autosaveTimer) window.clearTimeout(autosaveTimer);
+        autosaveTimer = window.setTimeout(() => syncDraft(false), 500);
+    };
+
+    const itemNeedsRemoteCheck = (item) => {
+        if (!item.lastSeen) return true;
+        const seenAt = Date.parse(item.lastSeen);
+        if (!Number.isFinite(seenAt)) return true;
+        return Date.now() - seenAt > staleSeconds * 1000;
+    };
+
+    const setSubmitLoading = (isLoading, checking = false) => {
+        submitButton.classList.toggle("is-loading", isLoading);
+        submitButton.setAttribute("aria-busy", String(isLoading));
+        if (submitStatus) {
+            submitStatus.textContent = checking ? "Проверяем матчи..." : "Сохраняем...";
+        }
+        submitButton.disabled = isLoading || !couponIsComplete();
+    };
+
     const upsertItem = (item) => {
         const existing = items.get(item.matchId);
         if (!existing && items.size >= 5) {
@@ -238,11 +414,11 @@
             Object.assign(existing, item);
             const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
             if (node) updateCouponItem(node, existing);
-            setNote("Ставка в купоне обновлена.");
+            setNote("Ставка в купоне обновлена. Сохраняем черновик...");
         } else {
             items.set(item.matchId, item);
             renderItem(item);
-            setNote(canWrite ? "Заполните сумму и общий комментарий к купону." : "Сохранять купоны могут только эксперты.");
+            setNote("Игра добавлена. Сохраняем черновик...");
         }
 
         if (sidebar && sidebar.classList.contains("is-collapsed")) {
@@ -251,18 +427,78 @@
         }
 
         updateState();
+        saveLocalSnapshot();
+        syncDraft(false);
         itemsRoot.scrollIntoView({ behavior: "smooth", block: "nearest" });
     };
 
-    stakeInput?.addEventListener("input", () => {
-        stakeInput.closest(".coupon-field")?.classList.toggle("is-invalid", stakeInput.value.length > 0 && !hasPositiveStake());
+    const restoreDraft = () => {
+        let serverDraft = null;
+        const script = document.getElementById("coupon-draft-data");
+        if (script) {
+            try {
+                serverDraft = JSON.parse(script.textContent || "null");
+            } catch (error) {
+                serverDraft = null;
+            }
+        }
+
+        let localDraft = null;
+        try {
+            localDraft = JSON.parse(localStorage.getItem(storageKey) || "null");
+        } catch (error) {
+            localDraft = null;
+        }
+
+        const draft = serverDraft || localDraft;
+        if (!draft || !Array.isArray(draft.items) || !draft.items.length) {
+            restoring = false;
+            updateState();
+            return;
+        }
+
+        draftId = draft.id || null;
+        titleInput.value = draft.title || "";
+        stakeInput.value = draft.stake || "";
+        commentInput.value = draft.comment || "";
+
+        draft.items.forEach((rawItem) => {
+            const item = {
+                ...rawItem,
+                matchId: String(rawItem.matchId),
+                coefficient: readOdd(rawItem.coefficient),
+                lastSeen: rawItem.lastSeen || "",
+            };
+            items.set(item.matchId, item);
+            renderItem(item);
+        });
+
+        restoring = false;
         updateState();
+        saveLocalSnapshot();
+        setNote(serverDraft ? "Черновик восстановлен из базы." : "Черновик восстановлен и будет сохранен.", "success");
+        if (!serverDraft && localDraft) syncDraft(false);
+    };
+
+    stakeInput?.addEventListener("input", () => {
+        stakeInput.closest(".coupon-field")?.classList.toggle(
+            "is-invalid",
+            stakeInput.value.length > 0 && !hasPositiveStake()
+        );
+        updateState();
+        scheduleDraftSync();
     });
 
     commentInput?.addEventListener("input", () => {
-        commentInput.closest(".coupon-field")?.classList.toggle("is-invalid", commentInput.value.length > 0 && !hasComment());
+        commentInput.closest(".coupon-field")?.classList.toggle(
+            "is-invalid",
+            commentInput.value.length > 0 && !hasComment()
+        );
         updateState();
+        scheduleDraftSync();
     });
+
+    titleInput?.addEventListener("input", scheduleDraftSync);
 
     document.querySelectorAll("[data-bet-option]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -272,7 +508,7 @@
         });
     });
 
-    form.addEventListener("submit", async (event) => {
+    form.addEventListener("submit", (event) => {
         event.preventDefault();
         if (!canWrite) {
             setNote("Сохранять купоны могут только эксперты.", "error");
@@ -287,45 +523,12 @@
             return;
         }
 
-        const payload = {
-            title: form.elements.title.value,
-            stake: stakeInput.value,
-            comment: commentInput.value,
-            items: [...items.values()].map((item) => ({
-                match_id: item.matchId,
-                market: item.market,
-                selection: item.selection,
-                coefficient: item.coefficient,
-            })),
-        };
-
-        submitButton.disabled = true;
-        setNote("Сохраняю купон...");
-
-        try {
-            const response = await fetch(createUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfInput.value,
-                },
-                body: JSON.stringify(payload),
-            });
-            const result = await response.json();
-            if (!response.ok || !result.ok) {
-                throw new Error(result.error || "Не удалось сохранить купон.");
-            }
-
-            items.clear();
-            itemsRoot.replaceChildren();
-            form.reset();
-            updateState();
-            setNote(result.message, "success");
-        } catch (error) {
-            setNote(error.message, "error");
-            updateState();
-        }
+        saveLocalSnapshot();
+        const checking = [...items.values()].some(itemNeedsRemoteCheck);
+        setSubmitLoading(true, checking);
+        setNote(checking ? "Проверяем актуальное состояние матчей..." : "Сохраняем купон...");
+        syncDraft(true);
     });
 
-    updateState();
+    restoreDraft();
 })();
