@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User
+from .models import AnalystProfile, User
 
 
 @admin.register(User)
@@ -14,3 +14,18 @@ class CabinetUserAdmin(UserAdmin):
     )
     list_display = ("username", "email", "role", "is_staff", "is_active")
     list_filter = ("role", "is_staff", "is_active")
+
+
+@admin.register(AnalystProfile)
+class AnalystProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "display_name",
+        "is_verified",
+        "is_public",
+        "created_at",
+    )
+    list_filter = ("is_verified", "is_public", "created_at")
+    search_fields = ("user__username", "user__email", "display_name")
+    autocomplete_fields = ("user",)
+    readonly_fields = ("created_at", "updated_at")

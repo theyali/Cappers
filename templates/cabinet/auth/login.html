@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Вход — Cappers{% endblock %}
+
+{% block content %}
+<h1>Вход</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    <button type="submit">Войти</button>
+</form>
+<p><a href="{% url 'cabinet:password_reset' %}">Забыли пароль?</a></p>
+<p>Нет аккаунта? <a href="{% url 'cabinet:register' %}">Зарегистрироваться</a></p>
+{% endblock %}

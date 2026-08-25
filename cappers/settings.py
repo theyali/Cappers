@@ -79,6 +79,9 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "cabinet.User"
+LOGIN_URL = "cabinet:login"
+LOGIN_REDIRECT_URL = "cabinet:dashboard"
+LOGOUT_REDIRECT_URL = "front:index"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -101,6 +104,16 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    (
+        "django.core.mail.backends.console.EmailBackend"
+        if DEBUG
+        else "django.core.mail.backends.smtp.EmailBackend"
+    ),
+)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@cappers.local")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

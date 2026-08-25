@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль — Cappers{% endblock %}
+
+{% block content %}
+<h1>Профиль</h1>
+<p>Логин: {{ request.user.username }}</p>
+<p>Email: {{ request.user.email }}</p>
+<p>Имя: {{ request.user.get_full_name|default:"—" }}</p>
+<p>Роль: {{ request.user.get_role_display }}</p>
+
+{% if analyst_profile %}
+    {% if analyst_profile.avatar %}
+        <img src="{{ analyst_profile.avatar.url }}" alt="Аватар" width="120">
+    {% endif %}
+    <p>Отображаемое имя: {{ analyst_profile.display_name|default:"—" }}</p>
+    <p>О себе: {{ analyst_profile.bio|default:"—" }}</p>
+    <p>Публичный профиль: {{ analyst_profile.is_public|yesno:"Да,Нет" }}</p>
+{% endif %}
+
+<a href="{% url 'cabinet:profile_edit' %}">Редактировать профиль</a>
+{% endblock %}
