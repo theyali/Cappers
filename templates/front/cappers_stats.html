@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Статистика капперов — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="cappers-page" aria-label="Статистика капперов">
+    <div class="cappers-hero">
+        <div>
+            <p class="cappers-eyebrow">Рейтинг экспертов</p>
+            <h1>Статистика капперов</h1>
+            <p>Сравнивай экспертов по опубликованным прогнозам, выигрышам и числу подписчиков.</p>
+        </div>
+        <div class="cappers-total">
+            <strong>{{ experts_count }}</strong>
+            <span>экспертов</span>
+        </div>
+    </div>
+
+    {% if experts %}
+    <div class="cappers-list">
+        {% for expert in experts %}
+        <article class="capper-row">
+            <span class="capper-rank">{{ forloop.counter }}</span>
+            <div class="capper-person">
+                <span class="capper-avatar">
+                    {% if expert.avatar_url %}
+                        <img src="{{ expert.avatar_url }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ expert.initials }}
+                    {% endif %}
+                </span>
+                <div class="capper-copy">
+                    <strong>{{ expert.name }} {% if expert.verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
+                    <span>@{{ expert.username }}</span>
+                </div>
+            </div>
+            <div class="capper-metric is-main">
+                <span>Проходимость</span>
+                <strong>{{ expert.win_rate }}%</strong>
+            </div>
+            <div class="capper-metric">
+                <span>Прогнозы</span>
+                <strong>{{ expert.predictions }}</strong>
+            </div>
+            <div class="capper-metric">
+                <span>Выигрыши</span>
+                <strong>{{ expert.wins }}</strong>
+            </div>
+            <div class="capper-metric">
+                <span>Подписчики</span>
+                <strong>{{ expert.followers }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="cappers-empty">
+        <h2>Капперов пока нет</h2>
+        <p>Когда появятся публичные аналитики, их статистика будет показана здесь.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
