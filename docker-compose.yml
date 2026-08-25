@@ -50,6 +50,20 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    build: .
+    env_file:
+      - .env
+    command: python manage.py migrate --noinput
+    volumes:
+      - .:/app
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+
   web:
     build: .
     env_file:
@@ -60,10 +74,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      pgbouncer:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   celery:
     build: .
@@ -73,8 +85,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      pgbouncer:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
@@ -86,8 +98,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      pgbouncer:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
