@@ -111,10 +111,9 @@
 
                     <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
 
-                    {% if can_write_coupon and match.sync_scope == "prematch" %}
                     <div
-                        class="coupon-options match-card-options"
-                        aria-label="Выбор ставки"
+                        class="coupon-options match-card-options{% if match.sync_scope != 'prematch' %} is-locked{% elif not can_write_coupon %} is-readonly{% endif %}"
+                        aria-label="{% if match.sync_scope != 'prematch' %}Заблокированные коэффициенты матча{% else %}Выбор ставки{% endif %}"
                         data-match-bets
                         data-match-id="{{ match.id }}"
                         data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
@@ -122,32 +121,73 @@
                         data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
                         data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
                     >
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="home" data-market="winner" data-selection="{{ match.home_team_name|default:'Хозяева' }}" data-coefficient="{{ match.coupon_odds.home }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="home" data-market="winner" data-selection="{{ match.home_team_name|default:'Хозяева' }}" data-coefficient="{{ match.coupon_odds.home }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>1</span>
-                            <small>{{ match.coupon_odds.home }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.home }}{% else %}{{ match.odds.home_win_bet|default:"—" }}{% endif %}</small>
                         </button>
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="draw" data-market="winner" data-selection="Ничья" data-coefficient="{{ match.coupon_odds.draw }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="draw" data-market="winner" data-selection="Ничья" data-coefficient="{{ match.coupon_odds.draw }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>X</span>
-                            <small>{{ match.coupon_odds.draw }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.draw }}{% else %}{{ match.odds.x_bet|default:"—" }}{% endif %}</small>
                         </button>
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="away" data-market="winner" data-selection="{{ match.away_team_name|default:'Гости' }}" data-coefficient="{{ match.coupon_odds.away }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="away" data-market="winner" data-selection="{{ match.away_team_name|default:'Гости' }}" data-coefficient="{{ match.coupon_odds.away }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>2</span>
-                            <small>{{ match.coupon_odds.away }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.away }}{% else %}{{ match.odds.away_win_bet|default:"—" }}{% endif %}</small>
                         </button>
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="over25" data-market="total" data-selection="ТБ 2.5" data-coefficient="{{ match.coupon_odds.over25 }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="over25" data-market="total" data-selection="ТБ 2.5" data-coefficient="{{ match.coupon_odds.over25 }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>ТБ 2.5</span>
-                            <small>{{ match.coupon_odds.over25 }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.over25 }}{% else %}{{ match.odds.goals_over_2_5|default:"—" }}{% endif %}</small>
                         </button>
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="under25" data-market="total" data-selection="ТМ 2.5" data-coefficient="{{ match.coupon_odds.under25 }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="under25" data-market="total" data-selection="ТМ 2.5" data-coefficient="{{ match.coupon_odds.under25 }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>ТМ 2.5</span>
-                            <small>{{ match.coupon_odds.under25 }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.under25 }}{% else %}{{ match.odds.goals_under_2_5|default:"—" }}{% endif %}</small>
                         </button>
-                        <button class="coupon-option match-bet-option" type="button" data-bet-option data-bet-key="bttsYes" data-market="both_score" data-selection="Обе забьют: да" data-coefficient="{{ match.coupon_odds.btts_yes }}">
+                        <button class="coupon-option match-bet-option" type="button"
+                            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                data-bet-option data-bet-key="bttsYes" data-market="both_score" data-selection="Обе забьют: да" data-coefficient="{{ match.coupon_odds.btts_yes }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            {% if match.sync_scope != "prematch" %}<i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>{% endif %}
                             <span>ОЗ Да</span>
-                            <small>{{ match.coupon_odds.btts_yes }}</small>
+                            <small>{% if can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.btts_yes }}{% else %}{{ match.odds.btts_yes|default:"—" }}{% endif %}</small>
                         </button>
                     </div>
-                    {% endif %}
                 </article>
                 {% endfor %}
             </div>
