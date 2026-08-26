@@ -79,7 +79,6 @@
     const itemsRoot = root.querySelector("[data-coupon-items]");
     const countNode = root.querySelector("[data-coupon-count]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
-    const commentInput = root.querySelector("[data-coupon-comment]");
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
     const totalNode = root.querySelector("[data-coupon-total]");
     const noteNode = root.querySelector("[data-coupon-note]");
@@ -105,15 +104,23 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    const normalizeConfidence = (value) => {
+        const parsed = Number.parseInt(String(value ?? "50"), 10);
+        if (!Number.isFinite(parsed)) return 50;
+        return Math.max(0, Math.min(100, parsed));
+    };
+
     const hasPositiveStake = () => toNumber(stakeInput?.value) > 0;
-    const hasComment = () => (commentInput?.value || "").trim().length > 0;
 
     const couponIsComplete = () => (
         items.size > 0
         && items.size <= 5
         && hasPositiveStake()
-        && hasComment()
-        && [...items.values()].every((item) => String(item.selection || "").trim().length > 0)
+        && [...items.values()].every((item) => (
+            String(item.selection || "").trim().length > 0
+            && normalizeConfidence(item.confidence) >= 0
+            && normalizeConfidence(item.confidence) <= 100
+        ))
     );
 
     const setNote = (message, state = "") => {
@@ -181,6 +188,7 @@
         selection: option.dataset.selection,
         shortLabel: option.querySelector("span")?.textContent || option.dataset.selection,
         coefficient: readOdd(option.dataset.coefficient),
+        confidence: 50,
         lastSeen: group.dataset.lastSeen || "",
     });
 
@@ -189,8 +197,22 @@
         matchId: String(rawItem.matchId),
         matchTitle: rawItem.matchTitle || rawItem.title || "",
         coefficient: readOdd(rawItem.coefficient),
+        confidence: normalizeConfidence(rawItem.confidence),
         lastSeen: rawItem.lastSeen || "",
     });
+
+    const updateConfidenceVisual = (node, item) => {
+        const value = normalizeConfidence(item.confidence);
+        item.confidence = value;
+        const valueNode = node.querySelector("[data-coupon-confidence-value]");
+        const fillNode = node.querySelector("[data-coupon-confidence-fill]");
+        const rangeNode = node.querySelector("[data-coupon-confidence]");
+        if (valueNode) valueNode.textContent = `${value}%`;
+        if (fillNode) fillNode.style.width = `${value}%`;
+        if (rangeNode && Number.parseInt(rangeNode.value, 10) !== value) {
+            rangeNode.value = String(value);
+        }
+    };
 
     const updateCouponItem = (node, item) => {
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
@@ -200,6 +222,7 @@
         const metaText = node.querySelector(".coupon-item-title span");
         if (titleText) titleText.textContent = item.matchTitle;
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
+        updateConfidenceVisual(node, item);
     };
 
     const saveLocalSnapshot = (dirty = true) => {
@@ -207,13 +230,12 @@
         const snapshot = {
             id: draftId,
             stake: stakeInput?.value || "",
-            comment: commentInput?.value || "",
             items: [...items.values()],
             dirty,
             savedAt: Date.now(),
         };
         try {
-            if (!snapshot.items.length && !snapshot.stake && !snapshot.comment) {
+            if (!snapshot.items.length && !snapshot.stake) {
                 localStorage.removeItem(storageKey);
             } else {
                 localStorage.setItem(storageKey, JSON.stringify(snapshot));
@@ -285,9 +307,39 @@
             <small>кф <b data-coupon-item-odd></b></small>
         `;
 
+        const confidence = document.createElement("div");
+        confidence.className = "coupon-confidence";
+        confidence.innerHTML = `
+            <div class="coupon-confidence-head">
+                <span>Уверенность</span>
+                <strong data-coupon-confidence-value>50%</strong>
+            </div>
+            <input
+                class="coupon-confidence-range"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="50"
+                data-coupon-confidence
+                aria-label="Уверенность в прогнозе, процентов"
+            >
+            <div class="coupon-confidence-loader" aria-hidden="true">
+                <span data-coupon-confidence-fill></span>
+            </div>
+        `;
+
+        const range = confidence.querySelector("[data-coupon-confidence]");
+        range.addEventListener("input", () => {
+            item.confidence = normalizeConfidence(range.value);
+            updateConfidenceVisual(node, item);
+            updateState();
+            scheduleDraftSync();
+        });
+
         const body = document.createElement("div");
         body.className = "coupon-item-body";
-        body.append(pick);
+        body.append(pick, confidence);
 
         node.append(top, body);
         itemsRoot.append(node);
@@ -299,12 +351,12 @@
         coupon_id: draftId,
         autosave,
         stake: stakeInput?.value || "",
-        comment: commentInput?.value || "",
         items: [...items.values()].map((item) => ({
             match_id: item.matchId,
             market: item.market,
             selection: item.selection,
             coefficient: item.coefficient,
+            confidence: normalizeConfidence(item.confidence),
         })),
     });
 
@@ -322,7 +374,11 @@
         }));
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
-            if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
+            if (!fresh) return;
+            if (fresh.lastSeen) item.lastSeen = fresh.lastSeen;
+            item.confidence = fresh.confidence;
+            const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
+            if (node) updateConfidenceVisual(node, item);
         });
         saveLocalSnapshot(false);
     };
@@ -332,7 +388,6 @@
         items.clear();
         itemsRoot.replaceChildren();
         if (stakeInput) stakeInput.value = "";
-        if (commentInput) commentInput.value = "";
         try {
             localStorage.removeItem(storageKey);
         } catch (error) {
@@ -456,14 +511,15 @@
         }
 
         if (existing) {
-            Object.assign(existing, item);
+            const confidence = existing.confidence;
+            Object.assign(existing, item, { confidence });
             const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
             if (node) updateCouponItem(node, existing);
             setNote("Ставка в купоне обновлена. Сохраняем черновик...");
         } else {
             items.set(item.matchId, item);
             renderItem(item);
-            setNote("Игра добавлена. Сохраняем черновик...");
+            setNote("Игра добавлена. Укажите уверенность в прогнозе.");
         }
 
         if (sidebar && sidebar.classList.contains("is-collapsed")) {
@@ -510,7 +566,6 @@
 
         draftId = draft.id || null;
         stakeInput.value = draft.stake || "";
-        commentInput.value = draft.comment || "";
 
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -538,15 +593,6 @@
         scheduleDraftSync();
     });
 
-    commentInput?.addEventListener("input", () => {
-        commentInput.closest(".coupon-field")?.classList.toggle(
-            "is-invalid",
-            commentInput.value.length > 0 && !hasComment()
-        );
-        updateState();
-        scheduleDraftSync();
-    });
-
     document.querySelectorAll("[data-bet-option]").forEach((button) => {
         button.addEventListener("click", () => {
             const group = button.closest("[data-match-bets]");
@@ -566,7 +612,7 @@
             return;
         }
         if (!couponIsComplete()) {
-            setNote("Заполните сумму и общий комментарий к купону.", "error");
+            setNote("Укажите сумму и уверенность для каждого прогноза.", "error");
             return;
         }
 
