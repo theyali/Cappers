@@ -118,7 +118,7 @@
         </div>
         <div class="prediction-odd-value">
             <span>КФ</span>
-            <b>{{ prediction.coefficient }}</b>
+            <b>{{ prediction.coefficient|floatformat:2 }}</b>
         </div>
     </div>
 
@@ -172,8 +172,8 @@
     </div>
 
     {% if not prediction_card_match_context %}
-    <a class="prediction-open-match" href="{{ prediction.match.get_absolute_url }}">
-        <span>Открыть матч</span>
+    <a class="prediction-open-match" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <span>Смотреть купон</span>
         <span aria-hidden="true">→</span>
     </a>
     {% endif %}
