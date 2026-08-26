@@ -1,12 +1,12 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
 
-from . import public_views, views
+from . import dashboard_views, public_views, views
 
 app_name = "cabinet"
 
 urlpatterns = [
-    path("", views.dashboard, name="dashboard"),
+    path("", dashboard_views.dashboard, name="dashboard"),
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),

@@ -1,0 +1,201 @@
+from datetime import timedelta
+from decimal import Decimal
+
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from front.models import PredictionFavorite, PredictionLike
+from game.models import Match, Prediction, PredictionCoupon
+
+from .models import AnalystFollow, User
+
+
+SETTLED_COUPON_STATES = (
+    PredictionCoupon.StateStatus.WIN,
+    PredictionCoupon.StateStatus.LOSE,
+    PredictionCoupon.StateStatus.REFUND,
+)
+
+
+def _today_bounds():
+    now = timezone.localtime()
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return now, start, start + timedelta(days=1)
+
+
+def _coupon_profit(coupon: PredictionCoupon) -> Decimal:
+    stake = coupon.total_stake or Decimal("0")
+    if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+        return (coupon.possible_payout or Decimal("0")) - stake
+    if coupon.state_status == PredictionCoupon.StateStatus.LOSE:
+        return -stake
+    return Decimal("0")
+
+
+def _signed_percent(value: Decimal) -> str:
+    prefix = "+" if value > 0 else ""
+    return f"{prefix}{value.quantize(Decimal('0.1'))}%"
+
+
+def _actor_data(user) -> dict:
+    profile = getattr(user, "analyst_profile", None)
+    display_name = (
+        profile.display_name
+        if profile and profile.display_name
+        else user.get_full_name() or user.username
+    )
+    return {
+        "name": display_name,
+        "username": user.username,
+        "initial": (display_name or user.username or "П")[0].upper(),
+        "avatar_url": profile.avatar.url if profile and profile.avatar else "",
+    }
+
+
+def _reaction_item(reaction, kind: str) -> dict:
+    actor = _actor_data(reaction.user)
+    prediction = reaction.prediction
+    match = prediction.match
+    return {
+        **actor,
+        "kind": kind,
+        "label": "Поставил лайк" if kind == "like" else "Добавил в избранное",
+        "icon": "👍" if kind == "like" else "♥",
+        "created_at": reaction.created_at,
+        "coupon_id": prediction.coupon_id,
+        "selection": prediction.selection,
+        "match_name": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+    }
+
+
+@login_required
+def dashboard(request):
+    if request.user.role != User.Role.ANALYST:
+        return redirect("cabinet:profile")
+
+    analyst = request.user
+    now, today_start, tomorrow_start = _today_bounds()
+
+    published = (
+        Prediction.objects.filter(
+            coupon__author=analyst,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .select_related(
+            "coupon",
+            "match__league",
+            "match__home_team",
+            "match__away_team",
+        )
+    )
+
+    today_predictions = published.filter(
+        match__starts_at__gte=today_start,
+        match__starts_at__lt=tomorrow_start,
+    )
+    pending_filter = Q(state_status="") | Q(state_status__isnull=True)
+    today_stats = today_predictions.aggregate(
+        active=Count("id"),
+        wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
+        losses=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
+        pending=Count("id", filter=pending_filter),
+        live=Count("id", filter=Q(match__sync_scope=Match.SyncScope.LIVE)),
+    )
+
+    settled_today = list(
+        PredictionCoupon.objects.filter(
+            author=analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status__in=SETTLED_COUPON_STATES,
+            settled_at__gte=today_start,
+            settled_at__lt=tomorrow_start,
+        ).order_by("settled_at", "id")
+    )
+    roi_stake = sum(
+        (coupon.total_stake or Decimal("0") for coupon in settled_today),
+        Decimal("0"),
+    )
+    roi_profit = sum((_coupon_profit(coupon) for coupon in settled_today), Decimal("0"))
+    roi_today = (
+        roi_profit / roi_stake * Decimal("100")
+        if roi_stake
+        else Decimal("0")
+    )
+
+    followers_today_qs = (
+        AnalystFollow.objects.filter(
+            analyst=analyst,
+            created_at__gte=today_start,
+            created_at__lt=tomorrow_start,
+        )
+        .select_related("follower", "follower__analyst_profile")
+        .order_by("-created_at")
+    )
+    new_followers_count = followers_today_qs.count()
+    latest_followers = list(followers_today_qs[:6])
+    for follow in latest_followers:
+        follow.dashboard_actor = _actor_data(follow.follower)
+
+    live_predictions = list(
+        published.filter(match__sync_scope=Match.SyncScope.LIVE)
+        .order_by("-match__last_seen_at", "match__starts_at", "id")[:12]
+    )
+
+    likes = list(
+        PredictionLike.objects.filter(prediction__coupon__author=analyst)
+        .exclude(user=analyst)
+        .select_related(
+            "user",
+            "user__analyst_profile",
+            "prediction__coupon",
+            "prediction__match__home_team",
+            "prediction__match__away_team",
+        )
+        .order_by("-created_at")[:10]
+    )
+    favorites = list(
+        PredictionFavorite.objects.filter(prediction__coupon__author=analyst)
+        .exclude(user=analyst)
+        .select_related(
+            "user",
+            "user__analyst_profile",
+            "prediction__coupon",
+            "prediction__match__home_team",
+            "prediction__match__away_team",
+        )
+        .order_by("-created_at")[:10]
+    )
+    reactions = [
+        *(_reaction_item(item, "like") for item in likes),
+        *(_reaction_item(item, "favorite") for item in favorites),
+    ]
+    reactions.sort(key=lambda item: item["created_at"], reverse=True)
+    reactions = reactions[:10]
+
+    analyst_profile = getattr(analyst, "analyst_profile", None)
+    display_name = (
+        analyst_profile.display_name
+        if analyst_profile and analyst_profile.display_name
+        else analyst.get_full_name() or analyst.username
+    )
+
+    return render(
+        request,
+        "cabinet/dashboard.html",
+        {
+            "analyst_profile": analyst_profile,
+            "display_name": display_name,
+            "today": now.date(),
+            "today_stats": today_stats,
+            "roi_today": roi_today,
+            "roi_today_display": _signed_percent(roi_today),
+            "roi_profit": roi_profit,
+            "roi_stake": roi_stake,
+            "new_followers_count": new_followers_count,
+            "latest_followers": latest_followers,
+            "latest_reactions": reactions,
+            "live_predictions": live_predictions,
+        },
+    )
