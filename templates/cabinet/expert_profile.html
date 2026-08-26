@@ -357,7 +357,15 @@
                     <div><span>{{ prediction.market }}</span><strong>{{ prediction.selection }}</strong></div>
                     <b>{{ prediction.coefficient }}</b>
                 </div>
-                {% if prediction.comment %}<p>{{ prediction.comment|truncatechars:120 }}</p>{% endif %}
+                <div class="prediction-confidence expert-public-confidence" aria-label="Уверенность эксперта {{ prediction.confidence }} процентов">
+                    <div class="prediction-confidence-head">
+                        <span>Уверенность</span>
+                        <strong>{{ prediction.confidence }}%</strong>
+                    </div>
+                    <div class="prediction-confidence-track" aria-hidden="true">
+                        <span style="width: {{ prediction.confidence }}%"></span>
+                    </div>
+                </div>
             </article>
             {% endfor %}
         </div>
