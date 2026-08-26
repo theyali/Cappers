@@ -1,6 +1,7 @@
 from datetime import timedelta
+from decimal import Decimal
 
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Prefetch, Q
 from django.shortcuts import render
 from django.utils import timezone
 
@@ -26,35 +27,40 @@ def _logo_url(primary: str, related) -> str:
     return ""
 
 
-def _state_label(prediction: Prediction) -> tuple[str, str]:
-    if prediction.state_status == Prediction.StateStatus.WIN:
+def _state_label(prediction: PredictionCoupon) -> tuple[str, str]:
+    if prediction.state_status == PredictionCoupon.StateStatus.WIN:
         return "Выигрыш", "win"
-    if prediction.state_status == Prediction.StateStatus.LOSE:
+    if prediction.state_status == PredictionCoupon.StateStatus.LOSE:
         return "Проигрыш", "lose"
-    if prediction.state_status == Prediction.StateStatus.REFUND:
+    if prediction.state_status == PredictionCoupon.StateStatus.REFUND:
         return "Возврат", "refund"
     return "Ожидает", "pending"
 
 
 def _latest_home_predictions() -> list[dict]:
-    queryset = (
-        Prediction.objects.filter(
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    positions = Prediction.objects.select_related(
+        "match__sport",
+        "match__league",
+        "match__home_team",
+        "match__away_team",
+    ).order_by("id")
+    queryset = list(
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
-        .select_related(
-            "coupon__author",
-            "coupon__author__analyst_profile",
-            "match__sport",
-            "match__league",
-            "match__home_team",
-            "match__away_team",
-        )
-        .order_by("-coupon__published_at", "-coupon__created_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
+        .select_related("author", "author__analyst_profile")
+        .prefetch_related(Prefetch("predictions", queryset=positions, to_attr="home_positions"))
+        .annotate(positions_count=Count("predictions", distinct=True))
+        .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
 
     cards = []
     for prediction in queryset:
-        author = prediction.coupon.author
+        positions_list = list(getattr(prediction, "home_positions", []) or [])
+        if not positions_list:
+            continue
+        item = positions_list[0]
+        author = prediction.author
         try:
             profile = author.analyst_profile
         except AnalystProfile.DoesNotExist:
@@ -65,14 +71,26 @@ def _latest_home_predictions() -> list[dict]:
             if profile and profile.display_name
             else author.get_full_name() or author.username
         )
-        match = prediction.match
+        match = item.match
         status_label, status_key = _state_label(prediction)
         starts_at = "Время не указано"
         if match.starts_at:
             starts_at = timezone.localtime(match.starts_at).strftime("%d.%m · %H:%M")
 
+        count = prediction.positions_count or len(positions_list)
+        if prediction.total_stake:
+            coefficient = prediction.possible_payout / prediction.total_stake
+        else:
+            coefficient = Decimal("0")
+        pick = item.selection
+        market = item.market
+        if count > 1:
+            pick = f"{item.selection} + ещё {count - 1}"
+            market = f"Экспресс · {count} игр"
+
         cards.append(
             {
+                "id": prediction.id,
                 "url": match.get_absolute_url(),
                 "sport": (match.sport.name_ru if match.sport and match.sport.name_ru else "Футбол"),
                 "league": match.league_name or "Лига",
@@ -82,10 +100,11 @@ def _latest_home_predictions() -> list[dict]:
                 "home_logo": _logo_url(match.home_team_logo, match.home_team),
                 "away_logo": _logo_url(match.away_team_logo, match.away_team),
                 "score": match.score or "",
-                "pick": prediction.selection,
-                "market": prediction.market,
-                "coefficient": prediction.coefficient,
+                "pick": pick,
+                "market": market,
+                "coefficient": coefficient.quantize(Decimal("0.01")),
                 "confidence": prediction.confidence,
+                "positions_count": count,
                 "starts_at": starts_at,
                 "expert": expert_name,
                 "expert_username": author.username,
@@ -114,24 +133,20 @@ def _best_home_experts(request) -> list[dict]:
             .annotate(
                 followers_count=Count("user__analyst_followers", distinct=True),
                 predictions_count=Count(
-                    "user__prediction_coupons__predictions",
+                    "user__prediction_coupons",
                     filter=published_filter,
                     distinct=True,
                 ),
                 wins_count=Count(
-                    "user__prediction_coupons__predictions",
+                    "user__prediction_coupons",
                     filter=published_filter
-                    & Q(
-                        user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN
-                    ),
+                    & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN),
                     distinct=True,
                 ),
                 losses_count=Count(
-                    "user__prediction_coupons__predictions",
+                    "user__prediction_coupons",
                     filter=published_filter
-                    & Q(
-                        user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE
-                    ),
+                    & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.LOSE),
                     distinct=True,
                 ),
                 sports_count=Count(
@@ -140,7 +155,7 @@ def _best_home_experts(request) -> list[dict]:
                     distinct=True,
                 ),
                 recent_publications_count=Count(
-                    "user__prediction_coupons__predictions",
+                    "user__prediction_coupons",
                     filter=published_filter
                     & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
                     distinct=True,
@@ -254,7 +269,7 @@ def _important_home_matches() -> list[Match]:
         )
         .annotate(
             predictions_count=Count(
-                "predictions",
+                "predictions__coupon",
                 filter=Q(
                     predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
                 ),
