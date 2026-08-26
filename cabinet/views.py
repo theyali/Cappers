@@ -2,12 +2,12 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST, require_http_methods
 
-from game.models import Prediction, PredictionCoupon
+from game.models import PredictionCoupon
 
 from .achievements import build_achievement_overview
 from .forms import (
@@ -74,21 +74,17 @@ def _profile_completion(user, analyst_profile) -> int:
     return round(sum(checks) / len(checks) * 100)
 
 
-def _coupon_result_from_counts(coupon) -> tuple[str, str]:
+def _coupon_result(coupon) -> tuple[str, str]:
     if coupon.published_status == PredictionCoupon.PublishedStatus.CANCELED:
         return "canceled", "Отменен"
     if coupon.published_status == PredictionCoupon.PublishedStatus.DRAFT:
         return "draft", "Черновик"
-
-    if coupon.lose_count:
+    if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+        return "won", "Выиграл"
+    if coupon.state_status == PredictionCoupon.StateStatus.LOSE:
         return "lost", "Проиграл"
-
-    settled_count = coupon.win_count + coupon.refund_count
-    if coupon.predictions_count and settled_count == coupon.predictions_count:
-        if coupon.win_count:
-            return "won", "Выиграл"
+    if coupon.state_status == PredictionCoupon.StateStatus.REFUND:
         return "refund", "Возврат"
-
     return "pending", "Ожидает"
 
 
@@ -118,10 +114,7 @@ def profile(request):
         active_tab = "profile"
 
     if analyst_profile is not None:
-        analyst_form = AnalystProfileForm(
-            request.POST or None,
-            instance=analyst_profile,
-        )
+        analyst_form = AnalystProfileForm(request.POST or None, instance=analyst_profile)
 
     if request.method == "POST":
         user_is_valid = user_form.is_valid()
@@ -135,15 +128,9 @@ def profile(request):
             messages.success(request, "Профиль обновлён.")
             return redirect("cabinet:profile")
 
-    followers_count = (
-        request.user.analyst_followers.count()
-        if request.user.role == User.Role.ANALYST
-        else 0
-    )
+    followers_count = request.user.analyst_followers.count() if request.user.role == User.Role.ANALYST else 0
     following_count = request.user.analyst_follows.count()
-    following_ids = set(
-        request.user.analyst_follows.values_list("analyst_id", flat=True)
-    )
+    following_ids = set(request.user.analyst_follows.values_list("analyst_id", flat=True))
     followers = (
         AnalystFollow.objects.filter(analyst=request.user)
         .select_related("follower", "follower__analyst_profile")
@@ -151,8 +138,7 @@ def profile(request):
         else AnalystFollow.objects.none()
     )
     following = AnalystFollow.objects.filter(follower=request.user).select_related(
-        "analyst",
-        "analyst__analyst_profile",
+        "analyst", "analyst__analyst_profile"
     )
 
     my_coupons = []
@@ -162,31 +148,14 @@ def profile(request):
     if request.user.role == User.Role.ANALYST:
         my_coupons = list(
             PredictionCoupon.objects.filter(author=request.user)
-            .annotate(
-                predictions_count=Count("predictions", distinct=True),
-                win_count=Count(
-                    "predictions",
-                    filter=Q(predictions__state_status=Prediction.StateStatus.WIN),
-                    distinct=True,
-                ),
-                lose_count=Count(
-                    "predictions",
-                    filter=Q(predictions__state_status=Prediction.StateStatus.LOSE),
-                    distinct=True,
-                ),
-                refund_count=Count(
-                    "predictions",
-                    filter=Q(predictions__state_status=Prediction.StateStatus.REFUND),
-                    distinct=True,
-                ),
-            )
+            .annotate(predictions_count=Count("predictions", distinct=True))
             .order_by("-created_at", "-id")
         )
         for coupon in my_coupons:
-            coupon.result_key, coupon.result_label = _coupon_result_from_counts(coupon)
+            coupon.result_key, coupon.result_label = _coupon_result(coupon)
 
         coupons_count = len(my_coupons)
-        predictions_count = Prediction.objects.filter(coupon__author=request.user).count()
+        predictions_count = coupons_count
         achievement_overview = build_achievement_overview(
             request.user,
             followers_count=followers_count,
@@ -265,13 +234,7 @@ def upload_avatar(request):
         if storage.exists(previous_avatar):
             storage.delete(previous_avatar)
 
-    return JsonResponse(
-        {
-            "ok": True,
-            "avatar_url": profile.avatar.url,
-            "message": "Аватар обновлён.",
-        }
-    )
+    return JsonResponse({"ok": True, "avatar_url": profile.avatar.url, "message": "Аватар обновлён."})
 
 
 @login_required
@@ -279,13 +242,7 @@ def upload_avatar(request):
 def follow_analyst(request, user_id):
     analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
     if analyst.pk == request.user.pk:
-        return JsonResponse(
-            {"ok": False, "error": "Нельзя подписаться на самого себя."},
-            status=400,
-        )
+        return JsonResponse({"ok": False, "error": "Нельзя подписаться на самого себя."}, status=400)
 
-    AnalystFollow.objects.get_or_create(
-        follower=request.user,
-        analyst=analyst,
-    )
+    AnalystFollow.objects.get_or_create(follower=request.user, analyst=analyst)
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
