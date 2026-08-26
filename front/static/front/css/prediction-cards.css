@@ -1,12 +1,204 @@
-.prediction-card-rich {
-    gap: 14px;
+.prediction-card.prediction-card-rich {
+    min-width: 0;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     padding: 16px;
+    border-radius: 18px;
     background: var(--panel);
+    transition: transform .18s ease, background .18s ease;
 }
 
-.prediction-card-rich:hover {
+.prediction-card.prediction-card-rich:hover {
+    transform: translateY(-2px);
     background: #242426;
+}
+
+.prediction-card-head,
+.prediction-author-row,
+.prediction-expert,
+.prediction-expert-name-row,
+.prediction-pick.prediction-pick-rich,
+.prediction-published-at,
+.prediction-open-match,
+.prediction-odd-value {
+    display: flex;
+    align-items: center;
+}
+
+.prediction-card-head {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.prediction-author-row {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 10px;
+}
+
+.prediction-author-row .prediction-expert {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.prediction-expert {
+    gap: 10px;
+    color: var(--text);
+}
+
+.prediction-expert-avatar {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 14px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.prediction-expert-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.prediction-expert-copy {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.prediction-expert-name-row {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.prediction-expert-name-row > strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.prediction-expert-copy > span {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.prediction-verified {
+    color: var(--blue);
+}
+
+.prediction-author-roi {
+    min-height: 22px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 7px;
+    border-radius: 7px;
+    color: var(--muted);
+    background: #303033;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.prediction-author-roi.is-positive {
+    color: #fff;
+    background: var(--green);
+}
+
+.prediction-author-roi.is-negative {
+    color: #fff;
+    background: var(--danger);
+}
+
+.prediction-owner-label,
+.prediction-follow-button {
+    min-height: 32px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.prediction-owner-label {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.prediction-follow-button {
+    color: #fff;
+    background: var(--blue);
+    cursor: pointer;
+    transition: transform .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.prediction-follow-button:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    background: #2168ff;
+}
+
+.prediction-follow-button.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.prediction-follow-button:disabled {
+    cursor: wait;
+    opacity: .58;
+    transform: none;
+}
+
+.prediction-status {
+    min-height: 32px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, .72);
+    background: #303033;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.prediction-status-win {
+    color: #fff;
+    background: var(--green);
+}
+
+.prediction-status-lose {
+    color: #fff;
+    background: var(--danger);
+}
+
+.prediction-status-refund {
+    color: #fff;
+    background: var(--blue);
 }
 
 .prediction-match-visual {
@@ -21,10 +213,7 @@
 .prediction-league-row,
 .prediction-league-info,
 .prediction-scoreboard,
-.prediction-team,
-.prediction-published-at,
-.prediction-open-match,
-.prediction-odd-value {
+.prediction-team {
     display: flex;
     align-items: center;
 }
@@ -161,8 +350,37 @@
     line-height: 1.2;
 }
 
-.prediction-pick-rich {
+.prediction-pick.prediction-pick-rich {
+    min-height: 72px;
+    justify-content: space-between;
+    gap: 14px;
     margin-top: 0;
+    padding: 14px;
+    border-radius: 14px;
+    background: #2a2a2d;
+}
+
+.prediction-pick-rich > div:first-child {
+    min-width: 0;
+}
+
+.prediction-pick-rich small,
+.prediction-pick-rich strong {
+    display: block;
+}
+
+.prediction-pick-rich small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.prediction-pick-rich strong {
+    margin-top: 5px;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .prediction-odd-value {
@@ -181,9 +399,12 @@
     line-height: 1;
 }
 
-.prediction-comment {
+.prediction-card.prediction-card-rich .prediction-comment {
     min-height: 36px;
     margin: 0;
+    color: var(--soft);
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .prediction-published-at {
@@ -217,6 +438,16 @@
     filter: brightness(1.04);
 }
 
+.prediction-card.prediction-card-rich.match-prediction-card {
+    gap: 14px;
+    padding: 16px;
+    background: var(--panel);
+}
+
+.prediction-card.prediction-card-rich.match-prediction-card:hover {
+    background: #242426;
+}
+
 @media (max-width: 1240px) {
     .prediction-scoreboard {
         grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
@@ -233,8 +464,22 @@
 }
 
 @media (max-width: 720px) {
-    .prediction-card-rich {
+    .prediction-card.prediction-card-rich {
         padding: 14px;
+    }
+
+    .prediction-card-head {
+        align-items: flex-start;
+    }
+
+    .prediction-author-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .prediction-follow-button,
+    .prediction-owner-label {
+        margin-left: 56px;
     }
 
     .prediction-match-visual {
@@ -263,5 +508,28 @@
 
     .prediction-score-center {
         min-height: 58px;
+    }
+}
+
+@media (max-width: 520px) {
+    .prediction-expert-name-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .prediction-author-roi {
+        min-height: 20px;
+        font-size: 9px;
+    }
+
+    .prediction-card-head {
+        gap: 8px;
+    }
+
+    .prediction-status {
+        min-height: 28px;
+        padding: 0 8px;
+        font-size: 9px;
     }
 }
