@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block title %}Профиль — Cappers{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/profile.css' %}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/profile.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="profile-page" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">
@@ -181,13 +184,53 @@
             <div class="profile-section-heading">
                 <div>
                     <p class="eyebrow">Прогнозы</p>
-                    <h2>Мои прогнозы</h2>
+                    <h2>Мои купоны</h2>
                 </div>
+                <span class="profile-coupon-count">{{ coupons_count }}</span>
             </div>
+
+            {% if my_coupons %}
+            <div class="profile-coupons-list">
+                {% for coupon in my_coupons %}
+                <a class="profile-coupon-row" href="{% url 'cabinet:coupon_detail' coupon.id %}">
+                    <div class="profile-coupon-main">
+                        <span class="profile-coupon-id">#{{ coupon.id }}</span>
+                        <div class="profile-coupon-copy">
+                            <strong>Купон #{{ coupon.id }}</strong>
+                            <span>{{ coupon.created_at|date:"d.m.Y · H:i" }}</span>
+                        </div>
+                    </div>
+
+                    {% if coupon.published_status == "published" %}
+                        <span class="profile-coupon-status is-published">Опубликован</span>
+                    {% elif coupon.published_status == "canceled" %}
+                        <span class="profile-coupon-status is-canceled">Отменен</span>
+                    {% else %}
+                        <span class="profile-coupon-status">Черновик</span>
+                    {% endif %}
+
+                    <div class="profile-coupon-metric">
+                        <span>Матчи</span>
+                        <strong>{{ coupon.predictions_count }}</strong>
+                    </div>
+                    <div class="profile-coupon-metric">
+                        <span>Сумма</span>
+                        <strong>{{ coupon.total_stake }}</strong>
+                    </div>
+                    <div class="profile-coupon-metric">
+                        <span>Возможный выигрыш</span>
+                        <strong>{{ coupon.possible_payout }}</strong>
+                    </div>
+                    <span class="profile-coupon-open" aria-hidden="true">→</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
             <div class="profile-empty-state">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-4 4"></path></svg>
-                <p>Здесь появятся ваши прогнозы, когда раздел прогнозов будет подключён.</p>
+                <p>У вас пока нет купонов. Созданные черновики и опубликованные купоны будут показываться здесь.</p>
             </div>
+            {% endif %}
         </div>
     </section>
 
