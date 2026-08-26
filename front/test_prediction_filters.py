@@ -149,3 +149,5 @@ class PredictionFiltersTests(TestCase):
         items = response.context["page_obj"].object_list
         self.assertEqual(items[0].id, best.id)
         self.assertGreater(items[0].author_roi, 0)
+        self.assertContains(response, "ROI +150.0%")
+        self.assertContains(response, "prediction-author-roi is-positive")
