@@ -1,0 +1,49 @@
+{% if website_settings and website_settings.home_about_enabled %}
+<section class="home-about" aria-labelledby="home-about-title">
+    <div class="home-about-hero">
+        <div class="home-about-copy">
+            {% if website_settings.home_about_eyebrow %}
+                <p class="home-about-eyebrow">{{ website_settings.home_about_eyebrow }}</p>
+            {% endif %}
+            <h2 id="home-about-title">{{ website_settings.home_about_title }}</h2>
+            {% if website_settings.home_about_intro %}
+                <p class="home-about-lead">{{ website_settings.home_about_intro }}</p>
+            {% endif %}
+        </div>
+
+        <div class="home-about-mark" aria-hidden="true">
+            <span>C</span>
+            <small>{{ website_settings.site_name }}</small>
+        </div>
+    </div>
+
+    <div class="home-about-facts" aria-label="Ключевые направления">
+        <article class="home-about-fact">
+            <strong>{{ website_settings.home_about_fact_1_title }}</strong>
+            <p>{{ website_settings.home_about_fact_1_text }}</p>
+        </article>
+        <article class="home-about-fact">
+            <strong>{{ website_settings.home_about_fact_2_title }}</strong>
+            <p>{{ website_settings.home_about_fact_2_text }}</p>
+        </article>
+        <article class="home-about-fact">
+            <strong>{{ website_settings.home_about_fact_3_title }}</strong>
+            <p>{{ website_settings.home_about_fact_3_text }}</p>
+        </article>
+    </div>
+
+    <div class="home-about-content">
+        <article class="home-about-story">
+            <p class="home-about-seo-label">О платформе</p>
+            <h3>{{ website_settings.site_name }}</h3>
+            <div>{{ website_settings.home_about_text|linebreaks }}</div>
+        </article>
+
+        <article class="home-about-seo">
+            <p class="home-about-seo-label">Спортивная платформа</p>
+            <h3>{{ website_settings.home_about_seo_title }}</h3>
+            <div>{{ website_settings.home_about_seo_text|linebreaks }}</div>
+        </article>
+    </div>
+</section>
+{% endif %}

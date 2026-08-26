@@ -14,15 +14,59 @@ class BookmakerAdmin(admin.ModelAdmin):
 
 @admin.register(WebsiteSettings)
 class WebsiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ("site_name", "fixed_tg_enable", "fixed_tg_link", "updated_at")
-    fields = (
-        "site_name",
-        "fixed_tg_enable",
-        "fixed_tg_link",
-        "fixed_tg_title",
-        "updated_at",
-    )
+    list_display = ("site_name", "home_about_enabled", "fixed_tg_enable", "updated_at")
     readonly_fields = ("updated_at",)
+    fieldsets = (
+        (
+            "Основное",
+            {
+                "fields": ("site_name",),
+            },
+        ),
+        (
+            "Telegram-баннер",
+            {
+                "fields": (
+                    "fixed_tg_enable",
+                    "fixed_tg_link",
+                    "fixed_tg_title",
+                ),
+            },
+        ),
+        (
+            "Главная страница — О нас",
+            {
+                "fields": (
+                    "home_about_enabled",
+                    "home_about_eyebrow",
+                    "home_about_title",
+                    "home_about_intro",
+                    "home_about_text",
+                ),
+            },
+        ),
+        (
+            "Главная страница — SEO и смысловые карточки",
+            {
+                "fields": (
+                    "home_about_seo_title",
+                    "home_about_seo_text",
+                    "home_about_fact_1_title",
+                    "home_about_fact_1_text",
+                    "home_about_fact_2_title",
+                    "home_about_fact_2_text",
+                    "home_about_fact_3_title",
+                    "home_about_fact_3_text",
+                ),
+            },
+        ),
+        (
+            "Система",
+            {
+                "fields": ("updated_at",),
+            },
+        ),
+    )
 
     def has_add_permission(self, request):
         return not WebsiteSettings.objects.exists()

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "bots.apps.BotsConfig",
     "back.apps.BackConfig",
     "front.apps.FrontConfig",
+    "pages.apps.PagesConfig",
 ]
 
 MIDDLEWARE = [
@@ -71,6 +72,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "front.context_processors.website_settings",
+                "pages.context_processors.page_seo",
             ],
         },
     },

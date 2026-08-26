@@ -28,6 +28,90 @@ class WebsiteSettings(models.Model):
         default="Бесплатный прогноз в Telegram",
         blank=True,
     )
+
+    home_about_enabled = models.BooleanField("Показывать блок «О нас» на главной", default=True)
+    home_about_eyebrow = models.CharField(
+        "Надпись над заголовком",
+        max_length=80,
+        default="О компании",
+        blank=True,
+    )
+    home_about_title = models.CharField(
+        "Заголовок блока",
+        max_length=220,
+        default="КапперХаб — спортивная аналитика в одном месте",
+        blank=True,
+    )
+    home_about_intro = models.TextField(
+        "Короткое описание",
+        default=(
+            "Мы собираем матчи, статистику, экспертные материалы и спортивный контент "
+            "в одном понятном интерфейсе."
+        ),
+        blank=True,
+    )
+    home_about_text = models.TextField(
+        "Основной текст о компании",
+        default=(
+            "КапперХаб — информационная платформа для аудитории, которая следит за спортом "
+            "и хочет быстрее находить данные, мнения авторов и разборы матчей. Мы развиваем "
+            "публичные профили экспертов, ленты материалов, рейтинги и удобные страницы матчей, "
+            "чтобы важная информация была доступна в одном месте."
+        ),
+        blank=True,
+    )
+    home_about_seo_title = models.CharField(
+        "SEO-заголовок внутри блока",
+        max_length=220,
+        default="Спортивные матчи, аналитика, эксперты и статьи",
+        blank=True,
+    )
+    home_about_seo_text = models.TextField(
+        "SEO-текст на главной",
+        default=(
+            "На КапперХаб можно изучать расписание и карточки спортивных матчей, читать аналитические "
+            "материалы, сравнивать публичные профили авторов и следить за обновлениями спортивной ленты. "
+            "Структура сайта помогает быстро переходить между матчами, экспертами, статистикой и статьями."
+        ),
+        blank=True,
+    )
+    home_about_fact_1_title = models.CharField(
+        "Карточка 1 — заголовок",
+        max_length=80,
+        default="Матчи и данные",
+        blank=True,
+    )
+    home_about_fact_1_text = models.CharField(
+        "Карточка 1 — текст",
+        max_length=220,
+        default="Расписание, статусы матчей и ключевая информация в одном интерфейсе.",
+        blank=True,
+    )
+    home_about_fact_2_title = models.CharField(
+        "Карточка 2 — заголовок",
+        max_length=80,
+        default="Публичные эксперты",
+        blank=True,
+    )
+    home_about_fact_2_text = models.CharField(
+        "Карточка 2 — текст",
+        max_length=220,
+        default="Профили авторов, статистика активности, достижения и подписки.",
+        blank=True,
+    )
+    home_about_fact_3_title = models.CharField(
+        "Карточка 3 — заголовок",
+        max_length=80,
+        default="Спортивный контент",
+        blank=True,
+    )
+    home_about_fact_3_text = models.CharField(
+        "Карточка 3 — текст",
+        max_length=220,
+        default="Статьи, разборы и материалы редакции для спортивной аудитории.",
+        blank=True,
+    )
+
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
     class Meta:

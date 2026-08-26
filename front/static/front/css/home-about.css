@@ -1,0 +1,201 @@
+.home-about {
+    width: 100%;
+    min-width: 0;
+    display: grid;
+    gap: 18px;
+    margin-top: 22px;
+    padding: clamp(22px, 3.2vw, 42px);
+    border-radius: 24px;
+    background: var(--panel);
+}
+
+.home-about-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(230px, .55fr);
+    gap: 18px;
+}
+
+.home-about-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(8px, 2vw, 20px) 0;
+}
+
+.home-about-eyebrow,
+.home-about-seo-label {
+    margin: 0 0 12px;
+    color: var(--yellow);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+}
+
+.home-about-copy h2 {
+    max-width: 900px;
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(38px, 5vw, 70px);
+    line-height: .94;
+    letter-spacing: -.045em;
+}
+
+.home-about-lead {
+    max-width: 760px;
+    margin: 20px 0 0;
+    color: var(--soft);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.home-about-mark {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22px;
+    border-radius: 20px;
+    color: #fff;
+    background: var(--blue);
+}
+
+.home-about-mark span {
+    font-size: clamp(74px, 10vw, 126px);
+    font-weight: 950;
+    line-height: .8;
+    letter-spacing: -.08em;
+}
+
+.home-about-mark small {
+    width: max-content;
+    max-width: 100%;
+    padding: 9px 11px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.home-about-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.home-about-fact {
+    min-width: 0;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #181819;
+}
+
+.home-about-fact:nth-child(2) {
+    background: var(--blue);
+}
+
+.home-about-fact:nth-child(3) {
+    background: var(--yellow);
+}
+
+.home-about-fact strong {
+    color: var(--text);
+    font-size: 19px;
+    line-height: 1.05;
+}
+
+.home-about-fact p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.home-about-fact:nth-child(2) strong,
+.home-about-fact:nth-child(2) p {
+    color: #fff;
+}
+
+.home-about-fact:nth-child(3) strong,
+.home-about-fact:nth-child(3) p {
+    color: var(--ink);
+}
+
+.home-about-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.home-about-story,
+.home-about-seo {
+    min-width: 0;
+    padding: clamp(20px, 2.5vw, 30px);
+    border-radius: 18px;
+    background: #181819;
+}
+
+.home-about-story h3,
+.home-about-seo h3 {
+    margin: 0 0 14px;
+    color: var(--text);
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1;
+    letter-spacing: -.03em;
+}
+
+.home-about-story p,
+.home-about-seo p {
+    margin: 0 0 12px;
+    color: var(--soft);
+    font-size: 12px;
+    line-height: 1.75;
+}
+
+.home-about-story p:last-child,
+.home-about-seo p:last-child {
+    margin-bottom: 0;
+}
+
+.home-about-seo {
+    background: #242426;
+}
+
+@media (max-width: 900px) {
+    .home-about-hero,
+    .home-about-content {
+        grid-template-columns: 1fr;
+    }
+
+    .home-about-mark {
+        min-height: 190px;
+    }
+}
+
+@media (max-width: 680px) {
+    .home-about {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .home-about-facts {
+        grid-template-columns: 1fr;
+    }
+
+    .home-about-fact {
+        min-height: 126px;
+    }
+
+    .home-about-copy h2 {
+        font-size: clamp(34px, 11vw, 48px);
+    }
+}
