@@ -14,8 +14,8 @@
         <span>Вернуться к моим купонам</span>
     </a>
 
-    <header class="coupon-detail-hero">
-        <div class="coupon-detail-hero-copy">
+    <header class="coupon-detail-heading">
+        <div>
             <p>Мой купон</p>
             <h1>Купон #{{ coupon.id }}</h1>
             <span>Создан {{ coupon.created_at|date:"d.m.Y · H:i" }}</span>
@@ -30,118 +30,6 @@
         {% endif %}
     </header>
 
-    <div class="coupon-detail-summary" aria-label="Сводка купона">
-        <div class="coupon-detail-summary-item">
-            <span>Матчей</span>
-            <strong>{{ predictions|length }}</strong>
-        </div>
-        <div class="coupon-detail-summary-item">
-            <span>Сумма</span>
-            <strong>{{ coupon.total_stake }}</strong>
-        </div>
-        <div class="coupon-detail-summary-item is-main">
-            <span>Возможный выигрыш</span>
-            <strong>{{ coupon.possible_payout }}</strong>
-        </div>
-        <div class="coupon-detail-summary-item">
-            <span>Обновлен</span>
-            <strong>{{ coupon.updated_at|date:"d.m · H:i" }}</strong>
-        </div>
-    </div>
-
-    <section class="coupon-detail-panel" aria-label="Прогнозы в купоне">
-        <div class="coupon-detail-panel-head">
-            <h2>Прогнозы в купоне</h2>
-            <span>{{ predictions|length }}</span>
-        </div>
-
-        {% if predictions %}
-        <div class="coupon-detail-predictions">
-            {% for prediction in predictions %}
-            <article class="coupon-detail-prediction">
-                <div class="coupon-detail-prediction-top">
-                    <div class="coupon-detail-league">
-                        <span class="coupon-detail-league-logo">
-                            {% if prediction.match.league and prediction.match.league.logo %}
-                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.league_name|default:"Л"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <div>
-                            <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                            <small>{% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m.Y · H:i" }}{% else %}Время не указано{% endif %}</small>
-                        </div>
-                    </div>
-
-                    {% if prediction.state_status == "win" %}
-                        <span class="coupon-detail-status is-published">Выигрыш</span>
-                    {% elif prediction.state_status == "lose" %}
-                        <span class="coupon-detail-status is-canceled">Проигрыш</span>
-                    {% elif prediction.state_status == "refund" %}
-                        <span class="coupon-detail-status">Возврат</span>
-                    {% else %}
-                        <span class="coupon-detail-status">Ожидает</span>
-                    {% endif %}
-                </div>
-
-                <div class="coupon-detail-match">
-                    <div class="coupon-detail-team">
-                        <span class="coupon-detail-team-logo">
-                            {% if prediction.match.home_team_logo %}
-                                <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
-                    </div>
-
-                    <div class="coupon-detail-score">
-                        <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
-                        <span>{{ prediction.match.get_sync_scope_display }}</span>
-                    </div>
-
-                    <div class="coupon-detail-team is-away">
-                        <span class="coupon-detail-team-logo">
-                            {% if prediction.match.away_team_logo %}
-                                <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
-                    </div>
-                </div>
-
-                <div class="coupon-detail-pick">
-                    <div>
-                        <span>{{ prediction.market|default:"Прогноз" }}</span>
-                        <strong>{{ prediction.selection }}</strong>
-                    </div>
-                    <div class="coupon-detail-odd">
-                        <span>КФ</span>
-                        <b>{{ prediction.coefficient }}</b>
-                    </div>
-                </div>
-
-                {% if prediction.comment %}
-                <p class="coupon-detail-comment">{{ prediction.comment }}</p>
-                {% endif %}
-
-                <div class="coupon-detail-prediction-foot">
-                    <span>Сумма прогноза: {{ prediction.stake }}</span>
-                    <a href="{{ prediction.match.get_absolute_url }}">Открыть матч →</a>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="coupon-detail-empty">
-            <strong>В купоне пока нет матчей</strong>
-            <p>Это может быть пустой черновик. Добавьте матч из списка игр.</p>
-        </div>
-        {% endif %}
-    </section>
+    {% include "cabinet/_coupon_slip.html" %}
 </section>
 {% endblock %}
