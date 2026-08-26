@@ -452,7 +452,6 @@ class PredictionCoupon(models.Model):
         default=PublishedStatus.DRAFT,
         db_index=True,
     )
-    title = models.CharField("Название", max_length=160, blank=True)
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -472,7 +471,7 @@ class PredictionCoupon(models.Model):
             raise ValidationError("Купоны могут создавать только аналитики.")
 
     def __str__(self) -> str:
-        return self.title or f"Купон #{self.pk or 'new'}"
+        return f"Купон #{self.pk or 'new'}"
 
 
 class Prediction(models.Model):
