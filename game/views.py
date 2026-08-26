@@ -210,18 +210,6 @@ def create_coupon(request):
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
-    comment = str(payload.get("comment") or "").strip()
-    if not autosave and not comment:
-        return JsonResponse(
-            {"ok": False, "error": "Заполните комментарий к купону."},
-            status=400,
-        )
-    if len(comment) > 1200:
-        return JsonResponse(
-            {"ok": False, "error": "Комментарий слишком длинный."},
-            status=400,
-        )
-
     try:
         normalized_items = [_normalize_prediction_item(item, matches) for item in items]
     except ValidationError as exc:
@@ -257,7 +245,7 @@ def create_coupon(request):
                     selection=item["selection"],
                     coefficient=item["coefficient"],
                     stake=stake,
-                    comment=comment,
+                    confidence=item["confidence"],
                 )
                 for item in normalized_items
             ]
@@ -342,13 +330,11 @@ def _active_draft_coupon(user: User) -> PredictionCoupon | None:
 
 def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
     predictions = list(coupon.predictions.all())
-    comment = predictions[0].comment if predictions else ""
     stake = coupon.total_stake if coupon.total_stake and coupon.total_stake > 0 else None
 
     return {
         "id": coupon.id,
         "stake": _decimal_string(stake) if stake is not None else "",
-        "comment": comment,
         "items": [_serialize_prediction(prediction) for prediction in predictions],
     }
 
@@ -370,6 +356,7 @@ def _serialize_prediction(prediction: Prediction) -> dict:
         "selection": prediction.selection,
         "shortLabel": _prediction_short_label(prediction),
         "coefficient": _decimal_string(prediction.coefficient),
+        "confidence": prediction.confidence,
         "lastSeen": match.last_seen_at.isoformat() if match.last_seen_at else "",
     }
 
@@ -419,11 +406,19 @@ def _normalize_prediction_item(
     if coefficient <= 0:
         raise ValidationError("Коэффициент должен быть больше нуля.")
 
+    try:
+        confidence = int(item.get("confidence", 50))
+    except (TypeError, ValueError):
+        raise ValidationError("Укажите уверенность от 0 до 100%.")
+    if not 0 <= confidence <= 100:
+        raise ValidationError("Уверенность должна быть от 0 до 100%.")
+
     return {
         "match": matches[match_id],
         "market": market[:80],
         "selection": selection[:120],
         "coefficient": coefficient,
+        "confidence": confidence,
     }
 
 
