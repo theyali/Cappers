@@ -26,13 +26,6 @@ SCOPE_FILTERS = (
     (Match.SyncScope.FINISHED, "Завершенные"),
 )
 
-MARKET_LABELS = {
-    "winner": "Победитель",
-    "total": "Тотал",
-    "handicap": "Фора",
-    "both_score": "Обе забьют",
-}
-
 
 def match_list(request):
     active_scope = request.GET.get("scope", "all")
@@ -136,7 +129,6 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
-    title = str(payload.get("title") or "").strip()[:160]
     items = payload.get("items")
     if not isinstance(items, list):
         return JsonResponse({"ok": False, "error": "Передайте список матчей."}, status=400)
@@ -233,15 +225,11 @@ def create_coupon(request):
         total_coefficient *= item["coefficient"]
     possible_payout = stake * total_coefficient if stake > 0 else Decimal("0")
 
-    if not title and not autosave:
-        title = _build_coupon_title(normalized_items)
-
     with transaction.atomic():
         coupon = _draft_for_update(request.user, coupon_id)
         if coupon is None:
             coupon = PredictionCoupon(author=request.user)
 
-        coupon.title = title
         coupon.total_stake = stake
         coupon.possible_payout = possible_payout
         coupon.published_status = (
@@ -352,7 +340,6 @@ def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
 
     return {
         "id": coupon.id,
-        "title": coupon.title,
         "stake": _decimal_string(stake) if stake is not None else "",
         "comment": comment,
         "items": [_serialize_prediction(prediction) for prediction in predictions],
@@ -368,7 +355,7 @@ def _serialize_prediction(prediction: Prediction) -> dict:
     )
     return {
         "matchId": str(match.id),
-        "title": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+        "matchTitle": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
         "league": match.league_name or "Лига не указана",
         "time": starts_at,
         "betKey": "restored",
@@ -431,26 +418,6 @@ def _normalize_prediction_item(
         "selection": selection[:120],
         "coefficient": coefficient,
     }
-
-
-def _build_coupon_title(items: list[dict]) -> str:
-    first_item = items[0]
-    match = first_item["match"]
-    market = MARKET_LABELS.get(first_item["market"], first_item["market"])
-    starts_at = ""
-    if match.starts_at:
-        starts_at = timezone.localtime(match.starts_at).strftime("%d.%m %H:%M")
-
-    title_parts = [
-        f"{match.home_team_name} — {match.away_team_name}",
-        match.league_name,
-        f"{market}: {first_item['selection']}",
-        starts_at,
-    ]
-    title = " · ".join(part for part in title_parts if part)
-    if len(items) > 1:
-        title = f"{title} · +{len(items) - 1}"
-    return title[:160]
 
 
 def _latest_predictions():
