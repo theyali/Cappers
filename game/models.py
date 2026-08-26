@@ -515,7 +515,7 @@ class Prediction(models.Model):
     selection = models.CharField("Выбор", max_length=120)
     coefficient = models.DecimalField("Коэффициент", max_digits=8, decimal_places=2, default=1)
     stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
-    comment = models.TextField("Комментарий", max_length=1200)
+    confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
     state_status = models.CharField(
         "Результат",
         max_length=16,
@@ -545,8 +545,8 @@ class Prediction(models.Model):
             raise ValidationError("Прогноз можно создать только на предстоящий матч.")
         if self.stake is not None and self.stake <= 0:
             raise ValidationError("Сумма ставки должна быть больше нуля.")
-        if not (self.comment or "").strip():
-            raise ValidationError("Комментарий обязателен.")
+        if self.confidence is None or not 0 <= self.confidence <= 100:
+            raise ValidationError("Уверенность должна быть от 0 до 100%.")
         if self.coupon_id:
             siblings = self.coupon.predictions.exclude(pk=self.pk)
             if siblings.count() >= 5:
