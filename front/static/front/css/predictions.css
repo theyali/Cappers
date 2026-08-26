@@ -213,8 +213,8 @@
 }
 
 .prediction-status-win {
-    color: var(--ink);
-    background: var(--yellow);
+    color: white;
+    background: var(--green);
 }
 
 .prediction-status-lose {
