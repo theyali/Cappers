@@ -63,8 +63,13 @@ class PublicPredictionDetailTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["total_coefficient"], Decimal("3.52"))
         self.assertContains(response, "Купон #")
-        self.assertContains(response, "Экспресс · 2 игр")
+        self.assertContains(response, "Коэффициент:")
+        self.assertContains(response, "Уверенность:")
         self.assertContains(response, "67%")
+        self.assertContains(response, "Хозяева")
+        self.assertContains(response, "ТБ 2.5")
+        self.assertContains(response, "profile-coupons.css")
+        self.assertNotContains(response, "prediction-detail.css")
 
     def test_prediction_card_links_to_public_coupon(self):
         response = self.client.get(reverse("front:predictions"))
