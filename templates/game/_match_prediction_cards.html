@@ -49,8 +49,9 @@
             class="prediction-reaction prediction-like{% if prediction.is_liked %} is-active{% endif %}"
             type="button"
             data-prediction-reaction
+            data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
             data-url="{% url 'front:prediction_like' prediction_id=prediction.id %}"
-            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ prediction.match.get_absolute_url|urlencode }}"
             aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
             title="{% if prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
         >
@@ -64,8 +65,9 @@
             class="prediction-reaction prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
             type="button"
             data-prediction-reaction
+            data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
             data-url="{% url 'front:prediction_favorite' prediction_id=prediction.id %}"
-            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ prediction.match.get_absolute_url|urlencode }}"
             aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
             title="{% if prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
         >
