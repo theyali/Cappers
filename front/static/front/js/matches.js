@@ -79,6 +79,9 @@
     const itemsRoot = root.querySelector("[data-coupon-items]");
     const countNode = root.querySelector("[data-coupon-count]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
+    const confidenceInput = root.querySelector("[data-coupon-confidence]");
+    const confidenceValue = root.querySelector("[data-coupon-confidence-value]");
+    const confidenceFill = root.querySelector("[data-coupon-confidence-fill]");
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
     const totalNode = root.querySelector("[data-coupon-total]");
     const noteNode = root.querySelector("[data-coupon-note]");
@@ -110,17 +113,16 @@
         return Math.max(0, Math.min(100, parsed));
     };
 
+    const currentConfidence = () => normalizeConfidence(confidenceInput?.value);
     const hasPositiveStake = () => toNumber(stakeInput?.value) > 0;
 
     const couponIsComplete = () => (
         items.size > 0
-        && items.size <= 5
+        && items.size <= 20
         && hasPositiveStake()
-        && [...items.values()].every((item) => (
-            String(item.selection || "").trim().length > 0
-            && normalizeConfidence(item.confidence) >= 0
-            && normalizeConfidence(item.confidence) <= 100
-        ))
+        && currentConfidence() >= 0
+        && currentConfidence() <= 100
+        && [...items.values()].every((item) => String(item.selection || "").trim().length > 0)
     );
 
     const setNote = (message, state = "") => {
@@ -149,6 +151,15 @@
         if (totalNode) totalNode.textContent = formatMoney(stake * coefficient);
     };
 
+    const updateConfidenceVisual = () => {
+        const value = currentConfidence();
+        if (confidenceInput && Number.parseInt(confidenceInput.value, 10) !== value) {
+            confidenceInput.value = String(value);
+        }
+        if (confidenceValue) confidenceValue.textContent = `${value}%`;
+        if (confidenceFill) confidenceFill.style.width = `${value}%`;
+    };
+
     const readOdd = (value) => {
         const odd = toNumber(value, 2);
         return odd > 0 ? odd : 2;
@@ -170,10 +181,11 @@
 
     const updateState = () => {
         root.classList.toggle("has-coupon", items.size > 0);
-        if (countNode) countNode.textContent = `${items.size}/5`;
+        if (countNode) countNode.textContent = `${items.size}/20`;
         if (submitButton) {
             submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
         }
+        updateConfidenceVisual();
         formatTotal();
         updateMatchButtons();
     };
@@ -188,7 +200,6 @@
         selection: option.dataset.selection,
         shortLabel: option.querySelector("span")?.textContent || option.dataset.selection,
         coefficient: readOdd(option.dataset.coefficient),
-        confidence: 50,
         lastSeen: group.dataset.lastSeen || "",
     });
 
@@ -197,22 +208,8 @@
         matchId: String(rawItem.matchId),
         matchTitle: rawItem.matchTitle || rawItem.title || "",
         coefficient: readOdd(rawItem.coefficient),
-        confidence: normalizeConfidence(rawItem.confidence),
         lastSeen: rawItem.lastSeen || "",
     });
-
-    const updateConfidenceVisual = (node, item) => {
-        const value = normalizeConfidence(item.confidence);
-        item.confidence = value;
-        const valueNode = node.querySelector("[data-coupon-confidence-value]");
-        const fillNode = node.querySelector("[data-coupon-confidence-fill]");
-        const rangeNode = node.querySelector("[data-coupon-confidence]");
-        if (valueNode) valueNode.textContent = `${value}%`;
-        if (fillNode) fillNode.style.width = `${value}%`;
-        if (rangeNode && Number.parseInt(rangeNode.value, 10) !== value) {
-            rangeNode.value = String(value);
-        }
-    };
 
     const updateCouponItem = (node, item) => {
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
@@ -222,7 +219,6 @@
         const metaText = node.querySelector(".coupon-item-title span");
         if (titleText) titleText.textContent = item.matchTitle;
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
-        updateConfidenceVisual(node, item);
     };
 
     const saveLocalSnapshot = (dirty = true) => {
@@ -230,6 +226,7 @@
         const snapshot = {
             id: draftId,
             stake: stakeInput?.value || "",
+            confidence: currentConfidence(),
             items: [...items.values()],
             dirty,
             savedAt: Date.now(),
@@ -270,14 +267,14 @@
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "coupon-remove";
-        remove.setAttribute("aria-label", "Удалить из купона");
+        remove.setAttribute("aria-label", "Удалить из прогноза");
         remove.textContent = "×";
         remove.addEventListener("click", () => {
             items.delete(item.matchId);
             node.remove();
             updateState();
             saveLocalSnapshot(true);
-            setNote(items.size ? "Изменения сохраняются..." : "Купон пуст.");
+            setNote(items.size ? "Изменения сохраняются..." : "Прогноз пуст.");
             syncDraft(false);
         });
 
@@ -307,39 +304,9 @@
             <small>кф <b data-coupon-item-odd></b></small>
         `;
 
-        const confidence = document.createElement("div");
-        confidence.className = "coupon-confidence";
-        confidence.innerHTML = `
-            <div class="coupon-confidence-head">
-                <span>Уверенность</span>
-                <strong data-coupon-confidence-value>50%</strong>
-            </div>
-            <input
-                class="coupon-confidence-range"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value="50"
-                data-coupon-confidence
-                aria-label="Уверенность в прогнозе, процентов"
-            >
-            <div class="coupon-confidence-loader" aria-hidden="true">
-                <span data-coupon-confidence-fill></span>
-            </div>
-        `;
-
-        const range = confidence.querySelector("[data-coupon-confidence]");
-        range.addEventListener("input", () => {
-            item.confidence = normalizeConfidence(range.value);
-            updateConfidenceVisual(node, item);
-            updateState();
-            scheduleDraftSync();
-        });
-
         const body = document.createElement("div");
         body.className = "coupon-item-body";
-        body.append(pick, confidence);
+        body.append(pick);
 
         node.append(top, body);
         itemsRoot.append(node);
@@ -351,12 +318,12 @@
         coupon_id: draftId,
         autosave,
         stake: stakeInput?.value || "",
+        confidence: currentConfidence(),
         items: [...items.values()].map((item) => ({
             match_id: item.matchId,
             market: item.market,
             selection: item.selection,
             coefficient: item.coefficient,
-            confidence: normalizeConfidence(item.confidence),
         })),
     });
 
@@ -368,18 +335,16 @@
         }
 
         draftId = draft.id || draftId;
+        if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
         const serverItems = new Map((draft.items || []).map((rawItem) => {
             const item = normalizeDraftItem(rawItem);
             return [String(item.matchId), item];
         }));
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
-            if (!fresh) return;
-            if (fresh.lastSeen) item.lastSeen = fresh.lastSeen;
-            item.confidence = fresh.confidence;
-            const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
-            if (node) updateConfidenceVisual(node, item);
+            if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
         });
+        updateConfidenceVisual();
         saveLocalSnapshot(false);
     };
 
@@ -388,6 +353,7 @@
         items.clear();
         itemsRoot.replaceChildren();
         if (stakeInput) stakeInput.value = "";
+        if (confidenceInput) confidenceInput.value = "50";
         try {
             localStorage.removeItem(storageKey);
         } catch (error) {
@@ -455,7 +421,7 @@
 
         request.done((result) => {
             if (!result?.ok) {
-                setNote(result?.error || (manual ? "Не удалось сохранить купон." : "Не удалось сохранить черновик."), "error");
+                setNote(result?.error || (manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить черновик."), "error");
                 return;
             }
             if (manual) {
@@ -473,7 +439,7 @@
         request.fail((xhr, statusText) => {
             if (statusText === "abort") return;
             setNote(
-                responseError(xhr, manual ? "Не удалось сохранить купон." : "Не удалось сохранить черновик."),
+                responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить черновик."),
                 "error"
             );
         });
@@ -505,21 +471,20 @@
 
     const upsertItem = (item) => {
         const existing = items.get(item.matchId);
-        if (!existing && items.size >= 5) {
-            setNote("В одном купоне может быть максимум 5 игр.", "error");
+        if (!existing && items.size >= 20) {
+            setNote("В одном прогнозе может быть максимум 20 игр.", "error");
             return;
         }
 
         if (existing) {
-            const confidence = existing.confidence;
-            Object.assign(existing, item, { confidence });
+            Object.assign(existing, item);
             const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
             if (node) updateCouponItem(node, existing);
-            setNote("Ставка в купоне обновлена. Сохраняем черновик...");
+            setNote("Исход обновлен. Сохраняем черновик...");
         } else {
             items.set(item.matchId, item);
             renderItem(item);
-            setNote("Игра добавлена. Укажите уверенность в прогнозе.");
+            setNote("Игра добавлена в прогноз.");
         }
 
         if (sidebar && sidebar.classList.contains("is-collapsed")) {
@@ -565,7 +530,8 @@
         }
 
         draftId = draft.id || null;
-        stakeInput.value = draft.stake || "";
+        if (stakeInput) stakeInput.value = draft.stake || "";
+        if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
 
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -593,6 +559,12 @@
         scheduleDraftSync();
     });
 
+    confidenceInput?.addEventListener("input", () => {
+        updateConfidenceVisual();
+        updateState();
+        scheduleDraftSync();
+    });
+
     document.querySelectorAll("[data-bet-option]").forEach((button) => {
         button.addEventListener("click", () => {
             const group = button.closest("[data-match-bets]");
@@ -604,22 +576,22 @@
     form.addEventListener("submit", (event) => {
         event.preventDefault();
         if (!canWrite) {
-            setNote("Сохранять купоны могут только эксперты.", "error");
+            setNote("Сохранять прогнозы могут только эксперты.", "error");
             return;
         }
-        if (items.size < 1 || items.size > 5) {
-            setNote("В купоне должно быть от 1 до 5 игр.", "error");
+        if (items.size < 1 || items.size > 20) {
+            setNote("В прогнозе должно быть от 1 до 20 игр.", "error");
             return;
         }
         if (!couponIsComplete()) {
-            setNote("Укажите сумму и уверенность для каждого прогноза.", "error");
+            setNote("Укажите сумму и общую уверенность в прогнозе.", "error");
             return;
         }
 
         saveLocalSnapshot(true);
         const checking = [...items.values()].some(itemNeedsRemoteCheck);
         setSubmitLoading(true, checking);
-        setNote(checking ? "Проверяем актуальное состояние матчей..." : "Сохраняем купон...");
+        setNote(checking ? "Проверяем актуальное состояние матчей..." : "Сохраняем прогноз...");
         syncDraft(true);
     });
 
