@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/expert-public.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/expert-achievements.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/expert-public-predictions.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -259,6 +260,25 @@
         <div class="expert-public-grid">
             {% for prediction in latest_predictions %}
             <article class="expert-public-prediction-card">
+                <div class="expert-public-prediction-topline">
+                    {% if prediction.state_status == "win" %}
+                        <span class="expert-public-prediction-status is-win">Выиграл</span>
+                    {% elif prediction.state_status == "lose" %}
+                        <span class="expert-public-prediction-status is-lose">Проиграл</span>
+                    {% elif prediction.state_status == "refund" %}
+                        <span class="expert-public-prediction-status is-refund">Возврат</span>
+                    {% else %}
+                        <span class="expert-public-prediction-status is-pending">Ожидается</span>
+                    {% endif %}
+                    {% if prediction.match.score %}
+                    <div class="expert-public-score-box">
+                        <span>Счёт</span>
+                        <strong>{{ prediction.match.score }}</strong>
+                        {% if prediction.match.live_minute_label %}<small>{{ prediction.match.live_minute_label }}</small>{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
                 <a class="expert-public-match" href="{{ prediction.match.get_absolute_url }}">
                     <div class="expert-public-league">
                         <span class="expert-public-league-logo">
@@ -273,14 +293,13 @@
                             {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
                         </div>
                     </div>
-                    <div class="expert-public-teams">
+                    <div class="expert-public-teams expert-public-teams-no-score">
                         <div>
                             <span class="expert-public-team-logo">
                                 {% if prediction.match.home_team_logo %}<img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">{% else %}{{ prediction.match.home_team_name|slice:":1" }}{% endif %}
                             </span>
                             <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
                         </div>
-                        <span class="expert-public-score">{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</span>
                         <div>
                             <span class="expert-public-team-logo">
                                 {% if prediction.match.away_team_logo %}<img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">{% else %}{{ prediction.match.away_team_name|slice:":1" }}{% endif %}
