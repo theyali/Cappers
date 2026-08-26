@@ -26,6 +26,15 @@
     const svg = root.querySelector("svg");
     const buttons = Array.from(root.querySelectorAll("[data-profit-days]"));
 
+    buttons.forEach((button) => {
+        button.style.border = "0";
+        button.style.appearance = "none";
+        button.style.webkitAppearance = "none";
+    });
+    document.querySelectorAll(".expert-follow-button").forEach((button) => {
+        button.style.border = "0";
+    });
+
     const signed = (value) => {
         const number = Number(value || 0);
         const prefix = number > 0 ? "+" : "";
@@ -87,7 +96,12 @@
         root.classList.toggle("is-positive", finalValue > 0);
         root.classList.toggle("is-negative", finalValue < 0);
 
-        if (valueNode) valueNode.textContent = signed(finalValue);
+        const lineColor = finalValue > 0 ? "var(--green)" : finalValue < 0 ? "var(--danger)" : "var(--blue)";
+        if (path) path.style.stroke = lineColor;
+        if (valueNode) {
+            valueNode.textContent = signed(finalValue);
+            valueNode.style.color = lineColor;
+        }
         if (captionNode) captionNode.textContent = `за последние ${days} дней`;
         if (startNode) startNode.textContent = chartPoints[0]?.label || "—";
         if (maxNode) maxNode.textContent = compact(geometry.max);
