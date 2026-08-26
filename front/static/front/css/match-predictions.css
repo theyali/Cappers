@@ -141,6 +141,7 @@
 
 .match-prediction-verified {
     display: inline !important;
+    margin: 0 0 0 4px !important;
     color: var(--blue) !important;
 }
 
@@ -257,6 +258,10 @@
     border-radius: 14px;
     background: #171718;
     text-align: center;
+}
+
+.match-predictions-loader[hidden] {
+    display: none;
 }
 
 .match-predictions-loader {
