@@ -1,0 +1,49 @@
+.match-card-options .coupon-option {
+    position: relative;
+}
+
+.match-card-options.is-locked .coupon-option,
+.match-card-options.is-readonly .coupon-option {
+    opacity: 1;
+    cursor: default;
+}
+
+.match-card-options.is-locked .coupon-option {
+    color: rgba(255, 255, 255, .48);
+    background: #262628;
+}
+
+.match-card-options.is-locked .coupon-option small {
+    color: rgba(255, 255, 255, .34);
+}
+
+.match-card-options.is-locked .coupon-option:hover,
+.match-card-options.is-readonly .coupon-option:hover {
+    transform: none;
+}
+
+.match-card-options.is-locked .coupon-option:disabled,
+.match-card-options.is-readonly .coupon-option:disabled {
+    opacity: 1;
+}
+
+.match-odd-lock {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 15px;
+    height: 15px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.match-odd-lock svg {
+    width: 100%;
+    height: 100%;
+}
+
+.match-card-options.is-locked {
+    opacity: .88;
+}
