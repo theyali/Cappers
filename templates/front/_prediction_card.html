@@ -1,6 +1,6 @@
 <article
     class="prediction-card prediction-card-rich{% if prediction_card_match_context %} match-prediction-card prediction-card-match-context{% endif %}{% if prediction.is_own %} is-own-prediction{% elif prediction.is_following_author %} is-followed-prediction{% endif %}"
-    data-prediction-card="{{ prediction.id }}"
+    data-prediction-card="{{ prediction.coupon.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
 >
     <div class="prediction-card-head">
@@ -138,7 +138,7 @@
             type="button"
             data-prediction-reaction
             data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-            data-url="{% url 'front:prediction_like' prediction_id=prediction.id %}"
+            data-url="{% url 'front:prediction_like' prediction_id=prediction.coupon.id %}"
             data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
             aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
             title="{% if prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
@@ -154,7 +154,7 @@
             type="button"
             data-prediction-reaction
             data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
-            data-url="{% url 'front:prediction_favorite' prediction_id=prediction.id %}"
+            data-url="{% url 'front:prediction_favorite' prediction_id=prediction.coupon.id %}"
             data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
             aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
             title="{% if prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
