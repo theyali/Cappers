@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -33,7 +34,7 @@
     {% if page_obj.object_list %}
     <div class="predictions-grid">
         {% for prediction in page_obj.object_list %}
-        <article class="prediction-card">
+        <article class="prediction-card prediction-card-rich">
             <div class="prediction-card-head">
                 <div class="prediction-expert">
                     <span class="prediction-expert-avatar">
@@ -60,30 +61,88 @@
                 {% endif %}
             </div>
 
-            <a class="prediction-match" href="{{ prediction.match.get_absolute_url }}">
-                <div class="prediction-match-meta">
-                    <span>{{ prediction.match.league_name|default:"Лига" }}</span>
-                    {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+            <a class="prediction-match-visual" href="{{ prediction.match.get_absolute_url }}">
+                <div class="prediction-league-row">
+                    <div class="prediction-league-info">
+                        <span class="prediction-league-logo">
+                            {% if prediction.match.league and prediction.match.league.logo %}
+                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                            {% endif %}
+                        </span>
+                        <div>
+                            <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
+                            {% if prediction.match.league_country %}<span>{{ prediction.match.league_country }}</span>{% endif %}
+                        </div>
+                    </div>
+                    {% if prediction.match.starts_at %}
+                        <time datetime="{{ prediction.match.starts_at|date:'c' }}">{{ prediction.match.starts_at|date:"d.m H:i" }}</time>
+                    {% endif %}
                 </div>
-                <h2>{{ prediction.match.home_team_name }} — {{ prediction.match.away_team_name }}</h2>
+
+                <div class="prediction-scoreboard">
+                    <div class="prediction-team prediction-team-home">
+                        <span class="prediction-team-logo">
+                            {% if prediction.match.home_team_logo %}
+                                <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                            {% endif %}
+                        </span>
+                        <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
+                    </div>
+
+                    <div class="prediction-score-center">
+                        <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
+                        {% if prediction.match.live_minute_label %}
+                            <span>{{ prediction.match.live_minute_label }}</span>
+                        {% elif prediction.match.sync_scope == "live" and prediction.match.live_minute %}
+                            <span>{{ prediction.match.live_minute }}′</span>
+                        {% elif prediction.match.sync_scope == "finished" %}
+                            <span>Матч завершён</span>
+                        {% else %}
+                            <span>{{ prediction.match.get_sync_scope_display }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="prediction-team prediction-team-away">
+                        <span class="prediction-team-logo">
+                            {% if prediction.match.away_team_logo %}
+                                <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                            {% endif %}
+                        </span>
+                        <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
+                    </div>
+                </div>
             </a>
 
-            <div class="prediction-pick">
+            <div class="prediction-pick prediction-pick-rich">
                 <div>
                     <small>{{ prediction.market }}</small>
                     <strong>{{ prediction.selection }}</strong>
                 </div>
-                <b>{{ prediction.coefficient }}</b>
+                <div class="prediction-odd-value">
+                    <span>КФ</span>
+                    <b>{{ prediction.coefficient }}</b>
+                </div>
             </div>
 
             {% if prediction.comment %}
                 <p class="prediction-comment">{{ prediction.comment|truncatechars:150 }}</p>
             {% endif %}
 
-            <div class="prediction-card-foot">
-                <span>{{ prediction.created_at|date:"d.m.Y H:i" }}</span>
-                <a href="{{ prediction.match.get_absolute_url }}">Открыть матч →</a>
+            <div class="prediction-published-at">
+                <span>Опубликовано</span>
+                <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y H:i" }}</time>
             </div>
+
+            <a class="prediction-open-match" href="{{ prediction.match.get_absolute_url }}">
+                <span>Открыть матч</span>
+                <span aria-hidden="true">→</span>
+            </a>
         </article>
         {% endfor %}
     </div>
