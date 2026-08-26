@@ -121,7 +121,7 @@ class ExpertAchievementTests(TestCase):
                 selection="ТБ 2.5",
                 coefficient=Decimal("2.00"),
                 stake=Decimal("100.00"),
-                comment="Тест достижения",
+                confidence=70,
                 state_status=state,
             )
 
@@ -158,7 +158,7 @@ class ExpertAchievementTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal("1.30"),
             stake=Decimal("100.00"),
-            comment="Тест",
+            confidence=75,
             state_status=Prediction.StateStatus.WIN,
         )
 
