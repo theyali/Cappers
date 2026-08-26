@@ -5,6 +5,7 @@ from django.db.models import Count, Max, Q
 from django.shortcuts import render
 from django.utils import timezone
 
+from cabinet.achievements import build_achievement_overview
 from cabinet.models import AnalystProfile, User
 from game.models import Prediction, PredictionCoupon
 
@@ -265,6 +266,14 @@ def cappers_stats(request):
     experts = []
     for profile in profiles:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        achievement_overview = build_achievement_overview(
+            profile.user,
+            followers_count=profile.followers_count,
+            is_verified=profile.is_verified,
+        )
+        unlocked_achievements = [
+            item for item in achievement_overview["items"] if item["unlocked"]
+        ]
         experts.append(
             {
                 "name": name,
@@ -279,6 +288,7 @@ def cappers_stats(request):
                 "recent_publications": profile.recent_publications_count,
                 "last_publication_at": profile.last_publication_at,
                 "joined_at": profile.created_at,
+                "latest_achievements": list(reversed(unlocked_achievements[-5:])),
             }
         )
 
