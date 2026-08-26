@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST, require_http_methods
@@ -71,6 +71,24 @@ def _profile_completion(user, analyst_profile) -> int:
     return round(sum(checks) / len(checks) * 100)
 
 
+def _coupon_result_from_counts(coupon) -> tuple[str, str]:
+    if coupon.published_status == PredictionCoupon.PublishedStatus.CANCELED:
+        return "canceled", "Отменен"
+    if coupon.published_status == PredictionCoupon.PublishedStatus.DRAFT:
+        return "draft", "Черновик"
+
+    if coupon.lose_count:
+        return "lost", "Проиграл"
+
+    settled_count = coupon.win_count + coupon.refund_count
+    if coupon.predictions_count and settled_count == coupon.predictions_count:
+        if coupon.win_count:
+            return "won", "Выиграл"
+        return "refund", "Возврат"
+
+    return "pending", "Ожидает"
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def profile(request):
@@ -124,16 +142,36 @@ def profile(request):
         "analyst__analyst_profile",
     )
 
-    my_coupons = PredictionCoupon.objects.none()
+    my_coupons = []
     coupons_count = 0
     predictions_count = 0
     if request.user.role == User.Role.ANALYST:
-        my_coupons = (
+        my_coupons = list(
             PredictionCoupon.objects.filter(author=request.user)
-            .annotate(predictions_count=Count("predictions", distinct=True))
+            .annotate(
+                predictions_count=Count("predictions", distinct=True),
+                win_count=Count(
+                    "predictions",
+                    filter=Q(predictions__state_status=Prediction.StateStatus.WIN),
+                    distinct=True,
+                ),
+                lose_count=Count(
+                    "predictions",
+                    filter=Q(predictions__state_status=Prediction.StateStatus.LOSE),
+                    distinct=True,
+                ),
+                refund_count=Count(
+                    "predictions",
+                    filter=Q(predictions__state_status=Prediction.StateStatus.REFUND),
+                    distinct=True,
+                ),
+            )
             .order_by("-created_at", "-id")
         )
-        coupons_count = my_coupons.count()
+        for coupon in my_coupons:
+            coupon.result_key, coupon.result_label = _coupon_result_from_counts(coupon)
+
+        coupons_count = len(my_coupons)
         predictions_count = Prediction.objects.filter(coupon__author=request.user).count()
 
     context = {
