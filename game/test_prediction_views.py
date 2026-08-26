@@ -25,6 +25,7 @@ class MatchPredictionDistributionTests(TestCase):
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             total_stake=Decimal("10.00"),
             possible_payout=Decimal("20.00"),
+            confidence=72,
         )
         return Prediction.objects.create(
             coupon=coupon,
@@ -33,7 +34,6 @@ class MatchPredictionDistributionTests(TestCase):
             selection=selection,
             coefficient=Decimal("2.00"),
             stake=Decimal("10.00"),
-            confidence=72,
         )
 
     def test_endpoint_returns_percentage_distribution_for_all_published_predictions(self):
