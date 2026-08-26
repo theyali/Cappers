@@ -86,6 +86,24 @@
     background: var(--blue);
 }
 
+.profile-coupon-status.is-won,
+.coupon-detail-status.is-won {
+    color: #fff;
+    background: var(--green);
+}
+
+.profile-coupon-status.is-lost,
+.coupon-detail-status.is-lost {
+    color: #fff;
+    background: var(--danger);
+}
+
+.profile-coupon-status.is-refund,
+.coupon-detail-status.is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
 .profile-coupon-status.is-canceled,
 .coupon-detail-status.is-canceled {
     color: #fff;
