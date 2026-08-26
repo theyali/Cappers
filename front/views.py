@@ -5,7 +5,7 @@ from django.db.models import Count, Max, Q
 from django.shortcuts import render
 from django.utils import timezone
 
-from cabinet.achievements import build_achievement_overview
+from cabinet.achievements import build_achievement_badges
 from cabinet.models import AnalystProfile, User
 from game.models import Prediction, PredictionCoupon
 
@@ -213,6 +213,31 @@ def predictions(request):
     )
 
 
+def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
+    if not author_ids:
+        return {}
+
+    rows = (
+        Prediction.objects.filter(
+            coupon__author_id__in=author_ids,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status__in=[Prediction.StateStatus.WIN, Prediction.StateStatus.LOSE],
+        )
+        .order_by("coupon__author_id", "updated_at", "id")
+        .values_list("coupon__author_id", "state_status")
+    )
+
+    best: dict[int, int] = {}
+    current: dict[int, int] = {}
+    for author_id, state in rows:
+        if state == Prediction.StateStatus.WIN:
+            current[author_id] = current.get(author_id, 0) + 1
+            best[author_id] = max(best.get(author_id, 0), current[author_id])
+        else:
+            current[author_id] = 0
+    return best
+
+
 def cappers_stats(request):
     recent_cutoff = timezone.now() - timedelta(days=30)
     published_filter = Q(
@@ -230,6 +255,14 @@ def cappers_stats(request):
             publications_count=Count(
                 "user__prediction_coupons__predictions",
                 filter=published_filter,
+                distinct=True,
+            ),
+            wins_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=published_filter
+                & Q(
+                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN
+                ),
                 distinct=True,
             ),
             sports_count=Count(
@@ -263,17 +296,19 @@ def cappers_stats(request):
         )
     )
 
+    best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
+
     experts = []
     for profile in profiles:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
-        achievement_overview = build_achievement_overview(
-            profile.user,
+        unlocked_achievements = build_achievement_badges(
+            predictions_count=profile.publications_count,
+            wins_count=profile.wins_count,
+            overall_roi=profile.author_roi,
             followers_count=profile.followers_count,
+            best_win_streak=best_streaks.get(profile.user_id, 0),
             is_verified=profile.is_verified,
         )
-        unlocked_achievements = [
-            item for item in achievement_overview["items"] if item["unlocked"]
-        ]
         experts.append(
             {
                 "name": name,
