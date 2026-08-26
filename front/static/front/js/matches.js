@@ -80,7 +80,6 @@
     const countNode = root.querySelector("[data-coupon-count]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
     const commentInput = root.querySelector("[data-coupon-comment]");
-    const titleInput = form.elements.title;
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
     const totalNode = root.querySelector("[data-coupon-total]");
     const noteNode = root.querySelector("[data-coupon-note]");
@@ -118,6 +117,7 @@
     );
 
     const setNote = (message, state = "") => {
+        if (!noteNode) return;
         noteNode.textContent = message;
         noteNode.classList.toggle("is-error", state === "error");
         noteNode.classList.toggle("is-success", state === "success");
@@ -138,8 +138,8 @@
             ? [...items.values()].reduce((product, item) => product * toNumber(item.coefficient, 2), 1)
             : 0;
         const stake = toNumber(stakeInput?.value);
-        coefficientNode.textContent = formatOdd(coefficient);
-        totalNode.textContent = formatMoney(stake * coefficient);
+        if (coefficientNode) coefficientNode.textContent = formatOdd(coefficient);
+        if (totalNode) totalNode.textContent = formatMoney(stake * coefficient);
     };
 
     const readOdd = (value) => {
@@ -163,15 +163,17 @@
 
     const updateState = () => {
         root.classList.toggle("has-coupon", items.size > 0);
-        countNode.textContent = `${items.size}/5`;
-        submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
+        if (countNode) countNode.textContent = `${items.size}/5`;
+        if (submitButton) {
+            submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
+        }
         formatTotal();
         updateMatchButtons();
     };
 
     const buildItem = (group, option) => ({
         matchId: group.dataset.matchId,
-        title: group.dataset.title,
+        matchTitle: group.dataset.title,
         league: group.dataset.league,
         time: group.dataset.time,
         betKey: option.dataset.betKey,
@@ -182,13 +184,21 @@
         lastSeen: group.dataset.lastSeen || "",
     });
 
+    const normalizeDraftItem = (rawItem) => ({
+        ...rawItem,
+        matchId: String(rawItem.matchId),
+        matchTitle: rawItem.matchTitle || rawItem.title || "",
+        coefficient: readOdd(rawItem.coefficient),
+        lastSeen: rawItem.lastSeen || "",
+    });
+
     const updateCouponItem = (node, item) => {
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
         node.querySelector("[data-coupon-short]").textContent = item.shortLabel;
         node.querySelector("[data-coupon-item-odd]").textContent = formatOdd(item.coefficient);
         const titleText = node.querySelector(".coupon-item-title strong");
         const metaText = node.querySelector(".coupon-item-title span");
-        if (titleText) titleText.textContent = item.title;
+        if (titleText) titleText.textContent = item.matchTitle;
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
     };
 
@@ -196,7 +206,6 @@
         if (!canWrite) return;
         const snapshot = {
             id: draftId,
-            title: titleInput?.value || "",
             stake: stakeInput?.value || "",
             comment: commentInput?.value || "",
             items: [...items.values()],
@@ -204,7 +213,7 @@
             savedAt: Date.now(),
         };
         try {
-            if (!snapshot.items.length && !snapshot.title && !snapshot.stake && !snapshot.comment) {
+            if (!snapshot.items.length && !snapshot.stake && !snapshot.comment) {
                 localStorage.removeItem(storageKey);
             } else {
                 localStorage.setItem(storageKey, JSON.stringify(snapshot));
@@ -289,7 +298,6 @@
     const payloadFromState = (autosave) => ({
         coupon_id: draftId,
         autosave,
-        title: titleInput?.value || "",
         stake: stakeInput?.value || "",
         comment: commentInput?.value || "",
         items: [...items.values()].map((item) => ({
@@ -308,11 +316,10 @@
         }
 
         draftId = draft.id || draftId;
-        if (typeof draft.title === "string" && draft.title && !titleInput.value.trim()) {
-            titleInput.value = draft.title;
-        }
-
-        const serverItems = new Map((draft.items || []).map((item) => [String(item.matchId), item]));
+        const serverItems = new Map((draft.items || []).map((rawItem) => {
+            const item = normalizeDraftItem(rawItem);
+            return [String(item.matchId), item];
+        }));
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
             if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
@@ -324,7 +331,6 @@
         draftId = null;
         items.clear();
         itemsRoot.replaceChildren();
-        if (titleInput) titleInput.value = "";
         if (stakeInput) stakeInput.value = "";
         if (commentInput) commentInput.value = "";
         try {
@@ -342,6 +348,7 @@
     };
 
     const setSubmitLoading = (isLoading, checking = false) => {
+        if (!submitButton) return;
         submitButton.classList.toggle("is-loading", isLoading);
         submitButton.setAttribute("aria-busy", String(isLoading));
         if (submitStatus) {
@@ -502,17 +509,11 @@
         }
 
         draftId = draft.id || null;
-        titleInput.value = draft.title || "";
         stakeInput.value = draft.stake || "";
         commentInput.value = draft.comment || "";
 
         draft.items.forEach((rawItem) => {
-            const item = {
-                ...rawItem,
-                matchId: String(rawItem.matchId),
-                coefficient: readOdd(rawItem.coefficient),
-                lastSeen: rawItem.lastSeen || "",
-            };
+            const item = normalizeDraftItem(rawItem);
             items.set(item.matchId, item);
             renderItem(item);
         });
@@ -545,8 +546,6 @@
         updateState();
         scheduleDraftSync();
     });
-
-    titleInput?.addEventListener("input", scheduleDraftSync);
 
     document.querySelectorAll("[data-bet-option]").forEach((button) => {
         button.addEventListener("click", () => {
