@@ -322,18 +322,21 @@
                 </div>
 
                 <a class="expert-public-match" href="{{ prediction.match.get_absolute_url }}">
-                    <div class="expert-public-league">
-                        <span class="expert-public-league-logo">
-                            {% if prediction.match.league and prediction.match.league.logo %}
-                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.league_name|default:"Л"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <div>
-                            <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                            {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+                    <div class="expert-public-match-head">
+                        <div class="expert-public-league">
+                            <span class="expert-public-league-logo">
+                                {% if prediction.match.league and prediction.match.league.logo %}
+                                    <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <div>
+                                <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
+                                {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+                            </div>
                         </div>
+                        <span class="match-status match-status-{{ prediction.match.sync_scope }}">{{ prediction.match.get_sync_scope_display }}</span>
                     </div>
                     <div class="expert-public-teams expert-public-teams-no-score">
                         <div>
