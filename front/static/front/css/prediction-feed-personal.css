@@ -1,59 +1,3 @@
-.prediction-author-row {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1 1 auto;
-}
-
-.prediction-author-row .prediction-expert {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-.prediction-owner-label,
-.prediction-follow-button {
-    min-height: 30px;
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 10px;
-    border: 0;
-    border-radius: 9px;
-    font-size: 10px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.prediction-owner-label {
-    color: var(--ink);
-    background: var(--yellow);
-}
-
-.prediction-follow-button {
-    color: #fff;
-    background: var(--blue);
-    cursor: pointer;
-    transition: transform .18s ease, background .18s ease, opacity .18s ease;
-}
-
-.prediction-follow-button:hover {
-    transform: translateY(-1px);
-    background: #2168ff;
-}
-
-.prediction-follow-button.is-active {
-    color: var(--ink);
-    background: var(--yellow);
-}
-
-.prediction-follow-button:disabled {
-    cursor: wait;
-    opacity: .58;
-    transform: none;
-}
-
 .favorites-empty-action {
     min-height: 44px;
     display: inline-flex;
@@ -64,20 +8,4 @@
     border-radius: 10px;
     color: #fff;
     background: var(--blue);
-}
-
-@media (max-width: 660px) {
-    .prediction-card-head {
-        align-items: flex-start;
-    }
-
-    .prediction-author-row {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .prediction-follow-button,
-    .prediction-owner-label {
-        margin-left: 52px;
-    }
 }
