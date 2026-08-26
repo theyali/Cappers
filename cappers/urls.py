@@ -12,6 +12,7 @@ def healthcheck(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("tinymce/", include("tinymce.urls")),
     path("health/", healthcheck, name="healthcheck"),
     path("", include("front.urls")),
     path("cabinet/", include("cabinet.urls")),

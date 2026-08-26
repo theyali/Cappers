@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/home.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-latest.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/home-articles.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -175,4 +176,62 @@
         </section>
     </aside>
 </section>
+
+<section class="home-articles" aria-labelledby="home-articles-title" data-article-slider>
+    <header class="home-articles-head">
+        <div>
+            <p class="home-eyebrow">Редакция</p>
+            <h2 id="home-articles-title">Новые статьи</h2>
+            <p>Разборы матчей, полезные материалы и идеи от команды КапперХаб.</p>
+        </div>
+        <div class="home-articles-actions">
+            <a href="{% url 'front:articles' %}">Все статьи</a>
+            {% if latest_articles|length > 1 %}
+            <button type="button" data-article-prev aria-label="Предыдущая статья">←</button>
+            <button class="is-accent" type="button" data-article-next aria-label="Следующая статья">→</button>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if latest_articles %}
+    <div class="home-articles-window" data-article-window>
+        <div class="home-articles-track" data-article-track>
+            {% for article in latest_articles %}
+            <article class="home-article-card" data-article-card>
+                <a class="home-article-image" href="{{ article.get_absolute_url }}">
+                    {% if article.image %}
+                        <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+                    {% else %}
+                        <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                    {% endif %}
+                </a>
+                <div class="home-article-copy">
+                    <div class="home-article-meta">
+                        <span>{{ article.created_at|date:"d.m.Y" }}</span>
+                        <span>Статья</span>
+                    </div>
+                    <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
+                    <p>{{ article.description|truncatechars:150 }}</p>
+                    <a class="home-article-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="home-articles-footer">
+        <div class="home-article-dots" data-article-dots aria-label="Навигация по статьям"></div>
+        <span><b data-article-current>01</b> / {{ latest_articles|length|stringformat:"02d" }}</span>
+    </div>
+    {% else %}
+    <div class="home-articles-empty">
+        <strong>Статьи скоро появятся</strong>
+        <p>Добавьте первую статью через админку — она автоматически попадёт на главную.</p>
+        <a href="{% url 'front:articles' %}">Открыть раздел →</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/article-slider.js' %}" defer></script>
 {% endblock %}

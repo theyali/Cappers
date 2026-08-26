@@ -1,7 +1,31 @@
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
+from tinymce.models import HTMLField
 
 from game.models import Prediction
+
+
+class Article(models.Model):
+    title = models.CharField("Заголовок", max_length=220)
+    slug = models.SlugField("Slug", max_length=240, unique=True)
+    description = models.TextField("Краткое описание", max_length=700)
+    image = models.ImageField("Изображение", upload_to="articles/%Y/%m/", blank=True, null=True)
+    content = HTMLField("Контент")
+    is_published = models.BooleanField("Опубликована", default=True, db_index=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Статья"
+        verbose_name_plural = "Статьи"
+        ordering = ("-created_at", "-id")
+
+    def __str__(self) -> str:
+        return self.title
+
+    def get_absolute_url(self) -> str:
+        return reverse("front:article_detail", kwargs={"slug": self.slug})
 
 
 class PredictionLike(models.Model):

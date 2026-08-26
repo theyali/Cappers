@@ -2,7 +2,7 @@ from django.urls import path
 
 from cabinet import public_views as cabinet_public_views
 
-from . import home_views, how_views, prediction_views, views
+from . import article_views, home_views, how_views, prediction_views, views
 
 app_name = "front"
 
@@ -10,6 +10,8 @@ urlpatterns = [
     path("", home_views.index, name="index"),
     path("predictions/", prediction_views.predictions, name="predictions"),
     path("favorites/", prediction_views.favorites, name="favorites"),
+    path("articles/", article_views.articles, name="articles"),
+    path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     path(
         "predictions/<int:prediction_id>/like/",
         prediction_views.toggle_prediction_like,

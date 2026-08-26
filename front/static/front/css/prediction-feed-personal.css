@@ -54,27 +54,6 @@
     transform: none;
 }
 
-.prediction-card.is-own-prediction {
-    background: #18284b;
-}
-
-.prediction-card.is-own-prediction:hover {
-    background: #1c315d;
-}
-
-.prediction-card.is-followed-prediction {
-    background: #253023;
-}
-
-.prediction-card.is-followed-prediction:hover {
-    background: #2b3828;
-}
-
-.prediction-card.is-own-prediction .prediction-match-visual,
-.prediction-card.is-followed-prediction .prediction-match-visual {
-    background: #171718;
-}
-
 .favorites-empty-action {
     min-height: 44px;
     display: inline-flex;

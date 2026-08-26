@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "tinymce",
     "django_celery_beat",
     "cabinet.apps.CabinetConfig",
     "game.apps.GameConfig",
@@ -122,6 +123,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
+TINYMCE_DEFAULT_CONFIG = {
+    "height": 560,
+    "menubar": True,
+    "plugins": "advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount",
+    "toolbar": "undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media table | blockquote code | removeformat fullscreen",
+    "content_style": "body { font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; }",
 }
 
 EMAIL_BACKEND = os.getenv(

@@ -2,11 +2,13 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile
+from front.models import Article
 from front.views import _initials, _top_experts
 from game.models import Prediction, PredictionCoupon
 
 
 HOME_PREDICTIONS_LIMIT = 5
+HOME_ARTICLES_LIMIT = 6
 
 
 def _logo_url(primary: str, related) -> str:
@@ -97,5 +99,6 @@ def index(request):
         {
             "latest_predictions": _latest_home_predictions(),
             "top_experts": _top_experts(),
+            "latest_articles": Article.objects.filter(is_published=True).order_by("-created_at", "-id")[:HOME_ARTICLES_LIMIT],
         },
     )
