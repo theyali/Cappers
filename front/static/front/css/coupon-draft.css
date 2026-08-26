@@ -63,6 +63,11 @@
     background: #242426;
 }
 
+.coupon-confidence-global {
+    padding: 14px;
+    background: #171718;
+}
+
 .coupon-confidence-head,
 .sidebar-prediction-confidence {
     display: flex;
@@ -106,6 +111,12 @@
     border-radius: inherit;
     background: var(--blue);
     transition: width .16s ease;
+}
+
+.coupon-confidence-hint {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
 }
 
 .sidebar-prediction-confidence {
