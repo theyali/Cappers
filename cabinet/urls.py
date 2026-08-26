@@ -10,6 +10,7 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("coupons/<int:coupon_id>/", views.coupon_detail, name="coupon_detail"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
     path("profile/avatar/", views.upload_avatar, name="avatar_upload"),
     path("profile/follow/<int:user_id>/", views.follow_analyst, name="follow_analyst"),
