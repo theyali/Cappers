@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from game.models import Prediction, PredictionCoupon
@@ -14,6 +15,7 @@ def _initials(name: str) -> str:
     return "".join(part[0] for part in parts[:2]).upper() or "К"
 
 
+@ensure_csrf_cookie
 def expert_profile(request, username: str):
     profile = get_object_or_404(
         AnalystProfile.objects.select_related("user"),
