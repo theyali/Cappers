@@ -91,11 +91,13 @@ class MatchOddsAdmin(admin.ModelAdmin):
     readonly_fields = ("raw_data", "extra_markets")
 
 
-class PredictionInline(admin.TabularInline):
+class PredictionItemInline(admin.TabularInline):
     model = Prediction
     extra = 0
     autocomplete_fields = ("match",)
-    fields = ("match", "market", "selection", "coefficient", "stake", "confidence", "state_status")
+    fields = ("match", "market", "selection", "coefficient", "stake", "state_status")
+    verbose_name = "Позиция прогноза"
+    verbose_name_plural = "Позиции прогноза"
 
 
 @admin.register(PredictionCoupon)
@@ -103,6 +105,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "author",
+        "confidence",
         "published_status",
         "state_status",
         "total_stake",
@@ -112,12 +115,22 @@ class PredictionCouponAdmin(admin.ModelAdmin):
     )
     list_filter = ("published_status", "state_status", "created_at", "settled_at")
     search_fields = ("author__username",)
-    inlines = (PredictionInline,)
+    fields = (
+        "author",
+        "confidence",
+        "published_status",
+        "state_status",
+        "total_stake",
+        "possible_payout",
+        "published_at",
+        "settled_at",
+    )
+    inlines = (PredictionItemInline,)
 
 
 @admin.register(Prediction)
-class PredictionAdmin(admin.ModelAdmin):
-    list_display = ("id", "coupon", "match", "market", "selection", "stake", "confidence", "state_status")
+class PredictionItemAdmin(admin.ModelAdmin):
+    list_display = ("id", "coupon", "match", "market", "selection", "stake", "state_status")
     list_filter = ("state_status", "market")
     search_fields = (
         "coupon__author__username",
