@@ -77,7 +77,7 @@ class PredictionFiltersTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal(coefficient),
             stake=Decimal("100.00"),
-            comment="Тест",
+            confidence=76,
             state_status=state,
         )
 
