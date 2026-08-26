@@ -46,7 +46,6 @@
 
     <div class="match-prediction-foot">
         <span>{{ prediction.created_at|date:"d.m.Y H:i" }}</span>
-        {% if prediction.coupon.title %}<strong>{{ prediction.coupon.title }}</strong>{% endif %}
     </div>
 </article>
 {% endfor %}
