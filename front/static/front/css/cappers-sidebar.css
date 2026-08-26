@@ -200,36 +200,6 @@
     line-height: 1.4;
 }
 
-.telegram-capper-banner {
-    min-height: 158px;
-    display: grid;
-    place-items: center;
-    align-content: center;
-    gap: 10px;
-    padding: 20px;
-    border-radius: 18px;
-    color: #fff;
-    background: var(--blue);
-    text-align: center;
-    transition: transform .18s ease, background .18s ease;
-}
-
-.telegram-capper-banner:hover {
-    transform: translateY(-1px);
-    background: #2168ff;
-}
-
-.telegram-capper-banner svg {
-    width: 38px;
-    height: 38px;
-    fill: currentColor;
-}
-
-.telegram-capper-banner strong {
-    max-width: 240px;
-    font-size: 21px;
-    line-height: 1.16;
-}
 
 @media (max-width: 1080px) {
     .cappers-page.cappers-layout {
@@ -258,9 +228,5 @@
 
     .bookmaker-logo {
         width: 72px;
-    }
-
-    .telegram-capper-banner {
-        min-height: 132px;
     }
 }
