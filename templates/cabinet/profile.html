@@ -5,6 +5,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/profile.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/profile-achievements.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -74,6 +75,11 @@
                     <span>Прогнозы</span>
                     <strong>{{ predictions_count }}</strong>
                 </a>
+                <a class="profile-stat-pill {% if active_tab == 'achievements' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=achievements" data-profile-tab-link>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8M9 16h6v5H9z"></path></svg>
+                    <span>Достижения</span>
+                    <strong>{{ achievement_overview.unlocked_count }}/{{ achievement_overview.total_count }}</strong>
+                </a>
                 <div class="profile-stat-pill">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="m3 16 9 5 9-5"></path><path d="m3 12 9 5 9-5"></path></svg>
                     <span>Роль</span>
@@ -88,6 +94,7 @@
         <a class="{% if active_tab == 'profile' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=profile" data-profile-tab-link>Профиль</a>
         {% if request.user.is_analyst %}
             <a class="{% if active_tab == 'predictions' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>Мои прогнозы</a>
+            <a class="{% if active_tab == 'achievements' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=achievements" data-profile-tab-link>Достижения</a>
             <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
         {% endif %}
         <a class="{% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>Подписки</a>
@@ -225,6 +232,80 @@
                 <p>У вас пока нет купонов. Созданные черновики и опубликованные купоны будут показываться здесь.</p>
             </div>
             {% endif %}
+        </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'achievements' %}is-active{% endif %}" id="profile-tab-achievements" data-profile-tab-panel="achievements">
+        <div class="profile-achievements-shell">
+            <div class="profile-achievements-head">
+                <div>
+                    <p class="eyebrow">Ваш прогресс</p>
+                    <h2>Достижения</h2>
+                    <p>Здесь видно, какие ачивки уже получены и сколько осталось до следующих.</p>
+                </div>
+                <div class="profile-achievements-total">
+                    <strong>{{ achievement_overview.unlocked_count }}/{{ achievement_overview.total_count }}</strong>
+                    <span>получено</span>
+                </div>
+            </div>
+
+            <div class="profile-achievements-overall">
+                <div>
+                    <span>Общий прогресс</span>
+                    <strong>{{ achievement_overview.completion_percent }}%</strong>
+                </div>
+                <div class="profile-achievements-track"><i style="width: {{ achievement_overview.completion_percent }}%"></i></div>
+            </div>
+
+            {% if achievement_overview.next_achievement %}
+            <article class="profile-next-achievement">
+                <span class="profile-next-achievement-icon">
+                    <img src="{% static achievement_overview.next_achievement.icon %}" alt="">
+                </span>
+                <div>
+                    <span>Ближайшая ачивка</span>
+                    <strong>{{ achievement_overview.next_achievement.label }}</strong>
+                    <small>{{ achievement_overview.next_achievement.description }}</small>
+                </div>
+                <div class="profile-next-achievement-progress">
+                    <strong>{{ achievement_overview.next_achievement.progress }}%</strong>
+                    <span>{{ achievement_overview.next_achievement.current_label }} / {{ achievement_overview.next_achievement.target_label }}</span>
+                </div>
+            </article>
+            {% else %}
+            <article class="profile-next-achievement is-complete">
+                <div>
+                    <span>Коллекция завершена</span>
+                    <strong>Все достижения получены</strong>
+                    <small>Вы открыли все доступные ачивки.</small>
+                </div>
+            </article>
+            {% endif %}
+
+            <div class="profile-achievements-grid">
+                {% for achievement in achievement_overview.items %}
+                <article class="profile-achievement-card{% if achievement.unlocked %} is-unlocked{% else %} is-locked{% endif %}" data-achievement="{{ achievement.key }}">
+                    <div class="profile-achievement-topline">
+                        <span class="profile-achievement-icon">
+                            <img src="{% static achievement.icon %}" alt="">
+                        </span>
+                        {% if achievement.unlocked %}
+                            <span class="profile-achievement-state is-unlocked">Получено</span>
+                        {% else %}
+                            <span class="profile-achievement-state">{{ achievement.progress }}%</span>
+                        {% endif %}
+                    </div>
+                    <span class="profile-achievement-category">{{ achievement.category }}</span>
+                    <h3>{{ achievement.label }}</h3>
+                    <p>{{ achievement.description }}</p>
+                    <div class="profile-achievement-progress"><i style="width: {{ achievement.progress }}%"></i></div>
+                    <div class="profile-achievement-meta">
+                        <span>Сейчас: {{ achievement.current_label }}</span>
+                        <strong>Цель: {{ achievement.target_label }}</strong>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
         </div>
     </section>
 
