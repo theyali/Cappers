@@ -81,8 +81,9 @@
 }
 
 .expert-public-teams-no-score > div:last-child {
-    justify-content: flex-start;
-    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    flex-direction: row-reverse;
     text-align: left;
 }
 
@@ -109,10 +110,17 @@
         gap: 10px;
     }
 
-    .expert-public-teams-no-score > div,
-    .expert-public-teams-no-score > div:last-child {
+    .expert-public-teams-no-score > div {
         align-items: flex-start;
         flex-direction: column;
+        text-align: left;
+    }
+
+    .expert-public-teams-no-score > div:last-child {
+        width: 100%;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row-reverse;
         text-align: left;
     }
 }
