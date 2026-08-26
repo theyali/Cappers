@@ -1,0 +1,50 @@
+.prediction-confidence {
+    display: grid;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #171718;
+}
+
+.prediction-confidence-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.prediction-confidence-head span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.prediction-confidence-head strong {
+    color: var(--yellow);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.prediction-confidence-track {
+    width: 100%;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #303033;
+}
+
+.prediction-confidence-track span {
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: var(--blue);
+}
+
+.coupon-slip-confidence {
+    margin-top: 2px;
+    padding: 10px 0 0;
+    background: transparent;
+}
+
+.expert-public-confidence {
+    margin-top: 10px;
+}
