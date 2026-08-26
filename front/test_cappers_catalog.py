@@ -9,7 +9,7 @@ from game.models import PredictionCoupon
 
 
 class CappersCatalogTests(TestCase):
-    def test_catalog_shows_roi_sidebar_and_favicon(self):
+    def test_catalog_shows_roi_sidebar_favicon_and_achievements(self):
         analyst = User.objects.create_user(
             username="catalog-roi-expert",
             password="safe-test-password",
@@ -35,3 +35,5 @@ class CappersCatalogTests(TestCase):
         self.assertContains(response, "ROI +50.0%")
         self.assertContains(response, 'class="bookmakers-sidebar"')
         self.assertContains(response, "/static/front/img/favicon.png")
+        self.assertContains(response, 'class="capper-pro-achievements"')
+        self.assertContains(response, "ROI +50%")
