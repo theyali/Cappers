@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Как пользоваться — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/how-it-works.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="how-page" data-how-page aria-label="Как пользоваться КапперХаб">
+    <div class="how-hero">
+        <div class="how-hero-copy">
+            <p class="how-eyebrow">Короткий гид</p>
+            <h1>Как пользоваться КапперХаб</h1>
+            <p>Выберите режим и посмотрите, как устроены матчи, прогнозы и работа эксперта на платформе.</p>
+        </div>
+
+        <div class="how-switch" role="tablist" aria-label="Режим инструкции">
+            <button class="how-switch-button is-active" type="button" role="tab" aria-selected="true" data-how-tab="users">
+                <span class="how-switch-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8.5 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2.5 20c0-3.3 2.5-5.8 5.5-5.8s5.5 2.5 5.5 5.8M13.5 15.4c.8-.7 1.8-1.1 3-1.1 2.8 0 5 2.2 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                Пользователям
+            </button>
+            <button class="how-switch-button" type="button" role="tab" aria-selected="false" data-how-tab="experts">
+                <span class="how-switch-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3 9.7 7.7 4.5 8.5l3.8 3.7-.9 5.3 4.6-2.5 4.6 2.5-.9-5.3 3.8-3.7-5.2-.8L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M5 21h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                Экспертам
+            </button>
+        </div>
+    </div>
+
+    <div class="how-panel is-active" role="tabpanel" data-how-panel="users">
+        <div class="how-panel-head">
+            <div>
+                <p class="how-eyebrow">Для пользователей</p>
+                <h2>Находите прогнозы и сравнивайте экспертов</h2>
+            </div>
+            <span class="how-panel-number">01</span>
+        </div>
+
+        <div class="how-steps">
+            <article class="how-step">
+                <span class="how-step-number">01</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M4 6.5h16M6.5 3v4M17.5 3v4M5 5h14a2 2 0 0 1 2 2v12H3V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M7 11h4M13 11h4M7 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Выберите матч</h3>
+                <p>Откройте раздел «Футбол», выберите дату и нужную вкладку: все матчи, live, предстоящие или завершённые.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">02</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M4 18V9m5 9V5m5 13v-7m5 7V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Посмотрите прогнозы</h3>
+                <p>На странице матча собраны опубликованные прогнозы экспертов: исход, коэффициент, комментарий и результат.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">03</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3v18M4 7h12a4 4 0 0 1 0 8H8a4 4 0 0 0 0 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Сравните капперов</h3>
+                <p>В «Статистике капперов» смотрите количество прогнозов, выигрышные результаты и аудиторию каждого эксперта.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">04</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 20s-7-4.2-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.8-7 10-7 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Следите за лучшими</h3>
+                <p>Добавляйте интересных экспертов в подписки и возвращайтесь к их новым прогнозам через профиль.</p>
+            </article>
+        </div>
+
+        <div class="how-summary">
+            <div>
+                <span>Что видно в прогнозе</span>
+                <strong>Матч · исход · коэффициент · комментарий · результат</strong>
+            </div>
+            <a href="{% url 'front:predictions' %}">Открыть все прогнозы <span>→</span></a>
+        </div>
+    </div>
+
+    <div class="how-panel" role="tabpanel" data-how-panel="experts" hidden>
+        <div class="how-panel-head">
+            <div>
+                <p class="how-eyebrow">Для экспертов</p>
+                <h2>Собирайте прогноз и публикуйте его в ленту</h2>
+            </div>
+            <span class="how-panel-number">02</span>
+        </div>
+
+        <div class="how-steps">
+            <article class="how-step">
+                <span class="how-step-number">01</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-7 18c0-4 3.1-7 7-7s7 3 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Войдите как эксперт</h3>
+                <p>После авторизации откройте список матчей. Для предстоящих игр коэффициенты доступны для добавления в купон.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">02</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 5h14v14H5V5Zm3 4h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Соберите купон</h3>
+                <p>Выберите исходы по одной или нескольким играм. Черновик сохраняется автоматически и не исчезает после обновления страницы.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">03</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Добавьте комментарий</h3>
+                <p>Заполните сумму и коротко объясните логику прогноза. Название купона можно оставить пустым — оно сформируется автоматически.</p>
+            </article>
+
+            <article class="how-step">
+                <span class="how-step-number">04</span>
+                <div class="how-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>Опубликуйте прогноз</h3>
+                <p>Перед публикацией система проверяет актуальность выбранных матчей. После сохранения прогноз появляется в общей ленте и на странице матча.</p>
+            </article>
+        </div>
+
+        <div class="how-summary how-summary-expert">
+            <div>
+                <span>Важно</span>
+                <strong>Live и завершённые матчи можно смотреть, но новые прогнозы на них недоступны.</strong>
+            </div>
+            <a href="{% url 'game:match_list' %}">Перейти к матчам <span>→</span></a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/how-it-works.js' %}" defer></script>
+{% endblock %}
