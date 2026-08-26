@@ -74,9 +74,39 @@
 
             <div class="site-nav-actions">
                 {% if request.user.is_authenticated %}
-                    <a class="nav-profile nav-profile-icon" href="{% url 'cabinet:profile' %}" aria-label="Профиль" title="Профиль">
-                        <img src="{% static 'front/svgs/profile.svg' %}" alt="">
-                    </a>
+                    <div class="nav-profile-menu" data-profile-menu>
+                        <button
+                            class="nav-profile nav-profile-icon"
+                            type="button"
+                            aria-label="Открыть меню профиля"
+                            title="Профиль"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            data-profile-menu-toggle
+                        >
+                            <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                        </button>
+                        <div class="nav-profile-dropdown" data-profile-menu-dropdown>
+                            <a href="{% url 'cabinet:profile' %}">
+                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+                                </span>
+                                <span>Профиль</span>
+                            </a>
+                            <a href="{% url 'cabinet:profile' %}?tab=predictions">
+                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
+                                </span>
+                                <span>Мои прогнозы</span>
+                            </a>
+                            <a href="{% url 'front:favorites' %}">
+                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                                </span>
+                                <span>Избранное</span>
+                            </a>
+                        </div>
+                    </div>
                     <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
                         {% csrf_token %}
                         <button type="submit" class="nav-button nav-logout">Выйти</button>
@@ -138,6 +168,7 @@
         <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
     </div>
     {% if locked_card_odds %}{{ locked_card_odds|json_script:"locked-match-odds-data" }}{% endif %}
+    <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     {% if request.resolver_match.app_name == 'game' %}
     <script
