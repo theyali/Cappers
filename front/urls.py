@@ -9,6 +9,11 @@ app_name = "front"
 urlpatterns = [
     path("", home_views.index, name="index"),
     path("predictions/", prediction_views.predictions, name="predictions"),
+    path(
+        "predictions/<int:prediction_id>/",
+        prediction_views.prediction_detail,
+        name="prediction_detail",
+    ),
     path("feed/", feed_views.following_feed, name="following_feed"),
     path("favorites/", prediction_views.favorites, name="favorites"),
     path("articles/", article_views.articles, name="articles"),
