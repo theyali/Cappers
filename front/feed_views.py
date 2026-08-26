@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystFollow
-from game.models import Prediction, PredictionCoupon
+from game.models import PredictionCoupon
 
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
@@ -51,24 +51,41 @@ def following_feed(request):
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
 
-    queryset = _published_queryset().filter(coupon__author_id__in=following_ids)
+    queryset = _published_queryset().filter(author_id__in=following_ids)
     if selected_capper:
-        queryset = queryset.filter(coupon__author__username=selected_capper)
+        queryset = queryset.filter(author__username=selected_capper)
     if only_live:
-        queryset = queryset.filter(match__sync_scope="live")
+        queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
-        queryset = queryset.filter(match__starts_at__date=timezone.localdate())
+        queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
+    queryset = queryset.distinct()
 
     counts = queryset.aggregate(
-        total=Count("id"),
-        pending=Count("id", filter=Q(state_status="") | Q(state_status__isnull=True)),
-        win=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-        lose=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-        refund=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
+        total=Count("id", distinct=True),
+        pending=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.PENDING),
+            distinct=True,
+        ),
+        win=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+            distinct=True,
+        ),
+        lose=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
+            distinct=True,
+        ),
+        refund=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.REFUND),
+            distinct=True,
+        ),
     )
 
     if active_status == "pending":
-        queryset = queryset.filter(Q(state_status="") | Q(state_status__isnull=True))
+        queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
     elif active_status != "all":
         queryset = queryset.filter(state_status=active_status)
 
@@ -76,15 +93,11 @@ def following_feed(request):
         queryset = queryset.order_by(
             "-likes_count",
             "-favorites_count",
-            "-coupon__published_at",
+            "-published_at",
             "-created_at",
         )
     else:
-        queryset = queryset.order_by(
-            "-coupon__published_at",
-            "-coupon__created_at",
-            "-created_at",
-        )
+        queryset = queryset.order_by("-published_at", "-created_at")
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -95,12 +108,12 @@ def following_feed(request):
     )
 
     author_counts = {
-        row["coupon__author_id"]: row["total"]
-        for row in Prediction.objects.filter(
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__author_id__in=following_ids,
+        row["author_id"]: row["total"]
+        for row in PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            author_id__in=following_ids,
         )
-        .values("coupon__author_id")
+        .values("author_id")
         .annotate(total=Count("id"))
     }
     for follow in following:
