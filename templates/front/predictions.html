@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -34,9 +35,9 @@
     {% if page_obj.object_list %}
     <div class="predictions-grid">
         {% for prediction in page_obj.object_list %}
-        <article class="prediction-card prediction-card-rich">
+        <article class="prediction-card prediction-card-rich" data-prediction-card="{{ prediction.id }}">
             <div class="prediction-card-head">
-                <div class="prediction-expert">
+                <a class="prediction-expert prediction-expert-link" href="{% url 'cabinet:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
                     <span class="prediction-expert-avatar">
                         {% if prediction.expert_avatar_url %}
                             <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
@@ -48,7 +49,7 @@
                         <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
                         <span>@{{ prediction.coupon.author.username }}</span>
                     </div>
-                </div>
+                </a>
 
                 {% if prediction.state_status == "win" %}
                     <span class="prediction-status prediction-status-win">Выигрыш</span>
@@ -134,6 +135,38 @@
                 <p class="prediction-comment">{{ prediction.comment|truncatechars:150 }}</p>
             {% endif %}
 
+            <div class="prediction-reactions" aria-label="Действия с прогнозом">
+                <button
+                    class="prediction-reaction prediction-like{% if prediction.is_liked %} is-active{% endif %}"
+                    type="button"
+                    data-prediction-reaction
+                    data-url="{% url 'front:prediction_like' prediction_id=prediction.id %}"
+                    data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+                    aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
+                    title="Поставить лайк"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="prediction-reaction-label">Нравится</span>
+                    <b data-like-count>{{ prediction.likes_count }}</b>
+                </button>
+                <button
+                    class="prediction-reaction prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
+                    type="button"
+                    data-prediction-reaction
+                    data-url="{% url 'front:prediction_favorite' prediction_id=prediction.id %}"
+                    data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+                    aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
+                    title="Добавить в избранное"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                    <span class="prediction-reaction-label">В избранное</span>
+                </button>
+            </div>
+
             <div class="prediction-published-at">
                 <span>Опубликовано</span>
                 <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y H:i" }}</time>
@@ -165,4 +198,8 @@
     </div>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}
