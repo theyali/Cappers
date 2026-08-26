@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="{% static 'front/css/home.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-real.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-articles.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -239,6 +241,32 @@
         <strong>Статьи скоро появятся</strong>
         <p>Добавьте первую статью через админку — она автоматически попадёт на главную.</p>
         <a href="{% url 'front:articles' %}">Открыть раздел →</a>
+    </div>
+    {% endif %}
+</section>
+
+<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">
+    <header class="home-articles-head">
+        <div>
+            <p class="home-eyebrow">Прематч</p>
+            <h2 id="home-important-matches-title">Важные матчи</h2>
+            <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
+        </div>
+        <div class="home-articles-actions">
+            <a href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
+        </div>
+    </header>
+
+    {% if important_matches %}
+    <div class="matches-grid">
+        {% for match in important_matches %}
+            {% include "game/_home_match_card.html" with match=match only %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="matches-empty">
+        <h2>Прематчей пока нет</h2>
+        <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
     </div>
     {% endif %}
 </section>
