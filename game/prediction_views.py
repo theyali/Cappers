@@ -3,8 +3,10 @@ from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystProfile
+from front.models import PredictionFavorite, PredictionLike
 from game.models import Match, Prediction, PredictionCoupon
 
 
@@ -38,6 +40,7 @@ def _prediction_distribution(queryset) -> tuple[int, list[dict]]:
     return total, distribution
 
 
+@ensure_csrf_cookie
 def match_predictions(request, slug: str):
     match = get_object_or_404(Match, slug=slug)
 
@@ -55,11 +58,29 @@ def match_predictions(request, slug: str):
             "match__home_team",
             "match__away_team",
         )
+        .annotate(likes_count=Count("likes", distinct=True))
         .order_by("-coupon__published_at", "-coupon__created_at", "-created_at", "-id")
     )
 
     paginator = Paginator(queryset, MATCH_PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    prediction_ids = [prediction.pk for prediction in page_obj.object_list]
+    liked_ids = set()
+    favorite_ids = set()
+    if request.user.is_authenticated and prediction_ids:
+        liked_ids = set(
+            PredictionLike.objects.filter(
+                user=request.user,
+                prediction_id__in=prediction_ids,
+            ).values_list("prediction_id", flat=True)
+        )
+        favorite_ids = set(
+            PredictionFavorite.objects.filter(
+                user=request.user,
+                prediction_id__in=prediction_ids,
+            ).values_list("prediction_id", flat=True)
+        )
 
     for prediction in page_obj.object_list:
         author = prediction.coupon.author
@@ -77,6 +98,8 @@ def match_predictions(request, slug: str):
         prediction.expert_initials = _initials(name)
         prediction.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         prediction.expert_verified = bool(profile and profile.is_verified)
+        prediction.is_liked = prediction.pk in liked_ids
+        prediction.is_favorite = prediction.pk in favorite_ids
 
     html = render_to_string(
         "game/_match_prediction_cards.html",
