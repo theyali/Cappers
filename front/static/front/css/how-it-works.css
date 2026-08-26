@@ -12,8 +12,8 @@
 .how-hero {
     min-height: 290px;
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    align-items: center;
     gap: 30px;
     padding: clamp(28px, 4vw, 52px);
 }
@@ -22,7 +22,7 @@
     max-width: 760px;
 }
 
-.how-eyebrow {
+.how-kicker {
     margin: 0 0 12px;
     color: var(--yellow);
     font-size: 11px;
@@ -47,59 +47,85 @@
     line-height: 1.65;
 }
 
-.how-switch {
+.how-hero-mark {
+    width: 150px;
+    height: 150px;
+    justify-self: end;
+    display: grid;
+    place-items: center;
+    border-radius: 34px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 74px;
+    line-height: 1;
+}
+
+.how-role-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     padding: 10px;
     border-radius: 18px;
-    background: #171718;
+    background: var(--panel);
 }
 
-.how-switch-button {
-    min-height: 78px;
+.how-role-tab {
+    min-height: 84px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 11px;
-    padding: 0 18px;
+    gap: 14px;
+    padding: 14px 18px;
     border: 0;
     border-radius: 14px;
-    color: rgba(255, 255, 255, .64);
+    color: rgba(255, 255, 255, .7);
     background: #29292c;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
+    text-align: left;
     transition: transform .18s ease, background .18s ease, color .18s ease;
 }
 
-.how-switch-button:hover {
+.how-role-tab:hover {
     transform: translateY(-1px);
     color: #fff;
     background: #323236;
 }
 
-.how-switch-button.is-active {
+.how-role-tab.is-active {
     color: var(--ink);
     background: var(--yellow);
 }
 
-.how-switch-icon,
-.how-step-icon {
+.how-role-icon {
+    width: 42px;
+    height: 42px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
 }
 
-.how-switch-icon {
-    width: 25px;
-    height: 25px;
-}
-
-.how-switch-icon svg,
-.how-step-icon svg {
+.how-role-icon svg {
     width: 100%;
     height: 100%;
+}
+
+.how-role-tab > span:last-child {
+    min-width: 0;
+}
+
+.how-role-tab strong,
+.how-role-tab small {
+    display: block;
+}
+
+.how-role-tab strong {
+    font-size: 15px;
+}
+
+.how-role-tab small {
+    margin-top: 4px;
+    color: inherit;
+    opacity: .66;
+    font-size: 11px;
 }
 
 .how-panel {
@@ -112,18 +138,14 @@
     display: grid;
 }
 
-.how-panel-head {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
+.how-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr);
+    align-items: end;
+    gap: 28px;
 }
 
-.how-panel-head > div {
-    min-width: 0;
-}
-
-.how-panel-head h2 {
+.how-intro h2 {
     max-width: 800px;
     margin: 0;
     font-size: clamp(30px, 4vw, 48px);
@@ -131,13 +153,11 @@
     letter-spacing: -.04em;
 }
 
-.how-panel-number {
-    flex: 0 0 auto;
-    color: #343438;
-    font-size: clamp(60px, 8vw, 110px);
-    line-height: .78;
-    font-weight: 700;
-    letter-spacing: -.08em;
+.how-intro > p {
+    margin: 0;
+    color: rgba(255, 255, 255, .62);
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .how-steps {
@@ -168,6 +188,8 @@
     height: 54px;
     margin-top: 18px;
     padding: 13px;
+    display: grid;
+    place-items: center;
     border-radius: 15px;
     color: var(--ink);
     background: var(--yellow);
@@ -176,6 +198,11 @@
 .how-step:nth-child(even) .how-step-icon {
     color: #fff;
     background: var(--blue);
+}
+
+.how-step-icon svg {
+    width: 100%;
+    height: 100%;
 }
 
 .how-step h3 {
@@ -261,11 +288,14 @@
 @media (max-width: 1100px) {
     .how-hero {
         grid-template-columns: 1fr;
-        align-items: stretch;
     }
 
-    .how-switch {
-        max-width: 680px;
+    .how-hero-mark {
+        display: none;
+    }
+
+    .how-intro {
+        grid-template-columns: 1fr;
     }
 
     .how-steps {
@@ -288,24 +318,16 @@
         font-size: clamp(36px, 12vw, 52px);
     }
 
-    .how-switch {
+    .how-role-tabs {
         grid-template-columns: 1fr;
     }
 
-    .how-switch-button {
-        min-height: 58px;
+    .how-role-tab {
+        min-height: 68px;
     }
 
     .how-panel {
         padding: 20px 16px;
-    }
-
-    .how-panel-head {
-        align-items: flex-start;
-    }
-
-    .how-panel-number {
-        display: none;
     }
 
     .how-steps {
