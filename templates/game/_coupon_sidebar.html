@@ -78,6 +78,7 @@
     {{ draft_coupon|json_script:"coupon-draft-data" }}
     {% my_recent_coupons request.user %}
     {% else %}
+    {% latest_prediction_cards as latest_predictions %}
     <section class="latest-predictions-panel sidebar-predictions" aria-label="Последние прогнозы">
         <div class="coupon-head sidebar-predictions-head">
             <div>
