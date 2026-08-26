@@ -210,17 +210,25 @@ def _best_win_streak(expert) -> int:
     return best
 
 
+def _published_predictions_count(expert) -> int:
+    if not getattr(expert, "pk", None):
+        return 0
+    return Prediction.objects.filter(
+        coupon__author=expert,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).count()
+
+
 @register.inclusion_tag("cabinet/_expert_achievements.html")
 def expert_achievement_badges(
     expert,
-    predictions_count,
     wins_count,
     overall_roi,
     followers_count,
     is_verified,
 ):
     badges = build_achievement_badges(
-        predictions_count=predictions_count,
+        predictions_count=_published_predictions_count(expert),
         wins_count=wins_count,
         overall_roi=overall_roi,
         followers_count=followers_count,
