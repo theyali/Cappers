@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Избранные — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="predictions-page" data-favorites-page aria-label="Избранные прогнозы">
+    <div class="predictions-hero favorites-hero">
+        <div>
+            <p class="predictions-eyebrow">Сохранённое</p>
+            <h1>Избранные</h1>
+            <p>Прогнозы, которые вы сохранили, чтобы быстро вернуться к ним позже.</p>
+        </div>
+        <div class="predictions-total">
+            <strong>{{ total_predictions }}</strong>
+            <span>в избранном</span>
+        </div>
+    </div>
+
+    {% if page_obj.object_list %}
+    <div class="predictions-grid" data-favorites-grid>
+        {% for prediction in page_obj.object_list %}
+            {% include "front/_prediction_card.html" %}
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="predictions-pagination" aria-label="Страницы избранного">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Назад</a>{% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Вперёд →</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="predictions-empty favorites-empty">
+        <h2>Избранных прогнозов пока нет</h2>
+        <p>Нажмите на сердечко в любой карточке прогноза, и он появится здесь.</p>
+        <a class="favorites-empty-action" href="{% url 'front:predictions' %}">Перейти ко всем прогнозам →</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
+<script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
+{% endblock %}
