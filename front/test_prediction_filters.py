@@ -67,19 +67,20 @@ class PredictionFiltersTests(TestCase):
             state_status=coupon_state,
             total_stake=Decimal("100.00"),
             possible_payout=Decimal(payout),
+            confidence=76,
             published_at=timezone.now(),
             settled_at=timezone.now(),
         )
-        return Prediction.objects.create(
+        Prediction.objects.create(
             coupon=coupon,
             match=match,
             market="total",
             selection="ТБ 2.5",
             coefficient=Decimal(coefficient),
             stake=Decimal("100.00"),
-            confidence=76,
             state_status=state,
         )
+        return coupon
 
     def test_filters_can_be_combined(self):
         prediction = self._prediction(external_id=910, coefficient="2.15")
