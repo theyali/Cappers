@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Case, Count, IntegerField, Value, When
 from django.shortcuts import render
 from django.utils import timezone
@@ -78,14 +79,7 @@ def match_list(request):
     for match in matches:
         match.coupon_odds = _match_winner_odds(match)
         if match.sync_scope in {Match.SyncScope.LIVE, Match.SyncScope.FINISHED}:
-            locked_card_odds[str(match.id)] = {
-                "home": match.coupon_odds["home"],
-                "draw": match.coupon_odds["draw"],
-                "away": match.coupon_odds["away"],
-                "over25": match.coupon_odds["over25"],
-                "under25": match.coupon_odds["under25"],
-                "bttsYes": match.coupon_odds["btts_yes"],
-            }
+            locked_card_odds[str(match.id)] = _stored_card_odds(match)
 
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
@@ -107,6 +101,43 @@ def match_list(request):
         "locked_card_odds": locked_card_odds,
     }
     return render(request, "game/match_list.html", context)
+
+
+def _stored_card_odds(match: Match) -> dict[str, str]:
+    empty = {
+        "home": "—",
+        "draw": "—",
+        "away": "—",
+        "over25": "—",
+        "under25": "—",
+        "bttsYes": "—",
+    }
+    try:
+        odds = match.odds
+    except ObjectDoesNotExist:
+        return empty
+
+    totals = odds.totals_all if isinstance(odds.totals_all, dict) else {}
+    return {
+        "home": _display_odd(odds.home_win_bet),
+        "draw": _display_odd(odds.x_bet),
+        "away": _display_odd(odds.away_win_bet),
+        "over25": _display_odd(odds.goals_over_2_5 or totals.get("Over 2.5")),
+        "under25": _display_odd(odds.goals_under_2_5 or totals.get("Under 2.5")),
+        "bttsYes": _display_odd(odds.btts_yes),
+    }
+
+
+def _display_odd(value) -> str:
+    if value in (None, ""):
+        return "—"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return "—"
+    if number <= 0:
+        return "—"
+    return f"{number:.2f}"
 
 
 def _selected_date(raw_value: str | None, *, today=None):
