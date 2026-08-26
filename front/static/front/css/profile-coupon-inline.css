@@ -1,11 +1,11 @@
 .profile-coupon-card {
     min-width: 0;
     display: grid;
-    gap: 8px;
+    gap: 10px;
 }
 
 .profile-coupon-card .profile-coupon-row {
-    grid-template-columns: minmax(180px, 1.35fr) auto repeat(3, minmax(90px, .65fr)) minmax(188px, auto);
+    grid-template-columns: minmax(190px, 1.35fr) auto repeat(3, minmax(90px, .65fr)) minmax(188px, auto);
     cursor: default;
 }
 
@@ -59,18 +59,43 @@
     display: none;
     min-width: 0;
     overflow: hidden;
-    padding: 14px;
-    border-radius: 16px;
-    background: #131313;
+    padding: 0 0 4px;
+    background: transparent;
 }
 
 .profile-coupon-inline .coupon-detail-panel {
-    padding: 16px;
-    border-radius: 14px;
+    gap: 12px;
+    padding: 0;
+    background: transparent;
+}
+
+.profile-coupon-inline .coupon-detail-panel-head {
+    padding: 8px 4px 2px;
 }
 
 .profile-coupon-inline .coupon-detail-panel-head h2 {
-    font-size: 20px;
+    font-size: 18px;
+}
+
+.profile-coupon-inline .coupon-detail-panel-head span {
+    min-width: 30px;
+    min-height: 30px;
+    font-size: 10px;
+}
+
+.profile-coupon-inline .coupon-detail-predictions {
+    gap: 10px;
+}
+
+.profile-coupon-inline .coupon-detail-prediction {
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: #171718;
+}
+
+.profile-coupon-inline .coupon-detail-team-logo,
+.profile-coupon-inline .coupon-detail-score {
+    background: var(--panel);
 }
 
 .profile-coupon-inline-error {
@@ -79,7 +104,7 @@
     align-items: center;
     justify-content: center;
     padding: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
     color: var(--muted);
     background: var(--panel);
     font-size: 11px;
@@ -115,20 +140,16 @@
     .profile-coupon-expand {
         flex: 1 1 0;
     }
-
-    .profile-coupon-inline {
-        padding: 10px;
-    }
 }
 
 @media (max-width: 520px) {
-    .profile-coupon-inline {
-        padding: 8px;
-        border-radius: 13px;
+    .profile-coupon-inline .coupon-detail-panel-head {
+        padding-left: 2px;
+        padding-right: 2px;
     }
 
-    .profile-coupon-inline .coupon-detail-panel {
-        padding: 12px;
+    .profile-coupon-inline .coupon-detail-prediction {
+        padding: 15px;
     }
 }
 
