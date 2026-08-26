@@ -463,7 +463,7 @@ class PredictionCoupon(models.Model):
         db_index=True,
     )
     state_status = models.CharField(
-        "Результат купона",
+        "Результат прогноза",
         max_length=16,
         choices=StateStatus.choices,
         default=StateStatus.PENDING,
@@ -471,14 +471,15 @@ class PredictionCoupon(models.Model):
     )
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
+    confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
     settled_at = models.DateTimeField("Рассчитан", null=True, blank=True)
 
     class Meta:
-        verbose_name = "Купон прогнозов"
-        verbose_name_plural = "Купоны прогнозов"
+        verbose_name = "Прогноз"
+        verbose_name_plural = "Прогнозы"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["author", "published_status", "created_at"]),
@@ -487,10 +488,12 @@ class PredictionCoupon(models.Model):
 
     def clean(self) -> None:
         if self.author_id and self.author.role != User.Role.ANALYST:
-            raise ValidationError("Купоны могут создавать только аналитики.")
+            raise ValidationError("Прогнозы могут создавать только аналитики.")
+        if self.confidence is None or not 0 <= self.confidence <= 100:
+            raise ValidationError("Уверенность должна быть от 0 до 100%.")
 
     def __str__(self) -> str:
-        return f"Купон #{self.pk or 'new'}"
+        return f"Прогноз #{self.pk or 'new'}"
 
 
 class Prediction(models.Model):
@@ -503,7 +506,7 @@ class Prediction(models.Model):
         PredictionCoupon,
         on_delete=models.CASCADE,
         related_name="predictions",
-        verbose_name="Купон",
+        verbose_name="Прогноз",
     )
     match = models.ForeignKey(
         Match,
@@ -515,9 +518,8 @@ class Prediction(models.Model):
     selection = models.CharField("Выбор", max_length=120)
     coefficient = models.DecimalField("Коэффициент", max_digits=8, decimal_places=2, default=1)
     stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
-    confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
     state_status = models.CharField(
-        "Результат",
+        "Результат позиции",
         max_length=16,
         choices=StateStatus.choices,
         blank=True,
@@ -527,8 +529,8 @@ class Prediction(models.Model):
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
 
     class Meta:
-        verbose_name = "Прогноз"
-        verbose_name_plural = "Прогнозы"
+        verbose_name = "Позиция прогноза"
+        verbose_name_plural = "Позиции прогноза"
         ordering = ["coupon_id", "id"]
         constraints = [
             models.UniqueConstraint(fields=["coupon", "match"], name="unique_prediction_match_in_coupon"),
@@ -542,12 +544,14 @@ class Prediction(models.Model):
 
     def clean(self) -> None:
         if self.match_id and self.match.sync_scope != Match.SyncScope.PREMATCH:
-            raise ValidationError("Прогноз можно создать только на предстоящий матч.")
+            raise ValidationError("Позицию можно создать только на предстоящий матч.")
         if self.stake is not None and self.stake <= 0:
             raise ValidationError("Сумма ставки должна быть больше нуля.")
-        if self.confidence is None or not 0 <= self.confidence <= 100:
-            raise ValidationError("Уверенность должна быть от 0 до 100%.")
         if self.coupon_id:
             siblings = self.coupon.predictions.exclude(pk=self.pk)
-            if siblings.count() >= 5:
-                raise ValidationError("В одном купоне может быть максимум 5 игр.")
+            if siblings.count() >= 20:
+                raise ValidationError("В одном прогнозе может быть максимум 20 игр.")
+
+
+# Canonical semantic name for a single match/market inside one prediction.
+PredictionItem = Prediction
