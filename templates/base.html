@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{% static 'front/css/match-predictions.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/match-card-odds-state.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/game-sidebar-predictions.css' %}">
     {% endif %}
 </head>
@@ -43,10 +44,6 @@
                     <span>Моя лента</span>
                 </a>
                 {% endif %}
-                <a class="{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %}is-active{% endif %}" href="{% url 'front:articles' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h10a4 4 0 0 1 4 4v10H9a4 4 0 0 1-4-4V5Zm4 4h6M9 13h5"/></svg></span>
-                    <span>Статьи</span>
-                </a>
                 <a class="{% if request.resolver_match.url_name == 'favorites' %}is-active{% endif %}" href="{% url 'front:favorites' %}">
                     <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"/></svg></span>
                     <span>Избранные прогнозы</span>
@@ -55,15 +52,13 @@
                     <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7M3 19h18"/></svg></span>
                     <span>Статистика капперов</span>
                 </a>
-                <a class="{% if request.resolver_match.url_name == 'how_it_works' %}is-active{% endif %}" href="{% url 'front:how_it_works' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 18h.01M9.5 9a2.5 2.5 0 1 1 4.2 1.84c-.93.72-1.7 1.28-1.7 2.66M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0Z"/></svg></span>
-                    <span>Как пользоваться</span>
-                </a>
             </div>
 
             <div class="site-nav-actions">
                 {% if request.user.is_authenticated %}
-                    <a class="nav-profile" href="{% url 'cabinet:profile' %}">Профиль</a>
+                    <a class="nav-profile nav-profile-icon" href="{% url 'cabinet:profile' %}" aria-label="Профиль" title="Профиль">
+                        <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                    </a>
                     <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
                         {% csrf_token %}
                         <button type="submit" class="nav-button nav-logout">Выйти</button>
@@ -108,11 +103,11 @@
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 <span>КапперХаб</span>
             </a>
-            <nav class="site-footer-links" aria-label="Документы">
+            <nav class="site-footer-links" aria-label="Документы и разделы">
+                <a href="{% url 'front:articles' %}">Статьи</a>
+                <a href="{% url 'front:how_it_works' %}">Как пользоваться</a>
                 {% for page in footer_static_pages %}
                     <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
-                {% empty %}
-                    <span>Документы скоро появятся</span>
                 {% endfor %}
             </nav>
         </div>
