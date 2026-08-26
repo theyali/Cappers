@@ -1,19 +1,19 @@
 {% load static site_extras %}
 
-<aside class="coupon-sidebar" aria-label="Купон прогнозов">
+<aside class="coupon-sidebar" aria-label="Прогноз">
     {% if can_write_coupon %}
     <form class="coupon-panel" data-coupon-form data-no-transition>
         {% csrf_token %}
         <div class="coupon-head">
             <div>
-                <p class="matches-eyebrow">Купон</p>
-                <h2>Прогноз</h2>
+                <p class="matches-eyebrow">Прогноз</p>
+                <h2>Новый прогноз</h2>
             </div>
             <div class="coupon-head-actions">
-                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть купон">
+                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогноз">
                     <span aria-hidden="true">⌃</span>
                 </button>
-                <span class="coupon-count" data-coupon-count>0/5</span>
+                <span class="coupon-count" data-coupon-count>0/20</span>
             </div>
         </div>
 
@@ -21,7 +21,7 @@
             <div class="coupon-empty" data-coupon-empty>
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 <strong>Выберите матч</strong>
-                <p>Добавьте предстоящую игру, выберите исход и укажите уверенность.</p>
+                <p>Добавьте до 20 игр. Все выбранные исходы войдут в один прогноз.</p>
             </div>
 
             <div class="coupon-items" data-coupon-items></div>
@@ -37,6 +37,27 @@
                 </div>
             </div>
 
+            <div class="coupon-confidence coupon-confidence-global">
+                <div class="coupon-confidence-head">
+                    <span>Уверенность во всём прогнозе</span>
+                    <strong data-coupon-confidence-value>50%</strong>
+                </div>
+                <input
+                    class="coupon-confidence-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value="50"
+                    data-coupon-confidence
+                    aria-label="Уверенность во всём прогнозе, процентов"
+                >
+                <div class="coupon-confidence-loader" aria-hidden="true">
+                    <span data-coupon-confidence-fill></span>
+                </div>
+                <small class="coupon-confidence-hint">Один процент применяется ко всем играм внутри этого прогноза.</small>
+            </div>
+
             <div class="coupon-total">
                 <span>Возможный выигрыш</span>
                 <strong data-coupon-total>0</strong>
@@ -50,7 +71,7 @@
                 </span>
             </button>
             <p class="coupon-note" data-coupon-note>
-                Для каждого матча укажите процент уверенности.
+                Один купон — один прогноз. Матчи внутри него являются позициями прогноза.
             </p>
         </div>
     </form>
@@ -140,8 +161,8 @@
                     </div>
 
                     <div class="sidebar-prediction-confidence">
-                        <span>Уверенность</span>
-                        <strong>{{ prediction.confidence }}%</strong>
+                        <span>Уверенность прогноза</span>
+                        <strong>{{ prediction.coupon.confidence }}%</strong>
                     </div>
 
                     <div class="sidebar-prediction-footer">
