@@ -135,7 +135,6 @@
 }
 
 .home-article-image {
-    position: relative;
     aspect-ratio: 16 / 10;
     min-height: 210px;
     display: grid;
@@ -145,24 +144,6 @@
     background: var(--yellow);
     font-size: 42px;
     font-weight: 800;
-}
-
-.home-article-image::after {
-    content: "Статья";
-    position: absolute;
-    left: 14px;
-    bottom: 14px;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 10px;
-    border-radius: 9px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
 }
 
 .home-article-image img {
