@@ -64,18 +64,19 @@ class FollowingFeedTests(TestCase):
             ),
             total_stake=Decimal("100.00"),
             possible_payout=Decimal("190.00"),
+            confidence=77,
             published_at=timezone.now(),
         )
-        return Prediction.objects.create(
+        Prediction.objects.create(
             coupon=coupon,
             match=match,
             market="total",
             selection="ТБ 2.5",
             coefficient=Decimal("1.90"),
             stake=Decimal("100.00"),
-            confidence=77,
             state_status=state,
         )
+        return coupon
 
     def test_feed_requires_login(self):
         response = self.client.get(reverse("front:following_feed"))
@@ -112,11 +113,11 @@ class FollowingFeedTests(TestCase):
 
         response = self.client.get(
             reverse("front:following_feed"),
-            {"live": "1", "status": Prediction.StateStatus.WIN},
+            {"live": "1", "status": PredictionCoupon.StateStatus.WIN},
         )
 
         self.assertEqual(response.status_code, 200)
         ids = [item.id for item in response.context["page_obj"].object_list]
         self.assertEqual(ids, [live_win.id])
         self.assertTrue(response.context["only_live"])
-        self.assertEqual(response.context["active_status"], Prediction.StateStatus.WIN)
+        self.assertEqual(response.context["active_status"], PredictionCoupon.StateStatus.WIN)
