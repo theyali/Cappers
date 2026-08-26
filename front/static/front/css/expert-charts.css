@@ -1,0 +1,22 @@
+.expert-follow-button,
+.expert-period-switch button {
+    border: 0;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.expert-profit-chart-card.is-positive .expert-profit-line {
+    stroke: var(--green);
+}
+
+.expert-profit-chart-card.is-negative .expert-profit-line {
+    stroke: var(--danger);
+}
+
+.expert-profit-chart-card.is-positive [data-profit-chart-value] {
+    color: var(--green);
+}
+
+.expert-profit-chart-card.is-negative [data-profit-chart-value] {
+    color: var(--danger);
+}
