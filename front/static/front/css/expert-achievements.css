@@ -54,6 +54,18 @@
     object-fit: contain;
 }
 
+@media (max-width: 760px) {
+    .expert-achievements-list {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .expert-achievement-badge {
+        flex: 0 0 auto;
+    }
+}
+
 @media (max-width: 520px) {
     .expert-achievement-badge {
         min-height: 36px;
