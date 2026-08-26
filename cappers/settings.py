@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "cabinet.apps.CabinetConfig",
     "game.apps.GameConfig",
+    "bots.apps.BotsConfig",
     "back.apps.BackConfig",
     "front.apps.FrontConfig",
 ]
@@ -169,6 +170,14 @@ CELERY_BEAT_SCHEDULE = {
     "fetch-finished-football-matches": {
         "task": "game.tasks.fetch_finished_matches",
         "schedule": timedelta(minutes=15),
+    },
+    "run-bot-prediction-cycle": {
+        "task": "bots.tasks.run_bot_prediction_cycle",
+        "schedule": timedelta(hours=1),
+    },
+    "run-bot-activity-cycle": {
+        "task": "bots.tasks.run_bot_activity_cycle",
+        "schedule": timedelta(minutes=10),
     },
 }
 

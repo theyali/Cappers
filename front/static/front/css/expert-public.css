@@ -183,6 +183,204 @@
     font-size: 13px;
 }
 
+.expert-public-section-head > span {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+}
+
+.expert-public-analytics {
+    display: grid;
+    gap: 14px;
+}
+
+.expert-public-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.expert-public-kpi-grid article,
+.expert-public-chart-card {
+    min-width: 0;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.expert-public-kpi-grid article {
+    min-height: 92px;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+    padding: 16px;
+}
+
+.expert-public-kpi-grid span,
+.expert-public-chart-head span,
+.expert-public-muted {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.expert-public-kpi-grid strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 22px;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.expert-public-analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.expert-public-chart-card {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+}
+
+.expert-public-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.expert-public-chart-head h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.expert-public-chart-head span {
+    min-height: 28px;
+    min-width: 32px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 9px;
+    border-radius: 9px;
+    background: #303033;
+}
+
+.expert-public-bars {
+    display: grid;
+    gap: 12px;
+}
+
+.expert-public-bar-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: 7px 12px;
+    align-items: center;
+}
+
+.expert-public-bar-row > div:first-child {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    grid-column: 1 / -1;
+}
+
+.expert-public-bar-row span,
+.expert-public-bar-row b {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12px;
+}
+
+.expert-public-bar-row span {
+    color: rgba(255, 255, 255, .78);
+}
+
+.expert-public-bar-row b {
+    flex: 0 0 auto;
+    color: var(--muted);
+}
+
+.expert-public-bar {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #171718;
+}
+
+.expert-public-bar i {
+    min-width: 4px;
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: var(--blue);
+}
+
+.expert-public-bar-row > strong {
+    color: var(--yellow);
+    font-size: 13px;
+    text-align: right;
+}
+
+.expert-public-bar-row.is-win .expert-public-bar i {
+    background: #65d96d;
+}
+
+.expert-public-bar-row.is-lose .expert-public-bar i {
+    background: var(--danger);
+}
+
+.expert-public-bar-row.is-refund .expert-public-bar i {
+    background: var(--yellow);
+}
+
+.expert-public-bar-row.is-open .expert-public-bar i {
+    background: var(--muted);
+}
+
+.expert-public-muted {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.expert-public-system-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+}
+
+.expert-public-system-grid div {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    padding: 13px;
+    border-radius: 13px;
+    background: #171718;
+}
+
+.expert-public-system-grid span {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.expert-public-system-grid strong {
+    color: var(--yellow);
+    font-size: 24px;
+    line-height: 1;
+}
+
 .expert-public-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -364,6 +562,10 @@
     .expert-public-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .expert-public-kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 720px) {
@@ -385,6 +587,15 @@
 
     .expert-public-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .expert-public-kpi-grid,
+    .expert-public-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .expert-public-system-grid {
+        grid-template-columns: 1fr;
     }
 
     .expert-public-grid {

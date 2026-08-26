@@ -55,6 +55,154 @@
         <article class="is-main"><span>Проходимость</span><strong>{{ win_rate }}%</strong></article>
     </section>
 
+    <section class="expert-public-analytics" aria-label="Подробная статистика эксперта">
+        <div class="expert-public-section-head">
+            <div>
+                <p class="expert-public-kicker">Подробная статистика</p>
+                <h2>Как ставит эксперт</h2>
+            </div>
+            <span>{{ settled_count }} рассчитано</span>
+        </div>
+
+        <div class="expert-public-kpi-grid">
+            <article>
+                <span>Купонов</span>
+                <strong>{{ coupons_count }}</strong>
+            </article>
+            <article>
+                <span>Поражений</span>
+                <strong>{{ losses_count }}</strong>
+            </article>
+            <article>
+                <span>Возвратов</span>
+                <strong>{{ refunds_count }}</strong>
+            </article>
+            <article>
+                <span>В ожидании</span>
+                <strong>{{ open_predictions_count }}</strong>
+            </article>
+            <article>
+                <span>Средний кф</span>
+                <strong>{{ avg_coefficient|floatformat:2 }}</strong>
+            </article>
+            <article>
+                <span>Сумма ставок</span>
+                <strong>{{ total_stake|floatformat:0 }}</strong>
+            </article>
+        </div>
+
+        <div class="expert-public-analytics-grid">
+            <article class="expert-public-chart-card">
+                <div class="expert-public-chart-head">
+                    <h3>Результаты</h3>
+                    <span>{{ predictions_count }}</span>
+                </div>
+                <div class="expert-public-bars">
+                    {% for row in status_distribution %}
+                    <div class="expert-public-bar-row is-{{ row.state }}">
+                        <div>
+                            <span>{{ row.label }}</span>
+                            <b>{{ row.count }}</b>
+                        </div>
+                        <div class="expert-public-bar"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.percent }}%</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </article>
+
+            <article class="expert-public-chart-card">
+                <div class="expert-public-chart-head">
+                    <h3>Рынки ставок</h3>
+                    <span>{{ market_distribution|length }}</span>
+                </div>
+                {% if market_distribution %}
+                <div class="expert-public-bars">
+                    {% for row in market_distribution %}
+                    <div class="expert-public-bar-row">
+                        <div>
+                            <span>{{ row.label }}</span>
+                            <b>{{ row.count }}</b>
+                        </div>
+                        <div class="expert-public-bar"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.percent }}%</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-muted">Пока нет опубликованных ставок.</p>
+                {% endif %}
+            </article>
+
+            <article class="expert-public-chart-card">
+                <div class="expert-public-chart-head">
+                    <h3>Выборы</h3>
+                    <span>{{ selection_distribution|length }}</span>
+                </div>
+                {% if selection_distribution %}
+                <div class="expert-public-bars">
+                    {% for row in selection_distribution %}
+                    <div class="expert-public-bar-row">
+                        <div>
+                            <span>{{ row.label }}</span>
+                            <b>{{ row.count }}</b>
+                        </div>
+                        <div class="expert-public-bar"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.percent }}%</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-muted">Нет данных по выборам.</p>
+                {% endif %}
+            </article>
+
+            <article class="expert-public-chart-card">
+                <div class="expert-public-chart-head">
+                    <h3>Лиги</h3>
+                    <span>{{ league_distribution|length }}</span>
+                </div>
+                {% if league_distribution %}
+                <div class="expert-public-bars">
+                    {% for row in league_distribution %}
+                    <div class="expert-public-bar-row">
+                        <div>
+                            <span>{{ row.label }}</span>
+                            <b>{{ row.count }} · {{ row.win_rate }}%</b>
+                        </div>
+                        <div class="expert-public-bar"><i style="width: {{ row.percent }}%"></i></div>
+                        <strong>{{ row.percent }}%</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-muted">Нет данных по лигам.</p>
+                {% endif %}
+            </article>
+
+            <article class="expert-public-chart-card expert-public-system-card">
+                <div class="expert-public-chart-head">
+                    <h3>В системе</h3>
+                    <span>Live</span>
+                </div>
+                <div class="expert-public-system-grid">
+                    <div>
+                        <span>Экспертов</span>
+                        <strong>{{ system_totals.experts }}</strong>
+                    </div>
+                    <div>
+                        <span>Прогнозов</span>
+                        <strong>{{ system_totals.predictions }}</strong>
+                    </div>
+                    <div>
+                        <span>Купонов</span>
+                        <strong>{{ system_totals.coupons }}</strong>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
     <section class="expert-public-predictions">
         <div class="expert-public-section-head">
             <div>

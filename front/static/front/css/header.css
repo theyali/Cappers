@@ -55,6 +55,45 @@
     transition: background .18s ease, color .18s ease, transform .18s ease;
 }
 
+.site-nav-center a {
+    gap: 7px;
+}
+
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+}
+
+.nav-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-icon-image {
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .9);
+}
+
+.nav-icon-image img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+    filter: none;
+}
+
+.site-nav-center a.is-active .nav-icon-image {
+    background: rgba(19, 19, 19, .12);
+}
+
 .site-nav-center a:hover,
 .site-nav-actions a:hover,
 .site-nav-actions .nav-button:hover {

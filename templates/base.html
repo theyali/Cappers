@@ -27,12 +27,30 @@
             </a>
 
             <div class="site-nav-center">
-                <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">Футбол</a>
-                <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">Все прогнозы</a>
-                <a class="{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %}is-active{% endif %}" href="{% url 'front:articles' %}">Статьи</a>
-                <a class="{% if request.resolver_match.url_name == 'favorites' %}is-active{% endif %}" href="{% url 'front:favorites' %}">Избранные</a>
-                <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
-                <a class="{% if request.resolver_match.url_name == 'how_it_works' %}is-active{% endif %}" href="{% url 'front:how_it_works' %}">Как пользоваться</a>
+                <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
+                    <span class="nav-icon nav-icon-image"><img src="{% static 'front/img/soccer.svg' %}" alt=""></span>
+                    <span>Футбол</span>
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
+                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"/></svg></span>
+                    <span>Все прогнозы</span>
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %}is-active{% endif %}" href="{% url 'front:articles' %}">
+                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h10a4 4 0 0 1 4 4v10H9a4 4 0 0 1-4-4V5Zm4 4h6M9 13h5"/></svg></span>
+                    <span>Статьи</span>
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'favorites' %}is-active{% endif %}" href="{% url 'front:favorites' %}">
+                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"/></svg></span>
+                    <span>Избранные</span>
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
+                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7M3 19h18"/></svg></span>
+                    <span>Статистика капперов</span>
+                </a>
+                <a class="{% if request.resolver_match.url_name == 'how_it_works' %}is-active{% endif %}" href="{% url 'front:how_it_works' %}">
+                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 18h.01M9.5 9a2.5 2.5 0 1 1 4.2 1.84c-.93.72-1.7 1.28-1.7 2.66M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0Z"/></svg></span>
+                    <span>Как пользоваться</span>
+                </a>
             </div>
 
             <div class="site-nav-actions">
