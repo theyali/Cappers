@@ -5,6 +5,47 @@
     gap: 10px;
 }
 
+.expert-public-match-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.expert-public-match-head .expert-public-league {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.expert-public-prediction-card .match-status {
+    flex: 0 0 auto;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, .75);
+    background: #303033;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.expert-public-prediction-card .match-status-live {
+    color: black;
+    background: var(--yellow);
+}
+
+.expert-public-prediction-card .match-status-prematch {
+    color: white;
+    background: var(--blue);
+}
+
+.expert-public-prediction-card .match-status-finished {
+    color: rgba(255, 255, 255, .62);
+    background: #29292c;
+}
+
 .expert-public-prediction-status {
     height: 27px;
     display: inline-flex;
@@ -89,6 +130,16 @@
 @media (max-width: 520px) {
     .expert-public-prediction-topline {
         align-items: stretch;
+    }
+
+    .expert-public-match-head {
+        align-items: flex-start;
+    }
+
+    .expert-public-prediction-card .match-status {
+        min-height: 28px;
+        padding: 0 9px;
+        font-size: 11px;
     }
 
     .expert-public-prediction-status {
