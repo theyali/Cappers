@@ -265,7 +265,7 @@ h2 {
 }
 
 .fixed-tg-btn {
-    min-width: 182px;
+    min-width: 120px;
     min-height: 88px;
     display: grid;
     place-items: center;
