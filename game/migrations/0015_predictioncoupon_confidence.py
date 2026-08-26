@@ -5,14 +5,10 @@ def copy_confidence_to_prediction(apps, schema_editor):
     PredictionCoupon = apps.get_model("game", "PredictionCoupon")
     PredictionItem = apps.get_model("game", "Prediction")
 
-    first_confidence_by_coupon = {
-        row["coupon_id"]: row["confidence"]
-        for row in (
-            PredictionItem.objects.order_by("coupon_id", "id")
-            .values("coupon_id", "confidence")
-        )
-        if row["coupon_id"] not in locals().get("first_confidence_by_coupon", {})
-    }
+    first_confidence_by_coupon = {}
+    rows = PredictionItem.objects.order_by("coupon_id", "id").values("coupon_id", "confidence")
+    for row in rows.iterator():
+        first_confidence_by_coupon.setdefault(row["coupon_id"], row["confidence"])
 
     for coupon in PredictionCoupon.objects.all().iterator():
         coupon.confidence = first_confidence_by_coupon.get(coupon.id, 50)
