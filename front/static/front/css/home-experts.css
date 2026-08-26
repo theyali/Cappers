@@ -144,11 +144,18 @@
     display: inline-grid;
     place-items: center;
     border-radius: 50%;
-    color: #fff;
+    color: transparent;
     background: var(--blue);
-    font-size: 11px;
-    font-weight: 900;
+    font-size: 0;
     line-height: 1;
+}
+
+.home-best-expert-verified::before {
+    content: "";
+    width: 10px;
+    height: 8px;
+    background: #fff;
+    clip-path: polygon(0 46%, 18% 28%, 43% 54%, 82% 10%, 100% 27%, 44% 88%);
 }
 
 .home-best-expert-rank {
