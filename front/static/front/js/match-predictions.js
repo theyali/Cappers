@@ -45,6 +45,35 @@
 
     const distributionKey = (market, selection) => `${String(market || "").trim()}\u0000${String(selection || "").trim()}`;
 
+    const enrichLockedOddsButtons = () => {
+        const teamNames = document.querySelectorAll(".match-detail-scoreboard .match-detail-team > strong");
+        const homeName = teamNames[0]?.textContent.trim() || "Хозяева";
+        const awayName = teamNames[1]?.textContent.trim() || "Гости";
+        const mapping = new Map([
+            ["1", ["winner", homeName]],
+            ["X", ["winner", "Ничья"]],
+            ["2", ["winner", awayName]],
+            ["ТБ 2.5", ["total", "ТБ 2.5"]],
+            ["ТМ 2.5", ["total", "ТМ 2.5"]],
+            ["ОЗ Да", ["both_score", "Обе забьют: да"]],
+        ]);
+
+        document.querySelectorAll(".match-detail-locked-options .match-bet-option").forEach((button) => {
+            const label = button.querySelector(":scope > span")?.textContent.trim();
+            const entry = mapping.get(label);
+            if (!entry) return;
+            button.dataset.market = entry[0];
+            button.dataset.selection = entry[1];
+        });
+    };
+
+    enrichLockedOddsButtons();
+
+    const oddsButtons = () => document.querySelectorAll(
+        ".match-detail-page .odds-button[data-market][data-selection], " +
+        ".match-detail-page .match-detail-locked-options .match-bet-option[data-market][data-selection]",
+    );
+
     const unwrapOddsButton = (button) => {
         const wrapper = button.parentElement;
         if (!wrapper?.classList.contains("odds-button-percent-wrap")) return;
@@ -52,7 +81,7 @@
     };
 
     const clearPredictionShares = () => {
-        document.querySelectorAll(".match-detail-page .odds-button[data-market][data-selection]").forEach((button) => {
+        oddsButtons().forEach((button) => {
             button.classList.remove("has-prediction-share");
             button.style.removeProperty("--prediction-share");
             button.querySelector(".odds-prediction-fill")?.remove();
@@ -106,7 +135,7 @@
             ]),
         );
 
-        document.querySelectorAll(".match-detail-page .odds-button[data-market][data-selection]").forEach((button) => {
+        oddsButtons().forEach((button) => {
             const entry = distributionMap.get(distributionKey(button.dataset.market, button.dataset.selection));
             const count = Number(entry?.count || 0);
             const percent = Math.max(0, Math.min(100, Number(entry?.percent || 0)));
