@@ -13,28 +13,72 @@ from .templatetags.achievement_tags import _best_win_streak, build_achievement_b
 class ExpertAchievementTests(TestCase):
     def test_all_badges_unlock_at_their_thresholds(self):
         badges = build_achievement_badges(
-            wins_count=10,
-            overall_roi=Decimal("20.0"),
-            followers_count=100,
-            best_win_streak=5,
+            predictions_count=50,
+            wins_count=50,
+            overall_roi=Decimal("50.0"),
+            followers_count=250,
+            best_win_streak=10,
             is_verified=True,
         )
 
         self.assertEqual(
             [badge["key"] for badge in badges],
-            ["wins-10", "roi-20", "followers-100", "streak-5", "verified"],
+            [
+                "first-pick",
+                "predictions-5",
+                "predictions-25",
+                "predictions-50",
+                "wins-3",
+                "wins-10",
+                "wins-25",
+                "wins-50",
+                "roi-5",
+                "roi-10",
+                "roi-20",
+                "roi-50",
+                "followers-10",
+                "followers-50",
+                "followers-100",
+                "followers-250",
+                "streak-3",
+                "streak-5",
+                "streak-10",
+                "verified",
+            ],
         )
 
-    def test_badges_stay_hidden_below_thresholds(self):
+    def test_badges_stay_hidden_below_first_thresholds(self):
         badges = build_achievement_badges(
-            wins_count=9,
-            overall_roi=Decimal("19.9"),
-            followers_count=99,
-            best_win_streak=4,
+            predictions_count=0,
+            wins_count=0,
+            overall_roi=Decimal("0"),
+            followers_count=0,
+            best_win_streak=0,
             is_verified=False,
         )
 
         self.assertEqual(badges, [])
+
+    def test_intermediate_badges_unlock_independently(self):
+        badges = build_achievement_badges(
+            predictions_count=5,
+            wins_count=3,
+            overall_roi=Decimal("10.0"),
+            followers_count=10,
+            best_win_streak=3,
+            is_verified=False,
+        )
+        keys = [badge["key"] for badge in badges]
+
+        self.assertIn("first-pick", keys)
+        self.assertIn("predictions-5", keys)
+        self.assertIn("wins-3", keys)
+        self.assertIn("roi-5", keys)
+        self.assertIn("roi-10", keys)
+        self.assertIn("followers-10", keys)
+        self.assertIn("streak-3", keys)
+        self.assertNotIn("wins-10", keys)
+        self.assertNotIn("roi-20", keys)
 
     def test_best_streak_uses_historical_winning_run(self):
         analyst = User.objects.create_user(
@@ -123,6 +167,7 @@ class ExpertAchievementTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-achievement="first-pick"')
         self.assertContains(response, 'data-achievement="roi-20"')
         self.assertContains(response, 'data-achievement="verified"')
         self.assertNotContains(response, 'data-achievement="wins-10"')
