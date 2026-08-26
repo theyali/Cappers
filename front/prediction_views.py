@@ -1,8 +1,20 @@
 from decimal import Decimal, InvalidOperation
+from types import SimpleNamespace
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Case, Count, ExpressionWrapper, F, IntegerField, Q, Value, When
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Prefetch,
+    Q,
+    Value,
+    When,
+)
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -33,9 +45,94 @@ def _following_ids(user) -> set[int]:
     )
 
 
+def _positions_queryset():
+    return Prediction.objects.select_related(
+        "match__sport",
+        "match__league__country",
+        "match__home_team",
+        "match__away_team",
+    ).order_by("id")
+
+
+def _combined_coefficient_expression():
+    return Case(
+        When(
+            total_stake__gt=0,
+            then=ExpressionWrapper(
+                F("possible_payout") / F("total_stake"),
+                output_field=DecimalField(max_digits=12, decimal_places=4),
+            ),
+        ),
+        default=Value(Decimal("0")),
+        output_field=DecimalField(max_digits=12, decimal_places=4),
+    )
+
+
+def _published_queryset():
+    queryset = (
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .select_related(
+            "author",
+            "author__analyst_profile",
+        )
+        .prefetch_related(
+            Prefetch("predictions", queryset=_positions_queryset(), to_attr="card_positions")
+        )
+        .annotate(
+            likes_count=Count("likes", distinct=True),
+            favorites_count=Count("favorites", distinct=True),
+            positions_count=Count("predictions", distinct=True),
+            combined_coefficient=_combined_coefficient_expression(),
+        )
+    )
+    return annotate_author_roi(
+        queryset,
+        author_outer_ref="author_id",
+        annotation_name="author_roi",
+    )
+
+
+def _prediction_card(coupon: PredictionCoupon):
+    positions = list(getattr(coupon, "card_positions", []) or [])
+    if not positions:
+        return None
+
+    item = positions[0]
+    count = getattr(coupon, "positions_count", None) or len(positions)
+    combined_coefficient = getattr(coupon, "combined_coefficient", None)
+    if combined_coefficient is None:
+        if coupon.total_stake:
+            combined_coefficient = coupon.possible_payout / coupon.total_stake
+        else:
+            combined_coefficient = Decimal("0")
+
+    selection = item.selection
+    market = item.market
+    if count > 1:
+        market = f"Экспресс · {count} игр"
+        selection = f"{item.selection} + ещё {count - 1}"
+
+    return SimpleNamespace(
+        id=coupon.id,
+        coupon=coupon,
+        match=item.match,
+        market=market,
+        selection=selection,
+        coefficient=combined_coefficient,
+        state_status=coupon.state_status,
+        created_at=coupon.published_at or coupon.created_at,
+        positions_count=count,
+        likes_count=getattr(coupon, "likes_count", 0),
+        favorites_count=getattr(coupon, "favorites_count", 0),
+        author_roi=getattr(coupon, "author_roi", Decimal("0")),
+    )
+
+
 def _decorate_predictions(request, predictions, following_ids: set[int] | None = None):
-    predictions = list(predictions)
-    prediction_ids = [prediction.pk for prediction in predictions]
+    coupons = list(predictions)
+    prediction_ids = [coupon.pk for coupon in coupons]
     liked_ids = set()
     favorite_ids = set()
     following_ids = following_ids if following_ids is not None else _following_ids(request.user)
@@ -54,45 +151,30 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
             ).values_list("prediction_id", flat=True)
         )
 
-    for prediction in predictions:
-        author = prediction.coupon.author
+    cards = []
+    for coupon in coupons:
+        card = _prediction_card(coupon)
+        if card is None:
+            continue
+
+        author = coupon.author
         profile = getattr(author, "analyst_profile", None)
         name = (
             profile.display_name
             if profile and profile.display_name
             else author.get_full_name() or author.username
         )
-        prediction.expert_name = name
-        prediction.expert_initials = _initials(name)
-        prediction.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
-        prediction.expert_verified = bool(profile and profile.is_verified)
-        prediction.is_liked = prediction.pk in liked_ids
-        prediction.is_favorite = prediction.pk in favorite_ids
-        prediction.is_own = bool(request.user.is_authenticated and author.pk == request.user.pk)
-        prediction.is_following_author = author.pk in following_ids and not prediction.is_own
+        card.expert_name = name
+        card.expert_initials = _initials(name)
+        card.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
+        card.expert_verified = bool(profile and profile.is_verified)
+        card.is_liked = coupon.pk in liked_ids
+        card.is_favorite = coupon.pk in favorite_ids
+        card.is_own = bool(request.user.is_authenticated and author.pk == request.user.pk)
+        card.is_following_author = author.pk in following_ids and not card.is_own
+        cards.append(card)
 
-    return predictions
-
-
-def _published_queryset():
-    queryset = (
-        Prediction.objects.filter(
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        )
-        .select_related(
-            "coupon__author",
-            "coupon__author__analyst_profile",
-            "match__sport",
-            "match__league__country",
-            "match__home_team",
-            "match__away_team",
-        )
-        .annotate(
-            likes_count=Count("likes", distinct=True),
-            favorites_count=Count("favorites", distinct=True),
-        )
-    )
-    return annotate_author_roi(queryset)
+    return cards
 
 
 def _parse_decimal(value: str | None) -> Decimal | None:
@@ -104,15 +186,15 @@ def _parse_decimal(value: str | None) -> Decimal | None:
         return None
 
 
-def _filter_options(published, selected_sport: str):
+def _filter_options(published_items, selected_sport: str):
     sports = list(
-        published.exclude(match__sport_id__isnull=True)
+        published_items.exclude(match__sport_id__isnull=True)
         .values("match__sport_id", "match__sport__name_ru", "match__sport__name")
         .distinct()
         .order_by("match__sport__name_ru", "match__sport__name")
     )
 
-    leagues_source = published.exclude(match__league_id__isnull=True)
+    leagues_source = published_items.exclude(match__league_id__isnull=True)
     if selected_sport.isdigit():
         leagues_source = leagues_source.filter(match__sport_id=int(selected_sport))
     leagues = list(
@@ -126,7 +208,7 @@ def _filter_options(published, selected_sport: str):
     )
 
     cappers = list(
-        published.values(
+        published_items.values(
             "coupon__author__username",
             "coupon__author__analyst_profile__display_name",
         )
@@ -144,9 +226,9 @@ def _status_tabs(request, counts: dict, active_status: str):
     count_map = {
         "all": counts["total"],
         "pending": counts["pending"],
-        Prediction.StateStatus.WIN: counts["win"],
-        Prediction.StateStatus.LOSE: counts["lose"],
-        Prediction.StateStatus.REFUND: counts["refund"],
+        PredictionCoupon.StateStatus.WIN: counts["win"],
+        PredictionCoupon.StateStatus.LOSE: counts["lose"],
+        PredictionCoupon.StateStatus.REFUND: counts["refund"],
     }
 
     tabs = []
@@ -164,6 +246,18 @@ def _status_tabs(request, counts: dict, active_status: str):
             }
         )
     return tabs
+
+
+def _apply_position_filters(queryset, *, selected_sport, selected_league, only_live, only_today):
+    if selected_sport.isdigit():
+        queryset = queryset.filter(predictions__match__sport_id=int(selected_sport))
+    if selected_league.isdigit():
+        queryset = queryset.filter(predictions__match__league_id=int(selected_league))
+    if only_live:
+        queryset = queryset.filter(predictions__match__sync_scope="live")
+    if only_today:
+        queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
+    return queryset.distinct()
 
 
 @ensure_csrf_cookie
@@ -186,52 +280,52 @@ def predictions(request):
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
 
-    published = Prediction.objects.filter(
+    published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
 
-    filtered = published
-    if selected_sport.isdigit():
-        filtered = filtered.filter(match__sport_id=int(selected_sport))
-    if selected_league.isdigit():
-        filtered = filtered.filter(match__league_id=int(selected_league))
+    filtered = _published_queryset()
+    filtered = _apply_position_filters(
+        filtered,
+        selected_sport=selected_sport,
+        selected_league=selected_league,
+        only_live=only_live,
+        only_today=only_today,
+    )
     if selected_capper:
-        filtered = filtered.filter(coupon__author__username=selected_capper)
+        filtered = filtered.filter(author__username=selected_capper)
     if coefficient_min is not None:
-        filtered = filtered.filter(coefficient__gte=coefficient_min)
+        filtered = filtered.filter(combined_coefficient__gte=coefficient_min)
     if coefficient_max is not None:
-        filtered = filtered.filter(coefficient__lte=coefficient_max)
-    if only_live:
-        filtered = filtered.filter(match__sync_scope="live")
-    if only_today:
-        filtered = filtered.filter(match__starts_at__date=timezone.localdate())
+        filtered = filtered.filter(combined_coefficient__lte=coefficient_max)
 
     counts = filtered.aggregate(
-        total=Count("id"),
-        pending=Count("id", filter=Q(state_status="") | Q(state_status__isnull=True)),
-        win=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-        lose=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-        refund=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
+        total=Count("id", distinct=True),
+        pending=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.PENDING),
+            distinct=True,
+        ),
+        win=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+            distinct=True,
+        ),
+        lose=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
+            distinct=True,
+        ),
+        refund=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.REFUND),
+            distinct=True,
+        ),
     )
 
-    queryset = _published_queryset()
-    if selected_sport.isdigit():
-        queryset = queryset.filter(match__sport_id=int(selected_sport))
-    if selected_league.isdigit():
-        queryset = queryset.filter(match__league_id=int(selected_league))
-    if selected_capper:
-        queryset = queryset.filter(coupon__author__username=selected_capper)
-    if coefficient_min is not None:
-        queryset = queryset.filter(coefficient__gte=coefficient_min)
-    if coefficient_max is not None:
-        queryset = queryset.filter(coefficient__lte=coefficient_max)
-    if only_live:
-        queryset = queryset.filter(match__sync_scope="live")
-    if only_today:
-        queryset = queryset.filter(match__starts_at__date=timezone.localdate())
-
+    queryset = filtered
     if active_status == "pending":
-        queryset = queryset.filter(Q(state_status="") | Q(state_status__isnull=True))
+        queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
     elif active_status != "all":
         queryset = queryset.filter(state_status=active_status)
 
@@ -240,7 +334,7 @@ def predictions(request):
         queryset = queryset.order_by(
             "-author_roi",
             "-likes_count",
-            "-coupon__published_at",
+            "-published_at",
             "-created_at",
         )
     elif active_sort == "popular":
@@ -252,29 +346,24 @@ def predictions(request):
         ).order_by(
             "-popularity_score",
             "-likes_count",
-            "-coupon__published_at",
+            "-published_at",
             "-created_at",
         )
     elif request.user.is_authenticated:
         queryset = queryset.annotate(
             feed_priority=Case(
-                When(coupon__author=request.user, then=Value(0)),
-                When(coupon__author_id__in=following_ids, then=Value(1)),
+                When(author=request.user, then=Value(0)),
+                When(author_id__in=following_ids, then=Value(1)),
                 default=Value(2),
                 output_field=IntegerField(),
             )
         ).order_by(
             "feed_priority",
-            "-coupon__published_at",
-            "-coupon__created_at",
+            "-published_at",
             "-created_at",
         )
     else:
-        queryset = queryset.order_by(
-            "-coupon__published_at",
-            "-coupon__created_at",
-            "-created_at",
-        )
+        queryset = queryset.order_by("-published_at", "-created_at")
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -284,7 +373,7 @@ def predictions(request):
         following_ids=following_ids,
     )
 
-    sports, leagues, cappers = _filter_options(published, selected_sport)
+    sports, leagues, cappers = _filter_options(published_items, selected_sport)
 
     params_without_page = request.GET.copy()
     params_without_page.pop("page", None)
@@ -338,6 +427,7 @@ def favorites(request):
         _published_queryset()
         .filter(favorites__user=request.user)
         .order_by("-favorites__created_at", "-created_at")
+        .distinct()
     )
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -357,11 +447,11 @@ def favorites(request):
     )
 
 
-def _published_prediction(prediction_id: int) -> Prediction:
+def _published_prediction(prediction_id: int) -> PredictionCoupon:
     return get_object_or_404(
-        Prediction,
+        PredictionCoupon,
         pk=prediction_id,
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
 
 
