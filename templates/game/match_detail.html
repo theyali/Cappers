@@ -81,25 +81,6 @@
                         {% if match.away_team_name_en %}<small>{{ match.away_team_name_en }}</small>{% endif %}
                     </div>
                 </div>
-
-                <dl class="match-detail-meta">
-                    <div>
-                        <dt>Лига EN</dt>
-                        <dd>{{ match.league_name_en|default:"-" }}</dd>
-                    </div>
-                    <div>
-                        <dt>Страна</dt>
-                        <dd>{{ match.league_country|default:"-" }}</dd>
-                    </div>
-                    <div>
-                        <dt>ID провайдера</dt>
-                        <dd>{{ match.external_id }}</dd>
-                    </div>
-                    <div>
-                        <dt>Обновлен</dt>
-                        <dd>{{ match.updated_at|date:"d.m.Y H:i" }}</dd>
-                    </div>
-                </dl>
             </article>
 
             {% if match.sync_scope == "prematch" %}

@@ -1086,39 +1086,6 @@
     font-size: 14px;
 }
 
-.match-detail-meta {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin: 0;
-}
-
-.match-detail-meta div {
-    min-width: 0;
-    display: grid;
-    gap: 8px;
-    padding: 16px;
-    border-radius: 14px;
-    background: #171718;
-}
-
-.match-detail-meta dt,
-.match-detail-meta dd {
-    margin: 0;
-}
-
-.match-detail-meta dt {
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.match-detail-meta dd {
-    overflow: hidden;
-    color: var(--text);
-    font-size: 14px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
 
 .match-odds-panel {
     min-width: 0;
@@ -1347,11 +1314,6 @@
     .match-detail-head {
         flex-direction: column;
     }
-
-    .match-detail-meta {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .odds-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1389,10 +1351,6 @@
     }
 
     .coupon-shared {
-        grid-template-columns: 1fr;
-    }
-
-    .match-detail-meta {
         grid-template-columns: 1fr;
     }
 
