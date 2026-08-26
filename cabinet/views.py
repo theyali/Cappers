@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from game.models import Prediction, PredictionCoupon
 
+from .achievements import build_achievement_overview
 from .forms import (
     AnalystAvatarForm,
     AnalystProfileForm,
@@ -98,7 +99,7 @@ def profile(request):
 
     allowed_tabs = {"profile", "following"}
     if request.user.role == User.Role.ANALYST:
-        allowed_tabs.update({"predictions", "followers"})
+        allowed_tabs.update({"predictions", "followers", "achievements"})
 
     active_tab = request.GET.get("tab", "profile")
     if active_tab not in allowed_tabs:
@@ -145,6 +146,7 @@ def profile(request):
     my_coupons = []
     coupons_count = 0
     predictions_count = 0
+    achievement_overview = None
     if request.user.role == User.Role.ANALYST:
         my_coupons = list(
             PredictionCoupon.objects.filter(author=request.user)
@@ -173,6 +175,11 @@ def profile(request):
 
         coupons_count = len(my_coupons)
         predictions_count = Prediction.objects.filter(coupon__author=request.user).count()
+        achievement_overview = build_achievement_overview(
+            request.user,
+            followers_count=followers_count,
+            is_verified=bool(analyst_profile and analyst_profile.is_verified),
+        )
 
     context = {
         "analyst_profile": analyst_profile,
@@ -187,6 +194,7 @@ def profile(request):
         "my_coupons": my_coupons,
         "coupons_count": coupons_count,
         "predictions_count": predictions_count,
+        "achievement_overview": achievement_overview,
         "profile_completion": _profile_completion(request.user, analyst_profile),
     }
     return render(request, "cabinet/profile.html", context)
