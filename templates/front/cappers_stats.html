@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static site_extras %}
 
 {% block title %}Эксперты и аналитики — КапперХаб{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-stats.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/cappers-sidebar.css' %}">
 {% endblock %}
 
 {% block content %}
-<section class="cappers-page" aria-label="Каталог экспертов и аналитиков">
+<section class="cappers-page cappers-layout" aria-label="Каталог экспертов и аналитиков">
     <div class="cappers-main">
         <div class="cappers-hero cappers-hero-pro">
             <div>
@@ -78,6 +79,9 @@
                                     </svg>
                                 </span>
                                 {% endif %}
+                                <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}">
+                                    ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%
+                                </span>
                             </div>
                             <span>@{{ expert.username }}</span>
                         </div>
@@ -131,5 +135,7 @@
         </div>
         {% endif %}
     </div>
+
+    {% bookmakers_sidebar %}
 </section>
 {% endblock %}
