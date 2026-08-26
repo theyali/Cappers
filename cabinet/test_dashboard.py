@@ -73,7 +73,7 @@ class CapperDashboardTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal("1.80"),
             stake=Decimal("100"),
-            comment="Тест",
+            confidence=80,
             state_status=Prediction.StateStatus.WIN,
         )
         Prediction.objects.create(
@@ -83,7 +83,7 @@ class CapperDashboardTests(TestCase):
             selection="Ничья",
             coefficient=Decimal("1.90"),
             stake=Decimal("50"),
-            comment="Тест",
+            confidence=65,
             state_status=Prediction.StateStatus.LOSE,
         )
         Prediction.objects.create(
@@ -93,7 +93,7 @@ class CapperDashboardTests(TestCase):
             selection="Обе забьют: да",
             coefficient=Decimal("1.70"),
             stake=Decimal("40"),
-            comment="Тест",
+            confidence=74,
             state_status="",
         )
 
