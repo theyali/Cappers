@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -57,17 +57,66 @@ def _actor_data(user) -> dict:
 def _reaction_item(reaction, kind: str) -> dict:
     actor = _actor_data(reaction.user)
     prediction = reaction.prediction
-    match = prediction.match
+    item = (
+        prediction.predictions.select_related("match__home_team", "match__away_team")
+        .order_by("id")
+        .first()
+    )
+    if item:
+        match = item.match
+        selection = item.selection
+        match_name = f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
+        positions_count = prediction.predictions.count()
+        if positions_count > 1:
+            selection = f"{selection} + ещё {positions_count - 1}"
+    else:
+        selection = "Прогноз"
+        match_name = "Матчи не указаны"
+
     return {
         **actor,
         "kind": kind,
         "label": "Поставил лайк" if kind == "like" else "Добавил в избранное",
         "icon": "👍" if kind == "like" else "♥",
         "created_at": reaction.created_at,
-        "coupon_id": prediction.coupon_id,
-        "selection": prediction.selection,
-        "match_name": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+        "coupon_id": prediction.id,
+        "selection": selection,
+        "match_name": match_name,
     }
+
+
+def _live_prediction_cards(analyst) -> list[Prediction]:
+    live_items = Prediction.objects.filter(match__sync_scope=Match.SyncScope.LIVE).select_related(
+        "match__league",
+        "match__home_team",
+        "match__away_team",
+    ).order_by("id")
+    coupons = list(
+        PredictionCoupon.objects.filter(
+            author=analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            predictions__match__sync_scope=Match.SyncScope.LIVE,
+        )
+        .prefetch_related(Prefetch("predictions", queryset=live_items, to_attr="live_items"))
+        .distinct()
+        .order_by("-published_at", "-created_at")[:12]
+    )
+
+    cards = []
+    for coupon in coupons:
+        items = list(getattr(coupon, "live_items", []) or [])
+        if not items:
+            continue
+        item = items[0]
+        item.state_status = coupon.state_status
+        item.confidence = coupon.confidence
+        if coupon.total_stake:
+            item.coefficient = (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"))
+        if len(items) > 1:
+            item.market = f"Экспресс · {coupon.predictions.count()} игр"
+            item.selection = f"{item.selection} + другие позиции"
+        cards.append(item)
+    return cards
 
 
 @login_required
@@ -78,36 +127,40 @@ def dashboard(request):
     analyst = request.user
     now, today_start, tomorrow_start = _today_bounds()
 
-    published = (
-        Prediction.objects.filter(
-            coupon__author=analyst,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        )
-        .select_related(
-            "coupon",
-            "match__league",
-            "match__home_team",
-            "match__away_team",
-        )
+    published = PredictionCoupon.objects.filter(
+        author=analyst,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
-
     today_predictions = published.filter(
-        match__starts_at__gte=today_start,
-        match__starts_at__lt=tomorrow_start,
-    )
-    pending_filter = Q(state_status="") | Q(state_status__isnull=True)
+        predictions__match__starts_at__gte=today_start,
+        predictions__match__starts_at__lt=tomorrow_start,
+    ).distinct()
     today_stats = today_predictions.aggregate(
-        active=Count("id"),
-        wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-        losses=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-        pending=Count("id", filter=pending_filter),
-        live=Count("id", filter=Q(match__sync_scope=Match.SyncScope.LIVE)),
+        active=Count("id", distinct=True),
+        wins=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+            distinct=True,
+        ),
+        losses=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
+            distinct=True,
+        ),
+        pending=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.PENDING),
+            distinct=True,
+        ),
+        live=Count(
+            "id",
+            filter=Q(predictions__match__sync_scope=Match.SyncScope.LIVE),
+            distinct=True,
+        ),
     )
 
     settled_today = list(
-        PredictionCoupon.objects.filter(
-            author=analyst,
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        published.filter(
             state_status__in=SETTLED_COUPON_STATES,
             settled_at__gte=today_start,
             settled_at__lt=tomorrow_start,
@@ -138,33 +191,18 @@ def dashboard(request):
     for follow in latest_followers:
         follow.dashboard_actor = _actor_data(follow.follower)
 
-    live_predictions = list(
-        published.filter(match__sync_scope=Match.SyncScope.LIVE)
-        .order_by("-match__last_seen_at", "match__starts_at", "id")[:12]
-    )
+    live_predictions = _live_prediction_cards(analyst)
 
     likes = list(
-        PredictionLike.objects.filter(prediction__coupon__author=analyst)
+        PredictionLike.objects.filter(prediction__author=analyst)
         .exclude(user=analyst)
-        .select_related(
-            "user",
-            "user__analyst_profile",
-            "prediction__coupon",
-            "prediction__match__home_team",
-            "prediction__match__away_team",
-        )
+        .select_related("user", "user__analyst_profile", "prediction")
         .order_by("-created_at")[:10]
     )
     favorites = list(
-        PredictionFavorite.objects.filter(prediction__coupon__author=analyst)
+        PredictionFavorite.objects.filter(prediction__author=analyst)
         .exclude(user=analyst)
-        .select_related(
-            "user",
-            "user__analyst_profile",
-            "prediction__coupon",
-            "prediction__match__home_team",
-            "prediction__match__away_team",
-        )
+        .select_related("user", "user__analyst_profile", "prediction")
         .order_by("-created_at")[:10]
     )
     reactions = [
