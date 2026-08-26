@@ -61,3 +61,33 @@ class CabinetProfileTests(TestCase):
 
         self.assertEqual(response.context["followers_count"], 1)
         self.assertEqual(response.context["following_count"], 0)
+
+    def test_reader_cannot_open_analyst_only_profile_tabs(self):
+        reader = User.objects.create_user(
+            username="reader-tabs",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        self.client.force_login(reader)
+
+        for tab in ("predictions", "followers"):
+            response = self.client.get(reverse("cabinet:profile"), {"tab": tab})
+            self.assertEqual(response.context["active_tab"], "profile")
+            self.assertNotContains(response, "profile-hero-shade")
+            self.assertNotContains(response, "Мои прогнозы")
+            self.assertNotContains(response, "Кто следит за вами")
+
+    def test_analyst_keeps_predictions_followers_and_stats(self):
+        analyst = User.objects.create_user(
+            username="analyst-tabs",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        self.client.force_login(analyst)
+
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "followers"})
+
+        self.assertEqual(response.context["active_tab"], "followers")
+        self.assertContains(response, "profile-hero-shade")
+        self.assertContains(response, "Мои прогнозы")
+        self.assertContains(response, "Кто следит за вами")

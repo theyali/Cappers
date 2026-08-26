@@ -74,8 +74,13 @@ def profile(request):
     analyst_profile = _get_analyst_profile(request.user)
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
+
+    allowed_tabs = {"profile", "following"}
+    if request.user.role == User.Role.ANALYST:
+        allowed_tabs.update({"predictions", "followers"})
+
     active_tab = request.GET.get("tab", "profile")
-    if active_tab not in {"profile", "predictions", "followers", "following"}:
+    if active_tab not in allowed_tabs:
         active_tab = "profile"
 
     if analyst_profile is not None:

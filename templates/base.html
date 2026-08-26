@@ -7,6 +7,7 @@
     <title>{% block title %}КапперХаб{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/messages.css' %}">
     {% block extra_css %}{% endblock %}
     {% if request.resolver_match.app_name == 'game' %}
     <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
@@ -46,9 +47,9 @@
     </header>
 
     {% if messages %}
-        <ul class="messages">
+        <ul class="messages" role="status" aria-live="polite">
             {% for message in messages %}
-                <li>{{ message }}</li>
+                <li class="message-item {{ message.tags|default:'info' }}">{{ message }}</li>
             {% endfor %}
         </ul>
     {% endif %}

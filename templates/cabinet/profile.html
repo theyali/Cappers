@@ -6,7 +6,7 @@
 
 {% block content %}
 <section class="profile-page" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">
-    <div class="profile-hero long-bg long-bg-5">
+    <div class="profile-hero long-bg long-bg-5{% if not request.user.is_analyst %} is-reader{% endif %}">
         <div class="profile-identity">
             <div class="profile-avatar-wrap">
                 <div class="profile-avatar" id="profileAvatar">
@@ -45,6 +45,7 @@
             </div>
         </div>
 
+        {% if request.user.is_analyst %}
         <div class="profile-hero-shade" aria-label="Статистика профиля">
             <div class="profile-completion-card">
                 <div>
@@ -77,12 +78,15 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <nav class="profile-tabs" aria-label="Разделы профиля">
         <a class="{% if active_tab == 'profile' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=profile" data-profile-tab-link>Профиль</a>
-        <a class="{% if active_tab == 'predictions' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>Мои прогнозы</a>
-        <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
+        {% if request.user.is_analyst %}
+            <a class="{% if active_tab == 'predictions' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>Мои прогнозы</a>
+            <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
+        {% endif %}
         <a class="{% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>Подписки</a>
     </nav>
 
@@ -171,6 +175,7 @@
     </div>
     </section>
 
+    {% if request.user.is_analyst %}
     <section class="profile-tab-panel {% if active_tab == 'predictions' %}is-active{% endif %}" id="profile-tab-predictions" data-profile-tab-panel="predictions">
         <div class="profile-list-card">
             <div class="profile-section-heading">
@@ -223,6 +228,7 @@
             </div>
         </div>
     </section>
+    {% endif %}
 
     <section class="profile-tab-panel {% if active_tab == 'following' %}is-active{% endif %}" id="profile-tab-following" data-profile-tab-panel="following">
         <div class="profile-list-card">
