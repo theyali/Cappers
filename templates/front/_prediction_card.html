@@ -122,9 +122,15 @@
         </div>
     </div>
 
-    {% if prediction.comment %}
-        <p class="prediction-comment">{{ prediction.comment|truncatechars:150 }}</p>
-    {% endif %}
+    <div class="prediction-confidence" aria-label="Уверенность эксперта {{ prediction.confidence }} процентов">
+        <div class="prediction-confidence-head">
+            <span>Уверенность эксперта</span>
+            <strong>{{ prediction.confidence }}%</strong>
+        </div>
+        <div class="prediction-confidence-track" aria-hidden="true">
+            <span style="width: {{ prediction.confidence }}%"></span>
+        </div>
+    </div>
 
     <div class="prediction-reactions" aria-label="Действия с прогнозом">
         <button
