@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Моя лента — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-feed-personal.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/following-feed.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="predictions-page following-feed-page" aria-label="Моя лента">
+    <div class="predictions-hero following-feed-hero">
+        <div>
+            <p class="predictions-eyebrow">Персональная лента</p>
+            <h1>Моя лента</h1>
+            <p>Здесь только прогнозы капперов, на которых вы подписаны. Сохранённые прогнозы остаются отдельно в разделе «Избранные прогнозы».</p>
+        </div>
+        <div class="following-feed-summary">
+            <div>
+                <strong>{{ following_count }}</strong>
+                <span>подписок</span>
+            </div>
+            <div>
+                <strong>{{ feed_predictions_count }}</strong>
+                <span>прогнозов</span>
+            </div>
+        </div>
+    </div>
+
+    {% if following %}
+    <section class="following-cappers-panel" aria-label="Капперы в моей ленте">
+        <div class="following-feed-section-head">
+            <div>
+                <span>Ваши капперы</span>
+                <strong>Быстрый выбор эксперта</strong>
+            </div>
+            <a href="{% url 'cabinet:profile' %}?tab=following">Управлять подписками →</a>
+        </div>
+
+        <div class="following-cappers-list">
+            <a class="following-capper-pill{% if not selected_capper %} is-active{% endif %}" href="{% url 'front:following_feed' %}">
+                <span class="following-capper-all">Все</span>
+                <div>
+                    <strong>Все подписки</strong>
+                    <small>{{ following_count }} капперов</small>
+                </div>
+            </a>
+            {% for follow in following %}
+            <a class="following-capper-pill{% if selected_capper == follow.analyst.username %} is-active{% endif %}" href="{% url 'front:following_feed' %}?capper={{ follow.analyst.username|urlencode }}">
+                <span class="following-capper-avatar">
+                    {% if follow.feed_avatar_url %}
+                        <img src="{{ follow.feed_avatar_url }}" alt="{{ follow.feed_name }}">
+                    {% else %}
+                        {{ follow.feed_initial }}
+                    {% endif %}
+                </span>
+                <div>
+                    <strong>{{ follow.feed_name }}</strong>
+                    <small>@{{ follow.analyst.username }} · {{ follow.feed_predictions_count }}</small>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <form class="following-feed-controls" method="get" action="{% url 'front:following_feed' %}">
+        {% if active_status != 'all' %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
+        <label class="following-feed-select">
+            <span>Каппер</span>
+            <select name="capper">
+                <option value="">Все подписки</option>
+                {% for follow in following %}
+                    <option value="{{ follow.analyst.username }}"{% if selected_capper == follow.analyst.username %} selected{% endif %}>{{ follow.feed_name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="following-feed-select">
+            <span>Сортировка</span>
+            <select name="sort">
+                {% for value, label in sort_options %}
+                    <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="following-feed-toggle">
+            <input type="checkbox" name="live" value="1"{% if only_live %} checked{% endif %}>
+            <span>Только LIVE</span>
+        </label>
+        <label class="following-feed-toggle">
+            <input type="checkbox" name="today" value="1"{% if only_today %} checked{% endif %}>
+            <span>Сегодня</span>
+        </label>
+        <button class="following-feed-submit" type="submit">Показать</button>
+        {% if active_filter_count %}<a class="following-feed-reset" href="{% url 'front:following_feed' %}">Сбросить</a>{% endif %}
+    </form>
+
+    <nav class="predictions-tabs" aria-label="Результаты прогнозов в моей ленте">
+        {% for tab in status_tabs %}
+        <a class="{% if tab.active %}is-active{% endif %}" href="{{ tab.href }}">
+            <span>{{ tab.label }}</span>
+            <b>{{ tab.count }}</b>
+        </a>
+        {% endfor %}
+    </nav>
+
+    {% if page_obj.object_list %}
+    <div class="predictions-grid">
+        {% for prediction in page_obj.object_list %}
+            {% include "front/_prediction_card.html" %}
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="predictions-pagination" aria-label="Страницы моей ленты">
+        {% if page_obj.has_previous %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+        {% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="predictions-empty following-feed-empty">
+        <h2>По этим условиям прогнозов нет</h2>
+        <p>Попробуйте сбросить фильтры или дождитесь новых прогнозов от ваших капперов.</p>
+        <a class="following-feed-empty-action" href="{% url 'front:predictions' %}">Посмотреть все прогнозы →</a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="following-feed-onboarding">
+        <span class="following-feed-onboarding-icon" aria-hidden="true">+</span>
+        <div>
+            <p class="predictions-eyebrow">Соберите свою ленту</p>
+            <h2>Вы пока ни на кого не подписаны</h2>
+            <p>Откройте рейтинг капперов или общую ленту, выберите интересных экспертов и нажмите «Подписаться». После этого их новые прогнозы будут появляться здесь автоматически.</p>
+        </div>
+        <div class="following-feed-onboarding-actions">
+            <a class="is-primary" href="{% url 'front:cappers_stats' %}">Найти капперов</a>
+            <a href="{% url 'front:predictions' %}">Все прогнозы</a>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
+<script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
+{% endblock %}
