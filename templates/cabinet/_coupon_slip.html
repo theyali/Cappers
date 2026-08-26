@@ -110,12 +110,15 @@
                     {% endif %}
                 </div>
 
-                {% if prediction.comment %}
-                <details class="coupon-slip-comment">
-                    <summary>Комментарий к прогнозу</summary>
-                    <p>{{ prediction.comment }}</p>
-                </details>
-                {% endif %}
+                <div class="prediction-confidence coupon-slip-confidence" aria-label="Уверенность {{ prediction.confidence }} процентов">
+                    <div class="prediction-confidence-head">
+                        <span>Уверенность</span>
+                        <strong>{{ prediction.confidence }}%</strong>
+                    </div>
+                    <div class="prediction-confidence-track" aria-hidden="true">
+                        <span style="width: {{ prediction.confidence }}%"></span>
+                    </div>
+                </div>
             </div>
         </article>
         {% endfor %}
