@@ -191,7 +191,33 @@
     </aside>
 </section>
 
-<section class="home-articles" aria-labelledby="home-articles-title" data-article-slider>
+<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">
+    <header class="home-articles-head">
+        <div>
+            <p class="home-eyebrow">Прематч</p>
+            <h2 id="home-important-matches-title">Важные матчи</h2>
+            <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
+        </div>
+        <div class="home-articles-actions">
+            <a href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
+        </div>
+    </header>
+
+    {% if important_matches %}
+    <div class="matches-grid">
+        {% for match in important_matches %}
+            {% include "game/_home_match_card.html" with match=match only %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="matches-empty">
+        <h2>Прематчей пока нет</h2>
+        <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="home-articles" aria-labelledby="home-articles-title" data-article-slider tabindex="0">
     <header class="home-articles-head">
         <div>
             <p class="home-eyebrow">Редакция</p>
@@ -201,8 +227,8 @@
         <div class="home-articles-actions">
             <a href="{% url 'front:articles' %}">Все статьи</a>
             {% if latest_articles|length > 1 %}
-            <button type="button" data-article-prev aria-label="Предыдущая статья">←</button>
-            <button class="is-accent" type="button" data-article-next aria-label="Следующая статья">→</button>
+            <button type="button" data-article-prev aria-label="Предыдущая страница статей">←</button>
+            <button class="is-accent" type="button" data-article-next aria-label="Следующая страница статей">→</button>
             {% endif %}
         </div>
     </header>
@@ -233,7 +259,7 @@
         </div>
     </div>
     <div class="home-articles-footer">
-        <div class="home-article-dots" data-article-dots aria-label="Навигация по статьям"></div>
+        <div class="home-article-dots" data-article-dots aria-label="Навигация по страницам статей"></div>
         <span><b data-article-current>01</b> / {{ latest_articles|length|stringformat:"02d" }}</span>
     </div>
     {% else %}
@@ -241,32 +267,6 @@
         <strong>Статьи скоро появятся</strong>
         <p>Добавьте первую статью через админку — она автоматически попадёт на главную.</p>
         <a href="{% url 'front:articles' %}">Открыть раздел →</a>
-    </div>
-    {% endif %}
-</section>
-
-<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">
-    <header class="home-articles-head">
-        <div>
-            <p class="home-eyebrow">Прематч</p>
-            <h2 id="home-important-matches-title">Важные матчи</h2>
-            <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
-        </div>
-        <div class="home-articles-actions">
-            <a href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
-        </div>
-    </header>
-
-    {% if important_matches %}
-    <div class="matches-grid">
-        {% for match in important_matches %}
-            {% include "game/_home_match_card.html" with match=match only %}
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="matches-empty">
-        <h2>Прематчей пока нет</h2>
-        <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
     </div>
     {% endif %}
 </section>
