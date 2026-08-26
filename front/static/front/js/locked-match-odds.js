@@ -2,9 +2,9 @@
     const dataNode = document.getElementById("locked-match-odds-data");
     if (!dataNode) return;
 
-    let oddsByMatch = {};
+    let cardData = {};
     try {
-        oddsByMatch = JSON.parse(dataNode.textContent || "{}");
+        cardData = JSON.parse(dataNode.textContent || "{}");
     } catch (error) {
         return;
     }
@@ -25,13 +25,18 @@
         ["ОЗ Да", "bttsYes"],
     ];
 
-    Object.entries(oddsByMatch).forEach(([matchId, odds]) => {
-        const card = document.querySelector(`[data-match-card][data-match-id="${CSS.escape(matchId)}"]`);
+    Object.entries(cardData).forEach(([matchId, entry]) => {
+        const card = document.querySelector(`[data-match-card][data-match-id="${matchId}"]`);
         if (!card || card.querySelector(".match-card-options")) return;
 
+        const isLocked = entry?.scope === "live" || entry?.scope === "finished";
+        const odds = entry?.odds || {};
         const options = document.createElement("div");
-        options.className = "coupon-options match-card-options is-locked";
-        options.setAttribute("aria-label", "Коэффициенты закрыты");
+        options.className = `coupon-options match-card-options ${isLocked ? "is-locked" : "is-readonly"}`;
+        options.setAttribute(
+            "aria-label",
+            isLocked ? "Коэффициенты закрыты" : "Коэффициенты матча",
+        );
 
         items.forEach(([label, key]) => {
             const button = document.createElement("button");
@@ -39,10 +44,12 @@
             button.type = "button";
             button.disabled = true;
             button.setAttribute("aria-disabled", "true");
-            button.title = "Матч уже идет или завершен. Коэффициент доступен только для просмотра.";
-            button.innerHTML = `${lockIcon}<span></span><small></small>`;
+            button.title = isLocked
+                ? "Матч уже идет или завершен. Коэффициент доступен только для просмотра."
+                : "Коэффициент доступен для просмотра. Добавлять исходы в прогноз могут эксперты.";
+            button.innerHTML = `${isLocked ? lockIcon : ""}<span></span><small></small>`;
             button.querySelector("span").textContent = label;
-            button.querySelector("small").textContent = odds?.[key] || "—";
+            button.querySelector("small").textContent = odds[key] || "—";
             options.append(button);
         });
 
