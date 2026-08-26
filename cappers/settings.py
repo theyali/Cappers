@@ -70,6 +70,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "front.context_processors.website_settings",
             ],
         },
     },
@@ -169,6 +170,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     "fetch-finished-football-matches": {
         "task": "game.tasks.fetch_finished_matches",
+        "schedule": timedelta(minutes=15),
+    },
+    "settle-football-predictions": {
+        "task": "game.tasks.settle_predictions",
         "schedule": timedelta(minutes=15),
     },
     "run-bot-prediction-cycle": {

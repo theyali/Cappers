@@ -283,6 +283,10 @@ class Match(models.Model):
     score = models.CharField(max_length=32, blank=True)
     live_minute = models.IntegerField(null=True, blank=True)
     live_minute_label = models.CharField(max_length=32, blank=True)
+    winning_bet_keys = models.JSONField(default=list, blank=True)
+    refund_bet_keys = models.JSONField(default=list, blank=True)
+    odds_result_data = models.JSONField(default=dict, blank=True)
+    odds_resolved_at = models.DateTimeField(null=True, blank=True)
 
     raw_data = models.JSONField(default=dict, blank=True)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
@@ -439,6 +443,12 @@ class PredictionCoupon(models.Model):
         CANCELED = "canceled", "Отменен"
         PUBLISHED = "published", "Опубликован"
 
+    class StateStatus(models.TextChoices):
+        PENDING = "pending", "В ожидании"
+        WIN = "win", "Выигрыш"
+        LOSE = "lose", "Проигрыш"
+        REFUND = "refund", "Возврат"
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -452,11 +462,19 @@ class PredictionCoupon(models.Model):
         default=PublishedStatus.DRAFT,
         db_index=True,
     )
+    state_status = models.CharField(
+        "Результат купона",
+        max_length=16,
+        choices=StateStatus.choices,
+        default=StateStatus.PENDING,
+        db_index=True,
+    )
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
+    settled_at = models.DateTimeField("Рассчитан", null=True, blank=True)
 
     class Meta:
         verbose_name = "Купон прогнозов"
@@ -464,6 +482,7 @@ class PredictionCoupon(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["author", "published_status", "created_at"]),
+            models.Index(fields=["published_status", "state_status", "created_at"]),
         ]
 
     def clean(self) -> None:

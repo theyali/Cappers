@@ -1,5 +1,6 @@
 from celery import shared_task
 
+from game.services.settlement import settle_finished_matches
 from game.services.match_sync import MatchSyncService
 
 
@@ -15,4 +16,11 @@ def fetch_live_matches():
 
 @shared_task
 def fetch_finished_matches():
-    return MatchSyncService().sync_finished()
+    result = MatchSyncService().sync_finished()
+    result["settlement"] = settle_finished_matches()
+    return result
+
+
+@shared_task
+def settle_predictions():
+    return settle_finished_matches()

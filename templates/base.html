@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}КапперХаб{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'front/img/logo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'front/img/logo.png' %}">
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/messages.css' %}">
@@ -76,9 +78,40 @@
         </ul>
     {% endif %}
 
+    {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link %}
+        <div class="fixed-tg-btn-wrapper">
+            <a href="{{ request.website_settings.fixed_tg_link }}"
+               target="_blank"
+               rel="nofollow noopener noreferrer"
+               class="fixed-tg-btn">
+                <span class="fixed-tg-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 4 3.6 10.8c-1 .39-.95 1.83.08 2.14l4.24 1.28 1.62 5.1c.31.98 1.63 1.16 2.19.3l2.32-3.58 4.56 3.34c.83.61 2.01.13 2.18-.89L23 5.33C23.16 4.35 21.91 3.65 21 4Zm-3.77 4.02-7.7 6.83-.29 2.11-1.02-3.21 9.01-5.73Z"/></svg>
+                </span>
+                <span>{{ request.website_settings.fixed_tg_title|default:"Бесплатный прогноз в Telegram" }}</span>
+            </a>
+        </div>
+    {% endif %}
+
     <main class="site-main">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <a class="site-footer-brand" href="{% url 'front:index' %}">
+                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <span>КапперХаб</span>
+            </a>
+            <nav class="site-footer-links" aria-label="Документы">
+                {% for page in footer_static_pages %}
+                    <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
+                {% empty %}
+                    <span>Документы скоро появятся</span>
+                {% endfor %}
+            </nav>
+        </div>
+    </footer>
+
     <div class="logo-transition" aria-hidden="true">
         <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
     </div>

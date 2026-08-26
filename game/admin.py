@@ -95,13 +95,22 @@ class PredictionInline(admin.TabularInline):
     model = Prediction
     extra = 0
     autocomplete_fields = ("match",)
-    fields = ("match", "market", "selection", "stake", "state_status")
+    fields = ("match", "market", "selection", "coefficient", "stake", "state_status")
 
 
 @admin.register(PredictionCoupon)
 class PredictionCouponAdmin(admin.ModelAdmin):
-    list_display = ("id", "author", "published_status", "total_stake", "created_at")
-    list_filter = ("published_status", "created_at")
+    list_display = (
+        "id",
+        "author",
+        "published_status",
+        "state_status",
+        "total_stake",
+        "possible_payout",
+        "published_at",
+        "settled_at",
+    )
+    list_filter = ("published_status", "state_status", "created_at", "settled_at")
     search_fields = ("author__username",)
     inlines = (PredictionInline,)
 
