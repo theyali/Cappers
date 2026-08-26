@@ -1,5 +1,5 @@
 :root {
-    --cyan: #2596be;
+    --green: #5ea731;
 }
 
 .match-predictions-feed {
@@ -316,7 +316,7 @@
     width: var(--prediction-share, 0%);
     z-index: 0;
     display: block;
-    background: var(--cyan);
+    background: var(--green);
     opacity: .42;
     pointer-events: none;
     transition: width .36s ease;
