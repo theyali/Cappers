@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/match-predictions.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/match-card-odds-state.css' %}">
     {% endif %}
 </head>
 <body>
@@ -58,6 +59,7 @@
     <div class="logo-transition" aria-hidden="true">
         <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
     </div>
+    {% if locked_card_odds %}{{ locked_card_odds|json_script:"locked-match-odds-data" }}{% endif %}
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     {% if request.resolver_match.app_name == 'game' %}
     <script
@@ -67,6 +69,7 @@
         data-today-date="{{ today_iso|default:'' }}"
         defer
     ></script>
+    <script src="{% static 'front/js/locked-match-odds.js' %}" defer></script>
     <script src="{% static 'front/js/match-predictions.js' %}" defer></script>
     {% endif %}
     {% block extra_js %}{% endblock %}
