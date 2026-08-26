@@ -194,6 +194,15 @@ def _important_home_matches() -> list[Match]:
             "away_team",
             "odds",
         )
+        .annotate(
+            predictions_count=Count(
+                "predictions",
+                filter=Q(
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            )
+        )
         .order_by("-last_seen_at", "-created_at", "-id")
     )
 

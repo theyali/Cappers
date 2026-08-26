@@ -58,6 +58,7 @@
     min-width: 0;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
@@ -100,7 +101,7 @@
     width: min(420px, 34vw);
     flex: 0 0 auto;
     display: grid;
-    align-content: end;
+    align-content: center;
     gap: 12px;
 }
 
@@ -249,6 +250,20 @@
 .expert-public-edit {
     color: var(--text);
     background: #303033;
+}
+
+.expert-public-name-action {
+    width: auto;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 11px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.expert-public-achievements {
+    width: min(520px, 100%);
+    margin-top: 18px;
 }
 
 .expert-public-stats {
@@ -604,6 +619,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+    align-items: start;
 }
 
 .expert-public-chart-card,
@@ -871,6 +887,9 @@
     margin-top: 3px;
     color: var(--muted);
     font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .expert-public-teams {
@@ -1009,6 +1028,10 @@
     .expert-follow-button,
     .expert-public-edit {
         width: 100%;
+    }
+
+    .expert-public-name-action {
+        width: auto;
     }
 
     .expert-public-side {

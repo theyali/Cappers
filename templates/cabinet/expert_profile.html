@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/expert-public.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/expert-achievements.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/cappers-achievements.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/expert-public-predictions.css' %}">
 {% endblock %}
 
@@ -25,6 +25,21 @@
                 <div class="expert-public-name-row">
                     <h1>{{ expert_name }}</h1>
                     {% if analyst_profile.is_verified %}<span class="expert-public-verified" title="Проверенный эксперт">✓</span>{% endif %}
+                    {% if is_self %}
+                        <a class="expert-public-edit expert-public-name-action" href="{% url 'cabinet:profile' %}">Редактировать</a>
+                    {% elif request.user.is_authenticated %}
+                        <button
+                            class="expert-follow-button expert-public-name-action{% if is_following %} is-active{% endif %}"
+                            type="button"
+                            data-expert-follow
+                            data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+                            aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+                        >
+                            <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                        </button>
+                    {% else %}
+                        <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+                    {% endif %}
                 </div>
                 <span class="expert-public-username">@{{ expert.username }}</span>
                 {% if analyst_profile.bio %}<p class="expert-public-bio">{{ analyst_profile.bio }}</p>{% endif %}
@@ -75,23 +90,6 @@
                 {% endif %}
             </article>
 
-            <div class="expert-public-actions">
-                {% if is_self %}
-                    <a class="expert-public-edit" href="{% url 'cabinet:profile' %}">Редактировать профиль</a>
-                {% elif request.user.is_authenticated %}
-                    <button
-                        class="expert-follow-button{% if is_following %} is-active{% endif %}"
-                        type="button"
-                        data-expert-follow
-                        data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
-                        aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
-                    >
-                        <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
-                    </button>
-                {% else %}
-                    <a class="expert-follow-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
-                {% endif %}
-            </div>
         </div>
     </section>
 

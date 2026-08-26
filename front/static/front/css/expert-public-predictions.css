@@ -6,12 +6,12 @@
 }
 
 .expert-public-prediction-status {
-    min-height: 44px;
+    height: 27px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 14px;
-    border-radius: 12px;
+    padding: 0 10px;
+    border-radius: 6px;
     color: #fff;
     background: #303033;
     font-size: 11px;
@@ -60,7 +60,7 @@
 
 .expert-public-score-box strong {
     color: var(--text);
-    font-size: 27px;
+    font-size: 20px;
     line-height: .95;
     letter-spacing: -.04em;
 }

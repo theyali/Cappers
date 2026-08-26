@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Case, Count, IntegerField, Value, When
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -51,7 +51,14 @@ def match_list(request):
                 When(sync_scope=Match.SyncScope.FINISHED, then=Value(2)),
                 default=Value(3),
                 output_field=IntegerField(),
-            )
+            ),
+            predictions_count=Count(
+                "predictions",
+                filter=Q(
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            ),
         ).order_by("scope_order", "starts_at", "id")[:60]
     )
 

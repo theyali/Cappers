@@ -114,6 +114,7 @@
 }
 
 .match-card {
+    position: relative;
     min-height: 260px;
     display: flex;
     flex-direction: column;
@@ -122,6 +123,34 @@
     border-radius: 16px;
     background: var(--panel);
     outline: 3px solid rgba(255, 255, 255, .08);
+}
+
+.match-prediction-badge {
+    position: absolute;
+    top: -12px;
+    right: 18px;
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--ink);
+    background: #f4f5f8;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    outline: 3px solid var(--ink);
+}
+
+.match-prediction-badge.is-mid {
+    background: var(--yellow);
+}
+
+.match-prediction-badge.is-high {
+    color: #fff;
+    background: #050506;
+    outline-color: var(--yellow);
 }
 
 .match-card-main {
