@@ -102,7 +102,7 @@ class PredictionInline(admin.TabularInline):
 class PredictionCouponAdmin(admin.ModelAdmin):
     list_display = ("id", "author", "published_status", "total_stake", "created_at")
     list_filter = ("published_status", "created_at")
-    search_fields = ("author__username", "title")
+    search_fields = ("author__username",)
     inlines = (PredictionInline,)
 
 
