@@ -166,18 +166,18 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
         return None
 
     states = list(coupon.predictions.values_list("state_status", flat=True))
-    if not states or any(not state for state in states):
+    if Prediction.StateStatus.LOSE in states:
+        coupon.state_status = PredictionCoupon.StateStatus.LOSE
+        coupon.settled_at = coupon.settled_at or timezone.now()
+    elif not states or any(not state for state in states):
         coupon.state_status = PredictionCoupon.StateStatus.PENDING
         coupon.settled_at = None
-    elif Prediction.StateStatus.LOSE in states:
-        coupon.state_status = PredictionCoupon.StateStatus.LOSE
-        coupon.settled_at = timezone.now()
     elif any(state == Prediction.StateStatus.WIN for state in states):
         coupon.state_status = PredictionCoupon.StateStatus.WIN
-        coupon.settled_at = timezone.now()
+        coupon.settled_at = coupon.settled_at or timezone.now()
     else:
         coupon.state_status = PredictionCoupon.StateStatus.REFUND
-        coupon.settled_at = timezone.now()
+        coupon.settled_at = coupon.settled_at or timezone.now()
 
     coupon.save(update_fields=["state_status", "settled_at", "updated_at"])
     return coupon
