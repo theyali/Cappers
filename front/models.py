@@ -3,7 +3,7 @@ from django.db import models
 from django.urls import reverse
 from tinymce.models import HTMLField
 
-from game.models import Prediction
+from game.models import PredictionCoupon
 
 
 class Article(models.Model):
@@ -52,7 +52,7 @@ class StaticPage(models.Model):
 
 class PredictionLike(models.Model):
     prediction = models.ForeignKey(
-        Prediction,
+        PredictionCoupon,
         on_delete=models.CASCADE,
         related_name="likes",
         verbose_name="Прогноз",
@@ -84,7 +84,7 @@ class PredictionLike(models.Model):
 
 class PredictionFavorite(models.Model):
     prediction = models.ForeignKey(
-        Prediction,
+        PredictionCoupon,
         on_delete=models.CASCADE,
         related_name="favorites",
         verbose_name="Прогноз",
