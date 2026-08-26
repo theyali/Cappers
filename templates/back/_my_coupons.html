@@ -14,7 +14,7 @@
     {% if my_coupons %}
     <div class="sidebar-predictions-list">
         {% for coupon in my_coupons %}
-        <article class="sidebar-prediction-card">
+        <a class="sidebar-prediction-card" href="{% url 'cabinet:coupon_detail' coupon.id %}">
             <div class="sidebar-prediction-league-row">
                 <div class="sidebar-prediction-league">
                     <span class="sidebar-prediction-league-logo">#{{ coupon.id }}</span>
@@ -45,10 +45,10 @@
             </div>
 
             <div class="sidebar-prediction-footer">
-                <span>Возможный выигрыш</span>
-                <strong>{{ coupon.possible_payout }}</strong>
+                <span>Возможный выигрыш: {{ coupon.possible_payout }}</span>
+                <strong>Открыть купон <i aria-hidden="true">→</i></strong>
             </div>
-        </article>
+        </a>
         {% endfor %}
     </div>
     {% else %}
