@@ -1,5 +1,9 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
+
+from game.models import PredictionCoupon
 
 from .models import AnalystFollow, AnalystProfile, User
 
@@ -91,3 +95,59 @@ class CabinetProfileTests(TestCase):
         self.assertContains(response, "profile-hero-shade")
         self.assertContains(response, "Мои прогнозы")
         self.assertContains(response, "Кто следит за вами")
+
+    def test_predictions_tab_lists_all_own_coupons(self):
+        analyst = User.objects.create_user(
+            username="coupon-owner",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        coupons = [
+            PredictionCoupon.objects.create(
+                author=analyst,
+                published_status=(
+                    PredictionCoupon.PublishedStatus.PUBLISHED
+                    if index % 2
+                    else PredictionCoupon.PublishedStatus.DRAFT
+                ),
+                total_stake=Decimal("100"),
+                possible_payout=Decimal("180"),
+            )
+            for index in range(5)
+        ]
+        self.client.force_login(analyst)
+
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "predictions"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["coupons_count"], 5)
+        self.assertEqual(list(response.context["my_coupons"]), list(reversed(coupons)))
+        for coupon in coupons:
+            self.assertContains(response, reverse("cabinet:coupon_detail", args=[coupon.id]))
+
+    def test_coupon_detail_is_only_available_to_owner(self):
+        owner = User.objects.create_user(
+            username="coupon-detail-owner",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        other = User.objects.create_user(
+            username="coupon-detail-other",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=owner,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("100"),
+            possible_payout=Decimal("190"),
+        )
+
+        self.client.force_login(owner)
+        response = self.client.get(reverse("cabinet:coupon_detail", args=[coupon.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"Купон #{coupon.id}")
+
+        self.client.force_login(other)
+        response = self.client.get(reverse("cabinet:coupon_detail", args=[coupon.id]))
+        self.assertEqual(response.status_code, 404)
