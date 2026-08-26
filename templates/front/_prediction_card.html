@@ -1,5 +1,5 @@
 <article
-    class="prediction-card prediction-card-rich{% if prediction.is_own %} is-own-prediction{% elif prediction.is_following_author %} is-followed-prediction{% endif %}"
+    class="prediction-card prediction-card-rich{% if prediction_card_match_context %} match-prediction-card prediction-card-match-context{% endif %}{% if prediction.is_own %} is-own-prediction{% elif prediction.is_following_author %} is-followed-prediction{% endif %}"
     data-prediction-card="{{ prediction.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
 >
@@ -14,7 +14,12 @@
                     {% endif %}
                 </span>
                 <div class="prediction-expert-copy">
-                    <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
+                    <div class="prediction-expert-name-row">
+                        <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
+                        <span class="prediction-author-roi{% if prediction.author_roi > 0 %} is-positive{% elif prediction.author_roi < 0 %} is-negative{% else %} is-neutral{% endif %}">
+                            ROI {% if prediction.author_roi > 0 %}+{% endif %}{{ prediction.author_roi|floatformat:1 }}%
+                        </span>
+                    </div>
                     <span>@{{ prediction.coupon.author.username }}</span>
                 </div>
             </a>
@@ -160,8 +165,10 @@
         <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y H:i" }}</time>
     </div>
 
+    {% if not prediction_card_match_context %}
     <a class="prediction-open-match" href="{{ prediction.match.get_absolute_url }}">
         <span>Открыть матч</span>
         <span aria-hidden="true">→</span>
     </a>
+    {% endif %}
 </article>
