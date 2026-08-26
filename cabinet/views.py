@@ -2,9 +2,12 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST, require_http_methods
+
+from game.models import Prediction, PredictionCoupon
 
 from .forms import (
     AnalystAvatarForm,
@@ -121,6 +124,18 @@ def profile(request):
         "analyst__analyst_profile",
     )
 
+    my_coupons = PredictionCoupon.objects.none()
+    coupons_count = 0
+    predictions_count = 0
+    if request.user.role == User.Role.ANALYST:
+        my_coupons = (
+            PredictionCoupon.objects.filter(author=request.user)
+            .annotate(predictions_count=Count("predictions", distinct=True))
+            .order_by("-created_at", "-id")
+        )
+        coupons_count = my_coupons.count()
+        predictions_count = Prediction.objects.filter(coupon__author=request.user).count()
+
     context = {
         "analyst_profile": analyst_profile,
         "user_form": user_form,
@@ -131,10 +146,34 @@ def profile(request):
         "followers": followers,
         "following": following,
         "following_ids": following_ids,
-        "predictions_count": 0,
+        "my_coupons": my_coupons,
+        "coupons_count": coupons_count,
+        "predictions_count": predictions_count,
         "profile_completion": _profile_completion(request.user, analyst_profile),
     }
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+def coupon_detail(request, coupon_id: int):
+    coupon = get_object_or_404(
+        PredictionCoupon.objects.filter(author=request.user).prefetch_related(
+            "predictions__match__league",
+            "predictions__match__home_team",
+            "predictions__match__away_team",
+        ),
+        pk=coupon_id,
+    )
+    predictions = list(coupon.predictions.all())
+
+    return render(
+        request,
+        "cabinet/coupon_detail.html",
+        {
+            "coupon": coupon,
+            "predictions": predictions,
+        },
+    )
 
 
 @login_required
