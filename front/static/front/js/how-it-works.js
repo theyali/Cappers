@@ -20,7 +20,7 @@
         });
 
         const url = new URL(window.location.href);
-        if (key === "experts") url.searchParams.set("for", "experts");
+        if (key === "expert") url.searchParams.set("for", "expert");
         else url.searchParams.delete("for");
         window.history.replaceState({}, "", url);
     };
@@ -39,5 +39,5 @@
     });
 
     const params = new URLSearchParams(window.location.search);
-    activate(params.get("for") === "experts" ? "experts" : "users");
+    activate(params.get("for") === "expert" ? "expert" : "reader");
 })();
