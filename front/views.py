@@ -1,6 +1,9 @@
+from datetime import timedelta
+
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Max, Q
 from django.shortcuts import render
+from django.utils import timezone
 
 from cabinet.models import AnalystProfile, User
 from game.models import Prediction, PredictionCoupon
@@ -208,6 +211,11 @@ def predictions(request):
 
 
 def cappers_stats(request):
+    recent_cutoff = timezone.now() - timedelta(days=30)
+    published_filter = Q(
+        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+    )
+
     profiles = list(
         AnalystProfile.objects.filter(
             is_public=True,
@@ -216,37 +224,38 @@ def cappers_stats(request):
         .select_related("user")
         .annotate(
             followers_count=Count("user__analyst_followers", distinct=True),
-            predictions_count=Count(
+            publications_count=Count(
                 "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-                ),
+                filter=published_filter,
                 distinct=True,
             ),
-            wins_count=Count(
-                "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN,
-                ),
+            sports_count=Count(
+                "user__prediction_coupons__predictions__match__sport",
+                filter=published_filter,
                 distinct=True,
             ),
-            losses_count=Count(
+            recent_publications_count=Count(
                 "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE,
-                ),
+                filter=published_filter
+                & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
                 distinct=True,
+            ),
+            last_publication_at=Max(
+                "user__prediction_coupons__published_at",
+                filter=published_filter,
             ),
         )
-        .order_by("-wins_count", "-followers_count", "-is_verified", "-created_at")
+        .order_by(
+            "-recent_publications_count",
+            "-publications_count",
+            "-followers_count",
+            "-is_verified",
+            "-created_at",
+        )
     )
 
     experts = []
     for profile in profiles:
-        settled = profile.wins_count + profile.losses_count
-        win_rate = round(profile.wins_count / settled * 100) if settled else 0
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         experts.append(
             {
@@ -256,12 +265,20 @@ def cappers_stats(request):
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "verified": profile.is_verified,
                 "followers": profile.followers_count,
-                "predictions": profile.predictions_count,
-                "wins": profile.wins_count,
-                "losses": profile.losses_count,
-                "win_rate": win_rate,
+                "publications": profile.publications_count,
+                "sports": profile.sports_count,
+                "recent_publications": profile.recent_publications_count,
+                "last_publication_at": profile.last_publication_at,
+                "joined_at": profile.created_at,
             }
         )
+
+    summary = {
+        "experts": len(profiles),
+        "verified": sum(1 for profile in profiles if profile.is_verified),
+        "publications": sum(profile.publications_count for profile in profiles),
+        "active_30d": sum(1 for profile in profiles if profile.recent_publications_count > 0),
+    }
 
     return render(
         request,
@@ -269,5 +286,6 @@ def cappers_stats(request):
         {
             "experts": experts,
             "experts_count": len(experts),
+            "summary": summary,
         },
     )
