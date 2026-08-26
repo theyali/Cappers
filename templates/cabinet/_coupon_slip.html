@@ -1,6 +1,6 @@
 {% load static %}
-<section class="coupon-slip" aria-label="Состав купона #{{ coupon.id }}">
-    <div class="coupon-slip-overview" aria-label="Параметры купона">
+<section class="coupon-slip" aria-label="Состав прогноза #{{ coupon.id }}">
+    <div class="coupon-slip-overview" aria-label="Параметры прогноза">
         <div class="coupon-slip-overview-row">
             <span>Коэффициент:</span>
             <strong>{{ coupon_total_coefficient }}</strong>
@@ -8,6 +8,10 @@
         <div class="coupon-slip-overview-row">
             <span>Ставка:</span>
             <strong>{{ coupon.total_stake }}</strong>
+        </div>
+        <div class="coupon-slip-overview-row">
+            <span>Уверенность:</span>
+            <strong>{{ coupon.confidence }}%</strong>
         </div>
         <div class="coupon-slip-overview-row is-payout">
             <span>Возможный выигрыш:</span>
@@ -87,14 +91,14 @@
             <div class="coupon-slip-result">
                 <div class="coupon-slip-pick-row">
                     <div>
-                        <span>{{ prediction.market|default:"Прогноз" }}</span>
+                        <span>{{ prediction.market|default:"Позиция" }}</span>
                         <strong>{{ prediction.selection }}</strong>
                     </div>
                     <b>{{ prediction.coefficient }}</b>
                 </div>
 
                 <div class="coupon-slip-status-row">
-                    <span>Статус:</span>
+                    <span>Статус позиции:</span>
                     {% if coupon.published_status == "canceled" %}
                         <strong class="is-canceled">Отменена</strong>
                     {% elif coupon.published_status == "draft" %}
@@ -109,23 +113,13 @@
                         <strong class="is-pending">Принята</strong>
                     {% endif %}
                 </div>
-
-                <div class="prediction-confidence coupon-slip-confidence" aria-label="Уверенность {{ prediction.confidence }} процентов">
-                    <div class="prediction-confidence-head">
-                        <span>Уверенность</span>
-                        <strong>{{ prediction.confidence }}%</strong>
-                    </div>
-                    <div class="prediction-confidence-track" aria-hidden="true">
-                        <span style="width: {{ prediction.confidence }}%"></span>
-                    </div>
-                </div>
             </div>
         </article>
         {% endfor %}
     </div>
     {% else %}
     <div class="coupon-slip-empty">
-        <strong>В купоне пока нет матчей</strong>
+        <strong>В прогнозе пока нет матчей</strong>
         <span>Это пустой черновик. Добавьте матч из списка игр.</span>
     </div>
     {% endif %}
