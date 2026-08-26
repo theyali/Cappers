@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -109,8 +109,13 @@ def _profit_chart(coupons: list[PredictionCoupon], *, days: int, now) -> list[di
 
 def _current_streak(queryset) -> dict:
     states = list(
-        queryset.filter(state_status__in=[Prediction.StateStatus.WIN, Prediction.StateStatus.LOSE])
-        .order_by("-updated_at", "-id")
+        queryset.filter(
+            state_status__in=[
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+            ]
+        )
+        .order_by("-settled_at", "-updated_at", "-id")
         .values_list("state_status", flat=True)[:100]
     )
     if not states:
@@ -125,9 +130,41 @@ def _current_streak(queryset) -> dict:
 
     return {
         "count": count,
-        "label": "побед подряд" if current == Prediction.StateStatus.WIN else "поражений подряд",
+        "label": "побед подряд" if current == PredictionCoupon.StateStatus.WIN else "поражений подряд",
         "state": current,
     }
+
+
+def _latest_prediction_cards(analyst) -> list[Prediction]:
+    positions = Prediction.objects.select_related(
+        "match__league__country",
+        "match__home_team",
+        "match__away_team",
+    ).order_by("id")
+    coupons = list(
+        PredictionCoupon.objects.filter(
+            author=analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .prefetch_related(Prefetch("predictions", queryset=positions, to_attr="public_positions"))
+        .order_by("-published_at", "-created_at", "-id")[:12]
+    )
+
+    cards = []
+    for coupon in coupons:
+        items = list(getattr(coupon, "public_positions", []) or [])
+        if not items:
+            continue
+        item = items[0]
+        item.confidence = coupon.confidence
+        item.state_status = coupon.state_status
+        if coupon.total_stake:
+            item.coefficient = (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"))
+        if len(items) > 1:
+            item.market = f"Экспресс · {len(items)} игр"
+            item.selection = f"{item.selection} + ещё {len(items) - 1}"
+        cards.append(item)
+    return cards
 
 
 @ensure_csrf_cookie
@@ -140,18 +177,16 @@ def expert_profile(request, username: str):
     )
     analyst = profile.user
 
-    published = Prediction.objects.filter(
-        coupon__author=analyst,
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    published = PredictionCoupon.objects.filter(
+        author=analyst,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
     stats = published.aggregate(
         predictions=Count("id"),
-        wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-        losses=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-        refunds=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
-        open_predictions=Count("id", filter=Q(state_status="")),
-        coupons=Count("coupon_id", distinct=True),
-        avg_coefficient=Avg("coefficient"),
+        wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+        losses=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE)),
+        refunds=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.REFUND)),
+        open_predictions=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)),
     )
     decided_predictions = (stats["wins"] or 0) + (stats["losses"] or 0)
     settled_predictions = decided_predictions + (stats["refunds"] or 0)
@@ -159,12 +194,7 @@ def expert_profile(request, username: str):
     followers_count = AnalystFollow.objects.filter(analyst=analyst).count()
     predictions_count = stats["predictions"] or 0
 
-    published_coupons = list(
-        PredictionCoupon.objects.filter(
-            author=analyst,
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        ).order_by("settled_at", "updated_at", "id")
-    )
+    published_coupons = list(published.order_by("settled_at", "updated_at", "id"))
     settled_coupons = [
         coupon for coupon in published_coupons if coupon.state_status in SETTLED_COUPON_STATES
     ]
@@ -175,14 +205,14 @@ def expert_profile(request, username: str):
         Decimal("0"),
     )
     overall_roi = _roi(total_profit, settled_stake)
-    average_coupon_coefficient_values = [
+    coefficient_values = [
         (coupon.possible_payout / coupon.total_stake)
         for coupon in published_coupons
         if coupon.total_stake and coupon.total_stake > 0 and coupon.possible_payout
     ]
     avg_coupon_coefficient = (
-        sum(average_coupon_coefficient_values, Decimal("0")) / len(average_coupon_coefficient_values)
-        if average_coupon_coefficient_values
+        sum(coefficient_values, Decimal("0")) / len(coefficient_values)
+        if coefficient_values
         else Decimal("0")
     )
 
@@ -204,17 +234,15 @@ def expert_profile(request, username: str):
             analyst=analyst,
         ).exists()
 
-    latest_predictions = list(
-        published.select_related(
-            "match__league__country",
-            "match__home_team",
-            "match__away_team",
-        ).order_by("-coupon__published_at", "-created_at")[:12]
+    published_items = Prediction.objects.filter(
+        coupon__author=analyst,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
+    latest_predictions = _latest_prediction_cards(analyst)
 
     name = profile.display_name or analyst.get_full_name() or analyst.username
-    market_distribution = _market_rows(published)
-    league_distribution = _league_rows(published)
+    market_distribution = _market_rows(published_items)
+    league_distribution = _league_rows(published_items)
     status_distribution = _status_rows(stats, predictions_count)
 
     return render(
@@ -231,8 +259,8 @@ def expert_profile(request, username: str):
             "losses_count": stats["losses"] or 0,
             "refunds_count": stats["refunds"] or 0,
             "open_predictions_count": stats["open_predictions"] or 0,
-            "coupons_count": stats["coupons"] or 0,
-            "avg_coefficient": stats["avg_coefficient"] or 0,
+            "coupons_count": predictions_count,
+            "avg_coefficient": avg_coupon_coefficient,
             "avg_coupon_coefficient": avg_coupon_coefficient,
             "win_rate": win_rate,
             "settled_count": settled_predictions,
