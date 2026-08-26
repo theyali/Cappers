@@ -8,6 +8,8 @@ from django.utils import timezone
 from cabinet.models import AnalystProfile, User
 from game.models import Prediction, PredictionCoupon
 
+from .prediction_metrics import annotate_author_roi
+
 
 LATEST_PREDICTIONS = [
     {
@@ -216,7 +218,7 @@ def cappers_stats(request):
         user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
     )
 
-    profiles = list(
+    profiles_queryset = (
         AnalystProfile.objects.filter(
             is_public=True,
             user__role=User.Role.ANALYST,
@@ -245,7 +247,13 @@ def cappers_stats(request):
                 filter=published_filter,
             ),
         )
-        .order_by(
+    )
+    profiles = list(
+        annotate_author_roi(
+            profiles_queryset,
+            author_outer_ref="user_id",
+            annotation_name="author_roi",
+        ).order_by(
             "-recent_publications_count",
             "-publications_count",
             "-followers_count",
@@ -264,6 +272,7 @@ def cappers_stats(request):
                 "initials": _initials(name),
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "verified": profile.is_verified,
+                "roi": profile.author_roi,
                 "followers": profile.followers_count,
                 "publications": profile.publications_count,
                 "sports": profile.sports_count,
