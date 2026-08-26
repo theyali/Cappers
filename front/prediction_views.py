@@ -68,6 +68,13 @@ def _combined_coefficient_expression():
     )
 
 
+def _normalized_coefficient(value) -> Decimal:
+    try:
+        return Decimal(value or 0).quantize(Decimal("0.01"))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal("0.00")
+
+
 def _published_queryset():
     queryset = (
         PredictionCoupon.objects.filter(
@@ -107,6 +114,7 @@ def _prediction_card(coupon: PredictionCoupon):
             combined_coefficient = coupon.possible_payout / coupon.total_stake
         else:
             combined_coefficient = Decimal("0")
+    combined_coefficient = _normalized_coefficient(combined_coefficient)
 
     selection = item.selection
     market = item.market
@@ -415,6 +423,60 @@ def predictions(request):
             "only_today": only_today,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
+        },
+    )
+
+
+@ensure_csrf_cookie
+def prediction_detail(request, prediction_id: int):
+    coupon = get_object_or_404(
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .select_related("author", "author__analyst_profile")
+        .prefetch_related(
+            Prefetch("predictions", queryset=_positions_queryset(), to_attr="detail_positions")
+        )
+        .annotate(
+            likes_count=Count("likes", distinct=True),
+            favorites_count=Count("favorites", distinct=True),
+        ),
+        pk=prediction_id,
+    )
+    positions = list(getattr(coupon, "detail_positions", []) or [])
+
+    total_coefficient = Decimal("1")
+    for position in positions:
+        total_coefficient *= position.coefficient
+    total_coefficient = _normalized_coefficient(total_coefficient if positions else 0)
+
+    author = coupon.author
+    profile = getattr(author, "analyst_profile", None)
+    expert_name = (
+        profile.display_name
+        if profile and profile.display_name
+        else author.get_full_name() or author.username
+    )
+
+    is_liked = False
+    is_favorite = False
+    if request.user.is_authenticated:
+        is_liked = PredictionLike.objects.filter(prediction=coupon, user=request.user).exists()
+        is_favorite = PredictionFavorite.objects.filter(prediction=coupon, user=request.user).exists()
+
+    return render(
+        request,
+        "front/prediction_detail.html",
+        {
+            "coupon": coupon,
+            "positions": positions,
+            "total_coefficient": total_coefficient,
+            "expert_name": expert_name,
+            "expert_initials": _initials(expert_name),
+            "expert_avatar_url": profile.avatar.url if profile and profile.avatar else "",
+            "expert_verified": bool(profile and profile.is_verified),
+            "is_liked": is_liked,
+            "is_favorite": is_favorite,
         },
     )
 
