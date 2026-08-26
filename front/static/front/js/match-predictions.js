@@ -13,11 +13,6 @@
             <div>
                 <p class="match-predictions-kicker">Мнения капперов</p>
                 <h2>Все прогнозы на игру</h2>
-                <p>Прогнозы подгружаются по мере прокрутки страницы, поэтому длинная лента не замедляет открытие матча.</p>
-            </div>
-            <div class="match-predictions-total">
-                <strong data-match-predictions-total>—</strong>
-                <span>прогнозов</span>
             </div>
         </div>
         <div class="match-predictions-list" data-match-predictions-list></div>
@@ -30,7 +25,6 @@
 
     const list = feed.querySelector("[data-match-predictions-list]");
     const sentinel = feed.querySelector("[data-match-predictions-sentinel]");
-    const totalNode = feed.querySelector("[data-match-predictions-total]");
     const loader = feed.querySelector("[data-match-predictions-loader]");
 
     let nextPage = 1;
@@ -82,7 +76,6 @@
                 throw new Error(result.error || "Ошибка загрузки.");
             }
 
-            totalNode.textContent = result.total;
             if (result.html) list.insertAdjacentHTML("beforeend", result.html);
 
             if (result.has_next) {
