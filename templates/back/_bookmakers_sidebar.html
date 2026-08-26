@@ -28,20 +28,15 @@
                 <span class="bookmaker-info">
                     <span class="bookmaker-name">{{ bookmaker.name }}</span>
                     {% if bookmaker.bonus_text %}
-                    <span class="bookmaker-bonus-row">
-                        <span class="bookmaker-bonus-icon" aria-hidden="true">🎁</span>
-                        <span class="bookmaker-bonus">{{ bookmaker.bonus_text }}</span>
-                    </span>
+                    <span class="bookmaker-bonus">{{ bookmaker.bonus_text }}</span>
+                    {% endif %}
+                    {% if bookmaker.exclusive %}
+                    <span class="bookmaker-exclusive">Эксклюзив</span>
                     {% endif %}
                 </span>
 
-                {% if bookmaker.exclusive %}
-                <span class="bookmaker-exclusive">★ Эксклюзивно</span>
-                {% endif %}
-
-                <span class="bookmaker-action">
-                    <span>Забрать кеш</span>
-                    <span aria-hidden="true">›</span>
+                <span class="bookmaker-arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
                 </span>
             </a>
             {% endfor %}
