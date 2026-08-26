@@ -1,14 +1,16 @@
+from django.db.models import Q
 from django.shortcuts import render
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile
 from front.models import Article
 from front.views import _initials, _top_experts
-from game.models import Prediction, PredictionCoupon
+from game.models import Match, Prediction, PredictionCoupon
 
 
 HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
+HOME_MATCHES_LIMIT = 9
 
 
 def _logo_url(primary: str, related) -> str:
@@ -92,6 +94,72 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
+def _league_rating(match: Match) -> int:
+    """Return league importance from normalized data or provider payload."""
+    league = match.league
+    if league is None:
+        return 0
+
+    values = [getattr(league, "rating", None)]
+    raw_data = league.raw_data if isinstance(league.raw_data, dict) else {}
+    values.extend(
+        raw_data.get(key)
+        for key in ("rating", "league_rating", "league_rank", "rank")
+    )
+
+    match_raw = match.raw_data if isinstance(match.raw_data, dict) else {}
+    raw_league = match_raw.get("league") if isinstance(match_raw.get("league"), dict) else {}
+    values.extend(
+        raw_league.get(key)
+        for key in ("rating", "league_rating", "league_rank", "rank")
+    )
+
+    for value in values:
+        if value in (None, ""):
+            continue
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            continue
+    return 0
+
+
+def _important_home_matches() -> list[Match]:
+    now = timezone.now()
+    matches = list(
+        Match.objects.filter(sync_scope=Match.SyncScope.PREMATCH)
+        .filter(Q(starts_at__gte=now) | Q(starts_at__isnull=True))
+        .select_related(
+            "sport",
+            "league__country",
+            "home_team",
+            "away_team",
+            "odds",
+        )
+        .order_by("-last_seen_at", "-created_at", "-id")
+    )
+
+    important = [match for match in matches if _league_rating(match) > 0]
+    important.sort(
+        key=lambda match: (
+            -_league_rating(match),
+            match.starts_at.timestamp() if match.starts_at else float("inf"),
+            match.id,
+        )
+    )
+
+    selected = important[:HOME_MATCHES_LIMIT]
+    if len(selected) < HOME_MATCHES_LIMIT:
+        selected_ids = {match.id for match in selected}
+        selected.extend(
+            match
+            for match in matches
+            if match.id not in selected_ids
+        )
+
+    return selected[:HOME_MATCHES_LIMIT]
+
+
 def index(request):
     return render(
         request,
@@ -100,5 +168,6 @@ def index(request):
             "latest_predictions": _latest_home_predictions(),
             "top_experts": _top_experts(),
             "latest_articles": Article.objects.filter(is_published=True).order_by("-created_at", "-id")[:HOME_ARTICLES_LIMIT],
+            "important_matches": _important_home_matches(),
         },
     )
