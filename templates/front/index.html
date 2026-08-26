@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <div class="forecast-slider" data-forecast-slider>
+        <div class="forecast-slider" data-forecast-slider data-direction="next">
             {% if latest_predictions %}
             <div class="forecast-track">
                 {% for prediction in latest_predictions %}
@@ -53,31 +53,32 @@
                         </div>
                     </div>
 
+                    <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
+                        <div class="forecast-team forecast-team-home">
+                            <span class="forecast-team-logo">
+                                {% if prediction.home_logo %}
+                                    <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy">
+                                {% else %}
+                                    {{ prediction.home_name|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ prediction.home_name }}</strong>
+                        </div>
+                        <span class="forecast-vs">VS</span>
+                        <div class="forecast-team forecast-team-away">
+                            <strong>{{ prediction.away_name }}</strong>
+                            <span class="forecast-team-logo">
+                                {% if prediction.away_logo %}
+                                    <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy">
+                                {% else %}
+                                    {{ prediction.away_name|slice:":1" }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </a>
+
                     <div class="forecast-body">
                         <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
-                            <div class="forecast-teams">
-                                <div class="forecast-team">
-                                    <span class="forecast-team-logo">
-                                        {% if prediction.home_logo %}
-                                            <img src="{{ prediction.home_logo }}" alt="" loading="lazy">
-                                        {% else %}
-                                            {{ prediction.home_name|slice:":1" }}
-                                        {% endif %}
-                                    </span>
-                                    <strong>{{ prediction.home_name }}</strong>
-                                </div>
-                                <span class="forecast-vs">VS</span>
-                                <div class="forecast-team">
-                                    <strong>{{ prediction.away_name }}</strong>
-                                    <span class="forecast-team-logo">
-                                        {% if prediction.away_logo %}
-                                            <img src="{{ prediction.away_logo }}" alt="" loading="lazy">
-                                        {% else %}
-                                            {{ prediction.away_name|slice:":1" }}
-                                        {% endif %}
-                                    </span>
-                                </div>
-                            </div>
                             <p class="forecast-label">Матч</p>
                             <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
                             {% if prediction.note %}<p class="forecast-note">{{ prediction.note|truncatechars:190 }}</p>{% endif %}
@@ -111,6 +112,9 @@
                     {% for prediction in latest_predictions %}
                     <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
                     {% endfor %}
+                </div>
+                <div class="slider-progress" aria-hidden="true">
+                    <span data-slider-progress></span>
                 </div>
                 <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
             </div>

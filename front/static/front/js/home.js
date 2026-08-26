@@ -7,20 +7,43 @@
     const previousButton = document.querySelector("[data-slider-prev]");
     const nextButton = document.querySelector("[data-slider-next]");
     const currentCounter = slider.querySelector("[data-slider-current]");
+    const progress = slider.querySelector("[data-slider-progress]");
 
     if (slides.length < 2) {
         previousButton?.setAttribute("hidden", "");
         nextButton?.setAttribute("hidden", "");
+        progress?.closest(".slider-progress")?.setAttribute("hidden", "");
         return;
     }
 
     const autoplayDelay = 5600;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let activeIndex = 0;
     let timer = null;
     let pointerStartX = null;
 
-    const render = (nextIndex) => {
-        activeIndex = (nextIndex + slides.length) % slides.length;
+    const restartProgress = () => {
+        if (!progress || reducedMotion.matches) return;
+        progress.classList.remove("is-running");
+        void progress.offsetWidth;
+        progress.classList.add("is-running");
+    };
+
+    const stopProgress = () => {
+        progress?.classList.remove("is-running");
+    };
+
+    const getDirection = (nextIndex) => {
+        if (nextIndex === activeIndex) return slider.dataset.direction || "next";
+        const forwardDistance = (nextIndex - activeIndex + slides.length) % slides.length;
+        const backwardDistance = (activeIndex - nextIndex + slides.length) % slides.length;
+        return forwardDistance <= backwardDistance ? "next" : "prev";
+    };
+
+    const render = (nextIndex, forcedDirection = null) => {
+        const normalizedIndex = (nextIndex + slides.length) % slides.length;
+        slider.dataset.direction = forcedDirection || getDirection(normalizedIndex);
+        activeIndex = normalizedIndex;
 
         slides.forEach((slide, index) => {
             const isActive = index === activeIndex;
@@ -43,21 +66,26 @@
     const stopAutoplay = () => {
         if (timer) window.clearInterval(timer);
         timer = null;
+        stopProgress();
     };
 
     const startAutoplay = () => {
         stopAutoplay();
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        timer = window.setInterval(() => render(activeIndex + 1), autoplayDelay);
+        if (reducedMotion.matches || document.hidden) return;
+        restartProgress();
+        timer = window.setInterval(() => {
+            render(activeIndex + 1, "next");
+            restartProgress();
+        }, autoplayDelay);
     };
 
     const goPrevious = () => {
-        render(activeIndex - 1);
+        render(activeIndex - 1, "prev");
         startAutoplay();
     };
 
     const goNext = () => {
-        render(activeIndex + 1);
+        render(activeIndex + 1, "next");
         startAutoplay();
     };
 
@@ -66,7 +94,8 @@
 
     dots.forEach((dot) => {
         dot.addEventListener("click", () => {
-            render(Number(dot.dataset.sliderDot || 0));
+            const nextIndex = Number(dot.dataset.sliderDot || 0);
+            render(nextIndex);
             startAutoplay();
         });
     });
@@ -113,6 +142,11 @@
         else startAutoplay();
     });
 
-    render(0);
+    reducedMotion.addEventListener?.("change", () => {
+        if (reducedMotion.matches) stopAutoplay();
+        else startAutoplay();
+    });
+
+    render(0, "next");
     startAutoplay();
 })();
