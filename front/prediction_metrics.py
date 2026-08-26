@@ -23,7 +23,7 @@ SETTLED_COUPON_STATES = (
 )
 
 
-def author_roi_subquery():
+def author_roi_subquery(author_outer_ref: str = "coupon__author_id"):
     money_field = DecimalField(max_digits=18, decimal_places=4)
     profit_expression = Case(
         When(
@@ -39,7 +39,7 @@ def author_roi_subquery():
     )
     return (
         PredictionCoupon.objects.filter(
-            author_id=OuterRef("coupon__author_id"),
+            author_id=OuterRef(author_outer_ref),
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             state_status__in=SETTLED_COUPON_STATES,
             total_stake__gt=0,
@@ -59,12 +59,22 @@ def author_roi_subquery():
     )
 
 
-def annotate_author_roi(queryset):
+def annotate_author_roi(
+    queryset,
+    *,
+    author_outer_ref: str = "coupon__author_id",
+    annotation_name: str = "author_roi",
+):
     roi_field = DecimalField(max_digits=12, decimal_places=4)
     return queryset.annotate(
-        author_roi=Coalesce(
-            Subquery(author_roi_subquery(), output_field=roi_field),
-            Value(Decimal("0")),
-            output_field=roi_field,
-        )
+        **{
+            annotation_name: Coalesce(
+                Subquery(
+                    author_roi_subquery(author_outer_ref),
+                    output_field=roi_field,
+                ),
+                Value(Decimal("0")),
+                output_field=roi_field,
+            )
+        }
     )
