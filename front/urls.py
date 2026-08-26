@@ -9,6 +9,7 @@ app_name = "front"
 urlpatterns = [
     path("", home_views.index, name="index"),
     path("predictions/", prediction_views.predictions, name="predictions"),
+    path("favorites/", prediction_views.favorites, name="favorites"),
     path(
         "predictions/<int:prediction_id>/like/",
         prediction_views.toggle_prediction_like,
