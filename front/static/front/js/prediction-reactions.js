@@ -31,15 +31,17 @@
         const button = event.target.closest("[data-prediction-reaction]");
         if (!button || button.disabled) return;
 
-        const endpoint = button.dataset.url;
-        if (!endpoint) return;
-
-        const csrftoken = decodeURIComponent(getCookie("csrftoken"));
-        if (!csrftoken) {
+        if (button.dataset.authenticated !== "true") {
             const loginUrl = button.dataset.loginUrl;
             if (loginUrl) window.location.assign(loginUrl);
             return;
         }
+
+        const endpoint = button.dataset.url;
+        if (!endpoint) return;
+
+        const csrftoken = decodeURIComponent(getCookie("csrftoken"));
+        if (!csrftoken) return;
 
         button.disabled = true;
         try {
