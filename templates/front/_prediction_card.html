@@ -122,13 +122,13 @@
         </div>
     </div>
 
-    <div class="prediction-confidence" aria-label="Уверенность эксперта {{ prediction.confidence }} процентов">
+    <div class="prediction-confidence" aria-label="Уверенность эксперта {{ prediction.coupon.confidence }} процентов">
         <div class="prediction-confidence-head">
-            <span>Уверенность эксперта</span>
-            <strong>{{ prediction.confidence }}%</strong>
+            <span>Уверенность прогноза</span>
+            <strong>{{ prediction.coupon.confidence }}%</strong>
         </div>
         <div class="prediction-confidence-track" aria-hidden="true">
-            <span style="width: {{ prediction.confidence }}%"></span>
+            <span style="width: {{ prediction.coupon.confidence }}%"></span>
         </div>
     </div>
 
