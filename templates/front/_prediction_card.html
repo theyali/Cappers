@@ -1,0 +1,165 @@
+<article
+    class="prediction-card prediction-card-rich{% if prediction.is_own %} is-own-prediction{% elif prediction.is_following_author %} is-followed-prediction{% endif %}"
+    data-prediction-card="{{ prediction.id }}"
+    data-analyst-id="{{ prediction.coupon.author_id }}"
+>
+    <div class="prediction-card-head">
+        <div class="prediction-author-row">
+            <a class="prediction-expert prediction-expert-link" href="{% url 'cabinet:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
+                <span class="prediction-expert-avatar">
+                    {% if prediction.expert_avatar_url %}
+                        <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ prediction.expert_initials }}
+                    {% endif %}
+                </span>
+                <div class="prediction-expert-copy">
+                    <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
+                    <span>@{{ prediction.coupon.author.username }}</span>
+                </div>
+            </a>
+
+            {% if prediction.is_own %}
+                <span class="prediction-owner-label">Ваш прогноз</span>
+            {% elif request.user.is_authenticated %}
+                <button
+                    class="prediction-follow-button{% if prediction.is_following_author %} is-active{% endif %}"
+                    type="button"
+                    data-prediction-follow
+                    data-analyst-id="{{ prediction.coupon.author_id }}"
+                    data-url="{% url 'cabinet:toggle_follow' user_id=prediction.coupon.author_id %}"
+                    aria-pressed="{% if prediction.is_following_author %}true{% else %}false{% endif %}"
+                >
+                    <span data-follow-label>{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}</span>
+                </button>
+            {% else %}
+                <a class="prediction-follow-button" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Подписаться</a>
+            {% endif %}
+        </div>
+
+        {% if prediction.state_status == "win" %}
+            <span class="prediction-status prediction-status-win">Выигрыш</span>
+        {% elif prediction.state_status == "lose" %}
+            <span class="prediction-status prediction-status-lose">Проигрыш</span>
+        {% elif prediction.state_status == "refund" %}
+            <span class="prediction-status prediction-status-refund">Возврат</span>
+        {% else %}
+            <span class="prediction-status">Ожидает</span>
+        {% endif %}
+    </div>
+
+    <a class="prediction-match-visual" href="{{ prediction.match.get_absolute_url }}">
+        <div class="prediction-league-row">
+            <div class="prediction-league-info">
+                <span class="prediction-league-logo">
+                    {% if prediction.match.league and prediction.match.league.logo %}
+                        <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                    {% endif %}
+                </span>
+                <div>
+                    <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
+                    {% if prediction.match.league_country %}<span>{{ prediction.match.league_country }}</span>{% endif %}
+                </div>
+            </div>
+            {% if prediction.match.starts_at %}
+                <time datetime="{{ prediction.match.starts_at|date:'c' }}">{{ prediction.match.starts_at|date:"d.m H:i" }}</time>
+            {% endif %}
+        </div>
+
+        <div class="prediction-scoreboard">
+            <div class="prediction-team prediction-team-home">
+                <span class="prediction-team-logo">
+                    {% if prediction.match.home_team_logo %}
+                        <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                    {% endif %}
+                </span>
+                <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
+            </div>
+
+            <div class="prediction-score-center">
+                <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
+                {% if prediction.match.live_minute_label %}
+                    <span>{{ prediction.match.live_minute_label }}</span>
+                {% elif prediction.match.sync_scope == "live" and prediction.match.live_minute %}
+                    <span>{{ prediction.match.live_minute }}′</span>
+                {% elif prediction.match.sync_scope == "finished" %}
+                    <span>Матч завершён</span>
+                {% else %}
+                    <span>{{ prediction.match.get_sync_scope_display }}</span>
+                {% endif %}
+            </div>
+
+            <div class="prediction-team prediction-team-away">
+                <span class="prediction-team-logo">
+                    {% if prediction.match.away_team_logo %}
+                        <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                    {% endif %}
+                </span>
+                <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
+            </div>
+        </div>
+    </a>
+
+    <div class="prediction-pick prediction-pick-rich">
+        <div>
+            <small>{{ prediction.market }}</small>
+            <strong>{{ prediction.selection }}</strong>
+        </div>
+        <div class="prediction-odd-value">
+            <span>КФ</span>
+            <b>{{ prediction.coefficient }}</b>
+        </div>
+    </div>
+
+    {% if prediction.comment %}
+        <p class="prediction-comment">{{ prediction.comment|truncatechars:150 }}</p>
+    {% endif %}
+
+    <div class="prediction-reactions" aria-label="Действия с прогнозом">
+        <button
+            class="prediction-reaction prediction-like{% if prediction.is_liked %} is-active{% endif %}"
+            type="button"
+            data-prediction-reaction
+            data-url="{% url 'front:prediction_like' prediction_id=prediction.id %}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
+            title="{% if prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
+        >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="prediction-reaction-label">Нравится</span>
+            <b data-like-count>{{ prediction.likes_count }}</b>
+        </button>
+        <button
+            class="prediction-reaction prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
+            type="button"
+            data-prediction-reaction
+            data-url="{% url 'front:prediction_favorite' prediction_id=prediction.id %}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
+            title="{% if prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+        >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span class="prediction-reaction-label">В избранное</span>
+        </button>
+    </div>
+
+    <div class="prediction-published-at">
+        <span>Опубликовано</span>
+        <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y H:i" }}</time>
+    </div>
+
+    <a class="prediction-open-match" href="{{ prediction.match.get_absolute_url }}">
+        <span>Открыть матч</span>
+        <span aria-hidden="true">→</span>
+    </a>
+</article>
