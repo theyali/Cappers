@@ -146,14 +146,15 @@
                                     <button
                                         class="odds-button"
                                         type="button"
+                                        data-market="{{ odd.market }}"
+                                        data-selection="{{ odd.selection }}"
+                                        data-coefficient="{{ odd.coefficient }}"
                                         {% if can_write_coupon and match.sync_scope == "prematch" %}
                                             data-bet-option
                                             data-bet-key="{{ odd.key }}"
-                                            data-market="{{ odd.market }}"
-                                            data-selection="{{ odd.selection }}"
-                                            data-coefficient="{{ odd.coefficient }}"
                                         {% else %}
                                             disabled
+                                            aria-disabled="true"
                                         {% endif %}
                                     >
                                         <span>{{ odd.label }}</span>
