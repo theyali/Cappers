@@ -153,8 +153,9 @@ def expert_profile(request, username: str):
         coupons=Count("coupon_id", distinct=True),
         avg_coefficient=Avg("coefficient"),
     )
-    settled_predictions = (stats["wins"] or 0) + (stats["losses"] or 0)
-    win_rate = round((stats["wins"] or 0) / settled_predictions * 100, 1) if settled_predictions else 0
+    decided_predictions = (stats["wins"] or 0) + (stats["losses"] or 0)
+    settled_predictions = decided_predictions + (stats["refunds"] or 0)
+    win_rate = round((stats["wins"] or 0) / decided_predictions * 100, 1) if decided_predictions else 0
     followers_count = AnalystFollow.objects.filter(analyst=analyst).count()
     predictions_count = stats["predictions"] or 0
 
