@@ -61,11 +61,11 @@
     </form>
     {{ draft_coupon|json_script:"coupon-draft-data" }}
     {% else %}
-    <section class="latest-predictions-panel" aria-label="Последние прогнозы">
-        <div class="coupon-head">
+    <section class="latest-predictions-panel sidebar-predictions" aria-label="Последние прогнозы">
+        <div class="coupon-head sidebar-predictions-head">
             <div>
-                <p class="matches-eyebrow">Прогнозы</p>
-                <h2>Последние</h2>
+                <p class="matches-eyebrow">Лента экспертов</p>
+                <h2>Последние прогнозы</h2>
             </div>
             <div class="coupon-head-actions">
                 <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогнозы">
@@ -75,32 +75,87 @@
             </div>
         </div>
 
-        <div class="coupon-body" data-sidebar-body>
+        <div class="coupon-body sidebar-predictions-body" data-sidebar-body>
             {% if latest_predictions %}
-            <div class="latest-predictions-list">
+            <div class="sidebar-predictions-list">
                 {% for prediction in latest_predictions %}
-                <a class="latest-prediction-card" href="{{ prediction.match.get_absolute_url }}">
-                    <div class="latest-prediction-top">
-                        <span class="coupon-item-ball">П</span>
-                        <div>
-                            <strong>{{ prediction.match.home_team_name }} — {{ prediction.match.away_team_name }}</strong>
-                            <small>{{ prediction.match.league_name }} · {{ prediction.match.starts_at|date:"d.m H:i" }}</small>
+                <a class="sidebar-prediction-card" href="{{ prediction.match.get_absolute_url }}">
+                    <div class="sidebar-prediction-league-row">
+                        <div class="sidebar-prediction-league">
+                            <span class="sidebar-prediction-league-logo">
+                                {% if prediction.match.league and prediction.match.league.logo %}
+                                    <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <div>
+                                <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
+                                <small>{% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m · H:i" }}{% else %}Время не указано{% endif %}</small>
+                            </div>
+                        </div>
+                        {% if prediction.state_status == "win" %}
+                            <span class="sidebar-prediction-status is-win">Выигрыш</span>
+                        {% elif prediction.state_status == "lose" %}
+                            <span class="sidebar-prediction-status is-lose">Проигрыш</span>
+                        {% elif prediction.state_status == "refund" %}
+                            <span class="sidebar-prediction-status is-refund">Возврат</span>
+                        {% else %}
+                            <span class="sidebar-prediction-status">Ожидает</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="sidebar-prediction-match">
+                        <div class="sidebar-prediction-team">
+                            <span class="sidebar-prediction-team-logo">
+                                {% if prediction.match.home_team_logo %}
+                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
+                        </div>
+                        <div class="sidebar-prediction-score">
+                            <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
+                            <span>{{ prediction.match.get_sync_scope_display }}</span>
+                        </div>
+                        <div class="sidebar-prediction-team is-away">
+                            <span class="sidebar-prediction-team-logo">
+                                {% if prediction.match.away_team_logo %}
+                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
                         </div>
                     </div>
-                    <div class="latest-prediction-pick">
-                        <span>{{ prediction.market }}</span>
-                        <b>{{ prediction.selection }}</b>
+
+                    <div class="sidebar-prediction-pick">
+                        <div>
+                            <span>{{ prediction.market|default:"Прогноз" }}</span>
+                            <strong>{{ prediction.selection }}</strong>
+                        </div>
+                        <div class="sidebar-prediction-odd">
+                            <span>КФ</span>
+                            <b>{{ prediction.coefficient }}</b>
+                        </div>
                     </div>
-                    <p>{{ prediction.comment|truncatechars:110 }}</p>
-                    <div class="latest-prediction-foot">
+
+                    {% if prediction.comment %}
+                    <p class="sidebar-prediction-comment">{{ prediction.comment|truncatechars:84 }}</p>
+                    {% endif %}
+
+                    <div class="sidebar-prediction-footer">
                         <span>@{{ prediction.coupon.author.username }}</span>
-                        <strong>кф {{ prediction.coefficient }}</strong>
+                        <strong>Открыть матч <i aria-hidden="true">→</i></strong>
                     </div>
                 </a>
                 {% endfor %}
             </div>
             {% else %}
-            <div class="coupon-empty latest-predictions-empty">
+            <div class="coupon-empty sidebar-predictions-empty">
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 <strong>Прогнозов пока нет</strong>
                 <p>Когда эксперты опубликуют прогнозы, они появятся здесь.</p>

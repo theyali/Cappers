@@ -1,0 +1,322 @@
+.sidebar-predictions {
+    gap: 12px;
+    padding: 14px;
+    outline: 0;
+    background: var(--panel);
+}
+
+.sidebar-predictions-head {
+    align-items: center;
+}
+
+.sidebar-predictions-head h2 {
+    max-width: 220px;
+    font-size: 24px;
+    line-height: 1.02;
+}
+
+.sidebar-predictions-body {
+    gap: 10px;
+}
+
+.sidebar-predictions-list {
+    display: grid;
+    gap: 8px;
+}
+
+.sidebar-prediction-card {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 14px;
+    color: inherit;
+    background: #171718;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.sidebar-prediction-card:hover {
+    transform: translateY(-1px);
+    background: #1d1d1f;
+}
+
+.sidebar-prediction-league-row,
+.sidebar-prediction-league,
+.sidebar-prediction-footer,
+.sidebar-prediction-pick {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-prediction-league-row,
+.sidebar-prediction-footer,
+.sidebar-prediction-pick {
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sidebar-prediction-league {
+    gap: 8px;
+}
+
+.sidebar-prediction-league-logo,
+.sidebar-prediction-team-logo {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--ink);
+    background: var(--yellow);
+    font-weight: 800;
+}
+
+.sidebar-prediction-league-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    font-size: 10px;
+}
+
+.sidebar-prediction-league-logo img,
+.sidebar-prediction-team-logo img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+}
+
+.sidebar-prediction-league > div {
+    min-width: 0;
+}
+
+.sidebar-prediction-league strong,
+.sidebar-prediction-league small {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-prediction-league strong {
+    max-width: 170px;
+    color: var(--text);
+    font-size: 11px;
+}
+
+.sidebar-prediction-league small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.sidebar-prediction-status {
+    flex: 0 0 auto;
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 8px;
+    color: var(--soft);
+    background: #2b2b2e;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.sidebar-prediction-status.is-win {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.sidebar-prediction-status.is-lose {
+    color: #fff;
+    background: var(--danger);
+}
+
+.sidebar-prediction-status.is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
+.sidebar-prediction-match {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #202022;
+}
+
+.sidebar-prediction-team {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sidebar-prediction-team.is-away {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+.sidebar-prediction-team-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    color: var(--yellow);
+    background: #2a2a2d;
+    font-size: 10px;
+}
+
+.sidebar-prediction-team strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-prediction-score {
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    border-radius: 10px;
+    background: #151516;
+    text-align: center;
+}
+
+.sidebar-prediction-score strong {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.sidebar-prediction-score span {
+    color: var(--muted);
+    font-size: 8px;
+}
+
+.sidebar-prediction-pick {
+    min-height: 50px;
+    padding: 10px 11px;
+    border-radius: 12px;
+    background: #242426;
+}
+
+.sidebar-prediction-pick > div:first-child {
+    min-width: 0;
+}
+
+.sidebar-prediction-pick span,
+.sidebar-prediction-pick strong {
+    display: block;
+}
+
+.sidebar-prediction-pick > div:first-child span {
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.sidebar-prediction-pick > div:first-child strong {
+    overflow: hidden;
+    margin-top: 3px;
+    color: var(--yellow);
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-prediction-odd {
+    flex: 0 0 auto;
+    min-width: 54px;
+    text-align: right;
+}
+
+.sidebar-prediction-odd span {
+    color: var(--muted);
+    font-size: 8px;
+}
+
+.sidebar-prediction-odd b {
+    display: block;
+    margin-top: 2px;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.sidebar-prediction-comment {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0;
+    color: rgba(255, 255, 255, .58);
+    font-size: 10px;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.sidebar-prediction-footer {
+    padding-top: 1px;
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.sidebar-prediction-footer strong {
+    color: var(--blue);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.sidebar-prediction-footer strong i {
+    margin-left: 4px;
+    font-style: normal;
+}
+
+.sidebar-predictions-empty {
+    min-height: 230px;
+}
+
+@media (max-width: 1120px) {
+    .sidebar-prediction-league strong {
+        max-width: 220px;
+    }
+}
+
+@media (max-width: 560px) {
+    .sidebar-predictions {
+        padding: 12px;
+    }
+
+    .sidebar-predictions-head h2 {
+        max-width: 180px;
+        font-size: 22px;
+    }
+
+    .sidebar-prediction-match {
+        grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+    }
+
+    .sidebar-prediction-team {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+
+    .sidebar-prediction-team.is-away {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .sidebar-prediction-team strong {
+        width: 100%;
+    }
+}

@@ -7,7 +7,7 @@ from front.views import _initials, _top_experts
 from game.models import Prediction, PredictionCoupon
 
 
-HOME_PREDICTIONS_LIMIT = 5
+HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
 
 

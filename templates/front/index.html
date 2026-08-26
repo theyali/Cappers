@@ -5,114 +5,127 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/home.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/home-latest.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/home-real.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-articles.css' %}">
 {% endblock %}
 
 {% block content %}
 <section class="home-layout" aria-label="Главная лента прогнозов">
     <div class="forecast-area">
-        <section class="latest-predictions" aria-labelledby="latest-predictions-title">
-            <header class="latest-predictions-head">
-                <div>
-                    <p class="home-eyebrow">Прогнозы</p>
-                    <h1 id="latest-predictions-title">Последние</h1>
-                </div>
-                <div class="latest-predictions-head-actions">
-                    <a class="latest-predictions-all" href="{% url 'front:predictions' %}">
-                        <span>Все</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                    <span class="latest-predictions-count" aria-label="Количество прогнозов">{{ latest_predictions|length }}</span>
-                </div>
-            </header>
+        <div class="home-heading">
+            <div>
+                <p class="home-eyebrow">Свежая лента</p>
+                <h1>Последние прогнозы</h1>
+            </div>
+            <div class="slider-actions" aria-label="Управление слайдером">
+                <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">←</button>
+                <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">→</button>
+            </div>
+        </div>
 
+        <div class="forecast-slider" data-forecast-slider data-direction="next">
             {% if latest_predictions %}
-            <div class="latest-predictions-list">
+            <div class="forecast-track">
                 {% for prediction in latest_predictions %}
-                <article class="latest-prediction-card">
-                    <div class="latest-prediction-meta">
-                        <div class="latest-prediction-league">
-                            <span class="latest-prediction-league-logo" aria-hidden="true">
-                                {% if prediction.league_logo %}
-                                    <img src="{{ prediction.league_logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.league|default:"Л"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <div>
-                                <strong>{{ prediction.league }}</strong>
-                                <span>{{ prediction.sport }} · {{ prediction.starts_at }}</span>
-                            </div>
-                        </div>
-                        <span class="latest-prediction-status is-{{ prediction.status_key }}">{{ prediction.status_label }}</span>
-                    </div>
-
-                    <a class="latest-prediction-match" href="{{ prediction.url }}">
-                        <span class="latest-prediction-team-logo" aria-hidden="true">
-                            {% if prediction.home_logo %}
-                                <img src="{{ prediction.home_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.home_name|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong>
-                            <span>{{ prediction.home_name }}</span>
-                            <i>—</i>
-                            <span>{{ prediction.away_name }}</span>
-                        </strong>
-                        {% if prediction.score %}<b class="latest-prediction-score">{{ prediction.score }}</b>{% endif %}
-                        <span class="latest-prediction-team-logo" aria-hidden="true">
-                            {% if prediction.away_logo %}
-                                <img src="{{ prediction.away_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.away_name|slice:":1" }}
-                            {% endif %}
-                        </span>
-                    </a>
-
-                    <div class="latest-prediction-pick">
-                        <div class="latest-prediction-pick-copy">
-                            <span>{{ prediction.market|default:"Прогноз" }}</span>
-                            <strong>{{ prediction.pick }}</strong>
-                        </div>
-                        <div class="latest-prediction-odd">
-                            <span>КФ</span>
-                            <strong>{{ prediction.coefficient }}</strong>
-                        </div>
-                    </div>
-
-                    {% if prediction.note %}
-                    <p class="latest-prediction-note">{{ prediction.note|truncatechars:145 }}</p>
-                    {% endif %}
-
-                    <footer class="latest-prediction-footer">
-                        <a class="latest-prediction-expert" href="{% url 'cabinet:expert_profile' username=prediction.expert_username %}">
-                            <span class="latest-prediction-avatar">
+                <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
+                    <div class="forecast-topline">
+                        <div class="forecast-expert">
+                            <span class="forecast-avatar">
                                 {% if prediction.expert_avatar_url %}
                                     <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
                                 {% else %}
                                     {{ prediction.expert_initials }}
                                 {% endif %}
                             </span>
-                            <span class="latest-prediction-expert-copy">
-                                <strong>{{ prediction.expert }}{% if prediction.expert_verified %} <i>✓</i>{% endif %}</strong>
-                                <small>@{{ prediction.expert_username }}</small>
+                            <div>
+                                <strong>
+                                    {{ prediction.expert }}
+                                    {% if prediction.expert_verified %}<span class="forecast-verified">✓</span>{% endif %}
+                                </strong>
+                                <span>Эксперт КапперХаб</span>
+                            </div>
+                        </div>
+                        <div class="forecast-meta">
+                            <span>{{ prediction.sport }}</span>
+                            <span class="forecast-league-meta">
+                                {% if prediction.league_logo %}<img src="{{ prediction.league_logo }}" alt="" loading="lazy">{% endif %}
+                                {{ prediction.league }}
                             </span>
+                        </div>
+                    </div>
+
+                    <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
+                        <div class="forecast-team forecast-team-home">
+                            <span class="forecast-team-logo">
+                                {% if prediction.home_logo %}
+                                    <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy">
+                                {% else %}
+                                    {{ prediction.home_name|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ prediction.home_name }}</strong>
+                        </div>
+                        <span class="forecast-vs">VS</span>
+                        <div class="forecast-team forecast-team-away">
+                            <strong>{{ prediction.away_name }}</strong>
+                            <span class="forecast-team-logo">
+                                {% if prediction.away_logo %}
+                                    <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy">
+                                {% else %}
+                                    {{ prediction.away_name|slice:":1" }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </a>
+
+                    <div class="forecast-body">
+                        <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
+                            <p class="forecast-label">Матч</p>
+                            <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
+                            {% if prediction.note %}<p class="forecast-note">{{ prediction.note|truncatechars:190 }}</p>{% endif %}
                         </a>
-                        <a class="latest-prediction-open" href="{{ prediction.url }}">Открыть матч <span aria-hidden="true">→</span></a>
-                    </footer>
+
+                        <div class="forecast-pick-card">
+                            <span>Прогноз</span>
+                            <strong>{{ prediction.pick }}</strong>
+                            <small class="forecast-market">{{ prediction.market }}</small>
+                            <div class="forecast-coefficient">
+                                <small>Коэффициент</small>
+                                <b>{{ prediction.coefficient }}</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="forecast-bottom forecast-bottom-real">
+                        <span class="forecast-result is-{{ prediction.status_key }}">{{ prediction.status_label }}</span>
+                        <div class="forecast-time">
+                            <span>Начало матча</span>
+                            <strong>{{ prediction.starts_at }}</strong>
+                        </div>
+                        <a class="forecast-open-match" href="{{ prediction.url }}">Открыть матч →</a>
+                    </div>
                 </article>
                 {% endfor %}
             </div>
+
+            <div class="slider-footer">
+                <div class="slider-dots" role="tablist" aria-label="Выбор прогноза">
+                    {% for prediction in latest_predictions %}
+                    <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
+                    {% endfor %}
+                </div>
+                <div class="slider-progress" aria-hidden="true">
+                    <span data-slider-progress></span>
+                </div>
+                <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
+            </div>
             {% else %}
-            <div class="latest-predictions-empty">
-                <strong>Прогнозов пока нет</strong>
-                <p>Как только эксперт опубликует прогноз, он появится здесь.</p>
-                <a href="{% url 'game:match_list' %}">Смотреть матчи →</a>
+            <div class="forecast-empty">
+                <strong>Опубликованных прогнозов пока нет</strong>
+                <p>Как только капперы опубликуют первый прогноз, он автоматически появится в этом слайдере.</p>
             </div>
             {% endif %}
-        </section>
+        </div>
     </div>
 
     <aside class="home-sidebar">
@@ -233,5 +246,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'front/js/home.js' %}" defer></script>
 <script src="{% static 'front/js/article-slider.js' %}" defer></script>
 {% endblock %}
