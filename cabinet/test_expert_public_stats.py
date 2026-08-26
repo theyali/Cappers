@@ -35,6 +35,7 @@ class ExpertPublicStatsTests(TestCase):
             state_status=PredictionCoupon.StateStatus.WIN,
             total_stake=Decimal("100.00"),
             possible_payout=Decimal("200.00"),
+            confidence=82,
             published_at=now,
             settled_at=now,
         )
@@ -44,6 +45,7 @@ class ExpertPublicStatsTests(TestCase):
             state_status=PredictionCoupon.StateStatus.LOSE,
             total_stake=Decimal("50.00"),
             possible_payout=Decimal("90.00"),
+            confidence=61,
             published_at=now,
             settled_at=now,
         )
@@ -55,7 +57,6 @@ class ExpertPublicStatsTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal("2.00"),
             stake=Decimal("100.00"),
-            confidence=82,
             state_status=Prediction.StateStatus.WIN,
         )
         Prediction.objects.create(
@@ -65,7 +66,6 @@ class ExpertPublicStatsTests(TestCase):
             selection="ТМ 2.5",
             coefficient=Decimal("1.80"),
             stake=Decimal("50.00"),
-            confidence=61,
             state_status=Prediction.StateStatus.LOSE,
         )
 
@@ -90,3 +90,4 @@ class ExpertPublicStatsTests(TestCase):
         self.assertContains(response, "Счёт")
         self.assertContains(response, "2-1")
         self.assertContains(response, "0-3")
+        self.assertContains(response, "82%")
