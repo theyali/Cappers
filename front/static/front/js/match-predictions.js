@@ -36,6 +36,69 @@
         loader.hidden = !show;
     };
 
+    const formatPercent = (value) => {
+        const number = Number(value || 0);
+        if (!Number.isFinite(number)) return "0%";
+        const rounded = Math.round(number * 10) / 10;
+        return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}%`;
+    };
+
+    const distributionKey = (market, selection) => `${String(market || "").trim()}\u0000${String(selection || "").trim()}`;
+
+    const clearPredictionShares = () => {
+        document.querySelectorAll(".match-detail-page .odds-button.has-prediction-share").forEach((button) => {
+            button.classList.remove("has-prediction-share");
+            button.style.removeProperty("--prediction-share");
+            button.querySelector(".odds-prediction-fill")?.remove();
+            button.querySelector(".odds-prediction-share")?.remove();
+            button.removeAttribute("data-prediction-share");
+            button.removeAttribute("title");
+        });
+    };
+
+    const renderPredictionShares = (distribution, total) => {
+        const totalPredictions = Number(total || 0);
+        if (!totalPredictions) {
+            clearPredictionShares();
+            return;
+        }
+
+        const distributionMap = new Map(
+            (Array.isArray(distribution) ? distribution : []).map((item) => [
+                distributionKey(item.market, item.selection),
+                item,
+            ]),
+        );
+
+        document.querySelectorAll(".match-detail-page .odds-button[data-market][data-selection]").forEach((button) => {
+            const entry = distributionMap.get(distributionKey(button.dataset.market, button.dataset.selection));
+            const count = Number(entry?.count || 0);
+            const percent = Math.max(0, Math.min(100, Number(entry?.percent || 0)));
+            const percentLabel = formatPercent(percent);
+
+            let fill = button.querySelector(".odds-prediction-fill");
+            if (!fill) {
+                fill = document.createElement("i");
+                fill.className = "odds-prediction-fill";
+                fill.setAttribute("aria-hidden", "true");
+                button.prepend(fill);
+            }
+
+            let share = button.querySelector(".odds-prediction-share");
+            if (!share) {
+                share = document.createElement("em");
+                share.className = "odds-prediction-share";
+                button.append(share);
+            }
+
+            button.classList.add("has-prediction-share");
+            button.style.setProperty("--prediction-share", `${percent}%`);
+            button.dataset.predictionShare = String(percent);
+            button.title = `${count} из ${totalPredictions} прогнозов — ${percentLabel}`;
+            share.textContent = `${percentLabel} прогнозов`;
+        });
+    };
+
     const showEmpty = () => {
         if (list.children.length) return;
         list.innerHTML = `
@@ -76,6 +139,7 @@
                 throw new Error(result.error || "Ошибка загрузки.");
             }
 
+            renderPredictionShares(result.distribution, result.total);
             if (result.html) list.insertAdjacentHTML("beforeend", result.html);
 
             if (result.has_next) {
