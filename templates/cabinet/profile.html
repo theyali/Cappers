@@ -44,7 +44,7 @@
                     {% endif %}
                 </h1>
                 <p>@{{ request.user.username }} · на платформе с {{ request.user.date_joined|date:"d.m.Y" }}</p>
-                <div class="avatar-upload-status" id="avatarUploadStatus" aria-live="polite"></div>
+                <div class="avatar-upload-status" id="profileAvatarStatus" aria-live="polite"></div>
             </div>
         </div>
 
@@ -201,13 +201,7 @@
                         </div>
                     </div>
 
-                    {% if coupon.published_status == "published" %}
-                        <span class="profile-coupon-status is-published">Опубликован</span>
-                    {% elif coupon.published_status == "canceled" %}
-                        <span class="profile-coupon-status is-canceled">Отменен</span>
-                    {% else %}
-                        <span class="profile-coupon-status">Черновик</span>
-                    {% endif %}
+                    <span class="profile-coupon-status is-{{ coupon.result_key }}">{{ coupon.result_label }}</span>
 
                     <div class="profile-coupon-metric">
                         <span>Матчи</span>
