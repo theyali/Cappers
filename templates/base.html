@@ -26,6 +26,7 @@
                 <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">Футбол</a>
                 <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">Все прогнозы</a>
                 <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
+                <a class="{% if request.resolver_match.url_name == 'how_it_works' %}is-active{% endif %}" href="{% url 'front:how_it_works' %}">Как пользоваться</a>
             </div>
 
             <div class="site-nav-actions">
