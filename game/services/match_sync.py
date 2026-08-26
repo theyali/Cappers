@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
 from game.models import Country, League, LeagueSeason, Match, MatchOdds, Provider, Sport, Team, Venue
-from game.services.odds import match_odds_defaults
+from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 
 logger = logging.getLogger(__name__)
@@ -256,6 +256,8 @@ class MatchSyncService:
         return team
 
     def _sync_odds(self, match: Match, payload: dict[str, Any]) -> None:
+        if not has_odds_payload(payload):
+            return
         MatchOdds.objects.update_or_create(
             match=match,
             defaults=match_odds_defaults(payload),

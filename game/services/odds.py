@@ -66,6 +66,27 @@ def match_odds_defaults(payload: dict[str, Any]) -> dict[str, Any]:
     return defaults
 
 
+def has_odds_payload(payload: dict[str, Any]) -> bool:
+    if not isinstance(payload, dict) or not payload:
+        return False
+
+    for key in DIRECT_ODDS_KEYS:
+        if _to_float(payload.get(key)) is not None:
+            return True
+
+    for aliases in GROUP_ALIASES.values():
+        if _first_dict(payload, aliases):
+            return True
+
+    return any(
+        key not in DIRECT_ODDS_KEYS
+        and all(key not in aliases for aliases in GROUP_ALIASES.values())
+        and isinstance(value, (dict, list))
+        and bool(value)
+        for key, value in payload.items()
+    )
+
+
 def _first_dict(payload: dict[str, Any], aliases: tuple[str, ...]) -> dict:
     for alias in aliases:
         value = payload.get(alias)
