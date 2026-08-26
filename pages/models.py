@@ -118,5 +118,6 @@ class PageSEO(models.Model):
 
     def save(self, *args, **kwargs):
         if self.exact_path:
-            self.exact_path = "/" + self.exact_path.strip("/") + "/"
+            normalized = self.exact_path.strip()
+            self.exact_path = "/" if normalized == "/" else f"/{normalized.strip('/')}/".replace("\\/", "/")
         super().save(*args, **kwargs)
