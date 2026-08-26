@@ -1,6 +1,6 @@
 (() => {
-    const button = document.querySelector("[data-expert-follow]");
-    if (!button) return;
+    const buttons = Array.from(document.querySelectorAll("[data-expert-follow]"));
+    if (!buttons.length) return;
 
     const getCookie = (name) => {
         const prefix = `${name}=`;
@@ -11,36 +11,49 @@
             ?.slice(prefix.length) || "";
     };
 
-    button.addEventListener("click", async () => {
-        if (button.disabled || !button.dataset.url) return;
-        button.disabled = true;
-
-        try {
-            const response = await fetch(button.dataset.url, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": decodeURIComponent(getCookie("csrftoken")),
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Accept": "application/json",
-                },
-                credentials: "same-origin",
+    const syncButtons = (url, active) => {
+        buttons
+            .filter((item) => item.dataset.url === url)
+            .forEach((item) => {
+                item.classList.toggle("is-active", Boolean(active));
+                item.setAttribute("aria-pressed", active ? "true" : "false");
+                const label = item.querySelector("[data-follow-label]");
+                if (label) label.textContent = active ? "Вы подписаны" : "Подписаться";
             });
-            const result = await response.json();
-            if (!response.ok || !result.ok) {
-                throw new Error(result.error || "Не удалось изменить подписку.");
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            if (button.disabled || !button.dataset.url) return;
+            button.disabled = true;
+
+            try {
+                const response = await fetch(button.dataset.url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": decodeURIComponent(getCookie("csrftoken")),
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || "Не удалось изменить подписку.");
+                }
+
+                syncButtons(button.dataset.url, Boolean(result.active));
+
+                const followers = button
+                    .closest("[data-follow-card]")
+                    ?.querySelector("[data-followers-count]")
+                    || document.querySelector("[data-followers-count]");
+                if (followers) followers.textContent = String(result.followers_count);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                button.disabled = false;
             }
-
-            button.classList.toggle("is-active", Boolean(result.active));
-            button.setAttribute("aria-pressed", result.active ? "true" : "false");
-            const label = button.querySelector("[data-follow-label]");
-            if (label) label.textContent = result.active ? "Вы подписаны" : "Подписаться";
-
-            const followers = document.querySelector("[data-followers-count]");
-            if (followers) followers.textContent = String(result.followers_count);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            button.disabled = false;
-        }
+        });
     });
 })();

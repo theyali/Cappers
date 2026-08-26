@@ -1,10 +1,14 @@
-from django.db.models import Count, Q
+from datetime import timedelta
+
+from django.db.models import Count, Max, Q
 from django.shortcuts import render
 from django.utils import timezone
 
+from cabinet.achievements import build_achievement_badges
 from cabinet.models import AnalystProfile, User
 from front.models import Article
-from front.views import _initials, _top_experts
+from front.prediction_metrics import annotate_author_roi
+from front.views import _best_streaks_for_authors, _initials, _top_experts
 from game.models import Match, Prediction, PredictionCoupon
 
 
@@ -95,58 +99,112 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
-def _best_home_experts() -> list[dict]:
-    profiles = list(
-        AnalystProfile.objects.filter(
-            is_public=True,
-            user__role=User.Role.ANALYST,
-        )
-        .select_related("user")
-        .annotate(
-            followers_count=Count("user__analyst_followers", distinct=True),
-            predictions_count=Count(
-                "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-                ),
-                distinct=True,
-            ),
-            wins_count=Count(
-                "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN,
-                ),
-                distinct=True,
-            ),
-            losses_count=Count(
-                "user__prediction_coupons__predictions",
-                filter=Q(
-                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE,
-                ),
-                distinct=True,
-            ),
-        )
-        .order_by("-wins_count", "-followers_count", "-is_verified", "-created_at")[:HOME_EXPERTS_LIMIT]
+def _best_home_experts(request) -> list[dict]:
+    recent_cutoff = timezone.now() - timedelta(days=30)
+    published_filter = Q(
+        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
     )
+    profiles = list(
+        annotate_author_roi(
+            AnalystProfile.objects.filter(
+                is_public=True,
+                user__role=User.Role.ANALYST,
+            )
+            .select_related("user")
+            .annotate(
+                followers_count=Count("user__analyst_followers", distinct=True),
+                predictions_count=Count(
+                    "user__prediction_coupons__predictions",
+                    filter=published_filter,
+                    distinct=True,
+                ),
+                wins_count=Count(
+                    "user__prediction_coupons__predictions",
+                    filter=published_filter
+                    & Q(
+                        user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN
+                    ),
+                    distinct=True,
+                ),
+                losses_count=Count(
+                    "user__prediction_coupons__predictions",
+                    filter=published_filter
+                    & Q(
+                        user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE
+                    ),
+                    distinct=True,
+                ),
+                sports_count=Count(
+                    "user__prediction_coupons__predictions__match__sport",
+                    filter=published_filter,
+                    distinct=True,
+                ),
+                recent_publications_count=Count(
+                    "user__prediction_coupons__predictions",
+                    filter=published_filter
+                    & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
+                    distinct=True,
+                ),
+                last_publication_at=Max(
+                    "user__prediction_coupons__published_at",
+                    filter=published_filter,
+                ),
+            ),
+            author_outer_ref="user_id",
+            annotation_name="author_roi",
+        )
+        .order_by(
+            "-wins_count",
+            "-followers_count",
+            "-is_verified",
+            "-recent_publications_count",
+            "-created_at",
+        )[:HOME_EXPERTS_LIMIT]
+    )
+
+    best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
+    following_ids = set()
+    if request.user.is_authenticated:
+        following_ids = set(
+            request.user.analyst_follows.filter(
+                analyst_id__in=[profile.user_id for profile in profiles]
+            ).values_list("analyst_id", flat=True)
+        )
 
     experts = []
     for profile in profiles:
         settled = profile.wins_count + profile.losses_count
         win_rate = round(profile.wins_count / settled * 100) if settled else 0
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        unlocked_achievements = build_achievement_badges(
+            predictions_count=profile.predictions_count,
+            wins_count=profile.wins_count,
+            overall_roi=profile.author_roi,
+            followers_count=profile.followers_count,
+            best_win_streak=best_streaks.get(profile.user_id, 0),
+            is_verified=profile.is_verified,
+        )
         experts.append(
             {
+                "id": profile.user_id,
                 "name": name,
                 "username": profile.user.username,
                 "initials": _initials(name),
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "verified": profile.is_verified,
+                "roi": profile.author_roi,
                 "followers": profile.followers_count,
                 "predictions": profile.predictions_count,
+                "publications": profile.predictions_count,
+                "sports": profile.sports_count,
+                "recent_publications": profile.recent_publications_count,
                 "wins": profile.wins_count,
                 "win_rate": win_rate,
+                "last_publication_at": profile.last_publication_at,
+                "joined_at": profile.created_at,
+                "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+                "is_self": request.user.is_authenticated and request.user.id == profile.user_id,
+                "is_following": profile.user_id in following_ids,
             }
         )
     return experts
@@ -234,7 +292,7 @@ def index(request):
         {
             "latest_predictions": _latest_home_predictions(),
             "top_experts": _top_experts(),
-            "best_experts": _best_home_experts(),
+            "best_experts": _best_home_experts(request),
             "latest_articles": Article.objects.filter(is_published=True).order_by("-created_at", "-id")[:HOME_ARTICLES_LIMIT],
             "important_matches": _important_home_matches(),
         },

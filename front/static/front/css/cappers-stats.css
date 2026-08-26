@@ -99,6 +99,15 @@
     background: #252528;
 }
 
+.capper-pro-card-link {
+    min-width: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 20px;
+    color: inherit;
+}
+
 .capper-pro-top {
     display: flex;
     align-items: flex-start;
@@ -277,6 +286,39 @@
     white-space: nowrap;
 }
 
+.capper-pro-follow {
+    width: 100%;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--blue);
+    cursor: pointer;
+    appearance: none;
+    font-size: 12px;
+    font-weight: 800;
+    transition: transform .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.capper-pro-follow.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.capper-pro-follow:hover {
+    transform: translateY(-2px);
+}
+
+.capper-pro-follow:disabled {
+    cursor: wait;
+    opacity: .62;
+    transform: none;
+}
+
 @media (max-width: 980px) {
     .cappers-summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -343,6 +385,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .capper-pro-follow,
     .capper-pro-card {
         transition: none;
     }
