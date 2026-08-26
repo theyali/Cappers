@@ -21,7 +21,7 @@
             <div class="coupon-empty" data-coupon-empty>
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 <strong>Выберите матч</strong>
-                <p>Добавьте предстоящую игру и заполните условия прогноза.</p>
+                <p>Добавьте предстоящую игру, выберите исход и укажите уверенность.</p>
             </div>
 
             <div class="coupon-items" data-coupon-items></div>
@@ -37,11 +37,6 @@
                 </div>
             </div>
 
-            <label class="coupon-field">
-                <span>Комментарий</span>
-                <textarea name="comment" maxlength="1200" placeholder="Коротко объясните логику прогноза" data-coupon-comment></textarea>
-            </label>
-
             <div class="coupon-total">
                 <span>Возможный выигрыш</span>
                 <strong data-coupon-total>0</strong>
@@ -55,7 +50,7 @@
                 </span>
             </button>
             <p class="coupon-note" data-coupon-note>
-                Заполните сумму и общий комментарий к купону.
+                Для каждого матча укажите процент уверенности.
             </p>
         </div>
     </form>
@@ -144,9 +139,10 @@
                         </div>
                     </div>
 
-                    {% if prediction.comment %}
-                    <p class="sidebar-prediction-comment">{{ prediction.comment|truncatechars:84 }}</p>
-                    {% endif %}
+                    <div class="sidebar-prediction-confidence">
+                        <span>Уверенность</span>
+                        <strong>{{ prediction.confidence }}%</strong>
+                    </div>
 
                     <div class="sidebar-prediction-footer">
                         <span>@{{ prediction.coupon.author.username }}</span>
