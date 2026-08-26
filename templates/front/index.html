@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="{% static 'front/css/home.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-real.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-articles.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/home-experts.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 {% endblock %}
@@ -213,6 +214,70 @@
     <div class="matches-empty">
         <h2>Прематчей пока нет</h2>
         <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="home-best-experts" aria-labelledby="home-best-experts-title">
+    <header class="home-best-experts-head">
+        <div>
+            <p class="home-eyebrow">Рейтинг экспертов</p>
+            <h2 id="home-best-experts-title">Лучшие прогнозисты</h2>
+            <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
+        </div>
+        <a class="home-best-experts-all" href="{% url 'front:cappers_stats' %}">Все прогнозисты</a>
+    </header>
+
+    {% if best_experts %}
+    <div class="home-best-experts-grid">
+        {% for expert in best_experts %}
+        <a class="home-best-expert-card" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
+            <div class="home-best-expert-top">
+                <div class="home-best-expert-person">
+                    <span class="home-best-expert-avatar">
+                        {% if expert.avatar_url %}
+                            <img src="{{ expert.avatar_url }}" alt="" loading="lazy">
+                        {% else %}
+                            {{ expert.initials }}
+                        {% endif %}
+                    </span>
+                    <div class="home-best-expert-copy">
+                        <strong>
+                            <span>{{ expert.name }}</span>
+                            {% if expert.verified %}<span class="home-best-expert-verified" title="Проверенный эксперт">✓</span>{% endif %}
+                        </strong>
+                        <small>@{{ expert.username }}</small>
+                    </div>
+                </div>
+                <span class="home-best-expert-rank">#{{ forloop.counter }}</span>
+            </div>
+
+            <div class="home-best-expert-metrics">
+                <div class="home-best-expert-metric is-main">
+                    <span>Проходимость</span>
+                    <strong>{{ expert.win_rate }}%</strong>
+                </div>
+                <div class="home-best-expert-metric">
+                    <span>Прогнозы</span>
+                    <strong>{{ expert.predictions }}</strong>
+                </div>
+                <div class="home-best-expert-metric">
+                    <span>Победы</span>
+                    <strong>{{ expert.wins }}</strong>
+                </div>
+            </div>
+
+            <div class="home-best-expert-foot">
+                <span><b>{{ expert.followers }}</b> подписчиков</span>
+                <span>Профиль →</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="home-best-experts-empty">
+        <strong>Прогнозисты скоро появятся</strong>
+        <p>После публикации первых прогнозов рейтинг лучших экспертов автоматически появится здесь.</p>
     </div>
     {% endif %}
 </section>
