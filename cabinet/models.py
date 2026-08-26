@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -40,6 +42,13 @@ class AnalystProfile(models.Model):
         null=True,
     )
     bio = models.TextField("О себе", max_length=2000, blank=True)
+    telegram_channel = models.CharField("Telegram канал", max_length=160, default="")
+    telegram_account = models.CharField("Telegram аккаунт", max_length=160, default="")
+    instagram = models.CharField("Instagram", max_length=160, blank=True)
+    threads = models.CharField("Threads", max_length=160, blank=True)
+    youtube = models.CharField("YouTube канал", max_length=200, blank=True)
+    tiktok = models.CharField("TikTok", max_length=160, blank=True)
+    facebook = models.CharField("Facebook", max_length=200, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
     is_public = models.BooleanField("Публичный профиль", default=True, db_index=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -52,6 +61,58 @@ class AnalystProfile(models.Model):
 
     def __str__(self) -> str:
         return self.display_name or self.user.get_full_name() or self.user.username
+
+    def clean(self) -> None:
+        super().clean()
+        errors = {}
+        if not (self.telegram_channel or "").strip():
+            errors["telegram_channel"] = "Укажите Telegram-канал эксперта."
+        if not (self.telegram_account or "").strip():
+            errors["telegram_account"] = "Укажите Telegram-аккаунт эксперта."
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def social_links(self) -> list[dict]:
+        values = [
+            ("telegram_channel", "Telegram канал", self.telegram_channel, "telegram"),
+            ("telegram_account", "Telegram аккаунт", self.telegram_account, "telegram"),
+            ("instagram", "Instagram", self.instagram, "instagram"),
+            ("threads", "Threads", self.threads, "threads"),
+            ("youtube", "YouTube", self.youtube, "youtube"),
+            ("tiktok", "TikTok", self.tiktok, "tiktok"),
+            ("facebook", "Facebook", self.facebook, "facebook"),
+        ]
+        return [
+            {"key": key, "label": label, "value": value, "url": _social_url(value, network)}
+            for key, label, value, network in values
+            if (value or "").strip()
+        ]
+
+
+def _social_url(value: str, network: str) -> str:
+    text = (value or "").strip()
+    if not text:
+        return "#"
+    if text.startswith(("http://", "https://")):
+        return text
+
+    handle = re.sub(r"^@", "", text).strip("/")
+    if network == "telegram":
+        return f"https://t.me/{handle}"
+    if network == "instagram":
+        return f"https://www.instagram.com/{handle}"
+    if network == "threads":
+        return f"https://www.threads.net/@{handle}"
+    if network == "youtube":
+        if handle.startswith("@"):
+            return f"https://www.youtube.com/{handle}"
+        return f"https://www.youtube.com/@{handle}"
+    if network == "tiktok":
+        return f"https://www.tiktok.com/@{handle}"
+    if network == "facebook":
+        return f"https://www.facebook.com/{handle}"
+    return text
 
 
 class AnalystFollow(models.Model):

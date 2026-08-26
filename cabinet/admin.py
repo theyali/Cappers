@@ -21,17 +21,43 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "display_name",
+        "telegram_channel",
+        "telegram_account",
+        "tiktok",
+        "facebook",
         "is_verified",
         "is_public",
         "created_at",
     )
     list_editable = ("is_verified", "is_public")
     list_filter = ("is_verified", "is_public", "created_at")
-    search_fields = ("user__username", "user__email", "display_name")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "display_name",
+        "telegram_channel",
+        "telegram_account",
+        "tiktok",
+        "facebook",
+    )
     autocomplete_fields = ("user",)
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         ("Эксперт", {"fields": ("user", "display_name", "avatar", "bio")}),
+        (
+            "Социальные сети",
+            {
+                "fields": (
+                    "telegram_channel",
+                    "telegram_account",
+                    "instagram",
+                    "threads",
+                    "youtube",
+                    "tiktok",
+                    "facebook",
+                )
+            },
+        ),
         ("Статус", {"fields": ("is_verified", "is_public")}),
         ("Системная информация", {"fields": ("created_at", "updated_at")}),
     )

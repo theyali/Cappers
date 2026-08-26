@@ -1,7 +1,13 @@
 from django.core.management.base import BaseCommand
 
 from bots.models import BotAccount
-from bots.services import EXPERT_NAMES, READER_NAMES, _expert_bio
+from bots.services import (
+    EXPERT_NAMES,
+    READER_NAMES,
+    _expert_bio,
+    _telegram_account,
+    _telegram_channel,
+)
 from cabinet.models import User
 
 
@@ -42,7 +48,17 @@ class Command(BaseCommand):
                 profile = user.analyst_profile
                 profile.display_name = full_name
                 profile.bio = _expert_bio(index, full_name)
-                profile.save(update_fields=["display_name", "bio", "updated_at"])
+                profile.telegram_channel = _telegram_channel(user.username)
+                profile.telegram_account = _telegram_account(user.username)
+                profile.save(
+                    update_fields=[
+                        "display_name",
+                        "bio",
+                        "telegram_channel",
+                        "telegram_account",
+                        "updated_at",
+                    ]
+                )
             updated += 1
         return updated
 

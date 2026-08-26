@@ -138,9 +138,21 @@ def seed_bots(reader_count: int = 40, expert_count: int = 20) -> dict:
         profile, _ = AnalystProfile.objects.get_or_create(user=user)
         profile.display_name = name
         profile.bio = _expert_bio(index, name)
+        profile.telegram_channel = _telegram_channel(username)
+        profile.telegram_account = _telegram_account(username)
         profile.is_public = True
         profile.is_verified = index <= 6
-        profile.save(update_fields=["display_name", "bio", "is_public", "is_verified", "updated_at"])
+        profile.save(
+            update_fields=[
+                "display_name",
+                "bio",
+                "telegram_channel",
+                "telegram_account",
+                "is_public",
+                "is_verified",
+                "updated_at",
+            ]
+        )
 
         bot, _ = BotAccount.objects.update_or_create(
             user=user,
@@ -314,6 +326,19 @@ def _strategy_defaults(index: int) -> dict:
 def _expert_bio(index: int, name: str) -> str:
     focuses = ["исходам", "тоталам", "форме команд", "молодежным лигам", "коэффициентам до матча"]
     return f"{name} разбирает футбол по {focuses[index % len(focuses)]} и публикует краткие прогнозы перед матчами."
+
+
+def _social_handle(username: str) -> str:
+    handle = "".join(char if char.isalnum() else "_" for char in username.lower()).strip("_")
+    return handle[:28] or "cappers_expert"
+
+
+def _telegram_account(username: str) -> str:
+    return f"https://t.me/{_social_handle(username)}"
+
+
+def _telegram_channel(username: str) -> str:
+    return f"https://t.me/{_social_handle(username)}_tips"
 
 
 def _next_match(strategy: BotExpertStrategy, used_match_ids: set[int]) -> Match | None:

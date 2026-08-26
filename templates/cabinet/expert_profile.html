@@ -32,22 +32,66 @@
             </div>
         </div>
 
-        <div class="expert-public-actions">
-            {% if is_self %}
-                <a class="expert-public-edit" href="{% url 'cabinet:profile' %}">Редактировать профиль</a>
-            {% elif request.user.is_authenticated %}
-                <button
-                    class="expert-follow-button{% if is_following %} is-active{% endif %}"
-                    type="button"
-                    data-expert-follow
-                    data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
-                    aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
-                >
-                    <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
-                </button>
-            {% else %}
-                <a class="expert-follow-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
-            {% endif %}
+        <div class="expert-public-side">
+            <article class="expert-public-brand-card" aria-label="Социальные сети эксперта">
+                <div class="expert-public-brand-head">
+                    <span class="expert-public-brand-logo">
+                        <img src="{% static 'front/img/logo.png' %}" alt="">
+                    </span>
+                    <div>
+                        <strong>КапперХаб</strong>
+                        <span>Профиль эксперта</span>
+                    </div>
+                </div>
+
+                {% if analyst_profile.social_links %}
+                <div class="expert-public-socials">
+                    {% for social in analyst_profile.social_links %}
+                    <a class="expert-public-social is-{{ social.key }}"
+                       href="{{ social.url }}"
+                       target="_blank"
+                       rel="nofollow noopener noreferrer">
+                        <span class="expert-public-social-icon" aria-hidden="true">
+                            {% if social.key == "telegram_channel" or social.key == "telegram_account" %}
+                                <img src="{% static 'front/svgs/telegram.svg' %}" alt="">
+                            {% elif social.key == "instagram" %}
+                                <img src="{% static 'front/svgs/instagram.svg' %}" alt="">
+                            {% elif social.key == "threads" %}
+                                <img src="{% static 'front/svgs/threads.png' %}" alt="">
+                            {% elif social.key == "youtube" %}
+                                <img src="{% static 'front/svgs/youtube.svg' %}" alt="">
+                            {% elif social.key == "tiktok" %}
+                                <img src="{% static 'front/svgs/tiktok.svg' %}" alt="">
+                            {% elif social.key == "facebook" %}
+                                <img src="{% static 'front/svgs/facebook.svg' %}" alt="">
+                            {% endif %}
+                        </span>
+                        <span>{{ social.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-social-empty">Социальные сети пока не указаны.</p>
+                {% endif %}
+            </article>
+
+            <div class="expert-public-actions">
+                {% if is_self %}
+                    <a class="expert-public-edit" href="{% url 'cabinet:profile' %}">Редактировать профиль</a>
+                {% elif request.user.is_authenticated %}
+                    <button
+                        class="expert-follow-button{% if is_following %} is-active{% endif %}"
+                        type="button"
+                        data-expert-follow
+                        data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+                        aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+                    >
+                        <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                    </button>
+                {% else %}
+                    <a class="expert-follow-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+                {% endif %}
+            </div>
         </div>
     </section>
 

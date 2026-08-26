@@ -47,7 +47,18 @@ class UserProfileForm(forms.ModelForm):
 class AnalystProfileForm(forms.ModelForm):
     class Meta:
         model = AnalystProfile
-        fields = ("display_name", "bio", "is_public")
+        fields = (
+            "display_name",
+            "bio",
+            "telegram_channel",
+            "telegram_account",
+            "instagram",
+            "threads",
+            "youtube",
+            "tiktok",
+            "facebook",
+            "is_public",
+        )
         widgets = {
             "display_name": forms.TextInput(attrs={"placeholder": "Имя, которое увидят другие"}),
             "bio": forms.Textarea(
@@ -56,6 +67,13 @@ class AnalystProfileForm(forms.ModelForm):
                     "placeholder": "Расскажите немного о себе и своей спортивной специализации",
                 }
             ),
+            "telegram_channel": forms.TextInput(attrs={"placeholder": "@channel или https://t.me/channel"}),
+            "telegram_account": forms.TextInput(attrs={"placeholder": "@username или https://t.me/username"}),
+            "instagram": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
+            "threads": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
+            "youtube": forms.TextInput(attrs={"placeholder": "@channel или ссылка"}),
+            "tiktok": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
+            "facebook": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
         }
 
 

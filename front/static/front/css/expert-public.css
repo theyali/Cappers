@@ -6,7 +6,7 @@
 .expert-public-hero {
     min-height: 250px;
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
     justify-content: space-between;
     gap: 28px;
     padding: clamp(24px, 4vw, 42px);
@@ -16,6 +16,7 @@
 
 .expert-public-main {
     min-width: 0;
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
     gap: 22px;
@@ -95,8 +96,125 @@
     line-height: 1.55;
 }
 
-.expert-public-actions {
+.expert-public-side {
+    width: min(420px, 34vw);
     flex: 0 0 auto;
+    display: grid;
+    align-content: end;
+    gap: 12px;
+}
+
+.expert-public-brand-card {
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 18px;
+    background: #171718;
+    outline: 1px solid var(--line);
+}
+
+.expert-public-brand-head {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.expert-public-brand-logo {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--line);
+}
+
+.expert-public-brand-logo img {
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+}
+
+.expert-public-brand-head > div {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.expert-public-brand-head strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.expert-public-brand-head span,
+.expert-public-social-empty {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.expert-public-socials {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.expert-public-social {
+    min-width: 0;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 11px;
+    border-radius: 12px;
+    color: var(--text);
+    background: #2a2a2d;
+    font-size: 12px;
+}
+
+.expert-public-social:hover {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.expert-public-social span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.expert-public-social-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    overflow: hidden;
+}
+
+.expert-public-social-icon img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.expert-public-social-empty {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.expert-public-actions {
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .expert-follow-button,
@@ -111,6 +229,11 @@
     background: var(--blue);
     cursor: pointer;
     font-weight: 600;
+}
+
+.expert-public-side .expert-follow-button,
+.expert-public-side .expert-public-edit {
+    width: 100%;
 }
 
 .expert-follow-button.is-active {
@@ -888,6 +1011,10 @@
         width: 100%;
     }
 
+    .expert-public-side {
+        width: 100%;
+    }
+
     .expert-public-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -943,5 +1070,9 @@
 
     .expert-public-name-row h1 {
         white-space: normal;
+    }
+
+    .expert-public-socials {
+        grid-template-columns: 1fr;
     }
 }

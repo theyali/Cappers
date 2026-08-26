@@ -65,6 +65,8 @@ def _profile_completion(user, analyst_profile) -> int:
                 bool(analyst_profile.display_name),
                 bool(analyst_profile.bio),
                 bool(analyst_profile.avatar),
+                bool(analyst_profile.telegram_channel),
+                bool(analyst_profile.telegram_account),
             ]
         )
     if not checks:
