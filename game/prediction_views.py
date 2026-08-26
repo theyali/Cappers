@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -15,15 +16,39 @@ def _initials(name: str) -> str:
     return "".join(part[0] for part in parts[:2]).upper() or "К"
 
 
+def _prediction_distribution(queryset) -> tuple[int, list[dict]]:
+    total = queryset.count()
+    if not total:
+        return 0, []
+
+    rows = (
+        queryset.values("market", "selection")
+        .annotate(count=Count("id"))
+        .order_by()
+    )
+    distribution = [
+        {
+            "market": row["market"],
+            "selection": row["selection"],
+            "count": row["count"],
+            "percent": round((row["count"] / total) * 100, 1),
+        }
+        for row in rows
+    ]
+    return total, distribution
+
+
 def match_predictions(request, slug: str):
     match = get_object_or_404(Match, slug=slug)
 
+    base_queryset = Prediction.objects.filter(
+        match=match,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    )
+    total, distribution = _prediction_distribution(base_queryset)
+
     queryset = (
-        Prediction.objects.filter(
-            match=match,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        )
-        .select_related(
+        base_queryset.select_related(
             "coupon__author",
             "coupon__author__analyst_profile",
             "match__league",
@@ -63,7 +88,8 @@ def match_predictions(request, slug: str):
         {
             "ok": True,
             "html": html,
-            "total": paginator.count,
+            "total": total,
+            "distribution": distribution,
             "page": page_obj.number,
             "has_next": page_obj.has_next(),
             "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
