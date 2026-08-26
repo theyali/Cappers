@@ -55,7 +55,7 @@ class ExpertPublicStatsTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal("2.00"),
             stake=Decimal("100.00"),
-            comment="Тест",
+            confidence=82,
             state_status=Prediction.StateStatus.WIN,
         )
         Prediction.objects.create(
@@ -65,7 +65,7 @@ class ExpertPublicStatsTests(TestCase):
             selection="ТМ 2.5",
             coefficient=Decimal("1.80"),
             stake=Decimal("50.00"),
-            comment="Тест",
+            confidence=61,
             state_status=Prediction.StateStatus.LOSE,
         )
 
