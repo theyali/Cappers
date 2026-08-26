@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystFollow
-from game.models import Prediction
+from game.models import Prediction, PredictionCoupon
 
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
@@ -96,8 +96,10 @@ def following_feed(request):
 
     author_counts = {
         row["coupon__author_id"]: row["total"]
-        for row in _published_queryset()
-        .filter(coupon__author_id__in=following_ids)
+        for row in Prediction.objects.filter(
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__author_id__in=following_ids,
+        )
         .values("coupon__author_id")
         .annotate(total=Count("id"))
     }
