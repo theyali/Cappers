@@ -1,7 +1,8 @@
 from celery import shared_task
 
-from game.services.settlement import settle_finished_matches
+from game.services.live_settlement import settle_live_matches
 from game.services.match_sync import MatchSyncService
+from game.services.settlement import settle_finished_matches
 
 
 @shared_task
@@ -11,7 +12,9 @@ def fetch_upcoming_matches():
 
 @shared_task
 def fetch_live_matches():
-    return MatchSyncService().sync_live()
+    result = MatchSyncService().sync_live()
+    result["settlement"] = settle_live_matches()
+    return result
 
 
 @shared_task
