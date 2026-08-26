@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{% static 'front/css/cappers-stats.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-sidebar.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-roi.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/cappers-achievements.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -89,6 +90,19 @@
                     </div>
                     <span class="capper-pro-rank">#{{ forloop.counter }}</span>
                 </div>
+
+                {% if expert.latest_achievements %}
+                <div class="capper-pro-achievements" aria-label="Последние достижения {{ expert.name }}">
+                    <span class="capper-pro-achievements-label">Достижения</span>
+                    <div class="capper-pro-achievements-list">
+                        {% for achievement in expert.latest_achievements %}
+                        <span class="capper-pro-achievement" title="{{ achievement.label }} — {{ achievement.description }}" aria-label="{{ achievement.label }}">
+                            <img src="{% static achievement.icon %}" alt="" loading="lazy">
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="capper-pro-metrics">
                     <div class="capper-pro-metric is-main">
