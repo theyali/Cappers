@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ expert_name }} — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/expert-public.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="expert-public-page" aria-label="Профиль эксперта">
+    <section class="expert-public-hero">
+        <div class="expert-public-main">
+            <span class="expert-public-avatar">
+                {% if analyst_profile.avatar %}
+                    <img src="{{ analyst_profile.avatar.url }}" alt="{{ expert_name }}">
+                {% else %}
+                    {{ expert_initials }}
+                {% endif %}
+            </span>
+            <div class="expert-public-copy">
+                <p class="expert-public-kicker">Эксперт КапперХаб</p>
+                <div class="expert-public-name-row">
+                    <h1>{{ expert_name }}</h1>
+                    {% if analyst_profile.is_verified %}<span class="expert-public-verified" title="Проверенный эксперт">✓</span>{% endif %}
+                </div>
+                <span class="expert-public-username">@{{ expert.username }}</span>
+                {% if analyst_profile.bio %}<p class="expert-public-bio">{{ analyst_profile.bio }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="expert-public-actions">
+            {% if is_self %}
+                <a class="expert-public-edit" href="{% url 'cabinet:profile' %}">Редактировать профиль</a>
+            {% elif request.user.is_authenticated %}
+                <button
+                    class="expert-follow-button{% if is_following %} is-active{% endif %}"
+                    type="button"
+                    data-expert-follow
+                    data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+                    aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+                >
+                    <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                </button>
+            {% else %}
+                <a class="expert-follow-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="expert-public-stats" aria-label="Статистика эксперта">
+        <article><span>Подписчики</span><strong data-followers-count>{{ followers_count }}</strong></article>
+        <article><span>Прогнозы</span><strong>{{ predictions_count }}</strong></article>
+        <article><span>Победы</span><strong>{{ wins_count }}</strong></article>
+        <article class="is-main"><span>Проходимость</span><strong>{{ win_rate }}%</strong></article>
+    </section>
+
+    <section class="expert-public-predictions">
+        <div class="expert-public-section-head">
+            <div>
+                <p class="expert-public-kicker">Последние публикации</p>
+                <h2>Прогнозы эксперта</h2>
+            </div>
+            <a href="{% url 'front:predictions' %}">Все прогнозы →</a>
+        </div>
+
+        {% if latest_predictions %}
+        <div class="expert-public-grid">
+            {% for prediction in latest_predictions %}
+            <article class="expert-public-prediction-card">
+                <a class="expert-public-match" href="{{ prediction.match.get_absolute_url }}">
+                    <div class="expert-public-league">
+                        <span class="expert-public-league-logo">
+                            {% if prediction.match.league and prediction.match.league.logo %}
+                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                            {% endif %}
+                        </span>
+                        <div>
+                            <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
+                            {% if prediction.match.starts_at %}<span>{{ prediction.match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="expert-public-teams">
+                        <div>
+                            <span class="expert-public-team-logo">
+                                {% if prediction.match.home_team_logo %}<img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">{% else %}{{ prediction.match.home_team_name|slice:":1" }}{% endif %}
+                            </span>
+                            <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
+                        </div>
+                        <span class="expert-public-score">{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</span>
+                        <div>
+                            <span class="expert-public-team-logo">
+                                {% if prediction.match.away_team_logo %}<img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">{% else %}{{ prediction.match.away_team_name|slice:":1" }}{% endif %}
+                            </span>
+                            <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
+                        </div>
+                    </div>
+                </a>
+                <div class="expert-public-pick">
+                    <div><span>{{ prediction.market }}</span><strong>{{ prediction.selection }}</strong></div>
+                    <b>{{ prediction.coefficient }}</b>
+                </div>
+                {% if prediction.comment %}<p>{{ prediction.comment|truncatechars:120 }}</p>{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="expert-public-empty">
+            <strong>Прогнозов пока нет</strong>
+            <span>Когда эксперт опубликует прогноз, он появится здесь.</span>
+        </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/expert-follow.js' %}" defer></script>
+{% endblock %}
