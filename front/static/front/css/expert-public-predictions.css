@@ -1,0 +1,118 @@
+.expert-public-prediction-topline {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.expert-public-prediction-status {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border-radius: 12px;
+    color: #fff;
+    background: #303033;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.expert-public-prediction-status.is-win {
+    background: var(--green);
+}
+
+.expert-public-prediction-status.is-lose {
+    background: var(--danger);
+}
+
+.expert-public-prediction-status.is-refund {
+    background: var(--blue);
+}
+
+.expert-public-prediction-status.is-pending {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.expert-public-score-box {
+    min-width: 108px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 2px 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #171718;
+    text-align: right;
+}
+
+.expert-public-score-box span {
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.expert-public-score-box strong {
+    color: var(--text);
+    font-size: 27px;
+    line-height: .95;
+    letter-spacing: -.04em;
+}
+
+.expert-public-score-box small {
+    color: var(--yellow);
+    font-size: 9px;
+    line-height: 1;
+}
+
+.expert-public-teams.expert-public-teams-no-score {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+}
+
+.expert-public-teams-no-score > div:first-child {
+    justify-content: flex-start;
+}
+
+.expert-public-teams-no-score > div:last-child {
+    justify-content: flex-start;
+    flex-direction: row;
+    text-align: left;
+}
+
+@media (max-width: 520px) {
+    .expert-public-prediction-topline {
+        align-items: stretch;
+    }
+
+    .expert-public-prediction-status {
+        min-height: 40px;
+        padding: 0 11px;
+        font-size: 10px;
+    }
+
+    .expert-public-score-box {
+        min-width: 96px;
+    }
+
+    .expert-public-score-box strong {
+        font-size: 23px;
+    }
+
+    .expert-public-teams.expert-public-teams-no-score {
+        gap: 10px;
+    }
+
+    .expert-public-teams-no-score > div,
+    .expert-public-teams-no-score > div:last-child {
+        align-items: flex-start;
+        flex-direction: column;
+        text-align: left;
+    }
+}
