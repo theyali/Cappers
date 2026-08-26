@@ -20,30 +20,14 @@ class ExpertAchievementTests(TestCase):
             best_win_streak=10,
             is_verified=True,
         )
-
         self.assertEqual(
             [badge["key"] for badge in badges],
             [
-                "first-pick",
-                "predictions-5",
-                "predictions-25",
-                "predictions-50",
-                "wins-3",
-                "wins-10",
-                "wins-25",
-                "wins-50",
-                "roi-5",
-                "roi-10",
-                "roi-20",
-                "roi-50",
-                "followers-10",
-                "followers-50",
-                "followers-100",
-                "followers-250",
-                "streak-3",
-                "streak-5",
-                "streak-10",
-                "verified",
+                "first-pick", "predictions-5", "predictions-25", "predictions-50",
+                "wins-3", "wins-10", "wins-25", "wins-50",
+                "roi-5", "roi-10", "roi-20", "roi-50",
+                "followers-10", "followers-50", "followers-100", "followers-250",
+                "streak-3", "streak-5", "streak-10", "verified",
             ],
         )
 
@@ -56,7 +40,6 @@ class ExpertAchievementTests(TestCase):
             best_win_streak=0,
             is_verified=False,
         )
-
         self.assertEqual(badges, [])
 
     def test_intermediate_badges_unlock_independently(self):
@@ -69,7 +52,6 @@ class ExpertAchievementTests(TestCase):
             is_verified=False,
         )
         keys = [badge["key"] for badge in badges]
-
         self.assertIn("first-pick", keys)
         self.assertIn("predictions-5", keys)
         self.assertIn("wins-3", keys)
@@ -111,6 +93,7 @@ class ExpertAchievementTests(TestCase):
                 ),
                 total_stake=Decimal("100.00"),
                 possible_payout=Decimal("200.00"),
+                confidence=70,
                 published_at=timezone.now(),
                 settled_at=timezone.now(),
             )
@@ -121,7 +104,6 @@ class ExpertAchievementTests(TestCase):
                 selection="ТБ 2.5",
                 coefficient=Decimal("2.00"),
                 stake=Decimal("100.00"),
-                confidence=70,
                 state_status=state,
             )
 
@@ -148,6 +130,7 @@ class ExpertAchievementTests(TestCase):
             state_status=PredictionCoupon.StateStatus.WIN,
             total_stake=Decimal("100.00"),
             possible_payout=Decimal("130.00"),
+            confidence=75,
             published_at=timezone.now(),
             settled_at=timezone.now(),
         )
@@ -158,7 +141,6 @@ class ExpertAchievementTests(TestCase):
             selection="ТБ 2.5",
             coefficient=Decimal("1.30"),
             stake=Decimal("100.00"),
-            confidence=75,
             state_status=Prediction.StateStatus.WIN,
         )
 
