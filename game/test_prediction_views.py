@@ -33,7 +33,7 @@ class MatchPredictionDistributionTests(TestCase):
             selection=selection,
             coefficient=Decimal("2.00"),
             stake=Decimal("10.00"),
-            comment="Тестовый прогноз",
+            confidence=72,
         )
 
     def test_endpoint_returns_percentage_distribution_for_all_published_predictions(self):
@@ -59,3 +59,4 @@ class MatchPredictionDistributionTests(TestCase):
         self.assertEqual(distribution[("winner", "Хозяева")]["percent"], 50.0)
         self.assertIn('class="prediction-card prediction-card-rich match-prediction-card', payload["html"])
         self.assertIn("ROI 0.0%", payload["html"])
+        self.assertIn("72%", payload["html"])
