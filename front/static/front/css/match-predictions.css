@@ -85,8 +85,7 @@
 }
 
 .match-prediction-head,
-.match-prediction-pick,
-.match-prediction-foot {
+.match-prediction-pick {
     justify-content: space-between;
     gap: 14px;
 }
@@ -233,18 +232,10 @@
 }
 
 .match-prediction-foot {
+    min-width: 0;
+    justify-content: flex-start;
     color: var(--muted);
     font-size: 10px;
-}
-
-.match-prediction-foot strong {
-    min-width: 0;
-    max-width: 62%;
-    overflow: hidden;
-    color: rgba(255, 255, 255, .52);
-    font-size: 10px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 .match-predictions-loader,
