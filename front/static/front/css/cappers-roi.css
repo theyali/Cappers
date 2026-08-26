@@ -1,0 +1,35 @@
+.capper-pro-roi {
+    min-height: 22px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 7px;
+    border-radius: 7px;
+    color: var(--muted);
+    background: #303033;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.capper-pro-roi.is-positive {
+    color: #fff;
+    background: var(--green);
+}
+
+.capper-pro-roi.is-negative {
+    color: #fff;
+    background: var(--danger);
+}
+
+@media (max-width: 560px) {
+    .capper-pro-name {
+        flex-wrap: wrap;
+    }
+
+    .capper-pro-roi {
+        min-height: 20px;
+        font-size: 9px;
+    }
+}
