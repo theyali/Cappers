@@ -20,13 +20,13 @@ def _initials(name: str) -> str:
 
 
 def _prediction_distribution(queryset) -> tuple[int, list[dict]]:
-    total = queryset.count()
+    total = queryset.values("coupon_id").distinct().count()
     if not total:
         return 0, []
 
     rows = (
         queryset.values("market", "selection")
-        .annotate(count=Count("id"))
+        .annotate(count=Count("coupon_id", distinct=True))
         .order_by()
     )
     distribution = [
@@ -59,7 +59,7 @@ def match_predictions(request, slug: str):
             "match__home_team",
             "match__away_team",
         )
-        .annotate(likes_count=Count("likes", distinct=True))
+        .annotate(likes_count=Count("coupon__likes", distinct=True))
     )
     queryset = annotate_author_roi(queryset).order_by(
         "-coupon__published_at",
@@ -71,7 +71,7 @@ def match_predictions(request, slug: str):
     paginator = Paginator(queryset, MATCH_PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
 
-    prediction_ids = [prediction.pk for prediction in page_obj.object_list]
+    prediction_ids = [prediction.coupon_id for prediction in page_obj.object_list]
     liked_ids = set()
     favorite_ids = set()
     following_ids = set()
@@ -107,12 +107,13 @@ def match_predictions(request, slug: str):
             if profile and profile.display_name
             else author.get_full_name() or author.username
         )
+        prediction.reaction_id = prediction.coupon_id
         prediction.expert_name = name
         prediction.expert_initials = _initials(name)
         prediction.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         prediction.expert_verified = bool(profile and profile.is_verified)
-        prediction.is_liked = prediction.pk in liked_ids
-        prediction.is_favorite = prediction.pk in favorite_ids
+        prediction.is_liked = prediction.coupon_id in liked_ids
+        prediction.is_favorite = prediction.coupon_id in favorite_ids
         prediction.is_own = bool(
             request.user.is_authenticated and author.pk == request.user.pk
         )
