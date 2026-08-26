@@ -32,13 +32,14 @@ class CapperDashboardTests(TestCase):
             score=score,
         )
 
-    def _coupon(self, *, state, stake, payout, settled=True):
+    def _coupon(self, *, state, stake, payout, confidence=70, settled=True):
         return PredictionCoupon.objects.create(
             author=self.analyst,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             state_status=state,
             total_stake=Decimal(stake),
             possible_payout=Decimal(payout),
+            confidence=confidence,
             settled_at=self.now if settled else None,
             published_at=self.now,
         )
@@ -53,27 +54,29 @@ class CapperDashboardTests(TestCase):
             state=PredictionCoupon.StateStatus.WIN,
             stake="100",
             payout="180",
+            confidence=80,
         )
         lose_coupon = self._coupon(
             state=PredictionCoupon.StateStatus.LOSE,
             stake="50",
             payout="90",
+            confidence=65,
         )
         pending_coupon = self._coupon(
             state=PredictionCoupon.StateStatus.PENDING,
             stake="40",
             payout="72",
+            confidence=74,
             settled=False,
         )
 
-        win_prediction = Prediction.objects.create(
+        Prediction.objects.create(
             coupon=win_coupon,
             match=self._match(91001),
             market="total",
             selection="ТБ 2.5",
             coefficient=Decimal("1.80"),
             stake=Decimal("100"),
-            confidence=80,
             state_status=Prediction.StateStatus.WIN,
         )
         Prediction.objects.create(
@@ -83,7 +86,6 @@ class CapperDashboardTests(TestCase):
             selection="Ничья",
             coefficient=Decimal("1.90"),
             stake=Decimal("50"),
-            confidence=65,
             state_status=Prediction.StateStatus.LOSE,
         )
         Prediction.objects.create(
@@ -93,13 +95,12 @@ class CapperDashboardTests(TestCase):
             selection="Обе забьют: да",
             coefficient=Decimal("1.70"),
             stake=Decimal("40"),
-            confidence=74,
             state_status="",
         )
 
         AnalystFollow.objects.create(follower=self.reader, analyst=self.analyst)
-        PredictionLike.objects.create(user=self.reader, prediction=win_prediction)
-        PredictionFavorite.objects.create(user=self.reader, prediction=win_prediction)
+        PredictionLike.objects.create(user=self.reader, prediction=win_coupon)
+        PredictionFavorite.objects.create(user=self.reader, prediction=win_coupon)
 
         self.client.force_login(self.analyst)
         response = self.client.get(reverse("cabinet:dashboard"))
