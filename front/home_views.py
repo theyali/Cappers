@@ -1,8 +1,8 @@
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.utils import timezone
 
-from cabinet.models import AnalystProfile
+from cabinet.models import AnalystProfile, User
 from front.models import Article
 from front.views import _initials, _top_experts
 from game.models import Match, Prediction, PredictionCoupon
@@ -11,6 +11,7 @@ from game.models import Match, Prediction, PredictionCoupon
 HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 9
+HOME_EXPERTS_LIMIT = 6
 
 
 def _logo_url(primary: str, related) -> str:
@@ -94,6 +95,63 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
+def _best_home_experts() -> list[dict]:
+    profiles = list(
+        AnalystProfile.objects.filter(
+            is_public=True,
+            user__role=User.Role.ANALYST,
+        )
+        .select_related("user")
+        .annotate(
+            followers_count=Count("user__analyst_followers", distinct=True),
+            predictions_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            ),
+            wins_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.WIN,
+                ),
+                distinct=True,
+            ),
+            losses_count=Count(
+                "user__prediction_coupons__predictions",
+                filter=Q(
+                    user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    user__prediction_coupons__predictions__state_status=Prediction.StateStatus.LOSE,
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by("-wins_count", "-followers_count", "-is_verified", "-created_at")[:HOME_EXPERTS_LIMIT]
+    )
+
+    experts = []
+    for profile in profiles:
+        settled = profile.wins_count + profile.losses_count
+        win_rate = round(profile.wins_count / settled * 100) if settled else 0
+        name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        experts.append(
+            {
+                "name": name,
+                "username": profile.user.username,
+                "initials": _initials(name),
+                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "verified": profile.is_verified,
+                "followers": profile.followers_count,
+                "predictions": profile.predictions_count,
+                "wins": profile.wins_count,
+                "win_rate": win_rate,
+            }
+        )
+    return experts
+
+
 def _league_rating(match: Match) -> int:
     """Return league importance from normalized data or provider payload."""
     league = match.league
@@ -167,6 +225,7 @@ def index(request):
         {
             "latest_predictions": _latest_home_predictions(),
             "top_experts": _top_experts(),
+            "best_experts": _best_home_experts(),
             "latest_articles": Article.objects.filter(is_published=True).order_by("-created_at", "-id")[:HOME_ARTICLES_LIMIT],
             "important_matches": _important_home_matches(),
         },
