@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/match-predictions.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/match-card-odds-state.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
     {% endif %}
 </head>
 <body>
@@ -27,6 +28,7 @@
             <div class="site-nav-center">
                 <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">Футбол</a>
                 <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">Все прогнозы</a>
+                <a class="{% if request.resolver_match.url_name == 'favorites' %}is-active{% endif %}" href="{% url 'front:favorites' %}">Избранные</a>
                 <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
                 <a class="{% if request.resolver_match.url_name == 'how_it_works' %}is-active{% endif %}" href="{% url 'front:how_it_works' %}">Как пользоваться</a>
             </div>
@@ -72,6 +74,7 @@
     ></script>
     <script src="{% static 'front/js/locked-match-odds.js' %}" defer></script>
     <script src="{% static 'front/js/match-predictions.js' %}" defer></script>
+    <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
     {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
