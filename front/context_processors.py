@@ -1,6 +1,7 @@
 from django.db.utils import OperationalError, ProgrammingError
 
-from front.models import StaticPage, WebsiteSettings
+from back.models import WebsiteSettings
+from front.models import StaticPage
 
 
 def website_settings(request):

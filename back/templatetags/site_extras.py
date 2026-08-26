@@ -1,7 +1,7 @@
 from django import template
 from django.db.models import Count
 
-from back.models import Bookmaker, SiteSettings
+from back.models import Bookmaker, WebsiteSettings
 from game.models import PredictionCoupon
 
 register = template.Library()
@@ -11,7 +11,7 @@ register = template.Library()
 def bookmakers_sidebar():
     return {
         "bookmakers": Bookmaker.objects.all(),
-        "site_settings": SiteSettings.get_solo(),
+        "website_settings": WebsiteSettings.load(),
     }
 
 

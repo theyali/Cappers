@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, StaticPage, WebsiteSettings
+from .models import Article, StaticPage
 
 
 @admin.register(Article)
@@ -15,17 +15,6 @@ class ArticleAdmin(admin.ModelAdmin):
         ("Содержание", {"fields": ("content",)}),
         ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-
-
-@admin.register(WebsiteSettings)
-class WebsiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ("site_name", "fixed_tg_enable", "fixed_tg_link", "updated_at")
-
-    def has_add_permission(self, request):
-        return not WebsiteSettings.objects.exists()
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 @admin.register(StaticPage)

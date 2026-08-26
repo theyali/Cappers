@@ -28,31 +28,6 @@ class Article(models.Model):
         return reverse("front:article_detail", kwargs={"slug": self.slug})
 
 
-class WebsiteSettings(models.Model):
-    site_name = models.CharField("Название сайта", max_length=120, default="КапперХаб")
-    fixed_tg_enable = models.BooleanField("Показывать Telegram-баннер", default=False)
-    fixed_tg_link = models.URLField("Ссылка Telegram", max_length=500, blank=True)
-    fixed_tg_title = models.CharField(
-        "Текст Telegram-баннера",
-        max_length=120,
-        default="Бесплатный прогноз в Telegram",
-        blank=True,
-    )
-    updated_at = models.DateTimeField("Обновлено", auto_now=True)
-
-    class Meta:
-        verbose_name = "Настройки сайта"
-        verbose_name_plural = "Настройки сайта"
-
-    def __str__(self) -> str:
-        return self.site_name
-
-    @classmethod
-    def load(cls):
-        settings, _ = cls.objects.get_or_create(pk=1)
-        return settings
-
-
 class StaticPage(models.Model):
     title = models.CharField("Заголовок", max_length=180)
     slug = models.SlugField("Slug", max_length=200, unique=True)

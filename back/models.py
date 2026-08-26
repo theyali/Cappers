@@ -18,24 +18,26 @@ class Bookmaker(models.Model):
         return self.name
 
 
-class SiteSettings(models.Model):
-    telegram_bot_url = models.URLField(
-        "Ссылка на Telegram-бота",
-        max_length=500,
+class WebsiteSettings(models.Model):
+    site_name = models.CharField("Название сайта", max_length=120, default="КапперХаб")
+    fixed_tg_enable = models.BooleanField("Показывать Telegram-баннер", default=False)
+    fixed_tg_link = models.URLField("Ссылка Telegram", max_length=500, blank=True)
+    fixed_tg_title = models.CharField(
+        "Текст Telegram-баннера",
+        max_length=120,
+        default="Бесплатный прогноз в Telegram",
         blank=True,
     )
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
     class Meta:
         verbose_name = "Настройки сайта"
         verbose_name_plural = "Настройки сайта"
 
-    def save(self, *args, **kwargs) -> None:
-        self.pk = 1
-        super().save(*args, **kwargs)
+    def __str__(self) -> str:
+        return self.site_name
 
     @classmethod
-    def get_solo(cls):
-        return cls.objects.filter(pk=1).first()
-
-    def __str__(self) -> str:
-        return "Настройки сайта"
+    def load(cls):
+        settings, _ = cls.objects.get_or_create(pk=1)
+        return settings

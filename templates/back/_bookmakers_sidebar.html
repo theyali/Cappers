@@ -54,17 +54,17 @@
         {% endif %}
     </section>
 
-    {% if site_settings and site_settings.telegram_bot_url %}
+    {% if website_settings and website_settings.fixed_tg_link %}
     <a
         class="telegram-capper-banner"
-        href="{{ site_settings.telegram_bot_url }}"
+        href="{{ website_settings.fixed_tg_link }}"
         target="_blank"
         rel="noopener noreferrer"
     >
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M21.8 3.2 18.6 19c-.2 1.1-.8 1.4-1.7.9l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.9 8.9-8c.4-.4-.1-.6-.6-.2L6.4 13 1.7 11.5C.7 11.2.7 10.5 1.9 10l18.4-7.1c.8-.3 1.6.2 1.5.3Z"/>
         </svg>
-        <strong>Бесплатный прогноз в Телеграм</strong>
+        <strong>{{ website_settings.fixed_tg_title|default:"Бесплатный прогноз в Телеграм" }}</strong>
     </a>
     {% endif %}
 </aside>

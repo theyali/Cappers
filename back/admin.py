@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Bookmaker, SiteSettings
+from .models import Bookmaker, WebsiteSettings
 
 
 @admin.register(Bookmaker)
@@ -12,12 +12,20 @@ class BookmakerAdmin(admin.ModelAdmin):
     ordering = ("order", "id")
 
 
-@admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
-    fields = ("telegram_bot_url",)
+@admin.register(WebsiteSettings)
+class WebsiteSettingsAdmin(admin.ModelAdmin):
+    list_display = ("site_name", "fixed_tg_enable", "fixed_tg_link", "updated_at")
+    fields = (
+        "site_name",
+        "fixed_tg_enable",
+        "fixed_tg_link",
+        "fixed_tg_title",
+        "updated_at",
+    )
+    readonly_fields = ("updated_at",)
 
     def has_add_permission(self, request):
-        return not SiteSettings.objects.exists()
+        return not WebsiteSettings.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
         return False
