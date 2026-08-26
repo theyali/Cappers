@@ -53,7 +53,7 @@ def match_list(request):
                 output_field=IntegerField(),
             ),
             predictions_count=Count(
-                "predictions",
+                "predictions__coupon",
                 filter=Q(
                     predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
                 ),
@@ -128,7 +128,7 @@ def match_detail(request, slug: str):
 @require_POST
 def create_coupon(request):
     if request.user.role != User.Role.ANALYST:
-        raise PermissionDenied("Купоны могут создавать только аналитики.")
+        raise PermissionDenied("Прогнозы могут создавать только аналитики.")
 
     try:
         payload = json.loads(request.body.decode("utf-8"))
@@ -139,9 +139,9 @@ def create_coupon(request):
     items = payload.get("items")
     if not isinstance(items, list):
         return JsonResponse({"ok": False, "error": "Передайте список матчей."}, status=400)
-    if len(items) > 5 or (not autosave and len(items) < 1):
+    if len(items) > 20 or (not autosave and len(items) < 1):
         return JsonResponse(
-            {"ok": False, "error": "В купоне должно быть от 1 до 5 игр."},
+            {"ok": False, "error": "В прогнозе должно быть от 1 до 20 игр."},
             status=400,
         )
 
@@ -207,6 +207,7 @@ def create_coupon(request):
 
     try:
         stake = _parse_stake(payload.get("stake"), required=not autosave)
+        confidence = _parse_confidence(payload.get("confidence"))
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
@@ -227,6 +228,7 @@ def create_coupon(request):
 
         coupon.total_stake = stake
         coupon.possible_payout = possible_payout
+        coupon.confidence = confidence
         coupon.published_status = (
             PredictionCoupon.PublishedStatus.DRAFT
             if autosave
@@ -245,7 +247,6 @@ def create_coupon(request):
                     selection=item["selection"],
                     coefficient=item["coefficient"],
                     stake=stake,
-                    confidence=item["confidence"],
                 )
                 for item in normalized_items
             ]
@@ -277,7 +278,7 @@ def _extract_match_ids(items: list[dict]) -> list[int]:
     match_ids: list[int] = []
     for item in items:
         if not isinstance(item, dict):
-            raise ValidationError("Некорректная игра в купоне.")
+            raise ValidationError("Некорректная игра в прогнозе.")
         match_id = _to_positive_int(item.get("match_id"))
         if match_id is None:
             raise ValidationError("Матч не найден.")
@@ -304,6 +305,16 @@ def _parse_stake(value, *, required: bool) -> Decimal:
             raise ValidationError("Сумма ставки должна быть больше нуля.")
         return Decimal("0")
     return stake
+
+
+def _parse_confidence(value) -> int:
+    try:
+        confidence = int(value if value not in (None, "") else 50)
+    except (TypeError, ValueError):
+        raise ValidationError("Укажите уверенность от 0 до 100%.")
+    if not 0 <= confidence <= 100:
+        raise ValidationError("Уверенность должна быть от 0 до 100%.")
+    return confidence
 
 
 def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
@@ -335,6 +346,7 @@ def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
     return {
         "id": coupon.id,
         "stake": _decimal_string(stake) if stake is not None else "",
+        "confidence": coupon.confidence,
         "items": [_serialize_prediction(prediction) for prediction in predictions],
     }
 
@@ -356,7 +368,6 @@ def _serialize_prediction(prediction: Prediction) -> dict:
         "selection": prediction.selection,
         "shortLabel": _prediction_short_label(prediction),
         "coefficient": _decimal_string(prediction.coefficient),
-        "confidence": prediction.confidence,
         "lastSeen": match.last_seen_at.isoformat() if match.last_seen_at else "",
     }
 
@@ -383,7 +394,7 @@ def _normalize_prediction_item(
     matches: dict[int, Match],
 ) -> dict:
     if not isinstance(item, dict):
-        raise ValidationError("Некорректная игра в купоне.")
+        raise ValidationError("Некорректная игра в прогнозе.")
 
     match_id = _to_positive_int(item.get("match_id"))
     if match_id is None or match_id not in matches:
@@ -406,19 +417,11 @@ def _normalize_prediction_item(
     if coefficient <= 0:
         raise ValidationError("Коэффициент должен быть больше нуля.")
 
-    try:
-        confidence = int(item.get("confidence", 50))
-    except (TypeError, ValueError):
-        raise ValidationError("Укажите уверенность от 0 до 100%.")
-    if not 0 <= confidence <= 100:
-        raise ValidationError("Уверенность должна быть от 0 до 100%.")
-
     return {
         "match": matches[match_id],
         "market": market[:80],
         "selection": selection[:120],
         "coefficient": coefficient,
-        "confidence": confidence,
     }
 
 
