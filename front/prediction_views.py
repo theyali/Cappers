@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from game.models import Prediction, PredictionCoupon
@@ -11,6 +12,7 @@ from .models import PredictionFavorite, PredictionLike
 from .views import PREDICTION_STATUS_FILTERS, _initials
 
 
+@ensure_csrf_cookie
 def predictions(request):
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
