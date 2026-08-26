@@ -9,8 +9,10 @@
 }
 
 .forecast-verified {
-    margin-left: 4px;
-    color: var(--blue);
+    display: inline !important;
+    margin: 0 0 0 4px !important;
+    color: var(--blue) !important;
+    font-size: inherit !important;
 }
 
 .forecast-league-meta {
@@ -76,6 +78,7 @@
     color: var(--text);
     font-size: clamp(18px, 2vw, 28px);
     line-height: 1.05;
+    white-space: nowrap;
     text-overflow: ellipsis;
 }
 
