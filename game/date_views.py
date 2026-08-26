@@ -74,8 +74,18 @@ def match_list(request):
         ).order_by("scope_order", "starts_at", "id")[:60]
     )
 
+    locked_card_odds = {}
     for match in matches:
         match.coupon_odds = _match_winner_odds(match)
+        if match.sync_scope in {Match.SyncScope.LIVE, Match.SyncScope.FINISHED}:
+            locked_card_odds[str(match.id)] = {
+                "home": match.coupon_odds["home"],
+                "draw": match.coupon_odds["draw"],
+                "away": match.coupon_odds["away"],
+                "over25": match.coupon_odds["over25"],
+                "under25": match.coupon_odds["under25"],
+                "bttsYes": match.coupon_odds["btts_yes"],
+            }
 
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
@@ -94,6 +104,7 @@ def match_list(request):
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
         "today_iso": today.isoformat(),
+        "locked_card_odds": locked_card_odds,
     }
     return render(request, "game/match_list.html", context)
 
