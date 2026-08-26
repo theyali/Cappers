@@ -2,7 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.db.models import Count, Q
 
-from game.models import Prediction, PredictionCoupon
+from game.models import PredictionCoupon
 
 
 ACHIEVEMENT_DEFINITIONS = (
@@ -41,19 +41,22 @@ def _best_win_streak(expert) -> int:
         return 0
 
     states = (
-        Prediction.objects.filter(
-            coupon__author=expert,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            state_status__in=[Prediction.StateStatus.WIN, Prediction.StateStatus.LOSE],
+        PredictionCoupon.objects.filter(
+            author=expert,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status__in=[
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+            ],
         )
-        .order_by("updated_at", "id")
+        .order_by("settled_at", "updated_at", "id")
         .values_list("state_status", flat=True)
     )
 
     best = 0
     current = 0
     for state in states:
-        if state == Prediction.StateStatus.WIN:
+        if state == PredictionCoupon.StateStatus.WIN:
             current += 1
             best = max(best, current)
         else:
@@ -64,9 +67,9 @@ def _best_win_streak(expert) -> int:
 def _published_predictions_count(expert) -> int:
     if not getattr(expert, "pk", None):
         return 0
-    return Prediction.objects.filter(
-        coupon__author=expert,
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    return PredictionCoupon.objects.filter(
+        author=expert,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     ).count()
 
 
@@ -133,13 +136,13 @@ def _format_metric(metric: str, value) -> str:
 
 
 def build_achievement_overview(expert, *, followers_count: int, is_verified: bool) -> dict:
-    published = Prediction.objects.filter(
-        coupon__author=expert,
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    published = PredictionCoupon.objects.filter(
+        author=expert,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
     stats = published.aggregate(
         predictions=Count("id"),
-        wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
+        wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
     )
     metrics = {
         "predictions": stats["predictions"] or 0,
