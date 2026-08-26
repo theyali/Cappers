@@ -1,0 +1,21 @@
+{% load static %}
+{% if achievement_badges %}
+<div class="expert-achievements" aria-label="Достижения эксперта">
+    <span class="expert-achievements-title">Достижения · {{ achievement_count }}</span>
+    <div class="expert-achievements-list">
+        {% for badge in achievement_badges %}
+        <span
+            class="expert-achievement-badge"
+            data-achievement="{{ badge.key }}"
+            title="{{ badge.description }}"
+            aria-label="{{ badge.label }}. {{ badge.description }}"
+        >
+            <span class="expert-achievement-icon" aria-hidden="true">
+                <img src="{% static badge.icon %}" alt="">
+            </span>
+            <span>{{ badge.label }}</span>
+        </span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="5 побед подряд">
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="#fbf110"/>
+  <path d="M37 10 19 35h12l-4 19 18-27H33l4-17Z" fill="#0b56fa"/>
+  <circle cx="17" cy="17" r="5" fill="#131313"/>
+</svg>

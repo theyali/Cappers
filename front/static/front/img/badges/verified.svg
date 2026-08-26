@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Проверенный эксперт">
+  <rect x="4" y="4" width="56" height="56" rx="18" fill="#0b56fa"/>
+  <path d="m32 11 6 7 9-1 2 9 8 5-5 8 2 9-9 2-5 8-8-5-8 5-5-8-9-2 2-9-5-8 8-5 2-9 9 1 6-7Z" fill="#fbf110"/>
+  <path d="m22 33 7 7 14-16 5 5-19 21-12-12 5-5Z" fill="#131313"/>
+</svg>

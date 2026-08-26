@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static achievement_tags %}
 
 {% block title %}{{ expert_name }} — КапперХаб{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/expert-public.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/expert-achievements.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -26,6 +27,7 @@
                 </div>
                 <span class="expert-public-username">@{{ expert.username }}</span>
                 {% if analyst_profile.bio %}<p class="expert-public-bio">{{ analyst_profile.bio }}</p>{% endif %}
+                {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
             </div>
         </div>
 
