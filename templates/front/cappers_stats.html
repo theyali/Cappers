@@ -1,73 +1,135 @@
 {% extends "base.html" %}
-{% load static site_extras %}
+{% load static %}
 
-{% block title %}Статистика капперов — КапперХаб{% endblock %}
+{% block title %}Эксперты и аналитики — КапперХаб{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/cappers-sidebar.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/cappers-stats.css' %}">
 {% endblock %}
 
 {% block content %}
-<section class="cappers-page cappers-layout" aria-label="Статистика капперов">
+<section class="cappers-page" aria-label="Каталог экспертов и аналитиков">
     <div class="cappers-main">
-        <div class="cappers-hero">
+        <div class="cappers-hero cappers-hero-pro">
             <div>
-                <p class="cappers-eyebrow">Рейтинг экспертов</p>
-                <h1>Статистика капперов</h1>
-                <p>Сравнивай экспертов по опубликованным прогнозам, выигрышам и числу подписчиков.</p>
+                <p class="cappers-eyebrow">Каталог экспертов</p>
+                <h1>Эксперты и аналитики</h1>
+                <p>Сравнивай экспертов по активности, количеству опубликованных разборов, охвату видов спорта и интересу аудитории.</p>
             </div>
             <div class="cappers-total">
-                <strong>{{ experts_count }}</strong>
+                <strong>{{ summary.experts }}</strong>
                 <span>экспертов</span>
             </div>
         </div>
 
+        <div class="cappers-summary" aria-label="Общая статистика экспертов">
+            <div class="cappers-summary-card is-primary">
+                <span>Опубликовано</span>
+                <strong>{{ summary.publications }}</strong>
+                <small>разборов всего</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Активны</span>
+                <strong>{{ summary.active_30d }}</strong>
+                <small>за последние 30 дней</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Проверены</span>
+                <strong>{{ summary.verified }}</strong>
+                <small>верифицированных профилей</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Всего экспертов</span>
+                <strong>{{ summary.experts }}</strong>
+                <small>публичных профилей</small>
+            </div>
+        </div>
+
         {% if experts %}
-        <div class="cappers-list">
+        <div class="cappers-section-head">
+            <div>
+                <p class="cappers-eyebrow">По активности</p>
+                <h2>Все эксперты</h2>
+            </div>
+            <span>{{ experts_count }} профилей</span>
+        </div>
+
+        <div class="cappers-pro-grid">
             {% for expert in experts %}
-            <article class="capper-row">
-                <span class="capper-rank">{{ forloop.counter }}</span>
-                <div class="capper-person">
-                    <span class="capper-avatar">
-                        {% if expert.avatar_url %}
-                            <img src="{{ expert.avatar_url }}" alt="" loading="lazy">
-                        {% else %}
-                            {{ expert.initials }}
-                        {% endif %}
-                    </span>
-                    <div class="capper-copy">
-                        <strong>{{ expert.name }} {% if expert.verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
-                        <span>@{{ expert.username }}</span>
+            <a class="capper-pro-card" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
+                <div class="capper-pro-top">
+                    <div class="capper-pro-person">
+                        <span class="capper-pro-avatar">
+                            {% if expert.avatar_url %}
+                                <img src="{{ expert.avatar_url }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ expert.initials }}
+                            {% endif %}
+                        </span>
+                        <div class="capper-pro-copy">
+                            <div class="capper-pro-name">
+                                <strong>{{ expert.name }}</strong>
+                                {% if expert.verified %}
+                                <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                                        <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
+                                        <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <span>@{{ expert.username }}</span>
+                        </div>
+                    </div>
+                    <span class="capper-pro-rank">#{{ forloop.counter }}</span>
+                </div>
+
+                <div class="capper-pro-metrics">
+                    <div class="capper-pro-metric is-main">
+                        <span>Публикации</span>
+                        <strong>{{ expert.publications }}</strong>
+                    </div>
+                    <div class="capper-pro-metric">
+                        <span>Виды спорта</span>
+                        <strong>{{ expert.sports }}</strong>
+                    </div>
+                    <div class="capper-pro-metric">
+                        <span>За 30 дней</span>
+                        <strong>{{ expert.recent_publications }}</strong>
+                    </div>
+                    <div class="capper-pro-metric">
+                        <span>Подписчики</span>
+                        <strong>{{ expert.followers }}</strong>
                     </div>
                 </div>
-                <div class="capper-metric is-main">
-                    <span>Проходимость</span>
-                    <strong>{{ expert.win_rate }}%</strong>
+
+                <div class="capper-pro-foot">
+                    <div>
+                        <span>Последняя публикация</span>
+                        <strong>
+                            {% if expert.last_publication_at %}
+                                {{ expert.last_publication_at|date:"d.m.Y" }}
+                            {% else %}
+                                Нет публикаций
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div>
+                        <span>На платформе</span>
+                        <strong>{{ expert.joined_at|date:"d.m.Y" }}</strong>
+                    </div>
+                    <span class="capper-pro-open">Профиль →</span>
                 </div>
-                <div class="capper-metric">
-                    <span>Прогнозы</span>
-                    <strong>{{ expert.predictions }}</strong>
-                </div>
-                <div class="capper-metric">
-                    <span>Выигрыши</span>
-                    <strong>{{ expert.wins }}</strong>
-                </div>
-                <div class="capper-metric">
-                    <span>Подписчики</span>
-                    <strong>{{ expert.followers }}</strong>
-                </div>
-            </article>
+            </a>
             {% endfor %}
         </div>
         {% else %}
         <div class="cappers-empty">
-            <h2>Капперов пока нет</h2>
-            <p>Когда появятся публичные аналитики, их статистика будет показана здесь.</p>
+            <h2>Экспертов пока нет</h2>
+            <p>Когда появятся публичные аналитики, их профили и активность будут показаны здесь.</p>
         </div>
         {% endif %}
     </div>
-
-    {% bookmakers_sidebar %}
 </section>
 {% endblock %}
