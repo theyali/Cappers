@@ -1,3 +1,5 @@
+import json
+
 from django.db.utils import OperationalError, ProgrammingError
 
 from .models import PageSEO
@@ -10,6 +12,28 @@ def _absolute_media_url(request, field) -> str:
         return request.build_absolute_uri(field.url)
     except (ValueError, AttributeError):
         return ""
+
+
+def _schema_json(page, canonical_url: str) -> str:
+    if not page:
+        return ""
+    if page.schema_json_ld:
+        return page.schema_json_ld
+    if not page.schema_type:
+        return ""
+
+    payload = {
+        "@context": "https://schema.org",
+        "@type": page.schema_type,
+        "url": canonical_url,
+    }
+    title = page.meta_title or page.og_title
+    description = page.meta_description or page.og_description
+    if title:
+        payload["name"] = title
+    if description:
+        payload["description"] = description
+    return json.dumps(payload, ensure_ascii=False)
 
 
 def page_seo(request):
@@ -52,6 +76,6 @@ def page_seo(request):
         "og_type": page.og_type if page else PageSEO.OpenGraphType.WEBSITE,
         "twitter_card": page.twitter_card if page else PageSEO.TwitterCard.LARGE,
         "schema_type": page.schema_type if page else "",
-        "schema_json_ld": page.schema_json_ld if page else "",
+        "schema_json_ld": _schema_json(page, canonical_url),
     }
     return {"seo_meta": seo_meta}
