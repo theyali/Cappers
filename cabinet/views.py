@@ -92,6 +92,16 @@ def _coupon_result_from_counts(coupon) -> tuple[str, str]:
     return "pending", "Ожидает"
 
 
+def _coupon_total_coefficient(predictions) -> str:
+    if not predictions:
+        return "—"
+
+    total = 1
+    for prediction in predictions:
+        total *= prediction.coefficient
+    return format(total, ".3f")
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def profile(request):
@@ -206,6 +216,7 @@ def profile(request):
 def coupon_detail(request, coupon_id: int):
     coupon = get_object_or_404(
         PredictionCoupon.objects.filter(author=request.user).prefetch_related(
+            "predictions__match__sport",
             "predictions__match__league",
             "predictions__match__home_team",
             "predictions__match__away_team",
@@ -220,6 +231,7 @@ def coupon_detail(request, coupon_id: int):
         {
             "coupon": coupon,
             "predictions": predictions,
+            "coupon_total_coefficient": _coupon_total_coefficient(predictions),
         },
     )
 
