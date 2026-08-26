@@ -57,3 +57,5 @@ class MatchPredictionDistributionTests(TestCase):
         self.assertEqual(distribution[("total", "ТМ 2.5")]["percent"], 50.0)
         self.assertEqual(distribution[("winner", "Хозяева")]["count"], 2)
         self.assertEqual(distribution[("winner", "Хозяева")]["percent"], 50.0)
+        self.assertIn('class="prediction-card prediction-card-rich match-prediction-card', payload["html"])
+        self.assertIn("ROI 0.0%", payload["html"])
