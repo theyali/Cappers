@@ -85,3 +85,8 @@ class ExpertPublicStatsTests(TestCase):
         self.assertEqual(response.context["market_distribution"][0]["win_rate"], 50)
         self.assertContains(response, "Динамика прибыли")
         self.assertContains(response, "Где эксперт сильнее")
+        self.assertContains(response, "Выиграл")
+        self.assertContains(response, "Проиграл")
+        self.assertContains(response, "Счёт")
+        self.assertContains(response, "2-1")
+        self.assertContains(response, "0-3")
