@@ -1,0 +1,266 @@
+.cappers-page.cappers-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+    align-items: start;
+    gap: 18px;
+}
+
+.cappers-main {
+    min-width: 0;
+    display: grid;
+    gap: 18px;
+}
+
+.bookmakers-sidebar {
+    position: sticky;
+    top: 92px;
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.bookmakers-panel {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.bookmakers-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.bookmakers-head div {
+    min-width: 0;
+}
+
+.bookmakers-head p {
+    margin: 0 0 6px;
+    color: var(--yellow);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.bookmakers-head h2 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.bookmakers-head span {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0 9px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.bookmakers-list {
+    display: grid;
+    gap: 8px;
+}
+
+.bookmaker-card {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 11px 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    color: inherit;
+    background: #171718;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.bookmaker-card:hover {
+    transform: translateY(-1px);
+    background: #242426;
+}
+
+.bookmaker-logo {
+    width: 78px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #242426;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.bookmaker-logo img {
+    width: 86%;
+    height: 78%;
+    object-fit: contain;
+}
+
+.bookmaker-info {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.bookmaker-name {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bookmaker-bonus-row {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.bookmaker-bonus {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--soft);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.bookmaker-bonus-icon {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.bookmaker-exclusive {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 7px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.bookmaker-action {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 1px;
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.bookmaker-action span:last-child {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.bookmakers-empty {
+    min-height: 140px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 6px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #171718;
+    text-align: center;
+}
+
+.bookmakers-empty strong {
+    font-size: 14px;
+}
+
+.bookmakers-empty span {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.telegram-capper-banner {
+    min-height: 158px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 10px;
+    padding: 20px;
+    border-radius: 18px;
+    color: #fff;
+    background: var(--blue);
+    text-align: center;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.telegram-capper-banner:hover {
+    transform: translateY(-1px);
+    background: #2168ff;
+}
+
+.telegram-capper-banner svg {
+    width: 38px;
+    height: 38px;
+    fill: currentColor;
+}
+
+.telegram-capper-banner strong {
+    max-width: 240px;
+    font-size: 21px;
+    line-height: 1.16;
+}
+
+@media (max-width: 1080px) {
+    .cappers-page.cappers-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .bookmakers-sidebar {
+        position: static;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, .55fr);
+        align-items: start;
+    }
+}
+
+@media (max-width: 720px) {
+    .bookmakers-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .bookmakers-panel {
+        padding: 14px;
+    }
+
+    .bookmaker-card {
+        grid-template-columns: 72px minmax(0, 1fr);
+    }
+
+    .bookmaker-logo {
+        width: 72px;
+    }
+
+    .telegram-capper-banner {
+        min-height: 132px;
+    }
+}

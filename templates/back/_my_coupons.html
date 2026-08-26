@@ -1,0 +1,60 @@
+<section
+    class="latest-predictions-panel sidebar-predictions"
+    style="margin-top: 14px;"
+    aria-label="Мои купоны"
+>
+    <div class="coupon-head sidebar-predictions-head">
+        <div>
+            <p class="matches-eyebrow">Эксперт</p>
+            <h2>Мои купоны</h2>
+        </div>
+        <span class="coupon-count">{{ my_coupons|length }}</span>
+    </div>
+
+    {% if my_coupons %}
+    <div class="sidebar-predictions-list">
+        {% for coupon in my_coupons %}
+        <article class="sidebar-prediction-card">
+            <div class="sidebar-prediction-league-row">
+                <div class="sidebar-prediction-league">
+                    <span class="sidebar-prediction-league-logo">#{{ coupon.id }}</span>
+                    <div>
+                        <strong>Купон #{{ coupon.id }}</strong>
+                        <small>{{ coupon.created_at|date:"d.m · H:i" }}</small>
+                    </div>
+                </div>
+
+                {% if coupon.published_status == "published" %}
+                    <span class="sidebar-prediction-status is-refund">Опубликован</span>
+                {% elif coupon.published_status == "canceled" %}
+                    <span class="sidebar-prediction-status is-lose">Отменен</span>
+                {% else %}
+                    <span class="sidebar-prediction-status">Черновик</span>
+                {% endif %}
+            </div>
+
+            <div class="sidebar-prediction-pick">
+                <div>
+                    <span>Матчи</span>
+                    <strong>{{ coupon.predictions_count }}</strong>
+                </div>
+                <div class="sidebar-prediction-odd">
+                    <span>Сумма</span>
+                    <b>{{ coupon.total_stake }}</b>
+                </div>
+            </div>
+
+            <div class="sidebar-prediction-footer">
+                <span>Возможный выигрыш</span>
+                <strong>{{ coupon.possible_payout }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="coupon-empty sidebar-predictions-empty">
+        <strong>Купонов пока нет</strong>
+        <p>После публикации или автосохранения последние купоны появятся здесь.</p>
+    </div>
+    {% endif %}
+</section>
