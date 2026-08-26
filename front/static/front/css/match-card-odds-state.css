@@ -47,3 +47,44 @@
 .match-card-options.is-locked {
     opacity: .88;
 }
+
+.match-odds-panel-locked {
+    padding: 18px;
+}
+
+.match-detail-locked-options {
+    margin: 0;
+    gap: 10px;
+}
+
+.match-detail-locked-options .coupon-option {
+    min-height: 72px;
+    font-size: 14px;
+}
+
+.match-detail-locked-options .coupon-option small {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.match-detail-locked-options .match-odd-lock {
+    top: 10px;
+    right: 10px;
+    width: 17px;
+    height: 17px;
+}
+
+@media (max-width: 620px) {
+    .match-odds-panel-locked {
+        padding: 12px;
+    }
+
+    .match-detail-locked-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .match-detail-locked-options .coupon-option {
+        min-height: 64px;
+    }
+}
