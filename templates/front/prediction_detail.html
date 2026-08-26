@@ -4,185 +4,36 @@
 {% block title %}Купон #{{ coupon.id }} — Cappers{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'front/css/prediction-detail.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
 {% endblock %}
 
 {% block content %}
-<section class="public-coupon-page" aria-label="Купон #{{ coupon.id }}">
-    <a class="public-coupon-back" href="{% url 'front:predictions' %}">
+<section class="coupon-detail-page" aria-label="Купон #{{ coupon.id }}">
+    <a class="coupon-detail-back" href="{% url 'front:predictions' %}">
         <span aria-hidden="true">←</span>
-        <span>Все прогнозы</span>
+        <span>Вернуться к прогнозам</span>
     </a>
 
-    <header class="public-coupon-hero">
-        <div class="public-coupon-hero-main">
-            <a class="public-coupon-expert" href="{% url 'cabinet:expert_profile' username=coupon.author.username %}">
-                <span class="public-coupon-avatar">
-                    {% if expert_avatar_url %}
-                        <img src="{{ expert_avatar_url }}" alt="" loading="lazy">
-                    {% else %}
-                        {{ expert_initials }}
-                    {% endif %}
-                </span>
-                <span class="public-coupon-expert-copy">
-                    <strong>{{ expert_name }}{% if expert_verified %} <i>✓</i>{% endif %}</strong>
-                    <small>@{{ coupon.author.username }}</small>
-                </span>
-            </a>
-
-            <div class="public-coupon-title-row">
-                <div>
-                    <p>Публичный прогноз</p>
-                    <h1>Купон #{{ coupon.id }}</h1>
-                    <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
-                </div>
-
-                {% if coupon.state_status == "win" %}
-                    <span class="public-coupon-status is-win">Выигрыш</span>
-                {% elif coupon.state_status == "lose" %}
-                    <span class="public-coupon-status is-lose">Проигрыш</span>
-                {% elif coupon.state_status == "refund" %}
-                    <span class="public-coupon-status is-refund">Возврат</span>
-                {% else %}
-                    <span class="public-coupon-status">Ожидает</span>
-                {% endif %}
-            </div>
+    <header class="coupon-detail-heading">
+        <div>
+            <p>Публичный купон</p>
+            <h1>Купон #{{ coupon.id }}</h1>
+            <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
         </div>
 
-        <div class="public-coupon-metrics">
-            <div class="public-coupon-metric is-primary">
-                <span>Общий КФ</span>
-                <strong>{{ total_coefficient|floatformat:2 }}</strong>
-            </div>
-            <div class="public-coupon-metric">
-                <span>Игр</span>
-                <strong>{{ positions|length }}</strong>
-            </div>
-            <div class="public-coupon-metric">
-                <span>Ставка</span>
-                <strong>{{ coupon.total_stake|floatformat:2 }}</strong>
-            </div>
-            <div class="public-coupon-metric">
-                <span>Возможный выигрыш</span>
-                <strong>{{ coupon.possible_payout|floatformat:2 }}</strong>
-            </div>
-        </div>
-
-        <div class="public-coupon-confidence" aria-label="Уверенность эксперта {{ coupon.confidence }} процентов">
-            <div class="public-coupon-confidence-head">
-                <span>Уверенность прогноза</span>
-                <strong>{{ coupon.confidence }}%</strong>
-            </div>
-            <div class="public-coupon-confidence-track" aria-hidden="true">
-                <span style="width: {{ coupon.confidence }}%"></span>
-            </div>
-        </div>
+        {% if coupon.state_status == "win" %}
+            <span class="coupon-detail-status is-published">Выигрыш</span>
+        {% elif coupon.state_status == "lose" %}
+            <span class="coupon-detail-status is-canceled">Проигрыш</span>
+        {% elif coupon.state_status == "refund" %}
+            <span class="coupon-detail-status">Возврат</span>
+        {% else %}
+            <span class="coupon-detail-status is-published">Опубликован</span>
+        {% endif %}
     </header>
 
-    <section class="public-coupon-content" aria-label="Матчи купона">
-        <div class="public-coupon-section-head">
-            <div>
-                <p>Состав прогноза</p>
-                <h2>{% if positions|length > 1 %}Экспресс · {{ positions|length }} игр{% else %}Одиночный прогноз{% endif %}</h2>
-            </div>
-            <span>{{ positions|length }}/20</span>
-        </div>
-
-        <div class="public-coupon-items">
-            {% for prediction in positions %}
-            <article class="public-coupon-item">
-                <div class="public-coupon-item-head">
-                    <div class="public-coupon-league">
-                        <span class="public-coupon-league-logo">
-                            {% if prediction.match.league and prediction.match.league.logo %}
-                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
-                            {% else %}
-                                <img src="{% static 'front/img/soccer.svg' %}" alt="">
-                            {% endif %}
-                        </span>
-                        <div>
-                            <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                            <span>
-                                {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m.Y · H:i" }}{% else %}Время не указано{% endif %}
-                            </span>
-                        </div>
-                    </div>
-
-                    <span class="public-coupon-match-status is-{{ prediction.match.sync_scope }}">
-                        {% if prediction.match.sync_scope == "live" %}
-                            LIVE{% if prediction.match.live_minute_label %} · {{ prediction.match.live_minute_label }}{% endif %}
-                        {% elif prediction.match.sync_scope == "finished" %}
-                            Завершён
-                        {% else %}
-                            Предстоящий
-                        {% endif %}
-                    </span>
-                </div>
-
-                <a class="public-coupon-match" href="{{ prediction.match.get_absolute_url }}">
-                    <div class="public-coupon-team is-home">
-                        <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
-                        <span class="public-coupon-team-logo">
-                            {% if prediction.match.home_team_logo %}
-                                <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                    </div>
-
-                    <div class="public-coupon-score">
-                        <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
-                        {% if prediction.match.live_minute_label %}
-                            <span>{{ prediction.match.live_minute_label }}</span>
-                        {% else %}
-                            <span>{{ prediction.match.get_sync_scope_display }}</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="public-coupon-team is-away">
-                        <span class="public-coupon-team-logo">
-                            {% if prediction.match.away_team_logo %}
-                                <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
-                    </div>
-                </a>
-
-                <div class="public-coupon-pick">
-                    <div>
-                        <span>{{ prediction.market|default:"Прогноз" }}</span>
-                        <strong>{{ prediction.selection }}</strong>
-                    </div>
-                    <div class="public-coupon-position-kf">
-                        <span>КФ</span>
-                        <strong>{{ prediction.coefficient|floatformat:2 }}</strong>
-                    </div>
-                </div>
-
-                <div class="public-coupon-item-foot">
-                    {% if prediction.state_status == "win" %}
-                        <span class="is-win">Выигрыш</span>
-                    {% elif prediction.state_status == "lose" %}
-                        <span class="is-lose">Проигрыш</span>
-                    {% elif prediction.state_status == "refund" %}
-                        <span class="is-refund">Возврат</span>
-                    {% else %}
-                        <span>Ожидает результата</span>
-                    {% endif %}
-                    <a href="{{ prediction.match.get_absolute_url }}">Смотреть матч <i aria-hidden="true">→</i></a>
-                </div>
-            </article>
-            {% empty %}
-            <div class="public-coupon-empty">
-                <strong>В купоне нет матчей</strong>
-                <span>Этот опубликованный прогноз пока не содержит позиций.</span>
-            </div>
-            {% endfor %}
-        </div>
+    <section class="coupon-detail-panel" aria-label="Состав купона">
+        {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient %}
     </section>
 </section>
 {% endblock %}
