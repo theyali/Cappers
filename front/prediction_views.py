@@ -2,21 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import (
-    Case,
-    Count,
-    DecimalField,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    OuterRef,
-    Q,
-    Subquery,
-    Sum,
-    Value,
-    When,
-)
-from django.db.models.functions import Coalesce
+from django.db.models import Case, Count, ExpressionWrapper, F, IntegerField, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -27,6 +13,7 @@ from cabinet.models import AnalystFollow
 from game.models import Prediction, PredictionCoupon
 
 from .models import PredictionFavorite, PredictionLike
+from .prediction_metrics import annotate_author_roi
 from .views import PREDICTION_STATUS_FILTERS, _initials
 
 
@@ -35,11 +22,6 @@ SORT_OPTIONS = (
     ("new", "Новые"),
     ("roi", "Лучший ROI"),
     ("popular", "Самые популярные"),
-)
-SETTLED_COUPON_STATES = (
-    PredictionCoupon.StateStatus.WIN,
-    PredictionCoupon.StateStatus.LOSE,
-    PredictionCoupon.StateStatus.REFUND,
 )
 
 
@@ -93,7 +75,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
 
 
 def _published_queryset():
-    return (
+    queryset = (
         Prediction.objects.filter(
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
@@ -110,6 +92,7 @@ def _published_queryset():
             favorites_count=Count("favorites", distinct=True),
         )
     )
+    return annotate_author_roi(queryset)
 
 
 def _parse_decimal(value: str | None) -> Decimal | None:
@@ -119,42 +102,6 @@ def _parse_decimal(value: str | None) -> Decimal | None:
         return Decimal(str(value).replace(",", "."))
     except InvalidOperation:
         return None
-
-
-def _author_roi_subquery():
-    money_field = DecimalField(max_digits=18, decimal_places=4)
-    profit_expression = Case(
-        When(
-            state_status=PredictionCoupon.StateStatus.WIN,
-            then=F("possible_payout") - F("total_stake"),
-        ),
-        When(
-            state_status=PredictionCoupon.StateStatus.LOSE,
-            then=-F("total_stake"),
-        ),
-        default=Value(Decimal("0")),
-        output_field=money_field,
-    )
-    return (
-        PredictionCoupon.objects.filter(
-            author_id=OuterRef("coupon__author_id"),
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            state_status__in=SETTLED_COUPON_STATES,
-            total_stake__gt=0,
-        )
-        .values("author_id")
-        .annotate(
-            roi_profit=Sum(profit_expression),
-            roi_stake=Sum("total_stake"),
-        )
-        .annotate(
-            roi_value=ExpressionWrapper(
-                F("roi_profit") * Value(Decimal("100")) / F("roi_stake"),
-                output_field=DecimalField(max_digits=12, decimal_places=4),
-            )
-        )
-        .values("roi_value")[:1]
-    )
 
 
 def _filter_options(published, selected_sport: str):
@@ -290,14 +237,7 @@ def predictions(request):
 
     following_ids = _following_ids(request.user)
     if active_sort == "roi":
-        roi_field = DecimalField(max_digits=12, decimal_places=4)
-        queryset = queryset.annotate(
-            author_roi=Coalesce(
-                Subquery(_author_roi_subquery(), output_field=roi_field),
-                Value(Decimal("0")),
-                output_field=roi_field,
-            )
-        ).order_by(
+        queryset = queryset.order_by(
             "-author_roi",
             "-likes_count",
             "-coupon__published_at",
