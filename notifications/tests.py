@@ -6,6 +6,7 @@ from game.models import Match
 
 from .models import MatchWatch, Notification
 from .services import create_notification, get_preferences
+from .telegram_bot import consume_link_payload, create_link_payload, disconnect_telegram
 
 
 class NotificationServiceTests(TestCase):
@@ -47,6 +48,65 @@ class NotificationServiceTests(TestCase):
 
         self.assertIsNone(notification)
         self.assertFalse(Notification.objects.exists())
+
+
+class TelegramLinkingTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="telegram-reader",
+            password="test-password-123",
+        )
+
+    def test_deep_link_connects_telegram_and_is_single_use(self):
+        payload = create_link_payload(self.user)
+        linked_user = consume_link_payload(
+            payload,
+            chat_id="123456789",
+            telegram_username="cappers_user",
+        )
+
+        self.assertEqual(linked_user, self.user)
+        preferences = get_preferences(self.user)
+        self.assertEqual(preferences.telegram_chat_id, "123456789")
+        self.assertEqual(preferences.telegram_username, "cappers_user")
+        self.assertTrue(preferences.telegram_enabled)
+        self.assertIsNotNone(preferences.telegram_connected_at)
+
+        repeated = consume_link_payload(
+            payload,
+            chat_id="123456789",
+            telegram_username="cappers_user",
+        )
+        self.assertIsNone(repeated)
+
+    def test_same_chat_moves_to_new_cappers_account(self):
+        other = User.objects.create_user(
+            username="telegram-reader-two",
+            password="test-password-123",
+        )
+        first_payload = create_link_payload(self.user)
+        consume_link_payload(first_payload, chat_id="555", telegram_username="same_chat")
+
+        second_payload = create_link_payload(other)
+        consume_link_payload(second_payload, chat_id="555", telegram_username="same_chat")
+
+        first_preferences = get_preferences(self.user)
+        second_preferences = get_preferences(other)
+        self.assertEqual(first_preferences.telegram_chat_id, "")
+        self.assertFalse(first_preferences.telegram_enabled)
+        self.assertEqual(second_preferences.telegram_chat_id, "555")
+        self.assertTrue(second_preferences.telegram_enabled)
+
+    def test_disconnect_clears_telegram_delivery(self):
+        payload = create_link_payload(self.user)
+        consume_link_payload(payload, chat_id="777", telegram_username="reader")
+        disconnect_telegram(self.user)
+
+        preferences = get_preferences(self.user)
+        self.assertEqual(preferences.telegram_chat_id, "")
+        self.assertEqual(preferences.telegram_username, "")
+        self.assertFalse(preferences.telegram_enabled)
+        self.assertIsNone(preferences.telegram_connected_at)
 
 
 class NotificationViewsTests(TestCase):
@@ -92,3 +152,16 @@ class NotificationViewsTests(TestCase):
         self.assertEqual(second.status_code, 200)
         self.assertFalse(second.json()["watching"])
         self.assertFalse(MatchWatch.objects.filter(user=self.user, match=match).exists())
+
+    def test_telegram_disconnect_view(self):
+        preferences = get_preferences(self.user)
+        preferences.telegram_chat_id = "999"
+        preferences.telegram_enabled = True
+        preferences.save(update_fields=["telegram_chat_id", "telegram_enabled", "updated_at"])
+
+        response = self.client.post(reverse("notifications:telegram_disconnect"))
+        self.assertEqual(response.status_code, 302)
+
+        preferences.refresh_from_db()
+        self.assertEqual(preferences.telegram_chat_id, "")
+        self.assertFalse(preferences.telegram_enabled)
