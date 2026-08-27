@@ -78,6 +78,20 @@
         stroke-linejoin: round;
     }
 
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon {
+        font-size: 0;
+    }
+
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon::before {
+        content: "";
+        width: 30px;
+        height: 30px;
+        display: block;
+        background: currentColor;
+        -webkit-mask: url("../img/soccer.svg") center / contain no-repeat;
+        mask: url("../img/soccer.svg") center / contain no-repeat;
+    }
+
     .mobile-app-nav-label {
         display: block;
         max-width: 100%;
@@ -121,7 +135,8 @@
         flex-basis: 42px;
     }
 
-    .mobile-app-nav-icon svg {
+    .mobile-app-nav-icon svg,
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon::before {
         width: 28px;
         height: 28px;
     }
