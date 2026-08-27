@@ -5,31 +5,12 @@
 
     const form = root.querySelector("[data-coupon-form]");
     const sidebar = root.querySelector(".coupon-sidebar");
-    if (!form || !sidebar) return;
+    const couponButton = nav.querySelector("[data-mobile-coupon-toggle]");
+    if (!form || !sidebar || !couponButton) return;
 
     const mobileQuery = window.matchMedia("(max-width: 1120px)");
     const itemsRoot = root.querySelector("[data-coupon-items]");
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
-
-    const pageItems = Array.from(nav.querySelectorAll(":scope > .mobile-app-nav-item"));
-    const iconClasses = ["mobile-nav-home", "mobile-nav-matches", "mobile-nav-articles", "mobile-nav-my", "mobile-nav-profile"];
-    pageItems.forEach((item, index) => item.classList.add(iconClasses[index] || ""));
-
-    const couponButton = document.createElement("button");
-    couponButton.type = "button";
-    couponButton.className = "mobile-app-nav-item mobile-nav-coupon";
-    couponButton.dataset.mobileCouponToggle = "";
-    couponButton.setAttribute("aria-controls", "mobile-coupon-sheet");
-    couponButton.setAttribute("aria-expanded", "false");
-    couponButton.innerHTML = `
-        <span class="mobile-coupon-nav-tooltip" data-mobile-coupon-tooltip hidden></span>
-        <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-        <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge hidden>0</span>
-        <span class="mobile-app-nav-label">Купоны</span>
-    `;
-
-    const insertBefore = pageItems[3] || pageItems[pageItems.length - 1] || null;
-    nav.insertBefore(couponButton, insertBefore);
 
     const handle = form.querySelector("[data-mobile-coupon-close]");
     const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
@@ -46,16 +27,18 @@
             window.clearTimeout(tooltipTimer);
             tooltipTimer = null;
         }
-        tooltip.hidden = true;
+        if (tooltip) tooltip.hidden = true;
     };
 
     const syncIndicator = () => {
         const count = itemCount();
         const coefficient = coefficientNode?.textContent?.trim() || "0.00";
         couponButton.classList.toggle("has-items", count > 0);
-        badge.textContent = String(count);
-        badge.hidden = count === 0;
-        tooltip.textContent = `К = ${coefficient}`;
+        if (badge) {
+            badge.textContent = String(count);
+            badge.hidden = count === 0;
+        }
+        if (tooltip) tooltip.textContent = `К = ${coefficient}`;
         if (count === 0) hideTooltip();
         couponButton.setAttribute(
             "aria-label",
@@ -64,7 +47,7 @@
     };
 
     const showTooltip = () => {
-        if (!mobileQuery.matches || itemCount() === 0 || sidebar.classList.contains("is-mobile-coupon-open")) return;
+        if (!tooltip || !mobileQuery.matches || itemCount() === 0 || sidebar.classList.contains("is-mobile-coupon-open")) return;
         if (tooltipTimer) window.clearTimeout(tooltipTimer);
         tooltip.hidden = false;
         tooltipTimer = window.setTimeout(() => {
@@ -94,7 +77,9 @@
         couponButton.setAttribute("aria-expanded", "false");
     };
 
-    couponButton.addEventListener("click", () => {
+    couponButton.addEventListener("click", (event) => {
+        if (!mobileQuery.matches) return;
+        event.preventDefault();
         if (sidebar.classList.contains("is-mobile-coupon-open")) closeSheet();
         else openSheet();
     });
