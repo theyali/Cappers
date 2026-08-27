@@ -11,6 +11,7 @@ from front.models import Article
 from front.views import _best_streaks_for_authors, _initials, _top_experts
 from game.models import Match, Prediction, PredictionCoupon
 from game.views import _match_winner_odds
+from notifications.models import MatchWatch
 
 
 HOME_PREDICTIONS_LIMIT = 8
@@ -129,8 +130,6 @@ def _latest_home_predictions() -> list[dict]:
 
 
 def _best_home_experts(request) -> list[dict]:
-    # The home page takes the first N profiles from the exact same ranking
-    # source as /cappers/. No local order_by rules are allowed here.
     profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
 
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
@@ -219,7 +218,7 @@ def _league_rating(match: Match) -> int:
     return 0
 
 
-def _important_home_matches(can_write_coupon: bool = False) -> list[Match]:
+def _important_home_matches(request, can_write_coupon: bool = False) -> list[Match]:
     now = timezone.now()
     matches = list(
         Match.objects.filter(sync_scope=Match.SyncScope.PREMATCH)
@@ -258,9 +257,19 @@ def _important_home_matches(can_write_coupon: bool = False) -> list[Match]:
         selected.extend(match for match in matches if match.id not in selected_ids)
 
     selected = selected[:HOME_MATCHES_LIMIT]
+    watched_ids = set()
+    if request.user.is_authenticated and selected:
+        watched_ids = set(
+            MatchWatch.objects.filter(
+                user=request.user,
+                match_id__in=[match.id for match in selected],
+            ).values_list("match_id", flat=True)
+        )
+
     for match in selected:
         match.coupon_odds = _match_winner_odds(match)
         match.home_can_write_coupon = can_write_coupon
+        match.is_watched = match.id in watched_ids
     return selected
 
 
@@ -279,7 +288,7 @@ def index(request):
             "latest_articles": Article.objects.filter(is_published=True).order_by(
                 "-created_at", "-id"
             )[:HOME_ARTICLES_LIMIT],
-            "important_matches": _important_home_matches(can_write_coupon),
+            "important_matches": _important_home_matches(request, can_write_coupon),
             "can_write_coupon": can_write_coupon,
         },
     )
