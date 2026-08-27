@@ -307,7 +307,7 @@
 @media (max-width: 680px) {
     .home-articles {
         gap: 18px;
-        padding: 18px;
+        padding: 0px;
         border-radius: 18px;
     }
 
