@@ -6,7 +6,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
-from cabinet.models import AnalystProfile, User
+from cabinet.models import AnalystFollow, AnalystProfile, User
 from game.models import PredictionCoupon
 
 from .prediction_metrics import annotate_author_roi
@@ -168,6 +168,12 @@ def cappers_stats(request):
         )
     )
 
+    following_ids = set()
+    if request.user.is_authenticated:
+        following_ids = set(
+            AnalystFollow.objects.filter(follower=request.user).values_list("analyst_id", flat=True)
+        )
+
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
     experts = []
     for profile in profiles:
@@ -181,6 +187,7 @@ def cappers_stats(request):
             is_verified=profile.is_verified,
         )
         experts.append({
+            "id": profile.user_id,
             "name": name,
             "username": profile.user.username,
             "initials": _initials(name),
@@ -194,6 +201,8 @@ def cappers_stats(request):
             "last_publication_at": profile.last_publication_at,
             "joined_at": profile.created_at,
             "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+            "is_self": request.user.is_authenticated and request.user.pk == profile.user_id,
+            "is_following": profile.user_id in following_ids,
         })
 
     summary = {
