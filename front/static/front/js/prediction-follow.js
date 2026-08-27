@@ -12,6 +12,14 @@
         document.querySelectorAll(`[data-prediction-follow][data-analyst-id="${analystId}"]`).forEach((button) => {
             button.classList.toggle("is-active", active);
             button.setAttribute("aria-pressed", active ? "true" : "false");
+            button.setAttribute("aria-label", active ? "Отписаться от эксперта" : "Подписаться на эксперта");
+            button.setAttribute("title", active ? "Отписаться" : "Подписаться");
+
+            const subscribeIcon = button.querySelector('[data-follow-icon="subscribe"]');
+            const unsubscribeIcon = button.querySelector('[data-follow-icon="unsubscribe"]');
+            if (subscribeIcon) subscribeIcon.hidden = active;
+            if (unsubscribeIcon) unsubscribeIcon.hidden = !active;
+
             const label = button.querySelector("[data-follow-label]");
             if (label) label.textContent = active ? "Отписаться" : "Подписаться";
         });
