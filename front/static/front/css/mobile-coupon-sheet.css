@@ -1,5 +1,6 @@
 .mobile-coupon-nav-badge,
-.mobile-coupon-nav-tooltip {
+.mobile-coupon-nav-tooltip,
+.mobile-coupon-sheet-handle {
     display: none;
 }
 
