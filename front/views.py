@@ -1,16 +1,12 @@
-from datetime import timedelta
-from decimal import Decimal
-
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Q
 from django.shortcuts import render
-from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
-from cabinet.models import AnalystFollow, AnalystProfile, User
+from cabinet.models import AnalystFollow
 from game.models import PredictionCoupon
 
-from .prediction_metrics import annotate_author_roi
+from .expert_ranking import ranked_expert_profiles
 
 
 LATEST_PREDICTIONS = [
@@ -39,12 +35,6 @@ PREDICTION_STATUS_FILTERS = (
     (PredictionCoupon.StateStatus.REFUND, "Возврат"),
 )
 
-SETTLED_EXPERT_STATES = (
-    PredictionCoupon.StateStatus.WIN,
-    PredictionCoupon.StateStatus.LOSE,
-    PredictionCoupon.StateStatus.REFUND,
-)
-
 
 def _initials(name: str) -> str:
     parts = [part for part in name.split() if part]
@@ -52,31 +42,32 @@ def _initials(name: str) -> str:
 
 
 def _top_experts():
-    profiles = list(
-        AnalystProfile.objects.filter(is_public=True, user__role=User.Role.ANALYST)
-        .select_related("user")
-        .annotate(followers_count=Count("user__analyst_followers"))
-        .order_by("-followers_count", "-is_verified", "-created_at")[:5]
-    )
+    profiles = ranked_expert_profiles(limit=5)
     if not profiles:
         return DEMO_EXPERTS
 
     experts = []
     for profile in profiles:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
-        experts.append({
-            "name": name,
-            "username": profile.user.username,
-            "followers": profile.followers_count,
-            "initials": _initials(name),
-            "verified": profile.is_verified,
-            "avatar_url": profile.avatar.url if profile.avatar else "",
-        })
+        experts.append(
+            {
+                "name": name,
+                "username": profile.user.username,
+                "followers": profile.followers_count,
+                "initials": _initials(name),
+                "verified": profile.is_verified,
+                "avatar_url": profile.avatar.url if profile.avatar else "",
+            }
+        )
     return experts
 
 
 def index(request):
-    return render(request, "front/index.html", {"latest_predictions": LATEST_PREDICTIONS, "top_experts": _top_experts()})
+    return render(
+        request,
+        "front/index.html",
+        {"latest_predictions": LATEST_PREDICTIONS, "top_experts": _top_experts()},
+    )
 
 
 def predictions(request):
@@ -85,13 +76,19 @@ def predictions(request):
     if active_status not in valid_statuses:
         active_status = "all"
 
-    published = PredictionCoupon.objects.filter(published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
+    published = PredictionCoupon.objects.filter(
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+    )
     counts = published.aggregate(
         total=Count("id"),
-        pending=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)),
+        pending=Count(
+            "id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)
+        ),
         win=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
         lose=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE)),
-        refund=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.REFUND)),
+        refund=Count(
+            "id", filter=Q(state_status=PredictionCoupon.StateStatus.REFUND)
+        ),
     )
 
     queryset = published.select_related("author", "author__analyst_profile")
@@ -110,14 +107,21 @@ def predictions(request):
         PredictionCoupon.StateStatus.LOSE: counts["lose"],
         PredictionCoupon.StateStatus.REFUND: counts["refund"],
     }
-    status_tabs = [{"key": key, "label": label, "count": count_map.get(key, 0)} for key, label in PREDICTION_STATUS_FILTERS]
+    status_tabs = [
+        {"key": key, "label": label, "count": count_map.get(key, 0)}
+        for key, label in PREDICTION_STATUS_FILTERS
+    ]
 
-    return render(request, "front/predictions.html", {
-        "page_obj": page_obj,
-        "status_tabs": status_tabs,
-        "active_status": active_status,
-        "total_predictions": counts["total"],
-    })
+    return render(
+        request,
+        "front/predictions.html",
+        {
+            "page_obj": page_obj,
+            "status_tabs": status_tabs,
+            "active_status": active_status,
+            "total_predictions": counts["total"],
+        },
+    )
 
 
 def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
@@ -128,7 +132,10 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
         PredictionCoupon.objects.filter(
             author_id__in=author_ids,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            state_status__in=[PredictionCoupon.StateStatus.WIN, PredictionCoupon.StateStatus.LOSE],
+            state_status__in=[
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+            ],
         )
         .order_by("author_id", "settled_at", "updated_at", "id")
         .values_list("author_id", "state_status")
@@ -145,77 +152,21 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
     return best
 
 
-def _expert_ranking_score(profile) -> Decimal:
-    """Shrink ROI toward zero until an expert has a meaningful result history."""
-    settled_count = int(getattr(profile, "settled_count", 0) or 0)
-    if settled_count <= 0:
-        return Decimal("0")
-
-    roi = Decimal(getattr(profile, "author_roi", 0) or 0)
-    return roi * Decimal(settled_count) / Decimal(settled_count + 10)
-
-
 def cappers_stats(request):
-    recent_cutoff = timezone.now() - timedelta(days=30)
-    published_filter = Q(user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
-
-    profiles_queryset = (
-        AnalystProfile.objects.filter(is_public=True, user__role=User.Role.ANALYST)
-        .select_related("user")
-        .annotate(
-            followers_count=Count("user__analyst_followers", distinct=True),
-            publications_count=Count("user__prediction_coupons", filter=published_filter, distinct=True),
-            settled_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter & Q(user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES),
-                distinct=True,
-            ),
-            wins_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN),
-                distinct=True,
-            ),
-            sports_count=Count("user__prediction_coupons__predictions__match__sport", filter=published_filter, distinct=True),
-            recent_publications_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
-                distinct=True,
-            ),
-            last_publication_at=Max("user__prediction_coupons__published_at", filter=published_filter),
-        )
-    )
-    profiles = list(
-        annotate_author_roi(
-            profiles_queryset,
-            author_outer_ref="user_id",
-            annotation_name="author_roi",
-        )
-    )
-
-    # Stable, performance-first ranking. Recent posting activity no longer decides rank.
-    profiles.sort(key=lambda profile: profile.user.username.lower())
-    profiles.sort(
-        key=lambda profile: (
-            1 if profile.settled_count else 0,
-            _expert_ranking_score(profile),
-            profile.settled_count,
-            profile.followers_count,
-            profile.publications_count,
-        ),
-        reverse=True,
-    )
+    profiles = ranked_expert_profiles()
 
     following_ids = set()
     if request.user.is_authenticated:
         following_ids = set(
-            AnalystFollow.objects.filter(follower=request.user).values_list("analyst_id", flat=True)
+            AnalystFollow.objects.filter(follower=request.user).values_list(
+                "analyst_id", flat=True
+            )
         )
 
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
     experts = []
     for profile in profiles:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
-        ranking_score = _expert_ranking_score(profile)
         unlocked_achievements = build_achievement_badges(
             predictions_count=profile.publications_count,
             wins_count=profile.wins_count,
@@ -224,35 +175,44 @@ def cappers_stats(request):
             best_win_streak=best_streaks.get(profile.user_id, 0),
             is_verified=profile.is_verified,
         )
-        experts.append({
-            "id": profile.user_id,
-            "name": name,
-            "username": profile.user.username,
-            "initials": _initials(name),
-            "avatar_url": profile.avatar.url if profile.avatar else "",
-            "verified": profile.is_verified,
-            "roi": profile.author_roi,
-            "ranking_score": ranking_score.quantize(Decimal("0.01")),
-            "settled": profile.settled_count,
-            "followers": profile.followers_count,
-            "publications": profile.publications_count,
-            "sports": profile.sports_count,
-            "recent_publications": profile.recent_publications_count,
-            "last_publication_at": profile.last_publication_at,
-            "joined_at": profile.created_at,
-            "latest_achievements": list(reversed(unlocked_achievements[-5:])),
-            "is_self": request.user.is_authenticated and request.user.pk == profile.user_id,
-            "is_following": profile.user_id in following_ids,
-        })
+        experts.append(
+            {
+                "id": profile.user_id,
+                "name": name,
+                "username": profile.user.username,
+                "initials": _initials(name),
+                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "verified": profile.is_verified,
+                "roi": profile.author_roi,
+                "ranking_score": profile.ranking_score,
+                "settled": profile.settled_count,
+                "followers": profile.followers_count,
+                "publications": profile.publications_count,
+                "sports": profile.sports_count,
+                "recent_publications": profile.recent_publications_count,
+                "last_publication_at": profile.last_publication_at,
+                "joined_at": profile.created_at,
+                "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+                "is_self": request.user.is_authenticated
+                and request.user.pk == profile.user_id,
+                "is_following": profile.user_id in following_ids,
+            }
+        )
 
     summary = {
         "experts": len(profiles),
         "verified": sum(1 for profile in profiles if profile.is_verified),
         "publications": sum(profile.publications_count for profile in profiles),
-        "active_30d": sum(1 for profile in profiles if profile.recent_publications_count > 0),
+        "active_30d": sum(
+            1 for profile in profiles if profile.recent_publications_count > 0
+        ),
     }
-    return render(request, "front/cappers_stats.html", {
-        "experts": experts,
-        "experts_count": len(experts),
-        "summary": summary,
-    })
+    return render(
+        request,
+        "front/cappers_stats.html",
+        {
+            "experts": experts,
+            "experts_count": len(experts),
+            "summary": summary,
+        },
+    )
