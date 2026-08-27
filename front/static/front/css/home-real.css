@@ -324,6 +324,7 @@
 
     .slider-footer {
         grid-template-columns: 1fr auto;
+        padding:20px;
     }
 
     .slider-progress {

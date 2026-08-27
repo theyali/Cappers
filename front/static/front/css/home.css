@@ -646,7 +646,7 @@
 
     .forecast-slider {
         min-height: 0;
-        padding: 12px;
+        padding: 0;
         border-radius: 18px;
     }
 

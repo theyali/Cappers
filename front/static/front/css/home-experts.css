@@ -87,7 +87,7 @@
 
 @media (max-width: 680px) {
     .home-best-experts {
-        padding: 18px;
+        padding: 0;
         border-radius: 18px;
     }
 
