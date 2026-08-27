@@ -7,137 +7,168 @@
         padding-bottom: calc(104px + env(safe-area-inset-bottom));
     }
 
-    /* The desktop center navigation stays in the header only on desktop. */
     .site-nav-center {
         display: none !important;
     }
 
     .mobile-app-nav {
         position: fixed;
-        right: 0;
-        bottom: 0;
-        left: 0;
+        left: 50%;
+        bottom: calc(12px + env(safe-area-inset-bottom));
         z-index: 1200;
-        width: 100%;
-        min-height: calc(94px + env(safe-area-inset-bottom));
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        align-items: stretch;
+        width: calc(100% - 24px);
+        max-width: 720px;
+        min-height: 76px;
+        display: flex;
+        align-items: center;
         gap: 4px;
-        padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
-        background: #161617;
-        box-shadow: 0 -14px 34px rgba(0, 0, 0, .34);
+        padding: 8px;
+        transform: translateX(-50%);
+        border-radius: 34px;
+        background: #1f1f21;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, .28);
     }
 
     .mobile-app-nav-item {
         min-width: 0;
-        min-height: 76px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        padding: 6px 2px;
+        min-height: 60px;
+        flex: 1 1 0;
+        display: grid;
+        place-items: center;
+        padding: 0 8px;
         border: 0;
-        border-radius: 16px;
-        color: #f7f8ff;
+        border-radius: 28px;
+        color: #8a8a8d;
         background: transparent;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 0;
         line-height: 1;
         text-align: center;
-        white-space: nowrap;
         -webkit-tap-highlight-color: transparent;
+        transition: flex .22s ease, background .22s ease, color .22s ease, transform .18s ease;
     }
 
     .mobile-app-nav-item:hover,
     .mobile-app-nav-item:active {
-        color: #f7f8ff;
-        background: #222224;
+        color: #b8b8ba;
+        background: transparent;
+    }
+
+    .mobile-app-nav-item:active {
+        transform: scale(.97);
+    }
+
+    .mobile-app-nav-item.is-active {
+        flex: 1.75 1 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 11px;
+        padding: 0 18px;
+        color: #fff;
+        background: #303033;
     }
 
     .mobile-app-nav-icon {
-        width: 44px;
-        height: 44px;
-        flex: 0 0 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 14px;
-        color: currentColor;
-        background: #232325;
-    }
-
-    .mobile-app-nav-icon svg {
         width: 30px;
         height: 30px;
+        flex: 0 0 30px;
         display: block;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-
-    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon {
+        background: currentColor;
         font-size: 0;
     }
 
-    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon::before {
-        content: "";
-        width: 30px;
-        height: 30px;
-        display: block;
-        background: currentColor;
-        -webkit-mask: url("../img/soccer.svg") center / contain no-repeat;
-        mask: url("../img/soccer.svg") center / contain no-repeat;
+    .mobile-app-nav-icon svg,
+    .mobile-app-nav-icon img {
+        display: none !important;
+    }
+
+    .mobile-app-nav-item:nth-child(1) .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-home.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-home.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav-item:nth-child(3) .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav-item:nth-child(4) .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav-item:nth-child(5) .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav-label {
-        display: block;
-        max-width: 100%;
+        display: none;
+        min-width: 0;
         overflow: hidden;
+        color: currentColor;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .mobile-app-nav-item.is-active {
-        color: var(--yellow);
-        background: #202022;
-    }
-
-    .mobile-app-nav-item.is-active .mobile-app-nav-icon {
-        color: var(--ink);
-        background: var(--yellow);
+    .mobile-app-nav-item.is-active .mobile-app-nav-label {
+        display: block;
     }
 
     .fixed-tg-btn-wrapper {
-        bottom: calc(112px + env(safe-area-inset-bottom));
+        bottom: calc(108px + env(safe-area-inset-bottom));
     }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 520px) {
     .mobile-app-nav {
-        min-height: calc(90px + env(safe-area-inset-bottom));
-        gap: 1px;
-        padding-right: 5px;
-        padding-left: 5px;
+        width: calc(100% - 18px);
+        min-height: 72px;
+        bottom: calc(9px + env(safe-area-inset-bottom));
+        gap: 2px;
+        padding: 7px;
+        border-radius: 32px;
     }
 
     .mobile-app-nav-item {
-        min-height: 72px;
-        gap: 6px;
-        font-size: 10px;
+        min-height: 58px;
+        padding: 0 5px;
+        border-radius: 26px;
+    }
+
+    .mobile-app-nav-item.is-active {
+        flex: 1.9 1 0;
+        gap: 8px;
+        padding: 0 13px;
     }
 
     .mobile-app-nav-icon {
-        width: 42px;
-        height: 42px;
-        flex-basis: 42px;
+        width: 27px;
+        height: 27px;
+        flex-basis: 27px;
     }
 
-    .mobile-app-nav-icon svg,
-    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon::before {
-        width: 28px;
-        height: 28px;
+    .mobile-app-nav-label {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .mobile-app-nav-item.is-active {
+        gap: 6px;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .mobile-app-nav-label {
+        font-size: 12px;
     }
 }
