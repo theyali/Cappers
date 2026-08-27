@@ -252,7 +252,12 @@
         {% endif %}
     </nav>
 
+    <div class="logo-transition" aria-hidden="true">
+        <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+    </div>
+
     <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
+    <script src="{% static 'front/js/transitions.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
