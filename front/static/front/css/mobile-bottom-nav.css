@@ -60,7 +60,7 @@
         order: 3;
     }
 
-    .mobile-nav-articles {
+    .mobile-nav-stats {
         order: 4;
     }
 
@@ -119,9 +119,9 @@
         mask: url("../svgs/soccer.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav .mobile-nav-articles .mobile-app-nav-icon {
-        -webkit-mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
-        mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
+    .mobile-app-nav .mobile-nav-stats .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav .mobile-nav-my .mobile-app-nav-icon {
