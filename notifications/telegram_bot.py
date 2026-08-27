@@ -1,0 +1,177 @@
+import hashlib
+import json
+import secrets
+import urllib.parse
+import urllib.request
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.cache import cache
+from django.db import transaction
+from django.utils import timezone
+
+from .models import NotificationPreference, TelegramLinkToken
+
+
+BOT_USERNAME_CACHE_KEY = "notifications:telegram_bot_username"
+LINK_TTL_MINUTES = 15
+
+
+def get_bot_token() -> str:
+    return (
+        getattr(settings, "TG_BOT_TOKEN", "")
+        or getattr(settings, "TELEGRAM_BOT_TOKEN", "")
+    ).strip()
+
+
+def api_call(method: str, payload: dict | None = None, *, timeout: int = 15):
+    token = get_bot_token()
+    if not token:
+        raise RuntimeError("TG_BOT_TOKEN не настроен")
+
+    request = urllib.request.Request(
+        f"https://api.telegram.org/bot{token}/{method}",
+        data=json.dumps(payload or {}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        data = json.loads(response.read().decode("utf-8"))
+
+    if not data.get("ok"):
+        raise RuntimeError(data.get("description") or f"Telegram API error: {method}")
+    return data.get("result")
+
+
+def get_bot_username(*, refresh: bool = False) -> str:
+    if not refresh:
+        cached = cache.get(BOT_USERNAME_CACHE_KEY)
+        if cached:
+            return cached
+
+    me = api_call("getMe") or {}
+    username = str(me.get("username") or "").strip()
+    if not username:
+        raise RuntimeError("Telegram bot username не найден")
+    cache.set(BOT_USERNAME_CACHE_KEY, username, 6 * 60 * 60)
+    return username
+
+
+def _token_digest(raw_token: str) -> str:
+    return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+
+def create_link_payload(user) -> str:
+    TelegramLinkToken.objects.filter(user=user, used_at__isnull=True).delete()
+    raw_token = secrets.token_urlsafe(24)
+    TelegramLinkToken.objects.create(
+        user=user,
+        token_hash=_token_digest(raw_token),
+        expires_at=timezone.now() + timedelta(minutes=LINK_TTL_MINUTES),
+    )
+    return f"link_{raw_token}"
+
+
+def build_connect_url(user) -> str:
+    payload = create_link_payload(user)
+    username = get_bot_username()
+    return f"https://t.me/{username}?start={urllib.parse.quote(payload, safe='')}"
+
+
+def consume_link_payload(
+    payload: str,
+    *,
+    chat_id: str,
+    telegram_username: str = "",
+):
+    if not payload.startswith("link_"):
+        return None
+
+    raw_token = payload[5:].strip()
+    if not raw_token:
+        return None
+
+    now = timezone.now()
+    digest = _token_digest(raw_token)
+
+    with transaction.atomic():
+        link = (
+            TelegramLinkToken.objects.select_for_update()
+            .select_related("user")
+            .filter(token_hash=digest, used_at__isnull=True, expires_at__gt=now)
+            .first()
+        )
+        if not link:
+            return None
+
+        NotificationPreference.objects.filter(telegram_chat_id=str(chat_id)).exclude(
+            user=link.user
+        ).update(
+            telegram_chat_id="",
+            telegram_username="",
+            telegram_connected_at=None,
+            telegram_enabled=False,
+        )
+
+        preferences, _ = NotificationPreference.objects.get_or_create(user=link.user)
+        preferences.telegram_chat_id = str(chat_id)
+        preferences.telegram_username = telegram_username.strip().lstrip("@")[:80]
+        preferences.telegram_connected_at = now
+        preferences.telegram_enabled = True
+        preferences.save(
+            update_fields=[
+                "telegram_chat_id",
+                "telegram_username",
+                "telegram_connected_at",
+                "telegram_enabled",
+                "updated_at",
+            ]
+        )
+
+        link.used_at = now
+        link.save(update_fields=["used_at"])
+
+    return link.user
+
+
+def disconnect_telegram(user) -> None:
+    preferences, _ = NotificationPreference.objects.get_or_create(user=user)
+    preferences.telegram_chat_id = ""
+    preferences.telegram_username = ""
+    preferences.telegram_connected_at = None
+    preferences.telegram_enabled = False
+    preferences.save(
+        update_fields=[
+            "telegram_chat_id",
+            "telegram_username",
+            "telegram_connected_at",
+            "telegram_enabled",
+            "updated_at",
+        ]
+    )
+    TelegramLinkToken.objects.filter(user=user, used_at__isnull=True).delete()
+
+
+def open_button(url: str | None = None) -> dict:
+    target = (url or getattr(settings, "SITE_BASE_URL", "")).strip()
+    if not target:
+        return {}
+
+    button = {"text": "Открыть Cappers"}
+    if target.startswith("https://"):
+        button["web_app"] = {"url": target}
+    else:
+        button["url"] = target
+    return {"inline_keyboard": [[button]]}
+
+
+def send_message(chat_id: str, text: str, *, open_url: str | None = None) -> None:
+    payload = {
+        "chat_id": str(chat_id),
+        "text": text,
+        "disable_web_page_preview": True,
+    }
+    markup = open_button(open_url)
+    if markup:
+        payload["reply_markup"] = markup
+    api_call("sendMessage", payload)
