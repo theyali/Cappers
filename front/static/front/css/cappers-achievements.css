@@ -21,6 +21,16 @@
     fill: #fff;
 }
 
+.capper-verified-badge.expert-public-verified {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    border-radius: 0;
+    color: inherit;
+    background: transparent;
+    font-size: inherit;
+}
+
 .capper-pro-achievements {
     min-width: 0;
     display: flex;
