@@ -242,6 +242,9 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
         .order_by("-last_seen_at", "-created_at", "-id")
     )
 
+    for match in matches:
+        match.coupon_odds = _match_winner_odds(match)
+
     important = [match for match in matches if _league_rating(match) > 0]
     important.sort(
         key=lambda match: (
@@ -251,12 +254,13 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
         )
     )
 
-    selected = important[:HOME_MATCHES_LIMIT]
-    if len(selected) < HOME_MATCHES_LIMIT:
-        selected_ids = {match.id for match in selected}
-        selected.extend(match for match in matches if match.id not in selected_ids)
+    if important:
+        selected = important[:HOME_MATCHES_LIMIT]
+    else:
+        selected = [
+            match for match in matches if match.coupon_odds.get("has_any")
+        ][:HOME_MATCHES_LIMIT]
 
-    selected = selected[:HOME_MATCHES_LIMIT]
     watched_ids = set()
     if request.user.is_authenticated and selected:
         watched_ids = set(
@@ -267,7 +271,6 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
         )
 
     for match in selected:
-        match.coupon_odds = _match_winner_odds(match)
         match.home_can_write_coupon = can_write_coupon
         match.is_watched = match.id in watched_ids
     return selected
