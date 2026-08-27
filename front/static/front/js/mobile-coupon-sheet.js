@@ -59,7 +59,10 @@
         badge.hidden = count === 0;
         tooltip.textContent = `К = ${coefficient}`;
         if (count === 0) hideTooltip();
-        couponButton.setAttribute("aria-label", count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купоны");
+        couponButton.setAttribute(
+            "aria-label",
+            count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купоны"
+        );
     };
 
     const showTooltip = () => {
@@ -69,7 +72,7 @@
         tooltipTimer = window.setTimeout(() => {
             tooltip.hidden = true;
             tooltipTimer = null;
-        }, 1800);
+        }, 2000);
     };
 
     const openSheet = () => {
@@ -110,16 +113,18 @@
         startY = null;
     });
 
-    document.addEventListener("click", (event) => {
-        const betButton = event.target.closest("[data-bet-option]");
-        if (!betButton || betButton.disabled || !mobileQuery.matches) return;
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && sidebar.classList.contains("is-mobile-coupon-open")) closeSheet();
+    });
 
+    const itemsObserver = new MutationObserver(() => {
         const count = itemCount();
-        const addedNewGame = count > previousCount;
+        const oldCount = previousCount;
+
         syncIndicator();
 
-        if (addedNewGame) {
-            if (previousCount === 0 && count === 1) {
+        if (mobileQuery.matches && count > oldCount) {
+            if (oldCount === 0 && count === 1) {
                 openSheet();
             } else {
                 showTooltip();
@@ -129,18 +134,18 @@
         previousCount = count;
     });
 
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && sidebar.classList.contains("is-mobile-coupon-open")) closeSheet();
-    });
-
-    const itemsObserver = new MutationObserver(() => {
-        previousCount = itemCount();
-        syncIndicator();
-    });
     if (itemsRoot) itemsObserver.observe(itemsRoot, { childList: true });
 
-    const coefficientObserver = new MutationObserver(syncIndicator);
-    if (coefficientNode) coefficientObserver.observe(coefficientNode, { childList: true, characterData: true, subtree: true });
+    const coefficientObserver = new MutationObserver(() => {
+        syncIndicator();
+    });
+    if (coefficientNode) {
+        coefficientObserver.observe(coefficientNode, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+        });
+    }
 
     const handleViewportChange = () => {
         if (!mobileQuery.matches) {
