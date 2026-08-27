@@ -154,7 +154,8 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@cappers.local")
 SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://localhost:8000")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN", ""))
+TELEGRAM_BOT_TOKEN = TG_BOT_TOKEN
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
