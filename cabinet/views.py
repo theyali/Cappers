@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST, require_http_methods
 
 from game.models import PredictionCoupon
@@ -13,6 +14,7 @@ from notifications.services import get_preferences
 from notifications.telegram_bot import get_bot_token
 
 from .achievements import build_achievement_overview
+from .dashboard_views import build_dashboard_context
 from .forms import (
     AnalystAvatarForm,
     AnalystProfileForm,
@@ -108,7 +110,7 @@ def profile(request):
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
 
-    allowed_tabs = {"profile", "following"}
+    allowed_tabs = {"profile", "following", "settings"}
     if request.user.role == User.Role.ANALYST:
         allowed_tabs.update({"predictions", "followers", "achievements"})
 
@@ -129,7 +131,8 @@ def profile(request):
                 if analyst_form is not None:
                     analyst_form.save()
             messages.success(request, "Профиль обновлён.")
-            return redirect("cabinet:profile")
+            return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+        active_tab = "settings"
 
     followers_count = request.user.analyst_followers.count() if request.user.role == User.Role.ANALYST else 0
     following_count = request.user.analyst_follows.count()
@@ -186,6 +189,9 @@ def profile(request):
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
     }
+    if request.user.role == User.Role.ANALYST:
+        context.update(build_dashboard_context(request.user))
+
     return render(request, "cabinet/profile.html", context)
 
 
