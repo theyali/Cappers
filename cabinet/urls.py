@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
 
-from . import avatar_views, dashboard_views, public_views, telegram_auth, views
+from . import avatar_views, capper_views, dashboard_views, public_views, telegram_auth, views
 
 app_name = "cabinet"
 
@@ -16,7 +16,14 @@ urlpatterns = [
     path("profile/follow/<int:user_id>/", views.follow_analyst, name="follow_analyst"),
     path("experts/<str:username>/", public_views.expert_profile, name="expert_profile"),
     path("experts/<int:user_id>/follow/", public_views.toggle_follow, name="toggle_follow"),
-    path("register/", views.register, name="register"),
+    path("register/", capper_views.register, name="register"),
+    path("become-capper/", capper_views.become_capper, name="become_capper"),
+    path("become-capper/start/", capper_views.become_capper_start, name="become_capper_start"),
+    path(
+        "become-capper/onboarding/<int:step>/",
+        capper_views.capper_onboarding,
+        name="capper_onboarding",
+    ),
     path(
         "login/",
         telegram_auth.TelegramAwareLoginView.as_view(),
