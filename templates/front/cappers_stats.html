@@ -60,7 +60,7 @@
 
         <div class="cappers-pro-grid">
             {% for expert in experts %}
-            {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter %}
+            {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=True %}
             {% endfor %}
         </div>
         {% else %}
@@ -73,4 +73,8 @@
 
     {% bookmakers_sidebar %}
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 {% endblock %}
