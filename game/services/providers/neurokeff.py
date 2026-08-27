@@ -70,10 +70,10 @@ class NeurokeffSportsProvider(BaseSportsProvider):
 
         results: list[dict[str, Any]] = []
         batch_size = max(
-            int(getattr(settings, "NEUROKEFF_GAME_INFO_BATCH_SIZE", 100)),
+            int(getattr(settings, "NEUROKEFF_GAME_INFO_BATCH_SIZE", 20)),
             1,
         )
-        endpoint = getattr(settings, "NEUROKEFF_GAME_INFO_ENDPOINT", "/api/games/info")
+        endpoint = getattr(settings, "NEUROKEFF_GAME_INFO_ENDPOINT", "/api/v1/games/info")
 
         for offset in range(0, len(normalized_ids), batch_size):
             batch = normalized_ids[offset:offset + batch_size]

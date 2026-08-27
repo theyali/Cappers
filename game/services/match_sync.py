@@ -386,11 +386,15 @@ class MatchSyncService:
             "in_play",
             "playing",
             "started",
+            "first_half",
+            "second_half",
             "1h",
             "2h",
             "ht",
             "et",
             "p",
+            "1",
+            "2",
         }:
             return Match.SyncScope.LIVE
         if normalized in {
@@ -404,6 +408,7 @@ class MatchSyncService:
             "ft",
             "aet",
             "ap",
+            "3",
         }:
             return Match.SyncScope.FINISHED
         return None

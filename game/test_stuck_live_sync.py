@@ -60,3 +60,11 @@ class StuckLiveSyncTests(TestCase):
         )
 
         self.assertEqual(scope, Match.SyncScope.FINISHED)
+
+    def test_neurokeff_finished_numeric_status_is_finished(self):
+        scope = MatchSyncService._scope_from_payload(
+            {"time_status": "3"},
+            default=Match.SyncScope.LIVE,
+        )
+
+        self.assertEqual(scope, Match.SyncScope.FINISHED)
