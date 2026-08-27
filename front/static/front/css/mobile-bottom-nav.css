@@ -140,8 +140,8 @@
     }
 
     .mobile-app-nav .mobile-nav-coupon .mobile-app-nav-icon {
-        -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
-        mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
+        -webkit-mask: url("../svgs/coupons.svg") center / contain no-repeat;
+        mask: url("../svgs/coupons.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav-label {
