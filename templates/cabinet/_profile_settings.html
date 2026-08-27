@@ -44,10 +44,26 @@
                     {{ analyst_form.display_name.errors }}
                 </label>
                 <label class="profile-field profile-field-full">
+                    <span>{{ analyst_form.specialization.label }}</span>
+                    {{ analyst_form.specialization }}
+                    {{ analyst_form.specialization.errors }}
+                    <small>Например: футбольная аналитика, live, тоталы или конкретные чемпионаты.</small>
+                </label>
+                <label class="profile-field profile-field-full">
                     <span>{{ analyst_form.bio.label }}</span>
                     {{ analyst_form.bio }}
                     {{ analyst_form.bio.errors }}
-                    <small>До 2000 символов. Коротко опишите специализацию и интересы.</small>
+                    <small>До 2000 символов. Расскажите о подходе и опыте.</small>
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.favorite_sports.label }}</span>
+                    {{ analyst_form.favorite_sports }}
+                    {{ analyst_form.favorite_sports.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.favorite_leagues.label }}</span>
+                    {{ analyst_form.favorite_leagues }}
+                    {{ analyst_form.favorite_leagues.errors }}
                 </label>
                 <label class="profile-field">
                     <span>{{ analyst_form.telegram_channel.label }}</span>
@@ -103,6 +119,15 @@
     </form>
 
     <aside class="profile-side-column">
+        {% if not request.user.is_analyst %}
+        <section class="profile-side-card">
+            <p class="eyebrow">Для экспертов</p>
+            <h3>Хотите стать каппером?</h3>
+            <p class="profile-telegram-copy">Заполните короткий профиль эксперта, получите публичную страницу, рейтинг и автоматическую статистику.</p>
+            <a class="profile-telegram-connect" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+        </section>
+        {% endif %}
+
         <section class="profile-side-card profile-telegram-card">
             <div class="profile-telegram-head">
                 <span class="profile-telegram-icon" aria-hidden="true">
