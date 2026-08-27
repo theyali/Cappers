@@ -1,4 +1,4 @@
-{% load static %}
+{% load static match_ui %}
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
     {% if match.predictions_count %}
@@ -29,9 +29,7 @@
             <span class="match-status match-status-{{ match.sync_scope }}">
                 {% if match.sync_scope == 'live' %}
                     <i class="match-live-dot" aria-hidden="true"></i>
-                    <span>
-                        {% if match.time_status %}{{ match.time_status }}{% endif %}{% if match.live_minute_label %}{% if match.time_status %} - {% endif %}{{ match.live_minute_label }}{% elif match.live_minute %}{% if match.time_status %} - {% endif %}{{ match.live_minute }}′{% elif not match.time_status %}LIVE{% endif %}
-                    </span>
+                    <span>{{ match|live_status_label }}</span>
                 {% else %}
                     {{ match.get_sync_scope_display }}
                 {% endif %}
@@ -56,8 +54,8 @@
                 {% else %}
                     <strong>vs</strong>
                 {% endif %}
-                {% if match.live_minute_label %}
-                    <span>{{ match.live_minute_label }}</span>
+                {% if match.sync_scope == 'live' %}
+                    <span>{{ match|live_status_label }}</span>
                 {% elif match.starts_at %}
                     <span data-starts-at>{{ match.starts_at|date:"d.m H:i" }}</span>
                 {% endif %}
