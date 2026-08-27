@@ -1,9 +1,11 @@
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from cabinet.models import AnalystProfile
@@ -11,7 +13,12 @@ from game.models import Match
 
 from .models import MatchWatch, Notification, TelegramAccount
 from .services import get_preferences
-from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
+from .telegram_bot import (
+    build_connect_url,
+    disconnect_telegram,
+    get_bot_token,
+    validate_web_app_init_data,
+)
 
 
 PAGE_SIZE = 30
@@ -124,6 +131,46 @@ def summary(request):
             "latest_id": latest_id,
             "cursor_id": cursor_id,
             "notifications": items,
+        }
+    )
+
+
+@csrf_exempt
+@require_POST
+def telegram_web_auth(request):
+    init_data = str(request.POST.get("init_data") or "").strip()
+    telegram_user = validate_web_app_init_data(init_data)
+    if not telegram_user:
+        return JsonResponse(
+            {"ok": False, "error": "invalid_telegram_data"},
+            status=403,
+        )
+
+    telegram_user_id = str(telegram_user.get("id") or "").strip()
+    account = (
+        TelegramAccount.objects.select_related("user")
+        .filter(chat_id=telegram_user_id)
+        .first()
+    )
+    if not account:
+        return JsonResponse(
+            {"ok": False, "error": "telegram_not_linked"},
+            status=409,
+        )
+
+    login(
+        request,
+        account.user,
+        backend="django.contrib.auth.backends.ModelBackend",
+    )
+    account.last_seen_at = timezone.now()
+    account.save(update_fields=["last_seen_at"])
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "user_id": account.user_id,
+            "username": account.user.username,
         }
     )
 
