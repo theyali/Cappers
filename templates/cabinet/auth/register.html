@@ -1,128 +1,135 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Регистрация — Cappers{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">{% endblock %}
+{% block title %}Регистрация — КапперХаб{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/capper-onboarding.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="auth-stage auth-stage-register">
-    <div class="auth-shell auth-shell-register">
-        <aside class="auth-visual auth-visual-register long-bg long-bg-2" aria-hidden="true">
-            <div class="auth-visual-overlay"></div>
-            <div class="auth-visual-content">
-                <span class="auth-badge"><img src="{% static 'front/img/logo.png' %}" alt=""> Cappers</span>
-                <div class="auth-visual-copy">
-                    <p class="eyebrow">Присоединяйся</p>
-                    <h2>Создай свой<br>спортивный профиль.</h2>
-                    <p>Выбери тип аккаунта сейчас — личные настройки и возможности кабинета будут адаптированы под тебя.</p>
-                </div>
-                <div class="auth-role-preview">
-                    <div>
-                        <span class="role-icon">U</span>
-                        <p><strong>Пользователь</strong><small>Подписки, лента и профиль</small></p>
-                    </div>
-                    <div>
-                        <span class="role-icon role-icon-blue">A</span>
-                        <p><strong>Аналитик</strong><small>Публичный профиль и статистика</small></p>
-                    </div>
-                </div>
-            </div>
-        </aside>
+    <div class="capper-register-choice-shell">
+        <a class="auth-back" href="{% url 'front:index' %}"><span>←</span> На главную</a>
 
-        <div class="auth-panel">
-            <div class="auth-panel-inner auth-panel-register">
-                <a class="auth-back" href="{% url 'front:index' %}">
-                    <span>←</span> На главную
+        <p class="capper-kicker">Новый аккаунт</p>
+        <h1>{% if selected_type %}Регистрация{% else %}Как вы хотите использовать КапперХаб?{% endif %}</h1>
+        {% if not selected_type %}
+            <p>Сначала выберите сценарий. Форму покажем уже после выбора, чтобы не заставлять вас разбираться в ролях и настройках.</p>
+
+            <div class="capper-register-choices" style="margin-top:24px">
+                <a class="capper-register-choice" href="{% url 'cabinet:register' %}?type=user">
+                    <span class="capper-register-choice-icon">U</span>
+                    <h2>Я пользователь</h2>
+                    <p>Следить за матчами, подписываться на капперов, сохранять прогнозы и получать уведомления.</p>
+                    <div class="capper-register-benefits">
+                        <span>✓ Персональная лента</span>
+                        <span>✓ Избранное и отслеживание матчей</span>
+                        <span>✓ Уведомления на сайте и в Telegram</span>
+                    </div>
                 </a>
 
-                <div class="auth-heading">
-                    <p class="eyebrow">Новый аккаунт</p>
-                    <h1>Регистрация</h1>
-                    <p>Заполни основные данные. Всё остальное можно настроить позже в профиле.</p>
-                </div>
-
-                <form method="post" class="auth-form auth-form-modern auth-register-grid" novalidate>
-                    {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                        <div class="auth-form-alert auth-grid-full" role="alert">
-                            <span>!</span>
-                            <div>{{ form.non_field_errors }}</div>
-                        </div>
-                    {% endif %}
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.username.label }}</span>
-                        <span class="auth-input-wrap">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg>
-                            {{ form.username }}
-                        </span>
-                        {{ form.username.errors }}
-                    </label>
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.email.label }}</span>
-                        <span class="auth-input-wrap">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></svg>
-                            {{ form.email }}
-                        </span>
-                        {{ form.email.errors }}
-                    </label>
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.first_name.label }}</span>
-                        <span class="auth-input-wrap auth-input-no-icon">{{ form.first_name }}</span>
-                        {{ form.first_name.errors }}
-                    </label>
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.last_name.label }}</span>
-                        <span class="auth-input-wrap auth-input-no-icon">{{ form.last_name }}</span>
-                        {{ form.last_name.errors }}
-                    </label>
-
-                    <label class="form-field auth-field auth-grid-full">
-                        <span class="auth-field-label">{{ form.role.label }}</span>
-                        <span class="auth-input-wrap auth-input-select">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-                            {{ form.role }}
-                        </span>
-                        <small class="auth-field-help">Тип аккаунта определяет стартовый вид личного кабинета.</small>
-                        {{ form.role.errors }}
-                    </label>
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.password1.label }}</span>
-                        <span class="auth-input-wrap">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
-                            {{ form.password1 }}
-                        </span>
-                        {{ form.password1.errors }}
-                    </label>
-
-                    <label class="form-field auth-field">
-                        <span class="auth-field-label">{{ form.password2.label }}</span>
-                        <span class="auth-input-wrap">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
-                            {{ form.password2 }}
-                        </span>
-                        {{ form.password2.errors }}
-                    </label>
-
-                    <button class="auth-submit auth-grid-full" type="submit">
-                        <span>Создать аккаунт</span>
-                        <span class="auth-submit-arrow">→</span>
-                    </button>
-                </form>
-
-                <p class="auth-legal">Создавая аккаунт, вы подтверждаете, что указали корректные данные.</p>
-
-                <div class="auth-bottom-line">
-                    <span>Уже зарегистрированы?</span>
-                    <a href="{% url 'cabinet:login' %}">Войти</a>
-                </div>
+                <a class="capper-register-choice is-capper" href="{% url 'cabinet:register' %}?type=capper">
+                    <span class="capper-register-choice-icon">C</span>
+                    <h2>Я каппер</h2>
+                    <p>Создать публичный профиль, публиковать прогнозы и строить подтверждённую историю результатов.</p>
+                    <div class="capper-register-benefits">
+                        <span>✓ Публичная статистика и ROI</span>
+                        <span>✓ Рейтинг и достижения</span>
+                        <span>✓ Подписчики и публичная ссылка</span>
+                        <span>✓ Страница для Telegram и соцсетей</span>
+                    </div>
+                </a>
             </div>
-        </div>
+        {% else %}
+            <p>{% if selected_type == 'capper' %}Создайте аккаунт, затем пройдите 5 коротких шагов и увидите готовый публичный профиль.{% else %}Заполните основные данные — всё остальное можно настроить позже.{% endif %}</p>
+
+            <div class="capper-register-selected">
+                <div>
+                    <strong>{% if selected_type == 'capper' %}Вы выбрали: Каппер{% else %}Вы выбрали: Пользователь{% endif %}</strong>
+                    <small>{% if selected_type == 'capper' %}Публичный профиль, рейтинг, статистика, достижения и подписчики.{% else %}Лента, подписки, избранное и уведомления.{% endif %}</small>
+                </div>
+                <a href="{% url 'cabinet:register' %}">Изменить</a>
+            </div>
+
+            <form method="post" class="auth-form auth-form-modern auth-register-grid" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="account_type" value="{{ selected_type }}">
+                {{ form.role }}
+
+                {% if form.non_field_errors %}
+                    <div class="auth-form-alert auth-grid-full" role="alert">
+                        <span>!</span>
+                        <div>{{ form.non_field_errors }}</div>
+                    </div>
+                {% endif %}
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.username.label }}</span>
+                    <span class="auth-input-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg>
+                        {{ form.username }}
+                    </span>
+                    {{ form.username.errors }}
+                </label>
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.email.label }}</span>
+                    <span class="auth-input-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></svg>
+                        {{ form.email }}
+                    </span>
+                    {{ form.email.errors }}
+                </label>
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.first_name.label }}</span>
+                    <span class="auth-input-wrap auth-input-no-icon">{{ form.first_name }}</span>
+                    {{ form.first_name.errors }}
+                </label>
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.last_name.label }}</span>
+                    <span class="auth-input-wrap auth-input-no-icon">{{ form.last_name }}</span>
+                    {{ form.last_name.errors }}
+                </label>
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.password1.label }}</span>
+                    <span class="auth-input-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
+                        {{ form.password1 }}
+                    </span>
+                    {{ form.password1.errors }}
+                </label>
+
+                <label class="form-field auth-field">
+                    <span class="auth-field-label">{{ form.password2.label }}</span>
+                    <span class="auth-input-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"/></svg>
+                        {{ form.password2 }}
+                    </span>
+                    {{ form.password2.errors }}
+                </label>
+
+                <button class="auth-submit auth-grid-full" type="submit">
+                    <span>{% if selected_type == 'capper' %}Создать профиль каппера{% else %}Создать аккаунт{% endif %}</span>
+                    <span class="auth-submit-arrow">→</span>
+                </button>
+            </form>
+
+            {% if selected_type == 'capper' %}
+            <div class="capper-telegram-path">
+                <span>Уже есть аккаунт или хотите войти через Telegram?</span>
+                <a href="{% url 'cabinet:login' %}?next={% url 'cabinet:become_capper_start' %}">Войти и продолжить как каппер →</a>
+            </div>
+            {% endif %}
+
+            <div class="auth-bottom-line">
+                <span>Уже зарегистрированы?</span>
+                <a href="{% url 'cabinet:login' %}">Войти</a>
+            </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
