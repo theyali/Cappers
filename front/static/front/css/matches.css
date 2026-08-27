@@ -1326,16 +1326,26 @@
 
 @media (max-width: 640px) {
     .matches-hero {
-        min-height: 190px;
+        min-height: auto;
         align-items: flex-start;
         flex-direction: column;
+        padding: 15px;
     }
 
     .matches-hero-meta {
         width: 100%;
-        min-height: 74px;
-        justify-items: start;
+        min-height: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-radius: 8px;
     }
+    .matches-hero-meta span {
+        color: var(--yellow);
+        font-size: 20px;
+        line-height: 1;
+    }
+
 
     .matches-grid {
         grid-template-columns: 1fr;
