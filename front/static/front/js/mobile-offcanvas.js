@@ -4,7 +4,7 @@
     const closeButton = panel?.querySelector("[data-mobile-offcanvas-close]");
     if (!toggle || !panel || !closeButton) return;
 
-    const mobileQuery = window.matchMedia("(max-width: 760px)");
+    const mobileQuery = window.matchMedia("(max-width: 1120px)");
     let previousFocus = null;
 
     const focusableSelector = [

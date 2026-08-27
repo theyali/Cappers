@@ -3,7 +3,7 @@
     display: none;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1120px) {
     .site-nav-actions .nav-profile-menu,
     .site-nav-actions .nav-form {
         display: none !important;
@@ -80,7 +80,6 @@
 
     body.mobile-offcanvas-open {
         overflow: hidden;
-        touch-action: none;
     }
 
     .mobile-offcanvas-head {
