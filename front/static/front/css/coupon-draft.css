@@ -55,6 +55,25 @@
     animation-delay: .24s;
 }
 
+/* A collapsed grid child still participates in the parent grid and leaves its
+   row gap behind. Collapse the parent gaps together with the hidden content so
+   the compact coupon/header cards keep an even shape. */
+.coupon-panel {
+    transition: row-gap .24s ease;
+}
+
+.coupon-sidebar.is-collapsed .coupon-panel {
+    row-gap: 0;
+}
+
+.coupon-item {
+    transition: row-gap .2s ease;
+}
+
+.coupon-item.is-collapsed {
+    row-gap: 0;
+}
+
 .coupon-confidence {
     display: grid;
     gap: 9px;
@@ -131,6 +150,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .coupon-panel,
+    .coupon-item,
     .coupon-submit-label,
     .coupon-submit-progress,
     .coupon-loader-dots i,
