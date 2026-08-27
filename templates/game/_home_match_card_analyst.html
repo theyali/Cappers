@@ -1,0 +1,63 @@
+<article class="match-card" data-match-card data-match-id="{{ match.id }}">
+    {% if match.predictions_count %}
+    <span
+        class="match-prediction-badge{% if match.predictions_count > 10 %} is-high{% elif match.predictions_count > 5 %} is-mid{% else %} is-low{% endif %}"
+        title="{{ match.predictions_count }} прогнозов"
+        aria-label="{{ match.predictions_count }} прогнозов"
+    >{{ match.predictions_count }}</span>
+    {% endif %}
+
+    <a class="match-card-main" href="{{ match.get_absolute_url }}">
+        <div class="match-card-head">
+            <div class="match-league">
+                <span class="league-mark">
+                    {% if match.league and match.league.logo %}
+                        <img src="{{ match.league.logo }}" alt="" loading="lazy">
+                    {% else %}
+                        {{ match.league_name|default:"Лига"|slice:":1" }}
+                    {% endif %}
+                </span>
+                <div>
+                    <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
+                    {% if match.league_country %}<small>{{ match.league_country }}</small>{% endif %}
+                </div>
+            </div>
+            <span class="match-status match-status-{{ match.sync_scope }}">{{ match.get_sync_scope_display }}</span>
+        </div>
+
+        <div class="match-teams">
+            <div class="match-team">
+                <span class="team-logo">
+                    {% if match.home_team_logo %}<img src="{{ match.home_team_logo }}" alt="" loading="lazy">{% else %}<span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>{% endif %}
+                </span>
+                <strong>{{ match.home_team_name|default:"Хозяева" }}</strong>
+            </div>
+            <div class="match-score">
+                {% if match.score %}<strong>{{ match.score }}</strong>{% else %}<strong>vs</strong>{% endif %}
+                {% if match.starts_at %}<span>{{ match.starts_at|date:"d.m H:i" }}</span>{% endif %}
+            </div>
+            <div class="match-team">
+                <span class="team-logo">
+                    {% if match.away_team_logo %}<img src="{{ match.away_team_logo }}" alt="" loading="lazy">{% else %}<span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>{% endif %}
+                </span>
+                <strong>{{ match.away_team_name|default:"Гости" }}</strong>
+            </div>
+        </div>
+
+        <div class="match-card-foot">
+            <span>{% if match.starts_at %}{{ match.starts_at|date:"d.m.Y H:i" }}{% else %}Время не указано{% endif %}</span>
+            <span>ID {{ match.external_id }}</span>
+        </div>
+    </a>
+
+    <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
+
+    <div class="coupon-options match-card-options" aria-label="Коэффициенты матча">
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>1</span><small>{{ match.coupon_odds.home }}</small></a>
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>X</span><small>{{ match.coupon_odds.draw }}</small></a>
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>2</span><small>{{ match.coupon_odds.away }}</small></a>
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>ТБ 2.5</span><small>{{ match.coupon_odds.over25 }}</small></a>
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>ТМ 2.5</span><small>{{ match.coupon_odds.under25 }}</small></a>
+        <a class="coupon-option match-bet-option" href="{{ match.get_absolute_url }}"><span>ОЗ Да</span><small>{{ match.coupon_odds.btts_yes }}</small></a>
+    </div>
+</article>
