@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="{% static 'front/css/profile.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/profile-achievements.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/capper-dashboard.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -98,166 +99,29 @@
             <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
         {% endif %}
         <a class="{% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>Подписки</a>
+        <a class="{% if active_tab == 'settings' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Настройки</a>
     </nav>
 
     <section class="profile-tab-panel {% if active_tab == 'profile' %}is-active{% endif %}" id="profile-tab-profile" data-profile-tab-panel="profile">
-    <div class="profile-layout">
-        <form method="post" class="profile-form-card" novalidate>
-            {% csrf_token %}
-            <div class="profile-section-heading">
-                <div>
-                    <p class="eyebrow">Настройки аккаунта</p>
-                    <h2>Личные данные</h2>
-                </div>
-                <button type="submit" class="profile-save-button">Сохранить изменения</button>
-            </div>
-
-            {% if user_form.non_field_errors or analyst_form.non_field_errors %}
-                <div class="profile-form-alert">
-                    {{ user_form.non_field_errors }}
-                    {% if analyst_form %}{{ analyst_form.non_field_errors }}{% endif %}
-                </div>
-            {% endif %}
-
-            <div class="profile-fields-grid">
-                <label class="profile-field">
-                    <span>Логин</span>
-                    <div class="profile-readonly">@{{ request.user.username }}</div>
-                </label>
-                <label class="profile-field">
-                    <span>{{ user_form.email.label }}</span>
-                    {{ user_form.email }}
-                    {{ user_form.email.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ user_form.first_name.label }}</span>
-                    {{ user_form.first_name }}
-                    {{ user_form.first_name.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ user_form.last_name.label }}</span>
-                    {{ user_form.last_name }}
-                    {{ user_form.last_name.errors }}
-                </label>
-
-                {% if analyst_form %}
-                    <label class="profile-field profile-field-full">
-                        <span>{{ analyst_form.display_name.label }}</span>
-                        {{ analyst_form.display_name }}
-                        {{ analyst_form.display_name.errors }}
-                    </label>
-                    <label class="profile-field profile-field-full">
-                        <span>{{ analyst_form.bio.label }}</span>
-                        {{ analyst_form.bio }}
-                        {{ analyst_form.bio.errors }}
-                        <small>До 2000 символов. Коротко опишите специализацию и интересы.</small>
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.telegram_channel.label }}</span>
-                        {{ analyst_form.telegram_channel }}
-                        {{ analyst_form.telegram_channel.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.telegram_account.label }}</span>
-                        {{ analyst_form.telegram_account }}
-                        {{ analyst_form.telegram_account.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.instagram.label }}</span>
-                        {{ analyst_form.instagram }}
-                        {{ analyst_form.instagram.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.threads.label }}</span>
-                        {{ analyst_form.threads }}
-                        {{ analyst_form.threads.errors }}
-                    </label>
-                    <label class="profile-field profile-field-full">
-                        <span>{{ analyst_form.youtube.label }}</span>
-                        {{ analyst_form.youtube }}
-                        {{ analyst_form.youtube.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.tiktok.label }}</span>
-                        {{ analyst_form.tiktok }}
-                        {{ analyst_form.tiktok.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.facebook.label }}</span>
-                        {{ analyst_form.facebook }}
-                        {{ analyst_form.facebook.errors }}
-                    </label>
-                    <div class="profile-visibility profile-field-full">
-                        <div>
-                            <strong>Публичный профиль</strong>
-                            <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
-                        </div>
-                        <label class="switch-control">
-                            {{ analyst_form.is_public }}
-                            <span></span>
-                        </label>
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="profile-mobile-save">
-                <button type="submit" class="profile-save-button">Сохранить изменения</button>
-            </div>
-        </form>
-
-        <aside class="profile-side-column">
-            <section class="profile-side-card profile-telegram-card">
-                <div class="profile-telegram-head">
-                    <span class="profile-telegram-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M21 4 3.6 10.8c-1 .39-.95 1.83.08 2.14l4.24 1.28 1.62 5.1c.31.98 1.63 1.16 2.19.3l2.32-3.58 4.56 3.34c.83.61 2.01.13 2.18-.89L23 5.33C23.16 4.35 21.91 3.65 21 4Zm-3.77 4.02-7.7 6.83-.29 2.11-1.02-3.21 9.01-5.73Z"></path></svg>
-                    </span>
+        {% if request.user.is_analyst %}
+            {% include "cabinet/_profile_dashboard.html" %}
+        {% else %}
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
                     <div>
-                        <p class="eyebrow">Telegram</p>
-                        <h3>Бот и сайт</h3>
+                        <p class="eyebrow">Профиль</p>
+                        <h2>Ваш аккаунт</h2>
                     </div>
+                    <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Настройки</a>
                 </div>
-
-                {% if telegram_account or notification_preferences.telegram_chat_id %}
-                    <div class="profile-telegram-state is-connected">
-                        <strong>Telegram подключён</strong>
-                        <span>
-                            {% if telegram_account.username %}
-                                @{{ telegram_account.username }}
-                            {% elif notification_preferences.telegram_username %}
-                                @{{ notification_preferences.telegram_username }}
-                            {% else %}
-                                Аккаунт связан
-                            {% endif %}
-                        </span>
-                    </div>
-                    <label class="profile-telegram-toggle">
-                        <input type="checkbox" checked disabled>
-                        <span>Уведомления доступны через бота</span>
-                    </label>
-                    <form method="post" action="{% url 'notifications:telegram_disconnect' %}">
-                        {% csrf_token %}
-                        <button class="profile-telegram-disconnect" type="submit">Отключить Telegram</button>
-                    </form>
-                {% elif telegram_bot_configured %}
-                    <p class="profile-telegram-copy">Свяжите аккаунт с Telegram, чтобы открывать сайт из бота и получать уведомления.</p>
-                    <a class="profile-telegram-connect" href="{% url 'notifications:telegram_connect' %}" target="_blank" rel="noopener noreferrer">Подключить Telegram</a>
-                {% else %}
-                    <p class="profile-telegram-copy">Telegram-бот ещё не настроен на сервере.</p>
-                {% endif %}
-            </section>
-
-            <section class="profile-side-card">
-                <p class="eyebrow">Аккаунт</p>
-                <h3>Информация</h3>
                 <dl class="profile-info-list">
-                    <div><dt>Email</dt><dd>{{ request.user.email|default:"—" }}</dd></div>
-                    <div><dt>Дата регистрации</dt><dd>{{ request.user.date_joined|date:"d.m.Y" }}</dd></div>
-                    <div><dt>Последний вход</dt><dd>{% if request.user.last_login %}{{ request.user.last_login|date:"d.m.Y H:i" }}{% else %}—{% endif %}</dd></div>
-                    <div><dt>Аккаунт</dt><dd>{% if request.user.is_active %}Активен{% else %}Отключён{% endif %}</dd></div>
+                    <div><dt>Логин</dt><dd>@{{ request.user.username }}</dd></div>
+                    <div><dt>Роль</dt><dd>{{ request.user.get_role_display }}</dd></div>
+                    <div><dt>Подписки</dt><dd>{{ following_count }}</dd></div>
+                    <div><dt>На платформе с</dt><dd>{{ request.user.date_joined|date:"d.m.Y" }}</dd></div>
                 </dl>
-            </section>
-        </aside>
-    </div>
+            </div>
+        {% endif %}
     </section>
 
     {% if request.user.is_analyst %}
@@ -282,21 +146,10 @@
                             <span>{{ coupon.created_at|date:"d.m.Y · H:i" }}</span>
                         </div>
                     </div>
-
                     <span class="profile-coupon-status is-{{ coupon.result_key }}">{{ coupon.result_label }}</span>
-
-                    <div class="profile-coupon-metric">
-                        <span>Матчи</span>
-                        <strong>{{ coupon.predictions_count }}</strong>
-                    </div>
-                    <div class="profile-coupon-metric">
-                        <span>Сумма</span>
-                        <strong>{{ coupon.total_stake }}</strong>
-                    </div>
-                    <div class="profile-coupon-metric">
-                        <span>Возможный выигрыш</span>
-                        <strong>{{ coupon.possible_payout }}</strong>
-                    </div>
+                    <div class="profile-coupon-metric"><span>Матчи</span><strong>{{ coupon.predictions_count }}</strong></div>
+                    <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ coupon.total_stake }}</strong></div>
+                    <div class="profile-coupon-metric"><span>Возможный выигрыш</span><strong>{{ coupon.possible_payout }}</strong></div>
                     <span class="profile-coupon-open" aria-hidden="true">→</span>
                 </a>
                 {% endfor %}
@@ -325,18 +178,13 @@
             </div>
 
             <div class="profile-achievements-overall">
-                <div>
-                    <span>Общий прогресс</span>
-                    <strong>{{ achievement_overview.completion_percent }}%</strong>
-                </div>
+                <div><span>Общий прогресс</span><strong>{{ achievement_overview.completion_percent }}%</strong></div>
                 <div class="profile-achievements-track"><i style="width: {{ achievement_overview.completion_percent }}%"></i></div>
             </div>
 
             {% if achievement_overview.next_achievement %}
             <article class="profile-next-achievement">
-                <span class="profile-next-achievement-icon">
-                    <img src="{% static achievement_overview.next_achievement.icon %}" alt="">
-                </span>
+                <span class="profile-next-achievement-icon"><img src="{% static achievement_overview.next_achievement.icon %}" alt=""></span>
                 <div>
                     <span>Ближайшая ачивка</span>
                     <strong>{{ achievement_overview.next_achievement.label }}</strong>
@@ -349,11 +197,7 @@
             </article>
             {% else %}
             <article class="profile-next-achievement is-complete">
-                <div>
-                    <span>Коллекция завершена</span>
-                    <strong>Все достижения получены</strong>
-                    <small>Вы открыли все доступные ачивки.</small>
-                </div>
+                <div><span>Коллекция завершена</span><strong>Все достижения получены</strong><small>Вы открыли все доступные ачивки.</small></div>
             </article>
             {% endif %}
 
@@ -361,23 +205,14 @@
                 {% for achievement in achievement_overview.items %}
                 <article class="profile-achievement-card{% if achievement.unlocked %} is-unlocked{% else %} is-locked{% endif %}" data-achievement="{{ achievement.key }}">
                     <div class="profile-achievement-topline">
-                        <span class="profile-achievement-icon">
-                            <img src="{% static achievement.icon %}" alt="">
-                        </span>
-                        {% if achievement.unlocked %}
-                            <span class="profile-achievement-state is-unlocked">Получено</span>
-                        {% else %}
-                            <span class="profile-achievement-state">{{ achievement.progress }}%</span>
-                        {% endif %}
+                        <span class="profile-achievement-icon"><img src="{% static achievement.icon %}" alt=""></span>
+                        {% if achievement.unlocked %}<span class="profile-achievement-state is-unlocked">Получено</span>{% else %}<span class="profile-achievement-state">{{ achievement.progress }}%</span>{% endif %}
                     </div>
                     <span class="profile-achievement-category">{{ achievement.category }}</span>
                     <h3>{{ achievement.label }}</h3>
                     <p>{{ achievement.description }}</p>
                     <div class="profile-achievement-progress"><i style="width: {{ achievement.progress }}%"></i></div>
-                    <div class="profile-achievement-meta">
-                        <span>Сейчас: {{ achievement.current_label }}</span>
-                        <strong>Цель: {{ achievement.target_label }}</strong>
-                    </div>
+                    <div class="profile-achievement-meta"><span>Сейчас: {{ achievement.current_label }}</span><strong>Цель: {{ achievement.target_label }}</strong></div>
                 </article>
                 {% endfor %}
             </div>
@@ -387,10 +222,7 @@
     <section class="profile-tab-panel {% if active_tab == 'followers' %}is-active{% endif %}" id="profile-tab-followers" data-profile-tab-panel="followers">
         <div class="profile-list-card">
             <div class="profile-list-head">
-                <div>
-                    <p class="eyebrow">Подписчики</p>
-                    <h2>Кто следит за вами</h2>
-                </div>
+                <div><p class="eyebrow">Подписчики</p><h2>Кто следит за вами</h2></div>
                 <label class="profile-search">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
                     <input type="search" placeholder="Поиск по username" data-profile-list-search="followers">
@@ -400,10 +232,7 @@
                 {% for follow in followers %}
                     <article class="profile-user-row" data-profile-username="{{ follow.follower.username|lower }}">
                         <div class="profile-user-avatar">{{ follow.follower.username|first|upper }}</div>
-                        <div>
-                            <strong>@{{ follow.follower.username }}</strong>
-                            <span>{{ follow.follower.get_role_display }}</span>
-                        </div>
+                        <div><strong>@{{ follow.follower.username }}</strong><span>{{ follow.follower.get_role_display }}</span></div>
                         {% if request.user.is_analyst and follow.follower.is_analyst and follow.follower.id not in following_ids %}
                             <button class="profile-row-action" type="button" data-follow-url="{% url 'cabinet:follow_analyst' follow.follower.id %}">Подписаться в ответ</button>
                         {% elif follow.follower.id in following_ids %}
@@ -426,10 +255,7 @@
     <section class="profile-tab-panel {% if active_tab == 'following' %}is-active{% endif %}" id="profile-tab-following" data-profile-tab-panel="following">
         <div class="profile-list-card">
             <div class="profile-list-head">
-                <div>
-                    <p class="eyebrow">Подписки</p>
-                    <h2>Ваши аналитики</h2>
-                </div>
+                <div><p class="eyebrow">Подписки</p><h2>Ваши аналитики</h2></div>
                 <label class="profile-search">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
                     <input type="search" placeholder="Поиск по username" data-profile-list-search="following">
@@ -439,10 +265,7 @@
                 {% for follow in following %}
                     <article class="profile-user-row" data-profile-username="{{ follow.analyst.username|lower }}">
                         <div class="profile-user-avatar">{{ follow.analyst.username|first|upper }}</div>
-                        <div>
-                            <strong>@{{ follow.analyst.username }}</strong>
-                            <span>{{ follow.analyst.get_role_display }}</span>
-                        </div>
+                        <div><strong>@{{ follow.analyst.username }}</strong><span>{{ follow.analyst.get_role_display }}</span></div>
                         <button class="profile-row-action is-muted" type="button">Вы подписаны</button>
                     </article>
                 {% empty %}
@@ -453,6 +276,10 @@
                 {% endfor %}
             </div>
         </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'settings' %}is-active{% endif %}" id="profile-tab-settings" data-profile-tab-panel="settings">
+        {% include "cabinet/_profile_settings.html" %}
     </section>
 </section>
 {% endblock %}
