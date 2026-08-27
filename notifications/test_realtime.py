@@ -27,6 +27,7 @@ class RealtimeNotificationSummaryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["unread_count"], 1)
+        self.assertEqual(payload["latest_id"], notification.id)
         self.assertEqual(payload["cursor_id"], notification.id)
         self.assertEqual(payload["notifications"], [])
 
@@ -53,11 +54,31 @@ class RealtimeNotificationSummaryTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
+        self.assertEqual(payload["latest_id"], second.id)
         self.assertEqual(payload["cursor_id"], second.id)
         self.assertEqual(len(payload["notifications"]), 1)
         self.assertEqual(payload["notifications"][0]["id"], second.id)
         self.assertEqual(payload["notifications"][0]["title"], "Новое достижение")
         self.assertEqual(payload["notifications"][0]["url"], "/notifications/")
+
+    def test_summary_resets_cursor_if_client_cursor_is_ahead(self):
+        notification = Notification.objects.create(
+            recipient=self.user,
+            kind=Notification.Kind.MATCH_REMINDER,
+            title="После сброса базы",
+            event_key="realtime:reset:1",
+        )
+
+        response = self.client.get(
+            reverse("notifications:summary"),
+            {"after_id": notification.id + 1000},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["latest_id"], notification.id)
+        self.assertEqual(payload["cursor_id"], notification.id)
+        self.assertEqual(payload["notifications"], [])
 
     def test_summary_does_not_leak_other_users_notifications(self):
         other = User.objects.create_user(
