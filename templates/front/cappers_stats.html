@@ -19,7 +19,7 @@
             <div>
                 <p class="cappers-eyebrow">Каталог экспертов</p>
                 <h1>Эксперты и аналитики</h1>
-                <p>Сравнивай экспертов по ROI, истории рассчитанных прогнозов, охвату видов спорта и интересу аудитории.</p>
+                <p>Сравнивай экспертов по ROI за последние {{ roi_period_days }} дней, истории рассчитанных прогнозов, охвату видов спорта и интересу аудитории.</p>
                 <div class="capper-growth-inline">
                     <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
                     <p>Создай публичную историю прогнозов и попади в этот рейтинг.</p>
@@ -60,7 +60,7 @@
                 <p class="cappers-eyebrow">Рейтинг по результатам</p>
                 <h2>Все эксперты</h2>
             </div>
-            <span>ROI с учётом истории · {{ experts_count }} профилей</span>
+            <span>ROI за {{ roi_period_days }} дней · {{ experts_count }} профилей</span>
         </div>
 
         <div class="cappers-pro-grid">
