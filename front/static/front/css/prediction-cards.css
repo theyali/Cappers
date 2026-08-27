@@ -166,6 +166,22 @@
     background: var(--yellow);
 }
 
+.prediction-follow-button [data-follow-icon="subscribe"] {
+    display: block;
+}
+
+.prediction-follow-button [data-follow-icon="unsubscribe"] {
+    display: none;
+}
+
+.prediction-follow-button.is-active [data-follow-icon="subscribe"] {
+    display: none;
+}
+
+.prediction-follow-button.is-active [data-follow-icon="unsubscribe"] {
+    display: block;
+}
+
 .prediction-follow-button:disabled {
     cursor: wait;
     opacity: .58;
