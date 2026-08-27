@@ -1,6 +1,6 @@
 {% load static site_extras %}
 
-<aside class="coupon-sidebar" aria-label="Прогноз">
+<aside class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write{% else %} coupon-sidebar-feed{% endif %}" aria-label="Прогноз">
     {% if can_write_coupon %}
     {% include "game/_coupon_panel.html" %}
     {{ draft_coupon|json_script:"coupon-draft-data" }}
@@ -32,7 +32,7 @@
                                 {% if prediction.match.league and prediction.match.league.logo %}
                                     <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
                                 {% else %}
-                                    {{ prediction.match.league_name|default:"Лига"|slice:":1" }}
+                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
                                 {% endif %}
                             </span>
                             <div>
