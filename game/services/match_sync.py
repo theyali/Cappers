@@ -4,6 +4,7 @@ from typing import Any
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 class MatchSyncService:
     """Provider-independent match synchronization facade."""
+
+    PREMATCH_TIME_STATUSES = {"0"}
+    LIVE_TIME_STATUSES = {"1", "2"}
+    TERMINAL_TIME_STATUSES = {"3", "4", "5", "6", "7", "8"}
 
     def __init__(self, provider: NeurokeffSportsProvider | None = None) -> None:
         self.provider = provider or NeurokeffSportsProvider()
@@ -32,6 +37,7 @@ class MatchSyncService:
         return self._sync_scope(
             Match.SyncScope.LIVE,
             self.provider.fetch_live_matches(),
+            derive_scope_from_payload=True,
         )
 
     def sync_finished(self) -> dict:
@@ -51,9 +57,10 @@ class MatchSyncService:
         threshold = timezone.now() - stale_after
         matches = list(
             Match.objects.filter(
+                Q(last_seen_at__lt=threshold)
+                | Q(time_status__in=self.TERMINAL_TIME_STATUSES),
                 provider=Provider.NEUROKEFF,
                 sync_scope=Match.SyncScope.LIVE,
-                last_seen_at__lt=threshold,
             ).order_by("last_seen_at", "id")[:limit]
         )
         external_ids = [match.external_id for match in matches]
@@ -109,11 +116,18 @@ class MatchSyncService:
         return result
 
     @transaction.atomic
-    def _sync_scope(self, scope: str, payloads: list[dict[str, Any]]) -> dict:
+    def _sync_scope(
+        self,
+        scope: str,
+        payloads: list[dict[str, Any]],
+        *,
+        derive_scope_from_payload: bool = False,
+    ) -> dict:
         scope_value = getattr(scope, "value", scope)
         created = 0
         updated = 0
         skipped = 0
+        scopes: dict[str, int] = {}
         now = timezone.now()
 
         for payload in payloads:
@@ -123,12 +137,18 @@ class MatchSyncService:
                 logger.warning("Skipping Neurokeff match without id: %s", payload)
                 continue
 
+            match_scope = (
+                self._scope_from_payload(payload, default=scope_value)
+                if derive_scope_from_payload
+                else scope_value
+            )
             match, was_created = Match.objects.update_or_create(
                 provider=Provider.NEUROKEFF,
                 external_id=external_id,
-                defaults={**self._match_defaults(payload, scope_value), "last_seen_at": now},
+                defaults={**self._match_defaults(payload, match_scope), "last_seen_at": now},
             )
             self._sync_odds(match, payload.get("odds") or {})
+            scopes[match_scope] = scopes.get(match_scope, 0) + 1
             if was_created:
                 created += 1
             else:
@@ -142,6 +162,8 @@ class MatchSyncService:
             "updated": updated,
             "skipped": skipped,
         }
+        if derive_scope_from_payload:
+            result["scopes"] = scopes
         logger.info("Match sync completed: %s", result)
         return result
 
@@ -369,6 +391,13 @@ class MatchSyncService:
         if value in (None, ""):
             return None
         normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+        if normalized in MatchSyncService.PREMATCH_TIME_STATUSES:
+            return Match.SyncScope.PREMATCH
+        if normalized in MatchSyncService.LIVE_TIME_STATUSES:
+            return Match.SyncScope.LIVE
+        if normalized in MatchSyncService.TERMINAL_TIME_STATUSES:
+            return Match.SyncScope.FINISHED
+
         if normalized in {
             "prematch",
             "pre_match",
@@ -377,7 +406,6 @@ class MatchSyncService:
             "not_started",
             "notstarted",
             "ns",
-            "0",
         }:
             return Match.SyncScope.PREMATCH
         if normalized in {
@@ -393,8 +421,6 @@ class MatchSyncService:
             "ht",
             "et",
             "p",
-            "1",
-            "2",
         }:
             return Match.SyncScope.LIVE
         if normalized in {
@@ -408,7 +434,6 @@ class MatchSyncService:
             "ft",
             "aet",
             "ap",
-            "3",
         }:
             return Match.SyncScope.FINISHED
         return None
