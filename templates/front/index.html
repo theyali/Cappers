@@ -12,7 +12,9 @@
 <link rel="stylesheet" href="{% static 'front/css/cappers-achievements.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/home-experts.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/capper-onboarding.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -191,6 +193,9 @@
             {% else %}
                 <a class="experts-bottom-action" href="{% url 'cabinet:register' %}">Присоединиться</a>
             {% endif %}
+            <div class="capper-growth-inline">
+                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+            </div>
         </section>
     </aside>
 </section>
@@ -210,7 +215,7 @@
     {% if important_matches %}
     <div class="matches-grid-home">
         {% for match in important_matches %}
-            {% include "game/_home_match_card.html" with match=match only %}
+            {% include "game/_home_match_card.html" with match=match request=request only %}
         {% endfor %}
     </div>
     {% else %}
@@ -229,6 +234,7 @@
             <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
         </div>
         <a class="home-best-experts-all" href="{% url 'front:cappers_stats' %}">Все прогнозисты</a>
+        <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
     </header>
 
     {% if best_experts %}
@@ -304,4 +310,5 @@
 <script src="{% static 'front/js/home.js' %}" defer></script>
 <script src="{% static 'front/js/article-slider.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
+<script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 {% endblock %}
