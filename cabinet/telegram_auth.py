@@ -11,6 +11,12 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET
 
+from notifications.telegram_bot import (
+    TelegramAlreadyLinkedError,
+    connect_verified_telegram_account,
+    find_linked_user_by_chat_id,
+)
+
 from .models import User
 
 
@@ -126,7 +132,19 @@ def telegram_login(request):
         "first_name": payload.get("first_name", "")[:150],
         "last_name": payload.get("last_name", "")[:150],
     }
+
     user = User.objects.filter(telegram_id=telegram_id).first()
+    linked_user = find_linked_user_by_chat_id(str(telegram_id))
+
+    if user and linked_user and user.pk != linked_user.pk:
+        messages.error(request, "Этот Telegram уже связан с другим профилем.")
+        return redirect("cabinet:login")
+
+    if user is None and linked_user is not None:
+        if linked_user.telegram_id not in {None, telegram_id}:
+            messages.error(request, "Этот профиль уже связан с другим Telegram.")
+            return redirect("cabinet:login")
+        user = linked_user
 
     if user is None:
         user = User(
@@ -138,6 +156,9 @@ def telegram_login(request):
         user.save()
     else:
         changed_fields = []
+        if user.telegram_id is None:
+            user.telegram_id = telegram_id
+            changed_fields.append("telegram_id")
         for field, value in defaults.items():
             if getattr(user, field) != value:
                 setattr(user, field, value)
@@ -149,8 +170,20 @@ def telegram_login(request):
         messages.error(request, "Этот аккаунт отключён.")
         return redirect("cabinet:login")
 
+    try:
+        connect_verified_telegram_account(
+            user,
+            chat_id=str(telegram_id),
+            telegram_username=payload.get("username", ""),
+            telegram_user=payload,
+            enable_notifications=True,
+        )
+    except TelegramAlreadyLinkedError:
+        messages.error(request, "Этот Telegram уже связан с другим профилем.")
+        return redirect("cabinet:login")
+
     login(request, user)
-    messages.success(request, "Вы вошли через Telegram.")
+    messages.success(request, "Вы вошли через Telegram. Telegram автоматически привязан к профилю.")
 
     next_url = request.session.pop("telegram_login_next", "")
     if next_url and url_has_allowed_host_and_scheme(

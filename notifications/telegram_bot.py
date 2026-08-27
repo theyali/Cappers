@@ -85,6 +85,77 @@ def build_connect_url(user) -> str:
     return f"https://t.me/{username}?start={urllib.parse.quote(payload, safe='')}"
 
 
+def find_linked_user_by_chat_id(chat_id: str):
+    account = (
+        TelegramAccount.objects.select_related("user")
+        .filter(chat_id=str(chat_id))
+        .first()
+    )
+    return account.user if account else None
+
+
+def connect_verified_telegram_account(
+    user,
+    *,
+    chat_id: str,
+    telegram_username: str = "",
+    telegram_user: dict | None = None,
+    enable_notifications: bool = True,
+):
+    now = timezone.now()
+    chat_id = str(chat_id)
+    telegram_user = telegram_user or {}
+    username = (
+        telegram_username
+        or str(telegram_user.get("username") or "")
+    ).strip().lstrip("@")[:80]
+
+    account_defaults = {
+        "chat_id": chat_id,
+        "username": username,
+        "first_name": str(telegram_user.get("first_name") or "")[:120],
+        "last_name": str(telegram_user.get("last_name") or "")[:120],
+        "last_seen_at": now,
+    }
+    language_code = str(telegram_user.get("language_code") or "")[:12]
+    if language_code:
+        account_defaults["language_code"] = language_code
+
+    with transaction.atomic():
+        existing_account = (
+            TelegramAccount.objects.select_for_update()
+            .select_related("user")
+            .filter(chat_id=chat_id)
+            .exclude(user=user)
+            .first()
+        )
+        if existing_account:
+            raise TelegramAlreadyLinkedError(existing_account.user)
+
+        account, _ = TelegramAccount.objects.update_or_create(
+            user=user,
+            defaults=account_defaults,
+        )
+
+        preferences, _ = NotificationPreference.objects.get_or_create(user=user)
+        preferences.telegram_chat_id = chat_id
+        preferences.telegram_username = username
+        preferences.telegram_connected_at = now
+        if enable_notifications:
+            preferences.telegram_enabled = True
+        preferences.save(
+            update_fields=[
+                "telegram_chat_id",
+                "telegram_username",
+                "telegram_connected_at",
+                "telegram_enabled",
+                "updated_at",
+            ]
+        )
+
+    return account
+
+
 def consume_link_payload(
     payload: str,
     *,
@@ -112,51 +183,12 @@ def consume_link_payload(
         if not link:
             return None
 
-        chat_id = str(chat_id)
-        telegram_user = telegram_user or {}
-        username = (
-            telegram_username
-            or str(telegram_user.get("username") or "")
-        ).strip().lstrip("@")[:80]
-
-        existing_account = (
-            TelegramAccount.objects.select_for_update()
-            .select_related("user")
-            .filter(chat_id=chat_id)
-            .exclude(user=link.user)
-            .first()
-        )
-        if existing_account:
-            raise TelegramAlreadyLinkedError(existing_account.user)
-
-        account, _ = TelegramAccount.objects.update_or_create(
-            user=link.user,
-            defaults={
-                "chat_id": chat_id,
-                "username": username,
-                "first_name": str(telegram_user.get("first_name") or "")[:120],
-                "last_name": str(telegram_user.get("last_name") or "")[:120],
-                "language_code": str(telegram_user.get("language_code") or "")[:12],
-                "last_seen_at": now,
-            },
-        )
-        if account.connected_at is None:
-            account.connected_at = now
-            account.save(update_fields=["connected_at"])
-
-        preferences, _ = NotificationPreference.objects.get_or_create(user=link.user)
-        preferences.telegram_chat_id = chat_id
-        preferences.telegram_username = username
-        preferences.telegram_connected_at = now
-        preferences.telegram_enabled = True
-        preferences.save(
-            update_fields=[
-                "telegram_chat_id",
-                "telegram_username",
-                "telegram_connected_at",
-                "telegram_enabled",
-                "updated_at",
-            ]
+        connect_verified_telegram_account(
+            link.user,
+            chat_id=str(chat_id),
+            telegram_username=telegram_username,
+            telegram_user=telegram_user,
+            enable_notifications=True,
         )
 
         link.used_at = now

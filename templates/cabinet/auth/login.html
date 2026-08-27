@@ -119,7 +119,7 @@
                                     button.disabled = true;
                                     button.classList.add("is-loading");
 
-                                    window.Telegram.Login.auth({ bot_id: botId }, (user) => {
+                                    window.Telegram.Login.auth({ bot_id: botId, request_access: "write" }, (user) => {
                                         if (!user) {
                                             setIdle();
                                             showStatus("Вход через Telegram отменён.");
