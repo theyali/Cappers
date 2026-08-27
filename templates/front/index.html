@@ -208,7 +208,7 @@
     </header>
 
     {% if important_matches %}
-    <div class="matches-grid">
+    <div class="matches-grid-home">
         {% for match in important_matches %}
             {% include "game/_home_match_card.html" with match=match only %}
         {% endfor %}

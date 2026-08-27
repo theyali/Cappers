@@ -14,7 +14,7 @@ from game.models import Match, Prediction, PredictionCoupon
 
 HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
-HOME_MATCHES_LIMIT = 9
+HOME_MATCHES_LIMIT = 12
 HOME_EXPERTS_LIMIT = 6
 
 

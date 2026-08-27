@@ -1,30 +1,51 @@
 (() => {
-    const menu = document.querySelector("[data-profile-menu]");
-    if (!menu) return;
+    const menus = Array.from(document.querySelectorAll("[data-profile-menu]"));
+    if (!menus.length) return;
 
-    const toggle = menu.querySelector("[data-profile-menu-toggle]");
-    const dropdown = menu.querySelector("[data-profile-menu-dropdown]");
-    if (!toggle || !dropdown) return;
+    const closeTimers = new WeakMap();
 
-    const setOpen = (isOpen) => {
+    const setOpen = (menu, isOpen) => {
+        const toggle = menu.querySelector("[data-profile-menu-toggle]");
+        window.clearTimeout(closeTimers.get(menu));
         menu.classList.toggle("is-open", isOpen);
-        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        if (toggle) {
+            toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        }
     };
 
-    toggle.addEventListener("click", (event) => {
-        event.stopPropagation();
-        setOpen(!menu.classList.contains("is-open"));
+    const scheduleClose = (menu) => {
+        window.clearTimeout(closeTimers.get(menu));
+        closeTimers.set(menu, window.setTimeout(() => setOpen(menu, false), 180));
+    };
+
+    menus.forEach((menu) => {
+        const toggle = menu.querySelector("[data-profile-menu-toggle]");
+        const dropdown = menu.querySelector("[data-profile-menu-dropdown]");
+        if (!toggle || !dropdown) return;
+
+        menu.addEventListener("pointerenter", () => setOpen(menu, true));
+        menu.addEventListener("pointerleave", () => scheduleClose(menu));
+        menu.addEventListener("focusin", () => setOpen(menu, true));
+        menu.addEventListener("focusout", () => scheduleClose(menu));
+
+        toggle.addEventListener("click", (event) => {
+            event.stopPropagation();
+            setOpen(menu, !menu.classList.contains("is-open"));
+        });
+
+        dropdown.addEventListener("click", (event) => {
+            event.stopPropagation();
+        });
     });
 
-    dropdown.addEventListener("click", (event) => {
-        event.stopPropagation();
+    document.addEventListener("click", () => {
+        menus.forEach((menu) => setOpen(menu, false));
     });
-
-    document.addEventListener("click", () => setOpen(false));
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        setOpen(false);
-        toggle.focus();
+        menus.forEach((menu) => setOpen(menu, false));
+        const activeMenu = document.activeElement?.closest?.("[data-profile-menu]");
+        activeMenu?.querySelector("[data-profile-menu-toggle]")?.focus();
     });
 })();

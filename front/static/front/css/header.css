@@ -111,6 +111,7 @@
 .nav-profile-menu {
     position: relative;
     flex: 0 0 auto;
+    --profile-dropdown-width: 272px;
 }
 
 .nav-profile-menu::after {
@@ -118,8 +119,10 @@
     position: absolute;
     top: 100%;
     right: 0;
-    width: 100%;
-    height: 10px;
+    z-index: 59;
+    width: var(--profile-dropdown-width);
+    height: 18px;
+    pointer-events: auto;
 }
 
 .site-nav-actions .nav-profile {
@@ -146,21 +149,51 @@
 
 .nav-profile-dropdown {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 12px);
     right: 0;
     z-index: 60;
-    width: 230px;
+    width: var(--profile-dropdown-width);
     display: grid;
-    gap: 5px;
-    padding: 8px;
-    border-radius: 16px;
-    background: var(--panel);
+    gap: 7px;
+    padding: 10px;
+    border-radius: 18px;
+    background: #101011;
+    outline: 2px solid rgba(255, 255, 255, .08);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(-8px) scale(.98);
+    transform: translateY(-10px) scale(.98);
     transform-origin: top right;
-    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+
+.nav-profile-dropdown::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    right: 16px;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px 0 0 0;
+    background: #101011;
+    outline: 2px solid rgba(255, 255, 255, .08);
+    transform: rotate(45deg);
+}
+
+.nav-profile-dropdown::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 8px;
+    left: 8px;
+    height: 14px;
+    border-radius: 18px 18px 0 0;
+    background: #101011;
+}
+
+.nav-profile-dropdown > * {
+    position: relative;
+    z-index: 1;
 }
 
 .nav-profile-menu:hover .nav-profile-dropdown,
@@ -173,33 +206,86 @@
 }
 
 .site-nav-actions .nav-profile-dropdown a {
-    min-height: 46px;
+    min-height: 52px;
     justify-content: flex-start;
-    gap: 11px;
-    padding: 0 12px;
-    border-radius: 11px;
-    color: rgba(255, 255, 255, .76);
-    background: #171718;
-    font-size: 12px;
-    font-weight: 700;
+    gap: 12px;
+    padding: 0 10px;
+    border-radius: 13px;
+    color: rgba(255, 255, 255, .78);
+    background: #1b1b1d;
+    font-size: 13px;
+    font-weight: 500;
+    outline: 1px solid rgba(255, 255, 255, .04);
 }
 
 .site-nav-actions .nav-profile-dropdown a:hover {
     color: var(--text);
-    background: #29292c;
-    transform: translateX(2px);
+    background: #252528;
+    outline-color: rgba(251, 241, 16, .22);
+    transform: translateX(3px);
 }
 
-.nav-profile-dropdown-icon {
-    width: 30px;
-    height: 30px;
+.nav-profile-dropdown-head {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--panel);
+}
+
+.nav-profile-dropdown-avatar {
+    width: 42px;
+    height: 42px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    border-radius: 9px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #2a2a2d;
+}
+
+.nav-profile-dropdown-avatar img {
+    width: 27px;
+    height: 27px;
+    display: block;
+    object-fit: contain;
+}
+
+.nav-profile-dropdown-head div {
+    min-width: 0;
+}
+
+.nav-profile-dropdown-head strong,
+.nav-profile-dropdown-head span {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.nav-profile-dropdown-head strong {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.nav-profile-dropdown-head span {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.nav-profile-dropdown-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
     color: var(--yellow);
-    background: #242426;
-    transition: color .18s ease, background .18s ease;
+    background: #29292c;
+    transition: color .18s ease, background .18s ease, transform .18s ease;
 }
 
 .nav-profile-dropdown-icon svg {
@@ -215,6 +301,7 @@
 .site-nav-actions .nav-profile-dropdown a:hover .nav-profile-dropdown-icon {
     color: var(--ink);
     background: var(--yellow);
+    transform: scale(1.04);
 }
 
 .site-nav-actions .nav-logout {
@@ -332,7 +419,7 @@
 
     .nav-profile-dropdown {
         top: calc(100% + 7px);
-        width: min(230px, calc(100vw - 34px));
+        width: min(var(--profile-dropdown-width), calc(100vw - 34px));
     }
 
     .brand > span:last-child {
