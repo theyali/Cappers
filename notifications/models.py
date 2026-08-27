@@ -195,7 +195,7 @@ class AchievementState(models.Model):
 
     class Meta:
         verbose_name = "Состояние достижений для уведомлений"
-        verbose_name_plural = "Состояния достижений прогнозов"
+        verbose_name_plural = "Состояния достижений капперов"
 
     def __str__(self) -> str:
         return f"Достижения: {self.user}"
