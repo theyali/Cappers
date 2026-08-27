@@ -2,6 +2,19 @@
     const page = document.querySelector("[data-notifications-page]");
     if (!page) return;
 
+    const matchReminderLabel = page
+        .querySelector('input[name="match_reminder"]')
+        ?.closest("label")
+        ?.querySelector("span");
+    if (matchReminderLabel) {
+        matchReminderLabel.textContent = "События отслеживаемых матчей";
+    }
+
+    const watchEmpty = page.querySelector(".notification-watch-empty");
+    if (watchEmpty) {
+        watchEmpty.textContent = "Откройте предстоящий или LIVE-матч и нажмите «Следить за матчем».";
+    }
+
     const getCookie = (name) => {
         const cookies = document.cookie ? document.cookie.split(";") : [];
         for (const cookie of cookies) {
