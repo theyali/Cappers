@@ -1,0 +1,119 @@
+.notification-telegram-connect {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    background: #29292c;
+    border-radius: 14px;
+}
+
+.notification-telegram-connect.is-connected {
+    background: #18316d;
+}
+
+.notification-telegram-connect-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.notification-telegram-logo {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: #0b56fa;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .04em;
+}
+
+.notification-telegram-connect-head > div {
+    min-width: 0;
+}
+
+.notification-telegram-connect-head strong,
+.notification-telegram-connect-head small {
+    display: block;
+}
+
+.notification-telegram-connect-head strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.notification-telegram-connect-head small {
+    margin-top: 3px;
+    overflow: hidden;
+    color: rgba(255,255,255,.55);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notification-telegram-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 38px;
+    color: rgba(255,255,255,.82);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.notification-telegram-toggle input {
+    width: 17px;
+    height: 17px;
+    accent-color: #fbf110;
+}
+
+.notification-telegram-connect-button,
+.notification-telegram-disconnect {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.notification-telegram-connect-button {
+    background: #0b56fa;
+    color: #fff;
+}
+
+.notification-telegram-connect-button:hover {
+    background: #2469ff;
+}
+
+.notification-telegram-disconnect {
+    width: 100%;
+    background: #29292c;
+    color: rgba(255,255,255,.78);
+}
+
+.notification-telegram-disconnect:hover {
+    background: #323236;
+    color: #fff;
+}
+
+.notification-telegram-unavailable {
+    display: block;
+    color: #707072;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+#telegramDisconnectForm {
+    display: none;
+}
