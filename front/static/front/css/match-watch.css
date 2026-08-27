@@ -7,34 +7,126 @@
     height: 100%;
 }
 
-.match-watch-card-marker {
-    position: absolute;
-    top: -10px;
-    left: 16px;
-    z-index: 4;
-    width: 30px;
-    height: 30px;
+.match-status-live {
+    min-height: 30px;
+    gap: 8px;
+    padding: 0;
+    border-radius: 0;
+    color: #ef3b3b;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.match-live-dot {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
     display: grid;
     place-items: center;
-    border-radius: 9px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 18px;
-    font-weight: 900;
-    line-height: 1;
-    box-shadow: 0 8px 18px rgba(11, 86, 250, .24);
-    pointer-events: none;
+    border-radius: 50%;
+    background: rgba(239, 59, 59, .12);
+}
+
+.match-live-dot::before,
+.match-live-dot::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef3b3b;
+}
+
+.match-live-dot::before {
+    z-index: 2;
+}
+
+.match-live-dot::after {
+    z-index: 1;
+    animation: matchLivePulse 1.45s ease-out infinite;
+}
+
+@keyframes matchLivePulse {
+    0% {
+        opacity: .45;
+        transform: scale(1);
+    }
+    70%,
+    100% {
+        opacity: 0;
+        transform: scale(2.15);
+    }
+}
+
+.match-card-foot-link {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: inherit;
+}
+
+.match-card-watch-button {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: #858b98;
+    background: transparent;
+    cursor: pointer;
+    transition: color .18s ease, transform .18s ease, opacity .18s ease;
+}
+
+.match-card-watch-button svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    fill: transparent;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: fill .18s ease, stroke .18s ease, transform .18s ease;
+}
+
+.match-card-watch-button:hover {
+    color: var(--blue);
+    transform: translateY(-1px);
+}
+
+.match-card-watch-button.is-watching {
+    color: var(--blue);
+}
+
+.match-card-watch-button.is-watching svg {
+    fill: var(--blue);
+    stroke: var(--blue);
+}
+
+.match-card-watch-button:disabled {
+    opacity: .5;
+    cursor: wait;
 }
 
 .matches-tabs a.is-watch-tab:not(.is-active) span::before {
-    content: "◎";
+    content: "⌑";
     margin-right: 7px;
     color: var(--blue);
     font-weight: 900;
 }
 
-@media (max-width: 640px) {
-    .match-watch-card-marker {
-        left: 14px;
+@media (prefers-reduced-motion: reduce) {
+    .match-live-dot::after {
+        animation: none;
+        opacity: 0;
     }
 }
