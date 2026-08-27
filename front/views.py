@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Q
@@ -36,6 +37,12 @@ PREDICTION_STATUS_FILTERS = (
     (PredictionCoupon.StateStatus.WIN, "Выиграли"),
     (PredictionCoupon.StateStatus.LOSE, "Проиграли"),
     (PredictionCoupon.StateStatus.REFUND, "Возврат"),
+)
+
+SETTLED_EXPERT_STATES = (
+    PredictionCoupon.StateStatus.WIN,
+    PredictionCoupon.StateStatus.LOSE,
+    PredictionCoupon.StateStatus.REFUND,
 )
 
 
@@ -138,6 +145,16 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
     return best
 
 
+def _expert_ranking_score(profile) -> Decimal:
+    """Shrink ROI toward zero until an expert has a meaningful result history."""
+    settled_count = int(getattr(profile, "settled_count", 0) or 0)
+    if settled_count <= 0:
+        return Decimal("0")
+
+    roi = Decimal(getattr(profile, "author_roi", 0) or 0)
+    return roi * Decimal(settled_count) / Decimal(settled_count + 10)
+
+
 def cappers_stats(request):
     recent_cutoff = timezone.now() - timedelta(days=30)
     published_filter = Q(user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
@@ -148,6 +165,11 @@ def cappers_stats(request):
         .annotate(
             followers_count=Count("user__analyst_followers", distinct=True),
             publications_count=Count("user__prediction_coupons", filter=published_filter, distinct=True),
+            settled_count=Count(
+                "user__prediction_coupons",
+                filter=published_filter & Q(user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES),
+                distinct=True,
+            ),
             wins_count=Count(
                 "user__prediction_coupons",
                 filter=published_filter & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN),
@@ -163,9 +185,24 @@ def cappers_stats(request):
         )
     )
     profiles = list(
-        annotate_author_roi(profiles_queryset, author_outer_ref="user_id", annotation_name="author_roi").order_by(
-            "-recent_publications_count", "-publications_count", "-followers_count", "-is_verified", "-created_at"
+        annotate_author_roi(
+            profiles_queryset,
+            author_outer_ref="user_id",
+            annotation_name="author_roi",
         )
+    )
+
+    # Stable, performance-first ranking. Recent posting activity no longer decides rank.
+    profiles.sort(key=lambda profile: profile.user.username.lower())
+    profiles.sort(
+        key=lambda profile: (
+            1 if profile.settled_count else 0,
+            _expert_ranking_score(profile),
+            profile.settled_count,
+            profile.followers_count,
+            profile.publications_count,
+        ),
+        reverse=True,
     )
 
     following_ids = set()
@@ -178,6 +215,7 @@ def cappers_stats(request):
     experts = []
     for profile in profiles:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        ranking_score = _expert_ranking_score(profile)
         unlocked_achievements = build_achievement_badges(
             predictions_count=profile.publications_count,
             wins_count=profile.wins_count,
@@ -194,6 +232,8 @@ def cappers_stats(request):
             "avatar_url": profile.avatar.url if profile.avatar else "",
             "verified": profile.is_verified,
             "roi": profile.author_roi,
+            "ranking_score": ranking_score.quantize(Decimal("0.01")),
+            "settled": profile.settled_count,
             "followers": profile.followers_count,
             "publications": profile.publications_count,
             "sports": profile.sports_count,
