@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from PIL import Image, UnidentifiedImageError
 
 from .models import AnalystProfile, User
 
@@ -33,6 +34,16 @@ def _validate_avatar(upload):
     content_type = getattr(upload, "content_type", "")
     if content_type and content_type not in ALLOWED_AVATAR_TYPES:
         return "Разрешены JPG, PNG и WebP."
+
+    try:
+        Image.open(upload).verify()
+    except (UnidentifiedImageError, OSError, ValueError):
+        return "Файл не является корректным изображением."
+    finally:
+        try:
+            upload.seek(0)
+        except (AttributeError, OSError):
+            pass
     return ""
 
 

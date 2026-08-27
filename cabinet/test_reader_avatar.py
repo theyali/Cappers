@@ -1,8 +1,10 @@
 import tempfile
+from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from .models import User
 
@@ -21,13 +23,21 @@ class ReaderAvatarTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    def test_reader_can_upload_avatar(self):
-        upload = SimpleUploadedFile(
+    @staticmethod
+    def _png_upload():
+        buffer = BytesIO()
+        Image.new("RGB", (2, 2), "white").save(buffer, format="PNG")
+        return SimpleUploadedFile(
             "avatar.png",
-            b"reader-avatar-content",
+            buffer.getvalue(),
             content_type="image/png",
         )
-        response = self.client.post(reverse("cabinet:avatar_upload"), {"avatar": upload})
+
+    def test_reader_can_upload_avatar(self):
+        response = self.client.post(
+            reverse("cabinet:avatar_upload"),
+            {"avatar": self._png_upload()},
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["ok"])
@@ -38,3 +48,13 @@ class ReaderAvatarTests(TestCase):
         response = self.client.get(reverse("cabinet:avatar_upload"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"ok": True, "avatar_url": ""})
+
+    def test_fake_image_is_rejected(self):
+        upload = SimpleUploadedFile(
+            "fake.png",
+            b"not-an-image",
+            content_type="image/png",
+        )
+        response = self.client.post(reverse("cabinet:avatar_upload"), {"avatar": upload})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
