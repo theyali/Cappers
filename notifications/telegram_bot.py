@@ -223,32 +223,53 @@ def _target_url(url: str | None = None) -> str:
     return target
 
 
+def telegram_webapp_url(next_path: str = "/cabinet/") -> str:
+    base_url = _target_url().rstrip("/")
+    if not base_url or not base_url.startswith("https://"):
+        return ""
+
+    next_path = str(next_path or "/cabinet/").strip()
+    if not next_path.startswith("/"):
+        next_path = "/cabinet/"
+
+    query = urllib.parse.urlencode({"next": next_path})
+    return f"{base_url}/cabinet/login/telegram-app/?{query}"
+
+
+def _same_site_destination(target: str) -> str:
+    base_url = _target_url().rstrip("/")
+    if not base_url or not target:
+        return ""
+
+    base = urllib.parse.urlsplit(base_url)
+    parsed = urllib.parse.urlsplit(target)
+    if parsed.scheme != base.scheme or parsed.netloc != base.netloc:
+        return ""
+
+    destination = parsed.path or "/"
+    if parsed.query:
+        destination = f"{destination}?{parsed.query}"
+    return destination
+
+
 def open_button(url: str | None = None) -> dict:
     target = _target_url(url)
     if not target:
         return {}
 
-    button = {"text": "Открыть Cappers"}
-    if target.startswith("https://"):
-        button["web_app"] = {"url": target}
+    button = {"text": "Открыть КапперХаб"}
+    destination = _same_site_destination(target)
+    webapp_target = telegram_webapp_url(destination) if destination else ""
+
+    if webapp_target:
+        button["web_app"] = {"url": webapp_target}
     else:
         button["url"] = target
     return {"inline_keyboard": [[button]]}
 
 
-def web_app_keyboard(url: str | None = None) -> dict:
-    target = _target_url(url)
-    if not target or not target.startswith("https://"):
-        return {}
-    return {
-        "keyboard": [[{"text": "Открыть сайт", "web_app": {"url": target}}]],
-        "resize_keyboard": True,
-        "is_persistent": True,
-    }
-
-
 def web_app_menu_button(url: str | None = None) -> dict:
-    target = _target_url(url)
+    target = (url or telegram_webapp_url("/cabinet/") or _target_url()).strip()
     if not target or not target.startswith("https://"):
         return {"type": "commands"}
     return {
@@ -258,13 +279,24 @@ def web_app_menu_button(url: str | None = None) -> dict:
     }
 
 
-def send_message(chat_id: str, text: str, *, open_url: str | None = None) -> None:
+def send_message(
+    chat_id: str,
+    text: str,
+    *,
+    open_url: str | None = None,
+    remove_keyboard: bool = False,
+) -> None:
     payload = {
         "chat_id": str(chat_id),
         "text": text,
         "disable_web_page_preview": True,
     }
-    markup = web_app_keyboard(open_url) or open_button(open_url)
-    if markup:
-        payload["reply_markup"] = markup
+
+    if remove_keyboard:
+        payload["reply_markup"] = {"remove_keyboard": True}
+    elif open_url:
+        markup = open_button(open_url)
+        if markup:
+            payload["reply_markup"] = markup
+
     api_call("sendMessage", payload)

@@ -1,0 +1,176 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Вход через Telegram — КапперХаб</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --blue: #0b56fa;
+            --ink: #131313;
+            --panel: #1f1f21;
+            --muted: #707072;
+            --yellow: #fbf110;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            min-height: 100%;
+            margin: 0;
+            background: var(--ink);
+            color: #fff;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .telegram-entry {
+            width: min(460px, 100%);
+            padding: 34px 28px;
+            border-radius: 24px;
+            background: var(--panel);
+            text-align: center;
+        }
+
+        .telegram-entry-logo {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 22px;
+            object-fit: contain;
+        }
+
+        .telegram-entry h1 {
+            margin: 0;
+            font-size: clamp(30px, 8vw, 44px);
+            line-height: 1;
+            letter-spacing: -.04em;
+        }
+
+        .telegram-entry p {
+            margin: 16px 0 0;
+            color: #b7b7b9;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+
+        .telegram-entry-status {
+            margin-top: 24px;
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 18px;
+            border-radius: 16px;
+            background: #171718;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .telegram-entry-dot {
+            width: 10px;
+            height: 10px;
+            margin-right: 10px;
+            border-radius: 50%;
+            background: var(--yellow);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .telegram-entry-status.is-error {
+            color: #fff;
+            background: #2a1b1b;
+        }
+
+        .telegram-entry-status.is-error .telegram-entry-dot {
+            background: #ff6b6b;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            50% { opacity: .35; transform: scale(.8); }
+        }
+    </style>
+</head>
+<body>
+    <main class="telegram-entry">
+        <img class="telegram-entry-logo" src="{% static 'front/img/logo.png' %}" alt="">
+        <h1>Входим в КапперХаб</h1>
+        <p>Подтверждаем ваш Telegram и открываем сайт уже авторизованным.</p>
+
+        <div class="telegram-entry-status" id="telegram-entry-status">
+            <span class="telegram-entry-dot" aria-hidden="true"></span>
+            <span id="telegram-entry-text">Проверяем Telegram…</span>
+        </div>
+
+        <form id="telegram-entry-form" hidden>
+            {% csrf_token %}
+        </form>
+    </main>
+
+    <script>
+        (() => {
+            const status = document.getElementById("telegram-entry-status");
+            const statusText = document.getElementById("telegram-entry-text");
+            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+            const endpoint = "{% url 'cabinet:telegram_webapp_login' %}";
+            const nextUrl = "{{ next_url|escapejs }}";
+
+            const fail = (message) => {
+                status.classList.add("is-error");
+                statusText.textContent = message;
+            };
+
+            const telegram = window.Telegram && window.Telegram.WebApp;
+            if (!telegram) {
+                fail("Откройте сайт через кнопку в Telegram-боте.");
+                return;
+            }
+
+            telegram.ready();
+            telegram.expand();
+
+            if (!telegram.initData) {
+                fail("Telegram не передал данные входа. Вернитесь в бот и нажмите «Открыть сайт».");
+                return;
+            }
+
+            const body = new URLSearchParams({
+                init_data: telegram.initData,
+                next: nextUrl,
+            });
+
+            fetch(endpoint, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: body.toString(),
+            })
+                .then(async (response) => {
+                    const data = await response.json();
+                    if (!response.ok || !data.ok) {
+                        throw new Error(data.message || "Не удалось выполнить вход.");
+                    }
+                    return data;
+                })
+                .then((data) => {
+                    statusText.textContent = "Готово. Открываем сайт…";
+                    window.location.replace(data.redirect || "/cabinet/");
+                })
+                .catch((error) => {
+                    fail(error.message || "Не удалось выполнить вход через Telegram.");
+                });
+        })();
+    </script>
+</body>
+</html>

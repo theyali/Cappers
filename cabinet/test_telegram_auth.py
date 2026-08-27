@@ -1,6 +1,8 @@
 import hashlib
 import hmac
+import json
 import time
+import urllib.parse
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -34,6 +36,39 @@ class TelegramAuthTests(TestCase):
             hashlib.sha256,
         ).hexdigest()
         return payload
+
+    def _signed_webapp_init_data(self, **user_overrides):
+        telegram_user = {
+            "id": 987654321,
+            "first_name": "Ali",
+            "last_name": "Telegram",
+            "username": "ali_tg",
+            "language_code": "ru",
+        }
+        telegram_user.update(user_overrides)
+        values = {
+            "auth_date": str(int(time.time())),
+            "query_id": "AAE-test-query",
+            "user": json.dumps(
+                telegram_user,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        }
+        data_check_string = "\n".join(
+            f"{key}={value}" for key, value in sorted(values.items())
+        )
+        secret_key = hmac.new(
+            b"WebAppData",
+            b"123456:test-token",
+            hashlib.sha256,
+        ).digest()
+        values["hash"] = hmac.new(
+            secret_key,
+            data_check_string.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        return urllib.parse.urlencode(values)
 
     def test_login_page_uses_custom_telegram_button_and_bot_id_from_token(self):
         response = self.client.get(reverse("cabinet:login"))
@@ -117,6 +152,53 @@ class TelegramAuthTests(TestCase):
         self.assertRedirects(response, reverse("cabinet:login"))
         self.assertFalse(User.objects.filter(telegram_id=987654321).exists())
         self.assertFalse(TelegramAccount.objects.filter(chat_id="987654321").exists())
+
+    def test_telegram_webapp_page_is_public_and_loads_sdk(self):
+        response = self.client.get(
+            reverse("cabinet:telegram_webapp_login"),
+            {"next": "/cabinet/profile/"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "telegram-web-app.js")
+        self.assertContains(response, "/cabinet/profile/")
+        self.assertContains(response, "telegram.initData")
+
+    def test_telegram_webapp_signed_data_logs_user_in_without_password(self):
+        response = self.client.post(
+            reverse("cabinet:telegram_webapp_login"),
+            {
+                "init_data": self._signed_webapp_init_data(),
+                "next": "/cabinet/profile/",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(response.json()["redirect"], "/cabinet/profile/")
+
+        user = User.objects.get(telegram_id=987654321)
+        self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
+        self.assertTrue(TelegramAccount.objects.filter(user=user).exists())
+        preferences = NotificationPreference.objects.get(user=user)
+        self.assertTrue(preferences.telegram_enabled)
+
+    def test_telegram_webapp_invalid_signature_is_rejected(self):
+        init_data = self._signed_webapp_init_data()
+        parsed = dict(urllib.parse.parse_qsl(init_data))
+        parsed["hash"] = "0" * 64
+
+        response = self.client.post(
+            reverse("cabinet:telegram_webapp_login"),
+            {
+                "init_data": urllib.parse.urlencode(parsed),
+                "next": "/cabinet/",
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.json()["ok"])
+        self.assertFalse(User.objects.filter(telegram_id=987654321).exists())
 
 
 @override_settings(TG_BOT_TOKEN="")

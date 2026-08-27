@@ -23,6 +23,11 @@ urlpatterns = [
         name="login",
     ),
     path("login/telegram/", telegram_auth.telegram_login, name="telegram_login"),
+    path(
+        "login/telegram-app/",
+        telegram_auth.telegram_webapp_login,
+        name="telegram_webapp_login",
+    ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path(
         "password-reset/",
