@@ -571,7 +571,7 @@
     min-width: 0;
     display: grid;
     gap: 12px;
-    padding: 12px;
+    padding: 9px;
     border-radius: 16px;
     background: #171718;
     outline: 1px solid rgba(255, 255, 255, .08);
@@ -596,12 +596,12 @@
 }
 
 .coupon-item-ball {
-    width: 34px;
-    height: 34px;
+    width: 26px;
+    height: 25px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    border-radius: 10px;
+    border-radius: 5px;
     color: var(--ink);
     background: var(--yellow);
 }
@@ -639,17 +639,19 @@
 
 .coupon-remove,
 .coupon-item-toggle {
-    width: 34px;
-    height: 34px;
+    width: 25px;
+    height: 25px;
     flex: 0 0 auto;
-    display: grid;
+    display: flex;
     place-items: center;
+    align-items: center;
+    justify-content: center;
     border: 0;
-    border-radius: 10px;
+    border-radius: 5px;
     color: var(--text);
     background: var(--danger);
     cursor: pointer;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .coupon-item-toggle {
@@ -749,13 +751,13 @@
 }
 
 .coupon-pick > span {
-    min-height: 38px;
+    min-height: 25px;
     display: inline-grid;
     place-items: center;
-    border-radius: 10px;
+    border-radius: 6px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 14px;
+    font-size: 11px;
 }
 
 .coupon-pick strong {
