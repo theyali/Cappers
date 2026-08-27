@@ -9,6 +9,8 @@
     --text: #f7f8ff;
     --soft: rgba(255, 255, 255, 0.72);
     --line: rgba(255, 255, 255, 0.12);
+    --brand-logo-size: 70px;
+    --nav-icon-size: 18px;
 }
 
 * {
@@ -60,7 +62,6 @@ h2 {
 }
 
 .site-nav {
-    height: 72px;
     margin: auto 30px;
     display: flex;
     align-items: center;
@@ -78,8 +79,8 @@ h2 {
 }
 
 .brand-logo {
-    width: 70px;
-    height: 70px;
+    width: var(--brand-logo-size);
+    aspect-ratio: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -88,8 +89,8 @@ h2 {
 }
 
 .brand-logo img {
-    width: 82%;
-    height: 82%;
+    width: 100%;
+    aspect-ratio: 1;
     object-fit: contain;
 }
 
@@ -228,8 +229,7 @@ h2 {
 }
 
 .site-footer-brand .brand-logo {
-    width: 54px;
-    height: 54px;
+    --brand-logo-size: 54px;
 }
 
 .site-footer-links {
@@ -816,15 +816,6 @@ h2 {
 }
 
 @media (max-width: 640px) {
-    .site-nav {
-        width: min(100% - 24px, 1180px);
-        height: auto;
-        min-height: 68px;
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 14px 0;
-    }
-
     .nav-links {
         width: 100%;
         overflow-x: auto;

@@ -6,10 +6,8 @@
 }
 
 .site-nav {
-    min-height: 72px;
-    height: auto;
     margin: 0;
-    padding: 0 22px;
+    padding: 10px 22px;
     display: grid;
     grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
     align-items: center;
@@ -61,8 +59,8 @@
 }
 
 .nav-icon {
-    width: 18px;
-    height: 18px;
+    width: var(--nav-icon-size);
+    aspect-ratio: 1;
     flex: 0 0 auto;
     display: inline-grid;
     place-items: center;
@@ -70,7 +68,7 @@
 
 .nav-icon svg {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -86,7 +84,7 @@
 
 .nav-icon-image img {
     width: 78%;
-    height: 78%;
+    aspect-ratio: 1;
     object-fit: contain;
     filter: none;
 }
