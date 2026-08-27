@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-feed-personal.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/capper-onboarding.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -18,6 +19,10 @@
             <p class="predictions-eyebrow">Лента экспертов</p>
             <h1>Все прогнозы</h1>
             <p>Ищите прогнозы по спорту, лиге, эксперту и коэффициенту. Можно отдельно смотреть live, матчи на сегодня и уже рассчитанные прогнозы.</p>
+            <div class="capper-growth-inline">
+                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+                <p>Публикуй свои прогнозы и собирай подтверждённую статистику рядом с другими экспертами.</p>
+            </div>
         </div>
         <div class="predictions-total">
             <strong>{{ filtered_predictions }}</strong>
