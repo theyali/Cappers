@@ -53,19 +53,19 @@
         order: 1;
     }
 
-    .mobile-nav-matches {
+    .mobile-nav-my {
         order: 2;
     }
 
-    .mobile-nav-coupon {
+    .mobile-nav-matches {
         order: 3;
     }
 
-    .mobile-nav-stats {
+    .mobile-nav-coupon {
         order: 4;
     }
 
-    .mobile-nav-my {
+    .mobile-nav-stats {
         order: 5;
     }
 
