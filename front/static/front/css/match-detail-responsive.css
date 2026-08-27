@@ -1,0 +1,410 @@
+@media (max-width: 1120px) {
+    .match-detail-page,
+    .match-detail-shell,
+    .match-detail-main,
+    .match-detail-card,
+    .match-odds-panel,
+    .odds-tab-panel,
+    .odds-section,
+    .odds-row {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .match-detail-page {
+        gap: 10px;
+    }
+
+    .match-detail-shell {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .match-detail-main {
+        gap: 10px;
+    }
+
+    .match-back-link {
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 12px;
+        font-size: 13px;
+    }
+
+    .match-detail-card {
+        gap: 14px;
+        padding: 14px;
+        border-radius: 18px;
+        outline: 0;
+    }
+
+    .match-detail-head {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .match-detail-head .match-league {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .match-detail-head .league-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }
+
+    .match-detail-head .match-league strong {
+        font-size: 14px;
+    }
+
+    .match-detail-head .match-league small {
+        font-size: 10px;
+    }
+
+    .match-detail-head .match-status {
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 10px;
+        font-size: 11px;
+    }
+
+    .match-detail-scoreboard {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        padding: 14px 10px;
+        border-radius: 16px;
+        background: #171718;
+    }
+
+    .match-detail-team {
+        min-width: 0;
+        gap: 7px;
+    }
+
+    .match-detail-logo {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
+        outline: 0;
+    }
+
+    .match-detail-team strong {
+        font-size: 16px;
+        line-height: 1.15;
+    }
+
+    .match-detail-team small {
+        max-width: 100%;
+        overflow: hidden;
+        font-size: 10px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .match-detail-score {
+        min-width: 88px;
+        min-height: 82px;
+        gap: 6px;
+        padding: 10px;
+        border-radius: 16px;
+        background: var(--blue);
+    }
+
+    .match-detail-score strong {
+        font-size: 26px;
+    }
+
+    .match-detail-score span {
+        max-width: 92px;
+        font-size: 10px;
+        line-height: 1.25;
+        text-align: center;
+    }
+
+    .match-odds-panel {
+        border-radius: 18px;
+        outline: 0;
+    }
+
+    .odds-topbar {
+        padding: 8px 10px;
+        background: var(--panel);
+    }
+
+    .odds-main-tabs {
+        width: 100%;
+        gap: 6px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+    }
+
+    .odds-main-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .odds-main-tab {
+        min-height: 38px;
+        padding: 0 12px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    .odds-tab-panel {
+        padding: 10px;
+    }
+
+    .odds-tab-panel.is-active {
+        gap: 12px;
+    }
+
+    .odds-section {
+        gap: 10px;
+        padding: 10px;
+        border-radius: 14px;
+        background: #171718;
+    }
+
+    .odds-section-head {
+        min-width: 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    .odds-section-head h2 {
+        min-width: 0;
+        overflow: hidden;
+        font-size: 15px;
+        line-height: 1.2;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .odds-section-head span {
+        min-width: 30px;
+        min-height: 26px;
+        padding: 0 8px;
+        border-radius: 8px;
+        font-size: 11px;
+    }
+
+    .odds-row {
+        gap: 7px;
+    }
+
+    .odds-row h3 {
+        font-size: 12px;
+    }
+
+    .odds-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .odds-button {
+        min-height: 54px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 7px;
+        padding: 8px 9px;
+        border-radius: 10px;
+    }
+
+    .odds-button span {
+        font-size: 12px;
+    }
+
+    .odds-button small {
+        font-size: 9px;
+    }
+
+    .odds-button b {
+        font-size: 15px;
+    }
+
+    .match-odds-panel-locked .coupon-options,
+    .match-detail-locked-options {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .match-odds-panel-locked .coupon-option {
+        min-height: 52px;
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .match-detail-page {
+        gap: 8px;
+    }
+
+    .match-back-link {
+        min-height: 38px;
+        font-size: 12px;
+    }
+
+    .match-detail-card {
+        gap: 12px;
+        padding: 11px;
+        border-radius: 16px;
+    }
+
+    .match-detail-head {
+        gap: 8px;
+    }
+
+    .match-detail-head .league-mark {
+        width: 32px;
+        height: 32px;
+    }
+
+    .match-detail-head .match-league strong {
+        font-size: 12px;
+    }
+
+    .match-detail-head .match-league small {
+        font-size: 9px;
+    }
+
+    .match-detail-head .match-status {
+        min-height: 29px;
+        padding: 0 8px;
+        font-size: 10px;
+    }
+
+    .match-detail-scoreboard {
+        gap: 7px;
+        padding: 12px 7px;
+        border-radius: 14px;
+    }
+
+    .match-detail-logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 15px;
+    }
+
+    .match-detail-team {
+        gap: 6px;
+    }
+
+    .match-detail-team strong {
+        font-size: 13px;
+    }
+
+    .match-detail-team small {
+        display: none;
+    }
+
+    .match-detail-score {
+        min-width: 72px;
+        min-height: 68px;
+        padding: 8px;
+        border-radius: 14px;
+    }
+
+    .match-detail-score strong {
+        font-size: 22px;
+    }
+
+    .match-detail-score span {
+        max-width: 74px;
+        font-size: 9px;
+    }
+
+    .match-odds-panel {
+        border-radius: 16px;
+    }
+
+    .odds-topbar {
+        padding: 7px 8px;
+    }
+
+    .odds-main-tab {
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 11px;
+    }
+
+    .odds-tab-panel {
+        padding: 8px;
+    }
+
+    .odds-section {
+        gap: 8px;
+        padding: 9px;
+        border-radius: 12px;
+    }
+
+    .odds-section-head h2 {
+        font-size: 13px;
+    }
+
+    .odds-section-head span {
+        min-width: 27px;
+        min-height: 24px;
+        font-size: 10px;
+    }
+
+    .odds-row h3 {
+        font-size: 11px;
+    }
+
+    .odds-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .odds-button {
+        min-height: 50px;
+        padding: 7px;
+        column-gap: 5px;
+    }
+
+    .odds-button span {
+        font-size: 11px;
+    }
+
+    .odds-button small {
+        display: none;
+    }
+
+    .odds-button b {
+        grid-row: 1;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 390px) {
+    .match-detail-logo {
+        width: 52px;
+        height: 52px;
+    }
+
+    .match-detail-team strong {
+        font-size: 12px;
+    }
+
+    .match-detail-score {
+        min-width: 66px;
+    }
+
+    .odds-button {
+        padding-right: 6px;
+        padding-left: 6px;
+    }
+
+    .odds-button span {
+        font-size: 10px;
+    }
+
+    .odds-button b {
+        font-size: 13px;
+    }
+}
