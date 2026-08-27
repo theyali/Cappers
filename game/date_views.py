@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Case, Count, IntegerField, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Exists, IntegerField, OuterRef, Q, Value, When
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -10,21 +10,27 @@ from django.utils.dateparse import parse_date
 from cabinet.models import User
 from game.models import Match, PredictionCoupon
 from game.views import (
-    SCOPE_FILTERS,
     _active_draft_coupon,
     _latest_predictions,
     _match_winner_odds,
     _serialize_draft_coupon,
 )
+from notifications.models import MatchWatch
+
+
+WATCHED_SCOPE = "watched"
+SCOPE_FILTERS = (
+    ("all", "Все"),
+    (WATCHED_SCOPE, "Отслеживаемые"),
+    (Match.SyncScope.LIVE, "Идут сейчас"),
+    (Match.SyncScope.PREMATCH, "Предстоящие"),
+    (Match.SyncScope.FINISHED, "Завершенные"),
+)
+ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
 
 
 def match_list(request):
-    """Match list filtered by scope and local calendar date.
-
-    The date defaults to today in the project timezone, so every scope tab
-    (all/live/prematch/finished) starts from today's games unless the user
-    explicitly selects another day.
-    """
+    """Match list filtered by scope and local calendar date."""
     active_scope = request.GET.get("scope", "all")
     valid_scopes = {scope for scope, _ in SCOPE_FILTERS}
     if active_scope not in valid_scopes:
@@ -44,14 +50,26 @@ def match_list(request):
         for row in date_matches.values("sync_scope").annotate(total=Count("id"))
     }
     total_count = sum(counts.values())
-    scope_tabs = [
-        {
-            "scope": scope,
-            "label": label,
-            "count": total_count if scope == "all" else counts.get(scope, 0),
-        }
-        for scope, label in SCOPE_FILTERS
-    ]
+    watched_count = 0
+    if request.user.is_authenticated:
+        watched_count = (
+            date_matches.filter(
+                sync_scope__in=ACTIVE_WATCH_SCOPES,
+                notification_watchers__user=request.user,
+            )
+            .distinct()
+            .count()
+        )
+
+    scope_tabs = []
+    for scope, label in SCOPE_FILTERS:
+        if scope == "all":
+            count = total_count
+        elif scope == WATCHED_SCOPE:
+            count = watched_count
+        else:
+            count = counts.get(scope, 0)
+        scope_tabs.append({"scope": scope, "label": label, "count": count})
 
     matches = date_matches.select_related(
         "sport",
@@ -60,11 +78,31 @@ def match_list(request):
         "away_team",
         "odds",
     )
-    if active_scope != "all":
+
+    if active_scope == WATCHED_SCOPE:
+        if request.user.is_authenticated:
+            matches = matches.filter(
+                sync_scope__in=ACTIVE_WATCH_SCOPES,
+                notification_watchers__user=request.user,
+            ).distinct()
+        else:
+            matches = matches.none()
+    elif active_scope != "all":
         matches = matches.filter(sync_scope=active_scope)
+
+    if request.user.is_authenticated:
+        watch_exists = MatchWatch.objects.filter(
+            user=request.user,
+            match_id=OuterRef("pk"),
+            match__sync_scope__in=ACTIVE_WATCH_SCOPES,
+        )
+        watched_annotation = Exists(watch_exists)
+    else:
+        watched_annotation = Value(False, output_field=BooleanField())
 
     matches = list(
         matches.annotate(
+            is_watched=watched_annotation,
             scope_order=Case(
                 When(sync_scope=Match.SyncScope.LIVE, then=Value(0)),
                 When(sync_scope=Match.SyncScope.PREMATCH, then=Value(1)),
@@ -79,7 +117,7 @@ def match_list(request):
                 ),
                 distinct=True,
             ),
-        ).order_by("scope_order", "starts_at", "id")[:60]
+        ).order_by("-is_watched", "scope_order", "starts_at", "id")[:60]
     )
 
     card_odds = {}
