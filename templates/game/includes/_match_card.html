@@ -97,6 +97,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>1</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.home }}{% else %}{{ match.odds.home_win_bet|default:"—" }}{% endif %}</small>
         </button>
@@ -107,6 +108,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>X</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.draw }}{% else %}{{ match.odds.x_bet|default:"—" }}{% endif %}</small>
         </button>
@@ -117,6 +119,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>2</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.away }}{% else %}{{ match.odds.away_win_bet|default:"—" }}{% endif %}</small>
         </button>
@@ -127,6 +130,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>ТБ 2.5</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.over25 }}{% else %}{{ match.odds.goals_over_2_5|default:"—" }}{% endif %}</small>
         </button>
@@ -137,6 +141,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>ТМ 2.5</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.under25 }}{% else %}{{ match.odds.goals_under_2_5|default:"—" }}{% endif %}</small>
         </button>
@@ -147,6 +152,7 @@
                 disabled aria-disabled="true"
             {% endif %}
         >
+            {% if card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
             <span>ОЗ Да</span>
             <small>{% if not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}{{ match.coupon_odds.btts_yes }}{% else %}{{ match.odds.btts_yes|default:"—" }}{% endif %}</small>
         </button>
