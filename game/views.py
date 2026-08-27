@@ -459,8 +459,8 @@ def _match_odds_tabs(match: Match) -> list[dict]:
         odds = match.odds
     except MatchOdds.DoesNotExist:
         odds = None
-    if odds is None:
-        return []
+    if not _match_odds_has_values(odds):
+        return _prediction_odds_tabs(match)
 
     home_name = match.home_team_name or "Хозяева"
     away_name = match.away_team_name or "Гости"
@@ -567,6 +567,76 @@ def _match_odds_tabs(match: Match) -> list[dict]:
         {"key": "other", "label": "Другие", "sections": [section for section in other_sections if section["rows"]]},
     ]
     return [tab for tab in tabs if tab["sections"]]
+
+
+def _match_odds_has_values(odds: MatchOdds | None) -> bool:
+    if odds is None:
+        return False
+
+    direct_fields = (
+        "home_win_bet",
+        "x_bet",
+        "away_win_bet",
+        "goals_over_2_5",
+        "goals_under_2_5",
+        "fora_1_0",
+        "fora_2_0",
+        "btts_yes",
+        "btts_no",
+        "d_1x",
+        "d_2x",
+        "first_time_home_win_bet",
+        "first_time_x_bet",
+        "first_time_away_win_bet",
+    )
+    if any(_optional_odd(getattr(odds, field, None)) is not None for field in direct_fields):
+        return True
+
+    json_fields = (
+        "totals_all",
+        "double_chance_all",
+        "handicaps_all",
+        "btts_all",
+        "team_totals_all",
+        "first_half_totals_all",
+        "first_half_handicaps_all",
+        "half_time_full_time_all",
+        "exact_score_all",
+        "extra_markets",
+    )
+    return any(bool(getattr(odds, field, None)) for field in json_fields)
+
+
+def _prediction_odds_tabs(match: Match) -> list[dict]:
+    predictions = (
+        Prediction.objects.filter(
+            match=match,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .values("market", "selection", "coefficient")
+        .distinct()
+        .order_by("market", "selection")
+    )
+
+    rows = [
+        _odds_row(
+            _human_market_label(prediction["market"]),
+            [
+                _odds_button(
+                    _short_odd_label(prediction["selection"]),
+                    prediction["selection"],
+                    prediction["market"],
+                    prediction["selection"],
+                    _optional_odd(prediction["coefficient"]),
+                )
+            ],
+        )
+        for prediction in predictions
+    ]
+    section = _odds_section("Сохраненные коэффициенты", rows)
+    if not section["rows"]:
+        return []
+    return [{"key": "popular", "label": "Популярное", "sections": [section]}]
 
 
 def _odds_section(title: str, rows: list[dict]) -> dict:

@@ -441,11 +441,20 @@
 .prediction-card.prediction-card-rich.match-prediction-card {
     gap: 14px;
     padding: 16px;
-    background: var(--panel);
+    background: #121213;
+    outline: 2px solid rgba(255, 255, 255, .08);
 }
 
 .prediction-card.prediction-card-rich.match-prediction-card:hover {
-    background: #242426;
+    background: #171718;
+}
+
+.prediction-card.prediction-card-rich.match-prediction-card .prediction-match-visual {
+    background: #171718;
+}
+
+.prediction-card.prediction-card-rich.match-prediction-card .prediction-pick-rich {
+    background: #2a2a2d;
 }
 
 @media (max-width: 1240px) {

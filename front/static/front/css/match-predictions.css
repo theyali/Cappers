@@ -58,6 +58,23 @@
     background: #171718;
 }
 
+.match-predictions-feed .prediction-card.prediction-card-rich.match-prediction-card {
+    background: #121213;
+    outline: 2px solid rgba(255, 255, 255, .08);
+}
+
+.match-predictions-feed .prediction-card.prediction-card-rich.match-prediction-card:hover {
+    background: #171718;
+}
+
+.match-predictions-feed .prediction-card-rich .prediction-match-visual {
+    background: #171718;
+}
+
+.match-predictions-feed .prediction-card-rich .prediction-pick-rich {
+    background: #2a2a2d;
+}
+
 .match-prediction-head,
 .match-prediction-expert,
 .match-prediction-pick,

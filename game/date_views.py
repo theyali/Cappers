@@ -2,13 +2,13 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Case, Count, IntegerField, Value, When
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from cabinet.models import User
-from game.models import Match
+from game.models import Match, PredictionCoupon
 from game.views import (
     SCOPE_FILTERS,
     _active_draft_coupon,
@@ -71,7 +71,14 @@ def match_list(request):
                 When(sync_scope=Match.SyncScope.FINISHED, then=Value(2)),
                 default=Value(3),
                 output_field=IntegerField(),
-            )
+            ),
+            predictions_count=Count(
+                "predictions__coupon",
+                filter=Q(
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            ),
         ).order_by("scope_order", "starts_at", "id")[:60]
     )
 

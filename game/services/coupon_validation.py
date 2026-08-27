@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from game.models import Match, MatchOdds, Provider
-from game.services.odds import match_odds_defaults
+from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
 
@@ -154,6 +154,8 @@ def _refresh_local_match_state(match: Match, scope: str, payload: dict[str, Any]
 
 
 def _refresh_match_odds(match: Match, payload: dict[str, Any]) -> None:
+    if not has_odds_payload(payload):
+        return
     MatchOdds.objects.update_or_create(
         match=match,
         defaults=match_odds_defaults(payload),
