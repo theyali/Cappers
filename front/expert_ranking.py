@@ -108,11 +108,17 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
             ),
         )
     )
+    queryset = annotate_author_roi(
+        queryset,
+        author_outer_ref="user_id",
+        annotation_name="author_roi",
+    )
     profiles = list(
         annotate_author_roi(
             queryset,
             author_outer_ref="user_id",
-            annotation_name="author_roi",
+            annotation_name="author_roi_all_time",
+            period_days=None,
         )
     )
 
