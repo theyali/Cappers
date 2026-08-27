@@ -9,7 +9,7 @@
     margin: 0;
     padding: 10px 22px;
     display: grid;
-    grid-template-columns: minmax(190px, 0.6fr) auto minmax(190px, 1fr);
+    grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
     align-items: center;
     gap: 22px;
 }
@@ -29,7 +29,7 @@
 .site-nav-center {
     justify-self: center;
     color: var(--soft);
-    font-size: 14px;
+    font-size: 17px;
     white-space: nowrap;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .nav-icon-image img {
-    width: 78%;
+    width: 100%;
     aspect-ratio: 1;
     object-fit: contain;
     filter: none;
