@@ -172,6 +172,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "game.tasks.fetch_live_matches",
         "schedule": timedelta(seconds=15),
     },
+    "sync-stuck-live-football-matches": {
+        "task": "game.tasks.sync_stuck_live_matches",
+        "schedule": timedelta(minutes=2),
+    },
     "fetch-prematch-football-matches": {
         "task": "game.tasks.fetch_upcoming_matches",
         "schedule": timedelta(minutes=10),
@@ -220,6 +224,10 @@ NEUROKEFF_LANG = os.getenv("NEUROKEFF_LANG", "ru,en")
 NEUROKEFF_PAGE_SIZE = env_int("NEUROKEFF_PAGE_SIZE", 100)
 NEUROKEFF_MAX_PAGES = env_int("NEUROKEFF_MAX_PAGES", 20)
 NEUROKEFF_API_TIMEOUT = env_int("NEUROKEFF_API_TIMEOUT", 20)
+NEUROKEFF_GAME_INFO_ENDPOINT = os.getenv("NEUROKEFF_GAME_INFO_ENDPOINT", "/api/games/info")
+NEUROKEFF_GAME_INFO_BATCH_SIZE = env_int("NEUROKEFF_GAME_INFO_BATCH_SIZE", 100)
+NEUROKEFF_STUCK_LIVE_AFTER_MINUTES = env_int("NEUROKEFF_STUCK_LIVE_AFTER_MINUTES", 10)
+NEUROKEFF_STUCK_LIVE_LIMIT = env_int("NEUROKEFF_STUCK_LIVE_LIMIT", 500)
 NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
 NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)
 COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)

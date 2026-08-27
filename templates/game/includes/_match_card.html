@@ -85,7 +85,6 @@
                     Время не указано
                 {% endif %}
             </span>
-            <span>ID {{ match.external_id }}</span>
         </a>
         {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
         <button

@@ -44,12 +44,14 @@ def match_list(request):
         starts_at__gte=day_start,
         starts_at__lt=day_end,
     )
+    live_matches = Match.objects.filter(sync_scope=Match.SyncScope.LIVE)
 
     counts = {
         row["sync_scope"]: row["total"]
         for row in date_matches.values("sync_scope").annotate(total=Count("id"))
     }
     total_count = sum(counts.values())
+    counts[Match.SyncScope.LIVE] = live_matches.count()
     watched_count = 0
     if request.user.is_authenticated:
         watched_count = (
@@ -71,7 +73,9 @@ def match_list(request):
             count = counts.get(scope, 0)
         scope_tabs.append({"scope": scope, "label": label, "count": count})
 
-    matches = date_matches.select_related(
+    base_matches = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
+
+    matches = base_matches.select_related(
         "sport",
         "league__country",
         "home_team",

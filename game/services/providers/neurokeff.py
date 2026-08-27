@@ -3,7 +3,7 @@ import logging
 from datetime import date, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from django.conf import settings
@@ -57,6 +57,30 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             raise NeurokeffProviderError(f"Unsupported match scope: {scope}")
         return self._fetch_matches(scope, date_value=date_value)
 
+    def fetch_matches_info(self, ids: list[int]) -> list[dict[str, Any]]:
+        """Fetch exact game records by provider ids."""
+        normalized_ids = []
+        for item in ids:
+            try:
+                normalized_ids.append(int(item))
+            except (TypeError, ValueError):
+                continue
+        if not normalized_ids:
+            return []
+
+        results: list[dict[str, Any]] = []
+        batch_size = max(
+            int(getattr(settings, "NEUROKEFF_GAME_INFO_BATCH_SIZE", 100)),
+            1,
+        )
+        endpoint = getattr(settings, "NEUROKEFF_GAME_INFO_ENDPOINT", "/api/games/info")
+
+        for offset in range(0, len(normalized_ids), batch_size):
+            batch = normalized_ids[offset:offset + batch_size]
+            payload = self._request(endpoint, {"ids": ",".join(map(str, batch))})
+            results.extend(self._normalize_info_payload(payload))
+        return results
+
     def _fetch_matches(
         self,
         endpoint: str,
@@ -99,7 +123,7 @@ class NeurokeffSportsProvider(BaseSportsProvider):
         if not self.token:
             raise NeurokeffProviderError("NEUROKEFF_API_TOKEN is not configured")
 
-        url = urljoin(self.base_url, endpoint.lstrip("/"))
+        url = self._endpoint_url(endpoint)
         request = Request(
             f"{url}?{urlencode(params)}",
             headers={
@@ -123,6 +147,36 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             return json.loads(body)
         except json.JSONDecodeError as exc:
             raise NeurokeffProviderError(f"Neurokeff returned invalid JSON for {endpoint}") from exc
+
+    def _endpoint_url(self, endpoint: str) -> str:
+        if endpoint.startswith(("http://", "https://")):
+            return endpoint
+        if endpoint.startswith("/"):
+            parsed = urlparse(self.base_url)
+            return f"{parsed.scheme}://{parsed.netloc}{endpoint}"
+        return urljoin(self.base_url, endpoint)
+
+    @staticmethod
+    def _normalize_info_payload(payload: Any) -> list[dict[str, Any]]:
+        if isinstance(payload, list):
+            return [item for item in payload if isinstance(item, dict)]
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff game info payload")
+
+        for key in ("results", "games", "matches", "data"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                return [item for item in value if isinstance(item, dict)]
+
+        dict_items = [
+            item for item in payload.values()
+            if isinstance(item, dict) and item.get("id") is not None
+        ]
+        if dict_items:
+            return dict_items
+        if payload.get("id") is not None:
+            return [payload]
+        return []
 
     @staticmethod
     def _dates(start: date, count: int) -> list[date]:

@@ -1,6 +1,8 @@
 import logging
+from datetime import timedelta
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
@@ -37,6 +39,74 @@ class MatchSyncService:
             Match.SyncScope.FINISHED,
             self.provider.fetch_finished_matches(),
         )
+
+    def sync_stuck_live_matches(self) -> dict:
+        stale_after = timedelta(
+            minutes=max(
+                int(getattr(settings, "NEUROKEFF_STUCK_LIVE_AFTER_MINUTES", 10)),
+                1,
+            )
+        )
+        limit = max(int(getattr(settings, "NEUROKEFF_STUCK_LIVE_LIMIT", 500)), 1)
+        threshold = timezone.now() - stale_after
+        matches = list(
+            Match.objects.filter(
+                provider=Provider.NEUROKEFF,
+                sync_scope=Match.SyncScope.LIVE,
+                last_seen_at__lt=threshold,
+            ).order_by("last_seen_at", "id")[:limit]
+        )
+        external_ids = [match.external_id for match in matches]
+        if not external_ids:
+            return {
+                "status": "ok",
+                "checked": 0,
+                "fetched": 0,
+                "updated": 0,
+                "missing": 0,
+                "scopes": {},
+            }
+
+        payloads = self.provider.fetch_matches_info(external_ids)
+        payload_by_id = {
+            int(payload["id"]): payload
+            for payload in payloads
+            if self._to_int(payload.get("id")) is not None
+        }
+        updated = 0
+        missing = 0
+        scopes: dict[str, int] = {}
+        now = timezone.now()
+
+        with transaction.atomic():
+            for match in matches:
+                payload = payload_by_id.get(match.external_id)
+                if payload is None:
+                    missing += 1
+                    continue
+
+                scope = self._scope_from_payload(payload, default=Match.SyncScope.LIVE)
+                defaults = {
+                    **self._match_defaults(payload, scope),
+                    "last_seen_at": now,
+                }
+                for field, value in defaults.items():
+                    setattr(match, field, value)
+                match.save(update_fields=[*defaults.keys(), "updated_at"])
+                self._sync_odds(match, payload.get("odds") or {})
+                updated += 1
+                scopes[scope] = scopes.get(scope, 0) + 1
+
+        result = {
+            "status": "ok",
+            "checked": len(matches),
+            "fetched": len(payloads),
+            "updated": updated,
+            "missing": missing,
+            "scopes": scopes,
+        }
+        logger.info("Stuck live match sync completed: %s", result)
+        return result
 
     @transaction.atomic
     def _sync_scope(self, scope: str, payloads: list[dict[str, Any]]) -> dict:
@@ -262,6 +332,81 @@ class MatchSyncService:
             match=match,
             defaults=match_odds_defaults(payload),
         )
+
+    @classmethod
+    def _scope_from_payload(cls, payload: dict[str, Any], default: str) -> str:
+        for value in cls._status_values(payload):
+            scope = cls._scope_from_status(value)
+            if scope is not None:
+                return scope
+        return default
+
+    @staticmethod
+    def _status_values(payload: dict[str, Any]) -> list[Any]:
+        values = []
+        for key in (
+            "sync_scope",
+            "scope",
+            "status",
+            "game_status",
+            "time_status",
+            "status_short",
+            "short_status",
+            "state",
+            "phase",
+        ):
+            value = payload.get(key)
+            values.append(value)
+            if isinstance(value, dict):
+                values.extend(
+                    value.get(nested_key)
+                    for nested_key in ("short", "long", "name", "code", "type")
+                )
+        return values
+
+    @staticmethod
+    def _scope_from_status(value: Any) -> str | None:
+        if value in (None, ""):
+            return None
+        normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+        if normalized in {
+            "prematch",
+            "pre_match",
+            "upcoming",
+            "scheduled",
+            "not_started",
+            "notstarted",
+            "ns",
+            "0",
+        }:
+            return Match.SyncScope.PREMATCH
+        if normalized in {
+            "live",
+            "inplay",
+            "in_play",
+            "playing",
+            "started",
+            "1h",
+            "2h",
+            "ht",
+            "et",
+            "p",
+        }:
+            return Match.SyncScope.LIVE
+        if normalized in {
+            "finished",
+            "finish",
+            "ended",
+            "closed",
+            "completed",
+            "fulltime",
+            "full_time",
+            "ft",
+            "aet",
+            "ap",
+        }:
+            return Match.SyncScope.FINISHED
+        return None
 
     @staticmethod
     def _localized(value: Any, preferred: str = "ru") -> str:

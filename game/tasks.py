@@ -18,6 +18,13 @@ def fetch_live_matches():
 
 
 @shared_task
+def sync_stuck_live_matches():
+    result = MatchSyncService().sync_stuck_live_matches()
+    result["settlement"] = settle_live_matches()
+    return result
+
+
+@shared_task
 def fetch_finished_matches():
     result = MatchSyncService().sync_finished()
     result["settlement"] = settle_finished_matches()
