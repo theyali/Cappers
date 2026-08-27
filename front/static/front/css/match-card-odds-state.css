@@ -74,6 +74,139 @@
     height: 17px;
 }
 
+.match-provider-predictions {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel);
+    outline: 1px solid rgba(255, 255, 255, .08);
+}
+
+.match-provider-predictions-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.match-provider-predictions-head h2,
+.match-provider-predictions-head p {
+    margin: 0;
+}
+
+.match-provider-predictions-head h2 {
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.match-provider-predictions-head p {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.match-provider-predictions-head time {
+    flex: 0 0 auto;
+    color: rgba(255, 255, 255, .44);
+    font-size: 12px;
+}
+
+.provider-probability-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.provider-probability-item {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #1b1b1d;
+}
+
+.provider-probability-item.is-favorite {
+    outline: 1px solid rgba(250, 210, 28, .5);
+}
+
+.provider-probability-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.provider-probability-row span {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.provider-probability-row strong {
+    color: var(--yellow);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.provider-probability-loader {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.provider-probability-loader i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--blue), var(--yellow));
+}
+
+.provider-probability-item small {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.provider-metric-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.provider-metric-item {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: #242426;
+}
+
+.provider-metric-item span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.provider-metric-item b {
+    flex: 0 0 auto;
+    color: var(--text);
+    font-size: 12px;
+}
+
 @media (max-width: 620px) {
     .match-odds-panel-locked {
         padding: 12px;
@@ -86,5 +219,22 @@
 
     .match-detail-locked-options .coupon-option {
         min-height: 64px;
+    }
+
+    .match-provider-predictions {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .match-provider-predictions-head {
+        display: grid;
+    }
+
+    .provider-probability-list {
+        grid-template-columns: 1fr;
+    }
+
+    .provider-metric-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

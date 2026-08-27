@@ -4,6 +4,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from cabinet.models import User
 from game.models import Match
 
 
@@ -49,3 +50,29 @@ class MatchListLiveDateTests(TestCase):
             if tab["scope"] == Match.SyncScope.LIVE
         )
         self.assertEqual(live_tab["count"], 1)
+
+    def test_prematch_card_without_odds_shows_locked_empty_odds(self):
+        user = User.objects.create_user(
+            username="oddsless-analyst",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        self.client.force_login(user)
+        tz = timezone.get_current_timezone()
+        selected_date = timezone.localdate()
+        starts_at = timezone.make_aware(datetime.combine(selected_date, time(19, 0)), tz)
+        Match.objects.create(
+            external_id=920003,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=starts_at,
+        )
+
+        response = self.client.get(reverse("game:match_list"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertIn("match-card-options", html)
+        self.assertIn("match-odd-lock", html)
+        self.assertNotIn('data-bet-option data-bet-key="home"', html)
+        self.assertNotIn('data-coefficient="2.00"', html)
+        self.assertNotIn("<small>2.00</small>", html)

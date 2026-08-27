@@ -39,6 +39,7 @@
         );
 
         items.forEach(([label, key]) => {
+            const odd = odds[key] || "";
             const button = document.createElement("button");
             button.className = "coupon-option match-bet-option";
             button.type = "button";
@@ -47,9 +48,9 @@
             button.title = isLocked
                 ? "Матч уже идет или завершен. Коэффициент доступен только для просмотра."
                 : "Коэффициент доступен для просмотра. Добавлять исходы в прогноз могут эксперты.";
-            button.innerHTML = `${isLocked ? lockIcon : ""}<span></span><small></small>`;
+            button.innerHTML = `${isLocked || !odd ? lockIcon : ""}<span></span>${odd ? "<small></small>" : ""}`;
             button.querySelector("span").textContent = label;
-            button.querySelector("small").textContent = odds[key] || "—";
+            if (odd) button.querySelector("small").textContent = odd;
             options.append(button);
         });
 

@@ -288,6 +288,9 @@ class Match(models.Model):
     odds_result_data = models.JSONField(default=dict, blank=True)
     odds_resolved_at = models.DateTimeField(null=True, blank=True)
 
+    provider_predictions = models.JSONField(default=dict, blank=True)
+    provider_predictions_updated_at = models.DateTimeField(null=True, blank=True)
+
     raw_data = models.JSONField(default=dict, blank=True)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)

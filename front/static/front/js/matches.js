@@ -103,7 +103,7 @@
     let restoring = true;
 
     const toNumber = (value, fallback = 0) => {
-        const parsed = Number.parseFloat(String(value || "").replace(",", "."));
+        const parsed = Number.parseFloat(String(value ?? "").replace(",", "."));
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
@@ -122,7 +122,10 @@
         && hasPositiveStake()
         && currentConfidence() >= 0
         && currentConfidence() <= 100
-        && [...items.values()].every((item) => String(item.selection || "").trim().length > 0)
+        && [...items.values()].every((item) => (
+            String(item.selection || "").trim().length > 0
+            && toNumber(item.coefficient) > 0
+        ))
     );
 
     const setNote = (message, state = "") => {
@@ -137,7 +140,7 @@
         maximumFractionDigits: 2,
     });
 
-    const formatOdd = (value) => toNumber(value, 2).toLocaleString("ru-RU", {
+    const formatOdd = (value) => toNumber(value, 0).toLocaleString("ru-RU", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
@@ -161,8 +164,8 @@
     };
 
     const readOdd = (value) => {
-        const odd = toNumber(value, 2);
-        return odd > 0 ? odd : 2;
+        const odd = toNumber(value, 0);
+        return odd > 0 ? odd : 0;
     };
 
     const updateMatchButtons = () => {

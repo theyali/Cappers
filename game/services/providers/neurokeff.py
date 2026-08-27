@@ -81,6 +81,17 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             results.extend(self._normalize_info_payload(payload))
         return results
 
+    def fetch_game_predictions(self, external_id: int) -> dict[str, Any]:
+        endpoint = getattr(
+            settings,
+            "NEUROKEFF_GAME_PREDICTIONS_ENDPOINT",
+            "games/predictions",
+        )
+        payload = self._request(endpoint, {"game_id": int(external_id)})
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff game predictions payload")
+        return payload
+
     def _fetch_matches(
         self,
         endpoint: str,

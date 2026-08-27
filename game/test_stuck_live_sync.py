@@ -25,6 +25,16 @@ class FakeLiveProvider:
         return self.payloads
 
 
+class FakePredictionProvider:
+    def __init__(self, payload):
+        self.payload = payload
+        self.requested_external_ids = []
+
+    def fetch_game_predictions(self, external_id):
+        self.requested_external_ids.append(external_id)
+        return self.payload
+
+
 class StuckLiveSyncTests(TestCase):
     @override_settings(NEUROKEFF_STUCK_LIVE_AFTER_MINUTES=10)
     def test_stuck_live_match_is_updated_from_game_info_payload(self):
@@ -116,3 +126,25 @@ class StuckLiveSyncTests(TestCase):
                     ),
                     scope,
                 )
+
+    def test_match_predictions_are_saved_by_external_id(self):
+        match = Match.objects.create(
+            external_id=910004,
+            sync_scope=Match.SyncScope.FINISHED,
+        )
+        payload = {
+            "api_id": match.external_id,
+            "predictions": {
+                "available": True,
+                "snapshot": {"percent": {"home": 10, "draw": 45, "away": 45}},
+            },
+        }
+        provider = FakePredictionProvider(payload)
+
+        result = MatchSyncService(provider=provider).sync_match_predictions(match)
+
+        match.refresh_from_db()
+        self.assertEqual(provider.requested_external_ids, [match.external_id])
+        self.assertEqual(match.provider_predictions, payload)
+        self.assertIsNotNone(match.provider_predictions_updated_at)
+        self.assertTrue(result["available"])

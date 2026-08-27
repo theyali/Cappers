@@ -1,4 +1,5 @@
 import json
+import logging
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
@@ -17,7 +18,11 @@ from game.services.coupon_validation import (
     CouponMatchVerificationError,
     verify_matches_for_coupon,
 )
+from game.services.match_sync import MatchSyncService
+from game.services.providers.neurokeff import NeurokeffProviderError
 
+
+logger = logging.getLogger(__name__)
 
 SCOPE_FILTERS = (
     ("all", "Все"),
@@ -112,6 +117,8 @@ def match_detail(request, slug: str):
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
+    match.coupon_odds = _match_winner_odds(match)
+    _refresh_provider_predictions(match)
 
     context = {
         "match": match,
@@ -120,6 +127,7 @@ def match_detail(request, slug: str):
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": _match_odds_tabs(match),
+        "provider_prediction_panel": _provider_prediction_panel(match),
     }
     return render(request, "game/match_detail.html", context)
 
@@ -435,19 +443,101 @@ def _latest_predictions():
     )
 
 
-def _match_winner_odds(match: Match) -> dict[str, str]:
+def _match_winner_odds(match: Match) -> dict:
     try:
         odds = match.odds
     except MatchOdds.DoesNotExist:
         odds = None
 
+    totals = odds.totals_all if odds and isinstance(odds.totals_all, dict) else {}
+    values = {
+        "home": _optional_odd(odds.home_win_bet if odds else None),
+        "draw": _optional_odd(odds.x_bet if odds else None),
+        "away": _optional_odd(odds.away_win_bet if odds else None),
+        "over25": _optional_odd(
+            (odds.goals_over_2_5 or _nested_odd(totals, "Over 2.5"))
+            if odds
+            else None
+        ),
+        "under25": _optional_odd(
+            (odds.goals_under_2_5 or _nested_odd(totals, "Under 2.5"))
+            if odds
+            else None
+        ),
+        "btts_yes": _optional_odd(odds.btts_yes if odds else None),
+    }
+    values["has_any"] = any(value is not None for value in values.values())
+    return values
+
+
+def _refresh_provider_predictions(match: Match) -> None:
+    try:
+        MatchSyncService().sync_match_predictions(match)
+    except (NeurokeffProviderError, ValueError) as exc:
+        logger.info(
+            "Provider predictions refresh skipped for match %s: %s",
+            match.external_id,
+            exc,
+        )
+
+
+def _provider_prediction_panel(match: Match) -> dict | None:
+    payload = match.provider_predictions if isinstance(match.provider_predictions, dict) else {}
+    predictions = payload.get("predictions")
+    if not isinstance(predictions, dict) or not predictions.get("available"):
+        return None
+
+    snapshot = predictions.get("snapshot")
+    if not isinstance(snapshot, dict):
+        snapshot = {}
+
+    percent = snapshot.get("percent")
+    if not isinstance(percent, dict):
+        percent = {}
+
+    outcomes = [
+        {
+            "key": "home",
+            "label": "1",
+            "name": match.home_team_name or "Хозяева",
+            "percent": _percent_value(percent.get("home")),
+        },
+        {
+            "key": "draw",
+            "label": "X",
+            "name": "Ничья",
+            "percent": _percent_value(percent.get("draw")),
+        },
+        {
+            "key": "away",
+            "label": "2",
+            "name": match.away_team_name or "Гости",
+            "percent": _percent_value(percent.get("away")),
+        },
+    ]
+    outcomes = [item for item in outcomes if item["percent"] is not None]
+    if not outcomes:
+        return None
+
+    winner = snapshot.get("winner") if isinstance(snapshot.get("winner"), dict) else {}
+    winner_side = str(winner.get("side") or "")
+    for item in outcomes:
+        item["is_winner"] = item["key"] == winner_side
+
+    metrics = [
+        metric
+        for metric in predictions.get("metrics") or []
+        if isinstance(metric, dict) and _percent_value(metric.get("value")) is not None
+    ][:8]
+    for metric in metrics:
+        metric["value"] = _percent_value(metric.get("value"))
+        metric["label"] = _provider_metric_label(metric)
+
     return {
-        "home": _format_odd(odds.home_win_bet if odds else Decimal("2")),
-        "draw": _format_odd(odds.x_bet if odds else Decimal("2")),
-        "away": _format_odd(odds.away_win_bet if odds else Decimal("2")),
-        "over25": _format_odd((odds.goals_over_2_5 or _nested_odd(odds.totals_all, "Over 2.5")) if odds else Decimal("2")),
-        "under25": _format_odd((odds.goals_under_2_5 or _nested_odd(odds.totals_all, "Under 2.5")) if odds else Decimal("2")),
-        "btts_yes": _format_odd(odds.btts_yes if odds else Decimal("2")),
+        "outcomes": outcomes,
+        "advice": snapshot.get("advice_ru") or snapshot.get("advice") or "",
+        "updated_at": match.provider_predictions_updated_at,
+        "metrics": metrics,
     }
 
 
@@ -808,6 +898,36 @@ def _optional_odd(value) -> str | None:
     if odd <= 0:
         return None
     return f"{odd.quantize(Decimal('0.01'))}"
+
+
+def _percent_value(value) -> int | None:
+    try:
+        percent = int(round(float(value)))
+    except (TypeError, ValueError):
+        return None
+    return max(0, min(percent, 100))
+
+
+def _provider_metric_label(metric: dict) -> str:
+    labels = {
+        "att": "Атака",
+        "def": "Защита",
+        "form": "Форма",
+        "goals": "Голы",
+        "h2h": "Очные",
+        "poisson_distribution": "Пуассон",
+        "total": "Итог",
+    }
+    subject_labels = {
+        "home": "1",
+        "draw": "X",
+        "away": "2",
+    }
+    code = str(metric.get("code") or "")
+    subject = str(metric.get("subject") or "")
+    label = labels.get(code, _human_market_label(code))
+    subject_label = subject_labels.get(subject)
+    return f"{label} {subject_label}" if subject_label else label
 
 
 def _nested_odd(odds: dict, key: str):

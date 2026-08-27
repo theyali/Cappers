@@ -156,12 +156,12 @@ def match_list(request):
 
 def _stored_card_odds(match: Match) -> dict[str, str]:
     empty = {
-        "home": "—",
-        "draw": "—",
-        "away": "—",
-        "over25": "—",
-        "under25": "—",
-        "bttsYes": "—",
+        "home": "",
+        "draw": "",
+        "away": "",
+        "over25": "",
+        "under25": "",
+        "bttsYes": "",
     }
     try:
         odds = match.odds
@@ -181,13 +181,13 @@ def _stored_card_odds(match: Match) -> dict[str, str]:
 
 def _display_odd(value) -> str:
     if value in (None, ""):
-        return "—"
+        return ""
     try:
         number = float(value)
     except (TypeError, ValueError):
-        return "—"
+        return ""
     if number <= 0:
-        return "—"
+        return ""
     return f"{number:.2f}"
 
 

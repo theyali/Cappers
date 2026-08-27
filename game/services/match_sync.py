@@ -46,6 +46,25 @@ class MatchSyncService:
             self.provider.fetch_finished_matches(),
         )
 
+    def sync_match_predictions(self, match: Match, *, force: bool = False) -> dict:
+        if not force and not self._match_predictions_are_stale(match):
+            return {"status": "skipped", "reason": "fresh"}
+
+        payload = self.provider.fetch_game_predictions(match.external_id)
+        now = timezone.now()
+        match.provider_predictions = payload
+        match.provider_predictions_updated_at = now
+        Match.objects.filter(pk=match.pk).update(
+            provider_predictions=payload,
+            provider_predictions_updated_at=now,
+            updated_at=now,
+        )
+        return {
+            "status": "ok",
+            "external_id": match.external_id,
+            "available": bool((payload.get("predictions") or {}).get("available")),
+        }
+
     def sync_stuck_live_matches(self) -> dict:
         stale_after = timedelta(
             minutes=max(
@@ -172,6 +191,19 @@ class MatchSyncService:
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at__lt=timezone.now(),
         ).update(sync_scope=Match.SyncScope.FINISHED)
+
+    def _match_predictions_are_stale(self, match: Match) -> bool:
+        if not isinstance(match.provider_predictions, dict) or not match.provider_predictions:
+            return True
+        if not match.provider_predictions_updated_at:
+            return True
+        stale_seconds = max(
+            int(getattr(settings, "NEUROKEFF_GAME_PREDICTIONS_STALE_SECONDS", 3600)),
+            1,
+        )
+        return timezone.now() - match.provider_predictions_updated_at > timedelta(
+            seconds=stale_seconds
+        )
 
     def _match_defaults(self, payload: dict[str, Any], scope: str) -> dict[str, Any]:
         league = payload.get("league") or {}
