@@ -24,7 +24,14 @@
                 <p class="expert-public-kicker">Эксперт КапперХаб</p>
                 <div class="expert-public-name-row">
                     <h1>{{ expert_name }}</h1>
-                    {% if analyst_profile.is_verified %}<span class="expert-public-verified" title="Проверенный эксперт">✓</span>{% endif %}
+                    {% if analyst_profile.is_verified %}
+                    <span class="capper-verified-badge expert-public-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
+                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                        </svg>
+                    </span>
+                    {% endif %}
                     {% if is_self %}
                         <a class="expert-public-edit expert-public-name-action" href="{% url 'cabinet:profile' %}">Редактировать</a>
                     {% elif request.user.is_authenticated %}
