@@ -265,7 +265,7 @@
 
 .match-status-prematch {
     color: white;
-    background: var(--blue);
+    background: var(--green);
 }
 
 .match-status-finished {
