@@ -9,6 +9,10 @@
     pointer-events: none;
 }
 
+.notification-toast-stack.has-fixed-telegram {
+    bottom: 118px;
+}
+
 .notification-toast {
     position: relative;
     width: 100%;
@@ -125,6 +129,10 @@
         bottom: calc(112px + env(safe-area-inset-bottom));
         width: min(390px, calc(100vw - 24px));
     }
+
+    .notification-toast-stack.has-fixed-telegram {
+        bottom: calc(170px + env(safe-area-inset-bottom));
+    }
 }
 
 @media (max-width: 560px) {
@@ -132,6 +140,10 @@
         right: 10px;
         bottom: calc(108px + env(safe-area-inset-bottom));
         width: calc(100vw - 20px);
+    }
+
+    .notification-toast-stack.has-fixed-telegram {
+        bottom: calc(166px + env(safe-area-inset-bottom));
     }
 
     .notification-toast {
