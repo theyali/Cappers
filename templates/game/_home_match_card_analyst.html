@@ -43,12 +43,28 @@
                 <strong>{{ match.away_team_name|default:"Гости" }}</strong>
             </div>
         </div>
-
-        <div class="match-card-foot">
-            <span>{% if match.starts_at %}{{ match.starts_at|date:"d.m.Y H:i" }}{% else %}Время не указано{% endif %}</span>
-            <span>ID {{ match.external_id }}</span>
-        </div>
     </a>
+
+    <div class="match-card-foot">
+        <a class="match-card-foot-link" href="{{ match.get_absolute_url }}">
+            <span>{% if match.starts_at %}{{ match.starts_at|date:"d.m.Y H:i" }}{% else %}Время не указано{% endif %}</span>
+        </a>
+        {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
+        <button
+            class="match-card-watch-button{% if match.is_watched %} is-watching{% endif %}"
+            type="button"
+            data-match-watch-toggle
+            data-watch-url="{% url 'notifications:match_watch' match.id %}"
+            aria-pressed="{% if match.is_watched %}true{% else %}false{% endif %}"
+            aria-label="{% if match.is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
+            title="{% if match.is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path>
+            </svg>
+        </button>
+        {% endif %}
+    </div>
 
     <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
 
