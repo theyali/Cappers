@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Уведомления — Cappers{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'notifications/css/center.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="notifications-page" data-notifications-page>
+    <div class="notifications-hero">
+        <div>
+            <p class="notifications-kicker">Ваш центр</p>
+            <h1>Уведомления</h1>
+            <p>Новые прогнозы ваших капперов, результаты избранного, напоминания о матчах и достижения.</p>
+        </div>
+        <div class="notifications-hero-count">
+            <span>Непрочитано</span>
+            <strong data-unread-count>{{ unread_count }}</strong>
+        </div>
+    </div>
+
+    <div class="notifications-layout">
+        <main class="notifications-main">
+            <div class="notifications-toolbar">
+                <div class="notifications-filters">
+                    <a class="{% if active_filter == 'all' %}is-active{% endif %}" href="{% url 'notifications:center' %}?filter=all">Все</a>
+                    <a class="{% if active_filter == 'unread' %}is-active{% endif %}" href="{% url 'notifications:center' %}?filter=unread">Непрочитанные</a>
+                </div>
+                {% if unread_count %}
+                <form method="post" action="{% url 'notifications:mark_all_read' %}" data-mark-all-form>
+                    {% csrf_token %}
+                    <button type="submit">Прочитать все</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if page_obj.object_list %}
+            <div class="notifications-list">
+                {% for notification in page_obj.object_list %}
+                <a
+                    class="notification-row{% if not notification.is_read %} is-unread{% endif %}"
+                    href="{{ notification.url|default:'#' }}"
+                    data-notification-link
+                    data-read-url="{% url 'notifications:mark_read' notification.id %}"
+                >
+                    <span class="notification-kind is-{{ notification.kind }}" aria-hidden="true">
+                        {% if notification.kind == 'new_prediction' %}
+                        <svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"></path></svg>
+                        {% elif notification.kind == 'favorite_settled' %}
+                        <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                        {% elif notification.kind == 'match_reminder' %}
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg>
+                        {% elif notification.kind == 'achievement' %}
+                        <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
+                        {% else %}
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="m17 15 3 3 3-3"></path></svg>
+                        {% endif %}
+                    </span>
+                    <span class="notification-copy">
+                        <strong>{{ notification.title }}</strong>
+                        {% if notification.message %}<span>{{ notification.message }}</span>{% endif %}
+                        <small>{{ notification.created_at|date:"d.m.Y · H:i" }}</small>
+                    </span>
+                    {% if not notification.is_read %}<i class="notification-unread-dot" aria-label="Непрочитано"></i>{% endif %}
+                    <span class="notification-arrow" aria-hidden="true">→</span>
+                </a>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <nav class="notifications-pagination" aria-label="Страницы уведомлений">
+                {% if page_obj.has_previous %}
+                    <a href="?filter={{ active_filter }}&page={{ page_obj.previous_page_number }}">← Назад</a>
+                {% endif %}
+                <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?filter={{ active_filter }}&page={{ page_obj.next_page_number }}">Вперёд →</a>
+                {% endif %}
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="notifications-empty">
+                <span>✓</span>
+                <strong>{% if active_filter == 'unread' %}Всё прочитано{% else %}Уведомлений пока нет{% endif %}</strong>
+                <p>Здесь появятся важные события по подпискам, избранному и отслеживаемым матчам.</p>
+            </div>
+            {% endif %}
+        </main>
+
+        <aside class="notifications-side">
+            <section class="notification-settings-card">
+                <p class="notifications-kicker">Доставка</p>
+                <h2>Настройки</h2>
+                <form method="post" action="{% url 'notifications:preferences' %}" class="notification-settings-form">
+                    {% csrf_token %}
+                    <div class="notification-settings-group">
+                        <strong>Каналы</strong>
+                        <label><input type="checkbox" name="in_app_enabled" {% if preferences.in_app_enabled %}checked{% endif %}><span>На сайте</span></label>
+                        <label><input type="checkbox" name="email_enabled" {% if preferences.email_enabled %}checked{% endif %}><span>Email</span></label>
+                        <label><input type="checkbox" name="telegram_enabled" {% if preferences.telegram_enabled %}checked{% endif %}><span>Telegram</span></label>
+                        <label class="notification-telegram-field">
+                            <span>Telegram chat id</span>
+                            <input type="text" name="telegram_chat_id" value="{{ preferences.telegram_chat_id }}" placeholder="Например 123456789">
+                        </label>
+                    </div>
+
+                    <div class="notification-settings-group">
+                        <strong>Что присылать</strong>
+                        <label><input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}><span>Новые прогнозы подписок</span></label>
+                        <label><input type="checkbox" name="favorite_settled" {% if preferences.favorite_settled %}checked{% endif %}><span>Результаты избранного</span></label>
+                        <label><input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}><span>Матч примерно через час</span></label>
+                        <label><input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}><span>Достижения капперов</span></label>
+                        <label><input type="checkbox" name="match_prediction" {% if preferences.match_prediction %}checked{% endif %}><span>Прогноз на выбранный матч</span></label>
+                    </div>
+
+                    <button type="submit" class="notification-settings-save">Сохранить настройки</button>
+                </form>
+            </section>
+
+            <section class="notification-watch-card">
+                <div class="notification-watch-head">
+                    <div>
+                        <p class="notifications-kicker">Матчи</p>
+                        <h2>Отслеживаю</h2>
+                    </div>
+                    <span>{{ watched_matches|length }}</span>
+                </div>
+                {% if watched_matches %}
+                <div class="notification-watch-list">
+                    {% for watch in watched_matches %}
+                    <a href="{{ watch.match.get_absolute_url }}">
+                        <strong>{{ watch.match.home_team_name }} — {{ watch.match.away_team_name }}</strong>
+                        <span>{% if watch.match.starts_at %}{{ watch.match.starts_at|date:"d.m · H:i" }}{% else %}Время не указано{% endif %}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="notification-watch-empty">Откройте предстоящий матч и нажмите «Следить за матчем».</p>
+                {% endif %}
+            </section>
+        </aside>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'notifications/js/center.js' %}" defer></script>
+{% endblock %}

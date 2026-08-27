@@ -17,6 +17,7 @@ urlpatterns = [
     path("", include("front.urls")),
     path("cabinet/", include("cabinet.urls")),
     path("games/", include("game.urls")),
+    path("notifications/", include("notifications.urls")),
     path("ajax/", include("back.urls")),
 ]
 

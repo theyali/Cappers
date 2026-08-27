@@ -1,0 +1,97 @@
+.nav-notification-link {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    background: #1f1f21;
+    color: #fff;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+.nav-notification-link:hover {
+    background: #0b56fa;
+}
+
+.nav-notification-link svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.nav-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    background: #fbf110;
+    color: #131313;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.nav-notification-badge.is-empty {
+    display: none;
+}
+
+.match-watch-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 13px;
+    margin-left: 8px;
+    background: #1f1f21;
+    color: #fff;
+    border: 0;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.match-watch-button:hover,
+.match-watch-button.is-watching {
+    background: #0b56fa;
+}
+
+.match-watch-button.is-watching::before {
+    content: "✓";
+    color: #fbf110;
+    font-weight: 900;
+}
+
+.match-watch-button:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+@media (max-width: 760px) {
+    .nav-notification-link {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .match-detail-head {
+        flex-wrap: wrap;
+    }
+
+    .match-watch-button {
+        width: 100%;
+        justify-content: center;
+        margin: 10px 0 0;
+    }
+}

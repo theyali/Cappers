@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
 
-from . import dashboard_views, public_views, views
+from . import avatar_views, dashboard_views, public_views, views
 
 app_name = "cabinet"
 
@@ -12,7 +12,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("coupons/<int:coupon_id>/", views.coupon_detail, name="coupon_detail"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
-    path("profile/avatar/", views.upload_avatar, name="avatar_upload"),
+    path("profile/avatar/", avatar_views.avatar, name="avatar_upload"),
     path("profile/follow/<int:user_id>/", views.follow_analyst, name="follow_analyst"),
     path("experts/<str:username>/", public_views.expert_profile, name="expert_profile"),
     path("experts/<int:user_id>/follow/", public_views.toggle_follow, name="toggle_follow"),

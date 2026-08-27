@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "back.apps.BackConfig",
     "front.apps.FrontConfig",
     "pages.apps.PagesConfig",
+    "notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,8 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@cappers.local")
+SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://localhost:8000")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -185,6 +188,22 @@ CELERY_BEAT_SCHEDULE = {
     "run-bot-activity-cycle": {
         "task": "bots.tasks.run_bot_activity_cycle",
         "schedule": timedelta(minutes=10),
+    },
+    "dispatch-notification-events": {
+        "task": "notifications.tasks.dispatch_recent_coupon_events",
+        "schedule": timedelta(minutes=1),
+    },
+    "notification-match-reminders": {
+        "task": "notifications.tasks.notify_match_reminders",
+        "schedule": timedelta(minutes=5),
+    },
+    "notification-achievement-sync": {
+        "task": "notifications.tasks.sync_achievement_notifications",
+        "schedule": timedelta(hours=1),
+    },
+    "deliver-notifications": {
+        "task": "notifications.tasks.deliver_pending_notifications",
+        "schedule": timedelta(minutes=1),
     },
 }
 

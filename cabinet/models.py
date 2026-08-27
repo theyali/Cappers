@@ -17,6 +17,12 @@ class User(AbstractUser):
         default=Role.READER,
         db_index=True,
     )
+    avatar = models.ImageField(
+        "Аватар",
+        upload_to="users/avatars/%Y/%m/",
+        blank=True,
+        null=True,
+    )
 
     @property
     def is_analyst(self) -> bool:
