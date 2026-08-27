@@ -1,14 +1,13 @@
-from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, Max, Prefetch, Q
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import render
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
-from cabinet.models import AnalystProfile, User
+from cabinet.models import AnalystProfile
+from front.expert_ranking import ranked_expert_profiles
 from front.models import Article
-from front.prediction_metrics import annotate_author_roi
 from front.views import _best_streaks_for_authors, _initials, _top_experts
 from game.models import Match, Prediction, PredictionCoupon
 
@@ -49,7 +48,9 @@ def _latest_home_predictions() -> list[dict]:
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
         .select_related("author", "author__analyst_profile")
-        .prefetch_related(Prefetch("predictions", queryset=positions, to_attr="home_positions"))
+        .prefetch_related(
+            Prefetch("predictions", queryset=positions, to_attr="home_positions")
+        )
         .annotate(positions_count=Count("predictions", distinct=True))
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
@@ -92,9 +93,15 @@ def _latest_home_predictions() -> list[dict]:
             {
                 "id": prediction.id,
                 "url": match.get_absolute_url(),
-                "sport": (match.sport.name_ru if match.sport and match.sport.name_ru else "Футбол"),
+                "sport": (
+                    match.sport.name_ru
+                    if match.sport and match.sport.name_ru
+                    else "Футбол"
+                ),
                 "league": match.league_name or "Лига",
-                "league_logo": match.league.logo if match.league and match.league.logo else "",
+                "league_logo": (
+                    match.league.logo if match.league and match.league.logo else ""
+                ),
                 "home_name": match.home_team_name or "Хозяева",
                 "away_name": match.away_team_name or "Гости",
                 "home_logo": _logo_url(match.home_team_logo, match.home_team),
@@ -109,7 +116,9 @@ def _latest_home_predictions() -> list[dict]:
                 "expert": expert_name,
                 "expert_username": author.username,
                 "expert_initials": _initials(expert_name),
-                "expert_avatar_url": profile.avatar.url if profile and profile.avatar else "",
+                "expert_avatar_url": (
+                    profile.avatar.url if profile and profile.avatar else ""
+                ),
                 "expert_verified": bool(profile and profile.is_verified),
                 "status_label": status_label,
                 "status_key": status_key,
@@ -119,63 +128,9 @@ def _latest_home_predictions() -> list[dict]:
 
 
 def _best_home_experts(request) -> list[dict]:
-    recent_cutoff = timezone.now() - timedelta(days=30)
-    published_filter = Q(
-        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-    )
-    profiles = list(
-        annotate_author_roi(
-            AnalystProfile.objects.filter(
-                is_public=True,
-                user__role=User.Role.ANALYST,
-            )
-            .select_related("user")
-            .annotate(
-                followers_count=Count("user__analyst_followers", distinct=True),
-                predictions_count=Count(
-                    "user__prediction_coupons",
-                    filter=published_filter,
-                    distinct=True,
-                ),
-                wins_count=Count(
-                    "user__prediction_coupons",
-                    filter=published_filter
-                    & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN),
-                    distinct=True,
-                ),
-                losses_count=Count(
-                    "user__prediction_coupons",
-                    filter=published_filter
-                    & Q(user__prediction_coupons__state_status=PredictionCoupon.StateStatus.LOSE),
-                    distinct=True,
-                ),
-                sports_count=Count(
-                    "user__prediction_coupons__predictions__match__sport",
-                    filter=published_filter,
-                    distinct=True,
-                ),
-                recent_publications_count=Count(
-                    "user__prediction_coupons",
-                    filter=published_filter
-                    & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
-                    distinct=True,
-                ),
-                last_publication_at=Max(
-                    "user__prediction_coupons__published_at",
-                    filter=published_filter,
-                ),
-            ),
-            author_outer_ref="user_id",
-            annotation_name="author_roi",
-        )
-        .order_by(
-            "-wins_count",
-            "-followers_count",
-            "-is_verified",
-            "-recent_publications_count",
-            "-created_at",
-        )[:HOME_EXPERTS_LIMIT]
-    )
+    # The home page takes the first N profiles from the exact same ranking
+    # source as /cappers/. No local order_by rules are allowed here.
+    profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
 
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
     following_ids = set()
@@ -192,7 +147,7 @@ def _best_home_experts(request) -> list[dict]:
         win_rate = round(profile.wins_count / settled * 100) if settled else 0
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         unlocked_achievements = build_achievement_badges(
-            predictions_count=profile.predictions_count,
+            predictions_count=profile.publications_count,
             wins_count=profile.wins_count,
             overall_roi=profile.author_roi,
             followers_count=profile.followers_count,
@@ -208,9 +163,10 @@ def _best_home_experts(request) -> list[dict]:
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "verified": profile.is_verified,
                 "roi": profile.author_roi,
+                "ranking_score": profile.ranking_score,
                 "followers": profile.followers_count,
-                "predictions": profile.predictions_count,
-                "publications": profile.predictions_count,
+                "predictions": profile.publications_count,
+                "publications": profile.publications_count,
                 "sports": profile.sports_count,
                 "recent_publications": profile.recent_publications_count,
                 "wins": profile.wins_count,
@@ -218,7 +174,10 @@ def _best_home_experts(request) -> list[dict]:
                 "last_publication_at": profile.last_publication_at,
                 "joined_at": profile.created_at,
                 "latest_achievements": list(reversed(unlocked_achievements[-5:])),
-                "is_self": request.user.is_authenticated and request.user.id == profile.user_id,
+                "is_self": (
+                    request.user.is_authenticated
+                    and request.user.id == profile.user_id
+                ),
                 "is_following": profile.user_id in following_ids,
             }
         )
@@ -239,7 +198,11 @@ def _league_rating(match: Match) -> int:
     )
 
     match_raw = match.raw_data if isinstance(match.raw_data, dict) else {}
-    raw_league = match_raw.get("league") if isinstance(match_raw.get("league"), dict) else {}
+    raw_league = (
+        match_raw.get("league")
+        if isinstance(match_raw.get("league"), dict)
+        else {}
+    )
     values.extend(
         raw_league.get(key)
         for key in ("rating", "league_rating", "league_rank", "rank")
@@ -291,11 +254,7 @@ def _important_home_matches() -> list[Match]:
     selected = important[:HOME_MATCHES_LIMIT]
     if len(selected) < HOME_MATCHES_LIMIT:
         selected_ids = {match.id for match in selected}
-        selected.extend(
-            match
-            for match in matches
-            if match.id not in selected_ids
-        )
+        selected.extend(match for match in matches if match.id not in selected_ids)
 
     return selected[:HOME_MATCHES_LIMIT]
 
@@ -308,7 +267,9 @@ def index(request):
             "latest_predictions": _latest_home_predictions(),
             "top_experts": _top_experts(),
             "best_experts": _best_home_experts(request),
-            "latest_articles": Article.objects.filter(is_published=True).order_by("-created_at", "-id")[:HOME_ARTICLES_LIMIT],
+            "latest_articles": Article.objects.filter(is_published=True).order_by(
+                "-created_at", "-id"
+            )[:HOME_ARTICLES_LIMIT],
             "important_matches": _important_home_matches(),
         },
     )
