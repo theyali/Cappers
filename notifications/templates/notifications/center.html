@@ -99,11 +99,32 @@
                         <strong>Каналы</strong>
                         <label><input type="checkbox" name="in_app_enabled" {% if preferences.in_app_enabled %}checked{% endif %}><span>На сайте</span></label>
                         <label><input type="checkbox" name="email_enabled" {% if preferences.email_enabled %}checked{% endif %}><span>Email</span></label>
-                        <label><input type="checkbox" name="telegram_enabled" {% if preferences.telegram_enabled %}checked{% endif %}><span>Telegram</span></label>
-                        <label class="notification-telegram-field">
-                            <span>Telegram chat id</span>
-                            <input type="text" name="telegram_chat_id" value="{{ preferences.telegram_chat_id }}" placeholder="Например 123456789">
-                        </label>
+
+                        <div class="notification-telegram-connect{% if preferences.telegram_chat_id %} is-connected{% endif %}">
+                            <div class="notification-telegram-connect-head">
+                                <span class="notification-telegram-logo" aria-hidden="true">TG</span>
+                                <div>
+                                    <strong>Telegram</strong>
+                                    {% if preferences.telegram_chat_id %}
+                                        <small>{% if preferences.telegram_username %}@{{ preferences.telegram_username }}{% else %}Аккаунт подключён{% endif %}</small>
+                                    {% else %}
+                                        <small>Подключите бота одним нажатием</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if preferences.telegram_chat_id %}
+                                <label class="notification-telegram-toggle">
+                                    <input type="checkbox" name="telegram_enabled" {% if preferences.telegram_enabled %}checked{% endif %}>
+                                    <span>Получать уведомления</span>
+                                </label>
+                                <button class="notification-telegram-disconnect" type="submit" form="telegramDisconnectForm">Отключить Telegram</button>
+                            {% elif telegram_bot_configured %}
+                                <a class="notification-telegram-connect-button" href="{% url 'notifications:telegram_connect' %}">Подключить Telegram</a>
+                            {% else %}
+                                <span class="notification-telegram-unavailable">Бот ещё не настроен</span>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="notification-settings-group">
@@ -117,6 +138,12 @@
 
                     <button type="submit" class="notification-settings-save">Сохранить настройки</button>
                 </form>
+
+                {% if preferences.telegram_chat_id %}
+                <form method="post" action="{% url 'notifications:telegram_disconnect' %}" id="telegramDisconnectForm">
+                    {% csrf_token %}
+                </form>
+                {% endif %}
             </section>
 
             <section class="notification-watch-card">
