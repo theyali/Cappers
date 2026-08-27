@@ -34,18 +34,22 @@
     sidebar.id = "mobile-coupon-sheet";
     sidebar.classList.add("coupon-sidebar-editor");
 
-    const handle = document.createElement("button");
-    handle.type = "button";
-    handle.className = "mobile-coupon-sheet-handle";
-    handle.dataset.mobileCouponClose = "";
-    handle.setAttribute("aria-label", "Закрыть купон");
-    form.prepend(handle);
-
+    const handle = form.querySelector("[data-mobile-coupon-close]");
     const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
     const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
     let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not(.mobile-nav-coupon)");
+    let previousCount = itemsRoot?.children.length || 0;
+    let tooltipTimer = null;
 
     const itemCount = () => itemsRoot?.children.length || 0;
+
+    const hideTooltip = () => {
+        if (tooltipTimer) {
+            window.clearTimeout(tooltipTimer);
+            tooltipTimer = null;
+        }
+        tooltip.hidden = true;
+    };
 
     const syncIndicator = () => {
         const count = itemCount();
@@ -54,12 +58,23 @@
         badge.textContent = String(count);
         badge.hidden = count === 0;
         tooltip.textContent = `К = ${coefficient}`;
-        tooltip.hidden = count === 0;
+        if (count === 0) hideTooltip();
         couponButton.setAttribute("aria-label", count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купоны");
+    };
+
+    const showTooltip = () => {
+        if (!mobileQuery.matches || itemCount() === 0 || sidebar.classList.contains("is-mobile-coupon-open")) return;
+        if (tooltipTimer) window.clearTimeout(tooltipTimer);
+        tooltip.hidden = false;
+        tooltipTimer = window.setTimeout(() => {
+            tooltip.hidden = true;
+            tooltipTimer = null;
+        }, 1800);
     };
 
     const openSheet = () => {
         if (!mobileQuery.matches) return;
+        hideTooltip();
         const currentActive = nav.querySelector(".mobile-app-nav-item.is-active:not(.mobile-nav-coupon)");
         if (currentActive) previousActive = currentActive;
         previousActive?.classList.remove("is-active");
@@ -83,14 +98,14 @@
         else openSheet();
     });
 
-    handle.addEventListener("click", closeSheet);
+    handle?.addEventListener("click", closeSheet);
 
     let startY = null;
-    handle.addEventListener("pointerdown", (event) => {
+    handle?.addEventListener("pointerdown", (event) => {
         startY = event.clientY;
         handle.setPointerCapture?.(event.pointerId);
     });
-    handle.addEventListener("pointerup", (event) => {
+    handle?.addEventListener("pointerup", (event) => {
         if (startY !== null && event.clientY - startY > 42) closeSheet();
         startY = null;
     });
@@ -98,22 +113,40 @@
     document.addEventListener("click", (event) => {
         const betButton = event.target.closest("[data-bet-option]");
         if (!betButton || betButton.disabled || !mobileQuery.matches) return;
-        window.requestAnimationFrame(() => {
-            syncIndicator();
-            if (itemCount() > 0) openSheet();
-        });
+
+        const count = itemCount();
+        const addedNewGame = count > previousCount;
+        syncIndicator();
+
+        if (addedNewGame) {
+            if (previousCount === 0 && count === 1) {
+                openSheet();
+            } else {
+                showTooltip();
+            }
+        }
+
+        previousCount = count;
     });
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && sidebar.classList.contains("is-mobile-coupon-open")) closeSheet();
     });
 
-    const observer = new MutationObserver(syncIndicator);
-    if (itemsRoot) observer.observe(itemsRoot, { childList: true });
-    if (coefficientNode) observer.observe(coefficientNode, { childList: true, characterData: true, subtree: true });
+    const itemsObserver = new MutationObserver(() => {
+        previousCount = itemCount();
+        syncIndicator();
+    });
+    if (itemsRoot) itemsObserver.observe(itemsRoot, { childList: true });
+
+    const coefficientObserver = new MutationObserver(syncIndicator);
+    if (coefficientNode) coefficientObserver.observe(coefficientNode, { childList: true, characterData: true, subtree: true });
 
     const handleViewportChange = () => {
-        if (!mobileQuery.matches) closeSheet();
+        if (!mobileQuery.matches) {
+            hideTooltip();
+            closeSheet();
+        }
     };
     mobileQuery.addEventListener?.("change", handleViewportChange);
 
