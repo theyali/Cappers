@@ -1,0 +1,334 @@
+/*
+ * Mobile application shell.
+ *
+ * Keep new responsive rules in this file instead of spreading mobile overrides
+ * across page-specific stylesheets. It is loaded after the desktop/page CSS.
+ */
+
+@media (max-width: 760px) {
+    html,
+    body {
+        width: 100%;
+        min-width: 0;
+        background: var(--ink);
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Mobile app header */
+    .site-header {
+        width: 100%;
+        margin: 0;
+        top: 0;
+        border-radius: 0;
+        background: var(--panel);
+    }
+
+    .site-nav {
+        width: 100%;
+        min-height: 58px;
+        height: 58px;
+        margin: 0;
+        padding: 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .site-nav .brand {
+        flex: 0 0 auto;
+        min-width: 0;
+        gap: 0;
+        font-size: 0;
+    }
+
+    .site-nav .brand > span:last-child {
+        display: none;
+    }
+
+    .site-nav .brand-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 0;
+    }
+
+    .site-nav .brand-logo img {
+        width: 92%;
+        height: 92%;
+    }
+
+    .site-nav-center {
+        display: none !important;
+    }
+
+    .site-nav-actions {
+        min-width: 0;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .site-nav-actions a,
+    .site-nav-actions .nav-button,
+    .site-nav-actions .nav-profile {
+        min-height: 38px;
+        padding: 0 10px;
+        border: 0;
+        border-radius: 10px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .site-nav-actions .nav-register {
+        order: 1;
+        color: var(--yellow);
+        background: transparent;
+    }
+
+    .site-nav-actions .nav-login {
+        order: 2;
+        color: var(--text);
+        background: transparent;
+    }
+
+    .site-nav-actions .nav-register:hover,
+    .site-nav-actions .nav-login:hover {
+        color: inherit;
+        background: transparent;
+        transform: none;
+    }
+
+    .site-nav-actions .nav-profile.nav-profile-icon {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        min-height: 38px;
+        padding: 0;
+        border-radius: 10px;
+    }
+
+    .nav-profile-dropdown {
+        right: 0;
+        width: min(260px, calc(100vw - 24px));
+    }
+
+    /* The mobile site behaves as an app screen, so there is no desktop footer. */
+    .site-footer {
+        display: none !important;
+    }
+
+    .site-main {
+        width: 100%;
+        margin: 0;
+        padding: 14px 12px 30px;
+    }
+
+    /* App-like authorization and registration screens. */
+    .auth-stage {
+        min-height: calc(100dvh - 58px);
+        padding: 0;
+        align-items: start;
+    }
+
+    .auth-shell,
+    .auth-shell-register {
+        width: 100%;
+        min-height: calc(100dvh - 58px);
+        margin: 0;
+        display: block;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: var(--ink);
+        box-shadow: none;
+    }
+
+    .auth-visual {
+        display: none;
+    }
+
+    .auth-panel {
+        min-height: calc(100dvh - 58px);
+        align-items: flex-start;
+        background: var(--ink);
+    }
+
+    .auth-panel-inner,
+    .auth-panel-register {
+        position: relative;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 18px 20px 34px;
+    }
+
+    .auth-back {
+        position: absolute;
+        top: 17px;
+        left: 14px;
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 0;
+        z-index: 2;
+    }
+
+    .auth-back span {
+        font-size: 25px;
+        line-height: 1;
+    }
+
+    .auth-heading {
+        text-align: center;
+    }
+
+    .auth-heading .eyebrow,
+    .auth-heading > p:last-child {
+        display: none;
+    }
+
+    .auth-heading h1 {
+        max-width: none;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 48px;
+        font-size: 19px;
+        line-height: 1.2;
+        letter-spacing: 0;
+    }
+
+    .auth-heading::after {
+        content: "";
+        width: 100px;
+        height: 82px;
+        display: block;
+        margin: 22px auto 30px;
+        background: url("../img/logo.png") center / contain no-repeat;
+    }
+
+    .auth-form-modern,
+    .auth-register-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-top: 0;
+    }
+
+    .auth-grid-full {
+        grid-column: auto;
+    }
+
+    .auth-field {
+        gap: 7px;
+    }
+
+    .auth-field-label,
+    .auth-field-row {
+        color: var(--muted) !important;
+        font-size: 12px !important;
+    }
+
+    .auth-field-row a {
+        color: var(--blue);
+    }
+
+    .auth-input-wrap {
+        min-height: 54px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--panel);
+        box-shadow: none;
+    }
+
+    .auth-input-wrap:focus-within {
+        border: 0;
+        background: #252528;
+        box-shadow: none;
+    }
+
+    .auth-input-wrap input,
+    .auth-input-wrap select {
+        min-height: 54px;
+    }
+
+    .auth-input-wrap svg {
+        color: var(--muted);
+        stroke: currentColor;
+    }
+
+    .auth-field-help {
+        color: var(--muted);
+    }
+
+    .auth-submit {
+        min-height: 54px;
+        justify-content: center;
+        margin-top: 4px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--blue);
+        box-shadow: none;
+        font-size: 14px;
+    }
+
+    .auth-submit:hover,
+    .auth-submit:active {
+        background: var(--blue);
+        box-shadow: none;
+        transform: none;
+    }
+
+    .auth-submit-arrow {
+        display: none;
+    }
+
+    .auth-form-alert {
+        border: 0;
+        border-radius: 12px;
+    }
+
+    .auth-legal {
+        margin-top: 12px;
+    }
+
+    .auth-bottom-line {
+        margin-top: 22px;
+    }
+}
+
+@media (max-width: 380px) {
+    .site-nav {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .site-nav .brand-logo {
+        width: 42px;
+        height: 42px;
+    }
+
+    .site-nav-actions a,
+    .site-nav-actions .nav-button {
+        padding-right: 7px;
+        padding-left: 7px;
+        font-size: 12px;
+    }
+
+    .auth-panel-inner,
+    .auth-panel-register {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+}
