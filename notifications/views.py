@@ -15,6 +15,7 @@ from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
 
 
 PAGE_SIZE = 30
+SUMMARY_BATCH_SIZE = 12
 
 
 def _avatar_url(user) -> str:
@@ -77,16 +78,48 @@ def center(request):
 @login_required
 @require_GET
 def summary(request):
-    unread_count = Notification.objects.filter(
+    queryset = Notification.objects.filter(
         recipient=request.user,
         show_in_app=True,
-        is_read=False,
-    ).count()
+    )
+    unread_count = queryset.filter(is_read=False).count()
+    latest_id = queryset.order_by("-id").values_list("id", flat=True).first() or 0
+
+    raw_after_id = request.GET.get("after_id")
+    after_id = None
+    if raw_after_id not in {None, ""}:
+        try:
+            after_id = max(0, int(raw_after_id))
+        except (TypeError, ValueError):
+            after_id = 0
+
+    items = []
+    cursor_id = latest_id
+    if after_id is not None:
+        new_notifications = list(
+            queryset.filter(id__gt=after_id)
+            .order_by("id")[:SUMMARY_BATCH_SIZE]
+        )
+        items = [
+            {
+                "id": notification.id,
+                "kind": notification.kind,
+                "title": notification.title,
+                "message": notification.message,
+                "url": notification.url,
+                "created_at": notification.created_at.isoformat(),
+            }
+            for notification in new_notifications
+        ]
+        cursor_id = new_notifications[-1].id if new_notifications else max(after_id, latest_id)
+
     return JsonResponse(
         {
             "ok": True,
             "unread_count": unread_count,
             "avatar_url": _avatar_url(request.user),
+            "cursor_id": cursor_id,
+            "notifications": items,
         }
     )
 
