@@ -218,14 +218,22 @@
             </span>
             <span class="mobile-app-nav-label">Главная</span>
         </a>
+        {% if request.user.is_authenticated %}
+        <a class="mobile-app-nav-item mobile-nav-my {% if request.resolver_match.url_name == 'following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Моя лента</span>
+        </a>
+        {% else %}
+        <a class="mobile-app-nav-item mobile-nav-my" href="{% url 'cabinet:login' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Моя лента</span>
+        </a>
+        {% endif %}
         <a class="mobile-app-nav-item mobile-nav-matches {% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
-        <a class="mobile-app-nav-item mobile-nav-stats {% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Статистика</span>
-        </a>
+        {% if request.user.is_authenticated and request.user.is_analyst %}
         <a
             class="mobile-app-nav-item mobile-nav-coupon"
             href="{% url 'game:match_list' %}"
@@ -239,17 +247,11 @@
             <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge hidden>0</span>
             <span class="mobile-app-nav-label">Купоны</span>
         </a>
-        {% if request.user.is_authenticated %}
-        <a class="mobile-app-nav-item mobile-nav-profile {% if request.resolver_match.app_name == 'cabinet' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Профиль</span>
-        </a>
-        {% else %}
-        <a class="mobile-app-nav-item mobile-nav-profile" href="{% url 'cabinet:login' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Войти</span>
-        </a>
         {% endif %}
+        <a class="mobile-app-nav-item mobile-nav-stats {% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Статистика</span>
+        </a>
     </nav>
 
     <div class="logo-transition" aria-hidden="true">
