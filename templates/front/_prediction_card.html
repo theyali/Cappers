@@ -16,8 +16,8 @@
                 <div class="prediction-expert-copy">
                     <div class="prediction-expert-name-row">
                         <strong>{{ prediction.expert_name }} {% if prediction.expert_verified %}<span class="prediction-verified">✓</span>{% endif %}</strong>
-                        <span class="prediction-author-roi{% if prediction.author_roi > 0 %} is-positive{% elif prediction.author_roi < 0 %} is-negative{% else %} is-neutral{% endif %}">
-                            ROI {% if prediction.author_roi > 0 %}+{% endif %}{{ prediction.author_roi|floatformat:1 }}%
+                        <span class="prediction-author-roi{% if prediction.author_roi > 0 %} is-positive{% elif prediction.author_roi < 0 %} is-negative{% else %} is-neutral{% endif %}" title="ROI эксперта за последние 30 дней">
+                            ROI {% if prediction.author_roi > 0 %}+{% endif %}{{ prediction.author_roi|floatformat:1 }}% · 30д
                         </span>
                     </div>
                     <span>@{{ prediction.coupon.author.username }}</span>
