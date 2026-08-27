@@ -2,9 +2,7 @@ import time
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.utils import timezone
 
-from notifications.models import TelegramAccount
 from notifications.telegram_bot import (
     TelegramAlreadyLinkedError,
     api_call,
@@ -93,10 +91,10 @@ class Command(BaseCommand):
                 send_message(
                     chat_id,
                     (
-                        "Этот Telegram уже подключён к другому аккаунту Cappers: "
+                        "Этот Telegram уже подключён к аккаунту Cappers: "
                         f"{display_name}.\n\n"
                         "Один Telegram можно связать только с одним аккаунтом. "
-                        "Если хотите использовать другой аккаунт, сначала отключите Telegram в текущем профиле."
+                        "Сначала отключите Telegram в текущем профиле."
                     ),
                     open_url=f"{settings.SITE_BASE_URL.rstrip('/')}/notifications/",
                 )
@@ -115,22 +113,6 @@ class Command(BaseCommand):
                 chat_id,
                 "Ссылка для подключения устарела или уже была использована. Откройте Cappers и подключите Telegram ещё раз.",
                 open_url=f"{settings.SITE_BASE_URL.rstrip('/')}/notifications/",
-            )
-            return
-
-        linked_account = (
-            TelegramAccount.objects.select_related("user")
-            .filter(chat_id=chat_id)
-            .first()
-        )
-        if linked_account:
-            linked_account.last_seen_at = timezone.now()
-            linked_account.save(update_fields=["last_seen_at"])
-            display_name = linked_account.user.get_full_name() or linked_account.user.username
-            send_message(
-                chat_id,
-                f"Telegram уже связан с аккаунтом Cappers: {display_name}.\n\nНажмите «Открыть сайт» — вход выполнится автоматически.",
-                open_url=settings.SITE_BASE_URL.rstrip("/"),
             )
             return
 
