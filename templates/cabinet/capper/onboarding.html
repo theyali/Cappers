@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Профиль каппера — шаг {{ step }} — КапперХаб{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/capper-onboarding.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="capper-onboarding" aria-label="Настройка профиля каппера">
+    <div class="capper-onboarding-shell">
+        <div class="capper-onboarding-top">
+            <div>
+                <p class="capper-kicker">Onboarding каппера</p>
+                <h1>{{ step_title }}</h1>
+                <p class="capper-onboarding-copy">{{ step_copy }}</p>
+            </div>
+            <span class="capper-onboarding-step">{{ step }}/{{ total_steps }}</span>
+        </div>
+
+        <div class="capper-progress" aria-label="Прогресс {{ progress_percent }}%">
+            <span style="width: {{ progress_percent }}%"></span>
+        </div>
+
+        {% if step < 5 %}
+        <form class="capper-onboarding-form" method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="capper-field-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% for field in form %}
+                <label class="capper-field">
+                    <span class="capper-field-label">{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.help_text %}<span class="capper-field-help">{{ field.help_text }}</span>{% endif %}
+                    {% if field.errors %}<span class="capper-field-errors">{{ field.errors|striptags }}</span>{% endif %}
+                </label>
+            {% endfor %}
+
+            <div class="capper-onboarding-actions">
+                {% if previous_step %}
+                    <a class="capper-back-action" href="{% url 'cabinet:capper_onboarding' previous_step %}">← Назад</a>
+                {% else %}
+                    <a class="capper-back-action" href="{% url 'cabinet:become_capper' %}">← О сценарии</a>
+                {% endif %}
+                <button class="capper-growth-link is-blue" type="submit">Продолжить →</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="capper-preview">
+            <div class="capper-preview-avatar">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="">
+                {% else %}
+                    {{ profile.display_name|default:request.user.username|slice:":1"|upper }}
+                {% endif %}
+            </div>
+            <div>
+                <p class="capper-kicker">Так вас увидят пользователи</p>
+                <h2>{{ profile.display_name|default:request.user.username }}</h2>
+                {% if profile.specialization %}<p><strong>{{ profile.specialization }}</strong></p>{% endif %}
+                {% if profile.bio %}<p>{{ profile.bio }}</p>{% endif %}
+                <div class="capper-preview-meta">
+                    {% if profile.favorite_sports %}<span>{{ profile.favorite_sports }}</span>{% endif %}
+                    {% if profile.favorite_leagues %}<span>{{ profile.favorite_leagues }}</span>{% endif %}
+                    {% if profile.telegram_channel %}<span>Telegram: {{ profile.telegram_channel }}</span>{% endif %}
+                    {% if profile.instagram %}<span>Instagram: {{ profile.instagram }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="capper-growth-inline">
+            {% if first_prediction_exists %}
+                <p>Первый опубликованный прогноз уже есть — статистика начнёт собираться автоматически.</p>
+            {% else %}
+                <p>Следующий логичный шаг — выбрать prematch и опубликовать первый прогноз.</p>
+            {% endif %}
+        </div>
+
+        <form method="post" class="capper-finish-actions">
+            {% csrf_token %}
+            <button class="capper-growth-link is-blue" type="submit" name="action" value="prediction">
+                {% if first_prediction_exists %}Создать ещё прогноз{% else %}Создать первый прогноз{% endif %}
+            </button>
+            <button class="capper-growth-link" type="submit" name="action" value="profile">Завершить и открыть профиль</button>
+            <a class="capper-back-action" href="{% url 'cabinet:capper_onboarding' 4 %}">← Изменить соцсети</a>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
