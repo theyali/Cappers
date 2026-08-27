@@ -22,6 +22,10 @@
         if (link.target && link.target !== "_self") return;
         if (link.hasAttribute("download")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
+        if (link.hasAttribute("data-mobile-coupon-toggle")) {
+            event.preventDefault();
+            return;
+        }
 
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin) return;
