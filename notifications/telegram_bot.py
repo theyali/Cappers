@@ -308,7 +308,7 @@ def send_message(chat_id: str, text: str, *, open_url: str | None = None) -> Non
         "text": text,
         "disable_web_page_preview": True,
     }
-    markup = web_app_keyboard(open_url) or open_button(open_url)
+    markup = open_button(open_url)
     if markup:
         payload["reply_markup"] = markup
     api_call("sendMessage", payload)
