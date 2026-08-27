@@ -21,29 +21,45 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "display_name",
+        "specialization",
         "telegram_channel",
         "telegram_account",
-        "tiktok",
-        "facebook",
         "is_verified",
         "is_public",
+        "onboarding_completed_at",
         "created_at",
     )
     list_editable = ("is_verified", "is_public")
-    list_filter = ("is_verified", "is_public", "created_at")
+    list_filter = ("is_verified", "is_public", "created_at", "onboarding_completed_at")
     search_fields = (
         "user__username",
         "user__email",
         "display_name",
+        "specialization",
+        "favorite_sports",
+        "favorite_leagues",
         "telegram_channel",
         "telegram_account",
         "tiktok",
         "facebook",
     )
     autocomplete_fields = ("user",)
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("onboarding_completed_at", "created_at", "updated_at")
     fieldsets = (
-        ("Эксперт", {"fields": ("user", "display_name", "avatar", "bio")}),
+        (
+            "Эксперт",
+            {
+                "fields": (
+                    "user",
+                    "display_name",
+                    "avatar",
+                    "specialization",
+                    "bio",
+                    "favorite_sports",
+                    "favorite_leagues",
+                )
+            },
+        ),
         (
             "Социальные сети",
             {
@@ -58,7 +74,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Статус", {"fields": ("is_verified", "is_public")}),
+        ("Статус", {"fields": ("is_verified", "is_public", "onboarding_completed_at")}),
         ("Системная информация", {"fields": ("created_at", "updated_at")}),
     )
 
