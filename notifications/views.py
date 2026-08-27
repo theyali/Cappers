@@ -96,28 +96,32 @@ def summary(request):
     items = []
     cursor_id = latest_id
     if after_id is not None:
-        new_notifications = list(
-            queryset.filter(id__gt=after_id)
-            .order_by("id")[:SUMMARY_BATCH_SIZE]
-        )
-        items = [
-            {
-                "id": notification.id,
-                "kind": notification.kind,
-                "title": notification.title,
-                "message": notification.message,
-                "url": notification.url,
-                "created_at": notification.created_at.isoformat(),
-            }
-            for notification in new_notifications
-        ]
-        cursor_id = new_notifications[-1].id if new_notifications else max(after_id, latest_id)
+        if after_id > latest_id:
+            cursor_id = latest_id
+        else:
+            new_notifications = list(
+                queryset.filter(id__gt=after_id)
+                .order_by("id")[:SUMMARY_BATCH_SIZE]
+            )
+            items = [
+                {
+                    "id": notification.id,
+                    "kind": notification.kind,
+                    "title": notification.title,
+                    "message": notification.message,
+                    "url": notification.url,
+                    "created_at": notification.created_at.isoformat(),
+                }
+                for notification in new_notifications
+            ]
+            cursor_id = new_notifications[-1].id if new_notifications else latest_id
 
     return JsonResponse(
         {
             "ok": True,
             "unread_count": unread_count,
             "avatar_url": _avatar_url(request.user),
+            "latest_id": latest_id,
             "cursor_id": cursor_id,
             "notifications": items,
         }
