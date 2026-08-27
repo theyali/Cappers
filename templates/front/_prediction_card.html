@@ -34,11 +34,35 @@
                     data-analyst-id="{{ prediction.coupon.author_id }}"
                     data-url="{% url 'cabinet:toggle_follow' user_id=prediction.coupon.author_id %}"
                     aria-pressed="{% if prediction.is_following_author %}true{% else %}false{% endif %}"
+                    aria-label="{% if prediction.is_following_author %}Отписаться от эксперта{% else %}Подписаться на эксперта{% endif %}"
+                    title="{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}"
                 >
-                    <span data-follow-label>{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}</span>
+                    <svg data-follow-icon="subscribe" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"{% if prediction.is_following_author %} hidden{% endif %}>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M19 8v6M22 11h-6"></path>
+                    </svg>
+                    <svg data-follow-icon="unsubscribe" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"{% if not prediction.is_following_author %} hidden{% endif %}>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 11h-6"></path>
+                    </svg>
+                    <span data-follow-label hidden>{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}</span>
                 </button>
             {% else %}
-                <a class="prediction-follow-button" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Подписаться</a>
+                <a
+                    class="prediction-follow-button"
+                    href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+                    aria-label="Войти, чтобы подписаться на эксперта"
+                    title="Подписаться"
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M19 8v6M22 11h-6"></path>
+                    </svg>
+                    <span hidden>Подписаться</span>
+                </a>
             {% endif %}
         </div>
 
