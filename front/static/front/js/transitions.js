@@ -1,4 +1,13 @@
 (() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tg_webapp") === "1" && !document.querySelector("script[data-telegram-web-auth]")) {
+        const telegramAuth = document.createElement("script");
+        telegramAuth.src = "/static/front/js/telegram-web-auth.js";
+        telegramAuth.async = true;
+        telegramAuth.dataset.telegramWebAuth = "true";
+        document.head.appendChild(telegramAuth);
+    }
+
     const overlay = document.querySelector(".logo-transition");
     if (!overlay) return;
 
