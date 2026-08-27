@@ -15,7 +15,9 @@ class NotificationPreference(models.Model):
     in_app_enabled = models.BooleanField("На сайте", default=True)
     email_enabled = models.BooleanField("Email", default=False)
     telegram_enabled = models.BooleanField("Telegram", default=False)
-    telegram_chat_id = models.CharField("Telegram chat id", max_length=80, blank=True)
+    telegram_chat_id = models.CharField("Telegram chat id", max_length=80, blank=True, db_index=True)
+    telegram_username = models.CharField("Telegram username", max_length=80, blank=True)
+    telegram_connected_at = models.DateTimeField("Telegram подключён", null=True, blank=True)
 
     new_prediction = models.BooleanField("Новые прогнозы капперов", default=True)
     favorite_settled = models.BooleanField("Расчёт избранных прогнозов", default=True)
@@ -32,6 +34,32 @@ class NotificationPreference(models.Model):
 
     def __str__(self) -> str:
         return f"Уведомления: {self.user}"
+
+
+class TelegramLinkToken(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="telegram_link_tokens",
+        verbose_name="Пользователь",
+    )
+    token_hash = models.CharField("Хеш токена", max_length=64, unique=True)
+    expires_at = models.DateTimeField("Истекает")
+    used_at = models.DateTimeField("Использован", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Токен привязки Telegram"
+        verbose_name_plural = "Токены привязки Telegram"
+        ordering = ("-created_at",)
+        indexes = [models.Index(fields=("expires_at", "used_at"), name="notif_tg_link_exp_idx")]
+
+    def __str__(self) -> str:
+        return f"Telegram link: {self.user}"
+
+    @property
+    def is_active(self) -> bool:
+        return self.used_at is None and self.expires_at > timezone.now()
 
 
 class Notification(models.Model):
