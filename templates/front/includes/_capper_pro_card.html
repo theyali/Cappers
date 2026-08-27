@@ -21,8 +21,8 @@
                             </svg>
                         </span>
                         {% endif %}
-                        <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}">
-                            ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%
+                        <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}" title="ROI за последние {{ expert.roi_period_days }} дней">
+                            ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · {{ expert.roi_period_days }}д
                         </span>
                     </div>
                     <span>@{{ expert.username }}</span>
