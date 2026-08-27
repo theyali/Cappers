@@ -1,6 +1,5 @@
 .mobile-app-nav {
     display: none;
-    border:1px solid var(--muted);
 }
 
 @media (max-width: 1120px) {
@@ -31,6 +30,7 @@
     }
 
     .mobile-app-nav-item {
+        position: relative;
         min-width: 0;
         min-height: 60px;
         flex: 1 1 0;
@@ -46,6 +46,12 @@
         text-align: center;
         -webkit-tap-highlight-color: transparent;
         transition: flex .22s ease, background .22s ease, color .22s ease, transform .18s ease;
+    }
+
+    button.mobile-app-nav-item {
+        appearance: none;
+        font-family: inherit;
+        cursor: pointer;
     }
 
     .mobile-app-nav-item:hover,
@@ -83,29 +89,39 @@
         display: none !important;
     }
 
-    .mobile-app-nav-item:nth-child(1) .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(1) .mobile-app-nav-icon,
+    .mobile-nav-home .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/home.svg") center / contain no-repeat;
         mask: url("../svgs/home.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon,
+    .mobile-nav-matches .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
         mask: url("../svgs/soccer.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(3) .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(3) .mobile-app-nav-icon,
+    .mobile-nav-articles .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
         mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(4) .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(4) .mobile-app-nav-icon,
+    .mobile-nav-my .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/my.svg") center / contain no-repeat;
         mask: url("../svgs/my.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(5) .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(5) .mobile-app-nav-icon,
+    .mobile-nav-profile .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/profile.svg") center / contain no-repeat;
         mask: url("../svgs/profile.svg") center / contain no-repeat;
+    }
+
+    .mobile-nav-coupon .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav-label {

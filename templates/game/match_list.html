@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -62,4 +63,5 @@
 {% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 <script src="{% static 'front/js/sidebar-predictions-responsive.js' %}" defer></script>
+<script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 {% endblock %}
