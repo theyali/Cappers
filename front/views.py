@@ -7,6 +7,7 @@ from cabinet.models import AnalystFollow
 from game.models import PredictionCoupon
 
 from .expert_ranking import ranked_expert_profiles
+from .prediction_metrics import ROI_PERIOD_DAYS
 
 
 LATEST_PREDICTIONS = [
@@ -170,7 +171,7 @@ def cappers_stats(request):
         unlocked_achievements = build_achievement_badges(
             predictions_count=profile.publications_count,
             wins_count=profile.wins_count,
-            overall_roi=profile.author_roi,
+            overall_roi=profile.author_roi_all_time,
             followers_count=profile.followers_count,
             best_win_streak=best_streaks.get(profile.user_id, 0),
             is_verified=profile.is_verified,
@@ -184,8 +185,10 @@ def cappers_stats(request):
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "verified": profile.is_verified,
                 "roi": profile.author_roi,
+                "roi_period_days": ROI_PERIOD_DAYS,
                 "ranking_score": profile.ranking_score,
                 "settled": profile.settled_count,
+                "settled_in_roi_period": profile.roi_settled_count,
                 "followers": profile.followers_count,
                 "publications": profile.publications_count,
                 "sports": profile.sports_count,
@@ -214,5 +217,6 @@ def cappers_stats(request):
             "experts": experts,
             "experts_count": len(experts),
             "summary": summary,
+            "roi_period_days": ROI_PERIOD_DAYS,
         },
     )
