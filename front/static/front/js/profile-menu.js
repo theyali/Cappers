@@ -204,12 +204,44 @@
         });
     };
 
+    const loadRealtimeNotifications = (bell) => {
+        if (!bell) return;
+        bell.dataset.notificationNav = "";
+        bell.dataset.summaryUrl = "/notifications/summary/";
+        bell.dataset.soundUrl = "/static/front/sounds/notification.wav";
+        bell.dataset.userId = menuUserKey();
+
+        if (!document.querySelector("link[data-notification-realtime-styles]")) {
+            const style = document.createElement("link");
+            style.rel = "stylesheet";
+            style.href = "/static/notifications/css/realtime.css";
+            style.dataset.notificationRealtimeStyles = "true";
+            document.head.appendChild(style);
+        }
+
+        if (!document.querySelector("script[data-notification-realtime-script]")) {
+            const script = document.createElement("script");
+            script.src = "/static/notifications/js/realtime.js";
+            script.dataset.notificationRealtimeScript = "true";
+            document.body.appendChild(script);
+        }
+    };
+
+    const menuUserKey = () => {
+        const username = menus[0]
+            ?.querySelector(".nav-profile-dropdown-head span")
+            ?.textContent
+            ?.trim();
+        return username || "authenticated-user";
+    };
+
     loadNotificationStyles();
     ensureReaderAvatarInput();
     const bell = ensureNotificationNavigation();
     initMatchWatch();
+    loadRealtimeNotifications(bell);
 
-    fetch("/notifications/summary/", { credentials: "same-origin" })
+    fetch("/notifications/summary/", { credentials: "same-origin", cache: "no-store" })
         .then((response) => response.ok ? response.json() : null)
         .then((payload) => {
             if (!payload?.ok) return;
