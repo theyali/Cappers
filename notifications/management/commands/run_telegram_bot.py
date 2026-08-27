@@ -9,6 +9,7 @@ from notifications.telegram_bot import (
     get_bot_token,
     get_bot_username,
     send_message,
+    web_app_menu_button,
 )
 
 
@@ -28,6 +29,7 @@ class Command(BaseCommand):
                 ]
             },
         )
+        api_call("setChatMenuButton", {"menu_button": web_app_menu_button()})
         username = get_bot_username(refresh=True)
         self.stdout.write(self.style.SUCCESS(f"Telegram bot @{username} запущен"))
 
@@ -80,6 +82,7 @@ class Command(BaseCommand):
                 argument,
                 chat_id=chat_id,
                 telegram_username=telegram_username,
+                telegram_user=telegram_user,
             )
             if user:
                 display_name = user.get_full_name() or user.username
@@ -99,6 +102,6 @@ class Command(BaseCommand):
 
         send_message(
             chat_id,
-            "Cappers — уведомления о подписках, прогнозах и матчах.\n\nЧтобы связать этот Telegram с аккаунтом, откройте центр уведомлений на сайте и нажмите «Подключить Telegram».",
-            open_url=f"{settings.SITE_BASE_URL.rstrip('/')}/notifications/",
+            "Cappers — прогнозы, матчи и уведомления в Telegram.\n\nЧтобы связать этот Telegram с аккаунтом, откройте профиль на сайте и нажмите «Подключить Telegram».",
+            open_url=f"{settings.SITE_BASE_URL.rstrip('/')}/cabinet/profile/",
         )

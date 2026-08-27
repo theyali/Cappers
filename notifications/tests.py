@@ -4,7 +4,7 @@ from django.urls import reverse
 from cabinet.models import User
 from game.models import Match
 
-from .models import MatchWatch, Notification
+from .models import MatchWatch, Notification, TelegramAccount
 from .services import create_notification, get_preferences
 from .telegram_bot import consume_link_payload, create_link_payload, disconnect_telegram
 
@@ -67,6 +67,9 @@ class TelegramLinkingTests(TestCase):
 
         self.assertEqual(linked_user, self.user)
         preferences = get_preferences(self.user)
+        telegram_account = TelegramAccount.objects.get(user=self.user)
+        self.assertEqual(telegram_account.chat_id, "123456789")
+        self.assertEqual(telegram_account.username, "cappers_user")
         self.assertEqual(preferences.telegram_chat_id, "123456789")
         self.assertEqual(preferences.telegram_username, "cappers_user")
         self.assertTrue(preferences.telegram_enabled)
@@ -92,6 +95,8 @@ class TelegramLinkingTests(TestCase):
 
         first_preferences = get_preferences(self.user)
         second_preferences = get_preferences(other)
+        self.assertFalse(TelegramAccount.objects.filter(user=self.user).exists())
+        self.assertEqual(TelegramAccount.objects.get(user=other).chat_id, "555")
         self.assertEqual(first_preferences.telegram_chat_id, "")
         self.assertFalse(first_preferences.telegram_enabled)
         self.assertEqual(second_preferences.telegram_chat_id, "555")
@@ -103,6 +108,7 @@ class TelegramLinkingTests(TestCase):
         disconnect_telegram(self.user)
 
         preferences = get_preferences(self.user)
+        self.assertFalse(TelegramAccount.objects.filter(user=self.user).exists())
         self.assertEqual(preferences.telegram_chat_id, "")
         self.assertEqual(preferences.telegram_username, "")
         self.assertFalse(preferences.telegram_enabled)
@@ -163,5 +169,6 @@ class NotificationViewsTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
         preferences.refresh_from_db()
+        self.assertFalse(TelegramAccount.objects.filter(user=self.user).exists())
         self.assertEqual(preferences.telegram_chat_id, "")
         self.assertFalse(preferences.telegram_enabled)

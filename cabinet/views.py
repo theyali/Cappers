@@ -8,6 +8,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST, require_http_methods
 
 from game.models import PredictionCoupon
+from notifications.models import TelegramAccount
+from notifications.services import get_preferences
+from notifications.telegram_bot import get_bot_token
 
 from .achievements import build_achievement_overview
 from .forms import (
@@ -140,6 +143,8 @@ def profile(request):
     following = AnalystFollow.objects.filter(follower=request.user).select_related(
         "analyst", "analyst__analyst_profile"
     )
+    notification_preferences = get_preferences(request.user)
+    telegram_account = TelegramAccount.objects.filter(user=request.user).first()
 
     my_coupons = []
     coupons_count = 0
@@ -177,6 +182,9 @@ def profile(request):
         "predictions_count": predictions_count,
         "achievement_overview": achievement_overview,
         "profile_completion": _profile_completion(request.user, analyst_profile),
+        "notification_preferences": notification_preferences,
+        "telegram_account": telegram_account,
+        "telegram_bot_configured": bool(get_bot_token()),
     }
     return render(request, "cabinet/profile.html", context)
 

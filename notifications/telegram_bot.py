@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
-from .models import NotificationPreference, TelegramLinkToken
+from .models import NotificationPreference, TelegramAccount, TelegramLinkToken
 
 
 BOT_USERNAME_CACHE_KEY = "notifications:telegram_bot_username"
@@ -83,6 +83,7 @@ def consume_link_payload(
     *,
     chat_id: str,
     telegram_username: str = "",
+    telegram_user: dict | None = None,
 ):
     if not payload.startswith("link_"):
         return None
@@ -104,7 +105,15 @@ def consume_link_payload(
         if not link:
             return None
 
-        NotificationPreference.objects.filter(telegram_chat_id=str(chat_id)).exclude(
+        chat_id = str(chat_id)
+        telegram_user = telegram_user or {}
+        username = (
+            telegram_username
+            or str(telegram_user.get("username") or "")
+        ).strip().lstrip("@")[:80]
+
+        TelegramAccount.objects.filter(chat_id=chat_id).exclude(user=link.user).delete()
+        NotificationPreference.objects.filter(telegram_chat_id=chat_id).exclude(
             user=link.user
         ).update(
             telegram_chat_id="",
@@ -113,9 +122,24 @@ def consume_link_payload(
             telegram_enabled=False,
         )
 
+        account, _ = TelegramAccount.objects.update_or_create(
+            user=link.user,
+            defaults={
+                "chat_id": chat_id,
+                "username": username,
+                "first_name": str(telegram_user.get("first_name") or "")[:120],
+                "last_name": str(telegram_user.get("last_name") or "")[:120],
+                "language_code": str(telegram_user.get("language_code") or "")[:12],
+                "last_seen_at": now,
+            },
+        )
+        if account.connected_at is None:
+            account.connected_at = now
+            account.save(update_fields=["connected_at"])
+
         preferences, _ = NotificationPreference.objects.get_or_create(user=link.user)
-        preferences.telegram_chat_id = str(chat_id)
-        preferences.telegram_username = telegram_username.strip().lstrip("@")[:80]
+        preferences.telegram_chat_id = chat_id
+        preferences.telegram_username = username
         preferences.telegram_connected_at = now
         preferences.telegram_enabled = True
         preferences.save(
@@ -135,6 +159,7 @@ def consume_link_payload(
 
 
 def disconnect_telegram(user) -> None:
+    TelegramAccount.objects.filter(user=user).delete()
     preferences, _ = NotificationPreference.objects.get_or_create(user=user)
     preferences.telegram_chat_id = ""
     preferences.telegram_username = ""
@@ -152,8 +177,15 @@ def disconnect_telegram(user) -> None:
     TelegramLinkToken.objects.filter(user=user, used_at__isnull=True).delete()
 
 
-def open_button(url: str | None = None) -> dict:
+def _target_url(url: str | None = None) -> str:
     target = (url or getattr(settings, "SITE_BASE_URL", "")).strip()
+    if not target:
+        return ""
+    return target
+
+
+def open_button(url: str | None = None) -> dict:
+    target = _target_url(url)
     if not target:
         return {}
 
@@ -165,13 +197,35 @@ def open_button(url: str | None = None) -> dict:
     return {"inline_keyboard": [[button]]}
 
 
+def web_app_keyboard(url: str | None = None) -> dict:
+    target = _target_url(url)
+    if not target or not target.startswith("https://"):
+        return {}
+    return {
+        "keyboard": [[{"text": "Открыть сайт", "web_app": {"url": target}}]],
+        "resize_keyboard": True,
+        "is_persistent": True,
+    }
+
+
+def web_app_menu_button(url: str | None = None) -> dict:
+    target = _target_url(url)
+    if not target or not target.startswith("https://"):
+        return {"type": "commands"}
+    return {
+        "type": "web_app",
+        "text": "Открыть сайт",
+        "web_app": {"url": target},
+    }
+
+
 def send_message(chat_id: str, text: str, *, open_url: str | None = None) -> None:
     payload = {
         "chat_id": str(chat_id),
         "text": text,
         "disable_web_page_preview": True,
     }
-    markup = open_button(open_url)
+    markup = web_app_keyboard(open_url) or open_button(open_url)
     if markup:
         payload["reply_markup"] = markup
     api_call("sendMessage", payload)

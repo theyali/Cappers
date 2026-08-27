@@ -14,7 +14,7 @@ from cabinet.models import AnalystFollow, AnalystProfile, User
 from front.models import PredictionFavorite
 from game.models import Match, PredictionCoupon
 
-from .models import AchievementState, CouponEventState, MatchWatch, Notification
+from .models import AchievementState, CouponEventState, MatchWatch, Notification, TelegramAccount
 from .services import create_notification, get_preferences
 
 
@@ -339,7 +339,13 @@ def deliver_pending_notifications(limit: int = 300) -> dict:
                     email_sent += 1
 
         if notification.telegram_processed_at is None:
-            if not preferences.telegram_enabled or not preferences.telegram_chat_id:
+            account = (
+                TelegramAccount.objects.filter(user=notification.recipient)
+                .only("chat_id")
+                .first()
+            )
+            telegram_chat_id = preferences.telegram_chat_id or (account.chat_id if account else "")
+            if not preferences.telegram_enabled or not telegram_chat_id:
                 notification.telegram_processed_at = now
                 update_fields.append("telegram_processed_at")
             elif getattr(settings, "TELEGRAM_BOT_TOKEN", "").strip():
@@ -347,7 +353,7 @@ def deliver_pending_notifications(limit: int = 300) -> dict:
                 if link:
                     text = f"{text}\n\n{link}"
                 try:
-                    _send_telegram(preferences.telegram_chat_id, text)
+                    _send_telegram(telegram_chat_id, text)
                 except Exception:
                     pass
                 else:

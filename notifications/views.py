@@ -9,7 +9,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 from cabinet.models import AnalystProfile
 from game.models import Match
 
-from .models import MatchWatch, Notification
+from .models import MatchWatch, Notification, TelegramAccount
 from .services import get_preferences
 from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
 
@@ -44,6 +44,7 @@ def center(request):
     paginator = Paginator(queryset, PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
     preferences = get_preferences(request.user)
+    telegram_account = TelegramAccount.objects.filter(user=request.user).first()
     unread_count = Notification.objects.filter(
         recipient=request.user,
         show_in_app=True,
@@ -64,6 +65,7 @@ def center(request):
         {
             "page_obj": page_obj,
             "preferences": preferences,
+            "telegram_account": telegram_account,
             "active_filter": active_filter,
             "unread_count": unread_count,
             "watched_matches": watched_matches,

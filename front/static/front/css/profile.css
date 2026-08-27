@@ -478,6 +478,119 @@
     font-weight: 500;
 }
 
+.profile-telegram-card {
+    display: grid;
+    gap: 14px;
+}
+
+.profile-telegram-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-telegram-head .eyebrow {
+    margin: 0 0 5px;
+}
+
+.profile-telegram-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: #fff;
+    background: var(--blue);
+}
+
+.profile-telegram-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+}
+
+.profile-telegram-copy {
+    margin: 0;
+    color: rgba(255,255,255,.62);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.profile-telegram-state {
+    display: grid;
+    gap: 4px;
+    padding: 13px;
+    border-radius: 15px;
+    background: #171718;
+    outline: 1px solid rgba(255,255,255,.08);
+}
+
+.profile-telegram-state.is-connected {
+    background: rgba(11,86,250,.18);
+    outline-color: rgba(11,86,250,.34);
+}
+
+.profile-telegram-state strong,
+.profile-telegram-state span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.profile-telegram-state strong {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.profile-telegram-state span {
+    color: rgba(255,255,255,.62);
+    font-size: 11px;
+}
+
+.profile-telegram-toggle {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: rgba(255,255,255,.72);
+    font-size: 11px;
+}
+
+.profile-telegram-toggle input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--yellow);
+}
+
+.profile-telegram-connect,
+.profile-telegram-disconnect {
+    min-height: 44px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 13px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.profile-telegram-connect {
+    color: #fff;
+    background: var(--blue);
+}
+
+.profile-telegram-connect:hover {
+    background: #2469ff;
+}
+
+.profile-telegram-disconnect {
+    color: #fff;
+    background: var(--danger);
+}
+
 .profile-info-list {
     display: grid;
     gap: 0;

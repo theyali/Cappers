@@ -6,6 +6,7 @@ from .models import (
     MatchWatch,
     Notification,
     NotificationPreference,
+    TelegramAccount,
 )
 
 
@@ -29,6 +30,13 @@ class NotificationAdmin(admin.ModelAdmin):
 class NotificationPreferenceAdmin(admin.ModelAdmin):
     list_display = ("user", "in_app_enabled", "email_enabled", "telegram_enabled", "updated_at")
     search_fields = ("user__username", "user__email", "telegram_chat_id")
+
+
+@admin.register(TelegramAccount)
+class TelegramAccountAdmin(admin.ModelAdmin):
+    list_display = ("user", "username", "chat_id", "connected_at", "last_seen_at")
+    search_fields = ("user__username", "user__email", "username", "chat_id")
+    readonly_fields = ("connected_at", "last_seen_at")
 
 
 @admin.register(MatchWatch)

@@ -36,6 +36,31 @@ class NotificationPreference(models.Model):
         return f"Уведомления: {self.user}"
 
 
+class TelegramAccount(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="telegram_account",
+        verbose_name="Пользователь",
+    )
+    chat_id = models.CharField("Telegram chat id", max_length=80, unique=True, db_index=True)
+    username = models.CharField("Telegram username", max_length=80, blank=True)
+    first_name = models.CharField("Имя в Telegram", max_length=120, blank=True)
+    last_name = models.CharField("Фамилия в Telegram", max_length=120, blank=True)
+    language_code = models.CharField("Язык Telegram", max_length=12, blank=True)
+    connected_at = models.DateTimeField("Подключён", default=timezone.now)
+    last_seen_at = models.DateTimeField("Последняя активность", default=timezone.now)
+
+    class Meta:
+        verbose_name = "Telegram-аккаунт"
+        verbose_name_plural = "Telegram-аккаунты"
+        ordering = ("-connected_at",)
+
+    def __str__(self) -> str:
+        username = f"@{self.username}" if self.username else self.chat_id
+        return f"{self.user} → {username}"
+
+
 class TelegramLinkToken(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
