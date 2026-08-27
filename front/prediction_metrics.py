@@ -27,13 +27,13 @@ SETTLED_COUPON_STATES = (
 )
 
 
-def roi_period_q(*, prefix: str = "") -> Q:
-    """Settled coupon activity included in the public ROI period.
+def roi_period_q(*, prefix: str = "", days: int = ROI_PERIOD_DAYS) -> Q:
+    """Settled coupon activity included in a public ROI period.
 
     ``settled_at`` is the canonical result date. ``updated_at`` is only a
     fallback for older settled rows that do not have ``settled_at`` filled.
     """
-    cutoff = timezone.now() - timedelta(days=ROI_PERIOD_DAYS)
+    cutoff = timezone.now() - timedelta(days=days)
     settled_at = f"{prefix}settled_at"
     updated_at = f"{prefix}updated_at"
     return Q(**{f"{settled_at}__gte": cutoff}) | Q(
@@ -44,7 +44,11 @@ def roi_period_q(*, prefix: str = "") -> Q:
     )
 
 
-def author_roi_subquery(author_outer_ref: str = "coupon__author_id"):
+def author_roi_subquery(
+    author_outer_ref: str = "coupon__author_id",
+    *,
+    period_days: int | None = ROI_PERIOD_DAYS,
+):
     money_field = DecimalField(max_digits=18, decimal_places=4)
     profit_expression = Case(
         When(
@@ -58,15 +62,17 @@ def author_roi_subquery(author_outer_ref: str = "coupon__author_id"):
         default=Value(Decimal("0")),
         output_field=money_field,
     )
+    queryset = PredictionCoupon.objects.filter(
+        author_id=OuterRef(author_outer_ref),
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        state_status__in=SETTLED_COUPON_STATES,
+        total_stake__gt=0,
+    )
+    if period_days is not None:
+        queryset = queryset.filter(roi_period_q(days=period_days))
+
     return (
-        PredictionCoupon.objects.filter(
-            author_id=OuterRef(author_outer_ref),
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            state_status__in=SETTLED_COUPON_STATES,
-            total_stake__gt=0,
-        )
-        .filter(roi_period_q())
-        .values("author_id")
+        queryset.values("author_id")
         .annotate(
             roi_profit=Sum(profit_expression),
             roi_stake=Sum("total_stake"),
@@ -86,13 +92,17 @@ def annotate_author_roi(
     *,
     author_outer_ref: str = "coupon__author_id",
     annotation_name: str = "author_roi",
+    period_days: int | None = ROI_PERIOD_DAYS,
 ):
     roi_field = DecimalField(max_digits=12, decimal_places=4)
     return queryset.annotate(
         **{
             annotation_name: Coalesce(
                 Subquery(
-                    author_roi_subquery(author_outer_ref),
+                    author_roi_subquery(
+                        author_outer_ref,
+                        period_days=period_days,
+                    ),
                     output_field=roi_field,
                 ),
                 Value(Decimal("0")),
