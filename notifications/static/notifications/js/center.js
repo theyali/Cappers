@@ -19,6 +19,10 @@
         unreadCounter.textContent = String(Math.max(0, value));
     };
 
+    const notifyGlobalStateChanged = () => {
+        window.dispatchEvent(new Event("cappers:notifications-changed"));
+    };
+
     page.querySelectorAll("[data-notification-link]").forEach((link) => {
         link.addEventListener("click", async (event) => {
             if (!link.classList.contains("is-unread")) return;
@@ -41,6 +45,7 @@
                     link.querySelector(".notification-unread-dot")?.remove();
                     const current = Number.parseInt(unreadCounter?.textContent || "0", 10) || 0;
                     setUnread(current - 1);
+                    notifyGlobalStateChanged();
                 }
             } finally {
                 if (href && href !== "#") window.location.href = href;
@@ -70,6 +75,7 @@
                 });
                 setUnread(0);
                 markAllForm.remove();
+                notifyGlobalStateChanged();
             } catch (error) {
                 if (button) button.disabled = false;
             }
