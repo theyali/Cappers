@@ -1,6 +1,4 @@
-import json
 import re
-import urllib.request
 from datetime import timedelta
 
 from celery import shared_task
@@ -17,6 +15,7 @@ from game.models import Match, PredictionCoupon
 
 from .models import AchievementState, CouponEventState, MatchWatch, Notification, TelegramAccount
 from .services import create_notification, get_preferences
+from .telegram_delivery import send_notification_to_telegram
 
 
 SETTLED_STATES = {
@@ -445,27 +444,6 @@ def _absolute_url(path: str) -> str:
     return f"{base}{path}" if base else path
 
 
-def _send_telegram(chat_id: str, text: str) -> None:
-    token = getattr(settings, "TELEGRAM_BOT_TOKEN", "").strip()
-    if not token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN не настроен")
-    payload = json.dumps(
-        {
-            "chat_id": chat_id,
-            "text": text,
-            "disable_web_page_preview": True,
-        }
-    ).encode("utf-8")
-    request = urllib.request.Request(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(request, timeout=10) as response:
-        response.read()
-
-
 @shared_task
 def deliver_pending_notifications(limit: int = 300) -> dict:
     pending = (
@@ -519,11 +497,8 @@ def deliver_pending_notifications(limit: int = 300) -> dict:
                 notification.telegram_processed_at = now
                 update_fields.append("telegram_processed_at")
             elif getattr(settings, "TELEGRAM_BOT_TOKEN", "").strip():
-                text = f"{notification.title}\n{notification.message}".strip()
-                if link:
-                    text = f"{text}\n\n{link}"
                 try:
-                    _send_telegram(telegram_chat_id, text)
+                    send_notification_to_telegram(telegram_chat_id, notification, link)
                 except Exception:
                     pass
                 else:
