@@ -193,9 +193,11 @@
             {% else %}
                 <a class="experts-bottom-action" href="{% url 'cabinet:register' %}">Присоединиться</a>
             {% endif %}
+            {% if not request.user.is_analyst %}
             <div class="capper-growth-inline">
                 <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
             </div>
+            {% endif %}
         </section>
     </aside>
 </section>
@@ -234,7 +236,9 @@
             <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
         </div>
         <a class="home-best-experts-all" href="{% url 'front:cappers_stats' %}">Все прогнозисты</a>
+        {% if not request.user.is_analyst %}
         <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+        {% endif %}
     </header>
 
     {% if best_experts %}
