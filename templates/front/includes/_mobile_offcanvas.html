@@ -1,0 +1,98 @@
+{% load static %}
+<aside
+    class="mobile-offcanvas"
+    id="mobile-offcanvas"
+    aria-hidden="true"
+    aria-label="Мобильное меню"
+    data-mobile-offcanvas
+>
+    <div class="mobile-offcanvas-head">
+        <a class="mobile-offcanvas-brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
+            <img src="{% static 'front/img/logo.png' %}" alt="">
+            <span>КапперХаб</span>
+        </a>
+        <button class="mobile-offcanvas-close" type="button" aria-label="Закрыть меню" data-mobile-offcanvas-close>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+        </button>
+    </div>
+
+    {% if request.user.is_authenticated %}
+        <div class="mobile-offcanvas-user">
+            <span class="mobile-offcanvas-avatar">
+                {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
+                    <img src="{{ request.user.analyst_profile.avatar.url }}" alt="">
+                {% elif request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="">
+                {% else %}
+                    <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                {% endif %}
+            </span>
+            <span class="mobile-offcanvas-user-copy">
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <small>@{{ request.user.username }}</small>
+            </span>
+        </div>
+
+        <nav class="mobile-offcanvas-links" aria-label="Меню аккаунта">
+            <a href="{% url 'cabinet:profile' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg>
+                </span>
+                <span>Профиль</span>
+            </a>
+            <a href="{% url 'cabinet:profile' %}?tab=predictions">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
+                </span>
+                <span>Мои прогнозы</span>
+            </a>
+            <a href="{% url 'notifications:center' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                </span>
+                <span>Уведомления</span>
+            </a>
+            <a href="{% url 'front:favorites' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                </span>
+                <span>Избранное</span>
+            </a>
+            <a href="{% url 'front:how_it_works' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.15c-.86.46-1.3.9-1.3 1.85"></path><path d="M12 17h.01"></path></svg>
+                </span>
+                <span>Как пользоваться</span>
+            </a>
+        </nav>
+
+        <form method="post" action="{% url 'cabinet:logout' %}" class="mobile-offcanvas-logout">
+            {% csrf_token %}
+            <button type="submit">
+                <span>Выйти из аккаунта</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg>
+            </button>
+        </form>
+    {% else %}
+        <nav class="mobile-offcanvas-links mobile-offcanvas-links-guest" aria-label="Меню">
+            <a href="{% url 'cabinet:login' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg>
+                </span>
+                <span>Войти</span>
+            </a>
+            <a href="{% url 'cabinet:register' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
+                </span>
+                <span>Регистрация</span>
+            </a>
+            <a href="{% url 'front:how_it_works' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.15c-.86.46-1.3.9-1.3 1.85"></path><path d="M12 17h.01"></path></svg>
+                </span>
+                <span>Как пользоваться</span>
+            </a>
+        </nav>
+    {% endif %}
+</aside>
