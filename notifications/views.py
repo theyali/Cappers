@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -10,6 +11,7 @@ from game.models import Match
 
 from .models import MatchWatch, Notification
 from .services import get_preferences
+from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
 
 
 PAGE_SIZE = 30
@@ -65,6 +67,7 @@ def center(request):
             "active_filter": active_filter,
             "unread_count": unread_count,
             "watched_matches": watched_matches,
+            "telegram_bot_configured": bool(get_bot_token()),
         },
     )
 
@@ -93,7 +96,6 @@ def update_preferences(request):
     checkbox_fields = (
         "in_app_enabled",
         "email_enabled",
-        "telegram_enabled",
         "new_prediction",
         "favorite_settled",
         "match_reminder",
@@ -102,8 +104,35 @@ def update_preferences(request):
     )
     for field in checkbox_fields:
         setattr(preferences, field, field in request.POST)
-    preferences.telegram_chat_id = request.POST.get("telegram_chat_id", "").strip()[:80]
+
+    preferences.telegram_enabled = bool(
+        preferences.telegram_chat_id and "telegram_enabled" in request.POST
+    )
     preferences.save()
+    return redirect("notifications:center")
+
+
+@login_required
+@require_GET
+def telegram_connect(request):
+    if not get_bot_token():
+        messages.error(request, "Telegram-бот ещё не настроен на сервере.")
+        return redirect("notifications:center")
+
+    try:
+        connect_url = build_connect_url(request.user)
+    except Exception:
+        messages.error(request, "Не удалось связаться с Telegram. Попробуйте ещё раз.")
+        return redirect("notifications:center")
+
+    return redirect(connect_url)
+
+
+@login_required
+@require_POST
+def telegram_disconnect(request):
+    disconnect_telegram(request.user)
+    messages.success(request, "Telegram отключён от аккаунта.")
     return redirect("notifications:center")
 
 
