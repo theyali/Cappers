@@ -228,12 +228,12 @@
     }
 
     .coupon-sidebar-editor .coupon-remove {
-        width: 30px;
-        height: 30px;
-        border-radius: 9px;
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
         color: #a6a6aa;
         background: #1f1f21;
-        font-size: 20px;
+        font-size: 15px;
     }
 
     .coupon-sidebar-editor .coupon-item-body,
@@ -274,7 +274,7 @@
     .coupon-sidebar-editor .coupon-pick b {
         margin-left: 4px;
         color: var(--yellow);
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 800;
     }
 
