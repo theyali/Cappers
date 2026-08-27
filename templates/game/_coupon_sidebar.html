@@ -2,79 +2,7 @@
 
 <aside class="coupon-sidebar" aria-label="Прогноз">
     {% if can_write_coupon %}
-    <form class="coupon-panel" data-coupon-form data-no-transition>
-        {% csrf_token %}
-        <div class="coupon-head">
-            <div>
-                <p class="matches-eyebrow">Прогноз</p>
-                <h2>Новый прогноз</h2>
-            </div>
-            <div class="coupon-head-actions">
-                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогноз">
-                    <span aria-hidden="true">⌃</span>
-                </button>
-                <span class="coupon-count" data-coupon-count>0/20</span>
-            </div>
-        </div>
-
-        <div class="coupon-body" data-sidebar-body>
-            <div class="coupon-empty" data-coupon-empty>
-                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
-                <strong>Выберите матч</strong>
-                <p>Добавьте до 20 игр. Все выбранные исходы войдут в один прогноз.</p>
-            </div>
-
-            <div class="coupon-items" data-coupon-items></div>
-
-            <div class="coupon-shared">
-                <label class="coupon-field">
-                    <span>Сумма</span>
-                    <input type="number" name="stake" min="1" step="1" placeholder="100" data-coupon-stake>
-                </label>
-                <div class="coupon-odd">
-                    <span>Общий кф</span>
-                    <strong data-coupon-coefficient>0</strong>
-                </div>
-            </div>
-
-            <div class="coupon-confidence coupon-confidence-global">
-                <div class="coupon-confidence-head">
-                    <span>Уверенность во всём прогнозе</span>
-                    <strong data-coupon-confidence-value>50%</strong>
-                </div>
-                <input
-                    class="coupon-confidence-range"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value="50"
-                    data-coupon-confidence
-                    aria-label="Уверенность во всём прогнозе, процентов"
-                >
-                <div class="coupon-confidence-loader" aria-hidden="true">
-                    <span data-coupon-confidence-fill></span>
-                </div>
-                <small class="coupon-confidence-hint">Один процент применяется ко всем играм внутри этого прогноза.</small>
-            </div>
-
-            <div class="coupon-total">
-                <span>Возможный выигрыш</span>
-                <strong data-coupon-total>0</strong>
-            </div>
-
-            <button class="coupon-submit" type="submit" data-coupon-submit>
-                <span class="coupon-submit-label">Сделать прогноз</span>
-                <span class="coupon-submit-progress" aria-hidden="true">
-                    <span class="coupon-loader-dots"><i></i><i></i><i></i></span>
-                    <span data-coupon-submit-status>Сохраняем...</span>
-                </span>
-            </button>
-            <p class="coupon-note" data-coupon-note>
-                Один купон — один прогноз. Матчи внутри него являются позициями прогноза.
-            </p>
-        </div>
-    </form>
+    {% include "game/_coupon_panel.html" %}
     {{ draft_coupon|json_script:"coupon-draft-data" }}
     {% my_recent_coupons request.user %}
     {% else %}
@@ -104,7 +32,7 @@
                                 {% if prediction.match.league and prediction.match.league.logo %}
                                     <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
                                 {% else %}
-                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                                    {{ prediction.match.league_name|default:"Лига"|slice:":1" }}
                                 {% endif %}
                             </span>
                             <div>
