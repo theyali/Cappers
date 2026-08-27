@@ -1,4 +1,74 @@
 (() => {
+    const formatLiveMinute = (value) => {
+        const raw = String(value || "")
+            .trim()
+            .replace(/[’']/g, "′")
+            .replace(/\s+/g, "");
+        if (!raw) return "";
+        if (raw.endsWith("′")) return raw;
+        return `${raw}′`;
+    };
+
+    const baseMinute = (value) => {
+        const match = String(value || "").match(/\d{1,3}/);
+        return match ? Number.parseInt(match[0], 10) : null;
+    };
+
+    const formatLiveStatus = (status) => {
+        const label = status.querySelector("span");
+        if (!label) return;
+
+        const raw = label.textContent.trim();
+        if (!raw) return;
+
+        const pieces = raw.split(/\s+-\s+/);
+        let phaseRaw = "";
+        let minuteRaw = "";
+
+        if (pieces.length > 1) {
+            phaseRaw = pieces.shift().trim();
+            minuteRaw = pieces.join("-").trim();
+        } else if (/\d/.test(raw)) {
+            minuteRaw = raw;
+        } else {
+            phaseRaw = raw;
+        }
+
+        const minute = baseMinute(minuteRaw);
+        const phase = phaseRaw.toLowerCase().replace(/\s+/g, "");
+        let period = "";
+
+        if (minute !== null && minute > 90) {
+            period = "Extra";
+        } else if (["1", "1h", "1t", "1т", "first", "firsthalf"].includes(phase)) {
+            period = "1Т";
+        } else if (["2", "2h", "2t", "2т", "second", "secondhalf"].includes(phase)) {
+            period = "2Т";
+        } else if (["ht", "half", "halftime", "перерыв"].includes(phase)) {
+            label.textContent = "Перерыв";
+            return;
+        } else if (["3", "et", "aet", "extra", "extratime"].includes(phase)) {
+            period = "Extra";
+        } else if (minute !== null) {
+            if (minute <= 45) period = "1Т";
+            else if (minute <= 90) period = "2Т";
+            else period = "Extra";
+        }
+
+        const minuteLabel = formatLiveMinute(minuteRaw);
+        if (period === "Extra") {
+            label.textContent = minuteLabel ? `Extra ${minuteLabel}` : "Extra";
+        } else if (period) {
+            label.textContent = minuteLabel ? `${period} - ${minuteLabel}` : period;
+        } else if (minuteLabel) {
+            label.textContent = `LIVE - ${minuteLabel}`;
+        } else {
+            label.textContent = "LIVE";
+        }
+    };
+
+    document.querySelectorAll(".match-status-live").forEach(formatLiveStatus);
+
     const buttons = Array.from(document.querySelectorAll("[data-match-watch-toggle]"));
     if (!buttons.length) return;
 
