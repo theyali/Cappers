@@ -160,6 +160,11 @@ class MatchWatch(models.Model):
         related_name="notification_watchers",
         verbose_name="Матч",
     )
+    last_scope = models.CharField("Последний статус", max_length=16, blank=True, default="")
+    last_score = models.CharField("Последний счёт", max_length=32, blank=True, default="")
+    last_time_status = models.CharField("Последний time status", max_length=8, blank=True, default="")
+    started_sent_at = models.DateTimeField("Уведомление о старте", null=True, blank=True)
+    halftime_sent_at = models.DateTimeField("Уведомление о перерыве", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -190,7 +195,7 @@ class AchievementState(models.Model):
 
     class Meta:
         verbose_name = "Состояние достижений для уведомлений"
-        verbose_name_plural = "Состояния достижений для уведомлений"
+        verbose_name_plural = "Состояния достижений прогнозов"
 
     def __str__(self) -> str:
         return f"Достижения: {self.user}"
