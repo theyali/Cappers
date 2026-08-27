@@ -286,23 +286,103 @@
 }
 
 @media (max-width: 1120px) {
-    .sidebar-prediction-league strong {
-        max-width: 220px;
+    .matches-shell {
+        grid-template-columns: minmax(0, 1fr);
     }
-}
 
-@media (max-width: 560px) {
+    .coupon-sidebar {
+        position: static;
+        order: -1;
+        width: 100%;
+        min-width: 0;
+    }
+
     .sidebar-predictions {
-        padding: 12px;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+        padding: 12px 14px;
+    }
+
+    .sidebar-predictions-head {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    .sidebar-predictions-head > div:first-child {
+        min-width: 0;
     }
 
     .sidebar-predictions-head h2 {
-        max-width: 180px;
-        font-size: 22px;
+        max-width: none;
+        font-size: clamp(20px, 3vw, 26px);
+    }
+
+    .sidebar-predictions .coupon-head-actions {
+        width: auto;
+        flex: 0 0 auto;
+        justify-content: flex-end;
+    }
+
+    .sidebar-predictions-body {
+        min-width: 0;
+    }
+
+    .sidebar-predictions-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sidebar-prediction-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .sidebar-prediction-league strong {
+        max-width: min(28vw, 260px);
+    }
+}
+
+@media (max-width: 640px) {
+    .sidebar-predictions {
+        padding: 11px 12px;
+    }
+
+    .sidebar-predictions-head {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .sidebar-predictions-head h2 {
+        max-width: 190px;
+        font-size: 20px;
+        line-height: 1.04;
+    }
+
+    .sidebar-predictions-head .matches-eyebrow {
+        margin-bottom: 5px;
+        font-size: 10px;
+    }
+
+    .sidebar-predictions .coupon-head-actions {
+        width: auto;
+    }
+
+    .sidebar-predictions-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sidebar-prediction-league strong {
+        max-width: 190px;
     }
 
     .sidebar-prediction-match {
         grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+        gap: 6px;
+        padding: 9px 8px;
     }
 
     .sidebar-prediction-team {
@@ -318,5 +398,6 @@
 
     .sidebar-prediction-team strong {
         width: 100%;
+        font-size: 9px;
     }
 }
