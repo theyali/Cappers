@@ -1,0 +1,157 @@
+<div class="profile-layout">
+    <form method="post" action="{% url 'cabinet:profile' %}?tab=settings" class="profile-form-card" novalidate>
+        {% csrf_token %}
+        <div class="profile-section-heading">
+            <div>
+                <p class="eyebrow">Настройки аккаунта</p>
+                <h2>Личные данные</h2>
+            </div>
+            <button type="submit" class="profile-save-button">Сохранить изменения</button>
+        </div>
+
+        {% if user_form.non_field_errors or analyst_form.non_field_errors %}
+            <div class="profile-form-alert">
+                {{ user_form.non_field_errors }}
+                {% if analyst_form %}{{ analyst_form.non_field_errors }}{% endif %}
+            </div>
+        {% endif %}
+
+        <div class="profile-fields-grid">
+            <label class="profile-field">
+                <span>Логин</span>
+                <div class="profile-readonly">@{{ request.user.username }}</div>
+            </label>
+            <label class="profile-field">
+                <span>{{ user_form.email.label }}</span>
+                {{ user_form.email }}
+                {{ user_form.email.errors }}
+            </label>
+            <label class="profile-field">
+                <span>{{ user_form.first_name.label }}</span>
+                {{ user_form.first_name }}
+                {{ user_form.first_name.errors }}
+            </label>
+            <label class="profile-field">
+                <span>{{ user_form.last_name.label }}</span>
+                {{ user_form.last_name }}
+                {{ user_form.last_name.errors }}
+            </label>
+
+            {% if analyst_form %}
+                <label class="profile-field profile-field-full">
+                    <span>{{ analyst_form.display_name.label }}</span>
+                    {{ analyst_form.display_name }}
+                    {{ analyst_form.display_name.errors }}
+                </label>
+                <label class="profile-field profile-field-full">
+                    <span>{{ analyst_form.bio.label }}</span>
+                    {{ analyst_form.bio }}
+                    {{ analyst_form.bio.errors }}
+                    <small>До 2000 символов. Коротко опишите специализацию и интересы.</small>
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.telegram_channel.label }}</span>
+                    {{ analyst_form.telegram_channel }}
+                    {{ analyst_form.telegram_channel.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.telegram_account.label }}</span>
+                    {{ analyst_form.telegram_account }}
+                    {{ analyst_form.telegram_account.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.instagram.label }}</span>
+                    {{ analyst_form.instagram }}
+                    {{ analyst_form.instagram.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.threads.label }}</span>
+                    {{ analyst_form.threads }}
+                    {{ analyst_form.threads.errors }}
+                </label>
+                <label class="profile-field profile-field-full">
+                    <span>{{ analyst_form.youtube.label }}</span>
+                    {{ analyst_form.youtube }}
+                    {{ analyst_form.youtube.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.tiktok.label }}</span>
+                    {{ analyst_form.tiktok }}
+                    {{ analyst_form.tiktok.errors }}
+                </label>
+                <label class="profile-field">
+                    <span>{{ analyst_form.facebook.label }}</span>
+                    {{ analyst_form.facebook }}
+                    {{ analyst_form.facebook.errors }}
+                </label>
+                <div class="profile-visibility profile-field-full">
+                    <div>
+                        <strong>Публичный профиль</strong>
+                        <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
+                    </div>
+                    <label class="switch-control">
+                        {{ analyst_form.is_public }}
+                        <span></span>
+                    </label>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="profile-mobile-save">
+            <button type="submit" class="profile-save-button">Сохранить изменения</button>
+        </div>
+    </form>
+
+    <aside class="profile-side-column">
+        <section class="profile-side-card profile-telegram-card">
+            <div class="profile-telegram-head">
+                <span class="profile-telegram-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 4 3.6 10.8c-1 .39-.95 1.83.08 2.14l4.24 1.28 1.62 5.1c.31.98 1.63 1.16 2.19.3l2.32-3.58 4.56 3.34c.83.61 2.01.13 2.18-.89L23 5.33C23.16 4.35 21.91 3.65 21 4Zm-3.77 4.02-7.7 6.83-.29 2.11-1.02-3.21 9.01-5.73Z"></path></svg>
+                </span>
+                <div>
+                    <p class="eyebrow">Telegram</p>
+                    <h3>Бот и сайт</h3>
+                </div>
+            </div>
+
+            {% if telegram_account or notification_preferences.telegram_chat_id %}
+                <div class="profile-telegram-state is-connected">
+                    <strong>Telegram подключён</strong>
+                    <span>
+                        {% if telegram_account.username %}
+                            @{{ telegram_account.username }}
+                        {% elif notification_preferences.telegram_username %}
+                            @{{ notification_preferences.telegram_username }}
+                        {% else %}
+                            Аккаунт связан
+                        {% endif %}
+                    </span>
+                </div>
+                <label class="profile-telegram-toggle">
+                    <input type="checkbox" checked disabled>
+                    <span>Уведомления доступны через бота</span>
+                </label>
+                <form method="post" action="{% url 'notifications:telegram_disconnect' %}">
+                    {% csrf_token %}
+                    <button class="profile-telegram-disconnect" type="submit">Отключить Telegram</button>
+                </form>
+            {% elif telegram_bot_configured %}
+                <p class="profile-telegram-copy">Свяжите аккаунт с Telegram, чтобы открывать сайт из бота и получать уведомления.</p>
+                <a class="profile-telegram-connect" href="{% url 'notifications:telegram_connect' %}" target="_blank" rel="noopener noreferrer">Подключить Telegram</a>
+            {% else %}
+                <p class="profile-telegram-copy">Telegram-бот ещё не настроен на сервере.</p>
+            {% endif %}
+        </section>
+
+        <section class="profile-side-card">
+            <p class="eyebrow">Аккаунт</p>
+            <h3>Информация</h3>
+            <dl class="profile-info-list">
+                <div><dt>Email</dt><dd>{{ request.user.email|default:"—" }}</dd></div>
+                <div><dt>Дата регистрации</dt><dd>{{ request.user.date_joined|date:"d.m.Y" }}</dd></div>
+                <div><dt>Последний вход</dt><dd>{% if request.user.last_login %}{{ request.user.last_login|date:"d.m.Y H:i" }}{% else %}—{% endif %}</dd></div>
+                <div><dt>Аккаунт</dt><dd>{% if request.user.is_active %}Активен{% else %}Отключён{% endif %}</dd></div>
+            </dl>
+        </section>
+    </aside>
+</div>
