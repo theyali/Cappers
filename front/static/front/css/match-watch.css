@@ -117,13 +117,6 @@
     cursor: wait;
 }
 
-.matches-tabs a.is-watch-tab:not(.is-active) span::before {
-    content: "⌑";
-    margin-right: 7px;
-    color: var(--blue);
-    font-weight: 900;
-}
-
 @media (prefers-reduced-motion: reduce) {
     .match-live-dot::after {
         animation: none;
