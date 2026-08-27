@@ -1,0 +1,128 @@
+.mobile-app-nav {
+    display: none;
+}
+
+@media (max-width: 1120px) {
+    body {
+        padding-bottom: calc(104px + env(safe-area-inset-bottom));
+    }
+
+    /* The desktop center navigation stays in the header only on desktop. */
+    .site-nav-center {
+        display: none !important;
+    }
+
+    .mobile-app-nav {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1200;
+        width: 100%;
+        min-height: calc(94px + env(safe-area-inset-bottom));
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 4px;
+        padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
+        background: #161617;
+        box-shadow: 0 -14px 34px rgba(0, 0, 0, .34);
+    }
+
+    .mobile-app-nav-item {
+        min-width: 0;
+        min-height: 76px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 6px 2px;
+        border: 0;
+        border-radius: 16px;
+        color: #f7f8ff;
+        background: transparent;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-app-nav-item:hover,
+    .mobile-app-nav-item:active {
+        color: #f7f8ff;
+        background: #222224;
+    }
+
+    .mobile-app-nav-icon {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        color: currentColor;
+        background: #232325;
+    }
+
+    .mobile-app-nav-icon svg {
+        width: 30px;
+        height: 30px;
+        display: block;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .mobile-app-nav-label {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mobile-app-nav-item.is-active {
+        color: var(--yellow);
+        background: #202022;
+    }
+
+    .mobile-app-nav-item.is-active .mobile-app-nav-icon {
+        color: var(--ink);
+        background: var(--yellow);
+    }
+
+    .fixed-tg-btn-wrapper {
+        bottom: calc(112px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 420px) {
+    .mobile-app-nav {
+        min-height: calc(90px + env(safe-area-inset-bottom));
+        gap: 1px;
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+
+    .mobile-app-nav-item {
+        min-height: 72px;
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .mobile-app-nav-icon {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .mobile-app-nav-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+}
