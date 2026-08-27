@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block content %}
+{% match_watched request.user match as is_watched %}
 <section
     class="match-detail-page"
     data-coupon-page
@@ -42,14 +43,31 @@
                             </small>
                         </div>
                     </div>
-                    <span class="match-status match-status-{{ match.sync_scope }}">
-                        {% if match.sync_scope == 'live' %}
-                            <i class="match-live-dot" aria-hidden="true"></i>
-                            <span>{{ match|live_status_label }}</span>
-                        {% else %}
-                            {{ match.get_sync_scope_display }}
+                    <div class="match-detail-head-actions">
+                        <span class="match-status match-status-{{ match.sync_scope }}">
+                            {% if match.sync_scope == 'live' %}
+                                <i class="match-live-dot" aria-hidden="true"></i>
+                                <span>{{ match|live_status_label }}</span>
+                            {% else %}
+                                {{ match.get_sync_scope_display }}
+                            {% endif %}
+                        </span>
+                        {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
+                        <button
+                            class="match-watch-button match-card-watch-button match-detail-watch-button{% if is_watched %} is-watching{% endif %}"
+                            type="button"
+                            data-match-watch-toggle
+                            data-watch-url="{% url 'notifications:match_watch' match.id %}"
+                            aria-pressed="{% if is_watched %}true{% else %}false{% endif %}"
+                            aria-label="{% if is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
+                            title="{% if is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path>
+                            </svg>
+                        </button>
                         {% endif %}
-                    </span>
+                    </div>
                 </div>
 
                 <div class="match-detail-scoreboard">
@@ -221,6 +239,7 @@
 {% if can_write_coupon %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 {% endif %}
+<script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}"></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}"></script>
 {% endblock %}
