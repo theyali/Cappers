@@ -77,6 +77,12 @@
             </div>
 
             <div class="site-nav-actions">
+                {% if not request.user.is_authenticated %}
+                    <a class="nav-register capper-header-cta" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+                {% elif not request.user.is_analyst %}
+                    <a class="nav-register capper-header-cta" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+                {% endif %}
+
                 {% if request.user.is_authenticated %}
                     <div class="nav-profile-menu" data-profile-menu>
                         <button
@@ -126,12 +132,17 @@
                                 </span>
                                 <span>Избранное</span>
                             </a>
+                            <form method="post" action="{% url 'cabinet:logout' %}" class="nav-profile-dropdown-logout-form">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-profile-dropdown-logout">
+                                    <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M18 12H9"></path></svg>
+                                    </span>
+                                    <span>Выйти</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    <form method="post" action="{% url 'cabinet:logout' %}" class="nav-form">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-button nav-logout">Выйти</button>
-                    </form>
                 {% else %}
                     <a class="nav-login" href="{% url 'cabinet:login' %}">Войти</a>
                     <a class="nav-register" href="{% url 'cabinet:register' %}">Регистрация</a>
@@ -229,41 +240,20 @@
             <span class="mobile-app-nav-label">Купоны</span>
         </a>
         {% if request.user.is_authenticated %}
-        <a class="mobile-app-nav-item mobile-nav-my {% if request.resolver_match.url_name == 'following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 9h8M8 13h5"></path><path d="m14 16 2 2 3-4"></path></svg>
-            </span>
-            <span class="mobile-app-nav-label">Моё</span>
+        <a class="mobile-app-nav-item mobile-nav-profile {% if request.resolver_match.app_name == 'cabinet' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Профиль</span>
         </a>
         {% else %}
-        <a class="mobile-app-nav-item mobile-nav-my" href="{% url 'cabinet:login' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 9h8M8 13h5"></path><path d="m14 16 2 2 3-4"></path></svg>
-            </span>
-            <span class="mobile-app-nav-label">Моё</span>
+        <a class="mobile-app-nav-item mobile-nav-profile" href="{% url 'cabinet:login' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Войти</span>
         </a>
         {% endif %}
     </nav>
 
-    <div class="logo-transition" aria-hidden="true">
-        <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
-    </div>
-    {% if locked_card_odds %}{{ locked_card_odds|json_script:"locked-match-odds-data" }}{% endif %}
     <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
-    <script src="{% static 'front/js/transitions.js' %}" defer></script>
-    {% if request.resolver_match.app_name == 'game' %}
-    <script
-        src="{% static 'front/js/matches-date-filter.js' %}"
-        data-match-date-filter
-        data-selected-date="{{ selected_date_iso|default:'' }}"
-        data-today-date="{{ today_iso|default:'' }}"
-        defer
-    ></script>
-    <script src="{% static 'front/js/locked-match-odds.js' %}" defer></script>
-    <script src="{% static 'front/js/match-predictions.js' %}" defer></script>
-    <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
-    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
