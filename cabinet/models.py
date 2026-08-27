@@ -59,6 +59,9 @@ class AnalystProfile(models.Model):
         null=True,
     )
     bio = models.TextField("О себе", max_length=2000, blank=True)
+    specialization = models.CharField("Специализация", max_length=220, blank=True)
+    favorite_sports = models.CharField("Любимые виды спорта", max_length=320, blank=True)
+    favorite_leagues = models.CharField("Любимые лиги", max_length=500, blank=True)
     telegram_channel = models.CharField("Telegram канал", max_length=160, default="")
     telegram_account = models.CharField("Telegram аккаунт", max_length=160, default="")
     instagram = models.CharField("Instagram", max_length=160, blank=True)
@@ -68,6 +71,7 @@ class AnalystProfile(models.Model):
     facebook = models.CharField("Facebook", max_length=200, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
     is_public = models.BooleanField("Публичный профиль", default=True, db_index=True)
+    onboarding_completed_at = models.DateTimeField("Onboarding завершён", null=True, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
@@ -81,13 +85,6 @@ class AnalystProfile(models.Model):
 
     def clean(self) -> None:
         super().clean()
-        errors = {}
-        if not (self.telegram_channel or "").strip():
-            errors["telegram_channel"] = "Укажите Telegram-канал эксперта."
-        if not (self.telegram_account or "").strip():
-            errors["telegram_account"] = "Укажите Telegram-аккаунт эксперта."
-        if errors:
-            raise ValidationError(errors)
 
     @property
     def social_links(self) -> list[dict]:
