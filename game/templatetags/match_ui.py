@@ -71,3 +71,12 @@ def live_status_label(match) -> str:
     if period == "Extra":
         return f"Extra {minute_label}"
     return f"{period} - {minute_label}"
+
+
+@register.simple_tag
+def match_watched(user, match) -> bool:
+    if not user or not getattr(user, "is_authenticated", False) or not match:
+        return False
+    from notifications.models import MatchWatch
+
+    return MatchWatch.objects.filter(user=user, match=match).exists()
