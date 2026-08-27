@@ -7,7 +7,7 @@ from django.utils import timezone
 from cabinet.models import AnalystProfile, User
 from game.models import PredictionCoupon
 
-from .prediction_metrics import annotate_author_roi
+from .prediction_metrics import annotate_author_roi, roi_period_q
 
 
 RANKING_HISTORY_PRIOR = 10
@@ -24,7 +24,9 @@ def expert_ranking_score(profile) -> Decimal:
     Raw ROI is shrunk toward zero for experts with a short result history so a
     single lucky coupon cannot immediately put a new profile at the top.
     """
-    settled_count = int(getattr(profile, "settled_count", 0) or 0)
+    settled_count = int(
+        getattr(profile, "roi_settled_count", getattr(profile, "settled_count", 0)) or 0
+    )
     if settled_count <= 0:
         return Decimal("0")
 
@@ -46,6 +48,9 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
     published_filter = Q(
         user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
     )
+    settled_filter = published_filter & Q(
+        user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES
+    )
 
     queryset = (
         AnalystProfile.objects.filter(
@@ -62,10 +67,12 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
             ),
             settled_count=Count(
                 "user__prediction_coupons",
-                filter=published_filter
-                & Q(
-                    user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES
-                ),
+                filter=settled_filter,
+                distinct=True,
+            ),
+            roi_settled_count=Count(
+                "user__prediction_coupons",
+                filter=settled_filter & roi_period_q(prefix="user__prediction_coupons__"),
                 distinct=True,
             ),
             wins_count=Count(
@@ -117,8 +124,9 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
     profiles.sort(key=lambda profile: profile.user.username.lower())
     profiles.sort(
         key=lambda profile: (
-            1 if profile.settled_count else 0,
+            1 if profile.roi_settled_count else 0,
             profile.ranking_score,
+            profile.roi_settled_count,
             profile.settled_count,
             profile.followers_count,
             profile.publications_count,
