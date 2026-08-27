@@ -8,7 +8,7 @@
     --panel-hover: #323236;
     --text: #f7f8ff;
     --soft: rgba(255, 255, 255, .62);
-    width: min(1440px, 86%);
+    width: 100%;
     margin: 28px auto 72px;
     color: var(--text);
 }
