@@ -211,11 +211,9 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
-        <a class="mobile-app-nav-item mobile-nav-articles {% if request.resolver_match.url_name == 'articles' %}is-active{% endif %}" href="{% url 'front:articles' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
-            </span>
-            <span class="mobile-app-nav-label">Статьи</span>
+        <a class="mobile-app-nav-item mobile-nav-stats {% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Статистика</span>
         </a>
         <a
             class="mobile-app-nav-item mobile-nav-coupon"
