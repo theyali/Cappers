@@ -37,6 +37,7 @@
     let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not(.mobile-nav-coupon)");
     let previousCount = itemsRoot?.children.length || 0;
     let tooltipTimer = null;
+    let pendingBetScrollY = null;
 
     const itemCount = () => itemsRoot?.children.length || 0;
 
@@ -108,6 +109,23 @@
     handle?.addEventListener("pointerup", (event) => {
         if (startY !== null && event.clientY - startY > 42) closeSheet();
         startY = null;
+    });
+
+    document.addEventListener("click", (event) => {
+        const betButton = event.target.closest("[data-bet-option]");
+        if (!betButton || betButton.disabled || !mobileQuery.matches) return;
+        pendingBetScrollY = window.scrollY;
+    }, true);
+
+    document.addEventListener("click", (event) => {
+        const betButton = event.target.closest("[data-bet-option]");
+        if (!betButton || betButton.disabled || !mobileQuery.matches || pendingBetScrollY === null) return;
+
+        const stableScrollY = pendingBetScrollY;
+        pendingBetScrollY = null;
+        window.requestAnimationFrame(() => {
+            window.scrollTo({ top: stableScrollY, left: 0, behavior: "auto" });
+        });
     });
 
     document.addEventListener("keydown", (event) => {
