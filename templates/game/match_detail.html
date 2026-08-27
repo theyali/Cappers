@@ -1,12 +1,14 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static match_ui %}
 
 {% block title %}{{ match.home_team_name }} — {{ match.away_team_name }} · {{ match.league_name }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/match-detail-desktop.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/match-detail-responsive.css' %}">
 {% endblock %}
 
@@ -19,11 +21,11 @@
     data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
     aria-label="Страница матча"
 >
-    <a class="match-back-link" href="{% url 'game:match_list' %}">Все матчи</a>
+    <a class="match-back-link" href="{% url 'game:match_list' %}">← Все матчи</a>
 
     <div class="match-detail-shell">
         <main class="match-detail-main">
-            <article class="match-detail-card">
+            <article class="match-detail-card{% if match.sync_scope == 'live' %} is-live{% endif %}">
                 <div class="match-detail-head">
                     <div class="match-league">
                         <span class="league-mark">
@@ -40,7 +42,14 @@
                             </small>
                         </div>
                     </div>
-                    <span class="match-status match-status-{{ match.sync_scope }}">{{ match.get_sync_scope_display }}</span>
+                    <span class="match-status match-status-{{ match.sync_scope }}">
+                        {% if match.sync_scope == 'live' %}
+                            <i class="match-live-dot" aria-hidden="true"></i>
+                            <span>{{ match|live_status_label }}</span>
+                        {% else %}
+                            {{ match.get_sync_scope_display }}
+                        {% endif %}
+                    </span>
                 </div>
 
                 <div class="match-detail-scoreboard">
@@ -62,8 +71,8 @@
                         {% else %}
                             <strong>VS</strong>
                         {% endif %}
-                        {% if match.live_minute_label %}
-                            <span>{{ match.live_minute_label }}</span>
+                        {% if match.sync_scope == 'live' %}
+                            <span>{{ match|live_status_label }}</span>
                         {% elif match.starts_at %}
                             <span>{{ match.starts_at|date:"d.m.Y H:i" }}</span>
                         {% else %}
