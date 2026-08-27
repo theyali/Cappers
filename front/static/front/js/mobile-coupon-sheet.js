@@ -31,9 +31,6 @@
     const insertBefore = pageItems[3] || pageItems[pageItems.length - 1] || null;
     nav.insertBefore(couponButton, insertBefore);
 
-    sidebar.id = "mobile-coupon-sheet";
-    sidebar.classList.add("coupon-sidebar-editor");
-
     const handle = form.querySelector("[data-mobile-coupon-close]");
     const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
     const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
