@@ -85,12 +85,20 @@
                             aria-expanded="false"
                             data-profile-menu-toggle
                         >
-                            <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                            {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
+                                <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" alt="">
+                            {% else %}
+                                <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                            {% endif %}
                         </button>
                         <div class="nav-profile-dropdown" data-profile-menu-dropdown>
                             <div class="nav-profile-dropdown-head">
                                 <span class="nav-profile-dropdown-avatar">
-                                    <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                                    {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
+                                        <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" alt="">
+                                    {% else %}
+                                        <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                                    {% endif %}
                                 </span>
                                 <div>
                                     <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
