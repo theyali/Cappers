@@ -42,7 +42,7 @@ def _display_name_for(user: User) -> str:
 
 
 def _profile_for_onboarding(user: User) -> AnalystProfile:
-    profile, created = AnalystProfile.objects.get_or_create(
+    profile, _ = AnalystProfile.objects.get_or_create(
         user=user,
         defaults={
             "display_name": _display_name_for(user),
@@ -63,6 +63,22 @@ def _profile_for_onboarding(user: User) -> AnalystProfile:
     if update_fields:
         profile.save(update_fields=update_fields)
     return profile
+
+
+def _first_incomplete_step(profile: AnalystProfile) -> int | None:
+    """Return the first required onboarding step that still needs data.
+
+    Photo, leagues and social networks are intentionally optional. A capper
+    cannot activate a public profile without a public name, description,
+    specialization and at least one sport focus.
+    """
+    if not (profile.display_name or "").strip():
+        return 1
+    if not (profile.specialization or "").strip() or not (profile.bio or "").strip():
+        return 2
+    if not (profile.favorite_sports or "").strip():
+        return 3
+    return None
 
 
 @require_http_methods(["GET", "POST"])
@@ -157,6 +173,11 @@ def capper_onboarding(request, step: int):
     profile = _profile_for_onboarding(request.user)
     if request.user.role == User.Role.ANALYST and profile.onboarding_completed_at and profile.is_public:
         return redirect("cabinet:expert_profile", username=request.user.username)
+
+    incomplete_step = _first_incomplete_step(profile)
+    if incomplete_step is not None and step > incomplete_step:
+        messages.info(request, "Сначала заполните обязательную часть профиля каппера.")
+        return redirect("cabinet:capper_onboarding", step=incomplete_step)
 
     form = None
     step_title = ""
@@ -253,6 +274,11 @@ def capper_onboarding(request, step: int):
         step_title = "Профиль готов"
         step_copy = "Теперь можно открыть публичную страницу или сразу перейти к первому прогнозу."
         if request.method == "POST":
+            incomplete_step = _first_incomplete_step(profile)
+            if incomplete_step is not None:
+                messages.error(request, "Заполните обязательные поля перед публикацией профиля.")
+                return redirect("cabinet:capper_onboarding", step=incomplete_step)
+
             action = request.POST.get("action", "profile")
             with transaction.atomic():
                 if request.user.role != User.Role.ANALYST:
