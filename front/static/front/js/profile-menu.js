@@ -1,16 +1,4 @@
 (() => {
-    const ensureCapperHeaderCta = () => {
-        const actions = document.querySelector(".site-nav-actions");
-        if (!actions || actions.querySelector(".capper-header-cta")) return;
-        const link = document.createElement("a");
-        link.className = "nav-register capper-header-cta";
-        link.href = "/cabinet/become-capper/";
-        link.textContent = "Стать каппером";
-        actions.insertBefore(link, actions.firstChild);
-    };
-
-    ensureCapperHeaderCta();
-
     const menus = Array.from(document.querySelectorAll("[data-profile-menu]"));
     if (!menus.length) return;
 
