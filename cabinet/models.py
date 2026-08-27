@@ -23,6 +23,17 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
+    telegram_id = models.BigIntegerField(
+        "Telegram ID",
+        blank=True,
+        null=True,
+        unique=True,
+    )
+    telegram_username = models.CharField(
+        "Telegram username",
+        max_length=150,
+        blank=True,
+    )
 
     @property
     def is_analyst(self) -> bool:

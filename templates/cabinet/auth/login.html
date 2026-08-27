@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block title %}Вход — Cappers{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/telegram_auth.css' %}">
+{% endblock %}
 
 {% block content %}
 <section class="auth-stage">
@@ -40,7 +43,37 @@
                 <div class="auth-heading">
                     <p class="eyebrow">С возвращением</p>
                     <h1>Войти в аккаунт</h1>
-                    <p>Введите данные, которые использовали при регистрации.</p>
+                    <p>Войдите через Telegram или используйте логин и пароль.</p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="auth-form-alert" role="alert">
+                            <span>{% if message.tags == 'success' %}✓{% else %}!{% endif %}</span>
+                            <div>{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="auth-telegram-block">
+                    {% if telegram_bot_username %}
+                        <div class="auth-telegram-widget">
+                            <script async src="https://telegram.org/js/telegram-widget.js?22"
+                                    data-telegram-login="{{ telegram_bot_username }}"
+                                    data-size="large"
+                                    data-userpic="false"
+                                    data-radius="14"
+                                    data-auth-url="{{ telegram_auth_url }}"></script>
+                        </div>
+                    {% else %}
+                        <button class="auth-telegram-disabled" type="button" disabled>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 3.4 18.4 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L5.8 12.6.9 11.1c-1.1-.3-1.1-1.1.2-1.6L20.3 2c.9-.3 1.7.2 1.4 1.4Z"/></svg>
+                            <span>Войти через Telegram</span>
+                        </button>
+                        <p class="auth-telegram-help">Укажите TG_BOT_USERNAME и TG_BOT_TOKEN в окружении.</p>
+                    {% endif %}
+
+                    <div class="auth-login-divider"><span>или</span></div>
                 </div>
 
                 <form method="post" class="auth-form auth-form-modern" novalidate>

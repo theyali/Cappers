@@ -156,6 +156,8 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@cappers.local")
 SITE_BASE_URL = os.getenv("SITE_BASE_URL", "http://localhost:8000")
 TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN", ""))
 TELEGRAM_BOT_TOKEN = TG_BOT_TOKEN
+TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "").lstrip("@")
+TELEGRAM_AUTH_MAX_AGE = env_int("TELEGRAM_AUTH_MAX_AGE", 900)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
