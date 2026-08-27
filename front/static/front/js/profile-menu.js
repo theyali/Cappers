@@ -154,12 +154,22 @@
     };
 
     const initMatchWatch = () => {
-        const bets = document.querySelector("[data-match-bets][data-match-id]");
         const head = document.querySelector(".match-detail-card .match-detail-head");
-        if (!bets || !head || head.querySelector(".match-watch-button")) return;
+        if (!head || head.querySelector(".match-watch-button")) return;
+        if (head.querySelector(".match-status-finished")) return;
 
-        const matchId = bets.dataset.matchId;
-        if (!matchId) return;
+        const bets = document.querySelector("[data-match-bets][data-match-id]");
+        let url = "";
+        if (bets?.dataset.matchId) {
+            url = `/notifications/matches/${bets.dataset.matchId}/watch/`;
+        } else {
+            const pathMatch = window.location.pathname.match(/^\/games\/([^/]+)\/?$/);
+            const matchSlug = pathMatch?.[1] ? decodeURIComponent(pathMatch[1]) : "";
+            if (matchSlug) {
+                url = `/notifications/matches/slug/${encodeURIComponent(matchSlug)}/watch/`;
+            }
+        }
+        if (!url) return;
 
         const button = document.createElement("button");
         button.type = "button";
@@ -167,13 +177,12 @@
         button.textContent = "Следить за матчем";
         head.appendChild(button);
 
-        const url = `/notifications/matches/${matchId}/watch/`;
         const setWatching = (watching) => {
             button.classList.toggle("is-watching", Boolean(watching));
             button.textContent = watching ? "Матч отслеживается" : "Следить за матчем";
         };
 
-        fetch(url, { credentials: "same-origin" })
+        fetch(url, { credentials: "same-origin", cache: "no-store" })
             .then((response) => response.ok ? response.json() : null)
             .then((payload) => {
                 if (payload?.ok) setWatching(payload.watching);
@@ -193,11 +202,13 @@
                     },
                 });
                 const payload = await response.json();
-                if (!response.ok || !payload.ok) throw new Error();
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload?.error || "Не удалось обновить отслеживание");
+                }
                 setWatching(payload.watching);
             } catch (error) {
-                button.textContent = "Не удалось обновить";
-                window.setTimeout(() => setWatching(button.classList.contains("is-watching")), 1500);
+                button.textContent = error?.message || "Не удалось обновить";
+                window.setTimeout(() => setWatching(button.classList.contains("is-watching")), 1700);
             } finally {
                 button.disabled = false;
             }
