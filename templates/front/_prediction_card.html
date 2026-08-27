@@ -37,17 +37,24 @@
                     aria-label="{% if prediction.is_following_author %}Отписаться от эксперта{% else %}Подписаться на эксперта{% endif %}"
                     title="{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}"
                 >
-                    <svg data-follow-icon="subscribe" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"{% if prediction.is_following_author %} hidden{% endif %}>
-                        <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
-                        <path d="M18.63 8A6.63 6.63 0 0 0 5.37 8c0 7-3 7-3 9h12.26"></path>
-                        <path d="M19 13v6"></path>
-                        <path d="M22 16h-6"></path>
-                    </svg>
-                    <svg data-follow-icon="unsubscribe" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"{% if not prediction.is_following_author %} hidden{% endif %}>
-                        <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
-                        <path d="M18.63 8A6.63 6.63 0 0 0 5.37 8c0 7-3 7-3 9h12.26"></path>
-                        <path d="M22 16h-6"></path>
-                    </svg>
+                    <img
+                        data-follow-icon="subscribe"
+                        src="/static/front/img/follow.png"
+                        width="20"
+                        height="20"
+                        alt=""
+                        aria-hidden="true"
+                        {% if prediction.is_following_author %}hidden{% endif %}
+                    >
+                    <img
+                        data-follow-icon="unsubscribe"
+                        src="/static/front/img/unfollow.png"
+                        width="20"
+                        height="20"
+                        alt=""
+                        aria-hidden="true"
+                        {% if not prediction.is_following_author %}hidden{% endif %}
+                    >
                     <span data-follow-label hidden>{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}</span>
                 </button>
             {% else %}
@@ -57,12 +64,7 @@
                     aria-label="Войти, чтобы подписаться на эксперта"
                     title="Подписаться"
                 >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
-                        <path d="M18.63 8A6.63 6.63 0 0 0 5.37 8c0 7-3 7-3 9h12.26"></path>
-                        <path d="M19 13v6"></path>
-                        <path d="M22 16h-6"></path>
-                    </svg>
+                    <img src="/static/front/img/follow.png" width="20" height="20" alt="" aria-hidden="true">
                     <span hidden>Подписаться</span>
                 </a>
             {% endif %}
