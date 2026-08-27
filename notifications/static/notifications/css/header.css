@@ -1,26 +1,36 @@
 .nav-notification-link {
     position: relative;
-    display: grid;
-    place-items: center;
     width: 42px;
     height: 42px;
     flex: 0 0 42px;
-    background: #1f1f21;
-    color: #fff;
+    display: grid !important;
+    place-items: center;
+    padding: 0 !important;
+    border: 0;
     border-radius: 12px;
+    color: #fff !important;
+    background: #29292c !important;
     text-decoration: none;
 }
 
 .nav-notification-link:hover {
-    background: #0b56fa;
+    color: #fff !important;
+    background: var(--blue) !important;
+    transform: none !important;
+}
+
+.nav-notification-link.is-active {
+    color: var(--ink) !important;
+    background: var(--yellow) !important;
 }
 
 .nav-notification-link svg {
-    width: 21px;
-    height: 21px;
+    width: 22px;
+    height: 22px;
+    display: block;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.8;
+    stroke-width: 1.9;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
@@ -29,16 +39,18 @@
     position: absolute;
     top: -5px;
     right: -5px;
-    display: grid;
-    place-items: center;
     min-width: 20px;
     height: 20px;
+    display: grid;
+    place-items: center;
     padding: 0 5px;
-    background: #fbf110;
-    color: #131313;
     border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
     font-size: 10px;
     font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
 .nav-notification-badge.is-empty {
@@ -52,7 +64,7 @@
     min-height: 36px;
     padding: 0 13px;
     margin-left: 8px;
-    background: #1f1f21;
+    background: var(--panel);
     color: #fff;
     border: 0;
     border-radius: 11px;
@@ -64,12 +76,12 @@
 
 .match-watch-button:hover,
 .match-watch-button.is-watching {
-    background: #0b56fa;
+    background: var(--blue);
 }
 
 .match-watch-button.is-watching::before {
     content: "✓";
-    color: #fbf110;
+    color: var(--yellow);
     font-weight: 900;
 }
 
@@ -78,13 +90,16 @@
     cursor: wait;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1120px) {
     .nav-notification-link {
-        width: 70px;
-        height: 70px;
-        flex-basis: 70px;
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+        border-radius: 12px;
     }
+}
 
+@media (max-width: 760px) {
     .match-detail-head {
         flex-wrap: wrap;
     }
@@ -93,5 +108,18 @@
         width: 100%;
         justify-content: center;
         margin: 10px 0 0;
+    }
+}
+
+@media (max-width: 380px) {
+    .nav-notification-link {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .nav-notification-link svg {
+        width: 21px;
+        height: 21px;
     }
 }
