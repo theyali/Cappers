@@ -316,15 +316,40 @@
     transform: scale(1.04);
 }
 
-.site-nav-actions .nav-logout {
-    color: #fff;
-    background: var(--danger);
+.nav-profile-dropdown-logout-form {
+    margin: 0;
 }
 
-.site-nav-actions .nav-logout:hover {
+.site-nav-actions .nav-profile-dropdown .nav-profile-dropdown-logout {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 13px;
     color: #fff;
     background: var(--danger);
-    transform: translateY(-1px);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .18s ease;
+}
+
+.site-nav-actions .nav-profile-dropdown .nav-profile-dropdown-logout:hover {
+    color: #fff;
+    background: var(--danger);
+    transform: translateX(3px);
+}
+
+.nav-profile-dropdown-logout .nav-profile-dropdown-icon,
+.nav-profile-dropdown-logout:hover .nav-profile-dropdown-icon {
+    color: #fff;
+    background: transparent;
+    transform: none;
 }
 
 .site-nav-actions .nav-login {
@@ -356,6 +381,7 @@
 @media (prefers-reduced-motion: reduce) {
     .nav-profile-dropdown,
     .site-nav-actions .nav-profile-dropdown a,
+    .site-nav-actions .nav-profile-dropdown .nav-profile-dropdown-logout,
     .nav-profile-dropdown-icon {
         transition: none;
     }
