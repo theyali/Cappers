@@ -3,13 +3,13 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Prefetch, Q
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.utils import timezone
 
 from front.models import PredictionFavorite, PredictionLike
 from game.models import Match, Prediction, PredictionCoupon
 
-from .models import AnalystFollow, User
+from .models import AnalystFollow
 
 
 SETTLED_COUPON_STATES = (
@@ -119,12 +119,7 @@ def _live_prediction_cards(analyst) -> list[Prediction]:
     return cards
 
 
-@login_required
-def dashboard(request):
-    if request.user.role != User.Role.ANALYST:
-        return redirect("cabinet:profile")
-
-    analyst = request.user
+def build_dashboard_context(analyst) -> dict:
     now, today_start, tomorrow_start = _today_bounds()
 
     published = PredictionCoupon.objects.filter(
@@ -171,11 +166,7 @@ def dashboard(request):
         Decimal("0"),
     )
     roi_profit = sum((_coupon_profit(coupon) for coupon in settled_today), Decimal("0"))
-    roi_today = (
-        roi_profit / roi_stake * Decimal("100")
-        if roi_stake
-        else Decimal("0")
-    )
+    roi_today = roi_profit / roi_stake * Decimal("100") if roi_stake else Decimal("0")
 
     followers_today_qs = (
         AnalystFollow.objects.filter(
@@ -190,8 +181,6 @@ def dashboard(request):
     latest_followers = list(followers_today_qs[:6])
     for follow in latest_followers:
         follow.dashboard_actor = _actor_data(follow.follower)
-
-    live_predictions = _live_prediction_cards(analyst)
 
     likes = list(
         PredictionLike.objects.filter(prediction__author=analyst)
@@ -210,7 +199,6 @@ def dashboard(request):
         *(_reaction_item(item, "favorite") for item in favorites),
     ]
     reactions.sort(key=lambda item: item["created_at"], reverse=True)
-    reactions = reactions[:10]
 
     analyst_profile = getattr(analyst, "analyst_profile", None)
     display_name = (
@@ -219,21 +207,21 @@ def dashboard(request):
         else analyst.get_full_name() or analyst.username
     )
 
-    return render(
-        request,
-        "cabinet/dashboard.html",
-        {
-            "analyst_profile": analyst_profile,
-            "display_name": display_name,
-            "today": now.date(),
-            "today_stats": today_stats,
-            "roi_today": roi_today,
-            "roi_today_display": _signed_percent(roi_today),
-            "roi_profit": roi_profit,
-            "roi_stake": roi_stake,
-            "new_followers_count": new_followers_count,
-            "latest_followers": latest_followers,
-            "latest_reactions": reactions,
-            "live_predictions": live_predictions,
-        },
-    )
+    return {
+        "display_name": display_name,
+        "today": now.date(),
+        "today_stats": today_stats,
+        "roi_today": roi_today,
+        "roi_today_display": _signed_percent(roi_today),
+        "roi_profit": roi_profit,
+        "roi_stake": roi_stake,
+        "new_followers_count": new_followers_count,
+        "latest_followers": latest_followers,
+        "latest_reactions": reactions[:10],
+        "live_predictions": _live_prediction_cards(analyst),
+    }
+
+
+@login_required
+def dashboard(request):
+    return redirect("cabinet:profile")
