@@ -79,6 +79,9 @@
         if (stack) return stack;
         stack = document.createElement("div");
         stack.className = "notification-toast-stack";
+        if (document.querySelector(".fixed-tg-btn-wrapper")) {
+            stack.classList.add("has-fixed-telegram");
+        }
         stack.dataset.notificationToastStack = "";
         stack.setAttribute("aria-live", "polite");
         stack.setAttribute("aria-atomic", "false");
@@ -174,6 +177,13 @@
             if (!data || !data.ok) return;
 
             setBadge(data.unread_count);
+
+            const serverLatestId = Number.parseInt(data.latest_id, 10) || 0;
+            if (cursorId !== null && serverLatestId < cursorId) {
+                cursorId = serverLatestId;
+                persistCursor();
+                return;
+            }
 
             const notifications = Array.isArray(data.notifications) ? data.notifications : [];
             if (cursorId === null) {
