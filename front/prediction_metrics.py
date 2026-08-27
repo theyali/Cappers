@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import (
@@ -6,21 +7,41 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     OuterRef,
+    Q,
     Subquery,
     Sum,
     Value,
     When,
 )
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 
 from game.models import PredictionCoupon
 
 
+ROI_PERIOD_DAYS = 30
 SETTLED_COUPON_STATES = (
     PredictionCoupon.StateStatus.WIN,
     PredictionCoupon.StateStatus.LOSE,
     PredictionCoupon.StateStatus.REFUND,
 )
+
+
+def roi_period_q(*, prefix: str = "") -> Q:
+    """Settled coupon activity included in the public ROI period.
+
+    ``settled_at`` is the canonical result date. ``updated_at`` is only a
+    fallback for older settled rows that do not have ``settled_at`` filled.
+    """
+    cutoff = timezone.now() - timedelta(days=ROI_PERIOD_DAYS)
+    settled_at = f"{prefix}settled_at"
+    updated_at = f"{prefix}updated_at"
+    return Q(**{f"{settled_at}__gte": cutoff}) | Q(
+        **{
+            f"{settled_at}__isnull": True,
+            f"{updated_at}__gte": cutoff,
+        }
+    )
 
 
 def author_roi_subquery(author_outer_ref: str = "coupon__author_id"):
@@ -44,6 +65,7 @@ def author_roi_subquery(author_outer_ref: str = "coupon__author_id"):
             state_status__in=SETTLED_COUPON_STATES,
             total_stake__gt=0,
         )
+        .filter(roi_period_q())
         .values("author_id")
         .annotate(
             roi_profit=Sum(profit_expression),
