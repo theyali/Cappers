@@ -1,3 +1,26 @@
+.capper-verified-badge {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.capper-verified-badge svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.capper-verified-bg {
+    fill: var(--blue);
+}
+
+.capper-verified-check {
+    fill: #fff;
+}
+
 .capper-pro-achievements {
     min-width: 0;
     display: flex;
