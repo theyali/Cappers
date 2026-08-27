@@ -89,37 +89,57 @@
         display: none !important;
     }
 
-    .mobile-app-nav-item:nth-child(1) .mobile-app-nav-icon,
-    .mobile-nav-home .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(1) .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/home.svg") center / contain no-repeat;
         mask: url("../svgs/home.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon,
-    .mobile-nav-matches .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(2) .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
         mask: url("../svgs/soccer.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(3) .mobile-app-nav-icon,
-    .mobile-nav-articles .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(3) .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
         mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(4) .mobile-app-nav-icon,
-    .mobile-nav-my .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(4) .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/my.svg") center / contain no-repeat;
         mask: url("../svgs/my.svg") center / contain no-repeat;
     }
 
-    .mobile-app-nav-item:nth-child(5) .mobile-app-nav-icon,
-    .mobile-nav-profile .mobile-app-nav-icon {
+    .mobile-app-nav-item:nth-child(5) .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/profile.svg") center / contain no-repeat;
         mask: url("../svgs/profile.svg") center / contain no-repeat;
     }
 
-    .mobile-nav-coupon .mobile-app-nav-icon {
+    .mobile-app-nav .mobile-nav-home .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/home.svg") center / contain no-repeat;
+        mask: url("../svgs/home.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
+        mask: url("../svgs/soccer.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-articles .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-articles.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-my .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/my.svg") center / contain no-repeat;
+        mask: url("../svgs/my.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-profile .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/profile.svg") center / contain no-repeat;
+        mask: url("../svgs/profile.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-coupon .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
         mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
     }
