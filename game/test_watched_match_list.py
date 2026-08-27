@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
@@ -13,16 +13,17 @@ class WatchedMatchListTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="match-list-reader")
         self.client.force_login(self.user)
-        now = timezone.now()
+        tz = timezone.get_current_timezone()
+        base = timezone.make_aware(datetime.combine(timezone.localdate(), time(12, 0)), tz)
         self.regular = Match.objects.create(
             external_id=890001,
             sync_scope=Match.SyncScope.PREMATCH,
-            starts_at=now + timedelta(minutes=15),
+            starts_at=base + timedelta(minutes=15),
         )
         self.watched = Match.objects.create(
             external_id=890002,
             sync_scope=Match.SyncScope.PREMATCH,
-            starts_at=now + timedelta(minutes=45),
+            starts_at=base + timedelta(minutes=45),
         )
         MatchWatch.objects.create(
             user=self.user,
