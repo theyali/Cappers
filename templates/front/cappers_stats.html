@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'front/css/cappers-sidebar.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-roi.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-achievements.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/capper-onboarding.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -19,6 +20,10 @@
                 <p class="cappers-eyebrow">Каталог экспертов</p>
                 <h1>Эксперты и аналитики</h1>
                 <p>Сравнивай экспертов по ROI, истории рассчитанных прогнозов, охвату видов спорта и интересу аудитории.</p>
+                <div class="capper-growth-inline">
+                    <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
+                    <p>Создай публичную историю прогнозов и попади в этот рейтинг.</p>
+                </div>
             </div>
             <div class="cappers-total">
                 <strong>{{ summary.experts }}</strong>
@@ -67,6 +72,9 @@
         <div class="cappers-empty">
             <h2>Экспертов пока нет</h2>
             <p>Когда появятся публичные аналитики, их профили и активность будут показаны здесь.</p>
+            <div class="capper-growth-inline">
+                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать первым каппером</a>
+            </div>
         </div>
         {% endif %}
     </div>
