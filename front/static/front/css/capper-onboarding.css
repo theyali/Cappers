@@ -70,7 +70,7 @@
 .capper-onboarding h1,
 .capper-register-choice-shell h1 {
     margin: 0;
-    font-size: clamp(30px, 5vw, 58px);
+    font-size: clamp(30px, 5vw, 51px);
     line-height: .98;
 }
 
@@ -145,7 +145,15 @@
     background: var(--panel);
     text-decoration: none;
 }
-
+.capper-register-choice.is-user {
+    background: var(--yellow);
+}
+.capper-register-choice.is-user h2{
+    color: black;
+}
+.capper-register-choice.is-user .capper-register-benefits{
+    color: rgb(69, 69, 69);
+}
 .capper-benefit span,
 .capper-register-choice-icon {
     width: 42px;
