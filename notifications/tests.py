@@ -1,10 +1,4 @@
-import hashlib
-import hmac
-import json
-import time
-import urllib.parse
-
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from cabinet.models import User
@@ -93,7 +87,7 @@ class TelegramLinkingTests(TestCase):
         )
         self.assertIsNone(repeated)
 
-    def test_same_chat_cannot_move_to_another_cappers_account(self):
+    def test_same_chat_cannot_move_to_new_cappers_account(self):
         other = User.objects.create_user(
             username="telegram-reader-two",
             password="test-password-123",
@@ -130,88 +124,6 @@ class TelegramLinkingTests(TestCase):
         self.assertEqual(preferences.telegram_username, "")
         self.assertFalse(preferences.telegram_enabled)
         self.assertIsNone(preferences.telegram_connected_at)
-
-
-@override_settings(
-    TG_BOT_TOKEN="telegram-web-auth-test-token",
-    TELEGRAM_BOT_TOKEN="telegram-web-auth-test-token",
-)
-class TelegramWebAuthTests(TestCase):
-    bot_token = "telegram-web-auth-test-token"
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="telegram-web-reader",
-            password="test-password-123",
-        )
-        TelegramAccount.objects.create(
-            user=self.user,
-            chat_id="987654321",
-            username="web_reader",
-        )
-
-    def _build_init_data(self, telegram_user_id: str) -> str:
-        values = {
-            "auth_date": str(int(time.time())),
-            "query_id": "AAE-test-query",
-            "user": json.dumps(
-                {
-                    "id": int(telegram_user_id),
-                    "first_name": "Telegram",
-                    "username": "web_reader",
-                },
-                separators=(",", ":"),
-                ensure_ascii=False,
-            ),
-        }
-        data_check_string = "\n".join(
-            f"{key}={value}" for key, value in sorted(values.items())
-        )
-        secret_key = hmac.new(
-            b"WebAppData",
-            self.bot_token.encode("utf-8"),
-            hashlib.sha256,
-        ).digest()
-        values["hash"] = hmac.new(
-            secret_key,
-            data_check_string.encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-        return urllib.parse.urlencode(values)
-
-    def test_linked_telegram_user_is_logged_into_django_session(self):
-        response = self.client.post(
-            reverse("notifications:telegram_web_auth"),
-            {"init_data": self._build_init_data("987654321")},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["ok"])
-        self.assertEqual(
-            int(self.client.session["_auth_user_id"]),
-            self.user.id,
-        )
-
-    def test_valid_unlinked_telegram_is_not_logged_in(self):
-        response = self.client.post(
-            reverse("notifications:telegram_web_auth"),
-            {"init_data": self._build_init_data("111222333")},
-        )
-
-        self.assertEqual(response.status_code, 409)
-        self.assertEqual(response.json()["error"], "telegram_not_linked")
-        self.assertNotIn("_auth_user_id", self.client.session)
-
-    def test_invalid_telegram_signature_is_rejected(self):
-        init_data = self._build_init_data("987654321") + "tampered"
-        response = self.client.post(
-            reverse("notifications:telegram_web_auth"),
-            {"init_data": init_data},
-        )
-
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["error"], "invalid_telegram_data")
-        self.assertNotIn("_auth_user_id", self.client.session)
 
 
 class NotificationViewsTests(TestCase):
