@@ -523,13 +523,13 @@
 }
 
 .coupon-empty {
-    min-height: 210px;
+    min-height: auto;
     display: grid;
     place-items: center;
     align-content: center;
     gap: 8px;
-    padding: 22px;
-    border-radius: 16px;
+    padding: 10px;
+    border-radius: 14px;
     background: #171718;
     text-align: center;
     opacity: 1;
@@ -549,7 +549,7 @@
 
 .coupon-empty p {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1.4;
 }
 
