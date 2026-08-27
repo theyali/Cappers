@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import render
 from django.utils import timezone
@@ -11,7 +10,7 @@ from front.expert_ranking import ranked_expert_profiles
 from front.models import Article
 from front.views import _best_streaks_for_authors, _initials, _top_experts
 from game.models import Match, Prediction, PredictionCoupon
-from game.views import _active_draft_coupon, _match_winner_odds, _serialize_draft_coupon
+from game.views import _match_winner_odds
 
 
 HOME_PREDICTIONS_LIMIT = 8
@@ -220,7 +219,7 @@ def _league_rating(match: Match) -> int:
     return 0
 
 
-def _important_home_matches() -> list[Match]:
+def _important_home_matches(can_write_coupon: bool = False) -> list[Match]:
     now = timezone.now()
     matches = list(
         Match.objects.filter(sync_scope=Match.SyncScope.PREMATCH)
@@ -261,6 +260,7 @@ def _important_home_matches() -> list[Match]:
     selected = selected[:HOME_MATCHES_LIMIT]
     for match in selected:
         match.coupon_odds = _match_winner_odds(match)
+        match.home_can_write_coupon = can_write_coupon
     return selected
 
 
@@ -268,7 +268,6 @@ def index(request):
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
-    draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
 
     return render(
         request,
@@ -280,9 +279,7 @@ def index(request):
             "latest_articles": Article.objects.filter(is_published=True).order_by(
                 "-created_at", "-id"
             )[:HOME_ARTICLES_LIMIT],
-            "important_matches": _important_home_matches(),
+            "important_matches": _important_home_matches(can_write_coupon),
             "can_write_coupon": can_write_coupon,
-            "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
-            "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         },
     )
