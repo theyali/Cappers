@@ -10,7 +10,6 @@ from .models import User
 
 @override_settings(
     TG_BOT_TOKEN="123456:test-token",
-    TG_BOT_USERNAME="cappers_test_bot",
     TELEGRAM_AUTH_MAX_AGE=900,
 )
 class TelegramAuthTests(TestCase):
@@ -34,12 +33,15 @@ class TelegramAuthTests(TestCase):
         ).hexdigest()
         return payload
 
-    def test_login_page_contains_telegram_widget_config(self):
+    def test_login_page_uses_custom_telegram_button_and_bot_id_from_token(self):
         response = self.client.get(reverse("cabinet:login"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-telegram-login="cappers_test_bot"')
+        self.assertContains(response, 'id="telegram-login-button"')
+        self.assertContains(response, 'const botId = "123456";')
+        self.assertContains(response, "Telegram.Login.auth")
         self.assertContains(response, reverse("cabinet:telegram_login"))
+        self.assertNotContains(response, "data-telegram-login")
 
     def test_valid_telegram_payload_creates_and_logs_in_user(self):
         response = self.client.get(
@@ -69,3 +71,13 @@ class TelegramAuthTests(TestCase):
 
         self.assertRedirects(response, reverse("cabinet:login"))
         self.assertFalse(User.objects.filter(telegram_id=987654321).exists())
+
+
+@override_settings(TG_BOT_TOKEN="")
+class TelegramAuthConfigurationTests(TestCase):
+    def test_missing_bot_token_disables_telegram_login(self):
+        response = self.client.get(reverse("cabinet:login"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Укажите TG_BOT_TOKEN в окружении.")
+        self.assertNotContains(response, 'id="telegram-login-button"')

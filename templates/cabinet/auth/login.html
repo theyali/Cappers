@@ -56,21 +56,94 @@
                 {% endif %}
 
                 <div class="auth-telegram-block">
-                    {% if telegram_bot_username %}
-                        <div class="auth-telegram-widget">
-                            <script async src="https://telegram.org/js/telegram-widget.js?22"
-                                    data-telegram-login="{{ telegram_bot_username }}"
-                                    data-size="large"
-                                    data-userpic="false"
-                                    data-radius="14"
-                                    data-auth-url="{{ telegram_auth_url }}"></script>
-                        </div>
+                    {% if telegram_bot_id %}
+                        <button class="auth-telegram-button" id="telegram-login-button" type="button" disabled>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 3.4 18.4 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L5.8 12.6.9 11.1c-1.1-.3-1.1-1.1.2-1.6L20.3 2c.9-.3 1.7.2 1.4 1.4Z"/></svg>
+                            <span class="auth-telegram-button-label">Войти через Telegram</span>
+                            <span class="auth-telegram-spinner" aria-hidden="true"></span>
+                        </button>
+                        <p class="auth-telegram-status" id="telegram-login-status" role="status" hidden></p>
+
+                        <script id="telegram-login-sdk" async src="https://telegram.org/js/telegram-widget.js?22"></script>
+                        <script>
+                            (() => {
+                                const button = document.getElementById("telegram-login-button");
+                                const sdk = document.getElementById("telegram-login-sdk");
+                                const status = document.getElementById("telegram-login-status");
+                                const botId = "{{ telegram_bot_id|escapejs }}";
+                                const authUrl = "{{ telegram_auth_url|escapejs }}";
+                                const fields = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"];
+
+                                const isReady = () => Boolean(
+                                    window.Telegram &&
+                                    window.Telegram.Login &&
+                                    typeof window.Telegram.Login.auth === "function"
+                                );
+
+                                const showStatus = (message) => {
+                                    status.textContent = message;
+                                    status.hidden = false;
+                                };
+
+                                const setIdle = () => {
+                                    button.classList.remove("is-loading");
+                                    button.disabled = !isReady();
+                                };
+
+                                const enableButton = () => {
+                                    if (isReady()) {
+                                        button.disabled = false;
+                                        status.hidden = true;
+                                    } else {
+                                        showStatus("Не удалось загрузить Telegram. Обновите страницу и попробуйте ещё раз.");
+                                    }
+                                };
+
+                                if (isReady()) {
+                                    enableButton();
+                                } else {
+                                    sdk.addEventListener("load", enableButton, { once: true });
+                                    sdk.addEventListener("error", () => {
+                                        button.disabled = true;
+                                        showStatus("Не удалось загрузить Telegram. Проверьте соединение и попробуйте ещё раз.");
+                                    }, { once: true });
+                                }
+
+                                button.addEventListener("click", () => {
+                                    if (!isReady()) {
+                                        showStatus("Telegram ещё загружается. Попробуйте через секунду.");
+                                        return;
+                                    }
+
+                                    status.hidden = true;
+                                    button.disabled = true;
+                                    button.classList.add("is-loading");
+
+                                    window.Telegram.Login.auth({ bot_id: botId }, (user) => {
+                                        if (!user) {
+                                            setIdle();
+                                            showStatus("Вход через Telegram отменён.");
+                                            return;
+                                        }
+
+                                        const params = new URLSearchParams();
+                                        fields.forEach((field) => {
+                                            if (user[field] !== undefined && user[field] !== null && user[field] !== "") {
+                                                params.set(field, String(user[field]));
+                                            }
+                                        });
+
+                                        window.location.assign(`${authUrl}?${params.toString()}`);
+                                    });
+                                });
+                            })();
+                        </script>
                     {% else %}
-                        <button class="auth-telegram-disabled" type="button" disabled>
+                        <button class="auth-telegram-button" type="button" disabled>
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 3.4 18.4 19c-.2 1.1-.9 1.4-1.8.9l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5.1 9.2-8.3c.4-.4-.1-.6-.6-.2L5.8 12.6.9 11.1c-1.1-.3-1.1-1.1.2-1.6L20.3 2c.9-.3 1.7.2 1.4 1.4Z"/></svg>
                             <span>Войти через Telegram</span>
                         </button>
-                        <p class="auth-telegram-help">Укажите TG_BOT_USERNAME и TG_BOT_TOKEN в окружении.</p>
+                        <p class="auth-telegram-help">Укажите TG_BOT_TOKEN в окружении.</p>
                     {% endif %}
 
                     <div class="auth-login-divider"><span>или</span></div>

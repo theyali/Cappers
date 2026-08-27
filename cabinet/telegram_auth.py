@@ -24,16 +24,19 @@ TELEGRAM_FIELDS = (
 )
 
 
+def _telegram_bot_id() -> str:
+    token = (getattr(settings, "TG_BOT_TOKEN", "") or "").strip()
+    bot_id = token.partition(":")[0].strip()
+    return bot_id if bot_id.isdigit() else ""
+
+
 class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        bot_username = (getattr(settings, "TG_BOT_USERNAME", "") or "").lstrip("@")
-        context["telegram_bot_username"] = bot_username
-        context["telegram_auth_url"] = self.request.build_absolute_uri(
-            reverse("cabinet:telegram_login")
-        )
+        context["telegram_bot_id"] = _telegram_bot_id()
+        context["telegram_auth_url"] = reverse("cabinet:telegram_login")
 
         next_url = self.request.GET.get(self.redirect_field_name, "")
         if next_url and url_has_allowed_host_and_scheme(
@@ -96,9 +99,8 @@ def _new_telegram_username(telegram_id: int) -> str:
 
 @require_GET
 def telegram_login(request):
-    bot_username = (getattr(settings, "TG_BOT_USERNAME", "") or "").strip()
     bot_token = (getattr(settings, "TG_BOT_TOKEN", "") or "").strip()
-    if not bot_username or not bot_token:
+    if not bot_token:
         messages.error(request, "Вход через Telegram пока не настроен.")
         return redirect("cabinet:login")
 
