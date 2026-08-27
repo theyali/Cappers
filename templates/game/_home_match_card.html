@@ -1,1 +1,5 @@
-{% include "game/includes/_match_card.html" with match=match card_readonly=1 %}
+{% if can_write_coupon %}
+    {% include "game/includes/_match_card.html" with match=match can_write_coupon=1 %}
+{% else %}
+    {% include "game/includes/_match_card.html" with match=match card_readonly=1 %}
+{% endif %}
