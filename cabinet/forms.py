@@ -6,6 +6,12 @@ from .models import AnalystProfile, User
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
+    role = forms.ChoiceField(
+        label="Тип аккаунта",
+        choices=User.Role.choices,
+        widget=forms.HiddenInput(),
+        initial=User.Role.READER,
+    )
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -49,7 +55,10 @@ class AnalystProfileForm(forms.ModelForm):
         model = AnalystProfile
         fields = (
             "display_name",
+            "specialization",
             "bio",
+            "favorite_sports",
+            "favorite_leagues",
             "telegram_channel",
             "telegram_account",
             "instagram",
@@ -61,12 +70,15 @@ class AnalystProfileForm(forms.ModelForm):
         )
         widgets = {
             "display_name": forms.TextInput(attrs={"placeholder": "Имя, которое увидят другие"}),
+            "specialization": forms.TextInput(attrs={"placeholder": "Например: футбольная аналитика, live, тоталы"}),
             "bio": forms.Textarea(
                 attrs={
                     "rows": 6,
                     "placeholder": "Расскажите немного о себе и своей спортивной специализации",
                 }
             ),
+            "favorite_sports": forms.TextInput(attrs={"placeholder": "Футбол, теннис, баскетбол"}),
+            "favorite_leagues": forms.TextInput(attrs={"placeholder": "АПЛ, Ла Лига, Лига чемпионов"}),
             "telegram_channel": forms.TextInput(attrs={"placeholder": "@channel или https://t.me/channel"}),
             "telegram_account": forms.TextInput(attrs={"placeholder": "@username или https://t.me/username"}),
             "instagram": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
