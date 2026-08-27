@@ -41,6 +41,7 @@
     {% endif %}
     <link rel="stylesheet" href="{% static 'front/css/mobile.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/mobile-bottom-nav.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/mobile-offcanvas.css' %}">
 </head>
 <body>
     <header class="site-header">
@@ -136,8 +137,23 @@
                     <a class="nav-register" href="{% url 'cabinet:register' %}">Регистрация</a>
                 {% endif %}
             </div>
+
+            <button
+                class="mobile-menu-toggle"
+                type="button"
+                aria-label="Открыть меню"
+                aria-controls="mobile-offcanvas"
+                aria-expanded="false"
+                data-mobile-offcanvas-toggle
+            >
+                <span class="mobile-menu-toggle-line"></span>
+                <span class="mobile-menu-toggle-line"></span>
+                <span class="mobile-menu-toggle-line"></span>
+            </button>
         </nav>
     </header>
+
+    {% include "front/includes/_mobile_offcanvas.html" %}
 
     {% if messages %}
         <ul class="messages" role="status" aria-live="polite">
@@ -231,6 +247,7 @@
     </div>
     {% if locked_card_odds %}{{ locked_card_odds|json_script:"locked-match-odds-data" }}{% endif %}
     <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
+    <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     {% if request.resolver_match.app_name == 'game' %}
     <script
