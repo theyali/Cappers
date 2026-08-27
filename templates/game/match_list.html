@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
 {% endblock %}
@@ -24,7 +25,7 @@
 
     <nav class="matches-tabs" aria-label="Фильтр матчей">
         {% for tab in scope_tabs %}
-        <a class="{% if active_scope == tab.scope %}is-active{% endif %}" href="{% url 'game:match_list' %}?scope={{ tab.scope }}">
+        <a class="{% if active_scope == tab.scope %}is-active{% endif %}{% if tab.scope == 'watched' %} is-watch-tab{% endif %}" href="{% url 'game:match_list' %}?scope={{ tab.scope }}{% if selected_date_iso %}&date={{ selected_date_iso }}{% endif %}">
             <span>{{ tab.label }}</span>
             <b>{{ tab.count }}</b>
         </a>
@@ -42,14 +43,24 @@
             {% if matches %}
             <div class="matches-grid">
                 {% for match in matches %}
-                    {% include "game/includes/_match_card.html" with match=match can_write_coupon=can_write_coupon %}
+                    <div class="match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}">
+                        {% if match.is_watched %}
+                        <span class="match-watch-card-marker" title="Матч отслеживается" aria-label="Матч отслеживается">◎</span>
+                        {% endif %}
+                        {% include "game/includes/_match_card.html" with match=match can_write_coupon=can_write_coupon %}
+                    </div>
                 {% endfor %}
             </div>
             {% else %}
             <div class="matches-empty">
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
-                <h2>Матчей пока нет</h2>
-                <p>Синхронизация скоро заполнит футбольную сетку.</p>
+                {% if active_scope == 'watched' %}
+                    <h2>Нет отслеживаемых матчей</h2>
+                    <p>Откройте предстоящий или LIVE-матч и нажмите «Следить за матчем».</p>
+                {% else %}
+                    <h2>Матчей пока нет</h2>
+                    <p>Синхронизация скоро заполнит футбольную сетку.</p>
+                {% endif %}
             </div>
             {% endif %}
         </section>
