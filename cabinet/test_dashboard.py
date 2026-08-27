@@ -44,12 +44,13 @@ class CapperDashboardTests(TestCase):
             published_at=self.now,
         )
 
-    def test_reader_is_redirected_to_profile(self):
-        self.client.force_login(self.reader)
-        response = self.client.get(reverse("cabinet:dashboard"))
-        self.assertRedirects(response, reverse("cabinet:profile"))
+    def test_old_dashboard_url_redirects_to_profile_for_every_role(self):
+        for user in (self.reader, self.analyst):
+            self.client.force_login(user)
+            response = self.client.get(reverse("cabinet:dashboard"))
+            self.assertRedirects(response, reverse("cabinet:profile"))
 
-    def test_dashboard_shows_today_stats_roi_followers_reactions_and_live(self):
+    def test_profile_tab_shows_old_dashboard_content(self):
         win_coupon = self._coupon(
             state=PredictionCoupon.StateStatus.WIN,
             stake="100",
@@ -103,9 +104,10 @@ class CapperDashboardTests(TestCase):
         PredictionFavorite.objects.create(user=self.reader, prediction=win_coupon)
 
         self.client.force_login(self.analyst)
-        response = self.client.get(reverse("cabinet:dashboard"))
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_tab"], "profile")
         self.assertEqual(response.context["today_stats"]["active"], 3)
         self.assertEqual(response.context["today_stats"]["wins"], 1)
         self.assertEqual(response.context["today_stats"]["losses"], 1)
@@ -117,3 +119,14 @@ class CapperDashboardTests(TestCase):
         self.assertEqual(response.context["roi_today_display"], "+20.0%")
         self.assertContains(response, "Текущие live-прогнозы")
         self.assertContains(response, "Последние реакции")
+        self.assertContains(response, "Настройки")
+
+    def test_settings_tab_contains_account_form(self):
+        self.client.force_login(self.analyst)
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "settings"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_tab"], "settings")
+        self.assertContains(response, "Личные данные")
+        self.assertContains(response, "Сохранить изменения")
+        self.assertContains(response, 'data-profile-tab-panel="settings"')
