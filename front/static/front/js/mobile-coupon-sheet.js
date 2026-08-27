@@ -96,6 +96,14 @@
         startY = null;
     });
 
+    document.addEventListener("pointerdown", (event) => {
+        if (!mobileQuery.matches || !sidebar.classList.contains("is-mobile-coupon-open")) return;
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+        if (sidebar.contains(target) || couponButton.contains(target)) return;
+        closeSheet();
+    });
+
     document.addEventListener("click", (event) => {
         const betButton = event.target.closest("[data-bet-option]");
         if (!betButton || betButton.disabled || !mobileQuery.matches) return;
