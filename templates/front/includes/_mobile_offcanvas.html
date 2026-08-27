@@ -40,6 +40,14 @@
                 </span>
                 <span>Профиль</span>
             </a>
+            {% if not request.user.is_analyst %}
+            <a href="{% url 'cabinet:become_capper' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
+                </span>
+                <span>Стать каппером</span>
+            </a>
+            {% endif %}
             <a href="{% url 'cabinet:profile' %}?tab=predictions">
                 <span class="mobile-offcanvas-link-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
@@ -92,6 +100,12 @@
                     <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
                 </span>
                 <span>Регистрация</span>
+            </a>
+            <a href="{% url 'cabinet:become_capper' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
+                </span>
+                <span>Стать каппером</span>
             </a>
             <a href="{% url 'front:articles' %}">
                 <span class="mobile-offcanvas-link-icon" aria-hidden="true">
