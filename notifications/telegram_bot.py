@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import secrets
 import urllib.parse
@@ -15,6 +16,14 @@ from .models import NotificationPreference, TelegramAccount, TelegramLinkToken
 
 BOT_USERNAME_CACHE_KEY = "notifications:telegram_bot_username"
 LINK_TTL_MINUTES = 15
+WEB_APP_AUTH_MAX_AGE_SECONDS = 5 * 60
+
+
+class TelegramAlreadyLinkedError(Exception):
+    def __init__(self, user):
+        self.user = user
+        display_name = user.get_full_name() or user.username
+        super().__init__(f"Telegram уже подключён к аккаунту {display_name}")
 
 
 def get_bot_token() -> str:
@@ -112,15 +121,15 @@ def consume_link_payload(
             or str(telegram_user.get("username") or "")
         ).strip().lstrip("@")[:80]
 
-        TelegramAccount.objects.filter(chat_id=chat_id).exclude(user=link.user).delete()
-        NotificationPreference.objects.filter(telegram_chat_id=chat_id).exclude(
-            user=link.user
-        ).update(
-            telegram_chat_id="",
-            telegram_username="",
-            telegram_connected_at=None,
-            telegram_enabled=False,
+        existing_account = (
+            TelegramAccount.objects.select_for_update()
+            .select_related("user")
+            .filter(chat_id=chat_id)
+            .exclude(user=link.user)
+            .first()
         )
+        if existing_account:
+            raise TelegramAlreadyLinkedError(existing_account.user)
 
         account, _ = TelegramAccount.objects.update_or_create(
             user=link.user,
@@ -177,11 +186,85 @@ def disconnect_telegram(user) -> None:
     TelegramLinkToken.objects.filter(user=user, used_at__isnull=True).delete()
 
 
+def validate_web_app_init_data(
+    init_data: str,
+    *,
+    max_age_seconds: int = WEB_APP_AUTH_MAX_AGE_SECONDS,
+) -> dict | None:
+    token = get_bot_token()
+    if not token or not init_data:
+        return None
+
+    try:
+        values = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+    except (TypeError, ValueError):
+        return None
+
+    received_hash = values.pop("hash", "")
+    if not received_hash:
+        return None
+
+    data_check_string = "\n".join(
+        f"{key}={value}" for key, value in sorted(values.items())
+    )
+    secret_key = hmac.new(
+        b"WebAppData",
+        token.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    expected_hash = hmac.new(
+        secret_key,
+        data_check_string.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected_hash, received_hash):
+        return None
+
+    try:
+        auth_date = int(values.get("auth_date") or "0")
+    except (TypeError, ValueError):
+        return None
+
+    now_timestamp = int(timezone.now().timestamp())
+    if auth_date <= 0 or auth_date > now_timestamp + 30:
+        return None
+    if now_timestamp - auth_date > max_age_seconds:
+        return None
+
+    try:
+        telegram_user = json.loads(values.get("user") or "{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(telegram_user, dict) or not telegram_user.get("id"):
+        return None
+    return telegram_user
+
+
 def _target_url(url: str | None = None) -> str:
     target = (url or getattr(settings, "SITE_BASE_URL", "")).strip()
     if not target:
         return ""
     return target
+
+
+def _web_app_target(url: str | None = None) -> str:
+    target = _target_url(url)
+    if not target or not target.startswith("https://"):
+        return target
+
+    parsed = urllib.parse.urlsplit(target)
+    query = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
+    query["tg_webapp"] = "1"
+    return urllib.parse.urlunsplit(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            urllib.parse.urlencode(query),
+            parsed.fragment,
+        )
+    )
 
 
 def open_button(url: str | None = None) -> dict:
@@ -191,7 +274,7 @@ def open_button(url: str | None = None) -> dict:
 
     button = {"text": "Открыть Cappers"}
     if target.startswith("https://"):
-        button["web_app"] = {"url": target}
+        button["web_app"] = {"url": _web_app_target(target)}
     else:
         button["url"] = target
     return {"inline_keyboard": [[button]]}
@@ -202,7 +285,7 @@ def web_app_keyboard(url: str | None = None) -> dict:
     if not target or not target.startswith("https://"):
         return {}
     return {
-        "keyboard": [[{"text": "Открыть сайт", "web_app": {"url": target}}]],
+        "keyboard": [[{"text": "Открыть сайт", "web_app": {"url": _web_app_target(target)}}]],
         "resize_keyboard": True,
         "is_persistent": True,
     }
@@ -215,7 +298,7 @@ def web_app_menu_button(url: str | None = None) -> dict:
     return {
         "type": "web_app",
         "text": "Открыть сайт",
-        "web_app": {"url": target},
+        "web_app": {"url": _web_app_target(target)},
     }
 
 
