@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.request
 from datetime import timedelta
 
@@ -24,6 +25,9 @@ SETTLED_STATES = {
     PredictionCoupon.StateStatus.REFUND,
 }
 
+SCORE_PATTERN = re.compile(r"(\d+)\s*[:\-]\s*(\d+)")
+HALFTIME_WORDS = {"ht", "halftime", "interval", "перерыв"}
+
 
 def _expert_name(user) -> str:
     try:
@@ -39,6 +43,50 @@ def _expert_name(user) -> str:
 
 def _match_name(match) -> str:
     return f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
+
+
+def _score_pair(value: str | None) -> tuple[int, int] | None:
+    match = SCORE_PATTERN.search(str(value or ""))
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2))
+
+
+def _canonical_score(value: str | None) -> str:
+    pair = _score_pair(value)
+    if pair is not None:
+        return f"{pair[0]}:{pair[1]}"
+    return str(value or "").strip()
+
+
+def _status_fragments(match: Match) -> list[str]:
+    fragments = [match.time_status or "", match.live_minute_label or ""]
+    raw = match.raw_data if isinstance(match.raw_data, dict) else {}
+    for key in ("status", "game_status", "time_status", "period", "phase"):
+        value = raw.get(key)
+        if isinstance(value, dict):
+            fragments.extend(str(item or "") for item in value.values())
+        elif value not in (None, ""):
+            fragments.append(str(value))
+    return fragments
+
+
+def _is_halftime(match: Match) -> bool:
+    status_text = " ".join(_status_fragments(match)).lower()
+    normalized = re.sub(r"[^a-zа-я0-9]+", " ", status_text).strip()
+    tokens = set(normalized.split())
+    return bool(tokens & HALFTIME_WORDS) or "half time" in normalized
+
+
+def _score_event_title(previous_score: str, current_score: str) -> str:
+    previous_pair = _score_pair(previous_score)
+    current_pair = _score_pair(current_score)
+    if current_pair is not None:
+        current_total = sum(current_pair)
+        previous_total = sum(previous_pair) if previous_pair is not None else 0
+        if current_total > previous_total:
+            return f"⚽ Гол! {current_score}"
+    return f"Счёт изменился: {current_score}"
 
 
 def _new_prediction_events(coupon: PredictionCoupon) -> int:
@@ -123,6 +171,121 @@ def _favorite_settlement_events(coupon: PredictionCoupon) -> int:
     return created
 
 
+def _watched_match_update_events() -> dict:
+    watches = list(
+        MatchWatch.objects.filter(
+            match__sync_scope__in=(
+                Match.SyncScope.PREMATCH,
+                Match.SyncScope.LIVE,
+                Match.SyncScope.FINISHED,
+            )
+        )
+        .select_related(
+            "user",
+            "match__home_team",
+            "match__away_team",
+            "match__league",
+        )
+        .order_by("id")
+    )
+    now = timezone.now()
+    created = 0
+    removed = 0
+
+    for watch in watches:
+        match = watch.match
+        score = _canonical_score(match.score)
+
+        if match.sync_scope == Match.SyncScope.FINISHED:
+            title = "Матч завершён"
+            if score:
+                title = f"Матч завершён · {score}"
+            notification = create_notification(
+                recipient=watch.user,
+                kind=Notification.Kind.MATCH_REMINDER,
+                title=title,
+                message=_match_name(match),
+                url=match.get_absolute_url(),
+                event_key=f"match-final:{watch.user_id}:{match.id}",
+                meta={"match_id": match.id, "event": "finished", "score": score},
+            )
+            created += int(notification is not None)
+            watch.delete()
+            removed += 1
+            continue
+
+        update_fields = []
+
+        if match.sync_scope == Match.SyncScope.LIVE:
+            if watch.started_sent_at is None:
+                notification = create_notification(
+                    recipient=watch.user,
+                    kind=Notification.Kind.MATCH_REMINDER,
+                    title="Матч начался",
+                    message=_match_name(match),
+                    url=match.get_absolute_url(),
+                    event_key=f"match-start:{watch.user_id}:{match.id}",
+                    meta={"match_id": match.id, "event": "started", "score": score},
+                )
+                created += int(notification is not None)
+                watch.started_sent_at = now
+                update_fields.append("started_sent_at")
+
+            previous_score = _canonical_score(watch.last_score)
+            if score and score != previous_score:
+                pair = _score_pair(score)
+                should_notify = bool(previous_score) or (pair is not None and sum(pair) > 0)
+                if should_notify:
+                    event_stamp = match.updated_at.strftime("%Y%m%d%H%M%S%f")
+                    notification = create_notification(
+                        recipient=watch.user,
+                        kind=Notification.Kind.MATCH_REMINDER,
+                        title=_score_event_title(previous_score, score),
+                        message=_match_name(match),
+                        url=match.get_absolute_url(),
+                        event_key=f"match-score:{watch.user_id}:{match.id}:{event_stamp}",
+                        meta={
+                            "match_id": match.id,
+                            "event": "score",
+                            "score": score,
+                            "previous_score": previous_score,
+                        },
+                    )
+                    created += int(notification is not None)
+                watch.last_score = score
+                update_fields.append("last_score")
+
+            if watch.halftime_sent_at is None and _is_halftime(match):
+                title = "Перерыв"
+                if score:
+                    title = f"Перерыв · {score}"
+                notification = create_notification(
+                    recipient=watch.user,
+                    kind=Notification.Kind.MATCH_REMINDER,
+                    title=title,
+                    message=_match_name(match),
+                    url=match.get_absolute_url(),
+                    event_key=f"match-halftime:{watch.user_id}:{match.id}",
+                    meta={"match_id": match.id, "event": "halftime", "score": score},
+                )
+                created += int(notification is not None)
+                watch.halftime_sent_at = now
+                update_fields.append("halftime_sent_at")
+
+        if watch.last_scope != match.sync_scope:
+            watch.last_scope = match.sync_scope
+            update_fields.append("last_scope")
+        current_time_status = str(match.time_status or "")
+        if watch.last_time_status != current_time_status:
+            watch.last_time_status = current_time_status
+            update_fields.append("last_time_status")
+
+        if update_fields:
+            watch.save(update_fields=list(dict.fromkeys(update_fields)))
+
+    return {"created": created, "removed": removed}
+
+
 @shared_task
 def dispatch_recent_coupon_events() -> dict:
     now = timezone.now()
@@ -164,7 +327,13 @@ def dispatch_recent_coupon_events() -> dict:
         state.settled_dispatched_at = now
         state.save(update_fields=["settled_state", "settled_dispatched_at", "updated_at"])
 
-    return {"new_prediction_events": new_count, "settlement_events": settled_count}
+    watched = _watched_match_update_events()
+    return {
+        "new_prediction_events": new_count,
+        "settlement_events": settled_count,
+        "match_update_events": watched["created"],
+        "finished_watches_removed": watched["removed"],
+    }
 
 
 @shared_task
@@ -172,39 +341,40 @@ def notify_match_reminders() -> int:
     now = timezone.now()
     window_start = now + timedelta(minutes=55)
     window_end = now + timedelta(minutes=65)
-    favorites = (
-        PredictionFavorite.objects.filter(
-            prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            prediction__predictions__match__sync_scope=Match.SyncScope.PREMATCH,
-            prediction__predictions__match__starts_at__gte=window_start,
-            prediction__predictions__match__starts_at__lt=window_end,
+    watches = (
+        MatchWatch.objects.filter(
+            match__sync_scope=Match.SyncScope.PREMATCH,
+            match__starts_at__gte=window_start,
+            match__starts_at__lt=window_end,
         )
-        .select_related("user", "prediction")
-        .prefetch_related(
-            "prediction__predictions__match__home_team",
-            "prediction__predictions__match__away_team",
+        .select_related(
+            "user",
+            "match__home_team",
+            "match__away_team",
+            "match__league",
         )
-        .distinct()
+        .order_by("id")
     )
 
     created = 0
-    for favorite in favorites:
-        for position in favorite.prediction.predictions.all():
-            match = position.match
-            if not match.starts_at or not (window_start <= match.starts_at < window_end):
-                continue
-            notification = create_notification(
-                recipient=favorite.user,
-                actor=favorite.prediction.author,
-                kind=Notification.Kind.MATCH_REMINDER,
-                title="Матч из избранного начнётся примерно через час",
-                message=_match_name(match),
-                url=match.get_absolute_url(),
-                event_key=f"match-reminder:{favorite.user_id}:{favorite.prediction_id}:{match.id}",
-                meta={"coupon_id": favorite.prediction_id, "match_id": match.id},
-            )
-            created += int(notification is not None)
+    for watch in watches:
+        match = watch.match
+        notification = create_notification(
+            recipient=watch.user,
+            kind=Notification.Kind.MATCH_REMINDER,
+            title="Матч начнётся примерно через час",
+            message=_match_name(match),
+            url=match.get_absolute_url(),
+            event_key=f"match-reminder:{watch.user_id}:{match.id}",
+            meta={"match_id": match.id, "event": "reminder"},
+        )
+        created += int(notification is not None)
     return created
+
+
+@shared_task
+def notify_watched_match_updates() -> dict:
+    return _watched_match_update_events()
 
 
 @shared_task
