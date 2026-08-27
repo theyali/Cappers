@@ -104,12 +104,12 @@
 }
 
 .match-card-watch-button.is-watching {
-    color: var(--blue);
+    color: var(--yellow);
 }
 
 .match-card-watch-button.is-watching svg {
-    fill: var(--blue);
-    stroke: var(--blue);
+    fill: var(--yellow);
+    stroke: var(--yellow);
 }
 
 .match-card-watch-button:disabled {
