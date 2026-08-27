@@ -38,9 +38,7 @@
         const phase = phaseRaw.toLowerCase().replace(/\s+/g, "");
         let period = "";
 
-        if (minute !== null && minute > 90) {
-            period = "Extra";
-        } else if (["1", "1h", "1t", "1т", "first", "firsthalf"].includes(phase)) {
+        if (["1", "1h", "1t", "1т", "first", "firsthalf"].includes(phase)) {
             period = "1Т";
         } else if (["2", "2h", "2t", "2т", "second", "secondhalf"].includes(phase)) {
             period = "2Т";
