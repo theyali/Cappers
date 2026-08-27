@@ -1,6 +1,10 @@
 {% load static site_extras %}
 
-<aside class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write{% else %} coupon-sidebar-feed{% endif %}" aria-label="Прогноз">
+<aside
+    class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write coupon-sidebar-editor{% else %} coupon-sidebar-feed{% endif %}"
+    {% if can_write_coupon %}id="mobile-coupon-sheet"{% endif %}
+    aria-label="Прогноз"
+>
     {% if can_write_coupon %}
     {% include "game/_coupon_panel.html" %}
     {{ draft_coupon|json_script:"coupon-draft-data" }}
