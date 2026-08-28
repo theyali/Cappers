@@ -65,9 +65,6 @@
 
 .cappers-section-head h2 {
     margin: 0;
-    font-size: clamp(30px, 4vw, 46px);
-    line-height: .96;
-    letter-spacing: -.04em;
 }
 
 .cappers-section-head > span {
