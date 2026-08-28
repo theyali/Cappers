@@ -213,7 +213,7 @@
 
 .capper-pro-metric {
     min-width: 0;
-    min-height: 82px;
+    min-height: 64px;
     display: flex;
     flex-direction: column;
     justify-content: center;
