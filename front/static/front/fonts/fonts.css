@@ -55,6 +55,21 @@
 :root {
     --font-body: "Manrope Cappers", ui-sans-serif, system-ui, sans-serif;
     --font-heading: "Russo One Cappers", "Manrope Cappers", ui-sans-serif, system-ui, sans-serif;
+
+    --heading-h1-size: clamp(40px, 4.5vw, 60px);
+    --heading-h2-size: clamp(32px, 3.4vw, 46px);
+    --heading-h3-size: clamp(26px, 2.5vw, 34px);
+    --heading-h4-size: clamp(22px, 2vw, 28px);
+    --heading-h5-size: clamp(18px, 1.5vw, 22px);
+    --heading-h6-size: clamp(15px, 1.1vw, 18px);
+
+    --heading-h1-line-height: .98;
+    --heading-h2-line-height: 1;
+    --heading-h3-line-height: 1.08;
+    --heading-h4-line-height: 1.12;
+    --heading-h5-line-height: 1.18;
+    --heading-h6-line-height: 1.2;
+    --heading-letter-spacing: -.025em;
 }
 
 html,
@@ -74,7 +89,37 @@ h5,
 h6 {
     font-family: var(--font-heading);
     font-weight: 400;
-    letter-spacing: -.02em;
+    letter-spacing: var(--heading-letter-spacing) !important;
+}
+
+h1 {
+    font-size: var(--heading-h1-size) !important;
+    line-height: var(--heading-h1-line-height) !important;
+}
+
+h2 {
+    font-size: var(--heading-h2-size) !important;
+    line-height: var(--heading-h2-line-height) !important;
+}
+
+h3 {
+    font-size: var(--heading-h3-size) !important;
+    line-height: var(--heading-h3-line-height) !important;
+}
+
+h4 {
+    font-size: var(--heading-h4-size) !important;
+    line-height: var(--heading-h4-line-height) !important;
+}
+
+h5 {
+    font-size: var(--heading-h5-size) !important;
+    line-height: var(--heading-h5-line-height) !important;
+}
+
+h6 {
+    font-size: var(--heading-h6-size) !important;
+    line-height: var(--heading-h6-line-height) !important;
 }
 
 body {
