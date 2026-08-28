@@ -1,16 +1,6 @@
 {% load static match_ui %}
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
-    {% if match.predictions_count %}
-    <span
-        class="match-prediction-badge{% if match.predictions_count > 10 %} is-high{% elif match.predictions_count > 5 %} is-mid{% else %} is-low{% endif %}"
-        title="{{ match.predictions_count }} прогнозов"
-        aria-label="{{ match.predictions_count }} прогнозов"
-    >
-        {{ match.predictions_count }}
-    </span>
-    {% endif %}
-
     <a class="match-card-main" href="{{ match.get_absolute_url }}">
         <div class="match-card-head">
             <div class="match-league">
@@ -76,13 +66,11 @@
 
     <div class="match-card-foot">
         <a class="match-card-foot-link" href="{{ match.get_absolute_url }}">
-            <span>
-                {% if match.starts_at %}
-                    {{ match.starts_at|date:"d.m.Y H:i" }}
-                {% else %}
-                    Время не указано
-                {% endif %}
-            </span>
+            {% if match.predictions_count %}
+                <span class="match-card-prediction-count">Прогнозов на матч: {{ match.predictions_count }}</span>
+            {% else %}
+                <span class="match-card-prediction-empty">Прогнозов пока нет</span>
+            {% endif %}
         </a>
         {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
         <button
