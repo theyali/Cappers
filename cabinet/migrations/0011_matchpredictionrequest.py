@@ -1,14 +1,11 @@
-from django.conf import settings
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("game", "0017_match_provider_predictions_and_more"),
         ("cabinet", "0010_capperreferralvisit"),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
@@ -39,7 +36,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="match_prediction_requests",
-                        to=settings.AUTH_USER_MODEL,
+                        to="cabinet.user",
                         verbose_name="Пользователь",
                     ),
                 ),
