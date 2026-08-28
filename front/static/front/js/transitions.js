@@ -146,3 +146,23 @@
         banner.classList.add("is-visible");
     });
 })();
+
+(() => {
+    const legacyBadges = document.querySelectorAll(
+        ".forecast-verified, .verified-mark, .prediction-verified, .home-best-expert-verified"
+    );
+    if (!legacyBadges.length) return;
+
+    const badgeSvg = `
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+        </svg>`;
+
+    legacyBadges.forEach((badge) => {
+        badge.className = "capper-verified-badge";
+        badge.title = "Проверенный эксперт";
+        badge.setAttribute("aria-label", "Проверенный эксперт");
+        badge.innerHTML = badgeSvg;
+    });
+})();
