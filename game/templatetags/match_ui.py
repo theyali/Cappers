@@ -12,6 +12,24 @@ _FIRST_HALF_WORDS = ("1h", "first half", "1st half", "первый тайм")
 _SECOND_HALF_WORDS = ("2h", "second half", "2nd half", "второй тайм")
 
 
+def _minute_value(match) -> int | None:
+    raw_label = str(getattr(match, "live_minute_label", "") or "").strip()
+    found = _MINUTE_RE.search(raw_label)
+    if found:
+        try:
+            return int(found.group(0).split("+", 1)[0])
+        except (TypeError, ValueError):
+            pass
+
+    minute = getattr(match, "live_minute", None)
+    if minute not in (None, ""):
+        try:
+            return int(minute)
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
 def _minute_label(match) -> str:
     raw_label = str(getattr(match, "live_minute_label", "") or "").strip()
     found = _MINUTE_RE.search(raw_label)
@@ -46,6 +64,7 @@ def live_status_label(match) -> str:
     if not match:
         return "LIVE"
 
+    minute_value = _minute_value(match)
     minute_label = _minute_label(match)
     status = str(getattr(match, "time_status", "") or "").strip().lower()
     status_text = _status_text(match)
@@ -53,18 +72,22 @@ def live_status_label(match) -> str:
     if any(word in status_text for word in _HALFTIME_WORDS):
         return "Перерыв"
 
-    if status == "1" or any(word in status_text for word in _FIRST_HALF_WORDS):
-        period = "1Т"
+    # Explicit extra-time markers are more reliable than the minute alone:
+    # 90+ stoppage time is still the second half, not extra time.
+    if any(word in status_text for word in _EXTRA_WORDS):
+        period = "Extra"
+    # Some provider payloads keep time_status=1 after the break. If the clock
+    # is already past 45 minutes, prefer the actual minute and show 2T.
+    elif minute_value is not None and minute_value > 45:
+        period = "2Т"
     elif status == "2" or any(word in status_text for word in _SECOND_HALF_WORDS):
         period = "2Т"
-    elif any(word in status_text for word in _EXTRA_WORDS):
-        period = "Extra"
+    elif status == "1" or any(word in status_text for word in _FIRST_HALF_WORDS):
+        period = "1Т"
+    elif minute_value is not None:
+        period = "1Т"
     else:
-        minute = getattr(match, "live_minute", None)
-        try:
-            period = "Extra" if minute is not None and int(minute) > 90 else "LIVE"
-        except (TypeError, ValueError):
-            period = "LIVE"
+        period = "LIVE"
 
     if not minute_label:
         return period
