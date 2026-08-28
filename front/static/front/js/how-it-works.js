@@ -38,6 +38,28 @@
         });
     });
 
+    root.querySelectorAll(".how-jump-nav a[href^='#']").forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const id = link.getAttribute("href")?.slice(1);
+            if (!id) return;
+            const target = document.getElementById(id);
+            if (!target) return;
+
+            event.preventDefault();
+            const panel = target.closest("[data-how-panel]");
+            if (panel) activate(panel.dataset.howPanel);
+
+            window.requestAnimationFrame(() => {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                const url = new URL(window.location.href);
+                url.hash = id;
+                window.history.replaceState({}, "", url);
+            });
+        });
+    });
+
     const params = new URLSearchParams(window.location.search);
-    activate(params.get("for") === "expert" ? "expert" : "reader");
+    const hashTarget = window.location.hash ? document.querySelector(window.location.hash) : null;
+    const hashPanel = hashTarget?.closest("[data-how-panel]");
+    activate(hashPanel?.dataset.howPanel || (params.get("for") === "expert" ? "expert" : "reader"));
 })();
