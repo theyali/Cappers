@@ -80,16 +80,15 @@
                             </span>
                             <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
                         </div>
-                    </div>
-
-                    <div class="sidebar-prediction-pick">
-                        <div>
-                            <span>{{ prediction.market|default:"Прогноз" }}</span>
-                            <strong>{{ prediction.selection }}</strong>
-                        </div>
-                        <div class="sidebar-prediction-odd">
-                            <span>КФ</span>
-                            <b>{{ prediction.coefficient }}</b>
+                        <div style="grid-column: 1 / -1; min-width: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-top: 8px;">
+                            <div style="min-width: 0;">
+                                <span style="display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .05em;">{{ prediction.market|default:"Прогноз" }}</span>
+                                <strong style="display: block; overflow: hidden; margin-top: 3px; color: var(--yellow); font-size: 13px; white-space: nowrap; text-overflow: ellipsis;">{{ prediction.selection }}</strong>
+                            </div>
+                            <div class="sidebar-prediction-odd">
+                                <span>КФ</span>
+                                <b>{{ prediction.coefficient }}</b>
+                            </div>
                         </div>
                     </div>
 
