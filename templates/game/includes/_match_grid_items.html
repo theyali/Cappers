@@ -1,0 +1,9 @@
+{% for match in matches %}
+<div
+    class="match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}"
+    data-lazy-match-card
+    data-match-shell-id="{{ match.id }}"
+>
+    {% include "game/includes/_match_card.html" with match=match can_write_coupon=can_write_coupon %}
+</div>
+{% endfor %}
