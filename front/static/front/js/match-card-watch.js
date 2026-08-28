@@ -15,6 +15,7 @@
     };
 
     const formatLiveStatus = (status) => {
+        if (!status || status.dataset.liveStatusFormatted === "true") return;
         const label = status.querySelector("span");
         if (!label) return;
 
@@ -44,6 +45,7 @@
             period = "2Т";
         } else if (["ht", "half", "halftime", "перерыв"].includes(phase)) {
             label.textContent = "Перерыв";
+            status.dataset.liveStatusFormatted = "true";
             return;
         } else if (["3", "et", "aet", "extra", "extratime"].includes(phase)) {
             period = "Extra";
@@ -63,12 +65,18 @@
         } else {
             label.textContent = "LIVE";
         }
+        status.dataset.liveStatusFormatted = "true";
     };
 
-    document.querySelectorAll(".match-status-live").forEach(formatLiveStatus);
+    const formatLiveStatuses = (scope = document) => {
+        if (scope.matches?.(".match-status-live")) formatLiveStatus(scope);
+        scope.querySelectorAll?.(".match-status-live").forEach(formatLiveStatus);
+    };
 
-    const buttons = Array.from(document.querySelectorAll("[data-match-watch-toggle]"));
-    if (!buttons.length) return;
+    formatLiveStatuses(document);
+    document.addEventListener("matches:appended", (event) => {
+        (event.detail?.nodes || []).forEach((node) => formatLiveStatuses(node));
+    });
 
     const getCookie = (name) => {
         const cookies = document.cookie ? document.cookie.split(";") : [];
@@ -90,44 +98,46 @@
         button.closest(".match-watch-card-shell")?.classList.toggle("is-watched", active);
     };
 
-    buttons.forEach((button) => {
-        button.addEventListener("click", async () => {
-            const url = button.dataset.watchUrl;
-            if (!url || button.disabled) return;
+    document.addEventListener("click", async (event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest("[data-match-watch-toggle]");
+        if (!button) return;
 
-            button.disabled = true;
-            const previousState = button.classList.contains("is-watching");
+        const url = button.dataset.watchUrl;
+        if (!url || button.disabled) return;
 
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    credentials: "same-origin",
-                    cache: "no-store",
-                    headers: {
-                        Accept: "application/json",
-                        "X-CSRFToken": getCookie("csrftoken"),
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                });
-                const contentType = response.headers.get("content-type") || "";
-                const payload = contentType.includes("application/json")
-                    ? await response.json()
-                    : null;
-                if (!response.ok || !payload?.ok) {
-                    throw new Error(payload?.error || "Не удалось обновить отслеживание");
-                }
+        button.disabled = true;
+        const previousState = button.classList.contains("is-watching");
 
-                setWatching(button, payload.watching);
-
-                const currentScope = new URL(window.location.href).searchParams.get("scope") || "all";
-                if (currentScope === "watched" && !payload.watching) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                setWatching(button, previousState);
-            } finally {
-                button.disabled = false;
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+            const contentType = response.headers.get("content-type") || "";
+            const payload = contentType.includes("application/json")
+                ? await response.json()
+                : null;
+            if (!response.ok || !payload?.ok) {
+                throw new Error(payload?.error || "Не удалось обновить отслеживание");
             }
-        });
+
+            setWatching(button, payload.watching);
+
+            const currentScope = new URL(window.location.href).searchParams.get("scope") || "all";
+            if (currentScope === "watched" && !payload.watching) {
+                window.location.reload();
+            }
+        } catch (error) {
+            setWatching(button, previousState);
+        } finally {
+            button.disabled = false;
+        }
     });
 })();
