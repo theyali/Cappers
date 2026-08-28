@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import AnalystFollow, AnalystProfile, User
+from .models import AnalystFollow, AnalystProfile, CapperReferralVisit, User
 
 
 @admin.register(User)
@@ -85,3 +85,27 @@ class AnalystFollowAdmin(admin.ModelAdmin):
     search_fields = ("follower__username", "analyst__username")
     autocomplete_fields = ("follower", "analyst")
     readonly_fields = ("created_at",)
+
+
+@admin.register(CapperReferralVisit)
+class CapperReferralVisitAdmin(admin.ModelAdmin):
+    list_display = (
+        "analyst",
+        "visitor",
+        "visits_count",
+        "first_seen_at",
+        "last_seen_at",
+        "subscribed_at",
+    )
+    list_filter = ("first_seen_at", "subscribed_at")
+    search_fields = ("analyst__username", "visitor__username", "session_key")
+    autocomplete_fields = ("analyst", "visitor")
+    readonly_fields = (
+        "analyst",
+        "visitor",
+        "session_key",
+        "visits_count",
+        "first_seen_at",
+        "last_seen_at",
+        "subscribed_at",
+    )
