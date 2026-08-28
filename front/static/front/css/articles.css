@@ -413,11 +413,11 @@
     font-size: 10px;
 }
 
-.related-article-card h3 {
+.related-article-title {
     margin: 12px 0 18px;
 }
 
-.related-article-card h3 a {
+.related-article-title a {
     color: var(--text);
 }
 
