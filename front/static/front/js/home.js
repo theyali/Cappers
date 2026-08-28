@@ -166,3 +166,26 @@
         window.location.assign(matchLink.href);
     });
 })();
+
+(() => {
+    const expertRows = document.querySelectorAll(".experts-card .expert-row");
+    if (!expertRows.length) return;
+
+    expertRows.forEach((row) => {
+        const usernameNode = row.querySelector(".expert-copy > span");
+        const username = usernameNode?.textContent.trim().replace(/^@/, "");
+        if (!username) return;
+
+        const link = document.createElement("a");
+        link.className = row.className;
+        link.href = `/cabinet/experts/${encodeURIComponent(username)}/`;
+        link.setAttribute("aria-label", `Открыть профиль ${username}`);
+        link.style.color = "inherit";
+        link.style.textDecoration = "none";
+
+        while (row.firstChild) {
+            link.appendChild(row.firstChild);
+        }
+        row.replaceWith(link);
+    });
+})();
