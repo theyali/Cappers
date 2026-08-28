@@ -175,7 +175,7 @@
 }
 
 .user-public-activity-row:hover {
-    background: #181818;
+    background: var(--panel);
 }
 
 .user-public-activity-kind {
