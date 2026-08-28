@@ -272,7 +272,6 @@
 .following-feed-onboarding h2 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(28px, 4vw, 42px);
 }
 
 .following-feed-onboarding > div > p:last-child {
