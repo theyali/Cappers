@@ -268,6 +268,14 @@
     line-height: 1.5;
 }
 
+.home-important-matches .match-bet-option {
+    position: relative;
+}
+
+.home-important-matches .match-bet-option:has(> small) .match-odd-lock {
+    display: none !important;
+}
+
 @media (max-width: 820px) {
     .forecast-matchup {
         margin-top: 24px;
