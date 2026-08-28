@@ -1,8 +1,16 @@
 import re
+import secrets
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+
+
+REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def generate_referral_code() -> str:
+    return "".join(secrets.choice(REFERRAL_CODE_ALPHABET) for _ in range(8))
 
 
 class User(AbstractUser):
@@ -52,6 +60,13 @@ class AnalystProfile(models.Model):
         verbose_name="Пользователь",
     )
     display_name = models.CharField("Отображаемое имя", max_length=120, blank=True)
+    referral_code = models.CharField(
+        "Реферальный код",
+        max_length=8,
+        unique=True,
+        default=generate_referral_code,
+        editable=False,
+    )
     avatar = models.ImageField(
         "Аватар",
         upload_to="analysts/avatars/%Y/%m/",
