@@ -83,7 +83,14 @@ def referral_stats(request):
         return JsonResponse({"ok": False, "error": "Раздел доступен только капперам."}, status=403)
 
     visits = CapperReferralVisit.objects.filter(analyst=request.user)
-    visitors_count = visits.count()
+    authenticated_visitors = (
+        visits.filter(visitor__isnull=False)
+        .values("visitor_id")
+        .distinct()
+        .count()
+    )
+    anonymous_visitors = visits.filter(visitor__isnull=True).count()
+    visitors_count = authenticated_visitors + anonymous_visitors
     clicks_count = visits.aggregate(total=Sum("visits_count"))["total"] or 0
     subscriptions_count = (
         visits.filter(subscribed_at__isnull=False, visitor__isnull=False)
