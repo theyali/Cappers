@@ -127,7 +127,7 @@
 
                     <section class="profile-referrals-recent">
                         <div class="profile-referrals-recent-head">
-                            <div><p class="eyebrow">Последние переходы</p><h3>Кто пришёл по ссылке</h3></div>
+                            <div><p class="eyebrow">Последние переходы</p><div class="profile-referrals-recent-title heading-style-h3">Кто пришёл по ссылке</div></div>
                             <span>Последние ${Math.min((payload.recent || []).length, 40)}</span>
                         </div>
                         <div class="profile-referral-list">
