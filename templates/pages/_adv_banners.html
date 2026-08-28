@@ -1,0 +1,21 @@
+{% if adv_banners %}
+<div class="adv-banners adv-banners--{{ placement|default:'content' }}" aria-label="Реклама">
+    {% for banner in adv_banners %}
+    <a
+        class="adv-banner adv-banner--{{ banner.size }}"
+        href="{{ banner.url }}"
+        target="_blank"
+        rel="nofollow noopener noreferrer"
+        aria-label="Реклама: {{ banner.name }}"
+    >
+        <span class="adv-banner-label">Реклама</span>
+        <picture>
+            {% if banner.mobile_image %}
+            <source media="(max-width: 767px)" srcset="{{ banner.mobile_image.url }}">
+            {% endif %}
+            <img src="{{ banner.image.url }}" alt="" loading="lazy" decoding="async">
+        </picture>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
