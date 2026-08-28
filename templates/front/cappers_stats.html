@@ -45,16 +45,100 @@
                 <small>за последние 30 дней</small>
             </div>
             <div class="cappers-summary-card">
+                <span>Новые</span>
+                <strong>{{ summary.new_30d }}</strong>
+                <small>пришли за последние 30 дней</small>
+            </div>
+            <div class="cappers-summary-card">
                 <span>Проверены</span>
                 <strong>{{ summary.verified }}</strong>
                 <small>верифицированных профилей</small>
             </div>
-            <div class="cappers-summary-card">
-                <span>Всего экспертов</span>
-                <strong>{{ summary.experts }}</strong>
-                <small>публичных профилей</small>
-            </div>
         </div>
+
+        <section class="capper-discovery-intro" aria-label="Шанс для новых экспертов">
+            <div>
+                <p class="cappers-eyebrow">Шанс для каждого</p>
+                <h2>Новым экспертам не нужно начинать с нуля</h2>
+                <p>КапперХаб отдельно показывает новичков, активных авторов и растущие профили. Даже без большой аудитории эксперт может попасть в заметный блок за счёт регулярных прогнозов и результатов.</p>
+            </div>
+            <div class="capper-discovery-intro-stats">
+                <span><strong>{{ summary.new_30d }}</strong> новых</span>
+                <span><strong>{{ summary.rising }}</strong> растущих</span>
+            </div>
+        </section>
+
+        {% if new_cappers %}
+        <section class="capper-discovery-section" aria-labelledby="new-cappers-title">
+            <div class="capper-discovery-head">
+                <div>
+                    <p class="cappers-eyebrow">Свежие профили</p>
+                    <h2 id="new-cappers-title">Новые капперы</h2>
+                    <p>Последние эксперты, которые завершили регистрацию и открыли публичный профиль.</p>
+                </div>
+                <span>{{ new_cappers|length }}</span>
+            </div>
+            <div class="capper-discovery-track">
+                {% for expert in new_cappers %}
+                    {% include "front/includes/_capper_spotlight_card.html" with expert=expert mode="new" %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if rising_stars %}
+        <section class="capper-discovery-section is-rising" aria-labelledby="rising-cappers-title">
+            <div class="capper-discovery-head">
+                <div>
+                    <p class="cappers-eyebrow">Набирают темп</p>
+                    <h2 id="rising-cappers-title">Растущие звёзды</h2>
+                    <p>Новые или ещё небольшие профили с заметной активностью и результатами за последние недели.</p>
+                </div>
+                <span>{{ rising_stars|length }}</span>
+            </div>
+            <div class="capper-discovery-track">
+                {% for expert in rising_stars %}
+                    {% include "front/includes/_capper_spotlight_card.html" with expert=expert mode="rising" %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if popular_cappers %}
+        <section class="capper-discovery-section" aria-labelledby="popular-cappers-title">
+            <div class="capper-discovery-head">
+                <div>
+                    <p class="cappers-eyebrow">Выбор аудитории</p>
+                    <h2 id="popular-cappers-title">Популярные эксперты</h2>
+                    <p>Профили, за которыми сейчас следит больше всего пользователей КапперХаб.</p>
+                </div>
+                <span>{{ popular_cappers|length }}</span>
+            </div>
+            <div class="capper-discovery-track">
+                {% for expert in popular_cappers %}
+                    {% include "front/includes/_capper_spotlight_card.html" with expert=expert mode="popular" %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if active_cappers %}
+        <section class="capper-discovery-section" aria-labelledby="active-cappers-title">
+            <div class="capper-discovery-head">
+                <div>
+                    <p class="cappers-eyebrow">Сейчас в игре</p>
+                    <h2 id="active-cappers-title">Самые активные</h2>
+                    <p>Эксперты, которые чаще других публикуют прогнозы в последние 30 дней.</p>
+                </div>
+                <span>{{ active_cappers|length }}</span>
+            </div>
+            <div class="capper-discovery-track">
+                {% for expert in active_cappers %}
+                    {% include "front/includes/_capper_spotlight_card.html" with expert=expert mode="active" %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
         {% if experts %}
         <div class="cappers-section-head">
