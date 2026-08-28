@@ -45,11 +45,16 @@ def _minute_label(match) -> str:
     return ""
 
 
-def _status_text(match) -> str:
-    fragments = [str(getattr(match, "time_status", "") or "")]
+def _phase_text(match) -> str:
+    """Return only provider fields that can actually describe a match period.
+
+    time_status is intentionally ignored here: for Neurokeff it is a numeric
+    game-state flag (for example, 1 means the game is live), not a half number.
+    """
+    fragments = []
     raw = getattr(match, "raw_data", None)
     if isinstance(raw, dict):
-        for key in ("status", "game_status", "time_status", "period", "phase"):
+        for key in ("period", "phase", "period_name", "phase_name"):
             value = raw.get(key)
             if isinstance(value, dict):
                 fragments.extend(str(item or "") for item in value.values())
@@ -66,24 +71,23 @@ def live_status_label(match) -> str:
 
     minute_value = _minute_value(match)
     minute_label = _minute_label(match)
-    status = str(getattr(match, "time_status", "") or "").strip().lower()
-    status_text = _status_text(match)
+    phase_text = _phase_text(match)
 
-    if any(word in status_text for word in _HALFTIME_WORDS):
+    if any(word in phase_text for word in _HALFTIME_WORDS):
         return "Перерыв"
 
-    # Explicit extra-time markers are more reliable than the minute alone:
-    # 90+ stoppage time is still the second half, not extra time.
-    if any(word in status_text for word in _EXTRA_WORDS):
+    # Explicit period data wins when the provider sends it. The numeric
+    # time_status field is not used here because it describes game state.
+    if any(word in phase_text for word in _EXTRA_WORDS):
         period = "Extra"
-    # Some provider payloads keep time_status=1 after the break. If the clock
-    # is already past 45 minutes, prefer the actual minute and show 2T.
-    elif minute_value is not None and minute_value > 45:
+    elif any(word in phase_text for word in _SECOND_HALF_WORDS):
         period = "2Т"
-    elif status == "2" or any(word in status_text for word in _SECOND_HALF_WORDS):
-        period = "2Т"
-    elif status == "1" or any(word in status_text for word in _FIRST_HALF_WORDS):
+    elif any(word in phase_text for word in _FIRST_HALF_WORDS):
         period = "1Т"
+    elif minute_value is not None and minute_value > 45:
+        # 90+ stoppage time remains the second half; extra time requires an
+        # explicit provider phase marker.
+        period = "2Т"
     elif minute_value is not None:
         period = "1Т"
     else:
