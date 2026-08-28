@@ -1,0 +1,336 @@
+.user-public-page {
+    display: grid;
+    gap: 18px;
+}
+
+.user-public-back {
+    width: fit-content;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.user-public-back:hover {
+    color: var(--yellow);
+}
+
+.user-public-hero {
+    min-height: 250px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 32px;
+    border-radius: 24px;
+    background: var(--panel);
+}
+
+.user-public-identity {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    min-width: 0;
+}
+
+.user-public-avatar {
+    width: 112px;
+    height: 112px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 28px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 34px;
+    font-weight: 600;
+}
+
+.user-public-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-public-title {
+    min-width: 0;
+}
+
+.user-public-role {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.user-public-title h1 {
+    margin: 12px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+    font-size: clamp(30px, 4vw, 48px);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.user-public-title p,
+.user-public-title small {
+    display: block;
+    margin: 8px 0 0;
+    color: var(--muted);
+}
+
+.user-public-title p {
+    font-size: 13px;
+}
+
+.user-public-title small {
+    font-size: 11px;
+}
+
+.user-public-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-public-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.user-public-stats article {
+    min-height: 116px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.user-public-stats span,
+.user-public-stats small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.user-public-stats strong {
+    color: var(--yellow);
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.user-public-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.user-public-card {
+    padding: 24px;
+    border-radius: 22px;
+    background: var(--panel);
+}
+
+.user-public-section-head {
+    margin-bottom: 18px;
+}
+
+.user-public-section-head h2 {
+    margin: 4px 0 0;
+    color: #fff;
+    font-size: clamp(24px, 2.5vw, 32px);
+    font-weight: 500;
+}
+
+.user-public-activity,
+.user-public-badges {
+    display: grid;
+    gap: 10px;
+}
+
+.user-public-activity-row {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 74px;
+    padding: 13px 14px;
+    border-radius: 16px;
+    background: var(--ink);
+}
+
+.user-public-activity-row:hover {
+    background: #181818;
+}
+
+.user-public-activity-kind {
+    width: fit-content;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.user-public-activity-row div {
+    min-width: 0;
+}
+
+.user-public-activity-row strong,
+.user-public-activity-row span,
+.user-public-activity-row time {
+    display: block;
+}
+
+.user-public-activity-row strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.user-public-activity-row div span,
+.user-public-activity-row time {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.user-public-activity-row time {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.user-public-badge {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--ink);
+}
+
+.user-public-badge img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+}
+
+.user-public-badge strong,
+.user-public-badge span {
+    display: block;
+}
+
+.user-public-badge strong {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-public-badge span {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.user-public-empty {
+    min-height: 130px;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    border-radius: 16px;
+    color: var(--muted);
+    text-align: center;
+    background: var(--ink);
+    font-size: 12px;
+}
+
+@media (max-width: 1080px) {
+    .user-public-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .user-public-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .user-public-hero {
+        min-height: 0;
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 22px;
+    }
+
+    .user-public-identity {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .user-public-avatar {
+        width: 92px;
+        height: 92px;
+        border-radius: 23px;
+        font-size: 28px;
+    }
+
+    .user-public-action {
+        width: 100%;
+    }
+
+    .user-public-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .user-public-activity-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .user-public-activity-row time {
+        justify-self: start;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-public-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .user-public-stats article {
+        min-height: 104px;
+        padding: 15px;
+    }
+
+    .user-public-card {
+        padding: 18px;
+    }
+
+    .user-public-title h1 {
+        white-space: normal;
+    }
+}
