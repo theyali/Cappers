@@ -272,6 +272,29 @@
     overflow: hidden;
 }
 
+.match-odds-panel::before {
+    content: "Коэффициенты";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    z-index: 7;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity .2s ease, transform .24s ease;
+}
+
+.match-odds-panel.is-odds-collapsed::before {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .match-odds-accordion-toggle {
     position: absolute;
     top: 8px;
@@ -341,6 +364,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .match-odds-panel::before,
     .match-odds-accordion-toggle,
     .match-odds-accordion-toggle svg,
     .match-odds-accordion-body {
