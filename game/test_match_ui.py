@@ -26,6 +26,18 @@ class LiveStatusLabelTests(SimpleTestCase):
             "2Т - 67′",
         )
 
+    def test_stale_first_half_status_uses_live_minute(self):
+        self.assertEqual(
+            live_status_label(self.match(time_status="1", minute=90, label="90")),
+            "2Т - 90′",
+        )
+
+    def test_second_half_stoppage_time_is_not_extra_time(self):
+        self.assertEqual(
+            live_status_label(self.match(time_status="1", label="90+4")),
+            "2Т - 90+4′",
+        )
+
     def test_extra_time(self):
         self.assertEqual(
             live_status_label(self.match(time_status="ET", minute=108)),
