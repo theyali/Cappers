@@ -88,14 +88,21 @@ class AnalystProfileForm(forms.ModelForm):
             ),
             "favorite_sports": forms.TextInput(attrs={"placeholder": "Футбол, теннис, баскетбол"}),
             "favorite_leagues": forms.TextInput(attrs={"placeholder": "АПЛ, Ла Лига, Лига чемпионов"}),
-            "telegram_channel": forms.TextInput(attrs={"placeholder": "@channel или https://t.me/channel"}),
-            "telegram_account": forms.TextInput(attrs={"placeholder": "@username или https://t.me/username"}),
+            "telegram_channel": forms.TextInput(attrs={"placeholder": "Необязательно: @channel или https://t.me/channel"}),
+            "telegram_account": forms.TextInput(attrs={"placeholder": "Необязательно: @username или https://t.me/username"}),
             "instagram": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
             "threads": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
             "youtube": forms.TextInput(attrs={"placeholder": "@channel или ссылка"}),
             "tiktok": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
             "facebook": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["telegram_channel"].required = False
+        self.fields["telegram_account"].required = False
+        self.fields["telegram_channel"].label = "Telegram-канал (необязательно)"
+        self.fields["telegram_account"].label = "Telegram-аккаунт (необязательно)"
 
 
 class AnalystAvatarForm(forms.ModelForm):
