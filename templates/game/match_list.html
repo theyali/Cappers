@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
@@ -69,6 +70,13 @@
 
 {% block extra_js %}
 {% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
+<script
+    src="{% static 'front/js/matches-date-filter.js' %}"
+    data-match-date-filter
+    data-selected-date="{{ selected_date_iso }}"
+    data-today-date="{{ today_iso }}"
+    defer
+></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 <script src="{% static 'front/js/sidebar-predictions-responsive.js' %}" defer></script>
