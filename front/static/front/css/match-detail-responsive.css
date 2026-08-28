@@ -179,8 +179,6 @@
     .odds-section-head h2 {
         min-width: 0;
         overflow: hidden;
-        font-size: 15px;
-        line-height: 1.2;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
@@ -195,10 +193,6 @@
 
     .odds-row {
         gap: 7px;
-    }
-
-    .odds-row h3 {
-        font-size: 12px;
     }
 
     .odds-grid {
@@ -342,18 +336,10 @@
         border-radius: 12px;
     }
 
-    .odds-section-head h2 {
-        font-size: 13px;
-    }
-
     .odds-section-head span {
         min-width: 27px;
         min-height: 24px;
         font-size: 10px;
-    }
-
-    .odds-row h3 {
-        font-size: 11px;
     }
 
     .odds-grid {
