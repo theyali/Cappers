@@ -276,6 +276,16 @@
     display: none !important;
 }
 
+.home-important-matches .match-bet-option:has(.match-odd-lock) {
+    color: rgba(255, 255, 255, .34);
+    background: #242426;
+}
+
+.home-important-matches .match-bet-option:has(.match-odd-lock):hover {
+    transform: none;
+    background: #242426;
+}
+
 @media (max-width: 820px) {
     .forecast-matchup {
         margin-top: 24px;
