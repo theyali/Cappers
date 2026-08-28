@@ -366,3 +366,195 @@
         }
     });
 })();
+
+(() => {
+    const page = document.querySelector(".profile-page");
+    if (!page) return;
+
+    const escapeHtml = (value) => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const loadFollowingStyles = () => {
+        if (document.querySelector("link[data-profile-following-styles]")) return;
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "/static/front/css/profile-following.css";
+        link.dataset.profileFollowingStyles = "true";
+        document.head.appendChild(link);
+    };
+
+    const wireRow = (row, url) => {
+        if (!row || !url) return;
+        row.classList.add("is-profile-link");
+        row.tabIndex = 0;
+        row.dataset.profileUrl = url;
+        row.addEventListener("click", (event) => {
+            if (event.target.closest("a, button, input, label")) return;
+            window.location.href = url;
+        });
+        row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") window.location.href = url;
+        });
+    };
+
+    const followersList = page.querySelector('[data-profile-list="followers"]');
+    if (followersList) {
+        loadFollowingStyles();
+        followersList.querySelectorAll("[data-profile-username]").forEach((row) => {
+            const username = row.dataset.profileUsername || "";
+            if (!username) return;
+            const url = `/cabinet/users/${encodeURIComponent(username)}/`;
+            wireRow(row, url);
+            const disabled = row.querySelector(".profile-row-action[disabled]");
+            if (disabled) {
+                const link = document.createElement("a");
+                link.className = "profile-user-open";
+                link.href = url;
+                link.textContent = "Открыть профиль";
+                disabled.replaceWith(link);
+            }
+        });
+    }
+
+    const followingList = page.querySelector('[data-profile-list="following"]');
+    if (!followingList) return;
+    loadFollowingStyles();
+
+    fetch("/cabinet/profile/following/summary/", {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+            if (!payload?.ok) return;
+            const byUsername = new Map((payload.items || []).map((item) => [String(item.username).toLowerCase(), item]));
+            followingList.querySelectorAll("[data-profile-username]").forEach((row) => {
+                const item = byUsername.get((row.dataset.profileUsername || "").toLowerCase());
+                if (!item) return;
+                const avatar = item.avatar_url
+                    ? `<div class="profile-user-avatar"><img src="${escapeHtml(item.avatar_url)}" alt=""></div>`
+                    : `<div class="profile-user-avatar">${escapeHtml(item.display_name || item.username).slice(0, 1).toUpperCase()}</div>`;
+                const verified = item.is_verified ? '<span class="profile-user-verified">Проверен</span>' : "";
+                row.innerHTML = `
+                    ${avatar}
+                    <div class="profile-user-copy">
+                        <strong>${escapeHtml(item.display_name || item.username)}</strong>
+                        <span>@${escapeHtml(item.username)}${item.specialization ? ` · ${escapeHtml(item.specialization)}` : ""}</span>
+                        <div class="profile-user-meta">
+                            <span>${escapeHtml(item.predictions_count)} прогнозов</span>
+                            <span>${escapeHtml(item.followers_count)} подписчиков</span>
+                            ${verified}
+                        </div>
+                    </div>
+                    <a class="profile-user-open" href="${escapeHtml(item.url)}">Открыть профиль</a>`;
+                wireRow(row, item.url);
+            });
+        })
+        .catch(() => {});
+})();
+
+(() => {
+    const page = document.querySelector(".profile-page");
+    const tabs = page?.querySelector(".profile-tabs");
+    if (!page || !tabs || page.querySelector('[data-profile-tab-panel="achievements"]')) return;
+
+    const escapeHtml = (value) => String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const currentTab = () => new URL(window.location.href).searchParams.get("tab") || "profile";
+
+    const activate = (panel, tab) => {
+        page.querySelectorAll("[data-profile-tab-panel]").forEach((item) => item.classList.remove("is-active"));
+        tabs.querySelectorAll("a").forEach((item) => item.classList.remove("is-active"));
+        panel.classList.add("is-active");
+        tab.classList.add("is-active");
+    };
+
+    const deactivate = (panel, tab) => {
+        panel.classList.remove("is-active");
+        tab.classList.remove("is-active");
+    };
+
+    fetch("/cabinet/profile/achievements/", {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+        .then((response) => response.ok ? response.json() : null)
+        .then((payload) => {
+            if (!payload?.ok || payload.is_analyst) return;
+
+            const tab = document.createElement("a");
+            tab.href = `${window.location.pathname}?tab=achievements`;
+            tab.textContent = "Достижения";
+            tab.dataset.readerAchievementTab = "";
+            tabs.insertBefore(tab, tabs.querySelector('a[href*="tab=following"]') || null);
+
+            const cards = (payload.items || []).map((item) => `
+                <article class="profile-achievement-card${item.unlocked ? " is-unlocked" : " is-locked"}" data-achievement="${escapeHtml(item.key)}">
+                    <div class="profile-achievement-topline">
+                        <span class="profile-achievement-icon"><img src="/static/${escapeHtml(item.icon)}" alt=""></span>
+                        <span class="profile-achievement-state${item.unlocked ? " is-unlocked" : ""}">${item.unlocked ? "Получено" : `${escapeHtml(item.progress)}%`}</span>
+                    </div>
+                    <span class="profile-achievement-category">${escapeHtml(item.category)}</span>
+                    <h3>${escapeHtml(item.label)}</h3>
+                    <p>${escapeHtml(item.description)}</p>
+                    <div class="profile-achievement-progress"><i style="width: ${Number(item.progress) || 0}%"></i></div>
+                    <div class="profile-achievement-meta"><span>Сейчас: ${escapeHtml(item.current_label)}</span><strong>Цель: ${escapeHtml(item.target_label)}</strong></div>
+                </article>`).join("");
+
+            const next = payload.next_achievement
+                ? `<article class="profile-next-achievement">
+                    <span class="profile-next-achievement-icon"><img src="/static/${escapeHtml(payload.next_achievement.icon)}" alt=""></span>
+                    <div><span>Ближайшая ачивка</span><strong>${escapeHtml(payload.next_achievement.label)}</strong><small>${escapeHtml(payload.next_achievement.description)}</small></div>
+                    <div class="profile-next-achievement-progress"><strong>${escapeHtml(payload.next_achievement.progress)}%</strong><span>${escapeHtml(payload.next_achievement.current_label)} / ${escapeHtml(payload.next_achievement.target_label)}</span></div>
+                </article>`
+                : '<article class="profile-next-achievement is-complete"><div><span>Коллекция завершена</span><strong>Все достижения получены</strong></div></article>';
+
+            const panel = document.createElement("section");
+            panel.className = "profile-tab-panel";
+            panel.dataset.profileTabPanel = "achievements";
+            panel.id = "profile-tab-achievements";
+            panel.innerHTML = `
+                <div class="profile-achievements-shell">
+                    <div class="profile-achievements-head">
+                        <div><p class="eyebrow">Ваш прогресс</p><h2>Достижения</h2><p>Ачивки за лайки и сохранённые прогнозы.</p></div>
+                        <div class="profile-achievements-total"><strong>${escapeHtml(payload.unlocked_count)}/${escapeHtml(payload.total_count)}</strong><span>получено</span></div>
+                    </div>
+                    <div class="profile-achievements-overall"><div><span>Общий прогресс</span><strong>${escapeHtml(payload.completion_percent)}%</strong></div><div class="profile-achievements-track"><i style="width: ${Number(payload.completion_percent) || 0}%"></i></div></div>
+                    ${next}
+                    <div class="profile-achievements-grid">${cards}</div>
+                </div>`;
+
+            const followingPanel = page.querySelector('[data-profile-tab-panel="following"]');
+            page.insertBefore(panel, followingPanel || null);
+
+            tab.addEventListener("click", (event) => {
+                event.preventDefault();
+                const url = new URL(tab.href, window.location.href);
+                window.history.pushState({}, "", url);
+                activate(panel, tab);
+            });
+
+            tabs.querySelectorAll("a:not([data-reader-achievement-tab])").forEach((link) => {
+                link.addEventListener("click", () => deactivate(panel, tab));
+            });
+
+            window.addEventListener("popstate", () => {
+                if (currentTab() === "achievements") activate(panel, tab);
+                else deactivate(panel, tab);
+            });
+
+            if (currentTab() === "achievements") activate(panel, tab);
+        })
+        .catch(() => {});
+})();
