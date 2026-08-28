@@ -126,6 +126,17 @@ def build_dashboard_context(analyst) -> dict:
         author=analyst,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
+    engagement_stats = published.aggregate(
+        published_count=Count("id", distinct=True),
+        total_likes=Count("likes", distinct=True),
+        total_saves=Count("favorites", distinct=True),
+    )
+    published_count = engagement_stats["published_count"] or 0
+    total_likes_count = engagement_stats["total_likes"] or 0
+    total_saves_count = engagement_stats["total_saves"] or 0
+    avg_likes_per_prediction = round(total_likes_count / published_count, 1) if published_count else 0
+    avg_saves_per_prediction = round(total_saves_count / published_count, 1) if published_count else 0
+
     today_predictions = published.filter(
         predictions__match__starts_at__gte=today_start,
         predictions__match__starts_at__lt=tomorrow_start,
@@ -183,13 +194,19 @@ def build_dashboard_context(analyst) -> dict:
         follow.dashboard_actor = _actor_data(follow.follower)
 
     likes = list(
-        PredictionLike.objects.filter(prediction__author=analyst)
+        PredictionLike.objects.filter(
+            prediction__author=analyst,
+            prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
         .exclude(user=analyst)
         .select_related("user", "user__analyst_profile", "prediction")
         .order_by("-created_at")[:10]
     )
     favorites = list(
-        PredictionFavorite.objects.filter(prediction__author=analyst)
+        PredictionFavorite.objects.filter(
+            prediction__author=analyst,
+            prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
         .exclude(user=analyst)
         .select_related("user", "user__analyst_profile", "prediction")
         .order_by("-created_at")[:10]
@@ -219,6 +236,10 @@ def build_dashboard_context(analyst) -> dict:
         "latest_followers": latest_followers,
         "latest_reactions": reactions[:10],
         "live_predictions": _live_prediction_cards(analyst),
+        "total_likes_count": total_likes_count,
+        "total_saves_count": total_saves_count,
+        "avg_likes_per_prediction": avg_likes_per_prediction,
+        "avg_saves_per_prediction": avg_saves_per_prediction,
     }
 
 
