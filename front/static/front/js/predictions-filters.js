@@ -4,6 +4,7 @@
     if (!$) return;
 
     let activeRequest = null;
+    let coefficientTimer = null;
 
     const currentLayout = () => $("[data-predictions-layout]").first();
 
@@ -135,6 +136,15 @@
             $form.trigger("submit");
         }
     );
+
+    $(document).on("input", "[data-prediction-filters] input[type='number']", function () {
+        const $form = $(this).closest("[data-prediction-filters]");
+        window.clearTimeout(coefficientTimer);
+        coefficientTimer = window.setTimeout(() => {
+            coefficientTimer = null;
+            $form.trigger("submit");
+        }, 350);
+    });
 
     $(document).on("change", "[data-prediction-sort]", function () {
         loadPredictions(sortUrl(this.value), { sortChange: true });
