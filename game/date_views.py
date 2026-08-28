@@ -31,6 +31,7 @@ SCOPE_FILTERS = (
 )
 ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
 MATCHES_PAGE_SIZE = 18
+MAX_MATCHES_WINDOW = 180
 
 
 def match_list(request):
@@ -44,19 +45,12 @@ def match_list(request):
     selected_date = _selected_date(request.GET.get("date"), today=today)
     day_start, day_end = _local_day_bounds(selected_date)
 
-    date_matches = Match.objects.filter(
-        starts_at__gte=day_start,
-        starts_at__lt=day_end,
-    )
+    date_matches = Match.objects.filter(starts_at__gte=day_start, starts_at__lt=day_end)
     live_matches = Match.objects.filter(sync_scope=Match.SyncScope.LIVE)
     base_matches = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
 
     matches_queryset = base_matches.select_related(
-        "sport",
-        "league__country",
-        "home_team",
-        "away_team",
-        "odds",
+        "sport", "league__country", "home_team", "away_team", "odds"
     )
 
     if active_scope == WATCHED_SCOPE:
@@ -91,14 +85,37 @@ def match_list(request):
         ),
         predictions_count=Count(
             "predictions__coupon",
-            filter=Q(
-                predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-            ),
+            filter=Q(predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED),
             distinct=True,
         ),
     ).order_by("-is_watched", "scope_order", "starts_at", "id")
 
     lazy_request = _is_lazy_request(request)
+    can_write_coupon = request.user.is_authenticated and request.user.role == User.Role.ANALYST
+    window_size = _window_size(request.GET.get("window")) if lazy_request else None
+
+    if window_size is not None:
+        total = matches_queryset.count()
+        matches = list(matches_queryset[:window_size])
+        _decorate_matches(matches)
+        html = render_to_string(
+            "game/includes/_match_grid_items.html",
+            {"matches": matches, "can_write_coupon": can_write_coupon},
+            request=request,
+        )
+        loaded_pages = (len(matches) + MATCHES_PAGE_SIZE - 1) // MATCHES_PAGE_SIZE
+        has_next = total > len(matches)
+        return JsonResponse(
+            {
+                "ok": True,
+                "html": html,
+                "page": loaded_pages,
+                "has_next": has_next,
+                "next_page": loaded_pages + 1 if has_next else None,
+                "window": len(matches),
+            }
+        )
+
     paginator = Paginator(matches_queryset, MATCHES_PAGE_SIZE)
     raw_page = request.GET.get("page", "1")
     try:
@@ -107,37 +124,16 @@ def match_list(request):
         page_obj = paginator.page(1)
     except EmptyPage:
         if lazy_request:
-            return JsonResponse(
-                {
-                    "ok": True,
-                    "html": "",
-                    "page": None,
-                    "has_next": False,
-                    "next_page": None,
-                }
-            )
+            return JsonResponse({"ok": True, "html": "", "page": None, "has_next": False, "next_page": None})
         page_obj = paginator.page(paginator.num_pages)
 
     matches = list(page_obj.object_list)
-    card_odds = {}
-    for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
-        card_odds[str(match.id)] = {
-            "scope": match.sync_scope,
-            "odds": _stored_card_odds(match),
-        }
-
-    can_write_coupon = (
-        request.user.is_authenticated and request.user.role == User.Role.ANALYST
-    )
+    card_odds = _decorate_matches(matches)
 
     if lazy_request:
         html = render_to_string(
             "game/includes/_match_grid_items.html",
-            {
-                "matches": matches,
-                "can_write_coupon": can_write_coupon,
-            },
+            {"matches": matches, "can_write_coupon": can_write_coupon},
             request=request,
         )
         return JsonResponse(
@@ -150,22 +146,15 @@ def match_list(request):
             }
         )
 
-    counts = {
-        row["sync_scope"]: row["total"]
-        for row in date_matches.values("sync_scope").annotate(total=Count("id"))
-    }
+    counts = {row["sync_scope"]: row["total"] for row in date_matches.values("sync_scope").annotate(total=Count("id"))}
     total_count = sum(counts.values())
     counts[Match.SyncScope.LIVE] = live_matches.count()
     watched_count = 0
     if request.user.is_authenticated:
-        watched_count = (
-            date_matches.filter(
-                sync_scope__in=ACTIVE_WATCH_SCOPES,
-                notification_watchers__user=request.user,
-            )
-            .distinct()
-            .count()
-        )
+        watched_count = date_matches.filter(
+            sync_scope__in=ACTIVE_WATCH_SCOPES,
+            notification_watchers__user=request.user,
+        ).distinct().count()
 
     scope_tabs = []
     for scope, label in SCOPE_FILTERS:
@@ -178,7 +167,6 @@ def match_list(request):
         scope_tabs.append({"scope": scope, "label": label, "count": count})
 
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
-
     context = {
         "active_scope": active_scope,
         "scope_tabs": scope_tabs,
@@ -197,22 +185,30 @@ def match_list(request):
     return render(request, "game/match_list.html", context)
 
 
+def _decorate_matches(matches):
+    card_odds = {}
+    for match in matches:
+        match.coupon_odds = _match_winner_odds(match)
+        card_odds[str(match.id)] = {"scope": match.sync_scope, "odds": _stored_card_odds(match)}
+    return card_odds
+
+
+def _window_size(raw_value):
+    if raw_value in (None, ""):
+        return None
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        return None
+    return max(MATCHES_PAGE_SIZE, min(MAX_MATCHES_WINDOW, value))
+
+
 def _is_lazy_request(request) -> bool:
-    return (
-        request.headers.get("X-Requested-With") == "XMLHttpRequest"
-        or request.GET.get("lazy") == "1"
-    )
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.GET.get("lazy") == "1"
 
 
 def _stored_card_odds(match: Match) -> dict[str, str]:
-    empty = {
-        "home": "",
-        "draw": "",
-        "away": "",
-        "over25": "",
-        "under25": "",
-        "bttsYes": "",
-    }
+    empty = {"home": "", "draw": "", "away": "", "over25": "", "under25": "", "bttsYes": ""}
     try:
         odds = match.odds
     except ObjectDoesNotExist:
@@ -255,6 +251,5 @@ def _selected_date(raw_value: str | None, *, today=None):
 def _local_day_bounds(selected_date):
     tz = timezone.get_current_timezone()
     start = timezone.make_aware(datetime.combine(selected_date, time.min), tz)
-    next_date = selected_date + timedelta(days=1)
-    end = timezone.make_aware(datetime.combine(next_date, time.min), tz)
+    end = timezone.make_aware(datetime.combine(selected_date + timedelta(days=1), time.min), tz)
     return start, end
