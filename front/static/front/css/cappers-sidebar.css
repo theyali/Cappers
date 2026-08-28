@@ -1,95 +1,18 @@
-.cappers-filter-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
+.cappers-page.cappers-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    align-items: start;
     gap: 22px;
 }
 
-.cappers-filter-layout.is-filter-collapsed {
-    grid-template-columns: minmax(0, 1fr) 300px;
-}
-
-.cappers-filter-layout .cappers-main {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.cappers-side-column {
-    grid-column: 2;
-    grid-row: 1;
+.cappers-main {
     min-width: 0;
-    max-height: calc(100vh - 132px);
     display: grid;
     gap: 18px;
-    align-self: start;
-    overflow-y: auto;
-    position: sticky;
-    top: 116px;
-    scrollbar-width: thin;
-}
-
-.cappers-side-column .prediction-filter-sidebar,
-.cappers-side-column .bookmakers-sidebar {
-    position: static;
-    top: auto;
-}
-
-.cappers-filter-sidebar .cappers-filter-quick {
-    grid-template-columns: 1fr;
-}
-
-.cappers-filter-layout.is-filter-collapsed .prediction-filter-sidebar-toggle {
-    justify-content: space-between;
-    padding: 0 14px;
-}
-
-.cappers-filter-layout.is-filter-collapsed .prediction-filter-sidebar-title {
-    display: flex;
-}
-
-.cappers-filter-layout.is-filter-collapsed .prediction-filter-sidebar-chevron {
-    transform: rotate(-90deg);
-}
-
-.cappers-main .cappers-section-head,
-.cappers-main .cappers-pro-grid,
-.cappers-main .cappers-empty {
-    transition: opacity .2s ease, transform .2s ease;
-}
-
-.cappers-main.is-results-leaving .cappers-section-head,
-.cappers-main.is-results-leaving .cappers-pro-grid,
-.cappers-main.is-results-leaving .cappers-empty {
-    opacity: 0;
-    transform: translateY(6px);
-}
-
-.cappers-main.is-results-entering .cappers-section-head,
-.cappers-main.is-results-entering .cappers-pro-grid,
-.cappers-main.is-results-entering .cappers-empty {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.cappers-results-copy {
-    min-width: 0;
-    display: grid !important;
-    align-items: initial !important;
-    gap: 6px !important;
-}
-
-.cappers-results-copy > div {
-    min-width: 0;
-}
-
-.cappers-results-copy .cappers-eyebrow {
-    margin-bottom: 6px;
-}
-
-.cappers-results-copy > span {
-    color: var(--muted);
-    font-size: 11px;
 }
 
 .bookmakers-sidebar {
+    position: sticky;
+    top: 92px;
     min-width: 0;
     display: grid;
 }
@@ -279,32 +202,12 @@
 }
 
 @media (max-width: 1080px) {
-    .cappers-filter-layout,
-    .cappers-filter-layout.is-filter-collapsed {
+    .cappers-page.cappers-layout {
         grid-template-columns: 1fr;
     }
 
-    .cappers-side-column {
-        display: contents;
+    .bookmakers-sidebar {
         position: static;
-        max-height: none;
-        overflow: visible;
-    }
-
-    .cappers-filter-sidebar {
-        position: static;
-        grid-column: 1;
-        grid-row: 1;
-    }
-
-    .cappers-filter-layout .cappers-main {
-        grid-column: 1;
-        grid-row: 2;
-    }
-
-    .cappers-side-column .bookmakers-sidebar {
-        grid-column: 1;
-        grid-row: 3;
     }
 
     .bookmakers-list {
@@ -339,9 +242,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .cappers-main .cappers-section-head,
-    .cappers-main .cappers-pro-grid,
-    .cappers-main .cappers-empty,
     .bookmaker-card,
     .bookmaker-arrow {
         transition: none;

@@ -57,28 +57,17 @@ class AjaxFilterSidebarTests(TestCase):
         self.assertNotIn('class="following-feed-controls"', html)
         self.assertEqual(response.context["active_filter_count"], 2)
 
-    def test_cappers_sidebar_filters_catalog_and_uses_ajax(self):
-        response = self.client.get(
-            reverse("front:cappers_stats"),
-            {
-                "q": "alpha",
-                "verified": "1",
-                "sort": "roi",
-            },
-        )
+    def test_cappers_catalog_has_no_filter_sidebar(self):
+        response = self.client.get(reverse("front:cappers_stats"))
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode("utf-8")
-        usernames = [expert["username"] for expert in response.context["experts"]]
 
-        self.assertEqual(usernames, [self.alpha.username])
-        self.assertEqual(response.context["filtered_experts_count"], 1)
-        self.assertEqual(response.context["active_filter_count"], 2)
-        self.assertEqual(response.context["active_sort"], "roi")
-        self.assertIn('class="prediction-filter-sidebar cappers-filter-sidebar"', html)
-        self.assertIn('name="q" value="alpha"', html)
-        self.assertIn("data-prediction-filters", html)
-        self.assertIn("data-prediction-sort", html)
-        self.assertIn("predictions-filters.js", html)
-        self.assertIn("code.jquery.com/jquery-3.7.1.min.js", html)
-        self.assertNotIn('class="cappers-summary"', html)
+        self.assertIn('class="cappers-page cappers-layout"', html)
+        self.assertIn('class="cappers-pro-grid"', html)
+        self.assertIn('class="bookmakers-sidebar"', html)
+        self.assertNotIn("cappers-filter-sidebar", html)
+        self.assertNotIn("data-prediction-filters", html)
+        self.assertNotIn("data-prediction-sort", html)
+        self.assertNotIn("predictions-filters.js", html)
+        self.assertNotIn("code.jquery.com/jquery-3.7.1.min.js", html)
