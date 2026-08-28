@@ -31,8 +31,6 @@
 
 .match-predictions-feed-head h2 {
     margin: 0;
-    font-size: clamp(28px, 3vw, 42px);
-    line-height: 1;
 }
 
 .match-predictions-feed-head p {
