@@ -121,6 +121,16 @@
             <strong>{% if overall_roi > 0 %}+{% endif %}{{ overall_roi }}%</strong>
             <small>прибыль к сумме рассчитанных купонов</small>
         </article>
+        <article>
+            <span>Лайки</span>
+            <strong>{{ total_likes_count }}</strong>
+            <small>всего на опубликованных прогнозах</small>
+        </article>
+        <article>
+            <span>Сохранения</span>
+            <strong>{{ total_saves_count }}</strong>
+            <small>добавлений прогнозов в избранное</small>
+        </article>
     </section>
 
     <section class="expert-public-analytics" aria-label="Подробная статистика эксперта">
