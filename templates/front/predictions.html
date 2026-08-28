@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/prediction-top-experts.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/predictions-filters.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/predictions-sidebar.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
@@ -34,6 +35,16 @@
     <div class="predictions-layout" data-predictions-layout>
         <div class="predictions-content" data-predictions-content>
             <nav class="predictions-tabs" aria-label="Быстрый фильтр по результату">
+                <a class="predictions-tab-top{% if top_experts_tab.active %} is-active{% endif %}" href="{{ top_experts_tab.href }}" data-top-experts-tab>
+                    <span class="predictions-tab-top-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 7.5 8.2 12 12 5l3.8 7L20 7.5l-1.7 10H5.7L4 7.5Z"></path>
+                            <path d="M6 20h12"></path>
+                        </svg>
+                    </span>
+                    <span>Топовые эксперты</span>
+                    <b>{{ top_experts_tab.count }}</b>
+                </a>
                 {% for tab in status_tabs %}
                 <a class="{% if tab.active %}is-active{% endif %}" href="{{ tab.href }}">
                     <span>{{ tab.label }}</span>
@@ -97,6 +108,7 @@
                 <form class="prediction-filters" method="get" action="{% url 'front:predictions' %}" data-prediction-filters>
                     <input type="hidden" name="sort" value="{{ active_sort }}">
                     <input type="hidden" name="status" value="{{ active_status }}">
+                    {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
 
                     {% if active_filter_count %}
                     <div class="prediction-filter-sidebar-actions">

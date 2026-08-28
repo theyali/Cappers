@@ -1,0 +1,61 @@
+.predictions-tabs a.predictions-tab-top {
+    color: #fff;
+    background: var(--blue);
+    font-weight: 700;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.predictions-tabs a.predictions-tab-top:hover {
+    color: #fff;
+    background: var(--blue);
+    transform: translateY(-1px);
+}
+
+.predictions-tab-top-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    color: var(--yellow);
+}
+
+.predictions-tab-top-icon svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.predictions-tabs a.predictions-tab-top b {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-tabs a.predictions-tab-top.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-tabs a.predictions-tab-top.is-active:hover {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-tabs a.predictions-tab-top.is-active .predictions-tab-top-icon {
+    color: var(--blue);
+}
+
+.predictions-tabs a.predictions-tab-top.is-active b {
+    color: #fff;
+    background: var(--blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .predictions-tabs a.predictions-tab-top {
+        transition: none;
+    }
+}

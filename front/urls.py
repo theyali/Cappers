@@ -4,7 +4,16 @@ from django.views.generic import TemplateView
 from cabinet import expert_profile_views as cabinet_expert_profile_views
 from cabinet import referral_views as cabinet_referral_views
 
-from . import article_views, capper_views, feed_views, home_views, how_views, prediction_views, static_views
+from . import (
+    article_views,
+    capper_views,
+    feed_views,
+    home_views,
+    how_views,
+    prediction_catalog_views,
+    prediction_views,
+    static_views,
+)
 
 app_name = "front"
 
@@ -16,7 +25,7 @@ urlpatterns = [
         name="capper_referral_code",
     ),
     path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
-    path("predictions/", prediction_views.predictions, name="predictions"),
+    path("predictions/", prediction_catalog_views.predictions, name="predictions"),
     path(
         "predictions/<int:prediction_id>/",
         prediction_views.prediction_detail,
