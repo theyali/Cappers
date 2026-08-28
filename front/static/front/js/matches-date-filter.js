@@ -48,9 +48,11 @@
     });
 
     const buildHref = (date, scope = activeScope) => {
-        const query = new URLSearchParams();
+        const query = new URLSearchParams(window.location.search);
         query.set("scope", scope);
         query.set("date", toIso(date));
+        query.delete("page");
+        query.delete("lazy");
         return `${window.location.pathname}?${query.toString()}`;
     };
 
@@ -137,8 +139,8 @@
 
     tabs.querySelectorAll("a").forEach((link) => {
         const url = new URL(link.href, window.location.href);
-        url.searchParams.set("date", selectedIso);
-        link.href = `${url.pathname}?${url.searchParams.toString()}`;
+        const targetScope = url.searchParams.get("scope") || "all";
+        link.href = buildHref(selectedDate, targetScope);
     });
 
     const heroMetaLabel = document.querySelector(".matches-hero-meta small");
