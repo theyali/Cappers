@@ -58,6 +58,9 @@
     };
 
     initScrollableNames(root);
+    document.addEventListener("matches:appended", (event) => {
+        (event.detail?.nodes || []).forEach((node) => initScrollableNames(node));
+    });
 
     root.querySelectorAll("[data-odds-tab-target]").forEach((button) => {
         button.addEventListener("click", () => {
@@ -181,6 +184,8 @@
             });
         });
     };
+
+    document.addEventListener("matches:appended", () => updateMatchButtons());
 
     const updateState = () => {
         root.classList.toggle("has-coupon", items.size > 0);
@@ -568,12 +573,13 @@
         scheduleDraftSync();
     });
 
-    document.querySelectorAll("[data-bet-option]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const group = button.closest("[data-match-bets]");
-            if (!group) return;
-            upsertItem(buildItem(group, button));
-        });
+    root.addEventListener("click", (event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest("[data-bet-option]");
+        if (!button || !root.contains(button)) return;
+        const group = button.closest("[data-match-bets]");
+        if (!group) return;
+        upsertItem(buildItem(group, button));
     });
 
     form.addEventListener("submit", (event) => {
