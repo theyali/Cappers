@@ -1,0 +1,119 @@
+.expert-public-stats.expert-public-stats-compact {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.expert-public-stats-compact .expert-public-stat-card {
+    min-width: 0;
+    min-height: 96px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.expert-public-stats-compact .expert-public-stat-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: #fff;
+    background: var(--blue);
+}
+
+.expert-public-stats-compact .expert-public-stat-icon svg {
+    width: 23px;
+    height: 23px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.expert-public-stats-compact .expert-public-stat-card > div {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.expert-public-stats-compact .expert-public-stat-card span:not(.expert-public-stat-icon) {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.expert-public-stats-compact .expert-public-stat-card strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 28px;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.expert-public-stats-compact .is-following .expert-public-stat-icon {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.expert-public-stats-compact .is-wins .expert-public-stat-icon {
+    background: var(--green);
+}
+
+.expert-public-stats-compact .is-wins strong {
+    color: var(--green);
+}
+
+.expert-public-stats-compact .is-losses .expert-public-stat-icon {
+    background: var(--danger);
+}
+
+.expert-public-stats-compact .is-losses strong {
+    color: var(--danger);
+}
+
+@media (max-width: 760px) {
+    .expert-public-stats.expert-public-stats-compact {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .expert-public-stats-compact .expert-public-stat-card {
+        min-height: 88px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    .expert-public-stats-compact .expert-public-stat-card {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .expert-public-stats-compact .expert-public-stat-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        border-radius: 12px;
+    }
+
+    .expert-public-stats-compact .expert-public-stat-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .expert-public-stats-compact .expert-public-stat-card strong {
+        font-size: 24px;
+    }
+
+    .expert-public-stats-compact .expert-public-stat-card span:not(.expert-public-stat-icon) {
+        font-size: 10px;
+    }
+}
