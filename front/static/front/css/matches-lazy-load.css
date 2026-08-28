@@ -1,0 +1,115 @@
+.matches-lazy-sentinel {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 14px;
+}
+
+.matches-lazy-sentinel.is-done {
+    display: none;
+}
+
+.matches-lazy-button {
+    min-height: 42px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--text);
+    background: var(--panel);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background .18s ease, transform .18s ease, opacity .18s ease;
+}
+
+.matches-lazy-button:hover {
+    background: #2a2a2d;
+    transform: translateY(-1px);
+}
+
+.matches-lazy-button:disabled {
+    cursor: wait;
+    opacity: .55;
+    transform: none;
+}
+
+.matches-lazy-status {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.matches-lazy-dots {
+    display: none;
+    align-items: center;
+    gap: 5px;
+}
+
+.matches-lazy-sentinel.is-loading .matches-lazy-dots {
+    display: inline-flex;
+}
+
+.matches-lazy-dots i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--yellow);
+    animation: matchLazyDot .8s ease-in-out infinite alternate;
+}
+
+.matches-lazy-dots i:nth-child(2) {
+    animation-delay: .12s;
+}
+
+.matches-lazy-dots i:nth-child(3) {
+    animation-delay: .24s;
+}
+
+.match-watch-card-shell.is-lazy-added {
+    animation: matchLazyCardIn .34s ease both;
+}
+
+@keyframes matchLazyDot {
+    from {
+        opacity: .3;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes matchLazyCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 720px) {
+    .matches-lazy-sentinel {
+        min-height: 64px;
+        margin-top: 12px;
+        padding: 10px 0;
+    }
+
+    .matches-lazy-button {
+        min-height: 44px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .matches-lazy-button,
+    .matches-lazy-dots i,
+    .match-watch-card-shell.is-lazy-added {
+        animation: none;
+        transition: none;
+    }
+}
