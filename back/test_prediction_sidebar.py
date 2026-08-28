@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.utils import timezone
 
-from back.templatetags.site_extras import latest_prediction_cards
+from back.templatetags.site_extras import latest_prediction_cards, my_recent_coupons
 from cabinet.models import User
 from game.models import Match, PredictionCoupon, PredictionItem
 
@@ -79,3 +79,31 @@ class LatestPredictionCardsTests(TestCase):
         self._add_item(draft, self.matches[0], "Хозяева")
 
         self.assertEqual(latest_prediction_cards(), [])
+
+    def test_my_recent_coupons_only_contains_published_coupons(self):
+        draft = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.DRAFT,
+            total_stake=Decimal("10.00"),
+            possible_payout=Decimal("30.00"),
+            confidence=55,
+        )
+        self._add_item(draft, self.matches[0], "Черновик")
+
+        published = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("20.00"),
+            possible_payout=Decimal("50.00"),
+            confidence=74,
+            published_at=timezone.now(),
+        )
+        self._add_item(published, self.matches[1], "Опубликован")
+
+        context = my_recent_coupons(self.analyst)
+        coupons = context["my_coupons"]
+
+        self.assertEqual([coupon.id for coupon in coupons], [published.id])
+        self.assertEqual(coupons[0].predictions_count, 1)
+        self.assertEqual(coupons[0].sidebar_coefficient, Decimal("2.50"))
+        self.assertEqual(coupons[0].sidebar_date, published.published_at)
