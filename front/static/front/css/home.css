@@ -22,9 +22,6 @@
 .home-heading h1 {
     margin: 0;
     max-width: none;
-    font-size: clamp(34px, 4vw, 58px);
-    line-height: .98;
-    letter-spacing: -.04em;
 }
 
 .home-eyebrow {
@@ -214,9 +211,6 @@
     max-width: 640px;
     margin: 0;
     color: var(--text);
-    font-size: clamp(31px, 3.8vw, 58px);
-    line-height: .98;
-    letter-spacing: -.045em;
 }
 
 .forecast-note {
@@ -391,13 +385,10 @@
 .follow-card h2,
 .experts-card h2 {
     margin: 0;
-    line-height: 1;
-    letter-spacing: -.035em;
 }
 
 .follow-card h2 {
     max-width: 330px;
-    font-size: clamp(29px, 3vw, 30px);
 }
 
 .follow-copy {
@@ -477,10 +468,6 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 18px;
-}
-
-.experts-card h2 {
-    font-size: clamp(26px, 2.4vw, 34px);
 }
 
 .experts-live {
@@ -675,10 +662,6 @@
         align-items: flex-end;
     }
 
-    .home-heading h1 {
-        font-size: 34px;
-    }
-
     .slider-arrow {
         width: 40px;
         height: 40px;
@@ -701,10 +684,6 @@
     .forecast-body {
         gap: 16px;
         padding-top: 30px;
-    }
-
-    .forecast-match-copy h2 {
-        font-size: 36px;
     }
 
     .forecast-note {
