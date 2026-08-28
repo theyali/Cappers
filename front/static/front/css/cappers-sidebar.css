@@ -10,6 +10,14 @@
     gap: 18px;
 }
 
+.cappers-side-column {
+    min-width: 0;
+    align-self: stretch;
+    display: grid;
+    align-content: start;
+    gap: 18px;
+}
+
 .bookmakers-sidebar {
     position: sticky;
     top: 116px;
@@ -204,6 +212,10 @@
 @media (max-width: 1080px) {
     .cappers-page.cappers-layout {
         grid-template-columns: 1fr;
+    }
+
+    .cappers-side-column {
+        align-self: start;
     }
 
     .bookmakers-sidebar {
