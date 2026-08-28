@@ -42,15 +42,22 @@
                 {% endfor %}
             </nav>
 
-            {% if page_obj.object_list %}
             <div class="prediction-results-head">
                 <div>
                     <strong>{{ filtered_predictions }}</strong>
                     <span>прогнозов по выбранным условиям</span>
                 </div>
-                <span>{% if active_sort == "roi" %}Лучший ROI{% elif active_sort == "popular" %}Самые популярные{% else %}Сначала новые{% endif %}</span>
+                <label class="prediction-results-sort">
+                    <span>Сортировка</span>
+                    <select name="sort" data-prediction-sort aria-label="Сортировка прогнозов">
+                        {% for value, label in sort_options %}
+                        <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
             </div>
 
+            {% if page_obj.object_list %}
             <div class="predictions-grid">
                 {% for prediction in page_obj.object_list %}
                     {% include "front/_prediction_card.html" %}
@@ -79,21 +86,20 @@
 
         <aside class="prediction-filter-sidebar" data-prediction-filter-sidebar aria-label="Фильтры прогнозов">
             <button class="prediction-filter-sidebar-toggle" type="button" data-prediction-filter-toggle aria-expanded="true" aria-controls="prediction-filter-sidebar-body">
-                <span class="prediction-filter-sidebar-toggle-copy">
-                    <span class="predictions-eyebrow">Фильтры</span>
-                    <strong>Настроить ленту</strong>
-                </span>
-                <span class="prediction-filter-sidebar-toggle-meta">
+                <span class="prediction-filter-sidebar-title">
+                    <strong>Фильтры</strong>
                     {% if active_filter_count %}<b>{{ active_filter_count }}</b>{% endif %}
-                    <i aria-hidden="true"></i>
                 </span>
+                <i class="prediction-filter-sidebar-chevron" aria-hidden="true"></i>
             </button>
 
             <div class="prediction-filter-sidebar-body" id="prediction-filter-sidebar-body" data-prediction-filter-body>
                 <form class="prediction-filters" method="get" action="{% url 'front:predictions' %}" data-prediction-filters>
+                    <input type="hidden" name="sort" value="{{ active_sort }}">
+
                     {% if active_filter_count %}
                     <div class="prediction-filter-sidebar-actions">
-                        <span class="prediction-filter-count">{{ active_filter_count }} активных</span>
+                        <span>{{ active_filter_count }} выбрано</span>
                         <a class="prediction-filter-reset" href="{% url 'front:predictions' %}">Сбросить</a>
                     </div>
                     {% endif %}
@@ -159,15 +165,6 @@
                             </label>
                         </div>
 
-                        <label class="prediction-filter-field">
-                            <span>Сортировка</span>
-                            <select name="sort">
-                                {% for value, label in sort_options %}
-                                <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </label>
-
                         <div class="prediction-filter-quick">
                             <label class="prediction-filter-toggle">
                                 <input type="checkbox" name="live" value="1"{% if only_live %} checked{% endif %}>
@@ -180,18 +177,7 @@
                         </div>
                     </div>
 
-                    <div class="prediction-filter-footer">
-                        <div class="prediction-filter-hint">
-                            {% if active_sort == "roi" %}
-                                Выше показываются прогнозы капперов с лучшим ROI по рассчитанным купонам.
-                            {% elif active_sort == "popular" %}
-                                Популярность учитывает лайки и добавления в избранное.
-                            {% else %}
-                                Для авторизованных пользователей новые прогнозы подписок остаются выше общей ленты.
-                            {% endif %}
-                        </div>
-                        <button class="prediction-filter-submit" type="submit">Показать прогнозы</button>
-                    </div>
+                    <button class="prediction-filter-submit" type="submit">Применить</button>
                 </form>
             </div>
         </aside>

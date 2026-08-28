@@ -84,6 +84,13 @@
         return query ? `${action}?${query}` : action;
     };
 
+    const sortUrl = (value) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("sort", value || "new");
+        url.searchParams.delete("page");
+        return url.href;
+    };
+
     $(document).on("click", "[data-prediction-filter-toggle]", (event) => {
         event.preventDefault();
         const $layout = currentLayout();
@@ -104,6 +111,10 @@
             $form.trigger("submit");
         }
     );
+
+    $(document).on("change", "[data-prediction-sort]", function () {
+        loadPredictions(sortUrl(this.value));
+    });
 
     $(document).on("click", ".predictions-tabs a, .predictions-pagination a, .prediction-filter-reset", function (event) {
         const href = this.href;

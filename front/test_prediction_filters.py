@@ -168,6 +168,30 @@ class PredictionFiltersTests(TestCase):
         self.assertIn("https://code.jquery.com/jquery-3.7.1.min.js", html)
         self.assertIn("front/js/predictions-filters.js", html)
         self.assertLess(html.index('data-predictions-content'), html.index('data-prediction-filter-sidebar'))
+        self.assertNotIn("Настроить ленту", html)
+        self.assertNotIn("prediction-filter-hint", html)
+
+    def test_sort_control_is_in_results_head_not_sidebar(self):
+        self._prediction(external_id=941)
+
+        response = self.client.get(
+            reverse("front:predictions"),
+            {"sport": self.sport.id, "sort": "popular"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        results_start = html.index('class="prediction-results-head"')
+        sidebar_start = html.index('class="prediction-filter-sidebar"')
+        sidebar_end = html.index("</aside>", sidebar_start)
+        sidebar_html = html[sidebar_start:sidebar_end]
+        results_html = html[results_start:sidebar_start]
+
+        self.assertIn('data-prediction-sort', results_html)
+        self.assertIn('<option value="popular" selected>', results_html)
+        self.assertNotIn('data-prediction-sort', sidebar_html)
+        self.assertNotIn('<select name="sort"', sidebar_html)
+        self.assertIn('<input type="hidden" name="sort" value="popular">', sidebar_html)
 
     def test_pagination_keeps_active_filter_query(self):
         for index in range(25):
