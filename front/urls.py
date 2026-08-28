@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from cabinet import public_views as cabinet_public_views
+from cabinet import referral_views as cabinet_referral_views
 
 from . import article_views, feed_views, home_views, how_views, prediction_views, static_views, views
 
@@ -9,6 +10,7 @@ app_name = "front"
 
 urlpatterns = [
     path("", home_views.index, name="index"),
+    path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
     path("predictions/", prediction_views.predictions, name="predictions"),
     path(
         "predictions/<int:prediction_id>/",
