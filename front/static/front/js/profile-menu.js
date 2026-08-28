@@ -271,3 +271,21 @@
     script.dataset.profileReferralsScript = "true";
     document.body.appendChild(script);
 })();
+
+(() => {
+    if (!document.querySelector(".profile-page")) return;
+    if (document.querySelector("script[data-profile-demand-script]")) return;
+    const script = document.createElement("script");
+    script.src = "/static/front/js/profile-demand.js";
+    script.dataset.profileDemandScript = "true";
+    document.body.appendChild(script);
+})();
+
+(() => {
+    if (!document.querySelector("[data-match-bets][data-match-id]")) return;
+    if (document.querySelector("script[data-match-demand-script]")) return;
+    const script = document.createElement("script");
+    script.src = "/static/front/js/match-demand.js";
+    script.dataset.matchDemandScript = "true";
+    document.body.appendChild(script);
+})();
