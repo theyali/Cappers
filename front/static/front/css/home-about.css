@@ -141,8 +141,7 @@
     background: #181819;
 }
 
-.home-about-story h3,
-.home-about-seo h3 {
+.home-about-content-title {
     margin: 0 0 14px;
     color: var(--text);
 }
