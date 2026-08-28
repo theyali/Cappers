@@ -76,6 +76,28 @@
         (event.detail?.nodes || []).forEach((node) => formatLiveStatuses(node));
     });
 
+    const loadMatchPredictionsScript = () => {
+        if (!document.querySelector(".match-detail-page")) return;
+        if (document.querySelector("script[data-match-predictions-script]")) return;
+
+        const source = Array.from(document.scripts).find((script) =>
+            /\/match-card-watch\.js(?:\?.*)?$/.test(script.src || ""),
+        );
+        if (!source?.src) return;
+
+        const src = new URL(source.src);
+        src.pathname = src.pathname.replace(/match-card-watch\.js$/, "match-predictions.js");
+        src.search = "";
+
+        const script = document.createElement("script");
+        script.src = src.toString();
+        script.dataset.matchPredictionsScript = "true";
+        script.async = false;
+        document.body.appendChild(script);
+    };
+
+    loadMatchPredictionsScript();
+
     const getCookie = (name) => {
         const cookies = document.cookie ? document.cookie.split(";") : [];
         for (const cookie of cookies) {
