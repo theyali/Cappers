@@ -10,6 +10,11 @@ app_name = "front"
 
 urlpatterns = [
     path("", home_views.index, name="index"),
+    path(
+        "r/<str:username>/<str:code>/",
+        cabinet_referral_views.referral_redirect_code,
+        name="capper_referral_code",
+    ),
     path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
     path("predictions/", prediction_views.predictions, name="predictions"),
     path(
