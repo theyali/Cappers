@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path, reverse_lazy
 
-from . import avatar_views, capper_views, dashboard_views, public_views, telegram_auth, views
+from . import avatar_views, capper_views, dashboard_views, public_views, referral_views, telegram_auth, views
 
 app_name = "cabinet"
 
@@ -10,12 +10,13 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("referrals/stats/", referral_views.referral_stats, name="referral_stats"),
     path("coupons/<int:coupon_id>/", views.coupon_detail, name="coupon_detail"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
     path("profile/avatar/", avatar_views.avatar, name="avatar_upload"),
-    path("profile/follow/<int:user_id>/", views.follow_analyst, name="follow_analyst"),
+    path("profile/follow/<int:user_id>/", referral_views.follow_analyst, name="follow_analyst"),
     path("experts/<str:username>/", public_views.expert_profile, name="expert_profile"),
-    path("experts/<int:user_id>/follow/", public_views.toggle_follow, name="toggle_follow"),
+    path("experts/<int:user_id>/follow/", referral_views.toggle_follow, name="toggle_follow"),
     path("register/", capper_views.register, name="register"),
     path("become-capper/", capper_views.become_capper, name="become_capper"),
     path("become-capper/start/", capper_views.become_capper_start, name="become_capper_start"),
