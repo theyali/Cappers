@@ -1,5 +1,1 @@
-{% if match.home_can_write_coupon %}
-    {% include "game/_home_match_card_analyst.html" with match=match request=request only %}
-{% else %}
-    {% include "game/includes/_match_card.html" with match=match request=request card_readonly=1 card_home=1 only %}
-{% endif %}
+{% include "game/includes/_match_card.html" with match=match request=request card_readonly=1 card_home=1 only %}
