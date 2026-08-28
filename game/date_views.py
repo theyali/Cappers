@@ -2,8 +2,11 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import BooleanField, Case, Count, Exists, IntegerField, OuterRef, Q, Value, When
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
@@ -27,10 +30,11 @@ SCOPE_FILTERS = (
     (Match.SyncScope.FINISHED, "Завершенные"),
 )
 ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
+MATCHES_PAGE_SIZE = 18
 
 
 def match_list(request):
-    """Match list filtered by scope and local calendar date."""
+    """Match list filtered by scope/date with AJAX pages for infinite scroll."""
     active_scope = request.GET.get("scope", "all")
     valid_scopes = {scope for scope, _ in SCOPE_FILTERS}
     if active_scope not in valid_scopes:
@@ -45,6 +49,106 @@ def match_list(request):
         starts_at__lt=day_end,
     )
     live_matches = Match.objects.filter(sync_scope=Match.SyncScope.LIVE)
+    base_matches = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
+
+    matches_queryset = base_matches.select_related(
+        "sport",
+        "league__country",
+        "home_team",
+        "away_team",
+        "odds",
+    )
+
+    if active_scope == WATCHED_SCOPE:
+        if request.user.is_authenticated:
+            matches_queryset = matches_queryset.filter(
+                sync_scope__in=ACTIVE_WATCH_SCOPES,
+                notification_watchers__user=request.user,
+            ).distinct()
+        else:
+            matches_queryset = matches_queryset.none()
+    elif active_scope != "all":
+        matches_queryset = matches_queryset.filter(sync_scope=active_scope)
+
+    if request.user.is_authenticated:
+        watch_exists = MatchWatch.objects.filter(
+            user=request.user,
+            match_id=OuterRef("pk"),
+            match__sync_scope__in=ACTIVE_WATCH_SCOPES,
+        )
+        watched_annotation = Exists(watch_exists)
+    else:
+        watched_annotation = Value(False, output_field=BooleanField())
+
+    matches_queryset = matches_queryset.annotate(
+        is_watched=watched_annotation,
+        scope_order=Case(
+            When(sync_scope=Match.SyncScope.LIVE, then=Value(0)),
+            When(sync_scope=Match.SyncScope.PREMATCH, then=Value(1)),
+            When(sync_scope=Match.SyncScope.FINISHED, then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField(),
+        ),
+        predictions_count=Count(
+            "predictions__coupon",
+            filter=Q(
+                predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+            ),
+            distinct=True,
+        ),
+    ).order_by("-is_watched", "scope_order", "starts_at", "id")
+
+    lazy_request = _is_lazy_request(request)
+    paginator = Paginator(matches_queryset, MATCHES_PAGE_SIZE)
+    raw_page = request.GET.get("page", "1")
+    try:
+        page_obj = paginator.page(raw_page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        if lazy_request:
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "html": "",
+                    "page": None,
+                    "has_next": False,
+                    "next_page": None,
+                }
+            )
+        page_obj = paginator.page(paginator.num_pages)
+
+    matches = list(page_obj.object_list)
+    card_odds = {}
+    for match in matches:
+        match.coupon_odds = _match_winner_odds(match)
+        card_odds[str(match.id)] = {
+            "scope": match.sync_scope,
+            "odds": _stored_card_odds(match),
+        }
+
+    can_write_coupon = (
+        request.user.is_authenticated and request.user.role == User.Role.ANALYST
+    )
+
+    if lazy_request:
+        html = render_to_string(
+            "game/includes/_match_grid_items.html",
+            {
+                "matches": matches,
+                "can_write_coupon": can_write_coupon,
+            },
+            request=request,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "html": html,
+                "page": page_obj.number,
+                "has_next": page_obj.has_next(),
+                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+            }
+        )
 
     counts = {
         row["sync_scope"]: row["total"]
@@ -73,74 +177,13 @@ def match_list(request):
             count = counts.get(scope, 0)
         scope_tabs.append({"scope": scope, "label": label, "count": count})
 
-    base_matches = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
-
-    matches = base_matches.select_related(
-        "sport",
-        "league__country",
-        "home_team",
-        "away_team",
-        "odds",
-    )
-
-    if active_scope == WATCHED_SCOPE:
-        if request.user.is_authenticated:
-            matches = matches.filter(
-                sync_scope__in=ACTIVE_WATCH_SCOPES,
-                notification_watchers__user=request.user,
-            ).distinct()
-        else:
-            matches = matches.none()
-    elif active_scope != "all":
-        matches = matches.filter(sync_scope=active_scope)
-
-    if request.user.is_authenticated:
-        watch_exists = MatchWatch.objects.filter(
-            user=request.user,
-            match_id=OuterRef("pk"),
-            match__sync_scope__in=ACTIVE_WATCH_SCOPES,
-        )
-        watched_annotation = Exists(watch_exists)
-    else:
-        watched_annotation = Value(False, output_field=BooleanField())
-
-    matches = list(
-        matches.annotate(
-            is_watched=watched_annotation,
-            scope_order=Case(
-                When(sync_scope=Match.SyncScope.LIVE, then=Value(0)),
-                When(sync_scope=Match.SyncScope.PREMATCH, then=Value(1)),
-                When(sync_scope=Match.SyncScope.FINISHED, then=Value(2)),
-                default=Value(3),
-                output_field=IntegerField(),
-            ),
-            predictions_count=Count(
-                "predictions__coupon",
-                filter=Q(
-                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-                ),
-                distinct=True,
-            ),
-        ).order_by("-is_watched", "scope_order", "starts_at", "id")[:60]
-    )
-
-    card_odds = {}
-    for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
-        card_odds[str(match.id)] = {
-            "scope": match.sync_scope,
-            "odds": _stored_card_odds(match),
-        }
-
-    can_write_coupon = (
-        request.user.is_authenticated and request.user.role == User.Role.ANALYST
-    )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
 
     context = {
         "active_scope": active_scope,
         "scope_tabs": scope_tabs,
         "matches": matches,
+        "page_obj": page_obj,
         "total_count": total_count,
         "can_write_coupon": can_write_coupon,
         "latest_predictions": _latest_predictions(),
@@ -152,6 +195,13 @@ def match_list(request):
         "locked_card_odds": card_odds,
     }
     return render(request, "game/match_list.html", context)
+
+
+def _is_lazy_request(request) -> bool:
+    return (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.GET.get("lazy") == "1"
+    )
 
 
 def _stored_card_odds(match: Match) -> dict[str, str]:
