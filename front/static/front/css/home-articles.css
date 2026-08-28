@@ -21,9 +21,6 @@
 .home-articles-head h2 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(34px, 4vw, 56px);
-    line-height: .96;
-    letter-spacing: -.04em;
 }
 
 .home-articles-head > div:first-child > p:last-child {
@@ -176,9 +173,6 @@
 
 .home-article-copy h3 {
     margin: 18px 0 0;
-    font-size: clamp(19px, 2vw, 23px);
-    line-height: 1.08;
-    letter-spacing: -.03em;
 }
 
 .home-article-copy h3 a {
