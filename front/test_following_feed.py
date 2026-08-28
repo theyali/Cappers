@@ -121,3 +121,37 @@ class FollowingFeedTests(TestCase):
         self.assertEqual(ids, [live_win.id])
         self.assertTrue(response.context["only_live"])
         self.assertEqual(response.context["active_status"], PredictionCoupon.StateStatus.WIN)
+
+    def test_feed_renders_avatar_and_team_logos_in_initial_html(self):
+        self.followed.avatar = "users/avatars/feed-expert.jpg"
+        self.followed.save(update_fields=["avatar"])
+        coupon = self._prediction(author=self.followed, external_id=1230)
+        position = coupon.predictions.select_related("match").get()
+        match = position.match
+        home_logo = "https://cdn.example.test/home-team.png"
+        away_logo = "https://cdn.example.test/away-team.png"
+        match.raw_data = {
+            "teams": {
+                "home": {"name": {"ru": "Хозяева"}, "logo": home_logo},
+                "away": {"name": {"ru": "Гости"}, "logo": away_logo},
+            }
+        }
+        match.save(update_fields=["raw_data"])
+        self.client.force_login(self.reader)
+
+        response = self.client.get(reverse("front:following_feed"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        avatar_url = self.followed.avatar.url
+
+        self.assertIn('class="following-cappers-list"', html)
+        self.assertIn(f'<img src="{avatar_url}" alt="followed-expert">', html)
+        self.assertIn('class="prediction-expert-avatar"', html)
+        self.assertIn(f'<img src="{avatar_url}" alt="">', html)
+        self.assertIn('class="prediction-team-logo"', html)
+        self.assertIn(f'<img src="{home_logo}" alt="">', html)
+        self.assertIn(f'<img src="{away_logo}" alt="">', html)
+        self.assertNotIn(f'<img src="{avatar_url}" alt="" loading="lazy">', html)
+        self.assertNotIn(f'<img src="{home_logo}" alt="" loading="lazy">', html)
+        self.assertNotIn(f'<img src="{away_logo}" alt="" loading="lazy">', html)

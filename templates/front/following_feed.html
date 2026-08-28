@@ -54,6 +54,8 @@
                 <span class="following-capper-avatar">
                     {% if follow.feed_avatar_url %}
                         <img src="{{ follow.feed_avatar_url }}" alt="{{ follow.feed_name }}">
+                    {% elif follow.analyst.avatar %}
+                        <img src="{{ follow.analyst.avatar.url }}" alt="{{ follow.feed_name }}">
                     {% else %}
                         {{ follow.feed_initial }}
                     {% endif %}
