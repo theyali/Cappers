@@ -1,6 +1,10 @@
 .site-header {
+    position: sticky;
+    top: 14px;
+    z-index: 40;
     width: min(1480px, calc(100% - 32px));
     margin: 20px auto 0;
+    border: 1px solid rgba(255, 255, 255, .10);
     background: var(--panel);
     border-radius: 21px;
 }
