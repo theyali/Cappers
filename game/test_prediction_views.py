@@ -60,3 +60,70 @@ class MatchPredictionDistributionTests(TestCase):
         self.assertIn('class="prediction-card prediction-card-rich match-prediction-card', payload["html"])
         self.assertIn("ROI 0.0%", payload["html"])
         self.assertIn("72%", payload["html"])
+
+    def test_endpoint_lazy_pages_cover_every_published_coupon_for_match(self):
+        predictions = [
+            self._publish_prediction("winner", f"Выбор {index}")
+            for index in range(8)
+        ]
+
+        unrelated_match = Match.objects.create(
+            external_id=990002,
+            sync_scope=Match.SyncScope.PREMATCH,
+        )
+        unrelated_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("10.00"),
+            possible_payout=Decimal("20.00"),
+            confidence=60,
+        )
+        Prediction.objects.create(
+            coupon=unrelated_coupon,
+            match=unrelated_match,
+            market="winner",
+            selection="Чужой матч",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("10.00"),
+        )
+
+        draft_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.DRAFT,
+            total_stake=Decimal("10.00"),
+            possible_payout=Decimal("20.00"),
+            confidence=55,
+        )
+        Prediction.objects.create(
+            coupon=draft_coupon,
+            match=self.match,
+            market="winner",
+            selection="Черновик",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("10.00"),
+        )
+
+        url = reverse("game:match_predictions", kwargs={"slug": self.match.slug})
+        first = self.client.get(url, {"page": 1}).json()
+        second = self.client.get(url, {"page": 2}).json()
+
+        self.assertEqual(first["total"], 8)
+        self.assertTrue(first["has_next"])
+        self.assertEqual(first["next_page"], 2)
+        self.assertFalse(second["has_next"])
+        self.assertIsNone(second["next_page"])
+
+        rendered = first["html"] + second["html"]
+        for prediction in predictions:
+            self.assertIn(
+                f'data-prediction-card="{prediction.coupon_id}"',
+                rendered,
+            )
+        self.assertNotIn(
+            f'data-prediction-card="{unrelated_coupon.id}"',
+            rendered,
+        )
+        self.assertNotIn(
+            f'data-prediction-card="{draft_coupon.id}"',
+            rendered,
+        )
