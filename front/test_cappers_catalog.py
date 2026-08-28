@@ -42,6 +42,22 @@ class CappersCatalogTests(TestCase):
         self.assertContains(response, 'class="capper-pro-achievements"')
         self.assertContains(response, "ROI +50%")
 
+    def test_catalog_ranking_is_rendered_before_secondary_blocks(self):
+        self._create_analyst()
+
+        response = self.client.get(reverse("front:cappers_stats"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        ranking_index = html.index('class="cappers-pro-grid"')
+        summary_index = html.index('class="cappers-summary"')
+        discovery_index = html.index('class="capper-discovery-intro"')
+
+        self.assertLess(ranking_index, summary_index)
+        self.assertLess(ranking_index, discovery_index)
+        self.assertLess(html.index("Рейтинг по результатам"), ranking_index)
+        self.assertLess(html.index("Все эксперты"), ranking_index)
+
     def test_guest_sees_follow_button_linking_to_login(self):
         self._create_analyst()
 

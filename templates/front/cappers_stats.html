@@ -34,6 +34,32 @@
             </div>
         </div>
 
+        {% if experts %}
+        <div class="cappers-section-head">
+            <div>
+                <p class="cappers-eyebrow">Рейтинг по результатам</p>
+                <h2>Все эксперты</h2>
+            </div>
+            <span>ROI за {{ roi_period_days }} дней · {{ experts_count }} профилей</span>
+        </div>
+
+        <div class="cappers-pro-grid">
+            {% for expert in experts %}
+            {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=True %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="cappers-empty">
+            <h2>Экспертов пока нет</h2>
+            <p>Когда появятся публичные аналитики, их профили и активность будут показаны здесь.</p>
+            {% if not request.user.is_analyst %}
+            <div class="capper-growth-inline">
+                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать первым каппером</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="cappers-summary" aria-label="Общая статистика экспертов">
             <div class="cappers-summary-card is-primary">
                 <span>Опубликовано</span>
@@ -139,32 +165,6 @@
                 {% endfor %}
             </div>
         </section>
-        {% endif %}
-
-        {% if experts %}
-        <div class="cappers-section-head">
-            <div>
-                <p class="cappers-eyebrow">Рейтинг по результатам</p>
-                <h2>Все эксперты</h2>
-            </div>
-            <span>ROI за {{ roi_period_days }} дней · {{ experts_count }} профилей</span>
-        </div>
-
-        <div class="cappers-pro-grid">
-            {% for expert in experts %}
-            {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=True %}
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="cappers-empty">
-            <h2>Экспертов пока нет</h2>
-            <p>Когда появятся публичные аналитики, их профили и активность будут показаны здесь.</p>
-            {% if not request.user.is_analyst %}
-            <div class="capper-growth-inline">
-                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать первым каппером</a>
-            </div>
-            {% endif %}
-        </div>
         {% endif %}
     </div>
 
