@@ -5,7 +5,7 @@
 
 .profile-user-row.is-profile-link:hover {
     transform: translateY(-1px);
-    background: #202022;
+    background: var(--panel);
 }
 
 .profile-user-row.is-profile-link:focus-visible {
