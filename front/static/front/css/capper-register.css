@@ -2,8 +2,53 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.auth-agreement {
+    display: grid;
+    gap: 7px;
+    margin-top: 2px;
+}
+
+.auth-agreement-label {
+    min-height: 52px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #252528;
+    color: var(--soft);
+    font-size: 13px;
+    line-height: 1.5;
+    cursor: pointer;
+}
+
+.auth-agreement-checkbox {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    margin: 1px 0 0;
+    accent-color: var(--yellow);
+    cursor: pointer;
+}
+
+.auth-agreement-label a {
+    color: var(--yellow);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.auth-agreement .errorlist {
+    color: var(--danger);
+    font-size: 12px;
+}
+
 @media (max-width: 640px) {
     .capper-register-choices {
         grid-template-columns: 1fr;
+    }
+
+    .auth-agreement-label {
+        padding: 13px 14px;
+        font-size: 12px;
     }
 }
