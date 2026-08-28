@@ -30,6 +30,33 @@ class MatchWatchLifecycleTests(TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertFalse(MatchWatch.objects.filter(user=self.user, match=finished).exists())
 
+    def test_watch_response_returns_counter_for_selected_date(self):
+        selected_date = timezone.localdate()
+        today_match = Match.objects.create(
+            external_id=880010,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=timezone.now() + timedelta(hours=2),
+        )
+        tomorrow_match = Match.objects.create(
+            external_id=880011,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=timezone.now() + timedelta(days=1, hours=2),
+        )
+
+        response = self.client.post(
+            reverse("notifications:match_watch", args=[today_match.id]),
+            {"date": selected_date.isoformat()},
+            QUERY_STRING=f"date={selected_date.isoformat()}",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["watched_count"], 1)
+
+        response = self.client.post(
+            f"{reverse('notifications:match_watch', args=[tomorrow_match.id])}?date={selected_date.isoformat()}"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["watched_count"], 1)
+
     def test_reminder_comes_from_match_watch(self):
         match = Match.objects.create(
             external_id=880003,
