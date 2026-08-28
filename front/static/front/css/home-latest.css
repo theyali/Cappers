@@ -24,9 +24,6 @@
 .latest-predictions-head h1 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(38px, 4.4vw, 62px);
-    line-height: .94;
-    letter-spacing: -.045em;
 }
 
 .latest-predictions-head-actions {
@@ -448,10 +445,6 @@
     .latest-predictions-head {
         align-items: center;
         gap: 12px;
-    }
-
-    .latest-predictions-head h1 {
-        font-size: 38px;
     }
 
     .latest-predictions-all {
