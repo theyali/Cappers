@@ -268,11 +268,17 @@
     text-transform: uppercase;
 }
 
-.profile-achievement-card h3 {
+.profile-achievement-title {
     margin: 0;
     color: var(--text);
     font-size: 17px;
     line-height: 1.15;
+}
+
+.profile-side-title {
+    margin: 0;
+    font-size: 23px;
+    font-weight: 500;
 }
 
 .profile-achievement-card p {
