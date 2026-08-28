@@ -28,6 +28,17 @@
         }
     };
 
+    const animateIncomingResults = () => {
+        const $content = currentLayout().find("[data-predictions-content]").first();
+        if (!$content.length) return;
+
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                $content.removeClass("is-results-entering");
+            });
+        });
+    };
+
     const loadPredictions = (url, options = {}) => {
         const $layout = currentLayout();
         if (!$layout.length) {
@@ -36,18 +47,29 @@
         }
 
         const wasCollapsed = $layout.hasClass("is-filter-collapsed");
+        const $content = $layout.find("[data-predictions-content]").first();
+        const $sort = $layout.find("[data-prediction-sort]").first();
+
         $layout.addClass("is-loading");
+        $content.addClass("is-results-leaving");
+
+        if (options.sortChange) {
+            $sort.addClass("is-changing").prop("disabled", true);
+        }
 
         if (activeRequest) activeRequest.abort();
 
-        activeRequest = $.ajax({
+        const request = $.ajax({
             url,
             method: "GET",
             dataType: "html",
             headers: {
                 "X-Requested-With": "XMLHttpRequest",
             },
-        })
+        });
+        activeRequest = request;
+
+        request
             .done((html) => {
                 const $response = responseDocument(html);
                 const $nextLayout = $response.find("[data-predictions-layout]").first();
@@ -57,9 +79,11 @@
                     return;
                 }
 
+                $nextLayout.find("[data-predictions-content]").first().addClass("is-results-entering");
                 $layout.replaceWith($nextLayout);
                 syncHeroTotal($response);
                 setSidebarCollapsed(wasCollapsed);
+                animateIncomingResults();
 
                 if (options.pushState !== false) {
                     window.history.pushState({}, "", url);
@@ -71,7 +95,7 @@
                 if (status !== "abort") window.location.assign(url);
             })
             .always(() => {
-                activeRequest = null;
+                if (activeRequest === request) activeRequest = null;
                 currentLayout().removeClass("is-loading");
             });
     };
@@ -113,7 +137,7 @@
     );
 
     $(document).on("change", "[data-prediction-sort]", function () {
-        loadPredictions(sortUrl(this.value));
+        loadPredictions(sortUrl(this.value), { sortChange: true });
     });
 
     $(document).on("click", ".predictions-tabs a, .predictions-pagination a, .prediction-filter-reset", function (event) {

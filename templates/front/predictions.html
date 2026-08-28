@@ -58,7 +58,7 @@
             </div>
 
             {% if page_obj.object_list %}
-            <div class="predictions-grid">
+            <div class="predictions-grid" data-predictions-grid>
                 {% for prediction in page_obj.object_list %}
                     {% include "front/_prediction_card.html" %}
                 {% endfor %}
@@ -96,6 +96,7 @@
             <div class="prediction-filter-sidebar-body" id="prediction-filter-sidebar-body" data-prediction-filter-body>
                 <form class="prediction-filters" method="get" action="{% url 'front:predictions' %}" data-prediction-filters>
                     <input type="hidden" name="sort" value="{{ active_sort }}">
+                    <input type="hidden" name="status" value="{{ active_status }}">
 
                     {% if active_filter_count %}
                     <div class="prediction-filter-sidebar-actions">
@@ -141,15 +142,6 @@
                                         @{{ capper.coupon__author__username }}
                                     {% endif %}
                                 </option>
-                                {% endfor %}
-                            </select>
-                        </label>
-
-                        <label class="prediction-filter-field">
-                            <span>Статус</span>
-                            <select name="status">
-                                {% for tab in status_tabs %}
-                                <option value="{{ tab.key }}"{% if active_status == tab.key %} selected{% endif %}>{{ tab.label }} · {{ tab.count }}</option>
                                 {% endfor %}
                             </select>
                         </label>

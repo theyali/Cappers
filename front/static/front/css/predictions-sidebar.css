@@ -20,6 +20,33 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.predictions-content .prediction-results-head,
+.predictions-content .predictions-grid,
+.predictions-content .predictions-pagination,
+.predictions-content .predictions-empty {
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.predictions-content.is-results-leaving .prediction-results-head,
+.predictions-content.is-results-leaving .predictions-grid,
+.predictions-content.is-results-leaving .predictions-pagination,
+.predictions-content.is-results-leaving .predictions-empty {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.predictions-content.is-results-entering .prediction-results-head,
+.predictions-content.is-results-entering .predictions-grid,
+.predictions-content.is-results-entering .predictions-pagination,
+.predictions-content.is-results-entering .predictions-empty {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.predictions-grid > * {
+    transition: opacity .2s ease, transform .2s ease;
+}
+
 .prediction-filter-sidebar {
     position: sticky;
     top: 84px;
@@ -179,10 +206,16 @@
     background: var(--panel);
     cursor: pointer;
     font-size: 11px;
+    transition: opacity .18s ease, transform .18s ease, background .18s ease;
 }
 
 .prediction-results-sort select:focus {
     outline: 2px solid var(--blue);
+}
+
+.prediction-results-sort select.is-changing {
+    opacity: .55;
+    transform: translateY(2px);
 }
 
 .predictions-layout.is-filter-collapsed .prediction-filter-sidebar-body {
@@ -204,7 +237,6 @@
 }
 
 .predictions-layout.is-loading {
-    opacity: .58;
     pointer-events: none;
 }
 
@@ -271,5 +303,18 @@
 
     .prediction-results-sort select {
         min-width: 150px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .predictions-layout,
+    .predictions-content .prediction-results-head,
+    .predictions-content .predictions-grid,
+    .predictions-content .predictions-pagination,
+    .predictions-content .predictions-empty,
+    .predictions-grid > *,
+    .prediction-results-sort select,
+    .prediction-filter-sidebar-chevron {
+        transition: none;
     }
 }

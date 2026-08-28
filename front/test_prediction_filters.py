@@ -164,6 +164,7 @@ class PredictionFiltersTests(TestCase):
         self.assertIn('class="prediction-filter-sidebar" data-prediction-filter-sidebar', html)
         self.assertIn('data-prediction-filter-toggle', html)
         self.assertIn('data-prediction-filters', html)
+        self.assertIn('data-predictions-grid', html)
         self.assertIn("front/css/predictions-sidebar.css", html)
         self.assertIn("https://code.jquery.com/jquery-3.7.1.min.js", html)
         self.assertIn("front/js/predictions-filters.js", html)
@@ -192,6 +193,25 @@ class PredictionFiltersTests(TestCase):
         self.assertNotIn('data-prediction-sort', sidebar_html)
         self.assertNotIn('<select name="sort"', sidebar_html)
         self.assertIn('<input type="hidden" name="sort" value="popular">', sidebar_html)
+
+    def test_status_is_kept_in_tabs_but_removed_from_sidebar_grid(self):
+        self._prediction(external_id=942)
+
+        response = self.client.get(
+            reverse("front:predictions"),
+            {"status": "win", "sport": self.sport.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        sidebar_start = html.index('class="prediction-filter-sidebar"')
+        sidebar_end = html.index("</aside>", sidebar_start)
+        sidebar_html = html[sidebar_start:sidebar_end]
+
+        self.assertNotIn('<span>Статус</span>', sidebar_html)
+        self.assertNotIn('<select name="status"', sidebar_html)
+        self.assertIn('<input type="hidden" name="status" value="win">', sidebar_html)
+        self.assertIn('class="is-active" href="?status=win', html)
 
     def test_pagination_keeps_active_filter_query(self):
         for index in range(25):
