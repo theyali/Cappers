@@ -1,13 +1,13 @@
 from datetime import timedelta
 from types import SimpleNamespace
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Q
 from django.utils import timezone
 
 from game.models import Match, PredictionCoupon
 
 
-POPULAR_MATCHES_WINDOW_DAYS = 14
 POPULAR_MATCHES_SCAN_LIMIT = 500
 
 _ODDS_SCALAR_FIELDS = (
@@ -95,7 +95,7 @@ def _contains_coefficient(value) -> bool:
 def match_has_odds(match: Match) -> bool:
     try:
         odds = match.odds
-    except Match.odds.RelatedObjectDoesNotExist:
+    except ObjectDoesNotExist:
         return False
 
     for field_name in _ODDS_SCALAR_FIELDS:
@@ -129,7 +129,6 @@ def _date_label(starts_at) -> str:
 
 def _serialize_match(match: Match):
     local_start = timezone.localtime(match.starts_at)
-    league = getattr(match, "league", None)
     sport = getattr(match, "sport", None)
     return SimpleNamespace(
         id=match.pk,
@@ -155,12 +154,10 @@ def build_popular_matches(limit: int = 5) -> list:
         safe_limit = 5
 
     now = timezone.now()
-    until = now + timedelta(days=POPULAR_MATCHES_WINDOW_DAYS)
     candidates = list(
         Match.objects.filter(
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at__gte=now,
-            starts_at__lte=until,
         )
         .select_related(
             "sport",
