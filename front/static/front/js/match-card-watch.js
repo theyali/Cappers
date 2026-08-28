@@ -76,6 +76,49 @@
         (event.detail?.nodes || []).forEach((node) => formatLiveStatuses(node));
     });
 
+    const initOddsAccordion = (scope = document) => {
+        const panels = [];
+        if (scope.matches?.(".match-odds-panel")) panels.push(scope);
+        scope.querySelectorAll?.(".match-odds-panel").forEach((panel) => panels.push(panel));
+
+        panels.forEach((panel) => {
+            if (panel.dataset.oddsAccordionReady === "true") return;
+            panel.dataset.oddsAccordionReady = "true";
+
+            const body = document.createElement("div");
+            body.className = "match-odds-accordion-body";
+            const inner = document.createElement("div");
+            inner.className = "match-odds-accordion-inner";
+
+            while (panel.firstChild) inner.appendChild(panel.firstChild);
+            body.appendChild(inner);
+
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = "match-odds-accordion-toggle";
+            toggle.setAttribute("aria-expanded", "true");
+            toggle.setAttribute("aria-label", "Свернуть коэффициенты");
+            toggle.title = "Свернуть коэффициенты";
+            toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>';
+
+            panel.classList.toggle("has-odds-topbar", Boolean(inner.querySelector(".odds-topbar")));
+            panel.append(toggle, body);
+
+            toggle.addEventListener("click", () => {
+                const collapsed = panel.classList.toggle("is-odds-collapsed");
+                toggle.setAttribute("aria-expanded", String(!collapsed));
+                const label = collapsed ? "Раскрыть коэффициенты" : "Свернуть коэффициенты";
+                toggle.setAttribute("aria-label", label);
+                toggle.title = label;
+            });
+        });
+    };
+
+    initOddsAccordion(document);
+    document.addEventListener("matches:appended", (event) => {
+        (event.detail?.nodes || []).forEach((node) => initOddsAccordion(node));
+    });
+
     const loadMatchPredictionsScript = () => {
         if (!document.querySelector(".match-detail-page")) return;
         if (document.querySelector("script[data-match-predictions-script]")) return;
