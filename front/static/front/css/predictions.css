@@ -273,9 +273,9 @@
     .predictions-total,
     .cappers-total {
         width: 100%;
-        min-height: 74px;
-        justify-items: start;
-        place-items: start;
+        min-height: auto;
+        justify-content: space-between !important;
+        display: flex;
     }
 
     .predictions-grid {

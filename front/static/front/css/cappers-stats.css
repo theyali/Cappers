@@ -361,7 +361,10 @@
     }
 
     .capper-pro-metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .capper-pro-metric strong{
+        font-size: 16px;
     }
 
     .capper-pro-foot {
@@ -376,7 +379,7 @@
 
 @media (max-width: 430px) {
     .cappers-summary {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
     .capper-pro-name strong {

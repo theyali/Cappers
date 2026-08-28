@@ -501,7 +501,6 @@
 
     .prediction-author-row {
         align-items: flex-start;
-        flex-direction: column;
     }
 
     .prediction-follow-button,

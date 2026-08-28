@@ -172,7 +172,7 @@
         padding: 0 14px;
         border: 0;
         border-radius: 12px;
-        background: var(--panel);
+        background: var(--line);
         box-shadow: none;
     }
 
@@ -230,6 +230,17 @@
 
     .auth-bottom-line {
         margin-top: 22px;
+    }
+    .capper-pro-metric{
+        min-width: 0;
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px;
+        border-radius: 14px;
+        background: #19191b;
     }
 }
 
@@ -489,7 +500,7 @@
     }
 
     .site-footer {
-        display: block !important;
+        display: none !important;
     }
 
     .fixed-tg-btn-wrapper {
