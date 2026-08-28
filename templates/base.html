@@ -122,12 +122,14 @@
                                 </span>
                                 <span>Профиль</span>
                             </a>
+                            {% if request.user.is_analyst %}
                             <a href="{% url 'cabinet:profile' %}?tab=predictions">
                                 <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                     <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
                                 </span>
                                 <span>Мои прогнозы</span>
                             </a>
+                            {% endif %}
                             <a href="{% url 'front:favorites' %}">
                                 <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                     <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
