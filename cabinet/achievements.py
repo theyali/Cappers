@@ -4,8 +4,10 @@ from django.db.models import Count, Q
 
 from game.models import PredictionCoupon
 
+from .models import CapperReferralVisit
 
-ACHIEVEMENT_DEFINITIONS = (
+
+EXPERT_ACHIEVEMENT_DEFINITIONS = (
     {"key": "first-pick", "label": "Первый прогноз", "description": "Опубликуйте первый прогноз", "icon": "front/img/badges/first-pick.svg", "metric": "predictions", "target": 1, "category": "Прогнозы"},
     {"key": "predictions-5", "label": "5 прогнозов", "description": "Опубликуйте минимум 5 прогнозов", "icon": "front/img/badges/predictions-5.svg", "metric": "predictions", "target": 5, "category": "Прогнозы"},
     {"key": "predictions-25", "label": "25 прогнозов", "description": "Опубликуйте минимум 25 прогнозов", "icon": "front/img/badges/predictions-25.svg", "metric": "predictions", "target": 25, "category": "Прогнозы"},
@@ -26,6 +28,30 @@ ACHIEVEMENT_DEFINITIONS = (
     {"key": "streak-5", "label": "5 побед подряд", "description": "Соберите серию минимум из 5 побед подряд", "icon": "front/img/badges/streak-5.svg", "metric": "streak", "target": 5, "category": "Серии"},
     {"key": "streak-10", "label": "10 побед подряд", "description": "Соберите серию минимум из 10 побед подряд", "icon": "front/img/badges/streak-10.svg", "metric": "streak", "target": 10, "category": "Серии"},
     {"key": "verified", "label": "Проверенный эксперт", "description": "Получите подтверждение профиля администрацией", "icon": "front/img/badges/verified.svg", "metric": "verified", "target": 1, "category": "Статус"},
+)
+
+REFERRAL_ACHIEVEMENT_DEFINITIONS = (
+    {"key": "referrals-5", "label": "Первые 5 рефералов", "description": "Приведите 5 пользователей, которые подпишутся на вас по реферальной ссылке", "icon": "front/img/badges/referrals.svg", "metric": "referrals", "target": 5, "category": "Рефералы"},
+    {"key": "referrals-10", "label": "10 рефералов", "description": "Получите 10 подписок после перехода по вашей реферальной ссылке", "icon": "front/img/badges/referrals.svg", "metric": "referrals", "target": 10, "category": "Рефералы"},
+    {"key": "referrals-25", "label": "25 рефералов", "description": "Получите 25 подписок после перехода по вашей реферальной ссылке", "icon": "front/img/badges/referrals.svg", "metric": "referrals", "target": 25, "category": "Рефералы"},
+    {"key": "referrals-50", "label": "50 рефералов", "description": "Получите 50 подписок после перехода по вашей реферальной ссылке", "icon": "front/img/badges/referrals.svg", "metric": "referrals", "target": 50, "category": "Рефералы"},
+)
+
+USER_ACTIVITY_ACHIEVEMENT_DEFINITIONS = (
+    {"key": "likes-5", "label": "5 лайков", "description": "Поставьте лайк 5 прогнозам", "icon": "front/img/badges/likes.svg", "metric": "likes_given", "target": 5, "category": "Активность"},
+    {"key": "likes-10", "label": "10 лайков", "description": "Поставьте лайк 10 прогнозам", "icon": "front/img/badges/likes.svg", "metric": "likes_given", "target": 10, "category": "Активность"},
+    {"key": "likes-25", "label": "25 лайков", "description": "Поставьте лайк 25 прогнозам", "icon": "front/img/badges/likes.svg", "metric": "likes_given", "target": 25, "category": "Активность"},
+    {"key": "likes-50", "label": "50 лайков", "description": "Поставьте лайк 50 прогнозам", "icon": "front/img/badges/likes.svg", "metric": "likes_given", "target": 50, "category": "Активность"},
+    {"key": "favorites-5", "label": "5 сохранений", "description": "Сохраните 5 прогнозов в избранное", "icon": "front/img/badges/favorites.svg", "metric": "favorites_saved", "target": 5, "category": "Активность"},
+    {"key": "favorites-10", "label": "10 сохранений", "description": "Сохраните 10 прогнозов в избранное", "icon": "front/img/badges/favorites.svg", "metric": "favorites_saved", "target": 10, "category": "Активность"},
+    {"key": "favorites-25", "label": "25 сохранений", "description": "Сохраните 25 прогнозов в избранное", "icon": "front/img/badges/favorites.svg", "metric": "favorites_saved", "target": 25, "category": "Активность"},
+    {"key": "favorites-50", "label": "50 сохранений", "description": "Сохраните 50 прогнозов в избранное", "icon": "front/img/badges/favorites.svg", "metric": "favorites_saved", "target": 50, "category": "Активность"},
+)
+
+ACHIEVEMENT_DEFINITIONS = (
+    EXPERT_ACHIEVEMENT_DEFINITIONS
+    + REFERRAL_ACHIEVEMENT_DEFINITIONS
+    + USER_ACTIVITY_ACHIEVEMENT_DEFINITIONS
 )
 
 
@@ -101,6 +127,31 @@ def _overall_roi(expert) -> Decimal:
     return (profit / total_stake * Decimal("100")).quantize(Decimal("0.1"))
 
 
+def _user_activity_metrics(user) -> dict:
+    if not getattr(user, "pk", None):
+        return {"likes_given": 0, "favorites_saved": 0, "referrals": 0}
+
+    likes_given = user.prediction_likes.count()
+    favorites_saved = user.prediction_favorites.count()
+    referrals = 0
+    if getattr(user, "is_analyst", False):
+        referrals = (
+            CapperReferralVisit.objects.filter(
+                analyst=user,
+                subscribed_at__isnull=False,
+                visitor__isnull=False,
+            )
+            .values("visitor_id")
+            .distinct()
+            .count()
+        )
+    return {
+        "likes_given": likes_given,
+        "favorites_saved": favorites_saved,
+        "referrals": referrals,
+    }
+
+
 def build_achievement_badges(
     *,
     predictions_count: int,
@@ -109,6 +160,9 @@ def build_achievement_badges(
     followers_count: int,
     best_win_streak: int,
     is_verified: bool,
+    likes_given: int = 0,
+    favorites_saved: int = 0,
+    referrals: int = 0,
 ) -> list[dict]:
     metrics = {
         "predictions": int(predictions_count or 0),
@@ -117,6 +171,9 @@ def build_achievement_badges(
         "followers": int(followers_count or 0),
         "streak": int(best_win_streak or 0),
         "verified": 1 if is_verified else 0,
+        "likes_given": int(likes_given or 0),
+        "favorites_saved": int(favorites_saved or 0),
+        "referrals": int(referrals or 0),
     }
     return [
         definition
@@ -135,26 +192,41 @@ def _format_metric(metric: str, value) -> str:
     return str(int(value or 0))
 
 
-def build_achievement_overview(expert, *, followers_count: int, is_verified: bool) -> dict:
-    published = PredictionCoupon.objects.filter(
-        author=expert,
-        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-    )
-    stats = published.aggregate(
-        predictions=Count("id"),
-        wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
-    )
+def build_achievement_overview(user, *, followers_count: int = 0, is_verified: bool = False) -> dict:
+    is_expert = bool(getattr(user, "is_analyst", False))
+    if is_expert:
+        published = PredictionCoupon.objects.filter(
+            author=user,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        stats = published.aggregate(
+            predictions=Count("id"),
+            wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+        )
+    else:
+        stats = {"predictions": 0, "wins": 0}
+
+    activity_metrics = _user_activity_metrics(user)
     metrics = {
         "predictions": stats["predictions"] or 0,
         "wins": stats["wins"] or 0,
-        "roi": _overall_roi(expert),
+        "roi": _overall_roi(user) if is_expert else Decimal("0"),
         "followers": int(followers_count or 0),
-        "streak": _best_win_streak(expert),
+        "streak": _best_win_streak(user) if is_expert else 0,
         "verified": 1 if is_verified else 0,
+        **activity_metrics,
     }
 
+    definitions = USER_ACTIVITY_ACHIEVEMENT_DEFINITIONS
+    if is_expert:
+        definitions = (
+            EXPERT_ACHIEVEMENT_DEFINITIONS
+            + REFERRAL_ACHIEVEMENT_DEFINITIONS
+            + USER_ACTIVITY_ACHIEVEMENT_DEFINITIONS
+        )
+
     items = []
-    for definition in ACHIEVEMENT_DEFINITIONS:
+    for definition in definitions:
         metric = definition["metric"]
         current = _to_decimal(metrics[metric])
         target = _to_decimal(definition["target"])
