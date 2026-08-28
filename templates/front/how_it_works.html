@@ -12,13 +12,21 @@
     <div class="how-hero">
         <div class="how-hero-copy">
             <p class="how-kicker">Как это работает</p>
-            <h1>Всё просто</h1>
-            <p>Выберите свою роль и посмотрите короткий путь от матча до готового прогноза или подписки на эксперта.</p>
+            <h1>КапперХаб по шагам</h1>
+            <p>Матчи, прогнозы, запросы на прогноз, уведомления, Telegram и профиль каппера — без лишних действий.</p>
         </div>
         <div class="how-hero-mark" aria-hidden="true">
             <span>?</span>
         </div>
     </div>
+
+    <nav class="how-jump-nav" aria-label="Разделы инструкции">
+        <a href="#how-predictions">Прогнозы</a>
+        <a href="#how-want-prediction">Хочу прогноз</a>
+        <a href="#how-notifications">Уведомления</a>
+        <a href="#how-telegram">Telegram</a>
+        <a href="#how-capppers">Стать каппером</a>
+    </nav>
 
     <div class="how-role-tabs" role="tablist" aria-label="Роль пользователя">
         <button class="how-role-tab is-active" type="button" role="tab" aria-selected="true" data-how-tab="reader">
@@ -28,7 +36,7 @@
                     <path d="M8 9h8M8 12h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
             </span>
-            <span><strong>Пользователям</strong><small>Ищите сильные прогнозы</small></span>
+            <span><strong>Пользователям</strong><small>Найти прогноз и настроить уведомления</small></span>
         </button>
         <button class="how-role-tab" type="button" role="tab" aria-selected="false" data-how-tab="expert">
             <span class="how-role-icon" aria-hidden="true">
@@ -36,136 +44,252 @@
                     <path d="M4 18V9m5 9V5m6 13v-7m5 7V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
             </span>
-            <span><strong>Экспертам</strong><small>Публикуйте прогнозы</small></span>
+            <span><strong>Капперам</strong><small>Стать экспертом и публиковать купоны</small></span>
         </button>
     </div>
 
     <div class="how-panel is-active" data-how-panel="reader" role="tabpanel">
-        <div class="how-intro">
-            <div>
-                <p class="how-kicker">Для пользователей</p>
-                <h2>Находите прогнозы, которым можно доверять</h2>
+        <section class="how-section" id="how-predictions">
+            <div class="how-intro">
+                <div>
+                    <p class="how-kicker">Прогнозы</p>
+                    <h2>Как найти прогноз на нужный матч</h2>
+                </div>
+                <p>Открывайте матч, смотрите опубликованные купоны и проверяйте статистику автора до подписки.</p>
             </div>
-            <p>Смотрите прогнозы на конкретный матч, сравнивайте статистику капперов и подписывайтесь на тех, чьи результаты вам подходят.</p>
-        </div>
 
-        <div class="how-steps">
-            <article class="how-step">
-                <span class="how-step-number">01</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 6h16v12H4V6Zm4 4h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <h3>Выберите матч</h3>
-                <p>Откройте футбол и выберите нужную дату. У каждого матча есть отдельная страница со счетом, лигой, командами и прогнозами.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">02</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 5h16v14H4V5Zm4 4h8M8 13h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <h3>Смотрите прогнозы</h3>
-                <p>На странице матча собраны опубликованные мнения капперов с выбором, коэффициентом, комментарием и результатом.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">03</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 18V9m5 9V5m5 13v-6m4 6V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <h3>Сравните экспертов</h3>
-                <p>Перейдите в статистику капперов, чтобы посмотреть проходимость, количество прогнозов, побед и подписчиков.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">04</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.7A4 4 0 0 1 19 10c0 5.7-7 10-7 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <h3>Подпишитесь</h3>
-                <p>Подписывайтесь на лучших экспертов и возвращайтесь к их новым прогнозам из личного кабинета.</p>
-            </article>
-        </div>
-
-        <div class="how-summary">
-            <div>
-                <span>Главное</span>
-                <strong>Не нужно искать прогнозы по чатам — матч, коэффициент, эксперт и результат находятся в одном месте.</strong>
+            <div class="how-steps">
+                <article class="how-step">
+                    <span class="how-step-number">01</span>
+                    <div class="how-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4V6Zm4 4h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <h3>Выберите матч</h3>
+                    <p>Откройте «Футбол», выберите дату и статус: все, LIVE, предстоящие, завершённые или отслеживаемые.</p>
+                </article>
+                <article class="how-step">
+                    <span class="how-step-number">02</span>
+                    <div class="how-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 5h14v14H5V5Zm3 4h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <h3>Откройте прогнозы</h3>
+                    <p>На карточке видно, сколько прогнозов уже опубликовано. Кнопка «Посмотреть прогнозы» открывает страницу матча.</p>
+                </article>
+                <article class="how-step">
+                    <span class="how-step-number">03</span>
+                    <div class="how-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 18V9m5 9V5m5 13v-6m4 6V3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </div>
+                    <h3>Проверьте каппера</h3>
+                    <p>Смотрите историю прогнозов, ROI, результаты, серии, подписчиков и достижения в публичном профиле.</p>
+                </article>
+                <article class="how-step">
+                    <span class="how-step-number">04</span>
+                    <div class="how-step-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.7A4 4 0 0 1 19 10c0 5.7-7 10-7 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                    </div>
+                    <h3>Подпишитесь или сохраните</h3>
+                    <p>Подписка добавляет новые прогнозы каппера в вашу ленту. Избранное сохраняет конкретный прогноз.</p>
+                </article>
             </div>
-            <a href="{% url 'game:match_list' %}">Смотреть матчи <span>→</span></a>
-        </div>
+
+            <div class="how-actions-row">
+                <a class="how-action is-blue" href="{% url 'game:match_list' %}">Открыть матчи <span>→</span></a>
+                <a class="how-action" href="{% url 'front:predictions' %}">Все прогнозы <span>→</span></a>
+                <a class="how-action" href="{% url 'front:cappers_stats' %}">Статистика капперов <span>→</span></a>
+            </div>
+        </section>
+
+        <section class="how-feature" id="how-want-prediction">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Хочу прогноз</p>
+                    <h2>Запросите прогноз на конкретный матч</h2>
+                </div>
+                <span class="how-feature-badge">Спрос на матч</span>
+            </div>
+            <p class="how-feature-lead">«Хочу прогноз» — это запрос капперам. Он не создаёт ставку и не публикует прогноз от вашего имени.</p>
+
+            <div class="how-flow">
+                <article><span>1</span><strong>Откройте матч</strong><p>Выберите предстоящую игру, по которой хотите увидеть мнение каппера.</p></article>
+                <article><span>2</span><strong>Нажмите «Хочу прогноз»</strong><p>Для одного пользователя учитывается один запрос на конкретный матч.</p></article>
+                <article><span>3</span><strong>Капперы видят спрос</strong><p>Матчи с запросами можно выделять и сортировать по количеству желающих.</p></article>
+                <article><span>4</span><strong>Появляется прогноз</strong><p>Опубликованный купон появляется на странице матча. Уведомление придёт по включённым каналам.</p></article>
+            </div>
+
+            <div class="how-note">
+                <strong>Важно</strong>
+                <p>Запрос не гарантирует, что каппер опубликует прогноз. Он показывает реальный интерес пользователей к матчу.</p>
+            </div>
+        </section>
+
+        <section class="how-feature" id="how-notifications">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Уведомления</p>
+                    <h2>Что можно получать</h2>
+                </div>
+            </div>
+
+            <div class="how-notification-grid">
+                <article><strong>Новый прогноз</strong><p>Когда каппер, на которого вы подписаны, публикует новый купон.</p></article>
+                <article><strong>Прогноз на отслеживаемый матч</strong><p>Когда по матчу, который вы отслеживаете, появляется опубликованный прогноз.</p></article>
+                <article><strong>Напоминание о матче</strong><p>События по матчам, добавленным в отслеживание.</p></article>
+                <article><strong>Расчёт избранного</strong><p>Когда сохранённый вами прогноз получает итоговый результат.</p></article>
+            </div>
+
+            <div class="how-track-row">
+                <div>
+                    <span class="how-track-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path></svg>
+                    </span>
+                    <div>
+                        <strong>Как отслеживать матч</strong>
+                        <p>Нажмите значок закладки на карточке или странице матча. Он появится во вкладке «Отслеживаемые».</p>
+                    </div>
+                </div>
+                {% if request.user.is_authenticated %}
+                    <a class="how-action is-blue" href="{% url 'notifications:center' %}">Настроить уведомления <span>→</span></a>
+                {% else %}
+                    <a class="how-action is-blue" href="{% url 'cabinet:login' %}?next={% url 'notifications:center' %}">Войти и настроить <span>→</span></a>
+                {% endif %}
+            </div>
+
+            <div class="how-channels">
+                <div><span>На сайте</span><strong>По умолчанию</strong></div>
+                <div><span>Email</span><strong>Можно включить</strong></div>
+                <div><span>Telegram</span><strong>После подключения бота</strong></div>
+            </div>
+        </section>
+
+        <section class="how-feature" id="how-telegram">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Telegram</p>
+                    <h2>Как подключить бота</h2>
+                </div>
+            </div>
+
+            <div class="how-flow how-flow-telegram">
+                <article><span>1</span><strong>Войдите в аккаунт</strong><p>Подключение Telegram привязывается к вашему аккаунту КапперХаб.</p></article>
+                <article><span>2</span><strong>Откройте настройки</strong><p>Профиль → Настройки → блок «Telegram: Бот и сайт».</p></article>
+                <article><span>3</span><strong>Нажмите «Подключить Telegram»</strong><p>Сайт откроет бота со служебной ссылкой привязки. Подтвердите запуск бота.</p></article>
+                <article><span>4</span><strong>Включите канал</strong><p>После привязки откройте центр уведомлений и включите Telegram для нужных событий.</p></article>
+            </div>
+
+            <div class="how-actions-row">
+                {% if request.user.is_authenticated %}
+                    <a class="how-action is-blue" href="{% url 'cabinet:profile' %}?tab=settings">Настройки профиля <span>→</span></a>
+                    <a class="how-action" href="{% url 'notifications:center' %}">Центр уведомлений <span>→</span></a>
+                {% else %}
+                    <a class="how-action is-blue" href="{% url 'cabinet:login' %}">Войти <span>→</span></a>
+                    <a class="how-action" href="{% url 'cabinet:register' %}">Регистрация <span>→</span></a>
+                {% endif %}
+            </div>
+        </section>
     </div>
 
     <div class="how-panel" data-how-panel="expert" role="tabpanel" hidden>
-        <div class="how-intro">
-            <div>
-                <p class="how-kicker">Для экспертов</p>
-                <h2>Собирайте прогнозы прямо из линии</h2>
+        <section class="how-section" id="how-capppers">
+            <div class="how-intro">
+                <div>
+                    <p class="how-kicker">Стать каппером</p>
+                    <h2>От обычного аккаунта до публичного профиля</h2>
+                </div>
+                <p>Переход в роль каппера проходит через короткий onboarding. Telegram-канал и соцсети не нужны для публикации прогнозов.</p>
             </div>
-            <p>Выберите предстоящие игры, соберите купон до пяти матчей, добавьте сумму и комментарий. Купон сохраняется автоматически.</p>
-        </div>
 
-        <div class="how-steps">
-            <article class="how-step">
-                <span class="how-step-number">01</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M7 20v-2a5 5 0 0 1 10 0v2M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <h3>Войдите как эксперт</h3>
-                <p>После авторизации откройте список матчей. Для предстоящих игр коэффициенты доступны для добавления в купон.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">02</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 5h14v14H5V5Zm3 4h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <h3>Соберите купон</h3>
-                <p>Выберите исходы по одной или нескольким играм. Купон сохраняется автоматически и не исчезает после обновления страницы.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">03</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 4h14v16H5V4Zm3 4h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <h3>Добавьте комментарий</h3>
-                <p>Укажите сумму и коротко объясните логику прогноза. После этого прогноз готов к проверке и публикации.</p>
-            </article>
-
-            <article class="how-step">
-                <span class="how-step-number">04</span>
-                <div class="how-step-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <h3>Опубликуйте прогноз</h3>
-                <p>Перед публикацией система проверяет актуальность выбранных матчей. После сохранения прогноз появляется в общей ленте и на странице матча.</p>
-            </article>
-        </div>
-
-        <div class="how-summary how-summary-expert">
-            <div>
-                <span>Важно</span>
-                <strong>Live и завершённые матчи можно смотреть, но новые прогнозы на них недоступны.</strong>
+            <div class="how-cap-step-list">
+                <article><span>01</span><div><strong>Профиль</strong><p>Имя, аватар и описание, которые увидят пользователи.</p></div></article>
+                <article><span>02</span><div><strong>Специализация</strong><p>Укажите, на чём вы специализируетесь.</p></div></article>
+                <article><span>03</span><div><strong>Спорт и лиги</strong><p>Выберите основные направления. Эти данные можно изменить позже.</p></div></article>
+                <article><span>04</span><div><strong>Соцсети</strong><p>Telegram, Instagram и другие ссылки заполняются только при необходимости.</p></div></article>
+                <article><span>05</span><div><strong>Проверка профиля</strong><p>Откройте публичный профиль или сразу перейдите к первому прогнозу.</p></div></article>
             </div>
-            <a href="{% url 'game:match_list' %}">Перейти к матчам <span>→</span></a>
-        </div>
+
+            <div class="how-actions-row">
+                <a class="how-action is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером <span>→</span></a>
+                <a class="how-action" href="{% url 'front:cappers_stats' %}">Посмотреть рейтинг <span>→</span></a>
+            </div>
+        </section>
+
+        <section class="how-feature">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Публикация</p>
+                    <h2>Как создать прогноз</h2>
+                </div>
+                <span class="how-feature-badge">Только prematch</span>
+            </div>
+
+            <div class="how-flow">
+                <article><span>1</span><strong>Откройте предстоящие матчи</strong><p>Новые прогнозы создаются только на prematch. LIVE и завершённые матчи недоступны для добавления.</p></article>
+                <article><span>2</span><strong>Выберите исходы</strong><p>Один купон может содержать от 1 до 20 игр. Один матч нельзя добавить дважды.</p></article>
+                <article><span>3</span><strong>Укажите сумму и уверенность</strong><p>Процент уверенности задаётся один раз на весь купон. Черновик сохраняется автоматически.</p></article>
+                <article><span>4</span><strong>Опубликуйте</strong><p>Перед публикацией система проверяет актуальность матчей. После публикации купон попадает в ленту и на страницы матчей.</p></article>
+            </div>
+
+            <div class="how-summary how-summary-expert">
+                <div>
+                    <span>Правило</span>
+                    <strong>Опубликованный результат остаётся частью вашей публичной статистики.</strong>
+                </div>
+                <a href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз <span>→</span></a>
+            </div>
+        </section>
+
+        <section class="how-feature">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Спрос пользователей</p>
+                    <h2>Матчи, на которые хотят прогноз</h2>
+                </div>
+            </div>
+            <p class="how-feature-lead">Количество запросов «Хочу прогноз» показывает, какие матчи сейчас интересуют пользователей. Это помогает выбирать игры с реальным спросом.</p>
+            <div class="how-two-columns">
+                <article><strong>Что смотреть</strong><p>Количество запросов по матчу и сортировку по спросу. Чем выше число, тем больше пользователей ждут прогноз.</p></article>
+                <article><strong>Что происходит после публикации</strong><p>Купон появляется на странице матча и в общей ленте. Пользователи с подходящими настройками получают уведомление.</p></article>
+            </div>
+        </section>
+
+        <section class="how-feature">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Статистика</p>
+                    <h2>Что считается автоматически</h2>
+                </div>
+            </div>
+            <div class="how-stat-list">
+                <span>Опубликованные прогнозы</span>
+                <span>Выигрыши и проигрыши</span>
+                <span>ROI</span>
+                <span>Серии результатов</span>
+                <span>Подписчики</span>
+                <span>Достижения</span>
+            </div>
+            <div class="how-note">
+                <strong>Не нужно вести статистику вручную</strong>
+                <p>Рейтинг и показатели профиля строятся по данным опубликованных и рассчитанных купонов.</p>
+            </div>
+        </section>
+
+        <section class="how-feature">
+            <div class="how-feature-head">
+                <div>
+                    <p class="how-kicker">Telegram для каппера</p>
+                    <h2>Бот подключается так же, как для пользователя</h2>
+                </div>
+            </div>
+            <div class="how-two-columns">
+                <article><strong>Для уведомлений</strong><p>Подключите Telegram в настройках профиля и включите нужные события в центре уведомлений.</p></article>
+                <article><strong>Telegram-канал в профиле</strong><p>Это отдельное публичное поле. Его можно оставить пустым — оно не требуется для статуса каппера.</p></article>
+            </div>
+            {% if request.user.is_authenticated %}
+            <div class="how-actions-row">
+                <a class="how-action is-blue" href="{% url 'cabinet:profile' %}?tab=settings">Открыть настройки <span>→</span></a>
+            </div>
+            {% endif %}
+        </section>
     </div>
 </section>
 {% endblock %}
