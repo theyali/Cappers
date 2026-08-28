@@ -165,7 +165,7 @@ def create_coupon(request):
             {
                 "ok": True,
                 "draft_id": None,
-                "message": "Пустой черновик удален.",
+                "message": "Пустой Купон удален.",
                 "autosaved": True,
             }
         )

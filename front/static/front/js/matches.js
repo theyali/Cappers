@@ -424,7 +424,7 @@
 
         request.done((result) => {
             if (!result?.ok) {
-                setNote(result?.error || (manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить черновик."), "error");
+                setNote(result?.error || (manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."), "error");
                 return;
             }
             if (manual) {
@@ -434,7 +434,7 @@
                 draftId = result.draft_id || null;
                 applyServerDraft(result.draft || null);
                 if (items.size) {
-                    setNote("Черновик сохранен автоматически.", "success");
+                    setNote("Купон сохранен автоматически.", "success");
                 }
             }
         });
@@ -442,7 +442,7 @@
         request.fail((xhr, statusText) => {
             if (statusText === "abort") return;
             setNote(
-                responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить черновик."),
+                responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."),
                 "error"
             );
         });
@@ -483,7 +483,7 @@
             Object.assign(existing, item);
             const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
             if (node) updateCouponItem(node, existing);
-            setNote("Исход обновлен. Сохраняем черновик...");
+            setNote("Исход обновлен. Сохраняем купон...");
         } else {
             items.set(item.matchId, item);
             renderItem(item);
@@ -546,10 +546,10 @@
         updateState();
         saveLocalSnapshot(localHasUnsavedChanges);
         if (localHasUnsavedChanges) {
-            setNote("Черновик восстановлен. Сохраняем последние изменения...", "success");
+            setNote("Сохраняем последние изменения...", "success");
             syncDraft(false);
         } else {
-            setNote("Черновик восстановлен из базы.", "success");
+            setNote("Купоны восстановлены.", "success");
         }
     };
 
