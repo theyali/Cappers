@@ -59,3 +59,90 @@
         overlay.classList.remove("is-active");
     });
 })();
+
+(() => {
+    const COOKIE_NAME = "capperhub_cookie_consent";
+    const STORAGE_KEY = "capperhub.cookieConsent";
+    const VALID_CHOICES = new Set(["accepted", "declined"]);
+
+    const readCookie = () => {
+        const prefix = `${COOKIE_NAME}=`;
+        const value = document.cookie
+            .split(";")
+            .map((item) => item.trim())
+            .find((item) => item.startsWith(prefix))
+            ?.slice(prefix.length) || "";
+        return VALID_CHOICES.has(value) ? value : "";
+    };
+
+    const readChoice = () => {
+        const cookieChoice = readCookie();
+        if (cookieChoice) return cookieChoice;
+        try {
+            const stored = sessionStorage.getItem(STORAGE_KEY) || "";
+            return VALID_CHOICES.has(stored) ? stored : "";
+        } catch (error) {
+            return "";
+        }
+    };
+
+    const exposeChoice = (choice) => {
+        if (!choice) return;
+        document.documentElement.dataset.cookieConsent = choice;
+    };
+
+    const existingChoice = readChoice();
+    if (existingChoice) {
+        exposeChoice(existingChoice);
+        return;
+    }
+
+    const banner = document.createElement("section");
+    banner.className = "cookie-consent";
+    banner.dataset.cookieConsent = "";
+    banner.setAttribute("role", "dialog");
+    banner.setAttribute("aria-live", "polite");
+    banner.setAttribute("aria-label", "Настройки cookies");
+    banner.innerHTML = `
+        <div class="cookie-consent-copy">
+            <strong>Cookies на КапперХаб</strong>
+            <p>Используем технические cookies для работы сайта. Необязательные cookies можно принять или отклонить.</p>
+        </div>
+        <div class="cookie-consent-actions">
+            <button class="cookie-consent-button" type="button" data-cookie-choice="declined">Отклонить</button>
+            <button class="cookie-consent-button is-accept" type="button" data-cookie-choice="accepted">Принять</button>
+        </div>`;
+    document.body.appendChild(banner);
+
+    const saveChoice = (choice) => {
+        document.cookie = `${COOKIE_NAME}=${choice}; Path=/; SameSite=Lax`;
+        try {
+            sessionStorage.setItem(STORAGE_KEY, choice);
+        } catch (error) {
+            // Session cookie remains the primary storage when sessionStorage is unavailable.
+        }
+        exposeChoice(choice);
+        document.dispatchEvent(new CustomEvent("cookie-consent:changed", {
+            detail: { choice },
+        }));
+    };
+
+    const closeBanner = () => {
+        banner.classList.remove("is-visible");
+        window.setTimeout(() => banner.remove(), 210);
+    };
+
+    banner.addEventListener("click", (event) => {
+        if (!(event.target instanceof Element)) return;
+        const button = event.target.closest("[data-cookie-choice]");
+        if (!button) return;
+        const choice = button.dataset.cookieChoice;
+        if (!VALID_CHOICES.has(choice)) return;
+        saveChoice(choice);
+        closeBanner();
+    });
+
+    window.requestAnimationFrame(() => {
+        banner.classList.add("is-visible");
+    });
+})();
