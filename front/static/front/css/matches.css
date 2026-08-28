@@ -781,6 +781,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) 108px;
     gap: 10px;
+    align-items: center;
 }
 
 .coupon-odd {
