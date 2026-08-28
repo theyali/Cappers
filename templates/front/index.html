@@ -110,7 +110,7 @@
                             <span>Начало матча</span>
                             <strong>{{ prediction.starts_at }}</strong>
                         </div>
-                        <a class="forecast-open-match" href="{{ prediction.url }}">Открыть матч →</a>
+                        <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">Посмотреть купон →</a>
                     </div>
                 </article>
                 {% endfor %}
