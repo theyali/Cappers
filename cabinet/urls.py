@@ -7,7 +7,6 @@ from . import (
     dashboard_views,
     demand_views,
     expert_profile_views,
-    public_views,
     referral_views,
     telegram_auth,
     user_public_views,
