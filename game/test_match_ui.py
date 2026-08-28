@@ -14,19 +14,25 @@ class LiveStatusLabelTests(SimpleTestCase):
             raw_data=raw or {},
         )
 
-    def test_first_half(self):
+    def test_first_half_uses_minute_not_time_status(self):
         self.assertEqual(
             live_status_label(self.match(time_status="1", label="44")),
             "1Т - 44′",
         )
 
-    def test_second_half(self):
+    def test_second_half_uses_minute_not_time_status(self):
         self.assertEqual(
-            live_status_label(self.match(time_status="2", label="67'")),
+            live_status_label(self.match(time_status="1", label="67'")),
             "2Т - 67′",
         )
 
-    def test_stale_first_half_status_uses_live_minute(self):
+    def test_numeric_time_status_does_not_force_second_half(self):
+        self.assertEqual(
+            live_status_label(self.match(time_status="2", label="20")),
+            "1Т - 20′",
+        )
+
+    def test_ninetieth_minute_is_second_half(self):
         self.assertEqual(
             live_status_label(self.match(time_status="1", minute=90, label="90")),
             "2Т - 90′",
@@ -38,14 +44,14 @@ class LiveStatusLabelTests(SimpleTestCase):
             "2Т - 90+4′",
         )
 
-    def test_extra_time(self):
+    def test_extra_time_uses_explicit_phase(self):
         self.assertEqual(
-            live_status_label(self.match(time_status="ET", minute=108)),
+            live_status_label(self.match(time_status="1", minute=108, raw={"phase": "ET"})),
             "Extra 108′",
         )
 
-    def test_halftime(self):
+    def test_halftime_uses_explicit_phase(self):
         self.assertEqual(
-            live_status_label(self.match(time_status="HT", minute=45)),
+            live_status_label(self.match(time_status="1", minute=45, raw={"phase": "HT"})),
             "Перерыв",
         )
