@@ -15,7 +15,7 @@
     };
 
     const formatLiveStatus = (status) => {
-        if (!status || status.dataset.liveStatusFormatted === "true") return;
+        if (!status) return;
         const label = status.querySelector("span");
         if (!label) return;
 
@@ -45,7 +45,6 @@
             period = "2Т";
         } else if (["ht", "half", "halftime", "перерыв"].includes(phase)) {
             label.textContent = "Перерыв";
-            status.dataset.liveStatusFormatted = "true";
             return;
         } else if (["3", "et", "aet", "extra", "extratime"].includes(phase)) {
             period = "Extra";
@@ -65,7 +64,6 @@
         } else {
             label.textContent = "LIVE";
         }
-        status.dataset.liveStatusFormatted = "true";
     };
 
     const formatLiveStatuses = (scope = document) => {
