@@ -71,6 +71,15 @@
     color: inherit;
 }
 
+.match-card-prediction-count {
+    color: var(--yellow);
+    font-weight: 700;
+}
+
+.match-card-prediction-empty {
+    color: var(--muted);
+}
+
 .match-card-watch-button {
     width: 34px;
     height: 34px;
