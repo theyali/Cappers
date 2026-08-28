@@ -2,11 +2,11 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from game.models import PredictionCoupon
 from notifications.models import TelegramAccount
@@ -70,8 +70,6 @@ def _profile_completion(user, analyst_profile) -> int:
                 bool(analyst_profile.display_name),
                 bool(analyst_profile.bio),
                 bool(analyst_profile.avatar),
-                bool(analyst_profile.telegram_channel),
-                bool(analyst_profile.telegram_account),
             ]
         )
     if not checks:
@@ -110,9 +108,9 @@ def profile(request):
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
 
-    allowed_tabs = {"profile", "following", "settings"}
+    allowed_tabs = {"profile", "following", "settings", "achievements"}
     if request.user.role == User.Role.ANALYST:
-        allowed_tabs.update({"predictions", "followers", "achievements"})
+        allowed_tabs.update({"predictions", "followers"})
 
     active_tab = request.GET.get("tab", "profile")
     if active_tab not in allowed_tabs:
@@ -152,7 +150,6 @@ def profile(request):
     my_coupons = []
     coupons_count = 0
     predictions_count = 0
-    achievement_overview = None
     if request.user.role == User.Role.ANALYST:
         my_coupons = list(
             PredictionCoupon.objects.filter(author=request.user)
@@ -164,11 +161,12 @@ def profile(request):
 
         coupons_count = len(my_coupons)
         predictions_count = coupons_count
-        achievement_overview = build_achievement_overview(
-            request.user,
-            followers_count=followers_count,
-            is_verified=bool(analyst_profile and analyst_profile.is_verified),
-        )
+
+    achievement_overview = build_achievement_overview(
+        request.user,
+        followers_count=followers_count,
+        is_verified=bool(analyst_profile and analyst_profile.is_verified),
+    )
 
     context = {
         "analyst_profile": analyst_profile,
@@ -193,6 +191,74 @@ def profile(request):
         context.update(build_dashboard_context(request.user))
 
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+@require_GET
+def achievement_stats(request):
+    analyst_profile = _get_analyst_profile(request.user)
+    followers_count = request.user.analyst_followers.count() if request.user.is_analyst else 0
+    overview = build_achievement_overview(
+        request.user,
+        followers_count=followers_count,
+        is_verified=bool(analyst_profile and analyst_profile.is_verified),
+    )
+    return JsonResponse(
+        {
+            "ok": True,
+            "is_analyst": request.user.is_analyst,
+            "unlocked_count": overview["unlocked_count"],
+            "total_count": overview["total_count"],
+            "completion_percent": overview["completion_percent"],
+            "next_achievement": overview["next_achievement"],
+            "items": overview["items"],
+        }
+    )
+
+
+@login_required
+@require_GET
+def following_summary(request):
+    follows = (
+        AnalystFollow.objects.filter(follower=request.user)
+        .select_related("analyst", "analyst__analyst_profile")
+        .annotate(
+            predictions_count=Count(
+                "analyst__prediction_coupons",
+                filter=Q(
+                    analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                ),
+                distinct=True,
+            ),
+            followers_count=Count("analyst__analyst_followers", distinct=True),
+        )
+        .order_by("-created_at")
+    )
+
+    items = []
+    for follow in follows:
+        analyst = follow.analyst
+        profile = getattr(analyst, "analyst_profile", None)
+        display_name = (
+            profile.display_name
+            if profile and profile.display_name
+            else analyst.get_full_name() or analyst.username
+        )
+        items.append(
+            {
+                "username": analyst.username,
+                "display_name": display_name,
+                "specialization": profile.specialization if profile else "",
+                "avatar_url": profile.avatar.url if profile and profile.avatar else "",
+                "is_verified": bool(profile and profile.is_verified),
+                "predictions_count": follow.predictions_count,
+                "followers_count": follow.followers_count,
+                "joined_at": analyst.date_joined.isoformat(),
+                "url": reverse("cabinet:expert_profile", kwargs={"username": analyst.username}),
+            }
+        )
+
+    return JsonResponse({"ok": True, "items": items})
 
 
 @login_required
