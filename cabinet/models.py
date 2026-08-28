@@ -167,3 +167,51 @@ class AnalystFollow(models.Model):
 
     def __str__(self) -> str:
         return f"{self.follower} → {self.analyst}"
+
+
+class CapperReferralVisit(models.Model):
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="capper_referral_visits",
+        verbose_name="Каппер",
+    )
+    session_key = models.CharField("Сессия", max_length=40)
+    visitor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="capper_referral_clicks",
+        verbose_name="Пользователь",
+        null=True,
+        blank=True,
+    )
+    visits_count = models.PositiveIntegerField("Переходы", default=1)
+    first_seen_at = models.DateTimeField("Первый переход", auto_now_add=True)
+    last_seen_at = models.DateTimeField("Последний переход", auto_now=True)
+    subscribed_at = models.DateTimeField("Подписался", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Переход по реферальной ссылке каппера"
+        verbose_name_plural = "Переходы по реферальным ссылкам капперов"
+        ordering = ("-last_seen_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("analyst", "session_key"),
+                name="unique_capper_referral_session",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("analyst", "first_seen_at"), name="capref_analyst_seen_idx"),
+            models.Index(fields=("analyst", "subscribed_at"), name="capref_analyst_sub_idx"),
+            models.Index(fields=("visitor", "analyst"), name="capref_visitor_analyst_idx"),
+        ]
+
+    def clean(self) -> None:
+        if self.analyst_id and self.analyst.role != User.Role.ANALYST:
+            raise ValidationError("Реферальная ссылка доступна только капперам.")
+        if self.visitor_id and self.visitor_id == self.analyst_id:
+            raise ValidationError("Переход самого каппера не учитывается как реферальный.")
+
+    def __str__(self) -> str:
+        visitor = self.visitor.username if self.visitor_id else self.session_key
+        return f"{self.analyst} ← {visitor}"
