@@ -209,7 +209,7 @@
                         {% if achievement.unlocked %}<span class="profile-achievement-state is-unlocked">Получено</span>{% else %}<span class="profile-achievement-state">{{ achievement.progress }}%</span>{% endif %}
                     </div>
                     <span class="profile-achievement-category">{{ achievement.category }}</span>
-                    <h3>{{ achievement.label }}</h3>
+                    <div class="profile-achievement-title heading-style-h3">{{ achievement.label }}</div>
                     <p>{{ achievement.description }}</p>
                     <div class="profile-achievement-progress"><i style="width: {{ achievement.progress }}%"></i></div>
                     <div class="profile-achievement-meta"><span>Сейчас: {{ achievement.current_label }}</span><strong>Цель: {{ achievement.target_label }}</strong></div>
