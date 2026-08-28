@@ -9,6 +9,7 @@ from . import (
     public_views,
     referral_views,
     telegram_auth,
+    user_public_views,
     views,
 )
 
@@ -19,12 +20,15 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("profile/achievements/", views.achievement_stats, name="achievement_stats"),
+    path("profile/following/summary/", views.following_summary, name="following_summary"),
     path("referrals/stats/", referral_views.referral_stats, name="referral_stats"),
     path("prediction-demand/", demand_views.prediction_demand, name="prediction_demand"),
     path("coupons/<int:coupon_id>/", views.coupon_detail, name="coupon_detail"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
     path("profile/avatar/", avatar_views.avatar, name="avatar_upload"),
     path("profile/follow/<int:user_id>/", referral_views.follow_analyst, name="follow_analyst"),
+    path("users/<str:username>/", user_public_views.user_profile, name="user_profile"),
     path("experts/<str:username>/", public_views.expert_profile, name="expert_profile"),
     path("experts/<int:user_id>/follow/", referral_views.toggle_follow, name="toggle_follow"),
     path("register/", capper_views.register, name="register"),
