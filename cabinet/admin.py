@@ -27,6 +27,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "display_name",
+        "referral_code",
         "specialization",
         "telegram_channel",
         "telegram_account",
@@ -41,6 +42,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "user__username",
         "user__email",
         "display_name",
+        "referral_code",
         "specialization",
         "favorite_sports",
         "favorite_leagues",
@@ -50,7 +52,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "facebook",
     )
     autocomplete_fields = ("user",)
-    readonly_fields = ("onboarding_completed_at", "created_at", "updated_at")
+    readonly_fields = ("referral_code", "onboarding_completed_at", "created_at", "updated_at")
     fieldsets = (
         (
             "Эксперт",
@@ -81,7 +83,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
             },
         ),
         ("Статус", {"fields": ("is_verified", "is_public", "onboarding_completed_at")}),
-        ("Системная информация", {"fields": ("created_at", "updated_at")}),
+        ("Системная информация", {"fields": ("referral_code", "created_at", "updated_at")}),
     )
 
 
