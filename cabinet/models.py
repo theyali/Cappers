@@ -77,8 +77,18 @@ class AnalystProfile(models.Model):
     specialization = models.CharField("Специализация", max_length=220, blank=True)
     favorite_sports = models.CharField("Любимые виды спорта", max_length=320, blank=True)
     favorite_leagues = models.CharField("Любимые лиги", max_length=500, blank=True)
-    telegram_channel = models.CharField("Telegram канал", max_length=160, default="")
-    telegram_account = models.CharField("Telegram аккаунт", max_length=160, default="")
+    telegram_channel = models.CharField(
+        "Telegram канал",
+        max_length=160,
+        default="",
+        blank=True,
+    )
+    telegram_account = models.CharField(
+        "Telegram аккаунт",
+        max_length=160,
+        default="",
+        blank=True,
+    )
     instagram = models.CharField("Instagram", max_length=160, blank=True)
     threads = models.CharField("Threads", max_length=160, blank=True)
     youtube = models.CharField("YouTube канал", max_length=200, blank=True)
