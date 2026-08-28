@@ -34,6 +34,29 @@
             </div>
         </div>
 
+        <div class="cappers-summary" aria-label="Общая статистика экспертов">
+            <div class="cappers-summary-card is-primary">
+                <span>Опубликовано</span>
+                <strong>{{ summary.publications }}</strong>
+                <small>разборов всего</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Активны</span>
+                <strong>{{ summary.active_30d }}</strong>
+                <small>за последние 30 дней</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Новые</span>
+                <strong>{{ summary.new_30d }}</strong>
+                <small>пришли за последние 30 дней</small>
+            </div>
+            <div class="cappers-summary-card">
+                <span>Проверены</span>
+                <strong>{{ summary.verified }}</strong>
+                <small>верифицированных профилей</small>
+            </div>
+        </div>
+
         {% if experts %}
         <div class="cappers-section-head">
             <div>
@@ -59,29 +82,6 @@
             {% endif %}
         </div>
         {% endif %}
-
-        <div class="cappers-summary" aria-label="Общая статистика экспертов">
-            <div class="cappers-summary-card is-primary">
-                <span>Опубликовано</span>
-                <strong>{{ summary.publications }}</strong>
-                <small>разборов всего</small>
-            </div>
-            <div class="cappers-summary-card">
-                <span>Активны</span>
-                <strong>{{ summary.active_30d }}</strong>
-                <small>за последние 30 дней</small>
-            </div>
-            <div class="cappers-summary-card">
-                <span>Новые</span>
-                <strong>{{ summary.new_30d }}</strong>
-                <small>пришли за последние 30 дней</small>
-            </div>
-            <div class="cappers-summary-card">
-                <span>Проверены</span>
-                <strong>{{ summary.verified }}</strong>
-                <small>верифицированных профилей</small>
-            </div>
-        </div>
 
         <section class="capper-discovery-intro" aria-label="Шанс для новых экспертов">
             <div>
