@@ -4,6 +4,38 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
+class AdvBanner(models.Model):
+    class Size(models.TextChoices):
+        FULL_240 = "full_240", "На всю ширину · 240 px"
+        HALF_240 = "half_240", "Половина ширины · 240 px"
+        FULL_450 = "full_450", "На всю ширину · 450 px"
+        HALF_450 = "half_450", "Половина ширины · 450 px"
+
+    name = models.CharField("Название в админке", max_length=160)
+    size = models.CharField(
+        "Размер",
+        max_length=20,
+        choices=Size.choices,
+        default=Size.FULL_240,
+    )
+    image = models.ImageField("Изображение", upload_to="ads/")
+    mobile_image = models.ImageField(
+        "Мобильное изображение",
+        upload_to="ads/mobile/",
+        blank=True,
+        help_text="Если заполнено, используется на экранах до 767 px.",
+    )
+    url = models.URLField("Ссылка", max_length=1000)
+
+    class Meta:
+        verbose_name = "Рекламный баннер"
+        verbose_name_plural = "Рекламные баннеры"
+        ordering = ("id",)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class PageSEO(models.Model):
     class Robots(models.TextChoices):
         INDEX_FOLLOW = "index,follow", "index, follow"
@@ -19,6 +51,10 @@ class PageSEO(models.Model):
     class TwitterCard(models.TextChoices):
         SUMMARY = "summary", "Summary"
         LARGE = "summary_large_image", "Summary large image"
+
+    class AdvPlacement(models.TextChoices):
+        CONTENT = "content", "На странице"
+        SIDEBAR = "sidebar", "В сайдбаре"
 
     name = models.CharField("Название страницы в админке", max_length=160)
     route_name = models.CharField(
@@ -79,6 +115,19 @@ class PageSEO(models.Model):
         "Дополнительный JSON-LD",
         blank=True,
         help_text="Необязательный JSON-объект. Будет выведен как application/ld+json.",
+    )
+    adv_banners = models.ManyToManyField(
+        AdvBanner,
+        blank=True,
+        related_name="pages",
+        verbose_name="Рекламные баннеры",
+    )
+    adv_placement = models.CharField(
+        "Размещение рекламы",
+        max_length=16,
+        choices=AdvPlacement.choices,
+        default=AdvPlacement.CONTENT,
+        help_text="Для страниц с сайдбаром выберите размещение в сайдбаре.",
     )
     is_active = models.BooleanField("Использовать SEO-настройки", default=True, db_index=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
