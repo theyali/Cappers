@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/matches-lazy-load.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
@@ -42,12 +43,21 @@
     >
         <section class="matches-list-panel" aria-label="Список матчей">
             {% if matches %}
-            <div class="matches-grid">
-                {% for match in matches %}
-                    <div class="match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}">
-                        {% include "game/includes/_match_card.html" with match=match can_write_coupon=can_write_coupon %}
-                    </div>
-                {% endfor %}
+            <div class="matches-grid" data-matches-grid>
+                {% include "game/includes/_match_grid_items.html" with matches=matches can_write_coupon=can_write_coupon %}
+            </div>
+            <div
+                class="matches-lazy-sentinel{% if not page_obj.has_next %} is-done{% endif %}"
+                data-matches-lazy
+                data-current-page="{{ page_obj.number }}"
+                data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
+                aria-live="polite"
+            >
+                <span class="matches-lazy-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <button class="matches-lazy-button" type="button" data-matches-lazy-button>
+                    Показать ещё
+                </button>
+                <span class="matches-lazy-status" data-matches-lazy-status></span>
             </div>
             {% else %}
             <div class="matches-empty">
@@ -79,6 +89,7 @@
 ></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
+<script src="{% static 'front/js/matches-lazy-load.js' %}" defer></script>
 <script src="{% static 'front/js/sidebar-predictions-responsive.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 {% endblock %}
