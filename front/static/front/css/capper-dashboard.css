@@ -27,11 +27,6 @@
     margin: 0;
 }
 
-.capper-dashboard-hero h1 {
-    font-size: clamp(42px, 6vw, 72px);
-    line-height: .94;
-}
-
 .capper-dashboard-date {
     margin: 14px 0 0;
     color: var(--muted);
@@ -152,10 +147,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-}
-
-.capper-dashboard-panel-head h2 {
-    font-size: 24px;
 }
 
 .capper-dashboard-panel-head > span {
