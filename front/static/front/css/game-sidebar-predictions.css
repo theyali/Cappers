@@ -265,18 +265,89 @@
 }
 
 .sidebar-prediction-footer {
-    padding-top: 1px;
-    color: var(--muted);
-    font-size: 9px;
+    padding-top: 3px;
 }
 
-.sidebar-prediction-footer strong {
+.sidebar-prediction-author {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.sidebar-prediction-author-avatar {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.sidebar-prediction-author-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.sidebar-prediction-author-copy {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.sidebar-prediction-author-name {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.sidebar-prediction-author-name > strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-prediction-author-name .capper-verified-badge {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
+}
+
+.sidebar-prediction-author-name .capper-verified-badge svg {
+    width: 17px;
+    height: 17px;
+}
+
+.sidebar-prediction-author-copy > small {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 9px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sidebar-prediction-open {
+    flex: 0 0 auto;
     color: var(--blue);
     font-size: 9px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
-.sidebar-prediction-footer strong i {
+.sidebar-prediction-open i {
     margin-left: 4px;
     font-style: normal;
 }
@@ -543,6 +614,25 @@
     .sidebar-prediction-team strong {
         width: 100%;
         font-size: 9px;
+    }
+
+    .sidebar-prediction-footer {
+        align-items: center;
+    }
+
+    .sidebar-prediction-author-avatar {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+        border-radius: 11px;
+    }
+
+    .sidebar-prediction-author-name > strong {
+        max-width: 125px;
+    }
+
+    .sidebar-prediction-open {
+        font-size: 8px;
     }
 
     .my-coupons-panel {
