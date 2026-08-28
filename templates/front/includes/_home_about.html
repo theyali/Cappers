@@ -1,49 +1,42 @@
-{% if website_settings and website_settings.home_about_enabled %}
-<section class="home-about" aria-labelledby="home-about-title">
+{% load static %}
+<section class="home-about" aria-labelledby="homeAboutTitle">
     <div class="home-about-hero">
         <div class="home-about-copy">
-            {% if website_settings.home_about_eyebrow %}
-                <p class="home-about-eyebrow">{{ website_settings.home_about_eyebrow }}</p>
-            {% endif %}
-            <h2 id="home-about-title">{{ website_settings.home_about_title }}</h2>
-            {% if website_settings.home_about_intro %}
-                <p class="home-about-lead">{{ website_settings.home_about_intro }}</p>
-            {% endif %}
+            <p class="home-about-eyebrow">О платформе</p>
+            <h2 id="homeAboutTitle">{{ website_settings.home_about_title }}</h2>
+            <p class="home-about-lead">{{ website_settings.home_about_lead }}</p>
         </div>
-
         <div class="home-about-mark" aria-hidden="true">
-            <span>C</span>
-            <small>{{ website_settings.site_name }}</small>
+            <span>КХ</span>
+            <small>Матчи · прогнозы · эксперты</small>
         </div>
     </div>
 
-    <div class="home-about-facts" aria-label="Ключевые направления">
+    <div class="home-about-facts" aria-label="Что есть на платформе">
         <article class="home-about-fact">
-            <strong>{{ website_settings.home_about_fact_1_title }}</strong>
-            <p>{{ website_settings.home_about_fact_1_text }}</p>
+            <strong>Матчи и коэффициенты</strong>
+            <p>Следите за прематчем и live, открывайте матч и изучайте доступные рынки.</p>
         </article>
         <article class="home-about-fact">
-            <strong>{{ website_settings.home_about_fact_2_title }}</strong>
-            <p>{{ website_settings.home_about_fact_2_text }}</p>
+            <strong>Прогнозы экспертов</strong>
+            <p>Смотрите опубликованные прогнозы, результаты и статистику капперов.</p>
         </article>
         <article class="home-about-fact">
-            <strong>{{ website_settings.home_about_fact_3_title }}</strong>
-            <p>{{ website_settings.home_about_fact_3_text }}</p>
+            <strong>Рейтинг и аналитика</strong>
+            <p>Сравнивайте ROI, результаты и активность, чтобы находить подходящих экспертов.</p>
         </article>
     </div>
 
     <div class="home-about-content">
         <article class="home-about-story">
             <p class="home-about-seo-label">О платформе</p>
-            <h3>{{ website_settings.site_name }}</h3>
+            <div class="home-about-content-title heading-style-h3">{{ website_settings.site_name }}</div>
             <div>{{ website_settings.home_about_text|linebreaks }}</div>
         </article>
-
         <article class="home-about-seo">
             <p class="home-about-seo-label">Спортивная платформа</p>
-            <h3>{{ website_settings.home_about_seo_title }}</h3>
+            <div class="home-about-content-title heading-style-h3">{{ website_settings.home_about_seo_title }}</div>
             <div>{{ website_settings.home_about_seo_text|linebreaks }}</div>
         </article>
     </div>
 </section>
-{% endif %}
