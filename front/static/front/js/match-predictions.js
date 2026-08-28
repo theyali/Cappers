@@ -1,6 +1,6 @@
 (() => {
     const detailMain = document.querySelector(".match-detail-page .match-detail-main");
-    if (!detailMain) return;
+    if (!detailMain || document.querySelector("[data-match-predictions-feed]")) return;
 
     const endpoint = `${window.location.pathname.replace(/\/$/, "")}/predictions/`;
     const feed = document.createElement("section");
@@ -12,7 +12,7 @@
         <div class="match-predictions-feed-head">
             <div>
                 <p class="match-predictions-kicker">Мнения капперов</p>
-                <h2>Все прогнозы на игру</h2>
+                <h2>Все прогнозы на игру <span data-match-predictions-total></span></h2>
             </div>
         </div>
         <div class="match-predictions-list" data-match-predictions-list></div>
@@ -21,16 +21,26 @@
             <span>Загружаем прогнозы...</span>
         </div>
         <div class="match-predictions-sentinel" data-match-predictions-sentinel aria-hidden="true"></div>`;
-    detailMain.append(feed);
+
+    const providerPanel = detailMain.querySelector(":scope > .match-provider-predictions");
+    if (providerPanel) {
+        providerPanel.insertAdjacentElement("afterend", feed);
+    } else {
+        detailMain.append(feed);
+    }
 
     const list = feed.querySelector("[data-match-predictions-list]");
     const sentinel = feed.querySelector("[data-match-predictions-sentinel]");
     const loader = feed.querySelector("[data-match-predictions-loader]");
+    const totalNode = feed.querySelector("[data-match-predictions-total]");
 
     let nextPage = 1;
     let isLoading = false;
     let finished = false;
     let observer = null;
+    let scrollFallbackBound = false;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const showLoader = (show) => {
         loader.hidden = !show;
@@ -163,6 +173,7 @@
     };
 
     const showError = (message) => {
+        if (list.querySelector(".match-predictions-error")) return;
         const node = document.createElement("div");
         node.className = "match-predictions-error";
         node.innerHTML = `
@@ -178,6 +189,47 @@
         list.append(node);
     };
 
+    const appendPredictionHtml = (html) => {
+        if (!html || !html.trim()) return [];
+
+        const template = document.createElement("template");
+        template.innerHTML = html.trim();
+        const existingIds = new Set(
+            Array.from(list.querySelectorAll("[data-prediction-card]"))
+                .map((node) => node.dataset.predictionCard)
+                .filter(Boolean),
+        );
+        const nodes = Array.from(template.content.children).filter((node) => {
+            const id = node.dataset.predictionCard;
+            return !id || !existingIds.has(id);
+        });
+
+        nodes.forEach((node, index) => {
+            list.appendChild(node);
+            if (!reducedMotion) {
+                node.animate(
+                    [
+                        { opacity: 0, transform: "translateY(16px)" },
+                        { opacity: 1, transform: "translateY(0)" },
+                    ],
+                    {
+                        duration: 300,
+                        delay: Math.min(index, 5) * 45,
+                        easing: "cubic-bezier(.2,.8,.2,1)",
+                        fill: "both",
+                    },
+                );
+            }
+        });
+
+        if (nodes.length) {
+            document.dispatchEvent(new CustomEvent("match-predictions:appended", {
+                detail: { nodes },
+            }));
+        }
+        return nodes;
+    };
+
     const loadNextPage = async () => {
         if (isLoading || finished) return;
         isLoading = true;
@@ -187,17 +239,20 @@
             const response = await fetch(`${endpoint}?page=${nextPage}`, {
                 headers: { "X-Requested-With": "XMLHttpRequest" },
                 credentials: "same-origin",
+                cache: "no-store",
             });
             const result = await response.json();
             if (!response.ok || !result.ok) {
                 throw new Error(result.error || "Ошибка загрузки.");
             }
 
-            renderPredictionShares(result.distribution, result.total);
-            if (result.html) list.insertAdjacentHTML("beforeend", result.html);
+            const total = Number(result.total || 0);
+            totalNode.textContent = total ? `(${total})` : "";
+            renderPredictionShares(result.distribution, total);
+            appendPredictionHtml(result.html || "");
 
-            if (result.has_next) {
-                nextPage = result.next_page;
+            if (result.has_next && result.next_page) {
+                nextPage = Number(result.next_page);
             } else {
                 finished = true;
                 observer?.disconnect();
@@ -212,12 +267,31 @@
         }
     };
 
+    const maybeLoadFromScroll = () => {
+        if (isLoading || finished) return;
+        const rect = sentinel.getBoundingClientRect();
+        if (rect.top <= window.innerHeight + 360) loadNextPage();
+    };
+
     if ("IntersectionObserver" in window) {
         observer = new IntersectionObserver((entries) => {
             if (entries.some((entry) => entry.isIntersecting)) loadNextPage();
-        }, { rootMargin: "320px 0px" });
+        }, { rootMargin: "360px 0px", threshold: 0.01 });
         observer.observe(sentinel);
-    } else {
-        loadNextPage();
+    } else if (!scrollFallbackBound) {
+        scrollFallbackBound = true;
+        let ticking = false;
+        const onScroll = () => {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(() => {
+                ticking = false;
+                maybeLoadFromScroll();
+            });
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
     }
+
+    loadNextPage();
 })();
