@@ -1,10 +1,54 @@
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from front.capper_stats_service import CapperStatsService
 from front.prediction_views import _decorate_predictions, _published_queryset
+from game.models import PredictionCoupon
 
 from .models import AnalystProfile, User
+
+
+RECENT_PERFORMANCE_LIMITS = (10, 100)
+RECENT_PERFORMANCE_STATES = (
+    PredictionCoupon.StateStatus.WIN,
+    PredictionCoupon.StateStatus.LOSE,
+    PredictionCoupon.StateStatus.REFUND,
+)
+
+
+def _recent_performance(author, limit: int) -> dict:
+    states = list(
+        PredictionCoupon.objects.filter(
+            author=author,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status__in=RECENT_PERFORMANCE_STATES,
+        )
+        .annotate(
+            result_at=Coalesce(
+                "settled_at",
+                "updated_at",
+                "published_at",
+                "created_at",
+            )
+        )
+        .order_by("-result_at", "-id")
+        .values_list("state_status", flat=True)[:limit]
+    )
+    total = len(states)
+
+    def bucket(state: str) -> dict:
+        count = states.count(state)
+        percent = round(count / total * 100) if total else 0
+        return {"count": count, "percent": percent}
+
+    return {
+        "limit": limit,
+        "total": total,
+        "wins": bucket(PredictionCoupon.StateStatus.WIN),
+        "losses": bucket(PredictionCoupon.StateStatus.LOSE),
+        "refunds": bucket(PredictionCoupon.StateStatus.REFUND),
+    }
 
 
 @ensure_csrf_cookie
@@ -18,6 +62,13 @@ def expert_profile(request, username: str):
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
 
+    performance_windows = {
+        str(limit): _recent_performance(profile.user, limit)
+        for limit in RECENT_PERFORMANCE_LIMITS
+    }
+    context["performance_windows"] = performance_windows
+    context["performance_default"] = performance_windows["10"]
+
     latest_coupons = (
         _published_queryset()
         .filter(author=profile.user)
@@ -27,6 +78,6 @@ def expert_profile(request, username: str):
 
     return render(
         request,
-        "cabinet/expert_profile.html",
+        "cabinet/expert_profile_performance.html",
         context,
     )

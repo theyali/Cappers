@@ -1,0 +1,66 @@
+{{ performance_windows|json_script:"expert-recent-performance-data" }}
+<section class="expert-recent-performance" data-expert-performance aria-labelledby="expert-recent-performance-title">
+    <div class="expert-recent-performance-head">
+        <div>
+            <p class="expert-public-kicker">Последняя форма</p>
+            <div class="expert-recent-performance-title-row">
+                <h2 id="expert-recent-performance-title">Эффективность последних</h2>
+                <select data-expert-performance-range aria-label="Период эффективности">
+                    <option value="10" selected>10 прогнозов</option>
+                    <option value="100">100 прогнозов</option>
+                </select>
+            </div>
+            <p class="expert-recent-performance-caption" data-performance-caption>
+                {% if performance_default.total %}
+                    По {{ performance_default.total }} рассчитанным прогнозам
+                {% else %}
+                    Пока нет рассчитанных прогнозов
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="expert-recent-performance-grid">
+        <article class="expert-recent-performance-item is-win" data-performance-state="wins">
+            <div class="expert-recent-performance-ring">
+                <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                    <circle class="expert-recent-performance-track" cx="60" cy="60" r="48" pathLength="100"></circle>
+                    <circle class="expert-recent-performance-progress" data-performance-ring cx="60" cy="60" r="48" pathLength="100" stroke-dasharray="{{ performance_default.wins.percent }} 100"></circle>
+                </svg>
+                <div class="expert-recent-performance-copy">
+                    <strong data-performance-percent>{{ performance_default.wins.percent }}%</strong>
+                    <span>Выигрыши</span>
+                    <small data-performance-count>{{ performance_default.wins.count }} прогнозов</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="expert-recent-performance-item is-loss" data-performance-state="losses">
+            <div class="expert-recent-performance-ring">
+                <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                    <circle class="expert-recent-performance-track" cx="60" cy="60" r="48" pathLength="100"></circle>
+                    <circle class="expert-recent-performance-progress" data-performance-ring cx="60" cy="60" r="48" pathLength="100" stroke-dasharray="{{ performance_default.losses.percent }} 100"></circle>
+                </svg>
+                <div class="expert-recent-performance-copy">
+                    <strong data-performance-percent>{{ performance_default.losses.percent }}%</strong>
+                    <span>Проигрыши</span>
+                    <small data-performance-count>{{ performance_default.losses.count }} прогнозов</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="expert-recent-performance-item is-refund" data-performance-state="refunds">
+            <div class="expert-recent-performance-ring">
+                <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+                    <circle class="expert-recent-performance-track" cx="60" cy="60" r="48" pathLength="100"></circle>
+                    <circle class="expert-recent-performance-progress" data-performance-ring cx="60" cy="60" r="48" pathLength="100" stroke-dasharray="{{ performance_default.refunds.percent }} 100"></circle>
+                </svg>
+                <div class="expert-recent-performance-copy">
+                    <strong data-performance-percent>{{ performance_default.refunds.percent }}%</strong>
+                    <span>Возвраты</span>
+                    <small data-performance-count>{{ performance_default.refunds.count }} прогнозов</small>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
