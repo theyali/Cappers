@@ -60,6 +60,10 @@ summary:focus-visible,
         border: 1px solid var(--muted);
     }
 
+    body:has(.site-nav-actions .nav-login) .mobile-app-nav .mobile-nav-my {
+        display: none;
+    }
+
     .mobile-app-nav-item {
         position: relative;
         min-width: 0;
