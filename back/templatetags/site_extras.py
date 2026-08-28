@@ -70,7 +70,7 @@ def latest_prediction_cards(limit=6):
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
-        .select_related("author")
+        .select_related("author", "author__analyst_profile")
         .prefetch_related(
             Prefetch("predictions", queryset=positions, to_attr="sidebar_positions")
         )
