@@ -122,7 +122,7 @@
         {% if not request.user.is_analyst %}
         <section class="profile-side-card">
             <p class="eyebrow">Для экспертов</p>
-            <h3>Хотите стать каппером?</h3>
+            <div class="profile-side-title heading-style-h3">Хотите стать каппером?</div>
             <p class="profile-telegram-copy">Заполните короткий профиль эксперта, получите публичную страницу, рейтинг и автоматическую статистику.</p>
             <a class="profile-telegram-connect" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
         </section>
@@ -135,7 +135,7 @@
                 </span>
                 <div>
                     <p class="eyebrow">Telegram</p>
-                    <h3>Бот и сайт</h3>
+                    <div class="profile-side-title heading-style-h3">Бот и сайт</div>
                 </div>
             </div>
 
@@ -170,7 +170,7 @@
 
         <section class="profile-side-card">
             <p class="eyebrow">Аккаунт</p>
-            <h3>Информация</h3>
+            <div class="profile-side-title heading-style-h3">Информация</div>
             <dl class="profile-info-list">
                 <div><dt>Email</dt><dd>{{ request.user.email|default:"—" }}</dd></div>
                 <div><dt>Дата регистрации</dt><dd>{{ request.user.date_joined|date:"d.m.Y" }}</dd></div>
