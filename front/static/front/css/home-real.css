@@ -115,10 +115,6 @@
     padding-top: 28px;
 }
 
-.forecast-real-copy h2 {
-    font-size: clamp(27px, 2.7vw, 43px);
-}
-
 .forecast-market {
     display: block;
     margin-top: 9px;
@@ -386,10 +382,6 @@
     .forecast-team-logo {
         width: 46px;
         height: 46px;
-    }
-
-    .forecast-real-copy h2 {
-        font-size: 30px;
     }
 }
 
