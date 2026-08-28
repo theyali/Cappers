@@ -20,6 +20,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.predictions-layout.is-filter-collapsed .predictions-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .predictions-content .prediction-results-head,
 .predictions-content .predictions-grid,
 .predictions-content .predictions-pagination,
@@ -249,7 +253,8 @@
         grid-template-columns: minmax(0, 1fr) 52px;
     }
 
-    .predictions-layout .predictions-grid {
+    .predictions-layout .predictions-grid,
+    .predictions-layout.is-filter-collapsed .predictions-grid {
         grid-template-columns: 1fr;
     }
 }
