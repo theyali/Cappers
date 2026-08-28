@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ display_name }} — профиль пользователя{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/user-public-profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="user-public-page">
+    <a class="user-public-back" href="{% url 'front:cappers_stats' %}">← Назад</a>
+
+    <section class="user-public-hero" aria-label="Профиль пользователя">
+        <div class="user-public-identity">
+            <div class="user-public-avatar">
+                {% if profile_user.avatar %}
+                    <img src="{{ profile_user.avatar.url }}" alt="Аватар {{ display_name }}">
+                {% else %}
+                    <span>{{ initials }}</span>
+                {% endif %}
+            </div>
+            <div class="user-public-title">
+                <span class="user-public-role">Пользователь</span>
+                <h1>{{ display_name }}</h1>
+                <p>@{{ profile_user.username }}</p>
+                <small>На платформе с {{ profile_user.date_joined|date:"d.m.Y" }}</small>
+            </div>
+        </div>
+        {% if is_self %}
+            <a class="user-public-action" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
+        {% endif %}
+    </section>
+
+    <section class="user-public-stats" aria-label="Активность пользователя">
+        <article><span>Матчи</span><strong>{{ match_watches_count }}</strong><small>в отслеживании</small></article>
+        <article><span>Сохранено</span><strong>{{ favorites_count }}</strong><small>прогнозов</small></article>
+        <article><span>Лайков</span><strong>{{ likes_count }}</strong><small>прогнозам</small></article>
+        <article><span>Подписки</span><strong>{{ following_count }}</strong><small>на капперов</small></article>
+        <article><span>Хочу прогноз</span><strong>{{ prediction_requests_count }}</strong><small>запросов</small></article>
+    </section>
+
+    <div class="user-public-grid">
+        <section class="user-public-card">
+            <div class="user-public-section-head">
+                <div>
+                    <p class="eyebrow">Активность</p>
+                    <h2>Последние действия</h2>
+                </div>
+            </div>
+            {% if recent_activity %}
+                <div class="user-public-activity">
+                    {% for item in recent_activity %}
+                        <a class="user-public-activity-row" href="{{ item.url }}">
+                            <span class="user-public-activity-kind">{{ item.kind }}</span>
+                            <div>
+                                <strong>{{ item.title }}</strong>
+                                <span>{{ item.description }}</span>
+                            </div>
+                            <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"d.m.Y H:i" }}</time>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="user-public-empty">Публичной активности пока нет.</div>
+            {% endif %}
+        </section>
+
+        <aside class="user-public-card user-public-achievements">
+            <div class="user-public-section-head">
+                <div>
+                    <p class="eyebrow">Достижения</p>
+                    <h2>{{ achievement_unlocked_count }}/{{ achievement_total }}</h2>
+                </div>
+            </div>
+            {% if unlocked_achievements %}
+                <div class="user-public-badges">
+                    {% for achievement in unlocked_achievements %}
+                        <article class="user-public-badge" data-achievement="{{ achievement.key }}">
+                            <img src="{% static achievement.icon %}" alt="">
+                            <div>
+                                <strong>{{ achievement.label }}</strong>
+                                <span>{{ achievement.description }}</span>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="user-public-empty">Первые ачивки появятся после 5 лайков или сохранений.</div>
+            {% endif %}
+        </aside>
+    </div>
+</section>
+{% endblock %}
