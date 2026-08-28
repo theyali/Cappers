@@ -12,6 +12,14 @@ class RegistrationForm(UserCreationForm):
         widget=forms.HiddenInput(),
         initial=User.Role.READER,
     )
+    accept_terms = forms.BooleanField(
+        label="Согласие с правилами",
+        required=True,
+        error_messages={
+            "required": "Для регистрации необходимо принять правила сервиса.",
+        },
+        widget=forms.CheckboxInput(attrs={"class": "auth-agreement-checkbox"}),
+    )
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -21,6 +29,7 @@ class RegistrationForm(UserCreationForm):
             "first_name",
             "last_name",
             "role",
+            "accept_terms",
         )
 
     def clean_email(self):
