@@ -5,10 +5,17 @@ from .models import Bookmaker, WebsiteSettings
 
 @admin.register(Bookmaker)
 class BookmakerAdmin(admin.ModelAdmin):
-    list_display = ("name", "bonus_text", "exclusive", "order")
-    list_editable = ("exclusive", "order")
-    list_filter = ("exclusive",)
-    search_fields = ("name", "bonus_text")
+    list_display = (
+        "name",
+        "show_on_home",
+        "home_order",
+        "bonus_text",
+        "exclusive",
+        "order",
+    )
+    list_editable = ("show_on_home", "home_order", "exclusive", "order")
+    list_filter = ("show_on_home", "exclusive")
+    search_fields = ("name", "bonus_text", "description")
     ordering = ("order", "id")
 
 

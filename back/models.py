@@ -5,8 +5,11 @@ class Bookmaker(models.Model):
     name = models.CharField("Название", max_length=120)
     icon = models.ImageField("Иконка", upload_to="bookmakers/", blank=True)
     bonus_text = models.CharField("Текст бонуса", max_length=160, blank=True)
+    description = models.CharField("Краткое описание", max_length=220, blank=True)
     link = models.URLField("Ссылка", max_length=500)
     exclusive = models.BooleanField("Эксклюзивно", default=False)
+    show_on_home = models.BooleanField("Показывать на главной", default=False)
+    home_order = models.PositiveIntegerField("Порядок на главной", default=0, db_index=True)
     order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
 
     class Meta:

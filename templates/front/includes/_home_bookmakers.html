@@ -1,0 +1,50 @@
+{% if bookmakers %}
+<section class="home-trusted-bookmakers" aria-labelledby="home-trusted-bookmakers-title">
+    <header class="home-trusted-bookmakers-head">
+        <div>
+            <p class="home-trusted-bookmakers-eyebrow">Проверенные партнёры</p>
+            <h2 id="home-trusted-bookmakers-title">БК, которым мы доверяем</h2>
+            <p class="home-trusted-bookmakers-copy">Отобранные букмекеры с понятными условиями и предложениями для аудитории КапперХаб.</p>
+        </div>
+        <span class="home-trusted-bookmakers-count" aria-label="Букмекеров в подборке: {{ bookmakers|length }}">{{ bookmakers|length }}</span>
+    </header>
+
+    <div class="home-trusted-bookmakers-list">
+        {% for bookmaker in bookmakers %}
+        <a
+            class="home-trusted-bookmaker"
+            href="{{ bookmaker.link }}"
+            target="_blank"
+            rel="noopener noreferrer nofollow sponsored"
+        >
+            <span class="home-trusted-bookmaker-logo">
+                {% if bookmaker.icon %}
+                    <img src="{{ bookmaker.icon.url }}" alt="{{ bookmaker.name }}" loading="lazy">
+                {% else %}
+                    <strong>{{ bookmaker.name|slice:":2"|upper }}</strong>
+                {% endif %}
+            </span>
+
+            <span class="home-trusted-bookmaker-body">
+                <span class="home-trusted-bookmaker-name">{{ bookmaker.name }}</span>
+                {% if bookmaker.description %}
+                <span class="home-trusted-bookmaker-description">{{ bookmaker.description }}</span>
+                {% endif %}
+                <span class="home-trusted-bookmaker-meta">
+                    {% if bookmaker.bonus_text %}
+                    <span class="home-trusted-bookmaker-bonus">{{ bookmaker.bonus_text }}</span>
+                    {% endif %}
+                    {% if bookmaker.exclusive %}
+                    <span class="home-trusted-bookmaker-exclusive">Эксклюзив</span>
+                    {% endif %}
+                </span>
+            </span>
+
+            <span class="home-trusted-bookmaker-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

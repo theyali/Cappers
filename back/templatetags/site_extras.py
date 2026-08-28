@@ -20,6 +20,14 @@ def bookmakers_sidebar(context):
     }
 
 
+@register.inclusion_tag("front/includes/_home_bookmakers.html")
+def home_bookmakers():
+    bookmakers = list(
+        Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")
+    )
+    return {"bookmakers": bookmakers}
+
+
 @register.inclusion_tag("back/_my_coupons.html")
 def my_recent_coupons(user):
     if not getattr(user, "is_authenticated", False):
