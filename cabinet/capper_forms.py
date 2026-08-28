@@ -67,16 +67,18 @@ class CapperFocusForm(forms.Form):
 
 class CapperSocialsForm(forms.Form):
     telegram_channel = forms.CharField(
-        label="Telegram-канал",
+        label="Telegram-канал (необязательно)",
         max_length=160,
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "@channel или https://t.me/channel"}),
+        help_text="Можно оставить пустым — Telegram-канал не нужен для активации профиля.",
     )
     telegram_account = forms.CharField(
-        label="Telegram-аккаунт",
+        label="Telegram-аккаунт (необязательно)",
         max_length=160,
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "@username или https://t.me/username"}),
+        help_text="Можно оставить пустым — Telegram-аккаунт не обязателен.",
     )
     instagram = forms.CharField(
         label="Instagram",
