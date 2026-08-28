@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import PageSEO
+from .models import AdvBanner, PageSEO
+
+
+@admin.register(AdvBanner)
+class AdvBannerAdmin(admin.ModelAdmin):
+    list_display = ("name", "size", "url")
+    list_filter = ("size",)
+    search_fields = ("name", "url")
+    ordering = ("id",)
 
 
 @admin.register(PageSEO)
@@ -9,11 +17,12 @@ class PageSEOAdmin(admin.ModelAdmin):
         "name",
         "route_name",
         "exact_path",
+        "adv_placement",
         "robots",
         "is_active",
         "updated_at",
     )
-    list_filter = ("is_active", "robots", "og_type", "twitter_card")
+    list_filter = ("is_active", "adv_placement", "robots", "og_type", "twitter_card")
     list_editable = ("is_active",)
     search_fields = (
         "name",
@@ -25,6 +34,7 @@ class PageSEOAdmin(admin.ModelAdmin):
     )
     ordering = ("route_name", "exact_path", "name")
     readonly_fields = ("updated_at",)
+    filter_horizontal = ("adv_banners",)
     fieldsets = (
         (
             "Страница",
@@ -34,6 +44,15 @@ class PageSEOAdmin(admin.ModelAdmin):
                     "route_name",
                     "exact_path",
                     "is_active",
+                )
+            },
+        ),
+        (
+            "Реклама",
+            {
+                "fields": (
+                    "adv_placement",
+                    "adv_banners",
                 )
             },
         ),
