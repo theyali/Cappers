@@ -5,6 +5,7 @@ from django import template
 from django.db.models import Count, Prefetch
 
 from back.models import Bookmaker, WebsiteSettings
+from front.popular_matches import build_popular_matches
 from game.models import PredictionCoupon, PredictionItem
 
 register = template.Library()
@@ -18,6 +19,11 @@ def bookmakers_sidebar(context):
         "adv_banners": context.get("adv_banners", []),
         "adv_placement": context.get("adv_placement", "content"),
     }
+
+
+@register.inclusion_tag("front/includes/_popular_matches.html")
+def popular_matches(limit=5):
+    return {"popular_matches": build_popular_matches(limit=limit)}
 
 
 @register.inclusion_tag("front/includes/_home_bookmakers.html")
