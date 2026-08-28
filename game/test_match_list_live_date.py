@@ -7,6 +7,7 @@ from django.utils import timezone
 from cabinet.models import User
 from game.date_views import MATCHES_PAGE_SIZE
 from game.models import Match
+from notifications.models import MatchWatch
 
 
 TEST_STORAGES = {
@@ -129,3 +130,40 @@ class MatchListLiveDateTests(TestCase):
         self.assertIn(f'data-match-shell-id="{matches[-2].id}"', payload["html"])
         self.assertIn(f'data-match-shell-id="{matches[-1].id}"', payload["html"])
         self.assertNotIn(f'data-match-shell-id="{matches[0].id}"', payload["html"])
+
+    def test_ajax_window_refresh_reorders_watched_match_without_resetting_filters(self):
+        user = User.objects.create_user(username="window-watch-user", password="safe-test-password")
+        self.client.force_login(user)
+        tz = timezone.get_current_timezone()
+        selected_date = timezone.localdate()
+        starts_at = timezone.make_aware(datetime.combine(selected_date, time(11, 0)), tz)
+        matches = [
+            Match.objects.create(
+                external_id=950000 + index,
+                sync_scope=Match.SyncScope.PREMATCH,
+                starts_at=starts_at + timedelta(minutes=index),
+            )
+            for index in range(MATCHES_PAGE_SIZE + 2)
+        ]
+        MatchWatch.objects.create(user=user, match=matches[-1], last_scope=Match.SyncScope.PREMATCH)
+
+        response = self.client.get(
+            reverse("game:match_list"),
+            {
+                "scope": Match.SyncScope.PREMATCH,
+                "date": selected_date.isoformat(),
+                "lazy": 1,
+                "window": MATCHES_PAGE_SIZE,
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["window"], MATCHES_PAGE_SIZE)
+        first_marker = payload["html"].find('data-match-shell-id=')
+        watched_marker = payload["html"].find(f'data-match-shell-id="{matches[-1].id}"')
+        self.assertEqual(first_marker, watched_marker)
+        self.assertTrue(payload["has_next"])
+        self.assertEqual(payload["next_page"], 2)
