@@ -188,11 +188,17 @@ def expert_profile(request, username: str):
         refunds=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.REFUND)),
         open_predictions=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)),
     )
+    engagement = published.aggregate(
+        likes=Count("likes", distinct=True),
+        saves=Count("favorites", distinct=True),
+    )
     decided_predictions = (stats["wins"] or 0) + (stats["losses"] or 0)
     settled_predictions = decided_predictions + (stats["refunds"] or 0)
     win_rate = round((stats["wins"] or 0) / decided_predictions * 100, 1) if decided_predictions else 0
     followers_count = AnalystFollow.objects.filter(analyst=analyst).count()
     predictions_count = stats["predictions"] or 0
+    total_likes_count = engagement["likes"] or 0
+    total_saves_count = engagement["saves"] or 0
 
     published_coupons = list(published.order_by("settled_at", "updated_at", "id"))
     settled_coupons = [
@@ -255,6 +261,8 @@ def expert_profile(request, username: str):
             "expert_initials": _initials(name),
             "followers_count": followers_count,
             "predictions_count": predictions_count,
+            "total_likes_count": total_likes_count,
+            "total_saves_count": total_saves_count,
             "wins_count": stats["wins"] or 0,
             "losses_count": stats["losses"] or 0,
             "refunds_count": stats["refunds"] or 0,
