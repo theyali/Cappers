@@ -22,6 +22,7 @@
     <link rel="icon" type="image/png" href="{% static 'front/img/favicon.png' %}">
     <link rel="apple-touch-icon" href="{% static 'front/img/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/adv-banners.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/messages.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/verified.css' %}">
@@ -190,6 +191,9 @@
 
     <main class="site-main">
         {% block content %}{% endblock %}
+        {% if adv_banners and adv_placement == 'content' %}
+            {% include "pages/_adv_banners.html" with placement="content" %}
+        {% endif %}
         {% if request.resolver_match.view_name == 'front:index' and website_settings.home_about_enabled %}
             {% include "front/includes/_home_about.html" %}
         {% endif %}
