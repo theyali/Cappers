@@ -78,4 +78,18 @@ def page_seo(request):
         "schema_type": page.schema_type if page else "",
         "schema_json_ld": _schema_json(page, canonical_url),
     }
-    return {"seo_meta": seo_meta}
+
+    adv_banners = []
+    adv_placement = PageSEO.AdvPlacement.CONTENT
+    if page:
+        adv_placement = page.adv_placement
+        try:
+            adv_banners = list(page.adv_banners.all())
+        except (OperationalError, ProgrammingError):
+            adv_banners = []
+
+    return {
+        "seo_meta": seo_meta,
+        "adv_banners": adv_banners,
+        "adv_placement": adv_placement,
+    }
