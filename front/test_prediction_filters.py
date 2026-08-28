@@ -152,3 +152,45 @@ class PredictionFiltersTests(TestCase):
         self.assertGreater(items[0].author_roi, 0)
         self.assertContains(response, "ROI +150.0%")
         self.assertContains(response, "prediction-author-roi is-positive")
+
+    def test_filters_render_in_right_sidebar_with_ajax_assets(self):
+        self._prediction(external_id=940)
+
+        response = self.client.get(reverse("front:predictions"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('class="predictions-layout" data-predictions-layout', html)
+        self.assertIn('class="prediction-filter-sidebar" data-prediction-filter-sidebar', html)
+        self.assertIn('data-prediction-filter-toggle', html)
+        self.assertIn('data-prediction-filters', html)
+        self.assertIn("front/css/predictions-sidebar.css", html)
+        self.assertIn("https://code.jquery.com/jquery-3.7.1.min.js", html)
+        self.assertIn("front/js/predictions-filters.js", html)
+        self.assertLess(html.index('data-predictions-content'), html.index('data-prediction-filter-sidebar'))
+
+    def test_pagination_keeps_active_filter_query(self):
+        for index in range(25):
+            self._prediction(external_id=1000 + index)
+
+        response = self.client.get(
+            reverse("front:predictions"),
+            {
+                "sport": self.sport.id,
+                "status": "win",
+                "sort": "roi",
+                "page": "2",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].number, 2)
+        self.assertEqual(response.context["filtered_predictions"], 25)
+        self.assertEqual(
+            response.context["pagination_query"],
+            f"sport={self.sport.id}&status=win&sort=roi",
+        )
+        self.assertContains(response, "page=1")
+        self.assertContains(response, f"sport={self.sport.id}")
+        self.assertContains(response, "status=win")
+        self.assertContains(response, "sort=roi")
