@@ -1,0 +1,174 @@
+.popular_matches {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 20px;
+    background: var(--panel);
+}
+
+.popular_matches-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.popular_matches-head > div {
+    min-width: 0;
+}
+
+.popular_matches-head p {
+    margin: 0 0 7px;
+    color: var(--yellow);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.popular_matches-head h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 25px;
+    line-height: 1.05;
+}
+
+.popular_matches-head > span {
+    min-width: 36px;
+    min-height: 36px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0 10px;
+    border-radius: 11px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.popular_matches-list {
+    display: grid;
+    gap: 9px;
+}
+
+.popular_match {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 13px;
+    border-radius: 15px;
+    color: inherit;
+    background: #171718;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.popular_match:hover {
+    background: #262628;
+    transform: translateX(2px);
+}
+
+.popular_match-main {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+}
+
+.popular_match-league {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.popular_match-team {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.popular_match-team-logo {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 9px;
+    font-weight: 900;
+}
+
+.popular_match-team-logo img {
+    width: 82%;
+    height: 82%;
+    display: block;
+    object-fit: contain;
+}
+
+.popular_match-team strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.popular_match-time {
+    min-width: 56px;
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
+}
+
+.popular_match-time strong {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.popular_match-time span {
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: lowercase;
+}
+
+@media (max-width: 1080px) {
+    .popular_matches-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .popular_matches {
+        padding: 14px;
+    }
+
+    .popular_matches-list {
+        grid-template-columns: 1fr;
+    }
+
+    .popular_matches-head h2 {
+        font-size: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .popular_match {
+        transition: none;
+    }
+}
