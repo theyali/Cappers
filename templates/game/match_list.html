@@ -21,18 +21,82 @@
         </div>
         <div class="matches-hero-meta">
             <span>{{ total_count }}</span>
-            <small>игр в базе</small>
+            <small>игр на {{ selected_date|date:"j M" }}</small>
         </div>
     </div>
 
     <nav class="matches-tabs" aria-label="Фильтр матчей">
         {% for tab in scope_tabs %}
-        <a class="{% if active_scope == tab.scope %}is-active{% endif %}{% if tab.scope == 'watched' %} is-watch-tab{% endif %}" href="{% url 'game:match_list' %}?scope={{ tab.scope }}{% if selected_date_iso %}&date={{ selected_date_iso }}{% endif %}">
+        <a class="{% if active_scope == tab.scope %}is-active{% endif %}{% if tab.scope == 'watched' %} is-watch-tab{% endif %}" href="{{ tab.url }}">
             <span>{{ tab.label }}</span>
             <b>{{ tab.count }}</b>
         </a>
         {% endfor %}
     </nav>
+
+    <section class="matches-date-filter" aria-label="Фильтр матчей по дате">
+        <div class="matches-date-current">
+            <span class="matches-date-current-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span class="matches-date-current-copy">
+                <span>Матчи по дате</span>
+                <strong>{{ selected_date|date:"l, j E" }}</strong>
+            </span>
+        </div>
+
+        <div class="matches-date-controls">
+            <a
+                class="matches-date-step"
+                href="{{ previous_date_url }}"
+                aria-label="Предыдущий день"
+                title="Предыдущий день"
+            >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+
+            <div class="matches-date-shortcuts">
+                {% for item in date_shortcuts %}
+                <a
+                    class="matches-date-option{% if item.is_active %} is-active{% endif %}"
+                    href="{{ item.url }}"
+                >
+                    <span>{{ item.label }}</span>
+                    <small>{{ item.date|date:"j M" }}</small>
+                </a>
+                {% endfor %}
+            </div>
+
+            <a
+                class="matches-date-step"
+                href="{{ next_date_url }}"
+                aria-label="Следующий день"
+                title="Следующий день"
+            >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+
+            <label class="matches-date-picker">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Календарь</span>
+                <input
+                    type="date"
+                    value="{{ selected_date_iso }}"
+                    data-match-date-input
+                    data-scope="{{ active_scope }}"
+                    aria-label="Выбрать дату матчей"
+                >
+            </label>
+        </div>
+    </section>
 
     <div
         class="matches-shell"
@@ -64,11 +128,10 @@
                 <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
                 {% if active_scope == 'watched' %}
                     <h2>Нет отслеживаемых матчей</h2>
-                    <p>Откройте предстоящий или LIVE-матч и нажмите «Следить за матчем».</p>
                 {% else %}
                     <h2>Матчей пока нет</h2>
-                    <p>Синхронизация скоро заполнит футбольную сетку.</p>
                 {% endif %}
+                <p>На {{ selected_date|date:"j M" }} матчей в этой вкладке нет.</p>
             </div>
             {% endif %}
         </section>
@@ -80,13 +143,7 @@
 
 {% block extra_js %}
 {% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
-<script
-    src="{% static 'front/js/matches-date-filter.js' %}"
-    data-match-date-filter
-    data-selected-date="{{ selected_date_iso }}"
-    data-today-date="{{ today_iso }}"
-    defer
-></script>
+<script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 <script src="{% static 'front/js/matches-lazy-load.js' %}" defer></script>

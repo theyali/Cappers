@@ -164,8 +164,37 @@ def match_list(request):
             count = watched_count
         else:
             count = counts.get(scope, 0)
-        scope_tabs.append({"scope": scope, "label": label, "count": count})
+        scope_tabs.append(
+            {
+                "scope": scope,
+                "label": label,
+                "count": count,
+                "url": _match_list_url(request, scope=scope, selected_date=selected_date),
+            }
+        )
 
+    date_shortcuts = []
+    for label, shortcut_date in (
+        ("Вчера", today - timedelta(days=1)),
+        ("Сегодня", today),
+        ("Завтра", today + timedelta(days=1)),
+    ):
+        date_shortcuts.append(
+            {
+                "label": label,
+                "date": shortcut_date,
+                "iso": shortcut_date.isoformat(),
+                "is_active": shortcut_date == selected_date,
+                "url": _match_list_url(
+                    request,
+                    scope=active_scope,
+                    selected_date=shortcut_date,
+                ),
+            }
+        )
+
+    previous_date = selected_date - timedelta(days=1)
+    next_date = selected_date + timedelta(days=1)
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
     context = {
         "active_scope": active_scope,
@@ -179,6 +208,19 @@ def match_list(request):
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
+        "previous_date_iso": previous_date.isoformat(),
+        "previous_date_url": _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=previous_date,
+        ),
+        "next_date_iso": next_date.isoformat(),
+        "next_date_url": _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=next_date,
+        ),
+        "date_shortcuts": date_shortcuts,
         "today_iso": today.isoformat(),
         "locked_card_odds": card_odds,
     }
@@ -205,6 +247,16 @@ def _window_size(raw_value):
 
 def _is_lazy_request(request) -> bool:
     return request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.GET.get("lazy") == "1"
+
+
+def _match_list_url(request, *, scope, selected_date):
+    query = request.GET.copy()
+    query["scope"] = scope
+    query["date"] = selected_date.isoformat()
+    query.pop("page", None)
+    query.pop("lazy", None)
+    encoded_query = query.urlencode()
+    return f"{request.path}?{encoded_query}" if encoded_query else request.path
 
 
 def _stored_card_odds(match: Match) -> dict[str, str]:
