@@ -394,3 +394,7 @@
         transition: none;
     }
 }
+.brand-name{
+    font-family: 'Russo One Cappers';
+    font-weight: 300;
+}
