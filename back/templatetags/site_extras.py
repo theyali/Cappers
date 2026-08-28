@@ -25,11 +25,23 @@ def my_recent_coupons(user):
     if not getattr(user, "is_authenticated", False):
         return {"my_coupons": []}
 
-    coupons = (
-        PredictionCoupon.objects.filter(author=user)
+    coupons = list(
+        PredictionCoupon.objects.filter(
+            author=user,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
         .annotate(predictions_count=Count("predictions", distinct=True))
-        .order_by("-created_at", "-id")[:3]
+        .order_by("-published_at", "-created_at", "-id")[:3]
     )
+    for coupon in coupons:
+        if coupon.total_stake and coupon.total_stake > 0:
+            coupon.sidebar_coefficient = (
+                coupon.possible_payout / coupon.total_stake
+            ).quantize(Decimal("0.01"))
+        else:
+            coupon.sidebar_coefficient = Decimal("0.00")
+        coupon.sidebar_date = coupon.published_at or coupon.created_at
+
     return {"my_coupons": coupons}
 
 
