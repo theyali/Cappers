@@ -88,13 +88,16 @@ html:root h2,
 html:root h3,
 html:root h4,
 html:root h5,
-html:root h6 {
+html:root h6,
+.heading-style-h1,
+.heading-style-h3 {
     font-family: var(--font-heading);
     font-weight: var(--heading-font-weight);
     letter-spacing: var(--heading-letter-spacing);
 }
 
-html:root h1 {
+html:root h1,
+.heading-style-h1 {
     font-size: var(--heading-h1-size);
     line-height: var(--heading-h1-line-height);
 }
@@ -104,7 +107,8 @@ html:root h2 {
     line-height: var(--heading-h2-line-height);
 }
 
-html:root h3 {
+html:root h3,
+.heading-style-h3 {
     font-size: var(--heading-h3-size);
     line-height: var(--heading-h3-line-height);
 }
