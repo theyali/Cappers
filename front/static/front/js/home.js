@@ -150,3 +150,19 @@
     render(0, "next");
     startAutoplay();
 })();
+
+(() => {
+    const matchesSection = document.querySelector(".home-important-matches");
+    if (!matchesSection) return;
+
+    matchesSection.addEventListener("click", (event) => {
+        const option = event.target.closest("[data-bet-option]");
+        if (!option || option.disabled) return;
+
+        const card = option.closest("[data-match-card]");
+        const matchLink = card?.querySelector(".match-card-main");
+        if (!matchLink?.href) return;
+
+        window.location.assign(matchLink.href);
+    });
+})();
