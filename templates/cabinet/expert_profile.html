@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/expert-public.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/expert-public-stats-compact.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/cappers-achievements.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
@@ -101,36 +102,42 @@
         </div>
     </section>
 
-    <section class="expert-public-stats" aria-label="Главные показатели эксперта">
-        <article>
-            <span>Подписчики</span>
-            <strong data-followers-count>{{ followers_count }}</strong>
-            <small>следят за экспертом</small>
+    <section class="expert-public-stats expert-public-stats-compact" aria-label="Главные показатели эксперта">
+        <article class="expert-public-stat-card is-followers">
+            <span class="expert-public-stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </span>
+            <div>
+                <span>Подписчики</span>
+                <strong data-followers-count>{{ followers_count }}</strong>
+            </div>
         </article>
-        <article>
-            <span>Прогнозы</span>
-            <strong>{{ predictions_count }}</strong>
-            <small>{{ settled_count }} уже рассчитано</small>
+        <article class="expert-public-stat-card is-following">
+            <span class="expert-public-stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"></circle><path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"></path><path d="M19 8v6"></path><path d="M16 11h6"></path></svg>
+            </span>
+            <div>
+                <span>Подписки</span>
+                <strong>{{ following_count }}</strong>
+            </div>
         </article>
-        <article class="is-main">
-            <span>Winrate</span>
-            <strong>{{ win_rate }}%</strong>
-            <small>победы без учета возвратов</small>
+        <article class="expert-public-stat-card is-wins">
+            <span class="expert-public-stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>
+            </span>
+            <div>
+                <span>Победы</span>
+                <strong>{{ wins_count }}</strong>
+            </div>
         </article>
-        <article class="is-roi">
-            <span>ROI</span>
-            <strong>{% if overall_roi > 0 %}+{% endif %}{{ overall_roi }}%</strong>
-            <small>прибыль к сумме рассчитанных купонов</small>
-        </article>
-        <article>
-            <span>Лайки</span>
-            <strong>{{ total_likes_count }}</strong>
-            <small>всего на опубликованных прогнозах</small>
-        </article>
-        <article>
-            <span>Сохранения</span>
-            <strong>{{ total_saves_count }}</strong>
-            <small>добавлений прогнозов в избранное</small>
+        <article class="expert-public-stat-card is-losses">
+            <span class="expert-public-stat-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>
+            </span>
+            <div>
+                <span>Поражения</span>
+                <strong>{{ losses_count }}</strong>
+            </div>
         </article>
     </section>
 
