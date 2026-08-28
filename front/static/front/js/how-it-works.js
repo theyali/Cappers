@@ -59,7 +59,8 @@
     });
 
     const params = new URLSearchParams(window.location.search);
-    const hashTarget = window.location.hash ? document.querySelector(window.location.hash) : null;
+    const hashId = window.location.hash ? decodeURIComponent(window.location.hash.slice(1)) : "";
+    const hashTarget = hashId ? document.getElementById(hashId) : null;
     const hashPanel = hashTarget?.closest("[data-how-panel]");
     activate(hashPanel?.dataset.howPanel || (params.get("for") === "expert" ? "expert" : "reader"));
 })();
