@@ -2,12 +2,13 @@
     width: 100%;
     min-width: 0;
     display: grid;
-    gap: 28px;
+    gap: 21px;
     margin-top: 22px;
-    padding: clamp(24px, 4vw, 44px);
+    padding: 15px;
     border-radius: 32px;
     background: var(--panel);
 }
+
 
 .home-trusted-bookmakers-head {
     display: flex;
@@ -32,7 +33,7 @@
 .home-trusted-bookmakers-head h2 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(36px, 4.5vw, 62px);
+    font-size: clamp(36px, 4.5vw, 39px);
     line-height: .96;
     letter-spacing: -.045em;
 }
@@ -46,17 +47,14 @@
 }
 
 .home-trusted-bookmakers-count {
-    width: 72px;
-    height: 72px;
-    flex: 0 0 72px;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
-    border-radius: 22px;
+    border-radius: 8px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 24px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
+    font-size: 17px;
 }
 
 .home-trusted-bookmakers-list {
@@ -87,13 +85,13 @@
 }
 
 .home-trusted-bookmaker-logo {
-    width: 116px;
-    height: 92px;
+    width: 100px;
+    height: auto;
     display: grid;
     place-items: center;
     overflow: hidden;
-    padding: 12px;
-    border-radius: 20px;
+    padding: 10px;
+    border-radius: 12px;
     color: var(--text);
     background: #252527;
     font-size: 19px;
@@ -123,7 +121,7 @@
 
 .home-trusted-bookmaker-name {
     color: var(--text);
-    font-size: clamp(23px, 2.4vw, 32px);
+    font-size: clamp(23px, 2.4vw, 22px);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -.025em;
@@ -166,11 +164,11 @@
 }
 
 .home-trusted-bookmaker-arrow {
-    width: 56px;
-    height: 56px;
+    width: 36px;
+    height: 36px;
     display: grid;
     place-items: center;
-    border-radius: 18px;
+    border-radius: 11px;
     background: #252527;
     transition: transform .2s ease, background .2s ease;
 }
