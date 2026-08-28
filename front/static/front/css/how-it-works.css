@@ -4,13 +4,19 @@
 }
 
 .how-hero,
-.how-panel {
-    border-radius: 24px;
+.how-panel,
+.how-role-tabs,
+.how-jump-nav {
     background: var(--panel);
 }
 
+.how-hero,
+.how-panel {
+    border-radius: 24px;
+}
+
 .how-hero {
-    min-height: 290px;
+    min-height: 300px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 190px;
     align-items: center;
@@ -19,28 +25,28 @@
 }
 
 .how-hero-copy {
-    max-width: 760px;
+    max-width: 820px;
 }
 
 .how-kicker {
     margin: 0 0 12px;
     color: var(--yellow);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: .12em;
     text-transform: uppercase;
 }
 
 .how-hero h1 {
     margin: 0;
-    max-width: 760px;
+    max-width: 820px;
     font-size: clamp(40px, 5vw, 72px);
     line-height: .96;
     letter-spacing: -.045em;
 }
 
 .how-hero-copy > p:last-child {
-    max-width: 690px;
+    max-width: 760px;
     margin: 20px 0 0;
     color: rgba(255, 255, 255, .64);
     font-size: 15px;
@@ -60,13 +66,40 @@
     line-height: 1;
 }
 
+.how-jump-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 18px;
+}
+
+.how-jump-nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .72);
+    background: #29292c;
+    font-size: 12px;
+    font-weight: 700;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.how-jump-nav a:hover {
+    color: var(--ink);
+    background: var(--yellow);
+    transform: translateY(-1px);
+}
+
 .how-role-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     padding: 10px;
     border-radius: 18px;
-    background: var(--panel);
 }
 
 .how-role-tab {
@@ -130,37 +163,83 @@
 
 .how-panel {
     display: none;
-    gap: 28px;
-    padding: clamp(24px, 3vw, 38px);
+    gap: 18px;
+    padding: clamp(18px, 2.5vw, 30px);
 }
 
 .how-panel.is-active {
     display: grid;
 }
 
-.how-intro {
+.how-section,
+.how-feature {
+    scroll-margin-top: 96px;
+}
+
+.how-section {
+    display: grid;
+    gap: 24px;
+}
+
+.how-feature {
+    display: grid;
+    gap: 20px;
+    padding: clamp(22px, 3vw, 34px);
+    border-radius: 20px;
+    background: #171718;
+}
+
+.how-intro,
+.how-feature-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, .65fr);
     align-items: end;
     gap: 28px;
 }
 
-.how-intro h2 {
-    max-width: 800px;
+.how-feature-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+}
+
+.how-intro h2,
+.how-feature-head h2 {
+    max-width: 820px;
     margin: 0;
     font-size: clamp(30px, 4vw, 48px);
     line-height: 1;
     letter-spacing: -.04em;
 }
 
-.how-intro > p {
+.how-intro > p,
+.how-feature-lead {
     margin: 0;
     color: rgba(255, 255, 255, .62);
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
-.how-steps {
+.how-feature-lead {
+    max-width: 900px;
+    font-size: 15px;
+}
+
+.how-feature-badge {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.how-steps,
+.how-flow {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
@@ -173,7 +252,7 @@
     flex-direction: column;
     padding: 22px;
     border-radius: 18px;
-    background: #171718;
+    background: #111112;
 }
 
 .how-step-number {
@@ -220,6 +299,238 @@
     line-height: 1.55;
 }
 
+.how-flow article {
+    min-width: 0;
+    padding: 20px;
+    border-radius: 16px;
+    background: #222224;
+}
+
+.how-flow article > span {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 34px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.how-flow article:nth-child(even) > span {
+    color: #fff;
+    background: var(--blue);
+}
+
+.how-flow strong,
+.how-notification-grid strong,
+.how-two-columns strong,
+.how-cap-step-list strong {
+    display: block;
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.25;
+}
+
+.how-flow p,
+.how-notification-grid p,
+.how-two-columns p,
+.how-cap-step-list p {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, .58);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.how-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.how-action {
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 16px;
+    border-radius: 12px;
+    color: #fff;
+    background: #2a2a2d;
+    font-size: 12px;
+    font-weight: 700;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.how-action:hover {
+    transform: translateY(-1px);
+    background: #343438;
+}
+
+.how-action.is-blue {
+    background: var(--blue);
+}
+
+.how-action.is-blue:hover {
+    background: #2468ff;
+}
+
+.how-note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #242426;
+}
+
+.how-note strong {
+    color: var(--yellow);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.how-note p {
+    margin: 0;
+    color: rgba(255, 255, 255, .66);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.how-notification-grid,
+.how-two-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.how-notification-grid article,
+.how-two-columns article {
+    min-width: 0;
+    padding: 18px;
+    border-radius: 15px;
+    background: #222224;
+}
+
+.how-track-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #222224;
+}
+
+.how-track-row > div {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.how-track-row strong {
+    color: #fff;
+    font-size: 14px;
+}
+
+.how-track-row p {
+    margin: 5px 0 0;
+    color: rgba(255, 255, 255, .58);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.how-track-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    color: var(--yellow);
+    background: #111112;
+}
+
+.how-track-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.how-channels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.how-channels > div {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 13px;
+    background: #222224;
+}
+
+.how-channels span {
+    color: rgba(255, 255, 255, .6);
+    font-size: 11px;
+}
+
+.how-channels strong {
+    color: #fff;
+    font-size: 11px;
+    text-align: right;
+}
+
+.how-cap-step-list {
+    display: grid;
+    gap: 8px;
+}
+
+.how-cap-step-list article {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 15px;
+    background: #171718;
+}
+
+.how-cap-step-list article > span {
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.how-stat-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.how-stat-list span {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 13px;
+    color: #fff;
+    background: #222224;
+    font-size: 12px;
+    font-weight: 700;
+}
+
 .how-summary {
     min-height: 92px;
     display: flex;
@@ -264,7 +575,7 @@
     color: var(--ink);
     background: var(--yellow);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .how-summary-expert {
@@ -298,12 +609,17 @@
         grid-template-columns: 1fr;
     }
 
-    .how-steps {
+    .how-steps,
+    .how-flow {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .how-channels {
+        grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 760px) {
     .how-hero,
     .how-panel {
         border-radius: 18px;
@@ -318,6 +634,20 @@
         font-size: clamp(36px, 12vw, 52px);
     }
 
+    .how-jump-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .how-jump-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .how-jump-nav a {
+        flex: 0 0 auto;
+    }
+
     .how-role-tabs {
         grid-template-columns: 1fr;
     }
@@ -327,10 +657,26 @@
     }
 
     .how-panel {
+        padding: 14px;
+    }
+
+    .how-feature {
         padding: 20px 16px;
     }
 
-    .how-steps {
+    .how-feature-head {
+        grid-template-columns: 1fr;
+    }
+
+    .how-feature-badge {
+        justify-self: start;
+    }
+
+    .how-steps,
+    .how-flow,
+    .how-notification-grid,
+    .how-two-columns,
+    .how-stat-list {
         grid-template-columns: 1fr;
     }
 
@@ -338,13 +684,62 @@
         min-height: 235px;
     }
 
+    .how-flow article > span {
+        margin-bottom: 22px;
+    }
+
+    .how-track-row,
     .how-summary {
         align-items: flex-start;
         flex-direction: column;
     }
 
+    .how-track-row > div {
+        align-items: flex-start;
+    }
+
+    .how-track-row .how-action,
     .how-summary a {
         width: 100%;
         justify-content: center;
+    }
+
+    .how-actions-row {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .how-action {
+        width: 100%;
+    }
+
+    .how-note {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .how-cap-step-list article {
+        grid-template-columns: 42px minmax(0, 1fr);
+        padding: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    .how-panel {
+        padding: 10px;
+    }
+
+    .how-feature {
+        padding: 18px 14px;
+    }
+
+    .how-intro h2,
+    .how-feature-head h2 {
+        font-size: 30px;
+    }
+
+    .how-track-icon {
+        width: 40px;
+        height: 40px;
     }
 }
