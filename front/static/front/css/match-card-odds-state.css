@@ -44,6 +44,24 @@
     height: 100%;
 }
 
+.match-bet-option.is-locked-odd,
+.odds-button.is-locked-odd {
+    position: relative;
+    opacity: .58;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.match-bet-option.is-locked-odd:hover,
+.odds-button.is-locked-odd:hover {
+    transform: none;
+}
+
+.odds-button.is-locked-odd .match-odd-lock {
+    top: 8px;
+    right: 8px;
+}
+
 .match-card-options.is-locked {
     opacity: .88;
 }

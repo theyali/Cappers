@@ -10,9 +10,9 @@ class CapperIdentityForm(forms.Form):
         help_text="Так вас увидят в рейтинге, прогнозах и публичном профиле.",
     )
     avatar = forms.ImageField(
-        label="Фото профиля",
+        label="Изменить фото (необязательно)",
         required=False,
-        help_text="JPG, PNG или WebP до 5 МБ.",
+        help_text="Фото аккаунта уже используется в профиле каппера. Загружайте файл только если хотите заменить его. JPG, PNG или WebP до 5 МБ.",
     )
 
     def clean_avatar(self):

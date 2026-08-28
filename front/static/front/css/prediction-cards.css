@@ -417,6 +417,42 @@
     line-height: 1;
 }
 
+.prediction-card-money {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.prediction-card-money > div {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    background: #171718;
+}
+
+.prediction-card-money > div:last-child {
+    text-align: right;
+}
+
+.prediction-card-money span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.prediction-card-money strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 15px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.prediction-card-money > div:last-child strong {
+    color: var(--yellow);
+}
+
 .prediction-card.prediction-card-rich .prediction-comment {
     min-height: 36px;
     margin: 0;

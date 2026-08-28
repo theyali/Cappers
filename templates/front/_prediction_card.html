@@ -152,6 +152,17 @@
         </div>
     </div>
 
+    <div class="prediction-card-money" aria-label="Сумма и стоимость купона">
+        <div>
+            <span>Сумма</span>
+            <strong>{{ prediction.coupon.total_stake|floatformat:0 }} ₽</strong>
+        </div>
+        <div>
+            <span>Стоимость купона</span>
+            <strong>{{ prediction.coupon.possible_payout|floatformat:0 }} ₽</strong>
+        </div>
+    </div>
+
     <div class="prediction-confidence" aria-label="Уверенность эксперта {{ prediction.coupon.confidence }} процентов">
         <div class="prediction-confidence-head">
             <span>Уверенность прогноза</span>

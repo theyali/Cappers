@@ -17,6 +17,8 @@
                 <div class="profile-avatar" id="profileAvatar">
                     {% if analyst_profile and analyst_profile.avatar %}
                         <img src="{{ analyst_profile.avatar.url }}" alt="Аватар {{ request.user.username }}" id="profileAvatarImage">
+                    {% elif request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" alt="Аватар {{ request.user.username }}" id="profileAvatarImage">
                     {% else %}
                         <span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>
                     {% endif %}
@@ -148,8 +150,8 @@
                     </div>
                     <span class="profile-coupon-status is-{{ coupon.result_key }}">{{ coupon.result_label }}</span>
                     <div class="profile-coupon-metric"><span>Матчи</span><strong>{{ coupon.predictions_count }}</strong></div>
-                    <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ coupon.total_stake }}</strong></div>
-                    <div class="profile-coupon-metric"><span>Возможный выигрыш</span><strong>{{ coupon.possible_payout }}</strong></div>
+                    <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ coupon.total_stake }} ₽</strong></div>
+                    <div class="profile-coupon-metric"><span>Стоимость купона</span><strong>{{ coupon.possible_payout }} ₽</strong></div>
                     <span class="profile-coupon-open" aria-hidden="true">→</span>
                 </a>
                 {% endfor %}

@@ -34,8 +34,9 @@
 
         <div class="coupon-shared">
             <label class="coupon-field">
-                <span>Сумма</span>
-                <input type="number" name="stake" min="1" step="1" placeholder="100" data-coupon-stake>
+                <span>Сумма, ₽</span>
+                <input type="number" name="stake" min="100" max="1000000" step="1" placeholder="100" data-coupon-stake>
+                <small class="coupon-confidence-hint">От 100 ₽ до 1 000 000 ₽</small>
             </label>
             <div class="coupon-odd">
                 <span>Общий кф</span>
@@ -62,8 +63,8 @@
         </div>
 
         <div class="coupon-total">
-            <span>Возможный выигрыш</span>
-            <strong data-coupon-total>0</strong>
+            <span>Стоимость купона</span>
+            <strong><span data-coupon-total>0</span> ₽</strong>
         </div>
 
         <button class="coupon-submit" type="submit" data-coupon-submit>
@@ -78,3 +79,4 @@
         </p>
     </div>
 </form>
+<script src="{% static 'front/js/coupon-constraints.js' %}" defer></script>
