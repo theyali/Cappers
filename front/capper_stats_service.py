@@ -1,7 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 
-from django.db.models import Avg, Count, Prefetch, Q
+from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
@@ -97,8 +98,7 @@ class CapperStatsService:
         popular_profiles = self._popular_profiles(profiles)
         active_profiles = self._active_profiles(profiles)
 
-        now = timezone.now()
-        new_cutoff = now - timedelta(days=NEW_WINDOW_DAYS)
+        new_cutoff = timezone.now() - timedelta(days=NEW_WINDOW_DAYS)
         summary = {
             "experts": len(profiles),
             "verified": sum(1 for profile in profiles if profile.is_verified),
@@ -107,9 +107,7 @@ class CapperStatsService:
                 1 for profile in profiles if profile.recent_publications_count > 0
             ),
             "new_30d": sum(
-                1
-                for profile in profiles
-                if self._joined_at(profile) >= new_cutoff
+                1 for profile in profiles if self._joined_at(profile) >= new_cutoff
             ),
             "rising": len(rising_profiles),
         }
@@ -136,7 +134,9 @@ class CapperStatsService:
             wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
             losses=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE)),
             refunds=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.REFUND)),
-            open_predictions=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)),
+            open_predictions=Count(
+                "id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)
+            ),
         )
         engagement = published.aggregate(
             likes=Count("likes", distinct=True),
@@ -149,13 +149,20 @@ class CapperStatsService:
         predictions_count = stats["predictions"] or 0
         decided_predictions = wins_count + losses_count
         settled_predictions = decided_predictions + refunds_count
-        win_rate = round(wins_count / decided_predictions * 100, 1) if decided_predictions else 0
+        win_rate = (
+            round(wins_count / decided_predictions * 100, 1)
+            if decided_predictions
+            else 0
+        )
 
         followers_count = AnalystFollow.objects.filter(analyst=analyst).count()
+        following_count = AnalystFollow.objects.filter(follower=analyst).count()
         total_likes_count = engagement["likes"] or 0
         total_saves_count = engagement["saves"] or 0
 
-        published_coupons = list(published.order_by("settled_at", "updated_at", "id"))
+        published_coupons = list(
+            published.order_by("settled_at", "updated_at", "id")
+        )
         settled_coupons = [
             coupon
             for coupon in published_coupons
@@ -172,7 +179,7 @@ class CapperStatsService:
         overall_roi = self._roi(total_profit, settled_stake)
 
         coefficient_values = [
-            (coupon.possible_payout / coupon.total_stake)
+            coupon.possible_payout / coupon.total_stake
             for coupon in published_coupons
             if coupon.total_stake and coupon.total_stake > 0 and coupon.possible_payout
         ]
@@ -187,7 +194,8 @@ class CapperStatsService:
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
         avg_prediction_coefficient = (
-            published_items.aggregate(value=Avg("coefficient"))["value"] or Decimal("0")
+            published_items.aggregate(value=Avg("coefficient"))["value"]
+            or Decimal("0")
         )
 
         now = timezone.now()
@@ -217,6 +225,7 @@ class CapperStatsService:
             "expert_name": name,
             "expert_initials": _initials(name),
             "followers_count": followers_count,
+            "following_count": following_count,
             "predictions_count": predictions_count,
             "total_likes_count": total_likes_count,
             "total_saves_count": total_saves_count,
@@ -375,7 +384,12 @@ class CapperStatsService:
 
     @staticmethod
     def _coupon_result_date(coupon: PredictionCoupon):
-        return coupon.settled_at or coupon.updated_at or coupon.published_at or coupon.created_at
+        return (
+            coupon.settled_at
+            or coupon.updated_at
+            or coupon.published_at
+            or coupon.created_at
+        )
 
     @staticmethod
     def _signed_money(value: Decimal) -> str:
@@ -389,7 +403,13 @@ class CapperStatsService:
             return 0.0
         return round(float(profit / stake * Decimal("100")), 1)
 
-    def _profit_period(self, coupons: list[PredictionCoupon], *, days: int, now) -> dict:
+    def _profit_period(
+        self,
+        coupons: list[PredictionCoupon],
+        *,
+        days: int,
+        now,
+    ) -> dict:
         cutoff = now - timedelta(days=days)
         selected = [
             coupon
@@ -415,7 +435,13 @@ class CapperStatsService:
             "negative": profit < 0,
         }
 
-    def _profit_chart(self, coupons: list[PredictionCoupon], *, days: int, now) -> list[dict]:
+    def _profit_chart(
+        self,
+        coupons: list[PredictionCoupon],
+        *,
+        days: int,
+        now,
+    ) -> list[dict]:
         today = timezone.localtime(now).date()
         start_date = today - timedelta(days=days - 1)
         daily_profit: dict = {}
@@ -424,14 +450,22 @@ class CapperStatsService:
             result_date = timezone.localtime(self._coupon_result_date(coupon)).date()
             if result_date < start_date or result_date > today:
                 continue
-            daily_profit[result_date] = daily_profit.get(result_date, Decimal("0")) + self._coupon_profit(coupon)
+            daily_profit[result_date] = (
+                daily_profit.get(result_date, Decimal("0"))
+                + self._coupon_profit(coupon)
+            )
 
         points = []
         balance = Decimal("0")
         for offset in range(days):
             day = start_date + timedelta(days=offset)
             balance += daily_profit.get(day, Decimal("0"))
-            points.append({"label": day.strftime("%d.%m"), "value": round(float(balance), 2)})
+            points.append(
+                {
+                    "label": day.strftime("%d.%m"),
+                    "value": round(float(balance), 2),
+                }
+            )
         return points
 
     @staticmethod
@@ -457,45 +491,34 @@ class CapperStatsService:
             count += 1
         return {
             "count": count,
-            "label": "побед подряд" if current == PredictionCoupon.StateStatus.WIN else "поражений подряд",
+            "label": (
+                "побед подряд"
+                if current == PredictionCoupon.StateStatus.WIN
+                else "поражений подряд"
+            ),
             "state": current,
         }
 
-    @staticmethod
-    def _latest_prediction_cards(analyst) -> list[Prediction]:
-        positions = Prediction.objects.select_related(
-            "match__league__country",
-            "match__home_team",
-            "match__away_team",
-        ).order_by("id")
-        coupons = list(
-            PredictionCoupon.objects.filter(
-                author=analyst,
-                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            )
-            .prefetch_related(
-                Prefetch("predictions", queryset=positions, to_attr="public_positions")
-            )
-            .order_by("-published_at", "-created_at", "-id")[:12]
+    def _latest_prediction_cards(self, analyst) -> list:
+        """Reuse the canonical prediction-card serializer instead of duplicating it."""
+        from .prediction_views import (
+            _decorate_predictions,
+            _following_ids,
+            _published_queryset,
         )
 
-        cards = []
-        for coupon in coupons:
-            items = list(getattr(coupon, "public_positions", []) or [])
-            if not items:
-                continue
-            item = items[0]
-            item.confidence = coupon.confidence
-            item.state_status = coupon.state_status
-            if coupon.total_stake:
-                item.coefficient = (
-                    coupon.possible_payout / coupon.total_stake
-                ).quantize(Decimal("0.01"))
-            if len(items) > 1:
-                item.market = f"Экспресс · {len(items)} игр"
-                item.selection = f"{item.selection} + ещё {len(items) - 1}"
-            cards.append(item)
-        return cards
+        queryset = (
+            _published_queryset()
+            .filter(author=analyst)
+            .order_by("-published_at", "-created_at", "-id")[:12]
+        )
+        user = self.user or SimpleNamespace(is_authenticated=False, pk=None)
+        request_proxy = SimpleNamespace(user=user)
+        return _decorate_predictions(
+            request_proxy,
+            queryset,
+            following_ids=_following_ids(user),
+        )
 
     @staticmethod
     def _market_rows(queryset) -> list[dict]:
@@ -503,9 +526,15 @@ class CapperStatsService:
             queryset.values("market")
             .annotate(
                 total=Count("id"),
-                wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-                losses=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-                refunds=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
+                wins=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.WIN)
+                ),
+                losses=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.LOSE)
+                ),
+                refunds=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.REFUND)
+                ),
                 avg_coefficient=Avg("coefficient"),
             )
             .order_by("-total", "market")[:8]
@@ -515,12 +544,18 @@ class CapperStatsService:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
             result.append(
                 {
-                    "label": MARKET_LABELS.get(row["market"], row["market"] or "Рынок"),
+                    "label": MARKET_LABELS.get(
+                        row["market"], row["market"] or "Рынок"
+                    ),
                     "count": row["total"] or 0,
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": round((row["wins"] or 0) / settled * 100) if settled else 0,
+                    "win_rate": (
+                        round((row["wins"] or 0) / settled * 100)
+                        if settled
+                        else 0
+                    ),
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )
@@ -532,9 +567,15 @@ class CapperStatsService:
             queryset.values("match__league__name_ru", "match__league__name")
             .annotate(
                 total=Count("id"),
-                wins=Count("id", filter=Q(state_status=Prediction.StateStatus.WIN)),
-                losses=Count("id", filter=Q(state_status=Prediction.StateStatus.LOSE)),
-                refunds=Count("id", filter=Q(state_status=Prediction.StateStatus.REFUND)),
+                wins=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.WIN)
+                ),
+                losses=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.LOSE)
+                ),
+                refunds=Count(
+                    "id", filter=Q(state_status=Prediction.StateStatus.REFUND)
+                ),
                 avg_coefficient=Avg("coefficient"),
             )
             .order_by("-total", "match__league__name_ru")[:8]
@@ -544,12 +585,20 @@ class CapperStatsService:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
             result.append(
                 {
-                    "label": row["match__league__name_ru"] or row["match__league__name"] or "Лига не указана",
+                    "label": (
+                        row["match__league__name_ru"]
+                        or row["match__league__name"]
+                        or "Лига не указана"
+                    ),
                     "count": row["total"] or 0,
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": round((row["wins"] or 0) / settled * 100) if settled else 0,
+                    "win_rate": (
+                        round((row["wins"] or 0) / settled * 100)
+                        if settled
+                        else 0
+                    ),
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )
