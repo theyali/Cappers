@@ -83,45 +83,45 @@ textarea {
     font-family: var(--font-body);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+html:root h1,
+html:root h2,
+html:root h3,
+html:root h4,
+html:root h5,
+html:root h6 {
     font-family: var(--font-heading);
-    font-weight: var(--heading-font-weight) !important;
-    letter-spacing: var(--heading-letter-spacing) !important;
+    font-weight: var(--heading-font-weight);
+    letter-spacing: var(--heading-letter-spacing);
 }
 
-h1 {
-    font-size: var(--heading-h1-size) !important;
-    line-height: var(--heading-h1-line-height) !important;
+html:root h1 {
+    font-size: var(--heading-h1-size);
+    line-height: var(--heading-h1-line-height);
 }
 
-h2 {
-    font-size: var(--heading-h2-size) !important;
-    line-height: var(--heading-h2-line-height) !important;
+html:root h2 {
+    font-size: var(--heading-h2-size);
+    line-height: var(--heading-h2-line-height);
 }
 
-h3 {
-    font-size: var(--heading-h3-size) !important;
-    line-height: var(--heading-h3-line-height) !important;
+html:root h3 {
+    font-size: var(--heading-h3-size);
+    line-height: var(--heading-h3-line-height);
 }
 
-h4 {
-    font-size: var(--heading-h4-size) !important;
-    line-height: var(--heading-h4-line-height) !important;
+html:root h4 {
+    font-size: var(--heading-h4-size);
+    line-height: var(--heading-h4-line-height);
 }
 
-h5 {
-    font-size: var(--heading-h5-size) !important;
-    line-height: var(--heading-h5-line-height) !important;
+html:root h5 {
+    font-size: var(--heading-h5-size);
+    line-height: var(--heading-h5-line-height);
 }
 
-h6 {
-    font-size: var(--heading-h6-size) !important;
-    line-height: var(--heading-h6-line-height) !important;
+html:root h6 {
+    font-size: var(--heading-h6-size);
+    line-height: var(--heading-h6-line-height);
 }
 
 body {
