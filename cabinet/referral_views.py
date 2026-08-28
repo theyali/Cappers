@@ -1,22 +1,65 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.http import JsonResponse
+from django.db.models import Q, Sum
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
-from .models import AnalystFollow, CapperReferralVisit, User
+from .models import AnalystFollow, AnalystProfile, CapperReferralVisit, User
 from .referrals import mark_referral_subscription, record_referral_visit
+
+
+def _public_analyst_profile_by_handle(handle: str) -> AnalystProfile:
+    value = (handle or "").strip().lstrip("@")
+    profiles = AnalystProfile.objects.select_related("user").filter(
+        user__role=User.Role.ANALYST,
+        is_public=True,
+    )
+
+    profile = profiles.filter(user__username__iexact=value).first()
+    if profile:
+        return profile
+
+    alternatives = list(
+        profiles.filter(
+            Q(display_name__iexact=value) | Q(user__telegram_username__iexact=value)
+        )
+        .distinct()[:2]
+    )
+    if len(alternatives) == 1:
+        return alternatives[0]
+
+    raise Http404("Каппер по этой реферальной ссылке не найден.")
 
 
 @require_GET
 def referral_redirect(request, username: str):
-    analyst = get_object_or_404(
-        User.objects.select_related("analyst_profile"),
-        username=username,
-        role=User.Role.ANALYST,
-        analyst_profile__is_public=True,
+    """Compatibility route for old /r/<handle>/ links."""
+    profile = _public_analyst_profile_by_handle(username)
+    analyst = profile.user
+    record_referral_visit(request, analyst)
+    return redirect("cabinet:expert_profile", username=analyst.username)
+
+
+@require_GET
+def referral_redirect_code(request, username: str, code: str):
+    """Canonical referral route: /r/<username>/<random-code>/."""
+    profile = get_object_or_404(
+        AnalystProfile.objects.select_related("user"),
+        referral_code__iexact=(code or "").strip(),
+        user__role=User.Role.ANALYST,
+        is_public=True,
     )
+    analyst = profile.user
+
+    if analyst.username.casefold() != (username or "").casefold():
+        return redirect(
+            "front:capper_referral_code",
+            username=analyst.username,
+            code=profile.referral_code,
+            permanent=True,
+        )
+
     record_referral_visit(request, analyst)
     return redirect("cabinet:expert_profile", username=analyst.username)
 
@@ -82,6 +125,13 @@ def referral_stats(request):
     if not request.user.is_analyst:
         return JsonResponse({"ok": False, "error": "Раздел доступен только капперам."}, status=403)
 
+    profile = AnalystProfile.objects.filter(user=request.user).first()
+    if not profile:
+        return JsonResponse(
+            {"ok": False, "error": "Профиль каппера не найден."},
+            status=409,
+        )
+
     visits = CapperReferralVisit.objects.filter(analyst=request.user)
     authenticated_visitors = (
         visits.filter(visitor__isnull=False)
@@ -120,12 +170,19 @@ def referral_stats(request):
         )
 
     referral_url = request.build_absolute_uri(
-        reverse("front:capper_referral", kwargs={"username": request.user.username})
+        reverse(
+            "front:capper_referral_code",
+            kwargs={
+                "username": request.user.username,
+                "code": profile.referral_code,
+            },
+        )
     )
     return JsonResponse(
         {
             "ok": True,
             "referral_url": referral_url,
+            "referral_code": profile.referral_code,
             "visitors_count": visitors_count,
             "clicks_count": clicks_count,
             "subscriptions_count": subscriptions_count,
