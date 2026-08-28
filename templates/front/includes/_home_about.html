@@ -1,42 +1,87 @@
 {% load static %}
 <section class="home-about" aria-labelledby="homeAboutTitle">
-    <div class="home-about-hero">
+    <div class="home-about-topline">
+        <div class="home-about-brand">
+            <span class="home-about-logo" aria-hidden="true">
+                <img src="{% static 'front/img/logo.png' %}" alt="">
+            </span>
+            <div>
+                <strong>{{ website_settings.site_name|default:"КапперХаб" }}</strong>
+                <span>Прогнозы с открытой историей результатов</span>
+            </div>
+        </div>
+        <a class="home-about-rating-link" href="{% url 'front:cappers_stats' %}">Рейтинг капперов <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="home-about-intro">
         <div class="home-about-copy">
-            <p class="home-about-eyebrow">О платформе</p>
-            <h2 id="homeAboutTitle">{{ website_settings.home_about_title }}</h2>
-            <p class="home-about-lead">{{ website_settings.home_about_lead }}</p>
+            <p class="home-about-eyebrow">О нас</p>
+            <h2 id="homeAboutTitle">{{ website_settings.home_about_title|default:"КапперХаб — место, где важен результат" }}</h2>
+            <p class="home-about-lead">{{ website_settings.home_about_lead|default:"Собираем матчи, прогнозы и статистику экспертов в одном месте, чтобы пользователям было проще сравнивать капперов, а капперам — строить публичную репутацию." }}</p>
+            {% if website_settings.home_about_text %}
+                <p class="home-about-note">{{ website_settings.home_about_text|striptags|truncatechars:300 }}</p>
+            {% endif %}
         </div>
-        <div class="home-about-mark" aria-hidden="true">
-            <span>КХ</span>
-            <small>Матчи · прогнозы · эксперты</small>
-        </div>
+
+        <aside class="home-about-capper-cta" aria-label="Преимущества для каппера">
+            <span>Для каппера</span>
+            <strong>Публикуйте прогнозы. Остальное считает КапперХаб.</strong>
+            <p>Результаты, ROI, статистика, рейтинг и аудитория собираются вокруг вашего профиля автоматически.</p>
+            {% if request.user.is_authenticated and request.user.is_analyst %}
+                <a href="{% url 'game:match_list' %}">Создать прогноз <span aria-hidden="true">→</span></a>
+            {% else %}
+                <a href="{% url 'cabinet:become_capper' %}">Стать каппером <span aria-hidden="true">→</span></a>
+            {% endif %}
+        </aside>
     </div>
 
-    <div class="home-about-facts" aria-label="Что есть на платформе">
-        <article class="home-about-fact">
-            <strong>Матчи и коэффициенты</strong>
-            <p>Следите за прематчем и live, открывайте матч и изучайте доступные рынки.</p>
-        </article>
-        <article class="home-about-fact">
-            <strong>Прогнозы экспертов</strong>
-            <p>Смотрите опубликованные прогнозы, результаты и статистику капперов.</p>
-        </article>
-        <article class="home-about-fact">
-            <strong>Рейтинг и аналитика</strong>
-            <p>Сравнивайте ROI, результаты и активность, чтобы находить подходящих экспертов.</p>
-        </article>
+    <div class="home-about-capper-head">
+        <div>
+            <p class="home-about-eyebrow">Что получает каппер</p>
+            <h3>Всё для репутации и роста аудитории</h3>
+        </div>
+        <p>Без ручных таблиц и разрозненной статистики — история прогнозов остаётся в одном профиле.</p>
     </div>
 
-    <div class="home-about-content">
-        <article class="home-about-story">
-            <p class="home-about-seo-label">О платформе</p>
-            <div class="home-about-content-title heading-style-h3">{{ website_settings.site_name }}</div>
-            <div>{{ website_settings.home_about_text|linebreaks }}</div>
+    <div class="home-about-benefits" aria-label="Плюсы КапперХаб для капперов">
+        <article class="home-about-benefit">
+            <span class="home-about-benefit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"></path></svg>
+            </span>
+            <div>
+                <strong>Автоматическая статистика</strong>
+                <p>ROI, прибыль, winrate и серии обновляются по рассчитанным купонам.</p>
+            </div>
         </article>
-        <article class="home-about-seo">
-            <p class="home-about-seo-label">Спортивная платформа</p>
-            <div class="home-about-content-title heading-style-h3">{{ website_settings.home_about_seo_title }}</div>
-            <div>{{ website_settings.home_about_seo_text|linebreaks }}</div>
+
+        <article class="home-about-benefit">
+            <span class="home-about-benefit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v1a4 4 0 0 0 4 4m8-5h4v1a4 4 0 0 1-4 4M12 12v5m-4 3h8"></path></svg>
+            </span>
+            <div>
+                <strong>Рейтинг по результатам</strong>
+                <p>Результаты и история прогнозов формируют вашу позицию среди экспертов.</p>
+            </div>
+        </article>
+
+        <article class="home-about-benefit">
+            <span class="home-about-benefit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M16 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"></path><circle cx="9" cy="7" r="4"></circle><path d="M18 8v6m-3-3h6"></path></svg>
+            </span>
+            <div>
+                <strong>Подписчики и личная лента</strong>
+                <p>Пользователи подписываются на вас и видят новые прогнозы в своей ленте.</p>
+            </div>
+        </article>
+
+        <article class="home-about-benefit">
+            <span class="home-about-benefit-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path><path d="m18 4 1 2 2 .5-1.5 1.5.5 2-2-1-2 1 .5-2L15 6.5l2-.5 1-2Z"></path></svg>
+            </span>
+            <div>
+                <strong>Публичный профиль</strong>
+                <p>Статистика, достижения, соцсети и история прогнозов собраны на одной странице.</p>
+            </div>
         </article>
     </div>
 </section>
