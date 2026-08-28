@@ -204,10 +204,6 @@
         outline: 0;
     }
 
-    .odds-section-head h2 {
-        font-size: 18px;
-    }
-
     .odds-section-head span {
         min-width: 30px;
         min-height: 26px;
@@ -227,8 +223,6 @@
 
     .odds-row h3 {
         color: #d9d9da;
-        font-size: 13px;
-        font-weight: 800;
     }
 
     .odds-grid {
