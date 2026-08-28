@@ -18,6 +18,35 @@
         });
     };
 
+    const updateCounter = (node, value) => {
+        if (!node) return;
+        node.textContent = String(value);
+        node.animate?.(
+            [
+                { transform: "scale(1)" },
+                { transform: "scale(1.12)" },
+                { transform: "scale(1)" },
+            ],
+            { duration: 220, easing: "ease-out" },
+        );
+    };
+
+    const syncFollowersCount = (button, followersCount) => {
+        const value = Number(followersCount);
+        if (!Number.isFinite(value)) return;
+
+        const card = button.closest("[data-follow-card]");
+        if (card) {
+            card.querySelectorAll("[data-followers-count]").forEach((node) => {
+                updateCounter(node, value);
+            });
+        }
+
+        document
+            .querySelectorAll(".expert-public-page [data-followers-count]")
+            .forEach((node) => updateCounter(node, value));
+    };
+
     document.addEventListener("click", async (event) => {
         if (!(event.target instanceof Element)) return;
 
@@ -43,11 +72,7 @@
             }
 
             syncButtons(button.dataset.url, Boolean(result.active));
-
-            const followers = button
-                .closest("[data-follow-card]")
-                ?.querySelector("[data-followers-count]");
-            if (followers) followers.textContent = String(result.followers_count);
+            syncFollowersCount(button, result.followers_count);
         } catch (error) {
             console.error(error);
         } finally {
