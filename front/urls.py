@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from cabinet import public_views as cabinet_public_views
 from cabinet import referral_views as cabinet_referral_views
 
-from . import article_views, feed_views, home_views, how_views, prediction_views, static_views, views
+from . import article_views, capper_views, feed_views, home_views, how_views, prediction_views, static_views, views
 
 app_name = "front"
 
@@ -37,7 +37,7 @@ urlpatterns = [
         name="prediction_favorite",
     ),
     path("experts/<str:username>/", cabinet_public_views.expert_profile, name="expert_profile"),
-    path("cappers/", views.cappers_stats, name="cappers_stats"),
+    path("cappers/", capper_views.cappers_stats, name="cappers_stats"),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path(
         "rules/",
