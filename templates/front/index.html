@@ -82,7 +82,7 @@
                                     <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy">
                                 {% else %}
                                     {{ prediction.away_name|slice:":1" }}
-                                {% endif %}
+                                {% endif % %}
                             </span>
                         </div>
                     </a>
@@ -286,7 +286,7 @@
                         <span>{{ article.created_at|date:"d.m.Y" }}</span>
                         <span>Статья</span>
                     </div>
-                    <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
+                    <div class="home-article-title heading-style-h3"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></div>
                     <p>{{ article.description|truncatechars:150 }}</p>
                     <a class="home-article-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
                 </div>
