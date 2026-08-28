@@ -1,0 +1,51 @@
+{% if popular_matches %}
+<section class="popular_matches" aria-label="Популярные матчи">
+    <div class="popular_matches-head">
+        <div>
+            <p>Сейчас интересно</p>
+            <h2>Популярные матчи</h2>
+        </div>
+        <span>{{ popular_matches|length }}</span>
+    </div>
+
+    <div class="popular_matches-list">
+        {% for item in popular_matches %}
+        <a class="popular_match" href="{{ item.url }}">
+            <div class="popular_match-main">
+                {% if item.league_name %}
+                <span class="popular_match-league">
+                    {% if item.sport_name %}{{ item.sport_name }} · {% endif %}{{ item.league_name }}
+                </span>
+                {% endif %}
+
+                <div class="popular_match-team">
+                    <span class="popular_match-team-logo">
+                        {% if item.home_logo %}
+                            <img src="{{ item.home_logo }}" alt="">
+                        {% else %}
+                            {{ item.home_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ item.home_name }}</strong>
+                </div>
+                <div class="popular_match-team">
+                    <span class="popular_match-team-logo">
+                        {% if item.away_logo %}
+                            <img src="{{ item.away_logo }}" alt="">
+                        {% else %}
+                            {{ item.away_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ item.away_name }}</strong>
+                </div>
+            </div>
+
+            <div class="popular_match-time">
+                <strong>{{ item.starts_at|date:"H:i" }}</strong>
+                <span>{{ item.date_label }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
