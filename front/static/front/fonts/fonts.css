@@ -56,6 +56,9 @@
     --font-body: "Manrope Cappers", ui-sans-serif, system-ui, sans-serif;
     --font-heading: "Russo One Cappers", "Manrope Cappers", ui-sans-serif, system-ui, sans-serif;
 
+    --heading-font-weight: 400;
+    --heading-letter-spacing: -.025em;
+
     --heading-h1-size: clamp(40px, 4.5vw, 60px);
     --heading-h2-size: clamp(32px, 3.4vw, 46px);
     --heading-h3-size: clamp(26px, 2.5vw, 34px);
@@ -69,7 +72,6 @@
     --heading-h4-line-height: 1.12;
     --heading-h5-line-height: 1.18;
     --heading-h6-line-height: 1.2;
-    --heading-letter-spacing: -.025em;
 }
 
 html,
@@ -88,7 +90,7 @@ h4,
 h5,
 h6 {
     font-family: var(--font-heading);
-    font-weight: 400;
+    font-weight: var(--heading-font-weight) !important;
     letter-spacing: var(--heading-letter-spacing) !important;
 }
 
