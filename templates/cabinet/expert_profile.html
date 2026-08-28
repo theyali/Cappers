@@ -383,6 +383,7 @@
                         <span style="width: {{ prediction.confidence }}%"></span>
                     </div>
                 </div>
+                <a class="expert-public-coupon-link" href="{% url 'front:prediction_detail' prediction.coupon_id %}">Смотреть купон <span aria-hidden="true">→</span></a>
             </article>
             {% endfor %}
         </div>
