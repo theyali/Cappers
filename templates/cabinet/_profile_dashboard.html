@@ -13,7 +13,7 @@
         </div>
     </section>
 
-    <section class="capper-dashboard-stats" aria-label="Статистика за сегодня">
+    <section class="capper-dashboard-stats" aria-label="Метрики каппера">
         <article class="is-live">
             <span>Активных</span>
             <strong>{{ today_stats.active }}</strong>
@@ -43,6 +43,16 @@
             <span>Новые подписчики</span>
             <strong>{{ new_followers_count }}</strong>
             <small>за сегодняшний день</small>
+        </article>
+        <article>
+            <span>Лайки всего</span>
+            <strong>{{ total_likes_count }}</strong>
+            <small>в среднем {{ avg_likes_per_prediction }} на опубликованный прогноз</small>
+        </article>
+        <article>
+            <span>Сохранения</span>
+            <strong>{{ total_saves_count }}</strong>
+            <small>в среднем {{ avg_saves_per_prediction }} на опубликованный прогноз</small>
         </article>
     </section>
 
