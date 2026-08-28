@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from cabinet import public_views as cabinet_public_views
 
@@ -31,5 +32,10 @@ urlpatterns = [
     path("experts/<str:username>/", cabinet_public_views.expert_profile, name="expert_profile"),
     path("cappers/", views.cappers_stats, name="cappers_stats"),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
+    path(
+        "rules/",
+        TemplateView.as_view(template_name="front/rules.html"),
+        name="rules",
+    ),
     path("pages/<slug:slug>/", static_views.static_page, name="static_page"),
 ]
