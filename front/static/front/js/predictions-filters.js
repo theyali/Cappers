@@ -4,7 +4,7 @@
     if (!$) return;
 
     let activeRequest = null;
-    let coefficientTimer = null;
+    let filterTimer = null;
 
     const currentLayout = () => $("[data-predictions-layout]").first();
 
@@ -116,6 +116,14 @@
         return url.href;
     };
 
+    const scheduleFormSubmit = ($form, delay) => {
+        window.clearTimeout(filterTimer);
+        filterTimer = window.setTimeout(() => {
+            filterTimer = null;
+            $form.trigger("submit");
+        }, delay);
+    };
+
     $(document).on("click", "[data-prediction-filter-toggle]", (event) => {
         event.preventDefault();
         const $layout = currentLayout();
@@ -137,29 +145,33 @@
         }
     );
 
-    $(document).on("input", "[data-prediction-filters] input[type='number']", function () {
-        const $form = $(this).closest("[data-prediction-filters]");
-        window.clearTimeout(coefficientTimer);
-        coefficientTimer = window.setTimeout(() => {
-            coefficientTimer = null;
-            $form.trigger("submit");
-        }, 350);
-    });
+    $(document).on(
+        "input",
+        "[data-prediction-filters] input[type='number'], [data-prediction-filters] input[type='search']",
+        function () {
+            const $form = $(this).closest("[data-prediction-filters]");
+            scheduleFormSubmit($form, this.type === "search" ? 300 : 350);
+        }
+    );
 
     $(document).on("change", "[data-prediction-sort]", function () {
         loadPredictions(sortUrl(this.value), { sortChange: true });
     });
 
-    $(document).on("click", ".predictions-tabs a, .predictions-pagination a, .prediction-filter-reset", function (event) {
-        const href = this.href;
-        if (!href) return;
+    $(document).on(
+        "click",
+        ".predictions-tabs a, .predictions-pagination a, .prediction-filter-reset, [data-prediction-ajax-link]",
+        function (event) {
+            const href = this.href;
+            if (!href) return;
 
-        const target = new URL(href, window.location.href);
-        if (target.origin !== window.location.origin) return;
+            const target = new URL(href, window.location.href);
+            if (target.origin !== window.location.origin) return;
 
-        event.preventDefault();
-        loadPredictions(target.href);
-    });
+            event.preventDefault();
+            loadPredictions(target.href);
+        }
+    );
 
     window.addEventListener("popstate", () => {
         loadPredictions(window.location.href, { pushState: false });

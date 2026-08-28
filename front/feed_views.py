@@ -23,6 +23,11 @@ FEED_SORT_OPTIONS = (
 )
 
 
+def _feed_url(request, params) -> str:
+    query = params.urlencode()
+    return f"{request.path}?{query}" if query else request.path
+
+
 @login_required
 @ensure_csrf_cookie
 def following_feed(request):
@@ -116,6 +121,12 @@ def following_feed(request):
         .values("author_id")
         .annotate(total=Count("id"))
     }
+
+    capper_params = request.GET.copy()
+    capper_params.pop("page", None)
+    capper_params.pop("capper", None)
+    feed_all_cappers_url = _feed_url(request, capper_params)
+
     for follow in following:
         profile = getattr(follow.analyst, "analyst_profile", None)
         follow.feed_name = (
@@ -127,6 +138,10 @@ def following_feed(request):
         follow.feed_initial = (follow.feed_name or follow.analyst.username or "К")[0].upper()
         follow.feed_predictions_count = author_counts.get(follow.analyst_id, 0)
 
+        follow_params = capper_params.copy()
+        follow_params["capper"] = follow.analyst.username
+        follow.feed_filter_url = _feed_url(request, follow_params)
+
     params_without_page = request.GET.copy()
     params_without_page.pop("page", None)
     pagination_query = params_without_page.urlencode()
@@ -137,7 +152,6 @@ def following_feed(request):
             only_live,
             only_today,
             active_status != "all",
-            active_sort != "new",
         ]
     )
 
@@ -158,5 +172,6 @@ def following_feed(request):
             "only_today": only_today,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
+            "feed_all_cappers_url": feed_all_cappers_url,
         },
     )
