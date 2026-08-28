@@ -35,12 +35,6 @@
 .article-detail-head h1 {
     margin: 0;
     color: var(--text);
-    letter-spacing: -.045em;
-}
-
-.articles-hero h1 {
-    font-size: clamp(42px, 5vw, 70px);
-    line-height: .95;
 }
 
 .articles-hero p:last-child {
@@ -139,9 +133,6 @@
 
 .article-list-copy h2 {
     margin: 20px 0 0;
-    font-size: 24px;
-    line-height: 1.08;
-    letter-spacing: -.03em;
 }
 
 .article-list-copy h2 a {
@@ -254,8 +245,6 @@
 
 .article-detail-head h1 {
     max-width: 1080px;
-    font-size: clamp(42px, 6vw, 82px);
-    line-height: .96;
 }
 
 .article-detail-head > p {
@@ -305,18 +294,14 @@
 .article-content h3,
 .article-content h4 {
     color: var(--text);
-    line-height: 1.12;
-    letter-spacing: -.025em;
 }
 
 .article-content h2 {
     margin: 42px 0 16px;
-    font-size: 34px;
 }
 
 .article-content h3 {
     margin: 34px 0 14px;
-    font-size: 26px;
 }
 
 .article-content p,
@@ -380,8 +365,6 @@
 
 .related-articles-head h2 {
     margin: 0;
-    font-size: clamp(30px, 4vw, 48px);
-    letter-spacing: -.04em;
 }
 
 .related-articles-head > a {
@@ -432,8 +415,6 @@
 
 .related-article-card h3 {
     margin: 12px 0 18px;
-    font-size: 19px;
-    line-height: 1.15;
 }
 
 .related-article-card h3 a {
@@ -484,10 +465,6 @@
         padding: 26px 20px;
     }
 
-    .article-detail-head h1 {
-        font-size: clamp(38px, 12vw, 56px);
-    }
-
     .article-detail-image {
         min-height: 230px;
         border-radius: 18px;
@@ -496,10 +473,6 @@
     .article-content {
         padding: 24px 18px;
         font-size: 15px;
-    }
-
-    .article-content h2 {
-        font-size: 28px;
     }
 
     .related-articles-head {
