@@ -113,6 +113,17 @@
                     {{ form.password2.errors }}
                 </label>
 
+                <div class="auth-agreement auth-grid-full">
+                    <label class="auth-agreement-label" for="{{ form.accept_terms.id_for_label }}">
+                        {{ form.accept_terms }}
+                        <span>
+                            Я принимаю <a href="{% url 'front:rules' %}" target="_blank" rel="noopener">Правила сервиса</a>
+                            и подтверждаю, что мне исполнилось 18 лет.
+                        </span>
+                    </label>
+                    {{ form.accept_terms.errors }}
+                </div>
+
                 <button class="auth-submit auth-grid-full" type="submit">
                     <span>{% if selected_type == 'capper' %}Создать профиль каппера{% else %}Создать аккаунт{% endif %}</span>
                     <span class="auth-submit-arrow">→</span>
