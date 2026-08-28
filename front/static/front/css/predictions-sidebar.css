@@ -49,7 +49,7 @@
 
 .prediction-filter-sidebar {
     position: sticky;
-    top: 84px;
+    top: 96px;
     min-width: 0;
     overflow: hidden;
     border-radius: 16px;
