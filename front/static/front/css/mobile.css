@@ -13,9 +13,8 @@
         background: var(--ink);
     }
 
-    /* The mobile site behaves as an app screen, so there is no desktop footer. */
     .site-footer {
-        display: none !important;
+        display: block !important;
     }
 
     .site-main {
@@ -490,7 +489,7 @@
     }
 
     .site-footer {
-        display: none !important;
+        display: block !important;
     }
 
     .fixed-tg-btn-wrapper {
