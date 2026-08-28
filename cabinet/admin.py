@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import AnalystFollow, AnalystProfile, CapperReferralVisit, User
+from .models import (
+    AnalystFollow,
+    AnalystProfile,
+    CapperReferralVisit,
+    MatchPredictionRequest,
+    User,
+)
 
 
 @admin.register(User)
@@ -109,3 +115,18 @@ class CapperReferralVisitAdmin(admin.ModelAdmin):
         "last_seen_at",
         "subscribed_at",
     )
+
+
+@admin.register(MatchPredictionRequest)
+class MatchPredictionRequestAdmin(admin.ModelAdmin):
+    list_display = ("user", "match", "created_at")
+    list_filter = ("created_at",)
+    search_fields = (
+        "user__username",
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+    )
+    autocomplete_fields = ("user", "match")
+    readonly_fields = ("created_at",)
