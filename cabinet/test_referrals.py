@@ -12,7 +12,7 @@ class CapperReferralTests(TestCase):
             password="test-pass-123",
             role=User.Role.ANALYST,
         )
-        AnalystProfile.objects.create(
+        self.profile = AnalystProfile.objects.create(
             user=self.capper,
             display_name="Referral Capper",
             is_public=True,
@@ -23,6 +23,10 @@ class CapperReferralTests(TestCase):
             password="test-pass-123",
             role=User.Role.READER,
         )
+
+    def test_referral_code_is_random_public_identifier(self):
+        self.assertEqual(len(self.profile.referral_code), 8)
+        self.assertRegex(self.profile.referral_code, r"^[A-Z2-9]{8}$")
 
     def test_referral_link_tracks_unique_session_and_total_clicks(self):
         url = reverse("front:capper_referral", kwargs={"username": self.capper.username})
@@ -35,6 +39,43 @@ class CapperReferralTests(TestCase):
         visits = CapperReferralVisit.objects.filter(analyst=self.capper)
         self.assertEqual(visits.count(), 1)
         self.assertEqual(visits.get().visits_count, 2)
+
+    def test_coded_referral_link_tracks_visit(self):
+        url = reverse(
+            "front:capper_referral_code",
+            kwargs={"username": self.capper.username, "code": self.profile.referral_code},
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(CapperReferralVisit.objects.filter(analyst=self.capper).exists())
+
+    def test_coded_referral_link_uses_code_as_stable_identity(self):
+        url = reverse(
+            "front:capper_referral_code",
+            kwargs={"username": "old-handle", "code": self.profile.referral_code},
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(
+            response.url,
+            reverse(
+                "front:capper_referral_code",
+                kwargs={"username": self.capper.username, "code": self.profile.referral_code},
+            ),
+        )
+
+    def test_legacy_referral_can_resolve_unique_display_name(self):
+        self.profile.display_name = "moder"
+        self.profile.save(update_fields=["display_name"])
+
+        response = self.client.get(reverse("front:capper_referral", kwargs={"username": "moder"}))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(CapperReferralVisit.objects.filter(analyst=self.capper).exists())
 
     def test_follow_after_referral_is_counted_as_conversion(self):
         self.client.force_login(self.reader)
@@ -66,7 +107,11 @@ class CapperReferralTests(TestCase):
         self.assertEqual(payload["clicks_count"], 2)
         self.assertEqual(payload["subscriptions_count"], 1)
         self.assertEqual(payload["conversion"], 100.0)
-        self.assertIn(f"/r/{self.capper.username}/", payload["referral_url"])
+        self.assertEqual(payload["referral_code"], self.profile.referral_code)
+        self.assertIn(
+            f"/r/{self.capper.username}/{self.profile.referral_code}/",
+            payload["referral_url"],
+        )
 
     def test_reader_cannot_open_referral_stats(self):
         self.client.force_login(self.reader)
