@@ -48,12 +48,14 @@
                 <span>Стать каппером</span>
             </a>
             {% endif %}
+            {% if request.user.is_analyst %}
             <a href="{% url 'cabinet:profile' %}?tab=predictions">
                 <span class="mobile-offcanvas-link-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
                 </span>
                 <span>Мои прогнозы</span>
             </a>
+            {% endif %}
             <a href="{% url 'notifications:center' %}">
                 <span class="mobile-offcanvas-link-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
