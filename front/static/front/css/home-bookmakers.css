@@ -9,7 +9,6 @@
     background: var(--panel);
 }
 
-
 .home-trusted-bookmakers-head {
     display: flex;
     align-items: flex-start;
@@ -33,9 +32,6 @@
 .home-trusted-bookmakers-head h2 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(36px, 4.5vw, 39px);
-    line-height: .96;
-    letter-spacing: -.045em;
 }
 
 .home-trusted-bookmakers-copy {
@@ -197,10 +193,6 @@
 
     .home-trusted-bookmakers-head {
         gap: 18px;
-    }
-
-    .home-trusted-bookmakers-head h2 {
-        font-size: 36px;
     }
 
     .home-trusted-bookmakers-count {
