@@ -24,12 +24,14 @@ from django.views.decorators.http import require_POST
 from cabinet.models import AnalystFollow
 from game.models import Prediction, PredictionCoupon
 
+from .expert_ranking import ranked_expert_profiles
 from .models import PredictionFavorite, PredictionLike
 from .prediction_metrics import annotate_author_roi
 from .views import PREDICTION_STATUS_FILTERS, _initials
 
 
 PREDICTIONS_PAGE_SIZE = 24
+TOP_EXPERTS_LIMIT = 10
 SORT_OPTIONS = (
     ("new", "Новые"),
     ("roi", "Лучший ROI"),
@@ -256,6 +258,21 @@ def _status_tabs(request, counts: dict, active_status: str):
     return tabs
 
 
+def _top_experts_tab(request, *, active: bool, count: int) -> dict:
+    params = request.GET.copy()
+    params.pop("page", None)
+    if active:
+        params.pop("top", None)
+    else:
+        params["top"] = "1"
+    query = params.urlencode()
+    return {
+        "active": active,
+        "count": count,
+        "href": f"?{query}" if query else "?",
+    }
+
+
 def _apply_position_filters(queryset, *, selected_sport, selected_league, only_live, only_today):
     if selected_sport.isdigit():
         queryset = queryset.filter(predictions__match__sport_id=int(selected_sport))
@@ -287,6 +304,10 @@ def predictions(request):
     coefficient_max = _parse_decimal(request.GET.get("coef_max"))
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
+    top_experts_only = request.GET.get("top") == "1"
+
+    top_profiles = ranked_expert_profiles(limit=TOP_EXPERTS_LIMIT)
+    top_expert_ids = [profile.user_id for profile in top_profiles]
 
     published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -306,6 +327,11 @@ def predictions(request):
         filtered = filtered.filter(combined_coefficient__gte=coefficient_min)
     if coefficient_max is not None:
         filtered = filtered.filter(combined_coefficient__lte=coefficient_max)
+
+    top_filtered = filtered.filter(author_id__in=top_expert_ids)
+    top_experts_count = top_filtered.count()
+    if top_experts_only:
+        filtered = top_filtered
 
     counts = filtered.aggregate(
         total=Count("id", distinct=True),
@@ -406,6 +432,12 @@ def predictions(request):
         {
             "page_obj": page_obj,
             "status_tabs": _status_tabs(request, counts, active_status),
+            "top_experts_tab": _top_experts_tab(
+                request,
+                active=top_experts_only,
+                count=top_experts_count,
+            ),
+            "top_experts_only": top_experts_only,
             "active_status": active_status,
             "active_sort": active_sort,
             "sort_options": SORT_OPTIONS,
