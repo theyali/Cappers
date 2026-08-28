@@ -215,3 +215,37 @@ class CapperReferralVisit(models.Model):
     def __str__(self) -> str:
         visitor = self.visitor.username if self.visitor_id else self.session_key
         return f"{self.analyst} ← {visitor}"
+
+
+class MatchPredictionRequest(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="match_prediction_requests",
+        verbose_name="Пользователь",
+    )
+    match = models.ForeignKey(
+        "game.Match",
+        on_delete=models.CASCADE,
+        related_name="prediction_requests",
+        verbose_name="Матч",
+    )
+    created_at = models.DateTimeField("Запрошен", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Запрос прогноза на матч"
+        verbose_name_plural = "Запросы прогнозов на матчи"
+        ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "match"),
+                name="unique_match_prediction_request",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("match", "created_at"), name="matchreq_match_created_idx"),
+            models.Index(fields=("user", "created_at"), name="matchreq_user_created_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} → {self.match}"
