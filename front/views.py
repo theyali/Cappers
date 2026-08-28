@@ -2,12 +2,10 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import render
 
-from cabinet.achievements import build_achievement_badges
-from cabinet.models import AnalystFollow
 from game.models import PredictionCoupon
 
+from .capper_stats_service import CapperStatsService
 from .expert_ranking import ranked_expert_profiles
-from .prediction_metrics import ROI_PERIOD_DAYS
 
 
 LATEST_PREDICTIONS = [
@@ -154,69 +152,8 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
 
 
 def cappers_stats(request):
-    profiles = ranked_expert_profiles()
-
-    following_ids = set()
-    if request.user.is_authenticated:
-        following_ids = set(
-            AnalystFollow.objects.filter(follower=request.user).values_list(
-                "analyst_id", flat=True
-            )
-        )
-
-    best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
-    experts = []
-    for profile in profiles:
-        name = profile.display_name or profile.user.get_full_name() or profile.user.username
-        unlocked_achievements = build_achievement_badges(
-            predictions_count=profile.publications_count,
-            wins_count=profile.wins_count,
-            overall_roi=profile.author_roi_all_time,
-            followers_count=profile.followers_count,
-            best_win_streak=best_streaks.get(profile.user_id, 0),
-            is_verified=profile.is_verified,
-        )
-        experts.append(
-            {
-                "id": profile.user_id,
-                "name": name,
-                "username": profile.user.username,
-                "initials": _initials(name),
-                "avatar_url": profile.avatar.url if profile.avatar else "",
-                "verified": profile.is_verified,
-                "roi": profile.author_roi,
-                "roi_period_days": ROI_PERIOD_DAYS,
-                "ranking_score": profile.ranking_score,
-                "settled": profile.settled_count,
-                "settled_in_roi_period": profile.roi_settled_count,
-                "followers": profile.followers_count,
-                "publications": profile.publications_count,
-                "sports": profile.sports_count,
-                "recent_publications": profile.recent_publications_count,
-                "last_publication_at": profile.last_publication_at,
-                "joined_at": profile.created_at,
-                "latest_achievements": list(reversed(unlocked_achievements[-5:])),
-                "is_self": request.user.is_authenticated
-                and request.user.pk == profile.user_id,
-                "is_following": profile.user_id in following_ids,
-            }
-        )
-
-    summary = {
-        "experts": len(profiles),
-        "verified": sum(1 for profile in profiles if profile.is_verified),
-        "publications": sum(profile.publications_count for profile in profiles),
-        "active_30d": sum(
-            1 for profile in profiles if profile.recent_publications_count > 0
-        ),
-    }
     return render(
         request,
         "front/cappers_stats.html",
-        {
-            "experts": experts,
-            "experts_count": len(experts),
-            "summary": summary,
-            "roi_period_days": ROI_PERIOD_DAYS,
-        },
+        CapperStatsService(request.user).build_catalog_context(),
     )
