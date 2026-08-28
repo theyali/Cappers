@@ -52,7 +52,7 @@
                 </a>
                 <div>
                     <span>{{ related.created_at|date:"d.m.Y" }}</span>
-                    <h3><a href="{{ related.get_absolute_url }}">{{ related.title }}</a></h3>
+                    <div class="related-article-title heading-style-h3"><a href="{{ related.get_absolute_url }}">{{ related.title }}</a></div>
                     <a href="{{ related.get_absolute_url }}">Читать →</a>
                 </div>
             </article>
