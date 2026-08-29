@@ -3,18 +3,29 @@
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
     <a class="match-card-main" href="{{ match.get_absolute_url }}">
-        <span class="matches-sport-icon" aria-hidden="true">
-            {% if match.sport_code == 'football' %}
-                {% include "front/svgs/soccer.svg" %}
-            {% elif match.sport_code == 'hockey' %}
-                {% include "front/svgs/hockey.svg" %}
-            {% elif match.sport_code == 'basketball' %}
-                {% include "front/svgs/basketball.svg" %}
-            {% elif match.sport_code == 'tennis' %}
-                {% include "front/svgs/tennis.svg" %}
-            {% else %}
-                {% include "front/svgs/nav-matches.svg" %}
-            {% endif %}
+        <span class="match-card-sport-label" style="display:inline-flex;align-items:center;gap:5px;width:max-content;color:var(--muted);font-size:11px;line-height:1;">
+            <span class="matches-sport-icon" aria-hidden="true" style="width:20px;height:20px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;transform:scale(.72);transform-origin:center;">
+                    {% if match.sport_code == 'football' %}
+                        {% include "front/svgs/soccer.svg" %}
+                    {% elif match.sport_code == 'hockey' %}
+                        {% include "front/svgs/hockey.svg" %}
+                    {% elif match.sport_code == 'basketball' %}
+                        {% include "front/svgs/basketball.svg" %}
+                    {% elif match.sport_code == 'tennis' %}
+                        {% include "front/svgs/tennis.svg" %}
+                    {% else %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% endif %}
+                </span>
+            </span>
+            <span>
+                {% if match.sport %}
+                    {{ match.sport.name_ru|default:match.sport.name }}
+                {% else %}
+                    Футбол
+                {% endif %}
+            </span>
         </span>
 
         <div class="match-card-head">
