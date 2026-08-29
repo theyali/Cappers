@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     AnalystFollow,
     AnalystProfile,
+    CapperMonthlyStat,
     CapperReferralVisit,
     MatchPredictionRequest,
     User,
@@ -132,3 +133,38 @@ class MatchPredictionRequestAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("user", "match")
     readonly_fields = ("created_at",)
+
+
+@admin.register(CapperMonthlyStat)
+class CapperMonthlyStatAdmin(admin.ModelAdmin):
+    list_display = (
+        "analyst",
+        "month",
+        "bets_count",
+        "wins_count",
+        "losses_count",
+        "refunds_count",
+        "flat_profit_percent",
+        "roi",
+        "avg_coefficient",
+        "hit_rate",
+        "calculated_at",
+    )
+    list_filter = ("month",)
+    search_fields = ("analyst__username", "analyst__email")
+    autocomplete_fields = ("analyst",)
+    readonly_fields = (
+        "analyst",
+        "month",
+        "bets_count",
+        "wins_count",
+        "losses_count",
+        "refunds_count",
+        "total_stake",
+        "total_profit",
+        "flat_profit_percent",
+        "roi",
+        "avg_coefficient",
+        "hit_rate",
+        "calculated_at",
+    )
