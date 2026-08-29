@@ -4,7 +4,16 @@ from django.views.generic import TemplateView
 from cabinet import expert_profile_views as cabinet_expert_profile_views
 from cabinet import referral_views as cabinet_referral_views
 
-from . import article_views, capper_views, feed_views, home_views, how_views, prediction_views, static_views
+from . import (
+    article_views,
+    bookmaker_views,
+    capper_views,
+    feed_views,
+    home_views,
+    how_views,
+    prediction_views,
+    static_views,
+)
 
 app_name = "front"
 
@@ -44,10 +53,13 @@ urlpatterns = [
     ),
     path("feed/", feed_views.following_feed, name="following_feed"),
     path("favorites/", prediction_views.favorites, name="favorites"),
+    path("bookmakers/", bookmaker_views.bookmakers, name="bookmakers"),
+    path("sports-news/", article_views.sports_news, name="sports_news"),
     path("articles/", article_views.articles, name="articles"),
     path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     path("experts/<str:username>/", cabinet_expert_profile_views.expert_profile, name="expert_profile"),
-    path("cappers/", capper_views.cappers_stats, name="cappers_stats"),
+    path("cappers-statistics/", capper_views.cappers_stats, name="cappers_stats"),
+    path("cappers-table/", capper_views.cappers_table, name="cappers_table"),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path(
         "rules/",
