@@ -27,7 +27,9 @@
                 <div class="coupon-slip-match-head">
                     <div class="coupon-slip-league">
                         <span class="coupon-slip-sport-icon" aria-hidden="true">
-                            {% if prediction.match.sport and prediction.match.sport.image %}
+                            {% if show_sport_badge and prediction.match.league and prediction.match.league.logo %}
+                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                            {% elif prediction.match.sport and prediction.match.sport.image %}
                                 <img src="{{ prediction.match.sport.image }}" alt="" loading="lazy">
                             {% elif prediction.match.league and prediction.match.league.logo %}
                                 <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
@@ -37,7 +39,7 @@
                         </span>
                         <div>
                             <strong>
-                                {% if prediction.match.sport %}{{ prediction.match.sport }} · {% endif %}{{ prediction.match.league_name|default:"Лига" }}
+                                {% if not show_sport_badge and prediction.match.sport %}{{ prediction.match.sport }} · {% endif %}{{ prediction.match.league_name|default:"Лига" }}
                             </strong>
                             <span>
                                 {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m.Y (H:i)" }}{% else %}Время не указано{% endif %}
@@ -45,13 +47,36 @@
                         </div>
                     </div>
 
-                    <span class="coupon-slip-match-state is-{{ prediction.match.sync_scope }}">
-                        {% if prediction.match.sync_scope == "live" %}
-                            LIVE{% if prediction.match.live_minute_label %} · {{ prediction.match.live_minute_label }}{% endif %}
-                        {% else %}
-                            {{ prediction.match.get_sync_scope_display }}
+                    <div class="coupon-slip-match-meta">
+                        {% if show_sport_badge and prediction.match.sport %}
+                        <span class="coupon-slip-sport-badge" title="Вид спорта: {{ prediction.match.sport.name_ru|default:prediction.match.sport.name }}">
+                            <span class="coupon-slip-sport-badge-icon" aria-hidden="true">
+                                {% if prediction.match.sport.code == 'football' %}
+                                    {% include "front/svgs/soccer.svg" %}
+                                {% elif prediction.match.sport.code == 'hockey' or prediction.match.sport.code == 'ice-hockey' %}
+                                    {% include "front/svgs/hockey.svg" %}
+                                {% elif prediction.match.sport.code == 'basketball' %}
+                                    {% include "front/svgs/basketball.svg" %}
+                                {% elif prediction.match.sport.code == 'tennis' %}
+                                    {% include "front/svgs/tennis.svg" %}
+                                {% elif prediction.match.sport.image %}
+                                    <img src="{{ prediction.match.sport.image }}" alt="" loading="lazy">
+                                {% else %}
+                                    {% include "front/svgs/nav-matches.svg" %}
+                                {% endif %}
+                            </span>
+                            <span>{{ prediction.match.sport.name_ru|default:prediction.match.sport.name }}</span>
+                        </span>
                         {% endif %}
-                    </span>
+
+                        <span class="coupon-slip-match-state is-{{ prediction.match.sync_scope }}">
+                            {% if prediction.match.sync_scope == "live" %}
+                                LIVE{% if prediction.match.live_minute_label %} · {{ prediction.match.live_minute_label }}{% endif %}
+                            {% else %}
+                                {{ prediction.match.get_sync_scope_display }}
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
 
                 <div class="coupon-slip-teams">
