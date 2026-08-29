@@ -25,6 +25,14 @@
     opacity: .48;
 }
 
+.coupon-item.is-timing-locked {
+    opacity: .62;
+}
+
+.coupon-item.is-timing-locked .coupon-item-title span {
+    color: var(--yellow);
+}
+
 @keyframes match-soon-pulse {
     0%, 100% {
         opacity: 1;
