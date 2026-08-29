@@ -36,8 +36,8 @@
             <span class="capper-pro-achievements-label">Достижения</span>
             <div class="capper-pro-achievements-list">
                 {% for achievement in expert.latest_achievements %}
-                <span class="capper-pro-achievement" title="{{ achievement.label }} — {{ achievement.description }}" aria-label="{{ achievement.label }}">
-                    <img src="{% static achievement.icon %}" alt="" loading="lazy">
+                <span class="capper-pro-achievement" title="{{ achievement.label }} — {{ achievement.description }}" aria-label="{{ achievement.label }}" data-skeleton-image>
+                    <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
                 </span>
                 {% endfor %}
             </div>
