@@ -2,7 +2,9 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.cache import cache
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from cabinet.models import User
@@ -107,4 +109,18 @@ def match_detail(request, slug: str):
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
         "match_predictions_total": _published_match_predictions_count(match),
     }
-    return render(request, "game/match_detail.html", context)
+
+    page_html = render_to_string("game/match_detail.html", context, request=request)
+    feed_html = render_to_string(
+        "game/_match_predictions_feed.html",
+        context,
+        request=request,
+    )
+
+    # Keep the feed shell in the first HTML response so the layout does not jump.
+    # JavaScript only fills .match-predictions-list after the page is visible.
+    closing_main = "</main>"
+    if closing_main in page_html:
+        page_html = page_html.replace(closing_main, f"{feed_html}\n{closing_main}", 1)
+
+    return HttpResponse(page_html)
