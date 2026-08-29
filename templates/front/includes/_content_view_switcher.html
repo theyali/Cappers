@@ -1,0 +1,35 @@
+<div
+    class="content-view-switcher"
+    data-content-view-switcher
+    data-state-url="{% url 'front:content_view_state' %}"
+    aria-label="Вид списка"
+>
+    <button
+        class="content-view-button{% if content_view_mode == 'grid' %} is-active{% endif %}"
+        type="button"
+        data-content-view-mode="grid"
+        aria-pressed="{% if content_view_mode == 'grid' %}true{% else %}false{% endif %}"
+        title="Карточками"
+        aria-label="Показывать карточками"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+            <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+            <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+            <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+        </svg>
+    </button>
+    <button
+        class="content-view-button{% if content_view_mode == 'table' %} is-active{% endif %}"
+        type="button"
+        data-content-view-mode="table"
+        aria-pressed="{% if content_view_mode == 'table' %}true{% else %}false{% endif %}"
+        title="Таблицей"
+        aria-label="Показывать таблицей"
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 6h14M5 12h14M5 18h14"></path>
+            <path d="M8 4v16"></path>
+        </svg>
+    </button>
+</div>
