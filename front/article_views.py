@@ -5,6 +5,7 @@ from .models import Article
 
 
 ARTICLES_PAGE_SIZE = 9
+SPORTS_NEWS_PAGE_SIZE = 12
 
 
 def articles(request):
@@ -14,6 +15,20 @@ def articles(request):
     return render(
         request,
         "front/articles.html",
+        {
+            "page_obj": page_obj,
+            "total_articles": paginator.count,
+        },
+    )
+
+
+def sports_news(request):
+    queryset = Article.objects.filter(is_published=True).order_by("-created_at", "-id")
+    paginator = Paginator(queryset, SPORTS_NEWS_PAGE_SIZE)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+    return render(
+        request,
+        "front/sports_news.html",
         {
             "page_obj": page_obj,
             "total_articles": paginator.count,
