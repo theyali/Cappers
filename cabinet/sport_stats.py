@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
 from .models import CapperMonthlyStat
@@ -227,46 +226,3 @@ def sport_profit_periods(
         **periods,
     }
     return periods, options
-
-
-def catalog_sport_stats(
-    analyst_ids: list[int],
-) -> tuple[dict[int, dict[str, dict]], list[dict]]:
-    ids = [int(value) for value in analyst_ids if value]
-    if not ids:
-        return {}, [{"code": "all", "label": "Все виды спорта"}]
-
-    grouped: dict[int, list[CapperMonthlyStat]] = defaultdict(list)
-    rows = CapperMonthlyStat.objects.filter(analyst_id__in=ids).order_by(
-        "analyst_id", "-month", "-id"
-    )
-    for row in rows:
-        grouped[row.analyst_id].append(row)
-
-    result: dict[int, dict[str, dict]] = {}
-    sport_labels: dict[str, str] = {}
-    for analyst_id in ids:
-        analyst_rows = grouped.get(analyst_id, [])
-        periods, _ = sport_profit_periods(analyst_rows)
-        stats = {
-            item["code"]: item
-            for item in periods.get("all", {}).get("rows", [])
-        }
-        result[analyst_id] = stats
-        for code, item in stats.items():
-            if code != "all":
-                sport_labels.setdefault(code, item["name"])
-
-    ordered_codes = sorted(
-        sport_labels,
-        key=lambda code: (
-            SPORT_ORDER.get(code, 100),
-            sport_labels[code].lower(),
-        ),
-    )
-    options = [{"code": "all", "label": "Все виды спорта"}]
-    options.extend(
-        {"code": code, "label": sport_labels[code]}
-        for code in ordered_codes
-    )
-    return result, options

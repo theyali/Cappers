@@ -5,7 +5,7 @@
 >
     <div class="prediction-card-head">
         <div class="prediction-author-row">
-            <a class="prediction-expert prediction-expert-link" href="{% url 'cabinet:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
+            <a class="prediction-expert prediction-expert-link" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
                 <span class="prediction-expert-avatar">
                     {% if prediction.expert_avatar_url %}
                         <img src="{{ prediction.expert_avatar_url }}" alt="">

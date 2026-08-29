@@ -38,7 +38,7 @@ def referral_redirect(request, username: str):
     profile = _public_analyst_profile_by_handle(username)
     analyst = profile.user
     record_referral_visit(request, analyst)
-    return redirect("cabinet:expert_profile", username=analyst.username)
+    return redirect("front:expert_profile", username=analyst.username)
 
 
 @require_GET
@@ -61,7 +61,7 @@ def referral_redirect_code(request, username: str, code: str):
         )
 
     record_referral_visit(request, analyst)
-    return redirect("cabinet:expert_profile", username=analyst.username)
+    return redirect("front:expert_profile", username=analyst.username)
 
 
 @login_required

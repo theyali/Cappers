@@ -21,7 +21,7 @@ def _match_title(match) -> str:
 def user_profile(request, username: str):
     user = get_object_or_404(User, username=username, is_active=True)
     if user.is_analyst:
-        return redirect("cabinet:expert_profile", username=user.username)
+        return redirect("front:expert_profile", username=user.username)
 
     likes = PredictionLike.objects.filter(user=user).select_related("prediction")
     favorites = PredictionFavorite.objects.filter(user=user).select_related("prediction")
@@ -67,7 +67,7 @@ def user_profile(request, username: str):
                 "kind": "Подписка",
                 "title": analyst_name,
                 "description": f"Подписался на @{item.analyst.username}",
-                "url": reverse("cabinet:expert_profile", kwargs={"username": item.analyst.username}),
+                "url": reverse("front:expert_profile", kwargs={"username": item.analyst.username}),
             }
         )
     for item in prediction_requests[:6]:

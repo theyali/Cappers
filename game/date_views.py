@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import BooleanField, Case, Count, Exists, IntegerField, OuterRef, Q, Value, When
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -37,13 +37,29 @@ SPORT_FILTERS = (
     ("basketball", "Баскетбол"),
     ("tennis", "Теннис"),
 )
+SPORT_SEO_LABELS = {
+    "all": "по всем видам спорта",
+    "football": "по футболу",
+    "hockey": "по хоккею",
+    "basketball": "по баскетболу",
+    "tennis": "по теннису",
+}
+SCOPE_SEO_LABELS = {
+    "all": "Матчи",
+    WATCHED_SCOPE: "Отслеживаемые матчи",
+    Match.SyncScope.LIVE: "Live-матчи",
+    Match.SyncScope.PREMATCH: "Предстоящие матчи",
+    Match.SyncScope.FINISHED: "Завершенные матчи",
+}
 ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
 MATCHES_PAGE_SIZE = 18
 MAX_MATCHES_WINDOW = 180
+MATCH_DATE_INDEX_WINDOW_DAYS = 30
 
 
 def match_list(request, sport=None, scope=None, selected_date=None):
     """Match list filtered by scope/date with AJAX pages for infinite scroll."""
+    lazy_request = _is_lazy_request(request)
     active_scope = scope or request.GET.get("scope", "all")
     valid_scopes = {scope for scope, _ in SCOPE_FILTERS}
     if active_scope not in valid_scopes:
@@ -56,6 +72,22 @@ def match_list(request, sport=None, scope=None, selected_date=None):
 
     today = timezone.localdate()
     selected_date = _selected_date(selected_date or request.GET.get("date"), today=today)
+    min_match_date = today - timedelta(days=MATCH_DATE_INDEX_WINDOW_DAYS)
+    max_match_date = today + timedelta(days=MATCH_DATE_INDEX_WINDOW_DAYS)
+
+    if active_scope == Match.SyncScope.LIVE and not lazy_request:
+        live_url = _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=selected_date,
+            sport=active_sport,
+        )
+        if request.path != live_url or any(param in request.GET for param in ("sport", "scope", "date")):
+            return redirect(live_url, permanent=True)
+
+    if active_scope != Match.SyncScope.LIVE and not _date_in_index_window(selected_date, today=today):
+        raise Http404("Дата матчей вне доступного диапазона.")
+
     if _should_redirect_to_clean_url(request, sport=sport, scope=scope):
         return redirect(
             _match_list_url(
@@ -116,7 +148,6 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         ),
     ).order_by("-is_watched", "scope_order", "starts_at", "id")
 
-    lazy_request = _is_lazy_request(request)
     can_write_coupon = request.user.is_authenticated and request.user.role == User.Role.ANALYST
     window_size = _window_size(request.GET.get("window")) if lazy_request else None
 
@@ -254,7 +285,34 @@ def match_list(request, sport=None, scope=None, selected_date=None):
 
     previous_date = selected_date - timedelta(days=1)
     next_date = selected_date + timedelta(days=1)
+    previous_date_url = (
+        _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=previous_date,
+            sport=active_sport,
+        )
+        if active_scope == Match.SyncScope.LIVE or previous_date >= min_match_date
+        else ""
+    )
+    next_date_url = (
+        _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=next_date,
+            sport=active_sport,
+        )
+        if active_scope == Match.SyncScope.LIVE or next_date <= max_match_date
+        else ""
+    )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
+    seo = _match_list_seo(
+        request,
+        active_scope=active_scope,
+        active_sport=active_sport,
+        selected_date=selected_date,
+        today=today,
+    )
     context = {
         "active_scope": active_scope,
         "active_sport": active_sport,
@@ -263,12 +321,16 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "matches": matches,
         "page_obj": page_obj,
         "total_count": total_count,
+        "hero_count": _hero_count(active_scope, total_count, counts, watched_count),
         "can_write_coupon": can_write_coupon,
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
+        "min_match_date_iso": min_match_date.isoformat(),
+        "max_match_date_iso": max_match_date.isoformat(),
+        "show_date_filter": active_scope != Match.SyncScope.LIVE,
         "date_picker_url_template": _match_list_url(
             request,
             scope=active_scope,
@@ -276,22 +338,15 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             sport=active_sport,
         ),
         "previous_date_iso": previous_date.isoformat(),
-        "previous_date_url": _match_list_url(
-            request,
-            scope=active_scope,
-            selected_date=previous_date,
-            sport=active_sport,
-        ),
+        "previous_date_url": previous_date_url,
         "next_date_iso": next_date.isoformat(),
-        "next_date_url": _match_list_url(
-            request,
-            scope=active_scope,
-            selected_date=next_date,
-            sport=active_sport,
-        ),
+        "next_date_url": next_date_url,
         "date_shortcuts": date_shortcuts,
         "today_iso": today.isoformat(),
         "locked_card_odds": card_odds,
+        "match_list_h1": seo["h1"],
+        "match_list_hero_meta": seo["hero_meta"],
+        "seo_meta": seo["meta"],
     }
     return render(request, "game/match_list.html", context)
 
@@ -345,9 +400,75 @@ def _should_redirect_to_clean_url(request, *, sport, scope) -> bool:
 
 
 def _match_list_url(request, *, scope, selected_date, sport=None):
+    sport_code = sport or "all"
+    if scope == Match.SyncScope.LIVE:
+        return reverse("game:match_list_live", kwargs={"sport": sport_code})
     selected_date_iso = selected_date.isoformat() if hasattr(selected_date, "isoformat") else str(selected_date)
     base_url = reverse("game:match_list")
-    return f"{base_url}{sport or 'all'}/{scope}/{selected_date_iso}/"
+    return f"{base_url}{sport_code}/{scope}/{selected_date_iso}/"
+
+
+def _date_in_index_window(selected_date, *, today) -> bool:
+    min_date = today - timedelta(days=MATCH_DATE_INDEX_WINDOW_DAYS)
+    max_date = today + timedelta(days=MATCH_DATE_INDEX_WINDOW_DAYS)
+    return min_date <= selected_date <= max_date
+
+
+def _hero_count(active_scope: str, total_count: int, counts: dict, watched_count: int) -> int:
+    if active_scope == "all":
+        return total_count
+    if active_scope == WATCHED_SCOPE:
+        return watched_count
+    return counts.get(active_scope, 0)
+
+
+def _match_list_seo(request, *, active_scope: str, active_sport: str, selected_date, today) -> dict:
+    scope_label = SCOPE_SEO_LABELS.get(active_scope, "Матчи")
+    sport_label = SPORT_SEO_LABELS.get(active_sport, "по всем видам спорта")
+    date_label = selected_date.strftime("%d.%m.%Y")
+
+    if active_scope == Match.SyncScope.LIVE:
+        h1 = f"{scope_label} {sport_label}"
+        title = f"{h1} — КапперХаб"
+        description = f"Актуальные live-матчи {sport_label}: счет, статус игры и коэффициенты на КапперХаб."
+        hero_meta = "игр сейчас"
+    else:
+        h1 = f"{scope_label} {sport_label} на {date_label}"
+        title = f"{h1} — КапперХаб"
+        description = f"{scope_label} {sport_label} на {date_label}: расписание, статусы, коэффициенты и прогнозы капперов."
+        hero_meta = f"игр на {selected_date.strftime('%d.%m')}"
+
+    robots = "index,follow"
+    if active_scope == WATCHED_SCOPE or request.GET:
+        robots = "noindex,follow"
+
+    canonical_path = _match_list_url(
+        request,
+        scope=active_scope,
+        selected_date=selected_date,
+        sport=active_sport,
+    )
+    canonical_url = request.build_absolute_uri(canonical_path)
+
+    return {
+        "h1": h1,
+        "hero_meta": hero_meta,
+        "meta": {
+            "page": None,
+            "title": title,
+            "description": description,
+            "keywords": "",
+            "robots": robots,
+            "canonical_url": canonical_url,
+            "og_title": title,
+            "og_description": description,
+            "og_image_url": "",
+            "og_type": "website",
+            "twitter_card": "summary_large_image",
+            "schema_type": "",
+            "schema_json_ld": "",
+        },
+    }
 
 
 def _stored_card_odds(match: Match) -> dict[str, str]:

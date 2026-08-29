@@ -52,3 +52,4 @@ class WatchedMatchListTests(TestCase):
         self.assertEqual([match.id for match in matches], [self.watched.id])
         watched_tab = next(tab for tab in response.context["scope_tabs"] if tab["scope"] == "watched")
         self.assertEqual(watched_tab["count"], 1)
+        self.assertEqual(response.context["seo_meta"]["robots"], "noindex,follow")

@@ -1,8 +1,4 @@
 {% load static %}
-{% if rank == 1 %}
-<link rel="stylesheet" href="{% static 'front/css/cappers-sport-filter.css' %}">
-<script src="{% static 'front/js/cappers-sport-filter.js' %}" defer></script>
-{% endif %}
 <article class="capper-pro-card{% if extra_class %} {{ extra_class }}{% endif %}"{% if show_follow %} data-follow-card{% endif %} data-capper-original-rank="{{ rank|default:0 }}">
     <a class="capper-pro-card-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
         <div class="capper-pro-top">
@@ -45,43 +41,6 @@
                 </span>
                 {% endfor %}
             </div>
-        </div>
-        {% endif %}
-
-        {% if expert.sport_stats %}
-        {% with all_stat=expert.sport_stats.all %}
-        <div class="capper-pro-sport-stat{% if not all_stat %} is-empty{% endif %}" data-capper-sport-stat>
-            <div>
-                <span data-capper-sport-name>Все виды спорта</span>
-                {% if all_stat %}
-                <strong data-capper-sport-roi>ROI {% if all_stat.roi > 0 %}+{% endif %}{{ all_stat.roi_display }}</strong>
-                {% else %}
-                <strong data-capper-sport-roi>Нет данных</strong>
-                {% endif %}
-            </div>
-            <small data-capper-sport-detail>
-                {% if all_stat %}
-                    {{ all_stat.predictions_text }} · Прибыль {% if all_stat.profit_percent > 0 %}+{% endif %}{{ all_stat.profit_display }}
-                {% else %}
-                    Нет рассчитанных прогнозов
-                {% endif %}
-            </small>
-        </div>
-        {% endwith %}
-
-        <div class="capper-pro-sport-source" hidden aria-hidden="true">
-            {% for code, stat in expert.sport_stats.items %}
-            <span
-                data-capper-sport-source="{{ code }}"
-                data-sport-name="{{ stat.name }}"
-                data-roi="{{ stat.roi }}"
-                data-roi-display="{{ stat.roi_display }}"
-                data-profit="{{ stat.profit_percent }}"
-                data-profit-display="{{ stat.profit_display }}"
-                data-predictions="{{ stat.predictions_count }}"
-                data-predictions-text="{{ stat.predictions_text }}"
-            ></span>
-            {% endfor %}
         </div>
         {% endif %}
 

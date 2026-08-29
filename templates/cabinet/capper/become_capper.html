@@ -15,7 +15,7 @@
                 <h1>Ваш профиль каппера уже активен.</h1>
                 <p class="capper-landing-lead">Публикуйте прогнозы, накапливайте подтверждённую статистику и развивайте аудиторию.</p>
                 <div class="capper-landing-actions">
-                    <a class="capper-growth-link is-blue" href="{% url 'cabinet:expert_profile' request.user.username %}">Открыть публичный профиль</a>
+                    <a class="capper-growth-link is-blue" href="{% url 'front:expert_profile' request.user.username %}">Открыть публичный профиль</a>
                     <a class="capper-growth-link" href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз</a>
                 </div>
             {% else %}

@@ -11,10 +11,10 @@ from .models import PageSEO
 
 ROUTE_FALLBACKS = {
     "game:match_list_filtered": ("game:match_list",),
+    "game:match_list_live": ("game:match_list",),
 }
 PUBLIC_PROFILE_ROUTES = {
     "front:expert_profile",
-    "cabinet:expert_profile",
     "cabinet:user_profile",
 }
 

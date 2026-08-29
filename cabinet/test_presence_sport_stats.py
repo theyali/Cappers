@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from .models import AnalystProfile, CapperMonthlyStat, User
 from .presence import UserPresence, presence_payload, touch_user_presence
-from .sport_stats import catalog_sport_stats, sport_profit_periods
+from .sport_stats import sport_profit_periods
 
 
 class UserPresenceTests(TestCase):
@@ -128,24 +128,3 @@ class SportStatsTests(TestCase):
         self.assertEqual(periods["all"]["rows"][0]["predictions_count"], 3)
         self.assertEqual(periods["all"]["rows"][0]["roi"], 20.0)
         self.assertEqual(options[0]["key"], "all")
-
-    def test_catalog_stats_are_loaded_from_persisted_monthly_data(self):
-        self._monthly_row()
-        stats, options = catalog_sport_stats([self.analyst.id])
-
-        self.assertEqual(stats[self.analyst.id]["all"]["predictions_count"], 3)
-        self.assertEqual(stats[self.analyst.id]["football"]["roi"], 40.0)
-        self.assertEqual(stats[self.analyst.id]["hockey"]["roi"], -20.0)
-        self.assertEqual(
-            [item["code"] for item in options],
-            ["all", "football", "hockey"],
-        )
-
-    def test_cappers_catalog_embeds_sport_specific_stats(self):
-        self._monthly_row()
-        response = self.client.get(reverse("front:cappers_stats"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-capper-sport-source="football"')
-        self.assertContains(response, "Все виды спорта")
-        self.assertContains(response, "cappers-sport-filter.js")

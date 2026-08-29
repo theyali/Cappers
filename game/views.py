@@ -542,9 +542,6 @@ def _provider_prediction_panel(match: Match) -> dict | None:
 
 
 def _match_odds_tabs(match: Match) -> list[dict]:
-    if match.sync_scope != Match.SyncScope.PREMATCH:
-        return []
-
     try:
         odds = match.odds
     except MatchOdds.DoesNotExist:
@@ -770,6 +767,9 @@ def _totals_rows_from_payload(
     for raw_key, raw_value in totals_all.items():
         key = str(raw_key)
         odd = _optional_odd(raw_value)
+        if odd is None and isinstance(raw_value, dict):
+            rows_by_line.update(_nested_total_values(raw_value))
+            continue
         if odd is None:
             continue
         lower_key = key.lower()
@@ -799,6 +799,23 @@ def _totals_rows_from_payload(
         )
 
     return rows
+
+
+def _nested_total_values(payload: dict) -> dict[str, dict[str, str | None]]:
+    nested_totals = payload.get("total") if isinstance(payload.get("total"), dict) else payload
+    if not isinstance(nested_totals, dict):
+        return {}
+
+    rows_by_line: dict[str, dict[str, str | None]] = {}
+    for raw_line, raw_value in nested_totals.items():
+        if not isinstance(raw_value, dict):
+            continue
+        line = str(raw_value.get("line") or raw_line).replace(",", ".").strip()
+        if not line:
+            continue
+        rows_by_line.setdefault(line, {"over": None, "under": None})["over"] = _optional_odd(raw_value.get("over"))
+        rows_by_line.setdefault(line, {"over": None, "under": None})["under"] = _optional_odd(raw_value.get("under"))
+    return rows_by_line
 
 
 def _generic_market_rows(payload: dict, market: str, title: str) -> list[dict]:

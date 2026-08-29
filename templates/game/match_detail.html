@@ -112,9 +112,9 @@
                 </div>
             </article>
 
-            {% if match.sync_scope == "prematch" %}
             <section
-                class="match-odds-panel"
+                class="match-odds-panel{% if odds_tabs %} has-odds-topbar{% endif %}{% if match.sync_scope != 'prematch' or not odds_tabs %} is-odds-collapsed{% endif %}"
+                {% if match.sync_scope != 'prematch' or not odds_tabs %}data-odds-collapsed="true"{% endif %}
                 data-match-bets
                 data-match-id="{{ match.id }}"
                 data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
@@ -123,6 +123,17 @@
                 data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
                 aria-label="Коэффициенты матча"
             >
+                <button
+                    type="button"
+                    class="match-odds-accordion-toggle"
+                    aria-expanded="{% if match.sync_scope != 'prematch' or not odds_tabs %}false{% else %}true{% endif %}"
+                    aria-label="{% if match.sync_scope != 'prematch' or not odds_tabs %}Раскрыть коэффициенты{% else %}Свернуть коэффициенты{% endif %}"
+                    title="{% if match.sync_scope != 'prematch' or not odds_tabs %}Раскрыть коэффициенты{% else %}Свернуть коэффициенты{% endif %}"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>
+                </button>
+                <div class="match-odds-accordion-body">
+                    <div class="match-odds-accordion-inner">
                 {% if odds_tabs %}
                 <div class="odds-topbar">
                     <div class="odds-main-tabs" role="tablist" aria-label="Разделы коэффициентов">
@@ -191,40 +202,7 @@
                     <p>Когда провайдер отдаст линию по этому матчу, она появится здесь.</p>
                 </div>
                 {% endif %}
-            </section>
-            {% else %}
-            <section class="match-odds-panel match-odds-panel-locked" aria-label="Заблокированные коэффициенты матча">
-                <div class="coupon-options match-card-options is-locked match-detail-locked-options">
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>1</span>
-                        {% if match.coupon_odds.home %}<small>{{ match.coupon_odds.home }}</small>{% endif %}
-                    </button>
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>X</span>
-                        {% if match.coupon_odds.draw %}<small>{{ match.coupon_odds.draw }}</small>{% endif %}
-                    </button>
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>2</span>
-                        {% if match.coupon_odds.away %}<small>{{ match.coupon_odds.away }}</small>{% endif %}
-                    </button>
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>ТБ 2.5</span>
-                        {% if match.coupon_odds.over25 %}<small>{{ match.coupon_odds.over25 }}</small>{% endif %}
-                    </button>
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>ТМ 2.5</span>
-                        {% if match.coupon_odds.under25 %}<small>{{ match.coupon_odds.under25 }}</small>{% endif %}
-                    </button>
-                    <button class="coupon-option match-bet-option" type="button" disabled aria-disabled="true">
-                        <i class="match-odd-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
-                        <span>ОЗ Да</span>
-                        {% if match.coupon_odds.btts_yes %}<small>{{ match.coupon_odds.btts_yes }}</small>{% endif %}
-                    </button>
+                    </div>
                 </div>
             </section>
             {% if provider_prediction_panel %}
@@ -263,7 +241,6 @@
                 </div>
                 {% endif %}
             </section>
-            {% endif %}
             {% endif %}
         </main>
 

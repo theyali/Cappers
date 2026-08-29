@@ -119,7 +119,7 @@ class ExpertSportProfitTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("cabinet:expert_profile", kwargs={"username": self.analyst.username})
+            reverse("front:expert_profile", kwargs={"username": self.analyst.username})
         )
 
         self.assertEqual(response.status_code, 200)

@@ -5,12 +5,13 @@
     padding: clamp(18px, 3vw, 28px);
     border-radius: 18px;
     background: var(--panel);
+    margin-top: 20px;
 }
 
 .expert-sport-profit-head {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 20px;
     flex-wrap: wrap;
 }
 
@@ -24,6 +25,10 @@
 .expert-sport-profit-filter {
     position: relative;
     z-index: 6;
+}
+.expert-sport-profit-label{
+    font-weight: 400;
+    font-size: 16px;
 }
 
 .expert-sport-profit-toggle {

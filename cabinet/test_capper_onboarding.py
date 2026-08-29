@@ -124,7 +124,7 @@ class CapperOnboardingTests(TestCase):
         self.assertIsNotNone(profile.onboarding_completed_at)
         self.assertRedirects(
             response,
-            reverse("cabinet:expert_profile", kwargs={"username": self.reader.username}),
+            reverse("front:expert_profile", kwargs={"username": self.reader.username}),
         )
 
     def test_final_action_can_send_new_capper_to_first_prediction(self):
@@ -144,7 +144,16 @@ class CapperOnboardingTests(TestCase):
 
         profile.refresh_from_db()
         self.assertTrue(profile.is_public)
+        match_list_url = reverse(
+            "game:match_list_filtered",
+            kwargs={
+                "sport": "all",
+                "scope": "prematch",
+                "selected_date": timezone.localdate().isoformat(),
+            },
+        )
         self.assertRedirects(
             response,
-            f"{reverse('game:match_list')}?scope=prematch&onboarding=done",
+            f"{match_list_url}?onboarding=done",
+            fetch_redirect_response=False,
         )

@@ -26,6 +26,12 @@ urlpatterns = [
         name="toggle_prediction_request",
     ),
     path(
+        "<str:sport>/live/",
+        date_views.match_list,
+        {"scope": "live"},
+        name="match_list_live",
+    ),
+    path(
         "<str:sport>/<str:scope>/<slug:selected_date>/",
         date_views.match_list,
         name="match_list_filtered",

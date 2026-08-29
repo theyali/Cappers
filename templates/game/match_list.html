@@ -17,11 +17,11 @@
     <div class="matches-hero long-bg long-bg-2">
         <div>
             <p class="matches-eyebrow">Матчи</p>
-            <h1>Матчи</h1>
+            <h1>{{ match_list_h1|default:"Матчи" }}</h1>
         </div>
         <div class="matches-hero-meta">
-            <span>{{ total_count }}</span>
-            <small>игр на {{ selected_date|date:"j M" }}</small>
+            <span>{{ hero_count|default:total_count }}</span>
+            <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
         </div>
     </div>
 
@@ -58,6 +58,7 @@
         {% endfor %}
     </nav>
 
+    {% if show_date_filter %}
     <section class="matches-date-filter" aria-label="Фильтр матчей по дате">
         <div class="matches-date-current">
             <span class="matches-date-current-icon">
@@ -72,16 +73,19 @@
         </div>
 
         <div class="matches-date-controls">
-            <a
-                class="matches-date-step"
-                href="{{ previous_date_url }}"
-                aria-label="Предыдущий день"
-                title="Предыдущий день"
-            >
+            {% if previous_date_url %}
+            <a class="matches-date-step" href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </a>
+            {% else %}
+            <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            {% endif %}
 
             <div class="matches-date-shortcuts">
                 {% for item in date_shortcuts %}
@@ -95,16 +99,19 @@
                 {% endfor %}
             </div>
 
-            <a
-                class="matches-date-step"
-                href="{{ next_date_url }}"
-                aria-label="Следующий день"
-                title="Следующий день"
-            >
+            {% if next_date_url %}
+            <a class="matches-date-step" href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </a>
+            {% else %}
+            <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            {% endif %}
 
             <label class="matches-date-picker">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -114,6 +121,8 @@
                 <input
                     type="date"
                     value="{{ selected_date_iso }}"
+                    min="{{ min_match_date_iso }}"
+                    max="{{ max_match_date_iso }}"
                     data-match-date-input
                     data-scope="{{ active_scope }}"
                     data-url-template="{{ date_picker_url_template }}"
@@ -122,6 +131,7 @@
             </label>
         </div>
     </section>
+    {% endif %}
 
     <div
         class="matches-shell"

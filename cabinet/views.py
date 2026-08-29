@@ -254,7 +254,7 @@ def following_summary(request):
                 "predictions_count": follow.predictions_count,
                 "followers_count": follow.followers_count,
                 "joined_at": analyst.date_joined.isoformat(),
-                "url": reverse("cabinet:expert_profile", kwargs={"username": analyst.username}),
+                "url": reverse("front:expert_profile", kwargs={"username": analyst.username}),
             }
         )
 

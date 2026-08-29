@@ -85,7 +85,7 @@ class MatchListLiveDateTests(TestCase):
             basketball_tab["url"],
         )
 
-    def test_live_scope_ignores_selected_calendar_date(self):
+    def test_live_scope_uses_clean_url_without_date(self):
         tz = timezone.get_current_timezone()
         selected_date = timezone.localdate()
         selected_day_start = timezone.make_aware(
@@ -103,9 +103,12 @@ class MatchListLiveDateTests(TestCase):
             starts_at=selected_day_start,
         )
 
-        response = self.client.get(
-            f"/games/all/{Match.SyncScope.LIVE}/{selected_date.isoformat()}/"
-        )
+        response = self.client.get(f"/games/all/{Match.SyncScope.LIVE}/{selected_date.isoformat()}/")
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response["Location"], "/games/all/live/")
+
+        response = self.client.get(response["Location"])
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -118,6 +121,51 @@ class MatchListLiveDateTests(TestCase):
             if tab["scope"] == Match.SyncScope.LIVE
         )
         self.assertEqual(live_tab["count"], 1)
+        self.assertEqual(live_tab["url"], "/games/all/live/")
+        self.assertFalse(response.context["show_date_filter"])
+
+    def test_query_live_filter_redirects_to_clean_live_url(self):
+        selected_date = timezone.localdate()
+
+        response = self.client.get(
+            reverse("game:match_list"),
+            {
+                "scope": Match.SyncScope.LIVE,
+                "date": selected_date.isoformat(),
+                "sport": "football",
+            },
+        )
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response["Location"], "/games/football/live/")
+
+    def test_far_match_dates_return_404(self):
+        far_date = timezone.localdate() + timedelta(days=31)
+
+        response = self.client.get(f"/games/football/all/{far_date.isoformat()}/")
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_match_filter_seo_is_unique_and_query_pages_are_noindex(self):
+        selected_date = timezone.localdate()
+
+        response = self.client.get(f"/games/hockey/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["match_list_h1"],
+            f"Предстоящие матчи по хоккею на {selected_date.strftime('%d.%m.%Y')}",
+        )
+        self.assertEqual(response.context["seo_meta"]["robots"], "index,follow")
+        self.assertIn("Предстоящие матчи по хоккею", response.context["seo_meta"]["title"])
+
+        paged_response = self.client.get(
+            f"/games/hockey/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
+            {"page": "2"},
+        )
+
+        self.assertEqual(paged_response.status_code, 200)
+        self.assertEqual(paged_response.context["seo_meta"]["robots"], "noindex,follow")
 
     def test_prematch_card_without_odds_shows_locked_empty_odds(self):
         user = User.objects.create_user(

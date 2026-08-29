@@ -546,6 +546,7 @@
     overflow: hidden;
     transform: translateY(0);
     transition: max-height .34s ease, opacity .24s ease, transform .24s ease;
+    padding: 5px;
 }
 
 .coupon-sidebar.is-collapsed .coupon-body {

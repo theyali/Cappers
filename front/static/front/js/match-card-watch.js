@@ -85,24 +85,45 @@
             if (panel.dataset.oddsAccordionReady === "true") return;
             panel.dataset.oddsAccordionReady = "true";
 
-            const body = document.createElement("div");
-            body.className = "match-odds-accordion-body";
-            const inner = document.createElement("div");
-            inner.className = "match-odds-accordion-inner";
+            let body = panel.querySelector(":scope > .match-odds-accordion-body");
+            let inner = body?.querySelector(":scope > .match-odds-accordion-inner");
+            let toggle = panel.querySelector(":scope > .match-odds-accordion-toggle");
 
-            while (panel.firstChild) inner.appendChild(panel.firstChild);
-            body.appendChild(inner);
+            if (!body || !inner) {
+                body = document.createElement("div");
+                body.className = "match-odds-accordion-body";
+                inner = document.createElement("div");
+                inner.className = "match-odds-accordion-inner";
 
-            const toggle = document.createElement("button");
-            toggle.type = "button";
-            toggle.className = "match-odds-accordion-toggle";
-            toggle.setAttribute("aria-expanded", "true");
-            toggle.setAttribute("aria-label", "Свернуть коэффициенты");
-            toggle.title = "Свернуть коэффициенты";
-            toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>';
+                while (panel.firstChild) {
+                    const child = panel.firstChild;
+                    if (child === toggle) {
+                        panel.removeChild(child);
+                        continue;
+                    }
+                    inner.appendChild(child);
+                }
+                body.appendChild(inner);
+            }
+
+            if (!toggle) {
+                toggle = document.createElement("button");
+                toggle.type = "button";
+                toggle.className = "match-odds-accordion-toggle";
+                toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>';
+            }
+
+            const startCollapsed = panel.classList.contains("is-odds-collapsed")
+                || panel.dataset.oddsCollapsed === "true";
+            panel.classList.toggle("is-odds-collapsed", startCollapsed);
+            toggle.setAttribute("aria-expanded", String(!startCollapsed));
+            const startLabel = startCollapsed ? "Раскрыть коэффициенты" : "Свернуть коэффициенты";
+            toggle.setAttribute("aria-label", startLabel);
+            toggle.title = startLabel;
 
             panel.classList.toggle("has-odds-topbar", Boolean(inner.querySelector(".odds-topbar")));
-            panel.append(toggle, body);
+            if (toggle.parentElement !== panel) panel.prepend(toggle);
+            if (body.parentElement !== panel) panel.append(body);
 
             toggle.addEventListener("click", () => {
                 const collapsed = panel.classList.toggle("is-odds-collapsed");

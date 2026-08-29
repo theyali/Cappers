@@ -154,7 +154,7 @@ class UserProfileAndAchievementTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("cabinet:expert_profile", kwargs={"username": self.capper.username}),
+            reverse("front:expert_profile", kwargs={"username": self.capper.username}),
         )
 
     def test_following_summary_contains_profile_stats_and_clickable_url(self):
@@ -172,7 +172,7 @@ class UserProfileAndAchievementTests(TestCase):
         self.assertEqual(item["predictions_count"], 5)
         self.assertEqual(
             item["url"],
-            reverse("cabinet:expert_profile", kwargs={"username": self.capper.username}),
+            reverse("front:expert_profile", kwargs={"username": self.capper.username}),
         )
 
     def test_reader_achievement_endpoint_returns_only_activity_achievements(self):

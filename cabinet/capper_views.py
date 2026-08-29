@@ -158,7 +158,7 @@ def become_capper_start(request):
     if request.user.role == User.Role.ANALYST:
         profile = AnalystProfile.objects.filter(user=request.user).first()
         if profile and profile.is_public:
-            return redirect("cabinet:expert_profile", username=request.user.username)
+            return redirect("front:expert_profile", username=request.user.username)
 
     _profile_for_onboarding(request.user)
     return redirect("cabinet:capper_onboarding", step=1)
@@ -172,7 +172,7 @@ def capper_onboarding(request, step: int):
 
     profile = _profile_for_onboarding(request.user)
     if request.user.role == User.Role.ANALYST and profile.onboarding_completed_at and profile.is_public:
-        return redirect("cabinet:expert_profile", username=request.user.username)
+        return redirect("front:expert_profile", username=request.user.username)
 
     incomplete_step = _first_incomplete_step(profile)
     if incomplete_step is not None and step > incomplete_step:
@@ -293,8 +293,16 @@ def capper_onboarding(request, step: int):
                 "Профиль каппера активирован. Теперь ваша статистика будет собираться автоматически.",
             )
             if action == "prediction":
-                return redirect(f"{reverse('game:match_list')}?scope=prematch&onboarding=done")
-            return redirect("cabinet:expert_profile", username=request.user.username)
+                match_list_url = reverse(
+                    "game:match_list_filtered",
+                    kwargs={
+                        "sport": "all",
+                        "scope": "prematch",
+                        "selected_date": timezone.localdate().isoformat(),
+                    },
+                )
+                return redirect(f"{match_list_url}?onboarding=done")
+            return redirect("front:expert_profile", username=request.user.username)
 
     first_prediction_exists = PredictionCoupon.objects.filter(
         author=request.user,

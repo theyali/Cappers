@@ -46,8 +46,7 @@ def match_odds_defaults(payload: dict[str, Any]) -> dict[str, Any]:
     defaults = _empty_defaults(payload)
     _apply_legacy_payload(defaults, payload)
 
-    bookmaker = _select_bookmaker(_extract_bookmakers(payload))
-    if bookmaker:
+    for bookmaker in _extract_bookmakers(payload):
         normalized = _normalize_bookmaker(bookmaker)
         _merge_normalized(defaults, normalized)
 
@@ -102,7 +101,7 @@ def _apply_legacy_payload(defaults: dict[str, Any], payload: dict[str, Any]) -> 
 
     used_keys = set(DIRECT_ODDS_KEYS) | set(BOOKMAKER_KEYS)
     for field, aliases in GROUP_ALIASES.items():
-        defaults[field] = _first_dict(payload, aliases)
+        _apply_legacy_group(defaults, field, _first_dict(payload, aliases))
         used_keys.update(aliases)
 
     defaults["extra_markets"] = {
@@ -129,6 +128,108 @@ def _has_legacy_payload(payload: dict[str, Any]) -> bool:
     )
 
 
+def _apply_legacy_group(defaults: dict[str, Any], field: str, value: dict) -> None:
+    if not value:
+        return
+
+    if field in {"totals_all", "first_half_totals_all"}:
+        _apply_total_container(defaults, value, field)
+    elif field in {"handicaps_all", "first_half_handicaps_all"}:
+        _apply_handicap_container(defaults, value, field)
+    elif field == "team_totals_all":
+        _apply_team_total_container(defaults, value)
+    else:
+        defaults[field] = _flat_odds_dict(value)
+
+
+def _apply_total_container(defaults: dict[str, Any], value: dict, field: str) -> None:
+    for key, item in value.items():
+        text = _normalize_text(key)
+        if isinstance(item, dict) and text in {"total", "totals"}:
+            _apply_line_totals(defaults, item, field)
+        elif isinstance(item, dict) and text in {"ah", "asian handicap", "handicap", "handicaps"}:
+            _apply_handicap_container(defaults, item, "handicaps_all")
+        elif isinstance(item, dict) and _is_team_total(text):
+            _put_group(defaults["team_totals_all"], key, _line_totals_to_dict(item))
+        elif _to_float(item) is not None:
+            defaults[field][key] = _to_float(item)
+
+
+def _apply_handicap_container(defaults: dict[str, Any], value: dict, field: str) -> None:
+    if field == "handicaps_all":
+        target = defaults["handicaps_all"]
+        direct_defaults = defaults
+    else:
+        target = defaults["first_half_handicaps_all"]
+        direct_defaults = None
+
+    for key, item in value.items():
+        if isinstance(item, dict) and _is_line_pair(item, ("home", "away")):
+            line = _normalize_line(item.get("line") or key)
+            home_odd = _to_float(item.get("home"))
+            away_odd = _to_float(item.get("away"))
+            if home_odd is not None:
+                target[f"Home {line}"] = home_odd
+                if direct_defaults is not None and line in {"0", "+0", "-0"}:
+                    direct_defaults["fora_1_0"] = home_odd
+            if away_odd is not None:
+                away_line = _opposite_line(line)
+                target[f"Away {away_line}"] = away_odd
+                if direct_defaults is not None and line in {"0", "+0", "-0"}:
+                    direct_defaults["fora_2_0"] = away_odd
+        elif _to_float(item) is not None:
+            target[key] = _to_float(item)
+
+
+def _apply_team_total_container(defaults: dict[str, Any], value: dict) -> None:
+    for key, item in value.items():
+        if isinstance(item, dict):
+            odds = _line_totals_to_dict(item)
+            if odds:
+                _put_group(defaults["team_totals_all"], key, odds)
+        elif _to_float(item) is not None:
+            defaults["team_totals_all"][key] = _to_float(item)
+
+
+def _apply_line_totals(defaults: dict[str, Any], line_map: dict, field: str) -> None:
+    for label, odd in _line_totals_to_dict(line_map).items():
+        defaults[field][label] = odd
+        line = _line_from_text(label)
+        side = _total_side(label)
+        if field == "totals_all" and line == "2.5":
+            if side == "Over":
+                defaults["goals_over_2_5"] = odd
+            elif side == "Under":
+                defaults["goals_under_2_5"] = odd
+
+
+def _line_totals_to_dict(line_map: dict) -> dict[str, float]:
+    values: dict[str, float] = {}
+    for key, item in line_map.items():
+        if not isinstance(item, dict) or not _is_line_pair(item, ("over", "under")):
+            continue
+        line = _normalize_line(item.get("line") or key)
+        over_odd = _to_float(item.get("over"))
+        under_odd = _to_float(item.get("under"))
+        if over_odd is not None:
+            values[f"Over {line}"] = over_odd
+        if under_odd is not None:
+            values[f"Under {line}"] = under_odd
+    return values
+
+
+def _flat_odds_dict(value: dict) -> dict:
+    return {
+        key: _to_float(item) if _to_float(item) is not None else item
+        for key, item in value.items()
+        if item not in (None, "")
+    }
+
+
+def _is_line_pair(value: dict, sides: tuple[str, str]) -> bool:
+    return any(_to_float(value.get(side)) is not None for side in sides)
+
+
 def _merge_normalized(defaults: dict[str, Any], normalized: dict[str, Any]) -> None:
     for key in DIRECT_ODDS_KEYS:
         if normalized.get(key) is not None:
@@ -144,11 +245,14 @@ def _merge_normalized(defaults: dict[str, Any], normalized: dict[str, Any]) -> N
 
 
 def _extract_bookmakers(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    explicit_bookmakers: list[dict[str, Any]] = []
     for key in BOOKMAKER_KEYS:
         value = payload.get(key)
         bookmakers = _bookmaker_list(value)
         if bookmakers:
-            return bookmakers
+            explicit_bookmakers.extend(bookmakers)
+    if explicit_bookmakers:
+        return explicit_bookmakers
 
     nested = payload.get("data")
     if isinstance(nested, dict):
@@ -156,9 +260,31 @@ def _extract_bookmakers(payload: dict[str, Any]) -> list[dict[str, Any]]:
         if bookmakers:
             return bookmakers
 
+    found: list[dict[str, Any]] = []
+    _collect_nested_bookmakers(payload, found)
+    if found:
+        return found
+
     if any(key in payload for key in MARKET_KEYS):
         return [payload]
     return []
+
+
+def _collect_nested_bookmakers(value: Any, found: list[dict[str, Any]]) -> None:
+    if isinstance(value, list):
+        for item in value:
+            _collect_nested_bookmakers(item, found)
+        return
+
+    if not isinstance(value, dict):
+        return
+
+    if any(key in value for key in MARKET_KEYS) and _market_items(value):
+        found.append(value)
+        return
+
+    for item in value.values():
+        _collect_nested_bookmakers(item, found)
 
 
 def _bookmaker_list(value: Any) -> list[dict[str, Any]]:
@@ -169,10 +295,6 @@ def _bookmaker_list(value: Any) -> list[dict[str, Any]]:
             return [value]
         return [item for item in value.values() if isinstance(item, dict)]
     return []
-
-
-def _select_bookmaker(bookmakers: list[dict[str, Any]]) -> dict[str, Any] | None:
-    return next((bookmaker for bookmaker in bookmakers if _market_items(bookmaker)), None)
 
 
 def _normalize_bookmaker(bookmaker: dict[str, Any]) -> dict[str, Any]:
@@ -239,13 +361,14 @@ def _market_values(market: dict[str, Any]) -> list[Any]:
 
 def _normalized_values(market: dict[str, Any]) -> dict[str, float]:
     values = {}
+    market_text = _normalize_text(_market_name(market))
     for item in _market_values(market):
         label = _value_label(item)
         odd = _to_float(_odd_value(item))
         if not label or odd is None:
             continue
         line = _line_value(item)
-        if line and line not in label:
+        if line and line not in label and (line != "0" or _is_handicap(market_text)):
             label = f"{label} {line}".strip()
         values[label] = odd
     return values
@@ -441,7 +564,7 @@ def _is_first_half_winner(text: str) -> bool:
 
 
 def _is_double_chance(text: str) -> bool:
-    return "double chance" in text or "двой" in text
+    return "double chance" in text or "двой" in text or _double_chance_key(text) is not None
 
 
 def _is_total(text: str) -> bool:
@@ -501,6 +624,17 @@ def _normalize_line(value: Any) -> str:
     except (TypeError, ValueError):
         return text
     return str(int(number)) if number.is_integer() else str(number).rstrip("0").rstrip(".")
+
+
+def _opposite_line(value: str) -> str:
+    try:
+        number = -float(str(value).replace(",", "."))
+    except (TypeError, ValueError):
+        return value
+    if number == 0:
+        return "0"
+    normalized = _normalize_line(number)
+    return normalized if normalized.startswith("-") else f"+{normalized}"
 
 
 def _is_yes(label: str) -> bool:

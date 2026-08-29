@@ -5,6 +5,7 @@ from django.core.cache import cache
 from game.models import Match
 from game.services.live_settlement import settle_live_matches
 from game.services.match_sync import MatchSyncService
+from game.services.providers.neurokeff import NeurokeffProviderError
 from game.services.settlement import settle_finished_matches
 
 
@@ -86,6 +87,14 @@ def _run_sync(scope: str, sport_code: str, callback):
         }
     try:
         return callback()
+    except NeurokeffProviderError as exc:
+        return {
+            "status": "error",
+            "reason": "provider_error",
+            "scope": scope,
+            "sport": sport_code,
+            "message": str(exc),
+        }
     finally:
         cache.delete(lock_key)
 
