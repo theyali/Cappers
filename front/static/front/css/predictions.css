@@ -64,6 +64,94 @@
     font-size: 12px;
 }
 
+.predictions-page .matches-sport-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--panel);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.predictions-page .matches-sport-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.predictions-page .matches-sport-tab {
+    min-height: 50px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 0 10px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .78);
+    background: #2a2a2d;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: color .18s ease, background .18s ease;
+}
+
+.predictions-page .matches-sport-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--yellow);
+}
+
+.predictions-page .matches-sport-icon img,
+.predictions-page .matches-sport-icon svg {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    color: inherit;
+}
+
+.predictions-page .matches-sport-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.predictions-page .matches-sport-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
+}
+
+.predictions-page .matches-sport-tab b {
+    min-width: 24px;
+    min-height: 22px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 7px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, .72);
+    background: rgba(255, 255, 255, .09);
+    font-size: 12px;
+}
+
+.predictions-page .matches-sport-tab:hover {
+    color: var(--text);
+    background: #303033;
+}
+
+.predictions-page .matches-sport-tab.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-page .matches-sport-tab.is-active .matches-sport-icon {
+    color: var(--ink);
+    background: rgba(19, 19, 19, .12);
+}
+
+.predictions-page .matches-sport-tab.is-active b {
+    color: var(--ink);
+    background: rgba(19, 19, 19, .12);
+}
+
 .predictions-tabs {
     display: flex;
     gap: 8px;
@@ -274,6 +362,23 @@
         min-height: auto;
         justify-content: space-between !important;
         display: flex;
+    }
+
+    .predictions-page .matches-sport-tabs {
+        padding: 9px;
+    }
+
+    .predictions-page .matches-sport-tab {
+        min-height: 46px;
+        gap: 8px;
+        padding: 0 12px 0 8px;
+        font-size: 13px;
+    }
+
+    .predictions-page .matches-sport-icon {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
     }
 
     .predictions-grid {
