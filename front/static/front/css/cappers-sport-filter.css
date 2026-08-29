@@ -1,0 +1,107 @@
+.cappers-sport-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 18px;
+    overflow-x: auto;
+    padding: 2px 0 6px;
+    scrollbar-width: none;
+}
+
+.cappers-sport-filter::-webkit-scrollbar {
+    display: none;
+}
+
+.cappers-sport-filter button {
+    flex: 0 0 auto;
+    appearance: none;
+    border: 0;
+    border-radius: 10px;
+    background: #1f1f21;
+    color: #fff;
+    min-height: 40px;
+    padding: 0 15px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .18s ease, background-color .18s ease, color .18s ease;
+}
+
+.cappers-sport-filter button:hover {
+    transform: translateY(-1px);
+}
+
+.cappers-sport-filter button.is-active {
+    background: #0b56fa;
+    color: #fff;
+}
+
+.cappers-sport-filter-count {
+    margin-left: auto;
+    flex: 0 0 auto;
+    color: #707072;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.capper-pro-sport-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f4f6fb;
+}
+
+.capper-pro-sport-stat > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.capper-pro-sport-stat span {
+    color: #707072;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.capper-pro-sport-stat strong {
+    color: #131313;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.capper-pro-sport-stat small {
+    color: #707072;
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: right;
+}
+
+.capper-pro-sport-stat.is-empty {
+    opacity: .72;
+}
+
+@media (max-width: 720px) {
+    .cappers-sport-filter {
+        margin-bottom: 14px;
+    }
+
+    .cappers-sport-filter-count {
+        display: none;
+    }
+
+    .capper-pro-sport-stat {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .capper-pro-sport-stat small {
+        text-align: left;
+    }
+}

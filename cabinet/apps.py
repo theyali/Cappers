@@ -7,4 +7,5 @@ class CabinetConfig(AppConfig):
     verbose_name = "Личный кабинет"
 
     def ready(self) -> None:
+        from . import presence  # noqa: F401
         from . import signals  # noqa: F401

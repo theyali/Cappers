@@ -1,0 +1,50 @@
+.public-presence-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    margin-top: 7px;
+    color: #707072;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.public-presence-status.is-online {
+    color: #1c8f49;
+}
+
+.public-presence-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: #27b65f;
+}
+
+.public-presence-status.is-online .public-presence-dot {
+    display: inline-block;
+    animation: publicPresencePulse 1.8s ease-in-out infinite;
+}
+
+.expert-public-username + .public-presence-status {
+    margin-top: 8px;
+}
+
+@keyframes publicPresencePulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(39, 182, 95, .12);
+    }
+
+    50% {
+        box-shadow: 0 0 0 5px rgba(39, 182, 95, .18);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .public-presence-status.is-online .public-presence-dot {
+        animation: none;
+    }
+}

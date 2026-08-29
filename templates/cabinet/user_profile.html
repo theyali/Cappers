@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/user-public-profile.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/public-presence.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -24,6 +25,12 @@
                 <span class="user-public-role">Пользователь</span>
                 <h1>{{ display_name }}</h1>
                 <p>@{{ profile_user.username }}</p>
+                {% if profile_presence %}
+                <span class="public-presence-status{% if profile_presence.is_online %} is-online{% endif %}">
+                    <span class="public-presence-dot" aria-hidden="true"></span>
+                    <span>{{ profile_presence.label }}</span>
+                </span>
+                {% endif %}
                 <small>На платформе с {{ profile_user.date_joined|date:"d.m.Y" }}</small>
             </div>
         </div>
