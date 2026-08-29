@@ -60,6 +60,21 @@ urlpatterns = [
     path("experts/<str:username>/", cabinet_expert_profile_views.expert_profile, name="expert_profile"),
     path("cappers-statistics/", capper_views.cappers_stats, name="cappers_stats"),
     path("cappers-table/", capper_views.cappers_table, name="cappers_table"),
+    path(
+        "cappers-table/<slug:group>/",
+        capper_views.cappers_table,
+        name="cappers_table_group",
+    ),
+    path(
+        "cappers-table/<slug:group>/<slug:period>/",
+        capper_views.cappers_table,
+        name="cappers_table_period",
+    ),
+    path(
+        "cappers-table/<slug:group>/<slug:period>/<slug:sport_code>/",
+        capper_views.cappers_table,
+        name="cappers_table_sport",
+    ),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path(
         "rules/",
