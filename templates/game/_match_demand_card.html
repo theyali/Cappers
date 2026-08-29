@@ -1,0 +1,41 @@
+<section
+    class="match-demand-card"
+    data-match-demand
+    data-toggle-url="{% url 'game:toggle_prediction_request' match.id %}"
+    aria-label="Хочу прогноз на матч"
+>
+    <div class="match-demand-main">
+        <span class="match-demand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5Z"></path><path d="M8 9h8M8 12h5"></path></svg>
+        </span>
+        <div class="match-demand-copy">
+            <span class="match-demand-kicker">Спрос на прогноз</span>
+            <strong>Хотите прогноз на этот матч?</strong>
+            <p>Отметьте матч — капперы увидят спрос в личном кабинете.</p>
+            <div class="match-demand-status" data-match-demand-status aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div class="match-demand-actions">
+        <div class="match-demand-count">
+            <strong data-match-demand-count>{{ match_demand.requests_count }}</strong>
+            <span>запросов на прогноз</span>
+        </div>
+
+        {% if match_demand.authenticated %}
+        <button
+            class="match-demand-button{% if match_demand.active %} is-active{% endif %}"
+            type="button"
+            data-match-demand-toggle
+            aria-pressed="{% if match_demand.active %}true{% else %}false{% endif %}"
+        >
+            <span data-match-demand-button-text>{% if match_demand.active %}Запрос отправлен{% else %}Хочу прогноз{% endif %}</span>
+        </button>
+        {% else %}
+        <a
+            class="match-demand-login"
+            href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+        >Хочу прогноз</a>
+        {% endif %}
+    </div>
+</section>
