@@ -3,6 +3,20 @@
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
     <a class="match-card-main" href="{{ match.get_absolute_url }}">
+        <span class="matches-sport-icon" aria-hidden="true">
+            {% if match.sport_code == 'football' %}
+                {% include "front/svgs/soccer.svg" %}
+            {% elif match.sport_code == 'hockey' %}
+                {% include "front/svgs/hockey.svg" %}
+            {% elif match.sport_code == 'basketball' %}
+                {% include "front/svgs/basketball.svg" %}
+            {% elif match.sport_code == 'tennis' %}
+                {% include "front/svgs/tennis.svg" %}
+            {% else %}
+                {% include "front/svgs/nav-matches.svg" %}
+            {% endif %}
+        </span>
+
         <div class="match-card-head">
             <div class="match-league">
                 <span class="league-mark">
