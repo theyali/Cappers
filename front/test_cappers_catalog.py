@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.test import TestCase
@@ -89,3 +90,62 @@ class CappersCatalogTests(TestCase):
             reverse("cabinet:toggle_follow", kwargs={"user_id": analyst.id}),
         )
         self.assertContains(response, "front/js/expert-follow.js")
+
+    def test_catalog_renders_roi_period_select_and_skeleton_grid(self):
+        self._create_analyst()
+
+        response = self.client.get(reverse("front:cappers_stats"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-cappers-roi-select")
+        self.assertContains(response, "ROI за 7 дней")
+        self.assertContains(response, "ROI за 30 дней")
+        self.assertContains(response, "ROI за 90 дней")
+        self.assertContains(response, "ROI за все время")
+        self.assertContains(response, "data-cappers-roi-grid")
+        self.assertContains(response, "data-skeleton-block")
+        self.assertContains(response, "front/js/cappers-roi-filter.js")
+        self.assertContains(response, "admin/js/vendor/jquery/jquery.min.js")
+
+    def test_ajax_roi_period_returns_only_ranking_fragment(self):
+        self._create_analyst()
+
+        response = self.client.get(
+            reverse("front:cappers_stats"),
+            {"roi_period": "7"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["period"], "7")
+        self.assertEqual(payload["label"], "ROI за 7 дней")
+        self.assertIn('class="capper-pro-card', payload["html"])
+        self.assertIn("ROI +50.0% · 7д", payload["html"])
+        self.assertNotIn("cappers-summary", payload["html"])
+
+    def test_all_time_ajax_roi_includes_old_settled_predictions(self):
+        analyst = self._create_analyst()
+        old_date = timezone.now() - timedelta(days=120)
+        PredictionCoupon.objects.create(
+            author=analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status=PredictionCoupon.StateStatus.LOSE,
+            total_stake=Decimal("100.00"),
+            possible_payout=Decimal("0.00"),
+            published_at=old_date,
+            settled_at=old_date,
+        )
+
+        response = self.client.get(
+            reverse("front:cappers_stats"),
+            {"roi_period": "all"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["period"], "all")
+        self.assertEqual(payload["label"], "ROI за все время")
+        self.assertIn("ROI -25.0% · всё время", payload["html"])
