@@ -21,7 +21,7 @@
             <div>
                 <p class="cappers-eyebrow">Каталог экспертов</p>
                 <h1>Эксперты и аналитики</h1>
-                <p>Сравнивай экспертов по ROI за последние {{ roi_period_days }} дней, истории рассчитанных прогнозов, охвату видов спорта и интересу аудитории.</p>
+                <p>Сравнивай экспертов по {{ roi_period_label|lower }}, истории рассчитанных прогнозов, охвату видов спорта и интересу аудитории.</p>
                 {% if not request.user.is_analyst %}
                 <div class="capper-growth-inline">
                     <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
@@ -64,13 +64,27 @@
                 <p class="cappers-eyebrow">Рейтинг по результатам</p>
                 <h2>Все эксперты</h2>
             </div>
-            <span>ROI за {{ roi_period_days }} дней · {{ experts_count }} профилей</span>
+            <div class="cappers-section-head-controls">
+                <span data-cappers-roi-meta>{{ roi_period_label }} · {{ experts_count }} профилей</span>
+                <label class="cappers-roi-period-select" aria-label="Период ROI">
+                    <select
+                        data-cappers-roi-select
+                        data-url="{% url 'front:cappers_stats' %}"
+                        aria-controls="cappers-pro-grid"
+                    >
+                        {% for option in roi_period_options %}
+                        <option value="{{ option.key }}"{% if option.key == roi_period_key %} selected{% endif %}>{{ option.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+                </label>
+            </div>
         </div>
 
-        <div class="cappers-pro-grid">
-            {% for expert in experts %}
-            {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=True %}
-            {% endfor %}
+        <div class="cappers-pro-grid-shell" data-cappers-roi-grid data-skeleton-block aria-live="polite">
+            <div class="cappers-pro-grid" id="cappers-pro-grid">
+                {% include "front/includes/_cappers_pro_cards.html" %}
+            </div>
         </div>
         {% else %}
         <div class="cappers-empty">
@@ -177,5 +191,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
+<script src="{% static 'front/js/cappers-roi-filter.js' %}" defer></script>
 {% endblock %}
