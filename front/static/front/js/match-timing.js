@@ -83,11 +83,16 @@
         if (node.textContent !== text) node.textContent = text;
     };
 
-    const setCardPrematchStatus = (node) => {
+    const setCardPrematchStatus = (node, isSoon) => {
         if (!node) return;
-        node.classList.remove("match-status-countdown", "match-status-soon");
+        node.classList.remove("match-status-prematch", "match-status-countdown", "match-status-soon");
+        if (isSoon) {
+            node.classList.add("match-status-soon");
+            if (node.textContent !== "Скоро начнется") node.textContent = "Скоро начнется";
+            return;
+        }
         node.classList.add("match-status-prematch");
-        if (node.textContent !== "Скоро начнется") node.textContent = "Скоро начнется";
+        if (node.textContent !== "Скоро") node.textContent = "Скоро";
     };
 
     const updateCouponMeta = (matchId, startDate) => {
@@ -153,15 +158,20 @@
         if (!startDate) return;
 
         const seconds = Math.ceil((startDate.getTime() - Date.now()) / 1000);
+        const soonWindow = Math.max(0, Number(timing.soon_window_seconds) || 600);
         const isPrematch = timing.scope === "prematch";
         const hasStartedLocally = isPrematch && seconds <= 0;
+        const isSoon = isPrematch && seconds <= soonWindow;
 
         document.querySelectorAll(`[data-match-card][data-match-id="${matchId}"]`).forEach((card) => {
             const dateNode = card.querySelector(".match-score [data-starts-at]");
             if (dateNode) dateNode.textContent = formatShortDate(startDate);
 
             if (isPrematch) {
-                setCardPrematchStatus(card.querySelector(".match-card-head .match-status"));
+                setCardPrematchStatus(
+                    card.querySelector(".match-card-head .match-status"),
+                    isSoon
+                );
             }
         });
 
