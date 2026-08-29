@@ -3,9 +3,9 @@
     <a class="capper-pro-card-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
         <div class="capper-pro-top">
             <div class="capper-pro-person">
-                <span class="capper-pro-avatar">
+                <span class="capper-pro-avatar"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
                     {% if expert.avatar_url %}
-                        <img src="{{ expert.avatar_url }}" alt="" loading="lazy">
+                        <img src="{{ expert.avatar_url }}" width="62" height="62" alt="" loading="lazy">
                     {% else %}
                         {{ expert.initials }}
                     {% endif %}
@@ -21,8 +21,8 @@
                             </svg>
                         </span>
                         {% endif %}
-                        <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}" title="ROI за последние {{ expert.roi_period_days }} дней">
-                            ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · {{ expert.roi_period_days }}д
+                        <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}" title="{{ expert.roi_period_label|default:'ROI за 30 дней' }}">
+                            ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · {% if expert.roi_period_days %}{{ expert.roi_period_days }}д{% else %}всё время{% endif %}
                         </span>
                     </div>
                     <span>@{{ expert.username }}</span>
