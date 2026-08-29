@@ -13,7 +13,6 @@
 {% endblock %}
 
 {% block content %}
-{% match_watched request.user match as is_watched %}
 <section
     class="match-detail-page"
     data-coupon-page
@@ -76,13 +75,13 @@
                         </span>
                         {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
                         <button
-                            class="match-watch-button match-card-watch-button match-detail-watch-button{% if is_watched %} is-watching{% endif %}"
+                            class="match-watch-button match-card-watch-button match-detail-watch-button{% if match.is_watched %} is-watching{% endif %}"
                             type="button"
                             data-match-watch-toggle
                             data-watch-url="{% url 'notifications:match_watch' match.id %}"
-                            aria-pressed="{% if is_watched %}true{% else %}false{% endif %}"
-                            aria-label="{% if is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
-                            title="{% if is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
+                            aria-pressed="{% if match.is_watched %}true{% else %}false{% endif %}"
+                            aria-label="{% if match.is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
+                            title="{% if match.is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
                         >
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path>

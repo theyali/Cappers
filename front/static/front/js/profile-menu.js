@@ -3,6 +3,7 @@
     if (!menus.length) return;
 
     const closeTimers = new WeakMap();
+    const skeleton = window.CappersSkeleton || null;
 
     const setOpen = (menu, isOpen) => {
         const toggle = menu.querySelector("[data-profile-menu-toggle]");
@@ -49,17 +50,6 @@
         activeMenu?.querySelector("[data-profile-menu-toggle]")?.focus();
     });
 
-    const getCookie = (name) => {
-        const cookies = document.cookie ? document.cookie.split(";") : [];
-        for (const cookie of cookies) {
-            const trimmed = cookie.trim();
-            if (trimmed.startsWith(`${name}=`)) {
-                return decodeURIComponent(trimmed.slice(name.length + 1));
-            }
-        }
-        return "";
-    };
-
     const loadNotificationStyles = () => {
         if (document.querySelector("link[data-notification-header-styles]")) return;
         const link = document.createElement("link");
@@ -104,6 +94,7 @@
             avatar.appendChild(image);
         }
         image.src = url;
+        skeleton?.watchImage(avatar);
     };
 
     const replaceHeaderAvatar = (url) => {
@@ -111,6 +102,7 @@
         document.querySelectorAll(".nav-profile img, .nav-profile-dropdown-avatar img").forEach((image) => {
             image.src = url;
             image.classList.add("nav-profile-avatar-image");
+            skeleton?.watchImage(image.closest("[data-skeleton-image]") || image);
         });
     };
 
@@ -128,6 +120,11 @@
             bell.title = "Уведомления";
             bell.setAttribute("aria-label", "Уведомления");
             bell.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="nav-notification-badge is-empty" data-notification-badge></span>';
+            bell.dataset.notificationNav = "";
+            bell.dataset.summaryUrl = "/notifications/summary/";
+            bell.dataset.soundUrl = "/static/front/sounds/notification.wav";
+            bell.dataset.userId = menuUserKey();
+            bell.dataset.skeletonBlock = "";
             actions.insertBefore(bell, menu);
         }
 
@@ -151,68 +148,6 @@
         const count = Number(unreadCount) || 0;
         badge.textContent = count > 99 ? "99+" : String(count);
         badge.classList.toggle("is-empty", count <= 0);
-    };
-
-    const initMatchWatch = () => {
-        const head = document.querySelector(".match-detail-card .match-detail-head");
-        if (!head || head.querySelector(".match-watch-button")) return;
-        if (head.querySelector(".match-status-finished")) return;
-
-        const bets = document.querySelector("[data-match-bets][data-match-id]");
-        let url = "";
-        if (bets?.dataset.matchId) {
-            url = `/notifications/matches/${bets.dataset.matchId}/watch/`;
-        } else {
-            const pathMatch = window.location.pathname.match(/^\/games\/([^/]+)\/?$/);
-            const matchSlug = pathMatch?.[1] ? decodeURIComponent(pathMatch[1]) : "";
-            if (matchSlug) {
-                url = `/notifications/matches/slug/${encodeURIComponent(matchSlug)}/watch/`;
-            }
-        }
-        if (!url) return;
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "match-watch-button";
-        button.textContent = "Следить за матчем";
-        head.appendChild(button);
-
-        const setWatching = (watching) => {
-            button.classList.toggle("is-watching", Boolean(watching));
-            button.textContent = watching ? "Матч отслеживается" : "Следить за матчем";
-        };
-
-        fetch(url, { credentials: "same-origin", cache: "no-store" })
-            .then((response) => response.ok ? response.json() : null)
-            .then((payload) => {
-                if (payload?.ok) setWatching(payload.watching);
-            })
-            .catch(() => {});
-
-        button.addEventListener("click", async () => {
-            if (button.disabled) return;
-            button.disabled = true;
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "X-CSRFToken": getCookie("csrftoken"),
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                });
-                const payload = await response.json();
-                if (!response.ok || !payload.ok) {
-                    throw new Error(payload?.error || "Не удалось обновить отслеживание");
-                }
-                setWatching(payload.watching);
-            } catch (error) {
-                button.textContent = error?.message || "Не удалось обновить";
-                window.setTimeout(() => setWatching(button.classList.contains("is-watching")), 1700);
-            } finally {
-                button.disabled = false;
-            }
-        });
     };
 
     const loadRealtimeNotifications = (bell) => {
@@ -249,9 +184,9 @@
     loadNotificationStyles();
     ensureReaderAvatarInput();
     const bell = ensureNotificationNavigation();
-    initMatchWatch();
     loadRealtimeNotifications(bell);
 
+    skeleton?.loading(bell);
     fetch("/notifications/summary/", { credentials: "same-origin", cache: "no-store" })
         .then((response) => response.ok ? response.json() : null)
         .then((payload) => {
@@ -260,7 +195,8 @@
             replaceHeaderAvatar(payload.avatar_url);
             replaceProfileAvatar(payload.avatar_url);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => skeleton?.ready(bell));
 })();
 
 (() => {

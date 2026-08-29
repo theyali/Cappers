@@ -57,57 +57,12 @@
     display: none;
 }
 
-.match-watch-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 36px;
-    padding: 0 13px;
-    margin-left: 8px;
-    background: var(--panel);
-    color: #fff;
-    border: 0;
-    border-radius: 11px;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-.match-watch-button:hover,
-.match-watch-button.is-watching {
-    background: var(--blue);
-}
-
-.match-watch-button.is-watching::before {
-    content: "✓";
-    color: var(--yellow);
-    font-weight: 900;
-}
-
-.match-watch-button:disabled {
-    opacity: .65;
-    cursor: wait;
-}
-
 @media (max-width: 1120px) {
     .nav-notification-link {
         width: 42px;
         height: 42px;
         flex-basis: 42px;
         border-radius: 12px;
-    }
-}
-
-@media (max-width: 760px) {
-    .match-detail-head {
-        flex-wrap: wrap;
-    }
-
-    .match-watch-button {
-        width: 100%;
-        justify-content: center;
-        margin: 10px 0 0;
     }
 }
 

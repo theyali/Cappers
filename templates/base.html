@@ -23,9 +23,13 @@
     <link rel="apple-touch-icon" href="{% static 'front/img/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
     <link rel="stylesheet" href="{% static 'front/fonts/fonts.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/skeleton.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/adv-banners.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
+    {% if request.user.is_authenticated %}
+    <link rel="stylesheet" href="{% static 'notifications/css/header.css' %}" data-notification-header-styles>
+    {% endif %}
     <link rel="stylesheet" href="{% static 'front/css/messages.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/verified.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/prediction-confidence.css' %}">
@@ -50,7 +54,7 @@
     <header class="site-header">
         <nav class="site-nav" aria-label="Главная навигация">
             <a class="brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
-                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <span class="brand-logo" data-skeleton-image><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
                 <span class="brand-name">КапперХаб</span>
             </a>
 
@@ -87,6 +91,20 @@
                 {% endif %}
 
                 {% if request.user.is_authenticated %}
+                    <a
+                        class="nav-notification-link{% if request.resolver_match.app_name == 'notifications' %} is-active{% endif %}"
+                        href="{% url 'notifications:center' %}"
+                        title="Уведомления"
+                        aria-label="Уведомления"
+                        data-notification-nav
+                        data-summary-url="{% url 'notifications:summary' %}"
+                        data-sound-url="{% static 'front/sounds/notification.wav' %}"
+                        data-user-id="{{ request.user.username }}"
+                        data-skeleton-block
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                        <span class="nav-notification-badge is-empty" data-notification-badge></span>
+                    </a>
                     <div class="nav-profile-menu" data-profile-menu>
                         <button
                             class="nav-profile nav-profile-icon"
@@ -96,24 +114,25 @@
                             aria-haspopup="true"
                             aria-expanded="false"
                             data-profile-menu-toggle
+                            data-skeleton-image
                         >
                             {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
-                                <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" alt="">
+                                <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" width="42" height="42" alt="">
                             {% elif request.user.avatar %}
-                                <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" alt="">
+                                <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" width="42" height="42" alt="">
                             {% else %}
-                                <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                                <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
                             {% endif %}
                         </button>
                         <div class="nav-profile-dropdown" data-profile-menu-dropdown>
                             <div class="nav-profile-dropdown-head">
-                                <span class="nav-profile-dropdown-avatar">
+                                <span class="nav-profile-dropdown-avatar" data-skeleton-image>
                                     {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
-                                        <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" alt="">
+                                        <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" width="42" height="42" alt="">
                                     {% elif request.user.avatar %}
-                                        <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" alt="">
+                                        <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" width="42" height="42" alt="">
                                     {% else %}
-                                        <img src="{% static 'front/svgs/profile.svg' %}" alt="">
+                                        <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
                                     {% endif %}
                                 </span>
                                 <div>
@@ -121,6 +140,12 @@
                                     <span>@{{ request.user.username }}</span>
                                 </div>
                             </div>
+                            <a href="{% url 'notifications:center' %}">
+                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                                </span>
+                                <span>Уведомления</span>
+                            </a>
                             <a href="{% url 'cabinet:profile' %}">
                                 <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
@@ -212,7 +237,7 @@
             <div class="site-footer-about">
                 <div>
                     <a class="site-footer-brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
-                        <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                        <span class="brand-logo" data-skeleton-image><img src="{% static 'front/img/logo.png' %}" width="54" height="54" alt=""></span>
                         <span class="brand-name">КапперХаб</span>
                     </a>
                     <p class="site-footer-copy">Прогнозы на спорт, статистика капперов и история результатов в одном месте.</p>
@@ -312,9 +337,10 @@
     </nav>
 
     <div class="logo-transition" aria-hidden="true">
-        <span><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+        <span><img src="{% static 'front/img/logo.png' %}" width="88" height="88" alt=""></span>
     </div>
 
+    <script src="{% static 'front/js/skeleton.js' %}" defer></script>
     <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>

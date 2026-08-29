@@ -1,0 +1,60 @@
+[data-skeleton-block],
+[data-skeleton-image] {
+    position: relative;
+}
+
+[data-skeleton-block].is-skeleton-loading,
+[data-skeleton-image].is-skeleton-loading {
+    overflow: hidden;
+}
+
+[data-skeleton-block].is-skeleton-loading::after,
+[data-skeleton-image].is-skeleton-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, .12), transparent),
+        rgba(255, 255, 255, .06);
+    background-size: 220% 100%, 100% 100%;
+    animation: skeletonShimmer 1.15s linear infinite;
+    pointer-events: none;
+}
+
+[data-skeleton-block].is-skeleton-loading > *,
+[data-skeleton-image].is-skeleton-loading img {
+    opacity: 0;
+}
+
+.skeleton-line {
+    height: 12px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.skeleton-line.is-short {
+    width: 58%;
+}
+
+.skeleton-line.is-wide {
+    width: 100%;
+}
+
+@keyframes skeletonShimmer {
+    from {
+        background-position: 120% 0, 0 0;
+    }
+
+    to {
+        background-position: -120% 0, 0 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-skeleton-block].is-skeleton-loading::after,
+    [data-skeleton-image].is-skeleton-loading::after {
+        animation: none;
+    }
+}

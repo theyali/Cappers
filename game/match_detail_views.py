@@ -115,10 +115,10 @@ def match_detail(request, slug: str):
     )
 
     match.coupon_odds = legacy_views._match_winner_odds(match)
-    # Resolve the watch state before rendering any HTML. The template tag reads
-    # this precomputed value, so the first response already contains is-watching
-    # when the user follows this match; JavaScript is only used after a click.
-    match._watched_for_request = _match_watch_state(request, match)
+    # Resolve the watch state before rendering HTML, so the first response
+    # already contains the correct bookmark icon state.
+    match.is_watched = _match_watch_state(request, match)
+    match._watched_for_request = match.is_watched
 
     # Render only DB-backed data. A slow HTTP call to Neurokeff used to happen
     # here synchronously and was the reason every uncached match page could wait
@@ -139,7 +139,7 @@ def match_detail(request, slug: str):
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
         "match_predictions_total": _published_match_predictions_count(match),
         "match_demand": _match_demand_context(request, match),
-        "is_watched": match._watched_for_request,
+        "is_watched": match.is_watched,
     }
 
     page_html = render_to_string("game/match_detail.html", context, request=request)

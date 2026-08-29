@@ -20,6 +20,7 @@ from game.services.coupon_validation import (
 )
 from game.services.match_sync import MatchSyncService
 from game.services.providers.neurokeff import NeurokeffProviderError
+from notifications.models import MatchWatch
 
 
 logger = logging.getLogger(__name__)
@@ -118,6 +119,12 @@ def match_detail(request, slug: str):
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
     match.coupon_odds = _match_winner_odds(match)
+    match.is_watched = (
+        request.user.is_authenticated
+        and match.sync_scope != Match.SyncScope.FINISHED
+        and MatchWatch.objects.filter(user=request.user, match=match).exists()
+    )
+    match._watched_for_request = match.is_watched
     _refresh_provider_predictions(match)
 
     context = {
@@ -128,6 +135,7 @@ def match_detail(request, slug: str):
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": _match_odds_tabs(match),
         "provider_prediction_panel": _provider_prediction_panel(match),
+        "is_watched": match.is_watched,
     }
     return render(request, "game/match_detail.html", context)
 

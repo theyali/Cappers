@@ -80,6 +80,8 @@ h2 {
 
 .brand-logo {
     width: var(--brand-logo-size);
+    height: var(--brand-logo-size);
+    flex: 0 0 var(--brand-logo-size);
     aspect-ratio: 1;
     display: inline-flex;
     align-items: center;
@@ -90,6 +92,7 @@ h2 {
 
 .brand-logo img {
     width: 100%;
+    height: 100%;
     aspect-ratio: 1;
     object-fit: contain;
 }
