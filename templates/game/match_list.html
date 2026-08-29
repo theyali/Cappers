@@ -14,7 +14,13 @@
 
 {% block content %}
 <section class="matches-page" aria-label="Матчи">
-    <div class="matches-hero long-bg long-bg-2">
+    <div
+        class="matches-hero long-bg long-bg-2 is-skeleton-loading"
+        data-skeleton-block
+        data-matches-hero-skeleton
+        data-skeleton-background="{% static 'front/img/long_2.webp' %}"
+        aria-busy="true"
+    >
         <div>
             <p class="matches-eyebrow">Матчи</p>
             <h1>{{ match_list_h1|default:"Матчи" }}</h1>
@@ -178,6 +184,7 @@
 
 {% block extra_js %}
 {% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
+<script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
 <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
