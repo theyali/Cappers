@@ -1,0 +1,63 @@
+<section class="expert-monthly-stats" data-expert-monthly-stats aria-label="Статистика каппера по месяцам">
+    <div class="expert-monthly-stats-head">
+        <div>
+            <p class="expert-public-kicker">История результатов</p>
+            <h2>Статистика по месяцам</h2>
+            <p>Каждый месяц сохранён отдельно — история не зависит от открытия страницы.</p>
+        </div>
+        {% if monthly_stats %}
+        <span class="expert-monthly-stats-count">{{ monthly_stats|length }} мес.</span>
+        {% endif %}
+    </div>
+
+    {% if monthly_stats %}
+    <div class="expert-monthly-table-scroll">
+        <table class="expert-monthly-table">
+            <thead>
+                <tr>
+                    <th>Месяц</th>
+                    <th>Прибыль <small>флэт</small></th>
+                    <th>Прогнозов</th>
+                    <th><span class="is-win">+</span> / <span class="is-loss">−</span> / <span class="is-refund">=</span></th>
+                    <th>ROI</th>
+                    <th>Ср. кф</th>
+                    <th>Проход</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in monthly_stats %}
+                <tr data-monthly-row{% if forloop.counter > 8 %} class="is-monthly-hidden"{% endif %}>
+                    <td class="expert-monthly-month">{{ row.month_label }}</td>
+                    <td title="Фактическая прибыль: {{ row.total_profit|floatformat:2 }} ₽ · оборот: {{ row.total_stake|floatformat:2 }} ₽">
+                        <strong class="{% if row.flat_profit > 0 %}is-positive{% elif row.flat_profit < 0 %}is-negative{% endif %}">{% if row.flat_profit > 0 %}+{% endif %}{{ row.flat_profit|floatformat:1 }}%</strong>
+                    </td>
+                    <td>{{ row.bets_count }}</td>
+                    <td class="expert-monthly-results">
+                        <span class="is-win">{{ row.wins_count }}</span><i>/</i><span class="is-loss">{{ row.losses_count }}</span><i>/</i><span class="is-refund">{{ row.refunds_count }}</span>
+                    </td>
+                    <td>
+                        <strong class="{% if row.roi > 0 %}is-positive{% elif row.roi < 0 %}is-negative{% endif %}">{% if row.roi > 0 %}+{% endif %}{{ row.roi|floatformat:1 }}%</strong>
+                    </td>
+                    <td>{{ row.avg_coefficient|floatformat:2 }}</td>
+                    <td>
+                        <strong class="expert-monthly-hit{% if row.hit_rate >= 50 %} is-high{% endif %}">{{ row.hit_rate|floatformat:0 }}%</strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if monthly_stats|length > 8 %}
+    <button class="expert-monthly-more" type="button" data-monthly-more aria-expanded="false">
+        <span data-monthly-more-label>Показать ещё</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+    </button>
+    {% endif %}
+    {% else %}
+    <div class="expert-monthly-empty">
+        <strong>История пока не сформирована</strong>
+        <span>После расчёта первых прогнозов здесь появится статистика за месяц.</span>
+    </div>
+    {% endif %}
+</section>
