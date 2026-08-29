@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static content_view %}
 
 {% block title %}Матчи — КапперХаб{% endblock %}
 
@@ -10,9 +10,11 @@
 <link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/content-view-mode.css' %}">
 {% endblock %}
 
 {% block content %}
+{% content_view_mode as content_view_mode %}
 <section class="matches-page" aria-label="Матчи">
     <div
         class="matches-hero long-bg long-bg-2 is-skeleton-loading"
@@ -81,24 +83,17 @@
         <div class="matches-date-controls">
             {% if previous_date_url %}
             <a class="matches-date-step" href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
             {% else %}
             <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
             {% endif %}
 
             <div class="matches-date-shortcuts">
                 {% for item in date_shortcuts %}
-                <a
-                    class="matches-date-option{% if item.is_active %} is-active{% endif %}"
-                    href="{{ item.url }}"
-                >
+                <a class="matches-date-option{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}">
                     <span>{{ item.label }}</span>
                     <small>{{ item.date|date:"j M" }}</small>
                 </a>
@@ -107,15 +102,11 @@
 
             {% if next_date_url %}
             <a class="matches-date-step" href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </a>
             {% else %}
             <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
             {% endif %}
 
@@ -146,27 +137,28 @@
         data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
         data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
     >
-        <section class="matches-list-panel" aria-label="Список матчей">
+        <section
+            class="matches-list-panel"
+            aria-label="Список матчей"
+            data-content-view-root
+            data-content-view-current="{{ content_view_mode }}"
+        >
             {% if matches %}
-            <div class="matches-grid" data-matches-grid>
-                {% include "game/includes/_match_grid_items.html" with matches=matches can_write_coupon=can_write_coupon %}
-            </div>
-            <div
-                class="matches-lazy-sentinel{% if not page_obj.has_next %} is-done{% endif %}"
-                data-matches-lazy
-                data-current-page="{{ page_obj.number }}"
-                data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
-                aria-live="polite"
-            >
-                <span class="matches-lazy-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-                <button class="matches-lazy-button" type="button" data-matches-lazy-button>
-                    Показать ещё
-                </button>
-                <span class="matches-lazy-status" data-matches-lazy-status></span>
-            </div>
+                {% group_content_items matches as grouped_matches %}
+                <div class="content-view-toolbar">
+                    {% include "front/includes/_content_view_switcher.html" %}
+                </div>
+                <div class="content-view-container" data-content-view-container>
+                    <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                        {% include "game/includes/_match_grid_view.html" %}
+                    </div>
+                    <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
+                        {% include "game/includes/_match_table_view.html" %}
+                    </div>
+                </div>
             {% else %}
             <div class="matches-empty">
-                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
                 {% if active_scope == 'watched' %}
                     <h2>Нет отслеживаемых матчей</h2>
                 {% else %}
@@ -183,12 +175,13 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if can_write_coupon %}<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>{% endif %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
 <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 <script src="{% static 'front/js/matches-lazy-load.js' %}" defer></script>
+<script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 <script src="{% static 'front/js/sidebar-predictions-responsive.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 {% endblock %}
