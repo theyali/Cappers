@@ -1,0 +1,12 @@
+{% if page_obj.object_list %}
+<div class="predictions-grid" data-predictions-grid{% if favorites_view %} data-favorites-grid{% endif %}>
+    {% for prediction in page_obj.object_list %}
+        {% include "front/_prediction_card.html" %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="predictions-empty">
+    <h2>Ничего не нашли</h2>
+    <p>По выбранным условиям прогнозов нет.</p>
+</div>
+{% endif %}
