@@ -1,6 +1,13 @@
 from django.urls import path
 
-from . import date_views, demand_views, prediction_constraints, prediction_views, timing_views, views
+from . import (
+    date_views,
+    demand_views,
+    match_detail_views,
+    prediction_constraints,
+    prediction_views,
+    timing_views,
+)
 
 app_name = "game"
 
@@ -24,5 +31,5 @@ urlpatterns = [
         name="match_list_filtered",
     ),
     path("<slug:slug>/predictions/", prediction_views.match_predictions, name="match_predictions"),
-    path("<slug:slug>/", views.match_detail, name="match_detail"),
+    path("<slug:slug>/", match_detail_views.match_detail, name="match_detail"),
 ]
