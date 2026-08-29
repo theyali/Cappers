@@ -1,0 +1,21 @@
+{% if matches %}
+<div class="matches-grid" data-matches-grid>
+    {% include "game/includes/_match_grid_items.html" with matches=matches can_write_coupon=can_write_coupon %}
+</div>
+<div
+    class="matches-lazy-sentinel{% if not page_obj.has_next %} is-done{% endif %}"
+    data-matches-lazy
+    data-current-page="{{ page_obj.number }}"
+    data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
+    aria-live="polite"
+>
+    <span class="matches-lazy-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <button class="matches-lazy-button" type="button" data-matches-lazy-button>Показать ещё</button>
+    <span class="matches-lazy-status" data-matches-lazy-status></span>
+</div>
+{% else %}
+<div class="matches-empty">
+    <h2>Матчей пока нет</h2>
+    <p>По выбранным условиям матчей нет.</p>
+</div>
+{% endif %}
