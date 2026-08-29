@@ -1,9 +1,10 @@
 {% load static match_ui coupon_options %}
 {% match_coupon_options match as coupon_quick %}
+{% match_card_status match as card_status %}
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
     <a class="match-card-main" href="{{ match.get_absolute_url }}">
-        <span class="match-card-sport-label" style="display:inline-flex;align-items:center;gap:5px;width:max-content;color:var(--muted);font-size:11px;line-height:1;">
+        <span class="match-card-sport-label" style="display:inline-flex;align-items:center;gap:5px;width:100%;color:var(--muted);font-size:11px;line-height:1;">
             <span class="matches-sport-icon" aria-hidden="true" style="width:20px;height:20px;">
                 <span style="display:inline-flex;align-items:center;justify-content:center;transform:scale(.72);transform-origin:center;">
                     {% if match.sport_code == 'football' %}
@@ -26,6 +27,10 @@
                     Футбол
                 {% endif %}
             </span>
+            <span class="match-status match-status-{{ card_status.state }}" style="margin-left:auto;">
+                {% if card_status.state == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
+                <span>{{ card_status.label }}</span>
+            </span>
         </span>
 
         <div class="match-card-head">
@@ -42,16 +47,6 @@
                     {% if match.league_country %}<small>{{ match.league_country }}</small>{% endif %}
                 </div>
             </div>
-            <span class="match-status match-status-{{ match.sync_scope }}">
-                {% if match.sync_scope == 'live' %}
-                    <i class="match-live-dot" aria-hidden="true"></i>
-                    <span>{{ match|live_status_label }}</span>
-                {% elif match.sync_scope == 'prematch' %}
-                    Скоро начнется
-                {% else %}
-                    {{ match.get_sync_scope_display }}
-                {% endif %}
-            </span>
         </div>
 
         <div class="match-teams">
