@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Таблица капперов — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/cappers-table.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="cappers-table-page" aria-labelledby="cappers-table-title">
+    <header class="cappers-table-hero">
+        <div>
+            <p class="cappers-table-eyebrow">Рейтинг экспертов</p>
+            <h1 id="cappers-table-title">Таблица капперов</h1>
+            <p>Сравнение капперов по ROI, количеству рассчитанных прогнозов, победам и аудитории.</p>
+        </div>
+        <div class="cappers-table-total">
+            <strong>{{ experts_count }}</strong>
+            <span>капперов</span>
+        </div>
+    </header>
+
+    <div class="cappers-table-switcher" aria-label="Разделы капперов">
+        <a href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
+        <a class="is-active" href="{% url 'front:cappers_table' %}">Таблица капперов</a>
+    </div>
+
+    {% if experts %}
+    <div class="cappers-ranking-table-wrap">
+        <table class="cappers-ranking-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Каппер</th>
+                    <th>ROI {{ roi_period_days }} дн.</th>
+                    <th>Рассчитано</th>
+                    <th>Победы</th>
+                    <th>Прогнозы</th>
+                    <th>Подписчики</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expert in experts %}
+                <tr>
+                    <td><span class="cappers-ranking-position">{{ forloop.counter }}</span></td>
+                    <td>
+                        <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
+                            <span class="cappers-ranking-avatar"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
+                                {% if expert.avatar_url %}
+                                    <img src="{{ expert.avatar_url }}" width="44" height="44" loading="lazy" alt="">
+                                {% else %}
+                                    <strong>{{ expert.initials }}</strong>
+                                {% endif %}
+                            </span>
+                            <span class="cappers-ranking-name">
+                                <strong>{{ expert.name }}</strong>
+                                <small>@{{ expert.username }}</small>
+                            </span>
+                        </a>
+                    </td>
+                    <td><strong class="cappers-ranking-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% endif %}">{{ expert.roi }}%</strong></td>
+                    <td>{{ expert.settled }}</td>
+                    <td>{{ expert.wins }}</td>
+                    <td>{{ expert.publications }}</td>
+                    <td>{{ expert.followers }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="cappers-table-empty">
+        <h2>Капперов пока нет</h2>
+        <p>Таблица появится после регистрации и публикации первых прогнозов.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
