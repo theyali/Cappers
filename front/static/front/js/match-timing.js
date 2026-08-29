@@ -56,11 +56,17 @@
     const localizePredictionTimes = (scope = document) => {
         scope.querySelectorAll(".prediction-league-row time[datetime]").forEach((node) => {
             const date = parseDate(node.getAttribute("datetime"));
-            if (date) node.textContent = formatShortDate(date);
+            if (date) {
+                const value = formatShortDate(date);
+                if (node.textContent !== value) node.textContent = value;
+            }
         });
         scope.querySelectorAll(".prediction-published-at time[datetime]").forEach((node) => {
             const date = parseDate(node.getAttribute("datetime"));
-            if (date) node.textContent = formatFullDate(date);
+            if (date) {
+                const value = formatFullDate(date);
+                if (node.textContent !== value) node.textContent = value;
+            }
         });
     };
 
@@ -78,21 +84,36 @@
 
     const setStatus = (node, state, text) => {
         if (!node) return;
+        const targetClass = state === "soon" ? "match-status-soon" : "match-status-countdown";
+        const currentText = node.textContent.trim();
+        const alreadyCorrect = node.classList.contains(targetClass)
+            && !node.classList.contains("match-status-prematch")
+            && currentText === text;
+        if (alreadyCorrect) return;
+
         node.classList.remove("match-status-prematch", "match-status-countdown", "match-status-soon");
-        node.classList.add(state === "soon" ? "match-status-soon" : "match-status-countdown");
-        if (node.textContent !== text) node.textContent = text;
+        node.classList.add(targetClass);
+        if (currentText !== text) node.textContent = text;
     };
 
     const setCardPrematchStatus = (node, isSoon) => {
         if (!node) return;
+        const targetClass = isSoon ? "match-status-soon" : "match-status-prematch";
+        const targetText = isSoon ? "Скоро начнется" : "Скоро";
+        const currentText = node.textContent.trim();
+        const alreadyCorrect = node.classList.contains(targetClass)
+            && !node.classList.contains(isSoon ? "match-status-prematch" : "match-status-soon")
+            && !node.classList.contains("match-status-countdown")
+            && currentText === targetText;
+        if (alreadyCorrect) return;
+
         node.classList.remove("match-status-prematch", "match-status-countdown", "match-status-soon");
-        if (isSoon) {
-            node.classList.add("match-status-soon");
-            if (node.textContent !== "Скоро начнется") node.textContent = "Скоро начнется";
-            return;
+        node.classList.add(targetClass);
+        if (currentText !== targetText) {
+            const copy = node.querySelector("span");
+            if (copy) copy.textContent = targetText;
+            else node.textContent = targetText;
         }
-        node.classList.add("match-status-prematch");
-        if (node.textContent !== "Скоро") node.textContent = "Скоро";
     };
 
     const updateCouponMeta = (matchId, startDate) => {
@@ -117,9 +138,13 @@
         );
         const blocked = timing.scope !== "prematch" || !startDate || hasStartedLocally;
         document.querySelectorAll(`[data-coupon-match-id="${matchId}"]`).forEach((node) => {
-            node.classList.toggle("is-timing-locked", blocked);
+            if (node.classList.contains("is-timing-locked") !== blocked) {
+                node.classList.toggle("is-timing-locked", blocked);
+            }
             if (blocked) {
-                node.title = "Матч уже начался — опубликовать прогноз нельзя";
+                if (node.title !== "Матч уже начался — опубликовать прогноз нельзя") {
+                    node.title = "Матч уже начался — опубликовать прогноз нельзя";
+                }
             } else if (node.title === "Матч уже начался — опубликовать прогноз нельзя") {
                 node.removeAttribute("title");
             }
@@ -165,11 +190,14 @@
 
         document.querySelectorAll(`[data-match-card][data-match-id="${matchId}"]`).forEach((card) => {
             const dateNode = card.querySelector(".match-score [data-starts-at]");
-            if (dateNode) dateNode.textContent = formatShortDate(startDate);
+            if (dateNode) {
+                const value = formatShortDate(startDate);
+                if (dateNode.textContent !== value) dateNode.textContent = value;
+            }
 
             if (isPrematch) {
                 setCardPrematchStatus(
-                    card.querySelector(".match-card-head .match-status"),
+                    card.querySelector(".match-card-sport-label .match-status"),
                     isSoon
                 );
             }
@@ -180,7 +208,8 @@
             if (!page) return;
             const dateNode = page.querySelector(".match-detail-score span");
             if (dateNode && timing.scope === "prematch") {
-                dateNode.textContent = formatFullDate(startDate);
+                const value = formatFullDate(startDate);
+                if (dateNode.textContent !== value) dateNode.textContent = value;
             }
             const statusNode = page.querySelector(".match-detail-head .match-status");
             if (isPrematch) {
