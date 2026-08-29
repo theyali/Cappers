@@ -11,13 +11,13 @@
 <section class="cappers-table-page" aria-labelledby="cappers-table-title">
     <header class="cappers-table-hero">
         <div>
-            <p class="cappers-table-eyebrow">Рейтинг экспертов</p>
+            <p class="cappers-table-eyebrow">Рейтинг прогнозистов</p>
             <h1 id="cappers-table-title">Таблица капперов</h1>
-            <p>Сравнение капперов по ROI, количеству рассчитанных прогнозов, победам и аудитории.</p>
+            <p>Отдельный рейтинг для каждого месяца. Сравнивай прибыль флэтом, результаты, средний коэффициент, проходимость и ROI.</p>
         </div>
         <div class="cappers-table-total">
             <strong>{{ experts_count }}</strong>
-            <span>капперов</span>
+            <span>в рейтинге</span>
         </div>
     </header>
 
@@ -26,44 +26,97 @@
         <a class="is-active" href="{% url 'front:cappers_table' %}">Таблица капперов</a>
     </div>
 
-    {% if experts %}
+    <nav class="cappers-ranking-groups" aria-label="Тип рейтинга">
+        {% for tab in group_tabs %}
+        <a class="cappers-ranking-group{% if selected_group == tab.key %} is-active{% endif %}" href="{{ tab.url }}">
+            <span>{{ tab.label }}</span>
+            {% if tab.key == 'vip' %}<small>VIP</small>{% endif %}
+        </a>
+        {% endfor %}
+    </nav>
+
+    <div class="cappers-ranking-toolbar">
+        <div>
+            <h2>Прогнозисты</h2>
+            <span>{{ selected_month_label }}</span>
+        </div>
+
+        <details class="cappers-period-filter">
+            <summary>
+                <span>{{ selected_month_label }}</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </summary>
+            <div class="cappers-period-menu">
+                {% for option in month_options %}
+                <a class="{% if option.value == selected_month_value %}is-active{% endif %}" href="{{ option.url }}">
+                    <span>{{ option.label }}</span>
+                    {% if option.value == selected_month_value %}
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        </details>
+    </div>
+
+    <form class="cappers-ranking-search" method="get" action="{% url 'front:cappers_table' %}" role="search">
+        <input type="hidden" name="group" value="{{ selected_group }}">
+        <input type="hidden" name="month" value="{{ selected_month_value }}">
+        <label>
+            <span class="cappers-ranking-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
+            </span>
+            <input type="search" name="q" value="{{ search_query }}" placeholder="Найти прогнозиста" autocomplete="off">
+        </label>
+        <button type="submit">Найти</button>
+    </form>
+
+    {% if ranking_rows %}
     <div class="cappers-ranking-table-wrap">
         <table class="cappers-ranking-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Каппер</th>
-                    <th>ROI {{ roi_period_days }} дн.</th>
-                    <th>Рассчитано</th>
-                    <th>Победы</th>
-                    <th>Прогнозы</th>
-                    <th>Подписчики</th>
+                    <th class="is-rank">#</th>
+                    <th>Прогнозист</th>
+                    <th class="is-profit">Прибыль</th>
+                    <th class="is-result is-win" title="Выигрыши">+</th>
+                    <th class="is-result is-loss" title="Проигрыши">−</th>
+                    <th class="is-result" title="Возвраты">=</th>
+                    <th title="Средний коэффициент">Кф</th>
+                    <th title="Проходимость">%</th>
+                    <th>ROI</th>
+                    <th class="is-followers">Подписчики</th>
                 </tr>
             </thead>
             <tbody>
-                {% for expert in experts %}
+                {% for expert in ranking_rows %}
                 <tr>
-                    <td><span class="cappers-ranking-position">{{ forloop.counter }}</span></td>
+                    <td class="is-rank"><span class="cappers-ranking-position">{{ forloop.counter }}</span></td>
                     <td>
                         <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
                             <span class="cappers-ranking-avatar"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
                                 {% if expert.avatar_url %}
-                                    <img src="{{ expert.avatar_url }}" width="44" height="44" loading="lazy" alt="">
+                                    <img src="{{ expert.avatar_url }}" width="34" height="34" loading="lazy" alt="">
                                 {% else %}
                                     <strong>{{ expert.initials }}</strong>
                                 {% endif %}
                             </span>
                             <span class="cappers-ranking-name">
                                 <strong>{{ expert.name }}</strong>
-                                <small>@{{ expert.username }}</small>
+                                {% if expert.is_vip %}<small class="cappers-ranking-vip">VIP</small>{% endif %}
                             </span>
                         </a>
                     </td>
-                    <td><strong class="cappers-ranking-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% endif %}">{{ expert.roi }}%</strong></td>
-                    <td>{{ expert.settled }}</td>
-                    <td>{{ expert.wins }}</td>
-                    <td>{{ expert.publications }}</td>
-                    <td>{{ expert.followers }}</td>
+                    <td class="is-profit">
+                        <strong class="cappers-ranking-profit{% if expert.flat_profit_percent > 0 %} is-positive{% elif expert.flat_profit_percent < 0 %} is-negative{% endif %}">{{ expert.flat_profit_percent|floatformat:1 }}%</strong>
+                    </td>
+                    <td class="is-result is-win">{{ expert.wins }}</td>
+                    <td class="is-result is-loss">{{ expert.losses }}</td>
+                    <td class="is-result">{{ expert.refunds }}</td>
+                    <td>{{ expert.avg_coefficient|floatformat:2 }}</td>
+                    <td>{{ expert.hit_rate|floatformat:1 }}</td>
+                    <td><strong class="cappers-ranking-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% endif %}">{{ expert.roi|floatformat:1 }}%</strong></td>
+                    <td class="is-followers">{{ expert.followers }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -71,8 +124,8 @@
     </div>
     {% else %}
     <div class="cappers-table-empty">
-        <h2>Капперов пока нет</h2>
-        <p>Таблица появится после регистрации и публикации первых прогнозов.</p>
+        <h2>Нет прогнозистов для этого фильтра</h2>
+        <p>Выбери другой месяц, тип рейтинга или очисти поиск.</p>
     </div>
     {% endif %}
 </section>
