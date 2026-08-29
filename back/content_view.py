@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 
 
 CONTENT_VIEW_SESSION_KEY = "ui.content_view_mode"
@@ -28,9 +28,10 @@ def is_content_view_fragment(request):
     )
 
 
-@require_POST
+@require_http_methods(["GET", "POST"])
 def content_view_state(request):
-    mode = request.POST.get("mode", "").strip().lower()
+    source = request.POST if request.method == "POST" else request.GET
+    mode = source.get("mode", "").strip().lower()
     if mode not in CONTENT_VIEW_MODES:
         return JsonResponse({"ok": False, "error": "invalid_view_mode"}, status=400)
 
