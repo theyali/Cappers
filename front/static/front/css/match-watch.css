@@ -81,39 +81,50 @@
 }
 
 .match-card-watch-button {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
     display: grid;
     place-items: center;
     padding: 0;
     border: 0;
     border-radius: 0;
-    color: #858b98;
-    background: transparent;
+    outline: 0;
+    color: #a2a2a5;
+    background: transparent !important;
     cursor: pointer;
-    transition: color .18s ease, transform .18s ease, opacity .18s ease;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .14s ease, opacity .14s ease;
 }
 
 .match-card-watch-button svg {
-    width: 24px;
-    height: 24px;
+    width: 27px;
+    height: 27px;
     display: block;
     fill: transparent;
     stroke: currentColor;
-    stroke-width: 1.9;
+    stroke-width: 2.15;
     stroke-linecap: round;
     stroke-linejoin: round;
-    transition: fill .18s ease, stroke .18s ease, transform .18s ease;
+    transform: none !important;
+    transition: fill .14s ease, stroke .14s ease;
 }
 
-.match-card-watch-button:hover {
-    color: var(--blue);
-    transform: translateY(-1px);
+.match-card-watch-button:hover,
+.match-card-watch-button:focus-visible,
+.match-card-watch-button:active {
+    color: #fff;
+    background: transparent !important;
+    outline: 0;
+    transform: none !important;
 }
 
-.match-card-watch-button.is-watching {
+.match-card-watch-button.is-watching,
+.match-card-watch-button.is-watching:hover,
+.match-card-watch-button.is-watching:focus-visible,
+.match-card-watch-button.is-watching:active {
     color: var(--yellow);
+    background: transparent !important;
 }
 
 .match-card-watch-button.is-watching svg {
@@ -122,8 +133,9 @@
 }
 
 .match-card-watch-button:disabled {
-    opacity: .5;
+    opacity: .62;
     cursor: wait;
+    background: transparent !important;
 }
 
 .match-detail-head-actions {
@@ -134,14 +146,65 @@
 }
 
 .match-detail-watch-button {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
 }
 
 .match-detail-watch-button svg {
-    width: 26px;
-    height: 26px;
+    width: 31px;
+    height: 31px;
+}
+
+.match-detail-league-meta {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+}
+
+.match-detail-sport {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #a2a2a5;
+}
+
+.match-detail-sport-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    display: inline-grid;
+    place-items: center;
+    color: var(--yellow);
+}
+
+.match-detail-sport-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    color: inherit;
+}
+
+.match-detail-sport-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.match-detail-sport-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
+}
+
+.match-detail-country {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--muted);
+    text-overflow: ellipsis;
+}
+
+.match-detail-country::before {
+    content: "·";
+    margin-right: 8px;
+    color: var(--muted);
 }
 
 @media (max-width: 640px) {
@@ -150,14 +213,37 @@
     }
 
     .match-detail-watch-button {
-        width: 32px;
-        height: 32px;
-        flex-basis: 32px;
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
     }
 
     .match-detail-watch-button svg {
-        width: 22px;
-        height: 22px;
+        width: 27px;
+        height: 27px;
+    }
+
+    .match-detail-league-meta {
+        gap: 5px;
+    }
+
+    .match-detail-sport {
+        gap: 3px;
+    }
+
+    .match-detail-sport-icon {
+        width: 15px;
+        height: 15px;
+        flex-basis: 15px;
+    }
+
+    .match-detail-sport-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .match-detail-country::before {
+        margin-right: 5px;
     }
 }
 
@@ -165,5 +251,10 @@
     .match-live-dot::after {
         animation: none;
         opacity: 0;
+    }
+
+    .match-card-watch-button,
+    .match-card-watch-button svg {
+        transition: none;
     }
 }
