@@ -33,12 +33,19 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "telegram_channel",
         "telegram_account",
         "is_verified",
+        "is_vip",
         "is_public",
         "onboarding_completed_at",
         "created_at",
     )
-    list_editable = ("is_verified", "is_public")
-    list_filter = ("is_verified", "is_public", "created_at", "onboarding_completed_at")
+    list_editable = ("is_verified", "is_vip", "is_public")
+    list_filter = (
+        "is_verified",
+        "is_vip",
+        "is_public",
+        "created_at",
+        "onboarding_completed_at",
+    )
     search_fields = (
         "user__username",
         "user__email",
@@ -83,7 +90,17 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Статус", {"fields": ("is_verified", "is_public", "onboarding_completed_at")}),
+        (
+            "Статус",
+            {
+                "fields": (
+                    "is_verified",
+                    "is_vip",
+                    "is_public",
+                    "onboarding_completed_at",
+                )
+            },
+        ),
         ("Системная информация", {"fields": ("referral_code", "created_at", "updated_at")}),
     )
 
