@@ -67,15 +67,94 @@
     margin: 0;
 }
 
-.cappers-section-head > span {
+.cappers-section-head-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cappers-section-head-controls > span {
     color: var(--muted);
     font-size: 11px;
+    white-space: nowrap;
+}
+
+.cappers-roi-period-select {
+    position: relative;
+    min-width: 190px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+    background: var(--panel);
+}
+
+.cappers-roi-period-select select {
+    width: 100%;
+    height: 46px;
+    padding: 0 42px 0 14px;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    color: var(--text);
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cappers-roi-period-select select:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+}
+
+.cappers-roi-period-select option {
+    color: var(--text);
+    background: var(--panel);
+}
+
+.cappers-roi-period-select > svg {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--blue);
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.cappers-roi-period-select.is-loading select {
+    cursor: wait;
+    opacity: .72;
+}
+
+.cappers-pro-grid-shell {
+    min-width: 0;
+    border-radius: 20px;
+}
+
+.cappers-pro-grid-shell.is-skeleton-loading {
+    min-height: 300px;
 }
 
 .cappers-pro-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.cappers-pro-grid-shell.is-filtering .cappers-pro-grid {
+    opacity: .35;
+    transform: translateY(5px);
 }
 
 .capper-pro-card {
@@ -341,7 +420,23 @@
     .cappers-section-head {
         align-items: flex-start;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
+    }
+
+    .cappers-section-head-controls {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .cappers-section-head-controls > span {
+        white-space: normal;
+    }
+
+    .cappers-roi-period-select {
+        width: 100%;
+        min-width: 0;
     }
 
     .capper-pro-card {
@@ -360,7 +455,8 @@
     .capper-pro-metrics {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    .capper-pro-metric strong{
+
+    .capper-pro-metric strong {
         font-size: 16px;
     }
 
@@ -386,7 +482,8 @@
 
 @media (prefers-reduced-motion: reduce) {
     .capper-pro-follow,
-    .capper-pro-card {
+    .capper-pro-card,
+    .cappers-pro-grid {
         transition: none;
     }
 }
