@@ -59,6 +59,9 @@
     gap: 7px;
     min-width: 0;
     padding: 2px 0 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: left;
 }
 
 .prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-head span {
