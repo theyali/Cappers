@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from .capper_stats_service import CapperStatsService
+from .capper_table_service import build_capper_table_context
 
 
 def cappers_stats(request):
@@ -14,10 +15,8 @@ def cappers_stats(request):
 
 
 def cappers_table(request):
-    service = CapperStatsService(request.user)
-    context = service.build_catalog_context()
     return render(
         request,
         "front/cappers_table.html",
-        context,
+        build_capper_table_context(request),
     )
