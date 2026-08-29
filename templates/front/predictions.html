@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Все прогнозы — КапперХаб{% endblock %}
+{% block title %}{{ page_heading|default:"Все прогнозы" }} — КапперХаб{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
@@ -15,12 +15,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="predictions-page" aria-label="Все прогнозы">
+<section class="predictions-page" aria-label="{{ page_heading|default:'Все прогнозы' }}">
     <div class="predictions-hero">
         <div>
             <p class="predictions-eyebrow">Лента экспертов</p>
-            <h1>Все прогнозы</h1>
-            <p>Ищите прогнозы по спорту, лиге, эксперту и коэффициенту. Можно отдельно смотреть live, матчи на сегодня и уже рассчитанные прогнозы.</p>
+            <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
+            <p data-predictions-intro>{{ page_intro }}</p>
             <div class="capper-growth-inline">
                 <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
                 <p>Публикуй свои прогнозы и собирай подтверждённую статистику рядом с другими экспертами.</p>
@@ -34,6 +34,33 @@
 
     <div class="predictions-layout" data-predictions-layout>
         <div class="predictions-content" data-predictions-content>
+            <nav class="matches-sport-tabs predictions-sport-tabs" aria-label="Прогнозы по видам спорта">
+                {% for tab in sport_tabs %}
+                <a
+                    class="matches-sport-tab{% if tab.active %} is-active{% endif %}"
+                    href="{{ tab.href }}"
+                    {% if tab.active %}aria-current="page"{% endif %}
+                    data-prediction-ajax-link
+                >
+                    <span class="matches-sport-icon" aria-hidden="true">
+                        {% if tab.code == 'football' %}
+                            {% include "front/svgs/soccer.svg" %}
+                        {% elif tab.code == 'hockey' %}
+                            {% include "front/svgs/hockey.svg" %}
+                        {% elif tab.code == 'basketball' %}
+                            {% include "front/svgs/basketball.svg" %}
+                        {% elif tab.code == 'tennis' %}
+                            {% include "front/svgs/tennis.svg" %}
+                        {% else %}
+                            {% include "front/svgs/nav-matches.svg" %}
+                        {% endif %}
+                    </span>
+                    <span>{{ tab.label }}</span>
+                    <b>{{ tab.count }}</b>
+                </a>
+                {% endfor %}
+            </nav>
+
             <nav class="predictions-tabs" aria-label="Быстрый фильтр по результату">
                 <a class="predictions-tab-top{% if top_experts_tab.active %} is-active{% endif %}" href="{{ top_experts_tab.href }}" data-top-experts-tab>
                     <span class="predictions-tab-top-icon" aria-hidden="true">
@@ -105,7 +132,13 @@
             </button>
 
             <div class="prediction-filter-sidebar-body" id="prediction-filter-sidebar-body" data-prediction-filter-body>
-                <form class="prediction-filters" method="get" action="{% url 'front:predictions' %}" data-prediction-filters>
+                <form
+                    class="prediction-filters"
+                    method="get"
+                    action="{{ filter_action_url }}"
+                    data-prediction-filters
+                    data-all-sports-url="{{ all_predictions_url }}"
+                >
                     <input type="hidden" name="sort" value="{{ active_sort }}">
                     <input type="hidden" name="status" value="{{ active_status }}">
                     {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
@@ -121,9 +154,13 @@
                         <label class="prediction-filter-field">
                             <span>Спорт</span>
                             <select name="sport">
-                                <option value="">Все виды спорта</option>
+                                <option value="" data-url="{{ all_predictions_url }}">Все виды спорта</option>
                                 {% for sport in sports %}
-                                <option value="{{ sport.match__sport_id }}"{% if selected_sport == sport.match__sport_id|stringformat:"s" %} selected{% endif %}>
+                                <option
+                                    value="{{ sport.match__sport_id }}"
+                                    data-url="{% url 'front:predictions_by_sport' sport_code=sport.match__sport__code %}"
+                                    {% if selected_sport == sport.match__sport_id|stringformat:"s" %}selected{% endif %}
+                                >
                                     {{ sport.match__sport__name_ru|default:sport.match__sport__name }}
                                 </option>
                                 {% endfor %}
