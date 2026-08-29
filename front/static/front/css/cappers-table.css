@@ -62,39 +62,121 @@
     font-size: 11px;
 }
 
+.cappers-sport-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 0 4px;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+}
+
+.cappers-sport-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.cappers-sport-filter {
+    width: 104px;
+    min-width: 104px;
+    min-height: 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px 9px;
+    border-radius: 16px;
+    color: var(--muted);
+    background: var(--panel);
+    scroll-snap-align: start;
+    transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.cappers-sport-filter:hover {
+    color: var(--text);
+    background: #29292c;
+    transform: translateY(-1px);
+}
+
+.cappers-sport-filter.is-active {
+    color: #fff;
+    background: var(--blue);
+}
+
+.cappers-sport-filter-icon {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    color: currentColor;
+}
+
+.cappers-sport-filter-icon svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cappers-sport-filter-icon.has-image {
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.cappers-sport-filter-icon img {
+    width: 30px;
+    height: 30px;
+    display: block;
+    object-fit: contain;
+    filter: grayscale(1);
+    opacity: .78;
+}
+
+.cappers-sport-filter.is-active .cappers-sport-filter-icon img {
+    filter: brightness(0) invert(1);
+    opacity: 1;
+}
+
+.cappers-sport-filter-name {
+    width: 100%;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .cappers-ranking-groups {
     display: flex;
     gap: 6px;
     overflow-x: auto;
+    padding: 0;
+    background: transparent;
     scrollbar-width: none;
 }
-
 
 .cappers-ranking-groups::-webkit-scrollbar {
     display: none;
 }
+
 .cappers-ranking-group {
-    min-height: 38px;
+    min-height: 46px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
     padding: 0 13px;
     border-radius: 10px;
-    white-space: nowrap;
-}
-
-
-.cappers-ranking-groups {
-    padding: 0;
-    background: transparent;
-}
-
-.cappers-ranking-group {
-    min-height: 46px;
     color: var(--soft);
     background: var(--panel);
     font-size: 14px;
+    white-space: nowrap;
     transition: background .18s ease, color .18s ease, transform .18s ease;
 }
 
@@ -511,9 +593,27 @@
         justify-items: start;
     }
 
+    .cappers-sport-filters,
     .cappers-ranking-groups {
         margin-right: -12px;
         padding-right: 12px;
+    }
+
+    .cappers-sport-filter {
+        width: 90px;
+        min-width: 90px;
+        min-height: 76px;
+        border-radius: 14px;
+    }
+
+    .cappers-sport-filter-icon,
+    .cappers-sport-filter-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .cappers-sport-filter-name {
+        font-size: 11px;
     }
 
     .cappers-ranking-group {
