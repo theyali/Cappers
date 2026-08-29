@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static content_view %}
 
 {% block title %}Моя лента — КапперХаб{% endblock %}
 
@@ -11,9 +11,11 @@
 <link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/prediction-feed-personal.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/following-feed.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/content-view-mode.css' %}">
 {% endblock %}
 
 {% block content %}
+{% content_view_mode as content_view_mode %}
 <section class="predictions-page following-feed-page" aria-label="Моя лента">
     <div class="predictions-hero following-feed-hero">
         <div>
@@ -110,23 +112,32 @@
             </div>
 
             {% if page_obj.object_list %}
-            <div class="predictions-grid" data-predictions-grid>
-                {% for prediction in page_obj.object_list %}
-                    {% include "front/_prediction_card.html" %}
-                {% endfor %}
-            </div>
+                {% group_content_items page_obj.object_list as grouped_predictions %}
+                <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
+                    <div class="content-view-toolbar">
+                        {% include "front/includes/_content_view_switcher.html" %}
+                    </div>
+                    <div class="content-view-container" data-content-view-container>
+                        <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                            {% include "front/includes/_prediction_grid_view.html" %}
+                        </div>
+                        <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
+                            {% include "front/includes/_prediction_table_view.html" %}
+                        </div>
+                    </div>
+                </div>
 
-            {% if page_obj.paginator.num_pages > 1 %}
-            <nav class="predictions-pagination" aria-label="Страницы моей ленты">
-                {% if page_obj.has_previous %}
-                    <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+                {% if page_obj.paginator.num_pages > 1 %}
+                <nav class="predictions-pagination" aria-label="Страницы моей ленты">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+                    {% endif %}
+                    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
+                    {% endif %}
+                </nav>
                 {% endif %}
-                <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                {% if page_obj.has_next %}
-                    <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
-                {% endif %}
-            </nav>
-            {% endif %}
             {% else %}
             <div class="predictions-empty following-feed-empty">
                 <h2>По этим условиям прогнозов нет</h2>
@@ -212,6 +223,7 @@
 {% if following %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
 <script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
+<script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 {% endif %}
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
