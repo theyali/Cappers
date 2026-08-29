@@ -2,6 +2,7 @@ from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
 
+from game.models import Match
 from game.services.live_settlement import settle_live_matches
 from game.services.match_sync import MatchSyncService
 from game.services.settlement import settle_finished_matches
@@ -147,6 +148,18 @@ def fetch_finished_hockey_matches():
 @shared_task
 def fetch_finished_basketball_matches():
     return _fetch_finished_for_sport("basketball")
+
+
+@shared_task
+def refresh_match_provider_predictions(match_id: int):
+    match = Match.objects.filter(pk=match_id).first()
+    if match is None:
+        return {
+            "status": "skipped",
+            "reason": "match_not_found",
+            "match_id": match_id,
+        }
+    return MatchSyncService().sync_match_predictions(match)
 
 
 @shared_task
