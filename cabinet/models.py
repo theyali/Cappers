@@ -274,3 +274,58 @@ class MatchPredictionRequest(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} → {self.match}"
+
+
+class CapperMonthlyStat(models.Model):
+    """Persisted historical performance snapshot for one capper and calendar month."""
+
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="monthly_capper_stats",
+        verbose_name="Каппер",
+    )
+    month = models.DateField("Месяц", db_index=True)
+    bets_count = models.PositiveIntegerField("Прогнозов", default=0)
+    wins_count = models.PositiveIntegerField("Выигрышей", default=0)
+    losses_count = models.PositiveIntegerField("Проигрышей", default=0)
+    refunds_count = models.PositiveIntegerField("Возвратов", default=0)
+    total_stake = models.DecimalField("Оборот", max_digits=14, decimal_places=2, default=0)
+    total_profit = models.DecimalField("Прибыль", max_digits=14, decimal_places=2, default=0)
+    flat_profit_percent = models.DecimalField(
+        "Прибыль флэтом, %",
+        max_digits=9,
+        decimal_places=2,
+        default=0,
+    )
+    roi = models.DecimalField("ROI, %", max_digits=9, decimal_places=2, default=0)
+    avg_coefficient = models.DecimalField(
+        "Средний коэффициент",
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+    )
+    hit_rate = models.DecimalField(
+        "Проходимость, %",
+        max_digits=6,
+        decimal_places=2,
+        default=0,
+    )
+    calculated_at = models.DateTimeField("Пересчитано", auto_now=True)
+
+    class Meta:
+        verbose_name = "Статистика каппера за месяц"
+        verbose_name_plural = "Статистика капперов по месяцам"
+        ordering = ("-month", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("analyst", "month"),
+                name="unique_capper_monthly_stat",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("analyst", "month"), name="capmonth_analyst_month_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.analyst} · {self.month:%Y-%m}"
