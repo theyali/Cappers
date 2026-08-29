@@ -1,7 +1,6 @@
 (() => {
     const endpoint = window.CAPPERS_MATCH_TIMING_URL || "/games/timing/";
     const cache = new Map();
-    let refreshTimer = null;
     let scanTimer = null;
     let requestInFlight = false;
 
@@ -78,7 +77,7 @@
     };
 
     const setStatus = (node, state, text) => {
-        if (!node || node.dataset.providerLive === "true") return;
+        if (!node) return;
         node.classList.remove("match-status-prematch", "match-status-countdown", "match-status-soon");
         node.classList.add(state === "soon" ? "match-status-soon" : "match-status-countdown");
         if (node.textContent !== text) node.textContent = text;
@@ -98,6 +97,37 @@
         });
     };
 
+    const updateCouponAvailability = (matchId, timing, startDate) => {
+        const hasStartedLocally = Boolean(
+            startDate
+            && timing.scope === "prematch"
+            && startDate.getTime() <= Date.now()
+        );
+        const blocked = timing.scope !== "prematch" || !startDate || hasStartedLocally;
+        document.querySelectorAll(`[data-coupon-match-id="${matchId}"]`).forEach((node) => {
+            node.classList.toggle("is-timing-locked", blocked);
+            if (blocked) {
+                node.title = "Матч уже начался — опубликовать прогноз нельзя";
+            } else if (node.title === "Матч уже начался — опубликовать прогноз нельзя") {
+                node.removeAttribute("title");
+            }
+        });
+    };
+
+    const updateCouponSubmit = () => {
+        document.querySelectorAll("[data-coupon-page]").forEach((root) => {
+            const blocked = Boolean(root.querySelector("[data-coupon-match-id].is-timing-locked"));
+            const submit = root.querySelector("[data-coupon-submit]");
+            if (!submit) return;
+            if (blocked) {
+                submit.disabled = true;
+                submit.title = "Удалите матч, который уже начался";
+            } else if (submit.title === "Удалите матч, который уже начался") {
+                submit.removeAttribute("title");
+            }
+        });
+    };
+
     const renderTiming = (matchId, timing) => {
         if (!timing) return;
         const startDate = parseDate(timing.starts_at);
@@ -112,7 +142,9 @@
             ));
         }
 
+        updateCouponAvailability(matchId, timing, startDate);
         if (!startDate) return;
+
         const seconds = Math.ceil((startDate.getTime() - Date.now()) / 1000);
         const soonWindow = Math.max(0, Number(timing.soon_window_seconds) || 600);
         const isPrematch = timing.scope === "prematch";
@@ -160,6 +192,7 @@
 
     const renderAll = () => {
         cache.forEach((timing, matchId) => renderTiming(matchId, timing));
+        updateCouponSubmit();
         localizePredictionTimes(document);
     };
 
@@ -201,7 +234,7 @@
         localizePredictionTimes(document);
         fetchTimings(false);
         window.setInterval(renderAll, 1000);
-        refreshTimer = window.setInterval(() => fetchTimings(true), 30000);
+        window.setInterval(() => fetchTimings(true), 30000);
 
         document.addEventListener("matches:appended", scheduleScan);
         const observer = new MutationObserver((mutations) => {
