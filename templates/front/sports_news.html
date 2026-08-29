@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Новости спорта — КапперХаб{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'front/css/articles.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="articles-page" aria-label="Новости спорта">
+    <header class="articles-hero">
+        <div>
+            <p class="articles-eyebrow">Спортивная лента</p>
+            <h1>Новости спорта</h1>
+            <p>Свежие материалы о матчах, командах, турнирах и главных событиях спортивного дня.</p>
+        </div>
+        <div class="articles-total">
+            <strong>{{ total_articles }}</strong>
+            <span>материалов</span>
+        </div>
+    </header>
+
+    {% if page_obj.object_list %}
+    <div class="articles-grid">
+        {% for article in page_obj.object_list %}
+        <article class="article-list-card">
+            <a class="article-list-image{% if article.image %} is-skeleton-loading{% endif %}" href="{{ article.get_absolute_url }}"{% if article.image %} data-skeleton-image aria-busy="true"{% endif %}>
+                {% if article.image %}
+                    <img src="{{ article.image.url }}" width="640" height="360" alt="{{ article.title }}" loading="lazy">
+                {% else %}
+                    <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                {% endif %}
+            </a>
+            <div class="article-list-copy">
+                <div class="article-list-meta">
+                    <span>{{ article.created_at|date:"d.m.Y" }}</span>
+                    <span>Новости спорта</span>
+                </div>
+                <h2><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h2>
+                <p>{{ article.description|truncatechars:190 }}</p>
+                <a class="article-list-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="articles-pagination" aria-label="Страницы новостей">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Назад</a>{% endif %}
+        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Вперёд →</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="articles-empty">
+        <strong>Новостей пока нет</strong>
+        <p>Новые спортивные материалы появятся здесь после публикации.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
