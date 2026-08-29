@@ -13,13 +13,32 @@
         <div>
             <p class="cappers-table-eyebrow">Рейтинг прогнозистов</p>
             <h1 id="cappers-table-title">Таблица капперов</h1>
-            <p>Отдельный рейтинг для каждого месяца. Сравнивай прибыль флэтом, результаты, средний коэффициент, проходимость и ROI.</p>
+            <p>Отдельный рейтинг для каждого месяца и вида спорта. Сравнивай прибыль флэтом, результаты, средний коэффициент, проходимость и ROI.</p>
         </div>
         <div class="cappers-table-total">
             <strong>{{ experts_count }}</strong>
             <span>в рейтинге</span>
         </div>
     </header>
+
+    <nav class="cappers-sport-filters" aria-label="Вид спорта">
+        {% for sport in sport_filters %}
+        <a
+            class="cappers-sport-filter{% if selected_sport_code == sport.code %} is-active{% endif %}"
+            href="{{ sport.url }}"
+            {% if selected_sport_code == sport.code %}aria-current="page"{% endif %}
+        >
+            <span class="cappers-sport-filter-icon{% if sport.image %} has-image{% endif %}"{% if sport.image %} data-skeleton-image{% endif %}>
+                {% if sport.image %}
+                    <img src="{{ sport.image }}" width="30" height="30" loading="lazy" alt="">
+                {% else %}
+                    {% include "front/includes/_capper_sport_icon.html" with icon_key=sport.icon_key %}
+                {% endif %}
+            </span>
+            <span class="cappers-sport-filter-name">{{ sport.name }}</span>
+        </a>
+        {% endfor %}
+    </nav>
 
     <nav class="cappers-ranking-groups" aria-label="Тип рейтинга">
         {% for tab in group_tabs %}
@@ -33,7 +52,7 @@
     <div class="cappers-ranking-toolbar">
         <div>
             <h2>Прогнозисты</h2>
-            <span>{{ selected_month_label }}</span>
+            <span>{{ selected_month_label }} · {{ selected_sport_name }}</span>
         </div>
 
         <details class="cappers-period-filter">
@@ -54,9 +73,7 @@
         </details>
     </div>
 
-    <form class="cappers-ranking-search" method="get" action="{% url 'front:cappers_table' %}" role="search">
-        <input type="hidden" name="group" value="{{ selected_group }}">
-        <input type="hidden" name="month" value="{{ selected_month_value }}">
+    <form class="cappers-ranking-search" method="get" action="{{ current_table_url }}" role="search">
         <label>
             <span class="cappers-ranking-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
@@ -120,7 +137,7 @@
     {% else %}
     <div class="cappers-table-empty">
         <h2>Нет прогнозистов для этого фильтра</h2>
-        <p>Выбери другой месяц, тип рейтинга или очисти поиск.</p>
+        <p>Выбери другой месяц, вид спорта, тип рейтинга или очисти поиск.</p>
     </div>
     {% endif %}
 </section>
