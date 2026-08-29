@@ -1,6 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 
+from back.content_view import content_view_state
 from cabinet import expert_profile_views as cabinet_expert_profile_views
 from cabinet import referral_views as cabinet_referral_views
 
@@ -19,6 +20,7 @@ app_name = "front"
 
 urlpatterns = [
     path("", home_views.index, name="index"),
+    path("ui/content-view/", content_view_state, name="content_view_state"),
     path(
         "r/<str:username>/<str:code>/",
         cabinet_referral_views.referral_redirect_code,
