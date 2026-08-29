@@ -7,7 +7,7 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: black;
+    color: white;
     background: var(--yellow);
 }
 
@@ -16,7 +16,7 @@
     height: 7px;
     flex: 0 0 auto;
     border-radius: 50%;
-    background: var(--yellow);
+    background: white;
     content: "";
     animation: match-soon-pulse 1.15s ease-in-out infinite;
 }
