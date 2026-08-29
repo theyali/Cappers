@@ -1,0 +1,77 @@
+{% load static %}
+{% if sport_profit_default.rows %}
+<section class="expert-sport-profit" data-expert-sport-profit>
+    {{ sport_profit_periods|json_script:"expert-sport-profit-data" }}
+
+    <div class="expert-sport-profit-head">
+        <h2>Прибыль по видам спорта за</h2>
+        <div class="expert-sport-profit-filter">
+            <button
+                class="expert-sport-profit-toggle"
+                type="button"
+                data-sport-profit-toggle
+                aria-expanded="false"
+                aria-controls="expert-sport-profit-menu"
+            >
+                <span data-sport-profit-label>{{ sport_profit_default.label }}</span>
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="expert-sport-profit-menu" id="expert-sport-profit-menu" data-sport-profit-menu hidden>
+                {% for option in sport_profit_period_options %}
+                <button
+                    type="button"
+                    class="expert-sport-profit-period{% if option.key == 'all' %} is-active{% endif %}"
+                    data-sport-profit-period="{{ option.key }}"
+                >
+                    <span>{{ option.label }}</span>
+                    <svg viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="m4 10.5 3.3 3.3L16 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="expert-sport-profit-list" data-sport-profit-list>
+        {% for row in sport_profit_default.rows %}
+        <article class="expert-sport-profit-card" data-sport-profit-card="{{ row.code }}">
+            <span class="expert-sport-profit-icon" aria-hidden="true">
+                {% if row.code == 'football' %}
+                    {% include "front/svgs/soccer.svg" %}
+                {% elif row.code == 'hockey' %}
+                    {% include "front/svgs/hockey.svg" %}
+                {% elif row.code == 'basketball' %}
+                    {% include "front/svgs/basketball.svg" %}
+                {% elif row.code == 'tennis' %}
+                    {% include "front/svgs/tennis.svg" %}
+                {% else %}
+                    {% include "front/svgs/nav-matches.svg" %}
+                {% endif %}
+            </span>
+            <h3 data-sport-name>{{ row.name }}</h3>
+            <p class="expert-sport-profit-count" data-sport-predictions>{{ row.predictions_text }}</p>
+
+            <div class="expert-sport-result-bar" aria-label="Результаты прогнозов">
+                <span class="is-win" data-sport-win-bar style="width: {{ row.win_percent }}%"></span>
+                <span class="is-loss" data-sport-loss-bar style="width: {{ row.loss_percent }}%"></span>
+                <span class="is-refund" data-sport-refund-bar style="width: {{ row.refund_percent }}%"></span>
+            </div>
+
+            <dl class="expert-sport-profit-metrics">
+                <div>
+                    <dt data-sport-profit>{{ row.profit_display }}</dt>
+                    <dd>Прибыль</dd>
+                </div>
+                <div>
+                    <dt data-sport-roi>{{ row.roi_display }}</dt>
+                    <dd>ROI</dd>
+                </div>
+            </dl>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

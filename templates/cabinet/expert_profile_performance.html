@@ -3,18 +3,21 @@
 
 {% block extra_css %}
 {{ block.super }}
+<link rel="stylesheet" href="{% static 'front/css/expert-sport-profit.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/expert-recent-performance.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/expert-monthly-stats.css' %}">
 {% endblock %}
 
 {% block content %}
 {{ block.super }}
+{% include "cabinet/_expert_sport_profit.html" %}
 {% include "cabinet/_expert_recent_performance.html" %}
 {% include "cabinet/_expert_monthly_stats.html" %}
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
+<script src="{% static 'front/js/expert-sport-profit.js' %}" defer></script>
 <script src="{% static 'front/js/expert-recent-performance.js' %}" defer></script>
 <script src="{% static 'front/js/expert-monthly-stats.js' %}" defer></script>
 {% endblock %}

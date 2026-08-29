@@ -311,6 +311,11 @@ class CapperMonthlyStat(models.Model):
         decimal_places=2,
         default=0,
     )
+    sports_data = models.JSONField(
+        "Статистика по видам спорта",
+        default=dict,
+        blank=True,
+    )
     calculated_at = models.DateTimeField("Пересчитано", auto_now=True)
 
     class Meta:

@@ -1,7 +1,7 @@
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from game.models import PredictionCoupon
+from game.models import Prediction, PredictionCoupon
 
 from .models import AnalystProfile, User
 from .monthly_stats import monthly_stat_key, rebuild_capper_month
@@ -71,3 +71,23 @@ def remove_coupon_from_monthly_stat(sender, instance: PredictionCoupon, **kwargs
     key = monthly_stat_key(instance)
     if key is not None:
         rebuild_capper_month(*key)
+
+
+def _rebuild_prediction_coupon_month(instance: Prediction) -> None:
+    coupon = PredictionCoupon.objects.filter(pk=instance.coupon_id).first()
+    if coupon is None:
+        return
+    key = monthly_stat_key(coupon)
+    if key is not None:
+        rebuild_capper_month(*key)
+
+
+@receiver(post_save, sender=Prediction)
+def sync_prediction_sport_monthly_stat(sender, instance: Prediction, **kwargs) -> None:
+    """Keep the persisted per-sport split in sync when prediction items change."""
+    _rebuild_prediction_coupon_month(instance)
+
+
+@receiver(post_delete, sender=Prediction)
+def remove_prediction_from_sport_monthly_stat(sender, instance: Prediction, **kwargs) -> None:
+    _rebuild_prediction_coupon_month(instance)
