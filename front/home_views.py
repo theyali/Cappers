@@ -8,7 +8,7 @@ from cabinet.achievements import build_achievement_badges
 from cabinet.models import AnalystProfile, User
 from front.expert_ranking import ranked_expert_profiles
 from front.models import Article
-from front.views import _best_streaks_for_authors, _initials, _top_experts
+from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon
 from game.views import _match_winner_odds
 from notifications.models import MatchWatch
@@ -18,6 +18,7 @@ HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 12
 HOME_EXPERTS_LIMIT = 6
+HOME_MATCH_CANDIDATE_LIMIT = 120
 
 
 def _logo_url(primary: str, related) -> str:
@@ -129,8 +130,28 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
-def _best_home_experts(request) -> list[dict]:
-    profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
+def _top_home_experts(profiles) -> list[dict]:
+    if not profiles:
+        return DEMO_EXPERTS
+
+    experts = []
+    for profile in profiles[:5]:
+        name = profile.display_name or profile.user.get_full_name() or profile.user.username
+        experts.append(
+            {
+                "name": name,
+                "username": profile.user.username,
+                "followers": profile.followers_count,
+                "initials": _initials(name),
+                "verified": profile.is_verified,
+                "avatar_url": profile.avatar.url if profile.avatar else "",
+            }
+        )
+    return experts
+
+
+def _best_home_experts(request, profiles) -> list[dict]:
+    profiles = list(profiles[:HOME_EXPERTS_LIMIT])
 
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
     following_ids = set()
@@ -218,9 +239,19 @@ def _league_rating(match: Match) -> int:
     return 0
 
 
-def _important_home_matches(request, can_write_coupon: bool = False) -> list[Match]:
-    now = timezone.now()
-    matches = list(
+def _home_match_has_quick_odds_q() -> Q:
+    return (
+        Q(odds__home_win_bet__isnull=False)
+        | Q(odds__x_bet__isnull=False)
+        | Q(odds__away_win_bet__isnull=False)
+        | Q(odds__goals_over_2_5__isnull=False)
+        | Q(odds__goals_under_2_5__isnull=False)
+        | Q(odds__btts_yes__isnull=False)
+    )
+
+
+def _home_match_queryset(now):
+    return (
         Match.objects.filter(sync_scope=Match.SyncScope.PREMATCH)
         .filter(Q(starts_at__gte=now) | Q(starts_at__isnull=True))
         .select_related(
@@ -239,13 +270,19 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
                 distinct=True,
             )
         )
-        .order_by("-last_seen_at", "-created_at", "-id")
     )
 
-    for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
 
-    important = [match for match in matches if _league_rating(match) > 0]
+def _important_home_matches(request, can_write_coupon: bool = False) -> list[Match]:
+    now = timezone.now()
+    base_queryset = _home_match_queryset(now)
+    candidates = list(
+        base_queryset.order_by("-last_seen_at", "-created_at", "-id")[
+            :HOME_MATCH_CANDIDATE_LIMIT
+        ]
+    )
+
+    important = [match for match in candidates if _league_rating(match) > 0]
     important.sort(
         key=lambda match: (
             -_league_rating(match),
@@ -257,9 +294,13 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
     if important:
         selected = important[:HOME_MATCHES_LIMIT]
     else:
-        selected = [
-            match for match in matches if match.coupon_odds.get("has_any")
-        ][:HOME_MATCHES_LIMIT]
+        selected = list(
+            base_queryset.filter(_home_match_has_quick_odds_q())
+            .order_by("-last_seen_at", "-created_at", "-id")[:HOME_MATCHES_LIMIT]
+        )
+
+    for match in selected:
+        match.coupon_odds = _match_winner_odds(match)
 
     watched_ids = set()
     if request.user.is_authenticated and selected:
@@ -280,14 +321,15 @@ def index(request):
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
+    ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
 
     return render(
         request,
         "front/index.html",
         {
             "latest_predictions": _latest_home_predictions(),
-            "top_experts": _top_experts(),
-            "best_experts": _best_home_experts(request),
+            "top_experts": _top_home_experts(ranked_profiles),
+            "best_experts": _best_home_experts(request, ranked_profiles),
             "latest_articles": Article.objects.filter(is_published=True).order_by(
                 "-created_at", "-id"
             )[:HOME_ARTICLES_LIMIT],
