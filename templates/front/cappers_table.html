@@ -28,12 +28,8 @@
             href="{{ sport.url }}"
             {% if selected_sport_code == sport.code %}aria-current="page"{% endif %}
         >
-            <span class="cappers-sport-filter-icon{% if sport.image %} has-image{% endif %}"{% if sport.image %} data-skeleton-image{% endif %}>
-                {% if sport.image %}
-                    <img src="{{ sport.image }}" width="30" height="30" loading="lazy" alt="">
-                {% else %}
-                    {% include "front/includes/_capper_sport_icon.html" with icon_key=sport.icon_key %}
-                {% endif %}
+            <span class="cappers-sport-filter-icon">
+                {% include "front/includes/_capper_sport_icon.html" with icon_key=sport.icon_key %}
             </span>
             <span class="cappers-sport-filter-name">{{ sport.name }}</span>
         </a>
