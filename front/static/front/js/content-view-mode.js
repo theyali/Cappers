@@ -19,16 +19,27 @@
         if (!stateUrl) return;
 
         if (persistRequest) persistRequest.abort();
-        persistRequest = $.ajax({
-            url: stateUrl,
-            method: "POST",
-            dataType: "json",
-            data: { mode },
-            headers: {
-                "X-CSRFToken": decodeURIComponent(getCookie("csrftoken")),
-                "X-Requested-With": "XMLHttpRequest",
-            },
-        }).always(() => {
+        const csrfToken = decodeURIComponent(getCookie("csrftoken"));
+        const options = csrfToken
+            ? {
+                url: stateUrl,
+                method: "POST",
+                dataType: "json",
+                data: { mode },
+                headers: {
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            }
+            : {
+                url: stateUrl,
+                method: "GET",
+                dataType: "json",
+                data: { mode },
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            };
+
+        persistRequest = $.ajax(options).always(() => {
             persistRequest = null;
         });
     };
@@ -89,5 +100,21 @@
         setButtons($switcher, mode);
         switchPanel($root, mode);
         persistMode($switcher, mode);
+    });
+
+    document.addEventListener("matches:watch-changed", (event) => {
+        const matchId = String(event.detail?.matchId || "");
+        if (!matchId) return;
+        const watching = Boolean(event.detail?.watching);
+
+        document.querySelectorAll(`[data-match-shell-id='${CSS.escape(matchId)}']`).forEach((shell) => {
+            shell.classList.toggle("is-watched", watching);
+            shell.querySelectorAll("[data-match-watch-toggle]").forEach((button) => {
+                button.classList.toggle("is-watching", watching);
+                button.setAttribute("aria-pressed", watching ? "true" : "false");
+                button.setAttribute("aria-label", watching ? "Не отслеживать матч" : "Отслеживать матч");
+                button.title = watching ? "Матч отслеживается" : "Следить за матчем";
+            });
+        });
     });
 })(window.jQuery);
