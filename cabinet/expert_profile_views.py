@@ -26,6 +26,19 @@ def _initials(value: str) -> str:
     return "".join(part[0] for part in parts[:2]).upper() or "К"
 
 
+def _prediction_word(value: int) -> str:
+    value = abs(int(value))
+    last_two = value % 100
+    last = value % 10
+    if 11 <= last_two <= 14:
+        return "прогнозов"
+    if last == 1:
+        return "прогноз"
+    if 2 <= last <= 4:
+        return "прогноза"
+    return "прогнозов"
+
+
 def _recent_performance(author, limit: int) -> dict:
     states = list(
         PredictionCoupon.objects.filter(
@@ -106,10 +119,10 @@ def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]
         for row in CapperMonthlyStat.objects.filter(analyst_id__in=analyst_ids)
         .values("analyst_id")
         .annotate(
-            predictions_count=Coalesce(Sum("bets_count"), 0),
-            wins_count=Coalesce(Sum("wins_count"), 0),
-            losses_count=Coalesce(Sum("losses_count"), 0),
-            refunds_count=Coalesce(Sum("refunds_count"), 0),
+            predictions_count=Sum("bets_count"),
+            wins_count=Sum("wins_count"),
+            losses_count=Sum("losses_count"),
+            refunds_count=Sum("refunds_count"),
         )
     }
 
@@ -132,6 +145,7 @@ def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]
         elif user.avatar:
             avatar_url = user.avatar.url
         stats = stats_by_analyst.get(profile.user_id, {})
+        predictions_count = int(stats.get("predictions_count") or 0)
         result.append(
             {
                 "id": profile.user_id,
@@ -144,7 +158,8 @@ def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]
                     kwargs={"username": user.username},
                 ),
                 "followers_count": int(profile.followers_count or 0),
-                "predictions_count": int(stats.get("predictions_count") or 0),
+                "predictions_count": predictions_count,
+                "predictions_label": _prediction_word(predictions_count),
                 "wins_count": int(stats.get("wins_count") or 0),
                 "losses_count": int(stats.get("losses_count") or 0),
                 "refunds_count": int(stats.get("refunds_count") or 0),
