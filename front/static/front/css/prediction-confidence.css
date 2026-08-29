@@ -39,6 +39,40 @@
     background: var(--blue);
 }
 
+.prediction-card.prediction-card-rich .prediction-card-money {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 18px;
+    padding: 13px 14px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.prediction-card.prediction-card-rich .prediction-card-money > .prediction-card-money-item {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.prediction-card.prediction-card-rich .prediction-card-money-confidence {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    padding: 2px 0 0;
+}
+
+.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-head span {
+    font-size: 10px;
+}
+
+.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-head strong {
+    font-size: 15px;
+}
+
+.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-track {
+    height: 5px;
+}
+
 .coupon-slip-confidence {
     margin-top: 2px;
     padding: 10px 0 0;
