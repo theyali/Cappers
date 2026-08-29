@@ -1,0 +1,214 @@
+.cappers-table-page {
+    display: grid;
+    gap: 18px;
+}
+
+.cappers-table-hero {
+    min-height: 220px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(24px, 4vw, 42px);
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.cappers-table-hero > div:first-child {
+    max-width: 760px;
+}
+
+.cappers-table-eyebrow {
+    margin: 0 0 10px;
+    color: var(--yellow);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.cappers-table-hero h1 {
+    margin: 0;
+}
+
+.cappers-table-hero p:last-child {
+    max-width: 680px;
+    margin: 16px 0 0;
+    color: var(--soft);
+    line-height: 1.55;
+}
+
+.cappers-table-total {
+    min-width: 150px;
+    min-height: 96px;
+    display: grid;
+    align-content: center;
+    justify-items: end;
+    padding: 18px;
+    border-radius: 16px;
+    background: #29292c;
+}
+
+.cappers-table-total strong {
+    color: var(--yellow);
+    font-size: 34px;
+    line-height: 1;
+}
+
+.cappers-table-total span {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.cappers-table-switcher {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px;
+    border-radius: 14px;
+    background: var(--panel);
+}
+
+.cappers-table-switcher a {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    border-radius: 10px;
+    color: var(--soft);
+    background: #2a2a2d;
+    white-space: nowrap;
+}
+
+.cappers-table-switcher a.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.cappers-ranking-table-wrap {
+    overflow-x: auto;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.cappers-ranking-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    padding: 8px 12px 12px;
+}
+
+.cappers-ranking-table th {
+    padding: 12px 14px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.cappers-ranking-table td {
+    padding: 12px 14px;
+    color: var(--soft);
+    background: #262628;
+    vertical-align: middle;
+}
+
+.cappers-ranking-table td:first-child {
+    border-radius: 12px 0 0 12px;
+}
+
+.cappers-ranking-table td:last-child {
+    border-radius: 0 12px 12px 0;
+}
+
+.cappers-ranking-position {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-weight: 700;
+}
+
+.cappers-ranking-expert {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 220px;
+}
+
+.cappers-ranking-avatar {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.cappers-ranking-avatar img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+}
+
+.cappers-ranking-name strong,
+.cappers-ranking-name small {
+    display: block;
+}
+
+.cappers-ranking-name strong {
+    color: var(--text);
+}
+
+.cappers-ranking-name small {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.cappers-ranking-roi {
+    color: var(--text);
+}
+
+.cappers-ranking-roi.is-positive {
+    color: var(--yellow);
+}
+
+.cappers-ranking-roi.is-negative {
+    color: var(--danger);
+}
+
+.cappers-table-empty {
+    padding: 34px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.cappers-table-empty p {
+    margin-bottom: 0;
+    color: var(--muted);
+}
+
+@media (max-width: 760px) {
+    .cappers-table-hero {
+        min-height: 190px;
+        align-items: stretch;
+        flex-direction: column;
+        padding: 22px;
+    }
+
+    .cappers-table-total {
+        min-width: 0;
+        min-height: 72px;
+        justify-items: start;
+    }
+}
