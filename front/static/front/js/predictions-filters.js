@@ -8,13 +8,49 @@
 
     const currentLayout = () => $("[data-predictions-layout]").first();
 
-    const setSidebarCollapsed = (collapsed) => {
+    const getCookie = (name) => {
+        const cookies = document.cookie ? document.cookie.split(";") : [];
+        for (const cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith(`${name}=`)) {
+                return decodeURIComponent(trimmed.slice(name.length + 1));
+            }
+        }
+        return "";
+    };
+
+    const persistSidebarCollapsed = (collapsed) => {
+        const $layout = currentLayout();
+        const url = $layout.data("filterStateUrl");
+        if (!url || typeof window.fetch !== "function") return;
+
+        const body = new URLSearchParams();
+        body.set("collapsed", collapsed ? "1" : "0");
+
+        window.fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            keepalive: true,
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest",
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            },
+            body,
+        }).catch(() => {});
+    };
+
+    const setSidebarCollapsed = (collapsed, options = {}) => {
         const $layout = currentLayout();
         if (!$layout.length) return;
 
         $layout.toggleClass("is-filter-collapsed", collapsed);
         const $toggle = $layout.find("[data-prediction-filter-toggle]").first();
         $toggle.attr("aria-expanded", collapsed ? "false" : "true");
+
+        if (options.persist !== false) {
+            persistSidebarCollapsed(collapsed);
+        }
     };
 
     const responseDocument = (html) => {
@@ -122,7 +158,7 @@
                 $layout.replaceWith($nextLayout);
                 syncHero($response);
                 syncDocumentHead(html);
-                setSidebarCollapsed(wasCollapsed);
+                setSidebarCollapsed(wasCollapsed, { persist: false });
                 animateIncomingResults();
 
                 if (options.pushState !== false) {

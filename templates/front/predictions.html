@@ -28,7 +28,11 @@
         </div>
     </div>
 
-    <div class="predictions-layout" data-predictions-layout>
+    <div
+        class="predictions-layout{% if predictions_filter_collapsed %} is-filter-collapsed{% endif %}"
+        data-predictions-layout
+        data-filter-state-url="{% url 'front:prediction_filter_state' %}"
+    >
         <div class="predictions-content" data-predictions-content>
             <nav class="matches-sport-tabs predictions-sport-tabs" aria-label="Прогнозы по видам спорта">
                 {% for tab in sport_tabs %}
@@ -119,7 +123,7 @@
         </div>
 
         <aside class="prediction-filter-sidebar" data-prediction-filter-sidebar aria-label="Фильтры прогнозов">
-            <button class="prediction-filter-sidebar-toggle" type="button" data-prediction-filter-toggle aria-expanded="true" aria-controls="prediction-filter-sidebar-body">
+            <button class="prediction-filter-sidebar-toggle" type="button" data-prediction-filter-toggle aria-expanded="{% if predictions_filter_collapsed %}false{% else %}true{% endif %}" aria-controls="prediction-filter-sidebar-body">
                 <span class="prediction-filter-sidebar-title">
                     <strong>Фильтры</strong>
                     {% if selected_sport %}

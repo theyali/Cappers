@@ -18,6 +18,11 @@ urlpatterns = [
     path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
     path("predictions/", prediction_views.predictions, name="predictions"),
     path(
+        "predictions/filter-state/",
+        prediction_views.prediction_filter_state,
+        name="prediction_filter_state",
+    ),
+    path(
         "predictions/<int:prediction_id>/",
         prediction_views.prediction_detail,
         name="prediction_detail",

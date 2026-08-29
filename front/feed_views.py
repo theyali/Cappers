@@ -13,6 +13,7 @@ from .prediction_views import (
     _decorate_predictions,
     _published_queryset,
     _status_tabs,
+    prediction_filter_collapsed,
 )
 from .views import PREDICTION_STATUS_FILTERS
 
@@ -173,5 +174,6 @@ def following_feed(request):
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "feed_all_cappers_url": feed_all_cappers_url,
+            "predictions_filter_collapsed": prediction_filter_collapsed(request),
         },
     )

@@ -34,7 +34,11 @@
     </div>
 
     {% if following %}
-    <div class="predictions-layout following-feed-layout" data-predictions-layout>
+    <div
+        class="predictions-layout following-feed-layout{% if predictions_filter_collapsed %} is-filter-collapsed{% endif %}"
+        data-predictions-layout
+        data-filter-state-url="{% url 'front:prediction_filter_state' %}"
+    >
         <div class="predictions-content following-feed-content" data-predictions-content>
             <section class="following-cappers-panel" aria-label="Капперы в моей ленте">
                 <div class="following-feed-section-head">
@@ -138,7 +142,7 @@
                 class="prediction-filter-sidebar-toggle"
                 type="button"
                 data-prediction-filter-toggle
-                aria-expanded="true"
+                aria-expanded="{% if predictions_filter_collapsed %}false{% else %}true{% endif %}"
                 aria-controls="following-feed-filter-body"
             >
                 <span class="prediction-filter-sidebar-title">

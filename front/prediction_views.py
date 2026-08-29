@@ -39,6 +39,20 @@ SORT_OPTIONS = (
     ("roi", "Лучший ROI"),
     ("popular", "Самые популярные"),
 )
+PREDICTION_FILTER_COLLAPSED_SESSION_KEY = "front.prediction_filter_collapsed"
+
+
+def prediction_filter_collapsed(request) -> bool:
+    return bool(request.session.get(PREDICTION_FILTER_COLLAPSED_SESSION_KEY))
+
+
+@require_POST
+def prediction_filter_state(request):
+    raw_value = request.POST.get("collapsed", "")
+    collapsed = str(raw_value).lower() in {"1", "true", "yes", "on"}
+    request.session[PREDICTION_FILTER_COLLAPSED_SESSION_KEY] = collapsed
+    request.session.modified = True
+    return JsonResponse({"ok": True, "collapsed": collapsed})
 
 
 def _following_ids(user) -> set[int]:
@@ -680,6 +694,7 @@ def predictions(request, sport_code: str | None = None):
             "active_filter_count": active_filter_count,
             "filter_action_url": _prediction_sport_path(active_sport.code if active_sport else None),
             "all_predictions_url": _prediction_sport_path(),
+            "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **seo_context,
         },
     )
