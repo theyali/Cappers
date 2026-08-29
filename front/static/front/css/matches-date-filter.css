@@ -179,6 +179,7 @@
 @media (max-width: 1120px) {
     .matches-page,
     .matches-page > *,
+    .matches-page .matches-sport-tabs,
     .matches-page .matches-tabs,
     .matches-date-filter {
         min-width: 0;
@@ -202,6 +203,7 @@
     }
 
     .matches-date-controls::-webkit-scrollbar,
+    .matches-page .matches-sport-tabs::-webkit-scrollbar,
     .matches-page .matches-tabs::-webkit-scrollbar {
         display: none;
     }
@@ -228,6 +230,13 @@
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
         box-sizing: border-box;
+    }
+
+    .matches-page .matches-sport-tabs {
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-inline: contain;
     }
 
     .matches-page .matches-tabs a {

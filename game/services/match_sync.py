@@ -24,6 +24,7 @@ class MatchSyncService:
 
     def __init__(self, provider: NeurokeffSportsProvider | None = None) -> None:
         self.provider = provider or NeurokeffSportsProvider()
+        self._sport_cache: dict[tuple[str, int | str], Sport] = {}
 
     def sync_upcoming(self) -> dict:
         result = self._sync_scope(
@@ -75,7 +76,7 @@ class MatchSyncService:
         limit = max(int(getattr(settings, "NEUROKEFF_STUCK_LIVE_LIMIT", 500)), 1)
         threshold = timezone.now() - stale_after
         matches = list(
-            Match.objects.filter(
+            Match.objects.select_related("sport").filter(
                 Q(last_seen_at__lt=threshold)
                 | Q(time_status__in=self.TERMINAL_TIME_STATUSES),
                 provider=Provider.NEUROKEFF,
@@ -113,7 +114,7 @@ class MatchSyncService:
 
                 scope = self._scope_from_payload(payload, default=Match.SyncScope.LIVE)
                 defaults = {
-                    **self._match_defaults(payload, scope),
+                    **self._match_defaults(payload, scope, sport_fallback=match.sport),
                     "last_seen_at": now,
                 }
                 for field, value in defaults.items():
@@ -205,7 +206,13 @@ class MatchSyncService:
             seconds=stale_seconds
         )
 
-    def _match_defaults(self, payload: dict[str, Any], scope: str) -> dict[str, Any]:
+    def _match_defaults(
+        self,
+        payload: dict[str, Any],
+        scope: str,
+        *,
+        sport_fallback: Sport | None = None,
+    ) -> dict[str, Any]:
         league = payload.get("league") or {}
         country = league.get("country") or {}
         teams = payload.get("teams") or {}
@@ -213,7 +220,7 @@ class MatchSyncService:
         away_team = teams.get("away") or {}
         venue_payload = payload.get("venue") or {}
 
-        sport = self._sync_sport(payload)
+        sport = self._sync_sport(payload, fallback=sport_fallback)
         league_country = self._sync_country(country)
         venue = self._sync_venue(venue_payload)
         league_obj = self._sync_league(league, sport, league_country)
@@ -241,19 +248,145 @@ class MatchSyncService:
             "raw_data": payload,
         }
 
-    def _sync_sport(self, payload: dict[str, Any]) -> Sport:
-        sport_id = self._to_int(payload.get("sport_id"), default=2)
+    def _sync_sport(self, payload: dict[str, Any], *, fallback: Sport | None = None) -> Sport:
+        meta = self._sport_meta(payload)
+        sport_id = self._to_int(meta.get("id") or payload.get("sport_id"))
+        if sport_id is None and fallback is not None:
+            return fallback
+
+        code = str(
+            meta.get("code")
+            or getattr(fallback, "code", "")
+            or (f"sport-{sport_id}" if sport_id is not None else "football")
+        ).lower()
+        if sport_id is None and code == "football":
+            sport_id = self._configured_sport_id(code) or 2
+        name = str(meta.get("name") or getattr(fallback, "name", "") or code.title())
+        name_ru = str(meta.get("name_ru") or getattr(fallback, "name_ru", "") or name)
+        raw_data = {"sport_id": sport_id, **meta}
+        cache_key: tuple[str, int | str] = ("id", sport_id) if sport_id is not None else ("code", code)
+        cached = self._sport_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        if sport_id is not None:
+            sport = Sport.objects.filter(provider=Provider.NEUROKEFF, external_id=sport_id).first()
+            if sport is not None:
+                update_fields = []
+                for field, value in (
+                    ("code", code),
+                    ("name", name),
+                    ("name_ru", name_ru),
+                    ("raw_data", raw_data),
+                ):
+                    if getattr(sport, field) != value:
+                        setattr(sport, field, value)
+                        update_fields.append(field)
+                if update_fields:
+                    sport.save(update_fields=update_fields)
+                self._sport_cache[cache_key] = sport
+                return sport
+
+        sport = Sport.objects.filter(code=code).first()
+        if sport is not None:
+            update_fields = []
+            if sport.provider != Provider.NEUROKEFF:
+                sport.provider = Provider.NEUROKEFF
+                update_fields.append("provider")
+            if sport_id is not None and sport.external_id != sport_id:
+                sport.external_id = sport_id
+                update_fields.append("external_id")
+            for field, value in (
+                ("name", name),
+                ("name_ru", name_ru),
+                ("raw_data", raw_data),
+            ):
+                if getattr(sport, field) != value:
+                    setattr(sport, field, value)
+                    update_fields.append(field)
+            if update_fields:
+                sport.save(update_fields=update_fields)
+            self._sport_cache[cache_key] = sport
+            return sport
+
+        if sport_id is None:
+            sport = Sport.objects.create(
+                provider=Provider.NEUROKEFF,
+                external_id=None,
+                code=code,
+                name=name,
+                name_ru=name_ru,
+                raw_data=raw_data,
+            )
+            self._sport_cache[cache_key] = sport
+            return sport
+
         sport, _ = Sport.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=sport_id,
             defaults={
-                "code": "football",
-                "name": "Football",
-                "name_ru": "Футбол",
-                "raw_data": {"sport_id": sport_id},
+                "code": code,
+                "name": name,
+                "name_ru": name_ru,
+                "raw_data": raw_data,
             },
         )
+        self._sport_cache[cache_key] = sport
         return sport
+
+    def _sport_meta(self, payload: dict[str, Any]) -> dict[str, Any]:
+        meta = payload.get("_sport_meta")
+        if isinstance(meta, dict):
+            return {
+                "id": self._to_int(meta.get("id")),
+                "code": str(meta.get("code") or ""),
+                "name": str(meta.get("name") or ""),
+                "name_ru": str(meta.get("name_ru") or meta.get("name") or ""),
+            }
+
+        sport_payload = payload.get("sport") or {}
+        if not isinstance(sport_payload, dict):
+            sport_payload = {}
+        sport_id = self._to_int(payload.get("sport_id") or sport_payload.get("id"))
+        configured = self._configured_sport_meta(sport_id=sport_id)
+        code = (
+            configured.get("code")
+            or sport_payload.get("code")
+            or payload.get("sport_code")
+            or sport_payload.get("slug")
+            or ""
+        )
+        name = configured.get("name") or self._localized(sport_payload.get("name"), "en")
+        name_ru = configured.get("name_ru") or self._localized(sport_payload.get("name"), "ru")
+        return {
+            "id": sport_id,
+            "code": str(code or ""),
+            "name": str(name or ""),
+            "name_ru": str(name_ru or name or ""),
+        }
+
+    @staticmethod
+    def _configured_sport_meta(*, sport_id: int | None) -> dict[str, Any]:
+        if sport_id is None:
+            return {}
+        for sport in getattr(settings, "NEUROKEFF_SPORTS", []):
+            if not isinstance(sport, dict):
+                continue
+            try:
+                configured_id = int(sport.get("id"))
+            except (TypeError, ValueError):
+                continue
+            if configured_id == sport_id:
+                return sport
+        return {}
+
+    @staticmethod
+    def _configured_sport_id(code: str) -> int | None:
+        for sport in getattr(settings, "NEUROKEFF_SPORTS", []):
+            if not isinstance(sport, dict) or str(sport.get("code") or "").lower() != code:
+                continue
+            return MatchSyncService._to_int(sport.get("id"))
+        return None
 
     def _sync_country(self, payload: dict[str, Any]) -> Country | None:
         external_id = self._to_int(payload.get("id"))

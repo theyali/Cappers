@@ -168,23 +168,23 @@ CELERY_TASK_TIME_LIMIT = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 270
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
-    "fetch-live-football-matches": {
+    "fetch-live-matches": {
         "task": "game.tasks.fetch_live_matches",
         "schedule": timedelta(seconds=15),
     },
-    "sync-stuck-live-football-matches": {
+    "sync-stuck-live-matches": {
         "task": "game.tasks.sync_stuck_live_matches",
         "schedule": timedelta(minutes=2),
     },
-    "fetch-prematch-football-matches": {
+    "fetch-prematch-matches": {
         "task": "game.tasks.fetch_upcoming_matches",
         "schedule": timedelta(minutes=10),
     },
-    "fetch-finished-football-matches": {
+    "fetch-finished-matches": {
         "task": "game.tasks.fetch_finished_matches",
         "schedule": timedelta(minutes=15),
     },
-    "settle-football-predictions": {
+    "settle-predictions": {
         "task": "game.tasks.settle_predictions",
         "schedule": timedelta(minutes=15),
     },
@@ -219,10 +219,35 @@ NEUROKEFF_API_BASE_URL = os.getenv(
     "https://sports.api-neurokeff.ru/api/v2",
 )
 NEUROKEFF_API_TOKEN = os.getenv("NEUROKEFF_API_TOKEN", "")
-NEUROKEFF_FOOTBALL_SPORT_ID = env_int("NEUROKEFF_FOOTBALL_SPORT_ID", 2)
+# Sport ids from https://www.sports.api-neurokeff.ru/api/docs/
+NEUROKEFF_SPORTS = [
+    {
+        "code": "tennis",
+        "id": 1,
+        "name": "Tennis",
+        "name_ru": "Теннис",
+    },
+    {
+        "code": "football",
+        "id": 2,
+        "name": "Football",
+        "name_ru": "Футбол",
+    },
+    {
+        "code": "hockey",
+        "id": 3,
+        "name": "Hockey",
+        "name_ru": "Хоккей",
+    },
+    {
+        "code": "basketball",
+        "id": 4,
+        "name": "Basketball",
+        "name_ru": "Баскетбол",
+    },
+]
 NEUROKEFF_LANG = os.getenv("NEUROKEFF_LANG", "ru,en")
 NEUROKEFF_PAGE_SIZE = env_int("NEUROKEFF_PAGE_SIZE", 100)
-NEUROKEFF_MAX_PAGES = env_int("NEUROKEFF_MAX_PAGES", 20)
 NEUROKEFF_API_TIMEOUT = env_int("NEUROKEFF_API_TIMEOUT", 20)
 NEUROKEFF_GAME_INFO_ENDPOINT = os.getenv("NEUROKEFF_GAME_INFO_ENDPOINT", "/api/v1/games/info")
 NEUROKEFF_GAME_INFO_BATCH_SIZE = env_int("NEUROKEFF_GAME_INFO_BATCH_SIZE", 20)

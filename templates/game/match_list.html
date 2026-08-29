@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Футбол — КапперХаб{% endblock %}
+{% block title %}Матчи — КапперХаб{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
@@ -13,10 +13,10 @@
 {% endblock %}
 
 {% block content %}
-<section class="matches-page" aria-label="Футбольные матчи">
+<section class="matches-page" aria-label="Матчи">
     <div class="matches-hero long-bg long-bg-2">
         <div>
-            <p class="matches-eyebrow">Футбол</p>
+            <p class="matches-eyebrow">Матчи</p>
             <h1>Матчи</h1>
         </div>
         <div class="matches-hero-meta">
@@ -24,6 +24,30 @@
             <small>игр на {{ selected_date|date:"j M" }}</small>
         </div>
     </div>
+
+    <nav class="matches-sport-tabs" aria-label="Выбор спорта">
+        {% for tab in sport_tabs %}
+        <a class="matches-sport-tab matches-sport-tab-{{ tab.code }}{% if active_sport == tab.code %} is-active{% endif %}" href="{{ tab.url }}">
+            <span class="matches-sport-icon" aria-hidden="true">
+                {% if tab.code == 'all' %}
+                    {% include "front/svgs/nav-matches.svg" %}
+                {% elif tab.code == 'football' %}
+                    {% include "front/svgs/soccer.svg" %}
+                {% elif tab.code == 'hockey' %}
+                    {% include "front/svgs/hockey.svg" %}
+                {% elif tab.code == 'basketball' %}
+                    {% include "front/svgs/basketball.svg" %}
+                {% elif tab.code == 'tennis' %}
+                    {% include "front/svgs/tennis.svg" %}
+                {% else %}
+                    {% include "front/svgs/nav-matches.svg" %}
+                {% endif %}
+            </span>
+            <span>{{ tab.label }}</span>
+            <b>{{ tab.count }}</b>
+        </a>
+        {% endfor %}
+    </nav>
 
     <nav class="matches-tabs" aria-label="Фильтр матчей">
         {% for tab in scope_tabs %}
@@ -92,6 +116,7 @@
                     value="{{ selected_date_iso }}"
                     data-match-date-input
                     data-scope="{{ active_scope }}"
+                    data-url-template="{{ date_picker_url_template }}"
                     aria-label="Выбрать дату матчей"
                 >
             </label>

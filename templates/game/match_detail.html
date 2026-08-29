@@ -39,7 +39,7 @@
                         <div>
                             <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
                             <small>
-                                {% if match.league_country %}{{ match.league_country }}{% else %}Футбол{% endif %}
+                                {% if match.league_country %}{{ match.league_country }}{% elif match.sport %}{{ match.sport }}{% else %}Матчи{% endif %}
                             </small>
                         </div>
                     </div>

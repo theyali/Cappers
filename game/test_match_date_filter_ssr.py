@@ -20,11 +20,7 @@ class MatchDateFilterSSRTests(TestCase):
         previous_date = selected_date - timedelta(days=1)
 
         response = self.client.get(
-            reverse("game:match_list"),
-            {
-                "scope": Match.SyncScope.PREMATCH,
-                "date": selected_date.isoformat(),
-            },
+            f"/games/all/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -34,11 +30,7 @@ class MatchDateFilterSSRTests(TestCase):
             (selected_date + timedelta(days=1)).isoformat(),
         )
         self.assertIn(
-            f"scope={Match.SyncScope.PREMATCH}",
-            response.context["previous_date_url"],
-        )
-        self.assertIn(
-            f"date={previous_date.isoformat()}",
+            f"/games/all/{Match.SyncScope.PREMATCH}/{previous_date.isoformat()}/",
             response.context["previous_date_url"],
         )
 

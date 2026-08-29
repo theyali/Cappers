@@ -32,7 +32,7 @@
                             {% elif prediction.match.league and prediction.match.league.logo %}
                                 <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
                             {% else %}
-                                <img src="{% static 'front/svgs/soccer.svg' %}" alt="">
+                                {% include "front/svgs/soccer.svg" %}
                             {% endif %}
                         </span>
                         <div>

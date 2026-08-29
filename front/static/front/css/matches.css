@@ -51,6 +51,94 @@
     font-size: 12px;
 }
 
+.matches-sport-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .06);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.matches-sport-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.matches-sport-tab {
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 0 10px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .78);
+    background: #2a2a2d;
+    font-size: 14px;
+    white-space: nowrap;
+    transition: color .18s ease, background .18s ease, outline-color .18s ease;
+}
+
+.matches-sport-icon {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--yellow);
+}
+
+.matches-sport-icon img,
+.matches-sport-icon svg {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    color: inherit;
+}
+
+.matches-sport-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.matches-sport-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
+}
+
+.matches-sport-tab b {
+    min-width: 24px;
+    min-height: 22px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 7px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, .72);
+    background: rgba(255, 255, 255, .09);
+    font-size: 12px;
+}
+
+.matches-sport-tab:hover {
+    color: var(--text);
+    outline-color: rgba(255, 255, 255, .16);
+}
+
+.matches-sport-tab.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+    outline-color: rgba(255, 212, 59, .7);
+}
+
+.matches-sport-tab.is-active .matches-sport-icon {
+    color: var(--ink);
+    background: rgba(19, 19, 19, .12);
+}
+
+.matches-sport-tab.is-active b {
+    color: var(--ink);
+    background: rgba(19, 19, 19, .12);
+}
+
 .matches-tabs {
     display: flex;
     gap: 8px;
@@ -1318,6 +1406,17 @@
 }
 
 @media (max-width: 640px) {
+    .matches-sport-tabs {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .matches-sport-tab {
+        flex: 0 0 auto;
+    }
+
     .matches-hero {
         min-height: auto;
         align-items: flex-start;

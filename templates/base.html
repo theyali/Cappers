@@ -56,8 +56,8 @@
 
             <div class="site-nav-center">
                 <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
-                    <span class="nav-icon nav-icon-image"><img src="{% static 'front/svgs/soccer.svg' %}" alt=""></span>
-                    <span>Футбол</span>
+                    <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
+                    <span>Матчи</span>
                 </a>
                 <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
                     <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"/></svg></span>

@@ -98,7 +98,7 @@ def _latest_home_predictions() -> list[dict]:
                 "sport": (
                     match.sport.name_ru
                     if match.sport and match.sport.name_ru
-                    else "Футбол"
+                    else "Спорт"
                 ),
                 "league": match.league_name or "Лига",
                 "league_logo": (

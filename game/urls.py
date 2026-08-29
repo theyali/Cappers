@@ -17,6 +17,11 @@ urlpatterns = [
         demand_views.toggle_prediction_request,
         name="toggle_prediction_request",
     ),
+    path(
+        "<str:sport>/<str:scope>/<slug:selected_date>/",
+        date_views.match_list,
+        name="match_list_filtered",
+    ),
     path("<slug:slug>/predictions/", prediction_views.match_predictions, name="match_predictions"),
     path("<slug:slug>/", views.match_detail, name="match_detail"),
 ]

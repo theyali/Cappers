@@ -80,6 +80,14 @@
     stroke-linejoin: round;
 }
 
+.nav-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.nav-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
+}
+
 .nav-icon-image {
     overflow: hidden;
     border-radius: 99px;

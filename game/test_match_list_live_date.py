@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from cabinet.models import User
 from game.date_views import MATCHES_PAGE_SIZE
-from game.models import Match
+from game.models import Match, Sport
 from notifications.models import MatchWatch
 
 
@@ -18,6 +18,73 @@ TEST_STORAGES = {
 
 @override_settings(STORAGES=TEST_STORAGES)
 class MatchListLiveDateTests(TestCase):
+    def test_sport_filter_limits_matches_and_is_preserved_in_links(self):
+        football = Sport.objects.create(code="football", name="Football", name_ru="Футбол")
+        basketball = Sport.objects.create(code="basketball", name="Basketball", name_ru="Баскетбол")
+        tz = timezone.get_current_timezone()
+        selected_date = timezone.localdate()
+        starts_at = timezone.make_aware(datetime.combine(selected_date, time(15, 0)), tz)
+        football_match = Match.objects.create(
+            external_id=919001,
+            sport=football,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=starts_at,
+        )
+        basketball_match = Match.objects.create(
+            external_id=919002,
+            sport=basketball,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=starts_at + timedelta(minutes=30),
+        )
+
+        response = self.client.get(
+            reverse("game:match_list"),
+            {
+                "scope": Match.SyncScope.PREMATCH,
+                "date": selected_date.isoformat(),
+                "sport": "basketball",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response["Location"],
+            f"/games/basketball/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
+        )
+
+        response = self.client.get(response["Location"])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_sport"], "basketball")
+        self.assertEqual(
+            [match.id for match in response.context["matches"]],
+            [basketball_match.id],
+        )
+        self.assertNotIn(football_match.id, [match.id for match in response.context["matches"]])
+        self.assertIn(
+            f"/games/basketball/{Match.SyncScope.PREMATCH}/{(selected_date - timedelta(days=1)).isoformat()}/",
+            response.context["previous_date_url"],
+        )
+        prematch_tab = next(
+            tab
+            for tab in response.context["scope_tabs"]
+            if tab["scope"] == Match.SyncScope.PREMATCH
+        )
+        self.assertIn(
+            f"/games/basketball/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
+            prematch_tab["url"],
+        )
+        basketball_tab = next(
+            tab
+            for tab in response.context["sport_tabs"]
+            if tab["code"] == "basketball"
+        )
+        self.assertEqual(basketball_tab["count"], 1)
+        self.assertIn(
+            f"/games/basketball/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
+            basketball_tab["url"],
+        )
+
     def test_live_scope_ignores_selected_calendar_date(self):
         tz = timezone.get_current_timezone()
         selected_date = timezone.localdate()
@@ -37,8 +104,7 @@ class MatchListLiveDateTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("game:match_list"),
-            {"scope": Match.SyncScope.LIVE, "date": selected_date.isoformat()},
+            f"/games/all/{Match.SyncScope.LIVE}/{selected_date.isoformat()}/"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -103,18 +169,15 @@ class MatchListLiveDateTests(TestCase):
         )
 
         first_response = self.client.get(
-            reverse("game:match_list"),
-            {"scope": Match.SyncScope.PREMATCH, "date": selected_date.isoformat()},
+            f"/games/all/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/"
         )
         self.assertEqual(first_response.status_code, 200)
         self.assertEqual(len(first_response.context["matches"]), MATCHES_PAGE_SIZE)
         self.assertTrue(first_response.context["page_obj"].has_next())
 
         response = self.client.get(
-            reverse("game:match_list"),
+            f"/games/all/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
             {
-                "scope": Match.SyncScope.PREMATCH,
-                "date": selected_date.isoformat(),
                 "page": 2,
                 "sort": "starts_at",
             },
@@ -148,10 +211,8 @@ class MatchListLiveDateTests(TestCase):
         MatchWatch.objects.create(user=user, match=matches[-1], last_scope=Match.SyncScope.PREMATCH)
 
         response = self.client.get(
-            reverse("game:match_list"),
+            f"/games/all/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/",
             {
-                "scope": Match.SyncScope.PREMATCH,
-                "date": selected_date.isoformat(),
                 "lazy": 1,
                 "window": MATCHES_PAGE_SIZE,
             },

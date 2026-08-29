@@ -306,10 +306,20 @@
     justify-content: center;
 }
 
-.coupon-slip-sport-icon img {
+.coupon-slip-sport-icon img,
+.coupon-slip-sport-icon svg {
     width: 76%;
     height: 76%;
     object-fit: contain;
+    color: inherit;
+}
+
+.coupon-slip-sport-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.coupon-slip-sport-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
 }
 
 .coupon-slip-league > div {

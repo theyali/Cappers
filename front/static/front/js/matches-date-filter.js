@@ -5,6 +5,13 @@
     dateInput.addEventListener("change", () => {
         if (!dateInput.value) return;
 
+        if (dateInput.dataset.urlTemplate) {
+            window.location.assign(
+                dateInput.dataset.urlTemplate.replace("__DATE__", encodeURIComponent(dateInput.value)),
+            );
+            return;
+        }
+
         const query = new URLSearchParams(window.location.search);
         query.set("scope", dateInput.dataset.scope || "all");
         query.set("date", dateInput.value);

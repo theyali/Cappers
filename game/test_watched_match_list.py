@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -9,6 +9,13 @@ from game.models import Match
 from notifications.models import MatchWatch
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class WatchedMatchListTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="match-list-reader")
@@ -39,7 +46,7 @@ class WatchedMatchListTests(TestCase):
         self.assertTrue(matches[0].is_watched)
 
     def test_watched_scope_contains_only_active_watches(self):
-        response = self.client.get(reverse("game:match_list"), {"scope": "watched"})
+        response = self.client.get(f"/games/all/watched/{timezone.localdate().isoformat()}/")
         self.assertEqual(response.status_code, 200)
         matches = list(response.context["matches"])
         self.assertEqual([match.id for match in matches], [self.watched.id])

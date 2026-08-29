@@ -65,7 +65,7 @@ def _phase_text(match) -> str:
 
 @register.filter
 def live_status_label(match) -> str:
-    """Human-friendly football LIVE phase used on match cards and match detail."""
+    """Human-friendly LIVE phase used on match cards and match detail."""
     if not match:
         return "LIVE"
 
