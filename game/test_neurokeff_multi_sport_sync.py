@@ -19,6 +19,20 @@ class MultiSportProviderTests(TestCase):
         self.assertEqual([call["sport_id"] for call in provider.calls], [2, 4])
         self.assertEqual([payload["_sport_meta"]["code"] for payload in payloads], ["football", "hockey"])
 
+    def test_provider_fetches_only_requested_sport(self):
+        provider = RecordingProvider(
+            sports=[
+                {"code": "football", "id": 2, "name": "Football", "name_ru": "Футбол"},
+                {"code": "hockey", "id": 3, "name": "Hockey", "name_ru": "Хоккей"},
+                {"code": "basketball", "id": 4, "name": "Basketball", "name_ru": "Баскетбол"},
+            ]
+        )
+
+        payloads = provider.fetch_live_matches(sport_code="hockey")
+
+        self.assertEqual([call["sport_id"] for call in provider.calls], [3])
+        self.assertEqual([payload["_sport_meta"]["code"] for payload in payloads], ["hockey"])
+
 
 class MultiSportSyncTests(TestCase):
     def test_match_sync_uses_payload_sport_meta_and_generic_bookmaker_odds(self):

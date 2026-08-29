@@ -1,12 +1,14 @@
 .match-status.match-status-countdown {
-    color: var(--blue);
+    color: white;
+    background: var(--green);
 }
 
 .match-status.match-status-soon {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: var(--yellow);
+    color: black;
+    background: var(--yellow);
 }
 
 .match-status.match-status-soon::before {

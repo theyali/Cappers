@@ -26,26 +26,49 @@ class MatchSyncService:
         self.provider = provider or NeurokeffSportsProvider()
         self._sport_cache: dict[tuple[str, int | str], Sport] = {}
 
-    def sync_upcoming(self) -> dict:
+    def sync_upcoming(self, sport_code: str | None = None) -> dict:
+        payloads = (
+            self.provider.fetch_upcoming_matches(sport_code=sport_code)
+            if sport_code
+            else self.provider.fetch_upcoming_matches()
+        )
         result = self._sync_scope(
             Match.SyncScope.PREMATCH,
-            self.provider.fetch_upcoming_matches(),
+            payloads,
         )
         result["expired"] = self._expire_past_prematches()
+        if sport_code:
+            result["sport"] = sport_code
         return result
 
-    def sync_live(self) -> dict:
-        return self._sync_scope(
+    def sync_live(self, sport_code: str | None = None) -> dict:
+        payloads = (
+            self.provider.fetch_live_matches(sport_code=sport_code)
+            if sport_code
+            else self.provider.fetch_live_matches()
+        )
+        result = self._sync_scope(
             Match.SyncScope.LIVE,
-            self.provider.fetch_live_matches(),
+            payloads,
             derive_scope_from_payload=True,
         )
+        if sport_code:
+            result["sport"] = sport_code
+        return result
 
-    def sync_finished(self) -> dict:
-        return self._sync_scope(
-            Match.SyncScope.FINISHED,
-            self.provider.fetch_finished_matches(),
+    def sync_finished(self, sport_code: str | None = None) -> dict:
+        payloads = (
+            self.provider.fetch_finished_matches(sport_code=sport_code)
+            if sport_code
+            else self.provider.fetch_finished_matches()
         )
+        result = self._sync_scope(
+            Match.SyncScope.FINISHED,
+            payloads,
+        )
+        if sport_code:
+            result["sport"] = sport_code
+        return result
 
     def sync_match_predictions(self, match: Match, *, force: bool = False) -> dict:
         if not force and not self._match_predictions_are_stale(match):

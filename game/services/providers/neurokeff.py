@@ -1,5 +1,6 @@
 import json
 import logging
+import socket
 from datetime import date, timedelta
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -29,25 +30,25 @@ class NeurokeffSportsProvider(BaseSportsProvider):
         self.page_size = settings.NEUROKEFF_PAGE_SIZE
         self.timeout = settings.NEUROKEFF_API_TIMEOUT
 
-    def fetch_upcoming_matches(self) -> list[dict[str, Any]]:
+    def fetch_upcoming_matches(self, sport_code: str | None = None) -> list[dict[str, Any]]:
         matches: list[dict[str, Any]] = []
         today = timezone.localdate()
-        for sport in self.sports:
+        for sport in self._sports_for_code(sport_code):
             for match_date in self._dates(today, settings.NEUROKEFF_PREMATCH_DAYS_AHEAD):
                 matches.extend(self._fetch_matches("prematch", sport=sport, date_value=match_date))
         return matches
 
-    def fetch_live_matches(self) -> list[dict[str, Any]]:
+    def fetch_live_matches(self, sport_code: str | None = None) -> list[dict[str, Any]]:
         matches: list[dict[str, Any]] = []
-        for sport in self.sports:
+        for sport in self._sports_for_code(sport_code):
             matches.extend(self._fetch_matches("live", sport=sport))
         return matches
 
-    def fetch_finished_matches(self) -> list[dict[str, Any]]:
+    def fetch_finished_matches(self, sport_code: str | None = None) -> list[dict[str, Any]]:
         matches: list[dict[str, Any]] = []
         days = settings.NEUROKEFF_FINISHED_DAYS_BACK
         first_date = timezone.localdate() - timedelta(days=max(days - 1, 0))
-        for sport in self.sports:
+        for sport in self._sports_for_code(sport_code):
             for match_date in self._dates(first_date, days):
                 matches.extend(self._fetch_matches("finished", sport=sport, date_value=match_date))
         return matches
@@ -170,6 +171,8 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             ) from exc
         except URLError as exc:
             raise NeurokeffProviderError(f"Neurokeff request failed for {endpoint}") from exc
+        except (TimeoutError, socket.timeout) as exc:
+            raise NeurokeffProviderError(f"Neurokeff request timed out for {endpoint}") from exc
 
         try:
             return json.loads(body)
