@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from game.models import Match, MatchOdds, Provider
+from game.services.match_sync import MatchSyncService
 from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
@@ -28,31 +29,42 @@ class CouponMatchVerificationSummary:
 def verify_matches_for_coupon(matches: list[Match]) -> CouponMatchVerificationSummary:
     """Ensure every coupon match is still prematch.
 
-    Fresh DB rows are trusted. Stale rows are checked against Neurokeff. Provider
-    list responses are cached for a short period so several coupon saves do not
-    fan out into identical external API requests.
+    Fresh DB rows are trusted. Stale rows are checked against Neurokeff by exact
+    provider ids, so publishing a coupon does not scan prematch/live/finished
+    lists across every configured sport.
     """
 
     summary = CouponMatchVerificationSummary()
+    stale_matches: list[Match] = []
     for match in matches:
         if match.sync_scope != Match.SyncScope.PREMATCH:
             raise ValidationError(
                 f"Матч «{match.home_team_name} — {match.away_team_name}» уже не является предстоящим."
             )
 
-        if not _is_stale(match):
-            continue
+        if _is_stale(match):
+            stale_matches.append(match)
 
-        remote = _find_remote_match(match)
-        summary.remote_checked = True
-        summary.cache_used = summary.cache_used or remote[2]
-        scope, payload, _ = remote
+    if not stale_matches:
+        return summary
+
+    payloads, from_cache = _fetch_remote_matches_info(stale_matches)
+    summary.remote_checked = True
+    summary.cache_used = from_cache
+
+    by_external_id = _payloads_by_external_id(payloads)
+    for match in stale_matches:
+        payload = by_external_id.get(match.external_id)
 
         if payload is None:
             raise CouponMatchVerificationError(
                 f"Не удалось подтвердить актуальный статус матча «{match.home_team_name} — {match.away_team_name}». Попробуйте ещё раз."
             )
 
+        scope = MatchSyncService._scope_from_payload(
+            payload,
+            default=Match.SyncScope.PREMATCH,
+        )
         _refresh_local_match_state(match, scope, payload)
         if scope != Match.SyncScope.PREMATCH:
             raise ValidationError(
@@ -69,39 +81,22 @@ def _is_stale(match: Match) -> bool:
     return timezone.now() - match.last_seen_at > timedelta(seconds=stale_seconds)
 
 
-def _find_remote_match(match: Match) -> tuple[str, dict[str, Any] | None, bool]:
-    provider = NeurokeffSportsProvider()
-    match_date = _match_local_date(match)
-    cache_used = False
-
-    lookups = (
-        (Match.SyncScope.PREMATCH, match_date),
-        (Match.SyncScope.LIVE, None),
-        (Match.SyncScope.FINISHED, match_date),
+def _fetch_remote_matches_info(matches: list[Match]) -> tuple[list[dict[str, Any]], bool]:
+    external_ids = sorted(
+        {
+            int(match.external_id)
+            for match in matches
+            if match.external_id not in (None, "")
+        }
     )
+    if len(external_ids) != len({match.pk for match in matches}):
+        raise CouponMatchVerificationError(
+            "Не удалось подтвердить актуальный статус одного из матчей. Попробуйте ещё раз."
+        )
 
-    for scope, date_value in lookups:
-        payloads, from_cache = _provider_scope_payload(provider, scope, date_value)
-        cache_used = cache_used or from_cache
-        for payload in payloads:
-            try:
-                external_id = int(payload.get("id"))
-            except (TypeError, ValueError, AttributeError):
-                continue
-            if external_id == match.external_id:
-                return scope, payload, cache_used
-
-    return Match.SyncScope.PREMATCH, None, cache_used
-
-
-def _provider_scope_payload(
-    provider: NeurokeffSportsProvider,
-    scope: str,
-    date_value: date | None,
-) -> tuple[list[dict[str, Any]], bool]:
     cache_seconds = max(int(getattr(settings, "COUPON_MATCH_STATE_CACHE_SECONDS", 10)), 1)
-    date_key = date_value.isoformat() if date_value else "all"
-    cache_key = f"coupon:match-state:{Provider.NEUROKEFF}:{scope}:{date_key}"
+    ids_key = ",".join(map(str, external_ids))
+    cache_key = f"coupon:match-info:{Provider.NEUROKEFF}:{ids_key}"
 
     cached: Any = None
     try:
@@ -112,8 +107,9 @@ def _provider_scope_payload(
     if isinstance(cached, list):
         return cached, True
 
+    provider = NeurokeffSportsProvider()
     try:
-        payloads = provider.fetch_matches_for_scope(scope, date_value=date_value)
+        payloads = provider.fetch_matches_info(external_ids)
     except NeurokeffProviderError as exc:
         raise CouponMatchVerificationError("Сервис спортивных данных временно недоступен.") from exc
 
@@ -123,6 +119,19 @@ def _provider_scope_payload(
         pass
 
     return payloads, False
+
+
+def _payloads_by_external_id(payloads: list[dict[str, Any]]) -> dict[int, dict[str, Any]]:
+    by_external_id: dict[int, dict[str, Any]] = {}
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            continue
+        try:
+            external_id = int(payload.get("id"))
+        except (TypeError, ValueError):
+            continue
+        by_external_id[external_id] = payload
+    return by_external_id
 
 
 def _refresh_local_match_state(match: Match, scope: str, payload: dict[str, Any]) -> None:
@@ -160,9 +169,3 @@ def _refresh_match_odds(match: Match, payload: dict[str, Any]) -> None:
         match=match,
         defaults=match_odds_defaults(payload),
     )
-
-
-def _match_local_date(match: Match) -> date:
-    if match.starts_at:
-        return timezone.localtime(match.starts_at).date()
-    return timezone.localdate()
