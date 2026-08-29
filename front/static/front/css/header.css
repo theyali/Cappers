@@ -131,7 +131,7 @@
     z-index: 59;
     width: var(--profile-dropdown-width);
     height: 18px;
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 .site-nav-actions .nav-profile {
@@ -211,7 +211,6 @@
     z-index: 1;
 }
 
-.nav-profile-menu:hover .nav-profile-dropdown,
 .nav-profile-menu:focus-within .nav-profile-dropdown,
 .nav-profile-menu.is-open .nav-profile-dropdown {
     opacity: 1;
