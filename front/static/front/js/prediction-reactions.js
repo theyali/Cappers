@@ -8,23 +8,51 @@
             ?.slice(prefix.length) || "";
     };
 
+    const reactionKind = (button) => (
+        button.classList.contains("prediction-favorite") ? "prediction-favorite" : "prediction-like"
+    );
+
+    const syncReactionCopies = (button, result) => {
+        const card = button.closest("[data-prediction-card]");
+        const predictionId = card?.dataset.predictionCard;
+        if (!predictionId) return;
+
+        const kind = reactionKind(button);
+        document
+            .querySelectorAll(`[data-prediction-card="${CSS.escape(predictionId)}"] .${kind}`)
+            .forEach((copy) => {
+                copy.classList.toggle("is-active", Boolean(result.active));
+                copy.setAttribute("aria-pressed", result.active ? "true" : "false");
+                copy.title = kind === "prediction-favorite"
+                    ? (result.active ? "Убрать из избранного" : "Добавить в избранное")
+                    : (result.active ? "Убрать лайк" : "Поставить лайк");
+
+                const count = copy.querySelector("[data-like-count]");
+                if (count && Number.isFinite(Number(result.count))) {
+                    count.textContent = String(result.count);
+                }
+            });
+    };
+
     const updateFavoritePage = (button, active) => {
         if (active || !button.classList.contains("prediction-favorite")) return;
         const page = document.querySelector("[data-favorites-page]");
         const card = button.closest("[data-prediction-card]");
-        if (!page || !card) return;
+        const predictionId = card?.dataset.predictionCard;
+        if (!page || !predictionId) return;
 
-        card.remove();
+        page
+            .querySelectorAll(`[data-prediction-card="${CSS.escape(predictionId)}"]`)
+            .forEach((copy) => copy.remove());
+
         const totalNode = page.querySelector(".predictions-total strong");
         if (totalNode) {
             const nextTotal = Math.max(0, Number.parseInt(totalNode.textContent || "0", 10) - 1);
             totalNode.textContent = String(nextTotal);
         }
 
-        const grid = page.querySelector("[data-favorites-grid]");
-        if (grid && !grid.querySelector("[data-prediction-card]")) {
-            window.location.reload();
-        }
+        const remaining = page.querySelector("[data-prediction-card]");
+        if (!remaining) window.location.reload();
     };
 
     document.addEventListener("click", async (event) => {
@@ -65,20 +93,7 @@
                 throw new Error(result.error || "Не удалось выполнить действие.");
             }
 
-            button.classList.toggle("is-active", Boolean(result.active));
-            button.setAttribute("aria-pressed", result.active ? "true" : "false");
-
-            const count = button.querySelector("[data-like-count]");
-            if (count && Number.isFinite(Number(result.count))) {
-                count.textContent = String(result.count);
-            }
-
-            if (button.classList.contains("prediction-favorite")) {
-                button.title = result.active ? "Убрать из избранного" : "Добавить в избранное";
-            } else {
-                button.title = result.active ? "Убрать лайк" : "Поставить лайк";
-            }
-
+            syncReactionCopies(button, result);
             updateFavoritePage(button, Boolean(result.active));
         } catch (error) {
             console.error(error);
