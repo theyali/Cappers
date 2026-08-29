@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal, InvalidOperation
 from types import SimpleNamespace
 
@@ -15,14 +16,15 @@ from django.db.models import (
     Value,
     When,
 )
-from django.http import JsonResponse
+from django.http import HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from cabinet.models import AnalystFollow
-from game.models import Prediction, PredictionCoupon
+from game.models import Prediction, PredictionCoupon, Sport
 
 from .expert_ranking import ranked_expert_profiles
 from .models import PredictionFavorite, PredictionLike
@@ -196,10 +198,78 @@ def _parse_decimal(value: str | None) -> Decimal | None:
         return None
 
 
+def _prediction_sport_path(sport_code: str | None = None) -> str:
+    if sport_code:
+        return reverse("front:predictions_by_sport", kwargs={"sport_code": sport_code})
+    return reverse("front:predictions")
+
+
+def _clean_prediction_params(params, *, drop_page: bool = True):
+    cleaned = params.copy()
+    cleaned.pop("sport", None)
+    if drop_page:
+        cleaned.pop("page", None)
+    if cleaned.get("sort") == "new":
+        cleaned.pop("sort", None)
+    if cleaned.get("status") == "all":
+        cleaned.pop("status", None)
+    return cleaned
+
+
+def _url_with_query(path: str, params) -> str:
+    query = params.urlencode()
+    return f"{path}?{query}" if query else path
+
+
+def _sport_from_filter(value: str) -> Sport | None:
+    if not value:
+        return None
+    queryset = Sport.objects.all()
+    if value.isdigit():
+        return queryset.filter(pk=int(value)).first()
+    return queryset.filter(code__iexact=value).first()
+
+
+def _resolve_sport_route(request, sport_code: str | None):
+    query_has_sport = "sport" in request.GET
+    query_sport = request.GET.get("sport", "").strip()
+
+    if sport_code:
+        route_sport = get_object_or_404(Sport, code__iexact=sport_code)
+        if query_has_sport:
+            requested_sport = _sport_from_filter(query_sport)
+            params = _clean_prediction_params(request.GET, drop_page=False)
+            target_path = _prediction_sport_path(requested_sport.code if requested_sport else None)
+            return requested_sport, HttpResponsePermanentRedirect(
+                _url_with_query(target_path, params)
+            )
+        if route_sport.code != sport_code:
+            params = _clean_prediction_params(request.GET, drop_page=False)
+            return route_sport, HttpResponsePermanentRedirect(
+                _url_with_query(_prediction_sport_path(route_sport.code), params)
+            )
+        return route_sport, None
+
+    if query_has_sport:
+        requested_sport = _sport_from_filter(query_sport)
+        params = _clean_prediction_params(request.GET, drop_page=False)
+        target_path = _prediction_sport_path(requested_sport.code if requested_sport else None)
+        return requested_sport, HttpResponsePermanentRedirect(
+            _url_with_query(target_path, params)
+        )
+
+    return None, None
+
+
 def _filter_options(published_items, selected_sport: str):
     sports = list(
         published_items.exclude(match__sport_id__isnull=True)
-        .values("match__sport_id", "match__sport__name_ru", "match__sport__name")
+        .values(
+            "match__sport_id",
+            "match__sport__code",
+            "match__sport__name_ru",
+            "match__sport__name",
+        )
         .distinct()
         .order_by("match__sport__name_ru", "match__sport__name")
     )
@@ -232,6 +302,46 @@ def _filter_options(published_items, selected_sport: str):
     return sports, leagues, cappers
 
 
+def _sport_tabs(request, published_items, active_sport: Sport | None):
+    params = _clean_prediction_params(request.GET)
+    params.pop("league", None)
+
+    rows = list(
+        published_items.exclude(match__sport_id__isnull=True)
+        .values(
+            "match__sport_id",
+            "match__sport__code",
+            "match__sport__name_ru",
+            "match__sport__name",
+        )
+        .annotate(count=Count("coupon_id", distinct=True))
+        .order_by("match__sport__name_ru", "match__sport__name")
+    )
+    all_count = published_items.values("coupon_id").distinct().count()
+
+    tabs = [
+        {
+            "code": "",
+            "label": "Все",
+            "count": all_count,
+            "href": _url_with_query(_prediction_sport_path(), params),
+            "active": active_sport is None,
+        }
+    ]
+    for row in rows:
+        code = row["match__sport__code"]
+        tabs.append(
+            {
+                "code": code,
+                "label": row["match__sport__name_ru"] or row["match__sport__name"] or code,
+                "count": row["count"],
+                "href": _url_with_query(_prediction_sport_path(code), params),
+                "active": bool(active_sport and active_sport.pk == row["match__sport_id"]),
+            }
+        )
+    return tabs
+
+
 def _status_tabs(request, counts: dict, active_status: str):
     count_map = {
         "all": counts["total"],
@@ -243,15 +353,17 @@ def _status_tabs(request, counts: dict, active_status: str):
 
     tabs = []
     for key, label in PREDICTION_STATUS_FILTERS:
-        params = request.GET.copy()
-        params["status"] = key
-        params.pop("page", None)
+        params = _clean_prediction_params(request.GET)
+        if key == "all":
+            params.pop("status", None)
+        else:
+            params["status"] = key
         tabs.append(
             {
                 "key": key,
                 "label": label,
                 "count": count_map.get(key, 0),
-                "href": f"?{params.urlencode()}",
+                "href": _url_with_query(request.path, params),
                 "active": active_status == key,
             }
         )
@@ -259,17 +371,15 @@ def _status_tabs(request, counts: dict, active_status: str):
 
 
 def _top_experts_tab(request, *, active: bool, count: int) -> dict:
-    params = request.GET.copy()
-    params.pop("page", None)
+    params = _clean_prediction_params(request.GET)
     if active:
         params.pop("top", None)
     else:
         params["top"] = "1"
-    query = params.urlencode()
     return {
         "active": active,
         "count": count,
-        "href": f"?{query}" if query else "?",
+        "href": _url_with_query(request.path, params),
     }
 
 
@@ -285,8 +395,118 @@ def _apply_position_filters(queryset, *, selected_sport, selected_league, only_l
     return queryset.distinct()
 
 
+def _has_seo_facets(request) -> bool:
+    values = request.GET
+    if values.get("status") not in (None, "", "all"):
+        return True
+    if values.get("sort") not in (None, "", "new"):
+        return True
+    for key in ("league", "capper", "coef_min", "coef_max"):
+        if values.get(key):
+            return True
+    for key in ("live", "today", "top"):
+        if values.get(key) == "1":
+            return True
+    return False
+
+
+def _prediction_seo(request, active_sport: Sport | None, page_number: int):
+    if active_sport:
+        sport_name = active_sport.name_ru or active_sport.name or active_sport.code
+        topic = sport_name.lower()
+        page_heading = f"Прогнозы на {topic}"
+        title = f"Прогнозы на {topic} от капперов — статистика и коэффициенты | КапперХаб"
+        description = (
+            f"Прогнозы на {topic} от капперов КапперХаб: коэффициенты, статистика экспертов, "
+            "результаты прогнозов и удобные фильтры по лигам и статусам."
+        )
+        canonical_path = _prediction_sport_path(active_sport.code)
+    else:
+        page_heading = "Все прогнозы на спорт"
+        title = "Прогнозы на спорт от капперов — статистика и коэффициенты | КапперХаб"
+        description = (
+            "Прогнозы на спорт от капперов КапперХаб: футбол, хоккей, баскетбол, теннис, "
+            "коэффициенты, результаты и подтверждённая статистика экспертов."
+        )
+        canonical_path = _prediction_sport_path()
+
+    has_facets = _has_seo_facets(request)
+    canonical_url = request.build_absolute_uri(canonical_path)
+    if page_number > 1 and not has_facets:
+        canonical_url = f"{canonical_url}?page={page_number}"
+        title = f"{title} — страница {page_number}"
+
+    home_url = request.build_absolute_uri(reverse("front:index"))
+    predictions_url = request.build_absolute_uri(_prediction_sport_path())
+    breadcrumbs = [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "КапперХаб",
+            "item": home_url,
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Прогнозы на спорт",
+            "item": predictions_url,
+        },
+    ]
+    if active_sport:
+        breadcrumbs.append(
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": page_heading,
+                "item": request.build_absolute_uri(_prediction_sport_path(active_sport.code)),
+            }
+        )
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": page_heading,
+        "description": description,
+        "url": canonical_url,
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "КапперХаб",
+            "url": home_url,
+        },
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": breadcrumbs,
+        },
+    }
+
+    return {
+        "page_heading": page_heading,
+        "page_intro": (
+            f"Прогнозы капперов на {(active_sport.name_ru or active_sport.name).lower()}: "
+            "сравнивайте коэффициенты, статистику экспертов и результаты опубликованных прогнозов."
+            if active_sport
+            else "Ищите прогнозы по спорту, лиге, эксперту и коэффициенту. Можно отдельно смотреть live, матчи на сегодня и уже рассчитанные прогнозы."
+        ),
+        "seo_meta": {
+            "title": title,
+            "description": description,
+            "robots": "noindex,follow" if has_facets else "index,follow",
+            "canonical_url": canonical_url,
+            "og_title": title,
+            "og_description": description,
+            "og_type": "website",
+            "twitter_card": "summary",
+            "schema_json_ld": json.dumps(schema, ensure_ascii=False),
+        },
+    }
+
+
 @ensure_csrf_cookie
-def predictions(request):
+def predictions(request, sport_code: str | None = None):
+    active_sport, redirect_response = _resolve_sport_route(request, sport_code)
+    if redirect_response:
+        return redirect_response
+
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
@@ -297,7 +517,7 @@ def predictions(request):
     if active_sort not in valid_sorts:
         active_sort = "new"
 
-    selected_sport = request.GET.get("sport", "").strip()
+    selected_sport = str(active_sport.pk) if active_sport else ""
     selected_league = request.GET.get("league", "").strip()
     selected_capper = request.GET.get("capper", "").strip()
     coefficient_min = _parse_decimal(request.GET.get("coef_min"))
@@ -409,8 +629,7 @@ def predictions(request):
 
     sports, leagues, cappers = _filter_options(published_items, selected_sport)
 
-    params_without_page = request.GET.copy()
-    params_without_page.pop("page", None)
+    params_without_page = _clean_prediction_params(request.GET)
     pagination_query = params_without_page.urlencode()
 
     active_filter_count = sum(
@@ -426,12 +645,15 @@ def predictions(request):
         ]
     )
 
+    seo_context = _prediction_seo(request, active_sport, page_obj.number)
+
     return render(
         request,
         "front/predictions.html",
         {
             "page_obj": page_obj,
             "status_tabs": _status_tabs(request, counts, active_status),
+            "sport_tabs": _sport_tabs(request, published_items, active_sport),
             "top_experts_tab": _top_experts_tab(
                 request,
                 active=top_experts_only,
@@ -447,6 +669,7 @@ def predictions(request):
             "leagues": leagues,
             "cappers": cappers,
             "selected_sport": selected_sport,
+            "selected_sport_code": active_sport.code if active_sport else "",
             "selected_league": selected_league,
             "selected_capper": selected_capper,
             "coefficient_min": request.GET.get("coef_min", ""),
@@ -455,6 +678,9 @@ def predictions(request):
             "only_today": only_today,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
+            "filter_action_url": _prediction_sport_path(active_sport.code if active_sport else None),
+            "all_predictions_url": _prediction_sport_path(),
+            **seo_context,
         },
     )
 
