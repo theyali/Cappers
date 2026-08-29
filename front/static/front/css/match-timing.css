@@ -1,15 +1,15 @@
-.match-status-countdown {
+.match-status.match-status-countdown {
     color: var(--blue);
 }
 
-.match-status-soon {
+.match-status.match-status-soon {
     display: inline-flex;
     align-items: center;
     gap: 7px;
     color: var(--yellow);
 }
 
-.match-status-soon::before {
+.match-status.match-status-soon::before {
     width: 7px;
     height: 7px;
     flex: 0 0 auto;
@@ -37,7 +37,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .match-status-soon::before {
+    .match-status.match-status-soon::before {
         animation: none;
     }
 }
