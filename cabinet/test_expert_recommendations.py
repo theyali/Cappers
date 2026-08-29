@@ -15,34 +15,34 @@ class ExpertRecommendationsTests(TestCase):
             password="test",
             role=User.Role.ANALYST,
         )
-        self.current_profile = AnalystProfile.objects.create(
-            user=self.current_user,
-            display_name="Current Capper",
-            is_public=True,
-            is_recommended=True,
-        )
+        self.current_profile = AnalystProfile.objects.get(user=self.current_user)
+        self.current_profile.display_name = "Current Capper"
+        self.current_profile.is_public = True
+        self.current_profile.is_recommended = True
+        self.current_profile.save()
+
         self.recommended_user = User.objects.create_user(
             username="recommended-capper",
             password="test",
             role=User.Role.ANALYST,
         )
-        self.recommended_profile = AnalystProfile.objects.create(
-            user=self.recommended_user,
-            display_name="Recommended Capper",
-            is_public=True,
-            is_recommended=True,
-        )
+        self.recommended_profile = AnalystProfile.objects.get(user=self.recommended_user)
+        self.recommended_profile.display_name = "Recommended Capper"
+        self.recommended_profile.is_public = True
+        self.recommended_profile.is_recommended = True
+        self.recommended_profile.save()
+
         self.hidden_user = User.objects.create_user(
             username="regular-capper",
             password="test",
             role=User.Role.ANALYST,
         )
-        AnalystProfile.objects.create(
-            user=self.hidden_user,
-            display_name="Regular Capper",
-            is_public=True,
-            is_recommended=False,
-        )
+        hidden_profile = AnalystProfile.objects.get(user=self.hidden_user)
+        hidden_profile.display_name = "Regular Capper"
+        hidden_profile.is_public = True
+        hidden_profile.is_recommended = False
+        hidden_profile.save()
+
         CapperMonthlyStat.objects.create(
             analyst=self.recommended_user,
             month=date(2026, 8, 1),
