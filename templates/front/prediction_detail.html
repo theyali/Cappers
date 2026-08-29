@@ -6,6 +6,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/coupon-author.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/coupon-slip-sport.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -58,7 +59,7 @@
     </header>
 
     <section class="coupon-detail-panel" aria-label="Состав купона">
-        {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient %}
+        {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True %}
     </section>
 </section>
 {% endblock %}
