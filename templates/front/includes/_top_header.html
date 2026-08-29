@@ -1,0 +1,22 @@
+<header class="site-topbar" aria-label="Дополнительная навигация">
+    <nav class="site-topbar-nav">
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'bookmakers' %} is-active{% endif %}" href="{% url 'front:bookmakers' %}">
+            <span class="site-topbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"></path><path d="M7 7V5h10v2M8 12h3m2 0h3M8 16h8"></path></svg>
+            </span>
+            <span>Букмекеры</span>
+        </a>
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'sports_news' %} is-active{% endif %}" href="{% url 'front:sports_news' %}">
+            <span class="site-topbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
+            </span>
+            <span>Новости спорта</span>
+        </a>
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %} is-active{% endif %}" href="{% url 'front:articles' %}">
+            <span class="site-topbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg>
+            </span>
+            <span>Статьи</span>
+        </a>
+    </nav>
+</header>
