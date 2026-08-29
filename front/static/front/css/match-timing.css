@@ -1,0 +1,43 @@
+.match-status-countdown {
+    color: var(--blue);
+}
+
+.match-status-soon {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--yellow);
+}
+
+.match-status-soon::before {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--yellow);
+    content: "";
+    animation: match-soon-pulse 1.15s ease-in-out infinite;
+}
+
+[data-match-bets].is-timing-locked .match-bet-option,
+[data-match-bets].is-timing-locked .odds-button {
+    cursor: not-allowed;
+    opacity: .48;
+}
+
+@keyframes match-soon-pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: .42;
+        transform: scale(.7);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .match-status-soon::before {
+        animation: none;
+    }
+}
