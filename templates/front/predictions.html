@@ -113,7 +113,7 @@
             <div class="predictions-empty">
                 <h2>Ничего не нашли</h2>
                 <p>Попробуйте убрать часть фильтров или расширить диапазон коэффициентов.</p>
-                <a class="prediction-filter-reset is-empty" href="{% url 'front:predictions' %}">Сбросить фильтры</a>
+                <a class="prediction-filter-reset is-empty" href="{{ filter_action_url }}">Сбросить фильтры</a>
             </div>
             {% endif %}
         </div>
@@ -122,7 +122,11 @@
             <button class="prediction-filter-sidebar-toggle" type="button" data-prediction-filter-toggle aria-expanded="true" aria-controls="prediction-filter-sidebar-body">
                 <span class="prediction-filter-sidebar-title">
                     <strong>Фильтры</strong>
-                    {% if active_filter_count %}<b>{{ active_filter_count }}</b>{% endif %}
+                    {% if selected_sport %}
+                        {% if active_filter_count > 1 %}<b>{{ active_filter_count|add:"-1" }}</b>{% endif %}
+                    {% elif active_filter_count %}
+                        <b>{{ active_filter_count }}</b>
+                    {% endif %}
                 </span>
                 <i class="prediction-filter-sidebar-chevron" aria-hidden="true"></i>
             </button>
@@ -133,36 +137,26 @@
                     method="get"
                     action="{{ filter_action_url }}"
                     data-prediction-filters
-                    data-all-sports-url="{{ all_predictions_url }}"
                 >
                     <input type="hidden" name="sort" value="{{ active_sort }}">
                     <input type="hidden" name="status" value="{{ active_status }}">
                     {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
 
-                    {% if active_filter_count %}
+                    {% if selected_sport %}
+                        {% if active_filter_count > 1 %}
+                        <div class="prediction-filter-sidebar-actions">
+                            <span>{{ active_filter_count|add:"-1" }} выбрано</span>
+                            <a class="prediction-filter-reset" href="{{ filter_action_url }}">Сбросить</a>
+                        </div>
+                        {% endif %}
+                    {% elif active_filter_count %}
                     <div class="prediction-filter-sidebar-actions">
                         <span>{{ active_filter_count }} выбрано</span>
-                        <a class="prediction-filter-reset" href="{% url 'front:predictions' %}">Сбросить</a>
+                        <a class="prediction-filter-reset" href="{{ filter_action_url }}">Сбросить</a>
                     </div>
                     {% endif %}
 
                     <div class="prediction-filter-grid">
-                        <label class="prediction-filter-field">
-                            <span>Спорт</span>
-                            <select name="sport">
-                                <option value="" data-url="{{ all_predictions_url }}">Все виды спорта</option>
-                                {% for sport in sports %}
-                                <option
-                                    value="{{ sport.match__sport_id }}"
-                                    data-url="{% url 'front:predictions_by_sport' sport_code=sport.match__sport__code %}"
-                                    {% if selected_sport == sport.match__sport_id|stringformat:"s" %}selected{% endif %}
-                                >
-                                    {{ sport.match__sport__name_ru|default:sport.match__sport__name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </label>
-
                         <label class="prediction-filter-field">
                             <span>Лига</span>
                             <select name="league">
