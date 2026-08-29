@@ -95,6 +95,7 @@ class AnalystProfile(models.Model):
     tiktok = models.CharField("TikTok", max_length=160, blank=True)
     facebook = models.CharField("Facebook", max_length=200, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
+    is_vip = models.BooleanField("VIP прогнозист", default=False, db_index=True)
     is_public = models.BooleanField("Публичный профиль", default=True, db_index=True)
     onboarding_completed_at = models.DateTimeField("Onboarding завершён", null=True, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
