@@ -1,0 +1,3 @@
+{% for expert in experts %}
+{% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=True %}
+{% endfor %}
