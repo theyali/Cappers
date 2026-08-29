@@ -11,6 +11,7 @@ from django.utils import timezone
 from cabinet.models import MatchPredictionRequest, User
 from game.models import Match, Prediction, PredictionCoupon
 from game.tasks import refresh_match_provider_predictions
+from notifications.models import MatchWatch
 
 from . import views as legacy_views
 
@@ -86,6 +87,14 @@ def _match_demand_context(request, match: Match) -> dict | None:
     }
 
 
+def _match_watch_state(request, match: Match) -> bool:
+    if not request.user.is_authenticated:
+        return False
+    if match.sync_scope == Match.SyncScope.FINISHED:
+        return False
+    return MatchWatch.objects.filter(user=request.user, match=match).exists()
+
+
 def match_detail(request, slug: str):
     match = get_object_or_404(
         Match.objects.select_related(
@@ -106,6 +115,10 @@ def match_detail(request, slug: str):
     )
 
     match.coupon_odds = legacy_views._match_winner_odds(match)
+    # Resolve the watch state before rendering any HTML. The template tag reads
+    # this precomputed value, so the first response already contains is-watching
+    # when the user follows this match; JavaScript is only used after a click.
+    match._watched_for_request = _match_watch_state(request, match)
 
     # Render only DB-backed data. A slow HTTP call to Neurokeff used to happen
     # here synchronously and was the reason every uncached match page could wait
@@ -126,6 +139,7 @@ def match_detail(request, slug: str):
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
         "match_predictions_total": _published_match_predictions_count(match),
         "match_demand": _match_demand_context(request, match),
+        "is_watched": match._watched_for_request,
     }
 
     page_html = render_to_string("game/match_detail.html", context, request=request)
