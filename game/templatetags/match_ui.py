@@ -101,6 +101,30 @@ def live_status_label(match) -> str:
 
 
 @register.simple_tag
+def match_card_status(match) -> dict:
+    """Initial card status, including the local 10-minute pre-kickoff window."""
+    if not match:
+        return {"state": "prematch", "label": "Скоро"}
+
+    from game.models import Match
+
+    if match.sync_scope == Match.SyncScope.LIVE:
+        return {"state": "live", "label": live_status_label(match)}
+    if match.sync_scope == Match.SyncScope.FINISHED:
+        return {"state": "finished", "label": match.get_sync_scope_display()}
+
+    if match.sync_scope == Match.SyncScope.PREMATCH:
+        from game.services.match_timing import match_timing_payload
+
+        timing = match_timing_payload(match)
+        if timing.get("state") == "soon":
+            return {"state": "soon", "label": "Скоро начнется"}
+        return {"state": "prematch", "label": "Скоро"}
+
+    return {"state": match.sync_scope, "label": match.get_sync_scope_display()}
+
+
+@register.simple_tag
 def match_watched(user, match) -> bool:
     if not user or not getattr(user, "is_authenticated", False) or not match:
         return False
