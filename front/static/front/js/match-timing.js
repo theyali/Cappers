@@ -83,6 +83,13 @@
         if (node.textContent !== text) node.textContent = text;
     };
 
+    const setCardPrematchStatus = (node) => {
+        if (!node) return;
+        node.classList.remove("match-status-countdown", "match-status-soon");
+        node.classList.add("match-status-prematch");
+        if (node.textContent !== "Скоро начнется") node.textContent = "Скоро начнется";
+    };
+
     const updateCouponMeta = (matchId, startDate) => {
         const localTime = formatShortDate(startDate);
         document.querySelectorAll(`[data-coupon-match-id="${matchId}"] .coupon-item-title span`).forEach((meta) => {
@@ -146,9 +153,7 @@
         if (!startDate) return;
 
         const seconds = Math.ceil((startDate.getTime() - Date.now()) / 1000);
-        const soonWindow = Math.max(0, Number(timing.soon_window_seconds) || 600);
         const isPrematch = timing.scope === "prematch";
-        const isSoon = isPrematch && seconds <= soonWindow;
         const hasStartedLocally = isPrematch && seconds <= 0;
 
         document.querySelectorAll(`[data-match-card][data-match-id="${matchId}"]`).forEach((card) => {
@@ -156,14 +161,7 @@
             if (dateNode) dateNode.textContent = formatShortDate(startDate);
 
             if (isPrematch) {
-                const statusNode = card.querySelector(".match-card-head .match-status");
-                if (hasStartedLocally) {
-                    setStatus(statusNode, "soon", "Скоро начнется");
-                } else if (isSoon) {
-                    setStatus(statusNode, "soon", `Скоро начнется · ${formatCountdown(seconds)}`);
-                } else {
-                    setStatus(statusNode, "countdown", `До начала · ${formatCountdown(seconds)}`);
-                }
+                setCardPrematchStatus(card.querySelector(".match-card-head .match-status"));
             }
         });
 
@@ -178,8 +176,6 @@
             if (isPrematch) {
                 if (hasStartedLocally) {
                     setStatus(statusNode, "soon", "Скоро начнется");
-                } else if (isSoon) {
-                    setStatus(statusNode, "soon", `Скоро начнется · ${formatCountdown(seconds)}`);
                 } else {
                     setStatus(statusNode, "countdown", `До начала · ${formatCountdown(seconds)}`);
                 }
