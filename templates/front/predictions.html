@@ -21,10 +21,6 @@
             <p class="predictions-eyebrow">Лента экспертов</p>
             <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
             <p data-predictions-intro>{{ page_intro }}</p>
-            <div class="capper-growth-inline">
-                <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-                <p>Публикуй свои прогнозы и собирай подтверждённую статистику рядом с другими экспертами.</p>
-            </div>
         </div>
         <div class="predictions-total">
             <strong data-predictions-total-value>{{ filtered_predictions }}</strong>
