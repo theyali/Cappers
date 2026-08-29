@@ -149,11 +149,13 @@
     width: 40px;
     height: 40px;
     flex-basis: 40px;
+    transition: none;
 }
 
 .match-detail-watch-button svg {
     width: 31px;
     height: 31px;
+    transition: none;
 }
 
 .match-detail-league-meta {
