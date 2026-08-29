@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="{% static 'front/css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/adv-banners.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
+    <link rel="stylesheet" href="{% static 'front/css/top-header.css' %}">
     {% if request.user.is_authenticated %}
     <link rel="stylesheet" href="{% static 'notifications/css/header.css' %}" data-notification-header-styles>
     {% endif %}
@@ -51,6 +52,8 @@
     <link rel="stylesheet" href="{% static 'front/css/mobile-offcanvas.css' %}">
 </head>
 <body>
+    {% include "front/includes/_top_header.html" %}
+
     <header class="site-header">
         <nav class="site-nav" aria-label="Главная навигация">
             <a class="brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
@@ -77,10 +80,7 @@
                     <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"/></svg></span>
                     <span>Избранные прогнозы</span>
                 </a>
-                <a class="{% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7M3 19h18"/></svg></span>
-                    <span>Статистика капперов</span>
-                </a>
+                {% include "front/includes/_cappers_nav_menu.html" %}
             </div>
 
             <div class="site-nav-actions">
