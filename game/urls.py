@@ -1,12 +1,13 @@
 from django.urls import path
 
-from . import date_views, demand_views, prediction_constraints, prediction_views, views
+from . import date_views, demand_views, prediction_constraints, prediction_views, timing_views, views
 
 app_name = "game"
 
 urlpatterns = [
     path("", date_views.match_list, name="match_list"),
     path("coupon/create/", prediction_constraints.create_coupon, name="create_coupon"),
+    path("timing/", timing_views.match_timing, name="match_timing"),
     path(
         "demand/<int:match_id>/",
         demand_views.prediction_request_state,
