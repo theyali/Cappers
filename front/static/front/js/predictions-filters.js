@@ -22,10 +22,48 @@
         return $("<div>").append(nodes);
     };
 
-    const syncHeroTotal = ($response) => {
+    const syncHero = ($response) => {
         const value = $response.find("[data-predictions-total-value]").first().text();
         if (value !== "") {
             $("[data-predictions-total-value]").first().text(value);
+        }
+
+        const heading = $response.find("[data-predictions-heading]").first().text();
+        if (heading !== "") {
+            $("[data-predictions-heading]").first().text(heading);
+        }
+
+        const intro = $response.find("[data-predictions-intro]").first().text();
+        if (intro !== "") {
+            $("[data-predictions-intro]").first().text(intro);
+        }
+    };
+
+    const syncDocumentHead = (html) => {
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        if (parsed.title) document.title = parsed.title;
+
+        ["description", "robots"].forEach((name) => {
+            const next = parsed.querySelector(`meta[name='${name}']`);
+            let current = document.querySelector(`meta[name='${name}']`);
+            if (!next) return;
+            if (!current) {
+                current = document.createElement("meta");
+                current.setAttribute("name", name);
+                document.head.appendChild(current);
+            }
+            current.setAttribute("content", next.getAttribute("content") || "");
+        });
+
+        const nextCanonical = parsed.querySelector("link[rel='canonical']");
+        let currentCanonical = document.querySelector("link[rel='canonical']");
+        if (nextCanonical) {
+            if (!currentCanonical) {
+                currentCanonical = document.createElement("link");
+                currentCanonical.setAttribute("rel", "canonical");
+                document.head.appendChild(currentCanonical);
+            }
+            currentCanonical.setAttribute("href", nextCanonical.getAttribute("href") || "");
         }
     };
 
@@ -82,7 +120,8 @@
 
                 $nextLayout.find("[data-predictions-content]").first().addClass("is-results-entering");
                 $layout.replaceWith($nextLayout);
-                syncHeroTotal($response);
+                syncHero($response);
+                syncDocumentHead(html);
                 setSidebarCollapsed(wasCollapsed);
                 animateIncomingResults();
 
@@ -104,14 +143,28 @@
     const formUrl = ($form) => {
         const params = new URLSearchParams($form.serialize());
         params.delete("page");
+
+        let action = $form.attr("action") || window.location.pathname;
+        const $sport = $form.find("[name='sport']").first();
+        if ($sport.length) {
+            const selectedUrl = $sport.find("option:selected").data("url");
+            action = selectedUrl || $form.data("all-sports-url") || action;
+            params.delete("sport");
+        }
+
+        if (params.get("sort") === "new") params.delete("sort");
+        if (params.get("status") === "all") params.delete("status");
+
         const query = params.toString();
-        const action = $form.attr("action") || window.location.pathname;
         return query ? `${action}?${query}` : action;
     };
 
     const sortUrl = (value) => {
         const url = new URL(window.location.href);
-        url.searchParams.set("sort", value || "new");
+        if (!value || value === "new") url.searchParams.delete("sort");
+        else url.searchParams.set("sort", value);
+        if (url.searchParams.get("status") === "all") url.searchParams.delete("status");
+        url.searchParams.delete("sport");
         url.searchParams.delete("page");
         return url.href;
     };
@@ -160,7 +213,7 @@
 
     $(document).on(
         "click",
-        ".predictions-tabs a, .predictions-pagination a, .prediction-filter-reset, [data-prediction-ajax-link]",
+        ".matches-sport-tabs a, .predictions-tabs a, .predictions-pagination a, .prediction-filter-reset, [data-prediction-ajax-link]",
         function (event) {
             const href = this.href;
             if (!href) return;
