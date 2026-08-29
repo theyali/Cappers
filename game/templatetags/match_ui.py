@@ -126,8 +126,16 @@ def match_card_status(match) -> dict:
 
 @register.simple_tag
 def match_watched(user, match) -> bool:
-    if not user or not getattr(user, "is_authenticated", False) or not match:
+    if not match:
         return False
+
+    precomputed = getattr(match, "_watched_for_request", None)
+    if precomputed is not None:
+        return bool(precomputed)
+
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+
     from notifications.models import MatchWatch
 
     return MatchWatch.objects.filter(user=user, match=match).exists()
