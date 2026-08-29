@@ -62,7 +62,6 @@
     font-size: 11px;
 }
 
-.cappers-table-switcher,
 .cappers-ranking-groups {
     display: flex;
     gap: 6px;
@@ -70,18 +69,10 @@
     scrollbar-width: none;
 }
 
-.cappers-table-switcher::-webkit-scrollbar,
+
 .cappers-ranking-groups::-webkit-scrollbar {
     display: none;
 }
-
-.cappers-table-switcher {
-    padding: 8px;
-    border-radius: 14px;
-    background: var(--panel);
-}
-
-.cappers-table-switcher a,
 .cappers-ranking-group {
     min-height: 38px;
     display: inline-flex;
@@ -93,16 +84,6 @@
     white-space: nowrap;
 }
 
-.cappers-table-switcher a {
-    color: var(--soft);
-    background: #2a2a2d;
-    font-size: 13px;
-}
-
-.cappers-table-switcher a.is-active {
-    color: var(--ink);
-    background: var(--yellow);
-}
 
 .cappers-ranking-groups {
     padding: 0;
@@ -411,8 +392,8 @@
 .cappers-ranking-table tbody tr:nth-child(1) .cappers-ranking-position,
 .cappers-ranking-table tbody tr:nth-child(2) .cappers-ranking-position,
 .cappers-ranking-table tbody tr:nth-child(3) .cappers-ranking-position {
-    color: var(--ink);
-    background: var(--yellow);
+    color: white;
+    background: var(--blue);
 }
 
 .cappers-ranking-expert {
@@ -480,7 +461,7 @@
 
 .cappers-ranking-profit.is-positive,
 .cappers-ranking-roi.is-positive {
-    color: var(--yellow);
+    color: var(--green);
 }
 
 .cappers-ranking-profit.is-negative,

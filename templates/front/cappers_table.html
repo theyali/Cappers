@@ -21,11 +21,6 @@
         </div>
     </header>
 
-    <div class="cappers-table-switcher" aria-label="Разделы капперов">
-        <a href="{% url 'front:cappers_stats' %}">Статистика капперов</a>
-        <a class="is-active" href="{% url 'front:cappers_table' %}">Таблица капперов</a>
-    </div>
-
     <nav class="cappers-ranking-groups" aria-label="Тип рейтинга">
         {% for tab in group_tabs %}
         <a class="cappers-ranking-group{% if selected_group == tab.key %} is-active{% endif %}" href="{{ tab.url }}">
