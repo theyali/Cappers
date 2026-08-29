@@ -1,38 +1,14 @@
 (() => {
-    const detailMain = document.querySelector(".match-detail-page .match-detail-main");
-    if (!detailMain || document.querySelector("[data-match-predictions-feed]")) return;
+    const feed = document.querySelector("[data-match-predictions-feed]");
+    if (!feed || feed.dataset.matchPredictionsReady === "true") return;
+    feed.dataset.matchPredictionsReady = "true";
 
-    const endpoint = `${window.location.pathname.replace(/\/$/, "")}/predictions/`;
-    const feed = document.createElement("section");
-    feed.className = "match-predictions-feed";
-    feed.dataset.matchPredictionsFeed = "";
-    feed.dataset.url = endpoint;
-    feed.setAttribute("aria-label", "Прогнозы на матч");
-    feed.innerHTML = `
-        <div class="match-predictions-feed-head">
-            <div>
-                <p class="match-predictions-kicker">Мнения капперов</p>
-                <h2>Все прогнозы на игру <span data-match-predictions-total></span></h2>
-            </div>
-        </div>
-        <div class="match-predictions-list" data-match-predictions-list></div>
-        <div class="match-predictions-loader" data-match-predictions-loader hidden>
-            <span class="match-predictions-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span>Загружаем прогнозы...</span>
-        </div>
-        <div class="match-predictions-sentinel" data-match-predictions-sentinel aria-hidden="true"></div>`;
-
-    const providerPanel = detailMain.querySelector(":scope > .match-provider-predictions");
-    if (providerPanel) {
-        providerPanel.insertAdjacentElement("afterend", feed);
-    } else {
-        detailMain.append(feed);
-    }
-
+    const endpoint = feed.dataset.url || `${window.location.pathname.replace(/\/$/, "")}/predictions/`;
     const list = feed.querySelector("[data-match-predictions-list]");
     const sentinel = feed.querySelector("[data-match-predictions-sentinel]");
     const loader = feed.querySelector("[data-match-predictions-loader]");
     const totalNode = feed.querySelector("[data-match-predictions-total]");
+    if (!list || !sentinel || !loader) return;
 
     let nextPage = 1;
     let isLoading = false;
@@ -247,7 +223,7 @@
             }
 
             const total = Number(result.total || 0);
-            totalNode.textContent = total ? `(${total})` : "";
+            if (totalNode) totalNode.textContent = `(${total})`;
             renderPredictionShares(result.distribution, total);
             appendPredictionHtml(result.html || "");
 
