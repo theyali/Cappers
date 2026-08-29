@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
 from cabinet.models import User
-from game.models import Match
+from game.models import Match, Prediction, PredictionCoupon
 from game.tasks import refresh_match_provider_predictions
 
 from . import views as legacy_views
@@ -55,6 +55,18 @@ def _queue_provider_predictions_refresh(match: Match) -> None:
             pass
 
 
+def _published_match_predictions_count(match: Match) -> int:
+    return (
+        Prediction.objects.filter(
+            match=match,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .values("coupon_id")
+        .distinct()
+        .count()
+    )
+
+
 def match_detail(request, slug: str):
     match = get_object_or_404(
         Match.objects.select_related(
@@ -93,5 +105,6 @@ def match_detail(request, slug: str):
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": legacy_views._match_odds_tabs(match),
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
+        "match_predictions_total": _published_match_predictions_count(match),
     }
     return render(request, "game/match_detail.html", context)
