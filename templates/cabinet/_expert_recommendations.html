@@ -1,0 +1,65 @@
+{% if recommended_experts %}
+<section class="expert-recommendations" aria-labelledby="expert-recommendations-title">
+    <div class="expert-recommendations-head">
+        <div>
+            <p class="expert-public-kicker">Капперы КапперХаб</p>
+            <h2 id="expert-recommendations-title">Рекомендуем подписаться</h2>
+        </div>
+        <span>{{ recommended_experts|length }} экспертов</span>
+    </div>
+
+    <div class="expert-recommendations-track">
+        {% for recommendation in recommended_experts %}
+        <article class="expert-recommendation-card" data-follow-card>
+            <div class="expert-recommendation-cover" aria-hidden="true"></div>
+
+            <a
+                class="expert-recommendation-avatar{% if recommendation.avatar_url %} has-image{% endif %}"
+                href="{{ recommendation.profile_url }}"
+                aria-label="Открыть профиль {{ recommendation.name }}"
+                {% if recommendation.avatar_url %}data-skeleton-image{% endif %}
+            >
+                {% if recommendation.avatar_url %}
+                    <img src="{{ recommendation.avatar_url }}" width="82" height="82" loading="lazy" alt="{{ recommendation.name }}">
+                {% else %}
+                    <strong>{{ recommendation.initials }}</strong>
+                {% endif %}
+            </a>
+
+            <div class="expert-recommendation-body">
+                <a class="expert-recommendation-name" href="{{ recommendation.profile_url }}">
+                    <strong>{{ recommendation.name }}</strong>
+                    <span class="expert-recommendation-badge" title="Рекомендуем КапперХаб" aria-label="Рекомендуем КапперХаб">
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                        </svg>
+                    </span>
+                </a>
+
+                <div class="expert-recommendation-results" aria-label="Результаты прогнозов">
+                    <strong class="is-win">+{{ recommendation.wins_count }}</strong>
+                    <strong class="is-refund">={{ recommendation.refunds_count }}</strong>
+                    <strong class="is-loss">-{{ recommendation.losses_count }}</strong>
+                </div>
+                <p class="expert-recommendation-total">{{ recommendation.predictions_count }} прогнозов</p>
+
+                {% if request.user.is_authenticated %}
+                    <button
+                        class="expert-recommendation-follow{% if recommendation.is_following %} is-active{% endif %}"
+                        type="button"
+                        data-expert-follow
+                        data-url="{% url 'cabinet:toggle_follow' user_id=recommendation.id %}"
+                        aria-pressed="{% if recommendation.is_following %}true{% else %}false{% endif %}"
+                    >
+                        <span data-follow-label>{% if recommendation.is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                    </button>
+                {% else %}
+                    <a class="expert-recommendation-follow" href="{% url 'cabinet:login' %}?next={{ recommendation.profile_url|urlencode }}">Подписаться</a>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
