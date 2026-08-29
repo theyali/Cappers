@@ -14,9 +14,14 @@ def cappers_stats(request):
     )
 
 
-def cappers_table(request):
+def cappers_table(request, group=None, period=None, sport_code=None):
     return render(
         request,
         "front/cappers_table.html",
-        build_capper_table_context(request),
+        build_capper_table_context(
+            request,
+            group=group,
+            period=period,
+            sport_code=sport_code,
+        ),
     )
