@@ -7,7 +7,7 @@ from django.utils import timezone
 from cabinet.models import AnalystProfile, User
 from game.models import PredictionCoupon
 
-from .prediction_metrics import annotate_author_roi, roi_period_q
+from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period_q
 
 
 RANKING_HISTORY_PRIOR = 10
@@ -38,11 +38,15 @@ def expert_ranking_score(profile) -> Decimal:
     )
 
 
-def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
+def ranked_expert_profiles(
+    *,
+    limit: int | None = None,
+    period_days: int | None = ROI_PERIOD_DAYS,
+) -> list[AnalystProfile]:
     """Return public analysts in the canonical Cappers ranking order.
 
-    Any page that displays ranked experts must use this function instead of
-    defining its own ``order_by`` rules.
+    ``period_days`` controls both ROI calculation and the amount of settled
+    history used to stabilise the ranking. ``None`` means all available time.
     """
     recent_cutoff = timezone.now() - timedelta(days=30)
     published_filter = Q(
@@ -51,6 +55,12 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
     settled_filter = published_filter & Q(
         user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES
     )
+    roi_settled_filter = settled_filter
+    if period_days is not None:
+        roi_settled_filter &= roi_period_q(
+            prefix="user__prediction_coupons__",
+            days=period_days,
+        )
 
     queryset = (
         AnalystProfile.objects.filter(
@@ -72,7 +82,7 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
             ),
             roi_settled_count=Count(
                 "user__prediction_coupons",
-                filter=settled_filter & roi_period_q(prefix="user__prediction_coupons__"),
+                filter=roi_settled_filter,
                 distinct=True,
             ),
             wins_count=Count(
@@ -112,6 +122,7 @@ def ranked_expert_profiles(*, limit: int | None = None) -> list[AnalystProfile]:
         queryset,
         author_outer_ref="user_id",
         annotation_name="author_roi",
+        period_days=period_days,
     )
     profiles = list(
         annotate_author_roi(
