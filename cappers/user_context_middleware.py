@@ -17,10 +17,10 @@ _TIMEZONE_BOOTSTRAP = r"""<script>(function(){try{var z=Intl.DateTimeFormat().re
 
 
 def _safe_timezone_name(raw_value: str | None) -> str:
-    candidate = unquote(str(raw_value or "").strip()) or settings.TIME_ZONE
+    candidate = unquote(str(raw_value or "").strip())[:128] or settings.TIME_ZONE
     try:
         ZoneInfo(candidate)
-    except (ZoneInfoNotFoundError, ValueError):
+    except (ZoneInfoNotFoundError, ValueError, OSError):
         return settings.TIME_ZONE
     return candidate
 
