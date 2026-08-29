@@ -42,7 +42,7 @@
                     <strong class="is-refund">={{ recommendation.refunds_count }}</strong>
                     <strong class="is-loss">-{{ recommendation.losses_count }}</strong>
                 </div>
-                <p class="expert-recommendation-total">{{ recommendation.predictions_count }} прогнозов</p>
+                <p class="expert-recommendation-total">{{ recommendation.predictions_count }} {{ recommendation.predictions_label }}</p>
 
                 {% if request.user.is_authenticated %}
                     <button
