@@ -6,7 +6,7 @@ from front.capper_stats_service import CapperStatsService
 from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
 
-from .models import AnalystProfile, User
+from .models import AnalystProfile, CapperMonthlyStat, User
 
 
 RECENT_PERFORMANCE_LIMITS = (10, 100)
@@ -14,6 +14,21 @@ RECENT_PERFORMANCE_STATES = (
     PredictionCoupon.StateStatus.WIN,
     PredictionCoupon.StateStatus.LOSE,
     PredictionCoupon.StateStatus.REFUND,
+)
+MONTH_NAMES_RU = (
+    "",
+    "Январь",
+    "Февраль",
+    "Март",
+    "Апрель",
+    "Май",
+    "Июнь",
+    "Июль",
+    "Август",
+    "Сентябрь",
+    "Октябрь",
+    "Ноябрь",
+    "Декабрь",
 )
 
 
@@ -51,6 +66,27 @@ def _recent_performance(author, limit: int) -> dict:
     }
 
 
+def _monthly_stats(author) -> list[dict]:
+    rows = CapperMonthlyStat.objects.filter(analyst=author).order_by("-month", "-id")
+    return [
+        {
+            "month": row.month,
+            "month_label": f"{MONTH_NAMES_RU[row.month.month]} {row.month.year}",
+            "bets_count": row.bets_count,
+            "wins_count": row.wins_count,
+            "losses_count": row.losses_count,
+            "refunds_count": row.refunds_count,
+            "flat_profit": row.flat_profit_percent,
+            "roi": row.roi,
+            "avg_coefficient": row.avg_coefficient,
+            "hit_rate": row.hit_rate,
+            "total_stake": row.total_stake,
+            "total_profit": row.total_profit,
+        }
+        for row in rows
+    ]
+
+
 @ensure_csrf_cookie
 def expert_profile(request, username: str):
     profile = get_object_or_404(
@@ -68,6 +104,7 @@ def expert_profile(request, username: str):
     }
     context["performance_windows"] = performance_windows
     context["performance_default"] = performance_windows["10"]
+    context["monthly_stats"] = _monthly_stats(profile.user)
 
     latest_coupons = (
         _published_queryset()
