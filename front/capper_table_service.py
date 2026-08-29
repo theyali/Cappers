@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
 from django.db.models import Count, Q
@@ -71,7 +71,7 @@ def _decimal(value) -> Decimal:
         return value
     try:
         return Decimal(str(value or 0))
-    except (TypeError, ValueError):
+    except (InvalidOperation, TypeError, ValueError):
         return Decimal("0")
 
 
