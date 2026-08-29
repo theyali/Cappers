@@ -1,0 +1,19 @@
+<section
+    class="match-predictions-feed"
+    data-match-predictions-feed
+    data-url="{% url 'game:match_predictions' slug=match.slug %}"
+    aria-label="Прогнозы на матч"
+>
+    <div class="match-predictions-feed-head">
+        <div>
+            <p class="match-predictions-kicker">Мнения капперов</p>
+            <h2>Все прогнозы на игру <span data-match-predictions-total>({{ match_predictions_total }})</span></h2>
+        </div>
+    </div>
+    <div class="match-predictions-list" data-match-predictions-list></div>
+    <div class="match-predictions-loader" data-match-predictions-loader hidden>
+        <span class="match-predictions-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>Загружаем прогнозы...</span>
+    </div>
+    <div class="match-predictions-sentinel" data-match-predictions-sentinel aria-hidden="true"></div>
+</section>
