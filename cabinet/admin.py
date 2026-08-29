@@ -34,14 +34,16 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "telegram_account",
         "is_verified",
         "is_vip",
+        "is_recommended",
         "is_public",
         "onboarding_completed_at",
         "created_at",
     )
-    list_editable = ("is_verified", "is_vip", "is_public")
+    list_editable = ("is_verified", "is_vip", "is_recommended", "is_public")
     list_filter = (
         "is_verified",
         "is_vip",
+        "is_recommended",
         "is_public",
         "created_at",
         "onboarding_completed_at",
@@ -96,6 +98,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 "fields": (
                     "is_verified",
                     "is_vip",
+                    "is_recommended",
                     "is_public",
                     "onboarding_completed_at",
                 )
