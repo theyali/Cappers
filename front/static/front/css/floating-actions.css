@@ -37,6 +37,107 @@
     height: 100%;
 }
 
+/* Shared VIP avatar treatment. Keep the badge attached to the person, not the card. */
+.expert-public-shell.is-vip .expert-public-avatar,
+.prediction-expert-avatar.is-vip,
+.cappers-ranking-avatar.is-vip,
+.expert-recommendation-avatar.is-vip,
+.following-capper-avatar.is-vip,
+.prediction-table-avatar.is-vip,
+.coupon-author-avatar.is-vip {
+    position: relative;
+    overflow: visible !important;
+    box-shadow: 0 0 0 2px var(--yellow);
+}
+
+.expert-public-shell.is-vip .expert-public-avatar > img,
+.prediction-expert-avatar.is-vip > img,
+.cappers-ranking-avatar.is-vip > img,
+.expert-recommendation-avatar.is-vip > img,
+.following-capper-avatar.is-vip > img,
+.prediction-table-avatar.is-vip > img,
+.coupon-author-avatar.is-vip > img {
+    border-radius: inherit;
+}
+
+.expert-public-shell.is-vip .expert-public-avatar::after,
+.prediction-expert-avatar.is-vip::after,
+.cappers-ranking-avatar.is-vip::after,
+.expert-recommendation-avatar.is-vip::after,
+.following-capper-avatar.is-vip::after,
+.prediction-table-avatar.is-vip::after,
+.coupon-author-avatar.is-vip::after {
+    content: "VIP";
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    z-index: 3;
+    min-width: 27px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.expert-public-shell.is-vip .expert-public-avatar::after {
+    right: -8px;
+    bottom: -7px;
+    min-width: 39px;
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
+.expert-recommendation-avatar.is-vip::after {
+    right: -7px;
+    bottom: -6px;
+    min-width: 34px;
+    height: 20px;
+    font-size: 9px;
+}
+
+body:has([data-current-user-vip]) .nav-profile-avatar-image {
+    box-shadow: 0 0 0 2px var(--yellow);
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon,
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar {
+    position: relative;
+    overflow: visible !important;
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon::after,
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
+    content: "VIP";
+    position: absolute;
+    right: -7px;
+    bottom: -6px;
+    z-index: 3;
+    min-width: 27px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1;
+    pointer-events: none;
+}
+
 @media (max-width: 1120px) {
     .fixed-tg-btn-wrapper {
         right: 12px;
