@@ -100,7 +100,7 @@
                     <td class="is-rank"><span class="cappers-ranking-position">{{ forloop.counter }}</span></td>
                     <td>
                         <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
-                            <span class="cappers-ranking-avatar"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
+                            <span class="cappers-ranking-avatar{% if expert.is_vip %} is-vip{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
                                 {% if expert.avatar_url %}
                                     <img src="{{ expert.avatar_url }}" width="34" height="34" loading="lazy" alt="">
                                 {% else %}
@@ -109,7 +109,6 @@
                             </span>
                             <span class="cappers-ranking-name">
                                 <strong>{{ expert.name }}</strong>
-                                {% if expert.is_vip %}<small class="cappers-ranking-vip">VIP</small>{% endif %}
                             </span>
                         </a>
                     </td>
