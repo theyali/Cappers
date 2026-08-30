@@ -67,6 +67,14 @@
     transition: none;
 }
 
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-shared,
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-confidence-global,
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-total,
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-submit,
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-note {
+    display: none;
+}
+
 .coupon-empty {
     min-height: 260px;
     display: grid;
