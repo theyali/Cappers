@@ -24,21 +24,21 @@
                 </div>
             </div>
 
-            <div class="prediction-results-head">
-                <div class="prediction-results-summary">
-                    <strong>{{ filtered_predictions }}</strong>
-                    <span>прогнозов по выбранным условиям</span>
-                </div>
-                <div class="prediction-results-actions">
-                    <div class="content-view-toolbar">
-                        {% include "front/includes/_content_view_switcher.html" %}
-                    </div>
-                </div>
-            </div>
-
             {% if page_obj.object_list %}
                 {% group_content_items page_obj.object_list as grouped_predictions %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
+                    <div class="prediction-results-head">
+                        <div class="prediction-results-summary">
+                            <strong>{{ filtered_predictions }}</strong>
+                            <span>прогнозов по выбранным условиям</span>
+                        </div>
+                        <div class="prediction-results-actions">
+                            <div class="content-view-toolbar">
+                                {% include "front/includes/_content_view_switcher.html" %}
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                             {% include "front/includes/_prediction_grid_view.html" with favorites_view=True %}
@@ -57,6 +57,12 @@
                 </nav>
                 {% endif %}
             {% else %}
+            <div class="prediction-results-head">
+                <div class="prediction-results-summary">
+                    <strong>{{ filtered_predictions }}</strong>
+                    <span>прогнозов по выбранным условиям</span>
+                </div>
+            </div>
             <div class="predictions-empty favorites-empty">
                 <div class="favorites-empty-logo" aria-hidden="true">
                     <img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt="">
