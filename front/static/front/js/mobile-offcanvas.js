@@ -94,10 +94,11 @@
 })();
 
 (() => {
-    const panels = document.querySelectorAll(".match-odds-panel");
-    if (!panels.length) return;
+    const setAccordionState = (panel, collapsed) => {
+        const toggle = panel.querySelector(".match-odds-accordion-toggle");
+        const body = panel.querySelector(".match-odds-accordion-body");
+        if (!toggle || !body) return;
 
-    const setAccordionState = (panel, toggle, collapsed) => {
         panel.classList.toggle("is-odds-collapsed", collapsed);
         if (collapsed) {
             panel.dataset.oddsCollapsed = "true";
@@ -105,23 +106,30 @@
             delete panel.dataset.oddsCollapsed;
         }
 
+        body.hidden = collapsed;
         toggle.setAttribute("aria-expanded", String(!collapsed));
         const label = collapsed ? "Раскрыть коэффициенты" : "Свернуть коэффициенты";
         toggle.setAttribute("aria-label", label);
         toggle.title = label;
     };
 
-    panels.forEach((panel) => {
-        const toggle = panel.querySelector(".match-odds-accordion-toggle");
-        if (!toggle || toggle.dataset.oddsAccordionReady === "true") return;
+    document.querySelectorAll(".match-odds-panel").forEach((panel) => {
+        setAccordionState(
+            panel,
+            panel.classList.contains("is-odds-collapsed") || panel.dataset.oddsCollapsed === "true",
+        );
+    });
 
-        toggle.dataset.oddsAccordionReady = "true";
-        const initiallyCollapsed = panel.classList.contains("is-odds-collapsed")
-            || panel.dataset.oddsCollapsed === "true";
-        setAccordionState(panel, toggle, initiallyCollapsed);
+    document.addEventListener("click", (event) => {
+        if (!(event.target instanceof Element)) return;
+        const toggle = event.target.closest(".match-odds-accordion-toggle");
+        if (!toggle) return;
 
-        toggle.addEventListener("click", () => {
-            setAccordionState(panel, toggle, !panel.classList.contains("is-odds-collapsed"));
-        });
+        const panel = toggle.closest(".match-odds-panel");
+        if (!panel) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        setAccordionState(panel, !panel.classList.contains("is-odds-collapsed"));
     });
 })();
