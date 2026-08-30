@@ -3479,7 +3479,7 @@ h2 {
 
 .match-predictions-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 }
 
@@ -25909,7 +25909,7 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
 }
 
 .match-detail-featured-odd {
-    min-height: 58px;
+    min-height: 40px;
     display: grid;
     place-items: center;
     align-content: center;
@@ -25917,7 +25917,7 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
     padding: 7px 9px;
     border-radius: 11px;
     color: #fff;
-    background: var(--blue);
+    background: var(--line);
 }
 
 .match-detail-featured-odd small {
@@ -25927,8 +25927,9 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
 }
 
 .match-detail-featured-odd strong {
-    font-size: 18px;
+font-size: 13px;
     line-height: 1;
+    color: var(--yellow);
 }
 
 .bookmaker-ref {

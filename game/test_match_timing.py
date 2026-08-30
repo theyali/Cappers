@@ -168,3 +168,35 @@ class MatchTimingTests(TestCase):
         match = type("MatchLike", (), {"score": "2-1", "starts_at": None})()
 
         self.assertEqual(format_match_score_or_start_label(match), "2-1")
+
+    def test_tennis_live_detail_marks_status_with_sport_code(self):
+        tennis = Sport.objects.create(
+            external_id=92007,
+            code="tennis",
+            name="Tennis",
+            name_ru="Теннис",
+        )
+        match = Match.objects.create(
+            external_id=92008,
+            sport=tennis,
+            sync_scope=Match.SyncScope.LIVE,
+            starts_at=timezone.now() - timedelta(minutes=20),
+            live_minute_label="2",
+            raw_data={
+                "period": "1",
+                "teams": {
+                    "home": {"name": {"ru": "Брейден Таллакссон", "en": "Brayden Tallakson"}},
+                    "away": {"name": {"ru": "Тайлер Далос", "en": "Tyler Dalos"}},
+                },
+                "league": {"name": {"ru": "UTR PTT Boise Men", "en": "UTR PTT Boise Men"}},
+            },
+            provider_predictions={"items": []},
+            provider_predictions_updated_at=timezone.now(),
+        )
+
+        response = self.client.get(match.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-sport-code="tennis"')
+        self.assertContains(response, "1-й сет")
+        self.assertNotContains(response, "1Т - 2")

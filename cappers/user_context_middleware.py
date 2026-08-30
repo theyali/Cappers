@@ -6,6 +6,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from cappers.timezone_service import (
+    SCROLL_RESTORE_BOOTSTRAP_SCRIPT,
     TIMEZONE_BOOTSTRAP_SCRIPT,
     activate_request_timezone,
     deactivate_request_timezone,
@@ -23,7 +24,8 @@ def _html_injection() -> bytes:
     timing_url = reverse("game:match_timing")
     js_url = _static_url("front/js/match-timing.js")
     payload = (
-        TIMEZONE_BOOTSTRAP_SCRIPT
+        SCROLL_RESTORE_BOOTSTRAP_SCRIPT
+        + TIMEZONE_BOOTSTRAP_SCRIPT
         + f'<script>window.CAPPERS_MATCH_TIMING_URL={json.dumps(timing_url)};</script>'
         + f'<script src="{js_url}" defer></script>'
     )

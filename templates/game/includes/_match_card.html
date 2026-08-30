@@ -33,7 +33,7 @@
             {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
         </span>
 
-        <span class="match-status match-status-{{ card_status.state }}">
+        <span class="match-status match-status-{{ card_status.state }}" data-sport-code="{{ match.sport_code }}">
             {% if card_status.state == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
             <span>{{ card_status.label }}</span>
         </span>

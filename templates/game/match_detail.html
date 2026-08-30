@@ -58,7 +58,7 @@
                         </div>
                     </div>
                     <div class="match-detail-head-actions">
-                        <span class="match-status match-status-{{ match.sync_scope }}">
+                        <span class="match-status match-status-{{ match.sync_scope }}" data-sport-code="{{ match.sport_code }}">
                             {% if match.sync_scope == 'live' %}
                                 <i class="match-live-dot" aria-hidden="true"></i>
                                 <span>{{ match|live_status_label }}</span>

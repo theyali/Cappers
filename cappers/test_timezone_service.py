@@ -2,6 +2,7 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.utils import timezone
 
 from cappers.timezone_service import (
+    SCROLL_RESTORE_BOOTSTRAP_SCRIPT,
     TIMEZONE_COOKIE,
     activate_request_timezone,
     deactivate_request_timezone,
@@ -29,3 +30,8 @@ class TimezoneServiceTests(SimpleTestCase):
             self.assertEqual(timezone.get_current_timezone_name(), "Europe/Moscow")
         finally:
             deactivate_request_timezone()
+
+    def test_scroll_restore_bootstrap_disables_late_browser_autorestore(self):
+        self.assertIn("scrollRestoration", SCROLL_RESTORE_BOOTSTRAP_SCRIPT)
+        self.assertIn("manual", SCROLL_RESTORE_BOOTSTRAP_SCRIPT)
+        self.assertIn("data-scroll-restoring", SCROLL_RESTORE_BOOTSTRAP_SCRIPT)

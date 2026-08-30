@@ -14,6 +14,16 @@
         return match ? Number.parseInt(match[0], 10) : null;
     };
 
+    const isFootballStatus = (status) => {
+        const sport = String(status.dataset.sportCode || "").trim().toLowerCase();
+        if (!sport) return true;
+        return sport.includes("football") || sport.includes("soccer");
+    };
+
+    const hasSportSpecificLiveLabel = (value) => (
+        /(сет|set|период|period|четверть|quarter|овертайм|overtime)/i.test(String(value || ""))
+    );
+
     const formatLiveStatus = (status) => {
         if (!status) return;
         const label = status.querySelector("span");
@@ -21,6 +31,7 @@
 
         const raw = label.textContent.trim();
         if (!raw) return;
+        if (!isFootballStatus(status) || hasSportSpecificLiveLabel(raw)) return;
 
         const pieces = raw.split(/\s+-\s+/);
         let phaseRaw = "";
