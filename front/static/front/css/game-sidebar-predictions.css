@@ -121,29 +121,29 @@
 
 @media (min-width: 1121px) {
     .matches-shell {
-        height: calc(100dvh - 32px);
-        min-height: 560px;
-        align-items: stretch;
+        height: auto;
+        min-height: 0;
+        align-items: start;
     }
 
     .matches-list-panel {
         min-height: 0;
-        height: 100%;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-gutter: stable;
-        padding-right: 4px;
+        height: auto;
+        overflow: visible;
+        overscroll-behavior: auto;
+        scrollbar-gutter: auto;
+        padding-right: 0;
     }
 
     .matches-list-panel .content-table-view {
-        --content-sport-sticky-top: 0px;
+        --content-sport-sticky-top: calc(var(--brand-logo-size) + 36px);
     }
 
     .coupon-sidebar {
         position: sticky;
-        top: 16px;
+        top: calc(var(--brand-logo-size) + 36px);
         align-self: start;
-        max-height: calc(100dvh - 32px);
+        max-height: calc(100dvh - var(--brand-logo-size) - 52px);
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
@@ -151,24 +151,25 @@
         padding-right: 2px;
     }
 
-    .matches-list-panel,
+    .matches-page.is-table-view .matches-table-filter-sidebar {
+        top: calc(var(--brand-logo-size) + 36px);
+        max-height: calc(100dvh - var(--brand-logo-size) - 52px);
+    }
+
     .coupon-sidebar {
         scrollbar-width: thin;
         scrollbar-color: #3a3a3d transparent;
     }
 
-    .matches-list-panel::-webkit-scrollbar,
     .coupon-sidebar::-webkit-scrollbar {
         width: 6px;
     }
 
-    .matches-list-panel::-webkit-scrollbar-thumb,
     .coupon-sidebar::-webkit-scrollbar-thumb {
         border-radius: 999px;
         background: #3a3a3d;
     }
 
-    .matches-list-panel::-webkit-scrollbar-track,
     .coupon-sidebar::-webkit-scrollbar-track {
         background: transparent;
     }
