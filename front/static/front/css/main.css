@@ -4787,9 +4787,12 @@ h2 {
     display: none;
 }
 
-.matches-shell:not(:has(.coupon-sidebar)),
-.match-detail-shell:not(:has(.coupon-sidebar)) {
+.matches-shell:not(:has(.coupon-sidebar)) {
     grid-template-columns: minmax(0, 1fr);
+}
+
+.match-detail-shell:not(:has(.coupon-sidebar)) {
+    grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
 }
 
 .coupon-panel {
@@ -4966,6 +4969,10 @@ h2 {
     .matches-shell,
     .match-detail-shell {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .match-detail-sidebar {
+        display: none;
     }
 
     .coupon-sidebar:not(.coupon-sidebar-editor) {
@@ -9117,14 +9124,22 @@ h2 {
 
 .match-detail-shell {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-    gap: 18px;
+    grid-template-columns: minmax(220px, 352px) minmax(0, 1fr) minmax(320px, 350px);
+    gap: 5px;
     align-items: start;
+}
+.match-detail-sidebar {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 14px;
 }
 .match-detail-main {
     min-width: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 18px;
+    padding: 0 7px;
 }
 
 .match-detail-page.has-coupon .coupon-empty {
@@ -9148,7 +9163,8 @@ h2 {
 }
 
 .match-detail-card {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 32px;
     padding: clamp(22px, 4vw, 42px);
     border-radius: 22px;
@@ -9445,6 +9461,10 @@ h2 {
 
     .match-detail-shell {
         grid-template-columns: 1fr;
+    }
+
+    .match-detail-sidebar {
+        display: none;
     }
 
     .coupon-sidebar {
@@ -11599,17 +11619,104 @@ h2 {
 
 /* Legacy source: front/static/front/css/match-detail-desktop.css */
 @media (min-width: 1121px) {
+    body:has(.match-detail-page) {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    body:has(.match-detail-page) .site-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 0;
+    }
+
+    body:has(.match-detail-page) .site-footer {
+        display: none;
+    }
+
     .match-detail-page {
+        flex: 1 1 auto;
+        min-height: 0;
         gap: 12px;
     }
 
     .match-detail-shell {
-        grid-template-columns: minmax(0, 1fr) minmax(330px, 370px);
-        gap: 14px;
+        height: 100%;
+        min-height: 0;
+        grid-template-columns: minmax(220px, 352px) minmax(0, 1fr) minmax(320px, 350px);
+        gap: 5px;
+        align-items: stretch;
+    }
+
+    .match-detail-sidebar {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        gap: 12px;
+        padding: 12px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        border-radius: 18px;
+        background: var(--panel);
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3d transparent;
+        animation: matchesTableSidebarIn .22s ease both;
     }
 
     .match-detail-main {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
         gap: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3d transparent;
+    }
+
+    .match-detail-shell > .coupon-sidebar {
+        grid-column: 3;
+        grid-row: 1;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .match-detail-shell:not(:has(.coupon-sidebar)) {
+        grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
+    }
+
+    .match-detail-sidebar::-webkit-scrollbar,
+    .match-detail-main::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .match-detail-sidebar::-webkit-scrollbar-thumb,
+    .match-detail-main::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #3a3a3d;
+    }
+
+    .match-detail-sidebar::-webkit-scrollbar-track,
+    .match-detail-main::-webkit-scrollbar-track {
+        background: transparent;
     }
 
     .match-back-link {
@@ -11626,12 +11733,15 @@ h2 {
     }
 
     .match-detail-card {
+        display: flex;
+        flex-direction: column;
         gap: 0;
         padding: 0;
         overflow: hidden;
         border-radius: 16px;
         background: var(--panel);
         outline: 0;
+        flex-shrink: 0;
     }
 
     .match-detail-head {
@@ -11667,6 +11777,7 @@ h2 {
         padding: 22px 28px;
         border-radius: 0;
         background: var(--panel);
+        flex-shrink: 0;
     }
 
     .match-detail-team {
@@ -11857,8 +11968,7 @@ h2 {
     }
 
     .match-detail-shell > .coupon-sidebar {
-        position: sticky;
-        top: 86px;
+        position: static;
     }
 
     .match-detail-locked-options {
@@ -11939,13 +12049,12 @@ h2 {
 
 .match-odds-accordion-body {
     display: grid;
-    grid-template-rows: 1fr;
+    grid-template-rows: auto;
     opacity: 1;
     transition: grid-template-rows .34s cubic-bezier(.2, .8, .2, 1), opacity .22s ease;
 }
 
 .match-odds-accordion-inner {
-    min-height: 0;
     overflow: hidden;
 }
 

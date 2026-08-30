@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static match_ui %}
+{% load static match_ui site_extras %}
 
 {% block title %}{{ match.home_team_name }} — {{ match.away_team_name }} · {{ match.league_name }}{% endblock %}
 
@@ -14,10 +14,14 @@
     data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
     aria-label="Страница матча"
 >
-    <a class="match-back-link" href="{% url 'game:match_list' %}">← Все матчи</a>
-
     <div class="match-detail-shell">
+        <aside class="match-detail-sidebar" aria-label="Матчи с прогнозами">
+            {% latest_match_predictions 5 %}
+        </aside>
+
         <main class="match-detail-main">
+            <a class="match-back-link" href="{% url 'game:match_list' %}">← Все матчи</a>
+
             <article class="match-detail-card{% if match.sync_scope == 'live' %} is-live{% endif %}">
                 <div class="match-detail-head">
                     <div class="match-league">

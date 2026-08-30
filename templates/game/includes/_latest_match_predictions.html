@@ -1,0 +1,56 @@
+{% if latest_match_predictions %}
+<section class="popular_matches match-detail-latest-predictions" aria-label="Последние прогнозы на матчи">
+    <div class="popular_matches-head">
+        <div>
+            <p>Свежие купоны</p>
+            <h2>Матчи с прогнозами</h2>
+        </div>
+        <span>{{ latest_match_predictions|length }}</span>
+    </div>
+
+    <div class="popular_matches-list">
+        {% for item in latest_match_predictions %}
+        <a class="popular_match" href="{{ item.url }}" aria-label="Купон #{{ item.coupon_id }}: {{ item.home_name }} — {{ item.away_name }}">
+            <div class="popular_match-main">
+                {% if item.league_name %}
+                <span class="popular_match-league">
+                    {% if item.sport_name %}{{ item.sport_name }} · {% endif %}{{ item.league_name }}
+                </span>
+                {% endif %}
+
+                <div class="popular_match-team">
+                    <span class="popular_match-team-logo">
+                        {% if item.home_logo %}
+                            <img src="{{ item.home_logo }}" alt="" loading="lazy">
+                        {% else %}
+                            {{ item.home_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ item.home_name }}</strong>
+                </div>
+                <div class="popular_match-team">
+                    <span class="popular_match-team-logo">
+                        {% if item.away_logo %}
+                            <img src="{{ item.away_logo }}" alt="" loading="lazy">
+                        {% else %}
+                            {{ item.away_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ item.away_name }}</strong>
+                </div>
+
+                <span class="popular_match-pick">
+                    <b>{{ item.selection|default:item.market }}</b>
+                    <span>за {{ item.coefficient }}</span>
+                </span>
+            </div>
+
+            <div class="popular_match-time">
+                <strong>{{ item.starts_at|date:"H:i" }}</strong>
+                <span>{{ item.starts_at|date:"d.m" }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
