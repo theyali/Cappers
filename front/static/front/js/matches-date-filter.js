@@ -1,8 +1,8 @@
 (() => {
-    const dateInput = document.querySelector("[data-match-date-input]");
-    if (!dateInput) return;
+    const dateInputs = document.querySelectorAll("[data-match-date-input]");
+    if (!dateInputs.length) return;
 
-    dateInput.addEventListener("change", () => {
+    const navigateToDate = (dateInput) => {
         if (!dateInput.value) return;
 
         if (dateInput.dataset.urlTemplate) {
@@ -20,5 +20,9 @@
         query.delete("window");
 
         window.location.assign(`${window.location.pathname}?${query.toString()}`);
+    };
+
+    dateInputs.forEach((dateInput) => {
+        dateInput.addEventListener("change", () => navigateToDate(dateInput));
     });
 })();
