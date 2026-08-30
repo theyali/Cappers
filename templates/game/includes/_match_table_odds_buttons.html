@@ -1,0 +1,20 @@
+{% load coupon_options %}
+{% match_coupon_options match as coupon_quick %}
+{% for option in coupon_quick.items %}
+<button
+    class="match-table-odd match-bet-option"
+    type="button"
+    {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
+        data-bet-option
+        data-bet-key="{{ option.key }}"
+        data-market="{{ option.market }}"
+        data-selection="{{ option.selection }}"
+        data-coefficient="{{ option.coefficient }}"
+    {% else %}
+        disabled aria-disabled="true"
+    {% endif %}
+>
+    <span>{{ option.label }}</span>
+    <strong>{% if option.coefficient %}{{ option.coefficient }}{% else %}—{% endif %}</strong>
+</button>
+{% endfor %}
