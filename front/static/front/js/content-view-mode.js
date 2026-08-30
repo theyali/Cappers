@@ -54,10 +54,29 @@
         });
     };
 
+    const syncMatchHero = ($page, $root, mode) => {
+        const $hero = $page.find(".matches-hero").first();
+        if (!$hero.length) return;
+
+        if (mode === "table") {
+            if (!$hero.parent().is($root)) $hero.prependTo($root);
+            return;
+        }
+
+        if (!$hero.parent().is($root)) return;
+        const $sportTabs = $page.children(".matches-sport-tabs").first();
+        if ($sportTabs.length) {
+            $hero.insertBefore($sportTabs);
+        } else {
+            $hero.prependTo($page);
+        }
+    };
+
     const syncPageMode = ($root, mode) => {
         const $page = $root.closest(".matches-page");
         if (!$page.length) return;
         $page.toggleClass("is-table-view", mode === "table");
+        syncMatchHero($page, $root, mode);
     };
 
     const dispatchUpdated = ($root, $panel, mode) => {
