@@ -1,8 +1,12 @@
 {% if grouped_predictions %}
 <div class="content-table-view predictions-table-view"{% if favorites_view %} data-favorites-grid{% endif %}>
     {% for sport in grouped_predictions %}
-    <details class="content-sport-accordion" open>
-        <summary class="content-sport-summary">
+    <details
+        class="content-sport-accordion{% if selected_sport_code %} is-sport-locked{% endif %}"
+        data-sport-locked="{% if selected_sport_code %}true{% else %}false{% endif %}"
+        open
+    >
+        <summary class="content-sport-summary"{% if selected_sport_code %} aria-disabled="true"{% endif %}>
             <span class="content-sport-icon" aria-hidden="true">
                 {% if sport.code == 'football' %}
                     {% include "front/svgs/soccer.svg" %}
