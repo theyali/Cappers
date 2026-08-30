@@ -1,61 +1,78 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static site_extras %}
 
 {% block title %}Купон #{{ coupon.id }} — Cappers{% endblock %}
 
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="coupon-detail-page" aria-label="Купон #{{ coupon.id }}">
-    <a class="coupon-detail-back" href="{% url 'front:predictions' %}">
-        <span aria-hidden="true">←</span>
-        <span>Вернуться к прогнозам</span>
-    </a>
-
-    <a class="coupon-author-link" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
-        <span class="coupon-author-avatar{% if coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if expert_avatar_url %} data-skeleton-image{% endif %}>
-            {% if expert_avatar_url %}
-                <img src="{{ expert_avatar_url }}" width="72" height="72" alt="" loading="lazy">
-            {% else %}
-                {{ expert_initials }}
+<section class="predictions-page coupon-detail-layout-page" aria-label="Купон #{{ coupon.id }}">
+    <div class="predictions-layout coupon-detail-layout">
+        <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" style="display:grid;gap:14px;" aria-label="Популярные матчи и реклама">
+            {% popular_matches 5 %}
+            {% if adv_banners %}
+            <div class="predictions-ad-sidebar coupon-sidebar coupon-sidebar-ads" aria-label="Реклама">
+                {% include "pages/_adv_banners.html" with placement="sidebar" %}
+            </div>
             {% endif %}
-        </span>
-        <span class="coupon-author-copy">
-            <span class="coupon-author-name">
-                <strong>{{ expert_name }}</strong>
-                {% if expert_verified %}
-                <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                    <svg viewBox="0 0 16 16" aria-hidden="true">
-                        <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
-                        <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
-                    </svg>
-                </span>
-                {% endif %}
-            </span>
-            <span>Эксперт КапперХаб</span>
-        </span>
-    </a>
+        </aside>
 
-    <header class="coupon-detail-heading">
-        <div>
-            <p>Публичный купон</p>
-            <h1>Купон #{{ coupon.id }}</h1>
-            <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
+        <div class="predictions-content coupon-detail-content">
+            <section class="coupon-detail-page" aria-label="Купон #{{ coupon.id }}">
+                <a class="coupon-detail-back" href="{% url 'front:predictions' %}">
+                    <span aria-hidden="true">←</span>
+                    <span>Вернуться к прогнозам</span>
+                </a>
+
+                <a class="coupon-author-link" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
+                    <span class="coupon-author-avatar{% if coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if expert_avatar_url %} data-skeleton-image{% endif %}>
+                        {% if expert_avatar_url %}
+                            <img src="{{ expert_avatar_url }}" width="72" height="72" alt="" loading="lazy">
+                        {% else %}
+                            {{ expert_initials }}
+                        {% endif %}
+                    </span>
+                    <span class="coupon-author-copy">
+                        <span class="coupon-author-name">
+                            <strong>{{ expert_name }}</strong>
+                            {% if expert_verified %}
+                            <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                <svg viewBox="0 0 16 16" aria-hidden="true">
+                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                                </svg>
+                            </span>
+                            {% endif %}
+                        </span>
+                        <span>Эксперт КапперХаб</span>
+                    </span>
+                </a>
+
+                <header class="coupon-detail-heading">
+                    <div>
+                        <p>Публичный купон</p>
+                        <h1>Купон #{{ coupon.id }}</h1>
+                        <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
+                    </div>
+
+                    {% if coupon.state_status == "win" %}
+                        <span class="coupon-detail-status is-published">Выигрыш</span>
+                    {% elif coupon.state_status == "lose" %}
+                        <span class="coupon-detail-status is-canceled">Проигрыш</span>
+                    {% elif coupon.state_status == "refund" %}
+                        <span class="coupon-detail-status">Возврат</span>
+                    {% else %}
+                        <span class="coupon-detail-status is-published">Опубликован</span>
+                    {% endif %}
+                </header>
+
+                <section class="coupon-detail-panel" aria-label="Состав купона">
+                    {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True %}
+                </section>
+            </section>
         </div>
 
-        {% if coupon.state_status == "win" %}
-            <span class="coupon-detail-status is-published">Выигрыш</span>
-        {% elif coupon.state_status == "lose" %}
-            <span class="coupon-detail-status is-canceled">Проигрыш</span>
-        {% elif coupon.state_status == "refund" %}
-            <span class="coupon-detail-status">Возврат</span>
-        {% else %}
-            <span class="coupon-detail-status is-published">Опубликован</span>
-        {% endif %}
-    </header>
-
-    <section class="coupon-detail-panel" aria-label="Состав купона">
-        {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True %}
-    </section>
+        {% include "front/includes/_prediction_ad_sidebar.html" %}
+    </div>
 </section>
 {% endblock %}
