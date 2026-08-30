@@ -60,6 +60,18 @@
     border-radius: inherit;
 }
 
+/* VIP fallback avatars must not merge with the yellow frame and badge. */
+.expert-public-shell.is-vip .expert-public-avatar:not(:has(img)),
+.prediction-expert-avatar.is-vip:not(:has(img)),
+.cappers-ranking-avatar.is-vip:not(:has(img)),
+.expert-recommendation-avatar.is-vip:not(:has(img)),
+.following-capper-avatar.is-vip:not(:has(img)),
+.prediction-table-avatar.is-vip:not(:has(img)),
+.coupon-author-avatar.is-vip:not(:has(img)) {
+    color: var(--yellow) !important;
+    background: var(--panel) !important;
+}
+
 .expert-public-shell.is-vip .expert-public-avatar::after,
 .prediction-expert-avatar.is-vip::after,
 .cappers-ranking-avatar.is-vip::after,
@@ -113,6 +125,13 @@ body:has([data-current-user-vip]) .nav-profile-icon,
 body:has([data-current-user-vip]) .nav-profile-dropdown-avatar {
     position: relative;
     overflow: visible !important;
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon:not(:has(.nav-profile-avatar-image)),
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar:not(:has(.nav-profile-avatar-image)) {
+    color: var(--yellow) !important;
+    background: var(--panel) !important;
+    box-shadow: 0 0 0 2px var(--yellow);
 }
 
 body:has([data-current-user-vip]) .nav-profile-icon::after,
