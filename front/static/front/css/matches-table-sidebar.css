@@ -2,6 +2,10 @@
     display: none;
 }
 
+.matches-page.is-table-view {
+    gap: 5px;
+}
+
 .matches-sport-tabs,
 .matches-date-filter {
     max-height: 180px;
