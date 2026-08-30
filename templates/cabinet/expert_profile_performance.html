@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="expert-public-shell" data-expert-public-tabs data-active-tab="predictions">
+<section class="expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" data-expert-public-tabs data-active-tab="predictions">
     <div class="expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
         <button
             class="expert-public-tab is-active"
