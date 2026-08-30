@@ -30,14 +30,6 @@
                     <span>прогнозов по выбранным условиям</span>
                 </div>
                 <div class="prediction-results-actions">
-                    <label class="prediction-results-sort">
-                        <span>Сортировка</span>
-                        <select name="sort" data-prediction-sort aria-label="Сортировка избранных прогнозов">
-                            {% for value, label in sort_options %}
-                            <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </label>
                     <div class="content-view-toolbar">
                         {% include "front/includes/_content_view_switcher.html" %}
                     </div>
