@@ -1,26 +1,53 @@
 {% extends "cabinet/expert_profile.html" %}
 {% load static %}
 
-{% block extra_css %}{% endblock %}
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'front/css/expert-public-tabs.css' %}">
+{% endblock %}
 
 {% block content %}
-{{ block.super }}
-{% if profile_presence %}
-<span
-    hidden
-    data-public-presence-source
-    data-online="{% if profile_presence.is_online %}1{% else %}0{% endif %}"
-    data-label="{{ profile_presence.label }}"
-></span>
-{% endif %}
-{% include "cabinet/_expert_sport_profit.html" %}
-{% include "cabinet/_expert_recent_performance.html" %}
-{% include "cabinet/_expert_monthly_stats.html" %}
-{% include "cabinet/_expert_recommendations.html" %}
+<section class="expert-public-shell" data-expert-public-tabs data-active-tab="predictions">
+    <div class="expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
+        <button
+            class="expert-public-tab is-active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            tabindex="0"
+            data-expert-public-tab="predictions"
+        >Прогнозы</button>
+        <button
+            class="expert-public-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            tabindex="-1"
+            data-expert-public-tab="stats"
+        >Статистика</button>
+    </div>
+
+    {{ block.super }}
+
+    {% if profile_presence %}
+    <span
+        hidden
+        data-public-presence-source
+        data-online="{% if profile_presence.is_online %}1{% else %}0{% endif %}"
+        data-label="{{ profile_presence.label }}"
+    ></span>
+    {% endif %}
+
+    {% include "cabinet/_expert_recent_performance.html" %}
+    {% include "cabinet/_expert_sport_profit.html" %}
+    {% include "cabinet/_expert_monthly_stats.html" %}
+    {% include "cabinet/_expert_recommendations.html" %}
+</section>
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
+<script src="{% static 'front/js/expert-public-tabs.js' %}" defer></script>
 <script src="{% static 'front/js/expert-public-presence.js' %}" defer></script>
 <script src="{% static 'front/js/expert-sport-profit.js' %}" defer></script>
 <script src="{% static 'front/js/expert-recent-performance.js' %}" defer></script>
