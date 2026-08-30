@@ -11,21 +11,15 @@
     ></button>
 
     <div class="coupon-head">
-        <div>
-            <p class="matches-eyebrow">Прогноз</p>
-            <h2>Новый прогноз</h2>
-        </div>
-        <div class="coupon-head-actions">
-            <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогноз">
-                <span aria-hidden="true">⌃</span>
-            </button>
-            <span class="coupon-count" data-coupon-count>0/20</span>
-        </div>
+        <h2>Новый прогноз</h2>
+        <span class="coupon-count" data-coupon-count>0/20</span>
     </div>
 
     <div class="coupon-body" data-sidebar-body>
         <div class="coupon-empty" data-coupon-empty>
-            <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
+            <span class="brand-logo" data-skeleton-image>
+                <img src="{% static 'front/img/logo.png' %}" width="88" height="88" alt="">
+            </span>
             <strong>Выберите матч</strong>
             <p>Добавьте до 20 игр. Все выбранные исходы войдут в один прогноз.</p>
         </div>
