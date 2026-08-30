@@ -69,7 +69,7 @@
 .prediction-table-avatar.is-vip:not(:has(img)),
 .coupon-author-avatar.is-vip:not(:has(img)) {
     color: var(--yellow) !important;
-    background: var(--panel) !important;
+    background: var(--ink) !important;
 }
 
 .expert-public-shell.is-vip .expert-public-avatar::after,
@@ -130,7 +130,7 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar {
 body:has([data-current-user-vip]) .nav-profile-icon:not(:has(.nav-profile-avatar-image)),
 body:has([data-current-user-vip]) .nav-profile-dropdown-avatar:not(:has(.nav-profile-avatar-image)) {
     color: var(--yellow) !important;
-    background: var(--panel) !important;
+    background: var(--ink) !important;
     box-shadow: 0 0 0 2px var(--yellow);
 }
 
