@@ -32,6 +32,39 @@ class WebsiteSettings(models.Model):
         blank=True,
     )
 
+    match_detail_bookmaker_left = models.ForeignKey(
+        Bookmaker,
+        verbose_name="Матч — БК слева",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    match_detail_bookmaker_right = models.ForeignKey(
+        Bookmaker,
+        verbose_name="Матч — БК справа",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    prediction_bookmaker_left = models.ForeignKey(
+        Bookmaker,
+        verbose_name="Прогнозы — БК 1",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    prediction_bookmaker_right = models.ForeignKey(
+        Bookmaker,
+        verbose_name="Прогнозы — БК 2",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
     home_about_enabled = models.BooleanField("Показывать блок «О нас» на главной", default=True)
     home_about_eyebrow = models.CharField(
         "Надпись над заголовком",

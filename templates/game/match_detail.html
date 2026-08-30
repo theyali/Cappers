@@ -123,6 +123,18 @@
                         <strong>{{ match.away_team_name|default:"Гости" }}</strong>
                         {% if match.away_team_name_en %}<small>{{ match.away_team_name_en }}</small>{% endif %}
                     </div>
+
+                    {% if website_settings and match.coupon_odds.has_any %}
+                    <div class="match-detail-bookmaker-strip" aria-label="Коэффициенты и букмекеры">
+                        {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_detail_bookmaker_left variant="scoreboard" only %}
+                        <div class="match-detail-featured-odds" aria-label="Основные коэффициенты 1 X 2">
+                            <span class="match-detail-featured-odd"><small>1</small><strong>{% if match.coupon_odds.home %}{{ match.coupon_odds.home|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                            <span class="match-detail-featured-odd"><small>X</small><strong>{% if match.coupon_odds.draw %}{{ match.coupon_odds.draw|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                            <span class="match-detail-featured-odd"><small>2</small><strong>{% if match.coupon_odds.away %}{{ match.coupon_odds.away|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                        </div>
+                        {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_detail_bookmaker_right variant="scoreboard" only %}
+                    </div>
+                    {% endif %}
                 </div>
             </article>
 

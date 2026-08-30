@@ -1,0 +1,22 @@
+{% if bookmaker %}
+<a
+    class="bookmaker-ref{% if variant == 'scoreboard' %} is-scoreboard{% else %} is-compact{% endif %}"
+    href="{{ bookmaker.link }}"
+    target="_blank"
+    rel="nofollow sponsored noopener noreferrer"
+    aria-label="Перейти в {{ bookmaker.name }}"
+    title="{{ bookmaker.name }}"
+>
+    <span class="bookmaker-ref-logo{% if bookmaker.icon %} has-image{% endif %}"{% if bookmaker.icon %} data-skeleton-image{% endif %}>
+        {% if bookmaker.icon %}
+            {% if variant == 'scoreboard' %}
+                <img src="{{ bookmaker.icon.url }}" width="92" height="32" loading="lazy" alt="{{ bookmaker.name }}">
+            {% else %}
+                <img src="{{ bookmaker.icon.url }}" width="24" height="24" loading="lazy" alt="{{ bookmaker.name }}">
+            {% endif %}
+        {% else %}
+            <strong>{{ bookmaker.name|slice:":2"|upper }}</strong>
+        {% endif %}
+    </span>
+</a>
+{% endif %}

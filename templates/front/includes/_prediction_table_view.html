@@ -97,6 +97,12 @@
                         </span>
 
                         <div class="prediction-table-actions">
+                            {% if website_settings.prediction_bookmaker_left or website_settings.prediction_bookmaker_right %}
+                            <div class="prediction-bookmaker-links is-table" aria-label="Букмекеры">
+                                {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.prediction_bookmaker_left variant="compact" only %}
+                                {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.prediction_bookmaker_right variant="compact" only %}
+                            </div>
+                            {% endif %}
                             <button
                                 class="prediction-table-action prediction-like{% if prediction.is_liked %} is-active{% endif %}"
                                 type="button"

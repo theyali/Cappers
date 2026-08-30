@@ -25886,3 +25886,100 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
 .expert-recommendation-avatar.is-vip {
     position: absolute;
 }
+
+/* Configurable bookmaker placements */
+.match-detail-scoreboard { flex-wrap: wrap; }
+.match-detail-bookmaker-strip {
+    width: 100%;
+    flex: 0 0 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 4px;
+}
+.match-detail-featured-odds {
+    display: grid;
+    grid-template-columns: repeat(3, 86px);
+    gap: 8px;
+}
+.match-detail-featured-odd {
+    min-height: 62px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--blue);
+}
+.match-detail-featured-odd small {
+    color: rgba(255, 255, 255, .72);
+    font-size: 12px;
+    font-weight: 700;
+}
+.match-detail-featured-odd strong { font-size: 18px; line-height: 1; }
+.bookmaker-ref {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    text-decoration: none;
+}
+.bookmaker-ref-logo {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--ink);
+    background: #fff;
+}
+.bookmaker-ref.is-scoreboard .bookmaker-ref-logo {
+    width: 108px;
+    height: 44px;
+    padding: 6px 8px;
+    border-radius: 999px;
+}
+.bookmaker-ref.is-scoreboard img {
+    width: 92px;
+    height: 32px;
+    display: block;
+    object-fit: contain;
+}
+.bookmaker-ref.is-compact .bookmaker-ref-logo {
+    width: 30px;
+    height: 30px;
+    padding: 3px;
+    border-radius: 8px;
+}
+.bookmaker-ref.is-compact img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    object-fit: contain;
+}
+.bookmaker-ref-logo > strong { font-size: 10px; font-weight: 800; }
+.prediction-bookmaker-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+}
+.prediction-bookmaker-links.is-table { margin-left: 0; margin-right: 2px; }
+.prediction-table-actions { gap: 5px; }
+@media (max-width: 760px) {
+    .match-detail-bookmaker-strip { gap: 8px; }
+    .match-detail-featured-odds {
+        grid-template-columns: repeat(3, minmax(64px, 1fr));
+        flex: 1 1 auto;
+    }
+    .match-detail-featured-odd { min-height: 54px; padding: 7px 5px; }
+    .bookmaker-ref.is-scoreboard .bookmaker-ref-logo {
+        width: 58px;
+        height: 40px;
+        padding: 5px;
+        border-radius: 10px;
+    }
+    .bookmaker-ref.is-scoreboard img { width: 48px; height: 28px; }
+    .prediction-bookmaker-links .bookmaker-ref:nth-child(2) { display: none; }
+}
+

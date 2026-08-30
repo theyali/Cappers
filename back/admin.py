@@ -41,6 +41,26 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Букмекеры — страница матча",
+            {
+                "fields": (
+                    "match_detail_bookmaker_left",
+                    "match_detail_bookmaker_right",
+                ),
+                "description": "Логотипы и ссылки по бокам от коэффициентов 1 / X / 2 в карточке матча.",
+            },
+        ),
+        (
+            "Букмекеры — прогнозы",
+            {
+                "fields": (
+                    "prediction_bookmaker_left",
+                    "prediction_bookmaker_right",
+                ),
+                "description": "Компактные ссылки на БК в карточках прогнозов и табличном режиме.",
+            },
+        ),
+        (
             "Главная страница — О нас",
             {
                 "fields": (
