@@ -2013,3 +2013,11 @@ summary:focus-visible,
         display: none !important;
     }
 }
+
+@media (max-width: 1024px) {
+    .matches-sport-tabs,
+    .matches-tabs,
+    .matches-date-filter {
+        display: none !important;
+    }
+}
