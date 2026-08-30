@@ -1,3 +1,5 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'front/css/floating-actions.css' %}">
 <header class="site-topbar" aria-label="Дополнительная навигация">
     <nav class="site-topbar-nav">
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'bookmakers' %} is-active{% endif %}" href="{% url 'front:bookmakers' %}">
