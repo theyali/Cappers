@@ -16,7 +16,12 @@ def website_settings(request):
         footer_pages = []
 
     request.website_settings = settings
+    view_name = request.resolver_match.view_name if request.resolver_match else ""
+    is_prediction_detail = view_name == "front:prediction_detail"
+
     return {
         "website_settings": settings,
         "footer_static_pages": footer_pages,
+        "hide_footer": is_prediction_detail,
+        "adv_placement": "sidebar" if is_prediction_detail else "content",
     }
