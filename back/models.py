@@ -32,33 +32,17 @@ class WebsiteSettings(models.Model):
         blank=True,
     )
 
-    match_detail_bookmaker_left = models.ForeignKey(
+    match_bookmaker = models.ForeignKey(
         Bookmaker,
-        verbose_name="Матч — БК слева",
+        verbose_name="Матч — БК",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="+",
     )
-    match_detail_bookmaker_right = models.ForeignKey(
+    prediction_bookmaker = models.ForeignKey(
         Bookmaker,
-        verbose_name="Матч — БК справа",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-    prediction_bookmaker_left = models.ForeignKey(
-        Bookmaker,
-        verbose_name="Прогнозы — БК 1",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="+",
-    )
-    prediction_bookmaker_right = models.ForeignKey(
-        Bookmaker,
-        verbose_name="Прогнозы — БК 2",
+        verbose_name="Прогнозы — БК",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -145,10 +145,9 @@
             <small>{{ prediction.market }}</small>
             <strong>{{ prediction.selection }}</strong>
         </div>
-        {% if website_settings.prediction_bookmaker_left or website_settings.prediction_bookmaker_right %}
-        <div class="prediction-bookmaker-links" aria-label="Букмекеры">
-            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.prediction_bookmaker_left variant="compact" only %}
-            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.prediction_bookmaker_right variant="compact" only %}
+        {% if website_settings.prediction_bookmaker %}
+        <div class="prediction-bookmaker-links" aria-label="Букмекер">
+            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.prediction_bookmaker variant="compact" only %}
         </div>
         {% endif %}
         <div class="prediction-odd-value">
