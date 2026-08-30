@@ -157,6 +157,14 @@
         if (totalNode) totalNode.textContent = formatMoney(stake * coefficient);
     };
 
+    const updateWalletBalance = (result) => {
+        const display = result?.balance_display;
+        if (!display) return;
+        document.querySelectorAll("[data-wallet-balance]").forEach((node) => {
+            node.textContent = `${display} ₽`;
+        });
+    };
+
     const updateConfidenceVisual = () => {
         const value = currentConfidence();
         if (confidenceInput && Number.parseInt(confidenceInput.value, 10) !== value) {
@@ -433,6 +441,7 @@
                 return;
             }
             if (manual) {
+                updateWalletBalance(result);
                 clearCoupon();
                 setNote(result.message || "Прогноз опубликован.", "success");
             } else {

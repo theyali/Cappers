@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
+from wallets.services import settle_prediction_coupon
 
 
 def settle_finished_matches(limit: int = 500) -> dict:
@@ -180,6 +181,7 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
         coupon.settled_at = coupon.settled_at or timezone.now()
 
     coupon.save(update_fields=["state_status", "settled_at", "updated_at"])
+    settle_prediction_coupon(coupon)
     return coupon
 
 

@@ -485,18 +485,185 @@ h2 {
     color: var(--yellow);
 }
 
-.messages {
-    width: min(1180px, calc(100% - 32px));
-    margin: 18px auto 0;
-    padding: 0;
-    list-style: none;
+.wallet-page {
+    display: grid;
+    gap: 18px;
 }
 
-.messages li {
-    padding: 12px 14px;
-    outline: 1px solid var(--line);
-    border-radius: 8px;
-    background: rgba(31, 31, 33, 0.9);
+.wallet-hero {
+    min-height: 160px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(22px, 4vw, 40px);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0b56fa 0%, #1166ff 52%, #101114 52%);
+}
+
+.wallet-hero-copy {
+    display: grid;
+    gap: 8px;
+}
+
+.wallet-kicker {
+    margin: 0;
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.wallet-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1;
+}
+
+.wallet-balance-card {
+    min-width: 220px;
+    display: grid;
+    gap: 7px;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(18, 19, 22, .88);
+}
+
+.wallet-balance-card span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.wallet-balance-card strong {
+    color: var(--yellow);
+    font-size: 28px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.wallet-methods {
+    display: grid;
+    gap: 12px;
+}
+
+.wallet-method {
+    min-height: 96px;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.wallet-method-icon {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--yellow);
+    background: #2a2a2d;
+}
+
+.wallet-method-icon svg {
+    width: 23px;
+    height: 23px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wallet-method-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.wallet-method-copy h2,
+.wallet-method-copy p {
+    margin: 0;
+}
+
+.wallet-method-copy h2 {
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.15;
+}
+
+.wallet-method-copy p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.wallet-method form {
+    margin: 0;
+}
+
+.wallet-method button,
+.wallet-method-status {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.wallet-method button {
+    color: var(--ink);
+    background: var(--yellow);
+    cursor: pointer;
+}
+
+.wallet-method.is-disabled {
+    opacity: .68;
+}
+
+.wallet-method-status {
+    color: var(--muted);
+    background: #2a2a2d;
+}
+
+@media (max-width: 720px) {
+    .wallet-hero {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wallet-balance-card {
+        min-width: 0;
+    }
+
+    .wallet-method {
+        grid-template-columns: 42px minmax(0, 1fr);
+    }
+
+    .wallet-method form,
+    .wallet-method-status {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .wallet-method button,
+    .wallet-method-status {
+        width: 100%;
+    }
 }
 
 .hero {
@@ -1629,6 +1796,63 @@ h2 {
     justify-self: end;
 }
 
+.nav-wallet {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 4px;
+    border-radius: 12px;
+    background: #2a2a2d;
+}
+
+.nav-wallet-balance {
+    min-width: 92px;
+    display: grid;
+    gap: 2px;
+    padding: 0 8px;
+    line-height: 1.05;
+}
+
+.nav-wallet-balance span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.nav-wallet-balance strong {
+    color: var(--yellow);
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.site-nav-actions .nav-wallet-topup {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--yellow);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.site-nav-actions .nav-wallet-topup:hover {
+    background: #fff200;
+    transform: translateY(-1px);
+}
+
 .site-nav-center a,
 .site-nav-actions a,
 .site-nav-actions .nav-button,
@@ -2226,58 +2450,68 @@ h2 {
 .messages {
     width: min(1680px, calc(100% - 32px));
     display: grid;
-    gap: 8px;
-    margin: 14px auto -6px;
+    gap: 10px;
+    margin: 14px auto 0;
     padding: 0;
     list-style: none;
 }
 
 .message-item {
     position: relative;
-    min-height: 54px;
+    min-height: 56px;
     display: flex;
     align-items: center;
-    padding: 13px 18px 13px 52px;
-    border-radius: 16px;
+    padding: 14px 18px 14px 58px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 14px;
     color: rgba(255, 255, 255, .88);
-    background: var(--panel);
+    background: #1f1f21;
     box-shadow: 0 12px 32px rgba(0, 0, 0, .16);
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 700;
     line-height: 1.45;
+    word-break: break-word;
     animation: message-enter .28s ease both;
 }
 
 .message-item::before {
-    content: "i";
+    content: "\2139";
     position: absolute;
-    left: 14px;
+    left: 18px;
     top: 50%;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     display: grid;
     place-items: center;
-    border-radius: 9px;
+    border-radius: 50%;
     color: #fff;
     background: var(--blue);
+    font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: 800;
+    line-height: 1;
     transform: translateY(-50%);
 }
 
+.message-item.success {
+    border-color: rgba(255, 239, 0, .20);
+    background: #202018;
+}
+
 .message-item.success::before {
-    content: "✓";
+    content: "\2713";
     color: var(--ink);
     background: var(--yellow);
 }
 
 .message-item.warning::before {
-    content: "!";
+    content: "\0021";
     color: var(--ink);
     background: var(--yellow);
 }
 
 .message-item.error::before {
-    content: "!";
+    content: "\0021";
     color: #fff;
     background: var(--danger);
 }
@@ -2301,15 +2535,15 @@ h2 {
 
     .message-item {
         min-height: 50px;
-        padding: 11px 14px 11px 48px;
-        border-radius: 14px;
-        font-size: 12px;
+        padding: 12px 14px 12px 46px;
+        border-radius: 12px;
+        font-size: 13px;
     }
 
     .message-item::before {
-        left: 12px;
-        width: 24px;
-        height: 24px;
+        left: 14px;
+        width: 22px;
+        height: 22px;
         border-radius: 8px;
     }
 }
@@ -7238,7 +7472,7 @@ h2 {
 
 .cappers-pro-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
     transition: opacity .2s ease, transform .2s ease;
 }
@@ -10127,7 +10361,7 @@ h2 {
 
 .match-table-head,
 .match-table-row {
-    grid-template-columns: minmax(270px, 1.7fr) 64px repeat(6, minmax(76px, .55fr)) 42px;
+    grid-template-columns: minmax(270px, 1.7fr) minmax(104px, .72fr) repeat(6, minmax(76px, .55fr)) 42px;
 }
 
 .prediction-table-head,
@@ -10231,11 +10465,24 @@ h2 {
     min-height: 31px;
     display: grid;
     place-items: center;
+    padding: 0 4px;
     color: var(--yellow);
-    font-size: 13px;
     font-weight: 900;
     letter-spacing: 0;
     text-align: center;
+}
+
+.match-table-score-value {
+    font-size: 13px;
+    line-height: 1;
+}
+
+.match-table-kickoff {
+    max-width: 100%;
+    color: rgba(255, 255, 255, .86);
+    font-size: 10px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
 }
 
 .match-table-odds {
@@ -10258,6 +10505,7 @@ h2 {
 }
 
 .match-table-odd {
+    position: relative;
     min-width: 0;
     min-height: 31px;
     display: grid;
@@ -10284,6 +10532,25 @@ h2 {
     opacity: .45;
 }
 
+.match-table-odd.is-locked-odd:disabled {
+    color: rgba(255, 255, 255, .52);
+    background: #262628;
+    opacity: 1;
+    cursor: default;
+}
+
+.match-table-odd.is-locked-odd:hover {
+    transform: none;
+}
+
+.match-table-odd .match-odd-lock {
+    top: 4px !important;
+    right: 4px !important;
+    width: 12px !important;
+    height: 12px !important;
+    color: rgba(255, 255, 255, .38) !important;
+}
+
 .match-table-odd span {
     color: currentColor;
     opacity: .72;
@@ -10295,6 +10562,10 @@ h2 {
 .match-table-odd strong {
     font-size: 12px;
     line-height: 1;
+}
+
+.match-table-odd.is-locked-odd strong {
+    color: rgba(255, 255, 255, .40);
 }
 
 .match-table-odd-placeholder {
@@ -10494,7 +10765,7 @@ h2 {
     }
 
     .match-table-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) 40px;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(74px, .9fr);
         grid-template-rows: auto auto;
         gap: 6px;
         padding: 8px;
@@ -10509,7 +10780,14 @@ h2 {
         grid-column: 4;
         grid-row: 1;
         min-height: 36px;
+    }
+
+    .match-table-score-value {
         font-size: 12px;
+    }
+
+    .match-table-kickoff {
+        font-size: 9px;
     }
 
     .match-table-odds {
@@ -21657,6 +21935,12 @@ h2 {
     font-size: 12px;
 }
 
+.auth-form-alert.success {
+    color: var(--yellow);
+    background: rgba(255, 239, 0, .08);
+    border-color: rgba(255, 239, 0, .18);
+}
+
 .auth-form-alert > span {
     width: 24px;
     height: 24px;
@@ -21667,6 +21951,21 @@ h2 {
     color: #131313;
     background: #ff7479;
     font-size: 12px;
+}
+
+.auth-form-alert > span::before {
+    content: "\0021";
+    font-family: Arial, sans-serif;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.auth-form-alert.success > span {
+    background: var(--yellow);
+}
+
+.auth-form-alert.success > span::before {
+    content: "\2713";
 }
 
 .auth-form-alert .errorlist {

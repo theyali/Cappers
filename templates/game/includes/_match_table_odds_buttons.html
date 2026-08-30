@@ -2,7 +2,7 @@
 {% match_coupon_options match as coupon_quick %}
 {% for option in coupon_quick.items %}
 <button
-    class="match-table-odd match-bet-option"
+    class="match-table-odd match-bet-option{% if not option.coefficient or not can_write_coupon or match.sync_scope != 'prematch' %} is-locked-odd{% endif %}"
     type="button"
     {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
         data-bet-option
@@ -14,7 +14,8 @@
         disabled aria-disabled="true"
     {% endif %}
 >
+    {% if not option.coefficient or not can_write_coupon or match.sync_scope != 'prematch' %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
     <span>{{ option.label }}</span>
-    <strong>{% if option.coefficient %}{{ option.coefficient }}{% else %}—{% endif %}</strong>
+    {% if option.coefficient %}<strong>{{ option.coefficient }}</strong>{% endif %}
 </button>
 {% endfor %}

@@ -21,6 +21,7 @@ from game.services.coupon_validation import (
 from game.services.match_sync import MatchSyncService
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
+from wallets.services import InsufficientBalance, charge_prediction_stake, format_money
 
 
 logger = logging.getLogger(__name__)
@@ -253,6 +254,13 @@ def create_coupon(request):
         coupon.published_at = None if autosave else timezone.now()
         coupon.save()
 
+        if not autosave:
+            try:
+                charge_prediction_stake(request.user, coupon, stake)
+            except InsufficientBalance as exc:
+                transaction.set_rollback(True)
+                return JsonResponse({"ok": False, "error": str(exc)}, status=402)
+
         coupon.predictions.all().delete()
         Prediction.objects.bulk_create(
             [
@@ -287,6 +295,10 @@ def create_coupon(request):
     if verification is not None:
         response["remote_checked"] = verification.remote_checked
         response["cache_used"] = verification.cache_used
+    if not autosave:
+        request.user.capper_balance.refresh_from_db()
+        response["balance"] = str(request.user.capper_balance.balance)
+        response["balance_display"] = format_money(request.user.capper_balance.balance)
     return JsonResponse(response)
 
 

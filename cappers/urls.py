@@ -18,6 +18,7 @@ urlpatterns = [
     path("cabinet/", include("cabinet.urls")),
     path("games/", include("game.urls")),
     path("notifications/", include("notifications.urls")),
+    path("wallets/", include("wallets.urls")),
     path("ajax/", include("back.urls")),
 ]
 

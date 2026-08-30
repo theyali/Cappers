@@ -6,10 +6,15 @@ from django import template
 register = template.Library()
 
 _MINUTE_RE = re.compile(r"\d+(?:\+\d+)?")
+_PERIOD_RE = re.compile(r"(?:^|\D)([1-9])(?:\D|$)")
 _HALFTIME_WORDS = ("ht", "half time", "halftime", "interval", "перерыв")
 _EXTRA_WORDS = ("extra", "extra time", "et", "aet", "доп")
 _FIRST_HALF_WORDS = ("1h", "first half", "1st half", "первый тайм")
 _SECOND_HALF_WORDS = ("2h", "second half", "2nd half", "второй тайм")
+_BASKETBALL_WORDS = ("basketball", "basket")
+_FOOTBALL_WORDS = ("football", "soccer")
+_HOCKEY_WORDS = ("hockey", "ice-hockey", "ice_hockey")
+_TENNIS_WORDS = ("tennis",)
 
 
 def _minute_value(match) -> int | None:
@@ -45,6 +50,14 @@ def _minute_label(match) -> str:
     return ""
 
 
+def _sport_code(match) -> str:
+    direct = str(getattr(match, "sport_code", "") or "").strip().lower()
+    if direct:
+        return direct
+    sport = getattr(match, "sport", None)
+    return str(getattr(sport, "code", "") or "football").strip().lower()
+
+
 def _phase_text(match) -> str:
     """Return only provider fields that can actually describe a match period.
 
@@ -63,6 +76,57 @@ def _phase_text(match) -> str:
     return " ".join(fragments).strip().lower()
 
 
+def _period_number(*values: str, max_period: int | None = None) -> int | None:
+    for value in values:
+        text = str(value or "").strip().lower()
+        if not text:
+            continue
+        match = _PERIOD_RE.search(text)
+        if not match:
+            continue
+        number = int(match.group(1))
+        if max_period is None or number <= max_period:
+            return number
+    return None
+
+
+def _ordinal(number: int, feminine: bool = False) -> str:
+    suffix = "я" if feminine else "й"
+    return f"{number}-{suffix}"
+
+
+def _non_football_live_status(match, sport_code: str, phase_text: str) -> str:
+    raw_label = str(getattr(match, "live_minute_label", "") or "").strip()
+    minute_value = _minute_value(match)
+    minute_label = _minute_label(match)
+
+    if any(word in phase_text for word in _EXTRA_WORDS) or raw_label.upper() in {"OT", "ОТ"}:
+        period = "Овертайм"
+    elif any(word in sport_code for word in _TENNIS_WORDS):
+        number = _period_number(phase_text, raw_label, max_period=5)
+        period = f"{_ordinal(number)} сет" if number else "LIVE"
+    elif any(word in sport_code for word in _BASKETBALL_WORDS):
+        number = _period_number(phase_text, raw_label, max_period=4)
+        if number is None and minute_value is not None:
+            number = min(max(((minute_value - 1) // 12) + 1, 1), 4)
+        period = f"{_ordinal(number, feminine=True)} четверть" if number else "LIVE"
+    elif any(word in sport_code for word in _HOCKEY_WORDS):
+        number = _period_number(phase_text, raw_label, max_period=3)
+        if number is None and minute_value is not None:
+            number = min(max(((minute_value - 1) // 20) + 1, 1), 3)
+        period = f"{_ordinal(number)} период" if number else "LIVE"
+    else:
+        period = "LIVE"
+
+    if not minute_label or period == minute_label.replace("′", ""):
+        return period
+    if period == "LIVE":
+        return f"LIVE - {minute_label}"
+    if minute_value is not None and minute_value <= 5 and raw_label.isdigit():
+        return period
+    return f"{period} - {minute_label}"
+
+
 @register.filter
 def live_status_label(match) -> str:
     """Human-friendly LIVE phase used on match cards and match detail."""
@@ -72,9 +136,13 @@ def live_status_label(match) -> str:
     minute_value = _minute_value(match)
     minute_label = _minute_label(match)
     phase_text = _phase_text(match)
+    sport_code = _sport_code(match)
 
     if any(word in phase_text for word in _HALFTIME_WORDS):
         return "Перерыв"
+
+    if not any(word in sport_code for word in _FOOTBALL_WORDS):
+        return _non_football_live_status(match, sport_code, phase_text)
 
     # Explicit period data wins when the provider sends it. The numeric
     # time_status field is not used here because it describes game state.
@@ -98,6 +166,13 @@ def live_status_label(match) -> str:
     if period == "Extra":
         return f"Extra {minute_label}"
     return f"{period} - {minute_label}"
+
+
+@register.filter
+def match_score_or_start_label(match) -> str:
+    from game.services.match_time_display import format_match_score_or_start_label
+
+    return format_match_score_or_start_label(match)
 
 
 @register.simple_tag

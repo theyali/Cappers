@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     "tinymce",
     "django_celery_beat",
     "cabinet.apps.CabinetConfig",
+    "wallets.apps.WalletsConfig",
     "game.apps.GameConfig",
     "bots.apps.BotsConfig",
     "back.apps.BackConfig",
@@ -75,6 +77,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "front.context_processors.website_settings",
                 "pages.context_processors.page_seo",
+                "wallets.context_processors.capper_balance",
             ],
         },
     },
@@ -308,3 +311,5 @@ NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)
 COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)
 COUPON_MATCH_STATE_CACHE_SECONDS = env_int("COUPON_MATCH_STATE_CACHE_SECONDS", 10)
 MATCH_SOON_WINDOW_SECONDS = env_int("MATCH_SOON_WINDOW_SECONDS", 600)
+CAPPER_STARTING_BALANCE = Decimal(os.getenv("CAPPER_STARTING_BALANCE", "10000.00"))
+CAPPER_VIRTUAL_TOP_UP_AMOUNT = Decimal(os.getenv("CAPPER_VIRTUAL_TOP_UP_AMOUNT", "10000.00"))

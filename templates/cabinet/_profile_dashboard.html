@@ -1,3 +1,4 @@
+{% load match_ui %}
 <section class="capper-dashboard" aria-label="Дашборд каппера">
     <section class="capper-dashboard-hero">
         <div>
@@ -81,7 +82,7 @@
                             </span>
                             <div>
                                 <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                                <small>LIVE{% if prediction.match.live_minute_label %} · {{ prediction.match.live_minute_label }}{% elif prediction.match.live_minute %} · {{ prediction.match.live_minute }}'{% endif %}</small>
+                                <small>{{ prediction.match|live_status_label }}</small>
                             </div>
                         </div>
 

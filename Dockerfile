@@ -15,7 +15,7 @@ RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 
 COPY . /app
 
-RUN chmod +x /app/deploy/start-web.sh
+RUN chmod +x /app/deploy/*.sh
 
 EXPOSE 8000
 

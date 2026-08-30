@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from game.models import PredictionCoupon
+from wallets.services import ensure_capper_balance
 
 from .capper_forms import (
     CapperAboutForm,
@@ -284,6 +285,7 @@ def capper_onboarding(request, step: int):
                 if request.user.role != User.Role.ANALYST:
                     request.user.role = User.Role.ANALYST
                     request.user.save(update_fields=["role"])
+                ensure_capper_balance(request.user)
                 profile.is_public = True
                 if profile.onboarding_completed_at is None:
                     profile.onboarding_completed_at = timezone.now()

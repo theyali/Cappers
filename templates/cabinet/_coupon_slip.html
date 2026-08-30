@@ -1,4 +1,4 @@
-{% load static %}
+{% load static match_ui %}
 <section class="coupon-slip" aria-label="Состав прогноза #{{ coupon.id }}">
     <div class="coupon-slip-overview" aria-label="Параметры прогноза">
         <div class="coupon-slip-overview-row">
@@ -71,7 +71,7 @@
 
                         <span class="coupon-slip-match-state is-{{ prediction.match.sync_scope }}">
                             {% if prediction.match.sync_scope == "live" %}
-                                LIVE{% if prediction.match.live_minute_label %} · {{ prediction.match.live_minute_label }}{% endif %}
+                                {{ prediction.match|live_status_label }}
                             {% else %}
                                 {{ prediction.match.get_sync_scope_display }}
                             {% endif %}
@@ -93,8 +93,8 @@
 
                     <div class="coupon-slip-score">
                         <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
-                        {% if prediction.match.live_minute_label %}
-                            <span>{{ prediction.match.live_minute_label }}</span>
+                        {% if prediction.match.sync_scope == "live" %}
+                            <span>{{ prediction.match|live_status_label }}</span>
                         {% elif prediction.match.starts_at %}
                             <span>{{ prediction.match.starts_at|date:"H:i" }}</span>
                         {% endif %}

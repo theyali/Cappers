@@ -50,6 +50,17 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    build: .
+    env_file:
+      - .env
+    command: python manage.py migrate --noinput
+    volumes:
+      - .:/app
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+
   web:
     build: .
     env_file:
@@ -60,6 +71,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       pgbouncer:
         condition: service_healthy
       redis:
@@ -74,10 +87,15 @@ services:
     build: .
     env_file:
       - .env
-    command: celery -A cappers worker --loglevel=info
+    command: /bin/sh /app/deploy/wait-for-celery-dependencies.sh celery -A cappers worker --loglevel=info
     volumes:
       - .:/app
+    restart: unless-stopped
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
       web:
         condition: service_healthy
       redis:
@@ -87,10 +105,15 @@ services:
     build: .
     env_file:
       - .env
-    command: celery -A cappers beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: /bin/sh /app/deploy/wait-for-celery-dependencies.sh celery -A cappers beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
+    restart: unless-stopped
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
       web:
         condition: service_healthy
       redis:
@@ -105,6 +128,10 @@ services:
       - .:/app
     restart: unless-stopped
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
       web:
         condition: service_healthy
 

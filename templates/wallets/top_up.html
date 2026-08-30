@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Пополнение баланса — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="wallet-page">
+    <div class="wallet-hero">
+        <div class="wallet-hero-copy">
+            <p class="wallet-kicker">Баланс каппера</p>
+            <h1>Способы пополнения</h1>
+        </div>
+        <div class="wallet-balance-card">
+            <span>Текущий баланс</span>
+            <strong>{{ balance_display }} ₽</strong>
+        </div>
+    </div>
+
+    <div class="wallet-methods" aria-label="Способы пополнения">
+        <article class="wallet-method is-active">
+            <div class="wallet-method-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"></path><path d="M7 11h5"></path><path d="M17 14h.01"></path></svg>
+            </div>
+            <div class="wallet-method-copy">
+                <h2>Виртуальное пополнение</h2>
+                <p>+{{ top_up_amount_display }} ₽ на баланс для тестовых прогнозов.</p>
+            </div>
+            <form method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
+                <button type="submit">Пополнить</button>
+            </form>
+        </article>
+
+        <article class="wallet-method is-disabled" aria-disabled="true">
+            <div class="wallet-method-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 8h18"></path><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"></path><path d="M7 15h4"></path></svg>
+            </div>
+            <div class="wallet-method-copy">
+                <h2>Банковская карта</h2>
+                <p>Скоро появится в списке доступных способов.</p>
+            </div>
+            <span class="wallet-method-status">Скоро</span>
+        </article>
+    </div>
+</section>
+{% endblock %}

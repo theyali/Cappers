@@ -79,6 +79,15 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
                         <span class="nav-notification-badge is-empty" data-notification-badge></span>
                     </a>
+                    {% if request.user.is_analyst and nav_capper_balance is not None %}
+                        <div class="nav-wallet">
+                            <span class="nav-wallet-balance">
+                                <span>Баланс</span>
+                                <strong data-wallet-balance>{{ nav_capper_balance_display }} ₽</strong>
+                            </span>
+                            <a href="{% url 'wallets:top_up' %}" class="nav-wallet-topup">Пополнить</a>
+                        </div>
+                    {% endif %}
                     <div class="nav-profile-menu" data-profile-menu>
                         <button
                             class="nav-profile nav-profile-icon"

@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
+from cappers.timezone_service import current_timezone_name
+
 from .models import Match
 from .services.match_timing import match_timing_payload
 
@@ -35,7 +37,7 @@ def match_timing(request):
         return JsonResponse(
             {
                 "ok": True,
-                "timezone": timezone.get_current_timezone_name(),
+                "timezone": current_timezone_name(),
                 "matches": {},
             }
         )
@@ -49,7 +51,7 @@ def match_timing(request):
     return JsonResponse(
         {
             "ok": True,
-            "timezone": timezone.get_current_timezone_name(),
+            "timezone": current_timezone_name(),
             "now": now.isoformat(),
             "matches": payload,
         }

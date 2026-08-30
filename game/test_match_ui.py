@@ -6,12 +6,13 @@ from game.templatetags.match_ui import live_status_label
 
 
 class LiveStatusLabelTests(SimpleTestCase):
-    def match(self, *, time_status="", minute=None, label="", raw=None):
+    def match(self, *, time_status="", minute=None, label="", raw=None, sport_code="football"):
         return SimpleNamespace(
             time_status=time_status,
             live_minute=minute,
             live_minute_label=label,
             raw_data=raw or {},
+            sport_code=sport_code,
         )
 
     def test_first_half_uses_minute_not_time_status(self):
@@ -54,4 +55,22 @@ class LiveStatusLabelTests(SimpleTestCase):
         self.assertEqual(
             live_status_label(self.match(time_status="1", minute=45, raw={"phase": "HT"})),
             "Перерыв",
+        )
+
+    def test_basketball_uses_quarter_label(self):
+        self.assertEqual(
+            live_status_label(self.match(sport_code="basketball", minute=18)),
+            "2-я четверть - 18′",
+        )
+
+    def test_hockey_uses_period_label(self):
+        self.assertEqual(
+            live_status_label(self.match(sport_code="hockey", minute=43)),
+            "3-й период - 43′",
+        )
+
+    def test_tennis_uses_set_label(self):
+        self.assertEqual(
+            live_status_label(self.match(sport_code="tennis", label="2")),
+            "2-й сет",
         )

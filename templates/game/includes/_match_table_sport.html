@@ -51,7 +51,7 @@
             <div class="content-table-scroll" data-table-league-scroll>
                 <div class="content-table-head match-table-head" aria-hidden="true">
                     <span>Матч</span>
-                    <span>Счет</span>
+                    <span>Счет / время</span>
                     {% if sport.code == 'hockey' %}
                         <span>П1</span><span>X</span><span>П2</span><span>ТБ 5.5</span><span>ТМ 5.5</span><span>Ф1 0</span>
                     {% elif sport.code == 'basketball' %}
@@ -90,7 +90,9 @@
                         </span>
                     </a>
                     <a class="match-table-score" href="{{ match.get_absolute_url }}">
-                        {% if match.score %}{{ match.score }}{% else %}VS{% endif %}
+                        <span class="{% if match.score %}match-table-score-value{% else %}match-table-kickoff{% endif %}">
+                            {{ match|match_score_or_start_label }}
+                        </span>
                     </a>
 
                     <div
