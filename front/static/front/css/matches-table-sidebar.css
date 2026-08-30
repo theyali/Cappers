@@ -42,16 +42,15 @@
     }
 
     .matches-page.is-table-view .matches-shell {
-        grid-template-columns: minmax(0, 1fr) minmax(250px, 292px);
-    }
-
-    .matches-page.is-table-view .coupon-sidebar {
-        display: none !important;
+        grid-template-columns: minmax(220px, 252px) minmax(0, 1fr) minmax(320px, 350px);
+        gap: 14px;
     }
 
     .matches-page.is-table-view .matches-table-filter-sidebar {
         position: sticky;
         top: 16px;
+        grid-column: 1;
+        grid-row: 1;
         align-self: start;
         max-height: calc(100dvh - 32px);
         display: grid;
@@ -67,6 +66,21 @@
         scrollbar-width: thin;
         scrollbar-color: #3a3a3d transparent;
         animation: matchesTableSidebarIn .22s ease both;
+    }
+
+    .matches-page.is-table-view .matches-list-panel {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .matches-page.is-table-view .coupon-sidebar {
+        grid-column: 3;
+        grid-row: 1;
+        display: block;
+    }
+
+    .matches-page.is-table-view .matches-shell:not(:has(.coupon-sidebar)) {
+        grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
     }
 
     .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar {
@@ -430,7 +444,7 @@
 @keyframes matchesTableSidebarIn {
     from {
         opacity: 0;
-        transform: translateX(8px);
+        transform: translateX(-8px);
     }
     to {
         opacity: 1;
