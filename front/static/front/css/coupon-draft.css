@@ -55,15 +55,8 @@
     animation-delay: .24s;
 }
 
-/* A collapsed grid child still participates in the parent grid and leaves its
-   row gap behind. Collapse the parent gaps together with the hidden content so
-   the compact coupon/header cards keep an even shape. */
 .coupon-panel {
     transition: row-gap .24s ease;
-}
-
-.coupon-sidebar.is-collapsed .coupon-panel {
-    row-gap: 0;
 }
 
 .coupon-item {
@@ -87,22 +80,19 @@
     background: #171718;
 }
 
-.coupon-confidence-head,
-.sidebar-prediction-confidence {
+.coupon-confidence-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.coupon-confidence-head span,
-.sidebar-prediction-confidence span {
+.coupon-confidence-head span {
     color: var(--muted);
     font-size: 11px;
 }
 
-.coupon-confidence-head strong,
-.sidebar-prediction-confidence strong {
+.coupon-confidence-head strong {
     color: var(--yellow);
     font-size: 15px;
     font-weight: 800;
@@ -119,15 +109,6 @@
     color: var(--muted);
     font-size: 11px;
     line-height: 1.4;
-}
-
-.sidebar-prediction-confidence {
-    min-height: 34px;
-    padding: 0 2px;
-}
-
-.sidebar-prediction-confidence strong {
-    font-size: 13px;
 }
 
 .coupon-note.is-success {
