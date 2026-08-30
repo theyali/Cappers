@@ -3,10 +3,10 @@
 {% match_card_status match as card_status %}
 
 <article class="match-card" data-match-card data-match-id="{{ match.id }}">
-    <a class="match-card-main" href="{{ match.get_absolute_url }}">
-        <span class="match-card-sport-label" style="display:inline-flex;align-items:center;gap:5px;width:100%;color:var(--muted);font-size:11px;line-height:1;">
-            <span class="matches-sport-icon" aria-hidden="true" style="width:20px;height:20px;">
-                <span style="display:inline-flex;align-items:center;justify-content:center;transform:scale(.72);transform-origin:center;">
+    <div class="match-card-sport-label">
+        <span class="match-card-sport-copy">
+            <span class="matches-sport-icon" aria-hidden="true">
+                <span class="match-card-sport-icon-inner">
                     {% if match.sport_code == 'football' %}
                         {% include "front/svgs/soccer.svg" %}
                     {% elif match.sport_code == 'hockey' %}
@@ -20,19 +20,26 @@
                     {% endif %}
                 </span>
             </span>
-            <span>
+            <span class="match-card-sport-name">
                 {% if match.sport %}
                     {{ match.sport.name_ru|default:match.sport.name }}
                 {% else %}
                     Футбол
                 {% endif %}
             </span>
-            <span class="match-status match-status-{{ card_status.state }}" style="margin-left:auto;">
-                {% if card_status.state == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
-                <span>{{ card_status.label }}</span>
-            </span>
         </span>
 
+        <span class="match-card-sport-bookmaker"{% if not website_settings.match_bookmaker %} aria-hidden="true"{% endif %}>
+            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
+        </span>
+
+        <span class="match-status match-status-{{ card_status.state }}">
+            {% if card_status.state == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
+            <span>{{ card_status.label }}</span>
+        </span>
+    </div>
+
+    <a class="match-card-main" href="{{ match.get_absolute_url }}">
         <div class="match-card-head">
             <div class="match-league">
                 <span class="league-mark">
@@ -114,35 +121,30 @@
 
     <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
 
-    <div class="match-card-odds-row{% if not website_settings.match_bookmaker %} without-bookmaker{% endif %}">
-        {% if website_settings.match_bookmaker %}
-        <div class="match-card-bookmaker-row" aria-label="Букмекер матча">
-            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
-        </div>
-        {% endif %}
+    <div class="match-card-odds-row without-bookmaker">
         <div
-        class="coupon-options match-card-options{% if match.sync_scope != 'prematch' or not coupon_quick.has_any %} is-locked{% elif card_readonly or not can_write_coupon %} is-readonly{% endif %}"
-        aria-label="{% if match.sync_scope != 'prematch' %}Заблокированные коэффициенты матча{% else %}Выбор ставки{% endif %}"
-        data-match-bets
-        data-match-id="{{ match.id }}"
-        data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
-        data-league="{{ match.league_name|default:'Лига не указана' }}"
-        data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
-        data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
-    >
-        {% for option in coupon_quick.items %}
-        <button class="coupon-option match-bet-option" type="button"
-            {% if option.coefficient and not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}
-                data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-coefficient="{{ option.coefficient }}"
-            {% else %}
-                disabled aria-disabled="true"
-            {% endif %}
+            class="coupon-options match-card-options{% if match.sync_scope != 'prematch' or not coupon_quick.has_any %} is-locked{% elif card_readonly or not can_write_coupon %} is-readonly{% endif %}"
+            aria-label="{% if match.sync_scope != 'prematch' %}Заблокированные коэффициенты матча{% else %}Выбор ставки{% endif %}"
+            data-match-bets
+            data-match-id="{{ match.id }}"
+            data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
+            data-league="{{ match.league_name|default:'Лига не указана' }}"
+            data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+            data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
         >
-            {% if not option.coefficient or card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
-            <span>{{ option.label }}</span>
-            {% if option.coefficient %}<small>{{ option.coefficient }}</small>{% endif %}
-        </button>
-        {% endfor %}
-    </div>
+            {% for option in coupon_quick.items %}
+            <button class="coupon-option match-bet-option" type="button"
+                {% if option.coefficient and not card_readonly and can_write_coupon and match.sync_scope == "prematch" %}
+                    data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-coefficient="{{ option.coefficient }}"
+                {% else %}
+                    disabled aria-disabled="true"
+                {% endif %}
+            >
+                {% if not option.coefficient or card_readonly or not can_write_coupon or match.sync_scope != "prematch" %}{% include "game/includes/_match_odd_lock.html" %}{% endif %}
+                <span>{{ option.label }}</span>
+                {% if option.coefficient %}<small>{{ option.coefficient }}</small>{% endif %}
+            </button>
+            {% endfor %}
+        </div>
     </div>
 </article>
