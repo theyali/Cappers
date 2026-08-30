@@ -12,11 +12,12 @@
 <link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/content-view-mode.css' %}">
 <link rel="stylesheet" href="{% static 'front/css/content-view-match.css' %}">
+<link rel="stylesheet" href="{% static 'front/css/matches-table-sidebar.css' %}">
 {% endblock %}
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-<section class="matches-page" aria-label="Матчи">
+<section class="matches-page{% if content_view_mode == 'table' %} is-table-view{% endif %}" aria-label="Матчи">
     <div
         class="matches-hero long-bg long-bg-2 is-skeleton-loading"
         data-skeleton-block
@@ -169,6 +170,7 @@
         </section>
 
         {% include "game/_coupon_sidebar.html" %}
+        {% include "game/_match_table_filter_sidebar.html" %}
     </div>
 </section>
 {% endblock %}
