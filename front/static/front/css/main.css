@@ -9525,6 +9525,8 @@ h2 {
 
     .match-card {
         min-height: 210px;
+        padding: 4px;
+        gap: 10px;
     }
 
     .coupon-head {
