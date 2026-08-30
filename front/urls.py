@@ -59,6 +59,7 @@ urlpatterns = [
     path("feed/", feed_views.following_feed, name="following_feed"),
     path("favorites/", favorites_views.favorites, name="favorites"),
     path("bookmakers/", bookmaker_views.bookmakers, name="bookmakers"),
+    path("bonuses/", bookmaker_views.bonuses, name="bonuses"),
     path("sports-news/", article_views.sports_news, name="sports_news"),
     path("articles/", article_views.articles, name="articles"),
     path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),

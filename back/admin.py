@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Bookmaker, WebsiteSettings
+from .models import Bonus, Bookmaker, WebsiteSettings
 
 
 @admin.register(Bookmaker)
@@ -16,6 +16,20 @@ class BookmakerAdmin(admin.ModelAdmin):
     list_editable = ("show_on_home", "home_order", "exclusive", "order")
     list_filter = ("show_on_home", "exclusive")
     search_fields = ("name", "bonus_text", "description")
+    ordering = ("order", "id")
+
+
+@admin.register(Bonus)
+class BonusAdmin(admin.ModelAdmin):
+    list_display = (
+        "bookmaker",
+        "short_description",
+        "promocode",
+        "order",
+    )
+    list_editable = ("order",)
+    list_filter = ("bookmaker",)
+    search_fields = ("bookmaker__name", "short_description", "promocode")
     ordering = ("order", "id")
 
 

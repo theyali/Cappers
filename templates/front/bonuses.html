@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Бонусы букмекеров — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="home-trusted-bookmakers" aria-labelledby="bonuses-page-title">
+    <header class="home-trusted-bookmakers-head">
+        <div>
+            <p class="home-trusted-bookmakers-eyebrow">Акции и промокоды</p>
+            <h1 id="bonuses-page-title">Бонусы</h1>
+            <p class="home-trusted-bookmakers-copy">Актуальные бонусы и промокоды букмекерских контор. Выбирайте лучшее предложение и переходите на сайт БК.</p>
+        </div>
+        <span class="home-trusted-bookmakers-count" aria-label="Бонусов: {{ bonuses|length }}">{{ bonuses|length }}</span>
+    </header>
+
+    {% if bonuses %}
+    <div class="home-trusted-bookmakers-list">
+        {% for bonus in bonuses %}
+        <a
+            class="home-trusted-bookmaker"
+            href="{{ bonus.link }}"
+            target="_blank"
+            rel="noopener noreferrer nofollow sponsored"
+        >
+            <span class="home-trusted-bookmaker-logo{% if bonus.bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bonus.bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
+                {% if bonus.bookmaker.icon %}
+                    <img src="{{ bonus.bookmaker.icon.url }}" width="100" height="76" alt="{{ bonus.bookmaker.name }}" loading="lazy">
+                {% else %}
+                    <strong>{{ bonus.bookmaker.name|slice:":2"|upper }}</strong>
+                {% endif %}
+            </span>
+
+            <span class="home-trusted-bookmaker-body">
+                <span class="home-trusted-bookmaker-name">{{ bonus.bookmaker.name }}</span>
+                <span class="home-trusted-bookmaker-description">{{ bonus.short_description }}</span>
+                {% if bonus.promocode or bonus.description %}
+                <span class="home-trusted-bookmaker-meta">
+                    {% if bonus.promocode %}
+                    <span class="home-trusted-bookmaker-bonus">Промокод: {{ bonus.promocode }}</span>
+                    {% endif %}
+                    {% if bonus.description %}
+                    <span class="home-trusted-bookmaker-exclusive">Подробнее</span>
+                    {% endif %}
+                </span>
+                {% endif %}
+            </span>
+
+            <span class="home-trusted-bookmaker-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="articles-empty">
+        <strong>Бонусов пока нет</strong>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

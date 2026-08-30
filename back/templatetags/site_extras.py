@@ -1,8 +1,10 @@
 from django import template
+from django.db.models import Count, Q
 
 from back.models import Bookmaker, WebsiteSettings
 from front.expert_ranking import ranked_expert_profiles
 from front.popular_matches import build_popular_matches
+from game.models import Match, Prediction, PredictionCoupon
 
 register = template.Library()
 
@@ -51,3 +53,30 @@ def home_bookmakers():
         Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")
     )
     return {"bookmakers": bookmakers}
+
+
+@register.inclusion_tag("front/includes/_hot_matches_sidebar.html")
+def hot_matches_sidebar(limit=6):
+    try:
+        safe_limit = max(1, min(int(limit), 12))
+    except (TypeError, ValueError):
+        safe_limit = 6
+
+    matches = (
+        Match.objects.filter(
+            sync_scope__in=(Match.SyncScope.PREMATCH, Match.SyncScope.LIVE),
+        )
+        .annotate(
+            prediction_count=Count(
+                "predictions",
+                filter=Q(
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                ),
+            )
+        )
+        .filter(prediction_count__gt=0)
+        .select_related("sport", "league")
+        .order_by("-prediction_count", "-starts_at")[:safe_limit]
+    )
+
+    return {"hot_matches": matches}

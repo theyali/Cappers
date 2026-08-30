@@ -1,0 +1,53 @@
+{% if hot_matches %}
+<section class="hot-matches-sidebar" aria-label="Матчи с прогнозами">
+    <div class="hot-matches-head">
+        <div>
+            <p>Топ матчей</p>
+            <h2>С прогнозами</h2>
+        </div>
+        <span>{{ hot_matches|length }}</span>
+    </div>
+
+    <div class="hot-matches-list">
+        {% for match in hot_matches %}
+        <a class="hot-match" href="{{ match.get_absolute_url }}">
+            <div class="hot-match-main">
+                {% if match.league_name %}
+                <span class="hot-match-league">
+                    {% if match.sport %}{{ match.sport.name_ru|default:match.sport.name }} · {% endif %}{{ match.league_name }}
+                </span>
+                {% endif %}
+
+                <div class="hot-match-team">
+                    <span class="hot-match-team-logo">
+                        {% if match.home_team_logo %}
+                            <img src="{{ match.home_team_logo }}" alt="">
+                        {% else %}
+                            {{ match.home_team_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ match.home_team_name }}</strong>
+                </div>
+                <div class="hot-match-team">
+                    <span class="hot-match-team-logo">
+                        {% if match.away_team_logo %}
+                            <img src="{{ match.away_team_logo }}" alt="">
+                        {% else %}
+                            {{ match.away_team_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ match.away_team_name }}</strong>
+                </div>
+            </div>
+
+            <div class="hot-match-meta">
+                <strong>{{ match.prediction_count }} прогнозов</strong>
+                {% if match.starts_at %}
+                <span>{{ match.starts_at|date:"d.m H:i" }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}

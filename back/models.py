@@ -21,6 +21,28 @@ class Bookmaker(models.Model):
         return self.name
 
 
+class Bonus(models.Model):
+    bookmaker = models.ForeignKey(
+        Bookmaker,
+        verbose_name="Букмекер",
+        on_delete=models.CASCADE,
+        related_name="bonuses",
+    )
+    promocode = models.CharField("Промокод", max_length=120, blank=True)
+    short_description = models.CharField("Краткое описание", max_length=220)
+    description = models.TextField("Описание", blank=True)
+    link = models.URLField("Ссылка", max_length=500)
+    order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
+
+    class Meta:
+        verbose_name = "Бонус"
+        verbose_name_plural = "Бонусы"
+        ordering = ("order", "id")
+
+    def __str__(self) -> str:
+        return f"{self.bookmaker.name} — {self.short_description}"
+
+
 class WebsiteSettings(models.Model):
     site_name = models.CharField("Название сайта", max_length=120, default="КапперХаб")
     fixed_tg_enable = models.BooleanField("Показывать Telegram-баннер", default=False)

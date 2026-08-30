@@ -9121,7 +9121,6 @@ h2 {
     gap: 18px;
     align-items: start;
 }
-
 .match-detail-main {
     min-width: 0;
     display: grid;
@@ -12194,6 +12193,7 @@ h2 {
     display: grid;
     gap: 20px;
     margin: 0 auto;
+    padding: 10px;
 }
 
 .coupon-detail-back {
@@ -12274,7 +12274,7 @@ h2 {
 
 .coupon-slip-overview-row strong {
     color: var(--text);
-    font-size: 23px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.1;
     text-align: right;
@@ -12303,8 +12303,8 @@ h2 {
 
 .coupon-slip-match {
     display: grid;
-    gap: 20px;
-    padding: 20px 22px 18px;
+    gap: 9px;
+    padding: 15px 19px 11px;
     color: inherit;
 }
 
@@ -12489,8 +12489,8 @@ h2 {
 
 .coupon-slip-result {
     display: grid;
-    gap: 10px;
-    padding: 14px 22px 16px;
+    gap: 6px;
+    padding: 10px 16px 10px;
     background: #171718;
 }
 
@@ -14796,12 +14796,15 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .predictions-layout > .bookmakers-sidebar .bookmaker-card {
-    grid-template-columns: 66px minmax(0, 1fr) 32px;
+    grid-template-columns: 52px minmax(0, 1fr) 28px;
+    min-height: 54px;
+    padding: 8px;
+    gap: 8px;
 }
 
 .predictions-layout > .bookmakers-sidebar .bookmaker-logo {
-    width: 66px;
-    height: 46px;
+    width: 52px;
+    height: 36px;
 }
 
 .predictions-lazy {
@@ -14878,6 +14881,7 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .prediction-table-row[data-coupon-url] {
     cursor: pointer;
+        border-bottom: 1px solid var(--line);
 }
 
 .prediction-table-row[data-coupon-url] a,
@@ -14942,7 +14946,6 @@ body:has(.predictions-scroll-page) .site-footer {
         position: static;
         top: auto;
         align-self: stretch;
-        height: 100%;
         min-height: 0;
         max-height: none;
         overflow-x: hidden;
@@ -15116,6 +15119,12 @@ body:has(.predictions-scroll-page) .site-footer {
     .prediction-filter-sidebar-chevron {
         transition: none;
     }
+}
+
+
+/* Custom: coupon-detail-layout — левый сайдбар 350px */
+.coupon-detail-layout {
+    grid-template-columns: 350px minmax(0, 1fr) minmax(300px, 340px);
 }
 
 
@@ -22668,8 +22677,8 @@ body:has(.predictions-scroll-page) .site-footer {
 .popular_matches {
     min-width: 0;
     display: grid;
-    gap: 14px;
-    padding: 18px;
+    gap: 10px;
+    padding: 0;
     border-radius: 20px;
     background: var(--panel);
 }
@@ -23164,8 +23173,8 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .bookmakers-panel {
     display: grid;
-    gap: 16px;
-    padding: 18px;
+    gap: 10px;
+    padding: 12px;
     border-radius: 20px;
     background: var(--panel);
 }
@@ -23174,7 +23183,7 @@ body:has(.predictions-scroll-page) .site-footer {
     display: flex;
     align-items: end;
     justify-content: space-between;
-    gap: 14px;
+    gap: 10px;
 }
 
 .bookmakers-head div {
@@ -23182,9 +23191,9 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .bookmakers-head p {
-    margin: 0 0 7px;
+    margin: 0 0 5px;
     color: var(--yellow);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: .13em;
     text-transform: uppercase;
@@ -23193,37 +23202,37 @@ body:has(.predictions-scroll-page) .site-footer {
 .bookmakers-head h2 {
     margin: 0;
     color: var(--text);
-    font-size: 30px;
+    font-size: 24px;
     line-height: 1;
 }
 
 .bookmakers-head > span {
     flex: 0 0 auto;
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 28px;
+    min-height: 28px;
     display: inline-grid;
     place-items: center;
-    padding: 0 10px;
-    border-radius: 11px;
+    padding: 0 8px;
+    border-radius: 9px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
 }
 
 .bookmakers-list {
     display: grid;
-    gap: 9px;
+    gap: 6px;
 }
 
 .bookmaker-card {
     min-width: 0;
-    min-height: 88px;
+    min-height: 68px;
     display: grid;
     grid-template-columns: 76px minmax(0, 1fr) 34px;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 9px;
     border-radius: 15px;
     color: inherit;
     background: #171718;
@@ -23260,14 +23269,14 @@ body:has(.predictions-scroll-page) .site-footer {
     display: grid;
     align-content: center;
     justify-items: start;
-    gap: 5px;
+    gap: 3px;
 }
 
 .bookmaker-name {
     max-width: 100%;
     overflow: hidden;
     color: var(--text);
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 800;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -23277,7 +23286,7 @@ body:has(.predictions-scroll-page) .site-footer {
     max-width: 100%;
     overflow: hidden;
     color: var(--muted);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -23298,19 +23307,19 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .bookmaker-arrow {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
     display: grid;
     place-items: center;
-    border-radius: 10px;
+    border-radius: 9px;
     color: rgba(255, 255, 255, .72);
     background: #242426;
     transition: color .18s ease, background .18s ease, transform .18s ease;
 }
 
 .bookmaker-arrow svg {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -23374,19 +23383,19 @@ body:has(.predictions-scroll-page) .site-footer {
     }
 
     .bookmaker-card {
-        grid-template-columns: 70px minmax(0, 1fr) 32px;
-        min-height: 82px;
-        padding: 10px;
+        grid-template-columns: 56px minmax(0, 1fr) 28px;
+        min-height: 62px;
+        padding: 8px;
     }
 
     .bookmaker-logo {
-        width: 70px;
-        height: 48px;
+        width: 56px;
+        height: 38px;
     }
 
     .bookmaker-arrow {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
     }
 }
 
