@@ -136,7 +136,7 @@
     }
 
     .matches-list-panel .content-table-view {
-        --content-sport-sticky-top: calc(var(--brand-logo-size) + 36px);
+        --content-sport-sticky-top: 0px;
     }
 
     .coupon-sidebar {
