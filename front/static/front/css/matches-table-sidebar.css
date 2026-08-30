@@ -6,6 +6,42 @@
     gap: 5px;
 }
 
+.matches-page.is-table-view > .matches-hero {
+    display: none;
+}
+
+.matches-page.is-table-view .matches-list-panel > .matches-hero {
+    min-height: 86px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    outline: 0;
+}
+
+.matches-page.is-table-view .matches-list-panel > .matches-hero h1 {
+    font-size: 26px;
+    line-height: 1;
+}
+
+.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta {
+    min-width: 118px;
+    min-height: 52px;
+    padding: 9px 11px;
+    border-radius: 10px;
+}
+
+.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta span {
+    font-size: 22px;
+}
+
+.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta small {
+    margin-top: 3px;
+    font-size: 10px;
+}
+
 .matches-sport-tabs,
 .matches-date-filter {
     max-height: 180px;
@@ -23,6 +59,19 @@
 }
 
 @media (min-width: 1121px) {
+    body:has(.matches-page.is-table-view) {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    body:has(.matches-page.is-table-view) .site-main {
+        padding-bottom: 0;
+    }
+
+    body:has(.matches-page.is-table-view) .site-footer {
+        display: none;
+    }
+
     .matches-page.is-table-view .matches-sport-tabs,
     .matches-page.is-table-view .matches-date-filter {
         max-height: 0;
@@ -46,17 +95,22 @@
     }
 
     .matches-page.is-table-view .matches-shell {
+        height: calc(100dvh - var(--brand-logo-size) - 68px);
+        min-height: 0;
         grid-template-columns: minmax(220px, 252px) minmax(0, 1fr) minmax(320px, 350px);
         gap: 14px;
+        align-items: stretch;
     }
 
-    .matches-page.is-table-view .matches-table-filter-sidebar {
-        position: sticky;
-        top: 16px;
+    .matches-page.is-table-view .matches-shell > .matches-table-filter-sidebar {
+        position: static;
+        top: auto;
         grid-column: 1;
         grid-row: 1;
-        align-self: start;
-        max-height: calc(100dvh - 32px);
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
         display: grid;
         align-content: start;
         gap: 12px;
@@ -72,15 +126,31 @@
         animation: matchesTableSidebarIn .22s ease both;
     }
 
-    .matches-page.is-table-view .matches-list-panel {
+    .matches-page.is-table-view .matches-shell > .matches-list-panel {
         grid-column: 2;
         grid-row: 1;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
-    .matches-page.is-table-view .coupon-sidebar {
+    .matches-page.is-table-view .matches-shell > .coupon-sidebar {
+        position: static;
+        top: auto;
         grid-column: 3;
         grid-row: 1;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
         display: block;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .matches-page.is-table-view .matches-shell:not(:has(.coupon-sidebar)) {
