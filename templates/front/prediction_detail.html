@@ -8,13 +8,8 @@
 {% block content %}
 <section class="predictions-page coupon-detail-layout-page" aria-label="Купон #{{ coupon.id }}">
     <div class="predictions-layout coupon-detail-layout">
-        <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" style="display:grid;gap:14px;" aria-label="Популярные матчи и реклама">
+        <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" style="display:grid;gap:14px;" aria-label="Популярные матчи">
             {% popular_matches 5 %}
-            {% if adv_banners %}
-            <div class="predictions-ad-sidebar coupon-sidebar coupon-sidebar-ads" aria-label="Реклама">
-                {% include "pages/_adv_banners.html" with placement="sidebar" %}
-            </div>
-            {% endif %}
         </aside>
 
         <div class="predictions-content coupon-detail-content">
