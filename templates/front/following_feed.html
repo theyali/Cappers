@@ -17,7 +17,7 @@
         {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_predictions_count reset_url=filter_action_url %}
 
         <div class="predictions-content following-feed-content" data-predictions-content>
-            <div class="predictions-hero following-feed-hero" style="background:#0b56fa;">
+            <div class="predictions-hero following-feed-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_2.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
                 <div>
                     <p class="predictions-eyebrow">Персональная лента</p>
                     <h1>Моя лента</h1>
