@@ -19,10 +19,10 @@ jobs:
           fetch-depth: 0
 
       - name: Apply changes
-        run: python .github/scripts/apply_bookmaker_placements.py
+        run: python .github/scripts/apply_bookmaker_placements_v2.py
 
       - name: Remove one-shot files
-        run: rm -f .github/workflows/add-bookmaker-placements.yml .github/scripts/apply_bookmaker_placements.py
+        run: rm -f .github/workflows/add-bookmaker-placements.yml .github/scripts/apply_bookmaker_placements.py .github/scripts/apply_bookmaker_placements_v2.py
 
       - name: Commit result
         run: |
