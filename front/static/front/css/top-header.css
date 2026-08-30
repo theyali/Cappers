@@ -7,7 +7,7 @@
 }
 
 .site-topbar-nav {
-    width: min(1480px, calc(100% - 32px));
+    width: min(1680px, calc(100% - 32px));
     display: flex;
     align-items: center;
     gap: 6px;

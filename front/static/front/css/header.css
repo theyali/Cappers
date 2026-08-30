@@ -9,7 +9,7 @@
 }
 
 .site-nav {
-    width: min(1480px, calc(100% - 32px));
+    width: min(1680px, calc(100% - 32px));
     margin: auto;
     padding: 10px 22px;
     display: grid;

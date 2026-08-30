@@ -1,5 +1,5 @@
 .site-footer {
-    width: min(1480px, calc(100% - 32px));
+    width: min(1680px, calc(100% - 32px));
     margin: 0 auto 24px;
     overflow: hidden;
     border-radius: 22px;
