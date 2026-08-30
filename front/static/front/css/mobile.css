@@ -247,7 +247,6 @@
         background: #19191b;
     }
 }
-
 @media (max-width: 1120px) {
     body {
         --bottom-nav-space: 78px;
@@ -497,7 +496,6 @@
     .site-nav-center a.is-active .nav-icon-image img {
         opacity: 1;
     }
-
     .nav-profile-dropdown {
         right: 0;
         width: min(260px, calc(100vw - 24px));
@@ -747,7 +745,6 @@ summary:focus-visible,
         -webkit-mask: url("../svgs/home.svg") center / contain no-repeat;
         mask: url("../svgs/home.svg") center / contain no-repeat;
     }
-
     .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
         mask: url("../svgs/soccer.svg") center / contain no-repeat;
@@ -1990,5 +1987,29 @@ summary:focus-visible,
 
     .odds-button b {
         font-size: 13px;
+    }
+}
+
+@media (min-width: 1350px) and (max-width: 1500px) {
+    .site-nav-actions .nav-wallet {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .site-nav-actions .nav-wallet-topup {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        opacity: 0;
+        background: transparent;
+    }
+}
+
+@media (max-width: 1120px) {
+    .match-detail-sidebar {
+        display: none !important;
     }
 }
