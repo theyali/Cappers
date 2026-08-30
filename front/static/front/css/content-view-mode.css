@@ -367,6 +367,21 @@
     display: contents;
 }
 
+/* The shared skeleton service must stay active for the async odds block,
+   but a display:contents wrapper cannot own an overlay box. Keep the six
+   fixed placeholder cells visible so the table never shifts while odds load. */
+.match-table-odds[data-skeleton-block].is-skeleton-loading {
+    overflow: visible;
+}
+
+.match-table-odds[data-skeleton-block].is-skeleton-loading::after {
+    display: none;
+}
+
+.match-table-odds[data-skeleton-block].is-skeleton-loading > * {
+    opacity: 1;
+}
+
 .match-table-odd {
     min-width: 0;
     min-height: 42px;
