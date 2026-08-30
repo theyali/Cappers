@@ -71,7 +71,7 @@
                         </a>
 
                         <a class="prediction-table-expert" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
-                            <span class="prediction-table-avatar"{% if prediction.expert_avatar_url %} data-skeleton-image{% endif %}>
+                            <span class="prediction-table-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
                                 {% if prediction.expert_avatar_url %}
                                     <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">
                                 {% elif prediction.coupon.author.avatar %}
