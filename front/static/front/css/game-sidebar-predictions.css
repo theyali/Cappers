@@ -153,7 +153,7 @@
         padding-right: 2px;
     }
 
-    .matches-page.is-table-view .matches-table-filter-sidebar {
+    .matches-page .matches-table-filter-sidebar {
         top: calc(var(--brand-logo-size) + 36px);
         max-height: calc(100dvh - var(--brand-logo-size) - 52px);
     }

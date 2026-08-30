@@ -2,15 +2,11 @@
     display: none;
 }
 
-.matches-page.is-table-view {
+.matches-page {
     gap: 5px;
 }
 
-.matches-page.is-table-view > .matches-hero {
-    display: none;
-}
-
-.matches-page.is-table-view .matches-list-panel > .matches-hero {
+.matches-page .matches-list-panel > .matches-hero {
     min-height: 86px;
     flex: 0 0 auto;
     display: flex;
@@ -21,23 +17,23 @@
     outline: 0;
 }
 
-.matches-page.is-table-view .matches-list-panel > .matches-hero h1 {
+.matches-page .matches-list-panel > .matches-hero h1 {
     font-size: 26px;
     line-height: 1;
 }
 
-.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta {
+.matches-page .matches-list-panel > .matches-hero .matches-hero-meta {
     min-width: 118px;
     min-height: 52px;
     padding: 9px 11px;
     border-radius: 10px;
 }
 
-.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta span {
+.matches-page .matches-list-panel > .matches-hero .matches-hero-meta span {
     font-size: 22px;
 }
 
-.matches-page.is-table-view .matches-list-panel > .matches-hero .matches-hero-meta small {
+.matches-page .matches-list-panel > .matches-hero .matches-hero-meta small {
     margin-top: 3px;
     font-size: 10px;
 }
@@ -59,21 +55,21 @@
 }
 
 @media (min-width: 1121px) {
-    body:has(.matches-page.is-table-view) {
+    body:has(.matches-page) {
         height: 100dvh;
         overflow: hidden;
     }
 
-    body:has(.matches-page.is-table-view) .site-main {
+    body:has(.matches-page) .site-main {
         padding-bottom: 0;
     }
 
-    body:has(.matches-page.is-table-view) .site-footer {
+    body:has(.matches-page) .site-footer {
         display: none;
     }
 
-    .matches-page.is-table-view .matches-sport-tabs,
-    .matches-page.is-table-view .matches-date-filter {
+    .matches-page > .matches-sport-tabs,
+    .matches-page > .matches-date-filter {
         max-height: 0;
         min-height: 0;
         padding-top: 0;
@@ -94,7 +90,7 @@
             visibility 0s linear .26s;
     }
 
-    .matches-page.is-table-view .matches-shell {
+    .matches-page .matches-shell {
         height: calc(100dvh - var(--brand-logo-size) - 68px);
         min-height: 0;
         grid-template-columns: minmax(220px, 252px) minmax(0, 1fr) minmax(320px, 350px);
@@ -102,7 +98,7 @@
         align-items: stretch;
     }
 
-    .matches-page.is-table-view .matches-shell > .matches-table-filter-sidebar {
+    .matches-page .matches-shell > .matches-table-filter-sidebar {
         position: static;
         top: auto;
         grid-column: 1;
@@ -126,7 +122,7 @@
         animation: matchesTableSidebarIn .22s ease both;
     }
 
-    .matches-page.is-table-view .matches-shell > .matches-list-panel {
+    .matches-page .matches-shell > .matches-list-panel {
         grid-column: 2;
         grid-row: 1;
         align-self: stretch;
@@ -138,7 +134,7 @@
         overscroll-behavior: contain;
     }
 
-    .matches-page.is-table-view .matches-shell > .coupon-sidebar {
+    .matches-page .matches-shell > .coupon-sidebar {
         position: static;
         top: auto;
         grid-column: 3;
@@ -153,25 +149,21 @@
         overscroll-behavior: contain;
     }
 
-    .matches-page.is-table-view .matches-shell:not(:has(.coupon-sidebar)) {
+    .matches-page .matches-shell:not(:has(.coupon-sidebar)) {
         grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
     }
 
-    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar {
+    .matches-page .matches-table-filter-sidebar::-webkit-scrollbar {
         width: 6px;
     }
 
-    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar-thumb {
+    .matches-page .matches-table-filter-sidebar::-webkit-scrollbar-thumb {
         border-radius: 999px;
         background: #3a3a3d;
     }
 
-    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar-track {
+    .matches-page .matches-table-filter-sidebar::-webkit-scrollbar-track {
         background: transparent;
-    }
-
-    .matches-page:not(.is-table-view) .matches-shell:not(:has(.coupon-sidebar)) {
-        grid-template-columns: minmax(0, 1fr);
     }
 }
 

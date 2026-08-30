@@ -18,22 +18,7 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-<section class="matches-page{% if content_view_mode == 'table' %} is-table-view{% endif %}" aria-label="Матчи">
-    <div
-        class="matches-hero long-bg long-bg-2 is-skeleton-loading"
-        data-skeleton-block
-        data-matches-hero-skeleton
-        data-skeleton-background="{% static 'front/img/long_2.webp' %}"
-        aria-busy="true"
-    >
-        <div>
-            <h1>{{ match_list_h1|default:"Матчи" }}</h1>
-        </div>
-        <div class="matches-hero-meta">
-            <span>{{ hero_count|default:total_count }}</span>
-            <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
-        </div>
-    </div>
+<section class="matches-page" aria-label="Матчи">
 
     <nav class="matches-sport-tabs" aria-label="Выбор спорта">
         {% for tab in sport_tabs %}
@@ -139,12 +124,30 @@
         data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
         data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
     >
+        {% include "game/_match_table_filter_sidebar.html" %}
+
         <section
             class="matches-list-panel"
             aria-label="Список матчей"
             data-content-view-root
             data-content-view-current="{{ content_view_mode }}"
         >
+            <div
+                class="matches-hero long-bg long-bg-2 is-skeleton-loading"
+                data-skeleton-block
+                data-matches-hero-skeleton
+                data-skeleton-background="{% static 'front/img/long_2.webp' %}"
+                aria-busy="true"
+            >
+                <div>
+                    <h1>{{ match_list_h1|default:"Матчи" }}</h1>
+                </div>
+                <div class="matches-hero-meta">
+                    <span>{{ hero_count|default:total_count }}</span>
+                    <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
+                </div>
+            </div>
+
             {% if matches %}
                 <div class="content-view-toolbar">
                     {% include "front/includes/_content_view_switcher.html" %}
@@ -171,7 +174,6 @@
         </section>
 
         {% include "game/_coupon_sidebar.html" %}
-        {% include "game/_match_table_filter_sidebar.html" %}
     </div>
 </section>
 {% endblock %}
