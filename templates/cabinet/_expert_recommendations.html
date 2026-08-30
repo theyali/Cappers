@@ -14,7 +14,7 @@
             <div class="expert-recommendation-cover" aria-hidden="true"></div>
 
             <a
-                class="expert-recommendation-avatar{% if recommendation.avatar_url %} has-image{% endif %}"
+                class="expert-recommendation-avatar{% if recommendation.avatar_url %} has-image{% endif %}{% if recommendation.is_vip %} is-vip{% endif %}"
                 href="{{ recommendation.profile_url }}"
                 aria-label="Открыть профиль {{ recommendation.name }}"
                 {% if recommendation.avatar_url %}data-skeleton-image{% endif %}

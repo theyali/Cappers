@@ -60,11 +60,11 @@
                         href="{{ follow.feed_filter_url }}"
                         data-prediction-ajax-link
                     >
-                        <span class="following-capper-avatar">
+                        <span class="following-capper-avatar{% if follow.analyst.analyst_profile.is_vip %} is-vip{% endif %}"{% if follow.feed_avatar_url or follow.analyst.avatar %} data-skeleton-image{% endif %}>
                             {% if follow.feed_avatar_url %}
-                                <img src="{{ follow.feed_avatar_url }}" alt="{{ follow.feed_name }}">
+                                <img src="{{ follow.feed_avatar_url }}" width="40" height="40" alt="{{ follow.feed_name }}">
                             {% elif follow.analyst.avatar %}
-                                <img src="{{ follow.analyst.avatar.url }}" alt="{{ follow.feed_name }}">
+                                <img src="{{ follow.analyst.avatar.url }}" width="40" height="40" alt="{{ follow.feed_name }}">
                             {% else %}
                                 {{ follow.feed_initial }}
                             {% endif %}
