@@ -115,8 +115,12 @@
     <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
 
     <div class="match-card-odds-row{% if not website_settings.match_bookmaker %} without-bookmaker{% endif %}">
-        {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
-    <div
+        {% if website_settings.match_bookmaker %}
+        <div class="match-card-bookmaker-row" aria-label="Букмекер матча">
+            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
+        </div>
+        {% endif %}
+        <div
         class="coupon-options match-card-options{% if match.sync_scope != 'prematch' or not coupon_quick.has_any %} is-locked{% elif card_readonly or not can_write_coupon %} is-readonly{% endif %}"
         aria-label="{% if match.sync_scope != 'prematch' %}Заблокированные коэффициенты матча{% else %}Выбор ставки{% endif %}"
         data-match-bets
