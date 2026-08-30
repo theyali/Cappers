@@ -48,7 +48,7 @@
         {% endif %}
     </section>
 
-    {% if adv_banners and adv_placement == 'sidebar' %}
+    {% if show_sidebar_ads %}
         {% include "pages/_adv_banners.html" with placement="sidebar" %}
     {% endif %}
 </aside>
