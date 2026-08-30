@@ -93,12 +93,17 @@ def _monthly_stats(rows: list[CapperMonthlyStat]) -> list[dict]:
     ]
 
 
-def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]:
+def _recommended_experts(
+    request,
+    current_profile: AnalystProfile | None = None,
+) -> list[dict]:
     profiles = AnalystProfile.objects.filter(
         user__role=User.Role.ANALYST,
         is_public=True,
         is_recommended=True,
-    ).exclude(pk=current_profile.pk)
+    )
+    if current_profile is not None:
+        profiles = profiles.exclude(pk=current_profile.pk)
 
     if request.user.is_authenticated:
         profiles = profiles.exclude(user_id=request.user.pk)

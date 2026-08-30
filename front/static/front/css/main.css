@@ -25572,3 +25572,304 @@ h2 {
 #telegramDisconnectForm {
     display: none;
 }
+
+
+/* Merged from front/static/front/css/expert-public-tabs.css */
+.expert-public-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.expert-public-shell > .expert-public-page {
+    display: contents;
+}
+
+.expert-public-shell .expert-public-hero {
+    order: 10;
+}
+
+.expert-public-shell .expert-public-stats-compact {
+    order: 20;
+}
+
+.expert-public-tabs {
+    order: 30;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.expert-public-tab {
+    min-height: 48px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.expert-public-tab:hover {
+    color: #fff;
+    background: #29292c;
+}
+
+.expert-public-tab.is-active,
+.expert-public-tab[aria-selected="true"] {
+    color: #fff;
+    background: var(--blue);
+}
+
+.expert-public-tab:active {
+    transform: translateY(1px);
+}
+
+.expert-public-tab:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 2px;
+}
+
+.expert-public-shell .expert-public-predictions,
+.expert-public-shell .expert-recent-performance {
+    order: 40;
+}
+
+.expert-public-shell .expert-public-analytics {
+    order: 50;
+}
+
+.expert-public-shell .expert-sport-profit {
+    order: 60;
+}
+
+.expert-public-shell .expert-monthly-stats {
+    order: 70;
+}
+
+.expert-public-shell .expert-recommendations {
+    order: 80;
+}
+
+.expert-public-shell[data-active-tab="predictions"] .expert-recent-performance,
+.expert-public-shell[data-active-tab="predictions"] .expert-public-analytics,
+.expert-public-shell[data-active-tab="predictions"] .expert-sport-profit,
+.expert-public-shell[data-active-tab="predictions"] .expert-monthly-stats {
+    display: none !important;
+}
+
+.expert-public-shell[data-active-tab="stats"] .expert-public-predictions {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .expert-public-tabs {
+        gap: 4px;
+        padding: 4px;
+        border-radius: 13px;
+    }
+
+    .expert-public-tab {
+        min-height: 44px;
+        padding: 9px 12px;
+        border-radius: 9px;
+        font-size: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .expert-public-tab {
+        transition: none;
+    }
+}
+
+
+/* Merged from front/static/front/css/floating-actions.css */
+.fixed-tg-btn-wrapper {
+    right: 24px;
+    top: auto;
+    bottom: 24px;
+    z-index: 50;
+    transform: none;
+}
+
+.fixed-tg-btn {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    display: grid;
+    place-items: center;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--blue);
+    font-size: 0;
+    line-height: 1;
+}
+
+.fixed-tg-btn > span:last-child {
+    display: none;
+}
+
+.fixed-tg-icon {
+    width: 25px;
+    height: 25px;
+}
+
+.fixed-tg-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* Shared VIP avatar treatment. Keep the badge attached to the person, not the card. */
+.expert-public-shell.is-vip .expert-public-avatar,
+.prediction-expert-avatar.is-vip,
+.cappers-ranking-avatar.is-vip,
+.expert-recommendation-avatar.is-vip,
+.following-capper-avatar.is-vip,
+.prediction-table-avatar.is-vip,
+.coupon-author-avatar.is-vip {
+    position: relative;
+    overflow: visible !important;
+    box-shadow: 0 0 0 2px var(--yellow);
+}
+
+.expert-public-shell.is-vip .expert-public-avatar > img,
+.prediction-expert-avatar.is-vip > img,
+.cappers-ranking-avatar.is-vip > img,
+.expert-recommendation-avatar.is-vip > img,
+.following-capper-avatar.is-vip > img,
+.prediction-table-avatar.is-vip > img,
+.coupon-author-avatar.is-vip > img {
+    border-radius: inherit;
+}
+
+/* VIP fallback avatars must not merge with the yellow frame and badge. */
+.expert-public-shell.is-vip .expert-public-avatar:not(:has(img)),
+.prediction-expert-avatar.is-vip:not(:has(img)),
+.cappers-ranking-avatar.is-vip:not(:has(img)),
+.expert-recommendation-avatar.is-vip:not(:has(img)),
+.following-capper-avatar.is-vip:not(:has(img)),
+.prediction-table-avatar.is-vip:not(:has(img)),
+.coupon-author-avatar.is-vip:not(:has(img)) {
+    color: var(--yellow) !important;
+    background: var(--ink) !important;
+}
+
+.expert-public-shell.is-vip .expert-public-avatar::after,
+.prediction-expert-avatar.is-vip::after,
+.cappers-ranking-avatar.is-vip::after,
+.expert-recommendation-avatar.is-vip::after,
+.following-capper-avatar.is-vip::after,
+.prediction-table-avatar.is-vip::after,
+.coupon-author-avatar.is-vip::after {
+    content: "VIP";
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    z-index: 3;
+    min-width: 27px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.expert-public-shell.is-vip .expert-public-avatar::after {
+    right: -8px;
+    bottom: -7px;
+    min-width: 39px;
+    height: 22px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
+.expert-recommendation-avatar.is-vip::after {
+    right: -7px;
+    bottom: -6px;
+    min-width: 34px;
+    height: 20px;
+    font-size: 9px;
+}
+
+body:has([data-current-user-vip]) .nav-profile-avatar-image {
+    box-shadow: 0 0 0 2px var(--yellow);
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon,
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar {
+    position: relative;
+    overflow: visible !important;
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon:not(:has(.nav-profile-avatar-image)),
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar:not(:has(.nav-profile-avatar-image)) {
+    color: var(--yellow) !important;
+    background: var(--ink) !important;
+    box-shadow: 0 0 0 2px var(--yellow);
+}
+
+body:has([data-current-user-vip]) .nav-profile-icon::after,
+body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
+    content: "VIP";
+    position: absolute;
+    right: -7px;
+    bottom: -6px;
+    z-index: 3;
+    min-width: 27px;
+    height: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    line-height: 1;
+    pointer-events: none;
+}
+
+@media (max-width: 1120px) {
+    .fixed-tg-btn-wrapper {
+        right: 12px;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+    }
+
+    .fixed-tg-btn {
+        width: 46px;
+        min-width: 46px;
+        height: 46px;
+        min-height: 46px;
+    }
+
+    .fixed-tg-icon {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 1120px) {
+    .fixed-tg-btn-wrapper {
+        bottom: calc(92px + env(safe-area-inset-bottom));
+    }
+}

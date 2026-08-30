@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
+from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
 from front.expert_ranking import ranked_expert_profiles
 from front.models import Article
@@ -333,6 +334,7 @@ def index(request):
             "latest_articles": Article.objects.filter(is_published=True).order_by(
                 "-created_at", "-id"
             )[:HOME_ARTICLES_LIMIT],
+            "recommended_experts": _recommended_experts(request),
             "important_matches": _important_home_matches(request, can_write_coupon),
             "can_write_coupon": can_write_coupon,
         },

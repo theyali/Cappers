@@ -1,5 +1,4 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'front/css/floating-actions.css' %}">
 {% if request.user.is_authenticated and request.user.is_analyst and request.user.analyst_profile.is_vip %}
 <span hidden data-current-user-vip="1" aria-hidden="true"></span>
 {% endif %}
