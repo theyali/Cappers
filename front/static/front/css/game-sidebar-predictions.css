@@ -1,642 +1,198 @@
-.sidebar-predictions {
-    gap: 12px;
-    padding: 14px;
-    outline: 0;
+.coupon-sidebar {
+    min-width: 0;
+}
+
+.coupon-sidebar:empty {
+    display: none;
+}
+
+.matches-shell:not(:has(.coupon-sidebar)),
+.match-detail-shell:not(:has(.coupon-sidebar)) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.coupon-panel {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 18px;
     background: var(--panel);
 }
 
-.sidebar-predictions-head {
-    align-items: center;
-}
-
-.sidebar-predictions-head h2 {
-    max-width: 220px;
-    font-size: 24px;
-    line-height: 1.02;
-}
-
-.sidebar-predictions-body {
-    gap: 10px;
-}
-
-.sidebar-predictions-list {
-    display: grid;
-    gap: 8px;
-}
-
-.sidebar-prediction-card {
-    min-width: 0;
-    display: grid;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 14px;
-    color: inherit;
-    background: #171718;
-    transition: transform .18s ease, background .18s ease;
-}
-
-.sidebar-prediction-card:hover {
-    transform: translateY(-1px);
-    background: #1d1d1f;
-}
-
-.sidebar-prediction-league-row,
-.sidebar-prediction-league,
-.sidebar-prediction-footer,
-.sidebar-prediction-pick {
-    min-width: 0;
+.coupon-head {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    min-height: 48px;
     display: flex;
     align-items: center;
-}
-
-.sidebar-prediction-league-row,
-.sidebar-prediction-footer,
-.sidebar-prediction-pick {
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    padding: 0 0 8px;
+    background: var(--panel);
 }
 
-.sidebar-prediction-league {
-    gap: 8px;
+.coupon-head h2 {
+    min-width: 0;
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(24px, 2vw, 31px);
+    line-height: 1.05;
 }
 
-.sidebar-prediction-league-logo,
-.sidebar-prediction-team-logo {
-    flex: 0 0 auto;
-    display: grid;
+.coupon-count {
+    min-width: 42px;
+    min-height: 30px;
+    display: inline-grid;
     place-items: center;
-    overflow: hidden;
-    color: var(--ink);
-    background: var(--yellow);
-    font-weight: 800;
-}
-
-.sidebar-prediction-league-logo {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
-    font-size: 10px;
-}
-
-.sidebar-prediction-league-logo img,
-.sidebar-prediction-team-logo img {
-    width: 78%;
-    height: 78%;
-    object-fit: contain;
-}
-
-.sidebar-prediction-league > div {
-    min-width: 0;
-}
-
-.sidebar-prediction-league strong,
-.sidebar-prediction-league small {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sidebar-prediction-league strong {
-    max-width: 170px;
-    color: var(--text);
-    font-size: 11px;
-}
-
-.sidebar-prediction-league small {
-    margin-top: 2px;
-    color: var(--muted);
-    font-size: 9px;
-}
-
-.sidebar-prediction-status {
-    flex: 0 0 auto;
-    min-height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     padding: 0 8px;
-    border-radius: 8px;
-    color: var(--soft);
-    background: #2b2b2e;
-    font-size: 9px;
-    font-weight: 700;
-}
-
-.sidebar-prediction-status.is-win {
+    border-radius: 9px;
     color: var(--ink);
     background: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
 }
 
-.sidebar-prediction-status.is-lose {
-    color: #fff;
-    background: var(--danger);
-}
-
-.sidebar-prediction-status.is-refund {
-    color: #fff;
-    background: var(--blue);
-}
-
-.sidebar-prediction-match {
-    min-width: 0;
+.coupon-body,
+.coupon-sidebar.is-collapsed .coupon-body {
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 12px;
-    background: #202022;
+    gap: 14px;
+    max-height: none;
+    padding: 5px;
+    opacity: 1;
+    overflow: visible;
+    transform: none;
+    transition: none;
 }
 
-.sidebar-prediction-team {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.sidebar-prediction-team.is-away {
-    flex-direction: row-reverse;
-    text-align: right;
-}
-
-.sidebar-prediction-team-logo {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    color: var(--yellow);
-    background: #2a2a2d;
-    font-size: 10px;
-}
-
-.sidebar-prediction-team strong {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 10px;
-    line-height: 1.15;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sidebar-prediction-score {
-    min-height: 42px;
+.coupon-empty {
+    min-height: 260px;
     display: grid;
     place-items: center;
     align-content: center;
-    gap: 3px;
-    border-radius: 10px;
-    background: #151516;
-    text-align: center;
-}
-
-.sidebar-prediction-score strong {
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1;
-}
-
-.sidebar-prediction-score span {
-    color: var(--muted);
-    font-size: 8px;
-}
-
-.sidebar-prediction-pick {
-    min-height: 50px;
-    padding: 10px 11px;
-    border-radius: 12px;
-    background: #242426;
-}
-
-.sidebar-prediction-pick > div:first-child {
-    min-width: 0;
-}
-
-.sidebar-prediction-pick span,
-.sidebar-prediction-pick strong {
-    display: block;
-}
-
-.sidebar-prediction-pick > div:first-child span {
-    color: var(--muted);
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-}
-
-.sidebar-prediction-pick > div:first-child strong {
-    overflow: hidden;
-    margin-top: 3px;
-    color: var(--yellow);
-    font-size: 13px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sidebar-prediction-odd {
-    flex: 0 0 auto;
-    min-width: 54px;
-    text-align: right;
-}
-
-.sidebar-prediction-odd span {
-    color: var(--muted);
-    font-size: 8px;
-}
-
-.sidebar-prediction-odd b {
-    display: block;
-    margin-top: 2px;
-    color: var(--text);
-    font-size: 15px;
-    line-height: 1;
-}
-
-.sidebar-prediction-comment {
-    display: -webkit-box;
-    overflow: hidden;
-    margin: 0;
-    color: rgba(255, 255, 255, .58);
-    font-size: 10px;
-    line-height: 1.4;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.sidebar-prediction-footer {
-    padding-top: 3px;
-}
-
-.sidebar-prediction-author {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.sidebar-prediction-author-avatar {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 12px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.sidebar-prediction-author-avatar img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-}
-
-.sidebar-prediction-author-copy {
-    min-width: 0;
-    display: grid;
-    gap: 3px;
-}
-
-.sidebar-prediction-author-name {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.sidebar-prediction-author-name > strong {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.1;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sidebar-prediction-author-name .capper-verified-badge {
-    width: 17px;
-    height: 17px;
-    flex-basis: 17px;
-}
-
-.sidebar-prediction-author-name .capper-verified-badge svg {
-    width: 17px;
-    height: 17px;
-}
-
-.sidebar-prediction-author-copy > small {
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 9px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.sidebar-prediction-open {
-    flex: 0 0 auto;
-    color: var(--blue);
-    font-size: 9px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.sidebar-prediction-open i {
-    margin-left: 4px;
-    font-style: normal;
-}
-
-.sidebar-predictions-empty {
-    min-height: 230px;
-}
-
-.my-coupons-panel {
-    gap: 10px;
-    margin-top: 12px;
-    padding: 12px;
-}
-
-.my-coupons-head {
-    min-height: 48px;
-}
-
-.my-coupons-head h2 {
-    font-size: 20px;
-}
-
-.my-coupons-head > div > small {
-    display: block;
-    margin-top: 4px;
-    color: var(--muted);
-    font-size: 9px;
-}
-
-.my-coupons-list {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 7px;
-}
-
-.my-coupon-card {
-    min-width: 0;
-    display: grid;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 12px;
+    gap: 12px;
+    padding: 30px 20px;
+    border-radius: 16px;
     background: #171718;
-    transition: background .18s ease, transform .18s ease;
-}
-
-.my-coupon-card:hover {
-    background: #242426;
-    transform: translateY(-1px);
-}
-
-.my-coupon-topline,
-.my-coupon-id,
-.my-coupon-footer {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-}
-
-.my-coupon-topline,
-.my-coupon-footer {
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.my-coupon-id {
-    gap: 7px;
-}
-
-.my-coupon-id > span {
-    min-width: 34px;
-    min-height: 28px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0 7px;
-    border-radius: 8px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 10px;
-    font-weight: 800;
-}
-
-.my-coupon-id time {
-    color: var(--muted);
-    font-size: 9px;
-    white-space: nowrap;
-}
-
-.my-coupon-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5px;
-}
-
-.my-coupon-stats > span {
-    min-width: 0;
-    display: grid;
-    gap: 3px;
-    padding: 8px 6px;
-    border-radius: 9px;
-    background: #242426;
     text-align: center;
 }
 
-.my-coupon-stats small,
-.my-coupon-stats strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.coupon-empty .brand-logo {
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
 }
 
-.my-coupon-stats small {
-    color: var(--muted);
-    font-size: 8px;
+.coupon-empty .brand-logo img {
+    width: 88px;
+    height: 88px;
+    display: block;
+    object-fit: contain;
 }
 
-.my-coupon-stats strong {
+.coupon-empty strong,
+.coupon-empty p {
+    margin: 0;
+}
+
+.coupon-empty strong {
     color: var(--text);
-    font-size: 12px;
+    font-size: 20px;
+    line-height: 1.15;
 }
 
-.my-coupon-stats > span:nth-child(2) strong {
-    color: var(--yellow);
-}
-
-.my-coupon-footer {
+.coupon-empty p {
+    max-width: 290px;
     color: var(--muted);
-    font-size: 8px;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
-.my-coupon-footer > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.my-coupon-footer strong {
-    flex: 0 0 auto;
-    color: var(--blue);
-    font-size: 16px;
-    line-height: 1;
-}
-
-.my-coupons-empty {
-    min-height: 110px;
-    padding: 16px 12px;
-}
-
-@media (max-width: 1120px) {
+@media (min-width: 1121px) {
     .matches-shell {
-        grid-template-columns: minmax(0, 1fr);
+        height: calc(100dvh - 32px);
+        min-height: 560px;
+        align-items: stretch;
+    }
+
+    .matches-list-panel {
+        min-height: 0;
+        height: 100%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        padding-right: 4px;
+    }
+
+    .matches-list-panel .content-table-view {
+        --content-sport-sticky-top: 0px;
     }
 
     .coupon-sidebar {
+        position: sticky;
+        top: 16px;
+        align-self: start;
+        max-height: calc(100dvh - 32px);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        padding-right: 2px;
+    }
+
+    .matches-list-panel,
+    .coupon-sidebar {
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3d transparent;
+    }
+
+    .matches-list-panel::-webkit-scrollbar,
+    .coupon-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .matches-list-panel::-webkit-scrollbar-thumb,
+    .coupon-sidebar::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #3a3a3d;
+    }
+
+    .matches-list-panel::-webkit-scrollbar-track,
+    .coupon-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
+@media (max-width: 1120px) {
+    .matches-shell,
+    .match-detail-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .coupon-sidebar:not(.coupon-sidebar-editor) {
         position: static;
-        order: -1;
         width: 100%;
-        min-width: 0;
-    }
-
-    .sidebar-predictions {
-        width: 100%;
-        min-width: 0;
-        overflow: hidden;
-        padding: 12px 14px;
-    }
-
-    .sidebar-predictions-head {
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-direction: row;
-        gap: 12px;
-    }
-
-    .sidebar-predictions-head > div:first-child {
-        min-width: 0;
-    }
-
-    .sidebar-predictions-head h2 {
-        max-width: none;
-        font-size: clamp(20px, 3vw, 26px);
-    }
-
-    .sidebar-predictions .coupon-head-actions {
-        width: auto;
-        flex: 0 0 auto;
-        justify-content: flex-end;
-    }
-
-    .sidebar-predictions-body {
-        min-width: 0;
-    }
-
-    .sidebar-predictions-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .my-coupons-list {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .sidebar-prediction-card {
-        width: 100%;
-        min-width: 0;
-    }
-
-    .sidebar-prediction-league strong {
-        max-width: min(28vw, 260px);
+        max-height: none;
+        overflow: visible;
     }
 }
 
 @media (max-width: 640px) {
-    .sidebar-predictions {
-        padding: 11px 12px;
+    .coupon-panel {
+        padding: 12px;
     }
 
-    .sidebar-predictions-head {
-        flex-direction: row;
-        align-items: center;
+    .coupon-empty {
+        min-height: 190px;
+        padding: 22px 16px;
     }
 
-    .sidebar-predictions-head h2 {
-        max-width: 190px;
-        font-size: 20px;
-        line-height: 1.04;
-    }
-
-    .sidebar-predictions-head .matches-eyebrow {
-        margin-bottom: 5px;
-        font-size: 10px;
-    }
-
-    .sidebar-predictions .coupon-head-actions {
-        width: auto;
-    }
-
-    .sidebar-predictions-list,
-    .my-coupons-list {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .sidebar-prediction-league strong {
-        max-width: 190px;
-    }
-
-    .sidebar-prediction-match {
-        grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
-        gap: 6px;
-        padding: 9px 8px;
-    }
-
-    .sidebar-prediction-team {
-        flex-direction: column;
-        gap: 5px;
-        text-align: center;
-    }
-
-    .sidebar-prediction-team.is-away {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .sidebar-prediction-team strong {
-        width: 100%;
-        font-size: 9px;
-    }
-
-    .sidebar-prediction-footer {
-        align-items: center;
-    }
-
-    .sidebar-prediction-author-avatar {
-        width: 38px;
-        height: 38px;
-        flex-basis: 38px;
-        border-radius: 11px;
-    }
-
-    .sidebar-prediction-author-name > strong {
-        max-width: 125px;
-    }
-
-    .sidebar-prediction-open {
-        font-size: 8px;
-    }
-
-    .my-coupons-panel {
-        margin-top: 9px;
-        padding: 10px;
+    .coupon-empty .brand-logo,
+    .coupon-empty .brand-logo img {
+        width: 68px;
+        height: 68px;
     }
 }
