@@ -5,27 +5,6 @@
 
     if (!page) return;
 
-    const loadCouponInlineStyles = () => {
-        if (document.querySelector("link[data-profile-coupon-inline-styles]")) return;
-
-        const profileScript = Array.from(document.scripts).find((script) =>
-            script.src.includes("/front/js/profile.js"),
-        );
-        if (!profileScript || !profileScript.src) return;
-
-        const href = profileScript.src.replace(
-            /\/front\/js\/profile\.js(?:\?.*)?$/,
-            "/front/css/profile-coupon-inline.css",
-        );
-        if (!href || href === profileScript.src) return;
-
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        link.dataset.profileCouponInlineStyles = "true";
-        document.head.appendChild(link);
-    };
-
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
 
@@ -192,7 +171,6 @@
     };
 
     if (document.querySelector(".profile-coupons-list > .profile-coupon-row[href]")) {
-        loadCouponInlineStyles();
         loadJQuery()
             .then(initCouponInline)
             .catch((error) => console.error(error));
@@ -378,15 +356,6 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 
-    const loadFollowingStyles = () => {
-        if (document.querySelector("link[data-profile-following-styles]")) return;
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "/static/front/css/profile-following.css";
-        link.dataset.profileFollowingStyles = "true";
-        document.head.appendChild(link);
-    };
-
     const wireRow = (row, url) => {
         if (!row || !url) return;
         row.classList.add("is-profile-link");
@@ -403,7 +372,6 @@
 
     const followersList = page.querySelector('[data-profile-list="followers"]');
     if (followersList) {
-        loadFollowingStyles();
         followersList.querySelectorAll("[data-profile-username]").forEach((row) => {
             const username = row.dataset.profileUsername || "";
             if (!username) return;
@@ -422,7 +390,6 @@
 
     const followingList = page.querySelector('[data-profile-list="following"]');
     if (!followingList) return;
-    loadFollowingStyles();
 
     fetch("/cabinet/profile/following/summary/", {
         credentials: "same-origin",

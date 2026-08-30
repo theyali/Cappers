@@ -1,0 +1,8 @@
+<nav class="matches-tabs" aria-label="Фильтр матчей">
+    {% for tab in scope_tabs %}
+    <a class="{% if active_scope == tab.scope %}is-active{% endif %}{% if tab.scope == 'watched' %} is-watch-tab{% endif %}" href="{{ tab.url }}">
+        <span>{{ tab.label }}</span>
+        <b>{{ tab.count }}</b>
+    </a>
+    {% endfor %}
+</nav>

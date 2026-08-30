@@ -160,14 +160,6 @@ def match_detail(request, slug: str):
                 1,
             )
 
-        demand_css = static("front/css/match-demand.css")
-        if demand_css not in page_html:
-            page_html = page_html.replace(
-                "</head>",
-                f'    <link rel="stylesheet" href="{demand_css}">\n</head>',
-                1,
-            )
-
         demand_js = static("front/js/match-demand.js")
         if demand_js not in page_html:
             page_html = page_html.replace(

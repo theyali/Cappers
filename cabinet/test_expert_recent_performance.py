@@ -76,5 +76,5 @@ class ExpertRecentPerformanceTests(TestCase):
         self.assertContains(response, 'data-expert-performance')
         self.assertContains(response, '10 прогнозов')
         self.assertContains(response, '100 прогнозов')
-        self.assertContains(response, 'expert-recent-performance.css')
+        self.assertContains(response, "front/css/main.css")
         self.assertContains(response, 'expert-recent-performance.js')

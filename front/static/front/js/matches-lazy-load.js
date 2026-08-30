@@ -1,7 +1,10 @@
 (() => {
-    const grid = document.querySelector("[data-matches-grid]");
-    const sentinel = document.querySelector("[data-matches-lazy]");
+    const initGridLazy = (scope = document) => {
+    const grid = scope.querySelector?.("[data-matches-grid]") || document.querySelector("[data-matches-grid]");
+    const sentinel = scope.querySelector?.("[data-matches-lazy]") || document.querySelector("[data-matches-lazy]");
     if (!grid || !sentinel) return;
+    if (grid.dataset.matchesLazyReady === "true") return;
+    grid.dataset.matchesLazyReady = "true";
 
     const button = sentinel.querySelector("[data-matches-lazy-button]");
     const status = sentinel.querySelector("[data-matches-lazy-status]");
@@ -250,11 +253,20 @@
     document.addEventListener("content-view:updated", (event) => {
         if (event.detail?.mode === "grid") maybeContinue();
     });
+    };
+
+    document.addEventListener("matches:filters-updated", (event) => {
+        initGridLazy(event.detail?.root || document);
+    });
+    initGridLazy(document);
 })();
 
 (() => {
-    const table = document.querySelector("[data-matches-table-view]");
+    const initTableLazy = (scope = document) => {
+    const table = scope.querySelector?.("[data-matches-table-view]") || document.querySelector("[data-matches-table-view]");
     if (!table) return;
+    if (table.dataset.matchesTableLazyReady === "true") return;
+    table.dataset.matchesTableLazyReady = "true";
 
     const tablePanel = table.closest("[data-content-view-panel]");
     const loadingSports = new Set();
@@ -586,4 +598,10 @@
     });
 
     maybeLoadVisible();
+    };
+
+    document.addEventListener("matches:filters-updated", (event) => {
+        initTableLazy(event.detail?.root || document);
+    });
+    initTableLazy(document);
 })();

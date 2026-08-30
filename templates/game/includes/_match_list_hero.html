@@ -1,0 +1,16 @@
+{% load static %}
+<div
+    class="matches-hero long-bg long-bg-2 is-skeleton-loading"
+    data-skeleton-block
+    data-matches-hero-skeleton
+    data-skeleton-background="{% static 'front/img/long_2.webp' %}"
+    aria-busy="true"
+>
+    <div>
+        <h1>{{ match_list_h1|default:"Матчи" }}</h1>
+    </div>
+    <div class="matches-hero-meta">
+        <span>{{ hero_count|default:total_count }}</span>
+        <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
+    </div>
+</div>

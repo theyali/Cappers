@@ -21,35 +21,9 @@
     {% if seo_meta.schema_json_ld %}<script type="application/ld+json">{{ seo_meta.schema_json_ld|safe }}</script>{% endif %}
     <link rel="icon" type="image/png" href="{% static 'front/img/favicon.png' %}">
     <link rel="apple-touch-icon" href="{% static 'front/img/favicon.png' %}">
-    <link rel="stylesheet" href="{% static 'front/css/site.css' %}">
-    <link rel="stylesheet" href="{% static 'front/fonts/fonts.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/skeleton.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/footer.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/adv-banners.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/header.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/top-header.css' %}">
-    {% if request.user.is_authenticated %}
-    <link rel="stylesheet" href="{% static 'notifications/css/header.css' %}" data-notification-header-styles>
-    {% endif %}
-    <link rel="stylesheet" href="{% static 'front/css/messages.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/verified.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/prediction-confidence.css' %}">
-    {% if request.resolver_match.view_name == 'front:index' %}
-    <link rel="stylesheet" href="{% static 'front/css/home-about.css' %}">
-    {% endif %}
-    {% block extra_css %}{% endblock %}
-    {% if request.resolver_match.app_name == 'game' %}
-    <link rel="stylesheet" href="{% static 'front/css/coupon-title.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/match-predictions.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/match-card-odds-state.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/game-sidebar-predictions.css' %}">
-    {% endif %}
+    <link rel="stylesheet" href="{% static 'front/css/main.css' %}">
     <link rel="stylesheet" href="{% static 'front/css/mobile.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/mobile-bottom-nav.css' %}">
-    <link rel="stylesheet" href="{% static 'front/css/mobile-offcanvas.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% include "front/includes/_top_header.html" %}

@@ -22,6 +22,7 @@
         if (link.target && link.target !== "_self") return;
         if (link.hasAttribute("download")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
+        if (link.closest(".matches-table-filter-sidebar, .matches-sport-tabs, .matches-tabs, .matches-date-filter")) return;
         if (link.hasAttribute("data-mobile-coupon-toggle")) {
             event.preventDefault();
             return;

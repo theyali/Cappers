@@ -178,7 +178,7 @@
 
         const link = document.createElement("a");
         link.className = row.className;
-        link.href = `/cabinet/experts/${encodeURIComponent(username)}/`;
+        link.href = `/experts/${encodeURIComponent(username)}/`;
         link.setAttribute("aria-label", `Открыть профиль ${username}`);
         link.style.color = "inherit";
         link.style.textDecoration = "none";

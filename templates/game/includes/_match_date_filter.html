@@ -1,0 +1,63 @@
+{% if show_date_filter %}
+<section class="matches-date-filter" aria-label="Фильтр матчей по дате">
+    <div class="matches-date-current">
+        <span class="matches-date-current-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </span>
+        <span class="matches-date-current-copy">
+            <span>Матчи по дате</span>
+            <strong>{{ selected_date|date:"l, j E" }}</strong>
+        </span>
+    </div>
+
+    <div class="matches-date-controls">
+        {% if previous_date_url %}
+        <a class="matches-date-step" href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        {% else %}
+        <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        {% endif %}
+
+        <div class="matches-date-shortcuts">
+            {% for item in date_shortcuts %}
+            <a class="matches-date-option{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}">
+                <span>{{ item.label }}</span>
+                <small>{{ item.date|date:"j M" }}</small>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% if next_date_url %}
+        <a class="matches-date-step" href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        {% else %}
+        <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        {% endif %}
+
+        <label class="matches-date-picker">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>Календарь</span>
+            <input
+                type="date"
+                value="{{ selected_date_iso }}"
+                min="{{ min_match_date_iso }}"
+                max="{{ max_match_date_iso }}"
+                data-match-date-input
+                data-scope="{{ active_scope }}"
+                data-url-template="{{ date_picker_url_template }}"
+                aria-label="Выбрать дату матчей"
+            >
+        </label>
+    </div>
+</section>
+{% endif %}

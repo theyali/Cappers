@@ -114,6 +114,6 @@ class CapperMonthlyStatsTests(TestCase):
         self.assertContains(response, "Статистика по месяцам")
         self.assertContains(response, "Август 2026")
         self.assertContains(response, 'data-expert-monthly-stats')
-        self.assertContains(response, "expert-monthly-stats.css")
+        self.assertContains(response, "front/css/main.css")
         self.assertContains(response, "expert-monthly-stats.js")
         self.assertContains(response, "₽")

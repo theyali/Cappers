@@ -105,7 +105,7 @@ class TopExpertPredictionsTests(TestCase):
         self.assertIn('predictions-tab-top is-active', html)
         self.assertIn('predictions-tab-top-icon', html)
         self.assertIn('Топовые эксперты', html)
-        self.assertIn('front/css/prediction-top-experts.css', html)
+        self.assertIn("front/css/main.css", html)
         self.assertIn('<input type="hidden" name="top" value="1">', html)
         self.assertTrue(all("top=1" in tab["href"] for tab in response.context["status_tabs"]))
 

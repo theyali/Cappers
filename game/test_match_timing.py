@@ -115,7 +115,7 @@ class MatchTimingTests(TestCase):
         self.assertContains(response, "29.08 16:30")
         self.assertNotContains(response, "29.08 17:30")
         self.assertContains(response, "match-timing.js")
-        self.assertContains(response, "match-timing.css")
+        self.assertContains(response, "front/css/main.css")
 
     def test_timing_endpoint_uses_active_browser_timezone(self):
         match = self._match(

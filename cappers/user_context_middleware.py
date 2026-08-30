@@ -34,11 +34,9 @@ def _static_url(path: str) -> str:
 
 def _html_injection() -> bytes:
     timing_url = reverse("game:match_timing")
-    css_url = _static_url("front/css/match-timing.css")
     js_url = _static_url("front/js/match-timing.js")
     payload = (
         _TIMEZONE_BOOTSTRAP
-        + f'<link rel="stylesheet" href="{css_url}">'
         + f'<script>window.CAPPERS_MATCH_TIMING_URL={json.dumps(timing_url)};</script>'
         + f'<script src="{js_url}" defer></script>'
     )

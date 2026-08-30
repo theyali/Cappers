@@ -163,6 +163,16 @@
         keepLockedSportsOpen(document);
     });
 
+    document.addEventListener("matches:filters-updated", () => {
+        syncRenderedRoots();
+        keepLockedSportsOpen(document);
+    });
+
+    window.CappersContentViewMode = {
+        sync: syncRenderedRoots,
+        applyMode,
+    };
+
     document.addEventListener("matches:watch-changed", (event) => {
         const matchId = String(event.detail?.matchId || "");
         if (!matchId) return;

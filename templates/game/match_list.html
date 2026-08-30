@@ -3,119 +3,15 @@
 
 {% block title %}Матчи — КапперХаб{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'front/css/matches.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/matches-date-filter.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/matches-lazy-load.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/match-watch.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/coupon-draft.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/mobile-coupon-sheet.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/content-view-mode.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/content-view-match.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/matches-table-sidebar.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/matches-table-status.css' %}">
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
 <section class="matches-page" aria-label="Матчи">
 
-    <nav class="matches-sport-tabs" aria-label="Выбор спорта">
-        {% for tab in sport_tabs %}
-        <a class="matches-sport-tab matches-sport-tab-{{ tab.code }}{% if active_sport == tab.code %} is-active{% endif %}" href="{{ tab.url }}">
-            <span class="matches-sport-icon" aria-hidden="true">
-                {% if tab.code == 'all' %}
-                    {% include "front/svgs/nav-matches.svg" %}
-                {% elif tab.code == 'football' %}
-                    {% include "front/svgs/soccer.svg" %}
-                {% elif tab.code == 'hockey' %}
-                    {% include "front/svgs/hockey.svg" %}
-                {% elif tab.code == 'basketball' %}
-                    {% include "front/svgs/basketball.svg" %}
-                {% elif tab.code == 'tennis' %}
-                    {% include "front/svgs/tennis.svg" %}
-                {% else %}
-                    {% include "front/svgs/nav-matches.svg" %}
-                {% endif %}
-            </span>
-            <span>{{ tab.label }}</span>
-            <b>{{ tab.count }}</b>
-        </a>
-        {% endfor %}
-    </nav>
-
-    <nav class="matches-tabs" aria-label="Фильтр матчей">
-        {% for tab in scope_tabs %}
-        <a class="{% if active_scope == tab.scope %}is-active{% endif %}{% if tab.scope == 'watched' %} is-watch-tab{% endif %}" href="{{ tab.url }}">
-            <span>{{ tab.label }}</span>
-            <b>{{ tab.count }}</b>
-        </a>
-        {% endfor %}
-    </nav>
-
-    {% if show_date_filter %}
-    <section class="matches-date-filter" aria-label="Фильтр матчей по дате">
-        <div class="matches-date-current">
-            <span class="matches-date-current-icon">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-            </span>
-            <span class="matches-date-current-copy">
-                <span>Матчи по дате</span>
-                <strong>{{ selected_date|date:"l, j E" }}</strong>
-            </span>
-        </div>
-
-        <div class="matches-date-controls">
-            {% if previous_date_url %}
-            <a class="matches-date-step" href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            {% else %}
-            <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            {% endif %}
-
-            <div class="matches-date-shortcuts">
-                {% for item in date_shortcuts %}
-                <a class="matches-date-option{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}">
-                    <span>{{ item.label }}</span>
-                    <small>{{ item.date|date:"j M" }}</small>
-                </a>
-                {% endfor %}
-            </div>
-
-            {% if next_date_url %}
-            <a class="matches-date-step" href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            {% else %}
-            <span class="matches-date-step is-disabled" aria-disabled="true" title="Дальше доступного диапазона">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            {% endif %}
-
-            <label class="matches-date-picker">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
-                <span>Календарь</span>
-                <input
-                    type="date"
-                    value="{{ selected_date_iso }}"
-                    min="{{ min_match_date_iso }}"
-                    max="{{ max_match_date_iso }}"
-                    data-match-date-input
-                    data-scope="{{ active_scope }}"
-                    data-url-template="{{ date_picker_url_template }}"
-                    aria-label="Выбрать дату матчей"
-                >
-            </label>
-        </div>
-    </section>
-    {% endif %}
+    {% include "game/includes/_match_sport_tabs.html" %}
+    {% include "game/includes/_match_scope_tabs.html" %}
+    {% include "game/includes/_match_date_filter.html" %}
 
     <div
         class="matches-shell"
@@ -132,45 +28,8 @@
             data-content-view-root
             data-content-view-current="{{ content_view_mode }}"
         >
-            <div
-                class="matches-hero long-bg long-bg-2 is-skeleton-loading"
-                data-skeleton-block
-                data-matches-hero-skeleton
-                data-skeleton-background="{% static 'front/img/long_2.webp' %}"
-                aria-busy="true"
-            >
-                <div>
-                    <h1>{{ match_list_h1|default:"Матчи" }}</h1>
-                </div>
-                <div class="matches-hero-meta">
-                    <span>{{ hero_count|default:total_count }}</span>
-                    <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
-                </div>
-            </div>
-
-            {% if matches %}
-                <div class="content-view-toolbar">
-                    {% include "front/includes/_content_view_switcher.html" %}
-                </div>
-                <div class="content-view-container" data-content-view-container>
-                    <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
-                        {% include "game/includes/_match_grid_view.html" %}
-                    </div>
-                    <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
-                        {% include "game/includes/_match_table_view.html" %}
-                    </div>
-                </div>
-            {% else %}
-            <div class="matches-empty">
-                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
-                {% if active_scope == 'watched' %}
-                    <h2>Нет отслеживаемых матчей</h2>
-                {% else %}
-                    <h2>Матчей пока нет</h2>
-                {% endif %}
-                <p>На {{ selected_date|date:"j M" }} матчей в этой вкладке нет.</p>
-            </div>
-            {% endif %}
+            {% include "game/includes/_match_list_hero.html" %}
+            {% include "game/includes/_match_list_content.html" %}
         </section>
 
         {% include "game/_coupon_sidebar.html" %}
@@ -181,6 +40,7 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
+<script src="{% static 'front/js/matches-filter-ajax.js' %}" defer></script>
 <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>

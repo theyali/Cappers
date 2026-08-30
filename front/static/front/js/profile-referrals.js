@@ -3,15 +3,6 @@
     const tabs = page?.querySelector(".profile-tabs");
     if (!page || !tabs || document.querySelector("[data-referral-tab]")) return;
 
-    const loadStyles = () => {
-        if (document.querySelector("link[data-profile-referrals-styles]")) return;
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "/static/front/css/profile-referrals.css";
-        link.dataset.profileReferralsStyles = "true";
-        document.head.appendChild(link);
-    };
-
     const escapeHtml = (value) => String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
@@ -74,8 +65,6 @@
         })
         .then((payload) => {
             if (!payload) return;
-            loadStyles();
-
             const tab = document.createElement("a");
             tab.href = `${window.location.pathname}?tab=referrals`;
             tab.dataset.referralTab = "";

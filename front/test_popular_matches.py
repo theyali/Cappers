@@ -109,5 +109,5 @@ class PopularMatchesTests(TestCase):
         self.assertIn('class="popular_matches"', html)
         self.assertIn("Популярные матчи", html)
         self.assertIn(match.get_absolute_url(), html)
-        self.assertIn("front/css/popular-matches.css", html)
+        self.assertIn("front/css/main.css", html)
         self.assertIn('class="cappers-side-column"', html)

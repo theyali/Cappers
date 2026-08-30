@@ -68,7 +68,7 @@ class PublicPredictionDetailTests(TestCase):
         self.assertContains(response, "67%")
         self.assertContains(response, "Хозяева")
         self.assertContains(response, "ТБ 2.5")
-        self.assertContains(response, "profile-coupons.css")
+        self.assertContains(response, "front/css/main.css")
         self.assertNotContains(response, "prediction-detail.css")
 
     def test_prediction_card_links_to_public_coupon(self):

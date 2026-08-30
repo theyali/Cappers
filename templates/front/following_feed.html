@@ -3,16 +3,7 @@
 
 {% block title %}Моя лента — КапперХаб{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'front/css/predictions.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/predictions-filters.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/predictions-sidebar.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/prediction-cards.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/prediction-reactions.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/prediction-feed-personal.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/following-feed.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/content-view-mode.css' %}">
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 {% content_view_mode as content_view_mode %}

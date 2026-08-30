@@ -2,12 +2,7 @@
 {% load static %}
 
 {% block title %}Профиль — Cappers{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'front/css/profile.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/profile-coupons.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/profile-achievements.css' %}">
-<link rel="stylesheet" href="{% static 'front/css/capper-dashboard.css' %}">
-{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 <section class="profile-page" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">

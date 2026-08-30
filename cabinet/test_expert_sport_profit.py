@@ -127,6 +127,6 @@ class ExpertSportProfitTests(TestCase):
         self.assertContains(response, "все время")
         self.assertContains(response, "август 2026")
         self.assertContains(response, "Футбол")
-        self.assertContains(response, "expert-sport-profit.css")
+        self.assertContains(response, "front/css/main.css")
         self.assertContains(response, "expert-sport-profit.js")
         self.assertContains(response, 'data-sport-profit-period="2026-08"')

@@ -165,7 +165,7 @@ class PredictionFiltersTests(TestCase):
         self.assertIn('data-prediction-filter-toggle', html)
         self.assertIn('data-prediction-filters', html)
         self.assertIn('data-predictions-grid', html)
-        self.assertIn("front/css/predictions-sidebar.css", html)
+        self.assertIn("front/css/main.css", html)
         self.assertIn("https://code.jquery.com/jquery-3.7.1.min.js", html)
         self.assertIn("front/js/predictions-filters.js", html)
         self.assertLess(html.index('data-predictions-content'), html.index('data-prediction-filter-sidebar'))

@@ -6,9 +6,12 @@
         if (!dateInput.value) return;
 
         if (dateInput.dataset.urlTemplate) {
-            window.location.assign(
-                dateInput.dataset.urlTemplate.replace("__DATE__", encodeURIComponent(dateInput.value)),
-            );
+            const nextUrl = dateInput.dataset.urlTemplate.replace("__DATE__", encodeURIComponent(dateInput.value));
+            if (window.CappersMatchesFilterAjax?.go) {
+                window.CappersMatchesFilterAjax.go(nextUrl);
+            } else {
+                window.location.assign(nextUrl);
+            }
             return;
         }
 
@@ -19,7 +22,12 @@
         query.delete("lazy");
         query.delete("window");
 
-        window.location.assign(`${window.location.pathname}?${query.toString()}`);
+        const nextUrl = `${window.location.pathname}?${query.toString()}`;
+        if (window.CappersMatchesFilterAjax?.go) {
+            window.CappersMatchesFilterAjax.go(nextUrl);
+        } else {
+            window.location.assign(nextUrl);
+        }
     };
 
     dateInputs.forEach((dateInput) => {

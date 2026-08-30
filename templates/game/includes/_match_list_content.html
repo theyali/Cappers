@@ -1,0 +1,26 @@
+{% load static %}
+<div class="matches-content-region" data-matches-content-region>
+    {% if matches %}
+        <div class="content-view-toolbar">
+            {% include "front/includes/_content_view_switcher.html" %}
+        </div>
+        <div class="content-view-container" data-content-view-container>
+            <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                {% include "game/includes/_match_grid_view.html" %}
+            </div>
+            <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
+                {% include "game/includes/_match_table_view.html" %}
+            </div>
+        </div>
+    {% else %}
+    <div class="matches-empty">
+        <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
+        {% if active_scope == 'watched' %}
+            <h2>Нет отслеживаемых матчей</h2>
+        {% else %}
+            <h2>Матчей пока нет</h2>
+        {% endif %}
+        <p>На {{ selected_date|date:"j M" }} матчей в этой вкладке нет.</p>
+    </div>
+    {% endif %}
+</div>

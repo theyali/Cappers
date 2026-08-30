@@ -50,15 +50,6 @@
         activeMenu?.querySelector("[data-profile-menu-toggle]")?.focus();
     });
 
-    const loadNotificationStyles = () => {
-        if (document.querySelector("link[data-notification-header-styles]")) return;
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "/static/notifications/css/header.css";
-        link.dataset.notificationHeaderStyles = "true";
-        document.head.appendChild(link);
-    };
-
     const ensureReaderAvatarInput = () => {
         const page = document.querySelector(".profile-page");
         const readerHero = page?.querySelector(".profile-hero.is-reader");
@@ -157,14 +148,6 @@
         bell.dataset.soundUrl = "/static/front/sounds/notification.wav";
         bell.dataset.userId = menuUserKey();
 
-        if (!document.querySelector("link[data-notification-realtime-styles]")) {
-            const style = document.createElement("link");
-            style.rel = "stylesheet";
-            style.href = "/static/notifications/css/realtime.css";
-            style.dataset.notificationRealtimeStyles = "true";
-            document.head.appendChild(style);
-        }
-
         if (!document.querySelector("script[data-notification-realtime-script]")) {
             const script = document.createElement("script");
             script.src = "/static/notifications/js/realtime.js";
@@ -181,7 +164,6 @@
         return username || "authenticated-user";
     };
 
-    loadNotificationStyles();
     ensureReaderAvatarInput();
     const bell = ensureNotificationNavigation();
     loadRealtimeNotifications(bell);

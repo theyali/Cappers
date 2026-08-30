@@ -1,0 +1,23 @@
+<nav class="matches-sport-tabs" aria-label="Выбор спорта">
+    {% for tab in sport_tabs %}
+    <a class="matches-sport-tab matches-sport-tab-{{ tab.code }}{% if active_sport == tab.code %} is-active{% endif %}" href="{{ tab.url }}">
+        <span class="matches-sport-icon" aria-hidden="true">
+            {% if tab.code == 'all' %}
+                {% include "front/svgs/nav-matches.svg" %}
+            {% elif tab.code == 'football' %}
+                {% include "front/svgs/soccer.svg" %}
+            {% elif tab.code == 'hockey' %}
+                {% include "front/svgs/hockey.svg" %}
+            {% elif tab.code == 'basketball' %}
+                {% include "front/svgs/basketball.svg" %}
+            {% elif tab.code == 'tennis' %}
+                {% include "front/svgs/tennis.svg" %}
+            {% else %}
+                {% include "front/svgs/nav-matches.svg" %}
+            {% endif %}
+        </span>
+        <span>{{ tab.label }}</span>
+        <b>{{ tab.count }}</b>
+    </a>
+    {% endfor %}
+</nav>

@@ -10,15 +10,6 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 
-    const loadStyles = () => {
-        if (document.querySelector("link[data-profile-demand-styles]")) return;
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "/static/front/css/profile-demand.css";
-        link.dataset.profileDemandStyles = "true";
-        document.head.appendChild(link);
-    };
-
     const formatDate = (value) => {
         if (!value) return { date: "Время не указано", time: "" };
         const date = new Date(value);
@@ -104,8 +95,6 @@
     load("demand")
         .then((initial) => {
             if (!initial) return;
-            loadStyles();
-
             const tab = document.createElement("a");
             tab.href = `${window.location.pathname}?tab=demand`;
             tab.dataset.demandTab = "";

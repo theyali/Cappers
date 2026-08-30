@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from back.content_view import group_by_sport_and_league
+from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
 from game.models import Match, PredictionCoupon
 from game.views import (
@@ -62,7 +62,8 @@ MATCH_DATE_INDEX_WINDOW_DAYS = 30
 
 def match_list(request, sport=None, scope=None, selected_date=None):
     """Match list filtered by scope/date with AJAX pages for infinite scroll."""
-    lazy_request = _is_lazy_request(request)
+    partial_request = request.GET.get("partial") == "matches"
+    lazy_request = _is_lazy_request(request) and not partial_request
     active_scope = scope or request.GET.get("scope", "all")
     valid_scopes = {scope for scope, _ in SCOPE_FILTERS}
     if active_scope not in valid_scopes:
@@ -331,6 +332,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
     context = {
         "active_scope": active_scope,
         "active_sport": active_sport,
+        "content_view_mode": content_view_mode(request),
         "scope_tabs": scope_tabs,
         "sport_tabs": sport_tabs,
         "matches": matches,
@@ -364,6 +366,62 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "match_list_hero_meta": seo["hero_meta"],
         "seo_meta": seo["meta"],
     }
+
+    if partial_request:
+        canonical_path = _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=selected_date,
+            sport=active_sport,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "url": canonical_path,
+                "title": seo["meta"]["title"],
+                "meta": {
+                    "description": seo["meta"]["description"],
+                    "robots": seo["meta"]["robots"],
+                    "canonical_url": seo["meta"]["canonical_url"],
+                    "og_title": seo["meta"]["og_title"],
+                    "og_description": seo["meta"]["og_description"],
+                    "og_url": seo["meta"]["canonical_url"],
+                    "twitter_title": seo["meta"]["og_title"],
+                    "twitter_description": seo["meta"]["og_description"],
+                },
+                "sport_tabs_html": render_to_string(
+                    "game/includes/_match_sport_tabs.html",
+                    context,
+                    request=request,
+                ),
+                "scope_tabs_html": render_to_string(
+                    "game/includes/_match_scope_tabs.html",
+                    context,
+                    request=request,
+                ),
+                "date_filter_html": render_to_string(
+                    "game/includes/_match_date_filter.html",
+                    context,
+                    request=request,
+                ),
+                "sidebar_html": render_to_string(
+                    "game/_match_table_filter_sidebar.html",
+                    context,
+                    request=request,
+                ),
+                "hero_html": render_to_string(
+                    "game/includes/_match_list_hero.html",
+                    context,
+                    request=request,
+                ),
+                "content_html": render_to_string(
+                    "game/includes/_match_list_content.html",
+                    context,
+                    request=request,
+                ),
+                "content_view_mode": context["content_view_mode"],
+            }
+        )
     return render(request, "game/match_list.html", context)
 
 
@@ -545,8 +603,10 @@ def _match_list_seo(request, *, active_scope: str, active_sport: str, selected_d
         description = f"{scope_label} {sport_label} на {date_label}: расписание, статусы, коэффициенты и прогнозы капперов."
         hero_meta = f"игр на {selected_date.strftime('%d.%m')}"
 
+    utility_params = {"partial", "lazy", "page", "window", "view", "table_sport"}
+    public_query_params = set(request.GET) - utility_params
     robots = "index,follow"
-    if active_scope == WATCHED_SCOPE or request.GET:
+    if active_scope == WATCHED_SCOPE or public_query_params:
         robots = "noindex,follow"
 
     canonical_path = _match_list_url(

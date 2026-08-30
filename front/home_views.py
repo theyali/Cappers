@@ -17,7 +17,7 @@ from notifications.models import MatchWatch
 HOME_PREDICTIONS_LIMIT = 8
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 12
-HOME_EXPERTS_LIMIT = 6
+HOME_EXPERTS_LIMIT = 8
 HOME_MATCH_CANDIDATE_LIMIT = 120
 
 
@@ -135,7 +135,7 @@ def _top_home_experts(profiles) -> list[dict]:
         return DEMO_EXPERTS
 
     experts = []
-    for profile in profiles[:5]:
+    for profile in profiles[:7]:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         experts.append(
             {
