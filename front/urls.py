@@ -12,6 +12,7 @@ from . import (
     feed_views,
     home_views,
     how_views,
+    match_table_views,
     prediction_views,
     static_views,
 )
@@ -21,6 +22,7 @@ app_name = "front"
 urlpatterns = [
     path("", home_views.index, name="index"),
     path("ui/content-view/", content_view_state, name="content_view_state"),
+    path("ui/match-table-odds/", match_table_views.match_table_odds, name="match_table_odds"),
     path(
         "r/<str:username>/<str:code>/",
         cabinet_referral_views.referral_redirect_code,
