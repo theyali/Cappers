@@ -188,6 +188,9 @@ def page_seo(request):
         except (OperationalError, ProgrammingError):
             adv_banners = []
 
+    if route_name == "front:prediction_detail":
+        adv_placement = PageSEO.AdvPlacement.SIDEBAR
+
     return {
         "seo_meta": seo_meta,
         "adv_banners": adv_banners,
