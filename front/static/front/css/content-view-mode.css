@@ -118,6 +118,14 @@
     border-radius: 12px 12px 0 0;
 }
 
+.content-sport-accordion[data-sport-locked="true"] > .content-sport-summary {
+    cursor: default;
+}
+
+.content-sport-accordion[data-sport-locked="true"] > .content-sport-summary .content-accordion-chevron {
+    display: none;
+}
+
 .content-sport-icon {
     width: 25px;
     height: 25px;
@@ -399,6 +407,17 @@
     line-height: 1;
 }
 
+.match-table-odd-placeholder {
+    pointer-events: none;
+    cursor: default;
+}
+
+.match-table-odd-placeholder strong {
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: .08em;
+}
+
 .match-table-watch {
     display: grid;
     place-items: center;
@@ -541,13 +560,165 @@
         width: max-content;
     }
 
+    .content-table-view {
+        gap: 8px;
+    }
+
     .content-sport-summary {
-        min-height: 50px;
-        padding: 0 12px;
+        position: relative;
+        top: auto;
+        z-index: 1;
+        min-height: 44px;
+        padding: 0 10px;
     }
 
     .content-sport-summary strong {
         font-size: 14px;
+    }
+
+    .content-sport-body {
+        gap: 5px;
+        padding: 6px;
+    }
+
+    .content-league-summary {
+        min-height: 40px;
+        padding: 0 9px;
+    }
+
+    .content-league-copy strong {
+        max-width: 210px;
+    }
+
+    .content-table-scroll {
+        overflow-x: visible;
+    }
+
+    .content-table-head {
+        display: none;
+    }
+
+    .content-table-row {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .match-table-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 40px;
+        grid-template-rows: auto auto;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .match-table-event {
+        grid-column: 1 / 4;
+        grid-row: 1;
+    }
+
+    .match-table-score {
+        grid-column: 4;
+        grid-row: 1;
+        min-height: 36px;
+        font-size: 12px;
+    }
+
+    .match-table-odds {
+        grid-column: 1 / 4;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .match-table-watch {
+        grid-column: 4;
+        grid-row: 2;
+        align-self: stretch;
+    }
+
+    .match-table-odd {
+        min-height: 38px;
+        padding: 4px;
+    }
+
+    .match-table-event-copy strong {
+        font-size: 11px;
+    }
+
+    .match-table-meta {
+        gap: 5px;
+    }
+
+    .prediction-table-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "event event"
+            "expert coefficient"
+            "pick status"
+            "actions actions";
+        gap: 7px 10px;
+        padding: 9px;
+    }
+
+    .prediction-table-event {
+        grid-area: event;
+        min-height: 34px;
+    }
+
+    .prediction-table-expert {
+        grid-area: expert;
+    }
+
+    .prediction-table-pick {
+        grid-area: pick;
+    }
+
+    .prediction-table-coefficient {
+        grid-area: coefficient;
+        min-width: 70px;
+        min-height: 34px;
+        padding: 0 9px;
+    }
+
+    .prediction-table-status {
+        grid-area: status;
+        min-width: 82px;
+        min-height: 34px;
+        padding: 0 8px;
+    }
+
+    .prediction-table-actions {
+        grid-area: actions;
+        justify-content: flex-start;
+        padding-top: 2px;
+    }
+
+    .prediction-table-event-copy strong,
+    .prediction-table-pick strong {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 420px) {
+    .content-sport-summary small {
+        display: none;
+    }
+
+    .content-league-copy strong {
+        max-width: 160px;
+    }
+
+    .match-table-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 36px;
+    }
+
+    .match-table-odd span {
+        font-size: 7px;
+    }
+
+    .match-table-odd strong {
+        font-size: 11px;
     }
 }
 
