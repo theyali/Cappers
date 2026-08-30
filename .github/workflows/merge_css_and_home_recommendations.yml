@@ -1,0 +1,119 @@
+name: Merge CSS and home recommendations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/merge_css_and_home_recommendations.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge styles and update home
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          main_css = root / 'front/static/front/css/main.css'
+          extra_css_files = [
+              root / 'front/static/front/css/expert-public-tabs.css',
+              root / 'front/static/front/css/floating-actions.css',
+          ]
+
+          main_content = main_css.read_text(encoding='utf-8').rstrip() + '\n'
+          for css_path in extra_css_files:
+              if css_path.exists():
+                  marker = f'/* Merged from {css_path.as_posix()} */'
+                  css_content = css_path.read_text(encoding='utf-8').strip()
+                  if marker not in main_content:
+                      main_content += f'\n\n{marker}\n{css_content}\n'
+                  css_path.unlink()
+          main_css.write_text(main_content, encoding='utf-8')
+
+          perf_template = root / 'templates/cabinet/expert_profile_performance.html'
+          text = perf_template.read_text(encoding='utf-8')
+          text = text.replace("<link rel=\"stylesheet\" href=\"{% static 'front/css/expert-public-tabs.css' %}\">\n", '')
+          perf_template.write_text(text, encoding='utf-8')
+
+          top_header = root / 'templates/front/includes/_top_header.html'
+          text = top_header.read_text(encoding='utf-8')
+          text = text.replace("<link rel=\"stylesheet\" href=\"{% static 'front/css/floating-actions.css' %}\">\n", '')
+          top_header.write_text(text, encoding='utf-8')
+
+          expert_views = root / 'cabinet/expert_profile_views.py'
+          text = expert_views.read_text(encoding='utf-8')
+          old = '''def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]:
+              profiles = AnalystProfile.objects.filter(
+                  user__role=User.Role.ANALYST,
+                  is_public=True,
+                  is_recommended=True,
+              ).exclude(pk=current_profile.pk)
+          '''
+          new = '''def _recommended_experts(
+              request,
+              current_profile: AnalystProfile | None = None,
+          ) -> list[dict]:
+              profiles = AnalystProfile.objects.filter(
+                  user__role=User.Role.ANALYST,
+                  is_public=True,
+                  is_recommended=True,
+              )
+              if current_profile is not None:
+                  profiles = profiles.exclude(pk=current_profile.pk)
+          '''
+          if old not in text:
+              raise SystemExit('Could not find _recommended_experts block')
+          expert_views.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          home_views = root / 'front/home_views.py'
+          text = home_views.read_text(encoding='utf-8')
+          import_line = 'from cabinet.expert_profile_views import _recommended_experts\n'
+          if import_line not in text:
+              text = text.replace(
+                  'from cabinet.achievements import build_achievement_badges\n',
+                  'from cabinet.achievements import build_achievement_badges\n' + import_line,
+                  1,
+              )
+          context_line = '            "recommended_experts": _recommended_experts(request),\n'
+          if context_line not in text:
+              text = text.replace(
+                  '            "important_matches": _important_home_matches(request, can_write_coupon),\n',
+                  context_line + '            "important_matches": _important_home_matches(request, can_write_coupon),\n',
+                  1,
+              )
+          home_views.write_text(text, encoding='utf-8')
+
+          index_template = root / 'templates/front/index.html'
+          text = index_template.read_text(encoding='utf-8')
+          include = '{% include "cabinet/_expert_recommendations.html" %}\n\n'
+          target = '<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">'
+          if include not in text:
+              if target not in text:
+                  raise SystemExit('Could not find important matches section')
+              text = text.replace(target, include + target, 1)
+          index_template.write_text(text, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/merge_css_and_home_recommendations.yml
+
+      - name: Commit result
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "feat: consolidate css and add home recommendations"
+          git push origin main
