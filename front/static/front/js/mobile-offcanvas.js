@@ -92,3 +92,36 @@
         mobileQuery.addListener(handleBreakpoint);
     }
 })();
+
+(() => {
+    const panels = document.querySelectorAll(".match-odds-panel");
+    if (!panels.length) return;
+
+    const setAccordionState = (panel, toggle, collapsed) => {
+        panel.classList.toggle("is-odds-collapsed", collapsed);
+        if (collapsed) {
+            panel.dataset.oddsCollapsed = "true";
+        } else {
+            delete panel.dataset.oddsCollapsed;
+        }
+
+        toggle.setAttribute("aria-expanded", String(!collapsed));
+        const label = collapsed ? "Раскрыть коэффициенты" : "Свернуть коэффициенты";
+        toggle.setAttribute("aria-label", label);
+        toggle.title = label;
+    };
+
+    panels.forEach((panel) => {
+        const toggle = panel.querySelector(".match-odds-accordion-toggle");
+        if (!toggle || toggle.dataset.oddsAccordionReady === "true") return;
+
+        toggle.dataset.oddsAccordionReady = "true";
+        const initiallyCollapsed = panel.classList.contains("is-odds-collapsed")
+            || panel.dataset.oddsCollapsed === "true";
+        setAccordionState(panel, toggle, initiallyCollapsed);
+
+        toggle.addEventListener("click", () => {
+            setAccordionState(panel, toggle, !panel.classList.contains("is-odds-collapsed"));
+        });
+    });
+})();
