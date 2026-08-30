@@ -7,12 +7,17 @@ register = template.Library()
 
 
 @register.inclusion_tag("back/_bookmakers_sidebar.html", takes_context=True)
-def bookmakers_sidebar(context):
+def bookmakers_sidebar(context, force_sidebar_ads=False):
+    adv_banners = context.get("adv_banners", [])
+    adv_placement = context.get("adv_placement", "content")
     return {
         "bookmakers": Bookmaker.objects.all(),
         "website_settings": WebsiteSettings.load(),
-        "adv_banners": context.get("adv_banners", []),
-        "adv_placement": context.get("adv_placement", "content"),
+        "adv_banners": adv_banners,
+        "adv_placement": adv_placement,
+        "show_sidebar_ads": bool(
+            adv_banners and (force_sidebar_ads or adv_placement == "sidebar")
+        ),
     }
 
 
