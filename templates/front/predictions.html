@@ -16,7 +16,7 @@
         {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="predictions-filter" filter_label="Фильтры прогнозов" filter_total=filtered_predictions reset_url=all_predictions_url %}
 
         <div class="predictions-content" data-predictions-content>
-            <div class="predictions-hero" style="background:#0b56fa;">
+            <div class="predictions-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_1.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
                 <div>
                     <p class="predictions-eyebrow">Лента экспертов</p>
                     <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
