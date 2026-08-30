@@ -13,8 +13,8 @@
 
 .coupon-panel {
     display: grid;
-    gap: 14px;
-    padding: 16px;
+    gap: 5px;
+    padding: 10px;
     border-radius: 18px;
     background: var(--panel);
 }
@@ -76,12 +76,12 @@
 }
 
 .coupon-empty {
-    min-height: 260px;
+    min-height: auto;
     display: grid;
     place-items: center;
     align-content: center;
-    gap: 12px;
-    padding: 30px 20px;
+    gap: 7px;
+    padding: 9px;
     border-radius: 16px;
     background: #171718;
     text-align: center;
@@ -95,8 +95,8 @@
 }
 
 .coupon-empty .brand-logo img {
-    width: 88px;
-    height: 88px;
+    width: 58px;
+    height: 58px;
     display: block;
     object-fit: contain;
 }
