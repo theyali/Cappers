@@ -114,7 +114,16 @@
         });
     };
 
-    $(() => syncRenderedRoots());
+    const keepLockedSportsOpen = (scope = document) => {
+        scope.querySelectorAll?.(".content-sport-accordion[data-sport-locked='true']").forEach((details) => {
+            if (details instanceof HTMLDetailsElement) details.open = true;
+        });
+    };
+
+    $(() => {
+        syncRenderedRoots();
+        keepLockedSportsOpen(document);
+    });
 
     $(document).on("click", "[data-content-view-mode]", function (event) {
         event.preventDefault();
@@ -131,8 +140,27 @@
         persistMode($switcher, mode);
     });
 
+    $(document).on(
+        "click keydown",
+        ".content-sport-accordion[data-sport-locked='true'] > .content-sport-summary",
+        function (event) {
+            if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+            event.preventDefault();
+            const details = this.parentElement;
+            if (details instanceof HTMLDetailsElement) details.open = true;
+        }
+    );
+
+    document.addEventListener("toggle", (event) => {
+        const details = event.target;
+        if (!(details instanceof HTMLDetailsElement)) return;
+        if (details.dataset.sportLocked !== "true" || details.open) return;
+        details.open = true;
+    }, true);
+
     document.addEventListener("predictions:updated", () => {
         syncRenderedRoots();
+        keepLockedSportsOpen(document);
     });
 
     document.addEventListener("matches:watch-changed", (event) => {
