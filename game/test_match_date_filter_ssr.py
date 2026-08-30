@@ -1,9 +1,9 @@
 from datetime import timedelta
 
 from django.test import TestCase, override_settings
-from django.urls import reverse
 from django.utils import timezone
 
+from back.content_view import CONTENT_VIEW_SESSION_KEY
 from game.models import Match
 
 
@@ -39,7 +39,25 @@ class MatchDateFilterSSRTests(TestCase):
         matches_shell_marker = 'class="matches-shell"'
 
         self.assertIn(date_filter_marker, html)
-        self.assertIn('data-match-date-input', html)
+        self.assertIn('class="matches-table-filter-sidebar"', html)
+        self.assertIn('class="matches-table-sport-list"', html)
+        self.assertEqual(html.count("data-match-date-input"), 2)
         self.assertIn(f'value="{selected_date.isoformat()}"', html)
         self.assertLess(html.index(date_filter_marker), html.index(matches_shell_marker))
         self.assertNotIn('data-match-date-filter', html)
+
+    def test_saved_table_mode_is_rendered_without_filter_layout_flash(self):
+        session = self.client.session
+        session[CONTENT_VIEW_SESSION_KEY] = "table"
+        session.save()
+
+        selected_date = timezone.localdate()
+        response = self.client.get(
+            f"/games/all/{Match.SyncScope.PREMATCH}/{selected_date.isoformat()}/"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertIn('class="matches-page is-table-view"', html)
+        self.assertIn('data-content-view-current="table"', html)
+        self.assertIn('class="matches-table-filter-sidebar"', html)
