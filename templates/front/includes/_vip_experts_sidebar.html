@@ -1,4 +1,119 @@
 {% if vip_experts %}
+<style>
+    .vip-experts-panel {
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .vip-experts-panel .bookmakers-head {
+        align-items: center;
+        gap: 10px;
+    }
+
+    .vip-experts-panel .bookmakers-head p {
+        margin-bottom: 3px;
+        font-size: 9px;
+        letter-spacing: .11em;
+    }
+
+    .vip-experts-panel .bookmakers-head h2 {
+        font-size: 21px;
+        line-height: 1.05;
+    }
+
+    .vip-experts-panel .bookmakers-head > span {
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 13px;
+    }
+
+    .vip-experts-list {
+        gap: 2px;
+    }
+
+    .predictions-layout > .bookmakers-sidebar .vip-expert-card,
+    .vip-expert-card {
+        min-height: 58px;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 10px;
+        padding: 7px 8px;
+        background: transparent;
+        border-radius: 10px;
+    }
+
+    .vip-expert-card:hover {
+        background: #262628;
+        transform: none;
+    }
+
+    .predictions-layout > .bookmakers-sidebar .vip-expert-avatar,
+    .vip-expert-avatar {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 50%;
+        background: #272729;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .vip-expert-avatar img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+    .vip-expert-card .bookmaker-info {
+        min-width: 0;
+        gap: 3px;
+    }
+
+    .vip-expert-card .bookmaker-name {
+        overflow: hidden;
+        font-size: 14px;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .vip-expert-record {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .vip-expert-record .is-win {
+        color: #5ea731;
+    }
+
+    .vip-expert-record .is-loss {
+        color: #fd1a01;
+    }
+
+    .vip-expert-record i {
+        color: var(--muted);
+        font-style: normal;
+    }
+
+    .vip-expert-roi {
+        justify-self: end;
+        color: #5ea731;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .vip-expert-roi.is-negative {
+        color: #fd1a01;
+    }
+</style>
 <section class="bookmakers-panel vip-experts-panel" aria-label="VIP прогнозисты">
     <div class="bookmakers-head">
         <div>
@@ -11,11 +126,11 @@
     <div class="bookmakers-list vip-experts-list">
         {% for profile in vip_experts %}
         <a class="bookmaker-card vip-expert-card" href="{% url 'front:expert_profile' profile.user.username %}">
-            <span class="bookmaker-logo following-capper-sidebar-avatar is-vip"{% if profile.avatar or profile.user.avatar %} data-skeleton-image{% endif %}>
+            <span class="vip-expert-avatar"{% if profile.avatar or profile.user.avatar %} data-skeleton-image{% endif %}>
                 {% if profile.avatar %}
-                    <img src="{{ profile.avatar.url }}" width="46" height="46" alt="" loading="lazy">
+                    <img src="{{ profile.avatar.url }}" width="38" height="38" alt="" loading="lazy">
                 {% elif profile.user.avatar %}
-                    <img src="{{ profile.user.avatar.url }}" width="46" height="46" alt="" loading="lazy">
+                    <img src="{{ profile.user.avatar.url }}" width="38" height="38" alt="" loading="lazy">
                 {% else %}
                     {{ profile.display_name|default:profile.user.username|slice:":1"|upper }}
                 {% endif %}
@@ -23,12 +138,15 @@
 
             <span class="bookmaker-info">
                 <span class="bookmaker-name">{{ profile.display_name|default:profile.user.get_full_name|default:profile.user.username }}</span>
-                <span class="bookmaker-bonus">ROI {% if profile.author_roi > 0 %}+{% endif %}{{ profile.author_roi|floatformat:1 }}% · {{ profile.publications_count }} прогнозов</span>
-                <span class="bookmaker-exclusive">VIP · {{ profile.followers_count }} подписчиков</span>
+                <span class="vip-expert-record">
+                    <b class="is-win">{{ profile.wins_count }}</b>
+                    <i>|</i>
+                    <b class="is-loss">{{ profile.losses_count }}</b>
+                </span>
             </span>
 
-            <span class="bookmaker-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
+            <span class="vip-expert-roi{% if profile.author_roi < 0 %} is-negative{% endif %}">
+                {% if profile.author_roi > 0 %}+{% endif %}{{ profile.author_roi|floatformat:1 }}%
             </span>
         </a>
         {% endfor %}
