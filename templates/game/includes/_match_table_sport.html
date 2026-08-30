@@ -1,0 +1,150 @@
+{% load coupon_options match_ui %}
+<details
+    class="content-sport-accordion"
+    data-table-sport-code="{{ sport.code }}"
+    {% if sport.open %}open{% endif %}
+>
+    <summary class="content-sport-summary">
+        <span class="content-sport-icon" aria-hidden="true">
+            {% if sport.code == 'football' %}
+                {% include "front/svgs/soccer.svg" %}
+            {% elif sport.code == 'hockey' %}
+                {% include "front/svgs/hockey.svg" %}
+            {% elif sport.code == 'basketball' %}
+                {% include "front/svgs/basketball.svg" %}
+            {% elif sport.code == 'tennis' %}
+                {% include "front/svgs/tennis.svg" %}
+            {% else %}
+                {% include "front/svgs/nav-matches.svg" %}
+            {% endif %}
+        </span>
+        <strong>{{ sport.name }}</strong>
+        <small>{{ sport.count }} матчей</small>
+        <svg class="content-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+    </summary>
+
+    <div class="content-sport-body">
+        {% for league in sport.leagues %}
+        <details class="content-league-accordion" open>
+            <summary class="content-league-summary">
+                <span class="content-league-logo"{% if league.logo %} data-skeleton-image{% endif %}>
+                    {% if league.logo %}
+                        <img src="{{ league.logo }}" width="24" height="24" loading="lazy" alt="">
+                    {% else %}
+                        {{ league.name|slice:":1" }}
+                    {% endif %}
+                </span>
+                <span class="content-league-copy">
+                    <strong>{{ league.name }}</strong>
+                    {% if league.country %}<span>{{ league.country }}</span>{% endif %}
+                </span>
+                <small>{{ league.count }}</small>
+                <svg class="content-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </summary>
+
+            <div class="content-table-scroll">
+                {% with header_match=league.items.0 %}
+                    {% match_coupon_options header_match as header_quick %}
+                    <div class="content-table-head match-table-head" aria-hidden="true">
+                        <span>Матч</span>
+                        <span>Счет</span>
+                        {% for option in header_quick.items %}<span>{{ option.label }}</span>{% endfor %}
+                        <span></span>
+                    </div>
+                {% endwith %}
+
+                {% for match in league.items %}
+                {% match_coupon_options match as coupon_quick %}
+                <div
+                    class="content-table-row match-table-row match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}"
+                    data-match-shell-id="{{ match.id }}"
+                    data-match-scope="{{ match.sync_scope }}"
+                    data-match-starts-at="{% if match.starts_at %}{{ match.starts_at|date:'c' }}{% endif %}"
+                >
+                    <a class="match-table-event" href="{{ match.get_absolute_url }}">
+                        <span class="match-table-event-copy">
+                            <strong>{{ match.home_team_name|default:"Хозяева" }} — {{ match.away_team_name|default:"Гости" }}</strong>
+                            <span class="match-table-meta">
+                                {% if match.sync_scope == 'live' %}
+                                    <span class="match-status match-status-live">
+                                        <i class="match-live-dot" aria-hidden="true"></i>
+                                        <span>{{ match|live_status_label }}</span>
+                                    </span>
+                                {% elif match.starts_at %}
+                                    <span>{{ match.starts_at|date:"d.m H:i" }}</span>
+                                {% else %}
+                                    <span>Время не указано</span>
+                                {% endif %}
+                                {% if match.predictions_count %}<span>{{ match.predictions_count }} прогнозов</span>{% endif %}
+                            </span>
+                            </span>
+                        </a>
+                        <a class="match-table-score" href="{{ match.get_absolute_url }}">
+                            {% if match.score %}{{ match.score }}{% else %}VS{% endif %}
+                        </a>
+
+                    <div
+                        class="match-table-odds"
+                        data-match-bets
+                        data-match-id="{{ match.id }}"
+                        data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
+                        data-league="{{ match.league_name|default:'Лига не указана' }}"
+                        data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+                        data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
+                    >
+                        {% for option in coupon_quick.items %}
+                        <button
+                            class="match-table-odd match-bet-option"
+                            type="button"
+                            {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
+                                data-bet-option
+                                data-bet-key="{{ option.key }}"
+                                data-market="{{ option.market }}"
+                                data-selection="{{ option.selection }}"
+                                data-coefficient="{{ option.coefficient }}"
+                            {% else %}
+                                disabled aria-disabled="true"
+                            {% endif %}
+                        >
+                            <span>{{ option.label }}</span>
+                            <strong>{% if option.coefficient %}{{ option.coefficient }}{% else %}—{% endif %}</strong>
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    <div class="match-table-watch">
+                        {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
+                        <button
+                            class="match-card-watch-button{% if match.is_watched %} is-watching{% endif %}"
+                            type="button"
+                            data-match-watch-toggle
+                            data-watch-url="{% url 'notifications:match_watch' match.id %}"
+                            aria-pressed="{% if match.is_watched %}true{% else %}false{% endif %}"
+                            aria-label="{% if match.is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
+                            title="{% if match.is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path></svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </details>
+        {% endfor %}
+
+        {% if sport.has_next %}
+        <div
+            class="matches-lazy-sentinel matches-table-lazy-sentinel"
+            data-table-sport-lazy
+            data-table-sport="{{ sport.code }}"
+            data-next-window="{{ sport.next_window }}"
+            aria-live="polite"
+        >
+            <span class="matches-lazy-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <button class="matches-lazy-button" type="button" data-table-sport-lazy-button>Показать ещё</button>
+            <span class="matches-lazy-status" data-table-sport-lazy-status></span>
+        </div>
+        {% endif %}
+    </div>
+</details>

@@ -73,13 +73,22 @@
     min-width: 0;
     display: grid;
     gap: 10px;
+    overflow-anchor: none;
+    --content-sport-sticky-top: 92px;
 }
 
-.content-sport-accordion,
+.content-sport-accordion {
+    min-width: 0;
+    overflow: visible;
+    overflow-anchor: none;
+    border-radius: 14px;
+    background: var(--panel);
+}
+
 .content-league-accordion {
     min-width: 0;
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 10px;
     background: var(--panel);
 }
 
@@ -96,13 +105,17 @@
 }
 
 .content-sport-summary {
-    min-height: 54px;
+    position: sticky;
+    top: var(--content-sport-sticky-top);
+    z-index: 39;
+    min-height: 37px;
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 4px;
     padding: 0 15px;
     color: #fff;
     background: var(--blue);
+    border-radius: 12px 12px 0 0;
 }
 
 .content-sport-icon {
@@ -114,13 +127,13 @@
 }
 
 .content-sport-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     display: block;
 }
 
 .content-sport-summary strong {
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .content-sport-summary small,
@@ -152,7 +165,6 @@
 }
 
 .content-league-accordion {
-    border-radius: 10px;
     background: #19191b;
 }
 
@@ -214,7 +226,7 @@
 
 .content-table-head,
 .content-table-row {
-    min-width: 920px;
+    min-width: 980px;
 }
 
 .content-table-head {
@@ -232,7 +244,7 @@
 
 .match-table-head,
 .match-table-row {
-    grid-template-columns: minmax(280px, 1.7fr) repeat(6, minmax(76px, .55fr)) 42px;
+    grid-template-columns: minmax(270px, 1.7fr) 64px repeat(6, minmax(76px, .55fr)) 42px;
 }
 
 .prediction-table-head,
@@ -241,7 +253,7 @@
 }
 
 .content-table-row {
-    min-height: 54px;
+    min-height: 45px;
     display: grid;
     align-items: stretch;
     gap: 6px;
@@ -288,13 +300,59 @@
     font-size: 10px;
 }
 
-.match-table-score {
-    min-width: 50px;
-    flex: 0 0 auto;
-    color: var(--yellow);
-    font-size: 12px;
+.match-table-meta {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.match-table-meta > span + span::before {
+    content: "";
+    width: 3px;
+    height: 3px;
+    margin-right: 7px;
+    display: inline-block;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: middle;
+}
+
+.match-table-meta .match-status-live {
+    min-height: 18px;
+    gap: 5px;
+    color: #ef3b3b;
+    font-size: 10px;
     font-weight: 800;
-    text-align: right;
+}
+
+.match-table-meta .match-status-live::before {
+    display: none;
+}
+
+.match-table-meta .match-live-dot {
+    width: 12px;
+    height: 12px;
+    flex-basis: 12px;
+    background: rgba(239, 59, 59, .14);
+}
+
+.match-table-meta .match-live-dot::before,
+.match-table-meta .match-live-dot::after {
+    width: 5px;
+    height: 5px;
+}
+
+.match-table-score {
+    min-width: 0;
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    color: var(--yellow);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0;
+    text-align: center;
 }
 
 .match-table-odds {
@@ -344,6 +402,11 @@
 .match-table-watch {
     display: grid;
     place-items: center;
+}
+
+.matches-table-lazy-sentinel {
+    margin: 8px 0 2px;
+    background: #202022;
 }
 
 .prediction-table-expert {
@@ -425,9 +488,9 @@
     background: #303034;
 }
 
-.prediction-table-status.is-win { color: var(--green); }
-.prediction-table-status.is-lose { color: var(--danger); }
-.prediction-table-status.is-refund { color: var(--blue); }
+.prediction-table-status.is-win { background: var(--green); color: white; }
+.prediction-table-status.is-lose { color: white; background: var(--danger); }
+.prediction-table-status.is-refund { color: white; background: var(--blue); }
 
 .prediction-table-actions {
     display: flex;
@@ -461,6 +524,12 @@
     fill: none;
     stroke: currentColor;
     stroke-width: 1.8;
+}
+
+@media (max-width: 1120px) {
+    .content-table-view {
+        --content-sport-sticky-top: 0px;
+    }
 }
 
 @media (max-width: 760px) {

@@ -1,19 +1,18 @@
 .site-topbar {
-    width: min(1480px, calc(100% - 32px));
+    width: 100%;
     min-height: 46px;
-    margin: 14px auto 0;
     display: flex;
     align-items: center;
-    border-radius: 15px;
-    background: #171718;
+    background: var(--blue);
 }
 
 .site-topbar-nav {
-    width: 100%;
+    width: min(1480px, calc(100% - 32px));
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
+    margin: auto;
 }
 
 .site-topbar-link {
@@ -58,10 +57,6 @@
     stroke-width: 1.8;
     stroke-linecap: round;
     stroke-linejoin: round;
-}
-
-.site-topbar + .site-header {
-    margin-top: 8px;
 }
 
 .site-nav-cappers-menu {
@@ -193,10 +188,6 @@
 @media (max-width: 1120px) {
     .site-topbar {
         display: none;
-    }
-
-    .site-topbar + .site-header {
-        margin-top: 0;
     }
 
     .site-nav-cappers-menu {

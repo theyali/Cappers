@@ -54,6 +54,14 @@
         });
     };
 
+    const dispatchUpdated = ($root, $panel, mode) => {
+        document.dispatchEvent(
+            new CustomEvent("content-view:updated", {
+                detail: { mode, root: $root.get(0), panel: $panel.get(0) },
+            })
+        );
+    };
+
     const applyMode = ($root, mode, { animate = false } = {}) => {
         if (!$root.length || !["grid", "table"].includes(mode)) return;
 
@@ -73,6 +81,7 @@
             $panels.attr("hidden", true);
             $next.removeAttr("hidden");
             window.CappersSkeleton?.watchImages($next.get(0));
+            dispatchUpdated($root, $next, mode);
             return;
         }
 
@@ -93,11 +102,7 @@
                 });
             });
 
-            document.dispatchEvent(
-                new CustomEvent("content-view:updated", {
-                    detail: { mode, root: $root.get(0), panel: $next.get(0) },
-                })
-            );
+            dispatchUpdated($root, $next, mode);
         }, 110);
     };
 

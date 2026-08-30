@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
+from back.content_view import group_by_sport_and_league
 from cabinet.models import User
 from game.models import Match, PredictionCoupon
 from game.views import (
@@ -54,6 +55,8 @@ SCOPE_SEO_LABELS = {
 ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
 MATCHES_PAGE_SIZE = 18
 MAX_MATCHES_WINDOW = 180
+TABLE_MATCHES_PER_SPORT = 20
+TABLE_MATCHES_MAX_WINDOW = 2000
 MATCH_DATE_INDEX_WINDOW_DAYS = 30
 
 
@@ -151,6 +154,13 @@ def match_list(request, sport=None, scope=None, selected_date=None):
     can_write_coupon = request.user.is_authenticated and request.user.role == User.Role.ANALYST
     window_size = _window_size(request.GET.get("window")) if lazy_request else None
 
+    if lazy_request and request.GET.get("view") == "table":
+        return _table_lazy_response(
+            request,
+            matches_queryset=matches_queryset,
+            can_write_coupon=can_write_coupon,
+        )
+
     if window_size is not None:
         total = matches_queryset.count()
         matches = list(matches_queryset[:window_size])
@@ -186,6 +196,11 @@ def match_list(request, sport=None, scope=None, selected_date=None):
 
     matches = list(page_obj.object_list)
     card_odds = _decorate_matches(matches)
+    table_groups = _table_match_groups(
+        matches_queryset,
+        active_sport=active_sport,
+        limit=TABLE_MATCHES_PER_SPORT,
+    )
 
     if lazy_request:
         html = render_to_string(
@@ -319,6 +334,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "scope_tabs": scope_tabs,
         "sport_tabs": sport_tabs,
         "matches": matches,
+        "table_grouped_matches": table_groups,
         "page_obj": page_obj,
         "total_count": total_count,
         "hero_count": _hero_count(active_scope, total_count, counts, watched_count),
@@ -377,6 +393,97 @@ def _decorate_matches(matches):
         match.coupon_odds = _match_winner_odds(match)
         card_odds[str(match.id)] = {"scope": match.sync_scope, "odds": _stored_card_odds(match)}
     return card_odds
+
+
+def _table_sport_codes(active_sport: str) -> list[str]:
+    if active_sport != "all":
+        return [active_sport]
+    return [sport for sport, _ in SPORT_FILTERS if sport != "all"]
+
+
+def _table_match_groups(matches_queryset, *, active_sport: str, limit: int) -> list[dict]:
+    groups = []
+    for index, sport_code in enumerate(_table_sport_codes(active_sport)):
+        sport_queryset = _filter_by_sport(matches_queryset, sport_code)
+        total = sport_queryset.count()
+        if total <= 0:
+            continue
+
+        matches = list(sport_queryset[:limit])
+        _decorate_matches(matches)
+        grouped = group_by_sport_and_league(matches)
+        if grouped:
+            sport_group = grouped[0]
+        else:
+            sport_group = {
+                "code": sport_code,
+                "name": dict(SPORT_FILTERS).get(sport_code, sport_code.title()),
+                "leagues": [],
+            }
+
+        loaded_count = len(matches)
+        has_next = total > loaded_count and loaded_count < TABLE_MATCHES_MAX_WINDOW
+        sport_group.update(
+            {
+                "code": sport_code,
+                "count": total,
+                "loaded_count": loaded_count,
+                "open": True,
+                "has_next": has_next,
+                "next_window": min(
+                    loaded_count + TABLE_MATCHES_PER_SPORT,
+                    total,
+                    TABLE_MATCHES_MAX_WINDOW,
+                ),
+            }
+        )
+        groups.append(sport_group)
+    return groups
+
+
+def _table_window_size(raw_value):
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        value = TABLE_MATCHES_PER_SPORT
+    return max(TABLE_MATCHES_PER_SPORT, min(TABLE_MATCHES_MAX_WINDOW, value))
+
+
+def _table_lazy_response(request, *, matches_queryset, can_write_coupon: bool):
+    sport_code = request.GET.get("table_sport", "").strip().lower()
+    valid_sports = {sport for sport, _ in SPORT_FILTERS if sport != "all"}
+    if sport_code not in valid_sports:
+        return JsonResponse(
+            {"ok": False, "error": "Некорректный вид спорта."},
+            status=400,
+        )
+
+    groups = _table_match_groups(
+        matches_queryset,
+        active_sport=sport_code,
+        limit=_table_window_size(request.GET.get("window")),
+    )
+    sport_group = groups[0] if groups else None
+    html = ""
+    if sport_group is not None:
+        sport_group["open"] = True
+        html = render_to_string(
+            "game/includes/_match_table_sport.html",
+            {"sport": sport_group, "can_write_coupon": can_write_coupon},
+            request=request,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": html,
+            "sport": sport_code,
+            "window": sport_group["loaded_count"] if sport_group else 0,
+            "total": sport_group["count"] if sport_group else 0,
+            "has_next": bool(sport_group and sport_group["has_next"]),
+            "next_window": sport_group["next_window"] if sport_group and sport_group["has_next"] else None,
+        }
+    )
 
 
 def _window_size(raw_value):

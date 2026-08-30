@@ -184,7 +184,7 @@
 
 .matches-shell {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
     gap: 18px;
     align-items: start;
 }
