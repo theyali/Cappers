@@ -2,9 +2,10 @@ name: Fix expert recommendations layout
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - '.github/workflows/fix-expert-recommendations-layout.yml'
+      - .github/workflows/fix-expert-recommendations-layout.yml
 
 permissions:
   contents: write
@@ -17,44 +18,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fix recommendation cards
-        shell: bash
+      - name: Apply layout fix
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          cat >> front/static/front/css/main.css <<'CSS'
 
-          css = Path('front/static/front/css/main.css')
-          text = css.read_text(encoding='utf-8').rstrip()
-          marker = '/* Expert recommendations VIP positioning fix */'
-          block = r'''
-/* Expert recommendations VIP positioning fix */
-.expert-recommendations-track {
-    align-items: stretch;
-}
+          /* Expert recommendations VIP positioning fix */
+          .expert-recommendations-track {
+              align-items: stretch;
+          }
 
-.expert-recommendation-card {
-    height: 100%;
-}
+          .expert-recommendation-card {
+              height: 100%;
+          }
 
-.expert-recommendation-avatar.is-vip {
-    position: absolute;
-}
-'''
-          if marker not in text:
-              text += '\n\n' + block.strip() + '\n'
-              css.write_text(text, encoding='utf-8')
-          PY
-
+          .expert-recommendation-avatar.is-vip {
+              position: absolute;
+          }
+          CSS
           rm -f .github/workflows/fix-expert-recommendations-layout.yml
 
       - name: Commit result
-        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          if git diff --cached --quiet; then
-            exit 0
-          fi
           git commit -m "fix: align expert recommendation cards"
           git push origin main
