@@ -92,3 +92,29 @@
         mobileQuery.addListener(handleBreakpoint);
     }
 })();
+
+(() => {
+    const panels = document.querySelectorAll(".match-detail-main > .match-odds-panel");
+    if (!panels.length) return;
+
+    const syncLayout = (panel) => {
+        const body = panel.querySelector(":scope > .match-odds-accordion-body");
+        const inner = body?.querySelector(":scope > .match-odds-accordion-inner");
+        if (!body || !inner) return;
+
+        const collapsed = panel.classList.contains("is-odds-collapsed");
+        panel.style.flexShrink = "0";
+        inner.style.minHeight = "0";
+        body.style.gridTemplateRows = collapsed ? "0fr" : "1fr";
+        body.style.opacity = collapsed ? "0" : "1";
+    };
+
+    panels.forEach((panel) => {
+        syncLayout(panel);
+        const observer = new MutationObserver(() => syncLayout(panel));
+        observer.observe(panel, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+    });
+})();
