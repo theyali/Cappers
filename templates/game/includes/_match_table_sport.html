@@ -1,10 +1,11 @@
-{% load coupon_options match_ui %}
+{% load match_ui %}
 <details
-    class="content-sport-accordion"
+    class="content-sport-accordion{% if active_sport != 'all' %} is-sport-locked{% endif %}"
     data-table-sport-code="{{ sport.code }}"
+    data-sport-locked="{% if active_sport != 'all' %}true{% else %}false{% endif %}"
     {% if sport.open %}open{% endif %}
 >
-    <summary class="content-sport-summary">
+    <summary class="content-sport-summary"{% if active_sport != 'all' %} aria-disabled="true"{% endif %}>
         <span class="content-sport-icon" aria-hidden="true">
             {% if sport.code == 'football' %}
                 {% include "front/svgs/soccer.svg" %}
@@ -25,7 +26,12 @@
 
     <div class="content-sport-body">
         {% for league in sport.leagues %}
-        <details class="content-league-accordion" open>
+        <details
+            class="content-league-accordion"
+            data-table-league-id="{{ league.id|default_if_none:'' }}"
+            data-table-league-name="{{ league.name }}"
+            open
+        >
             <summary class="content-league-summary">
                 <span class="content-league-logo"{% if league.logo %} data-skeleton-image{% endif %}>
                     {% if league.logo %}
@@ -38,23 +44,27 @@
                     <strong>{{ league.name }}</strong>
                     {% if league.country %}<span>{{ league.country }}</span>{% endif %}
                 </span>
-                <small>{{ league.count }}</small>
+                <small data-table-league-count>{{ league.count }}</small>
                 <svg class="content-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
             </summary>
 
-            <div class="content-table-scroll">
-                {% with header_match=league.items.0 %}
-                    {% match_coupon_options header_match as header_quick %}
-                    <div class="content-table-head match-table-head" aria-hidden="true">
-                        <span>Матч</span>
-                        <span>Счет</span>
-                        {% for option in header_quick.items %}<span>{{ option.label }}</span>{% endfor %}
-                        <span></span>
-                    </div>
-                {% endwith %}
+            <div class="content-table-scroll" data-table-league-scroll>
+                <div class="content-table-head match-table-head" aria-hidden="true">
+                    <span>Матч</span>
+                    <span>Счет</span>
+                    {% if sport.code == 'hockey' %}
+                        <span>П1</span><span>X</span><span>П2</span><span>ТБ 5.5</span><span>ТМ 5.5</span><span>Ф1 0</span>
+                    {% elif sport.code == 'basketball' %}
+                        <span>П1</span><span>П2</span><span>ТБ 160.5</span><span>ТМ 160.5</span><span>Ф1 -3.5</span><span>Ф2 +3.5</span>
+                    {% elif sport.code == 'tennis' %}
+                        <span>П1</span><span>П2</span><span>ТБ 22.5</span><span>ТМ 22.5</span><span>Ф1 -1.5</span><span>Ф2 +1.5</span>
+                    {% else %}
+                        <span>1</span><span>X</span><span>2</span><span>ТБ 2.5</span><span>ТМ 2.5</span><span>ОЗ Да</span>
+                    {% endif %}
+                    <span></span>
+                </div>
 
                 {% for match in league.items %}
-                {% match_coupon_options match as coupon_quick %}
                 <div
                     class="content-table-row match-table-row match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}"
                     data-match-shell-id="{{ match.id }}"
@@ -77,39 +87,54 @@
                                 {% endif %}
                                 {% if match.predictions_count %}<span>{{ match.predictions_count }} прогнозов</span>{% endif %}
                             </span>
-                            </span>
-                        </a>
-                        <a class="match-table-score" href="{{ match.get_absolute_url }}">
-                            {% if match.score %}{{ match.score }}{% else %}VS{% endif %}
-                        </a>
+                        </span>
+                    </a>
+                    <a class="match-table-score" href="{{ match.get_absolute_url }}">
+                        {% if match.score %}{{ match.score }}{% else %}VS{% endif %}
+                    </a>
 
                     <div
-                        class="match-table-odds"
+                        class="match-table-odds is-skeleton-loading"
                         data-match-bets
+                        data-table-match-odds
+                        data-table-odds-loaded="false"
+                        data-skeleton-block
+                        aria-busy="true"
                         data-match-id="{{ match.id }}"
                         data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
                         data-league="{{ match.league_name|default:'Лига не указана' }}"
                         data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
                         data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
                     >
-                        {% for option in coupon_quick.items %}
-                        <button
-                            class="match-table-odd match-bet-option"
-                            type="button"
-                            {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
-                                data-bet-option
-                                data-bet-key="{{ option.key }}"
-                                data-market="{{ option.market }}"
-                                data-selection="{{ option.selection }}"
-                                data-coefficient="{{ option.coefficient }}"
-                            {% else %}
-                                disabled aria-disabled="true"
-                            {% endif %}
-                        >
-                            <span>{{ option.label }}</span>
-                            <strong>{% if option.coefficient %}{{ option.coefficient }}{% else %}—{% endif %}</strong>
-                        </button>
-                        {% endfor %}
+                        {% if sport.code == 'hockey' %}
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П1</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>X</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П2</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТБ 5.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТМ 5.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>Ф1 0</span><strong>•••</strong></span>
+                        {% elif sport.code == 'basketball' %}
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П1</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П2</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТБ 160.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТМ 160.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>Ф1 -3.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>Ф2 +3.5</span><strong>•••</strong></span>
+                        {% elif sport.code == 'tennis' %}
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П1</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>П2</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТБ 22.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТМ 22.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>Ф1 -1.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>Ф2 +1.5</span><strong>•••</strong></span>
+                        {% else %}
+                            <span class="match-table-odd match-table-odd-placeholder"><span>1</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>X</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>2</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТБ 2.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ТМ 2.5</span><strong>•••</strong></span>
+                            <span class="match-table-odd match-table-odd-placeholder"><span>ОЗ Да</span><strong>•••</strong></span>
+                        {% endif %}
                     </div>
 
                     <div class="match-table-watch">
