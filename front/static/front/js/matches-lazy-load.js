@@ -258,8 +258,12 @@
 
     const tablePanel = table.closest("[data-content-view-panel]");
     const loadingSports = new Set();
-    let pendingScrollSport = null;
-    let observer = null;
+    const oddsQueue = new Set();
+    const oddsLoading = new Set();
+    const oddsUrl = table.dataset.tableOddsUrl || "";
+    let tableObserver = null;
+    let oddsObserver = null;
+    let oddsTimer = null;
 
     const isTableActive = () => !tablePanel || !tablePanel.hidden;
 
@@ -280,22 +284,183 @@
         return node?.matches?.("[data-table-sport-code]") ? node : null;
     };
 
+    const leagueKey = (league) => [
+        String(league?.dataset.tableLeagueId || ""),
+        String(league?.dataset.tableLeagueName || ""),
+    ].join("|");
+
     const setSentinelStatus = (sentinel, message) => {
         const status = sentinel?.querySelector("[data-table-sport-lazy-status]");
         if (status) status.textContent = message;
     };
 
-    const reviveSentinels = (scope = table) => {
-        scope.querySelectorAll("[data-table-sport-lazy]").forEach((sentinel) => {
-            observer?.observe(sentinel);
+    const directSportBody = (details) => details?.querySelector(":scope > .content-sport-body");
+
+    const sportSentinel = (details) => directSportBody(details)?.querySelector(":scope > [data-table-sport-lazy]") || null;
+
+    const observeSentinels = (scope = table) => {
+        scope.querySelectorAll?.("[data-table-sport-lazy]").forEach((sentinel) => {
+            tableObserver?.observe(sentinel);
         });
+    };
+
+    const queueOdds = (group) => {
+        if (!group || group.dataset.tableOddsLoaded === "true" || group.dataset.tableOddsLoading === "true") return;
+        const matchId = String(group.dataset.matchId || "");
+        if (!matchId || oddsLoading.has(matchId)) return;
+
+        group.dataset.tableOddsLoading = "true";
+        window.CappersSkeleton?.loading(group);
+        oddsQueue.add(matchId);
+        window.clearTimeout(oddsTimer);
+        oddsTimer = window.setTimeout(loadOddsBatch, 35);
+    };
+
+    const observeOdds = (scope = table) => {
+        scope.querySelectorAll?.("[data-table-match-odds][data-table-odds-loaded='false']").forEach((group) => {
+            oddsObserver?.observe(group);
+        });
+    };
+
+    const loadOddsBatch = async () => {
+        if (!oddsUrl || !oddsQueue.size || !isTableActive()) return;
+
+        const ids = Array.from(oddsQueue).slice(0, 24);
+        ids.forEach((id) => {
+            oddsQueue.delete(id);
+            oddsLoading.add(id);
+        });
+
+        const url = new URL(oddsUrl, window.location.origin);
+        url.searchParams.set("ids", ids.join(","));
+
+        try {
+            const response = await fetch(`${url.pathname}${url.search}`, {
+                method: "GET",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+            });
+            if (!response.ok) throw new Error("table-odds-request-failed");
+            const payload = await response.json();
+            if (!payload?.ok) throw new Error("table-odds-response-invalid");
+
+            ids.forEach((id) => {
+                const html = payload.items?.[id];
+                document.querySelectorAll(`[data-table-match-odds][data-match-id='${CSS.escape(id)}']`).forEach((group) => {
+                    if (typeof html === "string") group.innerHTML = html;
+                    group.dataset.tableOddsLoaded = "true";
+                    group.dataset.tableOddsLoading = "false";
+                    group.removeAttribute("aria-busy");
+                    group.classList.remove("is-skeleton-loading");
+                    window.CappersSkeleton?.ready(group);
+                    oddsObserver?.unobserve(group);
+                    const row = group.closest("[data-match-shell-id]");
+                    if (row) {
+                        document.dispatchEvent(new CustomEvent("matches:appended", { detail: { nodes: [row] } }));
+                    }
+                });
+            });
+        } catch (error) {
+            ids.forEach((id) => {
+                document.querySelectorAll(`[data-table-match-odds][data-match-id='${CSS.escape(id)}']`).forEach((group) => {
+                    group.dataset.tableOddsLoading = "false";
+                    group.dataset.oddsError = "true";
+                    window.CappersSkeleton?.ready(group);
+                });
+            });
+        } finally {
+            ids.forEach((id) => oddsLoading.delete(id));
+            if (oddsQueue.size) {
+                window.clearTimeout(oddsTimer);
+                oddsTimer = window.setTimeout(loadOddsBatch, 35);
+            }
+        }
+    };
+
+    const mergeSportWindow = (details, replacement) => {
+        const targetBody = directSportBody(details);
+        const sourceBody = directSportBody(replacement);
+        if (!targetBody || !sourceBody) return [];
+
+        const existingIds = new Set(
+            Array.from(details.querySelectorAll("[data-match-shell-id]"))
+                .map((row) => String(row.dataset.matchShellId || ""))
+                .filter(Boolean),
+        );
+        const addedRows = [];
+        let targetSentinel = sportSentinel(details);
+
+        sourceBody.querySelectorAll(":scope > [data-table-league-id]").forEach((incomingLeague) => {
+            const key = leagueKey(incomingLeague);
+            const existingLeague = Array.from(targetBody.querySelectorAll(":scope > [data-table-league-id]"))
+                .find((league) => leagueKey(league) === key) || null;
+
+            if (!existingLeague) {
+                const rows = Array.from(incomingLeague.querySelectorAll("[data-match-shell-id]"))
+                    .filter((row) => {
+                        const id = String(row.dataset.matchShellId || "");
+                        if (!id || existingIds.has(id)) return false;
+                        existingIds.add(id);
+                        return true;
+                    });
+                if (!rows.length) return;
+                targetBody.insertBefore(incomingLeague, targetSentinel);
+                addedRows.push(...rows);
+                return;
+            }
+
+            const targetScroll = existingLeague.querySelector("[data-table-league-scroll]");
+            const sourceScroll = incomingLeague.querySelector("[data-table-league-scroll]");
+            if (!targetScroll || !sourceScroll) return;
+
+            sourceScroll.querySelectorAll(":scope > [data-match-shell-id]").forEach((row) => {
+                const id = String(row.dataset.matchShellId || "");
+                if (!id || existingIds.has(id)) return;
+                existingIds.add(id);
+                row.classList.add("is-lazy-added");
+                targetScroll.appendChild(row);
+                addedRows.push(row);
+            });
+
+            const incomingCount = incomingLeague.querySelector("[data-table-league-count]")?.textContent;
+            const targetCount = existingLeague.querySelector("[data-table-league-count]");
+            if (targetCount && incomingCount) targetCount.textContent = incomingCount;
+        });
+
+        const sourceSentinel = sportSentinel(replacement);
+        targetSentinel = sportSentinel(details);
+        if (sourceSentinel) {
+            if (!targetSentinel) {
+                targetSentinel = sourceSentinel;
+                targetBody.appendChild(targetSentinel);
+            } else {
+                targetSentinel.dataset.nextWindow = sourceSentinel.dataset.nextWindow || "";
+                targetSentinel.classList.remove("is-done", "is-loading");
+                const button = targetSentinel.querySelector("[data-table-sport-lazy-button]");
+                if (button) {
+                    button.textContent = "Показать ещё";
+                    button.removeAttribute("disabled");
+                }
+                setSentinelStatus(targetSentinel, "");
+            }
+        } else if (targetSentinel) {
+            tableObserver?.unobserve(targetSentinel);
+            targetSentinel.remove();
+        }
+
+        const sourceCount = replacement.querySelector(":scope > .content-sport-summary small")?.textContent;
+        const targetCount = details.querySelector(":scope > .content-sport-summary small");
+        if (targetCount && sourceCount) targetCount.textContent = sourceCount;
+
+        return addedRows;
     };
 
     const loadSportWindow = async (details) => {
         if (!details || !details.open || !isTableActive()) return;
 
         const sportCode = details.dataset.tableSportCode;
-        const sentinel = details.querySelector("[data-table-sport-lazy]");
+        const sentinel = sportSentinel(details);
         const nextWindow = Number.parseInt(sentinel?.dataset.nextWindow || "", 10);
         if (!sportCode || !sentinel || !nextWindow || loadingSports.has(sportCode)) return;
 
@@ -304,7 +469,7 @@
         const button = sentinel.querySelector("[data-table-sport-lazy-button]");
         button?.setAttribute("disabled", "disabled");
         if (button) button.textContent = "Загружаем...";
-        setSentinelStatus(sentinel, "Загружаем матчи");
+        setSentinelStatus(sentinel, "Загружаем следующие матчи");
 
         try {
             const response = await fetch(requestUrl(sportCode, nextWindow), {
@@ -319,17 +484,18 @@
 
             const replacement = parseSport(payload.html);
             if (!replacement) {
-                sentinel.classList.add("is-done");
+                tableObserver?.unobserve(sentinel);
+                sentinel.remove();
                 return;
             }
 
-            replacement.open = true;
-            details.replaceWith(replacement);
-            window.CappersSkeleton?.watchImages(replacement);
-            const rows = Array.from(replacement.querySelectorAll("[data-match-shell-id]"));
-            document.dispatchEvent(new CustomEvent("matches:appended", { detail: { nodes: rows } }));
-            reviveSentinels(replacement);
-            if (pendingScrollSport === sportCode) settleSportAtTop(replacement);
+            const rows = mergeSportWindow(details, replacement);
+            window.CappersSkeleton?.watchImages(details);
+            observeOdds(details);
+            observeSentinels(details);
+            if (rows.length) {
+                document.dispatchEvent(new CustomEvent("matches:appended", { detail: { nodes: rows } }));
+            }
             maybeLoadVisible();
         } catch (error) {
             setSentinelStatus(sentinel, "Не удалось загрузить матчи.");
@@ -351,66 +517,17 @@
         if (rect.top <= window.innerHeight + 650) window.setTimeout(() => loadSportWindow(details), 90);
     };
 
-    const maybeLoadVisible = () => {
-        table.querySelectorAll("[data-table-sport-lazy]").forEach(maybeLoadSentinel);
-    };
-
-    const sportByCode = (sportCode) => {
-        if (!sportCode) return null;
-        return Array.from(table.querySelectorAll("[data-table-sport-code]"))
-            .find((node) => node.dataset.tableSportCode === sportCode) || null;
-    };
-
-    const stickyOffset = () => {
-        const value = window.getComputedStyle(table).getPropertyValue("--content-sport-sticky-top");
-        return Number.parseFloat(value) || 0;
-    };
-
-    const scrollSportToStickyTop = (details) => {
-        if (!details) return;
-
-        const top = details.getBoundingClientRect().top + window.scrollY - stickyOffset();
-        window.scrollTo({ top: Math.max(0, top), behavior: "auto" });
-    };
-
-    const settleSportAtTop = (details) => {
-        if (!details) return;
-        const sportCode = details.dataset.tableSportCode;
-        if (!sportCode) return;
-
-        pendingScrollSport = sportCode;
-        let attempts = 0;
-        const settle = () => {
-            const current = sportByCode(sportCode);
-            if (!current) return;
-            if (!current.open) current.open = true;
-            scrollSportToStickyTop(current);
-            attempts += 1;
-            if (attempts < 8) {
-                window.setTimeout(settle, attempts < 4 ? 70 : 140);
-            } else if (pendingScrollSport === sportCode) {
-                pendingScrollSport = null;
-            }
-        };
-
-        window.requestAnimationFrame(() => {
-            window.requestAnimationFrame(settle);
+    const maybeLoadVisibleOdds = () => {
+        if (!isTableActive()) return;
+        table.querySelectorAll("[data-table-match-odds][data-table-odds-loaded='false']").forEach((group) => {
+            const rect = group.getBoundingClientRect();
+            if (rect.bottom >= -250 && rect.top <= window.innerHeight + 500) queueOdds(group);
         });
     };
 
-    const nextSportAfterClose = (details) => {
-        let sibling = details?.nextElementSibling;
-        while (sibling) {
-            if (sibling.matches?.("[data-table-sport-code]")) return sibling;
-            sibling = sibling.nextElementSibling;
-        }
-
-        sibling = details?.previousElementSibling;
-        while (sibling) {
-            if (sibling.matches?.("[data-table-sport-code]")) return sibling;
-            sibling = sibling.previousElementSibling;
-        }
-        return null;
+    const maybeLoadVisible = () => {
+        table.querySelectorAll("[data-table-sport-lazy]").forEach(maybeLoadSentinel);
+        maybeLoadVisibleOdds();
     };
 
     table.addEventListener("click", (event) => {
@@ -425,23 +542,27 @@
         const details = event.target;
         if (!(details instanceof HTMLDetailsElement)) return;
         if (!details.matches("[data-table-sport-code]")) return;
-        if (!details.open) {
-            const nextSport = nextSportAfterClose(details);
-            settleSportAtTop(nextSport);
-            return;
-        }
+        if (!details.open) return;
 
-        const sentinel = details.querySelector("[data-table-sport-lazy]");
+        const sentinel = sportSentinel(details);
         if (sentinel) maybeLoadSentinel(sentinel);
+        maybeLoadVisibleOdds();
     }, true);
 
     if ("IntersectionObserver" in window) {
-        observer = new IntersectionObserver((entries) => {
+        tableObserver = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) maybeLoadSentinel(entry.target);
             });
         }, { root: null, rootMargin: "650px 0px", threshold: 0.01 });
-        reviveSentinels();
+        observeSentinels();
+
+        oddsObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) queueOdds(entry.target);
+            });
+        }, { root: null, rootMargin: "500px 0px", threshold: 0.01 });
+        observeOdds();
     } else {
         let ticking = false;
         const onScroll = () => {
@@ -457,7 +578,11 @@
     }
 
     document.addEventListener("content-view:updated", (event) => {
-        if (event.detail?.mode === "table") maybeLoadVisible();
+        if (event.detail?.mode === "table") {
+            observeSentinels();
+            observeOdds();
+            maybeLoadVisible();
+        }
     });
 
     maybeLoadVisible();
