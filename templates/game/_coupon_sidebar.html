@@ -1,151 +1,16 @@
-{% load static site_extras %}
-
+{% if can_write_coupon or adv_banners and adv_placement == 'sidebar' %}
 <aside
-    class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write coupon-sidebar-editor{% else %} coupon-sidebar-feed{% endif %}"
+    class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write coupon-sidebar-editor{% else %} coupon-sidebar-ads{% endif %}"
     {% if can_write_coupon %}id="mobile-coupon-sheet"{% endif %}
-    aria-label="Прогноз"
+    aria-label="{% if can_write_coupon %}Прогноз{% else %}Реклама{% endif %}"
 >
     {% if can_write_coupon %}
-    {% include "game/_coupon_panel.html" %}
-    {{ draft_coupon|json_script:"coupon-draft-data" }}
-    {% my_recent_coupons request.user %}
-    {% else %}
-    {% latest_prediction_cards as latest_predictions %}
-    <section class="latest-predictions-panel sidebar-predictions" aria-label="Последние прогнозы">
-        <div class="coupon-head sidebar-predictions-head">
-            <div>
-                <p class="matches-eyebrow">Лента экспертов</p>
-                <h2>Последние прогнозы</h2>
-            </div>
-            <div class="coupon-head-actions">
-                <button class="coupon-toggle" type="button" data-sidebar-toggle aria-expanded="true" aria-label="Свернуть прогнозы">
-                    <span aria-hidden="true">⌃</span>
-                </button>
-                <span class="coupon-count">{{ latest_predictions|length }}</span>
-            </div>
-        </div>
-
-        <div class="coupon-body sidebar-predictions-body" data-sidebar-body>
-            {% if latest_predictions %}
-            <div class="sidebar-predictions-list">
-                {% for prediction in latest_predictions %}
-                <a class="sidebar-prediction-card" href="{% url 'front:prediction_detail' prediction.id %}">
-                    <div class="sidebar-prediction-league-row">
-                        <div class="sidebar-prediction-league">
-                            <span class="sidebar-prediction-league-logo">
-                                {% if prediction.match.league and prediction.match.league.logo %}
-                                    <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <div>
-                                <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                                <small>{% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m · H:i" }}{% else %}Время не указано{% endif %}</small>
-                            </div>
-                        </div>
-                        {% if prediction.state_status == "win" %}
-                            <span class="sidebar-prediction-status is-win">Выигрыш</span>
-                        {% elif prediction.state_status == "lose" %}
-                            <span class="sidebar-prediction-status is-lose">Проигрыш</span>
-                        {% elif prediction.state_status == "refund" %}
-                            <span class="sidebar-prediction-status is-refund">Возврат</span>
-                        {% else %}
-                            <span class="sidebar-prediction-status">Ожидает</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="sidebar-prediction-match">
-                        <div class="sidebar-prediction-team">
-                            <span class="sidebar-prediction-team-logo">
-                                {% if prediction.match.home_team_logo %}
-                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <strong title="{{ prediction.match.home_team_name }}">{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
-                        </div>
-                        <div class="sidebar-prediction-score">
-                            <strong>{% if prediction.match.score %}{{ prediction.match.score }}{% else %}VS{% endif %}</strong>
-                            <span>{{ prediction.match.get_sync_scope_display }}</span>
-                        </div>
-                        <div class="sidebar-prediction-team is-away">
-                            <span class="sidebar-prediction-team-logo">
-                                {% if prediction.match.away_team_logo %}
-                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <strong title="{{ prediction.match.away_team_name }}">{{ prediction.match.away_team_name|default:"Гости" }}</strong>
-                        </div>
-                        <div style="grid-column: 1 / -1; min-width: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding-top: 8px;">
-                            <div style="min-width: 0;">
-                                <span style="display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .05em;">{{ prediction.market|default:"Прогноз" }}</span>
-                                <strong style="display: block; overflow: hidden; margin-top: 3px; color: var(--yellow); font-size: 13px; white-space: nowrap; text-overflow: ellipsis;">{{ prediction.selection }}</strong>
-                            </div>
-                            <div class="sidebar-prediction-odd">
-                                <span>КФ</span>
-                                <b>{{ prediction.coefficient }}</b>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-prediction-confidence">
-                        <span>Уверенность прогноза</span>
-                        <strong>{{ prediction.coupon.confidence }}%</strong>
-                    </div>
-
-                    <div class="sidebar-prediction-footer">
-                        <div class="sidebar-prediction-author">
-                            <span class="sidebar-prediction-author-avatar">
-                                {% if prediction.coupon.author.analyst_profile.avatar %}
-                                    <img src="{{ prediction.coupon.author.analyst_profile.avatar.url }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.coupon.author.username|slice:":1"|upper }}
-                                {% endif %}
-                            </span>
-                            <span class="sidebar-prediction-author-copy">
-                                <span class="sidebar-prediction-author-name">
-                                    <strong>
-                                        {% if prediction.coupon.author.analyst_profile.display_name %}
-                                            {{ prediction.coupon.author.analyst_profile.display_name }}
-                                        {% elif prediction.coupon.author.get_full_name %}
-                                            {{ prediction.coupon.author.get_full_name }}
-                                        {% else %}
-                                            {{ prediction.coupon.author.username }}
-                                        {% endif %}
-                                    </strong>
-                                    {% if prediction.coupon.author.analyst_profile.is_verified %}
-                                    <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                                        <svg viewBox="0 0 16 16" aria-hidden="true">
-                                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
-                                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
-                                        </svg>
-                                    </span>
-                                    {% endif %}
-                                </span>
-                                <small>Эксперт КапперХаб</small>
-                            </span>
-                        </div>
-                        <strong class="sidebar-prediction-open">Посмотреть купон <i aria-hidden="true">→</i></strong>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="coupon-empty sidebar-predictions-empty">
-                <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" alt=""></span>
-                <strong>Прогнозов пока нет</strong>
-                <p>Когда эксперты опубликуют прогнозы, они появятся здесь.</p>
-            </div>
-            {% endif %}
-        </div>
-    </section>
+        {% include "game/_coupon_panel.html" %}
+        {{ draft_coupon|json_script:"coupon-draft-data" }}
     {% endif %}
 
     {% if adv_banners and adv_placement == 'sidebar' %}
         {% include "pages/_adv_banners.html" with placement="sidebar" %}
     {% endif %}
 </aside>
+{% endif %}
