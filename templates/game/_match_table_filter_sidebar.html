@@ -1,0 +1,126 @@
+<aside class="matches-table-filter-sidebar" aria-label="Фильтры таблицы матчей">
+    <div class="matches-table-filter-head">
+        <span class="matches-table-filter-head-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+        </span>
+        <div>
+            <strong>Фильтры</strong>
+            <small>{{ hero_count|default:total_count }} матчей</small>
+        </div>
+    </div>
+
+    <section class="matches-table-filter-group" aria-labelledby="table-sports-title">
+        <div class="matches-table-filter-title" id="table-sports-title">
+            <span>Виды спорта</span>
+            <small>{{ sport_tabs|length }}</small>
+        </div>
+        <nav class="matches-table-sport-list" aria-label="Фильтр по виду спорта">
+            {% for tab in sport_tabs %}
+            <a
+                class="matches-table-sport-link{% if active_sport == tab.code %} is-active{% endif %}"
+                href="{{ tab.url }}"
+                {% if active_sport == tab.code %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-sport-icon" aria-hidden="true">
+                    {% if tab.code == 'all' %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% elif tab.code == 'football' %}
+                        {% include "front/svgs/soccer.svg" %}
+                    {% elif tab.code == 'hockey' %}
+                        {% include "front/svgs/hockey.svg" %}
+                    {% elif tab.code == 'basketball' %}
+                        {% include "front/svgs/basketball.svg" %}
+                    {% elif tab.code == 'tennis' %}
+                        {% include "front/svgs/tennis.svg" %}
+                    {% else %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% endif %}
+                </span>
+                <span class="matches-table-sport-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+
+    <section class="matches-table-filter-group matches-table-date-group" aria-labelledby="table-date-title">
+        <div class="matches-table-filter-title" id="table-date-title">
+            <span>Дата</span>
+            {% if show_date_filter %}<small>{{ selected_date|date:"d.m" }}</small>{% endif %}
+        </div>
+
+        {% if show_date_filter %}
+        <div class="matches-table-date-current">
+            <div>
+                <span>Выбрано</span>
+                <strong>{{ selected_date|date:"l, j E" }}</strong>
+            </div>
+            <div class="matches-table-date-arrows">
+                {% if previous_date_url %}
+                <a href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                {% else %}
+                <span class="is-disabled" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                {% endif %}
+
+                {% if next_date_url %}
+                <a href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+                {% else %}
+                <span class="is-disabled" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="matches-table-date-shortcuts">
+            {% for item in date_shortcuts %}
+            <a class="matches-table-date-link{% if item.is_active %} is-active{% endif %}" href="{{ item.url }}">
+                <span>{{ item.label }}</span>
+                <small>{{ item.date|date:"j M" }}</small>
+            </a>
+            {% endfor %}
+        </div>
+
+        <label class="matches-table-date-picker">
+            <span class="matches-table-date-picker-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span>Выбрать дату</span>
+            <input
+                type="date"
+                value="{{ selected_date_iso }}"
+                min="{{ min_match_date_iso }}"
+                max="{{ max_match_date_iso }}"
+                data-match-date-input
+                data-scope="{{ active_scope }}"
+                data-url-template="{{ date_picker_url_template }}"
+                aria-label="Выбрать дату матчей"
+            >
+        </label>
+        {% else %}
+        <div class="matches-table-live-date-note">
+            <span aria-hidden="true">●</span>
+            <div>
+                <strong>Live-режим</strong>
+                <small>Для текущих матчей дата не применяется.</small>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</aside>
