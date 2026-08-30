@@ -10,9 +10,22 @@
         ".matches-tabs a[href]",
         ".matches-date-filter a[href]",
     ].join(",");
+    const MOBILE_FILTER_BLOCK_SELECTOR = ".matches-mobile-scope-panel, .matches-mobile-sports-panel";
 
     let activeRequest = null;
     let activeSeq = 0;
+
+    const setMobileFiltersLoading = ($page) => {
+        $page.find(MOBILE_FILTER_BLOCK_SELECTOR).each((_index, block) => {
+            window.CappersSkeleton?.loading(block);
+        });
+    };
+
+    const setMobileFiltersReady = ($page) => {
+        $page.find(MOBILE_FILTER_BLOCK_SELECTOR).each((_index, block) => {
+            window.CappersSkeleton?.ready(block);
+        });
+    };
 
     const sameOriginPath = (rawUrl) => {
         const url = new URL(rawUrl, window.location.origin);
@@ -108,6 +121,8 @@
         const $listPanel = $page.find(".matches-list-panel").first();
         replaceNode($page.children(".matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
         replaceNode($page.children(".matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
+        replaceNode($page.find(".matches-mobile-sports-panel > .matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
+        replaceNode($page.find(".matches-mobile-scope-panel > .matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
 
         const $dateFilter = $page.children(".matches-date-filter").first();
         if (payload.date_filter_html && payload.date_filter_html.trim()) {
@@ -128,6 +143,7 @@
         $listPanel.attr("data-content-view-current", mode);
         if ($hero.length) $hero.attr("aria-busy", "false").removeClass("is-skeleton-loading");
 
+        setMobileFiltersReady($page);
         replaceHeadMeta(payload);
 
         const nextUrl = publicUrl(payload, fallbackUrl);
@@ -152,6 +168,7 @@
         if (activeRequest) activeRequest.abort();
 
         $page.addClass("is-filter-loading");
+        setMobileFiltersLoading($page);
         activeRequest = $.ajax({
             url: `${requestUrl.pathname}${requestUrl.search}`,
             method: "GET",
