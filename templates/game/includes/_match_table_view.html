@@ -42,16 +42,14 @@
                 </summary>
 
                 <div class="content-table-scroll">
-                    <div class="content-table-head match-table-head" aria-hidden="true">
-                        <span>Матч</span>
-                        <span>1</span>
-                        <span>X / 2</span>
-                        <span>Тотал</span>
-                        <span>Фора</span>
-                        <span>Исход</span>
-                        <span>КФ</span>
-                        <span></span>
-                    </div>
+                    {% with header_match=league.items.0 %}
+                        {% match_coupon_options header_match as header_quick %}
+                        <div class="content-table-head match-table-head" aria-hidden="true">
+                            <span>Матч</span>
+                            {% for option in header_quick.items %}<span>{{ option.label }}</span>{% endfor %}
+                            <span></span>
+                        </div>
+                    {% endwith %}
 
                     {% for match in league.items %}
                     {% match_coupon_options match as coupon_quick %}
