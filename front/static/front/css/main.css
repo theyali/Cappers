@@ -25873,3 +25873,16 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
         bottom: calc(92px + env(safe-area-inset-bottom));
     }
 }
+
+/* Expert recommendations VIP positioning fix */
+.expert-recommendations-track {
+    align-items: stretch;
+}
+
+.expert-recommendation-card {
+    height: 100%;
+}
+
+.expert-recommendation-avatar.is-vip {
+    position: absolute;
+}
