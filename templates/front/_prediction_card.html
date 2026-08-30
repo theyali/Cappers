@@ -7,11 +7,11 @@
     <div class="prediction-card-head">
         <div class="prediction-author-row">
             <a class="prediction-expert prediction-expert-link" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
-                <span class="prediction-expert-avatar">
+                <span class="prediction-expert-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
                     {% if prediction.expert_avatar_url %}
-                        <img src="{{ prediction.expert_avatar_url }}" alt="">
+                        <img src="{{ prediction.expert_avatar_url }}" width="46" height="46" alt="">
                     {% elif prediction.coupon.author.avatar %}
-                        <img src="{{ prediction.coupon.author.avatar.url }}" alt="">
+                        <img src="{{ prediction.coupon.author.avatar.url }}" width="46" height="46" alt="">
                     {% else %}
                         {{ prediction.expert_initials }}
                     {% endif %}
@@ -91,7 +91,7 @@
                     {% if prediction.match.league and prediction.match.league.logo %}
                         <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
                     {% else %}
-                        {{ prediction.match.league_name|default:"Л"|slice:":1" }}
+                        {{ prediction.match.league_name|default:"Лига"|slice:":1" }}
                     {% endif %}
                 </span>
                 <div>
