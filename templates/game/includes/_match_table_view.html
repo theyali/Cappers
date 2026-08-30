@@ -1,5 +1,9 @@
 {% if table_grouped_matches %}
-<div class="content-table-view matches-table-view" data-matches-table-view>
+<div
+    class="content-table-view matches-table-view"
+    data-matches-table-view
+    data-table-odds-url="{% url 'front:match_table_odds' %}"
+>
     {% for sport in table_grouped_matches %}
         {% include "game/includes/_match_table_sport.html" with sport=sport can_write_coupon=can_write_coupon %}
     {% endfor %}
