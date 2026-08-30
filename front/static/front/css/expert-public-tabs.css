@@ -1,0 +1,112 @@
+.expert-public-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.expert-public-shell > .expert-public-page {
+    display: contents;
+}
+
+.expert-public-shell .expert-public-hero {
+    order: 10;
+}
+
+.expert-public-shell .expert-public-stats-compact {
+    order: 20;
+}
+
+.expert-public-tabs {
+    order: 30;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.expert-public-tab {
+    min-height: 48px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.expert-public-tab:hover {
+    color: #fff;
+    background: #29292c;
+}
+
+.expert-public-tab.is-active,
+.expert-public-tab[aria-selected="true"] {
+    color: #fff;
+    background: var(--blue);
+}
+
+.expert-public-tab:active {
+    transform: translateY(1px);
+}
+
+.expert-public-tab:focus-visible {
+    outline: 2px solid var(--yellow);
+    outline-offset: 2px;
+}
+
+.expert-public-shell .expert-public-predictions,
+.expert-public-shell .expert-recent-performance {
+    order: 40;
+}
+
+.expert-public-shell .expert-public-analytics {
+    order: 50;
+}
+
+.expert-public-shell .expert-sport-profit {
+    order: 60;
+}
+
+.expert-public-shell .expert-monthly-stats {
+    order: 70;
+}
+
+.expert-public-shell .expert-recommendations {
+    order: 80;
+}
+
+.expert-public-shell[data-active-tab="predictions"] .expert-recent-performance,
+.expert-public-shell[data-active-tab="predictions"] .expert-public-analytics,
+.expert-public-shell[data-active-tab="predictions"] .expert-sport-profit,
+.expert-public-shell[data-active-tab="predictions"] .expert-monthly-stats {
+    display: none !important;
+}
+
+.expert-public-shell[data-active-tab="stats"] .expert-public-predictions {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .expert-public-tabs {
+        gap: 4px;
+        padding: 4px;
+        border-radius: 13px;
+    }
+
+    .expert-public-tab {
+        min-height: 44px;
+        padding: 9px 12px;
+        border-radius: 9px;
+        font-size: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .expert-public-tab {
+        transition: none;
+    }
+}
