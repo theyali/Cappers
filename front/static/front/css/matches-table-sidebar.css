@@ -1,0 +1,467 @@
+.matches-table-filter-sidebar {
+    display: none;
+}
+
+.matches-sport-tabs,
+.matches-date-filter {
+    max-height: 180px;
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    transition:
+        max-height .26s ease,
+        opacity .2s ease,
+        transform .26s ease,
+        padding-top .26s ease,
+        padding-bottom .26s ease,
+        margin-bottom .26s ease,
+        visibility 0s linear 0s;
+}
+
+@media (min-width: 1121px) {
+    .matches-page.is-table-view .matches-sport-tabs,
+    .matches-page.is-table-view .matches-date-filter {
+        max-height: 0;
+        min-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-bottom: -18px;
+        opacity: 0;
+        overflow: hidden;
+        transform: translateY(-8px);
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            max-height .26s ease,
+            opacity .18s ease,
+            transform .26s ease,
+            padding-top .26s ease,
+            padding-bottom .26s ease,
+            margin-bottom .26s ease,
+            visibility 0s linear .26s;
+    }
+
+    .matches-page.is-table-view .matches-shell {
+        grid-template-columns: minmax(0, 1fr) minmax(250px, 292px);
+    }
+
+    .matches-page.is-table-view .coupon-sidebar {
+        display: none !important;
+    }
+
+    .matches-page.is-table-view .matches-table-filter-sidebar {
+        position: sticky;
+        top: 16px;
+        align-self: start;
+        max-height: calc(100dvh - 32px);
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        padding: 12px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        border-radius: 18px;
+        background: var(--panel);
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3d transparent;
+        animation: matchesTableSidebarIn .22s ease both;
+    }
+
+    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #3a3a3d;
+    }
+
+    .matches-page.is-table-view .matches-table-filter-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .matches-page:not(.is-table-view) .matches-shell:not(:has(.coupon-sidebar)) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.matches-table-filter-head {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 13px;
+    background: #171718;
+}
+
+.matches-table-filter-head-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--yellow);
+    background: #242426;
+}
+
+.matches-table-filter-head-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.matches-table-filter-head > div {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.matches-table-filter-head strong {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.1;
+}
+
+.matches-table-filter-head small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.matches-table-filter-group {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+}
+
+.matches-table-filter-title {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 7px;
+}
+
+.matches-table-filter-title > span {
+    color: rgba(255, 255, 255, .78);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.matches-table-filter-title small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.matches-table-sport-list,
+.matches-table-date-shortcuts {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.matches-table-sport-link {
+    min-width: 0;
+    min-height: 43px;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto 16px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 9px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, .76);
+    background: transparent;
+    transition: color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.matches-table-sport-link:hover {
+    color: var(--text);
+    background: #2a2a2d;
+    transform: translateX(2px);
+}
+
+.matches-table-sport-link.is-active {
+    color: var(--text);
+    background: var(--ink);
+}
+
+.matches-table-sport-icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+}
+
+.matches-table-sport-link.is-active .matches-table-sport-icon {
+    color: var(--yellow);
+}
+
+.matches-table-sport-icon svg {
+    width: 17px;
+    height: 17px;
+    display: block;
+}
+
+.matches-table-sport-icon svg [fill]:not([fill="none"]) {
+    fill: currentColor;
+}
+
+.matches-table-sport-icon svg [stroke]:not([stroke="none"]) {
+    stroke: currentColor;
+}
+
+.matches-table-sport-copy {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.matches-table-sport-link b {
+    min-width: 28px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.matches-table-sport-link.is-active b {
+    color: var(--yellow);
+}
+
+.matches-table-filter-chevron {
+    width: 14px;
+    height: 14px;
+    color: #4c4c4f;
+}
+
+.matches-table-sport-link:hover .matches-table-filter-chevron,
+.matches-table-sport-link.is-active .matches-table-filter-chevron {
+    color: var(--muted);
+}
+
+.matches-table-date-current {
+    min-height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 9px 10px 11px;
+    border-radius: 11px;
+    background: #171718;
+}
+
+.matches-table-date-current > div:first-child {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.matches-table-date-current span,
+.matches-table-date-current strong {
+    display: block;
+}
+
+.matches-table-date-current > div:first-child span {
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: uppercase;
+}
+
+.matches-table-date-current strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.matches-table-date-arrows {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.matches-table-date-arrows a,
+.matches-table-date-arrows > span {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: var(--muted);
+    background: #242426;
+}
+
+.matches-table-date-arrows a:hover {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.matches-table-date-arrows .is-disabled {
+    opacity: .35;
+}
+
+.matches-table-date-arrows svg {
+    width: 16px;
+    height: 16px;
+}
+
+.matches-table-date-link {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 11px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, .72);
+    background: #242426;
+    transition: color .16s ease, background .16s ease;
+}
+
+.matches-table-date-link:hover {
+    color: var(--text);
+    background: #2a2a2d;
+}
+
+.matches-table-date-link.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.matches-table-date-link span {
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.matches-table-date-link small {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.matches-table-date-link.is-active small {
+    color: rgba(19, 19, 19, .65);
+}
+
+.matches-table-date-picker {
+    position: relative;
+    min-height: 42px;
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    border-radius: 10px;
+    color: var(--text);
+    background: var(--blue);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.matches-table-date-picker > span:nth-child(2) {
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.matches-table-date-picker-icon {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+}
+
+.matches-table-date-picker-icon svg {
+    width: 17px;
+    height: 17px;
+}
+
+.matches-table-date-picker input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.matches-table-live-date-note {
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px;
+    border-radius: 11px;
+    background: #171718;
+}
+
+.matches-table-live-date-note > span {
+    flex: 0 0 auto;
+    color: var(--yellow);
+    font-size: 10px;
+}
+
+.matches-table-live-date-note > div {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.matches-table-live-date-note strong {
+    color: var(--text);
+    font-size: 11px;
+}
+
+.matches-table-live-date-note small {
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.35;
+}
+
+@keyframes matchesTableSidebarIn {
+    from {
+        opacity: 0;
+        transform: translateX(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .matches-sport-tabs,
+    .matches-date-filter,
+    .matches-table-filter-sidebar,
+    .matches-table-sport-link,
+    .matches-table-date-link {
+        transition: none;
+        animation: none;
+    }
+}
+
+@media (max-width: 1120px) {
+    .matches-table-filter-sidebar {
+        display: none !important;
+    }
+
+    .matches-sport-tabs,
+    .matches-date-filter {
+        max-height: none;
+        margin-bottom: 0;
+        opacity: 1;
+        overflow: visible;
+        transform: none;
+        visibility: visible;
+        pointer-events: auto;
+    }
+}
