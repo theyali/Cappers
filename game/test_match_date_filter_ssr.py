@@ -40,7 +40,12 @@ class MatchDateFilterSSRTests(TestCase):
 
         self.assertIn(date_filter_marker, html)
         self.assertIn('class="matches-table-filter-sidebar"', html)
+        self.assertIn('class="matches-table-scope-list"', html)
         self.assertIn('class="matches-table-sport-list"', html)
+        self.assertIn('Статусы матчей', html)
+        self.assertIn('Идут сейчас', html)
+        self.assertIn('Предстоящие', html)
+        self.assertIn('Завершенные', html)
         self.assertEqual(html.count("data-match-date-input"), 2)
         self.assertIn(f'value="{selected_date.isoformat()}"', html)
         self.assertLess(html.index(date_filter_marker), html.index(matches_shell_marker))
@@ -61,3 +66,4 @@ class MatchDateFilterSSRTests(TestCase):
         self.assertIn('class="matches-page is-table-view"', html)
         self.assertIn('data-content-view-current="table"', html)
         self.assertIn('class="matches-table-filter-sidebar"', html)
+        self.assertIn('class="matches-table-scope-link is-active"', html)
