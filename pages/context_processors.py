@@ -10,6 +10,7 @@ from .models import PageSEO
 
 
 ROUTE_FALLBACKS = {
+    "front:prediction_detail": ("front:predictions",),
     "game:match_list_filtered": ("game:match_list",),
     "game:match_list_live": ("game:match_list",),
 }
