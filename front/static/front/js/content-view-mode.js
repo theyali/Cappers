@@ -54,6 +54,12 @@
         });
     };
 
+    const syncPageMode = ($root, mode) => {
+        const $page = $root.closest(".matches-page");
+        if (!$page.length) return;
+        $page.toggleClass("is-table-view", mode === "table");
+    };
+
     const dispatchUpdated = ($root, $panel, mode) => {
         document.dispatchEvent(
             new CustomEvent("content-view:updated", {
@@ -75,6 +81,7 @@
 
         setButtons($switcher, mode);
         $root.attr("data-content-view-current", mode);
+        syncPageMode($root, mode);
         selectedMode = mode;
 
         if (!animate || !$current.length || $current.is($next)) {
