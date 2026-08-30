@@ -1,0 +1,24 @@
+{% if page_obj.object_list %}
+<div class="content-table-view predictions-table-view predictions-table-view-flat">
+    <div class="content-table-scroll">
+        <div class="content-table-head prediction-table-head" aria-hidden="true">
+            <span>Матч</span>
+            <span>Каппер</span>
+            <span>Прогноз</span>
+            <span>КФ</span>
+            <span>Статус</span>
+            <span></span>
+        </div>
+        <div class="prediction-table-body" data-predictions-table-body>
+            {% for prediction in page_obj.object_list %}
+                {% include "front/includes/_prediction_table_row.html" %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="predictions-empty">
+    <h2>Ничего не нашли</h2>
+    <p>По выбранным условиям прогнозов нет.</p>
+</div>
+{% endif %}

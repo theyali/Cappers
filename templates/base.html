@@ -215,6 +215,7 @@
         {% endif %}
     </main>
 
+    {% if not hide_footer %}
     <footer class="site-footer" aria-label="Подвал сайта">
         <div class="site-footer-main">
             <div class="site-footer-about">
@@ -275,6 +276,7 @@
             <span>Сервис не гарантирует результат спортивных прогнозов.</span>
         </div>
     </footer>
+    {% endif %}
 
     <nav class="mobile-app-nav" aria-label="Мобильная навигация">
         <a class="mobile-app-nav-item mobile-nav-home {% if request.resolver_match.view_name == 'front:index' %}is-active{% endif %}" href="{% url 'front:index' %}">

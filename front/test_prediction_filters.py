@@ -1,15 +1,23 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import User
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
+from pages.models import AdvBanner, PageSEO
 
 from .models import PredictionFavorite, PredictionLike
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class PredictionFiltersTests(TestCase):
     def setUp(self):
         self.sport = Sport.objects.create(
@@ -94,9 +102,8 @@ class PredictionFiltersTests(TestCase):
         )
 
         response = self.client.get(
-            reverse("front:predictions"),
+            reverse("front:predictions_by_sport", kwargs={"sport_code": self.sport.code}),
             {
-                "sport": self.sport.id,
                 "league": self.league.id,
                 "capper": self.analyst.username,
                 "coef_min": "2.00",
@@ -150,43 +157,60 @@ class PredictionFiltersTests(TestCase):
         items = response.context["page_obj"].object_list
         self.assertEqual(items[0].id, best.id)
         self.assertGreater(items[0].author_roi, 0)
-        self.assertContains(response, "ROI +150.0%")
+        self.assertContains(response, "ROI +150")
         self.assertContains(response, "prediction-author-roi is-positive")
 
-    def test_filters_render_in_right_sidebar_with_ajax_assets(self):
+    def test_filters_render_in_left_sidebar_with_ajax_assets(self):
         self._prediction(external_id=940)
 
         response = self.client.get(reverse("front:predictions"))
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        self.assertIn('class="predictions-layout" data-predictions-layout', html)
-        self.assertIn('class="prediction-filter-sidebar" data-prediction-filter-sidebar', html)
-        self.assertIn('data-prediction-filter-toggle', html)
+        self.assertIn('class="predictions-layout"', html)
+        self.assertIn("data-predictions-layout", html)
+        self.assertIn("matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar", html)
+        self.assertIn("matches-table-sport-list predictions-sport-tabs", html)
+        self.assertIn("matches-table-scope-list predictions-sidebar-tabs", html)
         self.assertIn('data-prediction-filters', html)
         self.assertIn('data-predictions-grid', html)
+        self.assertIn('data-predictions-lazy', html)
+        self.assertIn("predictions-table-view-flat", html)
+        self.assertIn("data-predictions-table-body", html)
         self.assertIn("front/css/main.css", html)
         self.assertIn("https://code.jquery.com/jquery-3.7.1.min.js", html)
         self.assertIn("front/js/predictions-filters.js", html)
-        self.assertLess(html.index('data-predictions-content'), html.index('data-prediction-filter-sidebar'))
+        results_start = html.index('class="prediction-results-head"')
+        results_end = html.index('class="content-view-container"', results_start)
+        results_html = html[results_start:results_end]
+        self.assertIn('class="content-view-toolbar"', results_html)
+        self.assertIn('data-content-view-switcher', results_html)
+        self.assertLess(html.index('data-prediction-filter-sidebar'), html.index('data-predictions-content'))
+        self.assertLess(html.index('data-predictions-content'), html.index('class="bookmakers-sidebar'))
+        self.assertLess(html.index('class="prediction-results-head"'), html.index('class="content-view-container"'))
+        self.assertNotIn("predictions-pagination", html)
+        self.assertNotIn("content-sport-accordion", html)
+        self.assertNotIn("site-footer", html)
         self.assertNotIn("Настроить ленту", html)
         self.assertNotIn("prediction-filter-hint", html)
+        self.assertEqual(response.context["adv_placement"], "sidebar")
+        self.assertTrue(response.context["hide_footer"])
 
     def test_sort_control_is_in_results_head_not_sidebar(self):
         self._prediction(external_id=941)
 
         response = self.client.get(
-            reverse("front:predictions"),
-            {"sport": self.sport.id, "sort": "popular"},
+            reverse("front:predictions_by_sport", kwargs={"sport_code": self.sport.code}),
+            {"sort": "popular"},
         )
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
         results_start = html.index('class="prediction-results-head"')
-        sidebar_start = html.index('class="prediction-filter-sidebar"')
+        sidebar_start = html.index('data-prediction-filter-sidebar')
         sidebar_end = html.index("</aside>", sidebar_start)
         sidebar_html = html[sidebar_start:sidebar_end]
-        results_html = html[results_start:sidebar_start]
+        results_html = html[results_start:]
 
         self.assertIn('data-prediction-sort', results_html)
         self.assertIn('<option value="popular" selected>', results_html)
@@ -198,43 +222,70 @@ class PredictionFiltersTests(TestCase):
         self._prediction(external_id=942)
 
         response = self.client.get(
-            reverse("front:predictions"),
-            {"status": "win", "sport": self.sport.id},
+            reverse("front:predictions_by_sport", kwargs={"sport_code": self.sport.code}),
+            {"status": "win"},
         )
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
-        sidebar_start = html.index('class="prediction-filter-sidebar"')
+        sidebar_start = html.index('data-prediction-filter-sidebar')
         sidebar_end = html.index("</aside>", sidebar_start)
         sidebar_html = html[sidebar_start:sidebar_end]
 
         self.assertNotIn('<span>Статус</span>', sidebar_html)
         self.assertNotIn('<select name="status"', sidebar_html)
         self.assertIn('<input type="hidden" name="status" value="win">', sidebar_html)
-        self.assertIn('class="is-active" href="?status=win', html)
+        self.assertIn("Статусы прогнозов", sidebar_html)
+        self.assertIn(f'href="/predictions/{self.sport.code}/?status=win', sidebar_html)
 
-    def test_pagination_keeps_active_filter_query(self):
+    def test_lazy_scroll_keeps_active_filter_query(self):
         for index in range(25):
             self._prediction(external_id=1000 + index)
 
         response = self.client.get(
-            reverse("front:predictions"),
+            reverse("front:predictions_by_sport", kwargs={"sport_code": self.sport.code}),
             {
-                "sport": self.sport.id,
                 "status": "win",
                 "sort": "roi",
-                "page": "2",
             },
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["page_obj"].number, 2)
+        self.assertEqual(response.context["page_obj"].number, 1)
         self.assertEqual(response.context["filtered_predictions"], 25)
         self.assertEqual(
             response.context["pagination_query"],
-            f"sport={self.sport.id}&status=win&sort=roi",
+            "status=win&sort=roi",
         )
-        self.assertContains(response, "page=1")
-        self.assertContains(response, f"sport={self.sport.id}")
+        self.assertContains(response, 'data-predictions-lazy')
+        self.assertContains(response, 'data-current-page="1"')
+        self.assertContains(response, 'data-next-page="2"')
+        self.assertContains(response, "Показать еще")
+        self.assertNotContains(response, "predictions-pagination")
+        self.assertContains(response, f"/predictions/{self.sport.code}/")
         self.assertContains(response, "status=win")
         self.assertContains(response, "sort=roi")
+
+    def test_prediction_banners_render_in_right_sidebar(self):
+        banner = AdvBanner.objects.create(
+            name="Predictions Sidebar Banner",
+            image="ads/predictions-sidebar.jpg",
+            url="https://example.test/predictions",
+        )
+        page = PageSEO.objects.create(
+            name="Predictions SEO",
+            route_name="front:predictions",
+            exact_path="/predictions/",
+            adv_placement=PageSEO.AdvPlacement.CONTENT,
+        )
+        page.adv_banners.add(banner)
+
+        response = self.client.get(reverse("front:predictions"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode("utf-8")
+        self.assertEqual(response.context["adv_placement"], "sidebar")
+        self.assertIn('class="predictions-ad-sidebar coupon-sidebar coupon-sidebar-ads"', html)
+        self.assertIn("adv-banners--sidebar", html)
+        self.assertIn("Predictions Sidebar Banner", html)
+        self.assertNotIn("adv-banners--content", html)

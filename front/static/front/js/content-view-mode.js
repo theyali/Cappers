@@ -151,6 +151,12 @@
         }
     );
 
+    $(document).on("click", ".prediction-table-row[data-coupon-url]", function (event) {
+        if (event.target.closest("a, button, input, select, textarea, label")) return;
+        const url = this.dataset.couponUrl;
+        if (url) window.location.assign(url);
+    });
+
     document.addEventListener("toggle", (event) => {
         const details = event.target;
         if (!(details instanceof HTMLDetailsElement)) return;

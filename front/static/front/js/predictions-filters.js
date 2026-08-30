@@ -166,6 +166,7 @@
                 }
 
                 document.dispatchEvent(new CustomEvent("predictions:updated"));
+                initPredictionsLazy($nextLayout.get(0));
             })
             .fail((xhr, status) => {
                 if (status !== "abort") window.location.assign(url);
@@ -213,6 +214,147 @@
         }, delay);
     };
 
+    const initPredictionsLazy = (scope = document) => {
+        const root = scope.matches?.("[data-predictions-layout]")
+            ? scope
+            : scope.querySelector?.("[data-predictions-layout]") || document.querySelector("[data-predictions-layout]");
+        if (!root) return;
+        const sentinel = root.querySelector("[data-predictions-lazy]");
+        if (!sentinel || sentinel.dataset.predictionsLazyReady === "true") return;
+
+        sentinel.dataset.predictionsLazyReady = "true";
+        const button = sentinel.querySelector("[data-predictions-lazy-button]");
+        const status = sentinel.querySelector("[data-predictions-lazy-status]");
+        const content = root.querySelector("[data-predictions-content]");
+        let nextPage = Number.parseInt(sentinel.dataset.nextPage || "", 10) || null;
+        let loading = false;
+        let autoEnabled = true;
+
+        const setStatus = (message) => {
+            if (status) status.textContent = message;
+        };
+
+        const finish = () => {
+            nextPage = null;
+            sentinel.dataset.nextPage = "";
+            sentinel.classList.remove("is-loading");
+            sentinel.classList.add("is-done");
+            if (button) {
+                button.textContent = "Все прогнозы загружены";
+                button.setAttribute("disabled", "disabled");
+            }
+            setStatus("");
+        };
+
+        const revive = (page) => {
+            nextPage = Number.parseInt(page || "", 10) || null;
+            sentinel.dataset.nextPage = nextPage ? String(nextPage) : "";
+            sentinel.classList.toggle("is-done", !nextPage);
+            if (button) {
+                button.toggleAttribute("disabled", !nextPage);
+                if (nextPage) button.textContent = "Показать еще";
+            }
+        };
+
+        const requestUrl = (page) => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("page", String(page));
+            return url.href;
+        };
+
+        const appendChildren = (current, next) => {
+            if (!current || !next) return [];
+            const known = new Set(
+                Array.from(current.querySelectorAll("[data-prediction-card]"))
+                    .map((node) => node.dataset.predictionCard)
+                    .filter(Boolean)
+            );
+            const added = [];
+            Array.from(next.children).forEach((node, index) => {
+                const predictionNode = node.matches("[data-prediction-card]")
+                    ? node
+                    : node.querySelector("[data-prediction-card]");
+                const id = predictionNode?.dataset.predictionCard || "";
+                if (id && known.has(id)) return;
+                if (id) known.add(id);
+                node.classList.add("is-lazy-added");
+                node.style.animationDelay = `${Math.min(index, 8) * 35}ms`;
+                current.appendChild(node);
+                added.push(node);
+            });
+            return added;
+        };
+
+        const appendResponse = (html) => {
+            const parsed = new DOMParser().parseFromString(html, "text/html");
+            const nextLayout = parsed.querySelector("[data-predictions-layout]");
+            if (!nextLayout) throw new Error("predictions-lazy-layout-missing");
+
+            const currentTableBody = root.querySelector("[data-predictions-table-body]");
+            const nextTableBody = nextLayout.querySelector("[data-predictions-table-body]");
+            const added = [
+                ...appendChildren(root.querySelector("[data-predictions-grid]"), nextLayout.querySelector("[data-predictions-grid]")),
+                ...(currentTableBody && nextTableBody
+                    ? appendChildren(currentTableBody, nextTableBody)
+                    : appendChildren(root.querySelector(".content-table-view"), nextLayout.querySelector(".content-table-view"))),
+            ];
+
+            const nextSentinel = nextLayout.querySelector("[data-predictions-lazy]");
+            sentinel.dataset.currentPage = nextSentinel?.dataset.currentPage || sentinel.dataset.nextPage || "";
+            if (nextSentinel?.dataset.nextPage) revive(nextSentinel.dataset.nextPage);
+            else finish();
+
+            if (added.length) {
+                document.dispatchEvent(new CustomEvent("predictions:appended", { detail: { nodes: added } }));
+            }
+        };
+
+        const loadNext = async () => {
+            if (loading || !nextPage) return;
+            loading = true;
+            sentinel.classList.add("is-loading");
+            if (button) {
+                button.textContent = "Загружаем...";
+                button.setAttribute("disabled", "disabled");
+            }
+            setStatus("Загружаем следующие прогнозы");
+
+            try {
+                const response = await fetch(requestUrl(nextPage), {
+                    method: "GET",
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                if (!response.ok) throw new Error("predictions-lazy-request-failed");
+                appendResponse(await response.text());
+                autoEnabled = true;
+            } catch (error) {
+                autoEnabled = false;
+                setStatus("Не удалось загрузить прогнозы.");
+                if (button) button.textContent = "Повторить";
+            } finally {
+                loading = false;
+                sentinel.classList.remove("is-loading");
+                if (button && nextPage) button.removeAttribute("disabled");
+            }
+        };
+
+        button?.addEventListener("click", () => {
+            autoEnabled = true;
+            loadNext();
+        });
+
+        if ("IntersectionObserver" in window) {
+            const style = content ? window.getComputedStyle(content) : null;
+            const rootNode = style && /(auto|scroll)/.test(style.overflowY) ? content : null;
+            const observer = new IntersectionObserver((entries) => {
+                if (entries.some((entry) => entry.isIntersecting) && autoEnabled) loadNext();
+            }, { root: rootNode, rootMargin: "650px 0px", threshold: 0.01 });
+            observer.observe(sentinel);
+        }
+    };
+
     $(document).on("click", "[data-prediction-filter-toggle]", (event) => {
         event.preventDefault();
         const $layout = currentLayout();
@@ -249,7 +391,7 @@
 
     $(document).on(
         "click",
-        ".matches-sport-tabs a, .predictions-tabs a, .predictions-pagination a, .prediction-filter-reset, [data-prediction-ajax-link]",
+        ".matches-sport-tabs a, .predictions-tabs a, .prediction-filter-reset, [data-prediction-ajax-link]",
         function (event) {
             const href = this.href;
             if (!href) return;
@@ -265,4 +407,6 @@
     window.addEventListener("popstate", () => {
         loadPredictions(window.location.href, { pushState: false });
     });
+
+    initPredictionsLazy(document);
 })(window.jQuery);

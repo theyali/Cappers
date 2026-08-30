@@ -694,6 +694,8 @@ def predictions(request, sport_code: str | None = None):
             "active_filter_count": active_filter_count,
             "filter_action_url": _prediction_sport_path(active_sport.code if active_sport else None),
             "all_predictions_url": _prediction_sport_path(),
+            "adv_placement": "sidebar",
+            "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **seo_context,
         },

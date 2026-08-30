@@ -1,0 +1,8 @@
+{% load site_extras %}
+{% if adv_banners %}
+<aside class="predictions-ad-sidebar coupon-sidebar coupon-sidebar-ads" aria-label="Реклама">
+    {% include "pages/_adv_banners.html" with placement="sidebar" %}
+</aside>
+{% else %}
+    {% bookmakers_sidebar %}
+{% endif %}

@@ -7,73 +7,72 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-<section class="predictions-page" aria-label="{{ page_heading|default:'Все прогнозы' }}">
-    <div class="predictions-hero">
-        <div>
-            <p class="predictions-eyebrow">Лента экспертов</p>
-            <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
-            <p data-predictions-intro>{{ page_intro }}</p>
-        </div>
-        <div class="predictions-total">
-            <strong data-predictions-total-value>{{ filtered_predictions }}</strong>
-            <span>найдено</span>
-        </div>
-    </div>
-
+<section class="predictions-page predictions-index-page predictions-scroll-page" aria-label="{{ page_heading|default:'Все прогнозы' }}">
     <div
-        class="predictions-layout{% if predictions_filter_collapsed %} is-filter-collapsed{% endif %}"
+        class="predictions-layout"
         data-predictions-layout
         data-filter-state-url="{% url 'front:prediction_filter_state' %}"
     >
+        {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="predictions-filter" filter_label="Фильтры прогнозов" filter_total=filtered_predictions reset_url=all_predictions_url %}
+
         <div class="predictions-content" data-predictions-content>
-            <nav class="matches-sport-tabs predictions-sport-tabs" aria-label="Прогнозы по видам спорта">
-                {% for tab in sport_tabs %}
-                <a
-                    class="matches-sport-tab{% if tab.active %} is-active{% endif %}"
-                    href="{{ tab.href }}"
-                    {% if tab.active %}aria-current="page"{% endif %}
-                    data-prediction-ajax-link
-                >
-                    <span class="matches-sport-icon" aria-hidden="true">
-                        {% if tab.code == 'football' %}
-                            {% include "front/svgs/soccer.svg" %}
-                        {% elif tab.code == 'hockey' %}
-                            {% include "front/svgs/hockey.svg" %}
-                        {% elif tab.code == 'basketball' %}
-                            {% include "front/svgs/basketball.svg" %}
-                        {% elif tab.code == 'tennis' %}
-                            {% include "front/svgs/tennis.svg" %}
-                        {% else %}
-                            {% include "front/svgs/nav-matches.svg" %}
-                        {% endif %}
-                    </span>
-                    <span>{{ tab.label }}</span>
-                    <b>{{ tab.count }}</b>
-                </a>
-                {% endfor %}
-            </nav>
-
-            <nav class="predictions-tabs" aria-label="Быстрый фильтр по результату">
-                <a class="predictions-tab-top{% if top_experts_tab.active %} is-active{% endif %}" href="{{ top_experts_tab.href }}" data-top-experts-tab>
-                    <span class="predictions-tab-top-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 7.5 8.2 12 12 5l3.8 7L20 7.5l-1.7 10H5.7L4 7.5Z"></path>
-                            <path d="M6 20h12"></path>
-                        </svg>
-                    </span>
-                    <span>Топовые эксперты</span>
-                    <b>{{ top_experts_tab.count }}</b>
-                </a>
-                {% for tab in status_tabs %}
-                <a class="{% if tab.active %}is-active{% endif %}" href="{{ tab.href }}">
-                    <span>{{ tab.label }}</span>
-                    <b>{{ tab.count }}</b>
-                </a>
-                {% endfor %}
-            </nav>
-
-            <div class="prediction-results-head">
+            <div class="predictions-hero">
                 <div>
+                    <p class="predictions-eyebrow">Лента экспертов</p>
+                    <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
+                    <p data-predictions-intro>{{ page_intro }}</p>
+                </div>
+                <div class="predictions-total">
+                    <strong data-predictions-total-value>{{ filtered_predictions }}</strong>
+                    <span>найдено</span>
+                </div>
+            </div>
+
+            {% if page_obj.object_list %}
+                <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
+                    <div class="prediction-results-head">
+                        <div class="prediction-results-summary">
+                            <strong>{{ filtered_predictions }}</strong>
+                            <span>прогнозов по выбранным условиям</span>
+                        </div>
+                        <div class="prediction-results-actions">
+                            <label class="prediction-results-sort">
+                                <span>Сортировка</span>
+                                <select name="sort" data-prediction-sort aria-label="Сортировка прогнозов">
+                                    {% for value, label in sort_options %}
+                                    <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <div class="content-view-toolbar">
+                                {% include "front/includes/_content_view_switcher.html" %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="content-view-container" data-content-view-container>
+                        <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                            {% include "front/includes/_prediction_grid_view.html" %}
+                        </div>
+                        <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
+                            {% include "front/includes/_prediction_table_flat_view.html" %}
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="predictions-lazy"
+                    data-predictions-lazy
+                    data-current-page="{{ page_obj.number }}"
+                    data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
+                >
+                    <button type="button" data-predictions-lazy-button{% if not page_obj.has_next %} disabled{% endif %}>
+                        {% if page_obj.has_next %}Показать еще{% else %}Все прогнозы загружены{% endif %}
+                    </button>
+                    <span data-predictions-lazy-status></span>
+                </div>
+            {% else %}
+            <div class="prediction-results-head">
+                <div class="prediction-results-summary">
                     <strong>{{ filtered_predictions }}</strong>
                     <span>прогнозов по выбранным условиям</span>
                 </div>
@@ -86,35 +85,6 @@
                     </select>
                 </label>
             </div>
-
-            {% if page_obj.object_list %}
-                {% group_content_items page_obj.object_list as grouped_predictions %}
-                <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
-                    <div class="content-view-toolbar">
-                        {% include "front/includes/_content_view_switcher.html" %}
-                    </div>
-                    <div class="content-view-container" data-content-view-container>
-                        <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
-                            {% include "front/includes/_prediction_grid_view.html" %}
-                        </div>
-                        <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
-                            {% include "front/includes/_prediction_table_view.html" %}
-                        </div>
-                    </div>
-                </div>
-
-                {% if page_obj.paginator.num_pages > 1 %}
-                <nav class="predictions-pagination" aria-label="Страницы прогнозов">
-                    {% if page_obj.has_previous %}
-                        <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
-                    {% endif %}
-                    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}
-                        <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
-                    {% endif %}
-                </nav>
-                {% endif %}
-            {% else %}
             <div class="predictions-empty">
                 <h2>Ничего не нашли</h2>
                 <p>Попробуйте убрать часть фильтров или расширить диапазон коэффициентов.</p>
@@ -123,93 +93,7 @@
             {% endif %}
         </div>
 
-        <aside class="prediction-filter-sidebar" data-prediction-filter-sidebar aria-label="Фильтры прогнозов">
-            <button class="prediction-filter-sidebar-toggle" type="button" data-prediction-filter-toggle aria-expanded="{% if predictions_filter_collapsed %}false{% else %}true{% endif %}" aria-controls="prediction-filter-sidebar-body">
-                <span class="prediction-filter-sidebar-title">
-                    <strong>Фильтры</strong>
-                    {% if selected_sport %}
-                        {% if active_filter_count > 1 %}<b>{{ active_filter_count|add:"-1" }}</b>{% endif %}
-                    {% elif active_filter_count %}
-                        <b>{{ active_filter_count }}</b>
-                    {% endif %}
-                </span>
-                <i class="prediction-filter-sidebar-chevron" aria-hidden="true"></i>
-            </button>
-
-            <div class="prediction-filter-sidebar-body" id="prediction-filter-sidebar-body" data-prediction-filter-body>
-                <form class="prediction-filters" method="get" action="{{ filter_action_url }}" data-prediction-filters>
-                    <input type="hidden" name="sort" value="{{ active_sort }}">
-                    <input type="hidden" name="status" value="{{ active_status }}">
-                    {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
-
-                    {% if selected_sport %}
-                        {% if active_filter_count > 1 %}
-                        <div class="prediction-filter-sidebar-actions">
-                            <span>{{ active_filter_count|add:"-1" }} выбрано</span>
-                            <a class="prediction-filter-reset" href="{{ filter_action_url }}">Сбросить</a>
-                        </div>
-                        {% endif %}
-                    {% elif active_filter_count %}
-                    <div class="prediction-filter-sidebar-actions">
-                        <span>{{ active_filter_count }} выбрано</span>
-                        <a class="prediction-filter-reset" href="{{ filter_action_url }}">Сбросить</a>
-                    </div>
-                    {% endif %}
-
-                    <div class="prediction-filter-grid">
-                        <label class="prediction-filter-field">
-                            <span>Лига</span>
-                            <select name="league">
-                                <option value="">Все лиги</option>
-                                {% for league in leagues %}
-                                <option value="{{ league.match__league_id }}"{% if selected_league == league.match__league_id|stringformat:"s" %} selected{% endif %}>
-                                    {{ league.match__league__name_ru|default:league.match__league__name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </label>
-
-                        <label class="prediction-filter-field">
-                            <span>Каппер</span>
-                            <select name="capper">
-                                <option value="">Все эксперты</option>
-                                {% for capper in cappers %}
-                                <option value="{{ capper.coupon__author__username }}"{% if selected_capper == capper.coupon__author__username %} selected{% endif %}>
-                                    {% if capper.coupon__author__analyst_profile__display_name %}
-                                        {{ capper.coupon__author__analyst_profile__display_name }} · @{{ capper.coupon__author__username }}
-                                    {% else %}
-                                        @{{ capper.coupon__author__username }}
-                                    {% endif %}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </label>
-
-                        <div class="prediction-filter-coefficients">
-                            <label class="prediction-filter-field">
-                                <span>КФ от</span>
-                                <input type="number" name="coef_min" min="1" step="0.01" inputmode="decimal" value="{{ coefficient_min }}" placeholder="1.50">
-                            </label>
-                            <label class="prediction-filter-field">
-                                <span>КФ до</span>
-                                <input type="number" name="coef_max" min="1" step="0.01" inputmode="decimal" value="{{ coefficient_max }}" placeholder="3.00">
-                            </label>
-                        </div>
-
-                        <div class="prediction-filter-quick">
-                            <label class="prediction-filter-toggle">
-                                <input type="checkbox" name="live" value="1"{% if only_live %} checked{% endif %}>
-                                <span><i></i>Только live</span>
-                            </label>
-                            <label class="prediction-filter-toggle">
-                                <input type="checkbox" name="today" value="1"{% if only_today %} checked{% endif %}>
-                                <span><i></i>Матчи сегодня</span>
-                            </label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </aside>
+        {% include "front/includes/_prediction_ad_sidebar.html" %}
     </div>
 </section>
 {% endblock %}

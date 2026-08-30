@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -8,6 +8,13 @@ from cabinet.models import AnalystFollow, User
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class FollowingFeedTests(TestCase):
     def setUp(self):
         self.sport = Sport.objects.create(
@@ -95,6 +102,16 @@ class FollowingFeedTests(TestCase):
         self.assertEqual(ids, [followed_prediction.id])
         self.assertNotIn(other_prediction.id, ids)
         self.assertEqual(response.context["following_count"], 1)
+        html = response.content.decode("utf-8")
+        self.assertIn('data-predictions-lazy', html)
+        self.assertIn("predictions-table-view-flat", html)
+        self.assertIn("data-predictions-table-body", html)
+        self.assertIn('class="content-view-toolbar"', html)
+        self.assertNotIn("predictions-pagination", html)
+        self.assertNotIn("content-sport-accordion", html)
+        self.assertNotIn("site-footer", html)
+        self.assertEqual(response.context["adv_placement"], "sidebar")
+        self.assertTrue(response.context["hide_footer"])
 
     def test_feed_supports_live_and_status_filters(self):
         live_win = self._prediction(
@@ -145,10 +162,12 @@ class FollowingFeedTests(TestCase):
         html = response.content.decode("utf-8")
         avatar_url = self.followed.avatar.url
 
-        self.assertIn('class="following-cappers-list"', html)
-        self.assertIn(f'<img src="{avatar_url}" alt="followed-expert">', html)
+        self.assertIn("matches-table-sport-list following-feed-filter-quick", html)
+        self.assertIn('data-predictions-lazy', html)
+        self.assertIn("following-capper-sidebar-avatar", html)
+        self.assertIn(f'<img src="{avatar_url}" width="28" height="28" alt="">', html)
         self.assertIn('class="prediction-expert-avatar"', html)
-        self.assertIn(f'<img src="{avatar_url}" alt="">', html)
+        self.assertIn(f'<img src="{avatar_url}" width="46" height="46" alt="">', html)
         self.assertIn('class="prediction-team-logo"', html)
         self.assertIn(f'<img src="{home_logo}" alt="">', html)
         self.assertIn(f'<img src="{away_logo}" alt="">', html)

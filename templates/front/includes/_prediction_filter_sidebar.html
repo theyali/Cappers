@@ -1,0 +1,232 @@
+<aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar{% if filter_variant %} {{ filter_variant }}{% endif %}" data-prediction-filter-sidebar aria-label="{{ filter_label|default:'Фильтры прогнозов' }}">
+    <div class="matches-table-filter-head">
+        <span class="matches-table-filter-head-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+        </span>
+        <div>
+            <strong>Фильтры</strong>
+            <small>{{ filter_total }} прогнозов</small>
+        </div>
+    </div>
+
+    <section class="matches-table-filter-group" aria-labelledby="{{ filter_id_prefix }}-status-title">
+        <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-status-title">
+            <span>Статусы прогнозов</span>
+            <small>{% if top_experts_tab %}{{ status_tabs|length|add:"1" }}{% else %}{{ status_tabs|length }}{% endif %}</small>
+        </div>
+        <nav class="matches-table-scope-list predictions-sidebar-tabs" aria-label="Фильтр по статусу прогноза">
+            {% if top_experts_tab %}
+            <a
+                class="matches-table-scope-link predictions-tab-top{% if top_experts_tab.active %} is-active{% endif %}"
+                href="{{ top_experts_tab.href }}"
+                data-top-experts-tab
+                data-prediction-ajax-link
+                {% if top_experts_tab.active %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-scope-icon predictions-tab-top-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 7.5 8.2 12 12 5l3.8 7L20 7.5l-1.7 10H5.7L4 7.5Z"></path>
+                        <path d="M6 20h12"></path>
+                    </svg>
+                </span>
+                <span class="matches-table-scope-copy">Топовые эксперты</span>
+                <b>{{ top_experts_tab.count }}</b>
+            </a>
+            {% endif %}
+
+            {% for tab in status_tabs %}
+            <a
+                class="matches-table-scope-link{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    {% if tab.key == 'pending' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% elif tab.key == 'win' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.3 2.3 4.8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% elif tab.key == 'lose' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m9 9 6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% elif tab.key == 'refund' %}
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M8 7h7.5a4.5 4.5 0 1 1 0 9H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m10 4-3 3 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% else %}
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% endif %}
+                </span>
+                <span class="matches-table-scope-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+
+    {% if sport_tabs %}
+    <section class="matches-table-filter-group" aria-labelledby="{{ filter_id_prefix }}-sports-title">
+        <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-sports-title">
+            <span>Виды спорта</span>
+            <small>{{ sport_tabs|length }}</small>
+        </div>
+        <nav class="matches-table-sport-list predictions-sport-tabs" aria-label="Прогнозы по видам спорта">
+            {% for tab in sport_tabs %}
+            <a
+                class="matches-table-sport-link{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-sport-icon" aria-hidden="true">
+                    {% if tab.code == 'football' %}
+                        {% include "front/svgs/soccer.svg" %}
+                    {% elif tab.code == 'hockey' %}
+                        {% include "front/svgs/hockey.svg" %}
+                    {% elif tab.code == 'basketball' %}
+                        {% include "front/svgs/basketball.svg" %}
+                    {% elif tab.code == 'tennis' %}
+                        {% include "front/svgs/tennis.svg" %}
+                    {% else %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% endif %}
+                </span>
+                <span class="matches-table-sport-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+    {% endif %}
+
+    {% if following %}
+    <section class="matches-table-filter-group" aria-labelledby="{{ filter_id_prefix }}-cappers-title">
+        <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-cappers-title">
+            <span>Капперы</span>
+            <small>{{ following_count }}</small>
+        </div>
+        <nav class="matches-table-sport-list following-feed-filter-quick" aria-label="Фильтр по капперу">
+            <a
+                class="matches-table-sport-link{% if not selected_capper %} is-active{% endif %}"
+                href="{{ feed_all_cappers_url }}"
+                data-prediction-ajax-link
+                {% if not selected_capper %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-sport-icon following-capper-sidebar-avatar" aria-hidden="true">Все</span>
+                <span class="matches-table-sport-copy">Все подписки</span>
+                <b>{{ feed_all_cappers_count|default:following_count }}</b>
+                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            {% for follow in following %}
+            <a
+                class="matches-table-sport-link{% if selected_capper == follow.analyst.username %} is-active{% endif %}"
+                href="{{ follow.feed_filter_url }}"
+                data-prediction-ajax-link
+                {% if selected_capper == follow.analyst.username %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-sport-icon following-capper-sidebar-avatar{% if follow.analyst.analyst_profile.is_vip %} is-vip{% endif %}"{% if follow.feed_avatar_url or follow.analyst.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
+                    {% if follow.feed_avatar_url %}
+                        <img src="{{ follow.feed_avatar_url }}" width="28" height="28" alt="">
+                    {% elif follow.analyst.avatar %}
+                        <img src="{{ follow.analyst.avatar.url }}" width="28" height="28" alt="">
+                    {% else %}
+                        {{ follow.feed_initial }}
+                    {% endif %}
+                </span>
+                <span class="matches-table-sport-copy">{{ follow.feed_name }}</span>
+                <b>{{ follow.feed_predictions_count }}</b>
+                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+    {% endif %}
+
+    <section class="matches-table-filter-group predictions-sidebar-form-group" aria-labelledby="{{ filter_id_prefix }}-details-title">
+        <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-details-title">
+            <span>Параметры</span>
+            {% if active_filter_count %}<small>{{ active_filter_count }}</small>{% endif %}
+        </div>
+
+        <form class="prediction-filters" method="get" action="{{ filter_action_url }}" data-prediction-filters>
+            <input type="hidden" name="sort" value="{{ active_sort }}">
+            <input type="hidden" name="status" value="{{ active_status }}">
+            {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
+            {% if selected_capper and following %}<input type="hidden" name="capper" value="{{ selected_capper }}">{% endif %}
+
+            {% if active_filter_count %}
+            <div class="prediction-filter-sidebar-actions">
+                <span>{{ active_filter_count }} выбрано</span>
+                <a class="prediction-filter-reset" href="{{ reset_url|default:filter_action_url }}" data-prediction-ajax-link>Сбросить</a>
+            </div>
+            {% endif %}
+
+            <div class="prediction-filter-grid">
+                {% if leagues %}
+                <label class="prediction-filter-field">
+                    <span>Лига</span>
+                    <select name="league">
+                        <option value="">Все лиги</option>
+                        {% for league in leagues %}
+                        <option value="{{ league.match__league_id }}"{% if selected_league == league.match__league_id|stringformat:"s" %} selected{% endif %}>
+                            {{ league.match__league__name_ru|default:league.match__league__name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                {% endif %}
+
+                {% if cappers %}
+                <label class="prediction-filter-field">
+                    <span>Каппер</span>
+                    <select name="capper">
+                        <option value="">Все эксперты</option>
+                        {% for capper in cappers %}
+                        <option value="{{ capper.coupon__author__username }}"{% if selected_capper == capper.coupon__author__username %} selected{% endif %}>
+                            {% if capper.coupon__author__analyst_profile__display_name %}
+                                {{ capper.coupon__author__analyst_profile__display_name }} · @{{ capper.coupon__author__username }}
+                            {% else %}
+                                @{{ capper.coupon__author__username }}
+                            {% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                {% endif %}
+
+                {% if not following %}
+                <div class="prediction-filter-coefficients">
+                    <label class="prediction-filter-field">
+                        <span>КФ от</span>
+                        <input type="number" name="coef_min" min="1" step="0.01" inputmode="decimal" value="{{ coefficient_min }}" placeholder="1.50">
+                    </label>
+                    <label class="prediction-filter-field">
+                        <span>КФ до</span>
+                        <input type="number" name="coef_max" min="1" step="0.01" inputmode="decimal" value="{{ coefficient_max }}" placeholder="3.00">
+                    </label>
+                </div>
+                {% endif %}
+
+                <div class="prediction-filter-quick">
+                    <label class="prediction-filter-toggle">
+                        <input type="checkbox" name="live" value="1"{% if only_live %} checked{% endif %}>
+                        <span><i></i>Только live</span>
+                    </label>
+                    <label class="prediction-filter-toggle">
+                        <input type="checkbox" name="today" value="1"{% if only_today %} checked{% endif %}>
+                        <span><i></i>Сегодня</span>
+                    </label>
+                </div>
+            </div>
+        </form>
+    </section>
+</aside>

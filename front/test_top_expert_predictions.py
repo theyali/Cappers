@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -8,6 +8,13 @@ from cabinet.models import User
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class TopExpertPredictionsTests(TestCase):
     def setUp(self):
         self.sport = Sport.objects.create(
@@ -114,14 +121,14 @@ class TopExpertPredictionsTests(TestCase):
         self._prediction(author, external_id=19200, payout="180.00")
 
         response = self.client.get(
-            reverse("front:predictions"),
-            {"top": "1", "sport": self.sport.id, "sort": "roi"},
+            reverse("front:predictions_by_sport", kwargs={"sport_code": self.sport.code}),
+            {"top": "1", "sort": "roi"},
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["top_experts_tab"]["active"])
         toggle_href = response.context["top_experts_tab"]["href"]
-        self.assertIn(f"sport={self.sport.id}", toggle_href)
+        self.assertIn(f"/predictions/{self.sport.code}/", toggle_href)
         self.assertIn("sort=roi", toggle_href)
         self.assertNotIn("top=1", toggle_href)
         self.assertIn("top=1", response.context["pagination_query"])

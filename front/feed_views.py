@@ -143,6 +143,7 @@ def following_feed(request):
         follow_params["capper"] = follow.analyst.username
         follow.feed_filter_url = _feed_url(request, follow_params)
 
+    feed_all_cappers_count = sum(author_counts.values())
     params_without_page = request.GET.copy()
     params_without_page.pop("page", None)
     pagination_query = params_without_page.urlencode()
@@ -174,6 +175,10 @@ def following_feed(request):
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "feed_all_cappers_url": feed_all_cappers_url,
+            "feed_all_cappers_count": feed_all_cappers_count,
+            "filter_action_url": request.path,
+            "adv_placement": "sidebar",
+            "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
         },
     )

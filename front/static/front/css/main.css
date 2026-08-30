@@ -1672,14 +1672,6 @@ h2 {
     grid-column: 1 / -1;
 }
 
-.adv-banner-label {
-    display: block;
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1;
-}
-
 .adv-banner picture {
     width: 100%;
     display: block;
@@ -13645,14 +13637,20 @@ h2 {
 
 .predictions-hero,
 .cappers-hero {
-    min-height: 210px;
+    min-height: auto;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 24px;
-    padding: clamp(26px, 4vw, 44px);
+    padding: 20px;
     border-radius: 22px;
     background: var(--panel);
+}
+.predictions-hero h1{
+    font-size: 30px!important
+}
+.predictions-hero p{
+    font-size: 13px
 }
 
 .predictions-eyebrow,
@@ -13679,12 +13677,12 @@ h2 {
 
 .predictions-total,
 .cappers-total {
-    min-width: 150px;
+    min-width: auto;
     min-height: 96px;
     display: grid;
     place-items: center;
     align-content: center;
-    padding: 18px;
+    padding: 14px;
     border-radius: 18px;
     background: #171718;
 }
@@ -13692,7 +13690,7 @@ h2 {
 .predictions-total strong,
 .cappers-total strong {
     color: var(--yellow);
-    font-size: 34px;
+    font-size: 24px;
     line-height: 1;
 }
 
@@ -14297,20 +14295,35 @@ h2 {
     padding: 0 4px;
 }
 
+.prediction-results-summary,
 .prediction-results-head > div {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 8px;
 }
 
+.prediction-results-summary strong,
 .prediction-results-head > div strong {
     color: var(--yellow);
     font-size: 20px;
 }
 
+.prediction-results-summary span,
 .prediction-results-head > div span {
     color: var(--muted);
     font-size: 11px;
+}
+
+.prediction-results-actions {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.prediction-results-head .content-view-toolbar {
+    margin: 0;
 }
 
 .prediction-results-head > span {
@@ -14376,6 +14389,11 @@ h2 {
 
     .prediction-results-head > span {
         min-height: 30px;
+    }
+
+    .prediction-results-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 }
 
@@ -14605,6 +14623,378 @@ h2 {
     transform: translateY(2px);
 }
 
+.predictions-layout {
+    grid-template-columns: minmax(220px, 252px) minmax(0, 1fr) minmax(300px, 340px);
+    gap: 14px;
+}
+
+.predictions-content {
+    grid-column: 2;
+}
+
+.predictions-layout > .predictions-filter-sidebar {
+    position: sticky;
+    top: 116px;
+    grid-column: 1;
+    align-self: start;
+    max-height: calc(100dvh - 132px);
+    display: grid !important;
+    align-content: start;
+    gap: 12px;
+    padding: 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    border-radius: 18px;
+    background: var(--panel);
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3d transparent;
+    animation: matchesTableSidebarIn .22s ease both;
+}
+
+.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #3a3a3d;
+}
+
+.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.predictions-layout > .bookmakers-sidebar,
+.predictions-layout > .predictions-ad-sidebar {
+    position: sticky;
+    top: 116px;
+    grid-column: 3;
+    align-self: start;
+    min-width: 0;
+}
+
+.predictions-layout > .bookmakers-sidebar {
+    gap: 14px;
+}
+
+.predictions-layout .predictions-grid,
+.predictions-layout.is-filter-collapsed .predictions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.predictions-filter-sidebar .prediction-filters {
+    display: grid;
+    gap: 12px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.predictions-filter-sidebar .prediction-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.predictions-filter-sidebar .prediction-filter-field {
+    gap: 6px;
+}
+
+.predictions-filter-sidebar .prediction-filter-field select,
+.predictions-filter-sidebar .prediction-filter-field input {
+    min-height: 42px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #171718;
+}
+
+.predictions-filter-sidebar .prediction-filter-coefficients {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.predictions-filter-sidebar .prediction-filter-quick {
+    grid-column: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.predictions-filter-sidebar .prediction-filter-toggle > span {
+    min-height: 42px;
+    justify-content: flex-start;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: #171718;
+}
+
+.predictions-filter-sidebar .prediction-filter-reset {
+    min-height: 30px;
+    padding: 0 9px;
+    border-radius: 8px;
+}
+
+.predictions-filter-sidebar .predictions-tab-top {
+    color: #fff;
+    background: var(--blue);
+}
+
+.predictions-filter-sidebar .predictions-tab-top.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-filter-sidebar .predictions-tab-top .predictions-tab-top-icon {
+    color: var(--yellow);
+}
+
+.predictions-filter-sidebar .predictions-tab-top.is-active .predictions-tab-top-icon {
+    color: var(--blue);
+}
+
+.predictions-filter-sidebar .predictions-tab-top-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.following-capper-sidebar-avatar {
+    overflow: hidden;
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.following-capper-sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.predictions-layout > .bookmakers-sidebar .bookmakers-panel,
+.predictions-layout > .predictions-ad-sidebar {
+    border-radius: 18px;
+}
+
+body:has(.predictions-scroll-page) .site-footer {
+    display: none;
+}
+
+.predictions-index-page,
+.following-feed-page {
+    --prediction-results-sticky-top: 0px;
+}
+
+.predictions-layout > .bookmakers-sidebar .bookmaker-card {
+    grid-template-columns: 66px minmax(0, 1fr) 32px;
+}
+
+.predictions-layout > .bookmakers-sidebar .bookmaker-logo {
+    width: 66px;
+    height: 46px;
+}
+
+.predictions-lazy {
+    min-height: 56px;
+    display: grid;
+    place-items: center;
+    gap: 7px;
+    padding: 8px 0 2px;
+}
+
+.predictions-lazy button {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--text);
+    background: #242426;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+    transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.predictions-lazy button:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--yellow);
+    transform: translateY(-1px);
+}
+
+.predictions-lazy button:disabled {
+    cursor: default;
+    opacity: .55;
+}
+
+.predictions-lazy.is-loading button {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-lazy span {
+    min-height: 14px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.predictions-table-view-flat {
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--panel);
+}
+
+.predictions-table-view-flat .content-table-scroll {
+    padding: 0;
+}
+
+.prediction-table-body {
+    min-width: 980px;
+}
+
+.prediction-table-body .prediction-table-row:first-child {
+    margin-top: 0;
+}
+
+.predictions-scroll-page .predictions-content {
+    scroll-behavior: smooth;
+    overflow-anchor: none;
+}
+
+.predictions-scroll-page .predictions-grid,
+.predictions-scroll-page .prediction-table-body,
+.predictions-scroll-page .predictions-lazy {
+    overflow-anchor: none;
+}
+
+.prediction-table-row[data-coupon-url] {
+    cursor: pointer;
+}
+
+.prediction-table-row[data-coupon-url] a,
+.prediction-table-row[data-coupon-url] button {
+    cursor: pointer;
+}
+
+.prediction-table-verified,
+.prediction-table-verified svg {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    flex-basis: 16px !important;
+}
+
+.predictions-grid > .is-lazy-added,
+.content-table-view > .is-lazy-added,
+.prediction-table-body > .is-lazy-added {
+    animation: predictionLazyItemIn .24s ease both;
+}
+
+@keyframes predictionLazyItemIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (min-width: 1121px) {
+    body:has(.predictions-layout) {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    body:has(.predictions-layout) .site-main {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding-bottom: 0;
+    }
+
+    .predictions-page:has(.predictions-layout) {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .predictions-page .predictions-layout {
+        height: 100%;
+        min-height: 0;
+        align-items: stretch;
+    }
+
+    .predictions-layout > .predictions-filter-sidebar,
+    .predictions-layout > .bookmakers-sidebar,
+    .predictions-layout > .predictions-ad-sidebar {
+        position: static;
+        top: auto;
+        align-self: stretch;
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .predictions-layout > .bookmakers-sidebar {
+        align-content: start;
+    }
+
+    .predictions-content {
+        height: 100%;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 2px;
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a3d transparent;
+    }
+
+    .predictions-index-page .prediction-results-head,
+    .following-feed-page .prediction-results-head {
+        position: sticky;
+        top: var(--prediction-results-sticky-top);
+        z-index: 58;
+        margin: -2px 0 0;
+        padding: 8px 4px 10px;
+        background: #131313;
+    }
+
+    .predictions-content::-webkit-scrollbar,
+    .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar,
+    .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .predictions-content::-webkit-scrollbar-thumb,
+    .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar-thumb,
+    .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #3a3a3d;
+    }
+
+    .predictions-content::-webkit-scrollbar-track,
+    .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar-track,
+    .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
 .predictions-layout.is-filter-collapsed .prediction-filter-sidebar-body {
     display: none;
 }
@@ -14629,16 +15019,30 @@ h2 {
 
 @media (max-width: 1120px) {
     .predictions-layout {
-        grid-template-columns: minmax(0, 1fr) 260px;
+        grid-template-columns: minmax(208px, 240px) minmax(0, 1fr);
     }
 
     .predictions-layout.is-filter-collapsed {
-        grid-template-columns: minmax(0, 1fr) 52px;
+        grid-template-columns: minmax(208px, 240px) minmax(0, 1fr);
     }
 
     .predictions-layout .predictions-grid,
     .predictions-layout.is-filter-collapsed .predictions-grid {
         grid-template-columns: 1fr;
+    }
+
+    .predictions-layout > .predictions-filter-sidebar {
+        display: grid !important;
+    }
+
+    .predictions-layout > .bookmakers-sidebar,
+    .predictions-layout > .predictions-ad-sidebar {
+        position: static;
+        grid-column: 1 / -1;
+    }
+
+    .predictions-layout > .bookmakers-sidebar .bookmakers-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -14653,7 +15057,14 @@ h2 {
         grid-row: 1;
     }
 
+    .predictions-layout > .predictions-filter-sidebar {
+        position: static;
+        grid-column: 1;
+        max-height: none;
+    }
+
     .predictions-content {
+        grid-column: 1;
         grid-row: 2;
     }
 
