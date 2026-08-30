@@ -153,6 +153,7 @@ def _recommended_experts(request, current_profile: AnalystProfile) -> list[dict]
                 "name": name,
                 "initials": _initials(name),
                 "avatar_url": avatar_url,
+                "is_vip": bool(profile.is_vip),
                 "profile_url": reverse(
                     "front:expert_profile",
                     kwargs={"username": user.username},
