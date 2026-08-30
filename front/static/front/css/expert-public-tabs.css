@@ -11,6 +11,32 @@
     order: 10;
 }
 
+.expert-public-shell.is-vip .expert-public-hero {
+    position: relative;
+    box-shadow: inset 0 0 0 2px var(--yellow);
+}
+
+.expert-public-shell.is-vip .expert-public-hero::after {
+    content: "VIP";
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    min-width: 48px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 11px;
+    border-radius: 999px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    line-height: 1;
+    pointer-events: none;
+}
+
 .expert-public-shell .expert-public-stats-compact {
     order: 20;
 }
@@ -91,6 +117,15 @@
 }
 
 @media (max-width: 640px) {
+    .expert-public-shell.is-vip .expert-public-hero::after {
+        top: 10px;
+        right: 10px;
+        min-width: 44px;
+        height: 27px;
+        padding: 0 9px;
+        font-size: 11px;
+    }
+
     .expert-public-tabs {
         gap: 4px;
         padding: 4px;
