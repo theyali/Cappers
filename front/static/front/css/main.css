@@ -26576,22 +26576,26 @@ font-size: 13px;
     }
 
     .match-detail-featured-odd {
-        min-height: 52px;
-        padding: 6px 4px;
+        min-height: 42px;
+        padding: 3px 3px;
     }
 
     .bookmaker-ref.is-scoreboard .bookmaker-ref-logo {
-        width: 56px;
-        height: 38px;
+        width: 43px;
+        height: 30px;
         padding: 4px;
         border-radius: 9px;
     }
 
     .bookmaker-ref.is-scoreboard img {
-        width: 48px;
+        width: 100%;
         height: 28px;
     }
-
+    .match-detail-featured-odd strong {
+        font-size: 10px;
+        line-height: 1;
+        color: var(--yellow);
+    }
     .prediction-pick-rich {
         grid-template-columns: minmax(0, 1fr) 32px auto;
         gap: 7px;
@@ -26679,7 +26683,7 @@ font-size: 13px;
     .match-detail-bookmaker-strip > .match-detail-featured-odds {
         width: 100%;
         min-width: 0;
-        grid-template-columns: repeat(3, minmax(54px, 1fr));
+        grid-template-columns: repeat(3, minmax(45px, 1fr));
     }
 
     .match-watch-card-shell .match-card-odds-row,
