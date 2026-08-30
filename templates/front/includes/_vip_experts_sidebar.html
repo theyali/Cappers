@@ -1,0 +1,37 @@
+{% if vip_experts %}
+<section class="bookmakers-panel vip-experts-panel" aria-label="VIP прогнозисты">
+    <div class="bookmakers-head">
+        <div>
+            <p>Рекомендуем</p>
+            <h2>VIP прогнозисты</h2>
+        </div>
+        <span>{{ vip_experts|length }}</span>
+    </div>
+
+    <div class="bookmakers-list vip-experts-list">
+        {% for profile in vip_experts %}
+        <a class="bookmaker-card vip-expert-card" href="{% url 'front:expert_profile' profile.user.username %}">
+            <span class="bookmaker-logo following-capper-sidebar-avatar is-vip"{% if profile.avatar or profile.user.avatar %} data-skeleton-image{% endif %}>
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" width="46" height="46" alt="" loading="lazy">
+                {% elif profile.user.avatar %}
+                    <img src="{{ profile.user.avatar.url }}" width="46" height="46" alt="" loading="lazy">
+                {% else %}
+                    {{ profile.display_name|default:profile.user.username|slice:":1"|upper }}
+                {% endif %}
+            </span>
+
+            <span class="bookmaker-info">
+                <span class="bookmaker-name">{{ profile.display_name|default:profile.user.get_full_name|default:profile.user.username }}</span>
+                <span class="bookmaker-bonus">ROI {% if profile.author_roi > 0 %}+{% endif %}{{ profile.author_roi|floatformat:1 }}% · {{ profile.publications_count }} прогнозов</span>
+                <span class="bookmaker-exclusive">VIP · {{ profile.followers_count }} подписчиков</span>
+            </span>
+
+            <span class="bookmaker-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
