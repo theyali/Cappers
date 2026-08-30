@@ -14,6 +14,38 @@
         </div>
     </div>
 
+    <section class="matches-table-filter-group" aria-labelledby="table-statuses-title">
+        <div class="matches-table-filter-title" id="table-statuses-title">
+            <span>Статусы матчей</span>
+            <small>{{ scope_tabs|length }}</small>
+        </div>
+        <nav class="matches-table-scope-list" aria-label="Фильтр по статусу матча">
+            {% for tab in scope_tabs %}
+            <a
+                class="matches-table-scope-link{% if active_scope == tab.scope %} is-active{% endif %}"
+                href="{{ tab.url }}"
+                {% if active_scope == tab.scope %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    {% if tab.scope == 'watched' %}
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3.1L7 21V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                    {% elif tab.scope == 'live' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% elif tab.scope == 'prematch' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% elif tab.scope == 'finished' %}
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.3 2.3 4.8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% else %}
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% endif %}
+                </span>
+                <span class="matches-table-scope-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+
     <section class="matches-table-filter-group" aria-labelledby="table-sports-title">
         <div class="matches-table-filter-title" id="table-sports-title">
             <span>Виды спорта</span>
