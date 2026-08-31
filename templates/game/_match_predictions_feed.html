@@ -7,7 +7,15 @@
     <div class="match-predictions-feed-head">
         <div>
             <p class="match-predictions-kicker">Мнения капперов</p>
-            <h2>Все прогнозы на игру <span data-match-predictions-total>({{ match_predictions_total }})</span></h2>
+            <h2>
+                Все прогнозы на игру
+                <span
+                    class="match-predictions-total-badge"
+                    data-match-predictions-total
+                    aria-label="Всего прогнозов: {{ match_predictions_total }}"
+                    style="display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:48px;padding:0 14px;margin-left:12px;border-radius:15px;background:var(--blue, #0b56fa);color:#fff;font-size:16px;font-weight:800;line-height:1;vertical-align:middle;box-sizing:border-box;"
+                >{{ match_predictions_total }}</span>
+            </h2>
         </div>
     </div>
 
