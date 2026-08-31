@@ -1,10 +1,11 @@
 import json
-from decimal import Decimal
 
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, ExpressionWrapper, F, IntegerField, Q, Value, When
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from game.models import Prediction, PredictionCoupon
@@ -27,6 +28,11 @@ from .prediction_views import (
     _url_with_query,
     prediction_filter_collapsed,
 )
+from .views import PREDICTION_STATUS_FILTERS
+
+
+def _express_path() -> str:
+    return reverse("front:prediction_expresses")
 
 
 def _counted_published_items(published_items):
@@ -118,20 +124,15 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
             "count": all_count,
             "href": _url_with_query(_prediction_sport_path(), params),
             "active": active_sport is None and not express_only,
-        }
-    ]
-
-    express_params = params.copy()
-    express_params["express"] = "1"
-    tabs.append(
+        },
         {
             "code": "express",
             "label": "Экспрессы",
             "count": express_count,
-            "href": _url_with_query(_prediction_sport_path(), express_params),
+            "href": _url_with_query(_express_path(), params),
             "active": express_only,
-        }
-    )
+        },
+    ]
 
     for row in rows:
         code = row["match__sport__code"]
@@ -169,8 +170,6 @@ def _apply_position_filters(
     if only_live:
         queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
-        from django.utils import timezone
-
         queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
     return queryset.distinct()
 
@@ -185,15 +184,21 @@ def _catalog_seo_context(request, active_sport, page_number: int, *, express_onl
         "Экспрессы капперов КапперХаб: комбинированные прогнозы из нескольких матчей, "
         "общие коэффициенты и результаты расчёта."
     )
+    canonical_url = request.build_absolute_uri(_express_path())
+    if page_number > 1:
+        canonical_url = f"{canonical_url}?page={page_number}"
+        title = f"{title} — страница {page_number}"
+
     context["page_heading"] = "Экспрессы"
     context["page_intro"] = (
-        "Купоны из двух и более игр вынесены отдельно от прогнозов по конкретным видам спорта."
+        "Прогнозы из двух и более игр вынесены отдельно от одиночных прогнозов по видам спорта."
     )
 
     meta = context["seo_meta"]
     meta["title"] = title
     meta["description"] = description
-    meta["robots"] = "noindex,follow"
+    meta["robots"] = "index,follow"
+    meta["canonical_url"] = canonical_url
     meta["og_title"] = title
     meta["og_description"] = description
 
@@ -204,26 +209,51 @@ def _catalog_seo_context(request, active_sport, page_number: int, *, express_onl
     if schema:
         schema["name"] = "Экспрессы"
         schema["description"] = description
+        schema["url"] = canonical_url
+        breadcrumbs = schema.get("breadcrumb", {}).get("itemListElement", [])
+        if breadcrumbs:
+            breadcrumbs = [item for item in breadcrumbs if item.get("position") != 3]
+            breadcrumbs.append(
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "Экспрессы",
+                    "item": request.build_absolute_uri(_express_path()),
+                }
+            )
+            schema["breadcrumb"]["itemListElement"] = breadcrumbs
         meta["schema_json_ld"] = json.dumps(schema, ensure_ascii=False)
     return context
 
 
-@ensure_csrf_cookie
-def predictions(request, sport_code: str | None = None):
-    active_sport, redirect_response = _resolve_sport_route(request, sport_code)
-    if redirect_response:
-        return redirect_response
+def _redirect_legacy_express_query(request):
+    if request.GET.get("express") != "1":
+        return None
+    params = request.GET.copy()
+    params.pop("express", None)
+    return HttpResponseRedirect(_url_with_query(_express_path(), params))
 
-    if active_sport and request.GET.get("express") == "1":
-        params = request.GET.copy()
-        params.pop("express", None)
-        return HttpResponseRedirect(
-            _url_with_query(_prediction_sport_path(active_sport.code), params)
-        )
+
+@ensure_csrf_cookie
+def predictions(request, sport_code: str | None = None, express_only: bool = False):
+    if express_only:
+        active_sport = None
+    else:
+        active_sport, redirect_response = _resolve_sport_route(request, sport_code)
+        if redirect_response:
+            return redirect_response
+        if active_sport is None:
+            legacy_redirect = _redirect_legacy_express_query(request)
+            if legacy_redirect:
+                return legacy_redirect
+        elif request.GET.get("express") == "1":
+            params = request.GET.copy()
+            params.pop("express", None)
+            return HttpResponseRedirect(
+                _url_with_query(_prediction_sport_path(active_sport.code), params)
+            )
 
     active_status = request.GET.get("status", "all")
-    from .views import PREDICTION_STATUS_FILTERS
-
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
         active_status = "all"
@@ -234,7 +264,6 @@ def predictions(request, sport_code: str | None = None):
         active_sort = "new"
 
     selected_sport = str(active_sport.pk) if active_sport else ""
-    express_only = active_sport is None and request.GET.get("express") == "1"
     selected_league = request.GET.get("league", "").strip()
     selected_capper = request.GET.get("capper", "").strip()
     coefficient_min = _parse_decimal(request.GET.get("coef_min"))
@@ -352,8 +381,7 @@ def predictions(request, sport_code: str | None = None):
     )
 
     params_without_page = _clean_prediction_params(request.GET)
-    if active_sport:
-        params_without_page.pop("express", None)
+    params_without_page.pop("express", None)
     pagination_query = params_without_page.urlencode()
 
     active_filter_count = sum(
@@ -375,6 +403,11 @@ def predictions(request, sport_code: str | None = None):
         page_obj.number,
         express_only=express_only,
     )
+
+    if express_only:
+        filter_action_url = _express_path()
+    else:
+        filter_action_url = _prediction_sport_path(active_sport.code if active_sport else None)
 
     return render(
         request,
@@ -413,7 +446,7 @@ def predictions(request, sport_code: str | None = None):
             "only_today": only_today,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
-            "filter_action_url": _prediction_sport_path(active_sport.code if active_sport else None),
+            "filter_action_url": filter_action_url,
             "all_predictions_url": _prediction_sport_path(),
             "adv_placement": "sidebar",
             "hide_footer": True,
