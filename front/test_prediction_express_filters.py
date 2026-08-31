@@ -110,13 +110,53 @@ class PredictionExpressFiltersTests(TestCase):
                 selection=f"П{index}",
                 coefficient=Decimal("1.50"),
                 stake=Decimal("100.00"),
-                state_status=Prediction.StateStatus.PENDING,
+                state_status="",
             )
+        coupon.refresh_from_db()
         return coupon
 
     @staticmethod
     def _coupon_ids(response):
         return {card.coupon.id for card in response.context["page_obj"].object_list}
+
+    def test_coupon_type_is_stored_and_synchronized(self):
+        self.assertEqual(
+            self.football_single.coupon_type,
+            PredictionCoupon.CouponType.SINGLE,
+        )
+        self.assertEqual(
+            self.mixed_express.coupon_type,
+            PredictionCoupon.CouponType.EXPRESS,
+        )
+
+        extra_match = self._match(
+            28204,
+            self.football,
+            self.football_league,
+            "Футбол 2 Хозяева",
+            "Футбол 2 Гости",
+        )
+        extra_position = Prediction.objects.create(
+            coupon=self.football_single,
+            match=extra_match,
+            market="winner",
+            selection="П1",
+            coefficient=Decimal("1.70"),
+            stake=Decimal("100.00"),
+            state_status="",
+        )
+        self.football_single.refresh_from_db()
+        self.assertEqual(
+            self.football_single.coupon_type,
+            PredictionCoupon.CouponType.EXPRESS,
+        )
+
+        extra_position.delete()
+        self.football_single.refresh_from_db()
+        self.assertEqual(
+            self.football_single.coupon_type,
+            PredictionCoupon.CouponType.SINGLE,
+        )
 
     def test_sport_pages_show_only_single_match_predictions(self):
         football_response = self.client.get(
