@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.urls import path
+from django.urls import path, re_path
 
 from account_email import password_reset as password_reset_views
 
@@ -70,6 +70,11 @@ urlpatterns = [
         "reset/<uidb64>/<token>/",
         password_reset_views.consume_password_reset,
         name="password_reset_confirm",
+    ),
+    re_path(
+        r"^reset/(?P<uidb64>[^/]+)/(?P<token>[^/]+)/(?P<trailing>[\u200b\u200c\u200d\u2060\ufeff]+)/?$",
+        password_reset_views.consume_password_reset,
+        name="password_reset_confirm_invisible_suffix",
     ),
     path(
         "reset/password/",
