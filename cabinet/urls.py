@@ -34,6 +34,11 @@ urlpatterns = [
         views.subscribe_paid_predictions_view,
         name="paid_predictions_subscribe",
     ),
+    path(
+        "experts/<int:user_id>/paid-decline/",
+        views.decline_paid_predictions_view,
+        name="paid_predictions_decline",
+    ),
     path("users/<str:username>/", user_public_views.user_profile, name="user_profile"),
     path("experts/<int:user_id>/follow/", referral_views.toggle_follow, name="toggle_follow"),
     path("register/", capper_views.register, name="register"),

@@ -86,7 +86,15 @@
     </a>
 
     {% if show_follow and not expert.is_self %}
-        {% if request.user.is_authenticated %}
+        {% if expert.paid_predictions_enabled %}
+            {% if expert.is_paid_subscribed %}
+            <a class="capper-pro-follow capper-pro-paid-action is-active" href="{% url 'front:following_feed' %}">В ленту</a>
+            {% elif request.user.is_authenticated %}
+            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.path|urlencode }}">Оплатить {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+            {% else %}
+            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:login' %}?next={% url 'front:expert_profile' expert.username %}">Оплатить {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+            {% endif %}
+        {% elif request.user.is_authenticated %}
         <button
             class="capper-pro-follow{% if expert.is_following %} is-active{% endif %}"
             type="button"

@@ -68,6 +68,17 @@
             });
             const result = await response.json();
             if (!response.ok || !result.ok) {
+                if (result.payment_required && result.payment_url) {
+                    const paymentUrl = new URL(result.payment_url, window.location.origin);
+                    if (!paymentUrl.searchParams.has("next")) {
+                        paymentUrl.searchParams.set(
+                            "next",
+                            `${window.location.pathname}${window.location.search}`,
+                        );
+                    }
+                    window.location.href = paymentUrl.toString();
+                    return;
+                }
                 throw new Error(result.error || "Не удалось изменить подписку.");
             }
 

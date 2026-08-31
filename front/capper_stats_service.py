@@ -6,7 +6,7 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
-from cabinet.models import AnalystFollow
+from cabinet.models import AnalystFollow, AnalystPaidSubscription
 from game.models import Prediction, PredictionCoupon
 
 from .expert_ranking import ranked_expert_profiles
@@ -88,11 +88,13 @@ class CapperStatsService:
         profile_ids = [profile.user_id for profile in profiles]
         best_streaks = _best_streaks_for_authors(profile_ids)
         following_ids = self._following_ids(profile_ids)
+        paid_subscription_ids = self._paid_subscription_ids(profile_ids)
 
         cards_by_id = {
             profile.user_id: self._serialize_profile(
                 profile,
                 following_ids=following_ids,
+                paid_subscription_ids=paid_subscription_ids,
                 best_streak=best_streaks.get(profile.user_id, 0),
             )
             for profile in profiles
@@ -273,13 +275,26 @@ class CapperStatsService:
             ).values_list("analyst_id", flat=True)
         )
 
+    def _paid_subscription_ids(self, profile_ids: list[int]) -> set[int]:
+        if not getattr(self.user, "is_authenticated", False) or not profile_ids:
+            return set()
+        return set(
+            AnalystPaidSubscription.objects.filter(
+                subscriber=self.user,
+                analyst_id__in=profile_ids,
+                expires_at__gt=timezone.now(),
+            ).values_list("analyst_id", flat=True)
+        )
+
     def _serialize_profile(
         self,
         profile,
         *,
         following_ids: set[int],
+        paid_subscription_ids: set[int] | None = None,
         best_streak: int,
     ) -> dict:
+        paid_subscription_ids = paid_subscription_ids or set()
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         unlocked_achievements = build_achievement_badges(
             predictions_count=profile.publications_count,
@@ -314,6 +329,7 @@ class CapperStatsService:
                 and self.user.pk == profile.user_id
             ),
             "is_following": profile.user_id in following_ids,
+            "is_paid_subscribed": profile.user_id in paid_subscription_ids,
             "paid_predictions_enabled": bool(
                 profile.paid_predictions_enabled and profile.paid_predictions_price > 0
             ),

@@ -2,6 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import (
+    AnalystFollow,
     AnalystPaidSubscription,
     AnalystProfile,
     User,
@@ -76,6 +77,7 @@ def subscribe_to_paid_predictions(subscriber: User, analyst: User) -> AnalystPai
             },
         )
         if created:
+            AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
             return subscription
         base_time = subscription.expires_at if subscription.expires_at > now else now
         subscription.price = profile.paid_predictions_price
@@ -83,4 +85,5 @@ def subscribe_to_paid_predictions(subscriber: User, analyst: User) -> AnalystPai
         if subscription.starts_at > now:
             subscription.starts_at = now
         subscription.save(update_fields=["price", "starts_at", "expires_at", "updated_at"])
+        AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
     return subscription

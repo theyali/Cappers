@@ -5,8 +5,9 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import AnalystPaidSubscription, User
+from cabinet.models import AnalystFollow, AnalystPaidSubscription, User
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
+from notifications.models import Notification
 
 
 TEST_STORAGES = {
@@ -144,6 +145,106 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertContains(response, "paid-feed-block")
         self.assertContains(response, "Закрытые прогнозы")
 
+    def test_paid_subscription_creates_follow_relation(self):
+        self.client.force_login(self.reader)
+
+        response = self.client.post(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            {"next": reverse("front:following_feed")},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            AnalystFollow.objects.filter(
+                follower=self.reader,
+                analyst=self.analyst,
+            ).exists()
+        )
+
+    def test_free_follow_to_paid_expert_requires_payment(self):
+        self.client.force_login(self.reader)
+
+        response = self.client.post(reverse("cabinet:toggle_follow", args=[self.analyst.pk]))
+
+        self.assertEqual(response.status_code, 402)
+        self.assertFalse(
+            AnalystFollow.objects.filter(
+                follower=self.reader,
+                analyst=self.analyst,
+            ).exists()
+        )
+        self.assertTrue(response.json()["payment_required"])
+
+    def test_existing_follower_can_decline_paid_upgrade(self):
+        AnalystFollow.objects.create(follower=self.reader, analyst=self.analyst)
+        self.client.force_login(self.reader)
+
+        response = self.client.post(
+            reverse("cabinet:paid_predictions_decline", args=[self.analyst.pk]),
+            {"next": reverse("front:following_feed")},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            AnalystFollow.objects.filter(
+                follower=self.reader,
+                analyst=self.analyst,
+            ).exists()
+        )
+
+    def test_unpaid_follower_sees_paid_upgrade_offer_in_feed(self):
+        self._coupon(is_paid=True)
+        AnalystFollow.objects.create(follower=self.reader, analyst=self.analyst)
+        self.client.force_login(self.reader)
+
+        response = self.client.get(reverse("front:following_feed"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["paid_upgrade_offers_count"], 1)
+        self.assertContains(response, "paid-upgrade-card")
+        self.assertContains(response, "Каппер стал платным")
+        self.assertContains(response, "Оплатить подписку")
+        self.assertNotContains(response, "П1")
+
+    def test_enabling_paid_predictions_notifies_existing_followers(self):
+        analyst = User.objects.create_user(
+            username="upgrade-expert",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        profile = analyst.analyst_profile
+        profile.display_name = "Upgrade Expert"
+        profile.paid_predictions_enabled = False
+        profile.paid_predictions_price = Decimal("0")
+        profile.save(
+            update_fields=[
+                "display_name",
+                "paid_predictions_enabled",
+                "paid_predictions_price",
+                "updated_at",
+            ]
+        )
+        AnalystFollow.objects.create(follower=self.reader, analyst=analyst)
+
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("990.00")
+        with self.captureOnCommitCallbacks(execute=True):
+            profile.save(
+                update_fields=[
+                    "paid_predictions_enabled",
+                    "paid_predictions_price",
+                    "updated_at",
+                ]
+            )
+
+        notification = Notification.objects.get(
+            recipient=self.reader,
+            actor=analyst,
+            meta__event="paid_predictions_enabled",
+        )
+        self.assertEqual(notification.title, "Каппер стал платным")
+        self.assertIn("990 ₽", notification.message)
+
     def test_public_expert_page_shows_paid_placeholder(self):
         self._coupon(is_paid=True)
 
@@ -155,4 +256,6 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertContains(response, "predictions-grid expert-public-grid")
         self.assertContains(response, "Прогнозы платные")
         self.assertContains(response, "1990 ₽ / месяц")
+        self.assertContains(response, "Оплатить подписку")
+        self.assertNotContains(response, ">Подписаться<")
         self.assertNotContains(response, "П1")

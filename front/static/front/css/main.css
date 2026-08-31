@@ -635,6 +635,106 @@ h2 {
     opacity: .68;
 }
 
+.paid-checkout-page {
+    min-height: calc(100vh - 120px);
+    display: grid;
+    place-items: center;
+    padding: 42px 16px;
+}
+
+.paid-checkout-card {
+    width: min(100%, 520px);
+    display: grid;
+    gap: 22px;
+    padding: 28px;
+    border-radius: 18px;
+    background: var(--panel);
+    outline: 1px solid rgba(255, 255, 255, .08);
+}
+
+.paid-checkout-head {
+    display: grid;
+    gap: 8px;
+}
+
+.paid-checkout-kicker {
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.paid-checkout-head h1,
+.paid-checkout-head p {
+    margin: 0;
+}
+
+.paid-checkout-head h1 {
+    color: var(--text);
+    font-size: 30px;
+    line-height: 1.12;
+}
+
+.paid-checkout-head p {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.paid-checkout-plan {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .06);
+}
+
+.paid-checkout-plan span {
+    color: var(--muted);
+}
+
+.paid-checkout-plan strong {
+    color: var(--yellow);
+    font-size: 24px;
+}
+
+.paid-checkout-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.paid-checkout-actions form {
+    flex: 1 1 180px;
+}
+
+.paid-checkout-actions button,
+.paid-checkout-actions a {
+    width: 100%;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.paid-checkout-actions button {
+    color: #fff;
+    background: var(--blue);
+    cursor: pointer;
+}
+
+.paid-checkout-actions a {
+    color: var(--text);
+    background: rgba(255, 255, 255, .08);
+}
+
 .wallet-method-status {
     color: var(--muted);
     background: #2a2a2d;
@@ -7706,6 +7806,10 @@ h2 {
 .capper-pro-follow.is-active {
     color: var(--ink);
     background: var(--yellow);
+}
+
+.capper-pro-paid-action {
+    text-decoration: none;
 }
 
 .capper-pro-follow:hover {
@@ -15923,6 +16027,100 @@ body:has(.predictions-scroll-page) .site-footer {
     background: var(--yellow);
 }
 
+.paid-upgrade-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.paid-upgrade-card {
+    display: grid;
+    gap: 16px;
+}
+
+.paid-upgrade-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.paid-upgrade-avatar {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 14px;
+    overflow: hidden;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.paid-upgrade-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.paid-upgrade-card-top span,
+.paid-upgrade-card-copy p,
+.paid-upgrade-card-copy small {
+    color: var(--muted);
+}
+
+.paid-upgrade-card-top strong,
+.paid-upgrade-card-copy h3 {
+    color: var(--text);
+}
+
+.paid-upgrade-card-top > div,
+.paid-upgrade-card-copy {
+    display: grid;
+    gap: 5px;
+}
+
+.paid-upgrade-card-copy h3,
+.paid-upgrade-card-copy p {
+    margin: 0;
+}
+
+.paid-upgrade-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.paid-upgrade-actions > a,
+.paid-upgrade-actions form {
+    min-width: 160px;
+    flex: 1 1 160px;
+}
+
+.paid-upgrade-actions > a,
+.paid-upgrade-actions button {
+    width: 100%;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--blue);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.paid-upgrade-actions button.is-secondary {
+    color: var(--text);
+    background: rgba(255, 255, 255, .08);
+    outline: 1px solid rgba(255, 255, 255, .1);
+}
+
 .prediction-status-paid,
 .capper-pro-paid {
     color: var(--ink);
@@ -18041,6 +18239,11 @@ body:has(.predictions-scroll-page) .site-footer {
 .expert-follow-button:disabled {
     cursor: wait;
     opacity: .6;
+}
+
+.expert-public-name-action-form {
+    display: inline-flex;
+    margin: 0;
 }
 
 .expert-public-edit {

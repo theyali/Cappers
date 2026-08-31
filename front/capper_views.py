@@ -49,12 +49,14 @@ def _ranking_cards(
     profile_ids = [profile.user_id for profile in profiles]
     best_streaks = _best_streaks_for_authors(profile_ids)
     following_ids = service._following_ids(profile_ids)
+    paid_subscription_ids = service._paid_subscription_ids(profile_ids)
 
     cards = []
     for profile in profiles:
         card = service._serialize_profile(
             profile,
             following_ids=following_ids,
+            paid_subscription_ids=paid_subscription_ids,
             best_streak=best_streaks.get(profile.user_id, 0),
         )
         card["roi_period_days"] = period_days

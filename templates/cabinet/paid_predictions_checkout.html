@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Оплата подписки — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="paid-checkout-page" aria-label="Оплата платных прогнозов">
+    <article class="paid-checkout-card">
+        <div class="paid-checkout-head">
+            <span class="paid-checkout-kicker">Платные прогнозы</span>
+            <h1>Подписка на {{ expert_name }}</h1>
+            <p>После оплаты закрытые прогнозы каппера появятся отдельным блоком в вашей ленте.</p>
+        </div>
+
+        <div class="paid-checkout-plan">
+            <span>Стоимость</span>
+            <strong>{{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес</strong>
+        </div>
+
+        <form method="post" action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}" class="paid-checkout-actions">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <button type="submit">Оплатить подписку</button>
+            <a href="{{ next_url }}">Назад</a>
+        </form>
+    </article>
+</section>
+{% endblock %}

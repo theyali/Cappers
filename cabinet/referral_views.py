@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import AnalystFollow, AnalystProfile, CapperReferralVisit, User
+from .paid_predictions import profile_paid_predictions_enabled, user_can_view_paid_predictions
 from .referrals import mark_referral_subscription, record_referral_visit
 
 
@@ -68,7 +69,7 @@ def referral_redirect_code(request, username: str, code: str):
 @require_POST
 def toggle_follow(request, user_id: int):
     analyst = get_object_or_404(
-        User,
+        User.objects.select_related("analyst_profile"),
         pk=user_id,
         role=User.Role.ANALYST,
         analyst_profile__is_public=True,
@@ -79,6 +80,35 @@ def toggle_follow(request, user_id: int):
             status=400,
         )
 
+    existing_follow = AnalystFollow.objects.filter(
+        follower=request.user,
+        analyst=analyst,
+    ).first()
+    if existing_follow is not None:
+        existing_follow.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "active": False,
+                "followers_count": AnalystFollow.objects.filter(analyst=analyst).count(),
+                "message": "Подписка отменена.",
+            }
+        )
+
+    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
+        request.user,
+        analyst,
+    ):
+        return JsonResponse(
+            {
+                "ok": False,
+                "payment_required": True,
+                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
+                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
+            },
+            status=402,
+        )
+
     follow, created = AnalystFollow.objects.get_or_create(
         follower=request.user,
         analyst=analyst,
@@ -86,9 +116,6 @@ def toggle_follow(request, user_id: int):
     active = created
     if created:
         mark_referral_subscription(request, analyst)
-    else:
-        follow.delete()
-        active = False
 
     return JsonResponse(
         {
@@ -103,11 +130,28 @@ def toggle_follow(request, user_id: int):
 @login_required
 @require_POST
 def follow_analyst(request, user_id: int):
-    analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
+    analyst = get_object_or_404(
+        User.objects.select_related("analyst_profile"),
+        pk=user_id,
+        role=User.Role.ANALYST,
+    )
     if analyst.pk == request.user.pk:
         return JsonResponse(
             {"ok": False, "error": "Нельзя подписаться на самого себя."},
             status=400,
+        )
+    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
+        request.user,
+        analyst,
+    ):
+        return JsonResponse(
+            {
+                "ok": False,
+                "payment_required": True,
+                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
+                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
+            },
+            status=402,
         )
 
     _, created = AnalystFollow.objects.get_or_create(

@@ -23,7 +23,11 @@ from .forms import (
     UserProfileForm,
 )
 from .models import AnalystFollow, AnalystProfile, User
-from .paid_predictions import subscribe_to_paid_predictions
+from .paid_predictions import (
+    profile_paid_predictions_enabled,
+    subscribe_to_paid_predictions,
+    user_can_view_paid_predictions,
+)
 
 
 @require_http_methods(["GET", "POST"])
@@ -323,9 +327,26 @@ def upload_avatar(request):
 @login_required
 @require_POST
 def follow_analyst(request, user_id):
-    analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
+    analyst = get_object_or_404(
+        User.objects.select_related("analyst_profile"),
+        pk=user_id,
+        role=User.Role.ANALYST,
+    )
     if analyst.pk == request.user.pk:
         return JsonResponse({"ok": False, "error": "Нельзя подписаться на самого себя."}, status=400)
+    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
+        request.user,
+        analyst,
+    ):
+        return JsonResponse(
+            {
+                "ok": False,
+                "payment_required": True,
+                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
+                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
+            },
+            status=402,
+        )
 
     AnalystFollow.objects.get_or_create(follower=request.user, analyst=analyst)
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
@@ -333,8 +354,60 @@ def follow_analyst(request, user_id):
 
 @login_required
 @require_POST
-def subscribe_paid_predictions_view(request, user_id):
+def decline_paid_predictions_view(request, user_id):
     analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
+    if analyst.pk != request.user.pk:
+        AnalystFollow.objects.filter(follower=request.user, analyst=analyst).delete()
+        messages.success(request, "Вы отписались от каппера.")
+
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse("front:following_feed")
+    return redirect(next_url)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def subscribe_paid_predictions_view(request, user_id):
+    analyst = get_object_or_404(
+        User.objects.select_related("analyst_profile"),
+        pk=user_id,
+        role=User.Role.ANALYST,
+    )
+    profile = getattr(analyst, "analyst_profile", None)
+    expert_url = reverse("front:expert_profile", kwargs={"username": analyst.username})
+    raw_next_url = (
+        request.POST.get("next")
+        if request.method == "POST"
+        else request.GET.get("next")
+    ) or request.META.get("HTTP_REFERER") or expert_url
+    if not url_has_allowed_host_and_scheme(
+        raw_next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        raw_next_url = expert_url
+
+    if not profile or not profile_paid_predictions_enabled(analyst):
+        messages.error(request, "Этот эксперт не публикует платные прогнозы.")
+        return redirect(expert_url)
+
+    if request.method == "GET":
+        return render(
+            request,
+            "cabinet/paid_predictions_checkout.html",
+            {
+                "expert": analyst,
+                "analyst_profile": profile,
+                "expert_name": profile.display_name or analyst.get_full_name() or analyst.username,
+                "next_url": raw_next_url,
+            },
+        )
+
     try:
         subscription = subscribe_to_paid_predictions(request.user, analyst)
     except ValueError as exc:
@@ -344,12 +417,4 @@ def subscribe_paid_predictions_view(request, user_id):
             request,
             f"Платная подписка активна до {subscription.expires_at:%d.%m.%Y}.",
         )
-
-    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
-    if not url_has_allowed_host_and_scheme(
-        next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        next_url = reverse("front:expert_profile", kwargs={"username": analyst.username})
-    return redirect(next_url)
+    return redirect(raw_next_url)

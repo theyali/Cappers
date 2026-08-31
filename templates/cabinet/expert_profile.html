@@ -30,6 +30,14 @@
                     {% endif %}
                     {% if is_self %}
                         <a class="expert-public-edit expert-public-name-action" href="{% url 'cabinet:profile' %}">Редактировать</a>
+                    {% elif paid_predictions_enabled %}
+                        {% if paid_subscription %}
+                            <a class="expert-follow-button expert-public-name-action is-active" href="{% url 'front:following_feed' %}">Подписка активна</a>
+                        {% elif request.user.is_authenticated %}
+                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.get_full_path|urlencode }}">Оплатить {{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+                        {% else %}
+                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Оплатить {{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+                        {% endif %}
                     {% elif request.user.is_authenticated %}
                         <button
                             class="expert-follow-button expert-public-name-action{% if is_following %} is-active{% endif %}"
@@ -335,13 +343,9 @@
                 {% elif paid_subscription %}
                     <a class="expert-public-paid-action" href="{% url 'front:following_feed' %}">Открыть ленту</a>
                 {% elif request.user.is_authenticated %}
-                    <form method="post" action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        <button class="expert-public-paid-action" type="submit">Подписаться</button>
-                    </form>
+                    <a class="expert-public-paid-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.get_full_path|urlencode }}">Оплатить подписку</a>
                 {% else %}
-                    <a class="expert-public-paid-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Подписаться</a>
+                    <a class="expert-public-paid-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Оплатить подписку</a>
                 {% endif %}
             </article>
         </div>

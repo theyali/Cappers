@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -168,6 +169,26 @@ def following_feed(request):
         paid_queryset[:PAID_FEED_LIMIT],
         following_ids=following_ids,
     )
+    paid_upgrade_follows = [
+        follow
+        for follow in following
+        if follow.analyst_id not in paid_analyst_ids
+        and getattr(follow.analyst, "analyst_profile", None) is not None
+        and follow.analyst.analyst_profile.paid_predictions_enabled
+        and follow.analyst.analyst_profile.paid_predictions_price > 0
+        and (not selected_capper or follow.analyst.username == selected_capper)
+    ]
+    paid_upgrade_ids = [follow.analyst_id for follow in paid_upgrade_follows]
+    locked_paid_counts = {
+        row["author_id"]: row["total"]
+        for row in PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            is_paid=True,
+            author_id__in=paid_upgrade_ids,
+        )
+        .values("author_id")
+        .annotate(total=Count("id"))
+    }
 
     author_counts = {
         row["author_id"]: row["total"]
@@ -195,6 +216,11 @@ def following_feed(request):
         follow.feed_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         follow.feed_initial = (follow.feed_name or follow.analyst.username or "К")[0].upper()
         follow.feed_predictions_count = author_counts.get(follow.analyst_id, 0)
+        follow.feed_locked_paid_count = locked_paid_counts.get(follow.analyst_id, 0)
+        follow.feed_profile_url = reverse(
+            "front:expert_profile",
+            kwargs={"username": follow.analyst.username},
+        )
 
         follow_params = capper_params.copy()
         follow_params["capper"] = follow.analyst.username
@@ -226,6 +252,8 @@ def following_feed(request):
             "paid_subscriptions_count": len(paid_subscriptions),
             "paid_predictions": paid_predictions,
             "paid_predictions_count": paid_predictions_count,
+            "paid_upgrade_offers": paid_upgrade_follows,
+            "paid_upgrade_offers_count": len(paid_upgrade_follows),
             "feed_total_count": paginator.count + paid_predictions_count,
             "feed_predictions_count": paginator.count,
             "status_tabs": _status_tabs(request, counts, active_status),
