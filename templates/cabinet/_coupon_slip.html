@@ -1,6 +1,6 @@
 {% load static match_ui %}
-<section class="coupon-slip{% if compact %} is-compact{% endif %}" aria-label="{% if position_count > 1 %}Состав экспресса{% else %}Состав прогноза{% endif %} #{{ coupon.id }}">
-    <div class="coupon-slip-overview" aria-label="{% if position_count > 1 %}Параметры экспресса{% else %}Параметры прогноза{% endif %}">
+<section class="coupon-slip{% if compact %} is-compact{% endif %}" aria-label="{% if coupon.coupon_type == 'express' %}Состав экспресса{% else %}Состав прогноза{% endif %} #{{ coupon.id }}">
+    <div class="coupon-slip-overview" aria-label="{% if coupon.coupon_type == 'express' %}Параметры экспресса{% else %}Параметры прогноза{% endif %}">
         <div class="coupon-slip-overview-row">
             <span>Коэффициент:</span>
             <strong>{{ coupon_total_coefficient }}</strong>
@@ -14,7 +14,7 @@
             <strong>{{ coupon.confidence }}%</strong>
         </div>
         <div class="coupon-slip-overview-row is-payout">
-            <span>{% if position_count > 1 %}Стоимость экспресса{% else %}Стоимость купона{% endif %}:</span>
+            <span>{% if coupon.coupon_type == 'express' %}Стоимость экспресса{% else %}Стоимость купона{% endif %}:</span>
             <strong>{{ coupon.possible_payout }} ₽</strong>
         </div>
     </div>
