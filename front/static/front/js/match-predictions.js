@@ -10,6 +10,7 @@
     const totalNode = feed.querySelector("[data-match-predictions-total]");
     if (!list || !sentinel || !loader) return;
 
+    const skeletonBlock = feed.querySelector("[data-match-predictions-block]") || list;
     let nextPage = 1;
     let isLoading = false;
     let finished = false;
@@ -182,6 +183,7 @@
 
         nodes.forEach((node, index) => {
             list.appendChild(node);
+            window.CappersSkeleton?.watchImages(node);
             if (!reducedMotion) {
                 node.animate(
                     [
@@ -210,6 +212,7 @@
         if (isLoading || finished) return;
         isLoading = true;
         showLoader(true);
+        window.CappersSkeleton?.loading(skeletonBlock);
 
         try {
             const response = await fetch(`${endpoint}?page=${nextPage}`, {
@@ -240,6 +243,7 @@
         } finally {
             isLoading = false;
             showLoader(false);
+            window.CappersSkeleton?.ready(skeletonBlock);
         }
     };
 
