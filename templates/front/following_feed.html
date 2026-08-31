@@ -60,79 +60,23 @@
                             </div>
                         </div>
                     </div>
-                    {% if paid_predictions %}
-                    <section class="paid-feed-block" aria-labelledby="paid-feed-title">
-                        <div class="paid-feed-head">
-                            <div>
-                                <span>Платная подписка</span>
-                                <h2 id="paid-feed-title">Закрытые прогнозы</h2>
-                            </div>
-                            <strong>{{ paid_predictions_count }}</strong>
-                        </div>
-                        <div class="predictions-grid paid-feed-grid">
-                            {% for prediction in paid_predictions %}
-                                {% include "front/_prediction_card.html" %}
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% endif %}
-                    {% if paid_upgrade_offers %}
-                    <section class="paid-feed-block paid-upgrade-block" aria-labelledby="paid-upgrade-title">
-                        <div class="paid-feed-head">
-                            <div>
-                                <span>Нужна оплата</span>
-                                <h2 id="paid-upgrade-title">Капперы стали платными</h2>
-                            </div>
-                            <strong>{{ paid_upgrade_offers_count }}</strong>
-                        </div>
-                        <div class="predictions-grid paid-upgrade-grid">
-                            {% for follow in paid_upgrade_offers %}
-                            <article class="prediction-card prediction-card-rich is-followed-prediction paid-upgrade-card">
-                                <div class="paid-upgrade-card-top">
-                                    <a class="paid-upgrade-avatar" href="{{ follow.feed_profile_url }}"{% if follow.feed_avatar_url %} data-skeleton-image{% endif %}>
-                                        {% if follow.feed_avatar_url %}
-                                            <img src="{{ follow.feed_avatar_url }}" width="44" height="44" alt="">
-                                        {% else %}
-                                            {{ follow.feed_initial }}
-                                        {% endif %}
-                                    </a>
-                                    <div>
-                                        <span>Платный каппер</span>
-                                        <strong>{{ follow.feed_name }}</strong>
-                                    </div>
-                                </div>
-                                <div class="paid-upgrade-card-copy">
-                                    <span class="prediction-status-paid">Платные прогнозы</span>
-                                    <h3>Каппер стал платным</h3>
-                                    <p>Новые закрытые прогнозы появятся в вашей ленте после оплаты подписки.</p>
-                                    <small>
-                                        {{ follow.analyst.analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес
-                                        {% if follow.feed_locked_paid_count %} · закрытых прогнозов: {{ follow.feed_locked_paid_count }}{% endif %}
-                                    </small>
-                                </div>
-                                <div class="paid-upgrade-actions">
-                                    <a href="{% url 'cabinet:paid_predictions_subscribe' user_id=follow.analyst_id %}?next={{ request.get_full_path|urlencode }}">Оплатить подписку</a>
-                                    <form method="post" action="{% url 'cabinet:paid_predictions_decline' user_id=follow.analyst_id %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                        <button class="is-secondary" type="submit">Отписаться</button>
-                                    </form>
-                                </div>
-                            </article>
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% endif %}
-                    {% if page_obj.object_list %}
+
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
-                            {% include "front/includes/_prediction_grid_view.html" %}
+                            {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
+                            {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
+                            {% if page_obj.object_list %}
+                                {% include "front/includes/_prediction_grid_view.html" %}
+                            {% endif %}
                         </div>
                         <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
-                            {% include "front/includes/_prediction_table_flat_view.html" %}
+                            {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="table" %}
+                            {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="table" %}
+                            {% if page_obj.object_list %}
+                                {% include "front/includes/_prediction_table_flat_view.html" %}
+                            {% endif %}
                         </div>
                     </div>
-                    {% endif %}
                 </div>
 
                 {% if page_obj.object_list %}
