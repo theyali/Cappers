@@ -17,13 +17,6 @@ class CountryAdmin(admin.ModelAdmin):
     list_filter = ("provider",)
 
 
-@admin.register(Venue)
-class VenueAdmin(admin.ModelAdmin):
-    list_display = ("name_ru", "name", "city_ru", "city", "external_id", "provider")
-    search_fields = ("name", "name_ru", "city", "city_ru", "=external_id")
-    list_filter = ("provider",)
-
-
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
     list_display = ("name_ru", "name", "sport", "country", "external_id", "provider")
@@ -105,6 +98,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "author",
+        "coupon_type",
         "confidence",
         "published_status",
         "state_status",
@@ -113,10 +107,12 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "published_at",
         "settled_at",
     )
-    list_filter = ("published_status", "state_status", "created_at", "settled_at")
+    list_filter = ("coupon_type", "published_status", "state_status", "created_at", "settled_at")
     search_fields = ("author__username",)
+    readonly_fields = ("coupon_type",)
     fields = (
         "author",
+        "coupon_type",
         "confidence",
         "published_status",
         "state_status",
