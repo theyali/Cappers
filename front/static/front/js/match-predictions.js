@@ -226,7 +226,10 @@
             }
 
             const total = Number(result.total || 0);
-            if (totalNode) totalNode.textContent = `(${total})`;
+            if (totalNode) {
+                totalNode.textContent = String(total);
+                totalNode.setAttribute("aria-label", `Всего прогнозов: ${total}`);
+            }
             renderPredictionShares(result.distribution, total);
             appendPredictionHtml(result.html || "");
 
