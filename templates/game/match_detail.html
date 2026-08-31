@@ -1,178 +1,242 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static match_ui site_extras %}
 
-{% block title %}{{ match.home_team_name|default:"Матч" }} — {{ match.away_team_name|default:"Матч" }} | КапперХаб{% endblock %}
+{% block title %}{{ match.home_team_name }} — {{ match.away_team_name }} · {{ match.league_name }}{% endblock %}
+
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 <section
-    class="matches-page match-detail-page"
+    class="match-detail-page"
     data-coupon-page
+    data-create-url="{% url 'game:create_coupon' %}"
     data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
-    data-create-url="{% url 'game:coupon_create' %}"
-    data-stale-seconds="{{ coupon_match_stale_seconds }}"
-    data-user-id="{% if request.user.is_authenticated %}{{ request.user.id }}{% endif %}"
+    data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
+    aria-label="Страница матча"
 >
-    <div class="matches-layout">
-        <main class="matches-main">
-            <article class="match-detail-card">
+    <div class="match-detail-shell">
+        <aside class="match-detail-sidebar" aria-label="Матчи с прогнозами">
+            {% latest_match_predictions 5 %}
+        </aside>
+
+        <main class="match-detail-main">
+            <a class="match-back-link" href="{% url 'game:match_list' %}">← Все матчи</a>
+
+            <article class="match-detail-card{% if match.sync_scope == 'live' %} is-live{% endif %}">
                 <div class="match-detail-head">
-                    <a href="{% url 'game:match_list' %}" class="match-detail-back" aria-label="Вернуться к матчам">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
-                    </a>
-                    <div class="match-detail-league">
-                        {% if match.sport_icon %}
-                        <span class="match-detail-sport-icon" aria-hidden="true">
-                            <img src="{{ match.sport_icon }}" width="24" height="24" alt="">
+                    <div class="match-league">
+                        <span class="league-mark">
+                            {% if match.league and match.league.logo %}
+                                <img src="{{ match.league.logo }}" alt="" loading="lazy">
+                            {% else %}
+                                {{ match.league_name|default:"Лига"|slice:":1" }}
+                            {% endif %}
                         </span>
-                        {% endif %}
                         <div>
-                            <strong>{{ match.sport_name|default:"Спорт" }}</strong>
-                            <span>{{ match.league_name|default:"Лига" }}</span>
+                            <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
+                            <small class="match-detail-league-meta">
+                                <span class="match-detail-sport">
+                                    <span class="match-detail-sport-icon" aria-hidden="true">
+                                        {% if match.sport_code == 'football' %}
+                                            {% include "front/svgs/soccer.svg" %}
+                                        {% elif match.sport_code == 'hockey' %}
+                                            {% include "front/svgs/hockey.svg" %}
+                                        {% elif match.sport_code == 'basketball' %}
+                                            {% include "front/svgs/basketball.svg" %}
+                                        {% elif match.sport_code == 'tennis' %}
+                                            {% include "front/svgs/tennis.svg" %}
+                                        {% else %}
+                                            {% include "front/svgs/nav-matches.svg" %}
+                                        {% endif %}
+                                    </span>
+                                    <span>
+                                        {% if match.sport %}
+                                            {{ match.sport.name_ru|default:match.sport.name }}
+                                        {% else %}
+                                            Футбол
+                                        {% endif %}
+                                    </span>
+                                </span>
+                                {% if match.league_country %}<span class="match-detail-country">{{ match.league_country }}</span>{% endif %}
+                            </small>
                         </div>
                     </div>
-                    {% if request.user.is_authenticated %}
-                    <button
-                        class="match-watch-button match-card-watch-button match-detail-watch-button{% if match.is_watched %} is-watching{% endif %}"
-                        type="button"
-                        data-match-watch-toggle
-                        data-watch-url="{% url 'notifications:match_watch' match_id=match.id %}"
-                        data-authenticated="true"
-                        aria-pressed="{% if match.is_watched %}true{% else %}false{% endif %}"
-                        aria-label="{% if match.is_watched %}Убрать матч из отслеживания{% else %}Отслеживать матч{% endif %}"
-                        title="{% if match.is_watched %}Убрать из отслеживания{% else %}Отслеживать матч{% endif %}"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"></path></svg>
-                    </button>
-                    {% else %}
-                    <a
-                        class="match-watch-button match-card-watch-button match-detail-watch-button"
-                        href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}"
-                        aria-label="Войти, чтобы отслеживать матч"
-                        title="Войти, чтобы отслеживать матч"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z"></path></svg>
-                    </a>
-                    {% endif %}
+                    <div class="match-detail-head-actions">
+                        <span class="match-status match-status-{{ match.sync_scope }}" data-sport-code="{{ match.sport_code }}">
+                            {% if match.sync_scope == 'live' %}
+                                <i class="match-live-dot" aria-hidden="true"></i>
+                                <span>{{ match|live_status_label }}</span>
+                            {% else %}
+                                {{ match.get_sync_scope_display }}
+                            {% endif %}
+                        </span>
+                        {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
+                        <button
+                            class="match-watch-button match-card-watch-button match-detail-watch-button{% if match.is_watched %} is-watching{% endif %}"
+                            type="button"
+                            data-match-watch-toggle
+                            data-watch-url="{% url 'notifications:match_watch' match.id %}"
+                            aria-pressed="{% if match.is_watched %}true{% else %}false{% endif %}"
+                            aria-label="{% if match.is_watched %}Не отслеживать матч{% else %}Отслеживать матч{% endif %}"
+                            title="{% if match.is_watched %}Матч отслеживается{% else %}Следить за матчем{% endif %}"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75V21L12 17.35 6.5 21V4.75Z"></path>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="match-detail-scoreboard">
                     <div class="match-detail-team">
-                        <span class="match-detail-team-logo"{% if match.home_team_logo %} data-skeleton-image{% endif %}>
-                            {% if match.home_team_logo %}<img src="{{ match.home_team_logo }}" width="72" height="72" alt="">{% else %}<span>{{ match.home_team_name|slice:":1" }}</span>{% endif %}
+                        <span class="match-detail-logo">
+                            {% if match.home_team_logo %}
+                                <img src="{{ match.home_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                <span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>
+                            {% endif %}
                         </span>
                         <strong>{{ match.home_team_name|default:"Хозяева" }}</strong>
+                        {% if match.home_team_name_en %}<small>{{ match.home_team_name_en }}</small>{% endif %}
                     </div>
 
                     <div class="match-detail-score">
-                        {% if match.status == "live" %}
-                            <span class="match-detail-status is-live">LIVE</span>
-                            <strong>{{ match.score|default:"0 : 0" }}</strong>
-                            {% if match.live_clock %}<small>{{ match.live_clock }}</small>{% endif %}
-                        {% elif match.status == "finished" %}
-                            <span class="match-detail-status">Завершён</span>
-                            <strong>{{ match.score|default:"— : —" }}</strong>
+                        {% if match.score %}
+                            <strong>{{ match.score }}</strong>
                         {% else %}
-                            <span class="match-detail-status">{{ match.starts_at|date:"d.m.Y" }}</span>
-                            <strong>{{ match.starts_at|date:"H:i" }}</strong>
+                            <strong>VS</strong>
+                        {% endif %}
+                        {% if match.sync_scope == 'live' %}
+                            <span>{{ match|live_status_label }}</span>
+                        {% elif match.starts_at %}
+                            <span>{{ match.starts_at|date:"d.m.Y H:i" }}</span>
+                        {% else %}
+                            <span>Время не указано</span>
                         {% endif %}
                     </div>
 
                     <div class="match-detail-team">
-                        <span class="match-detail-team-logo"{% if match.away_team_logo %} data-skeleton-image{% endif %}>
-                            {% if match.away_team_logo %}<img src="{{ match.away_team_logo }}" width="72" height="72" alt="">{% else %}<span>{{ match.away_team_name|slice:":1" }}</span>{% endif %}
+                        <span class="match-detail-logo">
+                            {% if match.away_team_logo %}
+                                <img src="{{ match.away_team_logo }}" alt="" loading="lazy">
+                            {% else %}
+                                <span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>
+                            {% endif %}
                         </span>
                         <strong>{{ match.away_team_name|default:"Гости" }}</strong>
+                        {% if match.away_team_name_en %}<small>{{ match.away_team_name_en }}</small>{% endif %}
                     </div>
-                </div>
 
-                {% if match.venue or match.city or match.referee %}
-                <div class="match-detail-meta">
-                    {% if match.venue %}<span>{{ match.venue }}</span>{% endif %}
-                    {% if match.city %}<span>{{ match.city }}</span>{% endif %}
-                    {% if match.referee %}<span>Судья: {{ match.referee }}</span>{% endif %}
+                    {% if website_settings and match.coupon_odds.has_any %}
+                    <div class="match-detail-bookmaker-strip{% if not website_settings.match_bookmaker %} without-bookmaker{% endif %}" aria-label="Коэффициенты и букмекер">
+                        {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="scoreboard" only %}
+                        <div class="match-detail-featured-odds" aria-label="Основные коэффициенты 1 X 2">
+                            <span class="match-detail-featured-odd"><small>1</small><strong>{% if match.coupon_odds.home %}{{ match.coupon_odds.home|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                            <span class="match-detail-featured-odd"><small>X</small><strong>{% if match.coupon_odds.draw %}{{ match.coupon_odds.draw|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                            <span class="match-detail-featured-odd"><small>2</small><strong>{% if match.coupon_odds.away %}{{ match.coupon_odds.away|floatformat:2 }}{% else %}—{% endif %}</strong></span>
+                        </div>
+                        {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="scoreboard" only %}
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </article>
 
-            {% if odds_tabs %}
-            <section class="match-detail-odds" aria-label="Коэффициенты">
-                <div class="match-detail-section-head">
-                    <div>
-                        <p>Коэффициенты</p>
-                        <h2>Линия на матч</h2>
-                    </div>
-                </div>
+            <section
+                class="match-odds-panel{% if odds_tabs %} has-odds-topbar{% endif %}{% if match.sync_scope != 'prematch' or not odds_tabs %} is-odds-collapsed{% endif %}"
+                {% if match.sync_scope != 'prematch' or not odds_tabs %}data-odds-collapsed="true"{% endif %}
+                data-match-bets
+                data-match-id="{{ match.id }}"
+                data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
+                data-league="{{ match.league_name|default:'Лига не указана' }}"
+                data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+                data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
+                aria-label="Коэффициенты матча"
+            >
+                <button
+                    type="button"
+                    class="match-odds-accordion-toggle"
+                    aria-expanded="{% if match.sync_scope != 'prematch' or not odds_tabs %}false{% else %}true{% endif %}"
+                    aria-label="{% if match.sync_scope != 'prematch' or not odds_tabs %}Раскрыть коэффициенты{% else %}Свернуть коэффициенты{% endif %}"
+                    title="{% if match.sync_scope != 'prematch' or not odds_tabs %}Раскрыть коэффициенты{% else %}Свернуть коэффициенты{% endif %}"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"></path></svg>
+                </button>
+                <div class="match-odds-accordion-body">
+                    <div class="match-odds-accordion-inner">
+                {% if odds_tabs %}
                 <div class="odds-topbar">
-                    <div class="odds-tabs" role="tablist">
+                    <div class="odds-main-tabs" role="tablist" aria-label="Разделы коэффициентов">
                         {% for tab in odds_tabs %}
                         <button
+                            class="odds-main-tab{% if forloop.first %} is-active{% endif %}"
                             type="button"
-                            class="odds-tab-button{% if forloop.first %} is-active{% endif %}"
                             data-odds-tab-target="{{ tab.key }}"
-                            role="tab"
                             aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-                        >{{ tab.label }}</button>
+                        >
+                            {{ tab.label }}
+                        </button>
                         {% endfor %}
                     </div>
                 </div>
 
                 {% for tab in odds_tabs %}
                 <div class="odds-tab-panel{% if forloop.first %} is-active{% endif %}" data-odds-tab-panel="{{ tab.key }}">
-                    {% for group in tab.groups %}
-                    <div class="match-odds-group">
-                        <div class="match-odds-group-head">
-                            <strong>{{ group.label }}</strong>
-                        </div>
-                        <div class="match-odds-options">
-                            {% for option in group.options %}
-                            {% if can_write_coupon and match.sync_scope == "prematch" %}
-                            <button
-                                class="odds-button"
-                                type="button"
-                                data-match-id="{{ match.id }}"
-                                data-match-title="{{ match.home_team_name }} — {{ match.away_team_name }}"
-                                data-market="{{ option.market }}"
-                                data-selection="{{ option.selection }}"
-                                data-coefficient="{{ option.coefficient }}"
-                                data-starts-at="{{ match.starts_at|date:'c' }}"
-                            >
-                                <span>{{ option.label }}</span>
-                                <strong>{{ option.coefficient|floatformat:2 }}</strong>
-                            </button>
-                            {% else %}
-                            <span class="odds-button is-locked" data-market="{{ option.market }}" data-selection="{{ option.selection }}">
-                                <span>{{ option.label }}</span>
-                                <strong>{{ option.coefficient|floatformat:2 }}</strong>
-                            </span>
-                            {% endif %}
+                    {% if tab.sections %}
+                        {% for section in tab.sections %}
+                        <section class="odds-section">
+                            <div class="odds-section-head">
+                                <h2>{{ section.title }}</h2>
+                                <span>{{ section.rows|length }}</span>
+                            </div>
+                            {% for row in section.rows %}
+                            <div class="odds-row">
+                                <div class="odds-row-title heading-style-h3" style="color: rgba(255, 255, 255, .74);">{{ row.title }}</div>
+                                <div class="odds-grid">
+                                    {% for odd in row.odds %}
+                                    <button
+                                        class="odds-button"
+                                        type="button"
+                                        data-market="{{ odd.market }}"
+                                        data-selection="{{ odd.selection }}"
+                                        data-coefficient="{{ odd.coefficient }}"
+                                        {% if can_write_coupon and match.sync_scope == "prematch" %}
+                                            data-bet-option
+                                            data-bet-key="{{ odd.key }}"
+                                        {% else %}
+                                            disabled
+                                            aria-disabled="true"
+                                        {% endif %}
+                                    >
+                                        <span>{{ odd.label }}</span>
+                                        <small>{{ odd.description }}</small>
+                                        <b>{{ odd.coefficient }}</b>
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
                             {% endfor %}
-                        </div>
+                        </section>
+                        {% endfor %}
+                    {% else %}
+                    <div class="odds-empty">
+                        <strong>Коэффициенты пока не пришли</strong>
+                        <p>Когда провайдер отдаст линию по этому разделу, она появится здесь.</p>
                     </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
                 {% endfor %}
-            </section>
-            {% elif match.sync_scope != "prematch" %}
-            <section class="match-detail-odds match-detail-locked-options" aria-label="Коэффициенты">
-                <div class="match-detail-section-head">
-                    <div>
-                        <p>Коэффициенты</p>
-                        <h2>Линия на матч</h2>
+                {% else %}
+                <div class="odds-empty">
+                    <strong>Коэффициенты пока не пришли</strong>
+                    <p>Когда провайдер отдаст линию по этому матчу, она появится здесь.</p>
+                </div>
+                {% endif %}
                     </div>
                 </div>
-                <div class="match-bet-options is-locked">
-                    <span class="match-bet-option"><span>1</span><strong>—</strong></span>
-                    <span class="match-bet-option"><span>X</span><strong>—</strong></span>
-                    <span class="match-bet-option"><span>2</span><strong>—</strong></span>
-                    <span class="match-bet-option"><span>ТБ 2.5</span><strong>—</strong></span>
-                    <span class="match-bet-option"><span>ТМ 2.5</span><strong>—</strong></span>
-                    <span class="match-bet-option"><span>ОЗ Да</span><strong>—</strong></span>
-                </div>
             </section>
-            {% endif %}
-
             {% if provider_prediction_panel %}
-            <section class="match-provider-predictions" aria-label="Прогноз провайдера">
+            <section class="match-provider-predictions" aria-label="Прогноз вероятностей">
                 <div class="match-provider-predictions-head">
                     <div>
                         <h2>Прогноз вероятностей</h2>
