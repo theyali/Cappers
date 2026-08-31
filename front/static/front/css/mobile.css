@@ -1465,9 +1465,10 @@ summary:focus-visible,
         gap: 5px;
     }
 
-    .coupon-sidebar-editor .coupon-odd strong {
+    .coupon-sidebar-editor .coupon-pick b {
+        margin-left: 4px;
         color: var(--yellow);
-        font-size: 16px;
+        font-size: 12px;
         font-weight: 800;
     }
 
@@ -2594,4 +2595,33 @@ summary:focus-visible,
 
 .vip-expert-roi.is-negative {
     color: #fd1a01;
+}
+
+/* Match prediction feed heading/count */
+.match-predictions-feed-head > div {
+    width: 100%;
+}
+
+.match-predictions-feed-head h2 {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.match-predictions-total-badge {
+    min-width: 30px;
+    min-height: 26px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 8px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
 }
