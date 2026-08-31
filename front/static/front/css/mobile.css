@@ -2222,3 +2222,19 @@ summary:focus-visible,
         height: 27px;
     }
 }
+
+@media (max-width: 1024px) {
+    .site-main:has(> .matches-page) {
+        padding: 0;
+    }
+
+    .matches-page .matches-list-panel {
+        padding: 0 10px;
+    }
+
+    .matches-mobile-scope-panel,
+    .matches-mobile-sports-panel {
+        margin-right: 0;
+        margin-left: 0;
+    }
+}
