@@ -2430,3 +2430,54 @@ summary:focus-visible,
         font-size: 14px;
     }
 }
+
+@media (max-width: 1024px) {
+    .matches-table-view .match-table-row {
+        grid-template-rows: minmax(82px, auto) !important;
+        grid-auto-rows: 0 !important;
+    }
+
+    .matches-table-view .match-table-event {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        height: 100%;
+        align-self: stretch;
+    }
+
+    .matches-table-view .match-table-odds {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        height: 100%;
+        align-self: stretch;
+    }
+
+    .matches-table-view .match-table-teams {
+        min-width: 0;
+        display: grid !important;
+        gap: 2px;
+    }
+
+    .matches-table-view .match-table-team-home,
+    .matches-table-view .match-table-team-away {
+        min-width: 0;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .matches-table-view .match-table-team-separator {
+        display: none;
+    }
+
+    .matches-table-view .match-table-odd {
+        height: 100%;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .matches-table-view .match-table-row {
+        grid-template-rows: minmax(76px, auto) !important;
+    }
+}
