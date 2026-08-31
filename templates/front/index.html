@@ -187,6 +187,42 @@
 
 {% include "cabinet/_expert_recommendations.html" %}
 
+<section class="home-articles home-best-predictions" aria-labelledby="home-best-predictions-title">
+    <header class="home-articles-head">
+        <div>
+            <h2 id="home-best-predictions-title">Лучшие прогнозы</h2>
+        </div>
+        <div class="home-articles-actions">
+            <a href="{% url 'front:predictions' %}">Все прогнозы</a>
+        </div>
+    </header>
+
+    {% if best_predictions %}
+    <div class="content-table-view predictions-table-view predictions-table-view-flat">
+        <div class="content-table-scroll">
+            <div class="content-table-head prediction-table-head" aria-hidden="true">
+                <span>Матч</span>
+                <span>Каппер</span>
+                <span>Прогноз</span>
+                <span>КФ</span>
+                <span>Статус</span>
+                <span></span>
+            </div>
+            <div class="prediction-table-body">
+                {% for prediction in best_predictions %}
+                    {% include "front/includes/_prediction_table_row.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="predictions-empty">
+        <h2>Прогнозов пока нет</h2>
+        <p>Лучшие прогнозы появятся здесь после первых публикаций.</p>
+    </div>
+    {% endif %}
+</section>
+
 <section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">
     <header class="home-articles-head">
         <div>
@@ -302,4 +338,5 @@
 <script src="{% static 'front/js/article-slider.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}
