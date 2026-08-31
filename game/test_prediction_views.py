@@ -57,9 +57,10 @@ class MatchPredictionDistributionTests(TestCase):
         self.assertEqual(distribution[("total", "ТМ 2.5")]["percent"], 50.0)
         self.assertEqual(distribution[("winner", "Хозяева")]["count"], 2)
         self.assertEqual(distribution[("winner", "Хозяева")]["percent"], 50.0)
-        self.assertIn('class="prediction-card prediction-card-rich match-prediction-card', payload["html"])
-        self.assertIn("ROI 0.0%", payload["html"])
-        self.assertIn("72%", payload["html"])
+        self.assertIn('class="content-table-row prediction-table-row"', payload["html"])
+        self.assertIn("data-prediction-reaction", payload["html"])
+        self.assertIn("prediction-like", payload["html"])
+        self.assertIn("prediction-favorite", payload["html"])
 
     def test_endpoint_lazy_pages_cover_every_published_coupon_for_match(self):
         predictions = [
