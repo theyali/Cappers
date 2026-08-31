@@ -9227,7 +9227,7 @@ h2 {
 
 .match-detail-shell {
     display: grid;
-    grid-template-columns: minmax(220px, 352px) minmax(0, 1fr) minmax(320px, 350px);
+    grid-template-columns: minmax(220px, 330px) minmax(0, 1fr) minmax(300px, 300px);
     gap: 5px;
     align-items: start;
 }
@@ -11752,7 +11752,7 @@ h2 {
     .match-detail-shell {
         height: 100%;
         min-height: 0;
-        grid-template-columns: minmax(220px, 352px) minmax(0, 1fr) minmax(320px, 350px);
+        grid-template-columns: minmax(220px, 330px) minmax(0, 1fr) minmax(300px, 300px);
         gap: 5px;
         align-items: stretch;
     }
