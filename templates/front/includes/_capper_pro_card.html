@@ -24,6 +24,9 @@
                         <span class="capper-pro-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% else %} is-neutral{% endif %}" title="{{ expert.roi_period_label|default:'ROI за 30 дней' }}">
                             ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · {% if expert.roi_period_days %}{{ expert.roi_period_days }}д{% else %}всё время{% endif %}
                         </span>
+                        {% if expert.paid_predictions_enabled %}
+                        <span class="capper-pro-paid">Платные {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</span>
+                        {% endif %}
                     </div>
                     <span>@{{ expert.username }}</span>
                 </div>

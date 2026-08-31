@@ -109,12 +109,13 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "confidence",
         "published_status",
         "state_status",
+        "is_paid",
         "total_stake",
         "possible_payout",
         "published_at",
         "settled_at",
     )
-    list_filter = ("coupon_type", "published_status", "state_status", "created_at", "settled_at")
+    list_filter = ("coupon_type", "published_status", "state_status", "is_paid", "created_at", "settled_at")
     search_fields = ("author__username",)
     readonly_fields = ("coupon_type",)
     fields = (
@@ -123,6 +124,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "confidence",
         "published_status",
         "state_status",
+        "is_paid",
         "total_stake",
         "possible_payout",
         "published_at",

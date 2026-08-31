@@ -8,13 +8,13 @@
 {% block content %}
 {% content_view_mode as content_view_mode %}
 <section class="predictions-page following-feed-page predictions-scroll-page" aria-label="Моя лента">
-    {% if following %}
+    {% if has_feed_sources %}
     <div
         class="predictions-layout following-feed-layout"
         data-predictions-layout
         data-filter-state-url="{% url 'front:prediction_filter_state' %}"
     >
-        {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_predictions_count reset_url=filter_action_url %}
+        {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
 
         <div class="predictions-content following-feed-content" data-predictions-content>
             <div class="predictions-hero following-feed-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_2.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
@@ -30,16 +30,20 @@
                     </div>
                     <div>
                         <strong data-predictions-total-value>{{ feed_predictions_count }}</strong>
-                        <span>прогнозов</span>
+                        <span>обычных прогнозов</span>
+                    </div>
+                    <div>
+                        <strong>{{ paid_predictions_count }}</strong>
+                        <span>платных прогнозов</span>
                     </div>
                 </div>
             </div>
 
-            {% if page_obj.object_list %}
+            {% if page_obj.object_list or paid_predictions %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
                     <div class="prediction-results-head">
                         <div class="prediction-results-summary">
-                            <strong>{{ feed_predictions_count }}</strong>
+                            <strong>{{ feed_total_count }}</strong>
                             <span>прогнозов по выбранным условиям</span>
                         </div>
                         <div class="prediction-results-actions">
@@ -56,6 +60,23 @@
                             </div>
                         </div>
                     </div>
+                    {% if paid_predictions %}
+                    <section class="paid-feed-block" aria-labelledby="paid-feed-title">
+                        <div class="paid-feed-head">
+                            <div>
+                                <span>Платная подписка</span>
+                                <h2 id="paid-feed-title">Закрытые прогнозы</h2>
+                            </div>
+                            <strong>{{ paid_predictions_count }}</strong>
+                        </div>
+                        <div class="predictions-grid paid-feed-grid">
+                            {% for prediction in paid_predictions %}
+                                {% include "front/_prediction_card.html" %}
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+                    {% if page_obj.object_list %}
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                             {% include "front/includes/_prediction_grid_view.html" %}
@@ -64,8 +85,10 @@
                             {% include "front/includes/_prediction_table_flat_view.html" %}
                         </div>
                     </div>
+                    {% endif %}
                 </div>
 
+                {% if page_obj.object_list %}
                 <div
                     class="predictions-lazy"
                     data-predictions-lazy
@@ -77,6 +100,7 @@
                     </button>
                     <span data-predictions-lazy-status></span>
                 </div>
+                {% endif %}
             {% else %}
             <div class="prediction-results-head">
                 <div class="prediction-results-summary">
@@ -122,7 +146,7 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if following %}
+{% if has_feed_sources %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
 <script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
 <script src="{% static 'front/js/content-view-mode.js' %}" defer></script>

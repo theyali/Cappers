@@ -132,6 +132,7 @@ def favorites(request):
 
     favorite_positions = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        coupon__is_paid=False,
         coupon__favorites__user=request.user,
     ).distinct()
 

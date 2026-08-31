@@ -39,6 +39,7 @@
         <a class="cappers-ranking-group{% if selected_group == tab.key %} is-active{% endif %}" href="{{ tab.url }}">
             <span>{{ tab.label }}</span>
             {% if tab.key == 'vip' %}<small>VIP</small>{% endif %}
+            {% if tab.key == 'paid' %}<small>₽</small>{% endif %}
         </a>
         {% endfor %}
     </nav>
@@ -109,6 +110,9 @@
                             </span>
                             <span class="cappers-ranking-name">
                                 <strong>{{ expert.name }}</strong>
+                                {% if expert.paid_predictions_enabled %}
+                                <small>Платные {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</small>
+                                {% endif %}
                             </span>
                         </a>
                     </td>

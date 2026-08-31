@@ -1,9 +1,11 @@
 import re
 import secrets
+from datetime import timedelta
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -101,6 +103,17 @@ class AnalystProfile(models.Model):
         default=False,
         db_index=True,
     )
+    paid_predictions_enabled = models.BooleanField(
+        "Платные прогнозы",
+        default=False,
+        db_index=True,
+    )
+    paid_predictions_price = models.DecimalField(
+        "Стоимость подписки в месяц",
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+    )
     is_public = models.BooleanField("Публичный профиль", default=True, db_index=True)
     onboarding_completed_at = models.DateTimeField("Onboarding завершён", null=True, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -116,6 +129,12 @@ class AnalystProfile(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if self.paid_predictions_price is None:
+            self.paid_predictions_price = 0
+        if self.paid_predictions_enabled and self.paid_predictions_price <= 0:
+            raise ValidationError(
+                {"paid_predictions_price": "Укажите стоимость платной подписки."}
+            )
 
     @property
     def social_links(self) -> list[dict]:
@@ -198,6 +217,58 @@ class AnalystFollow(models.Model):
 
     def __str__(self) -> str:
         return f"{self.follower} → {self.analyst}"
+
+
+class AnalystPaidSubscription(models.Model):
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="paid_prediction_subscriptions",
+        verbose_name="Подписчик",
+    )
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="paid_prediction_subscribers",
+        verbose_name="Аналитик",
+    )
+    price = models.DecimalField("Стоимость на момент подписки", max_digits=10, decimal_places=2)
+    starts_at = models.DateTimeField("Начало подписки", default=timezone.now)
+    expires_at = models.DateTimeField("Действует до")
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Платная подписка на прогнозы"
+        verbose_name_plural = "Платные подписки на прогнозы"
+        ordering = ("-expires_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("subscriber", "analyst"),
+                name="unique_paid_prediction_subscription",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("subscriber", "expires_at"), name="paid_sub_subscriber_idx"),
+            models.Index(fields=("analyst", "expires_at"), name="paid_sub_analyst_idx"),
+        ]
+
+    def clean(self) -> None:
+        if self.subscriber_id and self.analyst_id and self.subscriber_id == self.analyst_id:
+            raise ValidationError("Нельзя оформить платную подписку на самого себя.")
+        if self.analyst_id and self.analyst.role != User.Role.ANALYST:
+            raise ValidationError("Платная подписка доступна только на аналитиков.")
+
+    @property
+    def is_active(self) -> bool:
+        return self.expires_at > timezone.now()
+
+    def __str__(self) -> str:
+        return f"{self.subscriber} → {self.analyst} до {self.expires_at:%Y-%m-%d}"
+
+
+def paid_subscription_expires_at(from_time=None):
+    return (from_time or timezone.now()) + timedelta(days=30)
 
 
 class CapperReferralVisit(models.Model):

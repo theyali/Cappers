@@ -313,10 +313,39 @@
                 <p class="expert-public-kicker">Последние публикации</p>
                 <h2>Прогнозы эксперта</h2>
             </div>
+            {% if paid_predictions_locked %}
+            <span>{{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽ / месяц</span>
+            {% else %}
             <a href="{% url 'front:predictions' %}?capper={{ expert.username|urlencode }}">Все прогнозы →</a>
+            {% endif %}
         </div>
 
-        {% if latest_predictions %}
+        {% if paid_predictions_locked %}
+        <div class="predictions-grid expert-public-grid">
+            <article class="expert-public-paid-lock">
+                <span class="expert-public-paid-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v2"></path></svg>
+                </span>
+                <div>
+                    <strong>Прогнозы платные</strong>
+                    <span>Эксперт публикует закрытые прогнозы по подписке. После подписки они появятся отдельным блоком в вашей ленте.</span>
+                </div>
+                {% if is_self %}
+                    <a class="expert-public-paid-action" href="{% url 'cabinet:profile' %}?tab=settings">Настроить цену</a>
+                {% elif paid_subscription %}
+                    <a class="expert-public-paid-action" href="{% url 'front:following_feed' %}">Открыть ленту</a>
+                {% elif request.user.is_authenticated %}
+                    <form method="post" action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button class="expert-public-paid-action" type="submit">Подписаться</button>
+                    </form>
+                {% else %}
+                    <a class="expert-public-paid-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Подписаться</a>
+                {% endif %}
+            </article>
+        </div>
+        {% elif latest_predictions %}
         <div class="predictions-grid expert-public-grid">
             {% for prediction in latest_predictions %}
                 {% include "front/_prediction_card.html" %}

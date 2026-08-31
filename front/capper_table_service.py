@@ -16,7 +16,8 @@ from game.models import Sport
 GROUP_ALL = "all"
 GROUP_VIP = "vip"
 GROUP_POPULAR = "popular"
-VALID_GROUPS = {GROUP_ALL, GROUP_VIP, GROUP_POPULAR}
+GROUP_PAID = "paid"
+VALID_GROUPS = {GROUP_ALL, GROUP_VIP, GROUP_POPULAR, GROUP_PAID}
 ALL_SPORTS = "all"
 ALL_TIME = "all-time"
 PERCENT_STEP = Decimal("0.1")
@@ -137,6 +138,10 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "avatar_url": avatar_url,
         "is_verified": profile.is_verified,
         "is_vip": profile.is_vip,
+        "paid_predictions_enabled": bool(
+            profile.paid_predictions_enabled and profile.paid_predictions_price > 0
+        ),
+        "paid_predictions_price": profile.paid_predictions_price,
         "followers": int(getattr(profile, "followers_count", 0) or 0),
     }
 
@@ -401,6 +406,11 @@ def build_capper_table_context(
         )
     if selected_group == GROUP_VIP:
         profiles = profiles.filter(is_vip=True)
+    elif selected_group == GROUP_PAID:
+        profiles = profiles.filter(
+            paid_predictions_enabled=True,
+            paid_predictions_price__gt=0,
+        )
 
     profiles_by_user = {profile.user_id: profile for profile in profiles}
     rows = (
@@ -454,6 +464,15 @@ def build_capper_table_context(
             "label": "Популярные",
             "url": _table_url(
                 group=GROUP_POPULAR,
+                period=selected_period,
+                sport_code=selected_sport_code,
+            ),
+        },
+        {
+            "key": GROUP_PAID,
+            "label": "Платные прогнозисты",
+            "url": _table_url(
+                group=GROUP_PAID,
                 period=selected_period,
                 sport_code=selected_sport_code,
             ),

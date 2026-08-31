@@ -76,7 +76,8 @@ def predictions(request):
         active_status = "all"
 
     published = PredictionCoupon.objects.filter(
-        published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        is_paid=False,
     )
     counts = published.aggregate(
         total=Count("id"),
@@ -131,6 +132,7 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
         PredictionCoupon.objects.filter(
             author_id__in=author_ids,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            is_paid=False,
             state_status__in=[
                 PredictionCoupon.StateStatus.WIN,
                 PredictionCoupon.StateStatus.LOSE,

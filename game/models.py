@@ -486,6 +486,7 @@ class PredictionCoupon(models.Model):
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
     confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
+    is_paid = models.BooleanField("Платный прогноз", default=False, db_index=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
@@ -498,6 +499,10 @@ class PredictionCoupon(models.Model):
         indexes = [
             models.Index(fields=["author", "published_status", "created_at"]),
             models.Index(fields=["published_status", "state_status", "created_at"]),
+            models.Index(
+                fields=["published_status", "is_paid", "created_at"],
+                name="coupon_public_paid_idx",
+            ),
         ]
 
     def clean(self) -> None:

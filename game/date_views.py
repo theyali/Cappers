@@ -147,7 +147,10 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         ),
         predictions_count=Count(
             "predictions__coupon",
-            filter=Q(predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED),
+            filter=Q(
+                predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                predictions__coupon__is_paid=False,
+            ),
             distinct=True,
         ),
     ).order_by("-is_watched", "scope_order", "starts_at", "id")

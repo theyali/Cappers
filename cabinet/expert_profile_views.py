@@ -9,6 +9,7 @@ from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
 
 from .models import AnalystFollow, AnalystProfile, CapperMonthlyStat, User
+from .paid_predictions import active_paid_subscriptions_by_analyst
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
 
 
@@ -202,12 +203,24 @@ def expert_profile(request, username: str):
     context["sport_profit_period_options"] = sport_period_options
     context["sport_profit_default"] = sport_periods["all"]
 
-    latest_coupons = (
-        _published_queryset()
-        .filter(author=profile.user)
-        .order_by("-published_at", "-created_at", "-id")[:12]
+    paid_subscription = active_paid_subscriptions_by_analyst(
+        request.user,
+        {profile.user_id},
+    ).get(profile.user_id)
+    context["paid_subscription"] = paid_subscription
+    context["paid_predictions_enabled"] = bool(
+        profile.paid_predictions_enabled and profile.paid_predictions_price > 0
     )
-    context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
+    context["paid_predictions_locked"] = context["paid_predictions_enabled"]
+    if context["paid_predictions_enabled"]:
+        context["latest_predictions"] = []
+    else:
+        latest_coupons = (
+            _published_queryset()
+            .filter(author=profile.user)
+            .order_by("-published_at", "-created_at", "-id")[:12]
+        )
+        context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
     context["recommended_experts"] = _recommended_experts(request, profile)
 
     return render(

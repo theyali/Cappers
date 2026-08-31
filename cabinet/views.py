@@ -6,6 +6,7 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from game.models import PredictionCoupon
@@ -22,6 +23,7 @@ from .forms import (
     UserProfileForm,
 )
 from .models import AnalystFollow, AnalystProfile, User
+from .paid_predictions import subscribe_to_paid_predictions
 
 
 @require_http_methods(["GET", "POST"])
@@ -226,7 +228,8 @@ def following_summary(request):
             predictions_count=Count(
                 "analyst__prediction_coupons",
                 filter=Q(
-                    analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                    analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    analyst__prediction_coupons__is_paid=False,
                 ),
                 distinct=True,
             ),
@@ -326,3 +329,27 @@ def follow_analyst(request, user_id):
 
     AnalystFollow.objects.get_or_create(follower=request.user, analyst=analyst)
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
+
+
+@login_required
+@require_POST
+def subscribe_paid_predictions_view(request, user_id):
+    analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
+    try:
+        subscription = subscribe_to_paid_predictions(request.user, analyst)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(
+            request,
+            f"Платная подписка активна до {subscription.expires_at:%d.%m.%Y}.",
+        )
+
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse("front:expert_profile", kwargs={"username": analyst.username})
+    return redirect(next_url)

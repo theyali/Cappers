@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Код подтверждения — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="email-flow-page" aria-labelledby="email-code-title">
+    <form class="email-flow-card" method="post" novalidate>
+        {% csrf_token %}
+        <p class="eyebrow">Подтверждение</p>
+        <h1 id="email-code-title">Введите код</h1>
+        <p>Мы отправили код на {{ flow.new_email }}. После подтверждения эта почта будет привязана к аккаунту.</p>
+
+        <label class="profile-field">
+            <span>{{ form.code.label }}</span>
+            {{ form.code }}
+            {{ form.code.errors }}
+        </label>
+
+        <div class="email-flow-actions">
+            <button class="profile-save-button" type="submit">Подтвердить почту</button>
+            <a href="{% url 'cabinet:profile' %}?tab=settings">Отмена</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

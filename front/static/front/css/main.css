@@ -13278,6 +13278,10 @@ h2 {
     transform: translateY(-1px);
 }
 
+.cappers-stats-groups {
+    margin-top: 16px;
+}
+
 .cappers-ranking-group.is-active {
     color: var(--ink);
     background: var(--yellow);
@@ -13599,9 +13603,8 @@ h2 {
 
 .cappers-ranking-name {
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 7px;
+    display: grid;
+    gap: 3px;
 }
 
 .cappers-ranking-name strong {
@@ -13610,6 +13613,15 @@ h2 {
     color: var(--text);
     font-size: 13px;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cappers-ranking-name small {
+    overflow: hidden;
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -15839,7 +15851,7 @@ body:has(.predictions-scroll-page) .site-footer {
 .following-feed-summary {
     min-width: 290px;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -15867,6 +15879,65 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .following-feed-content {
     min-width: 0;
+}
+
+.paid-feed-block {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.paid-feed-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.paid-feed-head > div {
+    display: grid;
+    gap: 4px;
+}
+
+.paid-feed-head span {
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.paid-feed-head h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+    line-height: 1.12;
+}
+
+.paid-feed-head > strong {
+    min-width: 44px;
+    min-height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.prediction-status-paid,
+.capper-pro-paid {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.capper-pro-paid {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .following-cappers-panel {
@@ -16078,6 +16149,7 @@ body:has(.predictions-scroll-page) .site-footer {
     .following-feed-summary {
         width: 100%;
         min-width: 0;
+        grid-template-columns: 1fr;
     }
 
     .following-feed-section-head {
@@ -18712,6 +18784,71 @@ body:has(.predictions-scroll-page) .site-footer {
     color: var(--muted);
 }
 
+.expert-public-paid-lock {
+    min-height: 240px;
+    grid-column: 1 / -1;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 16px;
+    padding: 28px;
+    border-radius: 18px;
+    background: var(--panel);
+    text-align: center;
+    outline: 1px solid rgba(255, 255, 255, .08);
+}
+
+.expert-public-paid-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.expert-public-paid-icon svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.expert-public-paid-lock > div {
+    max-width: 560px;
+    display: grid;
+    gap: 8px;
+}
+
+.expert-public-paid-lock strong {
+    color: var(--text);
+    font-size: 22px;
+}
+
+.expert-public-paid-lock span {
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.expert-public-paid-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--blue);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
 @media (max-width: 1120px) {
     .expert-public-kpi-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -19408,6 +19545,218 @@ body:has(.predictions-scroll-page) .site-footer {
     color: #707072;
 }
 
+.profile-email-field {
+    min-width: 0;
+}
+
+.profile-email-control {
+    min-height: 54px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.profile-email-control > div {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.profile-email-control strong {
+    overflow: hidden;
+    color: #f7f8ff;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-email-control small {
+    color: #707072;
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.profile-email-action {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 11px;
+    color: #fff;
+    background: #0b56fa;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.profile-email-action:hover {
+    background: #2469ff;
+}
+
+.profile-email-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: none;
+    place-items: center;
+    padding: 18px;
+}
+
+.profile-email-modal:target {
+    display: grid;
+}
+
+.profile-email-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .68);
+}
+
+.profile-email-modal-card {
+    position: relative;
+    z-index: 1;
+    width: min(520px, 100%);
+    display: grid;
+    gap: 18px;
+    padding: 24px;
+    border-radius: 22px;
+    background: #1f1f21;
+    outline: 1px solid rgba(255, 255, 255, .10);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .42);
+}
+
+.profile-email-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, .72);
+    background: #303033;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.profile-email-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-right: 38px;
+}
+
+.profile-email-modal-head .eyebrow {
+    margin: 0 0 5px;
+}
+
+.profile-email-modal-head h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+    line-height: 1.16;
+}
+
+.profile-email-modal-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.profile-email-modal-icon svg {
+    width: 25px;
+    height: 25px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.profile-email-modal-copy {
+    margin: 0;
+    color: rgba(255, 255, 255, .64);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.profile-email-modal-form {
+    display: grid;
+    gap: 16px;
+}
+
+.profile-email-modal-submit {
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: #0b56fa;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.profile-email-modal-submit:hover {
+    background: #2469ff;
+}
+
+.email-flow-page {
+    width: min(620px, calc(100% - 32px));
+    margin: 34px auto 70px;
+}
+
+.email-flow-card {
+    display: grid;
+    gap: 18px;
+    padding: 28px;
+    border-radius: 22px;
+    background: #1f1f21;
+    outline: 1px solid rgba(255, 255, 255, .07);
+}
+
+.email-flow-card h1 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.1;
+}
+
+.email-flow-card p:not(.eyebrow) {
+    margin: 0;
+    color: rgba(255, 255, 255, .64);
+    line-height: 1.55;
+}
+
+.email-flow-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.email-flow-actions a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, .72);
+    font-size: 13px;
+}
+
 .profile-field small,
 .profile-visibility small {
     color: #707072;
@@ -19871,6 +20220,15 @@ body:has(.predictions-scroll-page) .site-footer {
     .profile-fields-grid,
     .profile-side-column {
         grid-template-columns: 1fr;
+    }
+
+    .profile-email-control {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-email-action {
+        width: 100%;
+        min-height: 44px;
     }
 
     .profile-list-head {

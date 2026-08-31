@@ -27,6 +27,11 @@ urlpatterns = [
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
     path("profile/avatar/", avatar_views.avatar, name="avatar_upload"),
     path("profile/follow/<int:user_id>/", referral_views.follow_analyst, name="follow_analyst"),
+    path(
+        "experts/<int:user_id>/paid-subscribe/",
+        views.subscribe_paid_predictions_view,
+        name="paid_predictions_subscribe",
+    ),
     path("users/<str:username>/", user_public_views.user_profile, name="user_profile"),
     path("experts/<int:user_id>/follow/", referral_views.toggle_follow, name="toggle_follow"),
     path("register/", capper_views.register, name="register"),

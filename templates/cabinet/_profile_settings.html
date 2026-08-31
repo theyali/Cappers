@@ -21,11 +21,26 @@
                 <span>Логин</span>
                 <div class="profile-readonly">@{{ request.user.username }}</div>
             </label>
-            <label class="profile-field">
-                <span>{{ user_form.email.label }}</span>
-                {{ user_form.email }}
-                {{ user_form.email.errors }}
-            </label>
+            <div class="profile-field profile-email-field">
+                <span>Почта</span>
+                <div class="profile-email-control">
+                    <div>
+                        <strong>{{ request.user.email|default:"Почта не указана" }}</strong>
+                        <small>
+                            {% if request.user.email %}
+                                Для смены сначала подтвердите доступ к текущей почте.
+                            {% else %}
+                                Добавьте почту, чтобы получать системные уведомления и восстанавливать доступ.
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% if request.user.email %}
+                        <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
+                    {% else %}
+                        <a class="profile-email-action" href="#profile-email-add-modal">Добавить почту</a>
+                    {% endif %}
+                </div>
+            </div>
             <label class="profile-field">
                 <span>{{ user_form.first_name.label }}</span>
                 {{ user_form.first_name }}
@@ -102,6 +117,22 @@
                 </label>
                 <div class="profile-visibility profile-field-full">
                     <div>
+                        <strong>{{ analyst_form.paid_predictions_enabled.label }}</strong>
+                        <small>Новые опубликованные прогнозы будут доступны только пользователям с платной подпиской.</small>
+                    </div>
+                    <label class="switch-control">
+                        {{ analyst_form.paid_predictions_enabled }}
+                        <span></span>
+                    </label>
+                </div>
+                <label class="profile-field">
+                    <span>{{ analyst_form.paid_predictions_price.label }}</span>
+                    {{ analyst_form.paid_predictions_price }}
+                    {{ analyst_form.paid_predictions_price.errors }}
+                    <small>Цена подписки на 30 дней.</small>
+                </label>
+                <div class="profile-visibility profile-field-full">
+                    <div>
                         <strong>Публичный профиль</strong>
                         <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
                     </div>
@@ -117,6 +148,53 @@
             <button type="submit" class="profile-save-button">Сохранить изменения</button>
         </div>
     </form>
+
+    {% if request.user.email %}
+    <div class="profile-email-modal" id="profile-email-change-modal" role="dialog" aria-modal="true" aria-labelledby="profile-email-change-title">
+        <a class="profile-email-modal-backdrop" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть"></a>
+        <section class="profile-email-modal-card">
+            <a class="profile-email-modal-close" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть">×</a>
+            <div class="profile-email-modal-head">
+                <span class="profile-email-modal-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+                </span>
+                <div>
+                    <p class="eyebrow">Смена почты</p>
+                    <h2 id="profile-email-change-title">Подтвердите текущую почту</h2>
+                </div>
+            </div>
+            <p class="profile-email-modal-copy">Мы отправим ссылку на {{ request.user.email }}. После перехода по ссылке вы сможете указать новую почту и подтвердить ее кодом.</p>
+            <form method="post" action="{% url 'account_email:request_change' %}">
+                {% csrf_token %}
+                <button class="profile-email-modal-submit" type="submit">Отправить ссылку</button>
+            </form>
+        </section>
+    </div>
+    {% else %}
+    <div class="profile-email-modal" id="profile-email-add-modal" role="dialog" aria-modal="true" aria-labelledby="profile-email-add-title">
+        <a class="profile-email-modal-backdrop" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть"></a>
+        <section class="profile-email-modal-card">
+            <a class="profile-email-modal-close" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть">×</a>
+            <div class="profile-email-modal-head">
+                <span class="profile-email-modal-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+                </span>
+                <div>
+                    <p class="eyebrow">Добавление почты</p>
+                    <h2 id="profile-email-add-title">Укажите почту</h2>
+                </div>
+            </div>
+            <form class="profile-email-modal-form" method="post" action="{% url 'account_email:add' %}">
+                {% csrf_token %}
+                <label class="profile-field">
+                    <span>Новая почта</span>
+                    <input type="email" name="new_email" placeholder="name@example.com" autocomplete="email" required>
+                </label>
+                <button class="profile-email-modal-submit" type="submit">Отправить код</button>
+            </form>
+        </section>
+    </div>
+    {% endif %}
 
     <aside class="profile-side-column">
         {% if not request.user.is_analyst %}

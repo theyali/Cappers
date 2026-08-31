@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     AnalystFollow,
+    AnalystPaidSubscription,
     AnalystProfile,
     CapperMonthlyStat,
     CapperReferralVisit,
@@ -35,15 +36,18 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "is_verified",
         "is_vip",
         "is_recommended",
+        "paid_predictions_enabled",
+        "paid_predictions_price",
         "is_public",
         "onboarding_completed_at",
         "created_at",
     )
-    list_editable = ("is_verified", "is_vip", "is_recommended", "is_public")
+    list_editable = ("is_verified", "is_vip", "is_recommended", "paid_predictions_enabled", "is_public")
     list_filter = (
         "is_verified",
         "is_vip",
         "is_recommended",
+        "paid_predictions_enabled",
         "is_public",
         "created_at",
         "onboarding_completed_at",
@@ -99,6 +103,8 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                     "is_verified",
                     "is_vip",
                     "is_recommended",
+                    "paid_predictions_enabled",
+                    "paid_predictions_price",
                     "is_public",
                     "onboarding_completed_at",
                 )
@@ -114,6 +120,15 @@ class AnalystFollowAdmin(admin.ModelAdmin):
     search_fields = ("follower__username", "analyst__username")
     autocomplete_fields = ("follower", "analyst")
     readonly_fields = ("created_at",)
+
+
+@admin.register(AnalystPaidSubscription)
+class AnalystPaidSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("subscriber", "analyst", "price", "starts_at", "expires_at", "is_active")
+    list_filter = ("starts_at", "expires_at")
+    search_fields = ("subscriber__username", "analyst__username")
+    autocomplete_fields = ("subscriber", "analyst")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(CapperReferralVisit)

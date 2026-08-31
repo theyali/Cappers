@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_overview
-from cabinet.models import AnalystFollow, AnalystProfile, User
+from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
 from front.models import PredictionFavorite
 from game.models import Match, PredictionCoupon
 
@@ -95,6 +95,28 @@ def _new_prediction_events(coupon: PredictionCoupon) -> int:
     created = 0
     author_name = _expert_name(coupon.author)
     url = reverse("front:prediction_detail", kwargs={"prediction_id": coupon.id})
+    if coupon.is_paid:
+        paid_subscribers = (
+            AnalystPaidSubscription.objects.filter(
+                analyst_id=coupon.author_id,
+                expires_at__gt=timezone.now(),
+            )
+            .select_related("subscriber")
+        )
+        for subscription in paid_subscribers:
+            notification = create_notification(
+                recipient=subscription.subscriber,
+                actor=coupon.author,
+                kind=Notification.Kind.NEW_PREDICTION,
+                title=f"Новый платный прогноз от {author_name}",
+                message="В вашей платной подписке появился закрытый прогноз.",
+                url=url,
+                event_key=f"new-paid-prediction:{subscription.subscriber_id}:{coupon.id}",
+                meta={"coupon_id": coupon.id, "author_id": coupon.author_id, "paid": True},
+            )
+            created += int(notification is not None)
+        return created
+
     follower_rows = list(
         AnalystFollow.objects.filter(analyst_id=coupon.author_id)
         .select_related("follower")

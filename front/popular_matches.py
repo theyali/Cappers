@@ -171,7 +171,8 @@ def build_popular_matches(limit: int = 5) -> list:
             published_predictions_count=Count(
                 "predictions__coupon",
                 filter=Q(
-                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    predictions__coupon__is_paid=False,
                 ),
                 distinct=True,
             )

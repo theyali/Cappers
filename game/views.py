@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cabinet.models import User
+from cabinet.paid_predictions import profile_paid_predictions_enabled
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
 from game.services.coupon_validation import (
     CouponMatchVerificationError,
@@ -62,7 +63,8 @@ def match_list(request):
             predictions_count=Count(
                 "predictions__coupon",
                 filter=Q(
-                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    predictions__coupon__is_paid=False,
                 ),
                 distinct=True,
             ),
@@ -251,6 +253,7 @@ def create_coupon(request):
             if autosave
             else PredictionCoupon.PublishedStatus.PUBLISHED
         )
+        coupon.is_paid = False if autosave else profile_paid_predictions_enabled(request.user)
         coupon.published_at = None if autosave else timezone.now()
         coupon.save()
 
@@ -457,6 +460,7 @@ def _latest_predictions():
     return (
         Prediction.objects.filter(
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__is_paid=False,
         )
         .select_related("coupon__author", "match__league__country", "match__home_team", "match__away_team")
         .order_by("-coupon__published_at", "-coupon__created_at", "-created_at")[:6]
@@ -719,6 +723,7 @@ def _prediction_odds_tabs(match: Match) -> list[dict]:
         Prediction.objects.filter(
             match=match,
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__is_paid=False,
         )
         .values("market", "selection", "coefficient")
         .distinct()

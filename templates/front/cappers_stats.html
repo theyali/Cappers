@@ -49,6 +49,15 @@
             </div>
         </div>
 
+        <nav class="cappers-ranking-groups cappers-stats-groups" aria-label="Тип экспертов">
+            {% for tab in stats_group_tabs %}
+            <a class="cappers-ranking-group{% if stats_group == tab.key %} is-active{% endif %}" href="{{ tab.url }}">
+                <span>{{ tab.label }}</span>
+                {% if tab.key == 'paid' %}<small>₽</small>{% endif %}
+            </a>
+            {% endfor %}
+        </nav>
+
         {% if experts %}
         <div class="cappers-section-head">
             <div>

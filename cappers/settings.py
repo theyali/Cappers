@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "tinymce",
     "django_celery_beat",
+    "account_email.apps.AccountEmailConfig",
     "cabinet.apps.CabinetConfig",
     "wallets.apps.WalletsConfig",
     "game.apps.GameConfig",

@@ -56,7 +56,10 @@
                 url: $select.data("url") || window.location.pathname,
                 method: "GET",
                 dataType: "json",
-                data: { roi_period: period },
+                data: {
+                    roi_period: period,
+                    group: new URL(window.location.href).searchParams.get("group") || undefined,
+                },
                 cache: false,
             })
                 .done((response) => {

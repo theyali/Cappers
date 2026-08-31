@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Новая почта — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="email-flow-page" aria-labelledby="email-flow-title">
+    <form class="email-flow-card" method="post" novalidate>
+        {% csrf_token %}
+        <p class="eyebrow">Шаг 2</p>
+        <h1 id="email-flow-title">Новая почта</h1>
+        <p>Текущая почта подтверждена. Укажите новый адрес, на который мы отправим шестизначный код.</p>
+
+        <label class="profile-field">
+            <span>{{ form.new_email.label }}</span>
+            {{ form.new_email }}
+            {{ form.new_email.errors }}
+        </label>
+
+        <div class="email-flow-actions">
+            <button class="profile-save-button" type="submit">Отправить код</button>
+            <a href="{% url 'cabinet:profile' %}?tab=settings">Вернуться в профиль</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

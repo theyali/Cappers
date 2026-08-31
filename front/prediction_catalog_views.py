@@ -117,6 +117,7 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             coupon_type=PredictionCoupon.CouponType.EXPRESS,
+            is_paid=False,
         ).count()
     )
 
@@ -280,6 +281,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
 
     published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        coupon__is_paid=False,
     )
 
     filtered = _published_queryset()

@@ -16,7 +16,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.http import HttpResponsePermanentRedirect, JsonResponse
+from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -24,6 +24,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from cabinet.models import AnalystFollow
+from cabinet.paid_predictions import user_can_view_paid_predictions
 from game.models import Prediction, PredictionCoupon, Sport
 
 from .expert_ranking import ranked_expert_profiles
@@ -93,7 +94,7 @@ def _normalized_coefficient(value) -> Decimal:
         return Decimal("0.00")
 
 
-def _published_queryset():
+def _published_queryset(*, include_paid: bool = False):
     queryset = (
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -112,6 +113,8 @@ def _published_queryset():
             combined_coefficient=_combined_coefficient_expression(),
         )
     )
+    if not include_paid:
+        queryset = queryset.filter(is_paid=False)
     return annotate_author_roi(
         queryset,
         author_outer_ref="author_id",
@@ -545,6 +548,7 @@ def predictions(request, sport_code: str | None = None):
 
     published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        coupon__is_paid=False,
     )
 
     filtered = _published_queryset()
@@ -718,6 +722,8 @@ def prediction_detail(request, prediction_id: int):
         ),
         pk=prediction_id,
     )
+    if coupon.is_paid and not user_can_view_paid_predictions(request.user, coupon.author):
+        raise Http404("Прогноз не найден.")
     positions = list(getattr(coupon, "detail_positions", []) or [])
 
     total_coefficient = Decimal("1")
@@ -785,17 +791,25 @@ def favorites(request):
 
 
 def _published_prediction(prediction_id: int) -> PredictionCoupon:
-    return get_object_or_404(
+    prediction = get_object_or_404(
         PredictionCoupon,
         pk=prediction_id,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
+    return prediction
+
+
+def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoupon:
+    prediction = _published_prediction(prediction_id)
+    if prediction.is_paid and not user_can_view_paid_predictions(user, prediction.author):
+        raise Http404("Прогноз не найден.")
+    return prediction
 
 
 @login_required
 @require_POST
 def toggle_prediction_like(request, prediction_id: int):
-    prediction = _published_prediction(prediction_id)
+    prediction = _accessible_published_prediction(request.user, prediction_id)
     reaction, created = PredictionLike.objects.get_or_create(
         prediction=prediction,
         user=request.user,
@@ -817,7 +831,7 @@ def toggle_prediction_like(request, prediction_id: int):
 @login_required
 @require_POST
 def toggle_prediction_favorite(request, prediction_id: int):
-    prediction = _published_prediction(prediction_id)
+    prediction = _accessible_published_prediction(request.user, prediction_id)
     favorite, created = PredictionFavorite.objects.get_or_create(
         prediction=prediction,
         user=request.user,

@@ -14,6 +14,10 @@ class CapperTableRoutingTests(SimpleTestCase):
             "/cappers-table/vip/",
         )
         self.assertEqual(
+            reverse("front:cappers_table_group", kwargs={"group": "paid"}),
+            "/cappers-table/paid/",
+        )
+        self.assertEqual(
             reverse(
                 "front:cappers_table_period",
                 kwargs={"group": "popular", "period": "2026-08"},

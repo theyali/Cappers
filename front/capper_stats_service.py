@@ -77,8 +77,14 @@ class CapperStatsService:
     def __init__(self, user=None):
         self.user = user
 
-    def build_catalog_context(self) -> dict:
+    def build_catalog_context(self, *, paid_only: bool = False) -> dict:
         profiles = ranked_expert_profiles()
+        if paid_only:
+            profiles = [
+                profile
+                for profile in profiles
+                if profile.paid_predictions_enabled and profile.paid_predictions_price > 0
+            ]
         profile_ids = [profile.user_id for profile in profiles]
         best_streaks = _best_streaks_for_authors(profile_ids)
         following_ids = self._following_ids(profile_ids)
@@ -308,6 +314,10 @@ class CapperStatsService:
                 and self.user.pk == profile.user_id
             ),
             "is_following": profile.user_id in following_ids,
+            "paid_predictions_enabled": bool(
+                profile.paid_predictions_enabled and profile.paid_predictions_price > 0
+            ),
+            "paid_predictions_price": profile.paid_predictions_price,
         }
 
     @staticmethod

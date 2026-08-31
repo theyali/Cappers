@@ -64,6 +64,7 @@ def _published_match_predictions_count(match: Match) -> int:
         Prediction.objects.filter(
             match=match,
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__is_paid=False,
         )
         .values("coupon_id")
         .distinct()

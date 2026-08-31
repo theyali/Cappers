@@ -53,6 +53,7 @@ def _latest_home_predictions() -> list[dict]:
     queryset = list(
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            is_paid=False,
         )
         .select_related("author", "author__analyst_profile")
         .prefetch_related(
@@ -281,7 +282,8 @@ def _home_match_queryset(now):
             predictions_count=Count(
                 "predictions__coupon",
                 filter=Q(
-                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    predictions__coupon__is_paid=False,
                 ),
                 distinct=True,
             )
