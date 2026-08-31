@@ -42,6 +42,44 @@
         </nav>
     </section>
 
+    {% if sport_tabs %}
+    <section class="matches-table-filter-group" aria-labelledby="favorites-filter-sports-title">
+        <div class="matches-table-filter-title" id="favorites-filter-sports-title">
+            <span>Виды спорта</span>
+            <small>{{ sport_tabs|length }}</small>
+        </div>
+        <nav class="matches-table-sport-list predictions-sport-tabs" aria-label="Избранное по видам спорта">
+            {% for tab in sport_tabs %}
+            <a
+                class="matches-table-sport-link{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-sport-icon" aria-hidden="true">
+                    {% if tab.code == 'football' %}
+                        {% include "front/svgs/soccer.svg" %}
+                    {% elif tab.code == 'hockey' %}
+                        {% include "front/svgs/hockey.svg" %}
+                    {% elif tab.code == 'basketball' %}
+                        {% include "front/svgs/basketball.svg" %}
+                    {% elif tab.code == 'tennis' %}
+                        {% include "front/svgs/tennis.svg" %}
+                    {% else %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% endif %}
+                </span>
+                <span class="matches-table-sport-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+    {% endif %}
+
     <section class="matches-table-filter-group predictions-sidebar-form-group" aria-labelledby="favorites-filter-details-title">
         <div class="matches-table-filter-title" id="favorites-filter-details-title">
             <span>Параметры</span>
