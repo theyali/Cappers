@@ -2406,7 +2406,7 @@ summary:focus-visible,
     }
 
     .matches-table-view .match-table-event {
-        padding: 10px 8px;
+        padding: 5px 5px;
     }
 
     .matches-table-view .match-table-event-copy > strong {
@@ -2427,7 +2427,7 @@ summary:focus-visible,
     }
 
     .matches-table-view .match-table-odd > strong {
-        font-size: 14px;
+        font-size: 11px;
     }
 }
 
@@ -2478,6 +2478,6 @@ summary:focus-visible,
 
 @media (max-width: 600px) {
     .matches-table-view .match-table-row {
-        grid-template-rows: minmax(76px, auto) !important;
+        grid-template-rows: minmax(56px, auto) !important;
     }
 }
