@@ -452,6 +452,10 @@ class PredictionCoupon(models.Model):
         LOSE = "lose", "Проигрыш"
         REFUND = "refund", "Возврат"
 
+    class CouponType(models.TextChoices):
+        SINGLE = "single", "Одиночный"
+        EXPRESS = "express", "Экспресс"
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -470,6 +474,13 @@ class PredictionCoupon(models.Model):
         max_length=16,
         choices=StateStatus.choices,
         default=StateStatus.PENDING,
+        db_index=True,
+    )
+    coupon_type = models.CharField(
+        "Тип прогноза",
+        max_length=16,
+        choices=CouponType.choices,
+        default=CouponType.SINGLE,
         db_index=True,
     )
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
@@ -494,6 +505,17 @@ class PredictionCoupon(models.Model):
             raise ValidationError("Прогнозы могут создавать только аналитики.")
         if self.confidence is None or not 0 <= self.confidence <= 100:
             raise ValidationError("Уверенность должна быть от 0 до 100%.")
+
+    def sync_coupon_type(self) -> str:
+        coupon_type = (
+            self.CouponType.EXPRESS
+            if self.predictions.count() > 1
+            else self.CouponType.SINGLE
+        )
+        if self.coupon_type != coupon_type:
+            type(self).objects.filter(pk=self.pk).update(coupon_type=coupon_type)
+            self.coupon_type = coupon_type
+        return coupon_type
 
     def __str__(self) -> str:
         return f"Прогноз #{self.pk or 'new'}"
