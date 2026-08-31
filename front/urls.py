@@ -53,6 +53,12 @@ urlpatterns = [
         name="prediction_favorite",
     ),
     path(
+        "predictions/express/",
+        prediction_catalog_views.predictions,
+        {"express_only": True},
+        name="prediction_expresses",
+    ),
+    path(
         "predictions/<slug:sport_code>/",
         prediction_catalog_views.predictions,
         name="predictions_by_sport",
