@@ -35,15 +35,30 @@ def _express_path() -> str:
     return reverse("front:prediction_expresses")
 
 
-def _counted_published_items(published_items):
-    return published_items.annotate(
-        coupon_positions_count=Count("coupon__predictions", distinct=True),
+def _coupon_ids_with_position_count(*, express: bool):
+    queryset = (
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .annotate(catalog_positions_count=Count("predictions", distinct=True))
     )
+    if express:
+        queryset = queryset.filter(catalog_positions_count__gt=1)
+    else:
+        queryset = queryset.filter(catalog_positions_count=1)
+    return queryset.values("id")
+
+
+def _single_published_items(published_items):
+    return published_items.filter(coupon_id__in=_coupon_ids_with_position_count(express=False))
+
+
+def _express_published_items(published_items):
+    return published_items.filter(coupon_id__in=_coupon_ids_with_position_count(express=True))
 
 
 def _filter_options(published_items, selected_sport: str, *, express_only: bool):
-    counted_items = _counted_published_items(published_items)
-    single_items = counted_items.filter(coupon_positions_count=1)
+    single_items = _single_published_items(published_items)
 
     sports = list(
         single_items.exclude(match__sport_id__isnull=True)
@@ -58,7 +73,7 @@ def _filter_options(published_items, selected_sport: str, *, express_only: bool)
     )
 
     if express_only:
-        option_source = counted_items.filter(coupon_positions_count__gt=1)
+        option_source = _express_published_items(published_items)
     elif selected_sport.isdigit():
         option_source = single_items.filter(match__sport_id=int(selected_sport))
     else:
@@ -95,9 +110,7 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
     params.pop("league", None)
     params.pop("express", None)
 
-    counted_items = _counted_published_items(published_items)
-    single_items = counted_items.filter(coupon_positions_count=1)
-
+    single_items = _single_published_items(published_items)
     rows = list(
         single_items.exclude(match__sport_id__isnull=True)
         .values(
@@ -110,12 +123,7 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
         .order_by("match__sport__name_ru", "match__sport__name")
     )
     all_count = published_items.values("coupon_id").distinct().count()
-    express_count = (
-        counted_items.filter(coupon_positions_count__gt=1)
-        .values("coupon_id")
-        .distinct()
-        .count()
-    )
+    express_count = _coupon_ids_with_position_count(express=True).count()
 
     tabs = [
         {
@@ -158,10 +166,10 @@ def _apply_position_filters(
     express_only,
 ):
     if express_only:
-        queryset = queryset.filter(positions_count__gt=1)
+        queryset = queryset.filter(id__in=_coupon_ids_with_position_count(express=True))
     elif selected_sport.isdigit():
         queryset = queryset.filter(
-            positions_count=1,
+            id__in=_coupon_ids_with_position_count(express=False),
             predictions__match__sport_id=int(selected_sport),
         )
 
