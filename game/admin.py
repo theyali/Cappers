@@ -17,6 +17,13 @@ class CountryAdmin(admin.ModelAdmin):
     list_filter = ("provider",)
 
 
+@admin.register(Venue)
+class VenueAdmin(admin.ModelAdmin):
+    list_display = ("name_ru", "name", "city_ru", "city", "external_id", "provider")
+    search_fields = ("name", "name_ru", "city", "city_ru", "=external_id")
+    list_filter = ("provider",)
+
+
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
     list_display = ("name_ru", "name", "sport", "country", "external_id", "provider")
