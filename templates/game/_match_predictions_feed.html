@@ -10,10 +10,27 @@
             <h2>Все прогнозы на игру <span data-match-predictions-total>({{ match_predictions_total }})</span></h2>
         </div>
     </div>
-    <div class="match-predictions-list" data-match-predictions-list></div>
+
+    <div
+        class="content-table-view predictions-table-view predictions-table-view-flat"
+        data-match-predictions-block
+        data-skeleton-block
+    >
+        <div class="content-table-scroll">
+            <div class="content-table-head prediction-table-head" aria-hidden="true">
+                <span>Матч</span>
+                <span>Каппер</span>
+                <span>Прогноз</span>
+                <span>КФ</span>
+                <span>Статус</span>
+                <span></span>
+            </div>
+            <div class="prediction-table-body" data-match-predictions-list></div>
+        </div>
+    </div>
+
     <div class="match-predictions-loader" data-match-predictions-loader hidden>
-        <span class="match-predictions-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span>Загружаем прогнозы...</span>
+        <span></span><span></span><span></span>
     </div>
     <div class="match-predictions-sentinel" data-match-predictions-sentinel aria-hidden="true"></div>
 </section>
