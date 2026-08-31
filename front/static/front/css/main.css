@@ -1748,7 +1748,9 @@ h2 {
         transition: none;
     }
 }
-
+.predictions-filter-sidebar{
+    height: fit-content;
+}
 
 /* Legacy source: front/static/front/css/adv-banners.css */
 .adv-banners {
@@ -1756,7 +1758,7 @@ h2 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
-    margin: 22px 0 0;
+    margin: 0;
 }
 
 .adv-banner {
@@ -6538,7 +6540,7 @@ h2 {
 
 .home-articles-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 28px;
 }
@@ -9806,6 +9808,9 @@ h2 {
     border-radius: 50%;
     background: rgba(239, 59, 59, .12);
 }
+.match-live-dot-text{
+    color: #ef3b3b!important;
+}
 
 .match-live-dot::before,
 .match-live-dot::after {
@@ -10529,7 +10534,7 @@ h2 {
 
 .match-table-event-copy span,
 .prediction-table-event-copy span {
-    color: var(--muted);
+    color: var(--soft);
     font-size: 10px;
 }
 
@@ -11719,10 +11724,6 @@ h2 {
     .matches-table-scope-link {
         transition: none;
     }
-}
-
-.match-table-teams{
-    color: var(--soft);
 }
 
 /* Legacy source: front/static/front/css/match-detail-desktop.css */
@@ -17766,17 +17767,17 @@ body:has(.predictions-scroll-page) .site-footer {
 .user-public-activity,
 .user-public-badges {
     display: grid;
-    gap: 10px;
+    gap: 6px;
 }
 
 .user-public-activity-row {
     display: grid;
     grid-template-columns: 116px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 14px;
-    min-height: 74px;
-    padding: 13px 14px;
-    border-radius: 16px;
+    gap: 6px;
+    min-height: 50px;
+    padding: 6px;
+    border-radius: 9px;
     background: var(--ink);
 }
 
@@ -17785,9 +17786,10 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .user-public-activity-kind {
-    width: fit-content;
-    min-height: 28px;
-    display: inline-flex;
+    width: 75px;
+    min-height: 26px;
+    display: inline-flex!important;
+    justify-content: center;
     align-items: center;
     padding: 0 9px;
     border-radius: 999px;
@@ -23345,7 +23347,7 @@ body:has(.predictions-scroll-page) .site-footer {
     min-width: 0;
     display: grid;
     gap: 10px;
-    padding: 13px;
+    padding: 0;
     border-radius: 20px;
     background: var(--panel);
 }
