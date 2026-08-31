@@ -10250,6 +10250,7 @@ h2 {
 .content-view-container {
     min-width: 0;
     transition: opacity .16s ease, transform .16s ease;
+    padding: 0 7px;
 }
 
 .matches-content-region {
