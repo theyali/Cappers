@@ -120,6 +120,8 @@ class CapperDashboardTests(TestCase):
         self.assertContains(response, "Текущие live-прогнозы")
         self.assertContains(response, "Последние реакции")
         self.assertContains(response, "Настройки")
+        self.assertContains(response, 'class="content-table-row prediction-table-row"', count=3)
+        self.assertNotContains(response, 'class="capper-live-card"')
 
     def test_settings_tab_contains_account_form(self):
         self.client.force_login(self.analyst)

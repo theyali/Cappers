@@ -87,6 +87,7 @@ def _reaction_item(reaction, kind: str) -> dict:
 
 def _live_prediction_cards(analyst) -> list[Prediction]:
     live_items = Prediction.objects.filter(match__sync_scope=Match.SyncScope.LIVE).select_related(
+        "coupon__author__analyst_profile",
         "match__league",
         "match__home_team",
         "match__away_team",
@@ -102,6 +103,22 @@ def _live_prediction_cards(analyst) -> list[Prediction]:
         .order_by("-published_at", "-created_at")[:12]
     )
 
+    coupon_ids = [coupon.pk for coupon in coupons]
+    liked_ids = set(
+        PredictionLike.objects.filter(
+            user=analyst,
+            prediction_id__in=coupon_ids,
+        ).values_list("prediction_id", flat=True)
+    )
+    favorite_ids = set(
+        PredictionFavorite.objects.filter(
+            user=analyst,
+            prediction_id__in=coupon_ids,
+        ).values_list("prediction_id", flat=True)
+    )
+    actor = _actor_data(analyst)
+    analyst_profile = getattr(analyst, "analyst_profile", None)
+
     cards = []
     for coupon in coupons:
         items = list(getattr(coupon, "live_items", []) or [])
@@ -115,6 +132,15 @@ def _live_prediction_cards(analyst) -> list[Prediction]:
         if len(items) > 1:
             item.market = f"Экспресс · {coupon.predictions.count()} игр"
             item.selection = f"{item.selection} + другие позиции"
+
+        item.expert_name = actor["name"]
+        item.expert_initials = actor["initial"]
+        item.expert_avatar_url = actor["avatar_url"]
+        item.expert_verified = bool(analyst_profile and analyst_profile.is_verified)
+        item.is_liked = coupon.pk in liked_ids
+        item.is_favorite = coupon.pk in favorite_ids
+        item.is_own = True
+        item.is_following_author = False
         cards.append(item)
     return cards
 

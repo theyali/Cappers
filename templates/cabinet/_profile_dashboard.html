@@ -1,4 +1,4 @@
-{% load match_ui %}
+{% load static %}
 <section class="capper-dashboard" aria-label="Дашборд каппера">
     <section class="capper-dashboard-hero">
         <div>
@@ -68,81 +68,22 @@
             </div>
 
             {% if live_predictions %}
-            <div class="capper-live-list">
-                {% for prediction in live_predictions %}
-                <article class="capper-live-card">
-                    <div class="capper-live-topline">
-                        <div class="capper-live-league">
-                            <span class="capper-live-league-logo">
-                                {% if prediction.match.league and prediction.match.league.logo %}
-                                    <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.league_name|default:"Л"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <div>
-                                <strong>{{ prediction.match.league_name|default:"Лига" }}</strong>
-                                <small>{{ prediction.match|live_status_label }}</small>
-                            </div>
-                        </div>
-
-                        {% if prediction.state_status == "win" %}
-                            <span class="capper-live-status is-win">Выиграл</span>
-                        {% elif prediction.state_status == "lose" %}
-                            <span class="capper-live-status is-lose">Проиграл</span>
-                        {% elif prediction.state_status == "refund" %}
-                            <span class="capper-live-status is-refund">Возврат</span>
-                        {% else %}
-                            <span class="capper-live-status">Ожидает</span>
-                        {% endif %}
+            <div class="content-table-view predictions-table-view predictions-table-view-flat">
+                <div class="content-table-scroll">
+                    <div class="content-table-head prediction-table-head" aria-hidden="true">
+                        <span>Матч</span>
+                        <span>Каппер</span>
+                        <span>Прогноз</span>
+                        <span>КФ</span>
+                        <span>Статус</span>
+                        <span></span>
                     </div>
-
-                    <a class="capper-live-match" href="{{ prediction.match.get_absolute_url }}">
-                        <div class="capper-live-team">
-                            <span class="capper-live-team-logo">
-                                {% if prediction.match.home_team_logo %}
-                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
-                        </div>
-
-                        <div class="capper-live-score">
-                            <strong>{{ prediction.match.score|default:"VS" }}</strong>
-                            <span>Идёт</span>
-                        </div>
-
-                        <div class="capper-live-team is-away">
-                            <span class="capper-live-team-logo">
-                                {% if prediction.match.away_team_logo %}
-                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                                {% endif %}
-                            </span>
-                            <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
-                        </div>
-                    </a>
-
-                    <div class="capper-live-pick">
-                        <div>
-                            <span>{{ prediction.market|default:"Прогноз" }}</span>
-                            <strong>{{ prediction.selection }}</strong>
-                        </div>
-                        <div class="capper-live-odd">
-                            <span>КФ</span>
-                            <b>{{ prediction.coefficient }}</b>
-                        </div>
+                    <div class="prediction-table-body">
+                        {% for prediction in live_predictions %}
+                            {% include "front/includes/_prediction_table_row.html" %}
+                        {% endfor %}
                     </div>
-
-                    <div class="capper-live-footer">
-                        <a href="{% url 'cabinet:coupon_detail' prediction.coupon_id %}">Купон #{{ prediction.coupon_id }}</a>
-                        <a href="{{ prediction.match.get_absolute_url }}">Открыть матч →</a>
-                    </div>
-                </article>
-                {% endfor %}
+                </div>
             </div>
             {% else %}
             <div class="capper-dashboard-empty">
@@ -228,3 +169,4 @@
         </aside>
     </div>
 </section>
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
