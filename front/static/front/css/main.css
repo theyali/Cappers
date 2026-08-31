@@ -12163,8 +12163,7 @@ h2 {
     grid-template-columns: minmax(190px, 1.35fr) auto repeat(3, minmax(90px, .65fr)) 30px;
     align-items: center;
     gap: 16px;
-    min-height: 88px;
-    padding: 16px 18px;
+    padding: 10px;
     border-radius: 18px;
     color: inherit;
     background: var(--panel);
@@ -12184,16 +12183,17 @@ h2 {
 }
 
 .profile-coupon-id {
-    width: 46px;
-    height: 46px;
+    width: 36px;
+    height: 36px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    border-radius: 13px;
+    border-radius: 9px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 800;
+    overflow: hidden;
 }
 
 .profile-coupon-copy {
@@ -19176,21 +19176,19 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .profile-hero {
     position: relative;
-    min-height: 330px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 32px;
-    padding: 34px;
+    padding: 20px;
     overflow: hidden;
     border-radius: 24px;
     outline: 1px solid rgba(255,255,255,.08);
 }
 
 .profile-hero-shade {
-    width: min(430px, 100%);
     flex: 0 0 auto;
-    display: grid;
+    display: flex;
     gap: 12px;
     padding: 16px;
     border-radius: 22px;
@@ -19361,16 +19359,15 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .profile-hero-stats {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-columns: repeat(3, minmax(0,1fr));
     gap: 10px;
 }
 
 .profile-stat-pill {
-    min-height: 82px;
     display: grid;
     align-content: center;
     gap: 6px;
-    padding: 12px;
+    padding: 10px;
     border-radius: 16px;
     color: white;
     background: rgba(31,31,33,.92);
@@ -19395,7 +19392,7 @@ body:has(.predictions-scroll-page) .site-footer {
     overflow: hidden;
     text-overflow: ellipsis;
     color: #fbf110;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
@@ -20892,12 +20889,12 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .capper-dashboard-hero {
-    min-height: 230px;
+    min-height: auto;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 28px;
-    padding: clamp(26px, 4vw, 42px);
+    padding: 20px;
     border-radius: 22px;
     background: var(--panel);
 }
@@ -20926,7 +20923,6 @@ body:has(.predictions-scroll-page) .site-footer {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
-    max-width: 500px;
 }
 
 .capper-dashboard-actions a {
