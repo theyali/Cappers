@@ -1,19 +1,51 @@
 {% extends "base.html" %}
 {% load static site_extras %}
 
-{% block title %}Купон #{{ coupon.id }} — Cappers{% endblock %}
+{% block title %}{% if positions|length > 1 %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }} — КапперХаб{% endblock %}
 
-{% block extra_css %}{% endblock %}
+{% block extra_css %}
+<style>
+@media (min-width: 641px) {
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-list {
+        gap: 10px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-item {
+        border-radius: 16px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-match {
+        gap: 6px;
+        padding: 11px 16px 8px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-teams {
+        gap: 12px;
+        padding: 4px 0 2px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-team-logo {
+        width: 46px;
+        height: 46px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-result {
+        gap: 4px;
+        padding: 8px 16px 9px;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="predictions-page coupon-detail-layout-page" aria-label="Купон #{{ coupon.id }}">
+<section class="predictions-page coupon-detail-layout-page" aria-label="{% if positions|length > 1 %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}">
     <div class="predictions-layout coupon-detail-layout">
         <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" style="display:grid;gap:14px;" aria-label="Популярные матчи">
             {% popular_matches 5 %}
         </aside>
 
         <div class="predictions-content coupon-detail-content">
-            <section class="coupon-detail-page" aria-label="Купон #{{ coupon.id }}">
+            <section class="coupon-detail-page" aria-label="{% if positions|length > 1 %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}">
                 <a class="coupon-detail-back" href="{% url 'front:predictions' %}">
                     <span aria-hidden="true">←</span>
                     <span>Вернуться к прогнозам</span>
@@ -45,8 +77,8 @@
 
                 <header class="coupon-detail-heading">
                     <div>
-                        <p>Публичный купон</p>
-                        <h1>Купон #{{ coupon.id }}</h1>
+                        <p>{% if positions|length > 1 %}Публичный экспресс{% else %}Публичный купон{% endif %}</p>
+                        <h1>{% if positions|length > 1 %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}</h1>
                         <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
                     </div>
 
@@ -61,8 +93,8 @@
                     {% endif %}
                 </header>
 
-                <section class="coupon-detail-panel" aria-label="Состав купона">
-                    {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True %}
+                <section class="coupon-detail-panel" aria-label="{% if positions|length > 1 %}Состав экспресса{% else %}Состав купона{% endif %}">
+                    {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True compact=True position_count=positions|length %}
                 </section>
             </section>
         </div>
