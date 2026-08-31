@@ -22,6 +22,12 @@
             </span>
             <span>Новости спорта</span>
         </a>
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'how_it_works' %} is-active{% endif %}" href="{% url 'front:how_it_works' %}">
+            <span class="site-topbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 0 1 4.65.8c0 1.8-2.45 2.05-2.45 4"></path><path d="M12 17h.01"></path></svg>
+            </span>
+            <span>Как пользоваться</span>
+        </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %} is-active{% endif %}" href="{% url 'front:articles' %}">
             <span class="site-topbar-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg>
