@@ -23142,7 +23142,7 @@ body:has(.predictions-scroll-page) .site-footer {
     min-width: 0;
     display: grid;
     gap: 10px;
-    padding: 0;
+    padding: 13px;
     border-radius: 20px;
     background: var(--panel);
 }
