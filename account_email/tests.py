@@ -156,6 +156,25 @@ class PasswordResetFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Задайте новый пароль")
 
+    def test_email_link_with_trailing_word_joiner_is_consumed(self):
+        flow, link_path = self._request_reset()
+
+        response = self.client.get(f"{link_path}%E2%81%A0")
+
+        self.assertRedirects(response, reverse("cabinet:password_reset_set"))
+        flow.refresh_from_db()
+        self.assertIsNotNone(flow.opened_at)
+
+    def test_email_link_with_word_joiner_in_token_is_consumed(self):
+        flow, link_path = self._request_reset()
+        altered_path = f"{link_path.rstrip('/')}%E2%81%A0/"
+
+        response = self.client.get(altered_path)
+
+        self.assertRedirects(response, reverse("cabinet:password_reset_set"))
+        flow.refresh_from_db()
+        self.assertIsNotNone(flow.opened_at)
+
     def test_user_can_set_new_password_after_opening_link(self):
         flow, link_path = self._request_reset()
         self.client.get(link_path)
