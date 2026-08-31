@@ -73,7 +73,11 @@
                 >
                     <a class="match-table-event" href="{{ match.get_absolute_url }}">
                         <span class="match-table-event-copy">
-                            <strong>{{ match.home_team_name|default:"Хозяева" }} — {{ match.away_team_name|default:"Гости" }}</strong>
+                            <strong class="match-table-teams">
+                                <span class="match-table-team-home">{{ match.home_team_name|default:"Хозяева" }}</span>
+                                <span class="match-table-team-separator" aria-hidden="true">—</span>
+                                <span class="match-table-team-away">{{ match.away_team_name|default:"Гости" }}</span>
+                            </strong>
                             <span class="match-table-meta">
                                 {% if match.sync_scope == 'live' %}
                                     <span class="match-status match-status-live" data-sport-code="{{ match.sport_code }}">
