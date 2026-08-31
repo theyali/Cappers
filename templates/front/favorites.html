@@ -25,7 +25,6 @@
             </div>
 
             {% if page_obj.object_list %}
-                {% group_content_items page_obj.object_list as grouped_predictions %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
                     <div class="prediction-results-head">
                         <div class="prediction-results-summary">
@@ -44,7 +43,7 @@
                             {% include "front/includes/_prediction_grid_view.html" with favorites_view=True %}
                         </div>
                         <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
-                            {% include "front/includes/_prediction_table_view.html" with favorites_view=True %}
+                            {% include "front/includes/_prediction_table_flat_view.html" %}
                         </div>
                     </div>
                 </div>
