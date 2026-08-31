@@ -1,0 +1,37 @@
+{% if paid_predictions %}
+<section class="paid-feed-block" aria-labelledby="paid-feed-title-{{ paid_feed_view_mode }}">
+    <div class="paid-feed-head">
+        <div>
+            <span>Платная подписка</span>
+            <h2 id="paid-feed-title-{{ paid_feed_view_mode }}">Закрытые прогнозы</h2>
+        </div>
+        <strong>{{ paid_predictions_count }}</strong>
+    </div>
+
+    {% if paid_feed_view_mode == "table" %}
+    <div class="content-table-view predictions-table-view predictions-table-view-flat paid-feed-table-view">
+        <div class="content-table-scroll">
+            <div class="content-table-head prediction-table-head" aria-hidden="true">
+                <span>Матч</span>
+                <span>Каппер</span>
+                <span>Прогноз</span>
+                <span>КФ</span>
+                <span>Статус</span>
+                <span></span>
+            </div>
+            <div class="prediction-table-body paid-feed-table-body">
+                {% for prediction in paid_predictions %}
+                    {% include "front/includes/_prediction_table_row.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="predictions-grid paid-feed-grid">
+        {% for prediction in paid_predictions %}
+            {% include "front/_prediction_card.html" %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
