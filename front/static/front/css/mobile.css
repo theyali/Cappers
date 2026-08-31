@@ -1465,10 +1465,9 @@ summary:focus-visible,
         gap: 5px;
     }
 
-    .coupon-sidebar-editor .coupon-pick b {
-        margin-left: 4px;
+    .coupon-sidebar-editor .coupon-odd strong {
         color: var(--yellow);
-        font-size: 12px;
+        font-size: 16px;
         font-weight: 800;
     }
 
