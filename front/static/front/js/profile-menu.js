@@ -31,7 +31,7 @@
 
         toggle.addEventListener("click", (event) => {
             event.stopPropagation();
-            setOpen(menu, !menu.classList.contains("is-open"));
+            window.location.assign("/cabinet/profile/");
         });
 
         dropdown.addEventListener("click", (event) => {
