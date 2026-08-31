@@ -1,5 +1,5 @@
 {% load static match_ui %}
-<section class="coupon-slip" aria-label="Состав прогноза #{{ coupon.id }}">
+<section class="coupon-slip{% if compact %} is-compact{% endif %}" aria-label="{% if position_count > 1 %}Состав экспресса{% else %}Состав прогноза{% endif %} #{{ coupon.id }}">
     <div class="coupon-slip-overview" aria-label="Параметры прогноза">
         <div class="coupon-slip-overview-row">
             <span>Коэффициент:</span>
