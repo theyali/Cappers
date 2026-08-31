@@ -1,0 +1,17 @@
+{% if page_obj.object_list %}
+<section class="paid-feed-block following-feed-predictions-block" aria-labelledby="following-feed-predictions-title-{{ feed_view_mode }}">
+    <div class="paid-feed-head">
+        <div>
+            <span>Подписки</span>
+            <h2 id="following-feed-predictions-title-{{ feed_view_mode }}">Обычные прогнозы</h2>
+        </div>
+        <strong>{{ feed_predictions_count }}</strong>
+    </div>
+
+    {% if feed_view_mode == "table" %}
+        {% include "front/includes/_prediction_table_flat_view.html" %}
+    {% else %}
+        {% include "front/includes/_prediction_grid_view.html" %}
+    {% endif %}
+</section>
+{% endif %}

@@ -65,16 +65,12 @@
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                             {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
                             {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
-                            {% if page_obj.object_list %}
-                                {% include "front/includes/_prediction_grid_view.html" %}
-                            {% endif %}
+                            {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
                         </div>
                         <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
                             {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="table" %}
                             {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="table" %}
-                            {% if page_obj.object_list %}
-                                {% include "front/includes/_prediction_table_flat_view.html" %}
-                            {% endif %}
+                            {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="table" %}
                         </div>
                     </div>
                 </div>
