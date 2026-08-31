@@ -1700,7 +1700,6 @@ h2 {
 .adv-banners--sidebar {
     grid-template-columns: 1fr;
     gap: 18px;
-    margin-top: 18px;
 }
 
 .adv-banners--sidebar .adv-banner {
