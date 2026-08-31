@@ -40,3 +40,13 @@ class MatchDetailWatchTests(TestCase):
             reverse("notifications:match_watch", kwargs={"match_id": self.match.id}),
         )
         self.assertNotContains(response, ">Матч отслеживается</button>", html=False)
+
+    def test_match_detail_loads_prediction_feed_and_reaction_scripts(self):
+        response = self.client.get(self.match.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-match-predictions-feed")
+        self.assertContains(response, "data-match-predictions-block")
+        self.assertContains(response, "data-skeleton-block")
+        self.assertContains(response, "front/js/prediction-reactions.js")
+        self.assertContains(response, "front/js/match-predictions.js")
