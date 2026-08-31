@@ -3,12 +3,14 @@ from decimal import Decimal
 from django.db.models import Count, Prefetch, Q
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.achievements import build_achievement_badges
 from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
 from front.expert_ranking import ranked_expert_profiles
 from front.models import Article
+from front.prediction_views import _decorate_predictions, _published_queryset
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon
 from game.views import _match_winner_odds
@@ -16,6 +18,7 @@ from notifications.models import MatchWatch
 
 
 HOME_PREDICTIONS_LIMIT = 8
+HOME_BEST_PREDICTIONS_LIMIT = 10
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 12
 HOME_EXPERTS_LIMIT = 8
@@ -131,6 +134,16 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
+def _best_home_predictions(request):
+    queryset = _published_queryset().order_by(
+        "-combined_coefficient",
+        "-published_at",
+        "-created_at",
+        "-id",
+    )[:HOME_BEST_PREDICTIONS_LIMIT]
+    return _decorate_predictions(request, queryset)
+
+
 def _top_home_experts(profiles) -> list[dict]:
     if not profiles:
         return DEMO_EXPERTS
@@ -182,7 +195,7 @@ def _best_home_experts(request, profiles) -> list[dict]:
                 "name": name,
                 "username": profile.user.username,
                 "initials": _initials(name),
-                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "avatar_url": profile.avatar.url if profile and profile.avatar else "",
                 "verified": profile.is_verified,
                 "roi": profile.author_roi,
                 "ranking_score": profile.ranking_score,
@@ -318,6 +331,7 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
     return selected
 
 
+@ensure_csrf_cookie
 def index(request):
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
@@ -329,6 +343,7 @@ def index(request):
         "front/index.html",
         {
             "latest_predictions": _latest_home_predictions(),
+            "best_predictions": _best_home_predictions(request),
             "top_experts": _top_home_experts(ranked_profiles),
             "best_experts": _best_home_experts(request, ranked_profiles),
             "latest_articles": Article.objects.filter(is_published=True).order_by(
