@@ -14,6 +14,7 @@ from .services import (
 
 
 PASSWORD_RESET_SESSION_KEY = "account_email_password_reset_request_id"
+PASSWORD_RESET_INVISIBLE_CHARS = "\u200b\u200c\u200d\u2060\ufeff"
 
 
 class AccountPasswordResetView(FormView):
@@ -31,7 +32,10 @@ class AccountPasswordResetDoneView(TemplateView):
 
 
 @require_GET
-def consume_password_reset(request, uidb64: str, token: str):
+def consume_password_reset(request, uidb64: str, token: str, trailing: str = ""):
+    uidb64 = _remove_invisible_chars(uidb64)
+    token = _remove_invisible_chars(token)
+
     try:
         flow = consume_password_reset_link(uidb64, token)
     except PasswordResetError:
@@ -81,6 +85,10 @@ def set_new_password(request):
 
 class AccountPasswordResetCompleteView(TemplateView):
     template_name = "cabinet/auth/password_reset_complete.html"
+
+
+def _remove_invisible_chars(value: str) -> str:
+    return "".join(char for char in value if char not in PASSWORD_RESET_INVISIBLE_CHARS)
 
 
 def _clear_reset_session(request) -> None:
