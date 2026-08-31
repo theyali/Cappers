@@ -11721,6 +11721,9 @@ h2 {
     }
 }
 
+.match-table-teams{
+    color: var(--soft);
+}
 
 /* Legacy source: front/static/front/css/match-detail-desktop.css */
 @media (min-width: 1121px) {
