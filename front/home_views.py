@@ -135,7 +135,9 @@ def _latest_home_predictions() -> list[dict]:
 
 
 def _best_home_predictions(request):
-    queryset = _published_queryset().order_by(
+    queryset = _published_queryset().filter(
+        state_status=PredictionCoupon.StateStatus.WIN,
+    ).order_by(
         "-combined_coefficient",
         "-published_at",
         "-created_at",
