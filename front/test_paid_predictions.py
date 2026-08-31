@@ -143,7 +143,7 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertEqual(response.context["paid_predictions_count"], 1)
         self.assertEqual(response.context["paid_predictions"][0].id, paid_coupon.id)
         self.assertContains(response, "paid-feed-block")
-        self.assertContains(response, "Закрытые прогнозы")
+        self.assertContains(response, "Платные прогнозы")
 
     def test_paid_subscription_creates_follow_relation(self):
         self.client.force_login(self.reader)
