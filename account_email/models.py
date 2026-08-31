@@ -47,3 +47,48 @@ class EmailChangeRequest(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user_id}: {self.get_purpose_display()} -> {self.new_email or 'pending'}"
+
+
+class PasswordResetRequest(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="password_reset_requests",
+        verbose_name="Пользователь",
+    )
+    token_hash = models.CharField("Хеш токена", max_length=128)
+    password_fingerprint = models.CharField("Отпечаток пароля", max_length=64)
+    opened_at = models.DateTimeField("Ссылка открыта", null=True, blank=True)
+    revoked_at = models.DateTimeField("Отозвано", null=True, blank=True)
+    completed_at = models.DateTimeField("Пароль изменён", null=True, blank=True)
+    expires_at = models.DateTimeField("Истекает")
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Запрос сброса пароля"
+        verbose_name_plural = "Запросы сброса пароля"
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(
+                fields=("user", "opened_at", "revoked_at", "completed_at"),
+                name="pwd_reset_user_state_idx",
+            ),
+            models.Index(fields=("expires_at",), name="pwd_reset_expires_idx"),
+        ]
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def link_is_active(self) -> bool:
+        return (
+            self.opened_at is None
+            and self.revoked_at is None
+            and self.completed_at is None
+            and not self.is_expired
+        )
+
+    def __str__(self) -> str:
+        return f"Сброс пароля #{self.pk} для {self.user_id}"

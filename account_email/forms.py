@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm
 
 from cabinet.models import User
 
@@ -46,3 +47,26 @@ class EmailCodeForm(forms.Form):
         if not CODE_RE.match(code):
             raise forms.ValidationError("Введите шестизначный код.")
         return code
+
+
+class AccountPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(
+        label="Адрес электронной почты",
+        max_length=254,
+        widget=forms.EmailInput(
+            attrs={
+                "autocomplete": "email",
+                "placeholder": "name@example.com",
+            }
+        ),
+    )
+
+    def save(self, *, request=None, **kwargs):
+        from .services import start_password_reset
+
+        if request is None:
+            raise ValueError("request is required for password reset")
+
+        email = self.cleaned_data["email"]
+        for user in self.get_users(email):
+            start_password_reset(user, request=request)
