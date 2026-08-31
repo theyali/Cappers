@@ -2117,10 +2117,10 @@ summary:focus-visible,
 
     .matches-mobile-sports-panel .matches-sport-tabs {
         width: 100%;
-        min-height: 70px;
+        min-height: auto;
         display: flex !important;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-between;
         gap: 4px;
         margin: 0;
         padding: 7px 10px;
@@ -2195,7 +2195,9 @@ summary:focus-visible,
         margin-right: -12px;
         margin-left: -12px;
     }
-
+    .matches-sport-tab.is-active svg {
+        color: var(--yellow) !important;
+    }
     .matches-mobile-scope-panel .matches-tabs a {
         min-height: 54px;
         padding-right: 14px;
@@ -2210,11 +2212,11 @@ summary:focus-visible,
     }
 
     .matches-mobile-sports-panel .matches-sport-tab {
-        width: 58px;
-        min-width: 58px;
-        height: 52px;
-        min-height: 52px;
-        flex-basis: 58px;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        flex-basis: 44px;
     }
 
     .matches-mobile-sports-panel .matches-sport-icon {
