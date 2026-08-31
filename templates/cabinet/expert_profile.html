@@ -346,10 +346,22 @@
             </article>
         </div>
         {% elif latest_predictions %}
-        <div class="predictions-grid expert-public-grid">
-            {% for prediction in latest_predictions %}
-                {% include "front/_prediction_card.html" %}
-            {% endfor %}
+        <div class="content-table-view predictions-table-view predictions-table-view-flat">
+            <div class="content-table-scroll">
+                <div class="content-table-head prediction-table-head" aria-hidden="true">
+                    <span>Матч</span>
+                    <span>Каппер</span>
+                    <span>Прогноз</span>
+                    <span>КФ</span>
+                    <span>Статус</span>
+                    <span></span>
+                </div>
+                <div class="prediction-table-body">
+                    {% for prediction in latest_predictions %}
+                        {% include "front/includes/_prediction_table_row.html" %}
+                    {% endfor %}
+                </div>
+            </div>
         </div>
         {% else %}
         <div class="expert-public-empty">
