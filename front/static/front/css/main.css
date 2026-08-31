@@ -17801,12 +17801,11 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .expert-public-hero {
-    min-height: 250px;
     display: flex;
     align-items: stretch;
     justify-content: space-between;
     gap: 28px;
-    padding: clamp(24px, 4vw, 42px);
+    padding: 20px;
     border-radius: 22px;
     background: var(--panel);
 }
@@ -18071,7 +18070,6 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-stats article {
     min-width: 0;
-    min-height: 120px;
     display: grid;
     align-content: center;
     gap: 7px;
@@ -18972,11 +18970,10 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-stats-compact .expert-public-stat-card {
     min-width: 0;
-    min-height: 96px;
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 16px;
+    padding: 10px;
     border-radius: 16px;
     background: var(--panel);
 }
