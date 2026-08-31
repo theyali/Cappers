@@ -14,6 +14,7 @@ from . import (
     home_views,
     how_views,
     match_table_views,
+    prediction_catalog_views,
     prediction_views,
     static_views,
 )
@@ -30,7 +31,7 @@ urlpatterns = [
         name="capper_referral_code",
     ),
     path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
-    path("predictions/", prediction_views.predictions, name="predictions"),
+    path("predictions/", prediction_catalog_views.predictions, name="predictions"),
     path(
         "predictions/filter-state/",
         prediction_views.prediction_filter_state,
@@ -53,7 +54,7 @@ urlpatterns = [
     ),
     path(
         "predictions/<slug:sport_code>/",
-        prediction_views.predictions,
+        prediction_catalog_views.predictions,
         name="predictions_by_sport",
     ),
     path("feed/", feed_views.following_feed, name="following_feed"),
