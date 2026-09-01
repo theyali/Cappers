@@ -27950,47 +27950,49 @@ font-size: 13px;
 }
 
 .tournament-predict-page {
-    width: min(1480px, calc(100% - 32px));
     margin: 0 auto;
 }
 
-.tournament-predict-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 20px;
-    align-items: end;
-    margin-bottom: 18px;
-    padding: 22px;
-    border: 1px solid rgba(15, 23, 42, .1);
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: 0 16px 38px rgba(15, 23, 42, .06);
+.tournament-predict-hero {
+    align-items: flex-end;
+    margin-bottom: 8px;
+    color: #fff;
 }
 
-.tournament-predict-head .tournament-back-link {
-    grid-column: 1 / -1;
-    margin: 0;
+.tournament-predict-hero-copy {
+    min-width: 0;
 }
 
-.tournament-back-link.is-dark {
-    color: var(--muted);
+.tournament-back-link.is-dark,
+.tournament-predict-hero p {
+    color: rgba(255, 255, 255, .72);
 }
 
-.tournament-predict-head .tournament-status {
+.tournament-predict-hero .tournament-back-link {
+    margin: 0 0 10px;
+}
+
+.tournament-predict-hero .tournament-status {
     position: static;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
-.tournament-predict-head h1 {
+.tournament-predict-hero h1 {
     margin: 0;
-    font-size: 32px;
-    line-height: 1.08;
+    font-size: 26px;
+    line-height: 1;
     letter-spacing: 0;
 }
 
-.tournament-predict-head p {
+.tournament-predict-hero p {
     margin: 8px 0 0;
-    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tournament-predict-hero .tournament-predict-rules {
+    max-width: 520px;
+    margin-top: 12px;
 }
 
 .tournament-predict-rules {
@@ -28006,7 +28008,7 @@ font-size: 13px;
     min-width: 0;
     padding: 12px;
     border-radius: 8px;
-    background: #f8fafc;
+    background: #2a2a2d;
 }
 
 .tournament-predict-rules dt,
@@ -28015,19 +28017,26 @@ font-size: 13px;
 }
 
 .tournament-predict-rules dt {
-    color: var(--muted);
+    color: rgba(255, 255, 255, .56);
     font-size: 12px;
     font-weight: 800;
 }
 
 .tournament-predict-rules dd {
-    color: var(--dark);
+    color: #fff;
     font-size: 14px;
     font-weight: 900;
 }
 
-.tournament-predict-shell {
-    grid-template-columns: minmax(0, 1fr) 360px;
+@media (min-width: 1121px) {
+    .matches-page.tournament-predict-page {
+        grid-template-rows: 0 0 0 minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .matches-page.tournament-predict-page .matches-shell {
+        grid-row: 4;
+    }
 }
 
 .tournament-page-pagination {

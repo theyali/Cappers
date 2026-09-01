@@ -77,7 +77,13 @@ class Tournament(models.Model):
         decimal_places=2,
         default=Decimal("1.01"),
     )
-    min_confidence = models.PositiveSmallIntegerField("Минимальная уверенность, %", default=0)
+    min_confidence = models.PositiveSmallIntegerField(
+        "Минимальная уверенность, %",
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Оставьте пустым или укажите 0, если уверенность не участвует в условиях турнира.",
+    )
     coupon_type_rule = models.CharField(
         "Тип прогноза",
         max_length=16,
@@ -108,7 +114,7 @@ class Tournament(models.Model):
         super().clean()
         if self.ends_at and self.starts_at and self.ends_at <= self.starts_at:
             raise ValidationError({"ends_at": "Дата окончания должна быть позже даты начала."})
-        if self.min_confidence is None or not 0 <= self.min_confidence <= 100:
+        if self.min_confidence is not None and not 0 <= self.min_confidence <= 100:
             raise ValidationError({"min_confidence": "Уверенность должна быть от 0 до 100%."})
         for field in ("prize_first", "prize_second", "prize_third", "min_coefficient"):
             value = getattr(self, field)

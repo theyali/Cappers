@@ -2685,11 +2685,6 @@ summary:focus-visible,
         width: min(100% - 20px, 720px);
     }
 
-    .tournament-predict-head {
-        grid-template-columns: 1fr;
-        align-items: start;
-    }
-
     .tournament-predict-shell {
         grid-template-columns: 1fr;
     }
@@ -2745,7 +2740,7 @@ summary:focus-visible,
         font-size: 24px;
     }
 
-    .tournament-predict-head h1 {
+    .tournament-predict-hero h1 {
         font-size: 28px;
     }
 

@@ -38,9 +38,10 @@ def validate_tournament_coupon(
 ) -> None:
     validate_participant_can_predict(tournament, participant)
 
-    if confidence < tournament.min_confidence:
+    min_confidence = tournament.min_confidence or 0
+    if min_confidence > 0 and confidence < min_confidence:
         raise TournamentRuleError(
-            f"Минимальная уверенность для турнира — {tournament.min_confidence}%."
+            f"Минимальная уверенность для турнира — {min_confidence}%."
         )
 
     if tournament.coupon_type_rule == Tournament.CouponTypeRule.SINGLE and len(items) != 1:

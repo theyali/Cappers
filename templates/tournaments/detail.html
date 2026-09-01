@@ -197,7 +197,7 @@
 
                 <div class="expert-achievements">
                     <div class="profile-telegram-state"><strong>Коэффициент</strong><span>от {{ tournament.min_coefficient|floatformat:2 }}</span></div>
-                    <div class="profile-telegram-state"><strong>Уверенность</strong><span>от {{ tournament.min_confidence }}%</span></div>
+                    <div class="profile-telegram-state"><strong>Уверенность</strong><span>{% if tournament.min_confidence %}от {{ tournament.min_confidence }}%{% else %}без условия{% endif %}</span></div>
                     <div class="profile-telegram-state"><strong>Тип прогноза</strong><span>{{ tournament.get_coupon_type_rule_display }}</span></div>
                     <div class="profile-telegram-state">
                         <strong>Спорт</strong>

@@ -5,23 +5,8 @@
 
 {% block content %}
 <section class="matches-page tournament-predict-page" aria-label="Прогноз в турнире">
-    <div class="tournament-predict-head">
-        <a class="tournament-back-link is-dark" href="{{ tournament.get_absolute_url }}">← Турнир</a>
-        <div>
-            <span class="tournament-status tournament-status-{{ runtime_status.key }}">{{ runtime_status.label }}</span>
-            <h1>{{ tournament.title }}</h1>
-            <p>Выберите матч и исход для прогноза в рамках турнира.</p>
-        </div>
-        <dl class="tournament-predict-rules">
-            <div><dt>КФ</dt><dd>от {{ tournament.min_coefficient|floatformat:2 }}</dd></div>
-            <div><dt>Уверенность</dt><dd>от {{ tournament.min_confidence }}%</dd></div>
-            <div><dt>Тип</dt><dd>{{ tournament.get_coupon_type_rule_display }}</dd></div>
-        </dl>
-    </div>
-
     {% include "game/includes/_match_sport_tabs.html" %}
     {% include "game/includes/_match_scope_tabs.html" %}
-    {% include "game/includes/_match_date_filter.html" %}
 
     <div class="matches-mobile-scope-panel" aria-label="Фильтр матчей на мобильных устройствах" data-skeleton-block>
         {% include "game/includes/_match_scope_tabs.html" %}
@@ -39,29 +24,41 @@
         data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
         data-autosave="false"
         data-min-coefficient="{{ tournament.min_coefficient }}"
-        data-min-confidence="{{ tournament.min_confidence }}"
+        data-min-confidence="{{ tournament.min_confidence|default:0 }}"
         data-coupon-type-rule="{{ tournament.coupon_type_rule }}"
     >
-        <section class="matches-list-panel" aria-label="Список матчей">
-            {% include "game/includes/_match_list_hero.html" %}
-            <div class="matches-content-region" data-matches-content-region>
-                {% if matches %}
-                    <div class="matches-grid" data-matches-grid>
-                        {% include "game/includes/_match_grid_items.html" with matches=matches can_write_coupon=can_write_coupon %}
-                    </div>
-                    {% if page_obj.has_next %}
-                    <nav class="tournament-page-pagination" aria-label="Страницы матчей турнира">
-                        <a href="?scope={{ active_scope }}&sport={{ active_sport }}&date={{ selected_date_iso }}&page={{ page_obj.next_page_number }}">Показать ещё</a>
-                    </nav>
-                    {% endif %}
-                {% else %}
-                <div class="matches-empty">
-                    <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
-                    <h2>Матчей пока нет</h2>
-                    <p>По условиям турнира на {{ selected_date|date:"j M" }} нет доступных матчей.</p>
+        {% include "game/_match_table_filter_sidebar.html" %}
+
+        <section
+            class="matches-list-panel"
+            aria-label="Список матчей"
+            data-content-view-root
+            data-content-view-current="{{ content_view_mode }}"
+        >
+            <div
+                class="matches-hero long-bg long-bg-2 tournament-predict-hero is-skeleton-loading"
+                data-skeleton-block
+                data-matches-hero-skeleton
+                data-skeleton-background="{% static 'front/img/long_2.webp' %}"
+                aria-busy="true"
+            >
+                <div class="tournament-predict-hero-copy">
+                    <a class="tournament-back-link is-dark" href="{{ tournament.get_absolute_url }}">← Турнир</a>
+                    <span class="tournament-status tournament-status-{{ runtime_status.key }}">{{ runtime_status.label }}</span>
+                    <h1>{{ tournament.title }}</h1>
+                    <p>Выберите матч и исход для прогноза в рамках турнира.</p>
+                    <dl class="tournament-predict-rules">
+                        <div><dt>КФ</dt><dd>от {{ tournament.min_coefficient|floatformat:2 }}</dd></div>
+                        <div><dt>Уверенность</dt><dd>{% if tournament.min_confidence %}от {{ tournament.min_confidence }}%{% else %}без условия{% endif %}</dd></div>
+                        <div><dt>Тип</dt><dd>{{ tournament.get_coupon_type_rule_display }}</dd></div>
+                    </dl>
                 </div>
-                {% endif %}
+                <div class="matches-hero-meta">
+                    <span>{{ hero_count|default:total_count }}</span>
+                    <small>{{ match_list_hero_meta|default:"матчей доступно" }}</small>
+                </div>
             </div>
+            {% include "game/includes/_match_list_content.html" %}
         </section>
 
         {% include "game/_coupon_sidebar.html" %}
@@ -72,7 +69,10 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
+<script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
+<script src="{% static 'front/js/matches-lazy-load.js' %}" defer></script>
+<script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 {% endblock %}
