@@ -1,16 +1,17 @@
 {% load static %}
 {% if achievement_badges %}
-<div class="capper-pro-achievements expert-public-achievements" aria-label="Достижения эксперта">
-    <span class="capper-pro-achievements-label">Достижения</span>
+<div class="capper-pro-achievements expert-public-achievements" aria-label="Последние достижения эксперта">
+    <span class="capper-pro-achievements-label">Последние достижения</span>
     <div class="capper-pro-achievements-list">
         {% for badge in achievement_badges %}
         <span
             class="capper-pro-achievement"
             data-achievement="{{ badge.key }}"
+            data-skeleton-image
             title="{{ badge.description }}"
             aria-label="{{ badge.label }}. {{ badge.description }}"
         >
-            <img src="{% static badge.icon %}" alt="">
+            <img src="{% static badge.icon %}" width="48" height="48" alt="" loading="lazy">
         </span>
         {% endfor %}
     </div>
