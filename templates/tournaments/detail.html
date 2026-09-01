@@ -4,117 +4,167 @@
 {% block title %}{{ tournament.title }} — Турниры{% endblock %}
 
 {% block content %}
-<section class="tournament-detail-page" aria-labelledby="tournament-title">
-    <article class="tournament-detail-hero tournament-detail-hero-{{ runtime_status.key }}">
-        <div class="tournament-detail-media" data-skeleton-image>
-            {% if tournament.hero_image %}
-                <img src="{{ tournament.hero_image.url }}" alt="{{ tournament.title }}">
-            {% elif tournament.card_image %}
-                <img src="{{ tournament.card_image.url }}" alt="{{ tournament.title }}">
-            {% else %}
-                <img src="{% static 'front/img/long_4.webp' %}" alt="{{ tournament.title }}">
-            {% endif %}
-        </div>
-        <div class="tournament-detail-hero-copy">
-            <a class="tournament-back-link" href="{% url 'tournaments:index' %}">← Все турниры</a>
-            <span class="tournament-status tournament-status-{{ runtime_status.key }}">{{ runtime_status.label }}</span>
-            <h1 id="tournament-title">{{ tournament.title }}</h1>
-            {% if tournament.description %}<p>{{ tournament.description }}</p>{% endif %}
-            <div class="tournament-detail-actions">
-                {% if participant %}
-                    <span class="tournament-joined-badge">Вы участвуете</span>
-                    {% if runtime_status.key == 'live' %}
-                        <a class="tournament-primary-action" href="{% url 'tournaments:predict' slug=tournament.slug %}">Сделать прогноз</a>
+<section class="profile-page tournament-detail-page" aria-labelledby="tournament-title">
+    <article
+        class="profile-hero"
+        {% if tournament.hero_image %}
+            style="background-color:#0b56fa;background-image:url('{{ tournament.hero_image.url }}');background-size:cover;background-position:center;background-repeat:no-repeat;"
+        {% elif tournament.card_image %}
+            style="background-color:#0b56fa;background-image:url('{{ tournament.card_image.url }}');background-size:cover;background-position:center;background-repeat:no-repeat;"
+        {% else %}
+            style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_4.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;"
+        {% endif %}
+    >
+        <div class="profile-hero-shade">
+            <div class="profile-title-block">
+                <div class="profile-label-row">
+                    <a class="profile-role" href="{% url 'tournaments:index' %}">← Все турниры</a>
+                    <span class="{% if runtime_status.key == 'live' %}verified-badge{% else %}profile-role{% endif %}">{{ runtime_status.label }}</span>
+                    {% if participant %}<span class="profile-role">Вы участвуете</span>{% endif %}
+                </div>
+
+                <h1 id="tournament-title">{{ tournament.title }}</h1>
+                {% if tournament.description %}<p>{{ tournament.description }}</p>{% endif %}
+
+                <div class="tournament-detail-actions">
+                    {% if participant %}
+                        {% if runtime_status.key == 'live' %}
+                            <a class="tournament-primary-action" href="{% url 'tournaments:predict' slug=tournament.slug %}">Сделать прогноз</a>
+                        {% else %}
+                            <button class="tournament-primary-action" type="button" disabled>Сделать прогноз</button>
+                        {% endif %}
+                    {% elif request.user.is_authenticated and request.user.is_analyst %}
+                        <form method="post" action="{% url 'tournaments:join' slug=tournament.slug %}">
+                            {% csrf_token %}
+                            <button class="tournament-primary-action" type="submit">Подключиться</button>
+                        </form>
+                    {% elif request.user.is_authenticated %}
+                        <a class="tournament-primary-action" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
                     {% else %}
-                        <button class="tournament-primary-action" type="button" disabled>Сделать прогноз</button>
+                        <a class="tournament-primary-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Войти</a>
                     {% endif %}
-                {% elif request.user.is_authenticated and request.user.is_analyst %}
-                    <form method="post" action="{% url 'tournaments:join' slug=tournament.slug %}">
-                        {% csrf_token %}
-                        <button class="tournament-primary-action" type="submit">Подключиться</button>
-                    </form>
-                {% elif request.user.is_authenticated %}
-                    <a class="tournament-primary-action" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-                {% else %}
-                    <a class="tournament-primary-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Войти</a>
-                {% endif %}
+                </div>
             </div>
         </div>
-        <aside class="tournament-clock" aria-label="{{ runtime_status.target_label }}">
-            <span>{{ runtime_status.target_label }}</span>
-            <strong
-                data-countdown-target="{{ runtime_status.target_at|date:'c' }}"
-                data-countdown-expired="{% if runtime_status.key == 'upcoming' %}Турнир начался{% else %}Турнир завершён{% endif %}"
-            >
-                {{ runtime_status.target_at|date:"d.m.Y H:i" }}
-            </strong>
-        </aside>
+
+        <div class="profile-hero-shade" aria-label="Статистика турнира">
+            <div class="profile-hero-stats">
+                <div class="profile-stat-pill is-active">
+                    <span>{{ runtime_status.target_label }}</span>
+                    <strong
+                        data-countdown-target="{{ runtime_status.target_at|date:'c' }}"
+                        data-countdown-expired="{% if runtime_status.key == 'upcoming' %}Турнир начался{% else %}Турнир завершён{% endif %}"
+                    >{{ runtime_status.target_at|date:"d.m.Y H:i" }}</strong>
+                </div>
+                <div class="profile-stat-pill">
+                    <span>Участники</span>
+                    <strong>{{ participants_count }}</strong>
+                </div>
+                <div class="profile-stat-pill">
+                    <span>Мин. коэффициент</span>
+                    <strong>{{ tournament.min_coefficient|floatformat:2 }}</strong>
+                </div>
+            </div>
+        </div>
     </article>
 
-    <div class="tournament-detail-layout">
+    <div class="profile-layout">
         <main class="tournament-main">
-            <section class="tournament-panel tournament-prizes-panel" aria-labelledby="tournament-prizes-title">
-                <div class="tournament-section-head">
-                    <h2 id="tournament-prizes-title">Призы</h2>
-                    <span>{{ participants_count }} участников</span>
+            <section class="profile-form-card" aria-labelledby="tournament-prizes-title">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Призовой фонд</p>
+                        <h2 id="tournament-prizes-title">Призы</h2>
+                    </div>
+                    <span class="profile-role">{{ participants_count }} участников</span>
                 </div>
-                <div class="tournament-prize-grid">
-                    <div><span>1 место</span><strong>{{ tournament.prize_first|floatformat:0 }} ₽</strong></div>
-                    <div><span>2 место</span><strong>{{ tournament.prize_second|floatformat:0 }} ₽</strong></div>
-                    <div><span>3 место</span><strong>{{ tournament.prize_third|floatformat:0 }} ₽</strong></div>
+
+                <div class="expert-public-stats expert-public-stats-compact">
+                    <div class="expert-public-stat-card is-following">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M10 16h4"/></svg>
+                        </span>
+                        <div><span>1 место</span><strong>{{ tournament.prize_first|floatformat:0 }} ₽</strong></div>
+                    </div>
+                    <div class="expert-public-stat-card">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 3v3M6.5 5.5l2 2M17.5 5.5l-2 2"/><circle cx="12" cy="13" r="5"/><path d="M9 21h6"/></svg>
+                        </span>
+                        <div><span>2 место</span><strong>{{ tournament.prize_second|floatformat:0 }} ₽</strong></div>
+                    </div>
+                    <div class="expert-public-stat-card">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="m12 3 2.3 4.7 5.2.8-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2-3.8-3.7 5.2-.8L12 3Z"/></svg>
+                        </span>
+                        <div><span>3 место</span><strong>{{ tournament.prize_third|floatformat:0 }} ₽</strong></div>
+                    </div>
                 </div>
             </section>
 
-            <section class="tournament-panel" aria-labelledby="tournament-leaderboard-title">
-                <div class="tournament-section-head">
-                    <h2 id="tournament-leaderboard-title">Таблица турнира</h2>
-                    <span>{{ leaderboard|length }} позиций</span>
+            <section class="profile-form-card" aria-labelledby="tournament-leaderboard-title">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Рейтинг участников</p>
+                        <h2 id="tournament-leaderboard-title">Таблица турнира</h2>
+                    </div>
+                    <span class="profile-role">{{ leaderboard|length }} позиций</span>
                 </div>
+
                 {% if leaderboard %}
-                <div class="tournament-leaderboard">
-                    <div class="tournament-leaderboard-head" aria-hidden="true">
-                        <span>Место</span>
-                        <span>Каппер</span>
-                        <span>Прогнозы</span>
-                        <span>W-L-R</span>
-                        <span>Прибыль</span>
-                        <span>ROI</span>
+                <div class="content-table-view predictions-table-view predictions-table-view-flat">
+                    <div class="content-table-scroll">
+                        <div class="content-table-head prediction-table-head" aria-hidden="true">
+                            <span>Место</span>
+                            <span>Каппер</span>
+                            <span>Прогнозы</span>
+                            <span>W-L-R</span>
+                            <span>Прибыль</span>
+                            <span>ROI</span>
+                        </div>
+                        <div class="prediction-table-body">
+                            {% for row in leaderboard %}
+                            <div class="content-table-row prediction-table-row">
+                                <span class="prediction-table-coefficient">#{{ row.rank }}</span>
+                                <a class="prediction-table-expert" href="{% url 'front:expert_profile' username=row.user.username %}">
+                                    <span class="prediction-table-avatar"{% if row.user.analyst_profile.avatar or row.user.avatar %} data-skeleton-image{% endif %}>
+                                        {% if row.user.analyst_profile.avatar %}
+                                            <img src="{{ row.user.analyst_profile.avatar.url }}" width="30" height="30" alt="" loading="lazy">
+                                        {% elif row.user.avatar %}
+                                            <img src="{{ row.user.avatar.url }}" width="30" height="30" alt="" loading="lazy">
+                                        {% else %}
+                                            {{ row.user.username|slice:":1"|upper }}
+                                        {% endif %}
+                                    </span>
+                                    <strong>{{ row.user.analyst_profile.display_name|default:row.user.get_full_name|default:row.user.username }}</strong>
+                                </a>
+                                <span class="prediction-table-coefficient">{{ row.coupons_count }}</span>
+                                <span class="prediction-table-status">{{ row.wins_count }}-{{ row.losses_count }}-{{ row.refunds_count }}</span>
+                                <span class="prediction-table-pick {% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">
+                                    <strong>{{ row.profit|floatformat:2 }} ₽</strong>
+                                </span>
+                                <span class="prediction-table-coefficient">{{ row.roi_percent|floatformat:2 }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                    {% for row in leaderboard %}
-                    <div class="tournament-leaderboard-row">
-                        <strong>{{ row.rank }}</strong>
-                        <a href="{% url 'front:expert_profile' username=row.user.username %}">
-                            <span class="tournament-leader-avatar">
-                                {% if row.user.analyst_profile.avatar %}
-                                    <img src="{{ row.user.analyst_profile.avatar.url }}" alt="" loading="lazy">
-                                {% elif row.user.avatar %}
-                                    <img src="{{ row.user.avatar.url }}" alt="" loading="lazy">
-                                {% else %}
-                                    {{ row.user.username|slice:":1"|upper }}
-                                {% endif %}
-                            </span>
-                            <span>{{ row.user.analyst_profile.display_name|default:row.user.get_full_name|default:row.user.username }}</span>
-                        </a>
-                        <span>{{ row.coupons_count }}</span>
-                        <span>{{ row.wins_count }}-{{ row.losses_count }}-{{ row.refunds_count }}</span>
-                        <span class="{% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">{{ row.profit|floatformat:2 }} ₽</span>
-                        <span>{{ row.roi_percent|floatformat:2 }}%</span>
-                    </div>
-                    {% endfor %}
                 </div>
                 {% else %}
-                <div class="tournament-empty-block">
-                    <h3>Участников пока нет</h3>
-                    <p>Таблица появится после подключения капперов.</p>
+                <div class="profile-empty-state">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M10 16h4"/></svg>
+                    <p>Участников пока нет. Таблица появится после подключения капперов.</p>
                 </div>
                 {% endif %}
             </section>
 
-            <section class="tournament-panel" aria-labelledby="tournament-predictions-title">
-                <div class="tournament-section-head">
-                    <h2 id="tournament-predictions-title">Прогнозы турнира</h2>
-                    <span>{{ prediction_cards|length }} последних</span>
+            <section class="profile-form-card" aria-labelledby="tournament-predictions-title">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Лента турнира</p>
+                        <h2 id="tournament-predictions-title">Прогнозы турнира</h2>
+                    </div>
+                    <span class="profile-role">{{ prediction_cards|length }} последних</span>
                 </div>
+
                 {% if prediction_cards %}
                 <div class="content-table-view predictions-table-view predictions-table-view-flat tournament-predictions-table">
                     <div class="content-table-scroll">
@@ -134,60 +184,65 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="tournament-empty-block">
-                    <h3>Прогнозов пока нет</h3>
-                    <p>Когда участники опубликуют прогнозы, они появятся здесь и в общей ленте.</p>
+                <div class="profile-empty-state">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"/><path d="m8 15 2.5-3 2 2 3.5-5"/></svg>
+                    <p>Прогнозов пока нет. Новые прогнозы участников появятся здесь автоматически.</p>
                 </div>
                 {% endif %}
             </section>
         </main>
 
-        <aside class="tournament-sidebar">
-            <section class="tournament-panel" aria-labelledby="tournament-rules-title">
-                <h2 id="tournament-rules-title">Условия</h2>
-                <dl class="tournament-rules-list">
-                    <div><dt>Коэффициент</dt><dd>от {{ tournament.min_coefficient|floatformat:2 }}</dd></div>
-                    <div><dt>Уверенность</dt><dd>от {{ tournament.min_confidence }}%</dd></div>
-                    <div><dt>Тип</dt><dd>{{ tournament.get_coupon_type_rule_display }}</dd></div>
+        <aside class="profile-side-column tournament-sidebar">
+            <section class="profile-side-card" aria-labelledby="tournament-rules-title">
+                <div class="profile-section-heading">
                     <div>
-                        <dt>Спорт</dt>
-                        <dd>
-                            {% if allowed_sports %}
-                                {% for sport in allowed_sports %}{{ sport.name_ru|default:sport.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                            {% else %}
-                                Все виды спорта
-                            {% endif %}
-                        </dd>
+                        <p class="eyebrow">Правила участия</p>
+                        <h2 id="tournament-rules-title">Условия</h2>
                     </div>
-                    <div><dt>Матч</dt><dd>один прогноз на участника</dd></div>
-                </dl>
+                </div>
+
+                <div class="expert-achievements">
+                    <div class="profile-telegram-state"><strong>Коэффициент</strong><span>от {{ tournament.min_coefficient|floatformat:2 }}</span></div>
+                    <div class="profile-telegram-state"><strong>Уверенность</strong><span>от {{ tournament.min_confidence }}%</span></div>
+                    <div class="profile-telegram-state"><strong>Тип прогноза</strong><span>{{ tournament.get_coupon_type_rule_display }}</span></div>
+                    <div class="profile-telegram-state">
+                        <strong>Спорт</strong>
+                        <span>{% if allowed_sports %}{% for sport in allowed_sports %}{{ sport.name_ru|default:sport.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}Все виды спорта{% endif %}</span>
+                    </div>
+                    <div class="profile-telegram-state"><strong>Ограничение</strong><span>Один прогноз на участника</span></div>
+                </div>
+
                 {% if tournament.rules_text %}
-                <div class="tournament-rules-text">{{ tournament.rules_text|linebreaks }}</div>
+                <p class="profile-telegram-copy">{{ tournament.rules_text|linebreaksbr }}</p>
                 {% endif %}
             </section>
 
-            <section class="tournament-panel" aria-labelledby="tournament-achievements-title">
-                <h2 id="tournament-achievements-title">Достижения</h2>
+            <section class="profile-side-card" aria-labelledby="tournament-achievements-title">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Награды</p>
+                        <h2 id="tournament-achievements-title">Достижения</h2>
+                    </div>
+                </div>
+
                 {% if achievements %}
-                <div class="tournament-achievements">
+                <div class="expert-achievements-list">
                     {% for achievement in achievements %}
-                    <div class="tournament-achievement">
-                        <span data-skeleton-image>
+                    <div class="expert-achievement-badge"{% if achievement.description %} title="{{ achievement.description }}"{% endif %}>
+                        <span class="expert-achievement-icon"{% if achievement.icon %} data-skeleton-image{% endif %}>
                             {% if achievement.icon %}
-                                <img src="{{ achievement.icon.url }}" alt="" loading="lazy">
+                                <img src="{{ achievement.icon.url }}" width="28" height="28" alt="" loading="lazy">
                             {% else %}
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.47 6.03.88-4.36 4.25 1.03 6-5.4-2.84L6.6 19.6l1.03-6-4.36-4.25 6.03-.88L12 3Z"></path></svg>
+                                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3l2.7 5.47 6.03.88-4.36 4.25 1.03 6-5.4-2.84L6.6 19.6l1.03-6-4.36-4.25 6.03-.88L12 3Z"></path></svg>
                             {% endif %}
                         </span>
-                        <div>
-                            <strong>{{ achievement.title }}</strong>
-                            {% if achievement.description %}<small>{{ achievement.description }}</small>{% endif %}
-                        </div>
+                        <span>{{ achievement.title }}</span>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="tournament-empty-block is-compact">
+                <div class="profile-empty-state">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.47 6.03.88-4.36 4.25 1.03 6-5.4-2.84L6.6 19.6l1.03-6-4.36-4.25 6.03-.88L12 3Z"></path></svg>
                     <p>Достижения ещё не добавлены.</p>
                 </div>
                 {% endif %}
