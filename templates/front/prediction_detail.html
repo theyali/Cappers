@@ -6,6 +6,22 @@
 {% block extra_css %}
 <style>
 @media (min-width: 641px) {
+    .coupon-detail-content {
+        align-content: start;
+    }
+
+    .coupon-detail-page {
+        display: flex;
+        flex-direction: column;
+        align-self: start;
+        gap: 14px;
+        padding: 4px 10px 10px;
+    }
+
+    .coupon-detail-page .coupon-detail-heading {
+        padding: 4px 4px 2px;
+    }
+
     .coupon-detail-page .coupon-slip.is-compact .coupon-slip-list {
         gap: 10px;
     }
