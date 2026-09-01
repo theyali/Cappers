@@ -2,6 +2,328 @@
 
 {% block title %}Копирование ставок — КапперХаб{% endblock %}
 
+{% block extra_css %}
+<style>
+.copybetting-page .wallet-form-card {
+    gap: 18px;
+    padding: 18px;
+}
+
+.copybetting-settings-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, .65fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.copybetting-settings-panel {
+    min-width: 0;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--ink);
+}
+
+.copybetting-settings-panel--rules {
+    display: grid;
+    gap: 18px;
+}
+
+.copybetting-settings-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.copybetting-settings-panel--rules .copybetting-settings-head {
+    margin-bottom: 0;
+}
+
+.copybetting-settings-eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.copybetting-settings-head h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.copybetting-settings-head p {
+    max-width: 310px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.copybetting-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.copybetting-field {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+}
+
+.copybetting-field--wide {
+    grid-column: 1 / -1;
+}
+
+.copybetting-field-label,
+.copybetting-sports legend {
+    color: rgba(255, 255, 255, .68);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.copybetting-field input[type="number"] {
+    width: 100%;
+    min-height: 52px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    color: #fff;
+    background: var(--panel);
+    font: inherit;
+    font-size: 14px;
+    transition: background-color .18s ease, box-shadow .18s ease;
+}
+
+.copybetting-field input[type="number"]:focus {
+    background: var(--panel);
+    box-shadow: 0 0 0 2px var(--blue);
+}
+
+.copybetting-field small,
+.copybetting-sports-help {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.copybetting-field .errorlist,
+.copybetting-sports .errorlist,
+.copybetting-toggle-row .errorlist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #ff7479;
+    font-size: 10px;
+}
+
+.copybetting-toggle-list {
+    display: grid;
+    gap: 10px;
+}
+
+.copybetting-toggle-row {
+    min-height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border-radius: 13px;
+    background: var(--panel);
+    cursor: pointer;
+}
+
+.copybetting-toggle-copy {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.copybetting-toggle-copy strong {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.copybetting-toggle-copy small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.copybetting-switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    flex: 0 0 46px;
+}
+
+.copybetting-switch input {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.copybetting-switch-track {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border-radius: 999px;
+    background: var(--muted);
+    transition: background-color .18s ease;
+}
+
+.copybetting-switch-track::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform .18s ease;
+}
+
+.copybetting-switch input:checked + .copybetting-switch-track {
+    background: var(--blue);
+}
+
+.copybetting-switch input:checked + .copybetting-switch-track::after {
+    transform: translateX(20px);
+}
+
+.copybetting-switch input:focus-visible + .copybetting-switch-track {
+    box-shadow: 0 0 0 2px var(--blue);
+}
+
+.copybetting-sports {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.copybetting-sports legend {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 0;
+}
+
+.copybetting-sports-help {
+    margin: 0 0 10px;
+}
+
+.copybetting-sports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.copybetting-sport-option {
+    position: relative;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 12px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .82);
+    background: var(--panel);
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+
+.copybetting-sport-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.copybetting-sport-check {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    color: transparent;
+    background: var(--ink);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.copybetting-sport-option:has(input:checked) {
+    color: #fff;
+    background: var(--blue);
+}
+
+.copybetting-sport-option input:checked + .copybetting-sport-check {
+    color: var(--blue);
+    background: #fff;
+}
+
+.copybetting-sport-option:has(input:focus-visible) {
+    box-shadow: 0 0 0 2px var(--blue);
+}
+
+@media (max-width: 980px) {
+    .copybetting-settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .copybetting-page .wallet-form-card {
+        padding: 12px;
+    }
+
+    .copybetting-settings-panel {
+        padding: 16px;
+    }
+
+    .copybetting-settings-head {
+        display: grid;
+        gap: 8px;
+    }
+
+    .copybetting-settings-head p {
+        max-width: none;
+        text-align: left;
+    }
+
+    .copybetting-fields,
+    .copybetting-sports-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .copybetting-field--wide {
+        grid-column: auto;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="wallet-page copybetting-page">
     <div class="wallet-hero">
@@ -20,16 +342,90 @@
         {% if form.non_field_errors %}
             <div class="profile-form-alert">{{ form.non_field_errors }}</div>
         {% endif %}
-        <div class="profile-fields-grid">
-            {% for field in form %}
-                <label class="profile-field">
-                    <span>{{ field.label }}</span>
-                    {{ field }}
-                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
-                    {{ field.errors }}
-                </label>
-            {% endfor %}
+
+        <div class="copybetting-settings-grid">
+            <section class="copybetting-settings-panel">
+                <div class="copybetting-settings-head">
+                    <div>
+                        <span class="copybetting-settings-eyebrow">Риск-менеджмент</span>
+                        <h2>Параметры ставки</h2>
+                    </div>
+                    <p>Настройте размер банка, ставку и ограничения копирования.</p>
+                </div>
+
+                <div class="copybetting-fields">
+                    {% for field in form %}
+                        {% if field.name != "copy_regular_coupons" and field.name != "copy_tournament_coupons" and field.name != "allowed_sports" %}
+                            <label class="copybetting-field{% if field.name == 'min_total_coefficient' %} copybetting-field--wide{% endif %}" for="{{ field.id_for_label }}">
+                                <span class="copybetting-field-label">{{ field.label }}</span>
+                                {{ field }}
+                                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                                {{ field.errors }}
+                            </label>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="copybetting-settings-panel copybetting-settings-panel--rules">
+                <div class="copybetting-settings-head">
+                    <div>
+                        <span class="copybetting-settings-eyebrow">Фильтры</span>
+                        <h2>Что копировать</h2>
+                    </div>
+                </div>
+
+                <div class="copybetting-toggle-list">
+                    {% with field=form.copy_regular_coupons %}
+                        <label class="copybetting-toggle-row" for="{{ field.id_for_label }}">
+                            <span class="copybetting-toggle-copy">
+                                <strong>{{ field.label }}</strong>
+                                <small>Одиночные и обычные прогнозы каппера.</small>
+                                {{ field.errors }}
+                            </span>
+                            <span class="copybetting-switch">
+                                {{ field }}
+                                <span class="copybetting-switch-track" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                    {% endwith %}
+
+                    {% with field=form.copy_tournament_coupons %}
+                        <label class="copybetting-toggle-row" for="{{ field.id_for_label }}">
+                            <span class="copybetting-toggle-copy">
+                                <strong>{{ field.label }}</strong>
+                                <small>Прогнозы, опубликованные в турнирах.</small>
+                                {{ field.errors }}
+                            </span>
+                            <span class="copybetting-switch">
+                                {{ field }}
+                                <span class="copybetting-switch-track" aria-hidden="true"></span>
+                            </span>
+                        </label>
+                    {% endwith %}
+                </div>
+
+                <fieldset class="copybetting-sports">
+                    <legend>{{ form.allowed_sports.label }}</legend>
+                    {% if form.allowed_sports.help_text %}
+                        <p class="copybetting-sports-help">{{ form.allowed_sports.help_text }}</p>
+                    {% endif %}
+                    <div class="copybetting-sports-grid">
+                        {% for choice in form.allowed_sports %}
+                            <label class="copybetting-sport-option" for="{{ choice.id_for_label }}">
+                                {{ choice.tag }}
+                                <span class="copybetting-sport-check" aria-hidden="true">✓</span>
+                                <span>{{ choice.choice_label }}</span>
+                            </label>
+                        {% empty %}
+                            <span class="copybetting-sports-help">Виды спорта пока не добавлены.</span>
+                        {% endfor %}
+                    </div>
+                    {{ form.allowed_sports.errors }}
+                </fieldset>
+            </section>
         </div>
+
         <div class="wallet-form-actions">
             <button type="submit">Включить копирование</button>
             <a href="{% url 'front:expert_profile' analyst.username %}">Назад к капперу</a>
