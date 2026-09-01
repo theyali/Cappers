@@ -94,6 +94,9 @@
     const canWrite = root.dataset.canWrite === "true";
     const createUrl = root.dataset.createUrl;
     const staleSeconds = Number.parseInt(root.dataset.staleSeconds || "60", 10) || 60;
+    const autosaveEnabled = root.dataset.autosave !== "false";
+    const minConfidence = Math.max(0, Math.min(100, Number.parseInt(root.dataset.minConfidence || "0", 10) || 0));
+    const couponTypeRule = root.dataset.couponTypeRule || "any";
     const csrfCookie = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)?.[1] || "session";
     const userKey = root.dataset.userId || csrfCookie;
     const storageKey = `cappers:coupon-draft:${userKey}`;
@@ -112,18 +115,24 @@
 
     const normalizeConfidence = (value) => {
         const parsed = Number.parseInt(String(value ?? "50"), 10);
-        if (!Number.isFinite(parsed)) return 50;
-        return Math.max(0, Math.min(100, parsed));
+        if (!Number.isFinite(parsed)) return Math.max(50, minConfidence);
+        return Math.max(minConfidence, Math.min(100, parsed));
     };
 
     const currentConfidence = () => normalizeConfidence(confidenceInput?.value);
     const hasPositiveStake = () => toNumber(stakeInput?.value) > 0;
 
+    const couponCountMatchesRule = () => {
+        if (items.size < 1 || items.size > 20) return false;
+        if (couponTypeRule === "single") return items.size === 1;
+        if (couponTypeRule === "express") return items.size >= 2;
+        return true;
+    };
+
     const couponIsComplete = () => (
-        items.size > 0
-        && items.size <= 20
+        couponCountMatchesRule()
         && hasPositiveStake()
-        && currentConfidence() >= 0
+        && currentConfidence() >= minConfidence
         && currentConfidence() <= 100
         && [...items.values()].every((item) => (
             String(item.selection || "").trim().length > 0
@@ -167,6 +176,9 @@
 
     const updateConfidenceVisual = () => {
         const value = currentConfidence();
+        if (confidenceInput) {
+            confidenceInput.min = String(minConfidence);
+        }
         if (confidenceInput && Number.parseInt(confidenceInput.value, 10) !== value) {
             confidenceInput.value = String(value);
         }
@@ -396,6 +408,7 @@
 
     const syncDraft = (manual) => {
         if (!canWrite) return;
+        if (!manual && !autosaveEnabled) return;
         if (!window.jQuery) {
             setNote("Не удалось загрузить модуль сохранения. Обновите страницу.", "error");
             if (manual) setSubmitLoading(false);
@@ -488,6 +501,10 @@
 
     const upsertItem = (item) => {
         const existing = items.get(item.matchId);
+        if (!existing && couponTypeRule === "single" && items.size >= 1) {
+            items.clear();
+            itemsRoot.replaceChildren();
+        }
         if (!existing && items.size >= 20) {
             setNote("В одном прогнозе может быть максимум 20 игр.", "error");
             return;
@@ -501,7 +518,7 @@
         } else {
             items.set(item.matchId, item);
             renderItem(item);
-            setNote("Игра добавлена в прогноз.");
+            setNote(couponTypeRule === "single" ? "Игра выбрана для одиночного прогноза." : "Игра добавлена в прогноз.");
         }
 
         if (sidebar && sidebar.classList.contains("is-collapsed")) {
@@ -599,6 +616,18 @@
         }
         if (items.size < 1 || items.size > 20) {
             setNote("В прогнозе должно быть от 1 до 20 игр.", "error");
+            return;
+        }
+        if (couponTypeRule === "single" && items.size !== 1) {
+            setNote("В этом турнире доступны только одиночные прогнозы.", "error");
+            return;
+        }
+        if (couponTypeRule === "express" && items.size < 2) {
+            setNote("В этом турнире доступны только экспрессы.", "error");
+            return;
+        }
+        if (currentConfidence() < minConfidence) {
+            setNote(`Минимальная уверенность для турнира — ${minConfidence}%.`, "error");
             return;
         }
         if (!couponIsComplete()) {

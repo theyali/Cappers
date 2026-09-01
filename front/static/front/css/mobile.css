@@ -692,12 +692,16 @@ summary:focus-visible,
         order: 3;
     }
 
-    .mobile-nav-coupon {
+    .mobile-nav-tournaments {
         order: 4;
     }
 
-    .mobile-nav-stats {
+    .mobile-nav-coupon {
         order: 5;
+    }
+
+    .mobile-nav-stats {
+        order: 6;
     }
 
     button.mobile-app-nav-item {
@@ -748,6 +752,11 @@ summary:focus-visible,
     .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
         -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
         mask: url("../svgs/soccer.svg") center / contain no-repeat;
+    }
+
+    .mobile-app-nav .mobile-nav-tournaments .mobile-app-nav-icon {
+        -webkit-mask: url("../svgs/trophy.svg") center / contain no-repeat;
+        mask: url("../svgs/trophy.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav .mobile-nav-stats .mobile-app-nav-icon {
@@ -2623,4 +2632,143 @@ summary:focus-visible,
     font-size: 11px;
     font-weight: 800;
     line-height: 1;
+}
+
+@media (max-width: 980px) {
+    .tournaments-page,
+    .tournament-detail-page {
+        width: min(100% - 20px, 720px);
+        padding: 14px 0 86px;
+    }
+
+    .tournaments-hero {
+        min-height: 220px;
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+
+    .tournaments-total {
+        justify-items: start;
+    }
+
+    .tournament-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tournament-detail-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .tournament-detail-media {
+        min-height: 320px;
+    }
+
+    .tournament-detail-hero-copy {
+        left: 22px;
+        right: 22px;
+        bottom: 126px;
+    }
+
+    .tournament-clock {
+        min-height: 110px;
+    }
+
+    .tournament-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .tournament-prize-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tournament-predict-page {
+        width: min(100% - 20px, 720px);
+    }
+
+    .tournament-predict-head {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .tournament-predict-shell {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .tournaments-hero {
+        padding: 20px;
+    }
+
+    .tournaments-hero h1,
+    .tournament-detail-hero h1 {
+        font-size: 34px;
+    }
+
+    .tournament-card {
+        grid-template-rows: 180px 1fr;
+    }
+
+    .tournament-card-body,
+    .tournament-panel {
+        padding: 16px;
+    }
+
+    .tournament-detail-media {
+        min-height: 360px;
+    }
+
+    .tournament-detail-hero-copy {
+        left: 18px;
+        right: 18px;
+        bottom: 118px;
+    }
+
+    .tournament-detail-actions {
+        align-items: stretch;
+    }
+
+    .tournament-primary-action,
+    .tournament-detail-actions form {
+        width: 100%;
+    }
+
+    .tournament-primary-action {
+        min-width: 0;
+    }
+
+    .tournament-clock {
+        padding: 20px;
+    }
+
+    .tournament-clock strong {
+        font-size: 24px;
+    }
+
+    .tournament-predict-head h1 {
+        font-size: 28px;
+    }
+
+    .tournament-predict-rules {
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .tournament-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .tournament-card-meta div,
+    .tournament-rules-list div {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .tournament-card-meta dd,
+    .tournament-rules-list dd {
+        text-align: left;
+    }
 }

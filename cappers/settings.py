@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "cabinet.apps.CabinetConfig",
     "wallets.apps.WalletsConfig",
     "game.apps.GameConfig",
+    "tournaments.apps.TournamentsConfig",
     "bots.apps.BotsConfig",
     "back.apps.BackConfig",
     "front.apps.FrontConfig",

@@ -1,21 +1,23 @@
 (() => {
     const MIN_STAKE = 100;
     const MAX_STAKE = 1000000;
-    const MIN_COEFFICIENT = 1.01;
-
     const root = document.querySelector("[data-coupon-page]");
     if (!root) return;
+
+    const toNumber = (value) => {
+        const parsed = Number.parseFloat(String(value ?? "").replace(",", "."));
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+    const MIN_COEFFICIENT = Math.max(
+        1.01,
+        toNumber(root.dataset.minCoefficient) || 1.01,
+    );
 
     const form = root.querySelector("[data-coupon-form]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
     const submitButton = root.querySelector("[data-coupon-submit]");
     const noteNode = root.querySelector("[data-coupon-note]");
     let lastConstraintMessage = "";
-
-    const toNumber = (value) => {
-        const parsed = Number.parseFloat(String(value ?? "").replace(",", "."));
-        return Number.isFinite(parsed) ? parsed : null;
-    };
 
     const rubles = (value) => new Intl.NumberFormat("ru-RU", {
         maximumFractionDigits: 0,
@@ -79,7 +81,7 @@
             button.removeAttribute("data-bet-option");
             button.disabled = true;
             button.setAttribute("aria-disabled", "true");
-            button.setAttribute("title", "Коэффициент 1.00 недоступен для прогноза");
+            button.setAttribute("title", `Минимальный коэффициент для прогноза — ${MIN_COEFFICIENT.toFixed(2)}`);
             button.classList.add("is-locked-odd");
             if (!button.querySelector(".match-odd-lock")) {
                 button.prepend(lockMarkup());

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Турниры — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="tournaments-page" aria-labelledby="tournaments-title">
+    <header class="tournaments-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_4.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
+        <div>
+            <p class="tournaments-eyebrow">Соревнования капперов</p>
+            <h1 id="tournaments-title">Турниры</h1>
+            <p>Прогнозы в рамках турниров, таблица участников и призы за первые места.</p>
+        </div>
+        <div class="tournaments-total">
+            <strong>{{ tournaments|length }}</strong>
+            <span>турниров</span>
+        </div>
+    </header>
+
+    {% if tournaments %}
+    <div class="tournament-grid">
+        {% for item in tournaments %}
+        <article class="tournament-card tournament-card-{{ item.runtime_status.key }}">
+            <a class="tournament-card-image" href="{{ item.tournament.get_absolute_url }}" data-skeleton-image>
+                {% if item.tournament.card_image %}
+                    <img src="{{ item.tournament.card_image.url }}" alt="{{ item.tournament.title }}" loading="lazy">
+                {% elif item.tournament.hero_image %}
+                    <img src="{{ item.tournament.hero_image.url }}" alt="{{ item.tournament.title }}" loading="lazy">
+                {% else %}
+                    <img src="{% static 'front/img/long_4.webp' %}" alt="{{ item.tournament.title }}" loading="lazy">
+                {% endif %}
+                <span>{{ item.runtime_status.label }}</span>
+            </a>
+            <div class="tournament-card-body">
+                <div class="tournament-card-head">
+                    <h2>{{ item.tournament.title }}</h2>
+                    <span>{{ item.participants_count }} участников</span>
+                </div>
+                <dl class="tournament-card-meta">
+                    <div>
+                        <dt>Старт</dt>
+                        <dd>{{ item.tournament.starts_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Финиш</dt>
+                        <dd>{{ item.tournament.ends_at|date:"d.m.Y H:i" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Прогнозов</dt>
+                        <dd>{{ item.coupons_count }}</dd>
+                    </div>
+                </dl>
+                <div class="tournament-card-prizes">
+                    <span>1 место · {{ item.tournament.prize_first|floatformat:0 }} ₽</span>
+                    <span>2 место · {{ item.tournament.prize_second|floatformat:0 }} ₽</span>
+                    <span>3 место · {{ item.tournament.prize_third|floatformat:0 }} ₽</span>
+                </div>
+                <a class="tournament-card-link" href="{{ item.tournament.get_absolute_url }}">Открыть турнир</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="tournaments-empty">
+        <h2>Турниров пока нет</h2>
+        <p>Когда администратор опубликует турнир, он появится на этой странице.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
