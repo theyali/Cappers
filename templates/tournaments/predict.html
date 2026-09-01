@@ -32,8 +32,6 @@
         <section
             class="matches-list-panel"
             aria-label="Список матчей"
-            data-content-view-root
-            data-content-view-current="{{ content_view_mode }}"
         >
             <div
                 class="matches-hero long-bg long-bg-2 tournament-predict-hero is-skeleton-loading"
@@ -58,7 +56,9 @@
                     <small>{{ match_list_hero_meta|default:"матчей доступно" }}</small>
                 </div>
             </div>
-            {% include "game/includes/_match_list_content.html" %}
+            <div class="matches-content-region" data-matches-content-region>
+                {% include "game/includes/_match_table_view.html" %}
+            </div>
         </section>
 
         {% include "game/_coupon_sidebar.html" %}
@@ -69,10 +69,9 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
-<script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}" defer></script>
 <script src="{% static 'front/js/matches-lazy-load.js' %}" defer></script>
-<script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
+<script src="{% static 'front/js/tournament-match-odds.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 {% endblock %}

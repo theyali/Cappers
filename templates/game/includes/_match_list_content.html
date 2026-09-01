@@ -15,12 +15,18 @@
     {% else %}
     <div class="matches-empty">
         <span class="brand-logo"><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
-        {% if active_scope == 'watched' %}
+        {% if tournament_prediction_mode %}
+            <h2>Доступных матчей нет</h2>
+        {% elif active_scope == 'watched' %}
             <h2>Нет отслеживаемых матчей</h2>
         {% else %}
             <h2>Матчей пока нет</h2>
         {% endif %}
-        <p>На {{ selected_date|date:"j M" }} матчей в этой вкладке нет.</p>
+        {% if tournament_prediction_mode %}
+            <p>В период турнира нет матчей по выбранным условиям или вы уже сделали прогнозы на доступные игры.</p>
+        {% else %}
+            <p>На {{ selected_date|date:"j M" }} матчей в этой вкладке нет.</p>
+        {% endif %}
     </div>
     {% endif %}
 </div>

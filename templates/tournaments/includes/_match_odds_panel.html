@@ -1,0 +1,38 @@
+<div
+    class="tournament-match-full-odds"
+    data-match-bets
+    data-match-id="{{ match.id }}"
+    data-title="{{ match.home_team_name|default:'Хозяева' }} — {{ match.away_team_name|default:'Гости' }}"
+    data-league="{{ match.league_name|default:'Лига не указана' }}"
+    data-time="{% if match.starts_at %}{{ match.starts_at|date:'d.m H:i' }}{% else %}Время не указано{% endif %}"
+    data-last-seen="{% if match.last_seen_at %}{{ match.last_seen_at|date:'c' }}{% endif %}"
+>
+    {% if odds_items %}
+    <div class="tournament-match-odds-strip" aria-label="Все коэффициенты матча">
+        {% for odd in odds_items %}
+        <button
+            class="odds-button tournament-odd-chip"
+            type="button"
+            data-market="{{ odd.market }}"
+            data-selection="{{ odd.selection }}"
+            data-coefficient="{{ odd.coefficient }}"
+            {% if can_write_coupon and match.sync_scope == "prematch" %}
+                data-bet-option
+                data-bet-key="{{ odd.key }}"
+            {% else %}
+                disabled
+                aria-disabled="true"
+            {% endif %}
+        >
+            <span>{{ odd.label }}</span>
+            <b>{{ odd.coefficient }}</b>
+        </button>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="odds-empty">
+        <strong>Коэффициенты пока не пришли</strong>
+        <p>Когда провайдер отдаст линию по этому матчу, она появится здесь.</p>
+    </div>
+    {% endif %}
+</div>

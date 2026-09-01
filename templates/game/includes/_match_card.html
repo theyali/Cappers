@@ -39,7 +39,11 @@
         </span>
     </div>
 
+    {% if tournament_prediction_mode %}
+    <div class="match-card-main match-card-main-static">
+    {% else %}
     <a class="match-card-main" href="{{ match.get_absolute_url }}">
+    {% endif %}
         <div class="match-card-head">
             <div class="match-league">
                 <span class="league-mark">
@@ -92,10 +96,18 @@
                 <strong data-away-name>{{ match.away_team_name|default:"Гости" }}</strong>
             </div>
         </div>
+    {% if tournament_prediction_mode %}
+    </div>
+    {% else %}
     </a>
+    {% endif %}
 
     <div class="match-card-foot">
+        {% if tournament_prediction_mode %}
+        <span class="match-card-foot-link">
+        {% else %}
         <a class="match-card-foot-link" href="{{ match.get_absolute_url }}">
+        {% endif %}
             {% if match.tournament_match_used %}
                 <span class="match-card-tournament-used">Матч уже использован в турнире</span>
             {% elif match.predictions_count %}
@@ -103,7 +115,11 @@
             {% else %}
                 <span class="match-card-prediction-empty">Прогнозов пока нет</span>
             {% endif %}
+        {% if tournament_prediction_mode %}
+        </span>
+        {% else %}
         </a>
+        {% endif %}
         {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
         <button
             class="match-card-watch-button{% if match.is_watched %} is-watching{% endif %}"
@@ -121,7 +137,9 @@
         {% endif %}
     </div>
 
+    {% if not tournament_prediction_mode %}
     <a class="match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы</a>
+    {% endif %}
 
     <div class="match-card-odds-row without-bookmaker">
         <div

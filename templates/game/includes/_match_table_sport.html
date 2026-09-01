@@ -66,12 +66,21 @@
 
                 {% for match in league.items %}
                 <div
-                    class="content-table-row match-table-row match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}"
+                    class="content-table-row match-table-row match-watch-card-shell{% if match.is_watched %} is-watched{% endif %}{% if tournament_prediction_mode %} tournament-match-row{% endif %}"
                     data-match-shell-id="{{ match.id }}"
                     data-match-scope="{{ match.sync_scope }}"
                     data-match-starts-at="{% if match.starts_at %}{{ match.starts_at|date:'c' }}{% endif %}"
+                    {% if tournament_prediction_mode %}
+                    data-tournament-match-row
+                    data-tournament-match-odds-url="{% url 'tournaments:match_odds' slug=tournament.slug match_id=match.id %}"
+                    aria-expanded="false"
+                    {% endif %}
                 >
+                    {% if tournament_prediction_mode %}
+                    <div class="match-table-event match-table-event-static">
+                    {% else %}
                     <a class="match-table-event" href="{{ match.get_absolute_url }}">
+                    {% endif %}
                         <span class="match-table-event-copy">
                             <strong class="match-table-teams">
                                 <span class="match-table-team-home">{{ match.home_team_name|default:"Хозяева" }}</span>
@@ -92,12 +101,36 @@
                                 {% if match.predictions_count %}<span>{{ match.predictions_count }} прогнозов</span>{% endif %}
                             </span>
                         </span>
+                        {% if tournament_prediction_mode %}
+                        <button
+                            class="tournament-match-expand tournament-match-expand-inline"
+                            type="button"
+                            data-tournament-match-toggle
+                            aria-label="Показать все коэффициенты"
+                            title="Показать все коэффициенты"
+                        >
+                            <span>Все КФ</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                        </button>
+                        {% endif %}
+                    {% if tournament_prediction_mode %}
+                    </div>
+                    {% else %}
                     </a>
+                    {% endif %}
+                    {% if tournament_prediction_mode %}
+                    <div class="match-table-score match-table-score-static">
+                    {% else %}
                     <a class="match-table-score" href="{{ match.get_absolute_url }}">
+                    {% endif %}
                         <span class="{% if match.score %}match-table-score-value{% else %}match-table-kickoff{% endif %}">
                             {{ match|match_score_or_start_label }}
                         </span>
+                    {% if tournament_prediction_mode %}
+                    </div>
+                    {% else %}
                     </a>
+                    {% endif %}
 
                     <div
                         class="match-table-odds is-skeleton-loading"
@@ -159,6 +192,16 @@
                         {% endif %}
                     </div>
                 </div>
+                {% if tournament_prediction_mode %}
+                <div
+                    class="tournament-match-odds-row"
+                    data-tournament-match-odds-row
+                    data-match-shell-id="{{ match.id }}-odds"
+                    hidden
+                >
+                    <div class="tournament-match-odds-panel" data-tournament-match-odds-panel></div>
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </details>

@@ -83,6 +83,7 @@
         </nav>
     </section>
 
+    {% if not hide_date_filter %}
     <section class="matches-table-filter-group matches-table-date-group" aria-labelledby="table-date-title">
         <div class="matches-table-filter-title" id="table-date-title">
             <span>Дата</span>
@@ -155,4 +156,5 @@
         </div>
         {% endif %}
     </section>
+    {% endif %}
 </aside>

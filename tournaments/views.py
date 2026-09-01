@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
 from cabinet.models import AnalystFollow
@@ -19,7 +20,7 @@ from front.views import _initials
 from game import date_views
 from game.models import Match, Prediction, PredictionCoupon
 from game.services.coupon_validation import CouponMatchVerificationError
-from game.views import _latest_predictions, _match_winner_odds
+from game.views import _latest_predictions, _match_odds_tabs, _match_winner_odds
 from notifications.models import MatchWatch
 from tournaments.models import Tournament, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.coupons import create_tournament_coupon
@@ -121,6 +122,7 @@ def predict(request, slug: str):
     if date_views._is_lazy_request(request) and request.GET.get("view") == "table":
         return _tournament_table_lazy_response(
             request,
+            tournament=tournament,
             matches_queryset=matches_queryset,
             can_write_coupon=True,
             active_sport=active_sport,
@@ -159,6 +161,7 @@ def predict(request, slug: str):
     scope_tabs = _tournament_scope_tabs(
         request,
         tournament,
+        participant=participant,
         active_scope=active_scope,
         active_sport=active_sport,
         period_start=period_start,
@@ -168,6 +171,7 @@ def predict(request, slug: str):
     sport_tabs = _tournament_sport_tabs(
         request,
         tournament,
+        participant=participant,
         active_scope=active_scope,
         active_sport=active_sport,
         period_start=period_start,
@@ -205,6 +209,65 @@ def predict(request, slug: str):
             "hero_count": total_count,
         },
     )
+
+
+@require_GET
+def match_odds(request, slug: str, match_id: int):
+    tournament = get_object_or_404(
+        Tournament.objects.prefetch_related("allowed_sports"),
+        slug=slug,
+        status=Tournament.Status.PUBLISHED,
+    )
+    participant = get_active_participant(request.user, tournament)
+    if participant is None or tournament.runtime_status != "live":
+        return JsonResponse({"ok": False, "error": "Турнирный прогноз недоступен."}, status=403)
+
+    match = get_object_or_404(
+        Match.objects.select_related(
+            "sport",
+            "league__country",
+            "home_team",
+            "away_team",
+            "odds",
+        ),
+        pk=match_id,
+        sync_scope=Match.SyncScope.PREMATCH,
+        starts_at__gte=tournament.starts_at,
+        starts_at__lte=tournament.ends_at,
+    )
+    if not _match_allowed_for_tournament(tournament, participant, match):
+        return JsonResponse({"ok": False, "error": "Матч недоступен для этого турнира."}, status=400)
+
+    odds_tabs = _match_odds_tabs(match)
+    html = render_to_string(
+        "tournaments/includes/_match_odds_panel.html",
+        {
+            "match": match,
+            "odds_items": _flat_match_odds(odds_tabs),
+            "can_write_coupon": True,
+        },
+        request=request,
+    )
+    return JsonResponse({"ok": True, "html": html})
+
+
+def _flat_match_odds(odds_tabs):
+    odds = []
+    seen = set()
+    for tab in odds_tabs:
+        for section in tab.get("sections", []):
+            for row in section.get("rows", []):
+                for odd in row.get("odds", []):
+                    key = (
+                        odd.get("market"),
+                        odd.get("selection"),
+                        str(odd.get("coefficient")),
+                    )
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    odds.append(odd)
+    return odds
 
 
 @require_POST
@@ -349,6 +412,22 @@ def _exclude_tournament_used_matches(queryset, tournament: Tournament, participa
     return queryset.exclude(id__in=used_match_ids)
 
 
+def _match_allowed_for_tournament(
+    tournament: Tournament,
+    participant: TournamentParticipant,
+    match: Match,
+) -> bool:
+    allowed_sport_ids = set(tournament.allowed_sports.values_list("id", flat=True))
+    if allowed_sport_ids and match.sport_id not in allowed_sport_ids:
+        return False
+    return not TournamentPredictionEntry.objects.filter(
+        tournament=tournament,
+        participant=participant,
+        match=match,
+        tournament_coupon__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).exists()
+
+
 def _tournament_content_view_mode(request) -> str:
     requested = request.GET.get("view_mode")
     return requested if requested in {"grid", "table"} else "table"
@@ -364,7 +443,14 @@ def _tournament_page(matches_queryset, raw_page):
         return paginator.page(paginator.num_pages)
 
 
-def _tournament_table_lazy_response(request, *, matches_queryset, can_write_coupon: bool, active_sport: str):
+def _tournament_table_lazy_response(
+    request,
+    *,
+    tournament: Tournament,
+    matches_queryset,
+    can_write_coupon: bool,
+    active_sport: str,
+):
     sport_code = request.GET.get("table_sport", "").strip().lower()
     valid_sports = {sport for sport, _ in date_views.SPORT_FILTERS if sport != "all"}
     if sport_code not in valid_sports:
@@ -385,6 +471,7 @@ def _tournament_table_lazy_response(request, *, matches_queryset, can_write_coup
         html = render_to_string(
             "game/includes/_match_table_sport.html",
             {
+                "tournament": tournament,
                 "sport": sport_group,
                 "can_write_coupon": can_write_coupon,
                 "tournament_prediction_mode": True,
@@ -426,6 +513,7 @@ def _tournament_scope_tabs(
     request,
     tournament: Tournament,
     *,
+    participant: TournamentParticipant,
     active_scope: str,
     active_sport: str,
     period_start,
@@ -439,6 +527,7 @@ def _tournament_scope_tabs(
         queryset = _filter_tournament_sport(queryset, active_sport)
         if scope == PredictionMatchScope.WATCHED:
             queryset = queryset.filter(notification_watchers__user=request.user).distinct()
+        queryset = _exclude_tournament_used_matches(queryset, tournament, participant)
         tabs.append(
             {
                 "scope": scope,
@@ -458,6 +547,7 @@ def _tournament_sport_tabs(
     request,
     tournament: Tournament,
     *,
+    participant: TournamentParticipant,
     active_scope: str,
     active_sport: str,
     period_start,
@@ -469,6 +559,7 @@ def _tournament_sport_tabs(
     base_queryset = _filter_tournament_allowed_sports(base_queryset, allowed_sport_codes)
     if active_scope == PredictionMatchScope.WATCHED:
         base_queryset = base_queryset.filter(notification_watchers__user=request.user).distinct()
+    base_queryset = _exclude_tournament_used_matches(base_queryset, tournament, participant)
     for sport, label in _tournament_sport_filters(allowed_sport_codes):
         queryset = base_queryset if sport == "all" else base_queryset.filter(sport__code=sport)
         tabs.append(

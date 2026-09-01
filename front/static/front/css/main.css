@@ -10469,6 +10469,7 @@ h2 {
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
+    text-align: center;
 }
 
 .match-table-head,
@@ -19651,7 +19652,7 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .profile-form-card {
-    padding: 28px;
+    padding: 15px 10px;
 }
 
 .profile-section-heading {
@@ -27503,7 +27504,7 @@ font-size: 13px;
     min-height: 28px;
     padding: 0 10px;
     border-radius: 999px;
-    background: #0b56fa;
+    background: var(--green);
     color: #fff;
     font-size: 12px;
     font-weight: 800;
@@ -28054,6 +28055,163 @@ font-size: 13px;
     color: #dc2626;
     font-size: 12px;
     font-weight: 900;
+}
+
+.tournament-predict-page .match-card-main-static,
+.tournament-predict-page .match-table-event-static,
+.tournament-predict-page .match-table-score-static {
+    cursor: default;
+}
+
+.tournament-predict-page .content-view-toolbar {
+    display: none;
+}
+
+.tournament-predict-page .match-table-watch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tournament-predict-page .match-table-event-static {
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tournament-match-row {
+    cursor: pointer;
+}
+
+.tournament-match-row.is-expanded {
+    background: #2a2a2d;
+}
+
+.tournament-match-expand {
+    width: auto;
+    height: 34px;
+    min-width: 34px;
+    display: inline-grid;
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    color: var(--text);
+    background: #303034;
+    cursor: pointer;
+}
+
+.tournament-match-expand-inline {
+    flex: 0 0 auto;
+    min-width: 78px;
+    padding: 0 9px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tournament-match-expand:hover {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.tournament-match-expand svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform .22s ease;
+}
+
+.tournament-match-row.is-expanded .tournament-match-expand svg {
+    transform: rotate(180deg);
+}
+
+.tournament-match-odds-row {
+    min-width: 980px;
+    margin: 1px 0 8px;
+    padding: 0;
+}
+
+.tournament-match-odds-panel {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 10px 10px;
+    background: #202022;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3e transparent;
+}
+
+.tournament-match-odds-strip {
+    width: max-content;
+    min-width: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.tournament-match-odds-panel::-webkit-scrollbar {
+    height: 8px;
+}
+
+.tournament-match-odds-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tournament-match-odds-panel::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #3a3a3e;
+}
+
+.tournament-match-full-odds .odds-button {
+    flex: 0 0 78px;
+    width: 78px;
+    min-width: 78px;
+    min-height: 42px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 7px;
+    text-align: center;
+}
+
+.tournament-match-full-odds .odds-button span {
+    max-width: 100%;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.tournament-match-full-odds .odds-button b {
+    grid-column: 1;
+    grid-row: auto;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.tournament-match-full-odds .odds-button .match-odd-lock {
+    display: none;
+}
+
+.tournament-match-odds-loading,
+.tournament-match-odds-error {
+    min-height: 56px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.tournament-match-odds-error {
+    color: #f87171;
 }
 
 .tournaments-page .tournaments-layout {
