@@ -54,10 +54,6 @@
                     <span>Моя лента</span>
                 </a>
                 {% endif %}
-                <a class="{% if request.resolver_match.url_name == 'favorites' %}is-active{% endif %}" href="{% url 'front:favorites' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"/></svg></span>
-                    <span>Избранные прогнозы</span>
-                </a>
                 {% include "front/includes/_cappers_nav_menu.html" %}
             </div>
 
