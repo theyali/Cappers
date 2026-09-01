@@ -24,6 +24,22 @@
             tabindex="-1"
             data-expert-public-tab="stats"
         >Статистика</button>
+        <button
+            class="expert-public-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            tabindex="-1"
+            data-expert-public-tab="achievements"
+        >Достижения</button>
+        <button
+            class="expert-public-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            tabindex="-1"
+            data-expert-public-tab="tournaments"
+        >Турниры</button>
     </div>
 
     {{ block.super }}
@@ -40,6 +56,8 @@
     {% include "cabinet/_expert_recent_performance.html" %}
     {% include "cabinet/_expert_sport_profit.html" %}
     {% include "cabinet/_expert_monthly_stats.html" %}
+    {% include "cabinet/_expert_public_achievements.html" %}
+    {% include "cabinet/_expert_public_tournaments.html" %}
     {% include "cabinet/_expert_recommendations.html" %}
 </section>
 {% endblock %}
