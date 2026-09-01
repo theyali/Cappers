@@ -1,9 +1,20 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from tinymce.models import HTMLField
 
 from game.models import PredictionCoupon
+
+
+SELF_REACTION_ERROR = "Нельзя лайкать или сохранять собственный прогноз."
+
+
+def _validate_not_own_prediction_reaction(*, prediction_id, user_id):
+    if not prediction_id or not user_id:
+        return
+    if PredictionCoupon.objects.filter(pk=prediction_id, author_id=user_id).exists():
+        raise ValidationError(SELF_REACTION_ERROR)
 
 
 class Article(models.Model):
@@ -78,6 +89,17 @@ class PredictionLike(models.Model):
         ]
         ordering = ("-created_at",)
 
+    def clean(self):
+        super().clean()
+        _validate_not_own_prediction_reaction(
+            prediction_id=self.prediction_id,
+            user_id=self.user_id,
+        )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return f"{self.user} 👍 {self.prediction_id}"
 
@@ -108,6 +130,17 @@ class PredictionFavorite(models.Model):
             models.Index(fields=("user", "created_at"), name="pred_fav_user_created_idx"),
         ]
         ordering = ("-created_at",)
+
+    def clean(self):
+        super().clean()
+        _validate_not_own_prediction_reaction(
+            prediction_id=self.prediction_id,
+            user_id=self.user_id,
+        )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.user} ♥ {self.prediction_id}"
