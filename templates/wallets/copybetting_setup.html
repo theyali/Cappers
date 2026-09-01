@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Копирование ставок — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="wallet-page copybetting-page">
+    <div class="wallet-hero">
+        <div class="wallet-hero-copy">
+            <p class="wallet-kicker">Копибеттинг</p>
+            <h1>{{ expert_name }}</h1>
+        </div>
+        <div class="wallet-balance-card">
+            <span>Виртуальный баланс</span>
+            <strong>{{ virtual_balance.balance }} ₽</strong>
+        </div>
+    </div>
+
+    <form class="wallet-form-card" method="post" action="{% url 'wallets:copybetting_setup' analyst.id %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="profile-form-alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="profile-fields-grid">
+            {% for field in form %}
+                <label class="profile-field">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {{ field.errors }}
+                </label>
+            {% endfor %}
+        </div>
+        <div class="wallet-form-actions">
+            <button type="submit">Включить копирование</button>
+            <a href="{% url 'front:expert_profile' analyst.username %}">Назад к капперу</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

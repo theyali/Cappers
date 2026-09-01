@@ -22,7 +22,7 @@ from game.services.coupon_validation import (
 from game.services.match_sync import MatchSyncService
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
-from wallets.services import InsufficientBalance, charge_prediction_stake, format_money
+from wallets.services import InsufficientBalance, charge_prediction_stake, copy_published_coupon, format_money
 
 
 logger = logging.getLogger(__name__)
@@ -278,6 +278,8 @@ def create_coupon(request):
                 for item in normalized_items
             ]
         )
+        if not autosave:
+            copy_published_coupon(coupon)
 
     coupon = (
         PredictionCoupon.objects.prefetch_related("predictions__match")

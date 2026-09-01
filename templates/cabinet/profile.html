@@ -96,6 +96,8 @@
             <a class="{% if active_tab == 'followers' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link>Подписчики</a>
         {% endif %}
         <a class="{% if active_tab == 'following' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link>Подписки</a>
+        <a class="{% if active_tab == 'copybetting' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link>Копибеттинг</a>
+        <a class="{% if active_tab == 'wallet' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=wallet" data-profile-tab-link>Баланс</a>
         <a class="{% if active_tab == 'settings' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Настройки</a>
     </nav>
 
@@ -119,6 +121,162 @@
                 </dl>
             </div>
         {% endif %}
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'wallet' %}is-active{% endif %}" id="profile-tab-wallet" data-profile-tab-panel="wallet">
+        <div class="profile-list-card">
+            <div class="profile-section-heading">
+                <div>
+                    <p class="eyebrow">Финансы</p>
+                    <h2>Балансы и операции</h2>
+                </div>
+                <a class="profile-save-button" href="{% url 'wallets:top_up' %}">Пополнить</a>
+            </div>
+
+            <div class="profile-wallet-grid">
+                <article class="profile-wallet-card">
+                    <span>Виртуальный баланс</span>
+                    <strong>{{ virtual_balance_display }} ₽</strong>
+                    <small>Используется для прогнозов и копибеттинга.</small>
+                </article>
+                {% if request.user.is_analyst and real_balance %}
+                <article class="profile-wallet-card">
+                    <span>Реальный баланс</span>
+                    <strong>{{ real_balance_display }} ₽</strong>
+                    <small>Ожидает вывода: {{ real_pending_withdrawal_display }} ₽.</small>
+                </article>
+                {% endif %}
+            </div>
+
+            <div class="profile-wallet-history">
+                <div>
+                    <h3>Виртуальные операции</h3>
+                    <div class="profile-transaction-list">
+                        {% for transaction in virtual_transactions %}
+                            <div class="profile-transaction-row">
+                                <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span></div>
+                                <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount }} ₽</strong><span>после: {{ transaction.balance_after }} ₽</span></div>
+                            </div>
+                        {% empty %}
+                            <div class="profile-empty-state"><p>Операций пока нет.</p></div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if request.user.is_analyst %}
+                <div>
+                    <h3>Реальные операции</h3>
+                    <div class="profile-transaction-list">
+                        {% for transaction in real_transactions %}
+                            <div class="profile-transaction-row">
+                                <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }} · {{ transaction.get_status_display }}</span></div>
+                                <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount }} ₽</strong><span>после: {{ transaction.balance_after }} ₽</span></div>
+                            </div>
+                        {% empty %}
+                            <div class="profile-empty-state"><p>Операций пока нет.</p></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-tab-panel {% if active_tab == 'copybetting' %}is-active{% endif %}" id="profile-tab-copybetting" data-profile-tab-panel="copybetting">
+        <div class="profile-list-card">
+            <div class="profile-section-heading">
+                <div>
+                    <p class="eyebrow">Копибеттинг</p>
+                    <h2>Автокопирование капперов</h2>
+                </div>
+                <a class="profile-save-button" href="{% url 'front:cappers_table' %}">Найти каппера</a>
+            </div>
+
+            <div class="profile-copy-grid">
+                {% for subscription in copybetting_subscriptions %}
+                    <article class="profile-copy-card">
+                        <div>
+                            <span class="profile-coupon-id">{{ subscription.get_status_display }}</span>
+                            <h3>
+                                {% if subscription.analyst.analyst_profile.display_name %}
+                                    {{ subscription.analyst.analyst_profile.display_name }}
+                                {% else %}
+                                    @{{ subscription.analyst.username }}
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <dl class="profile-info-list">
+                            <div><dt>Статус</dt><dd>{{ subscription.get_status_display }}</dd></div>
+                            <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
+                            <div><dt>Ставка</dt><dd>{{ subscription.stake_percent }}%</dd></div>
+                            <div><dt>Стоп-лосс</dt><dd>{{ subscription.stop_loss_amount }} ₽</dd></div>
+                            <div><dt>Мин. КФ</dt><dd>{% if subscription.min_total_coefficient %}{{ subscription.min_total_coefficient }}{% else %}любой{% endif %}</dd></div>
+                            <div><dt>Обычные</dt><dd>{% if subscription.copy_regular_coupons %}да{% else %}нет{% endif %}</dd></div>
+                            <div><dt>Турниры</dt><dd>{% if subscription.copy_tournament_coupons %}да{% else %}нет{% endif %}</dd></div>
+                            <div><dt>Прибыль</dt><dd>{{ subscription.total_profit }} ₽</dd></div>
+                        </dl>
+                        {% with sports=subscription.allowed_sports.all %}
+                            {% if sports %}
+                                <div class="profile-copy-filters">
+                                    {% for sport in sports %}<span>{{ sport.name_ru|default:sport.name }}</span>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        <div class="profile-copy-actions">
+                            <a class="profile-row-action" href="{% url 'wallets:copybetting_setup' subscription.analyst_id %}">Настроить</a>
+                            {% if subscription.status == 'active' %}
+                            <form method="post" action="{% url 'wallets:copybetting_pause' subscription.id %}">
+                                {% csrf_token %}
+                                <button class="profile-row-action is-muted" type="submit">Пауза</button>
+                            </form>
+                            <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
+                                {% csrf_token %}
+                                <button class="profile-row-action is-muted" type="submit">Остановить</button>
+                            </form>
+                            {% elif subscription.status == 'paused' %}
+                            <form method="post" action="{% url 'wallets:copybetting_resume' subscription.id %}">
+                                {% csrf_token %}
+                                <button class="profile-row-action" type="submit">Возобновить</button>
+                            </form>
+                            <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
+                                {% csrf_token %}
+                                <button class="profile-row-action is-muted" type="submit">Остановить</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="profile-empty-state">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l6-6 4 4 6-8"></path><path d="M4 21h16"></path></svg>
+                        <p>Активных настроек копибеттинга пока нет.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="profile-list-head profile-copy-history-head">
+                <div><p class="eyebrow">История</p><h2>Скопированные ставки</h2></div>
+            </div>
+            <div class="profile-coupons-list">
+                {% for copied_bet in copied_bets %}
+                    <a class="profile-coupon-row" href="{% url 'front:prediction_detail' copied_bet.source_coupon_id %}">
+                        <div class="profile-coupon-main">
+                            <span class="profile-coupon-id">#{{ copied_bet.source_coupon_id }}</span>
+                            <div class="profile-coupon-copy">
+                                <strong>@{{ copied_bet.analyst.username }}</strong>
+                                <span>{{ copied_bet.created_at|date:"d.m.Y · H:i" }}</span>
+                            </div>
+                        </div>
+                        <span class="profile-coupon-status is-{{ copied_bet.state_status }}">{{ copied_bet.get_state_status_display }}</span>
+                        <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ copied_bet.stake }} ₽</strong></div>
+                        <div class="profile-coupon-metric"><span>Возможный выигрыш</span><strong>{{ copied_bet.possible_payout }} ₽</strong></div>
+                        <div class="profile-coupon-metric"><span>Прибыль</span><strong>{{ copied_bet.profit }} ₽</strong></div>
+                        <span class="profile-coupon-open" aria-hidden="true">→</span>
+                    </a>
+                {% empty %}
+                    <div class="profile-empty-state"><p>Скопированных ставок пока нет.</p></div>
+                {% endfor %}
+            </div>
+        </div>
     </section>
 
     {% if request.user.is_analyst %}

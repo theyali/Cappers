@@ -13,6 +13,13 @@ from game.models import PredictionCoupon
 from notifications.models import TelegramAccount
 from notifications.services import get_preferences
 from notifications.telegram_bot import get_bot_token
+from wallets.models import (
+    BalanceTransaction,
+    CopiedBet,
+    CopyBettingSubscription,
+    RealBalanceTransaction,
+)
+from wallets.services import ensure_real_balance, ensure_virtual_balance, format_money
 
 from .achievements import build_achievement_overview
 from .dashboard_views import build_dashboard_context
@@ -114,7 +121,7 @@ def profile(request):
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
 
-    allowed_tabs = {"profile", "following", "settings", "achievements"}
+    allowed_tabs = {"profile", "following", "settings", "achievements", "wallet", "copybetting"}
     if request.user.role == User.Role.ANALYST:
         allowed_tabs.update({"predictions", "followers"})
 
@@ -152,6 +159,24 @@ def profile(request):
     )
     notification_preferences = get_preferences(request.user)
     telegram_account = TelegramAccount.objects.filter(user=request.user).first()
+    virtual_balance = ensure_virtual_balance(request.user)
+    real_balance = ensure_real_balance(request.user) if request.user.role == User.Role.ANALYST else None
+    virtual_transactions = BalanceTransaction.objects.filter(user=request.user).order_by("-created_at", "-id")[:20]
+    real_transactions = (
+        RealBalanceTransaction.objects.filter(user=request.user).order_by("-created_at", "-id")[:20]
+        if request.user.role == User.Role.ANALYST
+        else []
+    )
+    copybetting_subscriptions = (
+        CopyBettingSubscription.objects.filter(user=request.user)
+        .select_related("analyst", "analyst__analyst_profile")
+        .order_by("-started_at", "-id")
+    )
+    copied_bets = (
+        CopiedBet.objects.filter(user=request.user)
+        .select_related("analyst", "analyst__analyst_profile", "source_coupon")
+        .order_by("-created_at", "-id")[:20]
+    )
 
     my_coupons = []
     coupons_count = 0
@@ -192,6 +217,15 @@ def profile(request):
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
+        "virtual_balance": virtual_balance,
+        "virtual_balance_display": format_money(virtual_balance.balance),
+        "real_balance": real_balance,
+        "real_balance_display": format_money(real_balance.balance) if real_balance else "",
+        "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
+        "virtual_transactions": virtual_transactions,
+        "real_transactions": real_transactions,
+        "copybetting_subscriptions": copybetting_subscriptions,
+        "copied_bets": copied_bets,
     }
     if request.user.role == User.Role.ANALYST:
         context.update(build_dashboard_context(request.user))

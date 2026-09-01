@@ -98,8 +98,11 @@
                                 {% else %}
                                     <span>Время не указано</span>
                                 {% endif %}
-                                {% if match.predictions_count %}<span>{{ match.predictions_count }} прогнозов</span>{% endif %}
-                            </span>
+                            {% if match.predictions_count %}<span>{{ match.predictions_count }} прогнозов</span>{% endif %}
+                            {% if tournament_prediction_mode and match.tournament_match_used %}
+                                <span class="match-card-tournament-used">Матч уже использован в турнире</span>
+                            {% endif %}
+                        </span>
                         </span>
                         {% if tournament_prediction_mode %}
                         <button

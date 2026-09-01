@@ -43,7 +43,7 @@
                 <div class="tournament-predict-hero-copy">
                     <a class="tournament-back-link is-dark" href="{{ tournament.get_absolute_url }}">← Турнир</a>
                     <span class="tournament-status tournament-status-{{ runtime_status.key }}">{{ runtime_status.label }}</span>
-                    <h1>{{ tournament.title }}</h1>
+                    <h1>{{ match_list_h1|default:tournament.title }}</h1>
                     <p>Выберите матч и исход для прогноза в рамках турнира.</p>
                     <dl class="tournament-predict-rules">
                         <div><dt>КФ</dt><dd>от {{ tournament.min_coefficient|floatformat:2 }}</dd></div>
@@ -56,9 +56,7 @@
                     <small>{{ match_list_hero_meta|default:"матчей доступно" }}</small>
                 </div>
             </div>
-            <div class="matches-content-region" data-matches-content-region>
-                {% include "game/includes/_match_table_view.html" %}
-            </div>
+            {% include "game/includes/_match_list_content.html" %}
         </section>
 
         {% include "game/_coupon_sidebar.html" %}

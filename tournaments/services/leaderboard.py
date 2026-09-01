@@ -12,6 +12,8 @@ from tournaments.models import (
     TournamentParticipant,
     TournamentResult,
 )
+from wallets.models import RealBalanceTransaction
+from wallets.services import credit_real_balance
 
 
 MONEY_STEP = Decimal("0.01")
@@ -86,7 +88,18 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
         )
         for row in rows
     ]
-    return list(TournamentResult.objects.bulk_create(results))
+    created_results = list(TournamentResult.objects.bulk_create(results))
+    for result in created_results:
+        if result.prize_amount <= 0:
+            continue
+        credit_real_balance(
+            result.participant.user,
+            result.prize_amount,
+            RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
+            related_obj=tournament,
+            note=f"{result.rank} место в турнире «{tournament.title}»",
+        )
+    return created_results
 
 
 def prize_for_rank(tournament: Tournament, rank: int) -> Decimal:

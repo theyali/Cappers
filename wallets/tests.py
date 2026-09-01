@@ -6,11 +6,12 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import User
+from cabinet.models import AnalystProfile, User
 from game.models import Match, Prediction, PredictionCoupon
 from game.services.settlement import settle_coupon
-from wallets.models import BalanceTransaction
-from wallets.services import charge_prediction_stake
+from cabinet.paid_predictions import subscribe_to_paid_predictions
+from wallets.models import BalanceTransaction, CopiedBet, CopyBettingSubscription, RealBalanceTransaction
+from wallets.services import activate_copybetting, charge_prediction_stake, copy_published_coupon
 
 
 TEST_STORAGES = {
@@ -60,6 +61,23 @@ class CapperBalanceTests(TestCase):
         self.assertTrue(
             BalanceTransaction.objects.filter(
                 user=self.analyst,
+                kind=BalanceTransaction.Kind.INITIAL_BONUS,
+                amount=Decimal("10000.00"),
+            ).exists()
+        )
+
+    def test_new_reader_gets_same_virtual_balance(self):
+        reader = User.objects.create_user(
+            username="balance-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("10000.00"))
+        self.assertTrue(
+            BalanceTransaction.objects.filter(
+                user=reader,
                 kind=BalanceTransaction.Kind.INITIAL_BONUS,
                 amount=Decimal("10000.00"),
             ).exists()
@@ -154,6 +172,124 @@ class CapperBalanceTests(TestCase):
                 user=self.analyst,
                 kind=BalanceTransaction.Kind.VIRTUAL_DEPOSIT,
                 amount=Decimal("10000.00"),
+            ).exists()
+        )
+
+    def test_reader_can_top_up_virtual_balance(self):
+        reader = User.objects.create_user(
+            username="top-up-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        self.client.force_login(reader)
+
+        response = self.client.post(reverse("wallets:top_up"))
+
+        self.assertEqual(response.status_code, 302)
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("20000.00"))
+
+    def test_copybetting_copies_published_coupon_and_charges_reader(self):
+        reader = User.objects.create_user(
+            username="copy-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            stop_loss_amount=Decimal("300.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+
+        copied = copy_published_coupon(coupon)
+
+        self.assertEqual(len(copied), 1)
+        copied_bet = copied[0]
+        self.assertEqual(copied_bet.subscription, subscription)
+        self.assertEqual(copied_bet.stake, Decimal("100.00"))
+        self.assertEqual(copied_bet.possible_payout, Decimal("200.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+        self.assertTrue(
+            BalanceTransaction.objects.filter(
+                user=reader,
+                kind=BalanceTransaction.Kind.COPYBET_STAKE,
+                amount=Decimal("-100.00"),
+            ).exists()
+        )
+
+    def test_copied_bet_is_settled_with_source_coupon(self):
+        reader = User.objects.create_user(
+            username="copy-settle-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            stop_loss_amount=Decimal("300.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("500.00"),
+            state_status=Prediction.StateStatus.WIN,
+        )
+        copy_published_coupon(coupon)
+
+        settle_coupon(coupon.id)
+
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
+        self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
+        self.assertEqual(copied_bet.profit, Decimal("100.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
+        self.assertEqual(subscription.total_profit, Decimal("100.00"))
+
+    def test_paid_subscription_credits_analyst_real_balance(self):
+        profile = AnalystProfile.objects.get(user=self.analyst)
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("990.00")
+        profile.save(update_fields=["paid_predictions_enabled", "paid_predictions_price", "updated_at"])
+        reader = User.objects.create_user(
+            username="paid-income-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+
+        subscribe_to_paid_predictions(reader, self.analyst)
+
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertTrue(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                amount=Decimal("990.00"),
             ).exists()
         )
 

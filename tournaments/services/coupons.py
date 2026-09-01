@@ -16,7 +16,7 @@ from game.services.match_timing import prediction_window_open
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.join import get_active_participant
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
-from wallets.services import InsufficientBalance, charge_prediction_stake
+from wallets.services import InsufficientBalance, charge_prediction_stake, copy_published_coupon
 
 
 class TournamentCouponCreateError(ValidationError):
@@ -155,6 +155,7 @@ def create_tournament_coupon(
                     for prediction in predictions
                 ]
             )
+            copy_published_coupon(coupon)
     except IntegrityError as exc:
         raise TournamentCouponCreateError(
             "В рамках турнира на один матч можно сделать только один прогноз."

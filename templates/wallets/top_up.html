@@ -6,11 +6,11 @@
 <section class="wallet-page">
     <div class="wallet-hero">
         <div class="wallet-hero-copy">
-            <p class="wallet-kicker">Баланс каппера</p>
+            <p class="wallet-kicker">Виртуальный баланс</p>
             <h1>Способы пополнения</h1>
         </div>
         <div class="wallet-balance-card">
-            <span>Текущий баланс</span>
+            <span>Виртуальный баланс</span>
             <strong>{{ balance_display }} ₽</strong>
         </div>
     </div>
@@ -22,7 +22,7 @@
             </div>
             <div class="wallet-method-copy">
                 <h2>Виртуальное пополнение</h2>
-                <p>+{{ top_up_amount_display }} ₽ на баланс для тестовых прогнозов.</p>
+                <p>+{{ top_up_amount_display }} ₽ для ставок, прогнозов и копибеттинга.</p>
             </div>
             <form method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
                 {% csrf_token %}
@@ -30,6 +30,42 @@
                 <button type="submit">Пополнить</button>
             </form>
         </article>
+
+        {% if real_balance %}
+        <article class="wallet-method">
+            <div class="wallet-method-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div class="wallet-method-copy">
+                <h2>Реальный баланс: {{ real_balance_display }} ₽</h2>
+                <p>Ожидает вывода: {{ pending_withdrawal_display }} ₽. Эти средства можно перевести в виртуальный баланс или запросить к выводу.</p>
+            </div>
+            <form method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
+                <input type="hidden" name="action" value="transfer_to_virtual">
+                <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" placeholder="Сумма">
+                <button type="submit">В виртуальный</button>
+            </form>
+        </article>
+
+        <article class="wallet-method">
+            <div class="wallet-method-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+            </div>
+            <div class="wallet-method-copy">
+                <h2>Запросить вывод</h2>
+                <p>Заявка фиксируется в истории реального баланса и ждёт обработки администратором.</p>
+            </div>
+            <form method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
+                <input type="hidden" name="action" value="withdraw">
+                <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" placeholder="Сумма">
+                <button type="submit">Вывести</button>
+            </form>
+        </article>
+        {% endif %}
 
         <article class="wallet-method is-disabled" aria-disabled="true">
             <div class="wallet-method-icon" aria-hidden="true">

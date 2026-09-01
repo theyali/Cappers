@@ -8,6 +8,8 @@ from .models import (
     User,
     paid_subscription_expires_at,
 )
+from wallets.models import RealBalanceTransaction
+from wallets.services import credit_real_balance
 
 
 def profile_paid_predictions_enabled(user: User) -> bool:
@@ -61,7 +63,7 @@ def subscribe_to_paid_predictions(subscriber: User, analyst: User) -> AnalystPai
     if analyst.role != User.Role.ANALYST:
         raise ValueError("Платная подписка доступна только на аналитиков.")
 
-    profile: AnalystProfile | None = getattr(analyst, "analyst_profile", None)
+    profile: AnalystProfile | None = AnalystProfile.objects.filter(user=analyst).first()
     if not profile or not profile.paid_predictions_enabled or profile.paid_predictions_price <= 0:
         raise ValueError("Этот эксперт не публикует платные прогнозы.")
 
@@ -78,6 +80,12 @@ def subscribe_to_paid_predictions(subscriber: User, analyst: User) -> AnalystPai
         )
         if created:
             AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
+            credit_real_balance(
+                analyst,
+                profile.paid_predictions_price,
+                RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                note=f"Подписка @{subscriber.username}",
+            )
             return subscription
         base_time = subscription.expires_at if subscription.expires_at > now else now
         subscription.price = profile.paid_predictions_price
@@ -86,4 +94,10 @@ def subscribe_to_paid_predictions(subscriber: User, analyst: User) -> AnalystPai
             subscription.starts_at = now
         subscription.save(update_fields=["price", "starts_at", "expires_at", "updated_at"])
         AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
+        credit_real_balance(
+            analyst,
+            profile.paid_predictions_price,
+            RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+            note=f"Продление подписки @{subscriber.username}",
+        )
     return subscription

@@ -607,7 +607,64 @@ h2 {
 }
 
 .wallet-method form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 0;
+}
+
+.wallet-method-input {
+    width: 120px;
+    min-height: 42px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    color: var(--text);
+    background: #171718;
+    font: inherit;
+    font-size: 13px;
+}
+
+.wallet-form-card {
+    display: grid;
+    gap: 22px;
+    padding: 24px;
+    border-radius: 18px;
+    background: var(--panel);
+    outline: 1px solid rgba(255, 255, 255, .08);
+}
+
+.wallet-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.wallet-form-actions button,
+.wallet-form-actions a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.wallet-form-actions button {
+    color: #fff;
+    background: var(--blue);
+    cursor: pointer;
+}
+
+.wallet-form-actions a {
+    color: var(--text);
+    background: rgba(255, 255, 255, .08);
 }
 
 .wallet-method button,
@@ -761,8 +818,14 @@ h2 {
     }
 
     .wallet-method button,
+    .wallet-method-input,
     .wallet-method-status {
         width: 100%;
+    }
+
+    .wallet-method form {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 
@@ -20342,6 +20405,108 @@ body:has(.predictions-scroll-page) .site-footer {
 .profile-row-action.is-muted {
     color: rgba(255,255,255,.7);
     background: #303033;
+}
+
+.profile-wallet-grid,
+.profile-copy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.profile-wallet-card,
+.profile-copy-card {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 16px;
+    background: #171718;
+    outline: 1px solid rgba(255,255,255,.07);
+}
+
+.profile-wallet-card span,
+.profile-wallet-card small {
+    color: #707072;
+    font-size: 11px;
+}
+
+.profile-wallet-card strong {
+    overflow: hidden;
+    color: var(--yellow);
+    font-size: 26px;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-wallet-history {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.profile-wallet-history h3,
+.profile-copy-card h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.profile-transaction-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.profile-transaction-row {
+    min-height: 62px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(110px, auto);
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.profile-transaction-row strong,
+.profile-transaction-row span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-transaction-row strong {
+    color: var(--text);
+    font-size: 12px;
+}
+
+.profile-transaction-row span {
+    margin-top: 4px;
+    color: #707072;
+    font-size: 10px;
+}
+
+.profile-transaction-row > div:last-child {
+    text-align: right;
+}
+
+.profile-copy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.profile-copy-actions form {
+    margin: 0;
+}
+
+.profile-copy-history-head {
+    margin-top: 10px;
 }
 
 .profile-empty-state {

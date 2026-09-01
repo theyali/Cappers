@@ -32,11 +32,11 @@
                 <small>@{{ request.user.username }}</small>
             </span>
         </div>
-        {% if request.user.is_analyst and nav_capper_balance is not None %}
+        {% if nav_virtual_balance is not None %}
             <div class="mobile-offcanvas-wallet">
                 <span>
                     <small>Баланс</small>
-                    <strong data-wallet-balance>{{ nav_capper_balance_display }} ₽</strong>
+                    <strong data-wallet-balance>{{ nav_virtual_balance_display }} ₽</strong>
                 </span>
                 <a href="{% url 'wallets:top_up' %}">Пополнить</a>
             </div>

@@ -51,6 +51,13 @@
                     {% else %}
                         <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
                     {% endif %}
+                    {% if not is_self %}
+                        {% if request.user.is_authenticated %}
+                            <a class="expert-follow-button expert-public-name-action" href="{% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
+                        {% else %}
+                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <span class="expert-public-username">@{{ expert.username }}</span>
                 {% if analyst_profile.bio %}<p class="expert-public-bio">{{ analyst_profile.bio }}</p>{% endif %}

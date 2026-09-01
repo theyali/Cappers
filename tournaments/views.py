@@ -116,13 +116,13 @@ def predict(request, slug: str):
     base_matches = _filter_tournament_sport(base_matches, active_sport)
     if active_scope == PredictionMatchScope.WATCHED:
         base_matches = base_matches.filter(notification_watchers__user=request.user).distinct()
-    base_matches = _exclude_tournament_used_matches(base_matches, tournament, participant)
     matches_queryset = MatchQuery.decorate(base_matches, request.user)
 
     if date_views._is_lazy_request(request) and request.GET.get("view") == "table":
         return _tournament_table_lazy_response(
             request,
             tournament=tournament,
+            participant=participant,
             matches_queryset=matches_queryset,
             can_write_coupon=True,
             active_sport=active_sport,
@@ -137,6 +137,7 @@ def predict(request, slug: str):
         active_sport=active_sport,
         limit=date_views.TABLE_MATCHES_PER_SPORT,
     )
+    _decorate_tournament_table_groups(table_groups, tournament, participant)
 
     if date_views._is_lazy_request(request):
         html = render_to_string(
@@ -447,6 +448,7 @@ def _tournament_table_lazy_response(
     request,
     *,
     tournament: Tournament,
+    participant: TournamentParticipant,
     matches_queryset,
     can_write_coupon: bool,
     active_sport: str,
@@ -468,6 +470,7 @@ def _tournament_table_lazy_response(
     html = ""
     if sport_group is not None:
         sport_group["open"] = True
+        _decorate_tournament_table_groups([sport_group], tournament, participant)
         html = render_to_string(
             "game/includes/_match_table_sport.html",
             {
@@ -507,6 +510,20 @@ def _decorate_tournament_matches(
     for match in matches:
         match.coupon_odds = _match_winner_odds(match)
         match.tournament_match_used = match.id in used_match_ids
+
+
+def _decorate_tournament_table_groups(
+    table_groups: list[dict],
+    tournament: Tournament,
+    participant: TournamentParticipant,
+) -> None:
+    for sport_group in table_groups:
+        for league_group in sport_group.get("leagues", []):
+            _decorate_tournament_matches(
+                list(league_group.get("items", [])),
+                tournament,
+                participant,
+            )
 
 
 def _tournament_scope_tabs(
