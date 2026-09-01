@@ -1,7 +1,6 @@
 from django import template
 
 from cabinet.achievements import (
-    ACHIEVEMENT_DEFINITIONS,
     _best_win_streak,
     _published_predictions_count,
     _user_activity_metrics,
@@ -9,6 +8,8 @@ from cabinet.achievements import (
 )
 
 register = template.Library()
+
+RECENT_ACHIEVEMENTS_LIMIT = 8
 
 
 @register.inclusion_tag("cabinet/_expert_achievements.html")
@@ -20,7 +21,7 @@ def expert_achievement_badges(
     is_verified,
 ):
     activity = _user_activity_metrics(expert)
-    badges = build_achievement_badges(
+    all_badges = build_achievement_badges(
         predictions_count=_published_predictions_count(expert),
         wins_count=wins_count,
         overall_roi=overall_roi,
@@ -31,7 +32,8 @@ def expert_achievement_badges(
         favorites_saved=activity["favorites_saved"],
         referrals=activity["referrals"],
     )
+    badges = list(reversed(all_badges))[:RECENT_ACHIEVEMENTS_LIMIT]
     return {
         "achievement_badges": badges,
-        "achievement_count": len(badges),
+        "achievement_count": len(all_badges),
     }
