@@ -28,6 +28,7 @@ class Bonus(models.Model):
         on_delete=models.CASCADE,
         related_name="bonuses",
     )
+    image = models.ImageField("Изображение", upload_to="bonuses/", blank=True)
     promocode = models.CharField("Промокод", max_length=120, blank=True)
     short_description = models.CharField("Краткое описание", max_length=220)
     description = models.TextField("Описание", blank=True)
