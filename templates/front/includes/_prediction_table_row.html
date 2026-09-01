@@ -3,6 +3,8 @@
     data-prediction-card="{{ prediction.coupon.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
     data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+    onclick="if (!event.target.closest('a, button')) window.location.href=this.dataset.couponUrl;"
+    style="cursor:pointer;"
 >
     <a class="prediction-table-event" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
         <span class="prediction-table-event-copy">
@@ -14,7 +16,13 @@
         </span>
     </a>
 
-    <a class="prediction-table-expert" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
+    <a
+        class="prediction-table-expert"
+        href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}"
+        style="justify-self:start;width:fit-content;max-width:100%;"
+        onmouseenter="this.querySelector('strong').style.color='var(--yellow)'"
+        onmouseleave="this.querySelector('strong').style.color=''"
+    >
         <span class="prediction-table-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% if prediction.expert_avatar_url %}
                 <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">
