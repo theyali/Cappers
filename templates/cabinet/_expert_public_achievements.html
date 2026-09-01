@@ -1,0 +1,70 @@
+{% load static %}
+<section class="profile-achievements-shell expert-public-achievements-panel" data-expert-public-panel="achievements" hidden>
+    <div class="profile-achievements-head">
+        <div>
+            <p class="eyebrow">Награды эксперта</p>
+            <h2>Достижения</h2>
+            <p>Все полученные достижения эксперта, начиная с последних.</p>
+        </div>
+        <div class="profile-achievements-total">
+            <strong>{{ expert_achievement_badges|length }}</strong>
+            <span>получено</span>
+        </div>
+    </div>
+
+    {% if expert_achievement_badges %}
+    <div class="profile-achievements-grid">
+        {% for achievement in expert_achievement_badges %}
+        <article class="profile-achievement-card is-unlocked" data-achievement="{{ achievement.key }}">
+            <div class="profile-achievement-topline">
+                <span class="profile-achievement-icon" data-skeleton-image>
+                    <img src="{% static achievement.icon %}" width="64" height="64" alt="" loading="lazy">
+                </span>
+                <span class="profile-achievement-state is-unlocked">Получено</span>
+            </div>
+            <span class="profile-achievement-category">{{ achievement.category }}</span>
+            <div class="profile-achievement-title heading-style-h3">{{ achievement.label }}</div>
+            <p>{{ achievement.description }}</p>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="profile-empty-state">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8M9 16h6v5H9z"></path></svg>
+        <p>Эксперт пока не получил достижений.</p>
+    </div>
+    {% endif %}
+
+    {% if expert_tournament_achievements %}
+    <div class="profile-achievements-head">
+        <div>
+            <p class="eyebrow">Турнирные результаты</p>
+            <h2>Награды за турниры</h2>
+        </div>
+        <div class="profile-achievements-total">
+            <strong>{{ expert_tournament_achievements|length }}</strong>
+            <span>наград</span>
+        </div>
+    </div>
+
+    <div class="profile-achievements-grid">
+        {% for row in expert_tournament_achievements %}
+        <a class="profile-achievement-card is-unlocked" href="{{ row.url }}">
+            <div class="profile-achievement-topline">
+                <span class="profile-achievement-icon" data-skeleton-image>
+                    {% if row.achievement.icon %}
+                    <img src="{{ row.achievement.icon.url }}" width="64" height="64" alt="" loading="lazy">
+                    {% else %}
+                    <img src="{% static 'front/svgs/trophy.svg' %}" width="64" height="64" alt="" loading="lazy">
+                    {% endif %}
+                </span>
+                <span class="profile-achievement-state is-unlocked">#{{ row.rank }}</span>
+            </div>
+            <span class="profile-achievement-category">{{ row.tournament.title }}</span>
+            <div class="profile-achievement-title heading-style-h3">{{ row.achievement.title }}</div>
+            <p>{% if row.achievement.description %}{{ row.achievement.description }}{% else %}Итоговое место в турнире: {{ row.rank }}.{% endif %}</p>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
