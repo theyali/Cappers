@@ -28063,6 +28063,7 @@ font-size: 13px;
 .tournaments-page .tournaments-content {
     align-content: start;
     grid-auto-rows: max-content;
+    padding: 0 8px;
 }
 
 .tournaments-page .tournament-grid {
