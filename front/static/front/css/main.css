@@ -28055,3 +28055,278 @@ font-size: 13px;
     font-size: 12px;
     font-weight: 900;
 }
+
+.tournaments-page .tournaments-layout {
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(300px, 340px);
+}
+
+.tournaments-page .tournaments-content {
+    align-content: start;
+    grid-auto-rows: max-content;
+}
+
+.tournaments-page .tournament-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: max-content;
+    align-items: start;
+    align-content: start;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.tournaments-page .tournament-card {
+    min-width: 0;
+    height: auto;
+    align-self: start;
+    display: grid;
+    grid-template-rows: 126px auto;
+    overflow: hidden;
+    border: 0;
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: none;
+    transition: transform .18s ease, background .18s ease;
+}
+
+.tournaments-page .tournament-card:hover {
+    transform: translateY(-2px);
+    background: #252527;
+}
+
+.tournaments-page .tournament-card-image {
+    position: relative;
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    background: var(--blue);
+}
+
+.tournaments-page .tournament-card-image::after {
+    display: none;
+}
+
+.tournaments-page .tournament-card-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.tournaments-page .tournament-card-image > span {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 8px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.tournaments-page .tournament-card-live .tournament-card-image > span {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.tournaments-page .tournament-card-upcoming .tournament-card-image > span {
+    color: #fff;
+    background: var(--blue);
+}
+
+.tournaments-page .tournament-card-finished .tournament-card-image > span {
+    color: rgba(255, 255, 255, .72);
+    background: #303033;
+}
+
+.tournaments-page .tournament-card-body {
+    min-width: 0;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    padding: 13px;
+}
+
+.tournaments-page .tournament-card-head {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.tournaments-page .tournament-card-head h2 {
+    min-height: 38px;
+    margin: 0;
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: var(--heading-font-weight);
+    line-height: 1.18;
+    letter-spacing: var(--heading-letter-spacing);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.tournaments-page .tournament-card-head > span {
+    color: var(--yellow);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.tournaments-page .tournament-card-meta {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding: 9px 10px;
+    border-radius: 10px;
+    background: #171718;
+}
+
+.tournaments-page .tournament-card-meta > div {
+    min-width: 0;
+    min-height: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tournaments-page .tournament-card-meta dt,
+.tournaments-page .tournament-card-meta dd {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.tournaments-page .tournament-card-meta dt {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.tournaments-page .tournament-card-meta dd {
+    min-width: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .86);
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tournaments-page .tournament-card-prizes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 0;
+    border: 0;
+}
+
+.tournaments-page .tournament-card-prizes > span {
+    min-width: 0;
+    min-height: 43px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    border-radius: 9px;
+    color: var(--muted);
+    background: #171718;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.tournaments-page .tournament-card-prizes b {
+    width: 18px;
+    height: 18px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 9px;
+    line-height: 1;
+}
+
+.tournaments-page .tournament-card-prizes > span:nth-child(2) b,
+.tournaments-page .tournament-card-prizes > span:nth-child(3) b {
+    color: rgba(255, 255, 255, .82);
+    background: #303033;
+}
+
+.tournaments-page .tournament-card-prizes strong {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 10px;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.tournaments-page .tournament-card-link {
+    width: 100%;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+    transition: background .18s ease, color .18s ease;
+}
+
+.tournaments-page .tournament-card-link:hover {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+@media (max-width: 1120px) {
+    .tournaments-page .tournaments-layout {
+        grid-template-columns: minmax(208px, 240px) minmax(0, 1fr);
+    }
+
+    .tournaments-page .tournament-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .tournaments-page .tournaments-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tournaments-page .tournament-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 620px) {
+    .tournaments-page .tournament-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tournaments-page .tournament-card {
+        grid-template-rows: 150px auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tournaments-page .tournament-card,
+    .tournaments-page .tournament-card-link {
+        transition: none;
+    }
+}
