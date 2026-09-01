@@ -31,6 +31,7 @@
             prediction.querySelectorAll("[data-prediction-reaction]").forEach((button) => {
                 button.disabled = true;
                 button.setAttribute("aria-disabled", "true");
+                button.style.cursor = "not-allowed";
                 button.title = ownReactionTitle(button);
             });
         });
@@ -99,6 +100,7 @@
         if (button.closest(".is-own-prediction")) {
             button.disabled = true;
             button.setAttribute("aria-disabled", "true");
+            button.style.cursor = "not-allowed";
             button.title = ownReactionTitle(button);
             return;
         }
