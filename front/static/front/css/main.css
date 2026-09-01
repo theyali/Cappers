@@ -161,7 +161,7 @@ textarea::placeholder {
     --text: #f7f8ff;
     --soft: rgba(255, 255, 255, 0.72);
     --line: rgba(255, 255, 255, 0.12);
-    --brand-logo-size: 70px;
+    --brand-logo-size: 60px;
     --nav-icon-size: 18px;
 }
 
@@ -205,12 +205,12 @@ h2 {
 .site-header {
     position: sticky;
     top: 0;
-    z-index: 20;
+    border-radius: 0;
+    z-index: 40;
+    width: 100%;
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, .10);
     background: var(--panel);
-    width: 86%;
-    margin: auto;
-    margin-top: 20px;
-    border-radius: 21px;
 }
 
 .site-nav {
@@ -1845,21 +1845,11 @@ h2 {
 }
 
 
-/* Legacy source: front/static/front/css/header.css */
-.site-header {
-    position: sticky;
-    z-index: 40;
-    width: 100%;
-    margin: 0;
-    border: 1px solid rgba(255, 255, 255, .10);
-    background: var(--panel);
-    border-radius: 0 0 21px 21px;
-}
 
 .site-nav {
     width: min(1680px, calc(100% - 32px));
     margin: auto;
-    padding: 10px 22px;
+    padding: 4px 16px;
     display: grid;
     grid-template-columns: minmax(190px, 1fr) auto minmax(190px, 1fr);
     align-items: center;
