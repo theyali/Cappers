@@ -1,5 +1,5 @@
 <article
-    class="content-table-row prediction-table-row"
+    class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}"
     data-prediction-card="{{ prediction.coupon.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
     data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
@@ -62,7 +62,8 @@
             data-url="{% url 'front:prediction_like' prediction_id=prediction.coupon.id %}"
             data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
             aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
-            title="{% if prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
+            {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
+            title="{% if prediction.is_own %}Нельзя лайкать свой прогноз{% elif prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
         >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3"></path></svg>
         </button>
@@ -74,7 +75,8 @@
             data-url="{% url 'front:prediction_favorite' prediction_id=prediction.coupon.id %}"
             data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
             aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
-            title="{% if prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+            {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
+            title="{% if prediction.is_own %}Нельзя сохранять свой прогноз в избранное{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
         >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
         </button>
