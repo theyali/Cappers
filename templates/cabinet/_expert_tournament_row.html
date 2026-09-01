@@ -1,0 +1,26 @@
+<a class="profile-coupon-row" href="{{ row.url }}">
+    <div class="profile-coupon-main">
+        <span class="profile-coupon-id">{% if row.rank %}#{{ row.rank }}{% else %}—{% endif %}</span>
+        <div class="profile-coupon-copy">
+            <strong>{{ row.tournament.title }}</strong>
+            <span>
+                {{ row.tournament.starts_at|date:"d.m.Y" }} — {{ row.tournament.ends_at|date:"d.m.Y" }}
+                · {{ row.wins_count }}-{{ row.losses_count }}-{{ row.refunds_count }}
+            </span>
+        </div>
+    </div>
+    <span class="profile-coupon-status is-{{ row.status_key }}">{{ row.status_label }}</span>
+    <div class="profile-coupon-metric">
+        <span>Прогнозы</span>
+        <strong>{{ row.coupons_count }}</strong>
+    </div>
+    <div class="profile-coupon-metric">
+        <span>Прибыль</span>
+        <strong class="{% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">{{ row.profit|floatformat:2 }} ₽</strong>
+    </div>
+    <div class="profile-coupon-metric">
+        <span>ROI</span>
+        <strong class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:2 }}%</strong>
+    </div>
+    <span class="profile-coupon-open" aria-hidden="true">→</span>
+</a>
