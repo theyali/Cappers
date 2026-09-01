@@ -12,6 +12,30 @@
         button.classList.contains("prediction-favorite") ? "prediction-favorite" : "prediction-like"
     );
 
+    const ownReactionTitle = (button) => (
+        reactionKind(button) === "prediction-favorite"
+            ? "Нельзя сохранять свой прогноз в избранное"
+            : "Нельзя лайкать свой прогноз"
+    );
+
+    const lockOwnPredictionReactions = (root = document) => {
+        const ownPredictions = [];
+        if (root instanceof Element && root.matches(".is-own-prediction")) {
+            ownPredictions.push(root);
+        }
+        if (root.querySelectorAll) {
+            ownPredictions.push(...root.querySelectorAll(".is-own-prediction"));
+        }
+
+        ownPredictions.forEach((prediction) => {
+            prediction.querySelectorAll("[data-prediction-reaction]").forEach((button) => {
+                button.disabled = true;
+                button.setAttribute("aria-disabled", "true");
+                button.title = ownReactionTitle(button);
+            });
+        });
+    };
+
     const syncReactionCopies = (button, result) => {
         const card = button.closest("[data-prediction-card]");
         const predictionId = card?.dataset.predictionCard;
@@ -55,9 +79,30 @@
         if (!remaining) window.location.reload();
     };
 
+    lockOwnPredictionReactions();
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node instanceof Element) lockOwnPredictionReactions(node);
+            });
+        });
+    });
+    if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     document.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-prediction-reaction]");
-        if (!button || button.disabled) return;
+        if (!button) return;
+
+        if (button.closest(".is-own-prediction")) {
+            button.disabled = true;
+            button.setAttribute("aria-disabled", "true");
+            button.title = ownReactionTitle(button);
+            return;
+        }
+        if (button.disabled) return;
 
         if (button.dataset.authenticated !== "true") {
             const loginUrl = button.dataset.loginUrl;
@@ -98,7 +143,9 @@
         } catch (error) {
             console.error(error);
         } finally {
-            if (button.isConnected) button.disabled = false;
+            if (button.isConnected && !button.closest(".is-own-prediction")) {
+                button.disabled = false;
+            }
         }
     });
 })();
