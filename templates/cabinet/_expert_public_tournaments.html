@@ -1,0 +1,46 @@
+<section class="expert-public-tournaments" data-expert-public-panel="tournaments" hidden>
+    <div class="profile-list-card">
+        <div class="profile-section-heading">
+            <div>
+                <p class="eyebrow">Турнирная история</p>
+                <h2>Турниры</h2>
+            </div>
+            <span class="profile-coupon-count">{{ expert_tournaments_count }}</span>
+        </div>
+
+        {% if expert_current_tournaments %}
+        <div class="profile-list-head">
+            <div>
+                <p class="eyebrow">Сейчас</p>
+                <h2>Текущие турниры</h2>
+            </div>
+        </div>
+        <div class="profile-coupons-list">
+            {% for row in expert_current_tournaments %}
+                {% include "cabinet/_expert_tournament_row.html" %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if expert_finished_tournaments %}
+        <div class="profile-list-head">
+            <div>
+                <p class="eyebrow">История участия</p>
+                <h2>Завершённые турниры</h2>
+            </div>
+        </div>
+        <div class="profile-coupons-list">
+            {% for row in expert_finished_tournaments %}
+                {% include "cabinet/_expert_tournament_row.html" %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if not expert_current_tournaments and not expert_finished_tournaments %}
+        <div class="profile-empty-state">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8M9 16h6v5H9z"></path></svg>
+            <p>Эксперт пока не участвовал в турнирах.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
