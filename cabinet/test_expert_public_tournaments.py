@@ -21,6 +21,8 @@ class ExpertPublicTournamentTabsTests(TestCase):
             password="safe-test-password",
             role=User.Role.ANALYST,
         )
+        analyst.analyst_profile.is_verified = True
+        analyst.analyst_profile.save(update_fields=["is_verified"])
         now = timezone.now()
 
         active_tournament = Tournament.objects.create(
@@ -74,6 +76,7 @@ class ExpertPublicTournamentTabsTests(TestCase):
         self.assertEqual(len(response.context["expert_tournament_achievements"]), 1)
         self.assertContains(response, 'data-expert-public-tab="achievements"')
         self.assertContains(response, 'data-expert-public-tab="tournaments"')
+        self.assertContains(response, "Последние достижения")
         self.assertContains(response, "Активный кубок")
         self.assertContains(response, "Завершённый кубок")
         self.assertContains(response, "Серебро турнира")
