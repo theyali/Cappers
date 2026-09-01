@@ -27394,25 +27394,16 @@ font-size: 13px;
 
 
 .tournaments-hero {
-    min-height: 260px;
+    min-height: 330px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     gap: 24px;
     padding: 36px;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
     color: #fff;
     position: relative;
-}
-
-.tournaments-hero::before,
-.tournament-detail-media::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: rgba(5, 16, 32, .58);
-    pointer-events: none;
 }
 
 .tournaments-hero > * {
