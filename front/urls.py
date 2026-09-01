@@ -16,6 +16,7 @@ from . import (
     match_table_views,
     prediction_catalog_views,
     prediction_views,
+    reaction_views,
     static_views,
 )
 
@@ -44,12 +45,12 @@ urlpatterns = [
     ),
     path(
         "predictions/<int:prediction_id>/like/",
-        prediction_views.toggle_prediction_like,
+        reaction_views.toggle_prediction_like,
         name="prediction_like",
     ),
     path(
         "predictions/<int:prediction_id>/favorite/",
-        prediction_views.toggle_prediction_favorite,
+        reaction_views.toggle_prediction_favorite,
         name="prediction_favorite",
     ),
     path(
