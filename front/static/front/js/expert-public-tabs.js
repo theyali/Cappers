@@ -1,6 +1,6 @@
 (() => {
     const TAB_PANELS = {
-        predictions: [".expert-public-predictions"],
+        predictions: [".expert-public-predictions:not([data-expert-public-panel])"],
         stats: [
             ".expert-recent-performance",
             ".expert-public-analytics",
