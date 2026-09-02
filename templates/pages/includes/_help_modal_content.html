@@ -1,13 +1,20 @@
-<div class="profile-coupons-list">
+<div class="profile-coupons-list" data-site-help-accordions>
     {% for item in help_items %}
-        <details class="content-sport-accordion"{% if forloop.first %} open{% endif %}>
-            <summary class="content-sport-summary">
-                <span>{{ item.title }}</span>
+        <details
+            class="content-sport-accordion content-league-accordion"
+            data-site-help-accordion
+            {% if forloop.first %}open{% endif %}
+        >
+            <summary
+                class="content-sport-summary content-league-summary profile-row-action is-muted"
+                data-site-help-accordion-summary
+            >
+                <strong>{{ item.title }}</strong>
                 <svg class="content-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 9 6 6 6-6"></path>
                 </svg>
             </summary>
-            <div class="content-sport-body">
+            <div class="content-sport-body" data-site-help-accordion-body>
                 <div class="static-page-content">{{ item.content|safe }}</div>
             </div>
         </details>
