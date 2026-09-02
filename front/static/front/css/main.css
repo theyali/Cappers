@@ -12480,8 +12480,8 @@ h2 {
 }
 
 .profile-coupon-status.is-won {
-    color: var(--ink);
-    background: var(--yellow);
+    color: white;
+    background: var(--green);
 }
 
 .profile-coupon-status.is-lost,
@@ -21608,7 +21608,6 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .capper-dashboard-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(320px, .8fr);
     gap: 14px;
     align-items: start;
 }
