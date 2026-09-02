@@ -14,6 +14,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("tinymce/", include("tinymce.urls")),
     path("health/", healthcheck, name="healthcheck"),
+    path("pages/", include("pages.urls")),
     path("", include("front.urls")),
     path("cabinet/", include("cabinet.urls")),
     path("email/", include("account_email.urls")),
