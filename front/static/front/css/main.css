@@ -27230,7 +27230,6 @@ body:has(.predictions-scroll-page) .site-footer {
 /* Merged from front/static/front/css/expert-public-tabs.css */
 .expert-public-shell {
     display: grid;
-    gap: 18px;
 }
 
 .expert-public-shell > .expert-public-page {
