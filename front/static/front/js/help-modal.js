@@ -13,16 +13,18 @@
 
     const positionTrigger = (trigger) => {
         if (!trigger || trigger.dataset.helpPosition !== "top-right") return;
-        const anchor = trigger.closest("[data-site-help-anchor]") || trigger.closest(".tournaments-hero");
+
+        const positionTarget = trigger.closest("[data-site-help-position-target]") || trigger;
+        const anchor = positionTarget.closest("[data-site-help-anchor]") || positionTarget.closest(".tournaments-hero");
         if (!anchor) return;
 
-        trigger.style.position = "absolute";
-        trigger.style.top = "18px";
-        trigger.style.right = "18px";
-        trigger.style.zIndex = "4";
-        trigger.style.width = "auto";
-        trigger.style.minWidth = "0";
-        trigger.style.gridColumn = "auto";
+        positionTarget.style.position = "absolute";
+        positionTarget.style.top = "18px";
+        positionTarget.style.right = "18px";
+        positionTarget.style.zIndex = "4";
+        positionTarget.style.width = "auto";
+        positionTarget.style.minWidth = "0";
+        positionTarget.style.gridColumn = "auto";
     };
 
     const positionTriggers = () => {
