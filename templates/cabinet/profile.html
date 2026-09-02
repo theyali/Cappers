@@ -374,9 +374,31 @@
             </div>
             <div class="profile-user-list" data-profile-list="followers">
                 {% for follow in followers %}
-                    <article class="profile-user-row" data-profile-username="{{ follow.follower.username|lower }}">
-                        <div class="profile-user-avatar">{{ follow.follower.username|first|upper }}</div>
-                        <div><strong>@{{ follow.follower.username }}</strong><span>{{ follow.follower.get_role_display }}</span></div>
+                    <article class="profile-user-row is-profile-link" data-profile-username="{{ follow.follower.username|lower }}">
+                        <div class="profile-user-avatar" data-skeleton-image>
+                            {% if follow.follower.is_analyst and follow.follower.analyst_profile.avatar %}
+                                <img src="{{ follow.follower.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
+                            {% elif follow.follower.avatar %}
+                                <img src="{{ follow.follower.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
+                            {% else %}
+                                {{ follow.follower.username|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div class="profile-user-copy">
+                            <strong>
+                                {% if follow.follower.is_analyst and follow.follower.analyst_profile.display_name %}
+                                    {{ follow.follower.analyst_profile.display_name }}
+                                {% else %}
+                                    {{ follow.follower.get_full_name|default:follow.follower.username }}
+                                {% endif %}
+                                {% if follow.follower.is_analyst and follow.follower.analyst_profile.is_verified %}
+                                    <span class="capper-verified-badge" title="Проверенный каппер" aria-label="Проверенный каппер">
+                                        <svg viewBox="0 0 16 16" aria-hidden="true"><path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path><path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path></svg>
+                                    </span>
+                                {% endif %}
+                            </strong>
+                            <span>@{{ follow.follower.username }} · {{ follow.follower.get_role_display }}</span>
+                        </div>
                         {% if request.user.is_analyst and follow.follower.is_analyst and follow.follower.id not in following_ids %}
                             <button class="profile-row-action" type="button" data-follow-url="{% url 'cabinet:follow_analyst' follow.follower.id %}">Подписаться в ответ</button>
                         {% elif follow.follower.id in following_ids %}
