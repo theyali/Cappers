@@ -195,16 +195,29 @@
             <div class="profile-copy-grid">
                 {% for subscription in copybetting_subscriptions %}
                     <article class="profile-copy-card">
-                        <div>
-                            <span class="profile-coupon-id">{{ subscription.get_status_display }}</span>
-                            <h3>
-                                {% if subscription.analyst.analyst_profile.display_name %}
-                                    {{ subscription.analyst.analyst_profile.display_name }}
+                        <div class="profile-coupon-main">
+                            <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                                {% if subscription.analyst.analyst_profile.avatar %}
+                                    <img class="nav-profile-avatar-image" src="{{ subscription.analyst.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.analyst.username }}">
+                                {% elif subscription.analyst.avatar %}
+                                    <img class="nav-profile-avatar-image" src="{{ subscription.analyst.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.analyst.username }}">
                                 {% else %}
-                                    @{{ subscription.analyst.username }}
+                                    <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
                                 {% endif %}
-                            </h3>
+                            </span>
+                            <div class="profile-coupon-copy">
+                                <strong>
+                                    {{ subscription.analyst.get_full_name|default:subscription.analyst.username }}
+                                    {% if subscription.analyst.analyst_profile.is_verified %}
+                                        <span class="capper-verified-badge" title="Проверенный каппер" aria-label="Проверенный каппер">
+                                            <svg viewBox="0 0 16 16" aria-hidden="true"><path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path><path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path></svg>
+                                        </span>
+                                    {% endif %}
+                                </strong>
+                                <span>@{{ subscription.analyst.username }}</span>
+                            </div>
                         </div>
+                        <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
                         <dl class="profile-info-list">
                             <div><dt>Статус</dt><dd>{{ subscription.get_status_display }}</dd></div>
                             <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
@@ -260,10 +273,25 @@
                 {% for copied_bet in copied_bets %}
                     <a class="profile-coupon-row" href="{% url 'front:prediction_detail' copied_bet.source_coupon_id %}">
                         <div class="profile-coupon-main">
-                            <span class="profile-coupon-id">#{{ copied_bet.source_coupon_id }}</span>
+                            <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                                {% if copied_bet.analyst.analyst_profile.avatar %}
+                                    <img class="nav-profile-avatar-image" src="{{ copied_bet.analyst.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ copied_bet.analyst.username }}">
+                                {% elif copied_bet.analyst.avatar %}
+                                    <img class="nav-profile-avatar-image" src="{{ copied_bet.analyst.avatar.url }}" width="42" height="42" alt="Аватар {{ copied_bet.analyst.username }}">
+                                {% else %}
+                                    <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
+                                {% endif %}
+                            </span>
                             <div class="profile-coupon-copy">
-                                <strong>@{{ copied_bet.analyst.username }}</strong>
-                                <span>{{ copied_bet.created_at|date:"d.m.Y · H:i" }}</span>
+                                <strong>
+                                    {{ copied_bet.analyst.get_full_name|default:copied_bet.analyst.username }}
+                                    {% if copied_bet.analyst.analyst_profile.is_verified %}
+                                        <span class="capper-verified-badge" title="Проверенный каппер" aria-label="Проверенный каппер">
+                                            <svg viewBox="0 0 16 16" aria-hidden="true"><path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path><path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path></svg>
+                                        </span>
+                                    {% endif %}
+                                </strong>
+                                <span>@{{ copied_bet.analyst.username }} · {{ copied_bet.created_at|date:"d.m.Y · H:i" }}</span>
                             </div>
                         </div>
                         <span class="profile-coupon-status is-{{ copied_bet.state_status }}">{{ copied_bet.get_state_status_display }}</span>
