@@ -47,6 +47,17 @@
             .forEach((node) => updateCounter(node, value));
     };
 
+    const hideCopybettingForCapper = () => {
+        const analystNavLink = document.querySelector(
+            '.nav-profile-dropdown a[href*="/cabinet/profile/"][href*="tab=predictions"]'
+        );
+        if (!analystNavLink) return;
+
+        document
+            .querySelectorAll('.expert-public-name-row a[href^="/wallets/copybetting/"]')
+            .forEach((link) => link.remove());
+    };
+
     const copyShareUrl = async (url) => {
         if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(url);
@@ -109,6 +120,7 @@
         window.CappersSkeleton?.watchImage(icon);
     };
 
+    hideCopybettingForCapper();
     initShareButton();
 
     document.addEventListener("click", async (event) => {
