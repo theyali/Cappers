@@ -92,6 +92,9 @@ def real_balance_action(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def copybetting_setup(request, analyst_id: int):
+    if request.user.role == User.Role.ANALYST:
+        raise PermissionDenied("Капперы не могут использовать копибеттинг.")
+
     analyst = get_object_or_404(
         User.objects.select_related("analyst_profile"),
         pk=analyst_id,
