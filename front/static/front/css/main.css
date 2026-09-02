@@ -20108,6 +20108,7 @@ body:has(.predictions-scroll-page) .site-footer {
     background: #303033;
     font-size: 22px;
     line-height: 1;
+    border:0;
 }
 
 .profile-email-modal-head {
@@ -29388,4 +29389,14 @@ font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+.profile-row-action.help_btn{
+    display:flex;
+    align-items:center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+}
+.nav-profile-dropdown-icon.help_icon{
+    background: none;
 }

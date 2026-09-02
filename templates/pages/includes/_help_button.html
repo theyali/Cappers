@@ -1,7 +1,7 @@
 {% load static %}
 {% with modal_slug=help_key|slugify %}
 <button
-    class="profile-row-action is-muted"
+    class="profile-row-action help_btn is-muted"
     type="button"
     data-site-help-trigger
     data-help-url="{% url 'pages:help_content' help_key %}"
@@ -10,7 +10,7 @@
     aria-haspopup="dialog"
     aria-controls="site-help-{{ modal_slug }}"
 >
-    <span class="nav-profile-dropdown-icon" aria-hidden="true">
+    <span class="nav-profile-dropdown-icon help_icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.7 9a2.5 2.5 0 1 1 3.65 2.22c-.83.45-1.35 1.05-1.35 2.03"></path><path d="M12 17h.01"></path></svg>
     </span>
     <span>{{ help_label|default:"Помощь" }}</span>
