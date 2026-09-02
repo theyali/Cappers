@@ -40,20 +40,17 @@
                     <strong>{{ bonus.bookmaker.name }}</strong>
                 </span>
                 {% endif %}
+
+                <span class="bonus-offer-bookmaker-logo{% if bonus.bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bonus.bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
+                    {% if bonus.bookmaker.icon %}
+                    <img src="{{ bonus.bookmaker.icon.url }}" width="88" height="40" alt="{{ bonus.bookmaker.name }}" loading="lazy">
+                    {% else %}
+                    <strong>{{ bonus.bookmaker.name|slice:":2"|upper }}</strong>
+                    {% endif %}
+                </span>
             </a>
 
             <div class="bonus-offer-body">
-                <div class="bonus-offer-bookmaker">
-                    <span class="bonus-offer-bookmaker-logo{% if bonus.bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bonus.bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
-                        {% if bonus.bookmaker.icon %}
-                        <img src="{{ bonus.bookmaker.icon.url }}" width="88" height="40" alt="{{ bonus.bookmaker.name }}" loading="lazy">
-                        {% else %}
-                        <strong>{{ bonus.bookmaker.name|slice:":2"|upper }}</strong>
-                        {% endif %}
-                    </span>
-                    <span class="bonus-offer-bookmaker-name">{{ bonus.bookmaker.name }}</span>
-                </div>
-
                 <h2 class="bonus-offer-title">{{ bonus.short_description }}</h2>
 
                 {% if bonus.description %}
