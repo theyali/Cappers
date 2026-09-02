@@ -167,3 +167,107 @@
         badge.innerHTML = badgeSvg;
     });
 })();
+
+(() => {
+    const backLink = document.querySelector(".coupon-detail-back");
+    if (!backLink) return;
+
+    const label = backLink.querySelector("span:last-child");
+    const currentUrl = new URL(window.location.href);
+    const storageKey = `cappers:coupon-back:${currentUrl.pathname}`;
+    const maxStoredAge = 30 * 60 * 1000;
+
+    const isUsableSource = (url) => (
+        url.origin === currentUrl.origin
+        && !(url.pathname === currentUrl.pathname && url.search === currentUrl.search)
+    );
+
+    const sourceLabel = (url) => {
+        const path = url.pathname;
+
+        if (path === "/cabinet/profile/") {
+            if (url.searchParams.get("tab") === "predictions") {
+                return "Вернуться к моим купонам";
+            }
+            return "Вернуться в мой профиль";
+        }
+        if (/^\/experts\/[^/]+\/?$/.test(path)) {
+            return "Вернуться к профилю каппера";
+        }
+        if (
+            path === "/predictions/"
+            || (/^\/predictions\/[^/]+\/?$/.test(path) && !/^\/predictions\/\d+\/?$/.test(path))
+        ) {
+            return "Вернуться к прогнозам";
+        }
+        if (path === "/favorites/") {
+            return "Вернуться в избранное";
+        }
+        if (path === "/feed/") {
+            return "Вернуться в мою ленту";
+        }
+        if (path === "/") {
+            return "Вернуться на главную";
+        }
+        if (path.startsWith("/games/")) {
+            const parts = path.split("/").filter(Boolean);
+            return parts.length === 2 ? "Вернуться к матчу" : "Вернуться к матчам";
+        }
+        if (path === "/tournaments/") {
+            return "Вернуться к турнирам";
+        }
+        if (path.startsWith("/tournaments/")) {
+            return "Вернуться к турниру";
+        }
+        if (path.startsWith("/cappers-statistics/") || path.startsWith("/cappers-table/")) {
+            return "Вернуться к капперам";
+        }
+        return "Вернуться назад";
+    };
+
+    const readStoredSource = () => {
+        try {
+            const raw = sessionStorage.getItem(storageKey);
+            if (!raw) return null;
+            const stored = JSON.parse(raw);
+            if (!stored?.href || !stored?.savedAt || Date.now() - stored.savedAt > maxStoredAge) {
+                sessionStorage.removeItem(storageKey);
+                return null;
+            }
+            const url = new URL(stored.href, currentUrl.href);
+            return isUsableSource(url) ? url : null;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const storeSource = (url) => {
+        try {
+            sessionStorage.setItem(storageKey, JSON.stringify({
+                href: url.href,
+                savedAt: Date.now(),
+            }));
+        } catch (error) {
+            // document.referrer remains enough when sessionStorage is unavailable.
+        }
+    };
+
+    let source = null;
+    if (document.referrer) {
+        try {
+            const referrer = new URL(document.referrer, currentUrl.href);
+            if (isUsableSource(referrer)) {
+                source = referrer;
+                storeSource(referrer);
+            }
+        } catch (error) {
+            source = null;
+        }
+    }
+
+    source = source || readStoredSource();
+    if (!source) return;
+
+    backLink.href = source.href;
+    if (label) label.textContent = sourceLabel(source);
+})();
