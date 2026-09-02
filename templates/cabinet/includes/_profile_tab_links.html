@@ -15,6 +15,10 @@
     <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M16 8h5M18.5 5.5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
     <span class="matches-table-scope-copy">Подписчики</span>
 </a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'earnings' %} is-active{% endif %}" href="{% url 'cabinet:profile_earnings' %}"{% if active_tab == 'earnings' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16v12H4zM8 10h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 3v4M7 17v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+    <span class="matches-table-scope-copy">Доходы</span>
+</a>
 {% endif %}
 <a class="{{ profile_tab_link_class }}{% if active_tab == 'following' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link{% if active_tab == 'following' %} aria-current="page"{% endif %}>
     <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M16 15l2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
