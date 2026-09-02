@@ -47,8 +47,100 @@
             .forEach((node) => updateCounter(node, value));
     };
 
+    const copyShareUrl = async (url) => {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(url);
+            return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+    };
+
+    const showShareCopied = (shareLink) => {
+        const label = shareLink.querySelector("[data-expert-share-label]");
+        if (!label) return;
+
+        label.textContent = "Ссылка скопирована";
+        window.setTimeout(() => {
+            label.textContent = "Поделиться профилем";
+        }, 1800);
+    };
+
+    const initShareButton = () => {
+        const side = document.querySelector(".expert-public-side");
+        if (!side || side.querySelector("[data-expert-share]")) return;
+
+        const shareLink = document.createElement("a");
+        shareLink.className = "expert-public-edit expert-public-social";
+        shareLink.href = window.location.href;
+        shareLink.setAttribute("role", "button");
+        shareLink.setAttribute("aria-label", "Поделиться профилем");
+        shareLink.setAttribute("data-expert-share", "");
+
+        const icon = document.createElement("span");
+        icon.className = "expert-public-social-icon";
+        icon.setAttribute("aria-hidden", "true");
+        icon.setAttribute("data-skeleton-image", "");
+
+        const image = document.createElement("img");
+        const logoSrc = side.querySelector(".expert-public-brand-logo img")?.src;
+        image.src = logoSrc
+            ? new URL("../svgs/share.svg", logoSrc).href
+            : "/static/front/svgs/share.svg";
+        image.width = 20;
+        image.height = 20;
+        image.alt = "";
+        icon.append(image);
+
+        const label = document.createElement("span");
+        label.setAttribute("data-expert-share-label", "");
+        label.textContent = "Поделиться профилем";
+
+        shareLink.append(icon, label);
+        side.append(shareLink);
+        window.CappersSkeleton?.watchImage(icon);
+    };
+
+    initShareButton();
+
     document.addEventListener("click", async (event) => {
         if (!(event.target instanceof Element)) return;
+
+        const shareLink = event.target.closest("[data-expert-share]");
+        if (shareLink) {
+            event.preventDefault();
+
+            const url = window.location.href;
+            const expertName = document.querySelector(".expert-public-name-row h1")?.textContent?.trim();
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: expertName ? `${expertName} — КапперХаб` : document.title,
+                        url,
+                    });
+                    return;
+                } catch (error) {
+                    if (error?.name === "AbortError") return;
+                }
+            }
+
+            try {
+                await copyShareUrl(url);
+                showShareCopied(shareLink);
+            } catch (error) {
+                console.error(error);
+            }
+            return;
+        }
 
         const button = event.target.closest("[data-expert-follow]");
         if (!button || button.disabled || !button.dataset.url) return;
