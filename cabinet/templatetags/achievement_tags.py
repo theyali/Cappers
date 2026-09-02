@@ -9,7 +9,7 @@ from cabinet.achievements import (
 
 register = template.Library()
 
-RECENT_ACHIEVEMENTS_LIMIT = 8
+RECENT_ACHIEVEMENTS_LIMIT = 4
 
 
 @register.inclusion_tag("cabinet/_expert_achievements.html")
