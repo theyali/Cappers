@@ -21857,8 +21857,14 @@ body:has(.predictions-scroll-page) .site-footer {
     display: grid;
     place-items: center;
     overflow: hidden;
-}
 
+}
+.capper-activity-avatar{
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    color:var(--ink)!important;
+}
 .capper-live-league-logo {
     width: 34px;
     height: 34px;
