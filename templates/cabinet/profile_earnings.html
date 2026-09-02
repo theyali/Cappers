@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Доходы — КапперХаб{% endblock %}
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page" aria-label="Доходы аналитика">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page">
+            <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
+                <nav class="matches-tabs" aria-label="Разделы профиля">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Финансы аналитика</p>
+                        <h1>Доходы</h1>
+                    </div>
+                    <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=wallet">Операции</a>
+                </div>
+
+                <div class="profile-wallet-grid">
+                    <article class="profile-wallet-card">
+                        <span>Реальный баланс</span>
+                        <strong>{{ real_balance_display }} ₽</strong>
+                        <small>Ожидает вывода: {{ real_pending_withdrawal_display }} ₽</small>
+                    </article>
+                    <article class="profile-wallet-card">
+                        <span>Заработано за всё время</span>
+                        <strong>{{ earnings_all_time.total_display }} ₽</strong>
+                        <small>Подписки и призовые турниров.</small>
+                    </article>
+                    <article class="profile-wallet-card">
+                        <span>Активные платные подписчики</span>
+                        <strong>{{ active_paid_subscribers }}</strong>
+                        <small>Всего покупателей: {{ paid_subscribers_total }}</small>
+                    </article>
+                </div>
+            </div>
+
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Динамика дохода</p>
+                        <h2>Неделя, месяц и квартал</h2>
+                    </div>
+                </div>
+
+                <div class="profile-wallet-grid">
+                    {% for period in earnings_periods %}
+                    <article class="profile-wallet-card">
+                        <span>{{ period.label }}</span>
+                        <strong>{{ period.total_display }} ₽</strong>
+                        <small>{{ period.subscription_purchases }} покупок платной подписки</small>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Источники</p>
+                        <h2>Откуда пришёл доход</h2>
+                    </div>
+                </div>
+
+                <div class="profile-wallet-grid">
+                    <article class="profile-wallet-card">
+                        <span>Платные подписки</span>
+                        <strong>{{ earnings_all_time.subscription_income_display }} ₽</strong>
+                        <small>{{ earnings_all_time.subscription_purchases }} покупок и продлений за всё время.</small>
+                    </article>
+                    <article class="profile-wallet-card">
+                        <span>Турниры</span>
+                        <strong>{{ earnings_all_time.tournament_income_display }} ₽</strong>
+                        <small>Призовые, зачисленные на реальный баланс.</small>
+                    </article>
+                    <article class="profile-wallet-card">
+                        <span>Рефералы</span>
+                        <strong>{{ earnings_all_time.referral_income_display }} ₽</strong>
+                        <small>Будет учитываться после запуска реферальных выплат.</small>
+                    </article>
+                </div>
+            </div>
+
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Разбивка</p>
+                        <h2>Доход по периодам</h2>
+                    </div>
+                </div>
+
+                <div class="profile-wallet-history">
+                    {% for period in earnings_periods %}
+                    <div>
+                        <h3>{{ period.label }}</h3>
+                        <dl class="profile-info-list">
+                            <div><dt>Платные подписки</dt><dd>{{ period.subscription_income_display }} ₽</dd></div>
+                            <div><dt>Покупок подписки</dt><dd>{{ period.subscription_purchases }}</dd></div>
+                            <div><dt>Турниры</dt><dd>{{ period.tournament_income_display }} ₽</dd></div>
+                            <div><dt>Рефералы</dt><dd>{{ period.referral_income_display }} ₽</dd></div>
+                            <div><dt>Всего</dt><dd>{{ period.total_display }} ₽</dd></div>
+                        </dl>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Последние начисления</p>
+                        <h2>История заработка</h2>
+                    </div>
+                </div>
+
+                <div class="profile-transaction-list">
+                    {% for transaction in recent_earning_transactions %}
+                    <div class="profile-transaction-row">
+                        <div>
+                            <strong>{{ transaction.get_kind_display }}</strong>
+                            <span>{{ transaction.created_at|date:"d.m.Y · H:i" }}{% if transaction.note %} · {{ transaction.note }}{% endif %}</span>
+                        </div>
+                        <div>
+                            <strong class="is-positive">+{{ transaction.amount }} ₽</strong>
+                            <span>после: {{ transaction.balance_after }} ₽</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="profile-empty-state">
+                        <p>Начислений на реальный баланс пока нет.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <aside class="coupon-sidebar" aria-label="Статистика каппера">
+            {% include "cabinet/includes/_profile_dashboard_stats.html" %}
+        </aside>
+    </div>
+</section>
+{% endblock %}
