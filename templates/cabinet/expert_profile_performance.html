@@ -9,40 +9,65 @@
 <section class="predictions-page predictions-scroll-page" data-expert-public-tabs data-active-tab="predictions">
     <div class="predictions-layout">
         <aside class="predictions-filter-sidebar matches-table-filter-sidebar" aria-label="Разделы профиля эксперта">
-            <div class="expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
-                <button
-                    class="expert-public-tab is-active"
-                    type="button"
-                    role="tab"
-                    aria-selected="true"
-                    tabindex="0"
-                    data-expert-public-tab="predictions"
-                >Прогнозы</button>
-                <button
-                    class="expert-public-tab"
-                    type="button"
-                    role="tab"
-                    aria-selected="false"
-                    tabindex="-1"
-                    data-expert-public-tab="stats"
-                >Статистика</button>
-                <button
-                    class="expert-public-tab"
-                    type="button"
-                    role="tab"
-                    aria-selected="false"
-                    tabindex="-1"
-                    data-expert-public-tab="achievements"
-                >Достижения</button>
-                <button
-                    class="expert-public-tab"
-                    type="button"
-                    role="tab"
-                    aria-selected="false"
-                    tabindex="-1"
-                    data-expert-public-tab="tournaments"
-                >Турниры</button>
-            </div>
+            <section class="matches-table-filter-group" aria-labelledby="expert-public-sidebar-title">
+                <div class="matches-table-filter-title" id="expert-public-sidebar-title">
+                    <span>Разделы профиля</span>
+                </div>
+                <nav class="matches-table-scope-list" role="tablist" aria-label="Разделы профиля эксперта">
+                    <button
+                        class="matches-table-scope-link is-active"
+                        type="button"
+                        role="tab"
+                        aria-selected="true"
+                        tabindex="0"
+                        data-expert-public-tab="predictions"
+                    >
+                        <span class="matches-table-scope-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="matches-table-scope-copy">Прогнозы</span>
+                    </button>
+                    <button
+                        class="matches-table-scope-link"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        data-expert-public-tab="stats"
+                    >
+                        <span class="matches-table-scope-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M5 19V11M12 19V5M19 19v-7M3 19h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="matches-table-scope-copy">Статистика</span>
+                    </button>
+                    <button
+                        class="matches-table-scope-link"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        data-expert-public-tab="achievements"
+                    >
+                        <span class="matches-table-scope-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M8 4h8v4a4 4 0 0 1-8 0V4ZM8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="matches-table-scope-copy">Достижения</span>
+                    </button>
+                    <button
+                        class="matches-table-scope-link"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        data-expert-public-tab="tournaments"
+                    >
+                        <span class="matches-table-scope-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-10 0V4ZM7 6H4v1a4 4 0 0 0 4 4M17 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="matches-table-scope-copy">Турниры</span>
+                    </button>
+                </nav>
+            </section>
         </aside>
 
         <section class="predictions-content expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
