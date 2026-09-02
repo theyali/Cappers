@@ -27306,6 +27306,7 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-shell .expert-recommendations {
     order: 80;
+    padding: 0 10px;
 }
 
 .expert-public-shell[data-active-tab="predictions"] .expert-recent-performance,
@@ -29406,6 +29407,6 @@ font-size: 13px;
 .nav-profile-dropdown-icon.help_icon{
     background: none;
 }
-.expert-public-name-row h1{
+.expert-public-name-row h1, .profile-title-block h1{
     font-size: 20px!important;
 }
