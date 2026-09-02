@@ -375,7 +375,7 @@
             <div class="profile-user-list" data-profile-list="followers">
                 {% for follow in followers %}
                     <article class="profile-user-row is-profile-link" data-profile-username="{{ follow.follower.username|lower }}">
-                        <div class="profile-user-avatar" data-skeleton-image>
+                        <div class="profile-user-avatar prediction-table-avatar{% if follow.follower.is_analyst and follow.follower.analyst_profile.is_vip %} is-vip{% endif %}" data-skeleton-image>
                             {% if follow.follower.is_analyst and follow.follower.analyst_profile.avatar %}
                                 <img src="{{ follow.follower.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
                             {% elif follow.follower.avatar %}
