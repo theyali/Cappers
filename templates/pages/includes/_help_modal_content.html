@@ -1,0 +1,19 @@
+<div class="profile-coupons-list">
+    {% for item in help_items %}
+        <details class="content-sport-accordion"{% if forloop.first %} open{% endif %}>
+            <summary class="content-sport-summary">
+                <span>{{ item.title }}</span>
+                <svg class="content-accordion-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"></path>
+                </svg>
+            </summary>
+            <div class="content-sport-body">
+                <div class="static-page-content">{{ item.content|safe }}</div>
+            </div>
+        </details>
+    {% empty %}
+        <div class="profile-empty-state">
+            <p>Для этого раздела пока нет справочной информации.</p>
+        </div>
+    {% endfor %}
+</div>
