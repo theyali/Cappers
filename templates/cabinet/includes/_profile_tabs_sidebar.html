@@ -20,4 +20,23 @@
             {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="matches-table-scope-link" %}
         </nav>
     </section>
+
+    {% if request.user.is_analyst %}
+    <section class="matches-table-filter-group" aria-labelledby="profile-public-title">
+        <div class="matches-table-filter-title" id="profile-public-title">
+            <span>Публичная страница</span>
+        </div>
+        <nav class="matches-table-scope-list" aria-label="Публичная страница каппера">
+            <a class="matches-table-scope-link" href="{% url 'front:expert_profile' username=request.user.username %}">
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M5.5 19.5c.8-3.6 3-5.4 6.5-5.4s5.7 1.8 6.5 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span class="matches-table-scope-copy">Публичный профиль</span>
+            </a>
+        </nav>
+    </section>
+    {% endif %}
 </aside>
