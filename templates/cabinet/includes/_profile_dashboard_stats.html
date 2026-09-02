@@ -1,0 +1,85 @@
+<section class="coupon-panel" aria-label="Метрики каппера">
+    <div class="coupon-head">
+        <h2>Сегодня</h2>
+    </div>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Активных</p>
+                <h2>{{ today_stats.active }}</h2>
+            </div>
+        </div>
+        <small>прогнозов на сегодня</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Выиграно</p>
+                <h2 class="is-positive">{{ today_stats.wins }}</h2>
+            </div>
+        </div>
+        <small>прогнозов сегодня</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Проиграно</p>
+                <h2 class="is-negative">{{ today_stats.losses }}</h2>
+            </div>
+        </div>
+        <small>прогнозов сегодня</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Ожидает</p>
+                <h2>{{ today_stats.pending }}</h2>
+            </div>
+        </div>
+        <small>{{ today_stats.live }} сейчас в live</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">ROI сегодня</p>
+                <h2 class="{% if roi_today > 0 %}is-positive{% elif roi_today < 0 %}is-negative{% endif %}">{{ roi_today_display }}</h2>
+            </div>
+        </div>
+        <small>{{ roi_profit|floatformat:2 }} прибыли / {{ roi_stake|floatformat:2 }} оборота</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Новые подписчики</p>
+                <h2>{{ new_followers_count }}</h2>
+            </div>
+        </div>
+        <small>за сегодняшний день</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Лайки всего</p>
+                <h2>{{ total_likes_count }}</h2>
+            </div>
+        </div>
+        <small>в среднем {{ avg_likes_per_prediction }} на опубликованный прогноз</small>
+    </article>
+
+    <article class="capper-dashboard-panel">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Сохранения</p>
+                <h2>{{ total_saves_count }}</h2>
+            </div>
+        </div>
+        <small>в среднем {{ avg_saves_per_prediction }} на опубликованный прогноз</small>
+    </article>
+</section>
