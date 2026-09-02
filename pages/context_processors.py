@@ -189,7 +189,7 @@ def page_seo(request):
         except (OperationalError, ProgrammingError):
             adv_banners = []
 
-    if route_name == "front:prediction_detail":
+    if route_name in {"front:prediction_detail", "front:expert_profile"}:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
     return {

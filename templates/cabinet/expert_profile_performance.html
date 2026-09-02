@@ -6,59 +6,69 @@
 {% endblock %}
 
 {% block content %}
-<section class="expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" data-expert-public-tabs data-active-tab="predictions">
-    <div class="expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
-        <button
-            class="expert-public-tab is-active"
-            type="button"
-            role="tab"
-            aria-selected="true"
-            tabindex="0"
-            data-expert-public-tab="predictions"
-        >Прогнозы</button>
-        <button
-            class="expert-public-tab"
-            type="button"
-            role="tab"
-            aria-selected="false"
-            tabindex="-1"
-            data-expert-public-tab="stats"
-        >Статистика</button>
-        <button
-            class="expert-public-tab"
-            type="button"
-            role="tab"
-            aria-selected="false"
-            tabindex="-1"
-            data-expert-public-tab="achievements"
-        >Достижения</button>
-        <button
-            class="expert-public-tab"
-            type="button"
-            role="tab"
-            aria-selected="false"
-            tabindex="-1"
-            data-expert-public-tab="tournaments"
-        >Турниры</button>
+<section class="expert-public-shell matches-page{% if analyst_profile.is_vip %} is-vip{% endif %}" data-expert-public-tabs data-active-tab="predictions">
+    <div class="matches-shell">
+        <aside class="matches-table-filter-sidebar expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
+            <button
+                class="expert-public-tab is-active"
+                type="button"
+                role="tab"
+                aria-selected="true"
+                tabindex="0"
+                data-expert-public-tab="predictions"
+            >Прогнозы</button>
+            <button
+                class="expert-public-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                tabindex="-1"
+                data-expert-public-tab="stats"
+            >Статистика</button>
+            <button
+                class="expert-public-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                tabindex="-1"
+                data-expert-public-tab="achievements"
+            >Достижения</button>
+            <button
+                class="expert-public-tab"
+                type="button"
+                role="tab"
+                aria-selected="false"
+                tabindex="-1"
+                data-expert-public-tab="tournaments"
+            >Турниры</button>
+        </aside>
+
+        <section class="matches-list-panel expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
+            {{ block.super }}
+
+            {% if profile_presence %}
+            <span
+                hidden
+                data-public-presence-source
+                data-online="{% if profile_presence.is_online %}1{% else %}0{% endif %}"
+                data-label="{{ profile_presence.label }}"
+            ></span>
+            {% endif %}
+
+            {% include "cabinet/_expert_recent_performance.html" %}
+            {% include "cabinet/_expert_sport_profit.html" %}
+            {% include "cabinet/_expert_monthly_stats.html" %}
+            {% include "cabinet/_expert_public_achievements.html" %}
+            {% include "cabinet/_expert_public_tournaments.html" %}
+            {% include "cabinet/_expert_recommendations.html" %}
+        </section>
+
+        {% if adv_banners %}
+        <aside class="coupon-sidebar" aria-label="Реклама">
+            {% include "pages/_adv_banners.html" with placement="sidebar" %}
+        </aside>
+        {% endif %}
     </div>
-
-    {{ block.super }}
-
-    {% if profile_presence %}
-    <span
-        hidden
-        data-public-presence-source
-        data-online="{% if profile_presence.is_online %}1{% else %}0{% endif %}"
-        data-label="{{ profile_presence.label }}"
-    ></span>
-    {% endif %}
-
-    {% include "cabinet/_expert_recent_performance.html" %}
-    {% include "cabinet/_expert_sport_profit.html" %}
-    {% include "cabinet/_expert_monthly_stats.html" %}
-    {% include "cabinet/_expert_public_achievements.html" %}
-    {% include "cabinet/_expert_public_tournaments.html" %}
-    {% include "cabinet/_expert_recommendations.html" %}
 </section>
 {% endblock %}
 
