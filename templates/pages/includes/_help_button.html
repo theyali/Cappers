@@ -1,11 +1,12 @@
 {% load static %}
 {% with modal_slug=help_key|slugify %}
 <button
-    class="profile-save-button"
+    class="profile-row-action is-muted"
     type="button"
     data-site-help-trigger
     data-help-url="{% url 'pages:help_content' help_key %}"
     data-help-target="site-help-{{ modal_slug }}"
+    {% if help_position %}data-help-position="{{ help_position }}"{% endif %}
     aria-haspopup="dialog"
     aria-controls="site-help-{{ modal_slug }}"
 >
