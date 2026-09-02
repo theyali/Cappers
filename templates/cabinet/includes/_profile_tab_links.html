@@ -1,0 +1,26 @@
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'profile' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=profile" data-profile-tab-link{% if active_tab == 'profile' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Профиль</span>
+</a>
+{% if request.user.is_analyst %}
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'predictions' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link{% if active_tab == 'predictions' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Мои прогнозы</span>
+</a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'achievements' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=achievements" data-profile-tab-link{% if active_tab == 'achievements' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Достижения</span>
+</a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'followers' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link{% if active_tab == 'followers' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Подписчики</span>
+</a>
+{% endif %}
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'following' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link{% if active_tab == 'following' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Подписки</span>
+</a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'copybetting' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link{% if active_tab == 'copybetting' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Копибеттинг</span>
+</a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'wallet' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=wallet" data-profile-tab-link{% if active_tab == 'wallet' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Баланс</span>
+</a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'settings' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link{% if active_tab == 'settings' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-copy">Настройки</span>
+</a>
