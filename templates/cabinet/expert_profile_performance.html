@@ -1,5 +1,5 @@
 {% extends "cabinet/expert_profile.html" %}
-{% load static %}
+{% load static site_extras %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -63,11 +63,9 @@
             {% include "cabinet/_expert_recommendations.html" %}
         </section>
 
-        {% if adv_banners %}
-        <aside class="coupon-sidebar" aria-label="Реклама">
-            {% include "pages/_adv_banners.html" with placement="sidebar" %}
-        </aside>
-        {% endif %}
+        <div class="coupon-sidebar" aria-label="Букмекеры и реклама">
+            {% bookmakers_sidebar True %}
+        </div>
     </div>
 </section>
 {% endblock %}
