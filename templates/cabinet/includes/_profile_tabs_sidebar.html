@@ -1,0 +1,23 @@
+<aside class="matches-table-filter-sidebar" aria-label="Разделы профиля">
+    <div class="matches-table-filter-head">
+        <span class="matches-table-filter-head-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4.5 20c.8-4 3.3-6 7.5-6s6.7 2 7.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </span>
+        <div>
+            <strong>Личный кабинет</strong>
+            <small>@{{ request.user.username }}</small>
+        </div>
+    </div>
+
+    <section class="matches-table-filter-group" aria-labelledby="profile-sidebar-title">
+        <div class="matches-table-filter-title" id="profile-sidebar-title">
+            <span>Разделы профиля</span>
+        </div>
+        <nav class="matches-table-scope-list" aria-label="Разделы профиля">
+            {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="matches-table-scope-link" %}
+        </nav>
+    </section>
+</aside>
