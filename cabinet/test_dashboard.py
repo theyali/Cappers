@@ -130,6 +130,46 @@ class CapperDashboardTests(TestCase):
         self.assertContains(response, "prediction-table-row", count=3)
         self.assertNotContains(response, 'class="capper-live-card"')
 
+    def test_recent_reaction_uses_account_avatar_and_two_letter_initials(self):
+        self.reader.first_name = "Aleksey"
+        self.reader.last_name = "Sorokin"
+        self.reader.avatar = "users/avatars/reaction-reader.jpg"
+        self.reader.save(update_fields=["first_name", "last_name", "avatar"])
+
+        coupon = self._coupon(
+            state=PredictionCoupon.StateStatus.PENDING,
+            stake="100",
+            payout="180",
+            settled=False,
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self._match(92001),
+            market="winner",
+            selection="П1",
+            coefficient=Decimal("1.80"),
+            stake=Decimal("100"),
+            state_status="",
+        )
+        PredictionLike.objects.create(user=self.reader, prediction=coupon)
+
+        self.client.force_login(self.analyst)
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
+
+        reaction = response.context["latest_reactions"][0]
+        self.assertEqual(reaction["initial"], "AS")
+        self.assertTrue(reaction["avatar_url"].endswith("/users/avatars/reaction-reader.jpg"))
+        self.assertContains(response, 'width="38" height="38"')
+
+        self.reader.avatar = None
+        self.reader.save(update_fields=["avatar"])
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
+        reaction = response.context["latest_reactions"][0]
+
+        self.assertEqual(reaction["avatar_url"], "")
+        self.assertEqual(reaction["initial"], "AS")
+        self.assertContains(response, "AS")
+
     def test_profile_dashboard_shows_confidence_calibration(self):
         for index in range(5):
             self._coupon(

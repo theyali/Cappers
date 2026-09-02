@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from django.utils import timezone
 
 from front.models import PredictionFavorite, PredictionLike
+from front.views import _initials
 from game.models import Match, Prediction, PredictionCoupon
 
 from .confidence_calibration import build_confidence_calibration
@@ -82,11 +83,12 @@ def _actor_data(user) -> dict:
         if profile and profile.display_name
         else user.get_full_name() or user.username
     )
+    avatar = user.avatar or (profile.avatar if profile and profile.avatar else None)
     return {
         "name": display_name,
         "username": user.username,
-        "initial": (display_name or user.username or "П")[0].upper(),
-        "avatar_url": profile.avatar.url if profile and profile.avatar else "",
+        "initial": _initials(display_name),
+        "avatar_url": avatar.url if avatar else "",
     }
 
 

@@ -117,9 +117,9 @@
                 <div class="capper-activity-list">
                     {% for reaction in latest_reactions %}
                     <a class="capper-activity-row" href="{% url 'cabinet:coupon_detail' reaction.coupon_id %}">
-                        <span class="capper-activity-avatar">
+                        <span class="capper-activity-avatar"{% if reaction.avatar_url %} data-skeleton-image{% endif %}>
                             {% if reaction.avatar_url %}
-                                <img src="{{ reaction.avatar_url }}" alt="" loading="lazy">
+                                <img src="{{ reaction.avatar_url }}" alt="" width="38" height="38" loading="lazy" decoding="async">
                             {% else %}
                                 {{ reaction.initial }}
                             {% endif %}
@@ -154,9 +154,9 @@
                 <div class="capper-followers-list">
                     {% for follow in latest_followers %}
                     <div class="capper-follower-row">
-                        <span class="capper-activity-avatar">
+                        <span class="capper-activity-avatar"{% if follow.dashboard_actor.avatar_url %} data-skeleton-image{% endif %}>
                             {% if follow.dashboard_actor.avatar_url %}
-                                <img src="{{ follow.dashboard_actor.avatar_url }}" alt="" loading="lazy">
+                                <img src="{{ follow.dashboard_actor.avatar_url }}" alt="" width="38" height="38" loading="lazy" decoding="async">
                             {% else %}
                                 {{ follow.dashboard_actor.initial }}
                             {% endif %}
