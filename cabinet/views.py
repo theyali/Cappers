@@ -170,6 +170,7 @@ def profile(request):
     copybetting_subscriptions = (
         CopyBettingSubscription.objects.filter(user=request.user)
         .select_related("analyst", "analyst__analyst_profile")
+        .prefetch_related("allowed_sports")
         .order_by("-started_at", "-id")
     )
     copied_bets = (

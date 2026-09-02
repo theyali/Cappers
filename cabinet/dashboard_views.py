@@ -9,6 +9,7 @@ from django.utils import timezone
 from front.models import PredictionFavorite, PredictionLike
 from game.models import Match, Prediction, PredictionCoupon
 
+from .confidence_calibration import build_confidence_calibration
 from .models import AnalystFollow
 
 
@@ -37,6 +38,41 @@ def _coupon_profit(coupon: PredictionCoupon) -> Decimal:
 def _signed_percent(value: Decimal) -> str:
     prefix = "+" if value > 0 else ""
     return f"{prefix}{value.quantize(Decimal('0.1'))}%"
+
+
+def _confidence_recommendation(calibration: dict) -> dict:
+    if not calibration["has_data"]:
+        return {
+            "tone": "neutral",
+            "title": "Нужна история рассчитанных купонов",
+            "text": "После первых выигрышей и проигрышей здесь появится разбор того, насколько заявленная уверенность совпадает с фактом.",
+        }
+
+    if not calibration["has_reliable_data"]:
+        return {
+            "tone": "warning",
+            "title": "Выборка пока мала",
+            "text": f"Для устойчивой оценки нужно минимум {calibration['min_reliable_sample']} рассчитанных купонов в бакете.",
+        }
+
+    average_delta = Decimal(str(calibration["average_delta"]))
+    if average_delta <= Decimal("-5"):
+        return {
+            "tone": "danger",
+            "title": "Уверенность завышается",
+            "text": "Фактический проход ниже заявленной уверенности. Стоит строже оценивать риск перед публикацией купона.",
+        }
+    if average_delta >= Decimal("5"):
+        return {
+            "tone": "success",
+            "title": "Уверенность занижается",
+            "text": "Фактический проход выше заявленной уверенности. Можно увереннее маркировать сильные прогнозы.",
+        }
+    return {
+        "tone": "success",
+        "title": "Оценка близка к факту",
+        "text": "Заявленная уверенность в среднем совпадает с фактическим проходом по рассчитанным купонам.",
+    }
 
 
 def _actor_data(user) -> dict:
@@ -152,6 +188,8 @@ def build_dashboard_context(analyst) -> dict:
         author=analyst,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
+    published_coupons = list(published.order_by("settled_at", "updated_at", "id"))
+    confidence_calibration = build_confidence_calibration(published_coupons)
     engagement_stats = published.aggregate(
         published_count=Count("id", distinct=True),
         total_likes=Count("likes", distinct=True),
@@ -266,6 +304,10 @@ def build_dashboard_context(analyst) -> dict:
         "total_saves_count": total_saves_count,
         "avg_likes_per_prediction": avg_likes_per_prediction,
         "avg_saves_per_prediction": avg_saves_per_prediction,
+        "dashboard_confidence_calibration": confidence_calibration,
+        "dashboard_confidence_recommendation": _confidence_recommendation(
+            confidence_calibration
+        ),
     }
 
 

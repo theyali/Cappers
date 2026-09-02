@@ -44,6 +44,16 @@
         </div>
         {% endif %}
 
+        {% if expert.confidence_calibration.has_data %}
+        <div class="capper-pro-calibration is-{{ expert.confidence_calibration.accuracy_tone }}" aria-label="Калибровка уверенности {{ expert.name }}">
+            <div>
+                <span>Калибровка</span>
+                <strong>Ошибка {{ expert.confidence_calibration.average_abs_error|floatformat:1 }} п.п.</strong>
+            </div>
+            <small>{{ expert.confidence_calibration.accuracy_label }} · {{ expert.confidence_calibration.total }} купонов</small>
+        </div>
+        {% endif %}
+
         <div class="capper-pro-metrics">
             <div class="capper-pro-metric is-main">
                 <span>Публикации</span>

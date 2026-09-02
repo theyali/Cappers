@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -10,6 +10,13 @@ from game.models import Match, Prediction, PredictionCoupon
 from .models import AnalystFollow, User
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class CapperDashboardTests(TestCase):
     def setUp(self):
         self.analyst = User.objects.create_user(
@@ -120,8 +127,57 @@ class CapperDashboardTests(TestCase):
         self.assertContains(response, "Текущие live-прогнозы")
         self.assertContains(response, "Последние реакции")
         self.assertContains(response, "Настройки")
-        self.assertContains(response, 'class="content-table-row prediction-table-row"', count=3)
+        self.assertContains(response, "prediction-table-row", count=3)
         self.assertNotContains(response, 'class="capper-live-card"')
+
+    def test_profile_dashboard_shows_confidence_calibration(self):
+        for index in range(5):
+            self._coupon(
+                state=(
+                    PredictionCoupon.StateStatus.WIN
+                    if index < 3
+                    else PredictionCoupon.StateStatus.LOSE
+                ),
+                stake="100",
+                payout="180",
+                confidence=80,
+            )
+        self._coupon(
+            state=PredictionCoupon.StateStatus.REFUND,
+            stake="100",
+            payout="100",
+            confidence=80,
+        )
+        self._coupon(
+            state=PredictionCoupon.StateStatus.PENDING,
+            stake="100",
+            payout="200",
+            confidence=80,
+            settled=False,
+        )
+
+        self.client.force_login(self.analyst)
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
+
+        calibration = response.context["dashboard_confidence_calibration"]
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(calibration["total"], 5)
+        self.assertEqual(calibration["refunds"], 1)
+        self.assertEqual(calibration["average_abs_error"], 20.0)
+        self.assertEqual(calibration["accuracy_tone"], "danger")
+        self.assertEqual(calibration["accuracy_label"], "сильное завышение")
+        self.assertEqual(
+            response.context["dashboard_confidence_recommendation"]["title"],
+            "Уверенность завышается",
+        )
+        self.assertContains(response, "Моя калибровка")
+        self.assertContains(response, "Средняя ошибка")
+        self.assertContains(response, "20,0 п.п.")
+        self.assertContains(response, "завышает на 20,0 п.п.")
+        self.assertContains(response, "сильное завышение")
+        self.assertContains(response, "is-danger")
+        self.assertContains(response, "80-89%")
+        self.assertContains(response, "60,0%")
 
     def test_settings_tab_contains_account_form(self):
         self.client.force_login(self.analyst)

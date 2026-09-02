@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -9,6 +9,13 @@ from cabinet.models import AnalystFollow, User
 from game.models import PredictionCoupon
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class CappersCatalogTests(TestCase):
     def _create_analyst(self, username="catalog-roi-expert"):
         analyst = User.objects.create_user(
@@ -37,11 +44,45 @@ class CappersCatalogTests(TestCase):
         response = self.client.get(reverse("front:cappers_stats"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "ROI +50.0%")
+        self.assertContains(response, "ROI +50,0%")
         self.assertContains(response, 'class="bookmakers-sidebar"')
         self.assertContains(response, "/static/front/img/favicon.png")
         self.assertContains(response, 'class="capper-pro-achievements"')
         self.assertContains(response, "ROI +50%")
+
+    def test_catalog_shows_confidence_calibration_badge(self):
+        analyst = User.objects.create_user(
+            username="calibrated-catalog-expert",
+            password="safe-test-password",
+            role=User.Role.ANALYST,
+        )
+        analyst.analyst_profile.display_name = "Calibrated Expert"
+        analyst.analyst_profile.save(update_fields=["display_name", "updated_at"])
+        now = timezone.now()
+
+        for index in range(5):
+            PredictionCoupon.objects.create(
+                author=analyst,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                state_status=(
+                    PredictionCoupon.StateStatus.WIN
+                    if index < 3
+                    else PredictionCoupon.StateStatus.LOSE
+                ),
+                total_stake=Decimal("100.00"),
+                possible_payout=Decimal("180.00"),
+                confidence=80,
+                published_at=now,
+                settled_at=now,
+            )
+
+        response = self.client.get(reverse("front:cappers_stats"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Калибровка")
+        self.assertContains(response, "Ошибка 20,0 п.п.")
+        self.assertContains(response, "сильное завышение · 5 купонов")
+        self.assertContains(response, "capper-pro-calibration is-danger")
 
     def test_catalog_summary_is_rendered_before_ranking_and_discovery(self):
         self._create_analyst()
@@ -122,7 +163,7 @@ class CappersCatalogTests(TestCase):
         self.assertEqual(payload["period"], "7")
         self.assertEqual(payload["label"], "ROI за 7 дней")
         self.assertIn('class="capper-pro-card', payload["html"])
-        self.assertIn("ROI +50.0% · 7д", payload["html"])
+        self.assertIn("ROI +50,0% · 7д", payload["html"])
         self.assertNotIn("cappers-summary", payload["html"])
 
     def test_all_time_ajax_roi_includes_old_settled_predictions(self):
@@ -148,4 +189,4 @@ class CappersCatalogTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["period"], "all")
         self.assertEqual(payload["label"], "ROI за все время")
-        self.assertIn("ROI -25.0% · всё время", payload["html"])
+        self.assertIn("ROI -25,0% · всё время", payload["html"])

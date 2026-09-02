@@ -192,6 +192,63 @@
             </article>
         </div>
 
+        <article class="expert-confidence-card{% if confidence_calibration.has_data %} is-{{ confidence_calibration.accuracy_tone }}{% endif %}">
+            <div class="expert-public-chart-head">
+                <div>
+                    <span>Калибровка уверенности</span>
+                    <h3>Заявлено против факта</h3>
+                </div>
+                <span>{{ confidence_calibration.total }}</span>
+            </div>
+            {% if confidence_calibration.has_data %}
+                <div class="expert-confidence-summary">
+                    <div>
+                        <span>Среднее отклонение</span>
+                        <strong>{{ confidence_calibration.average_abs_error|floatformat:1 }} п.п.</strong>
+                    </div>
+                    <div>
+                        <span>Поведение</span>
+                        <strong>{{ confidence_calibration.average_delta_label }}</strong>
+                    </div>
+                    <div>
+                        <span>Оценка</span>
+                        <strong>{{ confidence_calibration.accuracy_label }}</strong>
+                    </div>
+                    {% if confidence_calibration.strongest_row %}
+                    <div>
+                        <span>{{ confidence_calibration.strongest_row.label }}</span>
+                        <strong>{{ confidence_calibration.strongest_row.actual_rate|floatformat:1 }}%</strong>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="expert-confidence-list">
+                    {% for row in confidence_calibration.rows %}
+                    <div class="expert-confidence-row is-{{ row.accuracy_tone }}{% if not row.is_reliable %} is-low-sample{% endif %}">
+                        <div class="expert-confidence-row-head">
+                            <div>
+                                <strong>{{ row.label }}</strong>
+                                <span>{{ row.total }} купонов · {{ row.wins }}–{{ row.losses }}{% if row.refunds %} · {{ row.refunds }} возврат{% endif %}</span>
+                            </div>
+                            <div>
+                                <strong>{{ row.actual_rate|floatformat:1 }}%</strong>
+                                <span>{% if row.delta > 0 %}+{% endif %}{{ row.delta|floatformat:1 }} п.п.</span>
+                            </div>
+                        </div>
+                        <div class="expert-confidence-bars" aria-hidden="true">
+                            <span class="is-declared" style="width: {{ row.declared_rate_width }}%"></span>
+                            <span class="is-actual" style="width: {{ row.actual_rate_width }}%"></span>
+                        </div>
+                        {% if not row.is_full_sample %}
+                            <small>{{ row.sample_label }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="expert-public-muted">Пока недостаточно рассчитанных купонов для калибровки уверенности.</p>
+            {% endif %}
+        </article>
+
         {{ profit_chart|json_script:"expert-profit-chart-data" }}
         <div class="expert-profit-layout">
             <article class="expert-profit-chart-card" data-profit-chart>

@@ -7,11 +7,21 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, User
-from game.models import Match, Prediction, PredictionCoupon
+from game.models import Match, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
+from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
 from wallets.models import BalanceTransaction, CopiedBet, CopyBettingSubscription, RealBalanceTransaction
-from wallets.services import activate_copybetting, charge_prediction_stake, copy_published_coupon
+from wallets.services import (
+    activate_copybetting,
+    approve_real_withdrawal,
+    cancel_real_withdrawal,
+    charge_prediction_stake,
+    copy_published_coupon,
+    pause_copybetting,
+    request_real_withdrawal,
+    resume_copybetting,
+)
 
 
 TEST_STORAGES = {
@@ -270,6 +280,141 @@ class CapperBalanceTests(TestCase):
         subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
         self.assertEqual(subscription.total_profit, Decimal("100.00"))
 
+    def test_copybetting_respects_pause_and_resume(self):
+        reader = User.objects.create_user(
+            username="copy-pause-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        pause_copybetting(subscription)
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+
+        self.assertEqual(copy_published_coupon(coupon), [])
+
+        resume_copybetting(subscription)
+        copied = copy_published_coupon(coupon)
+
+        self.assertEqual(len(copied), 1)
+
+    def test_copybetting_filters_by_minimum_total_coefficient(self):
+        reader = User.objects.create_user(
+            username="copy-min-coef-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            min_total_coefficient=Decimal("2.50"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+
+        self.assertEqual(copy_published_coupon(coupon), [])
+        self.assertFalse(CopiedBet.objects.filter(user=reader, source_coupon=coupon).exists())
+
+    def test_copybetting_filters_by_allowed_sports(self):
+        football = Sport.objects.create(code="football", name="Football", name_ru="Футбол")
+        basketball = Sport.objects.create(code="basketball", name="Basketball", name_ru="Баскетбол")
+        self.match.sport = football
+        self.match.save(update_fields=["sport", "updated_at"])
+        reader = User.objects.create_user(
+            username="copy-sport-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            allowed_sports=[basketball],
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("500.00"),
+        )
+
+        self.assertEqual(copy_published_coupon(coupon), [])
+
+        subscription.allowed_sports.set([football])
+        copied = copy_published_coupon(coupon)
+
+        self.assertEqual(len(copied), 1)
+
+    def test_copybetting_can_skip_tournament_coupons(self):
+        reader = User.objects.create_user(
+            username="copy-tournament-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            copy_regular_coupons=True,
+            copy_tournament_coupons=False,
+        )
+        tournament = Tournament.objects.create(
+            title="Wallet Cup",
+            status=Tournament.Status.PUBLISHED,
+            starts_at=timezone.now() - timedelta(hours=1),
+            ends_at=timezone.now() + timedelta(days=1),
+        )
+        participant = TournamentParticipant.objects.create(
+            tournament=tournament,
+            user=self.analyst,
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        TournamentCoupon.objects.create(
+            tournament=tournament,
+            participant=participant,
+            coupon=coupon,
+        )
+
+        self.assertEqual(copy_published_coupon(coupon), [])
+
     def test_paid_subscription_credits_analyst_real_balance(self):
         profile = AnalystProfile.objects.get(user=self.analyst)
         profile.paid_predictions_enabled = True
@@ -290,6 +435,48 @@ class CapperBalanceTests(TestCase):
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
                 amount=Decimal("990.00"),
+            ).exists()
+        )
+
+    def test_admin_can_approve_real_withdrawal(self):
+        self.analyst.real_balance.balance = Decimal("1000.00")
+        self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
+        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        withdrawal = RealBalanceTransaction.objects.get(
+            user=self.analyst,
+            kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+        )
+
+        approve_real_withdrawal(withdrawal)
+
+        withdrawal.refresh_from_db()
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(withdrawal.status, RealBalanceTransaction.Status.COMPLETED)
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+        self.assertEqual(self.analyst.real_balance.pending_withdrawal, Decimal("0.00"))
+
+    def test_admin_can_cancel_real_withdrawal_and_refund_balance(self):
+        self.analyst.real_balance.balance = Decimal("1000.00")
+        self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
+        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        withdrawal = RealBalanceTransaction.objects.get(
+            user=self.analyst,
+            kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+        )
+
+        cancel_real_withdrawal(withdrawal)
+
+        withdrawal.refresh_from_db()
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(withdrawal.status, RealBalanceTransaction.Status.CANCELED)
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("1000.00"))
+        self.assertEqual(self.analyst.real_balance.pending_withdrawal, Decimal("0.00"))
+        self.assertTrue(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.WITHDRAWAL_CANCEL,
+                amount=Decimal("400.00"),
+                related_id=withdrawal.id,
             ).exists()
         )
 

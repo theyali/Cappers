@@ -630,7 +630,10 @@ summary:focus-visible,
     display: none;
 }
 
+
+
 @media (max-width: 1120px) {
+
     body {
         padding-bottom: calc(104px + env(safe-area-inset-bottom));
     }
@@ -750,8 +753,8 @@ summary:focus-visible,
         mask: url("../svgs/home.svg") center / contain no-repeat;
     }
     .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
-        -webkit-mask: url("../svgs/soccer.svg") center / contain no-repeat;
-        mask: url("../svgs/soccer.svg") center / contain no-repeat;
+        -webkit-mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
+        mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
     }
 
     .mobile-app-nav .mobile-nav-tournaments .mobile-app-nav-icon {
@@ -2765,5 +2768,40 @@ summary:focus-visible,
     .tournament-card-meta dd,
     .tournament-rules-list dd {
         text-align: left;
+    }
+}
+
+@media (min-width: 670px) and (max-width: 1024px) {
+    .capper-pro-avatar {
+        width: 52px;
+        height: 52px;
+        flex: 0 0 52px;
+    }
+    .capper-pro-card {
+        min-width: 0;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+        padding: 10px;
+    }
+    .home-best-experts-grid{
+        grid-template-columns: 1fr 1fr;
+    }
+    .capper-pro-card-link {
+        min-width: 0;
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: 12px;
+        color: inherit;
+    }
+    .capper-pro-roi{
+        display: none;
+    }
+
+    .capper-pro-metric span {
+        color: var(--muted);
+        font-size: 7px;
     }
 }

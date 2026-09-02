@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -8,6 +8,13 @@ from cabinet.models import User
 from game.models import PredictionCoupon
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class SharedExpertRankingTests(TestCase):
     def _analyst(self, username):
         user = User.objects.create_user(
@@ -81,6 +88,7 @@ class SharedExpertRankingTests(TestCase):
         self.assertEqual(catalog_ids[:3], [history.id, lucky.id, admin.id])
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class FavoritesEmptyStateTests(TestCase):
     def test_empty_favorites_uses_site_logo(self):
         user = User.objects.create_user(

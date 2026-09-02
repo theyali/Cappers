@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 
+from cabinet.confidence_calibration import build_confidence_calibration_by_author
+
 from .capper_stats_service import CapperStatsService, _best_streaks_for_authors
 from .capper_table_service import build_capper_table_context
 from .expert_ranking import ranked_expert_profiles
@@ -48,6 +50,7 @@ def _ranking_cards(
         ]
     profile_ids = [profile.user_id for profile in profiles]
     best_streaks = _best_streaks_for_authors(profile_ids)
+    confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
     following_ids = service._following_ids(profile_ids)
     paid_subscription_ids = service._paid_subscription_ids(profile_ids)
 
@@ -58,6 +61,7 @@ def _ranking_cards(
             following_ids=following_ids,
             paid_subscription_ids=paid_subscription_ids,
             best_streak=best_streaks.get(profile.user_id, 0),
+            confidence_calibration=confidence_calibrations.get(profile.user_id),
         )
         card["roi_period_days"] = period_days
         card["roi_period_label"] = period_label

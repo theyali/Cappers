@@ -57,6 +57,73 @@
         </article>
     </section>
 
+    <section class="capper-dashboard-panel capper-dashboard-confidence" aria-label="Моя калибровка уверенности">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Уверенность</p>
+                <h2>Моя калибровка</h2>
+            </div>
+            <span>{{ dashboard_confidence_calibration.total }}</span>
+        </div>
+
+        {% if dashboard_confidence_calibration.has_data %}
+        <div class="capper-dashboard-confidence-top">
+            <div>
+                <span>Средняя ошибка</span>
+                <strong>{{ dashboard_confidence_calibration.average_abs_error|floatformat:1 }} п.п.</strong>
+            </div>
+            <div>
+                <span>Смещение</span>
+                <strong>{{ dashboard_confidence_calibration.average_delta_label }}</strong>
+            </div>
+            <div>
+                <span>Оценка</span>
+                <strong>{{ dashboard_confidence_calibration.accuracy_label }}</strong>
+            </div>
+            {% if dashboard_confidence_calibration.strongest_row %}
+            <div>
+                <span>{{ dashboard_confidence_calibration.strongest_row.label }}</span>
+                <strong>{{ dashboard_confidence_calibration.strongest_row.actual_rate|floatformat:1 }}%</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="capper-dashboard-confidence-note is-{{ dashboard_confidence_recommendation.tone }}">
+            <strong>{{ dashboard_confidence_recommendation.title }}</strong>
+            <span>{{ dashboard_confidence_recommendation.text }}</span>
+        </div>
+
+        <div class="capper-dashboard-confidence-list">
+            {% for row in dashboard_confidence_calibration.rows %}
+            <div class="capper-dashboard-confidence-row is-{{ row.accuracy_tone }}{% if not row.is_reliable %} is-low-sample{% endif %}">
+                <div class="capper-dashboard-confidence-row-head">
+                    <div>
+                        <strong>{{ row.label }}</strong>
+                        <span>{{ row.total }} купонов · {{ row.wins }}-{{ row.losses }}{% if row.refunds %} · возвратов {{ row.refunds }}{% endif %}</span>
+                    </div>
+                    <div>
+                        <strong>{{ row.actual_rate|floatformat:1 }}%</strong>
+                        <span>{{ row.delta|floatformat:1 }} п.п.</span>
+                    </div>
+                </div>
+                <div class="capper-dashboard-confidence-bars" aria-hidden="true">
+                    <span class="is-declared" style="width: {{ row.declared_rate_width }}%"></span>
+                    <span class="is-actual" style="width: {{ row.actual_rate_width }}%"></span>
+                </div>
+                {% if not row.is_full_sample %}
+                <small>{{ row.sample_label }}</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="capper-dashboard-empty">
+            <strong>{{ dashboard_confidence_recommendation.title }}</strong>
+            <p>{{ dashboard_confidence_recommendation.text }}</p>
+        </div>
+        {% endif %}
+    </section>
+
     <div class="capper-dashboard-layout">
         <section class="capper-dashboard-panel capper-dashboard-live-panel" aria-label="Текущие live-прогнозы">
             <div class="capper-dashboard-panel-head">

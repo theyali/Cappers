@@ -6,6 +6,10 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
 from cabinet.achievements import build_achievement_badges
+from cabinet.confidence_calibration import (
+    build_confidence_calibration,
+    build_confidence_calibration_by_author,
+)
 from cabinet.models import AnalystFollow, AnalystPaidSubscription
 from game.models import Prediction, PredictionCoupon
 
@@ -87,6 +91,7 @@ class CapperStatsService:
             ]
         profile_ids = [profile.user_id for profile in profiles]
         best_streaks = _best_streaks_for_authors(profile_ids)
+        confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
         following_ids = self._following_ids(profile_ids)
         paid_subscription_ids = self._paid_subscription_ids(profile_ids)
 
@@ -96,6 +101,7 @@ class CapperStatsService:
                 following_ids=following_ids,
                 paid_subscription_ids=paid_subscription_ids,
                 best_streak=best_streaks.get(profile.user_id, 0),
+                confidence_calibration=confidence_calibrations.get(profile.user_id),
             )
             for profile in profiles
         }
@@ -253,6 +259,7 @@ class CapperStatsService:
             "overall_roi": overall_roi,
             "profit_periods": profit_periods,
             "profit_chart": profit_chart,
+            "confidence_calibration": build_confidence_calibration(published_coupons),
             "current_streak": self._current_streak(published),
             "market_distribution": self._market_rows(published_items),
             "league_distribution": self._league_rows(published_items),
@@ -293,6 +300,7 @@ class CapperStatsService:
         following_ids: set[int],
         paid_subscription_ids: set[int] | None = None,
         best_streak: int,
+        confidence_calibration: dict | None = None,
     ) -> dict:
         paid_subscription_ids = paid_subscription_ids or set()
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
@@ -324,6 +332,7 @@ class CapperStatsService:
             "last_publication_at": profile.last_publication_at,
             "joined_at": self._joined_at(profile),
             "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+            "confidence_calibration": confidence_calibration,
             "is_self": bool(
                 getattr(self.user, "is_authenticated", False)
                 and self.user.pk == profile.user_id
