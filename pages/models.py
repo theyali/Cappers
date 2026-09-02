@@ -2,6 +2,7 @@ import json
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from tinymce.models import HTMLField
 
 
 class AdvBanner(models.Model):
@@ -34,6 +35,53 @@ class AdvBanner(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class HelpBlock(models.Model):
+    key = models.SlugField(
+        "Ключ блока",
+        max_length=120,
+        unique=True,
+        help_text="Передавайте этот ключ в include кнопки помощи, например tournaments-hero.",
+    )
+    title = models.CharField("Заголовок модального окна", max_length=180)
+    is_active = models.BooleanField("Показывать помощь", default=True, db_index=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Блок помощи"
+        verbose_name_plural = "Блоки помощи"
+        ordering = ("title", "key")
+
+    def __str__(self) -> str:
+        return f"{self.title} · {self.key}"
+
+
+class HelpAccordionItem(models.Model):
+    help_block = models.ForeignKey(
+        HelpBlock,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Блок помощи",
+    )
+    title = models.CharField("Заголовок аккордеона", max_length=220)
+    content = HTMLField("RichText контент")
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+    is_active = models.BooleanField("Показывать", default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Пункт помощи"
+        verbose_name_plural = "Пункты помощи"
+        ordering = ("sort_order", "id")
+        indexes = [
+            models.Index(
+                fields=("help_block", "is_active", "sort_order"),
+                name="pages_help_item_active_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class PageSEO(models.Model):
