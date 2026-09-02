@@ -8,39 +8,41 @@
 {% block content %}
 <section class="predictions-page predictions-scroll-page" data-expert-public-tabs data-active-tab="predictions">
     <div class="predictions-layout">
-        <aside class="predictions-filter-sidebar matches-table-filter-sidebar expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
-            <button
-                class="expert-public-tab is-active"
-                type="button"
-                role="tab"
-                aria-selected="true"
-                tabindex="0"
-                data-expert-public-tab="predictions"
-            >Прогнозы</button>
-            <button
-                class="expert-public-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                tabindex="-1"
-                data-expert-public-tab="stats"
-            >Статистика</button>
-            <button
-                class="expert-public-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                tabindex="-1"
-                data-expert-public-tab="achievements"
-            >Достижения</button>
-            <button
-                class="expert-public-tab"
-                type="button"
-                role="tab"
-                aria-selected="false"
-                tabindex="-1"
-                data-expert-public-tab="tournaments"
-            >Турниры</button>
+        <aside class="predictions-filter-sidebar matches-table-filter-sidebar" aria-label="Разделы профиля эксперта">
+            <div class="expert-public-tabs" role="tablist" aria-label="Разделы профиля эксперта">
+                <button
+                    class="expert-public-tab is-active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    tabindex="0"
+                    data-expert-public-tab="predictions"
+                >Прогнозы</button>
+                <button
+                    class="expert-public-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    tabindex="-1"
+                    data-expert-public-tab="stats"
+                >Статистика</button>
+                <button
+                    class="expert-public-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    tabindex="-1"
+                    data-expert-public-tab="achievements"
+                >Достижения</button>
+                <button
+                    class="expert-public-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    tabindex="-1"
+                    data-expert-public-tab="tournaments"
+                >Турниры</button>
+            </div>
         </aside>
 
         <section class="predictions-content expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
