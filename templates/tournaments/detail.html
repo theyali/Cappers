@@ -17,7 +17,7 @@
 
         <div class="predictions-content tournaments-content">
             <article
-                class="profile-hero"
+                class="profile-hero tournament-detail-hero"
                 {% if tournament.hero_image %}
                     style="background-color:#0b56fa;background-image:url('{{ tournament.hero_image.url }}');background-size:cover;background-position:center;background-repeat:no-repeat;"
                 {% elif tournament.card_image %}
@@ -47,7 +47,7 @@
                             {% elif request.user.is_authenticated and request.user.is_analyst %}
                                 <form method="post" action="{% url 'tournaments:join' slug=tournament.slug %}">
                                     {% csrf_token %}
-                                    <button class="tournament-primary-action" type="submit">Подключиться</button>
+                                    <button class="tournament-primary-action" type="submit">Принять участие</button>
                                 </form>
                             {% elif request.user.is_authenticated %}
                                 <a class="tournament-primary-action" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>

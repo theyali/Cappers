@@ -19653,6 +19653,12 @@ body:has(.predictions-scroll-page) .site-footer {
     border-radius: 24px;
     outline: 1px solid rgba(255,255,255,.08);
 }
+.profile-hero.tournament-detail-hero{
+    position: relative;
+    display: block;
+    padding: 20px;
+    overflow: hidden;
+}
 
 .profile-hero-shade {
     flex: 0 0 auto;
@@ -19830,15 +19836,18 @@ body:has(.predictions-scroll-page) .site-footer {
     grid-template-columns: repeat(3, minmax(0,1fr));
     gap: 10px;
 }
+#tournament-title{
+    font-size: 25px;
+}
 
 .profile-stat-pill {
     display: grid;
     align-content: center;
     gap: 6px;
-    padding: 10px;
-    border-radius: 16px;
+    padding: 8px;
+    border-radius: 12px;
     color: white;
-    background: rgba(31,31,33,.92);
+    background: var(--line);
 }
 
 .profile-stat-pill svg {
