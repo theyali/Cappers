@@ -135,6 +135,12 @@
                                 </span>
                                 <span>Профиль</span>
                             </a>
+                            <a href="{% url 'cabinet:profile' %}?tab=copybetting">
+                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M5 7h10a4 4 0 0 1 4 4v1"></path><path d="m16 9 3 3 3-3"></path><path d="M19 17H9a4 4 0 0 1-4-4v-1"></path><path d="m8 15-3-3-3 3"></path></svg>
+                                </span>
+                                <span>Копибеттинг</span>
+                            </a>
                             {% if request.user.is_analyst %}
                             <a href="{% url 'cabinet:profile' %}?tab=predictions">
                                 <span class="nav-profile-dropdown-icon" aria-hidden="true">
