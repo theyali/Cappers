@@ -1,19 +1,5 @@
 {% load static %}
 <section class="capper-dashboard" aria-label="Дашборд каппера">
-    <section class="capper-dashboard-hero">
-        <div>
-            <p class="capper-dashboard-kicker">Рабочий кабинет</p>
-            <div class="heading-style-h1">Сегодня</div>
-            <p class="capper-dashboard-date">{{ today|date:"d.m.Y" }} · {{ display_name }}</p>
-        </div>
-        <div class="capper-dashboard-actions">
-            <a class="is-primary" href="{% url 'game:match_list' %}">Создать прогноз</a>
-            <a href="{% url 'cabinet:profile' %}?tab=predictions">Мои купоны</a>
-            <a href="{% url 'front:expert_profile' username=request.user.username %}">Публичный профиль</a>
-            <a href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Настройки</a>
-        </div>
-    </section>
-
     <section class="capper-dashboard-panel capper-dashboard-confidence" aria-label="Моя калибровка уверенности">
         <div class="capper-dashboard-panel-head">
             <div>
