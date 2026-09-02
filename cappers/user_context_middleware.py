@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-import json
-
 from django.conf import settings
-from django.urls import reverse
 
-from cappers.timezone_service import (
-    SCROLL_RESTORE_BOOTSTRAP_SCRIPT,
-    TIMEZONE_BOOTSTRAP_SCRIPT,
-    activate_request_timezone,
-    deactivate_request_timezone,
-)
+from cappers.timezone_service import activate_request_timezone, deactivate_request_timezone
 
 
 def _static_url(path: str) -> str:
@@ -21,13 +13,11 @@ def _static_url(path: str) -> str:
 
 
 def _html_injection() -> bytes:
-    timing_url = reverse("game:match_timing")
-    js_url = _static_url("front/js/match-timing.js")
+    browser_context_url = _static_url("front/js/browser-context.js")
+    match_timing_url = _static_url("front/js/match-timing.js")
     payload = (
-        SCROLL_RESTORE_BOOTSTRAP_SCRIPT
-        + TIMEZONE_BOOTSTRAP_SCRIPT
-        + f'<script>window.CAPPERS_MATCH_TIMING_URL={json.dumps(timing_url)};</script>'
-        + f'<script src="{js_url}" defer></script>'
+        f'<script src="{browser_context_url}"></script>'
+        f'<script src="{match_timing_url}" defer></script>'
     )
     return payload.encode("utf-8")
 
