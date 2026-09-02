@@ -53,7 +53,8 @@
         };
 
         buttons.forEach((button, index) => {
-            button.addEventListener("click", () => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
                 setActiveTab(button.dataset.expertPublicTab);
             });
 
