@@ -271,35 +271,8 @@
             </div>
             <div class="profile-coupons-list">
                 {% for copied_bet in copied_bets %}
-                    <a class="profile-coupon-row" href="{% url 'front:prediction_detail' copied_bet.source_coupon_id %}">
-                        <div class="profile-coupon-main">
-                            <span class="nav-profile-dropdown-avatar" data-skeleton-image>
-                                {% if copied_bet.analyst.analyst_profile.avatar %}
-                                    <img class="nav-profile-avatar-image" src="{{ copied_bet.analyst.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ copied_bet.analyst.username }}">
-                                {% elif copied_bet.analyst.avatar %}
-                                    <img class="nav-profile-avatar-image" src="{{ copied_bet.analyst.avatar.url }}" width="42" height="42" alt="Аватар {{ copied_bet.analyst.username }}">
-                                {% else %}
-                                    <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
-                                {% endif %}
-                            </span>
-                            <div class="profile-coupon-copy">
-                                <strong>
-                                    {{ copied_bet.analyst.get_full_name|default:copied_bet.analyst.username }}
-                                    {% if copied_bet.analyst.analyst_profile.is_verified %}
-                                        <span class="capper-verified-badge" title="Проверенный каппер" aria-label="Проверенный каппер">
-                                            <svg viewBox="0 0 16 16" aria-hidden="true"><path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path><path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path></svg>
-                                        </span>
-                                    {% endif %}
-                                </strong>
-                                <span>@{{ copied_bet.analyst.username }} · {{ copied_bet.created_at|date:"d.m.Y · H:i" }}</span>
-                            </div>
-                        </div>
-                        <span class="profile-coupon-status is-{{ copied_bet.state_status }}">{{ copied_bet.get_state_status_display }}</span>
-                        <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ copied_bet.stake }} ₽</strong></div>
-                        <div class="profile-coupon-metric"><span>Возможный выигрыш</span><strong>{{ copied_bet.possible_payout }} ₽</strong></div>
-                        <div class="profile-coupon-metric"><span>Прибыль</span><strong>{{ copied_bet.profit }} ₽</strong></div>
-                        <span class="profile-coupon-open" aria-hidden="true">→</span>
-                    </a>
+                    {% url 'front:prediction_detail' copied_bet.source_coupon_id as copied_bet_href %}
+                    {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.analyst row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix="₽" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix="₽" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix="₽" only %}
                 {% empty %}
                     <div class="profile-empty-state"><p>Скопированных ставок пока нет.</p></div>
                 {% endfor %}
@@ -321,20 +294,8 @@
             {% if my_coupons %}
             <div class="profile-coupons-list">
                 {% for coupon in my_coupons %}
-                <a class="profile-coupon-row" href="{% url 'cabinet:coupon_detail' coupon.id %}">
-                    <div class="profile-coupon-main">
-                        <span class="profile-coupon-id">#{{ coupon.id }}</span>
-                        <div class="profile-coupon-copy">
-                            <strong>Купон #{{ coupon.id }}</strong>
-                            <span>{{ coupon.created_at|date:"d.m.Y · H:i" }}</span>
-                        </div>
-                    </div>
-                    <span class="profile-coupon-status is-{{ coupon.result_key }}">{{ coupon.result_label }}</span>
-                    <div class="profile-coupon-metric"><span>Матчи</span><strong>{{ coupon.predictions_count }}</strong></div>
-                    <div class="profile-coupon-metric"><span>Сумма</span><strong>{{ coupon.total_stake }} ₽</strong></div>
-                    <div class="profile-coupon-metric"><span>Стоимость купона</span><strong>{{ coupon.possible_payout }} ₽</strong></div>
-                    <span class="profile-coupon-open" aria-hidden="true">→</span>
-                </a>
+                    {% url 'cabinet:coupon_detail' coupon.id as coupon_href %}
+                    {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix="₽" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix="₽" only %}
                 {% endfor %}
             </div>
             {% else %}
