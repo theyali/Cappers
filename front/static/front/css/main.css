@@ -4955,6 +4955,7 @@ h2 {
     padding: 10px;
     border-radius: 18px;
     background: var(--panel);
+    margin-bottom:20px;
 }
 
 .coupon-head {
