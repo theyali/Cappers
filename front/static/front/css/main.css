@@ -29384,3 +29384,8 @@ font-size: 13px;
         padding: 14px;
     }
 }
+.content-league-summary.profile-row-action{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
