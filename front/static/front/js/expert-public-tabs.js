@@ -17,13 +17,20 @@
 
     function initExpertTabs(root) {
         const buttons = Array.from(root.querySelectorAll("[data-expert-public-tab]"));
+        const panels = Array.from(root.querySelectorAll(MANAGED_PANEL_SELECTOR));
         if (!buttons.length) return;
 
         const setPanelVisibility = (tabName) => {
             const visibleSelectors = TAB_PANELS[tabName] || [];
-            root.querySelectorAll(MANAGED_PANEL_SELECTOR).forEach((panel) => {
+            panels.forEach((panel) => {
                 const isVisible = visibleSelectors.some((selector) => panel.matches(selector));
                 panel.hidden = !isVisible;
+
+                if (isVisible) {
+                    panel.style.removeProperty("display");
+                } else {
+                    panel.style.setProperty("display", "none", "important");
+                }
             });
         };
 
