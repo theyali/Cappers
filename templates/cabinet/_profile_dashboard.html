@@ -14,49 +14,6 @@
         </div>
     </section>
 
-    <section class="capper-dashboard-stats" aria-label="Метрики каппера">
-        <article class="is-live">
-            <span>Активных</span>
-            <strong>{{ today_stats.active }}</strong>
-            <small>прогнозов на сегодня</small>
-        </article>
-        <article class="is-win">
-            <span>Выиграно</span>
-            <strong>{{ today_stats.wins }}</strong>
-            <small>прогнозов сегодня</small>
-        </article>
-        <article class="is-lose">
-            <span>Проиграно</span>
-            <strong>{{ today_stats.losses }}</strong>
-            <small>прогнозов сегодня</small>
-        </article>
-        <article>
-            <span>Ожидает</span>
-            <strong>{{ today_stats.pending }}</strong>
-            <small>{{ today_stats.live }} сейчас в live</small>
-        </article>
-        <article class="is-roi {% if roi_today > 0 %}is-positive{% elif roi_today < 0 %}is-negative{% endif %}">
-            <span>ROI сегодня</span>
-            <strong>{{ roi_today_display }}</strong>
-            <small>{{ roi_profit|floatformat:2 }} прибыли / {{ roi_stake|floatformat:2 }} оборота</small>
-        </article>
-        <article class="is-followers">
-            <span>Новые подписчики</span>
-            <strong>{{ new_followers_count }}</strong>
-            <small>за сегодняшний день</small>
-        </article>
-        <article>
-            <span>Лайки всего</span>
-            <strong>{{ total_likes_count }}</strong>
-            <small>в среднем {{ avg_likes_per_prediction }} на опубликованный прогноз</small>
-        </article>
-        <article>
-            <span>Сохранения</span>
-            <strong>{{ total_saves_count }}</strong>
-            <small>в среднем {{ avg_saves_per_prediction }} на опубликованный прогноз</small>
-        </article>
-    </section>
-
     <section class="capper-dashboard-panel capper-dashboard-confidence" aria-label="Моя калибровка уверенности">
         <div class="capper-dashboard-panel-head">
             <div>
