@@ -5,25 +5,39 @@
     let activeTrigger = null;
     let activeRequest = null;
 
-    const setHash = (modalId) => {
-        if (!modalId) return;
-        if (window.location.hash === `#${modalId}`) return;
-        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${modalId}`);
+    const setModalVisible = (modal, visible) => {
+        if (!modal) return;
+        modal.setAttribute("aria-hidden", visible ? "false" : "true");
+        modal.style.display = visible ? "grid" : "";
     };
 
-    const clearHash = (modal) => {
-        if (!modal || window.location.hash !== `#${modal.id}`) return;
-        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    const positionTrigger = (trigger) => {
+        if (!trigger || trigger.dataset.helpPosition !== "top-right") return;
+        const anchor = trigger.closest("[data-site-help-anchor]") || trigger.closest(".tournaments-hero");
+        if (!anchor) return;
+
+        trigger.style.position = "absolute";
+        trigger.style.top = "18px";
+        trigger.style.right = "18px";
+        trigger.style.zIndex = "4";
+        trigger.style.width = "auto";
+        trigger.style.minWidth = "0";
+        trigger.style.gridColumn = "auto";
+    };
+
+    const positionTriggers = () => {
+        document.querySelectorAll("[data-site-help-trigger]").forEach(positionTrigger);
     };
 
     const close = (modal = activeModal) => {
         if (!modal) return;
-        clearHash(modal);
-        modal.setAttribute("aria-hidden", "true");
+        setModalVisible(modal, false);
+
         if (activeRequest) {
             activeRequest.abort();
             activeRequest = null;
         }
+
         const trigger = activeTrigger;
         activeModal = null;
         activeTrigger = null;
@@ -31,7 +45,13 @@
     };
 
     const showError = (content, message) => {
-        content.innerHTML = `<div class="profile-empty-state"><p>${message}</p></div>`;
+        content.replaceChildren();
+        const state = document.createElement("div");
+        state.className = "profile-empty-state";
+        const text = document.createElement("p");
+        text.textContent = message;
+        state.appendChild(text);
+        content.appendChild(state);
     };
 
     const open = async (trigger) => {
@@ -44,8 +64,7 @@
 
         activeModal = modal;
         activeTrigger = trigger;
-        modal.setAttribute("aria-hidden", "false");
-        setHash(modal.id);
+        setModalVisible(modal, true);
 
         const content = modal.querySelector("[data-site-help-content]");
         const title = modal.querySelector("[data-site-help-title]");
@@ -106,13 +125,6 @@
         if (event.key === "Escape" && activeModal) close(activeModal);
     });
 
-    window.addEventListener("hashchange", () => {
-        if (activeModal && window.location.hash !== `#${activeModal.id}`) {
-            activeModal.setAttribute("aria-hidden", "true");
-            activeModal = null;
-            activeTrigger = null;
-        }
-    });
-
-    window.CappersHelp = { open, close };
+    positionTriggers();
+    window.CappersHelp = { open, close, positionTriggers };
 })();
