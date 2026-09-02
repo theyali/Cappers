@@ -17,14 +17,14 @@
         </div>
 
         <div class="predictions-content tournaments-content">
-            <header class="tournaments-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/tournaments/tournaments.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
+            <header class="tournaments-hero" data-site-help-anchor style="background-color:#0b56fa;background-image:url('{% static 'front/img/tournaments/tournaments.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
                 <div style="max-width:720px;padding:20px 22px;border-radius:16px;background:rgba(19,19,19,.72);text-shadow:0 2px 8px rgba(0,0,0,.65);">
                     <p class="tournaments-eyebrow">Соревнования капперов</p>
                     <h1 id="tournaments-title">Турниры</h1>
                     <p style="color:#fff;">Прогнозы в рамках турниров, таблица участников и призы за первые места.</p>
                 </div>
                 <div class="profile-copy-actions">
-                    {% include "pages/includes/_help_button.html" with help_key="tournaments-hero" only %}
+                    {% include "pages/includes/_help_button.html" with help_key="tournaments-hero" help_position="top-right" only %}
                     <div class="tournaments-total" style="padding:14px 16px;border-radius:14px;background:rgba(19,19,19,.72);text-shadow:0 2px 8px rgba(0,0,0,.65);">
                         <strong>{{ tournaments|length }}</strong>
                         <span style="color:#fff;">турниров</span>
