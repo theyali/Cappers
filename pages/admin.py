@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AdvBanner, PageSEO
+from .models import AdvBanner, HelpAccordionItem, HelpBlock, PageSEO
 
 
 @admin.register(AdvBanner)
@@ -9,6 +9,24 @@ class AdvBannerAdmin(admin.ModelAdmin):
     list_filter = ("size",)
     search_fields = ("name", "url")
     ordering = ("id",)
+
+
+class HelpAccordionItemInline(admin.StackedInline):
+    model = HelpAccordionItem
+    extra = 1
+    fields = ("sort_order", "title", "content", "is_active")
+    ordering = ("sort_order", "id")
+
+
+@admin.register(HelpBlock)
+class HelpBlockAdmin(admin.ModelAdmin):
+    list_display = ("title", "key", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    list_editable = ("is_active",)
+    search_fields = ("title", "key", "items__title", "items__content")
+    readonly_fields = ("updated_at",)
+    ordering = ("title", "key")
+    inlines = (HelpAccordionItemInline,)
 
 
 @admin.register(PageSEO)
