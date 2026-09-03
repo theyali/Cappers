@@ -144,95 +144,102 @@
         }
     }, true);
 
-    const backLink = document.querySelector(".match-back-link");
-    if (!backLink) return;
+    const initBackLink = () => {
+        const backLink = document.querySelector(".match-back-link");
+        if (!backLink) return;
 
-    const currentUrl = new URL(window.location.href);
-    if (!isMatchDetail(currentUrl)) return;
+        const currentUrl = new URL(window.location.href);
+        if (!isMatchDetail(currentUrl)) return;
 
-    const isUsableSource = (url) => (
-        url.origin === currentUrl.origin
-        && !isSameLocation(url, currentUrl)
-    );
+        const isUsableSource = (url) => (
+            url.origin === currentUrl.origin
+            && !isSameLocation(url, currentUrl)
+        );
 
-    const sourceLabel = (url) => {
-        const path = url.pathname;
+        const sourceLabel = (url) => {
+            const path = url.pathname;
 
-        if (path === "/games/") return "Все матчи";
-        if (matchDetailPath.test(path)) return "Вернуться к матчу";
-        if (/^\/predictions\/\d+\/?$/.test(path) || /^\/cabinet\/coupons\/\d+\/?$/.test(path)) {
-            return "Вернуться к купону";
-        }
-        if (
-            path === "/predictions/"
-            || (/^\/predictions\/[^/]+\/?$/.test(path) && !/^\/predictions\/\d+\/?$/.test(path))
-        ) {
-            return "Вернуться к прогнозам";
-        }
-        if (path === "/cabinet/profile/") {
-            return url.searchParams.get("tab") === "predictions"
-                ? "Вернуться к моим купонам"
-                : "Вернуться в мой профиль";
-        }
-        if (/^\/experts\/[^/]+\/?$/.test(path)) return "Вернуться к профилю каппера";
-        if (path === "/favorites/") return "Вернуться в избранное";
-        if (path === "/feed/") return "Вернуться в мою ленту";
-        if (path === "/tournaments/") return "Вернуться к турнирам";
-        if (path.startsWith("/tournaments/")) return "Вернуться к турниру";
-        if (path === "/cappers/" || path.startsWith("/cappers-statistics/") || path.startsWith("/cappers-table/")) {
-            return "Вернуться к капперам";
-        }
-        if (path === "/") return "Вернуться на главную";
-        return "Вернуться назад";
-    };
+            if (path === "/games/") return "Все матчи";
+            if (matchDetailPath.test(path)) return "Вернуться к матчу";
+            if (/^\/predictions\/\d+\/?$/.test(path)) return "Вернуться к прогнозу";
+            if (/^\/cabinet\/coupons\/\d+\/?$/.test(path)) return "Вернуться к моему купону";
+            if (
+                path === "/predictions/"
+                || (/^\/predictions\/[^/]+\/?$/.test(path) && !/^\/predictions\/\d+\/?$/.test(path))
+            ) {
+                return "Вернуться к прогнозам";
+            }
+            if (path === "/cabinet/profile/") {
+                return url.searchParams.get("tab") === "predictions"
+                    ? "Вернуться к моим купонам"
+                    : "Вернуться в мой профиль";
+            }
+            if (/^\/experts\/[^/]+\/?$/.test(path)) return "Вернуться к профилю каппера";
+            if (path === "/favorites/") return "Вернуться в избранное";
+            if (path === "/feed/") return "Вернуться в мою ленту";
+            if (path === "/tournaments/") return "Вернуться к турнирам";
+            if (path.startsWith("/tournaments/")) return "Вернуться к турниру";
+            if (path === "/cappers/" || path.startsWith("/cappers-statistics/") || path.startsWith("/cappers-table/")) {
+                return "Вернуться к капперам";
+            }
+            if (path === "/") return "Вернуться на главную";
+            return "Вернуться назад";
+        };
 
-    const readStoredSource = () => {
-        try {
-            const raw = sessionStorage.getItem(storageKey(currentUrl.pathname));
-            if (!raw) return null;
-            const stored = JSON.parse(raw);
-            const age = Date.now() - Number(stored?.savedAt || 0);
-            if (!stored?.href || !stored?.savedAt || age < 0 || age > maxStoredAge) {
-                sessionStorage.removeItem(storageKey(currentUrl.pathname));
+        const readStoredSource = () => {
+            try {
+                const raw = sessionStorage.getItem(storageKey(currentUrl.pathname));
+                if (!raw) return null;
+                const stored = JSON.parse(raw);
+                const age = Date.now() - Number(stored?.savedAt || 0);
+                if (!stored?.href || !stored?.savedAt || age < 0 || age > maxStoredAge) {
+                    sessionStorage.removeItem(storageKey(currentUrl.pathname));
+                    return null;
+                }
+                const url = new URL(stored.href, currentUrl.href);
+                if (!isUsableSource(url)) return null;
+                return { url, age };
+            } catch (error) {
                 return null;
             }
-            const url = new URL(stored.href, currentUrl.href);
-            if (!isUsableSource(url)) return null;
-            return { url, age };
-        } catch (error) {
-            return null;
+        };
+
+        let source = null;
+        if (document.referrer) {
+            try {
+                const referrer = new URL(document.referrer, currentUrl.href);
+                if (isUsableSource(referrer)) {
+                    source = referrer;
+                    writeSource(currentUrl, referrer);
+                }
+            } catch (error) {
+                source = null;
+            }
         }
+
+        if (!source) {
+            const stored = readStoredSource();
+            if (stored) {
+                const navigation = performance.getEntriesByType?.("navigation")?.[0];
+                const navigationType = navigation?.type || "navigate";
+                if (
+                    navigationType === "reload"
+                    || navigationType === "back_forward"
+                    || stored.age <= freshNavigationAge
+                ) {
+                    source = stored.url;
+                }
+            }
+        }
+
+        if (!source) return;
+        backLink.href = source.href;
+        backLink.textContent = `← ${sourceLabel(source)}`;
     };
 
-    let source = null;
-    if (document.referrer) {
-        try {
-            const referrer = new URL(document.referrer, currentUrl.href);
-            if (isUsableSource(referrer)) {
-                source = referrer;
-                writeSource(currentUrl, referrer);
-            }
-        } catch (error) {
-            source = null;
-        }
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initBackLink, { once: true });
+    } else {
+        initBackLink();
     }
-
-    if (!source) {
-        const stored = readStoredSource();
-        if (stored) {
-            const navigation = performance.getEntriesByType?.("navigation")?.[0];
-            const navigationType = navigation?.type || "navigate";
-            if (
-                navigationType === "reload"
-                || navigationType === "back_forward"
-                || stored.age <= freshNavigationAge
-            ) {
-                source = stored.url;
-            }
-        }
-    }
-
-    if (!source) return;
-    backLink.href = source.href;
-    backLink.textContent = `← ${sourceLabel(source)}`;
 })();
