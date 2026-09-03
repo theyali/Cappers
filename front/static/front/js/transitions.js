@@ -176,10 +176,17 @@
     const currentUrl = new URL(window.location.href);
     const storageKey = `cappers:coupon-back:${currentUrl.pathname}`;
     const maxStoredAge = 30 * 60 * 1000;
+    const matchDetailPath = /^\/games\/[^/]+\/?$/;
+
+    const isSameLocation = (left, right) => (
+        left.pathname === right.pathname
+        && left.search === right.search
+        && left.hash === right.hash
+    );
 
     const isUsableSource = (url) => (
         url.origin === currentUrl.origin
-        && !(url.pathname === currentUrl.pathname && url.search === currentUrl.search)
+        && !isSameLocation(url, currentUrl)
     );
 
     const sourceLabel = (url) => {
@@ -230,7 +237,8 @@
             const raw = sessionStorage.getItem(storageKey);
             if (!raw) return null;
             const stored = JSON.parse(raw);
-            if (!stored?.href || !stored?.savedAt || Date.now() - stored.savedAt > maxStoredAge) {
+            const age = Date.now() - Number(stored?.savedAt || 0);
+            if (!stored?.href || !stored?.savedAt || age < 0 || age > maxStoredAge) {
                 sessionStorage.removeItem(storageKey);
                 return null;
             }
@@ -252,20 +260,44 @@
         }
     };
 
+    const isReturnFromMatch = (referrer) => {
+        if (!matchDetailPath.test(referrer.pathname)) return false;
+
+        try {
+            const raw = sessionStorage.getItem(`cappers:match-back:${referrer.pathname}`);
+            if (!raw) return false;
+
+            const stored = JSON.parse(raw);
+            const age = Date.now() - Number(stored?.savedAt || 0);
+            if (!stored?.href || !stored?.savedAt || age < 0 || age > maxStoredAge) return false;
+
+            const matchSource = new URL(stored.href, currentUrl.href);
+            return matchSource.origin === currentUrl.origin && isSameLocation(matchSource, currentUrl);
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const storedSource = readStoredSource();
     let source = null;
+
     if (document.referrer) {
         try {
             const referrer = new URL(document.referrer, currentUrl.href);
             if (isUsableSource(referrer)) {
-                source = referrer;
-                storeSource(referrer);
+                if (storedSource && isReturnFromMatch(referrer)) {
+                    source = storedSource;
+                } else {
+                    source = referrer;
+                    storeSource(referrer);
+                }
             }
         } catch (error) {
             source = null;
         }
     }
 
-    source = source || readStoredSource();
+    source = source || storedSource;
     if (!source) return;
 
     backLink.href = source.href;
