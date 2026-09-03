@@ -1,0 +1,41 @@
+<div
+    class="prediction-reactions{% if is_own %} is-own-prediction{% endif %}"
+    data-prediction-card="{{ coupon.id }}"
+    aria-label="Реакции на купон"
+>
+    <button
+        class="prediction-reaction prediction-like{% if is_liked %} is-active{% endif %}"
+        type="button"
+        data-prediction-reaction
+        data-authenticated="{% if is_authenticated %}true{% else %}false{% endif %}"
+        data-url="{% url 'front:prediction_like' prediction_id=coupon.id %}"
+        data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+        aria-pressed="{% if is_liked %}true{% else %}false{% endif %}"
+        aria-label="{% if is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}. Всего лайков: {{ likes_count }}"
+        title="{% if is_own %}Нельзя лайкать свой прогноз{% elif is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
+        {% if is_own %}disabled aria-disabled="true"{% endif %}
+    >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <b data-reaction-count>{{ likes_count }}</b>
+    </button>
+
+    <button
+        class="prediction-reaction prediction-favorite{% if is_favorite %} is-active{% endif %}"
+        type="button"
+        data-prediction-reaction
+        data-authenticated="{% if is_authenticated %}true{% else %}false{% endif %}"
+        data-url="{% url 'front:prediction_favorite' prediction_id=coupon.id %}"
+        data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+        aria-pressed="{% if is_favorite %}true{% else %}false{% endif %}"
+        aria-label="{% if is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}. Всего сохранений: {{ favorites_count }}"
+        title="{% if is_own %}Нельзя сохранять свой прогноз в избранное{% elif is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+        {% if is_own %}disabled aria-disabled="true"{% endif %}
+    >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        <b data-reaction-count>{{ favorites_count }}</b>
+    </button>
+</div>
