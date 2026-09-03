@@ -1,4 +1,5 @@
-{% load static %}
+{% load static prediction_reactions %}
+{% if row_id %}{% profile_coupon_reaction_counts row_id as row_reactions %}{% endif %}
 <a class="profile-coupon-row" href="{{ row_href }}">
     <div class="profile-coupon-main">
         {% if row_user %}
@@ -32,6 +33,23 @@
                 {% endif %}
             </strong>
             <span>{% if row_user %}@{{ row_user.username }} · {% endif %}{{ row_date|date:"d.m.Y · H:i" }}</span>
+            {% if row_id %}
+                <span
+                    data-profile-coupon-sort-data
+                    data-coupon-id="{{ row_id }}"
+                    data-sort-date="{{ row_date|date:'U' }}"
+                    data-sort-stake="{{ metric_2_value|default:'0' }}"
+                    data-sort-payout="{{ metric_3_value|default:'0' }}"
+                    data-sort-likes="{{ row_reactions.likes }}"
+                    data-sort-favorites="{{ row_reactions.favorites }}"
+                    title="Лайки: {{ row_reactions.likes }} · Сохранили: {{ row_reactions.favorites }}"
+                >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {{ row_reactions.likes }} ·
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                    {{ row_reactions.favorites }}
+                </span>
+            {% endif %}
         </div>
     </div>
 
