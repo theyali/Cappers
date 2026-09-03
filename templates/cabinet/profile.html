@@ -285,11 +285,22 @@
                             <p class="eyebrow">Прогнозы</p>
                             <h2>Мои купоны</h2>
                         </div>
-                        <span class="profile-coupon-count">{{ coupons_count }}</span>
+                        {% if my_coupons %}
+                        <div class="profile-demand-sort" data-profile-coupon-sort-controls role="group" aria-label="Сортировать мои купоны">
+                            <button class="is-active" type="button" data-profile-coupon-sort="date" aria-pressed="true">Дата <span data-sort-arrow>↓</span></button>
+                            <button type="button" data-profile-coupon-sort="stake" aria-pressed="false">Сумма <span data-sort-arrow></span></button>
+                            <button type="button" data-profile-coupon-sort="payout" aria-pressed="false">Стоимость <span data-sort-arrow></span></button>
+                            <button type="button" data-profile-coupon-sort="likes" aria-pressed="false">Лайки <span data-sort-arrow></span></button>
+                            <button type="button" data-profile-coupon-sort="favorites" aria-pressed="false">Сохранили <span data-sort-arrow></span></button>
+                            <span class="profile-coupon-count" title="Всего купонов">{{ coupons_count }}</span>
+                        </div>
+                        {% else %}
+                            <span class="profile-coupon-count">{{ coupons_count }}</span>
+                        {% endif %}
                     </div>
 
                     {% if my_coupons %}
-                    <div class="profile-coupons-list">
+                    <div class="profile-coupons-list" data-profile-coupon-sort-list>
                         {% for coupon in my_coupons %}
                             {% url 'cabinet:coupon_detail' coupon.id as coupon_href %}
                             {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix="₽" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix="₽" only %}
@@ -455,4 +466,7 @@
 </section>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'front/js/profile.js' %}" defer></script>{% endblock %}
+{% block extra_js %}
+<script src="{% static 'front/js/profile.js' %}" defer></script>
+<script src="{% static 'front/js/profile-coupon-sort.js' %}" defer></script>
+{% endblock %}
