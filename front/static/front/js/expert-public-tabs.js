@@ -7,6 +7,7 @@
             ".expert-sport-profit",
             ".expert-monthly-stats",
         ],
+        bank: ['[data-expert-public-panel="bank"]'],
         achievements: ['[data-expert-public-panel="achievements"]'],
         tournaments: ['[data-expert-public-panel="tournaments"]'],
     };
