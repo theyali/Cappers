@@ -1,7 +1,7 @@
 import json
 
 from django.core.paginator import Paginator
-from django.db.models import Case, Count, ExpressionWrapper, F, IntegerField, Q, Value, When
+from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -355,21 +355,11 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
             "-published_at",
             "-created_at",
         )
-    elif request.user.is_authenticated:
-        queryset = queryset.annotate(
-            feed_priority=Case(
-                When(author=request.user, then=Value(0)),
-                When(author_id__in=following_ids, then=Value(1)),
-                default=Value(2),
-                output_field=IntegerField(),
-            )
-        ).order_by(
-            "feed_priority",
-            "-published_at",
-            "-created_at",
-        )
     else:
-        queryset = queryset.order_by("-published_at", "-created_at")
+        # The public catalog's default "new" sort must be chronological for everyone.
+        # Personal author/follow priorities belong to the dedicated following feed and
+        # must not push older coupons above newer ones in /predictions/.
+        queryset = queryset.order_by("-published_at", "-created_at", "-id")
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
