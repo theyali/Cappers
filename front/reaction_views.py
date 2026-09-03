@@ -68,6 +68,7 @@ def toggle_prediction_favorite(request, prediction_id: int):
             {
                 "ok": False,
                 "active": False,
+                "count": PredictionFavorite.objects.filter(prediction=prediction).count(),
                 "error": OWN_FAVORITE_ERROR,
             },
             status=403,
@@ -82,4 +83,10 @@ def toggle_prediction_favorite(request, prediction_id: int):
         favorite.delete()
         active = False
 
-    return JsonResponse({"ok": True, "active": active})
+    return JsonResponse(
+        {
+            "ok": True,
+            "active": active,
+            "count": PredictionFavorite.objects.filter(prediction=prediction).count(),
+        }
+    )
