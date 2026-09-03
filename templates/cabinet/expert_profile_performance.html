@@ -1,5 +1,5 @@
 {% extends "cabinet/expert_profile.html" %}
-{% load static site_extras %}
+{% load static site_extras expert_bank %}
 
 {% block extra_css %}
 {{ block.super }}
@@ -39,6 +39,19 @@
                             <svg viewBox="0 0 24 24" fill="none"><path d="M5 19V11M12 19V5M19 19v-7M3 19h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </span>
                         <span class="matches-table-scope-copy">Статистика</span>
+                    </a>
+                    <a
+                        class="matches-table-scope-link"
+                        href="#bank"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        data-expert-public-tab="bank"
+                    >
+                        <span class="matches-table-scope-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4zM4 10h16M8 15h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        <span class="matches-table-scope-copy">Банк</span>
                     </a>
                     <a
                         class="matches-table-scope-link"
@@ -85,6 +98,7 @@
             {% include "cabinet/_expert_recent_performance.html" %}
             {% include "cabinet/_expert_sport_profit.html" %}
             {% include "cabinet/_expert_monthly_stats.html" %}
+            {% expert_public_bank expert %}
             {% include "cabinet/_expert_public_achievements.html" %}
             {% include "cabinet/_expert_public_tournaments.html" %}
             {% include "cabinet/_expert_recommendations.html" %}
