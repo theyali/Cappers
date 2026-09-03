@@ -62,6 +62,7 @@ class PredictionReactionGuardTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertFalse(response.json()["ok"])
         self.assertFalse(response.json()["active"])
+        self.assertEqual(response.json()["count"], 0)
         self.assertFalse(
             PredictionFavorite.objects.filter(
                 prediction=self.coupon,
@@ -93,6 +94,7 @@ class PredictionReactionGuardTests(TestCase):
         self.assertEqual(like_response.json()["count"], 1)
         self.assertEqual(favorite_response.status_code, 200)
         self.assertTrue(favorite_response.json()["active"])
+        self.assertEqual(favorite_response.json()["count"], 1)
 
         unlike_response = self.client.post(self.like_url)
         unfavorite_response = self.client.post(self.favorite_url)
@@ -102,3 +104,4 @@ class PredictionReactionGuardTests(TestCase):
         self.assertEqual(unlike_response.json()["count"], 0)
         self.assertEqual(unfavorite_response.status_code, 200)
         self.assertFalse(unfavorite_response.json()["active"])
+        self.assertEqual(unfavorite_response.json()["count"], 0)
