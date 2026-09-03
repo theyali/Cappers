@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from .models import (
     BalanceTransaction,
     CapperBalance,
+    CapperBankStats,
     CapperRealBalance,
     CopiedBet,
     CopyBettingSubscription,
@@ -32,6 +33,39 @@ class CapperRealBalanceAdmin(admin.ModelAdmin):
     list_display = ("user", "balance", "pending_withdrawal", "updated_at")
     search_fields = ("user__username", "user__email")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(CapperBankStats)
+class CapperBankStatsAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "coupons_count",
+        "settled_count",
+        "total_stake",
+        "average_stake",
+        "lost_amount",
+        "earned_amount",
+        "pending_stake",
+        "net_result",
+        "updated_at",
+    )
+    search_fields = ("user__username", "user__email")
+    readonly_fields = (
+        "user",
+        "coupons_count",
+        "settled_count",
+        "total_stake",
+        "average_stake",
+        "lost_amount",
+        "earned_amount",
+        "pending_stake",
+        "net_result",
+        "created_at",
+        "updated_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(RealBalanceTransaction)
