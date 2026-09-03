@@ -1,0 +1,84 @@
+<div
+    class="profile-email-modal expert-public-details-modal"
+    id="expert-public-details-modal"
+    data-expert-public-details-modal
+    aria-hidden="true"
+>
+    <button
+        class="profile-email-modal-backdrop expert-public-details-backdrop"
+        type="button"
+        data-expert-public-details-close
+        aria-label="Закрыть подробную информацию"
+        tabindex="-1"
+    ></button>
+
+    <section
+        class="profile-email-modal-card expert-public-details-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="expert-public-details-title"
+        tabindex="-1"
+        data-expert-public-details-dialog
+    >
+        <button
+            class="profile-email-modal-close expert-public-details-close"
+            type="button"
+            data-expert-public-details-close
+            aria-label="Закрыть"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18"></path>
+            </svg>
+        </button>
+
+        <header class="expert-public-details-head">
+            <h2 id="expert-public-details-title">Подробнее</h2>
+        </header>
+
+        <dl class="expert-public-details-list">
+            <div class="expert-public-details-row">
+                <dt>Имя:</dt>
+                <dd>{{ expert_name }}</dd>
+            </div>
+            <div class="expert-public-details-row">
+                <dt>Пользователь:</dt>
+                <dd>@{{ expert.username }}</dd>
+            </div>
+            <div class="expert-public-details-row">
+                <dt>{% if profile_presence.is_online %}Статус:{% else %}Был в сети:{% endif %}</dt>
+                <dd>
+                    {% if profile_presence.is_online %}
+                        В сети
+                    {% elif profile_presence.last_seen_at %}
+                        {{ profile_presence.last_seen_at|date:"d E Y, H:i" }}
+                    {% else %}
+                        Нет данных
+                    {% endif %}
+                </dd>
+            </div>
+            <div class="expert-public-details-row">
+                <dt>Регистрация:</dt>
+                <dd>{{ expert.date_joined|date:"d E Y, H:i" }}</dd>
+            </div>
+            {% if analyst_profile.specialization %}
+            <div class="expert-public-details-row">
+                <dt>Специализация:</dt>
+                <dd>{{ analyst_profile.specialization }}</dd>
+            </div>
+            {% endif %}
+            <div class="expert-public-details-row">
+                <dt>Подписчиков:</dt>
+                <dd data-followers-count>{{ followers_count }}</dd>
+            </div>
+            <div class="expert-public-details-row">
+                <dt>Подписок:</dt>
+                <dd>{{ following_count }}</dd>
+            </div>
+        </dl>
+
+        <section class="expert-public-details-bio" aria-labelledby="expert-public-details-bio-title">
+            <h3 id="expert-public-details-bio-title">О себе</h3>
+            <p>{{ analyst_profile.bio|default:"Описание пока не добавлено."|linebreaksbr }}</p>
+        </section>
+    </section>
+</div>
