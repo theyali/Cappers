@@ -11,10 +11,24 @@
     };
 
     const transitionDuration = 420;
+    const couponDetailPath = /^\/predictions\/\d+\/?$/;
+    const matchDetailPath = /^\/games\/[^/]+\/?$/;
 
     const isModifiedClick = (event) => (
         event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0
     );
+
+    const rememberCouponMatchRoundTrip = (sourceUrl, targetUrl) => {
+        if (!couponDetailPath.test(sourceUrl.pathname) || !matchDetailPath.test(targetUrl.pathname)) return;
+        try {
+            sessionStorage.setItem(`cappers:coupon-match-return:${targetUrl.pathname}`, JSON.stringify({
+                couponHref: sourceUrl.href,
+                savedAt: Date.now(),
+            }));
+        } catch (error) {
+            // Navigation still works normally when sessionStorage is unavailable.
+        }
+    };
 
     document.addEventListener("click", (event) => {
         const link = event.target.closest("a[href]");
@@ -33,6 +47,7 @@
         if (url.pathname === window.location.pathname && url.search === window.location.search) return;
         if (url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return;
 
+        rememberCouponMatchRoundTrip(new URL(window.location.href), url);
         event.preventDefault();
         showTransition();
         window.setTimeout(() => {
@@ -260,8 +275,34 @@
         }
     };
 
+    const consumeCouponMatchRoundTrip = (referrer) => {
+        if (!matchDetailPath.test(referrer.pathname)) return false;
+
+        const returnKey = `cappers:coupon-match-return:${referrer.pathname}`;
+        try {
+            const raw = sessionStorage.getItem(returnKey);
+            if (!raw) return false;
+
+            const stored = JSON.parse(raw);
+            const age = Date.now() - Number(stored?.savedAt || 0);
+            if (!stored?.couponHref || !stored?.savedAt || age < 0 || age > maxStoredAge) {
+                sessionStorage.removeItem(returnKey);
+                return false;
+            }
+
+            const couponUrl = new URL(stored.couponHref, currentUrl.href);
+            if (couponUrl.origin !== currentUrl.origin || !isSameLocation(couponUrl, currentUrl)) return false;
+
+            sessionStorage.removeItem(returnKey);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
     const isReturnFromMatch = (referrer) => {
         if (!matchDetailPath.test(referrer.pathname)) return false;
+        if (consumeCouponMatchRoundTrip(referrer)) return true;
 
         try {
             const raw = sessionStorage.getItem(`cappers:match-back:${referrer.pathname}`);
@@ -278,15 +319,24 @@
         }
     };
 
+    let defaultSource = null;
+    try {
+        const url = new URL(backLink.href, currentUrl.href);
+        if (isUsableSource(url)) defaultSource = url;
+    } catch (error) {
+        defaultSource = null;
+    }
+
     const storedSource = readStoredSource();
+    const rememberedSource = storedSource || defaultSource;
     let source = null;
 
     if (document.referrer) {
         try {
             const referrer = new URL(document.referrer, currentUrl.href);
             if (isUsableSource(referrer)) {
-                if (storedSource && isReturnFromMatch(referrer)) {
-                    source = storedSource;
+                if (rememberedSource && isReturnFromMatch(referrer)) {
+                    source = rememberedSource;
                 } else {
                     source = referrer;
                     storeSource(referrer);
@@ -297,7 +347,7 @@
         }
     }
 
-    source = source || storedSource;
+    source = source || rememberedSource;
     if (!source) return;
 
     backLink.href = source.href;
