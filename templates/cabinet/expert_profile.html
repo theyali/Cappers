@@ -60,7 +60,25 @@
                     {% endif %}
                 </div>
                 <span class="expert-public-username">@{{ expert.username }}</span>
-                {% if analyst_profile.bio %}<p class="expert-public-bio">{{ analyst_profile.bio }}</p>{% endif %}
+                {% if analyst_profile.bio %}
+                <div class="expert-public-bio-block">
+                    <p class="expert-public-bio">{{ analyst_profile.bio }}</p>
+                    <button
+                        class="expert-public-bio-more"
+                        type="button"
+                        data-expert-public-details-open
+                        aria-controls="expert-public-details-modal"
+                        aria-haspopup="dialog"
+                    >
+                        <span>Подробнее</span>
+                        <svg viewBox="0 0 20 20" aria-hidden="true">
+                            <circle cx="10" cy="10" r="8"></circle>
+                            <path d="M10 9v5"></path>
+                            <circle cx="10" cy="6.2" r=".8" class="expert-public-bio-more-dot"></circle>
+                        </svg>
+                    </button>
+                </div>
+                {% endif %}
                 {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
             </div>
         </div>
@@ -439,6 +457,8 @@
         {% endif %}
     </section>
 </section>
+
+{% include "modals/expert_public_details.html" %}
 {% endblock %}
 
 {% block extra_js %}
@@ -446,4 +466,5 @@
 <script src="{% static 'front/js/expert-stats.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
+<script src="{% static 'front/js/expert-public-details.js' %}" defer></script>
 {% endblock %}
