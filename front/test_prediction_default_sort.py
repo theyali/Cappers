@@ -61,7 +61,7 @@ class PredictionDefaultSortTests(TestCase):
             selection="П1",
             coefficient=Decimal("2.00"),
             stake=Decimal("100.00"),
-            state_status=Prediction.StateStatus.PENDING,
+            state_status="",
         )
         return coupon
 
