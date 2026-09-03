@@ -73,7 +73,7 @@
             {% endif %}
         </div>
 
-        {% if prediction.coupon.is_paid %}
+        {% if prediction.coupon.audience == "paid" %}
             <span class="prediction-status prediction-status-paid">Платный</span>
         {% endif %}
         {% if prediction.state_status == "win" %}

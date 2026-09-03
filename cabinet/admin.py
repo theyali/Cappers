@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     AnalystFollow,
+    AnalystPaidPlan,
     AnalystPaidSubscription,
     AnalystProfile,
     CapperMonthlyStat,
@@ -34,6 +35,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "telegram_channel",
         "telegram_account",
         "is_verified",
+        "verification_requested_at",
         "is_vip",
         "is_recommended",
         "paid_predictions_enabled",
@@ -45,6 +47,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_editable = ("is_verified", "is_vip", "is_recommended", "paid_predictions_enabled", "is_public")
     list_filter = (
         "is_verified",
+        "verification_requested_at",
         "is_vip",
         "is_recommended",
         "paid_predictions_enabled",
@@ -101,6 +104,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "is_verified",
+                    "verification_requested_at",
                     "is_vip",
                     "is_recommended",
                     "paid_predictions_enabled",
@@ -122,12 +126,40 @@ class AnalystFollowAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 
+@admin.register(AnalystPaidPlan)
+class AnalystPaidPlanAdmin(admin.ModelAdmin):
+    list_display = (
+        "analyst",
+        "title",
+        "duration_days",
+        "price",
+        "is_active",
+        "order",
+        "updated_at",
+    )
+    list_editable = ("price", "is_active", "order")
+    list_filter = ("is_active", "duration_days", "created_at")
+    search_fields = ("analyst__username", "analyst__email", "title")
+    autocomplete_fields = ("analyst",)
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("analyst", "order", "duration_days", "id")
+
+
 @admin.register(AnalystPaidSubscription)
 class AnalystPaidSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("subscriber", "analyst", "price", "starts_at", "expires_at", "is_active")
+    list_display = (
+        "subscriber",
+        "analyst",
+        "plan",
+        "price",
+        "duration_days",
+        "starts_at",
+        "expires_at",
+        "is_active",
+    )
     list_filter = ("starts_at", "expires_at")
     search_fields = ("subscriber__username", "analyst__username")
-    autocomplete_fields = ("subscriber", "analyst")
+    autocomplete_fields = ("subscriber", "analyst", "plan")
     readonly_fields = ("created_at", "updated_at")
 
 

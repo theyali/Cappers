@@ -114,7 +114,7 @@ def following_feed(request):
     )
     paid_queryset = _apply_feed_filters(
         _published_queryset(include_paid=True).filter(
-            is_paid=True,
+            audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_analyst_ids,
         ),
         selected_capper=selected_capper,
@@ -183,7 +183,7 @@ def following_feed(request):
         row["author_id"]: row["total"]
         for row in PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            is_paid=True,
+            audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_upgrade_ids,
         )
         .values("author_id")
@@ -194,7 +194,7 @@ def following_feed(request):
         row["author_id"]: row["total"]
         for row in PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            is_paid=False,
+            audience=PredictionCoupon.Audience.FREE,
             author_id__in=following_ids,
         )
         .values("author_id")

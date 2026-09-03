@@ -160,8 +160,14 @@ def copybetting_stop(request, subscription_id: int):
         pk=subscription_id,
         user=request.user,
     )
-    stop_copybetting(subscription)
-    messages.success(request, "Копибеттинг остановлен.")
+    subscription = stop_copybetting(subscription)
+    if subscription.pending_status == CopyBettingSubscription.Status.STOPPED:
+        messages.success(
+            request,
+            "Остановка запланирована. Она применится после расчета уже начавшихся купонов.",
+        )
+    else:
+        messages.success(request, "Копибеттинг остановлен.")
     return redirect(f"{reverse('cabinet:profile')}?tab=copybetting")
 
 
@@ -174,8 +180,14 @@ def copybetting_pause(request, subscription_id: int):
         pk=subscription_id,
         user=request.user,
     )
-    pause_copybetting(subscription)
-    messages.success(request, "Копибеттинг поставлен на паузу.")
+    subscription = pause_copybetting(subscription)
+    if subscription.pending_status == CopyBettingSubscription.Status.PAUSED:
+        messages.success(
+            request,
+            "Пауза запланирована. Она включится после расчета уже начавшихся купонов.",
+        )
+    else:
+        messages.success(request, "Копибеттинг поставлен на паузу.")
     return redirect(f"{reverse('cabinet:profile')}?tab=copybetting")
 
 

@@ -13,6 +13,7 @@ from django.utils.dateparse import parse_date
 
 from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
+from cabinet.paid_predictions import profile_paid_predictions_enabled
 from game.models import Match, PredictionCoupon
 from game.views import (
     _active_draft_coupon,
@@ -149,7 +150,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             "predictions__coupon",
             filter=Q(
                 predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                predictions__coupon__is_paid=False,
+                predictions__coupon__audience=PredictionCoupon.Audience.FREE,
             ),
             distinct=True,
         ),
@@ -344,6 +345,9 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "total_count": total_count,
         "hero_count": _hero_count(active_scope, total_count, counts, watched_count),
         "can_write_coupon": can_write_coupon,
+        "can_create_paid_coupon": (
+            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
+        ),
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,

@@ -172,7 +172,7 @@ def build_popular_matches(limit: int = 5) -> list:
                 "predictions__coupon",
                 filter=Q(
                     predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    predictions__coupon__is_paid=False,
+                    predictions__coupon__audience=PredictionCoupon.Audience.FREE,
                 ),
                 distinct=True,
             )

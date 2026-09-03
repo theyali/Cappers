@@ -17,7 +17,11 @@ from .achievements import (
     build_achievement_badges,
 )
 from .models import AnalystFollow, AnalystProfile, CapperMonthlyStat, User
-from .paid_predictions import active_paid_subscriptions_by_analyst
+from .paid_predictions import (
+    active_paid_subscriptions_by_analyst,
+    get_active_paid_plans,
+    profile_paid_predictions_enabled,
+)
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
 
@@ -331,19 +335,21 @@ def expert_profile(request, username: str):
         {profile.user_id},
     ).get(profile.user_id)
     context["paid_subscription"] = paid_subscription
-    context["paid_predictions_enabled"] = bool(
-        profile.paid_predictions_enabled and profile.paid_predictions_price > 0
-    )
-    context["paid_predictions_locked"] = context["paid_predictions_enabled"]
-    if context["paid_predictions_enabled"]:
-        context["latest_predictions"] = []
-    else:
-        latest_coupons = (
-            _published_queryset()
-            .filter(author=profile.user)
-            .order_by("-published_at", "-created_at", "-id")[:12]
+    context["paid_plans"] = list(get_active_paid_plans(profile.user))
+    context["paid_predictions_enabled"] = profile_paid_predictions_enabled(profile.user)
+    latest_coupons = (
+        _published_queryset()
+        .filter(
+            author=profile.user,
+            audience=PredictionCoupon.Audience.FREE,
         )
-        context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
+        .order_by("-published_at", "-created_at", "-id")[:12]
+    )
+    context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
+    context["paid_predictions_locked"] = (
+        context["paid_predictions_enabled"]
+        and not context["latest_predictions"]
+    )
     context["recommended_experts"] = _recommended_experts(request, profile)
 
     return render(

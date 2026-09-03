@@ -2,10 +2,11 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -25,15 +26,16 @@ from .achievements import build_achievement_overview
 from .dashboard_views import build_dashboard_context
 from .forms import (
     AnalystAvatarForm,
+    AnalystPaidPlanSettingsForm,
     AnalystProfileForm,
     RegistrationForm,
     UserProfileForm,
 )
 from .models import AnalystFollow, AnalystProfile, User
 from .paid_predictions import (
+    get_active_paid_plans,
     profile_paid_predictions_enabled,
     subscribe_to_paid_predictions,
-    user_can_view_paid_predictions,
 )
 
 
@@ -114,12 +116,53 @@ def _coupon_total_coefficient(predictions) -> str:
     return format(total, ".3f")
 
 
+def _copybetting_audience_context(user) -> dict:
+    if not getattr(user, "is_analyst", False):
+        return {
+            "copybetting_audience_subscriptions": [],
+            "copybetting_audience_active_count": 0,
+            "copybetting_audience_total_count": 0,
+            "copybetting_audience_profit": 0,
+            "copybetting_audience_profit_display": "0",
+            "copybetting_audience_copied_bets_count": 0,
+            "copybetting_audience_copied_bets": [],
+        }
+
+    audience_subscriptions = list(
+        CopyBettingSubscription.objects.filter(analyst=user)
+        .exclude(status=CopyBettingSubscription.Status.STOPPED)
+        .select_related("user", "user__analyst_profile")
+        .prefetch_related("allowed_sports")
+        .annotate(copied_bets_count=Count("copied_bets", distinct=True))
+        .order_by("status", "-updated_at", "-started_at", "-id")
+    )
+    all_audience = CopyBettingSubscription.objects.filter(analyst=user)
+    active_count = all_audience.filter(status=CopyBettingSubscription.Status.ACTIVE).count()
+    audience_profit = all_audience.aggregate(profit=Sum("total_profit"))["profit"] or 0
+    audience_copied_bets_count = CopiedBet.objects.filter(analyst=user).count()
+
+    return {
+        "copybetting_audience_subscriptions": audience_subscriptions,
+        "copybetting_audience_active_count": active_count,
+        "copybetting_audience_total_count": all_audience.count(),
+        "copybetting_audience_profit": audience_profit,
+        "copybetting_audience_profit_display": format_money(audience_profit),
+        "copybetting_audience_copied_bets_count": audience_copied_bets_count,
+        "copybetting_audience_copied_bets": (
+            CopiedBet.objects.filter(analyst=user)
+            .select_related("user", "user__analyst_profile", "source_coupon")
+            .order_by("-created_at", "-id")[:20]
+        ),
+    }
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def profile(request):
     analyst_profile = _get_analyst_profile(request.user)
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
+    paid_plan_form = None
 
     allowed_tabs = {"profile", "following", "settings", "achievements", "wallet", "copybetting"}
     if request.user.role == User.Role.ANALYST:
@@ -131,16 +174,24 @@ def profile(request):
 
     if analyst_profile is not None:
         analyst_form = AnalystProfileForm(request.POST or None, instance=analyst_profile)
+        paid_plan_form = AnalystPaidPlanSettingsForm(
+            request.POST or None,
+            analyst=request.user,
+            prefix="paid_plans",
+        )
 
     if request.method == "POST":
         user_is_valid = user_form.is_valid()
         analyst_is_valid = analyst_form.is_valid() if analyst_form is not None else True
+        paid_plans_are_valid = paid_plan_form.is_valid() if paid_plan_form is not None else True
 
-        if user_is_valid and analyst_is_valid:
+        if user_is_valid and analyst_is_valid and paid_plans_are_valid:
             with transaction.atomic():
                 user_form.save()
                 if analyst_form is not None:
                     analyst_form.save()
+                if paid_plan_form is not None:
+                    paid_plan_form.save(request.user)
             messages.success(request, "Профиль обновлён.")
             return redirect(f"{reverse('cabinet:profile')}?tab=settings")
         active_tab = "settings"
@@ -204,6 +255,7 @@ def profile(request):
         "analyst_profile": analyst_profile,
         "user_form": user_form,
         "analyst_form": analyst_form,
+        "paid_plan_form": paid_plan_form,
         "active_tab": active_tab,
         "followers_count": followers_count,
         "following_count": following_count,
@@ -228,10 +280,39 @@ def profile(request):
         "copybetting_subscriptions": copybetting_subscriptions,
         "copied_bets": copied_bets,
     }
+    context.update(_copybetting_audience_context(request.user))
     if request.user.role == User.Role.ANALYST:
         context.update(build_dashboard_context(request.user))
 
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+@require_POST
+def request_verification(request):
+    analyst_profile = _get_analyst_profile(request.user)
+    if analyst_profile is None:
+        messages.error(request, "Проверка доступна только аналитикам.")
+        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+    if analyst_profile.is_verified:
+        messages.info(request, "Профиль уже проверен.")
+        return redirect(f"{reverse('cabinet:profile')}?tab=profile")
+
+    completion = _profile_completion(request.user, analyst_profile)
+    if completion < 100:
+        messages.error(
+            request,
+            "Заполните профиль полностью перед отправкой на проверку.",
+        )
+        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+
+    if analyst_profile.verification_requested_at:
+        messages.info(request, "Запрос проверки уже отправлен.")
+    else:
+        analyst_profile.verification_requested_at = timezone.now()
+        analyst_profile.save(update_fields=["verification_requested_at", "updated_at"])
+        messages.success(request, "Запрос проверки отправлен администраторам.")
+    return redirect(f"{reverse('cabinet:profile')}?tab=profile")
 
 
 @login_required
@@ -268,7 +349,7 @@ def following_summary(request):
                 "analyst__prediction_coupons",
                 filter=Q(
                     analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    analyst__prediction_coupons__is_paid=False,
+                    analyst__prediction_coupons__audience=PredictionCoupon.Audience.FREE,
                 ),
                 distinct=True,
             ),
@@ -369,19 +450,6 @@ def follow_analyst(request, user_id):
     )
     if analyst.pk == request.user.pk:
         return JsonResponse({"ok": False, "error": "Нельзя подписаться на самого себя."}, status=400)
-    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
-        request.user,
-        analyst,
-    ):
-        return JsonResponse(
-            {
-                "ok": False,
-                "payment_required": True,
-                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
-                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
-            },
-            status=402,
-        )
 
     AnalystFollow.objects.get_or_create(follower=request.user, analyst=analyst)
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
@@ -431,6 +499,7 @@ def subscribe_paid_predictions_view(request, user_id):
         messages.error(request, "Этот эксперт не публикует платные прогнозы.")
         return redirect(expert_url)
 
+    paid_plans = list(get_active_paid_plans(analyst))
     if request.method == "GET":
         return render(
             request,
@@ -439,12 +508,14 @@ def subscribe_paid_predictions_view(request, user_id):
                 "expert": analyst,
                 "analyst_profile": profile,
                 "expert_name": profile.display_name or analyst.get_full_name() or analyst.username,
+                "paid_plans": paid_plans,
                 "next_url": raw_next_url,
             },
         )
 
     try:
-        subscription = subscribe_to_paid_predictions(request.user, analyst)
+        plan_id = request.POST.get("plan_id") or None
+        subscription = subscribe_to_paid_predictions(request.user, analyst, plan_id)
     except ValueError as exc:
         messages.error(request, str(exc))
     else:

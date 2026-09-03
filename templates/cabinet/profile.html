@@ -54,6 +54,22 @@
                         </h1>
                         <p>@{{ request.user.username }} · на платформе с {{ request.user.date_joined|date:"d.m.Y" }}</p>
                         <div class="avatar-upload-status" id="profileAvatarStatus" aria-live="polite"></div>
+                        {% if request.user.is_analyst and analyst_profile %}
+                        <div class="profile-verification-request">
+                            {% if analyst_profile.is_verified %}
+                                <span class="profile-verification-state is-verified">Профиль уже проверен</span>
+                            {% elif analyst_profile.verification_requested_at %}
+                                <span class="profile-verification-state">Запрос отправлен {{ analyst_profile.verification_requested_at|date:"d.m.Y" }}</span>
+                                <small>После заполнения профиля отправьте запрос: администраторы проверят информацию и присвоят галочку verified.</small>
+                            {% else %}
+                                <form method="post" action="{% url 'cabinet:request_verification' %}">
+                                    {% csrf_token %}
+                                    <button class="profile-verification-button" type="submit" {% if profile_completion < 100 %}disabled{% endif %}>Запросить проверку</button>
+                                </form>
+                                <small>После заполнения профиля отправьте запрос: администраторы проверят информацию и присвоят галочку verified.</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -87,6 +103,11 @@
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8M9 16h6v5H9z"></path></svg>
                             <span>Достижения</span>
                             <strong>{{ achievement_overview.unlocked_count }}/{{ achievement_overview.total_count }}</strong>
+                        </a>
+                        <a class="profile-stat-pill {% if active_tab == 'copybetting' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12"></path><path d="M4 12h8"></path><path d="M4 17h12"></path><path d="m16 4 4 3-4 3"></path><path d="m12 14 4 3-4 3"></path></svg>
+                            <span>Копируют</span>
+                            <strong>{{ copybetting_audience_active_count }}</strong>
                         </a>
                         <div class="profile-stat-pill">
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="m3 16 9 5 9-5"></path><path d="m3 12 9 5 9-5"></path></svg>
@@ -184,11 +205,90 @@
                     <div class="profile-section-heading">
                         <div>
                             <p class="eyebrow">Копибеттинг</p>
-                            <h2>Автокопирование капперов</h2>
+                            <h2>{% if request.user.is_analyst %}Кто копирует вас{% else %}Автокопирование капперов{% endif %}</h2>
                         </div>
+                        {% if not request.user.is_analyst %}
                         <a class="profile-save-button" href="{% url 'front:cappers_table' %}">Найти каппера</a>
+                        {% endif %}
                     </div>
 
+                    {% if request.user.is_analyst %}
+                    <div class="profile-wallet-grid profile-copy-audience-summary">
+                        <article class="profile-wallet-card">
+                            <span>Копируют сейчас</span>
+                            <strong>{{ copybetting_audience_active_count }}</strong>
+                            <small>Активные настройки копирования вашей стратегии.</small>
+                        </article>
+                        <article class="profile-wallet-card">
+                            <span>Пользователей всего</span>
+                            <strong>{{ copybetting_audience_total_count }}</strong>
+                            <small>Все пользователи, которые запускали копирование.</small>
+                        </article>
+                        <article class="profile-wallet-card">
+                            <span>Прибыль аудитории</span>
+                            <strong>{{ copybetting_audience_profit_display }} ₽</strong>
+                            <small>Суммарный результат пользователей по копибеттингу.</small>
+                        </article>
+                    </div>
+
+                    <div class="profile-copy-grid">
+                        {% for subscription in copybetting_audience_subscriptions %}
+                            <article class="profile-copy-card">
+                                <div class="profile-coupon-main">
+                                    <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                                        {% if subscription.user.is_analyst and subscription.user.analyst_profile.avatar %}
+                                            <img class="nav-profile-avatar-image" src="{{ subscription.user.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.user.username }}">
+                                        {% elif subscription.user.avatar %}
+                                            <img class="nav-profile-avatar-image" src="{{ subscription.user.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.user.username }}">
+                                        {% else %}
+                                            <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
+                                        {% endif %}
+                                    </span>
+                                    <div class="profile-coupon-copy">
+                                        <strong>{{ subscription.user.get_full_name|default:subscription.user.username }}</strong>
+                                        <span>@{{ subscription.user.username }}</span>
+                                    </div>
+                                </div>
+                                <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
+                                <dl class="profile-info-list">
+                                    {% if subscription.pending_status %}
+                                    <div><dt>Запрошено</dt><dd>{{ subscription.get_pending_status_display }}</dd></div>
+                                    {% endif %}
+                                    <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
+                                    <div><dt>Ставка</dt><dd>{{ subscription.stake_percent }}%</dd></div>
+                                    <div><dt>Скопировано</dt><dd>{{ subscription.copied_bets_count }}</dd></div>
+                                    <div><dt>Прибыль</dt><dd>{{ subscription.total_profit }} ₽</dd></div>
+                                    <div><dt>Просадка</dt><dd>{{ subscription.current_loss }} ₽</dd></div>
+                                    <div><dt>Мин. КФ</dt><dd>{% if subscription.min_total_coefficient %}{{ subscription.min_total_coefficient }}{% else %}любой{% endif %}</dd></div>
+                                </dl>
+                                {% with sports=subscription.allowed_sports.all %}
+                                    {% if sports %}
+                                        <div class="profile-copy-filters">
+                                            {% for sport in sports %}<span>{{ sport.name_ru|default:sport.name }}</span>{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
+                            </article>
+                        {% empty %}
+                            <div class="profile-empty-state">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l6-6 4 4 6-8"></path><path d="M4 21h16"></path></svg>
+                                <p>Вас пока никто не копирует.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="profile-list-head profile-copy-history-head">
+                        <div><p class="eyebrow">История аудитории</p><h2>Скопированные с вас ставки</h2></div>
+                    </div>
+                    <div class="profile-coupons-list" data-profile-coupon-inline="false">
+                        {% for copied_bet in copybetting_audience_copied_bets %}
+                            {% url 'front:prediction_detail' copied_bet.source_coupon_id as copied_bet_href %}
+                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.user row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix="₽" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix="₽" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix="₽" only %}
+                        {% empty %}
+                            <div class="profile-empty-state"><p>Скопированных ставок по вашим прогнозам пока нет.</p></div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
                     <div class="profile-copy-grid">
                         {% for subscription in copybetting_subscriptions %}
                             <article class="profile-copy-card">
@@ -217,6 +317,9 @@
                                 <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
                                 <dl class="profile-info-list">
                                     <div><dt>Статус</dt><dd>{{ subscription.get_status_display }}</dd></div>
+                                    {% if subscription.pending_status %}
+                                    <div><dt>Запрошено</dt><dd>{{ subscription.get_pending_status_display }}</dd></div>
+                                    {% endif %}
                                     <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
                                     <div><dt>Ставка</dt><dd>{{ subscription.stake_percent }}%</dd></div>
                                     <div><dt>Стоп-лосс</dt><dd>{{ subscription.stop_loss_amount }} ₽</dd></div>
@@ -266,7 +369,7 @@
                     <div class="profile-list-head profile-copy-history-head">
                         <div><p class="eyebrow">История</p><h2>Скопированные ставки</h2></div>
                     </div>
-                    <div class="profile-coupons-list">
+                    <div class="profile-coupons-list" data-profile-coupon-inline="false">
                         {% for copied_bet in copied_bets %}
                             {% url 'front:prediction_detail' copied_bet.source_coupon_id as copied_bet_href %}
                             {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.analyst row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix="₽" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix="₽" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix="₽" only %}
@@ -274,6 +377,7 @@
                             <div class="profile-empty-state"><p>Скопированных ставок пока нет.</p></div>
                         {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
             </section>
 

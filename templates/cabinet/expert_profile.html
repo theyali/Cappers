@@ -8,79 +8,92 @@
 {% block content %}
 <section class="expert-public-page" aria-label="Профиль эксперта">
     <section class="expert-public-hero">
-        <div class="expert-public-main">
-            <span class="expert-public-avatar">
-                {% if analyst_profile.avatar %}
-                    <img src="{{ analyst_profile.avatar.url }}" alt="{{ expert_name }}">
-                {% else %}
-                    {{ expert_initials }}
-                {% endif %}
-            </span>
-            <div class="expert-public-copy">
-                <p class="expert-public-kicker">Эксперт КапперХаб</p>
-                <div class="expert-public-name-row">
-                    <h1>{{ expert_name }}</h1>
-                    {% if analyst_profile.is_verified %}
-                    <span class="capper-verified-badge expert-public-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                        <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
-                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
-                        </svg>
-                    </span>
-                    {% endif %}
-                    {% if is_self %}
-                        <a class="expert-public-edit expert-public-name-action" href="{% url 'cabinet:profile' %}">Редактировать</a>
-                    {% elif paid_predictions_enabled %}
-                        {% if paid_subscription %}
-                            <a class="expert-follow-button expert-public-name-action is-active" href="{% url 'front:following_feed' %}">Подписка активна</a>
-                        {% elif request.user.is_authenticated %}
-                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.get_full_path|urlencode }}">Оплатить {{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес</a>
-                        {% else %}
-                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Оплатить {{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес</a>
-                        {% endif %}
-                    {% elif request.user.is_authenticated %}
-                        <button
-                            class="expert-follow-button expert-public-name-action{% if is_following %} is-active{% endif %}"
-                            type="button"
-                            data-expert-follow
-                            data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
-                            aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
-                        >
-                            <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
-                        </button>
+        <div class="expert-public-main-stack">
+            <div class="expert-public-main">
+                <span class="expert-public-avatar">
+                    {% if analyst_profile.avatar %}
+                        <img src="{{ analyst_profile.avatar.url }}" alt="{{ expert_name }}">
                     {% else %}
-                        <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+                        {{ expert_initials }}
                     {% endif %}
-                    {% if not is_self %}
-                        {% if request.user.is_authenticated %}
-                            <a class="expert-follow-button expert-public-name-action" href="{% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
-                        {% else %}
-                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
+                </span>
+                <div class="expert-public-copy">
+                    <p class="expert-public-kicker">Эксперт КапперХаб</p>
+                    <div class="expert-public-name-row">
+                        <h1>{{ expert_name }}</h1>
+                        {% if analyst_profile.is_verified %}
+                        <span class="capper-verified-badge expert-public-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                            <svg viewBox="0 0 16 16" aria-hidden="true">
+                                <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
+                                <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                            </svg>
+                        </span>
                         {% endif %}
+                        {% if is_self %}
+                            <a class="expert-public-edit expert-public-name-action" href="{% url 'cabinet:profile' %}">Редактировать</a>
+                        {% elif request.user.is_authenticated %}
+                            <button
+                                class="expert-follow-button expert-public-name-action{% if is_following %} is-active{% endif %}"
+                                type="button"
+                                data-expert-follow
+                                data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+                                aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+                            >
+                                <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                            </button>
+                        {% else %}
+                            <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+                        {% endif %}
+                        {% if not is_self %}
+                            {% if request.user.is_authenticated %}
+                                <a class="expert-follow-button expert-public-name-action" href="{% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
+                            {% else %}
+                                <a class="expert-follow-button expert-public-name-action" href="{% url 'cabinet:login' %}?next={% url 'wallets:copybetting_setup' analyst_id=expert.id %}">Копировать</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <span class="expert-public-username">@{{ expert.username }}</span>
+                    {% if analyst_profile.bio %}
+                    <div class="expert-public-bio-block">
+                        <p class="expert-public-bio">{{ analyst_profile.bio }}</p>
+                        <button
+                            class="expert-public-bio-more"
+                            type="button"
+                            data-expert-public-modal-open="details"
+                            aria-controls="expert-public-details-modal"
+                            aria-haspopup="dialog"
+                        >
+                            <span>Подробнее</span>
+                            <svg viewBox="0 0 20 20" aria-hidden="true">
+                                <circle cx="10" cy="10" r="8"></circle>
+                                <path d="M10 9v5"></path>
+                                <circle cx="10" cy="6.2" r=".8" class="expert-public-bio-more-dot"></circle>
+                            </svg>
+                        </button>
+                    </div>
                     {% endif %}
+                    {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
                 </div>
-                <span class="expert-public-username">@{{ expert.username }}</span>
-                {% if analyst_profile.bio %}
-                <div class="expert-public-bio-block">
-                    <p class="expert-public-bio">{{ analyst_profile.bio }}</p>
+            </div>
+            {% if paid_predictions_enabled %}
+                {% if is_self %}
+                    <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}?tab=settings">Настроить тарифы</a>
+                {% elif paid_subscription %}
+                    <a class="expert-public-buy-button is-active" href="{% url 'front:following_feed' %}">Открыть ленту</a>
+                {% elif request.user.is_authenticated %}
                     <button
-                        class="expert-public-bio-more"
+                        class="expert-public-buy-button"
                         type="button"
-                        data-expert-public-details-open
-                        aria-controls="expert-public-details-modal"
+                        data-expert-public-modal-open="paid-subscribe"
+                        aria-controls="expert-paid-subscribe-modal"
                         aria-haspopup="dialog"
                     >
-                        <span>Подробнее</span>
-                        <svg viewBox="0 0 20 20" aria-hidden="true">
-                            <circle cx="10" cy="10" r="8"></circle>
-                            <path d="M10 9v5"></path>
-                            <circle cx="10" cy="6.2" r=".8" class="expert-public-bio-more-dot"></circle>
-                        </svg>
+                        Купить подписку
                     </button>
-                </div>
+                {% else %}
+                    <a class="expert-public-buy-button" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Купить подписку</a>
                 {% endif %}
-                {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
-            </div>
+            {% endif %}
         </div>
 
         <div class="expert-public-side">
@@ -421,11 +434,19 @@
                     <span>Эксперт публикует закрытые прогнозы по подписке. После подписки они появятся отдельным блоком в вашей ленте.</span>
                 </div>
                 {% if is_self %}
-                    <a class="expert-public-paid-action" href="{% url 'cabinet:profile' %}?tab=settings">Настроить цену</a>
+                    <a class="expert-public-paid-action" href="{% url 'cabinet:profile' %}?tab=settings">Настроить тарифы</a>
                 {% elif paid_subscription %}
                     <a class="expert-public-paid-action" href="{% url 'front:following_feed' %}">Открыть ленту</a>
                 {% elif request.user.is_authenticated %}
-                    <a class="expert-public-paid-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.get_full_path|urlencode }}">Оплатить подписку</a>
+                    <button
+                        class="expert-public-paid-action"
+                        type="button"
+                        data-expert-public-modal-open="paid-subscribe"
+                        aria-controls="expert-paid-subscribe-modal"
+                        aria-haspopup="dialog"
+                    >
+                        Оплатить подписку
+                    </button>
                 {% else %}
                     <a class="expert-public-paid-action" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Оплатить подписку</a>
                 {% endif %}
@@ -459,6 +480,7 @@
 </section>
 
 {% include "modals/expert_public_details.html" %}
+{% include "modals/expert_paid_subscribe.html" %}
 {% endblock %}
 
 {% block extra_js %}

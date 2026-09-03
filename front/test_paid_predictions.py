@@ -54,9 +54,10 @@ class PaidPredictionsVisibilityTests(TestCase):
             role=User.Role.READER,
         )
 
-    def _coupon(self, *, is_paid):
+    def _coupon(self, *, audience):
+        external_id_offset = 1 if audience == PredictionCoupon.Audience.PAID else 0
         match = Match.objects.create(
-            external_id=2700 + int(is_paid),
+            external_id=2700 + external_id_offset,
             sport=self.sport,
             league=self.league,
             sync_scope=Match.SyncScope.PREMATCH,
@@ -76,7 +77,7 @@ class PaidPredictionsVisibilityTests(TestCase):
             possible_payout=Decimal("190.00"),
             confidence=80,
             published_at=timezone.now(),
-            is_paid=is_paid,
+            audience=audience,
         )
         Prediction.objects.create(
             coupon=coupon,
@@ -89,7 +90,7 @@ class PaidPredictionsVisibilityTests(TestCase):
         return coupon
 
     def test_paid_predictions_are_hidden_from_public_catalog_and_home(self):
-        paid_coupon = self._coupon(is_paid=True)
+        paid_coupon = self._coupon(audience=PredictionCoupon.Audience.PAID)
 
         predictions_response = self.client.get(reverse("front:predictions"))
         self.assertEqual(predictions_response.status_code, 200)
@@ -104,7 +105,7 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertEqual(home_response.context["latest_predictions"], [])
 
     def test_paid_prediction_detail_requires_active_subscription(self):
-        paid_coupon = self._coupon(is_paid=True)
+        paid_coupon = self._coupon(audience=PredictionCoupon.Audience.PAID)
 
         response = self.client.get(
             reverse("front:prediction_detail", kwargs={"prediction_id": paid_coupon.id})
@@ -127,7 +128,7 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertContains(response, "П1")
 
     def test_paid_subscription_adds_separate_feed_block(self):
-        paid_coupon = self._coupon(is_paid=True)
+        paid_coupon = self._coupon(audience=PredictionCoupon.Audience.PAID)
         AnalystPaidSubscription.objects.create(
             subscriber=self.reader,
             analyst=self.analyst,
@@ -161,19 +162,19 @@ class PaidPredictionsVisibilityTests(TestCase):
             ).exists()
         )
 
-    def test_free_follow_to_paid_expert_requires_payment(self):
+    def test_free_follow_to_paid_expert_does_not_require_payment(self):
         self.client.force_login(self.reader)
 
         response = self.client.post(reverse("cabinet:toggle_follow", args=[self.analyst.pk]))
 
-        self.assertEqual(response.status_code, 402)
-        self.assertFalse(
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
             AnalystFollow.objects.filter(
                 follower=self.reader,
                 analyst=self.analyst,
             ).exists()
         )
-        self.assertTrue(response.json()["payment_required"])
+        self.assertTrue(response.json()["active"])
 
     def test_existing_follower_can_decline_paid_upgrade(self):
         AnalystFollow.objects.create(follower=self.reader, analyst=self.analyst)
@@ -193,7 +194,7 @@ class PaidPredictionsVisibilityTests(TestCase):
         )
 
     def test_unpaid_follower_sees_paid_upgrade_offer_in_feed(self):
-        self._coupon(is_paid=True)
+        self._coupon(audience=PredictionCoupon.Audience.PAID)
         AnalystFollow.objects.create(follower=self.reader, analyst=self.analyst)
         self.client.force_login(self.reader)
 
@@ -246,7 +247,8 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertIn("990 ₽", notification.message)
 
     def test_public_expert_page_shows_paid_placeholder(self):
-        self._coupon(is_paid=True)
+        self._coupon(audience=PredictionCoupon.Audience.PAID)
+        self.client.force_login(self.reader)
 
         response = self.client.get(
             reverse("front:expert_profile", kwargs={"username": self.analyst.username})
@@ -256,6 +258,28 @@ class PaidPredictionsVisibilityTests(TestCase):
         self.assertContains(response, "predictions-grid expert-public-grid")
         self.assertContains(response, "Прогнозы платные")
         self.assertContains(response, "1990 ₽ / месяц")
-        self.assertContains(response, "Оплатить подписку")
-        self.assertNotContains(response, ">Подписаться<")
+        self.assertContains(response, "Купить подписку")
+        self.assertContains(response, ">Подписаться<")
+        self.assertContains(response, 'data-expert-public-modal-open="paid-subscribe"')
+        self.assertContains(response, 'id="expert-paid-subscribe-modal"')
         self.assertNotContains(response, "П1")
+
+    def test_public_expert_page_shows_free_predictions_when_paid_enabled(self):
+        paid_coupon = self._coupon(audience=PredictionCoupon.Audience.PAID)
+        free_coupon = self._coupon(audience=PredictionCoupon.Audience.FREE)
+
+        response = self.client.get(
+            reverse("front:expert_profile", kwargs={"username": self.analyst.username})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            free_coupon.id,
+            [item.id for item in response.context["latest_predictions"]],
+        )
+        self.assertNotIn(
+            paid_coupon.id,
+            [item.id for item in response.context["latest_predictions"]],
+        )
+        self.assertNotContains(response, "Прогнозы платные")
+        self.assertContains(response, "П1")

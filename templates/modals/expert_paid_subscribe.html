@@ -1,0 +1,51 @@
+{% if paid_predictions_enabled and not is_self and request.user.is_authenticated and not paid_subscription %}
+<div
+    class="profile-email-modal expert-public-details-modal expert-paid-subscribe-modal"
+    id="expert-paid-subscribe-modal"
+    data-expert-public-modal="paid-subscribe"
+    aria-hidden="true"
+>
+    <div
+        class="profile-email-modal-backdrop expert-public-details-backdrop"
+        data-expert-public-details-close
+        aria-hidden="true"
+    ></div>
+
+    <section
+        class="profile-email-modal-card expert-public-details-card expert-paid-subscribe-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="expert-paid-subscribe-title"
+        tabindex="-1"
+        data-expert-public-details-dialog
+    >
+        <button
+            class="profile-email-modal-close expert-public-details-close"
+            type="button"
+            data-expert-public-details-close
+            aria-label="Закрыть"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18"></path>
+            </svg>
+        </button>
+
+        <header class="expert-public-details-head expert-paid-subscribe-head">
+            <span class="expert-public-kicker">Платная подписка</span>
+            <h2 id="expert-paid-subscribe-title">Выберите тариф</h2>
+            <p>{{ expert_name }}</p>
+        </header>
+
+        <form
+            method="post"
+            action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}"
+            class="expert-paid-subscribe-form paid-checkout-actions"
+        >
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            {% include "cabinet/includes/_paid_plan_picker.html" %}
+            <button type="submit">Оплатить подписку</button>
+        </form>
+    </section>
+</div>
+{% endif %}

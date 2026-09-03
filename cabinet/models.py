@@ -9,6 +9,12 @@ from django.utils import timezone
 
 
 REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+DEFAULT_PAID_PLAN_PRESETS = (
+    (1, "1 день"),
+    (7, "7 дней"),
+    (30, "30 дней"),
+    (90, "3 месяца"),
+)
 
 
 def generate_referral_code() -> str:
@@ -97,6 +103,12 @@ class AnalystProfile(models.Model):
     tiktok = models.CharField("TikTok", max_length=160, blank=True)
     facebook = models.CharField("Facebook", max_length=200, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
+    verification_requested_at = models.DateTimeField(
+        "Запрос проверки отправлен",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     is_vip = models.BooleanField("VIP прогнозист", default=False, db_index=True)
     is_recommended = models.BooleanField(
         "Рекомендовать подписаться",
@@ -131,10 +143,6 @@ class AnalystProfile(models.Model):
         super().clean()
         if self.paid_predictions_price is None:
             self.paid_predictions_price = 0
-        if self.paid_predictions_enabled and self.paid_predictions_price <= 0:
-            raise ValidationError(
-                {"paid_predictions_price": "Укажите стоимость платной подписки."}
-            )
 
     @property
     def social_links(self) -> list[dict]:
@@ -219,6 +227,61 @@ class AnalystFollow(models.Model):
         return f"{self.follower} → {self.analyst}"
 
 
+class AnalystPaidPlan(models.Model):
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="paid_prediction_plans",
+        verbose_name="Аналитик",
+    )
+    title = models.CharField("Название тарифа", max_length=80)
+    duration_days = models.PositiveIntegerField("Срок, дней")
+    price = models.DecimalField("Стоимость", max_digits=10, decimal_places=2)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+    order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлён", auto_now=True)
+
+    class Meta:
+        verbose_name = "Тариф платных прогнозов"
+        verbose_name_plural = "Тарифы платных прогнозов"
+        ordering = ("order", "duration_days", "id")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(duration_days__gt=0),
+                name="paid_plan_duration_positive",
+            ),
+            models.CheckConstraint(
+                check=models.Q(price__gt=0),
+                name="paid_plan_price_positive",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("analyst", "is_active", "order"), name="paid_plan_active_idx"),
+        ]
+
+    def clean(self) -> None:
+        if self.analyst_id and self.analyst.role != User.Role.ANALYST:
+            raise ValidationError("Тарифы доступны только аналитикам.")
+        if not self.duration_days or self.duration_days <= 0:
+            raise ValidationError({"duration_days": "Срок тарифа должен быть больше 0."})
+        if not self.price or self.price <= 0:
+            raise ValidationError({"price": "Стоимость тарифа должна быть больше 0."})
+
+    @property
+    def period_label(self) -> str:
+        if self.duration_days == 1:
+            return "1 день"
+        if self.duration_days in (7, 30):
+            return f"{self.duration_days} дней"
+        if self.duration_days == 90:
+            return "3 месяца"
+        return f"{self.duration_days} дн."
+
+    def __str__(self) -> str:
+        return f"{self.analyst} · {self.title} · {self.price} за {self.period_label}"
+
+
 class AnalystPaidSubscription(models.Model):
     subscriber = models.ForeignKey(
         User,
@@ -232,7 +295,16 @@ class AnalystPaidSubscription(models.Model):
         related_name="paid_prediction_subscribers",
         verbose_name="Аналитик",
     )
+    plan = models.ForeignKey(
+        AnalystPaidPlan,
+        on_delete=models.SET_NULL,
+        related_name="subscriptions",
+        verbose_name="Тариф",
+        null=True,
+        blank=True,
+    )
     price = models.DecimalField("Стоимость на момент подписки", max_digits=10, decimal_places=2)
+    duration_days = models.PositiveIntegerField("Срок на момент подписки", default=30)
     starts_at = models.DateTimeField("Начало подписки", default=timezone.now)
     expires_at = models.DateTimeField("Действует до")
     created_at = models.DateTimeField("Создана", auto_now_add=True)
@@ -267,8 +339,8 @@ class AnalystPaidSubscription(models.Model):
         return f"{self.subscriber} → {self.analyst} до {self.expires_at:%Y-%m-%d}"
 
 
-def paid_subscription_expires_at(from_time=None):
-    return (from_time or timezone.now()) + timedelta(days=30)
+def paid_subscription_expires_at(from_time=None, *, duration_days: int = 30):
+    return (from_time or timezone.now()) + timedelta(days=duration_days)
 
 
 class CapperReferralVisit(models.Model):

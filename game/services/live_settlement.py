@@ -1,7 +1,14 @@
 from decimal import Decimal
 
 from game.models import Match, Prediction, PredictionCoupon
-from game.services.settlement import _normalize, _parse_score, _selection_line, settle_coupon
+from game.services.settlement import (
+    _is_over_selection,
+    _is_under_selection,
+    _normalize,
+    _parse_score,
+    _selection_line,
+    settle_coupon,
+)
 
 
 def settle_live_matches(limit: int = 1000) -> dict:
@@ -71,8 +78,8 @@ def _live_total_state(selection: str, total_goals: int) -> str | None:
         return None
 
     total = Decimal(total_goals)
-    is_over = any(marker in selection for marker in ("тб", "больше", "over"))
-    is_under = any(marker in selection for marker in ("тм", "меньше", "under"))
+    is_over = _is_over_selection(selection)
+    is_under = _is_under_selection(selection)
 
     # Once the score has crossed the line, more goals cannot reverse these outcomes.
     if total > line:

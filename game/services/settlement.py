@@ -56,7 +56,7 @@ def resolve_match_bets(match: Match) -> dict | None:
         return None
 
     home_goals, away_goals = score
-    total_goals = home_goals + away_goals
+    total_goals = _match_total_score(match, score)
     home = match.home_team_name or "Хозяева"
     away = match.away_team_name or "Гости"
 
@@ -149,15 +149,16 @@ def resolve_match_bets(match: Match) -> dict | None:
 
 
 def prediction_state(prediction: Prediction, result: dict) -> str:
+    evaluated = _evaluate_prediction(prediction, result)
+    if evaluated is not None:
+        return evaluated
+
     key = _key(prediction.market, prediction.selection)
     if key in set(result.get("refunds") or []):
         return Prediction.StateStatus.REFUND
     if key in set(result.get("winning") or []):
         return Prediction.StateStatus.WIN
 
-    evaluated = _evaluate_prediction(prediction, result)
-    if evaluated is not None:
-        return evaluated
     return Prediction.StateStatus.LOSE
 
 
@@ -183,6 +184,29 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
     coupon.save(update_fields=["state_status", "settled_at", "updated_at"])
     settle_prediction_coupon(coupon)
     return coupon
+
+
+def resettle_coupon(
+    coupon_id: int,
+    *,
+    recalculate_predictions: bool = True,
+) -> PredictionCoupon | None:
+    coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
+    if coupon is None:
+        return None
+
+    if recalculate_predictions:
+        predictions = Prediction.objects.filter(coupon=coupon).select_related("match")
+        for prediction in predictions:
+            result = resolve_match_bets(prediction.match)
+            if result is None:
+                continue
+            state = prediction_state(prediction, result)
+            if prediction.state_status != state:
+                prediction.state_status = state
+                prediction.save(update_fields=["state_status", "updated_at"])
+
+    return settle_coupon(coupon_id)
 
 
 def reconcile_pending_coupons(limit: int = 1000) -> int:
@@ -226,25 +250,25 @@ def _evaluate_prediction(prediction: Prediction, result: dict) -> str | None:
     home_name = _normalize(match.home_team_name or "Хозяева")
     away_name = _normalize(match.away_team_name or "Гости")
 
-    if market == "winner":
+    if market in {"winner", "1x2", "match_winner", "match winner", "победитель", "исход"}:
         return _settle_winner(selection, score, home_name, away_name)
-    if market == "double_chance":
+    if market in {"double_chance", "double chance", "двойной шанс"}:
         return _settle_double_chance(selection, score, home_name, away_name)
-    if market == "total":
-        return _settle_total(selection, sum(score))
-    if market == "both_score":
+    if market in {"total", "totals", "match_total", "match total", "total_goals", "goals_total", "тотал"}:
+        return _settle_total(selection, _match_total_score(match, score))
+    if market in {"both_score", "both score", "btts", "обе забьют"}:
         return _settle_both_score(selection, score)
-    if market == "handicap":
+    if market in {"handicap", "spread", "фора"}:
         return _settle_handicap(selection, score, home_name, away_name)
-    if market == "exact_score":
+    if market in {"exact_score", "exact score", "точный счет", "точный счёт"}:
         return _settle_exact_score(selection, score)
 
     first_half_score = _first_half_score(match)
-    if market == "first_half_winner" and first_half_score:
+    if market in {"first_half_winner", "first half winner", "1-й тайм исход"} and first_half_score:
         return _settle_winner(selection, first_half_score, home_name, away_name)
-    if market == "first_half_total" and first_half_score:
+    if market in {"first_half_total", "first half total", "тотал 1-го тайма"} and first_half_score:
         return _settle_total(selection, sum(first_half_score))
-    if market == "first_half_handicap" and first_half_score:
+    if market in {"first_half_handicap", "first half handicap", "фора 1-го тайма"} and first_half_score:
         return _settle_handicap(selection, first_half_score, home_name, away_name)
     return None
 
@@ -295,8 +319,8 @@ def _settle_total(selection: str, total_goals: int) -> str:
     line = _selection_line(selection)
     if line is None:
         return Prediction.StateStatus.LOSE
-    is_over = any(marker in selection for marker in ("тб", "больше", "over"))
-    is_under = any(marker in selection for marker in ("тм", "меньше", "under"))
+    is_over = _is_over_selection(selection)
+    is_under = _is_under_selection(selection)
     if Decimal(total_goals) == line:
         return Prediction.StateStatus.REFUND
     if is_over:
@@ -373,6 +397,76 @@ def _first_half_score(match: Match) -> tuple[int, int] | None:
     return None
 
 
+def _match_total_score(match: Match, score: tuple[int, int]) -> int:
+    score_total = sum(score)
+    period_total = _period_score_total(match)
+    return max(score_total, period_total or 0)
+
+
+def _period_score_total(match: Match) -> int | None:
+    payload = match.raw_data if isinstance(match.raw_data, dict) else {}
+    totals = [
+        total
+        for key in ("periods", "scoreboard", "scores", "period_scores", "sets", "quarters")
+        if (total := _sum_score_payload(payload.get(key))) is not None
+    ]
+    return max(totals) if totals else None
+
+
+def _sum_score_payload(payload) -> int | None:
+    if payload in (None, ""):
+        return None
+
+    if isinstance(payload, str):
+        score = _parse_optional_score(payload)
+        return sum(score) if score else None
+
+    if isinstance(payload, dict):
+        direct_score = _score_from_mapping(payload)
+        if direct_score is not None:
+            return sum(direct_score)
+        totals = [
+            total
+            for value in payload.values()
+            if (total := _sum_score_payload(value)) is not None
+        ]
+        return sum(totals) if totals else None
+
+    if isinstance(payload, (list, tuple)):
+        totals = [
+            total
+            for value in payload
+            if (total := _sum_score_payload(value)) is not None
+        ]
+        return sum(totals) if totals else None
+
+    return None
+
+
+def _score_from_mapping(payload: dict) -> tuple[int, int] | None:
+    home = _first_mapping_value(payload, ("home", "home_score", "home_goals", "team_1"))
+    away = _first_mapping_value(payload, ("away", "away_score", "away_goals", "team_2"))
+    home_score = _score_part(home)
+    away_score = _score_part(away)
+    if home_score is None or away_score is None:
+        return None
+    return home_score, away_score
+
+
+def _first_mapping_value(payload: dict, keys: tuple[str, ...]):
+    for key in keys:
+        if key in payload:
+            return payload[key]
+    return None
+
+
+def _score_part(value) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _selection_line(selection: str) -> Decimal | None:
     numbers = re.findall(r"[-+]?\d+(?:[.,]\d+)?", selection)
     if not numbers:
@@ -381,6 +475,20 @@ def _selection_line(selection: str) -> Decimal | None:
         return Decimal(numbers[-1].replace(",", "."))
     except InvalidOperation:
         return None
+
+
+def _is_over_selection(selection: str) -> bool:
+    return bool(
+        re.search(r"(^|[\s(:])(?:тб|больше|over|o)(?=\s*\d|\s|$)", selection)
+        or "тотал больше" in selection
+    )
+
+
+def _is_under_selection(selection: str) -> bool:
+    return bool(
+        re.search(r"(^|[\s(:])(?:тм|меньше|under|u)(?=\s*\d|\s|$)", selection)
+        or "тотал меньше" in selection
+    )
 
 
 def _total_lines(match: Match) -> set[Decimal]:

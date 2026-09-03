@@ -4,7 +4,7 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
-from django.db import models
+from django.utils import timezone
 
 from cabinet.models import User
 
@@ -243,18 +243,12 @@ def settle_prediction_coupon(coupon) -> CapperBalance | None:
 
     related_model, related_id = _related_subject(coupon)
     balance = None
-    has_author_stake = _has_transaction(
-        coupon.author,
-        BalanceTransaction.Kind.PREDICTION_STAKE,
-        related_model,
-        related_id,
-    )
 
-    if has_author_stake and coupon.state_status == PredictionCoupon.StateStatus.WIN:
+    if coupon.state_status == PredictionCoupon.StateStatus.WIN:
         kind = BalanceTransaction.Kind.PREDICTION_PAYOUT
         amount = _money(coupon.possible_payout)
         note = f"Выплата по прогнозу #{coupon.pk}"
-    elif has_author_stake and coupon.state_status == PredictionCoupon.StateStatus.REFUND:
+    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
         kind = BalanceTransaction.Kind.PREDICTION_REFUND
         amount = _money(coupon.total_stake)
         note = f"Возврат по прогнозу #{coupon.pk}"
@@ -263,19 +257,36 @@ def settle_prediction_coupon(coupon) -> CapperBalance | None:
         amount = Decimal("0.00")
         note = ""
 
-    if amount > 0:
-        with transaction.atomic():
-            balance = _balance_for_update(coupon.author)
-            _ensure_initial_bonus_locked(balance)
-            if not _has_transaction(coupon.author, kind, related_model, related_id):
-                balance = _apply_locked(
-                    balance,
-                    amount,
-                    kind,
-                    related_model=related_model,
-                    related_id=related_id,
-                    note=note,
-                )
+    with transaction.atomic():
+        balance = _balance_for_update(coupon.author)
+        _ensure_initial_bonus_locked(balance)
+        if (
+            coupon.total_stake > 0
+            and not _has_transaction(
+                coupon.author,
+                BalanceTransaction.Kind.PREDICTION_STAKE,
+                related_model,
+                related_id,
+            )
+        ):
+            balance = _apply_locked(
+                balance,
+                -coupon.total_stake,
+                BalanceTransaction.Kind.PREDICTION_STAKE,
+                related_model=related_model,
+                related_id=related_id,
+                note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
+            )
+        if amount > 0 and not _has_transaction(coupon.author, kind, related_model, related_id):
+            balance = _apply_locked(
+                balance,
+                amount,
+                kind,
+                related_model=related_model,
+                related_id=related_id,
+                note=note,
+            )
+    _copy_missing_bets_for_settlement(coupon)
     settle_copied_bets_for_coupon(coupon)
     return balance
 
@@ -317,6 +328,7 @@ def activate_copybetting(
         raise ValidationError("Выберите хотя бы один тип прогнозов для копирования.")
 
     ensure_virtual_balance(user)
+    active_since = timezone.now()
     with transaction.atomic():
         subscription, _ = CopyBettingSubscription.objects.select_for_update().get_or_create(
             user=user,
@@ -329,9 +341,12 @@ def activate_copybetting(
                 "min_total_coefficient": min_total_coefficient,
                 "copy_regular_coupons": copy_regular_coupons,
                 "copy_tournament_coupons": copy_tournament_coupons,
+                "active_since": active_since,
             },
         )
         was_stopped = subscription.status == CopyBettingSubscription.Status.STOPPED
+        was_inactive = subscription.status != CopyBettingSubscription.Status.ACTIVE
+        had_pending_status = bool(subscription.pending_status)
         subscription.bank_amount = bank_amount
         subscription.stake_percent = stake_percent
         subscription.stop_loss_amount = stop_loss_amount
@@ -340,7 +355,11 @@ def activate_copybetting(
         subscription.copy_regular_coupons = copy_regular_coupons
         subscription.copy_tournament_coupons = copy_tournament_coupons
         subscription.status = CopyBettingSubscription.Status.ACTIVE
+        subscription.pending_status = ""
+        subscription.pending_status_requested_at = None
         subscription.stopped_at = None
+        if was_inactive or had_pending_status or not subscription.active_since:
+            subscription.active_since = active_since
         if was_stopped:
             subscription.current_loss = Decimal("0.00")
         subscription.save(
@@ -353,6 +372,9 @@ def activate_copybetting(
                 "copy_regular_coupons",
                 "copy_tournament_coupons",
                 "status",
+                "active_since",
+                "pending_status",
+                "pending_status_requested_at",
                 "stopped_at",
                 "current_loss",
                 "updated_at",
@@ -364,31 +386,101 @@ def activate_copybetting(
 
 
 def pause_copybetting(subscription: CopyBettingSubscription) -> CopyBettingSubscription:
-    if subscription.status != CopyBettingSubscription.Status.ACTIVE:
-        return subscription
-    subscription.status = CopyBettingSubscription.Status.PAUSED
-    subscription.save(update_fields=["status", "updated_at"])
-    return subscription
+    return _request_copybetting_status(subscription, CopyBettingSubscription.Status.PAUSED)
 
 
 def resume_copybetting(subscription: CopyBettingSubscription) -> CopyBettingSubscription:
-    if subscription.status == CopyBettingSubscription.Status.ACTIVE:
-        return subscription
-    subscription.status = CopyBettingSubscription.Status.ACTIVE
-    subscription.stopped_at = None
-    subscription.save(update_fields=["status", "stopped_at", "updated_at"])
-    return subscription
+    with transaction.atomic():
+        locked_subscription = CopyBettingSubscription.objects.select_for_update().get(pk=subscription.pk)
+        if locked_subscription.status == CopyBettingSubscription.Status.ACTIVE:
+            if locked_subscription.pending_status:
+                locked_subscription.pending_status = ""
+                locked_subscription.pending_status_requested_at = None
+                locked_subscription.active_since = timezone.now()
+                locked_subscription.save(
+                    update_fields=[
+                        "active_since",
+                        "pending_status",
+                        "pending_status_requested_at",
+                        "updated_at",
+                    ]
+                )
+            return locked_subscription
+
+        locked_subscription.status = CopyBettingSubscription.Status.ACTIVE
+        locked_subscription.active_since = timezone.now()
+        locked_subscription.pending_status = ""
+        locked_subscription.pending_status_requested_at = None
+        locked_subscription.stopped_at = None
+        locked_subscription.save(
+            update_fields=[
+                "status",
+                "active_since",
+                "pending_status",
+                "pending_status_requested_at",
+                "stopped_at",
+                "updated_at",
+            ]
+        )
+        return locked_subscription
 
 
 def stop_copybetting(subscription: CopyBettingSubscription) -> CopyBettingSubscription:
-    if subscription.status == CopyBettingSubscription.Status.STOPPED:
-        return subscription
-    subscription.status = CopyBettingSubscription.Status.STOPPED
-    from django.utils import timezone
+    return _request_copybetting_status(subscription, CopyBettingSubscription.Status.STOPPED)
 
-    subscription.stopped_at = timezone.now()
-    subscription.save(update_fields=["status", "stopped_at", "updated_at"])
-    return subscription
+
+def _request_copybetting_status(
+    subscription: CopyBettingSubscription,
+    target_status: str,
+) -> CopyBettingSubscription:
+    if target_status not in {
+        CopyBettingSubscription.Status.PAUSED,
+        CopyBettingSubscription.Status.STOPPED,
+    }:
+        raise ValidationError("Некорректный статус копибеттинга.")
+
+    with transaction.atomic():
+        locked_subscription = CopyBettingSubscription.objects.select_for_update().get(pk=subscription.pk)
+        if locked_subscription.status == target_status and not locked_subscription.pending_status:
+            return locked_subscription
+
+        if _has_started_pending_copied_bets(locked_subscription):
+            locked_subscription.pending_status = target_status
+            locked_subscription.pending_status_requested_at = timezone.now()
+            locked_subscription.save(
+                update_fields=[
+                    "pending_status",
+                    "pending_status_requested_at",
+                    "updated_at",
+                ]
+            )
+            return locked_subscription
+
+        _apply_copybetting_status_locked(locked_subscription, target_status)
+        return locked_subscription
+
+
+def _apply_copybetting_status_locked(
+    subscription: CopyBettingSubscription,
+    target_status: str,
+) -> None:
+    if subscription.status == CopyBettingSubscription.Status.STOPPED:
+        return
+
+    update_fields = [
+        "status",
+        "pending_status",
+        "pending_status_requested_at",
+        "updated_at",
+    ]
+
+    subscription.status = target_status
+    subscription.pending_status = ""
+    subscription.pending_status_requested_at = None
+    if target_status == CopyBettingSubscription.Status.STOPPED:
+        subscription.stopped_at = timezone.now()
+        update_fields.append("stopped_at")
+    subscription.save(update_fields=update_fields)
 
 
 def copy_published_coupon(coupon) -> list[CopiedBet]:
@@ -404,6 +496,7 @@ def copy_published_coupon(coupon) -> list[CopiedBet]:
         CopyBettingSubscription.objects.filter(
             analyst=coupon.author,
             status=CopyBettingSubscription.Status.ACTIVE,
+            pending_status="",
         )
         .exclude(user=coupon.author)
         .select_related("user", "analyst")
@@ -411,45 +504,160 @@ def copy_published_coupon(coupon) -> list[CopiedBet]:
     )
 
     for subscription in subscriptions:
-        stake = _copy_stake(subscription)
+        copied_bet = _copy_coupon_for_subscription(coupon, subscription)
+        if copied_bet is not None:
+            created_bets.append(copied_bet)
+
+    if coupon.state_status != PredictionCoupon.StateStatus.PENDING:
+        settle_copied_bets_for_coupon(coupon)
+    return created_bets
+
+
+def _copy_coupon_for_subscription(
+    coupon,
+    subscription: CopyBettingSubscription,
+    *,
+    allow_pending_status: bool = False,
+) -> CopiedBet | None:
+    from game.models import PredictionCoupon
+
+    if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
+        return None
+    if coupon.total_stake <= 0:
+        return None
+    if subscription.user_id == coupon.author_id:
+        return None
+
+    with transaction.atomic():
+        locked_subscription = (
+            CopyBettingSubscription.objects.select_for_update()
+            .select_related("user", "analyst")
+            .get(pk=subscription.pk)
+        )
+        if locked_subscription.status != CopyBettingSubscription.Status.ACTIVE:
+            return None
+        if locked_subscription.pending_status and not allow_pending_status:
+            return None
+        if not _coupon_is_after_active_since(coupon, locked_subscription):
+            return None
+
+        stake = _copy_stake(locked_subscription)
         if stake <= 0:
-            continue
-        if not _copybetting_allows_coupon(subscription, coupon):
-            continue
-        if subscription.stop_loss_amount > 0 and subscription.current_loss >= subscription.stop_loss_amount:
-            stop_copybetting(subscription)
-            continue
+            return None
+        if not _copybetting_allows_coupon(locked_subscription, coupon):
+            return None
+        if (
+            locked_subscription.stop_loss_amount > 0
+            and locked_subscription.current_loss >= locked_subscription.stop_loss_amount
+        ):
+            _apply_copybetting_status_locked(
+                locked_subscription,
+                CopyBettingSubscription.Status.STOPPED,
+            )
+            return None
 
         copied_bet, created = CopiedBet.objects.get_or_create(
-            user=subscription.user,
+            user=locked_subscription.user,
             source_coupon=coupon,
             defaults={
-                "subscription": subscription,
+                "subscription": locked_subscription,
                 "analyst": coupon.author,
                 "stake": stake,
                 "possible_payout": _copy_possible_payout(coupon, stake),
             },
         )
         if not created:
-            continue
+            return None
 
         try:
             _charge_copied_bet_stake(copied_bet)
         except InsufficientBalance:
             copied_bet.delete()
-            continue
+            return None
 
-        CopyBettingSubscription.objects.filter(pk=subscription.pk).update(
-            total_staked=models.F("total_staked") + stake
+        locked_subscription.total_staked = _money(locked_subscription.total_staked + stake)
+        locked_subscription.save(update_fields=["total_staked", "updated_at"])
+        subscription.total_staked = locked_subscription.total_staked
+        return copied_bet
+
+
+def _copy_missing_bets_for_settlement(coupon) -> list[CopiedBet]:
+    from game.models import PredictionCoupon
+
+    if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
+        return []
+    published_at = _coupon_published_at(coupon)
+    if not coupon.settled_at or not published_at:
+        return []
+
+    created: list[CopiedBet] = []
+    subscriptions = (
+        CopyBettingSubscription.objects.filter(
+            analyst=coupon.author,
+            status=CopyBettingSubscription.Status.ACTIVE,
+            active_since__lte=published_at,
         )
-        subscription.total_staked = _money(subscription.total_staked + stake)
-        created_bets.append(copied_bet)
+        .exclude(user=coupon.author)
+        .exclude(copied_bets__source_coupon=coupon)
+        .select_related("user", "analyst")
+        .order_by("id")
+    )
+    for subscription in subscriptions:
+        copied_bet = _copy_coupon_for_subscription(
+            coupon,
+            subscription,
+            allow_pending_status=True,
+        )
+        if copied_bet is not None:
+            created.append(copied_bet)
+    return created
 
-    return created_bets
+
+def _coupon_published_at(coupon):
+    return coupon.published_at or coupon.created_at
+
+
+def _coupon_is_after_active_since(coupon, subscription: CopyBettingSubscription) -> bool:
+    published_at = _coupon_published_at(coupon)
+    if not published_at:
+        return True
+    if subscription.active_since and published_at < subscription.active_since:
+        return False
+    if (
+        subscription.pending_status
+        and subscription.pending_status_requested_at
+        and published_at >= subscription.pending_status_requested_at
+    ):
+        return False
+    return True
+
+
+def _has_started_pending_copied_bets(subscription: CopyBettingSubscription) -> bool:
+    return (
+        CopiedBet.objects.filter(
+            subscription=subscription,
+            state_status=CopiedBet.StateStatus.PENDING,
+            source_coupon__predictions__match__starts_at__lte=timezone.now(),
+        )
+        .distinct()
+        .exists()
+    )
+
+
+def _apply_pending_copybetting_status_if_ready(
+    subscription: CopyBettingSubscription,
+) -> CopyBettingSubscription:
+    if not subscription.pending_status:
+        return subscription
+    if _has_started_pending_copied_bets(subscription):
+        return subscription
+
+    target_status = subscription.pending_status
+    _apply_copybetting_status_locked(subscription, target_status)
+    return subscription
 
 
 def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
-    from django.utils import timezone
     from game.models import PredictionCoupon
 
     if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
@@ -515,9 +723,12 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
             update_fields = ["total_profit", "current_loss", "updated_at"]
             if subscription.stop_loss_amount > 0 and subscription.current_loss >= subscription.stop_loss_amount:
                 subscription.status = CopyBettingSubscription.Status.STOPPED
+                subscription.pending_status = ""
+                subscription.pending_status_requested_at = None
                 subscription.stopped_at = timezone.now()
-                update_fields.extend(["status", "stopped_at"])
+                update_fields.extend(["status", "pending_status", "pending_status_requested_at", "stopped_at"])
             subscription.save(update_fields=update_fields)
+            _apply_pending_copybetting_status_if_ready(subscription)
             settled.append(locked_bet)
     return settled
 

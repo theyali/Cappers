@@ -9,10 +9,11 @@
             <button type="submit" class="profile-save-button">Сохранить изменения</button>
         </div>
 
-        {% if user_form.non_field_errors or analyst_form.non_field_errors %}
+        {% if user_form.non_field_errors or analyst_form.non_field_errors or paid_plan_form.non_field_errors %}
             <div class="profile-form-alert">
                 {{ user_form.non_field_errors }}
                 {% if analyst_form %}{{ analyst_form.non_field_errors }}{% endif %}
+                {% if paid_plan_form %}{{ paid_plan_form.non_field_errors }}{% endif %}
             </div>
         {% endif %}
 
@@ -118,19 +119,43 @@
                 <div class="profile-visibility profile-field-full">
                     <div>
                         <strong>{{ analyst_form.paid_predictions_enabled.label }}</strong>
-                        <small>Новые опубликованные прогнозы будут доступны только пользователям с платной подпиской.</small>
+                        <small>Включите продажу платных прогнозов и настройте доступные периоды ниже.</small>
                     </div>
                     <label class="switch-control">
                         {{ analyst_form.paid_predictions_enabled }}
                         <span></span>
                     </label>
                 </div>
-                <label class="profile-field">
-                    <span>{{ analyst_form.paid_predictions_price.label }}</span>
-                    {{ analyst_form.paid_predictions_price }}
-                    {{ analyst_form.paid_predictions_price.errors }}
-                    <small>Цена подписки на 30 дней.</small>
-                </label>
+                {% if paid_plan_form %}
+                <section class="profile-paid-plans profile-field-full" aria-labelledby="profile-paid-plans-title">
+                    <div class="profile-paid-plans-head">
+                        <div>
+                            <span class="eyebrow">Тарифы</span>
+                            <h3 id="profile-paid-plans-title">Периоды платной подписки</h3>
+                        </div>
+                        <small>Активные тарифы будут показаны пользователю при покупке подписки.</small>
+                    </div>
+                    <div class="profile-paid-plan-list">
+                        {% for plan_row in paid_plan_form.plan_rows %}
+                        <div class="profile-paid-plan-row">
+                            <div class="profile-paid-plan-title">
+                                <strong>{{ plan_row.title }}</strong>
+                                <span>{{ plan_row.duration_days }} дн.</span>
+                            </div>
+                            <label class="switch-control profile-paid-plan-switch">
+                                {{ plan_row.active }}
+                                <span></span>
+                            </label>
+                            <label class="profile-paid-plan-price">
+                                <span>Цена, ₽</span>
+                                {{ plan_row.price }}
+                                {{ plan_row.price.errors }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
                 <div class="profile-visibility profile-field-full">
                     <div>
                         <strong>Публичный профиль</strong>

@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import AnalystFollow, AnalystProfile, CapperReferralVisit, User
-from .paid_predictions import profile_paid_predictions_enabled, user_can_view_paid_predictions
 from .referrals import mark_referral_subscription, record_referral_visit
 
 
@@ -95,20 +94,6 @@ def toggle_follow(request, user_id: int):
             }
         )
 
-    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
-        request.user,
-        analyst,
-    ):
-        return JsonResponse(
-            {
-                "ok": False,
-                "payment_required": True,
-                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
-                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
-            },
-            status=402,
-        )
-
     follow, created = AnalystFollow.objects.get_or_create(
         follower=request.user,
         analyst=analyst,
@@ -140,20 +125,6 @@ def follow_analyst(request, user_id: int):
             {"ok": False, "error": "Нельзя подписаться на самого себя."},
             status=400,
         )
-    if profile_paid_predictions_enabled(analyst) and not user_can_view_paid_predictions(
-        request.user,
-        analyst,
-    ):
-        return JsonResponse(
-            {
-                "ok": False,
-                "payment_required": True,
-                "payment_url": reverse("cabinet:paid_predictions_subscribe", args=[analyst.pk]),
-                "error": "Этот каппер перешёл на платные прогнозы. Оформите платную подписку.",
-            },
-            status=402,
-        )
-
     _, created = AnalystFollow.objects.get_or_create(
         follower=request.user,
         analyst=analyst,

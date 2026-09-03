@@ -3,7 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import AnalystProfile, User
+from .models import AnalystPaidPlan, AnalystProfile, DEFAULT_PAID_PLAN_PRESETS, User
 
 
 class RegistrationForm(UserCreationForm):
@@ -115,12 +115,120 @@ class AnalystProfileForm(forms.ModelForm):
         if price in (None, ""):
             price = Decimal("0")
             cleaned_data["paid_predictions_price"] = price
-        if paid_enabled and price <= 0:
-            self.add_error(
-                "paid_predictions_price",
-                "Укажите стоимость платной подписки.",
-            )
         return cleaned_data
+
+
+class AnalystPaidPlanSettingsForm(forms.Form):
+    def __init__(self, *args, analyst=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.analyst = analyst
+        existing_plans = {}
+        if analyst is not None:
+            existing_plans = {
+                plan.duration_days: plan
+                for plan in AnalystPaidPlan.objects.filter(
+                    analyst=analyst,
+                    duration_days__in=[duration for duration, _ in DEFAULT_PAID_PLAN_PRESETS],
+                )
+            }
+
+        self.plan_rows = []
+        for order, (duration_days, title) in enumerate(DEFAULT_PAID_PLAN_PRESETS, start=1):
+            plan = existing_plans.get(duration_days)
+            active_name = f"plan_{duration_days}_active"
+            price_name = f"plan_{duration_days}_price"
+
+            self.fields[active_name] = forms.BooleanField(
+                label="Активен",
+                required=False,
+                initial=bool(plan and plan.is_active),
+            )
+            self.fields[price_name] = forms.DecimalField(
+                label="Стоимость",
+                required=False,
+                min_value=Decimal("1"),
+                max_digits=10,
+                decimal_places=2,
+                initial=plan.price if plan else None,
+                widget=forms.NumberInput(
+                    attrs={
+                        "min": "1",
+                        "step": "1",
+                        "placeholder": "0",
+                    }
+                ),
+            )
+            self.plan_rows.append(
+                {
+                    "duration_days": duration_days,
+                    "title": title,
+                    "active": self[active_name],
+                    "price": self[price_name],
+                    "plan": plan,
+                    "order": order * 10,
+                }
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for duration_days, title in DEFAULT_PAID_PLAN_PRESETS:
+            active = cleaned_data.get(f"plan_{duration_days}_active")
+            price = cleaned_data.get(f"plan_{duration_days}_price")
+            if active:
+                if not price or price <= 0:
+                    self.add_error(
+                        f"plan_{duration_days}_price",
+                        f"Укажите стоимость тарифа «{title}».",
+                    )
+        return cleaned_data
+
+    def save(self, analyst):
+        existing_plans = {
+            plan.duration_days: plan
+            for plan in AnalystPaidPlan.objects.filter(
+                analyst=analyst,
+                duration_days__in=[duration for duration, _ in DEFAULT_PAID_PLAN_PRESETS],
+            )
+        }
+        for order, (duration_days, title) in enumerate(DEFAULT_PAID_PLAN_PRESETS, start=1):
+            active = self.cleaned_data.get(f"plan_{duration_days}_active")
+            price = self.cleaned_data.get(f"plan_{duration_days}_price")
+            plan = existing_plans.get(duration_days)
+
+            if active:
+                AnalystPaidPlan.objects.update_or_create(
+                    analyst=analyst,
+                    duration_days=duration_days,
+                    defaults={
+                        "title": title,
+                        "price": price,
+                        "is_active": True,
+                        "order": order * 10,
+                    },
+                )
+            elif plan is not None and plan.is_active:
+                plan.is_active = False
+                plan.save(update_fields=["is_active", "updated_at"])
+
+        active_plan = (
+            AnalystPaidPlan.objects.filter(
+                analyst=analyst,
+                is_active=True,
+                price__gt=0,
+                duration_days=30,
+            ).first()
+            or AnalystPaidPlan.objects.filter(
+                analyst=analyst,
+                is_active=True,
+                price__gt=0,
+            )
+            .order_by("order", "duration_days", "id")
+            .first()
+        )
+        profile = AnalystProfile.objects.filter(user=analyst).first()
+        if profile is not None:
+            profile.paid_predictions_price = active_plan.price if active_plan else Decimal("0")
+            profile.save(update_fields=["paid_predictions_price", "updated_at"])
 
 
 class AnalystAvatarForm(forms.ModelForm):

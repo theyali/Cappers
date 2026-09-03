@@ -120,7 +120,7 @@ def create_tournament_coupon(
                 total_stake=stake,
                 possible_payout=possible_payout,
                 confidence=confidence,
-                is_paid=False,
+                audience=PredictionCoupon.Audience.FREE,
                 published_at=timezone.now(),
             )
             charge_prediction_stake(user, coupon, stake)

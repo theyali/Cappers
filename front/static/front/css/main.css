@@ -742,13 +742,32 @@ h2 {
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 16px;
-    border-radius: 14px;
+    padding: 4px 27px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, .06);
 }
 
+.paid-checkout-plan-list {
+    width: 100%;
+    display: grid;
+    gap: 10px;
+}
+
+.paid-checkout-plan input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--blue);
+}
+
 .paid-checkout-plan span {
+    display: grid;
+    gap: 3px;
     color: var(--muted);
+}
+
+.paid-checkout-plan small {
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .paid-checkout-plan strong {
@@ -5007,6 +5026,7 @@ h2 {
 }
 
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-shared,
+[data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-audience,
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-confidence-global,
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-total,
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-submit,
@@ -10256,6 +10276,69 @@ h2 {
     background: #171718;
 }
 
+.coupon-audience {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: 12px;
+    background: #171718;
+}
+
+.coupon-audience legend {
+    padding: 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.coupon-audience-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.coupon-audience-option {
+    position: relative;
+    min-width: 0;
+}
+
+.coupon-audience-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.coupon-audience-option span {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    border-radius: 10px;
+    color: var(--muted);
+    background: #242426;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.coupon-audience-option input:checked + span {
+    color: #fff;
+    background: var(--blue);
+}
+
+.coupon-audience-option.is-disabled span {
+    opacity: .52;
+    cursor: not-allowed;
+}
+
+.coupon-audience small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
 .coupon-confidence-head {
     display: flex;
     align-items: center;
@@ -12976,6 +13059,57 @@ h2 {
 .profile-coupon-inline .coupon-slip-overview {
     padding-left: 4px;
     padding-right: 4px;
+}
+
+.profile-coupon-inline .coupon-detail-panel {
+    padding: 0;
+    background: transparent;
+    outline: 0;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-list {
+    gap: 10px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-item {
+    border-radius: 14px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-match {
+    gap: 6px;
+    padding: 11px 14px 8px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-match-head {
+    gap: 10px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-teams {
+    gap: 12px;
+    padding: 4px 0 2px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-team-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-score {
+    min-width: 58px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-score strong {
+    font-size: 24px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-team strong {
+    font-size: 13px;
+}
+
+.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-result {
+    gap: 4px;
+    padding: 8px 14px 9px;
 }
 
 @media (max-width: 1100px) {
@@ -18145,9 +18279,16 @@ body:has(.predictions-scroll-page) .site-footer {
     background: var(--panel);
 }
 
-.expert-public-main {
+.expert-public-main-stack {
     min-width: 0;
     flex: 1 1 auto;
+    display: grid;
+    align-content: center;
+    gap: 14px;
+}
+
+.expert-public-main {
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 22px;
@@ -18341,6 +18482,35 @@ body:has(.predictions-scroll-page) .site-footer {
 .expert-public-social-empty {
     margin: 0;
     line-height: 1.4;
+}
+
+.expert-public-buy-button {
+    width: fit-content;
+    min-width: 190px;
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 12px;
+    color: #07150d;
+    background: #39d27d;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.expert-public-buy-button:hover,
+.expert-public-buy-button:focus-visible {
+    color: #07150d;
+    background: #57e391;
+}
+
+.expert-public-buy-button.is-active {
+    color: var(--ink);
+    background: var(--yellow);
 }
 
 .expert-public-actions {
@@ -19316,6 +19486,33 @@ body:has(.predictions-scroll-page) .site-footer {
     cursor: pointer;
 }
 
+.expert-paid-subscribe-card {
+    width: min(620px, 100%);
+}
+
+.expert-paid-subscribe-head {
+    display: grid;
+    gap: 7px;
+}
+
+.expert-paid-subscribe-head .expert-public-kicker {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.expert-paid-subscribe-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.expert-paid-subscribe-form {
+    display: grid;
+    gap: 14px;
+}
+
 @media (max-width: 1120px) {
     .expert-public-kpi-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -19351,6 +19548,14 @@ body:has(.predictions-scroll-page) .site-footer {
     .expert-public-main {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .expert-public-main-stack {
+        width: 100%;
+    }
+
+    .expert-public-buy-button {
+        width: 100%;
     }
 
     .expert-public-actions,
@@ -19883,6 +20088,56 @@ body:has(.predictions-scroll-page) .site-footer {
     color: white;
 }
 
+.profile-verification-request {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin-top: 12px;
+}
+
+.profile-verification-request small {
+    max-width: 420px;
+    color: rgba(255,255,255,.56);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.profile-verification-button,
+.profile-verification-state {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    color: #07150d;
+    background: #39d27d;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.profile-verification-button {
+    cursor: pointer;
+}
+
+.profile-verification-button:disabled {
+    color: rgba(255,255,255,.54);
+    background: rgba(255,255,255,.12);
+    cursor: not-allowed;
+}
+
+.profile-verification-state {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.profile-verification-state.is-verified {
+    color: white;
+    background: var(--green);
+}
+
 .profile-layout {
     display: grid;
     gap: 18px;
@@ -20277,6 +20532,100 @@ body:has(.predictions-scroll-page) .site-footer {
     gap: 4px;
 }
 
+.profile-paid-plans {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 16px;
+    background: #171718;
+    outline: 1px solid rgba(255,255,255,.07);
+}
+
+.profile-paid-plans-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.profile-paid-plans-head h3 {
+    margin: 4px 0 0;
+    color: #f7f8ff;
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+.profile-paid-plans-head small {
+    max-width: 300px;
+    color: #707072;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.profile-paid-plan-list {
+    display: grid;
+    gap: 10px;
+}
+
+.profile-paid-plan-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 1fr) auto minmax(140px, 170px);
+    align-items: center;
+    gap: 12px;
+    min-height: 70px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #1f1f21;
+    outline: 1px solid rgba(255,255,255,.06);
+}
+
+.profile-paid-plan-title {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.profile-paid-plan-title strong {
+    overflow: hidden;
+    color: #f7f8ff;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-paid-plan-title span,
+.profile-paid-plan-price > span {
+    color: #707072;
+    font-size: 10px;
+}
+
+.profile-paid-plan-price {
+    display: grid;
+    gap: 6px;
+}
+
+.profile-paid-plan-price input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 12px;
+    color: #f7f8ff;
+    background: #171718;
+}
+
+.profile-paid-plan-price input:focus {
+    outline: 2px solid #0b56fa;
+}
+
+.profile-paid-plan-price .errorlist {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: #ff7479;
+    font-size: 11px;
+}
+
 .switch-control {
     position: relative;
     width: 48px;
@@ -20656,6 +21005,10 @@ body:has(.predictions-scroll-page) .site-footer {
     line-height: 1;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.profile-copy-audience-summary {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .profile-wallet-history {
@@ -21644,6 +21997,55 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .capper-dashboard-confidence {
     gap: 16px;
+}
+
+.capper-dashboard-copy-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.capper-dashboard-copy-summary article {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+    padding: 13px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.capper-dashboard-copy-summary span {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.capper-dashboard-copy-summary strong {
+    overflow: hidden;
+    color: var(--yellow);
+    font-size: 20px;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.capper-dashboard-copy-link {
+    width: fit-content;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border-radius: 11px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 12px;
+    font-weight: 800;
 }
 
 .capper-dashboard-confidence-top {

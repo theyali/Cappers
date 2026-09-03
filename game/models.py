@@ -456,6 +456,10 @@ class PredictionCoupon(models.Model):
         SINGLE = "single", "Одиночный"
         EXPRESS = "express", "Экспресс"
 
+    class Audience(models.TextChoices):
+        FREE = "free", "Бесплатная аудитория"
+        PAID = "paid", "Платная аудитория"
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -486,7 +490,13 @@ class PredictionCoupon(models.Model):
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
     confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
-    is_paid = models.BooleanField("Платный прогноз", default=False, db_index=True)
+    audience = models.CharField(
+        "Аудитория",
+        max_length=16,
+        choices=Audience.choices,
+        default=Audience.FREE,
+        db_index=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
@@ -500,8 +510,8 @@ class PredictionCoupon(models.Model):
             models.Index(fields=["author", "published_status", "created_at"]),
             models.Index(fields=["published_status", "state_status", "created_at"]),
             models.Index(
-                fields=["published_status", "is_paid", "created_at"],
-                name="coupon_public_paid_idx",
+                fields=["published_status", "audience", "created_at"],
+                name="coupon_public_audience_idx",
             ),
         ]
 

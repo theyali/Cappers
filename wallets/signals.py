@@ -57,5 +57,7 @@ def create_balance_for_new_user(sender, instance: User, **kwargs) -> None:
             status=CopyBettingSubscription.Status.STOPPED,
         ).update(
             status=CopyBettingSubscription.Status.STOPPED,
+            pending_status="",
+            pending_status_requested_at=None,
             stopped_at=timezone.now(),
         )

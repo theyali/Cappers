@@ -9,6 +9,7 @@ from django.templatetags.static import static
 from django.utils import timezone
 
 from cabinet.models import MatchPredictionRequest, User
+from cabinet.paid_predictions import profile_paid_predictions_enabled
 from game.models import Match, Prediction, PredictionCoupon
 from game.tasks import refresh_match_provider_predictions
 from notifications.models import MatchWatch
@@ -64,7 +65,7 @@ def _published_match_predictions_count(match: Match) -> int:
         Prediction.objects.filter(
             match=match,
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__is_paid=False,
+            coupon__audience=PredictionCoupon.Audience.FREE,
         )
         .values("coupon_id")
         .distinct()
@@ -130,6 +131,9 @@ def match_detail(request, slug: str):
         "match": match,
         "hide_footer": True,
         "can_write_coupon": can_write_coupon,
+        "can_create_paid_coupon": (
+            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
+        ),
         "latest_predictions": legacy_views._latest_predictions(),
         "draft_coupon": (
             legacy_views._serialize_draft_coupon(draft_coupon)

@@ -25,6 +25,29 @@
 
         <div class="coupon-items" data-coupon-items></div>
 
+        <fieldset class="coupon-audience" data-coupon-audience>
+            <legend>Аудитория прогноза</legend>
+            <div class="coupon-audience-options">
+                <label class="coupon-audience-option">
+                    <input type="radio" name="audience" value="free" checked data-coupon-audience-input>
+                    <span>Бесплатный</span>
+                </label>
+                <label class="coupon-audience-option{% if not can_create_paid_coupon %} is-disabled{% endif %}">
+                    <input
+                        type="radio"
+                        name="audience"
+                        value="paid"
+                        data-coupon-audience-input
+                        {% if not can_create_paid_coupon %}disabled{% endif %}
+                    >
+                    <span>Платный</span>
+                </label>
+            </div>
+            {% if not can_create_paid_coupon %}
+            <small>Платные прогнозы станут доступны после включения платных тарифов в кабинете.</small>
+            {% endif %}
+        </fieldset>
+
         <div class="coupon-shared">
             <label class="coupon-field">
                 <span>Сумма, От 100 ₽ до 1 000 000 ₽</span>

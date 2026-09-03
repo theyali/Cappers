@@ -19,7 +19,10 @@ def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoup
         pk=prediction_id,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     )
-    if prediction.is_paid and not user_can_view_paid_predictions(user, prediction.author):
+    if (
+        prediction.audience == PredictionCoupon.Audience.PAID
+        and not user_can_view_paid_predictions(user, prediction.author)
+    ):
         raise Http404("Прогноз не найден.")
     return prediction
 

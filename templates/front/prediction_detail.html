@@ -93,7 +93,13 @@
 
                 <header class="coupon-detail-heading">
                     <div>
-                        <p>{% if coupon.coupon_type == 'express' %}Публичный экспресс{% else %}Публичный купон{% endif %}</p>
+                        <p>
+                            {% if coupon.audience == "paid" %}
+                                {% if coupon.coupon_type == 'express' %}Платный экспресс{% else %}Платный купон{% endif %}
+                            {% else %}
+                                {% if coupon.coupon_type == 'express' %}Бесплатный экспресс{% else %}Бесплатный купон{% endif %}
+                            {% endif %}
+                        </p>
                         <h1>{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}</h1>
                         <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
                     </div>

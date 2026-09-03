@@ -114,7 +114,7 @@ def _published_queryset(*, include_paid: bool = False):
         )
     )
     if not include_paid:
-        queryset = queryset.filter(is_paid=False)
+        queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
     return annotate_author_roi(
         queryset,
         author_outer_ref="author_id",
@@ -548,7 +548,7 @@ def predictions(request, sport_code: str | None = None):
 
     published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        coupon__is_paid=False,
+        coupon__audience=PredictionCoupon.Audience.FREE,
     )
 
     filtered = _published_queryset()
@@ -722,7 +722,10 @@ def prediction_detail(request, prediction_id: int):
         ),
         pk=prediction_id,
     )
-    if coupon.is_paid and not user_can_view_paid_predictions(request.user, coupon.author):
+    if (
+        coupon.audience == PredictionCoupon.Audience.PAID
+        and not user_can_view_paid_predictions(request.user, coupon.author)
+    ):
         raise Http404("Прогноз не найден.")
     positions = list(getattr(coupon, "detail_positions", []) or [])
 
@@ -801,7 +804,10 @@ def _published_prediction(prediction_id: int) -> PredictionCoupon:
 
 def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoupon:
     prediction = _published_prediction(prediction_id)
-    if prediction.is_paid and not user_can_view_paid_predictions(user, prediction.author):
+    if (
+        prediction.audience == PredictionCoupon.Audience.PAID
+        and not user_can_view_paid_predictions(user, prediction.author)
+    ):
         raise Http404("Прогноз не найден.")
     return prediction
 

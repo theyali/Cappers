@@ -48,7 +48,7 @@ def match_predictions(request, slug: str):
     base_queryset = Prediction.objects.filter(
         match=match,
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        coupon__is_paid=False,
+        coupon__audience=PredictionCoupon.Audience.FREE,
     )
     total, distribution = _prediction_distribution(base_queryset)
 

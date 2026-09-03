@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 
 class CapperBalance(models.Model):
@@ -188,6 +189,16 @@ class CopyBettingSubscription(models.Model):
         verbose_name="Каппер",
     )
     status = models.CharField("Статус", max_length=16, choices=Status.choices, default=Status.ACTIVE, db_index=True)
+    active_since = models.DateTimeField("Активно с", null=True, blank=True, db_index=True)
+    pending_status = models.CharField(
+        "Запрошенный статус",
+        max_length=16,
+        choices=Status.choices,
+        default="",
+        blank=True,
+        db_index=True,
+    )
+    pending_status_requested_at = models.DateTimeField("Запрошен статус", null=True, blank=True)
     bank_amount = models.DecimalField("Банк для копирования", max_digits=12, decimal_places=2)
     stake_percent = models.DecimalField("Процент от банка на ставку", max_digits=5, decimal_places=2)
     stop_loss_amount = models.DecimalField("Стоп-лосс", max_digits=12, decimal_places=2, default=0)
@@ -231,6 +242,14 @@ class CopyBettingSubscription(models.Model):
         super().clean()
         if self.user_id and self.analyst_id and self.user_id == self.analyst_id:
             raise ValidationError("Нельзя копировать самого себя.")
+
+    def save(self, *args, **kwargs):
+        if self.status == self.Status.ACTIVE and not self.active_since:
+            self.active_since = timezone.now()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = [*set(update_fields), "active_since"]
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.user} копирует {self.analyst}"

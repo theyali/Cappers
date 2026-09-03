@@ -3037,3 +3037,34 @@ body.expert-public-details-open {
         transition: none;
     }
 }
+
+@media (max-width: 640px) {
+    .profile-paid-plans-head {
+        display: grid;
+        gap: 8px;
+    }
+
+    .profile-paid-plans-head small {
+        max-width: none;
+    }
+
+    .profile-paid-plan-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .profile-paid-plan-price {
+        grid-column: 1 / -1;
+    }
+
+    .paid-checkout-plan {
+        align-items: flex-start;
+    }
+
+    .coupon-sidebar-editor .coupon-audience {
+        padding: 10px;
+    }
+
+    .coupon-sidebar-editor .coupon-audience-options {
+        gap: 6px;
+    }
+}

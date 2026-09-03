@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 
 from .models import (
     BalanceTransaction,
@@ -130,17 +131,35 @@ class CopyBettingSubscriptionAdmin(admin.ModelAdmin):
         "user",
         "analyst",
         "status",
+        "pending_status",
         "bank_amount",
         "stake_percent",
         "min_total_coefficient",
+        "copied_bets_count",
         "current_loss",
         "total_profit",
         "updated_at",
     )
-    list_filter = ("status", "copy_regular_coupons", "copy_tournament_coupons", "allowed_sports", "started_at", "updated_at")
+    list_filter = (
+        "status",
+        "pending_status",
+        "copy_regular_coupons",
+        "copy_tournament_coupons",
+        "allowed_sports",
+        "started_at",
+        "active_since",
+        "updated_at",
+    )
     search_fields = ("user__username", "user__email", "analyst__username", "analyst__email")
     autocomplete_fields = ("user", "analyst", "allowed_sports")
-    readonly_fields = ("started_at", "stopped_at", "updated_at")
+    readonly_fields = ("started_at", "active_since", "pending_status_requested_at", "stopped_at", "updated_at")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_copied_bets_count=Count("copied_bets"))
+
+    @admin.display(description="Скопировано ставок")
+    def copied_bets_count(self, obj):
+        return obj._copied_bets_count
 
 
 @admin.register(CopiedBet)

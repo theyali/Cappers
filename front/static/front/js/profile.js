@@ -40,7 +40,7 @@
     const initCouponInline = ($) => {
         const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
 
-        $(".profile-coupons-list > .profile-coupon-row[href]").each(function (index) {
+        $(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href]").each(function (index) {
             const $source = $(this);
             if ($source.data("coupon-inline-ready")) return;
 
@@ -170,7 +170,7 @@
         });
     };
 
-    if (document.querySelector(".profile-coupons-list > .profile-coupon-row[href]")) {
+    if (document.querySelector(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href]")) {
         loadJQuery()
             .then(initCouponInline)
             .catch((error) => console.error(error));

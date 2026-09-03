@@ -95,7 +95,7 @@ def _new_prediction_events(coupon: PredictionCoupon) -> int:
     created = 0
     author_name = _expert_name(coupon.author)
     url = reverse("front:prediction_detail", kwargs={"prediction_id": coupon.id})
-    if coupon.is_paid:
+    if coupon.audience == PredictionCoupon.Audience.PAID:
         paid_subscribers = (
             AnalystPaidSubscription.objects.filter(
                 analyst_id=coupon.author_id,

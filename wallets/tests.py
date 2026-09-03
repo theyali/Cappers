@@ -21,6 +21,7 @@ from wallets.services import (
     pause_copybetting,
     request_real_withdrawal,
     resume_copybetting,
+    stop_copybetting,
 )
 
 
@@ -166,6 +167,47 @@ class CapperBalanceTests(TestCase):
             1,
         )
 
+    def test_settled_winning_coupon_recovers_missing_stake_transaction(self):
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("100.00"),
+            possible_payout=Decimal("250.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.50"),
+            stake=Decimal("100.00"),
+            state_status=Prediction.StateStatus.WIN,
+        )
+
+        settle_coupon(coupon.id)
+        settle_coupon(coupon.id)
+
+        self.analyst.capper_balance.refresh_from_db()
+        self.assertEqual(self.analyst.capper_balance.balance, Decimal("10150.00"))
+        self.assertEqual(
+            BalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=BalanceTransaction.Kind.PREDICTION_STAKE,
+                related_id=coupon.id,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            BalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=BalanceTransaction.Kind.PREDICTION_PAYOUT,
+                related_id=coupon.id,
+            ).count(),
+            1,
+        )
+
     def test_top_up_view_adds_virtual_money_and_redirects_back(self):
         self.client.force_login(self.analyst)
 
@@ -238,6 +280,79 @@ class CapperBalanceTests(TestCase):
             ).exists()
         )
 
+    def test_activating_copybetting_does_not_copy_existing_pending_coupon(self):
+        old_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        reader = User.objects.create_user(
+            username="copy-existing-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        new_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        copied = copy_published_coupon(new_coupon)
+
+        self.assertFalse(CopiedBet.objects.filter(user=reader, source_coupon=old_coupon).exists())
+        self.assertEqual(len(copied), 1)
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=new_coupon)
+        self.assertEqual(copied_bet.subscription, subscription)
+        self.assertEqual(copied_bet.stake, Decimal("100.00"))
+        self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.PENDING)
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+
+    def test_copying_settled_coupon_settles_copied_bet_immediately(self):
+        reader = User.objects.create_user(
+            username="copy-finished-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status=PredictionCoupon.StateStatus.WIN,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+
+        copied = copy_published_coupon(coupon)
+
+        self.assertEqual(len(copied), 1)
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
+        self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
+        self.assertEqual(copied_bet.profit, Decimal("100.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
+        self.assertEqual(subscription.total_profit, Decimal("100.00"))
+
     def test_copied_bet_is_settled_with_source_coupon(self):
         reader = User.objects.create_user(
             username="copy-settle-reader",
@@ -280,6 +395,45 @@ class CapperBalanceTests(TestCase):
         subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
         self.assertEqual(subscription.total_profit, Decimal("100.00"))
 
+    def test_settling_source_coupon_creates_missing_copied_bet(self):
+        reader = User.objects.create_user(
+            username="copy-missing-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+            stop_loss_amount=Decimal("300.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("500.00"),
+            state_status=Prediction.StateStatus.WIN,
+        )
+
+        settle_coupon(coupon.id)
+
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
+        self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
+        self.assertEqual(copied_bet.profit, Decimal("100.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+
     def test_copybetting_respects_pause_and_resume(self):
         reader = User.objects.create_user(
             username="copy-pause-reader",
@@ -305,9 +459,119 @@ class CapperBalanceTests(TestCase):
         self.assertEqual(copy_published_coupon(coupon), [])
 
         resume_copybetting(subscription)
-        copied = copy_published_coupon(coupon)
+        self.assertFalse(CopiedBet.objects.filter(user=reader, source_coupon=coupon).exists())
+        self.assertEqual(copy_published_coupon(coupon), [])
+
+        new_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+
+        copied = copy_published_coupon(new_coupon)
 
         self.assertEqual(len(copied), 1)
+
+    def test_pause_is_deferred_while_started_copied_bet_is_pending(self):
+        reader = User.objects.create_user(
+            username="copy-deferred-pause-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("500.00"),
+            state_status=Prediction.StateStatus.WIN,
+        )
+        copy_published_coupon(coupon)
+        self.match.starts_at = timezone.now() - timedelta(minutes=1)
+        self.match.save(update_fields=["starts_at", "updated_at"])
+
+        subscription = pause_copybetting(subscription)
+
+        self.assertEqual(subscription.status, CopyBettingSubscription.Status.ACTIVE)
+        self.assertEqual(subscription.pending_status, CopyBettingSubscription.Status.PAUSED)
+
+        next_coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        self.assertEqual(copy_published_coupon(next_coupon), [])
+
+        settle_coupon(coupon.id)
+
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, CopyBettingSubscription.Status.PAUSED)
+        self.assertEqual(subscription.pending_status, "")
+
+    def test_stop_is_deferred_while_started_copied_bet_is_pending(self):
+        reader = User.objects.create_user(
+            username="copy-deferred-stop-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        subscription = activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("2.00"),
+            stake=Decimal("500.00"),
+            state_status=Prediction.StateStatus.WIN,
+        )
+        copy_published_coupon(coupon)
+        self.match.starts_at = timezone.now() - timedelta(minutes=1)
+        self.match.save(update_fields=["starts_at", "updated_at"])
+
+        subscription = stop_copybetting(subscription)
+
+        self.assertEqual(subscription.status, CopyBettingSubscription.Status.ACTIVE)
+        self.assertEqual(subscription.pending_status, CopyBettingSubscription.Status.STOPPED)
+
+        settle_coupon(coupon.id)
+
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, CopyBettingSubscription.Status.STOPPED)
+        self.assertEqual(subscription.pending_status, "")
 
     def test_copybetting_filters_by_minimum_total_coefficient(self):
         reader = User.objects.create_user(

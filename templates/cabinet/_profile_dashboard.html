@@ -1,5 +1,30 @@
 {% load static %}
 <section class="capper-dashboard" aria-label="Дашборд каппера">
+    <section class="capper-dashboard-panel capper-dashboard-copybetting" aria-label="Копибеттинг аудитории">
+        <div class="capper-dashboard-panel-head">
+            <div>
+                <p class="capper-dashboard-kicker">Копибеттинг</p>
+                <h2>Вас копируют</h2>
+            </div>
+            <span>{{ copybetting_audience_active_count }}</span>
+        </div>
+        <div class="capper-dashboard-copy-summary">
+            <article>
+                <span>Активно копируют</span>
+                <strong>{{ copybetting_audience_active_count }}</strong>
+            </article>
+            <article>
+                <span>Скопировано ставок</span>
+                <strong>{{ copybetting_audience_copied_bets_count }}</strong>
+            </article>
+            <article>
+                <span>Прибыль аудитории</span>
+                <strong>{{ copybetting_audience_profit_display }} ₽</strong>
+            </article>
+        </div>
+        <a class="capper-dashboard-copy-link" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link>Открыть копибеттинг</a>
+    </section>
+
     <section class="capper-dashboard-panel capper-dashboard-confidence" aria-label="Моя калибровка уверенности">
         <div class="capper-dashboard-panel-head">
             <div>

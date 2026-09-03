@@ -64,7 +64,7 @@ def match_list(request):
                 "predictions__coupon",
                 filter=Q(
                     predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    predictions__coupon__is_paid=False,
+                    predictions__coupon__audience=PredictionCoupon.Audience.FREE,
                 ),
                 distinct=True,
             ),
@@ -99,6 +99,9 @@ def match_list(request):
         "matches": matches,
         "total_count": total_count,
         "can_write_coupon": can_write_coupon,
+        "can_create_paid_coupon": (
+            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
+        ),
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
@@ -133,6 +136,9 @@ def match_detail(request, slug: str):
     context = {
         "match": match,
         "can_write_coupon": can_write_coupon,
+        "can_create_paid_coupon": (
+            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
+        ),
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
@@ -155,6 +161,11 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
+    try:
+        audience = _parse_coupon_audience(payload.get("audience"), request.user)
+    except ValidationError as exc:
+        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
+
     items = payload.get("items")
     if not isinstance(items, list):
         return JsonResponse({"ok": False, "error": "Передайте список матчей."}, status=400)
@@ -253,7 +264,7 @@ def create_coupon(request):
             if autosave
             else PredictionCoupon.PublishedStatus.PUBLISHED
         )
-        coupon.is_paid = False if autosave else profile_paid_predictions_enabled(request.user)
+        coupon.audience = audience
         coupon.published_at = None if autosave else timezone.now()
         coupon.save()
 
@@ -350,6 +361,16 @@ def _parse_confidence(value) -> int:
     return confidence
 
 
+def _parse_coupon_audience(value, user: User) -> str:
+    audience = str(value or PredictionCoupon.Audience.FREE).strip().lower()
+    valid_audiences = {choice for choice, _ in PredictionCoupon.Audience.choices}
+    if audience not in valid_audiences:
+        raise ValidationError("Выберите аудиторию прогноза.")
+    if audience == PredictionCoupon.Audience.PAID and not profile_paid_predictions_enabled(user):
+        raise ValidationError("Сначала включите платные прогнозы и настройте тарифы в кабинете.")
+    return audience
+
+
 def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
     queryset = PredictionCoupon.objects.select_for_update().filter(
         author=user,
@@ -380,6 +401,7 @@ def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
         "id": coupon.id,
         "stake": _decimal_string(stake) if stake is not None else "",
         "confidence": coupon.confidence,
+        "audience": coupon.audience,
         "items": [_serialize_prediction(prediction) for prediction in predictions],
     }
 
@@ -462,7 +484,7 @@ def _latest_predictions():
     return (
         Prediction.objects.filter(
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__is_paid=False,
+            coupon__audience=PredictionCoupon.Audience.FREE,
         )
         .select_related("coupon__author", "match__league__country", "match__home_team", "match__away_team")
         .order_by("-coupon__published_at", "-coupon__created_at", "-created_at")[:6]
@@ -725,7 +747,7 @@ def _prediction_odds_tabs(match: Match) -> list[dict]:
         Prediction.objects.filter(
             match=match,
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__is_paid=False,
+            coupon__audience=PredictionCoupon.Audience.FREE,
         )
         .values("market", "selection", "coefficient")
         .distinct()
