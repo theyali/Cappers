@@ -1,7 +1,8 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.template import Context, Template
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -37,6 +38,16 @@ class PredictionReactionGuardTests(TestCase):
             "front:prediction_favorite",
             kwargs={"prediction_id": self.coupon.id},
         )
+
+    def _render_reactions(self, user):
+        request = RequestFactory().get(
+            reverse("front:prediction_detail", kwargs={"prediction_id": self.coupon.id})
+        )
+        request.user = user
+        template = Template(
+            "{% load prediction_reactions %}{% coupon_reactions coupon %}"
+        )
+        return template.render(Context({"request": request, "coupon": self.coupon}))
 
     def test_author_cannot_like_own_prediction(self):
         self.client.force_login(self.analyst)
@@ -105,3 +116,24 @@ class PredictionReactionGuardTests(TestCase):
         self.assertEqual(unfavorite_response.status_code, 200)
         self.assertFalse(unfavorite_response.json()["active"])
         self.assertEqual(unfavorite_response.json()["count"], 0)
+
+    def test_coupon_reactions_show_counts_and_disable_author_controls(self):
+        PredictionLike.objects.create(prediction=self.coupon, user=self.viewer)
+        PredictionFavorite.objects.create(prediction=self.coupon, user=self.viewer)
+
+        html = self._render_reactions(self.analyst)
+
+        self.assertIn("is-own-prediction", html)
+        self.assertEqual(html.count('data-reaction-count'), 2)
+        self.assertEqual(html.count('>1</b>'), 2)
+        self.assertEqual(html.count('disabled aria-disabled="true"'), 2)
+
+    def test_coupon_reactions_mark_viewer_reactions_active(self):
+        PredictionLike.objects.create(prediction=self.coupon, user=self.viewer)
+        PredictionFavorite.objects.create(prediction=self.coupon, user=self.viewer)
+
+        html = self._render_reactions(self.viewer)
+
+        self.assertIn("prediction-like is-active", html)
+        self.assertIn("prediction-favorite is-active", html)
+        self.assertNotIn('disabled aria-disabled="true"', html)
