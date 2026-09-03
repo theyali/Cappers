@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from cabinet.models import AnalystProfile, User
 from game.models import PredictionCoupon
+from wallets.models import CapperBankStats
 
 
 class ExpertPublicBankTests(TestCase):
@@ -34,7 +35,7 @@ class ExpertPublicBankTests(TestCase):
             total_stake=Decimal("50.00"),
             possible_payout=Decimal("0.00"),
         )
-        PredictionCoupon.objects.create(
+        self.pending_coupon = PredictionCoupon.objects.create(
             author=self.expert,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             state_status=PredictionCoupon.StateStatus.PENDING,
@@ -63,3 +64,23 @@ class ExpertPublicBankTests(TestCase):
         self.assertIn("100 ₽", html)
         self.assertIn("Сейчас в игре", html)
         self.assertIn("150 ₽", html)
+
+    def test_coupon_changes_refresh_stored_bank_stats(self):
+        stats = CapperBankStats.objects.get(user=self.expert)
+        self.assertEqual(stats.coupons_count, 3)
+        self.assertEqual(stats.settled_count, 2)
+        self.assertEqual(stats.total_stake, Decimal("300.00"))
+        self.assertEqual(stats.average_stake, Decimal("100.00"))
+        self.assertEqual(stats.lost_amount, Decimal("50.00"))
+        self.assertEqual(stats.earned_amount, Decimal("80.00"))
+        self.assertEqual(stats.pending_stake, Decimal("150.00"))
+        self.assertEqual(stats.net_result, Decimal("30.00"))
+
+        self.pending_coupon.state_status = PredictionCoupon.StateStatus.LOSE
+        self.pending_coupon.save(update_fields=["state_status", "updated_at"])
+
+        stats.refresh_from_db()
+        self.assertEqual(stats.settled_count, 3)
+        self.assertEqual(stats.lost_amount, Decimal("200.00"))
+        self.assertEqual(stats.pending_stake, Decimal("0.00"))
+        self.assertEqual(stats.net_result, Decimal("-120.00"))
