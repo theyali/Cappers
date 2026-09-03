@@ -29,10 +29,12 @@
                         </span>
                     {% endif %}
                 {% else %}
-                    Купон #{{ row_id }}
+                    {{ row_date|date:"d.m.Y · H:i" }}
                 {% endif %}
             </strong>
-            <span>{% if row_user %}@{{ row_user.username }} · {% endif %}{{ row_date|date:"d.m.Y · H:i" }}</span>
+            {% if row_user %}
+                <span>@{{ row_user.username }} · {{ row_date|date:"d.m.Y · H:i" }}</span>
+            {% endif %}
             {% if row_id %}
                 <span
                     data-profile-coupon-sort-data
