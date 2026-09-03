@@ -31,7 +31,6 @@
             prediction.querySelectorAll("[data-prediction-reaction]").forEach((button) => {
                 button.disabled = true;
                 button.setAttribute("aria-disabled", "true");
-                button.style.cursor = "not-allowed";
                 button.title = ownReactionTitle(button);
             });
         });
@@ -52,7 +51,7 @@
                     ? (result.active ? "Убрать из избранного" : "Добавить в избранное")
                     : (result.active ? "Убрать лайк" : "Поставить лайк");
 
-                const count = copy.querySelector("[data-like-count]");
+                const count = copy.querySelector("[data-reaction-count], [data-like-count]");
                 if (count && Number.isFinite(Number(result.count))) {
                     count.textContent = String(result.count);
                 }
@@ -100,7 +99,6 @@
         if (button.closest(".is-own-prediction")) {
             button.disabled = true;
             button.setAttribute("aria-disabled", "true");
-            button.style.cursor = "not-allowed";
             button.title = ownReactionTitle(button);
             return;
         }
