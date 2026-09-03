@@ -18,6 +18,7 @@ from .achievements import (
 )
 from .models import AnalystFollow, AnalystProfile, CapperMonthlyStat, User
 from .paid_predictions import active_paid_subscriptions_by_analyst
+from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
 
 
@@ -298,6 +299,7 @@ def expert_profile(request, username: str):
     )
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
+    context["profile_presence"] = presence_payload(profile.user)
 
     performance_windows = {
         str(limit): _recent_performance(profile.user, limit)
