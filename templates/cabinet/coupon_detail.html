@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static prediction_reactions %}
 
 {% block title %}Купон #{{ coupon.id }} — Cappers{% endblock %}
 
@@ -28,8 +28,14 @@
         {% endif %}
     </header>
 
+    {% coupon_reactions coupon %}
+
     <section class="coupon-detail-panel" aria-label="Состав купона">
         {% include "cabinet/_coupon_slip.html" %}
     </section>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}
