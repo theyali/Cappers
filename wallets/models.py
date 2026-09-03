@@ -92,6 +92,33 @@ class CapperRealBalance(models.Model):
         return f"{self.user}: {self.balance}"
 
 
+class CapperBankStats(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="public_bank_stats",
+        verbose_name="Каппер",
+    )
+    coupons_count = models.PositiveIntegerField("Опубликовано купонов", default=0)
+    settled_count = models.PositiveIntegerField("Рассчитано купонов", default=0)
+    total_stake = models.DecimalField("Сыграно за всё время", max_digits=14, decimal_places=2, default=0)
+    average_stake = models.DecimalField("Средняя ставка", max_digits=14, decimal_places=2, default=0)
+    lost_amount = models.DecimalField("Проиграно", max_digits=14, decimal_places=2, default=0)
+    earned_amount = models.DecimalField("Заработано", max_digits=14, decimal_places=2, default=0)
+    pending_stake = models.DecimalField("Сейчас в игре", max_digits=14, decimal_places=2, default=0)
+    net_result = models.DecimalField("Чистый результат", max_digits=14, decimal_places=2, default=0)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Публичный банк каппера"
+        verbose_name_plural = "Публичные банки капперов"
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.net_result}"
+
+
 class RealBalanceTransaction(models.Model):
     class Kind(models.TextChoices):
         SUBSCRIPTION_INCOME = "subscription_income", "Доход с подписки"
