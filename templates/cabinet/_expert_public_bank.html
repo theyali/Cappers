@@ -1,0 +1,43 @@
+<section class="expert-public-predictions expert-public-bank" data-expert-public-panel="bank" hidden aria-label="Банк каппера">
+    <div class="expert-public-section-head">
+        <div>
+            <p class="expert-public-kicker">Банк каппера</p>
+            <h2>Деньги в прогнозах</h2>
+            <p class="expert-public-section-note">Публичная статистика считается только по опубликованным купонам. Баланс кошелька пользователя здесь не раскрывается.</p>
+        </div>
+        <span>{{ bank_coupons_count }} купонов</span>
+    </div>
+
+    <div class="expert-public-kpi-grid">
+        <article>
+            <span>Сыграно за всё время</span>
+            <strong>{{ bank_total_stake|floatformat:0 }} ₽</strong>
+            <small>общая сумма опубликованных ставок</small>
+        </article>
+        <article>
+            <span>Проиграно</span>
+            <strong class="{% if bank_lost_amount > 0 %}is-negative{% endif %}">{{ bank_lost_amount|floatformat:0 }} ₽</strong>
+            <small>сумма ставок проигранных купонов</small>
+        </article>
+        <article>
+            <span>Заработано</span>
+            <strong class="{% if bank_earned_amount > 0 %}is-positive{% endif %}">{{ bank_earned_amount|floatformat:0 }} ₽</strong>
+            <small>прибыль только с выигранных купонов</small>
+        </article>
+        <article>
+            <span>Чистый результат</span>
+            <strong class="{% if bank_net_result > 0 %}is-positive{% elif bank_net_result < 0 %}is-negative{% endif %}">{% if bank_net_result > 0 %}+{% endif %}{{ bank_net_result|floatformat:0 }} ₽</strong>
+            <small>заработано минус проиграно</small>
+        </article>
+        <article>
+            <span>Средняя ставка</span>
+            <strong>{{ bank_average_stake|floatformat:0 }} ₽</strong>
+            <small>на один опубликованный купон</small>
+        </article>
+        <article>
+            <span>Сейчас в игре</span>
+            <strong>{{ bank_pending_stake|floatformat:0 }} ₽</strong>
+            <small>{{ bank_settled_count }} купонов уже рассчитано</small>
+        </article>
+    </div>
+</section>
