@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static site_extras %}
+{% load static site_extras prediction_reactions %}
 
 {% block title %}{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }} — КапперХаб{% endblock %}
 
@@ -109,6 +109,8 @@
                     {% endif %}
                 </header>
 
+                {% coupon_reactions coupon %}
+
                 <section class="coupon-detail-panel" aria-label="{% if coupon.coupon_type == 'express' %}Состав экспресса{% else %}Состав купона{% endif %}">
                     {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True compact=True %}
                 </section>
@@ -118,4 +120,8 @@
         {% include "front/includes/_prediction_ad_sidebar.html" %}
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}
