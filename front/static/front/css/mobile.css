@@ -2887,7 +2887,7 @@ body.expert-public-details-open {
     padding: 34px 42px 36px;
     border-radius: 18px;
     color: var(--ink);
-    background: #fff;
+    background: var(--panel);
     box-shadow: 0 26px 70px rgba(19, 19, 19, .24);
     opacity: 0;
     transform: translateY(16px) scale(.985);
@@ -2932,7 +2932,7 @@ body.expert-public-details-open {
 
 .expert-public-details-head h2 {
     margin: 0;
-    color: var(--ink);
+    color: var(--yellow);
     font-size: 28px;
     line-height: 1.2;
 }
@@ -2972,7 +2972,7 @@ body.expert-public-details-open {
 
 .expert-public-details-row dd {
     overflow-wrap: anywhere;
-    color: var(--ink);
+    color: var(--text);
     font-size: 15px;
     font-weight: 600;
 }
@@ -2981,12 +2981,12 @@ body.expert-public-details-open {
     margin-top: 24px;
     padding: 20px 22px;
     border-radius: 14px;
-    background: #f4f5f7;
+    background: var(--panel);
 }
 
 .expert-public-details-bio h3 {
     margin: 0 0 10px;
-    color: var(--muted);
+    color: var(--text);
     font-size: 13px;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -2994,7 +2994,7 @@ body.expert-public-details-open {
 
 .expert-public-details-bio p {
     margin: 0;
-    color: var(--ink);
+    color: var(--soft);
     font-size: 15px;
     line-height: 1.7;
 }
