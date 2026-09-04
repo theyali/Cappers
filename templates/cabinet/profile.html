@@ -231,9 +231,17 @@
                         </article>
                     </div>
 
-                    <div class="profile-copy-grid">
+                    <div class="profile-copy-table">
+                        <div class="profile-copy-table-head" aria-hidden="true">
+                            <span>Пользователь</span>
+                            <span>Статус</span>
+                            <span>Банк</span>
+                            <span>Ставка</span>
+                            <span>Скопировано</span>
+                            <span>Прибыль</span>
+                        </div>
                         {% for subscription in copybetting_audience_subscriptions %}
-                            <article class="profile-copy-card">
+                            <article class="profile-copy-table-row">
                                 <div class="profile-coupon-main">
                                     <span class="nav-profile-dropdown-avatar" data-skeleton-image>
                                         {% if subscription.user.is_analyst and subscription.user.analyst_profile.avatar %}
@@ -250,24 +258,22 @@
                                     </div>
                                 </div>
                                 <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
-                                <dl class="profile-info-list">
-                                    {% if subscription.pending_status %}
-                                    <div><dt>Запрошено</dt><dd>{{ subscription.get_pending_status_display }}</dd></div>
-                                    {% endif %}
-                                    <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
-                                    <div><dt>Ставка</dt><dd>{{ subscription.stake_percent }}%</dd></div>
-                                    <div><dt>Скопировано</dt><dd>{{ subscription.copied_bets_count }}</dd></div>
-                                    <div><dt>Прибыль</dt><dd>{{ subscription.total_profit }} ₽</dd></div>
-                                    <div><dt>Просадка</dt><dd>{{ subscription.current_loss }} ₽</dd></div>
-                                    <div><dt>Мин. КФ</dt><dd>{% if subscription.min_total_coefficient %}{{ subscription.min_total_coefficient }}{% else %}любой{% endif %}</dd></div>
-                                </dl>
-                                {% with sports=subscription.allowed_sports.all %}
-                                    {% if sports %}
-                                        <div class="profile-copy-filters">
-                                            {% for sport in sports %}<span>{{ sport.name_ru|default:sport.name }}</span>{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
+                                <div class="profile-copy-table-cell">
+                                    <span>Банк</span>
+                                    <strong>{{ subscription.bank_amount }} ₽</strong>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Ставка</span>
+                                    <strong>{{ subscription.stake_percent }}%</strong>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Скопировано</span>
+                                    <strong>{{ subscription.copied_bets_count }}</strong>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Прибыль</span>
+                                    <strong>{{ subscription.total_profit }} ₽</strong>
+                                </div>
                             </article>
                         {% empty %}
                             <div class="profile-empty-state">
@@ -289,9 +295,17 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="profile-copy-grid">
+                    <div class="profile-copy-table">
+                        <div class="profile-copy-table-head" aria-hidden="true">
+                            <span>Каппер</span>
+                            <span>Статус</span>
+                            <span>Банк</span>
+                            <span>Ставка</span>
+                            <span>Прибыль</span>
+                            <span>Действия</span>
+                        </div>
                         {% for subscription in copybetting_subscriptions %}
-                            <article class="profile-copy-card">
+                            <article class="profile-copy-table-row">
                                 <div class="profile-coupon-main">
                                     <span class="nav-profile-dropdown-avatar" data-skeleton-image>
                                         {% if subscription.analyst.analyst_profile.avatar %}
@@ -314,48 +328,55 @@
                                         <span>@{{ subscription.analyst.username }}</span>
                                     </div>
                                 </div>
-                                <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
-                                <dl class="profile-info-list">
-                                    <div><dt>Статус</dt><dd>{{ subscription.get_status_display }}</dd></div>
+                                <div class="profile-copy-status-cell">
+                                    <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
                                     {% if subscription.pending_status %}
-                                    <div><dt>Запрошено</dt><dd>{{ subscription.get_pending_status_display }}</dd></div>
+                                        <small>→ {{ subscription.get_pending_status_display }}</small>
                                     {% endif %}
-                                    <div><dt>Банк</dt><dd>{{ subscription.bank_amount }} ₽</dd></div>
-                                    <div><dt>Ставка</dt><dd>{{ subscription.stake_percent }}%</dd></div>
-                                    <div><dt>Стоп-лосс</dt><dd>{{ subscription.stop_loss_amount }} ₽</dd></div>
-                                    <div><dt>Мин. КФ</dt><dd>{% if subscription.min_total_coefficient %}{{ subscription.min_total_coefficient }}{% else %}любой{% endif %}</dd></div>
-                                    <div><dt>Обычные</dt><dd>{% if subscription.copy_regular_coupons %}да{% else %}нет{% endif %}</dd></div>
-                                    <div><dt>Турниры</dt><dd>{% if subscription.copy_tournament_coupons %}да{% else %}нет{% endif %}</dd></div>
-                                    <div><dt>Прибыль</dt><dd>{{ subscription.total_profit }} ₽</dd></div>
-                                </dl>
-                                {% with sports=subscription.allowed_sports.all %}
-                                    {% if sports %}
-                                        <div class="profile-copy-filters">
-                                            {% for sport in sports %}<span>{{ sport.name_ru|default:sport.name }}</span>{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
+                                    <div class="profile-copy-status-actions">
+                                        {% if subscription.status == 'active' %}
+                                        <form method="post" action="{% url 'wallets:copybetting_pause' subscription.id %}">
+                                            {% csrf_token %}
+                                            <button class="profile-copy-icon-btn pause" type="submit" title="Пауза" aria-label="Пауза">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"></path></svg>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
+                                            {% csrf_token %}
+                                            <button class="profile-copy-icon-btn is-stop" type="submit" title="Остановить" aria-label="Остановить">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+                                            </button>
+                                        </form>
+                                        {% elif subscription.status == 'paused' %}
+                                        <form method="post" action="{% url 'wallets:copybetting_resume' subscription.id %}">
+                                            {% csrf_token %}
+                                            <button class="profile-copy-icon-btn" type="submit" title="Возобновить" aria-label="Возобновить">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5v13l11-6.5z"></path></svg>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
+                                            {% csrf_token %}
+                                            <button class="profile-copy-icon-btn is-stop" type="submit" title="Остановить" aria-label="Остановить">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Банк</span>
+                                    <strong>{{ subscription.bank_amount }} ₽</strong>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Ставка</span>
+                                    <strong>{{ subscription.stake_percent }}%</strong>
+                                </div>
+                                <div class="profile-copy-table-cell">
+                                    <span>Прибыль</span>
+                                    <strong>{{ subscription.total_profit }} ₽</strong>
+                                </div>
                                 <div class="profile-copy-actions">
-                                    <a class="profile-row-action" href="{% url 'wallets:copybetting_setup' subscription.analyst_id %}">Настроить</a>
-                                    {% if subscription.status == 'active' %}
-                                    <form method="post" action="{% url 'wallets:copybetting_pause' subscription.id %}">
-                                        {% csrf_token %}
-                                        <button class="profile-row-action is-muted" type="submit">Пауза</button>
-                                    </form>
-                                    <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
-                                        {% csrf_token %}
-                                        <button class="profile-row-action is-muted" type="submit">Остановить</button>
-                                    </form>
-                                    {% elif subscription.status == 'paused' %}
-                                    <form method="post" action="{% url 'wallets:copybetting_resume' subscription.id %}">
-                                        {% csrf_token %}
-                                        <button class="profile-row-action" type="submit">Возобновить</button>
-                                    </form>
-                                    <form method="post" action="{% url 'wallets:copybetting_stop' subscription.id %}">
-                                        {% csrf_token %}
-                                        <button class="profile-row-action is-muted" type="submit">Остановить</button>
-                                    </form>
-                                    {% endif %}
+                                    <a class="profile-row-action profile-copybetting-action-btns" href="{% url 'wallets:copybetting_setup' subscription.analyst_id %}">Настроить</a>
                                 </div>
                             </article>
                         {% empty %}

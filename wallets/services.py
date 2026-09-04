@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
@@ -21,6 +22,7 @@ from .models import (
 MONEY_QUANT = Decimal("0.01")
 DEFAULT_CAPPER_STARTING_BALANCE = Decimal("10000.00")
 DEFAULT_VIRTUAL_TOP_UP_AMOUNT = Decimal("10000.00")
+logger = logging.getLogger(__name__)
 
 
 class InsufficientBalance(Exception):
@@ -657,6 +659,33 @@ def _apply_pending_copybetting_status_if_ready(
     return subscription
 
 
+def settle_orphaned_copied_bets(limit: int = 1000) -> int:
+    from game.models import PredictionCoupon
+
+    coupon_ids = list(
+        CopiedBet.objects.filter(
+            state_status=CopiedBet.StateStatus.PENDING,
+            source_coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .exclude(source_coupon__state_status=PredictionCoupon.StateStatus.PENDING)
+        .values_list("source_coupon_id", flat=True)
+        .distinct()
+        .order_by("source_coupon_id")[:limit]
+    )
+    if not coupon_ids:
+        return 0
+
+    settled_count = 0
+    coupons = PredictionCoupon.objects.filter(pk__in=coupon_ids).select_related("author").order_by("id")
+    for coupon in coupons:
+        try:
+            _copy_missing_bets_for_settlement(coupon)
+            settled_count += len(settle_copied_bets_for_coupon(coupon))
+        except Exception:
+            logger.exception("Failed to reconcile copied bets for coupon #%s.", coupon.pk)
+    return settled_count
+
+
 def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
     from game.models import PredictionCoupon
 
@@ -673,63 +702,66 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
         .order_by("id")
     )
     for copied_bet in copied_bets:
-        with transaction.atomic():
-            locked_bet = CopiedBet.objects.select_for_update().select_related("subscription", "user").get(pk=copied_bet.pk)
-            if locked_bet.state_status != CopiedBet.StateStatus.PENDING:
-                continue
+        try:
+            with transaction.atomic():
+                locked_bet = CopiedBet.objects.select_for_update().select_related("subscription", "user").get(pk=copied_bet.pk)
+                if locked_bet.state_status != CopiedBet.StateStatus.PENDING:
+                    continue
 
-            subscription = CopyBettingSubscription.objects.select_for_update().get(pk=locked_bet.subscription_id)
-            if coupon.state_status == PredictionCoupon.StateStatus.WIN:
-                kind = BalanceTransaction.Kind.COPYBET_PAYOUT
-                amount = locked_bet.possible_payout
-                locked_bet.state_status = CopiedBet.StateStatus.WIN
-                locked_bet.profit = _money(locked_bet.possible_payout - locked_bet.stake)
-            elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
-                kind = BalanceTransaction.Kind.COPYBET_REFUND
-                amount = locked_bet.stake
-                locked_bet.state_status = CopiedBet.StateStatus.REFUND
-                locked_bet.profit = Decimal("0.00")
-            else:
-                kind = ""
-                amount = Decimal("0.00")
-                locked_bet.state_status = CopiedBet.StateStatus.LOSE
-                locked_bet.profit = -locked_bet.stake
+                subscription = CopyBettingSubscription.objects.select_for_update().get(pk=locked_bet.subscription_id)
+                if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+                    kind = BalanceTransaction.Kind.COPYBET_PAYOUT
+                    amount = locked_bet.possible_payout
+                    locked_bet.state_status = CopiedBet.StateStatus.WIN
+                    locked_bet.profit = _money(locked_bet.possible_payout - locked_bet.stake)
+                elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
+                    kind = BalanceTransaction.Kind.COPYBET_REFUND
+                    amount = locked_bet.stake
+                    locked_bet.state_status = CopiedBet.StateStatus.REFUND
+                    locked_bet.profit = Decimal("0.00")
+                else:
+                    kind = ""
+                    amount = Decimal("0.00")
+                    locked_bet.state_status = CopiedBet.StateStatus.LOSE
+                    locked_bet.profit = -locked_bet.stake
 
-            locked_bet.settled_at = timezone.now()
-            locked_bet.save(update_fields=["state_status", "profit", "settled_at"])
+                locked_bet.settled_at = timezone.now()
+                locked_bet.save(update_fields=["state_status", "profit", "settled_at"])
 
-            if amount > 0:
-                balance = _balance_for_update(locked_bet.user)
-                _ensure_initial_bonus_locked(balance)
-                related_model, related_id = _related_subject(locked_bet)
-                if not _has_transaction(locked_bet.user, kind, related_model, related_id):
-                    _apply_locked(
-                        balance,
-                        amount,
-                        kind,
-                        related_model=related_model,
-                        related_id=related_id,
-                        note=f"Расчет копиставки #{locked_bet.pk}",
+                if amount > 0:
+                    balance = _balance_for_update(locked_bet.user)
+                    _ensure_initial_bonus_locked(balance)
+                    related_model, related_id = _related_subject(locked_bet)
+                    if not _has_transaction(locked_bet.user, kind, related_model, related_id):
+                        _apply_locked(
+                            balance,
+                            amount,
+                            kind,
+                            related_model=related_model,
+                            related_id=related_id,
+                            note=f"Расчет копиставки #{locked_bet.pk}",
+                        )
+
+                subscription.total_profit = _money(subscription.total_profit + locked_bet.profit)
+                if locked_bet.profit < 0:
+                    subscription.current_loss = _money(subscription.current_loss + abs(locked_bet.profit))
+                elif locked_bet.profit > 0:
+                    subscription.current_loss = max(
+                        Decimal("0.00"),
+                        _money(subscription.current_loss - locked_bet.profit),
                     )
-
-            subscription.total_profit = _money(subscription.total_profit + locked_bet.profit)
-            if locked_bet.profit < 0:
-                subscription.current_loss = _money(subscription.current_loss + abs(locked_bet.profit))
-            elif locked_bet.profit > 0:
-                subscription.current_loss = max(
-                    Decimal("0.00"),
-                    _money(subscription.current_loss - locked_bet.profit),
-                )
-            update_fields = ["total_profit", "current_loss", "updated_at"]
-            if subscription.stop_loss_amount > 0 and subscription.current_loss >= subscription.stop_loss_amount:
-                subscription.status = CopyBettingSubscription.Status.STOPPED
-                subscription.pending_status = ""
-                subscription.pending_status_requested_at = None
-                subscription.stopped_at = timezone.now()
-                update_fields.extend(["status", "pending_status", "pending_status_requested_at", "stopped_at"])
-            subscription.save(update_fields=update_fields)
-            _apply_pending_copybetting_status_if_ready(subscription)
-            settled.append(locked_bet)
+                update_fields = ["total_profit", "current_loss", "updated_at"]
+                if subscription.stop_loss_amount > 0 and subscription.current_loss >= subscription.stop_loss_amount:
+                    subscription.status = CopyBettingSubscription.Status.STOPPED
+                    subscription.pending_status = ""
+                    subscription.pending_status_requested_at = None
+                    subscription.stopped_at = timezone.now()
+                    update_fields.extend(["status", "pending_status", "pending_status_requested_at", "stopped_at"])
+                subscription.save(update_fields=update_fields)
+                _apply_pending_copybetting_status_if_ready(subscription)
+                settled.append(locked_bet)
+        except Exception:
+            logger.exception("Failed to settle copied bet #%s for coupon #%s.", copied_bet.pk, coupon.pk)
     return settled
 
 

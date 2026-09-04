@@ -1,3 +1,4 @@
+import logging
 import re
 from decimal import Decimal, InvalidOperation
 
@@ -5,7 +6,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
-from wallets.services import settle_prediction_coupon
+from wallets.services import settle_orphaned_copied_bets, settle_prediction_coupon
+
+
+logger = logging.getLogger(__name__)
 
 
 def settle_finished_matches(limit: int = 500) -> dict:
@@ -18,34 +22,46 @@ def settle_finished_matches(limit: int = 500) -> dict:
     updated_predictions = 0
     updated_coupons = set()
 
+    settlement_errors = 0
     for match in matches:
-        result = resolve_match_bets(match)
-        if result is None:
-            continue
+        try:
+            result = resolve_match_bets(match)
+            if result is None:
+                continue
 
-        resolved_matches += 1
-        predictions = Prediction.objects.filter(
-            match=match,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        ).filter(state_status="")
+            resolved_matches += 1
+            predictions = Prediction.objects.filter(
+                match=match,
+                coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            ).filter(state_status="")
 
-        for prediction in predictions.select_related("coupon"):
-            state = prediction_state(prediction, result)
-            prediction.state_status = state
-            prediction.save(update_fields=["state_status", "updated_at"])
-            updated_predictions += 1
-            updated_coupons.add(prediction.coupon_id)
+            for prediction in predictions.select_related("coupon"):
+                state = prediction_state(prediction, result)
+                prediction.state_status = state
+                prediction.save(update_fields=["state_status", "updated_at"])
+                updated_predictions += 1
+                updated_coupons.add(prediction.coupon_id)
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to resolve finished match #%s.", match.pk)
 
     for coupon_id in updated_coupons:
-        settle_coupon(coupon_id)
+        try:
+            settle_coupon(coupon_id)
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to settle coupon #%s.", coupon_id)
 
     reconciled_coupons = reconcile_pending_coupons()
+    reconciled_copied_bets = settle_orphaned_copied_bets()
 
     return {
         "matches": resolved_matches,
         "predictions": updated_predictions,
         "coupons": len(updated_coupons),
         "reconciled_coupons": reconciled_coupons,
+        "reconciled_copied_bets": reconciled_copied_bets,
+        "errors": settlement_errors,
     }
 
 
@@ -162,6 +178,7 @@ def prediction_state(prediction: Prediction, result: dict) -> str:
     return Prediction.StateStatus.LOSE
 
 
+@transaction.atomic
 def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
     coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
     if coupon is None:
@@ -220,9 +237,12 @@ def reconcile_pending_coupons(limit: int = 1000) -> int:
     )
     reconciled = 0
     for coupon_id in coupon_ids:
-        coupon = settle_coupon(coupon_id)
-        if coupon and coupon.state_status != PredictionCoupon.StateStatus.PENDING:
-            reconciled += 1
+        try:
+            coupon = settle_coupon(coupon_id)
+            if coupon and coupon.state_status != PredictionCoupon.StateStatus.PENDING:
+                reconciled += 1
+        except Exception:
+            logger.exception("Failed to reconcile pending coupon #%s.", coupon_id)
     return reconciled
 
 

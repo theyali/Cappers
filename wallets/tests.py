@@ -21,6 +21,7 @@ from wallets.services import (
     pause_copybetting,
     request_real_withdrawal,
     resume_copybetting,
+    settle_orphaned_copied_bets,
     stop_copybetting,
 )
 
@@ -428,6 +429,40 @@ class CapperBalanceTests(TestCase):
 
         settle_coupon(coupon.id)
 
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
+        self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
+        self.assertEqual(copied_bet.profit, Decimal("100.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+
+    def test_orphaned_pending_copied_bets_are_reconciled(self):
+        reader = User.objects.create_user(
+            username="copy-orphan-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            total_stake=Decimal("500.00"),
+            possible_payout=Decimal("1000.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        copy_published_coupon(coupon)
+        coupon.state_status = PredictionCoupon.StateStatus.WIN
+        coupon.settled_at = timezone.now()
+        coupon.save(update_fields=["state_status", "settled_at", "updated_at"])
+
+        settled_count = settle_orphaned_copied_bets()
+
+        self.assertEqual(settled_count, 1)
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
         self.assertEqual(copied_bet.profit, Decimal("100.00"))

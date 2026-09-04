@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from game.models import Match, Prediction, PredictionCoupon
@@ -9,6 +10,10 @@ from game.services.settlement import (
     _selection_line,
     settle_coupon,
 )
+from wallets.services import settle_orphaned_copied_bets
+
+
+logger = logging.getLogger(__name__)
 
 
 def settle_live_matches(limit: int = 1000) -> dict:
@@ -22,38 +27,51 @@ def settle_live_matches(limit: int = 1000) -> dict:
     updated_predictions = 0
     updated_coupons: set[int] = set()
 
+    settlement_errors = 0
     for match in matches:
-        score = _parse_score(match.score)
-        if score is None:
-            continue
-
-        checked_matches += 1
-        predictions = (
-            Prediction.objects.filter(
-                match=match,
-                coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                state_status="",
-            )
-            .select_related("coupon")
-        )
-
-        for prediction in predictions:
-            state = live_prediction_state(prediction, score)
-            if state is None:
+        try:
+            score = _parse_score(match.score)
+            if score is None:
                 continue
 
-            prediction.state_status = state
-            prediction.save(update_fields=["state_status", "updated_at"])
-            updated_predictions += 1
-            updated_coupons.add(prediction.coupon_id)
+            checked_matches += 1
+            predictions = (
+                Prediction.objects.filter(
+                    match=match,
+                    coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    state_status="",
+                )
+                .select_related("coupon")
+            )
+
+            for prediction in predictions:
+                state = live_prediction_state(prediction, score)
+                if state is None:
+                    continue
+
+                prediction.state_status = state
+                prediction.save(update_fields=["state_status", "updated_at"])
+                updated_predictions += 1
+                updated_coupons.add(prediction.coupon_id)
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to resolve live match #%s.", match.pk)
 
     for coupon_id in updated_coupons:
-        settle_coupon(coupon_id)
+        try:
+            settle_coupon(coupon_id)
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to settle live coupon #%s.", coupon_id)
+
+    reconciled_copied_bets = settle_orphaned_copied_bets()
 
     return {
         "matches": checked_matches,
         "predictions": updated_predictions,
         "coupons": len(updated_coupons),
+        "reconciled_copied_bets": reconciled_copied_bets,
+        "errors": settlement_errors,
     }
 
 

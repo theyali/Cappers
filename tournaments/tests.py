@@ -220,7 +220,7 @@ class TournamentServiceTests(TestCase):
 
         self.assertEqual(coupon.published_status, PredictionCoupon.PublishedStatus.PUBLISHED)
         self.assertEqual(coupon.coupon_type, PredictionCoupon.CouponType.SINGLE)
-        self.assertFalse(coupon.is_paid)
+        self.assertEqual(coupon.audience, PredictionCoupon.Audience.FREE)
         self.assertEqual(tournament_coupon.tournament, self.tournament)
         self.assertEqual(tournament_coupon.participant, self.participant)
         self.assertEqual(TournamentPredictionEntry.objects.filter(tournament=self.tournament).count(), 1)

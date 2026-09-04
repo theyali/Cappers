@@ -12560,17 +12560,19 @@ h2 {
 .profile-coupon-status.is-published,
 .coupon-detail-status.is-published {
     color: #fff;
-    background: var(--blue);
+    background: var(--green);
 }
 
-.profile-coupon-status.is-won {
+.profile-coupon-status.is-won,
+.profile-coupon-status.is-win {
     color: white;
     background: var(--green);
 }
 
 .profile-coupon-status.is-lost,
 .profile-coupon-status.is-canceled,
-.coupon-detail-status.is-canceled {
+.coupon-detail-status.is-canceled,
+.profile-coupon-status.is-lose {
     color: #fff;
     background: var(--danger, #ff6268);
 }
@@ -20973,16 +20975,14 @@ body:has(.predictions-scroll-page) .site-footer {
     background: #303033;
 }
 
-.profile-wallet-grid,
-.profile-copy-grid {
+.profile-wallet-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 12px;
     margin-bottom: 22px;
 }
 
-.profile-wallet-card,
-.profile-copy-card {
+.profile-wallet-card {
     min-width: 0;
     display: grid;
     gap: 12px;
@@ -21017,8 +21017,7 @@ body:has(.predictions-scroll-page) .site-footer {
     gap: 18px;
 }
 
-.profile-wallet-history h3,
-.profile-copy-card h3 {
+.profile-wallet-history h3 {
     margin: 0;
     color: var(--text);
     font-size: 18px;
@@ -21091,6 +21090,163 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .profile-copy-actions form {
     margin: 0;
+}
+
+.profile-copy-table {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.profile-copy-table-head,
+.profile-copy-table-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(180px, 1.25fr) minmax(120px, .55fr) minmax(90px, .45fr) minmax(80px, .4fr) minmax(90px, .45fr) minmax(120px, .7fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-copy-table-head {
+    padding: 0 12px 4px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.profile-copy-table-row {
+    min-height: 56px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: #171718;
+    outline: 1px solid rgba(255,255,255,.07);
+}
+
+.profile-copy-table-row:hover {
+    background: #1d1d1f;
+}
+
+.profile-copy-table .nav-profile-dropdown-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+}
+
+.profile-copy-table .profile-coupon-copy strong {
+    font-size: 13px;
+}
+
+.profile-copy-table-cell {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.profile-copy-table-cell > span {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.profile-copy-table-cell > strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.profile-copy-table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.profile-copy-status-cell {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-copy-status-cell small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.profile-copy-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 2px;
+}
+
+.profile-copy-status-actions form {
+    margin: 0;
+}
+
+.profile-copy-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    color: rgba(255,255,255,.72);
+    background: #303033;
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+}
+
+.profile-copy-icon-btn:hover {
+    color: #fff;
+    background: #3a3a3e;
+}
+
+.profile-copy-icon-btn.is-stop:hover {
+    background: var(--danger);
+}
+
+.profile-copy-icon-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    fill: currentColor;
+}
+.profile-copy-icon-btn.is-stop{
+    background: var(--danger);
+    color: white;
+}
+.profile-copy-icon-btn.pause {
+    background: var(--green);
+    color: white;
+}
+.profile-coupon-status.is-active {
+    background: var(--yellow);
+    color: black;
+}
+
+@media (max-width: 1100px) {
+    .profile-copy-table {
+        overflow-x: auto;
+    }
+
+    .profile-copy-table-head,
+    .profile-copy-table-row {
+        min-width: 880px;
+    }
 }
 
 .profile-copy-history-head {
@@ -29817,4 +29973,9 @@ font-size: 13px;
 }
 .expert-public-name-row h1, .profile-title-block h1{
     font-size: 20px!important;
+}
+.profile-copybetting-action-btns{
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
