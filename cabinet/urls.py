@@ -23,6 +23,7 @@ urlpatterns = [
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
     path("profile/request-verification/", views.request_verification, name="request_verification"),
+    path("profile/delete-account/", views.delete_account, name="delete_account"),
     path("profile/earnings/", earnings_views.profile_earnings, name="profile_earnings"),
     path("profile/achievements/", views.achievement_stats, name="achievement_stats"),
     path("profile/following/summary/", views.following_summary, name="following_summary"),

@@ -192,9 +192,7 @@
         <div>
             <h2 id="home-best-predictions-title">Прогнозы с высоким Коэффициентом</h2>
         </div>
-        <div class="home-articles-actions">
-            <a href="{% url 'front:predictions' %}">Все прогнозы</a>
-        </div>
+        <a class="home-best-experts-all" href="{% url 'front:predictions' %}">Все прогнозы</a>
     </header>
 
     {% if best_predictions %}
@@ -230,9 +228,7 @@
             <h2 id="home-important-matches-title">Важные матчи</h2>
             <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
         </div>
-        <div class="home-articles-actions">
-            <a href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
-        </div>
+        <a class="home-best-experts-all" href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
     </header>
 
     {% if important_matches %}
@@ -285,13 +281,13 @@
             <h2 id="home-articles-title">Новые статьи</h2>
             <p>Разборы матчей, полезные материалы и идеи от команды КапперХаб.</p>
         </div>
+        <a class="home-best-experts-all" href="{% url 'front:articles' %}">Все статьи</a>
+        {% if latest_articles|length > 1 %}
         <div class="home-articles-actions">
-            <a href="{% url 'front:articles' %}">Все статьи</a>
-            {% if latest_articles|length > 1 %}
             <button type="button" data-article-prev aria-label="Предыдущая страница статей">←</button>
             <button class="is-accent" type="button" data-article-next aria-label="Следующая страница статей">→</button>
-            {% endif %}
         </div>
+        {% endif %}
     </header>
 
     {% if latest_articles %}

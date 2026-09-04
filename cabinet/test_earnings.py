@@ -15,12 +15,12 @@ class AnalystEarningsTests(TestCase):
     def setUp(self):
         self.analyst = User.objects.create_user(
             username="earnings-analyst",
-            password="safe-test-password",
             role=User.Role.ANALYST,
         )
         self.subscriber = User.objects.create_user(
             username="earnings-reader",
-            password="safe-test-password",
+            first_name="Paid",
+            last_name="Reader",
             role=User.Role.READER,
         )
         AnalystPaidSubscription.objects.create(
@@ -43,7 +43,7 @@ class AnalystEarningsTests(TestCase):
         )
         return transaction
 
-    def test_earnings_page_splits_income_by_period_and_source(self):
+    def test_earnings_tab_splits_income_by_period_and_source(self):
         self._income(
             "500.00",
             RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
@@ -70,11 +70,15 @@ class AnalystEarningsTests(TestCase):
         )
 
         self.client.force_login(self.analyst)
-        response = self.client.get(reverse("cabinet:profile_earnings"))
+        response = self.client.get(f"{reverse('cabinet:profile')}?tab=earnings")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["active_tab"], "earnings")
         self.assertEqual(response.context["active_paid_subscribers"], 1)
+        self.assertEqual(
+            response.context["active_paid_subscriptions"][0].subscriber,
+            self.subscriber,
+        )
         self.assertEqual(response.context["earnings_all_time"]["total"], Decimal("1800.00"))
         self.assertEqual(
             response.context["earnings_all_time"]["subscription_income"],
@@ -92,11 +96,35 @@ class AnalystEarningsTests(TestCase):
         self.assertEqual(month["tournament_income"], Decimal("1000.00"))
         self.assertEqual(quarter["total"], Decimal("1800.00"))
         self.assertContains(response, "Доходы")
-        self.assertContains(response, "Рефералы")
+        self.assertContains(response, "Paid Reader")
+        self.assertContains(response, "Активные платные подписчики")
+
+    def test_legacy_earnings_url_redirects_to_profile_tab(self):
+        self.client.force_login(self.analyst)
+
+        response = self.client.get(reverse("cabinet:profile_earnings"))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('cabinet:profile')}?tab=earnings",
+            fetch_redirect_response=False,
+        )
 
     def test_reader_cannot_open_analyst_earnings_page(self):
         self.client.force_login(self.subscriber)
 
         response = self.client.get(reverse("cabinet:profile_earnings"))
 
-        self.assertRedirects(response, reverse("cabinet:profile"))
+        self.assertRedirects(
+            response,
+            reverse("cabinet:profile"),
+            fetch_redirect_response=False,
+        )
+
+    def test_reader_cannot_activate_earnings_tab(self):
+        self.client.force_login(self.subscriber)
+
+        response = self.client.get(f"{reverse('cabinet:profile')}?tab=earnings")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_tab"], "profile")

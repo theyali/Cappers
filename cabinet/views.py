@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count, Q, Sum
@@ -24,6 +24,7 @@ from wallets.services import ensure_real_balance, ensure_virtual_balance, format
 
 from .achievements import build_achievement_overview
 from .dashboard_views import build_dashboard_context
+from .earnings_views import build_earnings_context
 from .forms import (
     AnalystAvatarForm,
     AnalystPaidPlanSettingsForm,
@@ -166,7 +167,7 @@ def profile(request):
 
     allowed_tabs = {"profile", "following", "settings", "achievements", "wallet", "copybetting"}
     if request.user.role == User.Role.ANALYST:
-        allowed_tabs.update({"predictions", "followers"})
+        allowed_tabs.update({"predictions", "followers", "earnings"})
 
     active_tab = request.GET.get("tab", "profile")
     if active_tab not in allowed_tabs:
@@ -230,6 +231,16 @@ def profile(request):
         .order_by("-created_at", "-id")[:20]
     )
 
+    earnings_context = {}
+    active_paid_subscriber_ids = set()
+    if request.user.role == User.Role.ANALYST:
+        earnings_context = build_earnings_context(request.user)
+        active_paid_subscriber_ids = {
+            subscription.subscriber_id
+            for subscription in earnings_context["active_paid_subscriptions"]
+        }
+    active_paid_subscribers = len(active_paid_subscriber_ids)
+
     my_coupons = []
     coupons_count = 0
     predictions_count = 0
@@ -262,6 +273,8 @@ def profile(request):
         "followers": followers,
         "following": following,
         "following_ids": following_ids,
+        "active_paid_subscribers": active_paid_subscribers,
+        "active_paid_subscriber_ids": active_paid_subscriber_ids,
         "my_coupons": my_coupons,
         "coupons_count": coupons_count,
         "predictions_count": predictions_count,
@@ -283,8 +296,25 @@ def profile(request):
     context.update(_copybetting_audience_context(request.user))
     if request.user.role == User.Role.ANALYST:
         context.update(build_dashboard_context(request.user))
+        context.update(earnings_context)
 
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+@require_POST
+def delete_account(request):
+    if request.POST.get("confirmation") != "delete-account":
+        messages.error(request, "Подтвердите удаление аккаунта.")
+        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+
+    user = request.user
+    with transaction.atomic():
+        user.delete()
+
+    logout(request)
+    messages.success(request, "Аккаунт и связанные данные удалены.")
+    return redirect("front:index")
 
 
 @login_required

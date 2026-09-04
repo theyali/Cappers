@@ -109,11 +109,11 @@
                             <span>Копируют</span>
                             <strong>{{ copybetting_audience_active_count }}</strong>
                         </a>
-                        <div class="profile-stat-pill">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5Z"></path><path d="m3 16 9 5 9-5"></path><path d="m3 12 9 5 9-5"></path></svg>
-                            <span>Роль</span>
-                            <strong>{{ request.user.get_role_display }}</strong>
-                        </div>
+                        <a class="profile-stat-pill {% if active_tab == 'earnings' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=earnings" data-profile-tab-link>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"></path><path d="M8 10h8M8 14h5"></path></svg>
+                            <span>Платные подписчики</span>
+                            <strong>{{ active_paid_subscribers }}</strong>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
@@ -199,6 +199,12 @@
                     </div>
                 </div>
             </section>
+
+            {% if request.user.is_analyst %}
+            <section class="profile-tab-panel {% if active_tab == 'earnings' %}is-active{% endif %}" id="profile-tab-earnings" data-profile-tab-panel="earnings">
+                {% include "cabinet/profile_earnings.html" %}
+            </section>
+            {% endif %}
 
             <section class="profile-tab-panel {% if active_tab == 'copybetting' %}is-active{% endif %}" id="profile-tab-copybetting" data-profile-tab-panel="copybetting">
                 <div class="profile-list-card">
@@ -531,6 +537,9 @@
                                         {% endif %}
                                     </strong>
                                     <span>@{{ follow.follower.username }} · {{ follow.follower.get_role_display }}</span>
+                                    {% if follow.follower.id in active_paid_subscriber_ids %}
+                                        <span class="profile-user-verified">Платный подписчик</span>
+                                    {% endif %}
                                 </div>
                                 {% if request.user.is_analyst and follow.follower.is_analyst and follow.follower.id not in following_ids %}
                                     <button class="profile-row-action" type="button" data-follow-url="{% url 'cabinet:follow_analyst' follow.follower.id %}">Подписаться в ответ</button>
