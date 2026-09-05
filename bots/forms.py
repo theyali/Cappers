@@ -12,6 +12,8 @@ class BotAccountProfileForm(forms.ModelForm):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": "image/jpeg,image/png,image/webp",
+                "class": "avatar-upload-input",
+                "aria-label": "Загрузить изображение бота",
             }
         ),
     )
@@ -28,18 +30,21 @@ class BotAccountProfileForm(forms.ModelForm):
                 attrs={
                     "placeholder": "Логин бота",
                     "autocomplete": "off",
+                    "aria-label": "Логин бота",
                 }
             ),
             "first_name": forms.TextInput(
                 attrs={
                     "placeholder": "Имя",
                     "autocomplete": "off",
+                    "aria-label": "Имя бота",
                 }
             ),
             "last_name": forms.TextInput(
                 attrs={
                     "placeholder": "Фамилия",
                     "autocomplete": "off",
+                    "aria-label": "Фамилия бота",
                 }
             ),
         }
