@@ -15,16 +15,16 @@
             </div>
 
             <div class="profile-list-card">
-                <div class="profile-section-heading">
-                    <div>
-                        <p class="eyebrow">Администрирование</p>
-                        <h1>Пользователи-боты</h1>
-                    </div>
-                    <span class="profile-coupon-count" title="Всего ботов">{{ bots_count }}</span>
-                </div>
-
                 {% if bots %}
                     <form method="get" action="{% url 'bots:manage_accounts' %}">
+                        <div class="profile-section-heading">
+                            <div>
+                                <p class="eyebrow">Администрирование · {{ bots_count }} ботов</p>
+                                <h1>Пользователи-боты</h1>
+                            </div>
+                            <button type="submit" class="profile-save-button">Открыть выбранного</button>
+                        </div>
+
                         <div class="profile-fields-grid">
                             <label class="profile-field profile-field-full">
                                 <span>Выберите бота</span>
@@ -37,10 +37,21 @@
                                 </select>
                             </label>
                         </div>
+
                         <div class="profile-mobile-save">
-                            <button type="submit" class="profile-save-button">Открыть бота</button>
+                            <button type="submit" class="profile-save-button">Открыть выбранного</button>
                         </div>
                     </form>
+                {% else %}
+                    <div class="profile-section-heading">
+                        <div>
+                            <p class="eyebrow">Администрирование</p>
+                            <h1>Пользователи-боты</h1>
+                        </div>
+                    </div>
+                    <div class="profile-empty-state">
+                        <p>Боты пока не созданы.</p>
+                    </div>
                 {% endif %}
             </div>
 
@@ -128,12 +139,6 @@
                         <button type="submit" class="profile-save-button">Сохранить изменения</button>
                     </div>
                 </form>
-            {% else %}
-                <div class="profile-list-card">
-                    <div class="profile-empty-state">
-                        <p>Боты пока не созданы.</p>
-                    </div>
-                </div>
             {% endif %}
         </section>
     </div>

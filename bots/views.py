@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
@@ -45,7 +46,10 @@ def manage_accounts(request):
     selected_bot = None
 
     if selected_id:
-        selected_bot = get_object_or_404(bots, pk=selected_id)
+        selected_id = str(selected_id).strip()
+        if not selected_id.isdigit():
+            raise Http404
+        selected_bot = get_object_or_404(bots, pk=int(selected_id))
     else:
         selected_bot = bots.first()
 
