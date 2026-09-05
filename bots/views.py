@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -35,15 +35,16 @@ def _resolve_posted_bot(bots, raw_bot_id):
     return get_object_or_404(bots, pk=int(bot_id))
 
 
+def _bot_queryset():
+    return BotAccount.objects.select_related("user", "user__analyst_profile")
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def manage_accounts(request):
     _ensure_bot_admin(request.user)
 
-    bots_queryset = (
-        BotAccount.objects.select_related("user", "user__analyst_profile")
-        .order_by("kind", "user__username")
-    )
+    bots_queryset = _bot_queryset().order_by("kind", "user__username")
     bots = list(bots_queryset)
 
     submitted_bot = None
@@ -94,4 +95,46 @@ def manage_accounts(request):
             "bots_count": len(bot_rows),
             "bots_admin_active": True,
         },
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def upload_avatar(request, bot_id: int):
+    _ensure_bot_admin(request.user)
+
+    bot = get_object_or_404(_bot_queryset(), pk=bot_id)
+    upload = request.FILES.get("avatar")
+    if upload is None:
+        return JsonResponse(
+            {"ok": False, "error": "Выберите изображение."},
+            status=400,
+        )
+
+    form = BotAccountProfileForm(
+        {
+            "username": bot.user.username,
+            "first_name": bot.user.first_name,
+            "last_name": bot.user.last_name,
+        },
+        {"avatar": upload},
+        instance=bot.user,
+        bot_account=bot,
+    )
+
+    if not form.is_valid():
+        avatar_errors = form.errors.get("avatar")
+        if avatar_errors:
+            error = str(avatar_errors[0])
+        else:
+            error = "Не удалось загрузить изображение."
+        return JsonResponse({"ok": False, "error": error}, status=400)
+
+    user = form.save()
+    return JsonResponse(
+        {
+            "ok": True,
+            "avatar_url": user.avatar.url,
+            "message": "Изображение обновлено.",
+        }
     )
