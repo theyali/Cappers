@@ -12670,7 +12670,7 @@ h2 {
 .coupon-detail-heading h1 {
     margin: 0;
     color: var(--text);
-    font-size: clamp(36px, 5vw, 58px);
+    font-size: clamp(25px, 5vw, 28px)!important;
     line-height: .96;
 }
 
@@ -12831,8 +12831,8 @@ h2 {
 }
 
 .coupon-slip-match-state.is-live {
-    color: var(--ink);
-    background: var(--yellow);
+    color: var(--danger);
+    background: none;
 }
 
 .coupon-slip-match-state.is-prematch {
@@ -29978,4 +29978,49 @@ font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+@media (min-width: 641px) {
+    .coupon-detail-content {
+        align-content: start;
+    }
+
+    .coupon-detail-page {
+        display: flex;
+        flex-direction: column;
+        align-self: start;
+        gap: 8px;
+        padding: 4px 10px 10px;
+    }
+
+    .coupon-detail-page .coupon-detail-heading {
+        padding: 4px 4px 2px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-list {
+        gap: 10px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-item {
+        border-radius: 16px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-match {
+        gap: 6px;
+        padding: 11px 16px 8px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-teams {
+        gap: 12px;
+        padding: 4px 0 2px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-team-logo {
+        width: 46px;
+        height: 46px;
+    }
+
+    .coupon-detail-page .coupon-slip.is-compact .coupon-slip-result {
+        gap: 4px;
+        padding: 8px 16px 9px;
+    }
 }

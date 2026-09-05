@@ -321,6 +321,43 @@ class CapperBalanceTests(TestCase):
         reader.capper_balance.refresh_from_db()
         self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
 
+    def test_published_coupon_signal_copies_after_predictions_are_saved(self):
+        reader = User.objects.create_user(
+            username="copy-signal-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        activate_copybetting(
+            user=reader,
+            analyst=self.analyst,
+            bank_amount=Decimal("1000.00"),
+            stake_percent=Decimal("10.00"),
+        )
+
+        with self.captureOnCommitCallbacks(execute=True):
+            coupon = PredictionCoupon.objects.create(
+                author=self.analyst,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                total_stake=Decimal("500.00"),
+                possible_payout=Decimal("1000.00"),
+                confidence=80,
+                published_at=timezone.now(),
+            )
+            Prediction.objects.create(
+                coupon=coupon,
+                match=self.match,
+                market="winner",
+                selection="Хозяева",
+                coefficient=Decimal("2.00"),
+                stake=Decimal("500.00"),
+            )
+
+        copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
+        self.assertEqual(copied_bet.stake, Decimal("100.00"))
+        self.assertEqual(copied_bet.possible_payout, Decimal("200.00"))
+        reader.capper_balance.refresh_from_db()
+        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+
     def test_copying_settled_coupon_settles_copied_bet_immediately(self):
         reader = User.objects.create_user(
             username="copy-finished-reader",

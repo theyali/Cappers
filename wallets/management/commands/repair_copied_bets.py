@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from game.models import PredictionCoupon
 from wallets.models import CopiedBet
-from wallets.services import settle_orphaned_copied_bets, settle_prediction_coupon
+from wallets.services import copy_published_coupon, settle_orphaned_copied_bets, settle_prediction_coupon
 
 
 class Command(BaseCommand):
@@ -24,8 +24,10 @@ class Command(BaseCommand):
                     "Купоны не найдены: " + ", ".join(str(pk) for pk in sorted(missing_ids))
                 )
 
+            created_count = 0
             settled_count = 0
             for coupon in PredictionCoupon.objects.filter(pk__in=coupon_ids).select_related("author"):
+                created_count += len(copy_published_coupon(coupon))
                 before_count = CopiedBet.objects.filter(
                     source_coupon=coupon,
                     state_status=CopiedBet.StateStatus.PENDING,
@@ -37,7 +39,9 @@ class Command(BaseCommand):
                 ).count()
                 settled_count += max(0, before_count - after_count)
             self.stdout.write(
-                self.style.SUCCESS(f"Settled copied bets for selected coupons: {settled_count}")
+                self.style.SUCCESS(
+                    f"Created missing copied bets: {created_count}; settled selected copied bets: {settled_count}"
+                )
             )
             return
 
