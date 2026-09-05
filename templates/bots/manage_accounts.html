@@ -15,131 +15,83 @@
             </div>
 
             <div class="profile-list-card">
-                {% if bots %}
-                    <form method="get" action="{% url 'bots:manage_accounts' %}">
-                        <div class="profile-section-heading">
-                            <div>
-                                <p class="eyebrow">Администрирование · {{ bots_count }} ботов</p>
-                                <h1>Пользователи-боты</h1>
-                            </div>
-                            <button type="submit" class="profile-save-button">Открыть выбранного</button>
-                        </div>
-
-                        <div class="profile-fields-grid">
-                            <label class="profile-field profile-field-full">
-                                <span>Выберите бота</span>
-                                <select name="bot">
-                                    {% for bot in bots %}
-                                        <option value="{{ bot.pk }}"{% if selected_bot and bot.pk == selected_bot.pk %} selected{% endif %}>
-                                            @{{ bot.user.username }} · {{ bot.get_kind_display }}{% if not bot.is_active %} · выключен{% endif %}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </label>
-                        </div>
-
-                        <div class="profile-mobile-save">
-                            <button type="submit" class="profile-save-button">Открыть выбранного</button>
-                        </div>
-                    </form>
-                {% else %}
-                    <div class="profile-section-heading">
-                        <div>
-                            <p class="eyebrow">Администрирование</p>
-                            <h1>Пользователи-боты</h1>
-                        </div>
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Администрирование · {{ bots_count }} ботов</p>
+                        <h1>Пользователи-боты</h1>
+                        <p>Редактируйте данные прямо в строке. Нажмите на аватар, чтобы выбрать новое изображение с компьютера.</p>
                     </div>
+                </div>
+
+                {% if bot_rows %}
+                    <div class="profile-copy-table">
+                        <div class="profile-copy-table-head" aria-hidden="true">
+                            <span>Бот</span>
+                            <span>Логин</span>
+                            <span>Имя</span>
+                            <span>Фамилия</span>
+                            <span>Статус</span>
+                            <span>Действие</span>
+                        </div>
+
+                        {% for row in bot_rows %}
+                            <form method="post" enctype="multipart/form-data" action="{% url 'bots:manage_accounts' %}" class="profile-copy-table-row" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="bot_id" value="{{ row.bot.pk }}">
+
+                                <div class="profile-coupon-main">
+                                    <label class="profile-user-avatar" for="{{ row.form.avatar.id_for_label }}" data-skeleton-image title="Нажмите, чтобы изменить изображение">
+                                        {% if row.avatar_url %}
+                                            <img src="{{ row.avatar_url }}" width="46" height="46" alt="Аватар {{ row.bot.user.username }}">
+                                        {% else %}
+                                            {{ row.bot.user.username|first|upper }}
+                                        {% endif %}
+                                    </label>
+                                    {{ row.form.avatar }}
+                                    <div class="profile-coupon-copy">
+                                        <strong>{{ row.bot.get_kind_display }}</strong>
+                                        <span>{% if row.bot.persona %}{{ row.bot.persona }}{% else %}@{{ row.bot.user.username }}{% endif %}</span>
+                                        {{ row.form.avatar.errors }}
+                                    </div>
+                                </div>
+
+                                <div class="profile-field">
+                                    {{ row.form.username }}
+                                    {{ row.form.username.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    {{ row.form.first_name }}
+                                    {{ row.form.first_name.errors }}
+                                </div>
+
+                                <div class="profile-field">
+                                    {{ row.form.last_name }}
+                                    {{ row.form.last_name.errors }}
+                                </div>
+
+                                <div class="profile-copy-status-cell">
+                                    <span class="profile-coupon-status{% if row.bot.is_active %} is-active{% endif %}">
+                                        {% if row.bot.is_active %}Активен{% else %}Выключен{% endif %}
+                                    </span>
+                                </div>
+
+                                <div class="profile-copy-actions">
+                                    <button class="profile-row-action" type="submit">Сохранить</button>
+                                </div>
+
+                                {% if row.form.non_field_errors %}
+                                    <div class="profile-form-alert">{{ row.form.non_field_errors }}</div>
+                                {% endif %}
+                            </form>
+                        {% endfor %}
+                    </div>
+                {% else %}
                     <div class="profile-empty-state">
                         <p>Боты пока не созданы.</p>
                     </div>
                 {% endif %}
             </div>
-
-            {% if selected_bot and form %}
-                <form method="post" enctype="multipart/form-data" action="{% url 'bots:manage_accounts' %}?bot={{ selected_bot.pk }}" class="profile-form-card" novalidate>
-                    {% csrf_token %}
-                    <input type="hidden" name="bot_id" value="{{ selected_bot.pk }}">
-
-                    <div class="profile-section-heading">
-                        <div>
-                            <p class="eyebrow">{{ selected_bot.get_kind_display }}{% if selected_bot.persona %} · {{ selected_bot.persona }}{% endif %}</p>
-                            <h2>Редактирование @{{ selected_bot.user.username }}</h2>
-                        </div>
-                        <button type="submit" class="profile-save-button">Сохранить изменения</button>
-                    </div>
-
-                    {% if form.non_field_errors %}
-                        <div class="profile-form-alert">{{ form.non_field_errors }}</div>
-                    {% endif %}
-
-                    <div class="profile-fields-grid">
-                        <div class="profile-field profile-field-full">
-                            <span>Текущее изображение</span>
-                            <div class="profile-identity">
-                                <div class="profile-avatar-wrap" data-skeleton-image>
-                                    <div class="profile-avatar">
-                                        {% if selected_avatar_url %}
-                                            <img src="{{ selected_avatar_url }}" width="96" height="96" alt="Аватар {{ selected_bot.user.username }}">
-                                        {% else %}
-                                            <span>{{ selected_bot.user.username|first|upper }}</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div>
-                                    <strong>{{ selected_bot.user.get_full_name|default:selected_bot.user.username }}</strong>
-                                    <p>@{{ selected_bot.user.username }} · {{ selected_bot.get_kind_display }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <label class="profile-field profile-field-full">
-                            <span>{{ form.avatar.label }}</span>
-                            {{ form.avatar }}
-                            {{ form.avatar.errors }}
-                            <small>JPG, PNG или WEBP, до 5 МБ.</small>
-                        </label>
-
-                        {% if selected_avatar_url %}
-                            <label class="profile-field profile-field-full">
-                                <span>{{ form.remove_avatar.label }}</span>
-                                {{ form.remove_avatar }}
-                            </label>
-                        {% endif %}
-
-                        <label class="profile-field">
-                            <span>Логин</span>
-                            {{ form.username }}
-                            {{ form.username.errors }}
-                        </label>
-
-                        <label class="profile-field">
-                            <span>Имя</span>
-                            {{ form.first_name }}
-                            {{ form.first_name.errors }}
-                        </label>
-
-                        <label class="profile-field">
-                            <span>Фамилия</span>
-                            {{ form.last_name }}
-                            {{ form.last_name.errors }}
-                        </label>
-
-                        <div class="profile-field">
-                            <span>Тип бота</span>
-                            <div class="profile-readonly">{{ selected_bot.get_kind_display }}</div>
-                        </div>
-
-                        <div class="profile-field">
-                            <span>Статус</span>
-                            <div class="profile-readonly">{% if selected_bot.is_active %}Активен{% else %}Выключен{% endif %}</div>
-                        </div>
-                    </div>
-
-                    <div class="profile-mobile-save">
-                        <button type="submit" class="profile-save-button">Сохранить изменения</button>
-                    </div>
-                </form>
-            {% endif %}
         </section>
     </div>
 </section>
