@@ -417,7 +417,7 @@
                 <h2>Прогнозы эксперта</h2>
             </div>
             {% if paid_predictions_locked %}
-            <span>{{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽ / месяц</span>
+            <span>{{ analyst_profile.paid_predictions_price|money }} ₽ / месяц</span>
             {% else %}
             <a href="{% url 'front:predictions' %}?capper={{ expert.username|urlencode }}">Все прогнозы →</a>
             {% endif %}

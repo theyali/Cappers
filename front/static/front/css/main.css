@@ -7746,6 +7746,17 @@ h2 {
     font-size: 11px;
 }
 
+.capper-pro-copy > .capper-pro-presence {
+    display: inline-flex;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.capper-pro-copy > .capper-pro-presence.is-online {
+    color: #27b65f;
+}
+
 .capper-verified-badge {
     width: 20px;
     height: 20px;
@@ -14000,6 +14011,17 @@ h2 {
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.cappers-ranking-name .cappers-ranking-presence {
+    margin-top: 0;
+    color: #8c8c90;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.cappers-ranking-name .cappers-ranking-presence.is-online {
+    color: #27b65f;
 }
 
 .cappers-ranking-vip {
@@ -30023,4 +30045,8 @@ font-size: 13px;
         gap: 4px;
         padding: 8px 16px 9px;
     }
+}
+
+.profile-hero-stats-banner{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }

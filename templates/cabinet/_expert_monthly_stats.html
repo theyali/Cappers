@@ -28,7 +28,7 @@
                 {% for row in monthly_stats %}
                 <tr data-monthly-row{% if forloop.counter > 8 %} class="is-monthly-hidden"{% endif %}>
                     <td class="expert-monthly-month">{{ row.month_label }}</td>
-                    <td title="Фактическая прибыль: {{ row.total_profit|floatformat:2 }} ₽ · оборот: {{ row.total_stake|floatformat:2 }} ₽">
+                    <td title="Фактическая прибыль: {{ row.total_profit|money }} ₽ · оборот: {{ row.total_stake|money }} ₽">
                         <strong class="{% if row.flat_profit > 0 %}is-positive{% elif row.flat_profit < 0 %}is-negative{% endif %}">{% if row.flat_profit > 0 %}+{% endif %}{{ row.flat_profit|floatformat:1 }}%</strong>
                     </td>
                     <td>{{ row.bets_count }}</td>

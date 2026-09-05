@@ -38,6 +38,8 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "verification_requested_at",
         "is_vip",
         "is_recommended",
+        "trust_index",
+        "trust_index_updated_at",
         "paid_predictions_enabled",
         "paid_predictions_price",
         "is_public",
@@ -50,6 +52,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "verification_requested_at",
         "is_vip",
         "is_recommended",
+        "trust_index",
         "paid_predictions_enabled",
         "is_public",
         "created_at",
@@ -69,7 +72,14 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "facebook",
     )
     autocomplete_fields = ("user",)
-    readonly_fields = ("referral_code", "onboarding_completed_at", "created_at", "updated_at")
+    readonly_fields = (
+        "referral_code",
+        "trust_index",
+        "trust_index_updated_at",
+        "onboarding_completed_at",
+        "created_at",
+        "updated_at",
+    )
     fieldsets = (
         (
             "Эксперт",
@@ -107,6 +117,8 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                     "verification_requested_at",
                     "is_vip",
                     "is_recommended",
+                    "trust_index",
+                    "trust_index_updated_at",
                     "paid_predictions_enabled",
                     "paid_predictions_price",
                     "is_public",
@@ -114,7 +126,10 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Системная информация", {"fields": ("referral_code", "created_at", "updated_at")}),
+        (
+            "Системная информация",
+            {"fields": ("referral_code", "created_at", "updated_at")},
+        ),
     )
 
 

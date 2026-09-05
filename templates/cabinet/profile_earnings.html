@@ -147,8 +147,8 @@
                 <span>{{ transaction.created_at|date:"d.m.Y · H:i" }}{% if transaction.note %} · {{ transaction.note }}{% endif %}</span>
             </div>
             <div>
-                <strong class="is-positive">+{{ transaction.amount }} ₽</strong>
-                <span>после: {{ transaction.balance_after }} ₽</span>
+                <strong class="is-positive">+{{ transaction.amount|money }} ₽</strong>
+                <span>после: {{ transaction.balance_after|money }} ₽</span>
             </div>
         </div>
         {% empty %}

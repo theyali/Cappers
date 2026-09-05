@@ -90,9 +90,9 @@
                             </div>
                         </dl>
                         <div class="tournament-card-prizes" aria-label="Призы турнира">
-                            <span><b>1</b><strong>{{ item.tournament.prize_first|floatformat:0 }} ₽</strong></span>
-                            <span><b>2</b><strong>{{ item.tournament.prize_second|floatformat:0 }} ₽</strong></span>
-                            <span><b>3</b><strong>{{ item.tournament.prize_third|floatformat:0 }} ₽</strong></span>
+                            <span><b>1</b><strong>{{ item.tournament.prize_first|money }} ₽</strong></span>
+                            <span><b>2</b><strong>{{ item.tournament.prize_second|money }} ₽</strong></span>
+                            <span><b>3</b><strong>{{ item.tournament.prize_third|money }} ₽</strong></span>
                         </div>
                         <a class="tournament-card-link" href="{{ item.tournament.get_absolute_url }}">Открыть турнир</a>
                     </div>

@@ -173,7 +173,7 @@
                                 {% for transaction in virtual_transactions %}
                                     <div class="profile-transaction-row">
                                         <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span></div>
-                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount }} ₽</strong><span>после: {{ transaction.balance_after }} ₽</span></div>
+                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount|money }} ₽</strong><span>после: {{ transaction.balance_after|money }} ₽</span></div>
                                     </div>
                                 {% empty %}
                                     <div class="profile-empty-state"><p>Операций пока нет.</p></div>
@@ -188,7 +188,7 @@
                                 {% for transaction in real_transactions %}
                                     <div class="profile-transaction-row">
                                         <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }} · {{ transaction.get_status_display }}</span></div>
-                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount }} ₽</strong><span>после: {{ transaction.balance_after }} ₽</span></div>
+                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount|money }} ₽</strong><span>после: {{ transaction.balance_after|money }} ₽</span></div>
                                     </div>
                                 {% empty %}
                                     <div class="profile-empty-state"><p>Операций пока нет.</p></div>
@@ -266,7 +266,7 @@
                                 <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
                                 <div class="profile-copy-table-cell">
                                     <span>Банк</span>
-                                    <strong>{{ subscription.bank_amount }} ₽</strong>
+                                    <strong>{{ subscription.bank_amount|money }} ₽</strong>
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Ставка</span>
@@ -278,7 +278,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Прибыль</span>
-                                    <strong>{{ subscription.total_profit }} ₽</strong>
+                                    <strong>{{ subscription.total_profit|money }} ₽</strong>
                                 </div>
                             </article>
                         {% empty %}
@@ -371,7 +371,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Банк</span>
-                                    <strong>{{ subscription.bank_amount }} ₽</strong>
+                                    <strong>{{ subscription.bank_amount|money }} ₽</strong>
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Ставка</span>
@@ -379,7 +379,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Прибыль</span>
-                                    <strong>{{ subscription.total_profit }} ₽</strong>
+                                    <strong>{{ subscription.total_profit|money }} ₽</strong>
                                 </div>
                                 <div class="profile-copy-actions">
                                     <a class="profile-row-action profile-copybetting-action-btns" href="{% url 'wallets:copybetting_setup' subscription.analyst_id %}">Настроить</a>

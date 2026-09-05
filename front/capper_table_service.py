@@ -10,6 +10,7 @@ from django.http import Http404
 from django.urls import reverse
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
+from cabinet.presence import presence_payload
 from game.models import Sport
 
 
@@ -125,6 +126,7 @@ def _table_url(*, group: str, period: str, sport_code: str) -> str:
 
 def _profile_payload(profile: AnalystProfile) -> dict:
     name = profile.display_name or profile.user.get_full_name() or profile.user.username
+    presence = presence_payload(profile.user)
     avatar_url = ""
     if profile.avatar:
         avatar_url = profile.avatar.url
@@ -138,6 +140,8 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "avatar_url": avatar_url,
         "is_verified": profile.is_verified,
         "is_vip": profile.is_vip,
+        "presence": presence,
+        "is_online": presence["is_online"],
         "paid_predictions_enabled": bool(
             profile.paid_predictions_enabled and profile.paid_predictions_price > 0
         ),

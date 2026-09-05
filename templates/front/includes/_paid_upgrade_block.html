@@ -28,7 +28,7 @@
                 <h3>Каппер стал платным</h3>
                 <p>Новые закрытые прогнозы появятся в вашей ленте после оплаты подписки.</p>
                 <small>
-                    {{ follow.analyst.analyst_profile.paid_predictions_price|floatformat:0 }} ₽/мес
+                    {{ follow.analyst.analyst_profile.paid_predictions_price|money }} ₽/мес
                     {% if follow.feed_locked_paid_count %} · закрытых прогнозов: {{ follow.feed_locked_paid_count }}{% endif %}
                 </small>
             </div>

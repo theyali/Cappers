@@ -81,6 +81,7 @@ TEMPLATES = [
                 "pages.context_processors.page_seo",
                 "wallets.context_processors.capper_balance",
             ],
+            "builtins": ["wallets.templatetags.money"],
         },
     },
 ]
@@ -241,6 +242,22 @@ CELERY_BEAT_SCHEDULE = {
     "run-bot-activity-cycle": {
         "task": "bots.tasks.run_bot_activity_cycle",
         "schedule": timedelta(minutes=10),
+    },
+    "run-bot-presence-activity-cycle": {
+        "task": "bots.tasks.run_bot_presence_activity_cycle",
+        "schedule": timedelta(minutes=3),
+    },
+    "run-bot-planned-actions-cycle": {
+        "task": "bots.tasks.run_bot_planned_actions_cycle",
+        "schedule": timedelta(minutes=5),
+    },
+    "run-bot-tournament-activity-cycle": {
+        "task": "bots.tasks.run_bot_tournament_activity_cycle",
+        "schedule": timedelta(minutes=30),
+    },
+    "cleanup-bot-runtime-data-cycle": {
+        "task": "bots.tasks.cleanup_bot_runtime_data_cycle",
+        "schedule": timedelta(days=1),
     },
     "dispatch-notification-events": {
         "task": "notifications.tasks.dispatch_recent_coupon_events",

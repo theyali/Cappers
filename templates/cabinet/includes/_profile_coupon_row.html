@@ -56,8 +56,8 @@
     </div>
 
     <span class="profile-coupon-status is-{{ row_status_key }}">{{ row_status_label }}</span>
-    <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{{ metric_1_value }}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}</strong></div>
-    <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{{ metric_2_value }}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}</strong></div>
-    <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{{ metric_3_value }}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{% if metric_1_suffix == '₽' %}{{ metric_1_value|money }}{% else %}{{ metric_1_value }}{% endif %}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{% if metric_2_suffix == '₽' %}{{ metric_2_value|money }}{% else %}{{ metric_2_value }}{% endif %}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{% if metric_3_suffix == '₽' %}{{ metric_3_value|money }}{% else %}{{ metric_3_value }}{% endif %}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}</strong></div>
     <span class="profile-coupon-open" aria-hidden="true">→</span>
 </a>

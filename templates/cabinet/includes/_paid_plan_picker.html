@@ -4,14 +4,14 @@
         <input type="radio" name="plan_id" value="{{ plan.id }}" {% if forloop.first %}checked{% endif %}>
         <span>
             <small>{{ plan.period_label }}</small>
-            <strong>{{ plan.price|floatformat:0 }} ₽</strong>
+            <strong>{{ plan.price|money }} ₽</strong>
         </span>
     </label>
     {% empty %}
     <div class="paid-checkout-plan">
         <span>
             <small>30 дней</small>
-            <strong>{{ analyst_profile.paid_predictions_price|floatformat:0 }} ₽</strong>
+            <strong>{{ analyst_profile.paid_predictions_price|money }} ₽</strong>
         </span>
     </div>
     {% endfor %}

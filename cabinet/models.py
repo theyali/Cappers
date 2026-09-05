@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -125,6 +126,20 @@ class AnalystProfile(models.Model):
         max_digits=10,
         decimal_places=2,
         default=0,
+    )
+    trust_index = models.DecimalField(
+        "Индекс доверия",
+        max_digits=3,
+        decimal_places=1,
+        default=0,
+        db_index=True,
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+    )
+    trust_index_updated_at = models.DateTimeField(
+        "Индекс доверия обновлён",
+        null=True,
+        blank=True,
+        db_index=True,
     )
     is_public = models.BooleanField("Публичный профиль", default=True, db_index=True)
     onboarding_completed_at = models.DateTimeField("Onboarding завершён", null=True, blank=True)

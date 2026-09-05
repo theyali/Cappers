@@ -110,8 +110,14 @@
                             </span>
                             <span class="cappers-ranking-name">
                                 <strong>{{ expert.name }}</strong>
+                                {% if expert.presence %}
+                                <small class="public-presence-status cappers-ranking-presence{% if expert.presence.is_online %} is-online{% endif %}">
+                                    <span class="public-presence-dot" aria-hidden="true"></span>
+                                    <span>{{ expert.presence.label }}</span>
+                                </small>
+                                {% endif %}
                                 {% if expert.paid_predictions_enabled %}
-                                <small>Платные {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</small>
+                                <small>Платные {{ expert.paid_predictions_price|money }} ₽/мес</small>
                                 {% endif %}
                             </span>
                         </a>

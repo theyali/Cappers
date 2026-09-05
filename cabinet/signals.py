@@ -8,6 +8,7 @@ from game.models import Prediction, PredictionCoupon
 
 from .models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
 from .monthly_stats import monthly_stat_key, rebuild_capper_month
+from .trust_index import refresh_capper_trust_index
 
 
 def _profile_has_paid_predictions(profile: AnalystProfile) -> bool:
@@ -120,11 +121,13 @@ def notify_followers_about_paid_predictions(sender, instance: AnalystProfile, cr
 def remember_previous_coupon_month(sender, instance: PredictionCoupon, **kwargs) -> None:
     """Remember the old bucket so edits can rebuild both the old and new month."""
     instance._monthly_stat_previous_key = None
+    instance._trust_index_previous_author_id = None
     if not instance.pk:
         return
     previous = sender.objects.filter(pk=instance.pk).first()
     if previous is not None:
         instance._monthly_stat_previous_key = monthly_stat_key(previous)
+        instance._trust_index_previous_author_id = previous.author_id
 
 
 @receiver(post_save, sender=PredictionCoupon)
@@ -140,12 +143,22 @@ def sync_coupon_monthly_stat(sender, instance: PredictionCoupon, **kwargs) -> No
     for analyst_id, month in keys:
         rebuild_capper_month(analyst_id, month)
 
+    analyst_ids = {instance.author_id}
+    previous_author_id = getattr(instance, "_trust_index_previous_author_id", None)
+    if previous_author_id:
+        analyst_ids.add(previous_author_id)
+    for analyst_id in analyst_ids:
+        if analyst_id:
+            refresh_capper_trust_index(analyst_id)
+
 
 @receiver(post_delete, sender=PredictionCoupon)
 def remove_coupon_from_monthly_stat(sender, instance: PredictionCoupon, **kwargs) -> None:
     key = monthly_stat_key(instance)
     if key is not None:
         rebuild_capper_month(*key)
+    if instance.author_id:
+        refresh_capper_trust_index(instance.author_id)
 
 
 def _rebuild_prediction_coupon_month(instance: Prediction) -> None:

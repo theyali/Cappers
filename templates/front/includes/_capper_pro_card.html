@@ -26,6 +26,12 @@
                         </span>
                     </div>
                     <span>@{{ expert.username }}</span>
+                    {% if expert.presence %}
+                    <span class="public-presence-status capper-pro-presence{% if expert.presence.is_online %} is-online{% endif %}">
+                        <span class="public-presence-dot" aria-hidden="true"></span>
+                        <span>{{ expert.presence.label }}</span>
+                    </span>
+                    {% endif %}
                 </div>
             </div>
             <span class="capper-pro-rank">#{{ rank }}</span>
@@ -89,7 +95,7 @@
                 <strong>{{ expert.joined_at|date:"d.m.Y" }}</strong>
             </div>
             {% if expert.paid_predictions_enabled %}
-            <span class="capper-pro-paid">Платные {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</span>
+            <span class="capper-pro-paid">Платные {{ expert.paid_predictions_price|money }} ₽/мес</span>
             {% endif %}
         </div>
     </a>
@@ -99,9 +105,9 @@
             {% if expert.is_paid_subscribed %}
             <a class="capper-pro-follow capper-pro-paid-action is-active" href="{% url 'front:following_feed' %}">В ленту</a>
             {% elif request.user.is_authenticated %}
-            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.path|urlencode }}">Оплатить {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.path|urlencode }}">Оплатить {{ expert.paid_predictions_price|money }} ₽/мес</a>
             {% else %}
-            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:login' %}?next={% url 'front:expert_profile' expert.username %}">Оплатить {{ expert.paid_predictions_price|floatformat:0 }} ₽/мес</a>
+            <a class="capper-pro-follow capper-pro-paid-action" href="{% url 'cabinet:login' %}?next={% url 'front:expert_profile' expert.username %}">Оплатить {{ expert.paid_predictions_price|money }} ₽/мес</a>
             {% endif %}
         {% elif request.user.is_authenticated %}
         <button

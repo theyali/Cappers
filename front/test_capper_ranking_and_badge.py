@@ -1,11 +1,12 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import User
+from cabinet.models import CapperMonthlyStat, User
+from cabinet.presence import UserPresence
 from game.models import PredictionCoupon
 
 
@@ -115,3 +116,29 @@ class CapperRankingAndBadgeTests(TestCase):
         self.assertContains(response, 'class="capper-verified-bg"')
         self.assertContains(response, 'class="capper-verified-check"')
         self.assertNotContains(response, '>✓</span>')
+
+    def test_cappers_table_renders_presence_status(self):
+        analyst = self._analyst("online-table-expert")
+        analyst.analyst_profile.display_name = "Online Table Expert"
+        analyst.analyst_profile.save(update_fields=["display_name", "updated_at"])
+        UserPresence.objects.create(user=analyst, last_seen_at=timezone.now())
+        CapperMonthlyStat.objects.create(
+            analyst=analyst,
+            month=date(2026, 9, 1),
+            bets_count=3,
+            wins_count=2,
+            losses_count=1,
+            total_stake=Decimal("300.00"),
+            total_profit=Decimal("60.00"),
+            flat_profit_percent=Decimal("20.00"),
+            roi=Decimal("20.00"),
+            avg_coefficient=Decimal("1.80"),
+            hit_rate=Decimal("66.67"),
+        )
+
+        response = self.client.get(reverse("front:cappers_table"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Online Table Expert")
+        self.assertContains(response, "cappers-ranking-presence is-online")
+        self.assertContains(response, "В сети")

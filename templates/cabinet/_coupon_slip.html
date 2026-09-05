@@ -7,7 +7,7 @@
         </div>
         <div class="coupon-slip-overview-row">
             <span>Сумма:</span>
-            <strong>{{ coupon.total_stake }} ₽</strong>
+            <strong>{{ coupon.total_stake|money }} ₽</strong>
         </div>
         <div class="coupon-slip-overview-row">
             <span>Уверенность:</span>
@@ -15,7 +15,7 @@
         </div>
         <div class="coupon-slip-overview-row is-payout">
             <span>{% if coupon.coupon_type == 'express' %}Стоимость экспресса{% else %}Стоимость купона{% endif %}:</span>
-            <strong>{{ coupon.possible_payout }} ₽</strong>
+            <strong>{{ coupon.possible_payout|money }} ₽</strong>
         </div>
     </div>
 

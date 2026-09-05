@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -9,6 +9,13 @@ from cabinet.models import AnalystFollow, User
 from game.models import Match, Prediction, PredictionCoupon, Sport
 
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
 class PredictionDefaultSortTests(TestCase):
     def setUp(self):
         self.sport = Sport.objects.create(
@@ -85,3 +92,48 @@ class PredictionDefaultSortTests(TestCase):
         self.assertEqual(response.context["active_sort"], "new")
         ids = [item.id for item in response.context["page_obj"].object_list]
         self.assertEqual(ids[:2], [newest.id, older_followed.id])
+
+    def test_default_sort_limits_long_author_streaks_on_page(self):
+        now = timezone.now()
+        quiet_analyst = User.objects.create_user(
+            username="quiet-sort-expert",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        dominant_coupons = [
+            self._coupon(
+                author=self.fresh_analyst,
+                external_id=99100 + index,
+                published_at=now - timedelta(minutes=index),
+            )
+            for index in range(5)
+        ]
+        other_coupons = [
+            self._coupon(
+                author=quiet_analyst,
+                external_id=99200 + index,
+                published_at=now - timedelta(hours=1, minutes=index),
+            )
+            for index in range(2)
+        ]
+
+        response = self.client.get(reverse("front:predictions"))
+
+        self.assertEqual(response.status_code, 200)
+        cards = list(response.context["page_obj"].object_list)
+        self.assertEqual(
+            {card.id for card in cards},
+            {coupon.id for coupon in dominant_coupons + other_coupons},
+        )
+        max_streak = 1
+        current_streak = 1
+        previous_author_id = None
+        for card in cards:
+            author_id = card.coupon.author_id
+            if author_id == previous_author_id:
+                current_streak += 1
+            else:
+                current_streak = 1
+            max_streak = max(max_streak, current_streak)
+            previous_author_id = author_id
+        self.assertLessEqual(max_streak, 3)

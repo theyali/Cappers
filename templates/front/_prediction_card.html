@@ -162,11 +162,11 @@
     <div class="prediction-card-money" aria-label="Сумма, стоимость купона и уверенность прогноза">
         <div class="prediction-card-money-item">
             <span>Сумма</span>
-            <strong>{{ prediction.coupon.total_stake|floatformat:0 }} ₽</strong>
+            <strong>{{ prediction.coupon.total_stake|money }} ₽</strong>
         </div>
         <div class="prediction-card-money-item">
             <span>Стоимость купона</span>
-            <strong>{{ prediction.coupon.possible_payout|floatformat:0 }} ₽</strong>
+            <strong>{{ prediction.coupon.possible_payout|money }} ₽</strong>
         </div>
         <div class="prediction-card-money-confidence" aria-label="Уверенность эксперта {{ prediction.coupon.confidence }} процентов">
             <div class="prediction-confidence-head">

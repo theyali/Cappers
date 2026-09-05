@@ -31,6 +31,9 @@ from .prediction_views import (
 from .views import PREDICTION_STATUS_FILTERS
 
 
+MAX_CONSECUTIVE_AUTHOR_CARDS = 3
+
+
 def _express_path() -> str:
     return reverse("front:prediction_expresses")
 
@@ -238,6 +241,36 @@ def _redirect_legacy_express_query(request):
     return HttpResponseRedirect(_url_with_query(_express_path(), params))
 
 
+def _diversify_author_streaks(coupons, *, max_streak: int = MAX_CONSECUTIVE_AUTHOR_CARDS):
+    queue = list(coupons)
+    diversified = []
+
+    while queue:
+        next_coupon = queue.pop(0)
+        if (
+            max_streak > 0
+            and len(diversified) >= max_streak
+            and all(
+                item.author_id == next_coupon.author_id
+                for item in diversified[-max_streak:]
+            )
+        ):
+            replacement_index = next(
+                (
+                    index
+                    for index, candidate in enumerate(queue)
+                    if candidate.author_id != next_coupon.author_id
+                ),
+                None,
+            )
+            if replacement_index is not None:
+                queue.insert(0, next_coupon)
+                next_coupon = queue.pop(replacement_index + 1)
+        diversified.append(next_coupon)
+
+    return diversified
+
+
 @ensure_csrf_cookie
 def predictions(request, sport_code: str | None = None, express_only: bool = False):
     if express_only:
@@ -363,6 +396,8 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
+    if active_sort == "new" and not selected_capper:
+        page_obj.object_list = _diversify_author_streaks(page_obj.object_list)
     page_obj.object_list = _decorate_predictions(
         request,
         page_obj.object_list,

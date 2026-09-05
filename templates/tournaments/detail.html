@@ -47,7 +47,7 @@
                             {% elif request.user.is_authenticated and request.user.is_analyst %}
                                 <form method="post" action="{% url 'tournaments:join' slug=tournament.slug %}">
                                     {% csrf_token %}
-                                    <button class="tournament-primary-action" type="submit">Принять участие</button>
+                                    <button class="tournament-primary-action" type="submit">Подключиться</button>
                                 </form>
                             {% elif request.user.is_authenticated %}
                                 <a class="tournament-primary-action" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
@@ -92,15 +92,15 @@
                     <div class="profile-hero-stats">
                         <div class="profile-stat-pill is-active">
                             <span>1 место</span>
-                            <strong>{{ tournament.prize_first|floatformat:0 }} ₽</strong>
+                            <strong>{{ tournament.prize_first|money }} ₽</strong>
                         </div>
                         <div class="profile-stat-pill">
                             <span>2 место</span>
-                            <strong>{{ tournament.prize_second|floatformat:0 }} ₽</strong>
+                            <strong>{{ tournament.prize_second|money }} ₽</strong>
                         </div>
                         <div class="profile-stat-pill">
                             <span>3 место</span>
-                            <strong>{{ tournament.prize_third|floatformat:0 }} ₽</strong>
+                            <strong>{{ tournament.prize_third|money }} ₽</strong>
                         </div>
                     </div>
                 </section>
@@ -144,7 +144,7 @@
                                     <span class="prediction-table-coefficient">{{ row.coupons_count }}</span>
                                     <span class="prediction-table-status">{{ row.wins_count }}-{{ row.losses_count }}-{{ row.refunds_count }}</span>
                                     <span class="prediction-table-pick {% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">
-                                        <strong>{{ row.profit|floatformat:2 }} ₽</strong>
+                                        <strong>{{ row.profit|money }} ₽</strong>
                                     </span>
                                     <span class="prediction-table-coefficient">{{ row.roi_percent|floatformat:2 }}%</span>
                                 </div>
