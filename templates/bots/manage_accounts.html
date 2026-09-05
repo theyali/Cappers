@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Управление ботами — Cappers{% endblock %}
 
@@ -19,7 +20,7 @@
                     <div>
                         <p class="eyebrow">Администрирование · {{ bots_count }} ботов</p>
                         <h1>Пользователи-боты</h1>
-                        <p>Редактируйте данные прямо в строке. Нажмите на аватар, чтобы выбрать новое изображение с компьютера.</p>
+                        <p>Редактируйте данные прямо в строке. Изображение загружается сразу после выбора файла.</p>
                     </div>
                 </div>
 
@@ -35,22 +36,37 @@
                         </div>
 
                         {% for row in bot_rows %}
-                            <form method="post" enctype="multipart/form-data" action="{% url 'bots:manage_accounts' %}" class="profile-copy-table-row" novalidate>
+                            <form
+                                method="post"
+                                enctype="multipart/form-data"
+                                action="{% url 'bots:manage_accounts' %}"
+                                class="profile-copy-table-row"
+                                data-bot-row
+                                data-avatar-upload-url="{% url 'bots:upload_avatar' row.bot.pk %}"
+                                novalidate
+                            >
                                 {% csrf_token %}
                                 <input type="hidden" name="bot_id" value="{{ row.bot.pk }}">
 
-                                <div class="profile-coupon-main">
-                                    <label class="profile-user-avatar" for="{{ row.form.avatar.id_for_label }}" data-skeleton-image title="Нажмите, чтобы изменить изображение">
+                                <div class="profile-coupon-main" data-skeleton-block data-bot-avatar-block>
+                                    <label
+                                        class="profile-user-avatar"
+                                        for="{{ row.form.avatar.id_for_label }}"
+                                        data-skeleton-image
+                                        data-bot-avatar-wrapper
+                                        title="Нажмите, чтобы изменить изображение"
+                                    >
                                         {% if row.avatar_url %}
                                             <img src="{{ row.avatar_url }}" width="46" height="46" alt="Аватар {{ row.bot.user.username }}">
                                         {% else %}
-                                            {{ row.bot.user.username|first|upper }}
+                                            <span>{{ row.bot.user.username|first|upper }}</span>
                                         {% endif %}
                                     </label>
                                     {{ row.form.avatar }}
                                     <div class="profile-coupon-copy">
                                         <strong>{{ row.bot.get_kind_display }}</strong>
                                         <span>{% if row.bot.persona %}{{ row.bot.persona }}{% else %}@{{ row.bot.user.username }}{% endif %}</span>
+                                        <span data-bot-avatar-status aria-live="polite">Нажмите на аватар для загрузки</span>
                                         {{ row.form.avatar.errors }}
                                     </div>
                                 </div>
@@ -95,4 +111,9 @@
         </section>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
+<script src="{% static 'bots/js/manage_accounts.js' %}" defer></script>
 {% endblock %}
