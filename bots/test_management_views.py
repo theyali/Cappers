@@ -30,7 +30,10 @@ class BotAccountManagementViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Пользователи-боты")
-        self.assertContains(response, "@reader_bot")
+        self.assertContains(response, "reader_bot")
+        self.assertContains(response, 'name="bot_id"')
+        self.assertContains(response, f'name="bot-{self.bot.pk}-username"')
+        self.assertContains(response, f'for="id_bot-{self.bot.pk}-avatar"')
 
     def test_regular_user_cannot_open_bot_management(self):
         regular_user = User.objects.create_user(
@@ -43,16 +46,17 @@ class BotAccountManagementViewTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_staff_can_update_bot_identity(self):
+    def test_staff_can_update_bot_identity_from_table_row(self):
         self.client.force_login(self.admin)
+        prefix = f"bot-{self.bot.pk}"
 
         response = self.client.post(
             reverse("bots:manage_accounts"),
             {
                 "bot_id": self.bot.pk,
-                "username": "reader_bot_new",
-                "first_name": "Иван",
-                "last_name": "Ботов",
+                f"{prefix}-username": "reader_bot_new",
+                f"{prefix}-first_name": "Иван",
+                f"{prefix}-last_name": "Ботов",
             },
         )
 
@@ -61,6 +65,27 @@ class BotAccountManagementViewTests(TestCase):
         self.assertEqual(self.bot_user.username, "reader_bot_new")
         self.assertEqual(self.bot_user.first_name, "Иван")
         self.assertEqual(self.bot_user.last_name, "Ботов")
+
+    def test_invalid_row_is_rendered_with_errors(self):
+        other_user = User.objects.create_user(
+            username="taken_login",
+            password="test-password",
+        )
+        self.client.force_login(self.admin)
+        prefix = f"bot-{self.bot.pk}"
+
+        response = self.client.post(
+            reverse("bots:manage_accounts"),
+            {
+                "bot_id": self.bot.pk,
+                f"{prefix}-username": other_user.username,
+                f"{prefix}-first_name": "Иван",
+                f"{prefix}-last_name": "Ботов",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Пользователь с таким логином уже существует.")
 
     def test_expert_display_name_is_synced(self):
         expert_user = User.objects.create_user(
@@ -73,14 +98,15 @@ class BotAccountManagementViewTests(TestCase):
             kind=BotAccount.Kind.EXPERT,
         )
         self.client.force_login(self.admin)
+        prefix = f"bot-{expert_bot.pk}"
 
         response = self.client.post(
             reverse("bots:manage_accounts"),
             {
                 "bot_id": expert_bot.pk,
-                "username": "expert_bot",
-                "first_name": "Алексей",
-                "last_name": "Бот",
+                f"{prefix}-username": "expert_bot",
+                f"{prefix}-first_name": "Алексей",
+                f"{prefix}-last_name": "Бот",
             },
         )
 
