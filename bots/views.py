@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from cabinet.models import User
@@ -17,10 +16,7 @@ def _ensure_bot_admin(user) -> None:
         raise PermissionDenied
 
 
-def _avatar_url(bot_account: BotAccount | None) -> str:
-    if bot_account is None:
-        return ""
-
+def _avatar_url(bot_account: BotAccount) -> str:
     user = bot_account.user
     if user.role == User.Role.ANALYST:
         analyst_profile = getattr(user, "analyst_profile", None)
@@ -32,55 +28,70 @@ def _avatar_url(bot_account: BotAccount | None) -> str:
     return ""
 
 
+def _resolve_posted_bot(bots, raw_bot_id):
+    bot_id = str(raw_bot_id or "").strip()
+    if not bot_id.isdigit():
+        raise Http404
+    return get_object_or_404(bots, pk=int(bot_id))
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def manage_accounts(request):
     _ensure_bot_admin(request.user)
 
-    bots = (
+    bots_queryset = (
         BotAccount.objects.select_related("user", "user__analyst_profile")
         .order_by("kind", "user__username")
     )
+    bots = list(bots_queryset)
 
-    selected_id = request.POST.get("bot_id") or request.GET.get("bot")
-    selected_bot = None
+    submitted_bot = None
+    submitted_form = None
 
-    if selected_id:
-        selected_id = str(selected_id).strip()
-        if not selected_id.isdigit():
-            raise Http404
-        selected_bot = get_object_or_404(bots, pk=int(selected_id))
-    else:
-        selected_bot = bots.first()
-
-    form = None
-    if selected_bot is not None:
-        form = BotAccountProfileForm(
-            request.POST or None,
-            request.FILES or None,
-            instance=selected_bot.user,
-            bot_account=selected_bot,
+    if request.method == "POST":
+        submitted_bot = _resolve_posted_bot(bots_queryset, request.POST.get("bot_id"))
+        submitted_form = BotAccountProfileForm(
+            request.POST,
+            request.FILES,
+            instance=submitted_bot.user,
+            bot_account=submitted_bot,
+            prefix=f"bot-{submitted_bot.pk}",
         )
 
-        if request.method == "POST" and form.is_valid():
-            form.save()
+        if submitted_form.is_valid():
+            submitted_form.save()
             messages.success(
                 request,
-                f"Данные бота @{selected_bot.user.username} обновлены.",
+                f"Данные бота @{submitted_bot.user.username} обновлены.",
             )
-            return redirect(
-                f"{reverse('bots:manage_accounts')}?bot={selected_bot.pk}"
+            return redirect("bots:manage_accounts")
+
+    bot_rows = []
+    for bot in bots:
+        if submitted_bot is not None and bot.pk == submitted_bot.pk:
+            form = submitted_form
+        else:
+            form = BotAccountProfileForm(
+                instance=bot.user,
+                bot_account=bot,
+                prefix=f"bot-{bot.pk}",
             )
+
+        bot_rows.append(
+            {
+                "bot": bot,
+                "form": form,
+                "avatar_url": _avatar_url(bot),
+            }
+        )
 
     return render(
         request,
         "bots/manage_accounts.html",
         {
-            "bots": bots,
-            "bots_count": bots.count(),
-            "selected_bot": selected_bot,
-            "selected_avatar_url": _avatar_url(selected_bot),
-            "form": form,
+            "bot_rows": bot_rows,
+            "bots_count": len(bot_rows),
             "bots_admin_active": True,
         },
     )
