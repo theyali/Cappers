@@ -135,11 +135,20 @@ def update_preferences(request):
     checkbox_fields = (
         "in_app_enabled",
         "email_enabled",
+        "prediction_like",
+        "prediction_favorite",
+        "copybetting",
+        "new_follower",
+        "paid_subscription",
         "new_prediction",
+        "requested_match_prediction",
+        "match_prediction",
+        "tournament_started",
+        "tournament_finished",
+        "own_coupon_settled",
         "favorite_settled",
         "match_reminder",
         "achievement",
-        "match_prediction",
     )
     for field in checkbox_fields:
         setattr(preferences, field, field in request.POST)
@@ -148,6 +157,8 @@ def update_preferences(request):
         preferences.telegram_chat_id and "telegram_enabled" in request.POST
     )
     preferences.save()
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"ok": True, "message": "Настройки уведомлений сохранены."})
     return redirect("notifications:center")
 
 

@@ -11,7 +11,7 @@
         <div>
             <p class="notifications-kicker">Ваш центр</p>
             <h1>Уведомления</h1>
-            <p>Новые прогнозы ваших капперов, результаты избранного, напоминания о матчах и достижения.</p>
+            <p>Все важные события: реакции на ваши прогнозы, подписки, копибеттинг, новые прогнозы, матчи, турниры и расчёты.</p>
         </div>
         <div class="notifications-hero-count">
             <span>Непрочитано</span>
@@ -35,23 +35,32 @@
             </div>
 
             {% if page_obj.object_list %}
-            <div class="notifications-list">
+            <div class="notifications-list" data-skeleton-block>
                 {% for notification in page_obj.object_list %}
                 <a
                     class="notification-row{% if not notification.is_read %} is-unread{% endif %}"
                     href="{{ notification.url|default:'#' }}"
                     data-notification-link
                     data-read-url="{% url 'notifications:mark_read' notification.id %}"
+                    data-skeleton-block
                 >
                     <span class="notification-kind is-{{ notification.kind }}" aria-hidden="true">
-                        {% if notification.kind == 'new_prediction' %}
+                        {% if notification.kind == 'new_prediction' or notification.kind == 'requested_match_prediction' or notification.kind == 'match_prediction' %}
                         <svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"></path></svg>
-                        {% elif notification.kind == 'favorite_settled' %}
+                        {% elif notification.kind == 'prediction_like' %}
+                        <svg viewBox="0 0 24 24"><path d="M8 21H4V9h4v12Zm0-10 4-8c2 0 3 1 3 3v3h4a2 2 0 0 1 2 2l-1 7a3 3 0 0 1-3 3H8V11Z"></path></svg>
+                        {% elif notification.kind == 'prediction_favorite' or notification.kind == 'favorite_settled' %}
                         <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                        {% elif notification.kind == 'new_follower' %}
+                        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
+                        {% elif notification.kind == 'copybetting' or notification.kind == 'paid_subscription' %}
+                        <svg viewBox="0 0 24 24"><path d="M5 7h14v12H5zM8 4h8v3M8 13h8M12 10v6"></path></svg>
+                        {% elif notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' or notification.kind == 'achievement' %}
+                        <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
+                        {% elif notification.kind == 'own_coupon_settled' %}
+                        <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9h8M8 13h5M8 17l2 2 5-5"></path></svg>
                         {% elif notification.kind == 'match_reminder' %}
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg>
-                        {% elif notification.kind == 'achievement' %}
-                        <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
                         {% else %}
                         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="m17 15 3 3 3-3"></path></svg>
                         {% endif %}
@@ -82,16 +91,16 @@
             <div class="notifications-empty">
                 <span>✓</span>
                 <strong>{% if active_filter == 'unread' %}Всё прочитано{% else %}Уведомлений пока нет{% endif %}</strong>
-                <p>Здесь появятся важные события по подпискам, избранному и отслеживаемым матчам.</p>
+                <p>Здесь появятся важные события по вашим прогнозам, подпискам, матчам и турнирам.</p>
             </div>
             {% endif %}
         </main>
 
         <aside class="notifications-side">
-            <section class="notification-settings-card">
+            <section class="notification-settings-card" data-skeleton-block data-notification-settings-block>
                 <p class="notifications-kicker">Доставка</p>
                 <h2>Настройки</h2>
-                <form method="post" action="{% url 'notifications:preferences' %}" class="notification-settings-form">
+                <form method="post" action="{% url 'notifications:preferences' %}" class="notification-settings-form" data-notification-settings-form>
                     {% csrf_token %}
                     <div class="notification-settings-group">
                         <strong>Каналы</strong>
@@ -126,15 +135,36 @@
                     </div>
 
                     <div class="notification-settings-group">
-                        <strong>Что присылать</strong>
-                        <label><input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}><span>Новые прогнозы подписок</span></label>
-                        <label><input type="checkbox" name="favorite_settled" {% if preferences.favorite_settled %}checked{% endif %}><span>Результаты избранного</span></label>
-                        <label><input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}><span>Матч примерно через час</span></label>
-                        <label><input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}><span>Достижения капперов</span></label>
-                        <label><input type="checkbox" name="match_prediction" {% if preferences.match_prediction %}checked{% endif %}><span>Прогноз на выбранный матч</span></label>
+                        <strong>Мои прогнозы</strong>
+                        <label><input type="checkbox" name="prediction_like" {% if preferences.prediction_like %}checked{% endif %}><span>Лайки моих прогнозов</span></label>
+                        <label><input type="checkbox" name="prediction_favorite" {% if preferences.prediction_favorite %}checked{% endif %}><span>Сохранения моих прогнозов</span></label>
+                        <label><input type="checkbox" name="copybetting" {% if preferences.copybetting %}checked{% endif %}><span>Когда меня копируют через копибеттинг</span></label>
+                        <label><input type="checkbox" name="new_follower" {% if preferences.new_follower %}checked{% endif %}><span>Новые подписчики</span></label>
+                        <label><input type="checkbox" name="paid_subscription" {% if preferences.paid_subscription %}checked{% endif %}><span>Покупка или продление платной подписки</span></label>
+                        <label><input type="checkbox" name="own_coupon_settled" {% if preferences.own_coupon_settled %}checked{% endif %}><span>Расчёт моих купонов</span></label>
                     </div>
 
-                    <button type="submit" class="notification-settings-save">Сохранить настройки</button>
+                    <div class="notification-settings-group">
+                        <strong>Капперы и матчи</strong>
+                        <label><input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}><span>Новый прогноз каппера, на которого я подписан</span></label>
+                        <label><input type="checkbox" name="requested_match_prediction" {% if preferences.requested_match_prediction %}checked{% endif %}><span>Прогноз на матч, где я нажал «Хочу прогноз»</span></label>
+                        <label><input type="checkbox" name="match_prediction" {% if preferences.match_prediction %}checked{% endif %}><span>Прогноз на отслеживаемый матч</span></label>
+                    </div>
+
+                    <div class="notification-settings-group">
+                        <strong>Турниры</strong>
+                        <label><input type="checkbox" name="tournament_started" {% if preferences.tournament_started %}checked{% endif %}><span>Турнир, в котором я участвую, начался</span></label>
+                        <label><input type="checkbox" name="tournament_finished" {% if preferences.tournament_finished %}checked{% endif %}><span>Турнир, в котором я участвую, завершён</span></label>
+                    </div>
+
+                    <div class="notification-settings-group">
+                        <strong>Дополнительно</strong>
+                        <label><input type="checkbox" name="favorite_settled" {% if preferences.favorite_settled %}checked{% endif %}><span>Расчёт сохранённых прогнозов</span></label>
+                        <label><input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}><span>События отслеживаемых матчей: старт, гол, финал</span></label>
+                        <label><input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}><span>Новые достижения капперов</span></label>
+                    </div>
+
+                    <button type="submit" class="notification-settings-save" data-settings-save>Сохранить настройки</button>
                 </form>
 
                 {% if telegram_account or preferences.telegram_chat_id %}
@@ -162,7 +192,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="notification-watch-empty">Откройте предстоящий матч и нажмите «Следить за матчем».</p>
+                <p class="notification-watch-empty">Откройте предстоящий или LIVE-матч и нажмите «Следить за матчем».</p>
                 {% endif %}
             </section>
         </aside>

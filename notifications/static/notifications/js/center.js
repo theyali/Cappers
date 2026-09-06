@@ -2,19 +2,6 @@
     const page = document.querySelector("[data-notifications-page]");
     if (!page) return;
 
-    const matchReminderLabel = page
-        .querySelector('input[name="match_reminder"]')
-        ?.closest("label")
-        ?.querySelector("span");
-    if (matchReminderLabel) {
-        matchReminderLabel.textContent = "События отслеживаемых матчей";
-    }
-
-    const watchEmpty = page.querySelector(".notification-watch-empty");
-    if (watchEmpty) {
-        watchEmpty.textContent = "Откройте предстоящий или LIVE-матч и нажмите «Следить за матчем».";
-    }
-
     const getCookie = (name) => {
         const cookies = document.cookie ? document.cookie.split(";") : [];
         for (const cookie of cookies) {
@@ -44,6 +31,7 @@
             if (!readUrl) return;
 
             event.preventDefault();
+            window.CappersSkeleton?.loading(link);
             try {
                 const response = await fetch(readUrl, {
                     method: "POST",
@@ -61,6 +49,7 @@
                     notifyGlobalStateChanged();
                 }
             } finally {
+                window.CappersSkeleton?.ready(link);
                 if (href && href !== "#") window.location.href = href;
             }
         });
@@ -71,7 +60,9 @@
         markAllForm.addEventListener("submit", async (event) => {
             event.preventDefault();
             const button = markAllForm.querySelector("button");
+            const list = page.querySelector(".notifications-list");
             if (button) button.disabled = true;
+            window.CappersSkeleton?.loading(list);
             try {
                 const response = await fetch(markAllForm.action, {
                     method: "POST",
@@ -91,6 +82,47 @@
                 notifyGlobalStateChanged();
             } catch (error) {
                 if (button) button.disabled = false;
+            } finally {
+                window.CappersSkeleton?.ready(list);
+            }
+        });
+    }
+
+    const settingsForm = page.querySelector("[data-notification-settings-form]");
+    if (settingsForm) {
+        settingsForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const block = settingsForm.closest("[data-notification-settings-block]");
+            const button = settingsForm.querySelector("[data-settings-save]");
+            const originalText = button?.textContent || "Сохранить настройки";
+
+            if (button) button.disabled = true;
+            window.CappersSkeleton?.loading(block);
+            try {
+                const response = await fetch(settingsForm.action, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    body: new FormData(settingsForm),
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || payload.ok === false) {
+                    throw new Error(payload.error || "Не удалось сохранить настройки.");
+                }
+                if (button) button.textContent = payload.message || "Сохранено";
+            } catch (error) {
+                if (button) button.textContent = "Не удалось сохранить";
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    window.setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 1600);
+                }
+                window.CappersSkeleton?.ready(block);
             }
         });
     }
