@@ -123,9 +123,97 @@ class WikiVideo(models.Model):
         return self.title
 
 
+class WikiTermSection(models.Model):
+    ICON_GENERAL = "general"
+    ICON_ACCOUNT = "account"
+    ICON_BETS = "bets"
+    ICON_ODDS = "odds"
+    ICON_STATS = "stats"
+    ICON_SUBSCRIPTIONS = "subscriptions"
+    ICON_COPYBETTING = "copybetting"
+    ICON_BALANCE = "balance"
+    ICON_TOURNAMENTS = "tournaments"
+
+    ICON_CHOICES = (
+        (ICON_GENERAL, "Другое"),
+        (ICON_ACCOUNT, "Аккаунт"),
+        (ICON_BETS, "Ставки"),
+        (ICON_ODDS, "Коэффициенты"),
+        (ICON_STATS, "Статистика"),
+        (ICON_SUBSCRIPTIONS, "Подписки"),
+        (ICON_COPYBETTING, "Копибеттинг"),
+        (ICON_BALANCE, "Баланс"),
+        (ICON_TOURNAMENTS, "Турниры"),
+    )
+
+    ACCENT_BLUE = "blue"
+    ACCENT_YELLOW = "yellow"
+    ACCENT_SLATE = "slate"
+    ACCENT_LIGHT = "light"
+
+    ACCENT_CHOICES = (
+        (ACCENT_BLUE, "Синий"),
+        (ACCENT_YELLOW, "Жёлтый"),
+        (ACCENT_SLATE, "Серый"),
+        (ACCENT_LIGHT, "Светлый"),
+    )
+
+    name = models.CharField("Название", max_length=160, unique=True)
+    icon = models.CharField("Иконка", max_length=24, choices=ICON_CHOICES, default=ICON_GENERAL)
+    accent = models.CharField("Цвет", max_length=16, choices=ACCENT_CHOICES, default=ACCENT_BLUE)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+
+    class Meta:
+        verbose_name = "Wiki: раздел терминов"
+        verbose_name_plural = "Wiki: разделы терминов"
+        ordering = ("sort_order", "name", "id")
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class WikiTerm(models.Model):
+    ICON_USER = "user"
+    ICON_GROUP = "group"
+    ICON_COINS = "coins"
+    ICON_CHART = "chart"
+    ICON_COPY = "copy"
+    ICON_LOCK = "lock"
+    ICON_STAR = "star"
+    ICON_BELL = "bell"
+    ICON_CHECK = "check"
+    ICON_TROPHY = "trophy"
+    ICON_GAMEPAD = "gamepad"
+    ICON_PERCENT = "percent"
+    ICON_WALLET = "wallet"
+    ICON_INFO = "info"
+
+    ICON_CHOICES = (
+        (ICON_USER, "Пользователь"),
+        (ICON_GROUP, "Пользователи"),
+        (ICON_COINS, "Монеты"),
+        (ICON_CHART, "Статистика"),
+        (ICON_COPY, "Копирование"),
+        (ICON_LOCK, "Закрытый прогноз"),
+        (ICON_STAR, "Избранное"),
+        (ICON_BELL, "Уведомления"),
+        (ICON_CHECK, "Проверка"),
+        (ICON_TROPHY, "Турнир"),
+        (ICON_GAMEPAD, "Ставка"),
+        (ICON_PERCENT, "Коэффициент"),
+        (ICON_WALLET, "Баланс"),
+        (ICON_INFO, "Информация"),
+    )
+
     term = models.CharField("Термин", max_length=180, unique=True)
-    section = models.CharField("Раздел", max_length=160, db_index=True)
+    section = models.ForeignKey(
+        WikiTermSection,
+        on_delete=models.PROTECT,
+        related_name="terms",
+        verbose_name="Раздел",
+    )
+    icon = models.CharField("Иконка", max_length=24, choices=ICON_CHOICES, default=ICON_INFO)
     description = models.TextField("Описание")
     is_published = models.BooleanField("Опубликовано", default=True, db_index=True)
     sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
@@ -135,7 +223,7 @@ class WikiTerm(models.Model):
     class Meta:
         verbose_name = "Wiki: термин"
         verbose_name_plural = "Wiki: словарь"
-        ordering = ("section", "sort_order", "term", "id")
+        ordering = ("section_id", "sort_order", "term", "id")
 
     def __str__(self) -> str:
         return self.term
