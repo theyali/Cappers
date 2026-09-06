@@ -19,11 +19,21 @@ class NotificationPreference(models.Model):
     telegram_username = models.CharField("Telegram username", max_length=80, blank=True)
     telegram_connected_at = models.DateTimeField("Telegram подключён", null=True, blank=True)
 
+    prediction_like = models.BooleanField("Лайки моих прогнозов", default=True)
+    prediction_favorite = models.BooleanField("Сохранения моих прогнозов", default=True)
+    copybetting = models.BooleanField("Копибеттинг моих прогнозов", default=True)
+    new_follower = models.BooleanField("Новые подписчики", default=True)
+    paid_subscription = models.BooleanField("Покупка платной подписки", default=True)
     new_prediction = models.BooleanField("Новые прогнозы капперов", default=True)
-    favorite_settled = models.BooleanField("Расчёт избранных прогнозов", default=True)
-    match_reminder = models.BooleanField("Напоминания о матчах", default=True)
-    achievement = models.BooleanField("Достижения капперов", default=True)
+    requested_match_prediction = models.BooleanField("Прогнозы по запросу", default=True)
     match_prediction = models.BooleanField("Прогнозы на отслеживаемые матчи", default=True)
+    tournament_started = models.BooleanField("Старт турнира", default=True)
+    tournament_finished = models.BooleanField("Завершение турнира", default=True)
+    own_coupon_settled = models.BooleanField("Расчёт моих купонов", default=True)
+
+    favorite_settled = models.BooleanField("Расчёт избранных прогнозов", default=False)
+    match_reminder = models.BooleanField("Напоминания о матчах", default=False)
+    achievement = models.BooleanField("Достижения капперов", default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -89,11 +99,20 @@ class TelegramLinkToken(models.Model):
 
 class Notification(models.Model):
     class Kind(models.TextChoices):
+        PREDICTION_LIKE = "prediction_like", "Лайк прогноза"
+        PREDICTION_FAVORITE = "prediction_favorite", "Сохранение прогноза"
+        COPYBETTING = "copybetting", "Копибеттинг"
+        NEW_FOLLOWER = "new_follower", "Новый подписчик"
+        PAID_SUBSCRIPTION = "paid_subscription", "Платная подписка"
         NEW_PREDICTION = "new_prediction", "Новый прогноз"
+        REQUESTED_MATCH_PREDICTION = "requested_match_prediction", "Прогноз по запросу"
+        MATCH_PREDICTION = "match_prediction", "Прогноз на отслеживаемый матч"
+        TOURNAMENT_STARTED = "tournament_started", "Турнир начался"
+        TOURNAMENT_FINISHED = "tournament_finished", "Турнир завершён"
+        OWN_COUPON_SETTLED = "own_coupon_settled", "Мой купон рассчитан"
         FAVORITE_SETTLED = "favorite_settled", "Избранный прогноз рассчитан"
         MATCH_REMINDER = "match_reminder", "Скоро матч"
         ACHIEVEMENT = "achievement", "Достижение каппера"
-        MATCH_PREDICTION = "match_prediction", "Прогноз на отслеживаемый матч"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -6,11 +6,20 @@ from .models import Notification, NotificationPreference
 
 
 CATEGORY_FIELD_BY_KIND = {
+    Notification.Kind.PREDICTION_LIKE: "prediction_like",
+    Notification.Kind.PREDICTION_FAVORITE: "prediction_favorite",
+    Notification.Kind.COPYBETTING: "copybetting",
+    Notification.Kind.NEW_FOLLOWER: "new_follower",
+    Notification.Kind.PAID_SUBSCRIPTION: "paid_subscription",
     Notification.Kind.NEW_PREDICTION: "new_prediction",
+    Notification.Kind.REQUESTED_MATCH_PREDICTION: "requested_match_prediction",
+    Notification.Kind.MATCH_PREDICTION: "match_prediction",
+    Notification.Kind.TOURNAMENT_STARTED: "tournament_started",
+    Notification.Kind.TOURNAMENT_FINISHED: "tournament_finished",
+    Notification.Kind.OWN_COUPON_SETTLED: "own_coupon_settled",
     Notification.Kind.FAVORITE_SETTLED: "favorite_settled",
     Notification.Kind.MATCH_REMINDER: "match_reminder",
     Notification.Kind.ACHIEVEMENT: "achievement",
-    Notification.Kind.MATCH_PREDICTION: "match_prediction",
 }
 
 
@@ -22,8 +31,8 @@ def get_preferences(user) -> NotificationPreference:
 def category_enabled(preferences: NotificationPreference, kind: str) -> bool:
     field = CATEGORY_FIELD_BY_KIND.get(kind)
     if not field:
-        return True
-    return bool(getattr(preferences, field, True))
+        return False
+    return bool(getattr(preferences, field, False))
 
 
 def create_notification(
