@@ -10962,6 +10962,7 @@ h2 {
     height: 30px;
     display: block;
     object-fit: cover;
+    border-radius:50%;
 }
 
 .prediction-table-expert strong {
