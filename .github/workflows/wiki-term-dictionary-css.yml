@@ -1,6 +1,6 @@
 name: Apply wiki dictionary styles
 
-on:
+'on':
   push:
     paths:
       - '.github/workflows/wiki-term-dictionary-css.yml'
@@ -283,11 +283,6 @@ jobs:
     stroke-width: 1.8;
     stroke-linecap: round;
     stroke-linejoin: round;
-}
-
-.wiki-term-card-icon svg path[fill],
-.wiki-term-card-icon svg circle[fill] {
-    fill: currentColor;
 }
 
 .wiki-term-card-copy {
