@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Wiki — КапперХаб{% endblock %}
 
@@ -48,15 +49,16 @@
         {% if wiki_videos %}
             <div class="wiki-video-grid">
                 {% for video in wiki_videos %}
-                    <article class="wiki-video-card">
-                        <a
-                            class="wiki-video-preview"
-                            href="{{ video.video.url }}"
-                            target="_blank"
-                            rel="noopener"
-                            data-skeleton-image
-                            aria-label="Смотреть видео: {{ video.title }}"
-                        >
+                    <article
+                        class="wiki-video-card"
+                        role="button"
+                        tabindex="0"
+                        data-wiki-video-card
+                        data-video-url="{{ video.video.url }}"
+                        data-video-title="{{ video.title }}"
+                        aria-label="Смотреть видео: {{ video.title }}"
+                    >
+                        <div class="wiki-video-preview" data-skeleton-image>
                             {% if video.preview_image %}
                                 <img
                                     src="{{ video.preview_image.url }}"
@@ -75,10 +77,12 @@
                                     <path d="M9 7.2v9.6L17 12 9 7.2Z"></path>
                                 </svg>
                             </span>
-                            {% if video.duration %}
-                                <span class="wiki-video-duration">{{ video.duration }}</span>
-                            {% endif %}
-                        </a>
+                            <span
+                                class="wiki-video-duration"
+                                data-wiki-video-duration
+                                {% if not video.duration %}hidden{% endif %}
+                            >{{ video.duration }}</span>
+                        </div>
 
                         <div class="wiki-video-copy">
                             <div class="wiki-video-meta">
@@ -91,9 +95,7 @@
                                 </span>
                             </div>
 
-                            <h3>
-                                <a href="{{ video.video.url }}" target="_blank" rel="noopener">{{ video.title }}</a>
-                            </h3>
+                            <h3>{{ video.title }}</h3>
                             <p>{{ video.description }}</p>
                         </div>
                     </article>
@@ -142,4 +144,20 @@
         {% endif %}
     </section>
 </section>
+
+<div class="wiki-video-player" data-wiki-video-modal hidden aria-hidden="true">
+    <div class="wiki-video-player-shell" role="dialog" aria-modal="true" aria-labelledby="wiki-video-player-title">
+        <div class="wiki-video-player-head">
+            <strong id="wiki-video-player-title" data-wiki-video-player-title>Видео</strong>
+            <button class="wiki-video-player-close" type="button" data-wiki-video-close aria-label="Закрыть видео">×</button>
+        </div>
+        <div class="wiki-video-player-media">
+            <video controls playsinline preload="metadata" data-wiki-video-player></video>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/wiki-videos.js' %}" defer></script>
 {% endblock %}

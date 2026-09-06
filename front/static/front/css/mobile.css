@@ -3151,3 +3151,32 @@ body.expert-public-details-open {
         font-size: 18px;
     }
 }
+
+/* Wiki inline video player responsive */
+@media (max-width: 760px) {
+    .wiki-video-player {
+        padding: 0;
+    }
+
+    .wiki-video-player-shell {
+        width: 100%;
+        min-height: 100dvh;
+        align-content: center;
+        padding: 12px;
+        border-radius: 0;
+        background: var(--ink);
+    }
+
+    .wiki-video-player-head {
+        padding: 0;
+    }
+
+    .wiki-video-player-head strong {
+        font-size: 14px;
+    }
+
+    .wiki-video-player-media {
+        border-radius: 12px;
+    }
+}
+
