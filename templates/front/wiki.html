@@ -109,7 +109,7 @@
         {% endif %}
     </section>
 
-    <section class="wiki-dictionary" id="wiki-dictionary">
+    <section class="wiki-dictionary" id="wiki-dictionary" data-wiki-dictionary>
         <header class="wiki-dictionary-head">
             <div class="wiki-dictionary-title">
                 <p class="wiki-dictionary-kicker">Термины</p>
@@ -122,27 +122,27 @@
             </div>
         </header>
 
-        <form class="wiki-dictionary-search" method="get" action="{% url 'front:wiki' %}#wiki-dictionary" role="search">
-            {% if wiki_selected_term_section %}
-                <input type="hidden" name="term_section" value="{{ wiki_selected_term_section.pk }}">
-            {% endif %}
+        <form class="wiki-dictionary-search" role="search" data-wiki-terms-search>
             <span class="wiki-dictionary-search-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
             </span>
             <input
                 type="search"
-                name="q"
                 value="{{ wiki_term_query }}"
                 placeholder="Поиск по терминам..."
                 aria-label="Поиск по терминам"
+                data-wiki-terms-query
             >
         </form>
 
         <div class="wiki-dictionary-layout">
             <aside class="wiki-dictionary-sidebar" aria-label="Разделы словаря">
-                <a
+                <button
                     class="wiki-dictionary-filter wiki-term-accent-blue{% if not wiki_selected_term_section %} is-active{% endif %}"
-                    href="{% url 'front:wiki' %}{% if wiki_term_query %}?q={{ wiki_term_query|urlencode }}{% endif %}#wiki-dictionary"
+                    type="button"
+                    data-wiki-term-filter
+                    data-section-id=""
+                    aria-pressed="{% if not wiki_selected_term_section %}true{% else %}false{% endif %}"
                 >
                     <span class="wiki-dictionary-filter-main">
                         <span class="wiki-dictionary-filter-icon">
@@ -151,12 +151,15 @@
                         <span>Все термины</span>
                     </span>
                     <span class="wiki-dictionary-filter-count">{{ wiki_term_count }}</span>
-                </a>
+                </button>
 
                 {% for section in wiki_term_sections %}
-                    <a
+                    <button
                         class="wiki-dictionary-filter wiki-term-accent-{{ section.accent }}{% if wiki_selected_term_section.pk == section.pk %} is-active{% endif %}"
-                        href="{% url 'front:wiki' %}?term_section={{ section.pk }}{% if wiki_term_query %}&amp;q={{ wiki_term_query|urlencode }}{% endif %}#wiki-dictionary"
+                        type="button"
+                        data-wiki-term-filter
+                        data-section-id="{{ section.pk }}"
+                        aria-pressed="{% if wiki_selected_term_section.pk == section.pk %}true{% else %}false{% endif %}"
                     >
                         <span class="wiki-dictionary-filter-main">
                             <span class="wiki-dictionary-filter-icon">
@@ -165,43 +168,17 @@
                             <span>{{ section.name }}</span>
                         </span>
                         <span class="wiki-dictionary-filter-count">{{ section.term_count }}</span>
-                    </a>
+                    </button>
                 {% endfor %}
             </aside>
 
-            <div class="wiki-dictionary-content">
-                {% if wiki_terms %}
-                    <div class="wiki-term-grid">
-                        {% for item in wiki_terms %}
-                            <article class="wiki-term-card wiki-term-accent-{{ item.section.accent }}">
-                                <span class="wiki-term-card-icon" aria-hidden="true">
-                                    {% include "front/includes/_wiki_term_icon.html" with icon=item.icon %}
-                                </span>
-                                <div class="wiki-term-card-copy">
-                                    <div class="wiki-term-card-head">
-                                        <h3>{{ item.term }}</h3>
-                                        <span class="wiki-term-card-arrow" aria-hidden="true">
-                                            <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
-                                        </span>
-                                    </div>
-                                    <p>{{ item.description|linebreaksbr }}</p>
-                                </div>
-                            </article>
-                        {% endfor %}
-                    </div>
-
-                    {% if wiki_terms_has_more %}
-                        <a class="wiki-dictionary-more" href="{% url 'front:wiki' %}?{{ wiki_terms_more_query }}#wiki-dictionary">
-                            <span>Показать еще термины</span>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
-                        </a>
-                    {% endif %}
-                {% else %}
-                    <div class="articles-empty wiki-dictionary-empty">
-                        <strong>Термины не найдены</strong>
-                        <p>Попробуйте изменить запрос или выбрать другой раздел.</p>
-                    </div>
-                {% endif %}
+            <div
+                class="wiki-dictionary-content"
+                data-wiki-terms-content
+                data-skeleton-block
+                aria-live="polite"
+            >
+                {% include "front/includes/_wiki_term_results.html" %}
             </div>
         </div>
     </section>
@@ -222,4 +199,5 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/wiki-videos.js' %}" defer></script>
+<script src="{% static 'front/js/wiki-terms.js' %}" defer></script>
 {% endblock %}
