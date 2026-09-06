@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import Article, StaticPage, WikiTerm, WikiVideo, WikiVideoSection
+from .models import (
+    Article,
+    StaticPage,
+    WikiTerm,
+    WikiTermSection,
+    WikiVideo,
+    WikiVideoSection,
+)
 
 
 @admin.register(Article)
@@ -57,17 +64,27 @@ class WikiVideoAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(WikiTermSection)
+class WikiTermSectionAdmin(admin.ModelAdmin):
+    list_display = ("name", "icon", "accent", "is_active", "sort_order")
+    list_display_links = ("name",)
+    list_editable = ("icon", "accent", "is_active", "sort_order")
+    list_filter = ("is_active", "icon", "accent")
+    search_fields = ("name",)
+    ordering = ("sort_order", "name")
+
+
 @admin.register(WikiTerm)
 class WikiTermAdmin(admin.ModelAdmin):
-    list_display = ("term", "section", "is_published", "sort_order", "updated_at")
+    list_display = ("term", "section", "icon", "is_published", "sort_order", "updated_at")
     list_display_links = ("term",)
-    list_editable = ("is_published", "sort_order")
-    list_filter = ("is_published", "section")
-    search_fields = ("term", "section", "description")
-    ordering = ("section", "sort_order", "term")
+    list_editable = ("icon", "is_published", "sort_order")
+    list_filter = ("is_published", "section", "icon")
+    search_fields = ("term", "section__name", "description")
+    ordering = ("section__sort_order", "sort_order", "term")
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
-        ("Термин", {"fields": ("term", "section", "description")}),
+        ("Термин", {"fields": ("term", "section", "icon", "description")}),
         ("Публикация", {"fields": ("is_published", "sort_order")}),
         ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
