@@ -3180,3 +3180,147 @@ body.expert-public-details-open {
     }
 }
 
+/* Wiki dictionary reference responsive */
+@media (max-width: 1320px) {
+    .wiki-term-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .wiki-dictionary-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .wiki-dictionary-sidebar {
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        padding: 8px;
+        scrollbar-width: none;
+    }
+
+    .wiki-dictionary-sidebar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .wiki-dictionary-filter {
+        min-width: max-content;
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .wiki-dictionary {
+        gap: 14px;
+        padding: 22px 0 4px;
+    }
+
+    .wiki-dictionary-head {
+        display: block;
+    }
+
+    .wiki-dictionary-title h2 {
+        font-size: 34px;
+    }
+
+    .wiki-dictionary-title > p:last-child {
+        margin-top: 9px;
+        font-size: 13px;
+    }
+
+    .wiki-dictionary-note {
+        display: none;
+    }
+
+    .wiki-dictionary-search {
+        min-height: 52px;
+        gap: 11px;
+        padding: 0 14px;
+        border-radius: 11px;
+    }
+
+    .wiki-dictionary-search-icon {
+        width: 19px;
+        height: 19px;
+    }
+
+    .wiki-dictionary-search input[type='search'] {
+        min-height: 52px;
+        font-size: 13px;
+    }
+
+    .wiki-dictionary-layout {
+        gap: 12px;
+    }
+
+    .wiki-dictionary-sidebar {
+        margin-right: -12px;
+        margin-left: -12px;
+        padding-right: 12px;
+        padding-left: 12px;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .wiki-dictionary-filter {
+        min-height: 44px;
+        padding: 6px 8px;
+        border-radius: 10px;
+        background: var(--panel);
+    }
+
+    .wiki-dictionary-filter-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .wiki-dictionary-filter-count {
+        height: 28px;
+        min-width: 28px;
+    }
+
+    .wiki-term-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .wiki-term-card {
+        min-height: 132px;
+        grid-template-columns: 50px minmax(0, 1fr);
+        gap: 13px;
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .wiki-term-card-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+    }
+
+    .wiki-term-card-icon svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .wiki-term-card-head h3 {
+        margin-top: 2px;
+        font-size: 16px;
+    }
+
+    .wiki-term-card-copy > p {
+        font-size: 12px;
+        line-height: 1.48;
+    }
+
+    .wiki-term-card-arrow {
+        width: 28px;
+        height: 28px;
+    }
+
+    .wiki-dictionary-more {
+        min-height: 50px;
+        border-radius: 11px;
+    }
+}
