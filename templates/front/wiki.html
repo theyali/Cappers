@@ -22,64 +22,94 @@
         <a href="{% url 'front:how_it_works' %}">Как пользоваться</a>
     </nav>
 
-    <section class="how-feature" id="wiki-videos">
-        <div class="how-feature-head">
-            <div>
-                <p class="how-kicker">Обучение</p>
-                <h2>Видео</h2>
-            </div>
-        </div>
-        <p class="how-feature-lead">Выберите нужный раздел и откройте видео. Новые инструкции публикуются через админку.</p>
+    <section class="wiki-videos-section" id="wiki-videos">
+        <header class="wiki-videos-heading">
+            <p class="wiki-videos-kicker">Обучение</p>
+            <h2>Видео</h2>
+            <p class="wiki-videos-lead">Выберите нужный раздел и откройте видео. Новые инструкции публикуются через админку.</p>
+        </header>
+
+        {% if wiki_video_sections %}
+            <nav class="wiki-video-filters" aria-label="Фильтр видео по разделам">
+                <a
+                    class="wiki-video-filter{% if not wiki_selected_video_section %} is-active{% endif %}"
+                    href="{% url 'front:wiki' %}#wiki-videos"
+                >
+                    Все
+                </a>
+                {% for section in wiki_video_sections %}
+                    <a
+                        class="wiki-video-filter{% if wiki_selected_video_section.pk == section.pk %} is-active{% endif %}"
+                        href="{% url 'front:wiki' %}?section={{ section.pk }}#wiki-videos"
+                    >
+                        <span class="wiki-video-filter-icon">
+                            {% include "front/includes/_wiki_video_section_icon.html" with icon=section.icon %}
+                        </span>
+                        <span>{{ section.name }}</span>
+                    </a>
+                {% endfor %}
+            </nav>
+        {% endif %}
 
         {% if wiki_videos %}
-            {% regroup wiki_videos by section as video_sections %}
-            {% for video_section in video_sections %}
-                <div class="how-feature-head">
-                    <div>
-                        <p class="how-kicker">Раздел</p>
-                        <h2>{{ video_section.grouper }}</h2>
-                    </div>
-                </div>
-                <div class="articles-grid">
-                    {% for video in video_section.list %}
-                        <article class="article-list-card">
-                            <a
-                                class="article-list-image"
-                                href="{{ video.video.url }}"
-                                target="_blank"
-                                rel="noopener"
-                                data-skeleton-image
-                                aria-label="Смотреть видео: {{ video.title }}"
-                            >
-                                {% if video.preview_image %}
-                                    <img
-                                        src="{{ video.preview_image.url }}"
-                                        width="640"
-                                        height="360"
-                                        loading="lazy"
-                                        alt="{{ video.title }}"
-                                    >
-                                {% else %}
-                                    <span aria-hidden="true">▶</span>
-                                {% endif %}
-                            </a>
-                            <div class="article-list-copy">
-                                <div class="article-list-meta">
-                                    <span>{{ video.section }}</span>
-                                    <span>Видео</span>
-                                </div>
-                                <h2>
-                                    <a href="{{ video.video.url }}" target="_blank" rel="noopener">{{ video.title }}</a>
-                                </h2>
-                                <p>{{ video.description }}</p>
-                                <a class="article-list-read" href="{{ video.video.url }}" target="_blank" rel="noopener">
-                                    Смотреть видео <span aria-hidden="true">→</span>
-                                </a>
+            <div class="wiki-video-grid">
+                {% for video in wiki_videos %}
+                    <article class="wiki-video-card">
+                        <a
+                            class="wiki-video-preview"
+                            href="{{ video.video.url }}"
+                            target="_blank"
+                            rel="noopener"
+                            data-skeleton-image
+                            aria-label="Смотреть видео: {{ video.title }}"
+                        >
+                            {% if video.preview_image %}
+                                <img
+                                    src="{{ video.preview_image.url }}"
+                                    width="720"
+                                    height="540"
+                                    loading="lazy"
+                                    alt="{{ video.title }}"
+                                >
+                            {% else %}
+                                <span class="wiki-video-preview-placeholder" aria-hidden="true">
+                                    {% include "front/includes/_wiki_video_section_icon.html" with icon=video.section.icon %}
+                                </span>
+                            {% endif %}
+                            <span class="wiki-video-play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                                    <path d="M9 7.2v9.6L17 12 9 7.2Z"></path>
+                                </svg>
+                            </span>
+                            {% if video.duration %}
+                                <span class="wiki-video-duration">{{ video.duration }}</span>
+                            {% endif %}
+                        </a>
+
+                        <div class="wiki-video-copy">
+                            <div class="wiki-video-meta">
+                                <span class="wiki-video-category">{{ video.section.name }}</span>
+                                <span class="wiki-video-type">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                                        <path d="M4 6h11a2 2 0 0 1 2 2v1.2l4-2.2v10l-4-2.2V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path>
+                                    </svg>
+                                    Видео
+                                </span>
                             </div>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% endfor %}
+
+                            <h3>
+                                <a href="{{ video.video.url }}" target="_blank" rel="noopener">{{ video.title }}</a>
+                            </h3>
+                            <p>{{ video.description }}</p>
+
+                            <a class="wiki-video-watch" href="{{ video.video.url }}" target="_blank" rel="noopener">
+                                <span>Смотреть видео</span>
+                                <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
         {% else %}
             <div class="articles-empty">
                 <strong>Видео пока нет</strong>
