@@ -30779,3 +30779,43 @@ body.wiki-video-player-open {
 .wiki-dictionary-empty {
     min-height: 320px;
 }
+
+/* Wiki dictionary AJAX fixes */
+.wiki-dictionary-content {
+    min-width: 0;
+    min-height: 320px;
+}
+
+.wiki-term-card {
+    overflow: hidden;
+}
+
+.wiki-term-card-copy,
+.wiki-term-card-head,
+.wiki-term-card-copy > p,
+.wiki-term-card-head h3 {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.wiki-term-card-copy > p,
+.wiki-term-card-head h3 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.wiki-dictionary-filter,
+.wiki-dictionary-more {
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.wiki-dictionary-filter {
+    text-align: left;
+}
+
+.wiki-dictionary-more {
+    width: 100%;
+}
+
