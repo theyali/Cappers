@@ -12,7 +12,18 @@ from wallets.services import settle_orphaned_copied_bets, settle_prediction_coup
 logger = logging.getLogger(__name__)
 
 
+VOID_MATCH_SCOPES = {
+    Match.SyncScope.POSTPONED,
+    Match.SyncScope.CANCELED,
+    Match.SyncScope.FORFEIT,
+    Match.SyncScope.INTERRUPTED,
+    Match.SyncScope.ABANDONED,
+}
+MONEY_STEP = Decimal("0.01")
+
+
 def settle_finished_matches(limit: int = 500) -> dict:
+    void_result = settle_void_matches(limit=limit)
     matches = (
         Match.objects.filter(sync_scope=Match.SyncScope.FINISHED)
         .exclude(score="")
@@ -57,16 +68,67 @@ def settle_finished_matches(limit: int = 500) -> dict:
 
     return {
         "matches": resolved_matches,
+        "void_matches": void_result["matches"],
         "predictions": updated_predictions,
-        "coupons": len(updated_coupons),
+        "void_predictions": void_result["predictions"],
+        "coupons": len(updated_coupons) + void_result["coupons"],
         "reconciled_coupons": reconciled_coupons,
         "reconciled_copied_bets": reconciled_copied_bets,
+        "errors": settlement_errors + void_result["errors"],
+    }
+
+
+def settle_void_matches(limit: int = 500) -> dict:
+    matches = (
+        Match.objects.filter(sync_scope__in=VOID_MATCH_SCOPES)
+        .order_by("-starts_at", "-id")[:limit]
+    )
+    resolved_matches = 0
+    updated_predictions = 0
+    updated_coupons: set[int] = set()
+    settlement_errors = 0
+
+    for match in matches:
+        try:
+            predictions = Prediction.objects.filter(
+                match=match,
+                coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                state_status="",
+            ).select_related("coupon")
+            match_updated = False
+            for prediction in predictions:
+                prediction.state_status = Prediction.StateStatus.REFUND
+                prediction.save(update_fields=["state_status", "updated_at"])
+                updated_predictions += 1
+                updated_coupons.add(prediction.coupon_id)
+                match_updated = True
+
+            if match_updated:
+                resolved_matches += 1
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to void match #%s.", match.pk)
+
+    for coupon_id in updated_coupons:
+        try:
+            settle_coupon(coupon_id)
+        except Exception:
+            settlement_errors += 1
+            logger.exception("Failed to settle void coupon #%s.", coupon_id)
+
+    return {
+        "matches": resolved_matches,
+        "predictions": updated_predictions,
+        "coupons": len(updated_coupons),
         "errors": settlement_errors,
     }
 
 
 @transaction.atomic
 def resolve_match_bets(match: Match) -> dict | None:
+    if match.sync_scope in VOID_MATCH_SCOPES:
+        return None
+
     score = _parse_score(match.score)
     if score is None:
         return None
@@ -180,11 +242,13 @@ def prediction_state(prediction: Prediction, result: dict) -> str:
 
 @transaction.atomic
 def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
-    coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
+    coupon = PredictionCoupon.objects.prefetch_related("predictions").filter(pk=coupon_id).first()
     if coupon is None:
         return None
 
-    states = list(coupon.predictions.values_list("state_status", flat=True))
+    predictions = list(coupon.predictions.all())
+    states = [prediction.state_status for prediction in predictions]
+    effective_payout = _effective_coupon_payout(coupon, predictions)
     if Prediction.StateStatus.LOSE in states:
         coupon.state_status = PredictionCoupon.StateStatus.LOSE
         coupon.settled_at = coupon.settled_at or timezone.now()
@@ -198,7 +262,13 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
         coupon.state_status = PredictionCoupon.StateStatus.REFUND
         coupon.settled_at = coupon.settled_at or timezone.now()
 
-    coupon.save(update_fields=["state_status", "settled_at", "updated_at"])
+    if effective_payout is not None:
+        coupon.possible_payout = effective_payout
+
+    update_fields = ["state_status", "settled_at", "updated_at"]
+    if effective_payout is not None:
+        update_fields.append("possible_payout")
+    coupon.save(update_fields=update_fields)
     settle_prediction_coupon(coupon)
     return coupon
 
@@ -215,6 +285,13 @@ def resettle_coupon(
     if recalculate_predictions:
         predictions = Prediction.objects.filter(coupon=coupon).select_related("match")
         for prediction in predictions:
+            if prediction.match.sync_scope in VOID_MATCH_SCOPES:
+                state = Prediction.StateStatus.REFUND
+                if prediction.state_status != state:
+                    prediction.state_status = state
+                    prediction.save(update_fields=["state_status", "updated_at"])
+                continue
+
             result = resolve_match_bets(prediction.match)
             if result is None:
                 continue
@@ -224,6 +301,37 @@ def resettle_coupon(
                 prediction.save(update_fields=["state_status", "updated_at"])
 
     return settle_coupon(coupon_id)
+
+
+def _effective_coupon_payout(
+    coupon: PredictionCoupon,
+    predictions: list[Prediction],
+) -> Decimal | None:
+    if not predictions:
+        return None
+
+    states = [prediction.state_status for prediction in predictions]
+    if any(not state for state in states):
+        return None
+
+    stake = coupon.total_stake or Decimal("0")
+    if stake <= 0:
+        return Decimal("0.00")
+
+    total_coefficient = Decimal("1")
+    has_active_position = False
+    for prediction in predictions:
+        if prediction.state_status == Prediction.StateStatus.REFUND:
+            continue
+        coefficient = prediction.coefficient or Decimal("0")
+        if coefficient <= 0:
+            continue
+        total_coefficient *= coefficient
+        has_active_position = True
+
+    if not has_active_position:
+        return stake.quantize(MONEY_STEP)
+    return (stake * total_coefficient).quantize(MONEY_STEP)
 
 
 def reconcile_pending_coupons(limit: int = 1000) -> int:

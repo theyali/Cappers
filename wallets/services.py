@@ -710,6 +710,7 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
 
                 subscription = CopyBettingSubscription.objects.select_for_update().get(pk=locked_bet.subscription_id)
                 if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+                    locked_bet.possible_payout = _copy_possible_payout(coupon, locked_bet.stake)
                     kind = BalanceTransaction.Kind.COPYBET_PAYOUT
                     amount = locked_bet.possible_payout
                     locked_bet.state_status = CopiedBet.StateStatus.WIN
@@ -726,7 +727,14 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                     locked_bet.profit = -locked_bet.stake
 
                 locked_bet.settled_at = timezone.now()
-                locked_bet.save(update_fields=["state_status", "profit", "settled_at"])
+                locked_bet.save(
+                    update_fields=[
+                        "state_status",
+                        "possible_payout",
+                        "profit",
+                        "settled_at",
+                    ]
+                )
 
                 if amount > 0:
                     balance = _balance_for_update(locked_bet.user)

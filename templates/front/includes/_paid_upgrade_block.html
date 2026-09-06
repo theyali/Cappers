@@ -1,3 +1,4 @@
+{% load capper_trust %}
 {% if paid_upgrade_offers %}
 <section class="paid-feed-block paid-upgrade-block" aria-labelledby="paid-upgrade-title-{{ paid_feed_view_mode }}">
     <div class="paid-feed-head">
@@ -12,6 +13,7 @@
         <article class="prediction-card prediction-card-rich is-followed-prediction paid-upgrade-card">
             <div class="paid-upgrade-card-top">
                 <a class="paid-upgrade-avatar" href="{{ follow.feed_profile_url }}"{% if follow.feed_avatar_url %} data-skeleton-image{% endif %}>
+                    {% capper_trust_badge follow.feed_trust_index %}
                     {% if follow.feed_avatar_url %}
                         <img src="{{ follow.feed_avatar_url }}" width="44" height="44" alt="">
                     {% else %}

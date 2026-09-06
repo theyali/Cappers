@@ -1,9 +1,10 @@
-{% load static %}
+{% load capper_trust static %}
 <article class="capper-pro-card{% if extra_class %} {{ extra_class }}{% endif %}"{% if show_follow %} data-follow-card{% endif %} data-capper-original-rank="{{ rank|default:0 }}">
     <a class="capper-pro-card-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
         <div class="capper-pro-top">
             <div class="capper-pro-person">
                 <span class="capper-pro-avatar"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
+                    {% capper_trust_badge expert.trust_index %}
                     {% if expert.avatar_url %}
                         <img src="{{ expert.avatar_url }}" width="62" height="62" alt="" loading="lazy">
                     {% else %}

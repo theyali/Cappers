@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static site_extras %}
+{% load capper_trust static site_extras %}
 
 {% block title %}КапперХаб — прогнозы и эксперты{% endblock %}
 
@@ -27,6 +27,7 @@
                     <div class="forecast-topline">
                         <div class="forecast-expert">
                             <span class="forecast-avatar">
+                                {% capper_trust_badge prediction.expert_trust_index %}
                                 {% if prediction.expert_avatar_url %}
                                     <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
                                 {% else %}
@@ -154,6 +155,7 @@
                 <div class="expert-row">
                     <span class="expert-rank">{{ forloop.counter }}</span>
                     <div class="expert-avatar">
+                        {% capper_trust_badge expert.trust_index %}
                         {% if expert.avatar_url %}
                             <img src="{{ expert.avatar_url }}" alt="">
                         {% else %}

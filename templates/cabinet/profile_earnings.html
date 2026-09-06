@@ -1,3 +1,4 @@
+{% load capper_trust %}
 <div class="profile-list-card">
     <div class="profile-section-heading">
         <div>
@@ -39,6 +40,9 @@
         {% for subscription in active_paid_subscriptions %}
             <article class="profile-user-row">
                 <div class="profile-user-avatar prediction-table-avatar{% if subscription.subscriber.is_analyst and subscription.subscriber.analyst_profile.is_vip %} is-vip{% endif %}" data-skeleton-image>
+                    {% if subscription.subscriber.is_analyst %}
+                        {% capper_trust_badge subscription.subscriber.analyst_profile.trust_index %}
+                    {% endif %}
                     {% if subscription.subscriber.is_analyst and subscription.subscriber.analyst_profile.avatar %}
                         <img src="{{ subscription.subscriber.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ subscription.subscriber.username }}">
                     {% elif subscription.subscriber.avatar %}

@@ -1,3 +1,4 @@
+{% load capper_trust %}
 <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar{% if filter_variant %} {{ filter_variant }}{% endif %}" data-prediction-filter-sidebar aria-label="{{ filter_label|default:'Фильтры прогнозов' }}">
     <div class="matches-table-filter-head">
         <span class="matches-table-filter-head-icon" aria-hidden="true">
@@ -132,6 +133,7 @@
                 {% if selected_capper == follow.analyst.username %}aria-current="page"{% endif %}
             >
                 <span class="matches-table-sport-icon following-capper-sidebar-avatar{% if follow.analyst.analyst_profile.is_vip %} is-vip{% endif %}"{% if follow.feed_avatar_url or follow.analyst.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
+                    {% capper_trust_badge follow.feed_trust_index %}
                     {% if follow.feed_avatar_url %}
                         <img src="{{ follow.feed_avatar_url }}" width="28" height="28" alt="">
                     {% elif follow.analyst.avatar %}

@@ -1,3 +1,4 @@
+{% load capper_trust %}
 {% if recommended_experts %}
 <section class="expert-recommendations" aria-labelledby="expert-recommendations-title">
     <div class="expert-recommendations-head">
@@ -19,6 +20,7 @@
                 aria-label="Открыть профиль {{ recommendation.name }}"
                 {% if recommendation.avatar_url %}data-skeleton-image{% endif %}
             >
+                {% capper_trust_badge recommendation.trust_index %}
                 {% if recommendation.avatar_url %}
                     <img src="{{ recommendation.avatar_url }}" width="82" height="82" loading="lazy" alt="{{ recommendation.name }}">
                 {% else %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static site_extras prediction_reactions %}
+{% load capper_trust static site_extras prediction_reactions %}
 
 {% block title %}{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }} — КапперХаб{% endblock %}
 
@@ -20,6 +20,7 @@
 
                 <a class="coupon-author-link" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
                     <span class="coupon-author-avatar{% if coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if expert_avatar_url %} data-skeleton-image{% endif %}>
+                        {% capper_trust_badge expert_trust_index %}
                         {% if expert_avatar_url %}
                             <img src="{{ expert_avatar_url }}" width="72" height="72" alt="" loading="lazy">
                         {% else %}

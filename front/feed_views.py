@@ -214,6 +214,7 @@ def following_feed(request):
             else follow.analyst.get_full_name() or follow.analyst.username
         )
         follow.feed_avatar_url = profile.avatar.url if profile and profile.avatar else ""
+        follow.feed_trust_index = profile.trust_index if profile else 0
         follow.feed_initial = (follow.feed_name or follow.analyst.username or "К")[0].upper()
         follow.feed_predictions_count = author_counts.get(follow.analyst_id, 0)
         follow.feed_locked_paid_count = locked_paid_counts.get(follow.analyst_id, 0)

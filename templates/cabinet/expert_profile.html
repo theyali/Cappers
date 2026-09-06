@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static achievement_tags %}
+{% load capper_trust static achievement_tags %}
 
 {% block title %}{{ expert_name }} — КапперХаб{% endblock %}
 
@@ -11,6 +11,7 @@
         <div class="expert-public-main-stack">
             <div class="expert-public-main">
                 <span class="expert-public-avatar">
+                    {% capper_trust_badge analyst_profile.trust_index %}
                     {% if analyst_profile.avatar %}
                         <img src="{{ analyst_profile.avatar.url }}" alt="{{ expert_name }}">
                     {% else %}

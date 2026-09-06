@@ -113,6 +113,7 @@ def match_predictions(request, slug: str):
         prediction.expert_initials = _initials(name)
         prediction.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         prediction.expert_verified = bool(profile and profile.is_verified)
+        prediction.expert_trust_index = profile.trust_index if profile else 0
         prediction.is_liked = prediction.coupon_id in liked_ids
         prediction.is_favorite = prediction.coupon_id in favorite_ids
         prediction.is_own = bool(

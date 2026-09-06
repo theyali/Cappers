@@ -13975,7 +13975,7 @@ h2 {
     display: grid;
     place-items: center;
     overflow: hidden;
-    border-radius: 50%;
+    border-radius: 20%;
     color: var(--ink);
     background: var(--yellow);
     font-size: 10px;
@@ -13986,6 +13986,7 @@ h2 {
     height: 34px;
     display: block;
     object-fit: cover;
+    border-radius:20%;
 }
 
 .cappers-ranking-name {
@@ -18325,7 +18326,7 @@ body:has(.predictions-scroll-page) .site-footer {
     display: grid;
     place-items: center;
     overflow: hidden;
-    border-radius: 28px;
+    border-radius: 50%;
     color: var(--ink);
     background: var(--yellow);
     font-size: 28px;
@@ -18336,6 +18337,8 @@ body:has(.predictions-scroll-page) .site-footer {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
+
 }
 
 .expert-public-copy {
@@ -18517,8 +18520,8 @@ body:has(.predictions-scroll-page) .site-footer {
     justify-content: center;
     border: 0;
     border-radius: 12px;
-    color: #07150d;
-    background: #39d27d;
+    color: white;
+    background: var(--green);
     cursor: pointer;
     font: inherit;
     font-size: 13px;
@@ -18528,8 +18531,8 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-buy-button:hover,
 .expert-public-buy-button:focus-visible {
-    color: #07150d;
-    background: #57e391;
+    color: var(--ink);
+    background: var(--green);
 }
 
 .expert-public-buy-button.is-active {
@@ -23647,6 +23650,8 @@ body:has(.predictions-scroll-page) .site-footer {
     height: 82px;
     display: block;
     object-fit: cover;
+    border-radius: 50%;
+
 }
 
 .expert-recommendation-body {
@@ -27968,6 +27973,88 @@ body:has(.predictions-scroll-page) .site-footer {
     height: 100%;
 }
 
+.expert-public-avatar,
+.prediction-expert-avatar,
+.cappers-ranking-avatar,
+.expert-recommendation-avatar,
+.following-capper-avatar,
+.prediction-table-avatar,
+.coupon-author-avatar,
+.capper-pro-avatar,
+.capper-spotlight-avatar,
+.expert-avatar,
+.forecast-avatar,
+.following-capper-sidebar-avatar,
+.paid-upgrade-avatar,
+.nav-profile-dropdown-avatar,
+.profile-user-avatar {
+    position: relative;
+    overflow: visible !important;
+}
+
+.capper-trust-badge {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    z-index: 4;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .28);
+    pointer-events: none;
+}
+
+.capper-trust-badge.is-high {
+    background: #20b15a;
+}
+
+.capper-trust-badge.is-good {
+    color: #131313;
+    background: #bfd92f;
+}
+
+.capper-trust-badge.is-medium {
+    color: #131313;
+    background: #f59e0b;
+}
+
+.capper-trust-badge.is-low {
+    background: #ef4444;
+}
+
+.capper-trust-badge.is-none {
+    background: #5f6368;
+}
+
+.prediction-table-avatar .capper-trust-badge,
+.following-capper-sidebar-avatar .capper-trust-badge,
+.nav-profile-dropdown-avatar .capper-trust-badge {
+    top: -6px;
+    left: -6px;
+    width: 20px;
+    height: 20px;
+    border-width: 1.5px;
+    font-size: 7px;
+}
+
+.expert-public-avatar .capper-trust-badge,
+.expert-recommendation-avatar .capper-trust-badge {
+    top: -8px;
+    left: -8px;
+    width: 28px;
+    height: 28px;
+    font-size: 9px;
+}
+
 /* Shared VIP avatar treatment. Keep the badge attached to the person, not the card. */
 .expert-public-shell.is-vip .expert-public-avatar,
 .prediction-expert-avatar.is-vip,
@@ -28122,8 +28209,12 @@ body:has([data-current-user-vip]) .nav-profile-dropdown-avatar::after {
     height: 100%;
 }
 
+.expert-recommendation-card .expert-recommendation-avatar,
 .expert-recommendation-avatar.is-vip {
     position: absolute;
+    top: 42px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 /* Configurable bookmaker placements */

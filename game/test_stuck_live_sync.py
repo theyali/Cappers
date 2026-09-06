@@ -76,7 +76,7 @@ class StuckLiveSyncTests(TestCase):
             [
                 {
                     "id": 910003,
-                    "time_status": "8",
+                    "time_status": "4",
                     "score": "0:0",
                 }
             ]
@@ -85,8 +85,8 @@ class StuckLiveSyncTests(TestCase):
         result = MatchSyncService(provider=provider).sync_live()
 
         match = Match.objects.get(external_id=910003)
-        self.assertEqual(match.sync_scope, Match.SyncScope.FINISHED)
-        self.assertEqual(result["scopes"], {Match.SyncScope.FINISHED: 1})
+        self.assertEqual(match.sync_scope, Match.SyncScope.POSTPONED)
+        self.assertEqual(result["scopes"], {Match.SyncScope.POSTPONED: 1})
 
     def test_scope_can_be_read_from_nested_status_payload(self):
         scope = MatchSyncService._scope_from_payload(
@@ -110,11 +110,11 @@ class StuckLiveSyncTests(TestCase):
             "1": Match.SyncScope.LIVE,
             "2": Match.SyncScope.LIVE,
             "3": Match.SyncScope.FINISHED,
-            "4": Match.SyncScope.FINISHED,
-            "5": Match.SyncScope.FINISHED,
-            "6": Match.SyncScope.FINISHED,
-            "7": Match.SyncScope.FINISHED,
-            "8": Match.SyncScope.FINISHED,
+            "4": Match.SyncScope.POSTPONED,
+            "5": Match.SyncScope.CANCELED,
+            "6": Match.SyncScope.FORFEIT,
+            "7": Match.SyncScope.INTERRUPTED,
+            "8": Match.SyncScope.ABANDONED,
         }
 
         for status, scope in expected.items():

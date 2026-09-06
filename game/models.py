@@ -223,6 +223,11 @@ class Match(models.Model):
         LIVE = "live", "Идет"
         PREMATCH = "prematch", "Скоро"
         FINISHED = "finished", "Завершен"
+        POSTPONED = "postponed", "Отложен"
+        CANCELED = "canceled", "Отменен"
+        FORFEIT = "forfeit", "Техническая победа"
+        INTERRUPTED = "interrupted", "Прерван"
+        ABANDONED = "abandoned", "Прерван окончательно"
 
     provider = models.CharField(
         max_length=32,

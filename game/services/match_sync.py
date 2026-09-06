@@ -20,7 +20,20 @@ class MatchSyncService:
 
     PREMATCH_TIME_STATUSES = {"0"}
     LIVE_TIME_STATUSES = {"1", "2"}
-    TERMINAL_TIME_STATUSES = {"3", "4", "5", "6", "7", "8"}
+    FINISHED_TIME_STATUSES = {"3"}
+    POSTPONED_TIME_STATUSES = {"4"}
+    CANCELED_TIME_STATUSES = {"5"}
+    FORFEIT_TIME_STATUSES = {"6"}
+    INTERRUPTED_TIME_STATUSES = {"7"}
+    ABANDONED_TIME_STATUSES = {"8"}
+    TERMINAL_TIME_STATUSES = (
+        FINISHED_TIME_STATUSES
+        | POSTPONED_TIME_STATUSES
+        | CANCELED_TIME_STATUSES
+        | FORFEIT_TIME_STATUSES
+        | INTERRUPTED_TIME_STATUSES
+        | ABANDONED_TIME_STATUSES
+    )
 
     def __init__(self, provider: NeurokeffSportsProvider | None = None) -> None:
         self.provider = provider or NeurokeffSportsProvider()
@@ -35,6 +48,7 @@ class MatchSyncService:
         result = self._sync_scope(
             Match.SyncScope.PREMATCH,
             payloads,
+            derive_scope_from_payload=True,
         )
         result["expired"] = self._expire_past_prematches()
         if sport_code:
@@ -65,6 +79,7 @@ class MatchSyncService:
         result = self._sync_scope(
             Match.SyncScope.FINISHED,
             payloads,
+            derive_scope_from_payload=True,
         )
         if sport_code:
             result["sport"] = sport_code
@@ -214,7 +229,7 @@ class MatchSyncService:
         return Match.objects.filter(
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at__lt=timezone.now(),
-        ).update(sync_scope=Match.SyncScope.FINISHED)
+        ).update(sync_scope=Match.SyncScope.LIVE)
 
     def _match_predictions_are_stale(self, match: Match) -> bool:
         if not isinstance(match.provider_predictions, dict) or not match.provider_predictions:
@@ -583,8 +598,18 @@ class MatchSyncService:
             return Match.SyncScope.PREMATCH
         if normalized in MatchSyncService.LIVE_TIME_STATUSES:
             return Match.SyncScope.LIVE
-        if normalized in MatchSyncService.TERMINAL_TIME_STATUSES:
+        if normalized in MatchSyncService.FINISHED_TIME_STATUSES:
             return Match.SyncScope.FINISHED
+        if normalized in MatchSyncService.POSTPONED_TIME_STATUSES:
+            return Match.SyncScope.POSTPONED
+        if normalized in MatchSyncService.CANCELED_TIME_STATUSES:
+            return Match.SyncScope.CANCELED
+        if normalized in MatchSyncService.FORFEIT_TIME_STATUSES:
+            return Match.SyncScope.FORFEIT
+        if normalized in MatchSyncService.INTERRUPTED_TIME_STATUSES:
+            return Match.SyncScope.INTERRUPTED
+        if normalized in MatchSyncService.ABANDONED_TIME_STATUSES:
+            return Match.SyncScope.ABANDONED
 
         if normalized in {
             "prematch",
@@ -624,6 +649,44 @@ class MatchSyncService:
             "ap",
         }:
             return Match.SyncScope.FINISHED
+        if normalized in {
+            "postponed",
+            "postpone",
+            "delayed",
+            "suspended",
+            "pst",
+        }:
+            return Match.SyncScope.POSTPONED
+        if normalized in {
+            "canceled",
+            "cancelled",
+            "cancel",
+            "cncl",
+            "canc",
+        }:
+            return Match.SyncScope.CANCELED
+        if normalized in {
+            "forfeit",
+            "walkover",
+            "technical_win",
+            "technical_victory",
+            "wo",
+        }:
+            return Match.SyncScope.FORFEIT
+        if normalized in {
+            "interrupted",
+            "abandoned_temporarily",
+            "paused",
+            "stopped",
+        }:
+            return Match.SyncScope.INTERRUPTED
+        if normalized in {
+            "abandoned",
+            "interrupted_final",
+            "interrupted_and_not_resumed",
+            "not_resumed",
+        }:
+            return Match.SyncScope.ABANDONED
         return None
 
     @staticmethod

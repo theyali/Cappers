@@ -197,6 +197,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
         card.expert_initials = _initials(name)
         card.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         card.expert_verified = bool(profile and profile.is_verified)
+        card.expert_trust_index = profile.trust_index if profile else Decimal("0.0")
         card.is_liked = coupon.pk in liked_ids
         card.is_favorite = coupon.pk in favorite_ids
         card.is_own = bool(request.user.is_authenticated and author.pk == request.user.pk)
@@ -759,6 +760,7 @@ def prediction_detail(request, prediction_id: int):
             "expert_initials": _initials(expert_name),
             "expert_avatar_url": profile.avatar.url if profile and profile.avatar else "",
             "expert_verified": bool(profile and profile.is_verified),
+            "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
             "is_liked": is_liked,
             "is_favorite": is_favorite,
         },

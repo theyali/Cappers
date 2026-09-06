@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load capper_trust static %}
 
 {% block title %}Профиль — Cappers{% endblock %}
 {% block extra_css %}{% endblock %}
@@ -250,6 +250,9 @@
                             <article class="profile-copy-table-row">
                                 <div class="profile-coupon-main">
                                     <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                                        {% if subscription.user.is_analyst %}
+                                            {% capper_trust_badge subscription.user.analyst_profile.trust_index %}
+                                        {% endif %}
                                         {% if subscription.user.is_analyst and subscription.user.analyst_profile.avatar %}
                                             <img class="nav-profile-avatar-image" src="{{ subscription.user.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.user.username }}">
                                         {% elif subscription.user.avatar %}
@@ -314,6 +317,7 @@
                             <article class="profile-copy-table-row">
                                 <div class="profile-coupon-main">
                                     <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                                        {% capper_trust_badge subscription.analyst.analyst_profile.trust_index %}
                                         {% if subscription.analyst.analyst_profile.avatar %}
                                             <img class="nav-profile-avatar-image" src="{{ subscription.analyst.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.analyst.username }}">
                                         {% elif subscription.analyst.avatar %}
@@ -515,6 +519,9 @@
                         {% for follow in followers %}
                             <article class="profile-user-row is-profile-link" data-profile-username="{{ follow.follower.username|lower }}">
                                 <div class="profile-user-avatar prediction-table-avatar{% if follow.follower.is_analyst and follow.follower.analyst_profile.is_vip %} is-vip{% endif %}" data-skeleton-image>
+                                    {% if follow.follower.is_analyst %}
+                                        {% capper_trust_badge follow.follower.analyst_profile.trust_index %}
+                                    {% endif %}
                                     {% if follow.follower.is_analyst and follow.follower.analyst_profile.avatar %}
                                         <img src="{{ follow.follower.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
                                     {% elif follow.follower.avatar %}
@@ -572,7 +579,16 @@
                     <div class="profile-user-list" data-profile-list="following">
                         {% for follow in following %}
                             <article class="profile-user-row" data-profile-username="{{ follow.analyst.username|lower }}">
-                                <div class="profile-user-avatar">{{ follow.analyst.username|first|upper }}</div>
+                                <div class="profile-user-avatar prediction-table-avatar{% if follow.analyst.analyst_profile.is_vip %} is-vip{% endif %}" data-skeleton-image>
+                                    {% capper_trust_badge follow.analyst.analyst_profile.trust_index %}
+                                    {% if follow.analyst.analyst_profile.avatar %}
+                                        <img src="{{ follow.analyst.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.analyst.username }}">
+                                    {% elif follow.analyst.avatar %}
+                                        <img src="{{ follow.analyst.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.analyst.username }}">
+                                    {% else %}
+                                        {{ follow.analyst.username|first|upper }}
+                                    {% endif %}
+                                </div>
                                 <div><strong>@{{ follow.analyst.username }}</strong><span>{{ follow.analyst.get_role_display }}</span></div>
                                 <button class="profile-row-action is-muted" type="button">Вы подписаны</button>
                             </article>

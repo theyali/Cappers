@@ -1,3 +1,4 @@
+{% load capper_trust %}
 {% if vip_experts %}
 <section class="bookmakers-panel vip-experts-panel" aria-label="VIP прогнозисты">
     <div class="bookmakers-head">
@@ -12,6 +13,7 @@
         {% for profile in vip_experts %}
         <a class="bookmaker-card vip-expert-card" href="{% url 'front:expert_profile' profile.user.username %}">
             <span class="expert-avatar"{% if profile.avatar or profile.user.avatar %} data-skeleton-image{% endif %}>
+                {% capper_trust_badge profile.trust_index %}
                 {% if profile.avatar %}
                     <img src="{{ profile.avatar.url }}" width="42" height="42" alt="" loading="lazy">
                 {% elif profile.user.avatar %}

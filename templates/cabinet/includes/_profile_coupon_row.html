@@ -1,9 +1,12 @@
-{% load static prediction_reactions %}
+{% load capper_trust static prediction_reactions %}
 {% if row_id %}{% profile_coupon_reaction_counts row_id as row_reactions %}{% endif %}
 <a class="profile-coupon-row" href="{{ row_href }}">
     <div class="profile-coupon-main">
         {% if row_user %}
             <span class="nav-profile-dropdown-avatar" data-skeleton-image>
+                {% if row_user.is_analyst %}
+                    {% capper_trust_badge row_user.analyst_profile.trust_index %}
+                {% endif %}
                 {% if row_user.analyst_profile.avatar %}
                     <img class="nav-profile-avatar-image" src="{{ row_user.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ row_user.username }}">
                 {% elif row_user.avatar %}

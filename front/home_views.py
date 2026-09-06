@@ -128,6 +128,7 @@ def _latest_home_predictions() -> list[dict]:
                     profile.avatar.url if profile and profile.avatar else ""
                 ),
                 "expert_verified": bool(profile and profile.is_verified),
+                "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
                 "status_label": status_label,
                 "status_key": status_key,
             }
@@ -162,6 +163,7 @@ def _top_home_experts(profiles) -> list[dict]:
                 "initials": _initials(name),
                 "verified": profile.is_verified,
                 "avatar_url": profile.avatar.url if profile.avatar else "",
+                "trust_index": profile.trust_index,
             }
         )
     return experts
@@ -200,6 +202,7 @@ def _best_home_experts(request, profiles) -> list[dict]:
                 "initials": _initials(name),
                 "avatar_url": profile.avatar.url if profile and profile.avatar else "",
                 "verified": profile.is_verified,
+                "trust_index": profile.trust_index,
                 "roi": profile.author_roi,
                 "ranking_score": profile.ranking_score,
                 "followers": profile.followers_count,

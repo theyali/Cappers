@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load capper_trust static %}
 
 {% block title %}Таблица капперов — КапперХаб{% endblock %}
 
@@ -102,6 +102,7 @@
                     <td>
                         <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
                             <span class="cappers-ranking-avatar{% if expert.is_vip %} is-vip{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
+                                {% capper_trust_badge expert.trust_index %}
                                 {% if expert.avatar_url %}
                                     <img src="{{ expert.avatar_url }}" width="34" height="34" loading="lazy" alt="">
                                 {% else %}

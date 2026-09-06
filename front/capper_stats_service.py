@@ -319,6 +319,7 @@ class CapperStatsService:
             "initials": _initials(name),
             "avatar_url": profile.avatar.url if profile.avatar else "",
             "verified": profile.is_verified,
+            "trust_index": profile.trust_index,
             "roi": profile.author_roi,
             "roi_period_days": ROI_PERIOD_DAYS,
             "ranking_score": profile.ranking_score,

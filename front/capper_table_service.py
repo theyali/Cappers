@@ -140,6 +140,7 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "avatar_url": avatar_url,
         "is_verified": profile.is_verified,
         "is_vip": profile.is_vip,
+        "trust_index": profile.trust_index,
         "presence": presence,
         "is_online": presence["is_online"],
         "paid_predictions_enabled": bool(
