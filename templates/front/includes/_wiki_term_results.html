@@ -1,0 +1,32 @@
+{% if wiki_terms %}
+    <div class="wiki-term-grid">
+        {% for item in wiki_terms %}
+            <article class="wiki-term-card wiki-term-accent-{{ item.section.accent }}">
+                <span class="wiki-term-card-icon" aria-hidden="true">
+                    {% include "front/includes/_wiki_term_icon.html" with icon=item.icon %}
+                </span>
+                <div class="wiki-term-card-copy">
+                    <div class="wiki-term-card-head">
+                        <h3>{{ item.term }}</h3>
+                        <span class="wiki-term-card-arrow" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
+                        </span>
+                    </div>
+                    <p>{{ item.description|linebreaksbr }}</p>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+
+    {% if wiki_terms_has_more %}
+        <button class="wiki-dictionary-more" type="button" data-wiki-terms-more>
+            <span>Показать еще термины</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+        </button>
+    {% endif %}
+{% else %}
+    <div class="articles-empty wiki-dictionary-empty">
+        <strong>Термины не найдены</strong>
+        <p>Попробуйте изменить запрос или выбрать другой раздел.</p>
+    </div>
+{% endif %}
