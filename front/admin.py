@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, StaticPage, WikiTerm, WikiVideo
+from .models import Article, StaticPage, WikiTerm, WikiVideo, WikiVideoSection
 
 
 @admin.register(Article)
@@ -31,17 +31,27 @@ class StaticPageAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(WikiVideoSection)
+class WikiVideoSectionAdmin(admin.ModelAdmin):
+    list_display = ("name", "icon", "is_active", "sort_order")
+    list_display_links = ("name",)
+    list_editable = ("icon", "is_active", "sort_order")
+    list_filter = ("is_active", "icon")
+    search_fields = ("name",)
+    ordering = ("sort_order", "name")
+
+
 @admin.register(WikiVideo)
 class WikiVideoAdmin(admin.ModelAdmin):
-    list_display = ("title", "section", "is_published", "sort_order", "updated_at")
+    list_display = ("title", "section", "duration", "is_published", "sort_order", "updated_at")
     list_display_links = ("title",)
     list_editable = ("is_published", "sort_order")
     list_filter = ("is_published", "section")
-    search_fields = ("title", "section", "description")
-    ordering = ("section", "sort_order", "title")
+    search_fields = ("title", "section__name", "description")
+    ordering = ("section__sort_order", "sort_order", "title")
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
-        ("Видео", {"fields": ("title", "section", "description", "video", "preview_image")}),
+        ("Видео", {"fields": ("title", "section", "description", "video", "preview_image", "duration")}),
         ("Публикация", {"fields": ("is_published", "sort_order")}),
         ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
