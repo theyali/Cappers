@@ -17156,8 +17156,7 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .how-hero,
 .how-panel,
-.how-role-tabs,
-.how-jump-nav {
+.how-role-tabs {
     background: var(--panel);
 }
 
@@ -17215,34 +17214,6 @@ body:has(.predictions-scroll-page) .site-footer {
     background: var(--yellow);
     font-size: 74px;
     line-height: 1;
-}
-
-.how-jump-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 18px;
-}
-
-.how-jump-nav a {
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    border-radius: 12px;
-    color: rgba(255, 255, 255, .72);
-    background: #29292c;
-    font-size: 12px;
-    font-weight: 700;
-    transition: background .18s ease, color .18s ease, transform .18s ease;
-}
-
-.how-jump-nav a:hover {
-    color: var(--ink);
-    background: var(--yellow);
-    transform: translateY(-1px);
 }
 
 .how-role-tabs {
@@ -17783,20 +17754,6 @@ body:has(.predictions-scroll-page) .site-footer {
 
     .how-hero h1 {
         font-size: clamp(36px, 12vw, 52px);
-    }
-
-    .how-jump-nav {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .how-jump-nav::-webkit-scrollbar {
-        display: none;
-    }
-
-    .how-jump-nav a {
-        flex: 0 0 auto;
     }
 
     .how-role-tabs {
@@ -30243,7 +30200,6 @@ font-size: 13px;
 
 .wiki-video-preview {
     position: relative;
-    aspect-ratio: 1.23 / 1;
     display: block;
     overflow: hidden;
     color: #fff;
@@ -30309,7 +30265,7 @@ font-size: 13px;
 }
 
 .wiki-video-copy {
-    min-height: 246px;
+    min-height: 150px;
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -30364,25 +30320,4 @@ font-size: 13px;
     color: rgba(255, 255, 255, .58);
     font-size: 13px;
     line-height: 1.65;
-}
-
-.wiki-video-watch {
-    min-height: 54px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: auto;
-    padding: 0 18px;
-    border-radius: 13px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 13px;
-    font-weight: 800;
-    transition: background .18s ease, transform .18s ease;
-}
-
-.wiki-video-watch:hover {
-    background: #2468ff;
-    transform: translateY(-1px);
 }

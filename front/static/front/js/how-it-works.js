@@ -38,26 +38,6 @@
         });
     });
 
-    root.querySelectorAll(".how-jump-nav a[href^='#']").forEach((link) => {
-        link.addEventListener("click", (event) => {
-            const id = link.getAttribute("href")?.slice(1);
-            if (!id) return;
-            const target = document.getElementById(id);
-            if (!target) return;
-
-            event.preventDefault();
-            const panel = target.closest("[data-how-panel]");
-            if (panel) activate(panel.dataset.howPanel);
-
-            window.requestAnimationFrame(() => {
-                target.scrollIntoView({ behavior: "smooth", block: "start" });
-                const url = new URL(window.location.href);
-                url.hash = id;
-                window.history.replaceState({}, "", url);
-            });
-        });
-    });
-
     const params = new URLSearchParams(window.location.search);
     const hashId = window.location.hash ? decodeURIComponent(window.location.hash.slice(1)) : "";
     const hashTarget = hashId ? document.getElementById(hashId) : null;
