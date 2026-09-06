@@ -30142,3 +30142,247 @@ font-size: 13px;
 .profile-hero-stats-banner{
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
+/* Wiki video library */
+.wiki-videos-section {
+    scroll-margin-top: 96px;
+    padding: 34px 6px 12px;
+}
+
+.wiki-videos-heading {
+    max-width: 980px;
+}
+
+.wiki-videos-kicker {
+    margin: 0 0 10px;
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.wiki-videos-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 48px;
+    line-height: 1;
+    letter-spacing: -.035em;
+}
+
+.wiki-videos-lead {
+    margin: 16px 0 0;
+    color: rgba(255, 255, 255, .64);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.wiki-video-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.wiki-video-filter {
+    min-height: 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 24px;
+    border-radius: 16px;
+    color: rgba(255, 255, 255, .76);
+    background: var(--panel);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.wiki-video-filter:hover {
+    color: #fff;
+    background: #29292c;
+    transform: translateY(-1px);
+}
+
+.wiki-video-filter.is-active,
+.wiki-video-filter.is-active:hover {
+    color: #fff;
+    background: var(--blue);
+}
+
+.wiki-video-filter-icon {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: grid;
+    place-items: center;
+}
+
+.wiki-video-filter-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.wiki-video-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 30px;
+}
+
+.wiki-video-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.wiki-video-preview {
+    position: relative;
+    aspect-ratio: 1.23 / 1;
+    display: block;
+    overflow: hidden;
+    color: #fff;
+    background: #171718;
+}
+
+.wiki-video-preview img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.wiki-video-preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--blue);
+    background: #171718;
+}
+
+.wiki-video-preview-placeholder svg {
+    width: 76px;
+    height: 76px;
+}
+
+.wiki-video-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 66px;
+    height: 66px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--panel);
+    transform: translate(-50%, -50%);
+    transition: background .18s ease, transform .18s ease;
+}
+
+.wiki-video-preview:hover .wiki-video-play {
+    background: var(--blue);
+    transform: translate(-50%, -50%) scale(1.04);
+}
+
+.wiki-video-duration {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    min-height: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 7px;
+    color: #fff;
+    background: var(--ink);
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.wiki-video-copy {
+    min-height: 246px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 18px 20px 20px;
+}
+
+.wiki-video-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.wiki-video-category {
+    overflow: hidden;
+    color: var(--blue);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wiki-video-type {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, .56);
+}
+
+.wiki-video-type svg {
+    width: 16px;
+    height: 16px;
+}
+
+.wiki-video-copy h3 {
+    margin: 16px 0 0;
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1.18;
+    letter-spacing: -.02em;
+}
+
+.wiki-video-copy h3 a {
+    color: inherit;
+}
+
+.wiki-video-copy p {
+    margin: 12px 0 20px;
+    color: rgba(255, 255, 255, .58);
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.wiki-video-watch {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding: 0 18px;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 13px;
+    font-weight: 800;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.wiki-video-watch:hover {
+    background: #2468ff;
+    transform: translateY(-1px);
+}

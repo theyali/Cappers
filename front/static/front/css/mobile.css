@@ -3068,3 +3068,90 @@ body.expert-public-details-open {
         gap: 6px;
     }
 }
+
+/* Wiki video library responsive */
+@media (max-width: 1320px) {
+    .wiki-video-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .wiki-video-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .wiki-videos-section {
+        padding: 24px 0 8px;
+    }
+
+    .wiki-videos-heading h2 {
+        font-size: 36px;
+    }
+
+    .wiki-videos-lead {
+        font-size: 13px;
+    }
+
+    .wiki-video-filters {
+        flex-wrap: nowrap;
+        gap: 8px;
+        margin-top: 22px;
+        padding-bottom: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .wiki-video-filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .wiki-video-filter {
+        min-height: 46px;
+        flex: 0 0 auto;
+        padding: 0 16px;
+        border-radius: 13px;
+        font-size: 12px;
+    }
+
+    .wiki-video-filter-icon {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    .wiki-video-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-top: 22px;
+    }
+
+    .wiki-video-card {
+        border-radius: 15px;
+    }
+
+    .wiki-video-preview {
+        aspect-ratio: 1.28 / 1;
+    }
+
+    .wiki-video-play {
+        width: 58px;
+        height: 58px;
+    }
+
+    .wiki-video-copy {
+        min-height: 224px;
+        padding: 16px;
+    }
+
+    .wiki-video-copy h3 {
+        font-size: 18px;
+    }
+
+    .wiki-video-watch {
+        min-height: 50px;
+    }
+}
