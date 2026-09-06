@@ -1,0 +1,21 @@
+{% if icon == "account" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.5"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path></svg>
+{% elif icon == "bets" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"></path><path d="m8 3 2 4-2 4M16 13l-2 4 2 4"></path></svg>
+{% elif icon == "odds" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 14-14"></path><circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>
+{% elif icon == "stats" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M10 20V6M15 20v-8M20 20V4"></path></svg>
+{% elif icon == "subscriptions" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"></circle><path d="M6 20a6 6 0 0 1 12 0"></path><path d="M4 5h2M18 5h2"></path></svg>
+{% elif icon == "copybetting" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+{% elif icon == "balance" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"></path><path d="M4 9V6a2 2 0 0 1 2-2h11"></path><circle cx="16.5" cy="12.5" r="1.5"></circle></svg>
+{% elif icon == "tournaments" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
+{% elif icon == "all" %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+{% else %}
+<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle></svg>
+{% endif %}
