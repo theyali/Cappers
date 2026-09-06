@@ -24,6 +24,7 @@
         <a href="#how-notifications">Уведомления</a>
         <a href="#how-telegram">Telegram</a>
         <a href="#how-capppers">Стать каппером</a>
+        <a href="{% url 'front:wiki' %}">Wiki</a>
     </nav>
 
     <div class="how-role-tabs" role="tablist" aria-label="Роль пользователя">
@@ -95,6 +96,7 @@
                 <a class="how-action is-blue" href="{% url 'game:match_list' %}">Открыть матчи <span>→</span></a>
                 <a class="how-action" href="{% url 'front:predictions' %}">Все прогнозы <span>→</span></a>
                 <a class="how-action" href="{% url 'front:cappers_stats' %}">Статистика капперов <span>→</span></a>
+                <a class="how-action" href="{% url 'front:wiki' %}">Открыть Wiki <span>→</span></a>
             </div>
         </section>
 
@@ -208,6 +210,7 @@
             <div class="how-actions-row">
                 <a class="how-action is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером <span>→</span></a>
                 <a class="how-action" href="{% url 'front:cappers_stats' %}">Посмотреть рейтинг <span>→</span></a>
+                <a class="how-action" href="{% url 'front:wiki' %}">Wiki для капперов <span>→</span></a>
             </div>
         </section>
 
@@ -285,6 +288,7 @@
             {% if request.user.is_authenticated %}
             <div class="how-actions-row">
                 <a class="how-action is-blue" href="{% url 'cabinet:profile' %}?tab=settings">Открыть настройки <span>→</span></a>
+                <a class="how-action" href="{% url 'front:wiki' %}">Открыть Wiki <span>→</span></a>
             </div>
             {% endif %}
         </section>

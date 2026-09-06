@@ -34,6 +34,12 @@
             </span>
             <span>Как пользоваться</span>
         </a>
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'wiki' %} is-active{% endif %}" href="{% url 'front:wiki' %}">
+            <span class="site-topbar-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"></path><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16Z"></path></svg>
+            </span>
+            <span>Wiki</span>
+        </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %} is-active{% endif %}" href="{% url 'front:articles' %}">
             <span class="site-topbar-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg>
