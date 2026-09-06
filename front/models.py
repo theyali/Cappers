@@ -61,6 +61,49 @@ class StaticPage(models.Model):
         return reverse("front:static_page", kwargs={"slug": self.slug})
 
 
+class WikiVideo(models.Model):
+    title = models.CharField("Название", max_length=220)
+    section = models.CharField("Раздел", max_length=160, db_index=True)
+    description = models.TextField("Краткое описание", max_length=700)
+    video = models.FileField("Видео", upload_to="wiki/videos/%Y/%m/")
+    preview_image = models.ImageField(
+        "Preview image",
+        upload_to="wiki/previews/%Y/%m/",
+        blank=True,
+        null=True,
+    )
+    is_published = models.BooleanField("Опубликовано", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Wiki: видео"
+        verbose_name_plural = "Wiki: видео"
+        ordering = ("section", "sort_order", "title", "id")
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class WikiTerm(models.Model):
+    term = models.CharField("Термин", max_length=180, unique=True)
+    section = models.CharField("Раздел", max_length=160, db_index=True)
+    description = models.TextField("Описание")
+    is_published = models.BooleanField("Опубликовано", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Wiki: термин"
+        verbose_name_plural = "Wiki: словарь"
+        ordering = ("section", "sort_order", "term", "id")
+
+    def __str__(self) -> str:
+        return self.term
+
+
 class PredictionLike(models.Model):
     prediction = models.ForeignKey(
         PredictionCoupon,

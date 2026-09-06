@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Wiki — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="articles-page" aria-label="Wiki КапперХаб">
+    <header class="articles-hero">
+        <div>
+            <p class="articles-eyebrow">База знаний КапперХаб</p>
+            <h1>Wiki</h1>
+            <p>Видеоинструкции по работе с сайтом и словарь терминов — всё в одном месте.</p>
+        </div>
+        <div class="articles-total">
+            <strong>{{ wiki_total_count }}</strong>
+            <span>материалов</span>
+        </div>
+    </header>
+
+    <nav class="how-jump-nav" aria-label="Разделы Wiki">
+        <a href="#wiki-videos">Видео {{ wiki_video_count }}</a>
+        <a href="#wiki-dictionary">Словарь {{ wiki_term_count }}</a>
+        <a href="{% url 'front:how_it_works' %}">Как пользоваться</a>
+    </nav>
+
+    <section class="how-feature" id="wiki-videos">
+        <div class="how-feature-head">
+            <div>
+                <p class="how-kicker">Обучение</p>
+                <h2>Видео</h2>
+            </div>
+        </div>
+        <p class="how-feature-lead">Выберите нужный раздел и откройте видео. Новые инструкции публикуются через админку.</p>
+
+        {% if wiki_videos %}
+            {% regroup wiki_videos by section as video_sections %}
+            {% for video_section in video_sections %}
+                <div class="how-feature-head">
+                    <div>
+                        <p class="how-kicker">Раздел</p>
+                        <h2>{{ video_section.grouper }}</h2>
+                    </div>
+                </div>
+                <div class="articles-grid">
+                    {% for video in video_section.list %}
+                        <article class="article-list-card">
+                            <a
+                                class="article-list-image"
+                                href="{{ video.video.url }}"
+                                target="_blank"
+                                rel="noopener"
+                                data-skeleton-image
+                                aria-label="Смотреть видео: {{ video.title }}"
+                            >
+                                {% if video.preview_image %}
+                                    <img
+                                        src="{{ video.preview_image.url }}"
+                                        width="640"
+                                        height="360"
+                                        loading="lazy"
+                                        alt="{{ video.title }}"
+                                    >
+                                {% else %}
+                                    <span aria-hidden="true">▶</span>
+                                {% endif %}
+                            </a>
+                            <div class="article-list-copy">
+                                <div class="article-list-meta">
+                                    <span>{{ video.section }}</span>
+                                    <span>Видео</span>
+                                </div>
+                                <h2>
+                                    <a href="{{ video.video.url }}" target="_blank" rel="noopener">{{ video.title }}</a>
+                                </h2>
+                                <p>{{ video.description }}</p>
+                                <a class="article-list-read" href="{{ video.video.url }}" target="_blank" rel="noopener">
+                                    Смотреть видео <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="articles-empty">
+                <strong>Видео пока нет</strong>
+                <p>После публикации через админку видео автоматически появятся здесь.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="how-feature" id="wiki-dictionary">
+        <div class="how-feature-head">
+            <div>
+                <p class="how-kicker">Термины</p>
+                <h2>Словарь</h2>
+            </div>
+        </div>
+        <p class="how-feature-lead">Короткие объяснения терминов, которые встречаются в прогнозах, статистике и инструментах КапперХаб.</p>
+
+        {% if wiki_terms %}
+            {% regroup wiki_terms by section as term_sections %}
+            {% for term_section in term_sections %}
+                <div class="how-feature-head">
+                    <div>
+                        <p class="how-kicker">Раздел</p>
+                        <h2>{{ term_section.grouper }}</h2>
+                    </div>
+                </div>
+                <div class="how-notification-grid">
+                    {% for item in term_section.list %}
+                        <article>
+                            <strong>{{ item.term }}</strong>
+                            <p>{{ item.description|linebreaksbr }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="articles-empty">
+                <strong>Словарь пока пуст</strong>
+                <p>Термины появятся здесь после добавления через админку.</p>
+            </div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}
