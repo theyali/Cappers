@@ -61,9 +61,45 @@ class StaticPage(models.Model):
         return reverse("front:static_page", kwargs={"slug": self.slug})
 
 
+class WikiVideoSection(models.Model):
+    ICON_GENERAL = "general"
+    ICON_ACCOUNT = "account"
+    ICON_PREDICTIONS = "predictions"
+    ICON_COPYBETTING = "copybetting"
+    ICON_NOTIFICATIONS = "notifications"
+    ICON_TELEGRAM = "telegram"
+
+    ICON_CHOICES = (
+        (ICON_GENERAL, "Общее"),
+        (ICON_ACCOUNT, "Аккаунт"),
+        (ICON_PREDICTIONS, "Прогнозы"),
+        (ICON_COPYBETTING, "Копибеттинг"),
+        (ICON_NOTIFICATIONS, "Уведомления"),
+        (ICON_TELEGRAM, "Telegram"),
+    )
+
+    name = models.CharField("Название", max_length=160, unique=True)
+    icon = models.CharField("Иконка", max_length=24, choices=ICON_CHOICES, default=ICON_GENERAL)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+
+    class Meta:
+        verbose_name = "Wiki: раздел видео"
+        verbose_name_plural = "Wiki: разделы видео"
+        ordering = ("sort_order", "name", "id")
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class WikiVideo(models.Model):
     title = models.CharField("Название", max_length=220)
-    section = models.CharField("Раздел", max_length=160, db_index=True)
+    section = models.ForeignKey(
+        WikiVideoSection,
+        on_delete=models.PROTECT,
+        related_name="videos",
+        verbose_name="Раздел",
+    )
     description = models.TextField("Краткое описание", max_length=700)
     video = models.FileField("Видео", upload_to="wiki/videos/%Y/%m/")
     preview_image = models.ImageField(
@@ -72,6 +108,7 @@ class WikiVideo(models.Model):
         blank=True,
         null=True,
     )
+    duration = models.CharField("Длительность", max_length=12, blank=True, help_text="Например: 5:18")
     is_published = models.BooleanField("Опубликовано", default=True, db_index=True)
     sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
@@ -80,7 +117,7 @@ class WikiVideo(models.Model):
     class Meta:
         verbose_name = "Wiki: видео"
         verbose_name_plural = "Wiki: видео"
-        ordering = ("section", "sort_order", "title", "id")
+        ordering = ("section_id", "sort_order", "title", "id")
 
     def __str__(self) -> str:
         return self.title
