@@ -60,13 +60,17 @@
                                 <span class="profile-verification-state is-verified">Профиль уже проверен</span>
                             {% elif analyst_profile.verification_requested_at %}
                                 <span class="profile-verification-state">Запрос отправлен {{ analyst_profile.verification_requested_at|date:"d.m.Y" }}</span>
-                                <small>После заполнения профиля отправьте запрос: администраторы проверят информацию и присвоят галочку verified.</small>
+                                <small>Администраторы проверят профиль и присвоят синюю галочку.</small>
                             {% else %}
                                 <form method="post" action="{% url 'cabinet:request_verification' %}">
                                     {% csrf_token %}
-                                    <button class="profile-verification-button" type="submit" {% if profile_completion < 100 %}disabled{% endif %}>Запросить проверку</button>
+                                    <button class="profile-verification-button" type="submit" {% if not verification_requirements.can_request %}disabled{% endif %}>Запросить проверку</button>
                                 </form>
-                                <small>После заполнения профиля отправьте запрос: администраторы проверят информацию и присвоят галочку verified.</small>
+                                {% if verification_requirements.can_request %}
+                                    <small>Администраторы проверят профиль и присвоят синюю галочку.</small>
+                                {% else %}
+                                    <small>Для синей галочки нужно: {{ verification_requirements.missing_text }}.</small>
+                                {% endif %}
                             {% endif %}
                         </div>
                         {% endif %}

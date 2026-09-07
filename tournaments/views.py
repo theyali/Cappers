@@ -80,6 +80,11 @@ def detail(request, slug: str):
             "prediction_cards": prediction_cards,
             "allowed_sports": list(tournament.allowed_sports.all()),
             "achievements": list(tournament.achievements.all()),
+            "breadcrumbs": [
+                {"title": "Главная", "url": reverse("front:index")},
+                {"title": "Турниры", "url": reverse("tournaments:index")},
+                {"title": tournament.title},
+            ],
         },
     )
 

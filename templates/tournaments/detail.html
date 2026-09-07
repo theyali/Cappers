@@ -26,7 +26,7 @@
                     style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_4.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;"
                 {% endif %}
             >
-                <div class="profile-hero-shade">
+                <div class="profile-hero-shade tournament-detail-title-panel">
                     <div class="profile-title-block">
                         <div class="profile-label-row">
                             <a class="profile-role" href="{% url 'tournaments:index' %}">← Все турниры</a>
@@ -57,8 +57,10 @@
                         </div>
                     </div>
                 </div>
+            </article>
 
-                <div class="profile-hero-shade" aria-label="Статистика турнира">
+            <main class="tournament-main">
+                <section class="profile-form-card tournament-detail-summary" aria-label="Статистика турнира">
                     <div class="profile-hero-stats">
                         <div class="profile-stat-pill is-active">
                             <span>{{ runtime_status.target_label }}</span>
@@ -76,10 +78,8 @@
                             <strong>{{ tournament.min_coefficient|floatformat:2 }}</strong>
                         </div>
                     </div>
-                </div>
-            </article>
+                </section>
 
-            <main class="tournament-main">
                 <section class="profile-form-card" aria-labelledby="tournament-prizes-title">
                     <div class="profile-section-heading">
                         <div>

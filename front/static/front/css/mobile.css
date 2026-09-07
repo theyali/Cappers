@@ -2648,11 +2648,6 @@ summary:focus-visible,
         grid-template-columns: 1fr;
         padding: 24px;
     }
-
-    .tournaments-total {
-        justify-items: start;
-    }
-
     .tournament-grid {
         grid-template-columns: 1fr;
     }
@@ -3164,7 +3159,6 @@ body.expert-public-details-open {
         align-content: center;
         padding: 12px;
         border-radius: 0;
-        background: var(--ink);
     }
 
     .wiki-video-player-head {

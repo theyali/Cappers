@@ -48,6 +48,65 @@ class Bonus(models.Model):
         return f"{self.bookmaker.name} — {self.short_description}"
 
 
+class FooterLinkGroup(models.Model):
+    title = models.CharField("Заголовок", max_length=120)
+    order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Футер — группа ссылок"
+        verbose_name_plural = "Футер — группы ссылок"
+        ordering = ("order", "id")
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class FooterLink(models.Model):
+    group = models.ForeignKey(
+        FooterLinkGroup,
+        verbose_name="Группа",
+        on_delete=models.CASCADE,
+        related_name="links",
+    )
+    title = models.CharField("Текст", max_length=160)
+    url = models.CharField("Ссылка", max_length=500)
+    order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Футер — ссылка"
+        verbose_name_plural = "Футер — ссылки"
+        ordering = ("group__order", "order", "id")
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class FooterButton(models.Model):
+    class Kind(models.TextChoices):
+        APP = "app", "Приложение"
+        SOCIAL = "social", "Соцсеть"
+        PARTNER = "partner", "Партнёр/логотип"
+
+    kind = models.CharField("Тип", max_length=16, choices=Kind.choices, db_index=True)
+    title = models.CharField("Текст", max_length=120)
+    subtitle = models.CharField("Подпись", max_length=120, blank=True)
+    url = models.CharField("Ссылка", max_length=500, blank=True)
+    icon_text = models.CharField("Текстовая иконка", max_length=16, blank=True)
+    icon = models.ImageField("Иконка", upload_to="footer/", blank=True)
+    order = models.PositiveIntegerField("Порядок", default=0, db_index=True)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Футер — кнопка/логотип"
+        verbose_name_plural = "Футер — кнопки и логотипы"
+        ordering = ("kind", "order", "id")
+
+    def __str__(self) -> str:
+        return self.title
+
+
 class WebsiteSettings(models.Model):
     site_name = models.CharField("Название сайта", max_length=120, default="КапперХаб")
     fixed_tg_enable = models.BooleanField("Показывать Telegram-баннер", default=False)
@@ -58,6 +117,24 @@ class WebsiteSettings(models.Model):
         default="Бесплатный прогноз в Telegram",
         blank=True,
     )
+    footer_description = models.TextField(
+        "Футер — описание",
+        default="Прогнозы на спорт, статистика капперов и история результатов в одном месте.",
+        blank=True,
+    )
+    footer_age_label = models.CharField("Футер — возрастной знак", max_length=16, default="18+", blank=True)
+    footer_responsible_text = models.TextField(
+        "Футер — предупреждение",
+        default="Материалы сайта носят информационный характер. Оценивайте риски и принимайте решения самостоятельно.",
+        blank=True,
+    )
+    footer_support_title = models.CharField("Футер — заголовок поддержки", max_length=120, default="Поддержка 24/7", blank=True)
+    footer_support_phone = models.CharField("Футер — телефон поддержки", max_length=80, blank=True)
+    footer_support_email = models.EmailField("Футер — email поддержки", blank=True)
+    footer_legal_text = models.TextField("Футер — юридический текст", default="Официальные документы сервиса", blank=True)
+    footer_copyright_text = models.CharField("Футер — копирайт", max_length=220, default="© КапперХаб. Все права защищены.", blank=True)
+    footer_disclaimer_text = models.CharField("Футер — дисклеймер", max_length=260, default="Сервис не гарантирует результат спортивных прогнозов.", blank=True)
+    footer_address_text = models.TextField("Футер — адрес/реквизиты", blank=True)
 
     match_bookmaker = models.ForeignKey(
         Bookmaker,

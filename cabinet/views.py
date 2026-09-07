@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
+from front.models import PredictionFavorite, PredictionLike
 from game.models import PredictionCoupon
 from notifications.models import TelegramAccount
 from notifications.services import get_preferences
@@ -93,6 +94,40 @@ def _profile_completion(user, analyst_profile) -> int:
     if not checks:
         return 0
     return round(sum(checks) / len(checks) * 100)
+
+
+def _verification_requirements(user, analyst_profile) -> dict:
+    profile_completion = _profile_completion(user, analyst_profile)
+    published = PredictionCoupon.objects.filter(
+        author=user,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    )
+    stats = published.aggregate(
+        predictions=Count("id"),
+        wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+    )
+    likes_count = PredictionLike.objects.filter(
+        prediction__author=user,
+        prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).count()
+    favorites_count = PredictionFavorite.objects.filter(
+        prediction__author=user,
+        prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).count()
+    requirements = [
+        {"label": "заполнить профиль", "done": profile_completion >= 100},
+        {"label": "Первый прогноз", "done": (stats["predictions"] or 0) >= 1},
+        {"label": "3 победы", "done": (stats["wins"] or 0) >= 3},
+        {"label": "10 лайков", "done": likes_count >= 10},
+        {"label": "10 сохранений", "done": favorites_count >= 10},
+    ]
+    missing = [item["label"] for item in requirements if not item["done"]]
+    return {
+        "can_request": not missing,
+        "missing": missing,
+        "missing_text": ", ".join(missing),
+        "profile_completion": profile_completion,
+    }
 
 
 def _coupon_result(coupon) -> tuple[str, str]:
@@ -264,6 +299,17 @@ def profile(request):
         is_verified=bool(analyst_profile and analyst_profile.is_verified),
     )
 
+    verification_requirements = (
+        _verification_requirements(request.user, analyst_profile)
+        if request.user.role == User.Role.ANALYST and analyst_profile
+        else None
+    )
+    profile_completion = (
+        verification_requirements["profile_completion"]
+        if verification_requirements
+        else _profile_completion(request.user, analyst_profile)
+    )
+
     context = {
         "analyst_profile": analyst_profile,
         "user_form": user_form,
@@ -281,7 +327,8 @@ def profile(request):
         "coupons_count": coupons_count,
         "predictions_count": predictions_count,
         "achievement_overview": achievement_overview,
-        "profile_completion": _profile_completion(request.user, analyst_profile),
+        "profile_completion": profile_completion,
+        "verification_requirements": verification_requirements,
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
@@ -330,11 +377,11 @@ def request_verification(request):
         messages.info(request, "Профиль уже проверен.")
         return redirect(f"{reverse('cabinet:profile')}?tab=profile")
 
-    completion = _profile_completion(request.user, analyst_profile)
-    if completion < 100:
+    requirements = _verification_requirements(request.user, analyst_profile)
+    if not requirements["can_request"]:
         messages.error(
             request,
-            "Заполните профиль полностью перед отправкой на проверку.",
+            f"Для проверки профиля нужно: {requirements['missing_text']}.",
         )
         return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 

@@ -13,6 +13,8 @@ from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from cabinet.presence import presence_payload
 from game.models import Sport
 
+from .expert_ranking import ranked_expert_profiles
+
 
 GROUP_ALL = "all"
 GROUP_VIP = "vip"
@@ -370,6 +372,16 @@ def _sport_catalog(stats_queryset) -> list[dict]:
     )
 
 
+def _canonical_rank_order() -> dict[int, int]:
+    return {
+        profile.user_id: index
+        for index, profile in enumerate(
+            ranked_expert_profiles(),
+            start=1,
+        )
+    }
+
+
 def build_capper_table_context(
     request,
     *,
@@ -424,26 +436,13 @@ def build_capper_table_context(
         else _all_time_rows(profiles_by_user, selected_sport_code)
     )
 
-    if selected_group == GROUP_POPULAR:
-        rows.sort(
-            key=lambda row: (
-                row["followers"],
-                row["flat_profit_percent"],
-                row["roi"],
-                row["bets"],
-            ),
-            reverse=True,
+    rank_order = _canonical_rank_order()
+    rows.sort(
+        key=lambda row: (
+            rank_order.get(row["id"], len(rank_order) + 1),
+            row["username"].lower(),
         )
-    else:
-        rows.sort(
-            key=lambda row: (
-                row["flat_profit_percent"],
-                row["roi"],
-                row["bets"],
-                row["followers"],
-            ),
-            reverse=True,
-        )
+    )
 
     group_tabs = [
         {

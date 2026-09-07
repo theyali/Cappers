@@ -212,6 +212,17 @@
     {% endif %}
 
     <main class="site-main">
+        {% if breadcrumbs %}
+        <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
+            {% for crumb in breadcrumbs %}
+                {% if crumb.url and not forloop.last %}
+                    <a href="{{ crumb.url }}">{{ crumb.title }}</a>
+                {% else %}
+                    <span {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.title }}</span>
+                {% endif %}
+            {% endfor %}
+        </nav>
+        {% endif %}
         {% block content %}{% endblock %}
         {% if adv_banners and adv_placement == 'content' %}
             {% include "pages/_adv_banners.html" with placement="content" %}
@@ -223,64 +234,108 @@
 
     {% if not hide_footer %}
     <footer class="site-footer" aria-label="Подвал сайта">
-        <div class="site-footer-main">
-            <div class="site-footer-about">
-                <div>
-                    <a class="site-footer-brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
-                        <span class="brand-logo" data-skeleton-image><img src="{% static 'front/img/logo.png' %}" width="54" height="54" alt=""></span>
-                        <span class="brand-name">КапперХаб</span>
-                    </a>
-                    <p class="site-footer-copy">Прогнозы на спорт, статистика капперов и история результатов в одном месте.</p>
-                </div>
-                <div class="site-footer-responsible">
-                    <span class="site-footer-age" aria-label="Только для совершеннолетних">18+</span>
-                    <p>Материалы сайта носят информационный характер. Оценивайте риски и принимайте решения самостоятельно.</p>
-                </div>
-            </div>
+        <div class="site-footer-top">
+            <nav class="site-footer-nav" aria-label="Ссылки футера">
+                {% for group in footer_link_groups %}
+                    {% for item in group.active_links %}
+                        <a href="{{ item.url }}">{{ item.title }}</a>
+                    {% endfor %}
+                {% endfor %}
+            </nav>
 
-            <div class="site-footer-nav">
-                <section class="site-footer-group" aria-labelledby="footer-sections-title">
-                    <span class="site-footer-title" id="footer-sections-title">Разделы</span>
-                    <nav class="site-footer-links" aria-label="Основные разделы">
-                        <a href="{% url 'game:match_list' %}">Матчи</a>
-                        <a href="{% url 'front:predictions' %}">Все прогнозы</a>
-                        <a href="{% url 'tournaments:index' %}">Турниры</a>
-                        <a href="{% url 'front:cappers_stats' %}">Капперы</a>
-                        <a href="{% url 'front:articles' %}">Статьи</a>
-                    </nav>
-                </section>
-
-                <section class="site-footer-group" aria-labelledby="footer-service-title">
-                    <span class="site-footer-title" id="footer-service-title">Сервис</span>
-                    <nav class="site-footer-links" aria-label="О сервисе">
-                        <a href="{% url 'front:how_it_works' %}">Как пользоваться</a>
-                        <a href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-                        {% if request.user.is_authenticated %}
-                            <a href="{% url 'notifications:center' %}">Уведомления</a>
-                            <a href="{% url 'cabinet:profile' %}">Личный кабинет</a>
-                        {% else %}
-                            <a href="{% url 'cabinet:login' %}">Войти</a>
-                            <a href="{% url 'cabinet:register' %}">Регистрация</a>
+            <section class="site-footer-support" aria-label="Поддержка">
+                <strong>{{ website_settings.footer_support_title|default:"Поддержка" }}</strong>
+                {% if website_settings.footer_support_phone %}
+                    <a href="tel:{{ website_settings.footer_support_phone }}">{{ website_settings.footer_support_phone }}</a>
+                {% endif %}
+                {% if website_settings.footer_support_email %}
+                    <a href="mailto:{{ website_settings.footer_support_email }}">{{ website_settings.footer_support_email }}</a>
+                {% endif %}
+                {% if footer_buttons.social %}
+                <div class="site-footer-support-buttons">
+                    {% for item in footer_buttons.social %}
+                    <a class="site-footer-pill" href="{{ item.url|default:'#' }}">
+                        {% if item.icon %}
+                            <img src="{{ item.icon.url }}" alt="">
+                        {% elif item.icon_text == "VK" or item.icon_text == "vk" or item.title == "Вконтакте" %}
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 7.2c.15 7.2 3.75 11.52 10.08 11.52h.36v-4.12c2.32.24 4.08 1.94 4.78 4.12h3.28c-.9-3.25-3.22-5.07-4.67-5.76 1.45-.85 3.48-2.94 3.96-5.76h-2.98c-.64 2.27-2.57 4.36-4.37 4.55V7.2h-2.98v7.98c-1.85-.46-4.17-2.7-4.27-7.98H3.6z"/></svg>
+                        {% elif item.icon_text == "TG" or item.icon_text == "tg" or item.title == "Telegram" %}
+                            <img src="{% static 'front/svgs/telegram.svg' %}" alt="">
+                        {% elif item.icon_text == "YT" or item.icon_text == "yt" or item.title == "YouTube" %}
+                            <img src="{% static 'front/svgs/youtube.svg' %}" alt="">
+                        {% elif item.icon_text %}
+                            <span>{{ item.icon_text }}</span>
                         {% endif %}
-                    </nav>
-                </section>
-
-                <section class="site-footer-group" aria-labelledby="footer-documents-title">
-                    <span class="site-footer-title" id="footer-documents-title">Документы</span>
-                    <nav class="site-footer-links" aria-label="Документы">
-                        {% for page in footer_static_pages %}
-                            <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
-                        {% empty %}
-                            <a href="{% url 'front:how_it_works' %}">Правила сервиса</a>
-                        {% endfor %}
-                    </nav>
-                </section>
-            </div>
+                        {{ item.title }}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </section>
         </div>
 
-        <div class="site-footer-bottom">
-            <span>© {% now "Y" %} <strong>КапперХаб</strong>. Все права защищены.</span>
-            <span>Сервис не гарантирует результат спортивных прогнозов.</span>
+        <div class="site-footer-actions">
+            {% if footer_buttons.app %}
+            <div class="site-footer-apps" aria-label="Приложения">
+                {% for item in footer_buttons.app %}
+                <a class="site-footer-app" href="{{ item.url|default:'#' }}">
+                    {% if item.icon %}<img src="{{ item.icon.url }}" alt="">{% elif item.icon_text %}<span>{{ item.icon_text }}</span>{% endif %}
+                    <span>{{ item.subtitle }}</span>
+                    <strong>{{ item.title }}</strong>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if footer_buttons.social %}
+            <div class="site-footer-socials" aria-label="Социальные сети">
+                {% for item in footer_buttons.social %}
+                <a class="site-footer-social" href="{{ item.url|default:'#' }}" title="{{ item.title }}">
+                    {% if item.icon %}
+                        <img src="{{ item.icon.url }}" alt="">
+                    {% elif item.icon_text == "VK" or item.icon_text == "vk" or item.title == "Вконтакте" %}
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 7.2c.15 7.2 3.75 11.52 10.08 11.52h.36v-4.12c2.32.24 4.08 1.94 4.78 4.12h3.28c-.9-3.25-3.22-5.07-4.67-5.76 1.45-.85 3.48-2.94 3.96-5.76h-2.98c-.64 2.27-2.57 4.36-4.37 4.55V7.2h-2.98v7.98c-1.85-.46-4.17-2.7-4.27-7.98H3.6z"/></svg>
+                    {% elif item.icon_text == "TG" or item.icon_text == "tg" or item.title == "Telegram" %}
+                        <img src="{% static 'front/svgs/telegram.svg' %}" alt="">
+                    {% elif item.icon_text == "YT" or item.icon_text == "yt" or item.title == "YouTube" %}
+                        <img src="{% static 'front/svgs/youtube.svg' %}" alt="">
+                    {% else %}
+                        <span>{{ item.title|slice:":1" }}</span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if footer_buttons.partner %}
+        <div class="site-footer-partners" aria-label="Партнеры">
+            {% for item in footer_buttons.partner %}
+                {% if item.icon %}
+                {% if item.url %}
+                <a href="{{ item.url }}" title="{{ item.title }}">
+                    <img src="{{ item.icon.url }}" alt="{{ item.title }}">
+                </a>
+                {% else %}
+                <span class="site-footer-partner-logo" title="{{ item.title }}">
+                    <img src="{{ item.icon.url }}" alt="{{ item.title }}">
+                </span>
+                {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="site-footer-legal">
+            {% if website_settings.footer_description %}<p>{{ website_settings.footer_description }}</p>{% endif %}
+            {% if website_settings.footer_responsible_text %}<p>{{ website_settings.footer_responsible_text }}</p>{% endif %}
+            <p>{{ website_settings.footer_legal_text|default:"Официальные документы сервиса" }}</p>
+            <div>
+                {% if website_settings.footer_age_label %}<span class="site-footer-age">{{ website_settings.footer_age_label }}</span>{% endif %}
+                <span>{{ website_settings.footer_copyright_text|default:"© КапперХаб. Все права защищены." }}</span>
+            </div>
+            {% if website_settings.footer_disclaimer_text %}<p>{{ website_settings.footer_disclaimer_text }}</p>{% endif %}
+            {% if website_settings.footer_address_text %}<p>{{ website_settings.footer_address_text }}</p>{% endif %}
         </div>
     </footer>
     {% endif %}

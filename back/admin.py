@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Bonus, Bookmaker, WebsiteSettings
+from .models import Bonus, Bookmaker, FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
 
 
 @admin.register(Bookmaker)
@@ -33,6 +33,30 @@ class BonusAdmin(admin.ModelAdmin):
     ordering = ("order", "id")
 
 
+class FooterLinkInline(admin.TabularInline):
+    model = FooterLink
+    extra = 1
+    fields = ("title", "url", "order", "is_active")
+
+
+@admin.register(FooterLinkGroup)
+class FooterLinkGroupAdmin(admin.ModelAdmin):
+    list_display = ("title", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("title",)
+    ordering = ("order", "id")
+    inlines = (FooterLinkInline,)
+
+
+@admin.register(FooterButton)
+class FooterButtonAdmin(admin.ModelAdmin):
+    list_display = ("title", "kind", "subtitle", "order", "is_active")
+    list_editable = ("order", "is_active")
+    list_filter = ("kind", "is_active")
+    search_fields = ("title", "subtitle", "url")
+    ordering = ("kind", "order", "id")
+
+
 @admin.register(WebsiteSettings)
 class WebsiteSettingsAdmin(admin.ModelAdmin):
     list_display = ("site_name", "home_about_enabled", "fixed_tg_enable", "updated_at")
@@ -52,6 +76,24 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
                     "fixed_tg_link",
                     "fixed_tg_title",
                 ),
+            },
+        ),
+        (
+            "Футер",
+            {
+                "fields": (
+                    "footer_description",
+                    "footer_age_label",
+                    "footer_responsible_text",
+                    "footer_support_title",
+                    "footer_support_phone",
+                    "footer_support_email",
+                    "footer_legal_text",
+                    "footer_copyright_text",
+                    "footer_disclaimer_text",
+                    "footer_address_text",
+                ),
+                "description": "Группы ссылок и кнопки футера редактируются отдельными разделами «Футер — группы ссылок» и «Футер — кнопки и логотипы».",
             },
         ),
         (
