@@ -65,6 +65,29 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Реферальные начисления",
+            {
+                "fields": (
+                    "referral_subscription_percent",
+                    "referral_tournament_percent",
+                    "referral_balance_topup_percent",
+                ),
+                "description": "Процент начисляется рефереру только если реферер является каппером.",
+            },
+        ),
+        (
+            "Комиссия площадки по тарифам",
+            {
+                "fields": (
+                    "platform_fee_1_day_percent",
+                    "platform_fee_7_days_percent",
+                    "platform_fee_30_days_percent",
+                    "platform_fee_90_days_percent",
+                    "platform_fee_180_days_percent",
+                ),
+            },
+        ),
+        (
             "Главная страница — О нас",
             {
                 "fields": (

@@ -8,6 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_http_methods
 
 from cabinet.models import User
+from cabinet.referrals import REFERRAL_ACTION_BALANCE_TOP_UP, credit_referral_income
 
 from .forms import CopyBettingForm
 from .models import CopyBettingSubscription
@@ -38,6 +39,13 @@ def top_up_balance(request):
     if request.method == "POST":
         try:
             top_up_virtual_balance(request.user, amount)
+            if request.user.role == User.Role.ANALYST:
+                credit_referral_income(
+                    request.user,
+                    amount,
+                    REFERRAL_ACTION_BALANCE_TOP_UP,
+                    note=f"Реферал @{request.user.username}: пополнение баланса",
+                )
         except ValidationError as exc:
             messages.error(request, exc.messages[0] if exc.messages else str(exc))
         else:

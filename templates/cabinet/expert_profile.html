@@ -17,6 +17,7 @@
                     {% else %}
                         {{ expert_initials }}
                     {% endif %}
+                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
                 </span>
                 <div class="expert-public-copy">
                     <p class="expert-public-kicker">Эксперт КапперХаб</p>
@@ -73,9 +74,9 @@
                         </button>
                     </div>
                     {% endif %}
-                    {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
                 </div>
             </div>
+            {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
             {% if paid_predictions_enabled %}
                 {% if is_self %}
                     <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}?tab=settings">Настроить тарифы</a>

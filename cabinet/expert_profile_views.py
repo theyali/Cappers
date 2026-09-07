@@ -5,6 +5,11 @@ from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from front.capper_stats_service import CapperStatsService
+from front.expert_ranking import (
+    current_month_top_expert_ids,
+    expert_leader_badges,
+    ranked_expert_profiles,
+)
 from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
 from tournaments.models import Tournament, TournamentParticipant, TournamentResult
@@ -305,6 +310,15 @@ def expert_profile(request, username: str):
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
     context["profile_presence"] = presence_payload(profile.user)
+    monthly_top_ids = current_month_top_expert_ids()
+    monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
+    all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)
+    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
+    context["leader_badges"] = expert_leader_badges(
+        profile.user_id,
+        monthly_leader_id=monthly_leader_id,
+        all_time_leader_id=all_time_leader_id,
+    )
 
     performance_windows = {
         str(limit): _recent_performance(profile.user, limit)

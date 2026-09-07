@@ -1,4 +1,8 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+
+PERCENT_VALIDATORS = [MinValueValidator(0), MaxValueValidator(100)]
 
 
 class Bookmaker(models.Model):
@@ -70,6 +74,64 @@ class WebsiteSettings(models.Model):
         null=True,
         blank=True,
         related_name="+",
+    )
+
+    referral_subscription_percent = models.DecimalField(
+        "Реферал — покупка подписки, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    referral_tournament_percent = models.DecimalField(
+        "Реферал — приз турнира, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    referral_balance_topup_percent = models.DecimalField(
+        "Реферал — пополнение баланса, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+
+    platform_fee_1_day_percent = models.DecimalField(
+        "Комиссия тарифа 1 день, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    platform_fee_7_days_percent = models.DecimalField(
+        "Комиссия тарифа 7 дней, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    platform_fee_30_days_percent = models.DecimalField(
+        "Комиссия тарифа 30 дней, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    platform_fee_90_days_percent = models.DecimalField(
+        "Комиссия тарифа 3 месяца, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
+    )
+    platform_fee_180_days_percent = models.DecimalField(
+        "Комиссия тарифа 6 месяцев, %",
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        validators=PERCENT_VALIDATORS,
     )
 
     home_about_enabled = models.BooleanField("Показывать блок «О нас» на главной", default=True)

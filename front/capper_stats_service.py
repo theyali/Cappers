@@ -13,7 +13,7 @@ from cabinet.confidence_calibration import (
 from cabinet.models import AnalystFollow, AnalystPaidSubscription
 from game.models import Prediction, PredictionCoupon
 
-from .expert_ranking import ranked_expert_profiles
+from .expert_ranking import current_month_top_expert_ids, expert_leader_badges, ranked_expert_profiles
 from .prediction_metrics import ROI_PERIOD_DAYS
 
 
@@ -94,6 +94,12 @@ class CapperStatsService:
         confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
         following_ids = self._following_ids(profile_ids)
         paid_subscription_ids = self._paid_subscription_ids(profile_ids)
+        monthly_top_ids = current_month_top_expert_ids()
+        monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
+        all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)
+        all_time_leader_id = (
+            all_time_profiles[0].user_id if all_time_profiles else None
+        )
 
         cards_by_id = {
             profile.user_id: self._serialize_profile(
@@ -102,6 +108,8 @@ class CapperStatsService:
                 paid_subscription_ids=paid_subscription_ids,
                 best_streak=best_streaks.get(profile.user_id, 0),
                 confidence_calibration=confidence_calibrations.get(profile.user_id),
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
             )
             for profile in profiles
         }
@@ -301,6 +309,8 @@ class CapperStatsService:
         paid_subscription_ids: set[int] | None = None,
         best_streak: int,
         confidence_calibration: dict | None = None,
+        monthly_leader_id=None,
+        all_time_leader_id=None,
     ) -> dict:
         paid_subscription_ids = paid_subscription_ids or set()
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
@@ -333,6 +343,11 @@ class CapperStatsService:
             "last_publication_at": profile.last_publication_at,
             "joined_at": self._joined_at(profile),
             "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+            "leader_badges": expert_leader_badges(
+                profile.user_id,
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
+            ),
             "confidence_calibration": confidence_calibration,
             "is_self": bool(
                 getattr(self.user, "is_authenticated", False)

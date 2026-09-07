@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from cabinet.referrals import REFERRAL_ACTION_TOURNAMENT, credit_referral_income
 from game.models import PredictionCoupon
 from tournaments.models import (
     Tournament,
@@ -98,6 +99,13 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
             RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
             related_obj=tournament,
             note=f"{result.rank} место в турнире «{tournament.title}»",
+        )
+        credit_referral_income(
+            result.participant.user,
+            result.prize_amount,
+            REFERRAL_ACTION_TOURNAMENT,
+            related_obj=result,
+            note=f"Реферал @{result.participant.user.username}: приз в турнире «{tournament.title}»",
         )
     return created_results
 

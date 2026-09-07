@@ -7,8 +7,8 @@ from .models import (
     AnalystPaidSubscription,
     AnalystProfile,
     CapperMonthlyStat,
-    CapperReferralVisit,
     MatchPredictionRequest,
+    ReferralVisit,
     User,
 )
 
@@ -16,13 +16,15 @@ from .models import (
 @admin.register(User)
 class CabinetUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ("Профиль", {"fields": ("role",)}),
+        ("Профиль", {"fields": ("role", "referral_code")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Профиль", {"fields": ("role",)}),
     )
-    list_display = ("username", "email", "role", "is_staff", "is_active")
+    list_display = ("username", "email", "role", "referral_code", "is_staff", "is_active")
     list_filter = ("role", "is_staff", "is_active")
+    readonly_fields = (*UserAdmin.readonly_fields, "referral_code")
+    search_fields = (*UserAdmin.search_fields, "referral_code")
 
 
 @admin.register(AnalystProfile)
@@ -30,7 +32,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "display_name",
-        "referral_code",
         "specialization",
         "telegram_channel",
         "telegram_account",
@@ -62,7 +63,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "user__username",
         "user__email",
         "display_name",
-        "referral_code",
         "specialization",
         "favorite_sports",
         "favorite_leagues",
@@ -73,7 +73,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("user",)
     readonly_fields = (
-        "referral_code",
         "trust_index",
         "trust_index_updated_at",
         "onboarding_completed_at",
@@ -128,7 +127,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         ),
         (
             "Системная информация",
-            {"fields": ("referral_code", "created_at", "updated_at")},
+            {"fields": ("created_at", "updated_at")},
         ),
     )
 
@@ -178,26 +177,28 @@ class AnalystPaidSubscriptionAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
-@admin.register(CapperReferralVisit)
-class CapperReferralVisitAdmin(admin.ModelAdmin):
+@admin.register(ReferralVisit)
+class ReferralVisitAdmin(admin.ModelAdmin):
     list_display = (
-        "analyst",
+        "referrer",
         "visitor",
         "visits_count",
         "first_seen_at",
         "last_seen_at",
+        "registered_at",
         "subscribed_at",
     )
-    list_filter = ("first_seen_at", "subscribed_at")
-    search_fields = ("analyst__username", "visitor__username", "session_key")
-    autocomplete_fields = ("analyst", "visitor")
+    list_filter = ("first_seen_at", "registered_at", "subscribed_at")
+    search_fields = ("referrer__username", "visitor__username", "session_key")
+    autocomplete_fields = ("referrer", "visitor")
     readonly_fields = (
-        "analyst",
+        "referrer",
         "visitor",
         "session_key",
         "visits_count",
         "first_seen_at",
         "last_seen_at",
+        "registered_at",
         "subscribed_at",
     )
 

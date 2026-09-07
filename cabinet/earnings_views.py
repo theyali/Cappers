@@ -16,6 +16,15 @@ from .models import AnalystPaidSubscription, User
 EARNING_KINDS = (
     RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
     RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
+    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
+    RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
+    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
+)
+
+REFERRAL_EARNING_KINDS = (
+    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
+    RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
+    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
 )
 
 
@@ -40,11 +49,13 @@ def _period_summary(queryset, *, label: str, days: int | None = None) -> dict:
             "id",
             filter=Q(kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME),
         ),
+        referral_income=Sum("amount", filter=Q(kind__in=REFERRAL_EARNING_KINDS)),
     )
 
     total = values["total"] or Decimal("0.00")
     subscription_income = values["subscription_income"] or Decimal("0.00")
     tournament_income = values["tournament_income"] or Decimal("0.00")
+    referral_income = values["referral_income"] or Decimal("0.00")
 
     return {
         "label": label,
@@ -55,8 +66,8 @@ def _period_summary(queryset, *, label: str, days: int | None = None) -> dict:
         "subscription_income_display": format_money(subscription_income),
         "tournament_income": tournament_income,
         "tournament_income_display": format_money(tournament_income),
-        "referral_income": Decimal("0.00"),
-        "referral_income_display": format_money(0),
+        "referral_income": referral_income,
+        "referral_income_display": format_money(referral_income),
         "subscription_purchases": values["subscription_purchases"],
     }
 

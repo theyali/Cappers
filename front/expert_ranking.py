@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 
-from cabinet.models import AnalystProfile, User
+from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from game.models import PredictionCoupon
 
 from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period_q
@@ -16,6 +16,38 @@ SETTLED_EXPERT_STATES = (
     PredictionCoupon.StateStatus.LOSE,
     PredictionCoupon.StateStatus.REFUND,
 )
+
+
+def current_month_start():
+    today = timezone.localdate()
+    return today.replace(day=1)
+
+
+def current_month_top_expert_ids(limit: int = 1) -> list[int]:
+    return list(
+        CapperMonthlyStat.objects.filter(
+            month=current_month_start(),
+            bets_count__gt=0,
+            analyst__role=User.Role.ANALYST,
+            analyst__analyst_profile__is_public=True,
+        )
+        .order_by("-roi", "-bets_count", "-wins_count", "-total_profit", "analyst__username")
+        .values_list("analyst_id", flat=True)[:limit]
+    )
+
+
+def expert_leader_badges(
+    user_id,
+    *,
+    monthly_leader_id=None,
+    all_time_leader_id=None,
+) -> list[dict]:
+    badges = []
+    if user_id and user_id == all_time_leader_id:
+        badges.append({"kind": "all-time", "label": "Лучший аналитик за все время"})
+    if user_id and user_id == monthly_leader_id:
+        badges.append({"kind": "month", "label": "Лучший прогнозист месяца"})
+    return badges
 
 
 def expert_ranking_score(profile) -> Decimal:

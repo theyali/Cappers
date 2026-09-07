@@ -4,7 +4,7 @@ from django.db.models import Count, Q
 
 from game.models import PredictionCoupon
 
-from .models import CapperReferralVisit
+from .models import ReferralVisit
 
 
 EXPERT_ACHIEVEMENT_DEFINITIONS = (
@@ -136,8 +136,8 @@ def _user_activity_metrics(user) -> dict:
     referrals = 0
     if getattr(user, "is_analyst", False):
         referrals = (
-            CapperReferralVisit.objects.filter(
-                analyst=user,
+            ReferralVisit.objects.filter(
+                referrer=user,
                 subscribed_at__isnull=False,
                 visitor__isnull=False,
             )

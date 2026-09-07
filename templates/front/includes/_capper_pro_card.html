@@ -10,6 +10,7 @@
                     {% else %}
                         {{ expert.initials }}
                     {% endif %}
+                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges only %}
                 </span>
                 <div class="capper-pro-copy">
                     <div class="capper-pro-name">

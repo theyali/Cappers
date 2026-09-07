@@ -8,7 +8,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from cabinet.achievements import build_achievement_badges
 from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
-from front.expert_ranking import ranked_expert_profiles
+from front.expert_ranking import (
+    current_month_top_expert_ids,
+    expert_leader_badges,
+    ranked_expert_profiles,
+)
 from front.models import Article
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
@@ -22,6 +26,7 @@ HOME_BEST_PREDICTIONS_LIMIT = 10
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 12
 HOME_EXPERTS_LIMIT = 8
+HOME_TOP_EXPERTS_LIMIT = 7
 HOME_MATCH_CANDIDATE_LIMIT = 120
 
 
@@ -148,15 +153,34 @@ def _best_home_predictions(request):
     return _decorate_predictions(request, queryset)
 
 
-def _top_home_experts(profiles) -> list[dict]:
+def _top_home_profiles(all_time_profiles, monthly_top_ids: list[int]) -> tuple[list, str]:
+    if monthly_top_ids:
+        profiles_by_id = {profile.user_id: profile for profile in all_time_profiles}
+        monthly_profiles = [
+            profiles_by_id[user_id]
+            for user_id in monthly_top_ids
+            if user_id in profiles_by_id
+        ]
+        if monthly_profiles:
+            return monthly_profiles, "month"
+    return list(all_time_profiles[:HOME_TOP_EXPERTS_LIMIT]), "all_time"
+
+
+def _top_home_experts(
+    profiles,
+    *,
+    monthly_leader_id=None,
+    all_time_leader_id=None,
+) -> list[dict]:
     if not profiles:
         return DEMO_EXPERTS
 
     experts = []
-    for profile in profiles[:7]:
+    for profile in profiles[:HOME_TOP_EXPERTS_LIMIT]:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         experts.append(
             {
+                "id": profile.user_id,
                 "name": name,
                 "username": profile.user.username,
                 "followers": profile.followers_count,
@@ -164,12 +188,23 @@ def _top_home_experts(profiles) -> list[dict]:
                 "verified": profile.is_verified,
                 "avatar_url": profile.avatar.url if profile.avatar else "",
                 "trust_index": profile.trust_index,
+                "leader_badges": expert_leader_badges(
+                    profile.user_id,
+                    monthly_leader_id=monthly_leader_id,
+                    all_time_leader_id=all_time_leader_id,
+                ),
             }
         )
     return experts
 
 
-def _best_home_experts(request, profiles) -> list[dict]:
+def _best_home_experts(
+    request,
+    profiles,
+    *,
+    monthly_leader_id=None,
+    all_time_leader_id=None,
+) -> list[dict]:
     profiles = list(profiles[:HOME_EXPERTS_LIMIT])
 
     best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
@@ -215,6 +250,11 @@ def _best_home_experts(request, profiles) -> list[dict]:
                 "last_publication_at": profile.last_publication_at,
                 "joined_at": profile.created_at,
                 "latest_achievements": list(reversed(unlocked_achievements[-5:])),
+                "leader_badges": expert_leader_badges(
+                    profile.user_id,
+                    monthly_leader_id=monthly_leader_id,
+                    all_time_leader_id=all_time_leader_id,
+                ),
                 "is_self": (
                     request.user.is_authenticated
                     and request.user.id == profile.user_id
@@ -344,6 +384,14 @@ def index(request):
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
     ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
+    all_time_profiles = ranked_expert_profiles(period_days=None)
+    monthly_top_ids = current_month_top_expert_ids(HOME_TOP_EXPERTS_LIMIT)
+    monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
+    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
+    top_profiles, top_experts_scope = _top_home_profiles(
+        all_time_profiles,
+        monthly_top_ids,
+    )
 
     return render(
         request,
@@ -351,8 +399,21 @@ def index(request):
         {
             "latest_predictions": _latest_home_predictions(),
             "best_predictions": _best_home_predictions(request),
-            "top_experts": _top_home_experts(ranked_profiles),
-            "best_experts": _best_home_experts(request, ranked_profiles),
+            "top_experts": _top_home_experts(
+                top_profiles,
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
+            ),
+            "top_experts_scope": top_experts_scope,
+            "top_experts_scope_label": (
+                "МЕСЯЦ" if top_experts_scope == "month" else "ВСЁ ВРЕМЯ"
+            ),
+            "best_experts": _best_home_experts(
+                request,
+                ranked_profiles,
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
+            ),
             "latest_articles": Article.objects.filter(is_published=True).order_by(
                 "-created_at", "-id"
             )[:HOME_ARTICLES_LIMIT],

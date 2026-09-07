@@ -1,5 +1,9 @@
+from decimal import Decimal, InvalidOperation
+
 from django.db import transaction
 from django.utils import timezone
+
+from back.models import WebsiteSettings
 
 from .models import (
     AnalystFollow,
@@ -11,6 +15,39 @@ from .models import (
 )
 from wallets.models import RealBalanceTransaction
 from wallets.services import credit_real_balance
+
+from .referrals import REFERRAL_ACTION_SUBSCRIPTION, credit_referral_income
+
+
+PLATFORM_FEE_FIELDS = {
+    1: "platform_fee_1_day_percent",
+    7: "platform_fee_7_days_percent",
+    30: "platform_fee_30_days_percent",
+    90: "platform_fee_90_days_percent",
+    180: "platform_fee_180_days_percent",
+}
+
+
+def _decimal(value) -> Decimal:
+    try:
+        return Decimal(str(value or 0))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal("0")
+
+
+def platform_fee_percent_for_duration(duration_days: int) -> Decimal:
+    field = PLATFORM_FEE_FIELDS.get(int(duration_days or 0))
+    if not field:
+        return Decimal("0")
+    return _decimal(getattr(WebsiteSettings.load(), field, 0))
+
+
+def paid_subscription_capper_income(price, duration_days: int) -> Decimal:
+    price = _decimal(price)
+    fee_percent = platform_fee_percent_for_duration(duration_days)
+    fee_amount = (price * fee_percent / Decimal("100")).quantize(Decimal("0.01"))
+    income = price - fee_amount
+    return income if income > 0 else Decimal("0.00")
 
 
 def profile_paid_predictions_enabled(user: User) -> bool:
@@ -120,6 +157,7 @@ def subscribe_to_paid_predictions(
         raise ValueError("У этого эксперта нет активных тарифов.")
 
     now = timezone.now()
+    capper_income = paid_subscription_capper_income(price, duration_days)
     with transaction.atomic():
         subscription, created = AnalystPaidSubscription.objects.select_for_update().get_or_create(
             subscriber=subscriber,
@@ -137,11 +175,18 @@ def subscribe_to_paid_predictions(
         )
         if created:
             AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
-            credit_real_balance(
-                analyst,
+            if capper_income > 0:
+                credit_real_balance(
+                    analyst,
+                    capper_income,
+                    RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                    note=f"Подписка @{subscriber.username}: {plan_title}",
+                )
+            credit_referral_income(
+                subscriber,
                 price,
-                RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
-                note=f"Подписка @{subscriber.username}: {plan_title}",
+                REFERRAL_ACTION_SUBSCRIPTION,
+                note=f"Реферал @{subscriber.username}: покупка подписки «{plan_title}»",
             )
             return subscription
         base_time = subscription.expires_at if subscription.expires_at > now else now
@@ -165,10 +210,17 @@ def subscribe_to_paid_predictions(
             ]
         )
         AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
-        credit_real_balance(
-            analyst,
+        if capper_income > 0:
+            credit_real_balance(
+                analyst,
+                capper_income,
+                RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                note=f"Продление подписки @{subscriber.username}: {plan_title}",
+            )
+        credit_referral_income(
+            subscriber,
             price,
-            RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
-            note=f"Продление подписки @{subscriber.username}: {plan_title}",
+            REFERRAL_ACTION_SUBSCRIPTION,
+            note=f"Реферал @{subscriber.username}: продление подписки «{plan_title}»",
         )
     return subscription

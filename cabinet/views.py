@@ -38,6 +38,7 @@ from .paid_predictions import (
     profile_paid_predictions_enabled,
     subscribe_to_paid_predictions,
 )
+from .referrals import mark_referral_registration
 
 
 @require_http_methods(["GET", "POST"])
@@ -49,6 +50,7 @@ def register(request):
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             user = form.save()
+            mark_referral_registration(request, user)
         login(request, user)
         messages.success(request, "Регистрация завершена.")
         return redirect("cabinet:profile")

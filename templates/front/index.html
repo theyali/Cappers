@@ -11,7 +11,7 @@
         <div class="home-heading">
             <div>
                 <p class="home-eyebrow">Свежая лента</p>
-                <h1>Последние прогнозы</h1>
+                <h1>Последние <mark>прогнозы</mark></h1>
             </div>
             <div class="slider-actions" aria-label="Управление слайдером">
                 <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">←</button>
@@ -147,9 +147,9 @@
         <section class="experts-card" id="experts">
             <div class="experts-title-row">
                 <div>
-                    <h2>Топовые эксперты</h2>
+                    <h2>{% if top_experts_scope == "month" %}Топовые эксперты месяца{% else %}Топовые эксперты{% endif %}</h2>
                 </div>
-                <span class="experts-live">LIVE</span>
+                <span class="experts-live">{{ top_experts_scope_label|default:"LIVE" }}</span>
             </div>
 
             <div class="experts-list">
@@ -163,6 +163,7 @@
                         {% else %}
                             <span>{{ expert.initials }}</span>
                         {% endif %}
+                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges only %}
                     </div>
                     <div class="expert-copy">
                         <div class="expert-name-line">

@@ -201,7 +201,10 @@ h1,
 h2 {
     font-weight: 500;
 }
-
+mark{
+    color:var(--blue);
+    background: none;
+}
 .site-header {
     position: sticky;
     top: 0;
@@ -18205,7 +18208,7 @@ body:has(.predictions-scroll-page) .site-footer {
     width: fit-content;
     margin-top: 7px;
     color: #707072;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -18347,13 +18350,14 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-username {
     display: block;
-    margin-top: 9px;
+    margin-top: 2px;
     color: var(--muted);
+    font-size: 14px;
 }
 
 .expert-public-bio {
     max-width: 720px;
-    margin: 16px 0 0;
+    margin: 4px 0 0;
     color: var(--soft);
     line-height: 1.55;
 }
@@ -18429,12 +18433,12 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-social {
     min-width: 0;
-    min-height: 42px;
+    min-height: auto;
     display: inline-flex;
     align-items: center;
     gap: 9px;
-    padding: 0 11px;
-    border-radius: 12px;
+    padding: 6px 11px;
+    border-radius: 7px;
     color: var(--text);
     background: #2a2a2d;
     font-size: 12px;
@@ -18549,9 +18553,9 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-name-action {
     width: auto;
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 11px;
+    min-height: auto;
+    padding: 7px 14px;
+    border-radius: 4px;
     font-size: 12px;
     line-height: 1;
 }
@@ -20101,8 +20105,8 @@ body:has(.predictions-scroll-page) .site-footer {
     padding: 0 12px;
     border: 0;
     border-radius: 10px;
-    color: #07150d;
-    background: #39d27d;
+    color: white;
+    background: var(--green);
     font-size: 11px;
     font-weight: 800;
 }
@@ -28029,6 +28033,80 @@ body:has(.predictions-scroll-page) .site-footer {
     font-size: 9px;
 }
 
+.expert-leader-badges {
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+}
+
+.expert-leader-badge {
+    width: 21px;
+    height: 21px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, .3);
+}
+
+.expert-leader-badge svg {
+    width: 13px;
+    height: 13px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.expert-leader-badge.is-all-time {
+    color: #fff;
+    background: var(--blue);
+}
+
+.expert-leader-badge.is-month {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.expert-avatar .expert-leader-badges {
+    right: -8px;
+    bottom: -8px;
+}
+
+.expert-avatar .expert-leader-badge {
+    width: 18px;
+    height: 18px;
+    border-width: 1.5px;
+}
+
+.expert-avatar .expert-leader-badge svg {
+    width: 11px;
+    height: 11px;
+}
+
+.expert-public-avatar .expert-leader-badges {
+    right: -10px;
+    bottom: -9px;
+}
+
+.expert-public-avatar .expert-leader-badge {
+    width: 30px;
+    height: 30px;
+}
+
+.expert-public-avatar .expert-leader-badge svg {
+    width: 18px;
+    height: 18px;
+}
+
 /* Shared VIP avatar treatment. Keep the badge attached to the person, not the card. */
 .expert-public-shell.is-vip .expert-public-avatar,
 .prediction-expert-avatar.is-vip,
@@ -30834,4 +30912,3 @@ body.wiki-video-player-open {
 .wiki-dictionary-more {
     width: 100%;
 }
-

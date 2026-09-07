@@ -124,6 +124,9 @@ class RealBalanceTransaction(models.Model):
     class Kind(models.TextChoices):
         SUBSCRIPTION_INCOME = "subscription_income", "Доход с подписки"
         TOURNAMENT_PRIZE = "tournament_prize", "Приз турнира"
+        REFERRAL_SUBSCRIPTION = "referral_subscription", "Реферал: покупка подписки"
+        REFERRAL_TOURNAMENT = "referral_tournament", "Реферал: приз турнира"
+        REFERRAL_BALANCE_TOP_UP = "referral_balance_top_up", "Реферал: пополнение баланса"
         REAL_DEPOSIT = "real_deposit", "Реальное пополнение"
         VIRTUAL_TOP_UP = "virtual_top_up", "Пополнение виртуального баланса"
         WITHDRAWAL_REQUEST = "withdrawal_request", "Заявка на вывод"

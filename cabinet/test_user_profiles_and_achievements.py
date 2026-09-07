@@ -13,8 +13,8 @@ from .forms import AnalystProfileForm
 from .models import (
     AnalystFollow,
     AnalystProfile,
-    CapperReferralVisit,
     MatchPredictionRequest,
+    ReferralVisit,
     User,
 )
 
@@ -91,8 +91,8 @@ class UserProfileAndAchievementTests(TestCase):
                 password="safe-test-password",
                 role=User.Role.READER,
             )
-            CapperReferralVisit.objects.create(
-                analyst=self.capper,
+            ReferralVisit.objects.create(
+                referrer=self.capper,
                 visitor=visitor,
                 session_key=f"ref-session-{index}",
                 subscribed_at=now,

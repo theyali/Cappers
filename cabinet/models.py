@@ -15,6 +15,7 @@ DEFAULT_PAID_PLAN_PRESETS = (
     (7, "7 дней"),
     (30, "30 дней"),
     (90, "3 месяца"),
+    (180, "6 месяцев"),
 )
 
 
@@ -51,6 +52,13 @@ class User(AbstractUser):
         max_length=150,
         blank=True,
     )
+    referral_code = models.CharField(
+        "Реферальный код",
+        max_length=8,
+        unique=True,
+        default=generate_referral_code,
+        editable=False,
+    )
 
     @property
     def is_analyst(self) -> bool:
@@ -69,13 +77,6 @@ class AnalystProfile(models.Model):
         verbose_name="Пользователь",
     )
     display_name = models.CharField("Отображаемое имя", max_length=120, blank=True)
-    referral_code = models.CharField(
-        "Реферальный код",
-        max_length=8,
-        unique=True,
-        default=generate_referral_code,
-        editable=False,
-    )
     avatar = models.ImageField(
         "Аватар",
         upload_to="analysts/avatars/%Y/%m/",
@@ -358,18 +359,18 @@ def paid_subscription_expires_at(from_time=None, *, duration_days: int = 30):
     return (from_time or timezone.now()) + timedelta(days=duration_days)
 
 
-class CapperReferralVisit(models.Model):
-    analyst = models.ForeignKey(
+class ReferralVisit(models.Model):
+    referrer = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="capper_referral_visits",
-        verbose_name="Каппер",
+        related_name="referral_visits",
+        verbose_name="Реферер",
     )
     session_key = models.CharField("Сессия", max_length=40)
     visitor = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
-        related_name="capper_referral_clicks",
+        related_name="referral_clicks",
         verbose_name="Пользователь",
         null=True,
         blank=True,
@@ -377,33 +378,33 @@ class CapperReferralVisit(models.Model):
     visits_count = models.PositiveIntegerField("Переходы", default=1)
     first_seen_at = models.DateTimeField("Первый переход", auto_now_add=True)
     last_seen_at = models.DateTimeField("Последний переход", auto_now=True)
+    registered_at = models.DateTimeField("Зарегистрировался", null=True, blank=True)
     subscribed_at = models.DateTimeField("Подписался", null=True, blank=True)
 
     class Meta:
-        verbose_name = "Переход по реферальной ссылке каппера"
-        verbose_name_plural = "Переходы по реферальным ссылкам капперов"
+        verbose_name = "Переход по реферальной ссылке"
+        verbose_name_plural = "Переходы по реферальным ссылкам"
         ordering = ("-last_seen_at", "-id")
         constraints = [
             models.UniqueConstraint(
-                fields=("analyst", "session_key"),
-                name="unique_capper_referral_session",
+                fields=("referrer", "session_key"),
+                name="unique_referral_session",
             )
         ]
         indexes = [
-            models.Index(fields=("analyst", "first_seen_at"), name="capref_analyst_seen_idx"),
-            models.Index(fields=("analyst", "subscribed_at"), name="capref_analyst_sub_idx"),
-            models.Index(fields=("visitor", "analyst"), name="capref_visitor_analyst_idx"),
+            models.Index(fields=("referrer", "first_seen_at"), name="refvisit_ref_seen_idx"),
+            models.Index(fields=("referrer", "registered_at"), name="refvisit_ref_reg_idx"),
+            models.Index(fields=("referrer", "subscribed_at"), name="refvisit_ref_sub_idx"),
+            models.Index(fields=("visitor", "referrer"), name="refvisit_visitor_ref_idx"),
         ]
 
     def clean(self) -> None:
-        if self.analyst_id and self.analyst.role != User.Role.ANALYST:
-            raise ValidationError("Реферальная ссылка доступна только капперам.")
-        if self.visitor_id and self.visitor_id == self.analyst_id:
-            raise ValidationError("Переход самого каппера не учитывается как реферальный.")
+        if self.visitor_id and self.visitor_id == self.referrer_id:
+            raise ValidationError("Переход по своей ссылке не учитывается как реферальный.")
 
     def __str__(self) -> str:
         visitor = self.visitor.username if self.visitor_id else self.session_key
-        return f"{self.analyst} ← {visitor}"
+        return f"{self.referrer} ← {visitor}"
 
 
 class MatchPredictionRequest(models.Model):
