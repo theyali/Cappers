@@ -87,8 +87,15 @@
 </section>
 
 {% if home_wiki_videos %}
-<section class="home-wiki-videos" aria-label="Видео Wiki">
-    <div class="wiki-video-grid">
+<section class="home-wiki-videos home-articles" aria-labelledby="home-wiki-videos-title">
+    <header class="home-articles-head">
+        <div>
+            <p class="home-eyebrow">Обучение</p>
+            <h2 id="home-wiki-videos-title">Видео</h2>
+        </div>
+        <a class="home-best-experts-all" href="{% url 'front:wiki' %}#wiki-videos">Все видео</a>
+    </header>
+    <div class="wiki-video-grid home-wiki-videos-grid profile-fields-grid">
         {% for video in home_wiki_videos %}
             {% include "front/includes/_wiki_video_card.html" with video=video only %}
         {% endfor %}
