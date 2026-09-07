@@ -31,7 +31,9 @@
                                 {% if prediction.expert_avatar_url %}
                                     <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
                                 {% else %}
-                                    {{ prediction.expert_initials }}
+                                    <span class="forecast-avatar-initials">
+                                        {{ prediction.expert_initials }}
+                                    </span>
                                 {% endif %}
                             </span>
                             <div>
