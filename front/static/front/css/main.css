@@ -2071,10 +2071,7 @@ h2 {
     transition: transform .18s ease, background .18s ease;
 }
 
-.site-nav-actions .nav-wallet-topup:hover {
-    background: #fff200;
-    transform: translateY(-1px);
-}
+
 
 .site-nav-center a,
 .site-nav-actions a,
@@ -2092,7 +2089,11 @@ h2 {
     cursor: pointer;
     transition: background .18s ease, color .18s ease, transform .18s ease;
 }
-
+.site-nav-actions .nav-wallet-topup:hover {
+    background: #fff200;
+    transform: translateY(-1px);
+    color: var(--ink);
+}
 .site-nav-center a {
     gap: 7px;
 }
