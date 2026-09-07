@@ -12,10 +12,19 @@
             <div>
                 <p class="home-eyebrow">Свежая лента</p>
                 <h1>Последние <mark>прогнозы</mark></h1>
+                <p class="follow-copy">Актуальные прогнозы от проверенных экспертов. Следи, анализируй, выигрывай.</p>
             </div>
             <div class="slider-actions" aria-label="Управление слайдером">
-                <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">←</button>
-                <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">→</button>
+                <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -26,20 +35,25 @@
                 <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
                     <div class="forecast-topline">
                         <div class="forecast-expert">
-                            <span class="forecast-avatar">
+                            <span class="forecast-avatar" data-skeleton-image>
                                 {% capper_trust_badge prediction.expert_trust_index %}
                                 {% if prediction.expert_avatar_url %}
-                                    <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy">
+                                    <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" width="56" height="56">
                                 {% else %}
-                                    <span class="forecast-avatar-initials">
-                                        {{ prediction.expert_initials }}
-                                    </span>
+                                    <span class="forecast-avatar-initials">{{ prediction.expert_initials }}</span>
                                 {% endif %}
                             </span>
                             <div>
                                 <strong>
                                     {{ prediction.expert }}
-                                    {% if prediction.expert_verified %}<span class="forecast-verified">✓</span>{% endif %}
+                                    {% if prediction.expert_verified %}
+                                    <span class="forecast-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                        <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                            <path d="M10 1.8l2.05 1.35 2.45-.13 1.08 2.2 2.08 1.3-.38 2.43.86 2.3-1.68 1.79-.12 2.45-2.34.76-1.48 1.96L10 17.5l-2.52.71L6 16.25l-2.34-.76-.12-2.45-1.68-1.79.86-2.3-.38-2.43 2.08-1.3 1.08-2.2 2.45.13L10 1.8Z" fill="currentColor"/>
+                                            <path d="m6.8 10.1 2.05 2.05 4.35-4.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    {% endif %}
                                 </strong>
                                 <span>Эксперт КапперХаб</span>
                             </div>
@@ -47,7 +61,16 @@
                         <div class="forecast-meta">
                             <span>{{ prediction.sport }}</span>
                             <span class="forecast-league-meta">
-                                {% if prediction.league_logo %}<img src="{{ prediction.league_logo }}" alt="" loading="lazy">{% endif %}
+                                {% if prediction.league_logo %}
+                                <span data-skeleton-image>
+                                    <img src="{{ prediction.league_logo }}" alt="" loading="lazy" width="18" height="18">
+                                </span>
+                                {% else %}
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 19V9l4-3 4 3 4-5 4 3v12H4Z" fill="#2dbd87"/>
+                                    <path d="M8 19v-5m4 5v-7m4 7v-9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                                {% endif %}
                                 {{ prediction.league }}
                             </span>
                         </div>
@@ -55,21 +78,33 @@
 
                     <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
                         <div class="forecast-team forecast-team-home">
-                            <span class="forecast-team-logo">
+                            <span class="forecast-team-logo" data-skeleton-image>
                                 {% if prediction.home_logo %}
-                                    <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy">
+                                    <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" width="86" height="86">
                                 {% else %}
                                     {{ prediction.home_name|slice:":1" }}
                                 {% endif %}
                             </span>
                             <strong>{{ prediction.home_name }}</strong>
+                            <span class="forecast-league-meta">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                {{ prediction.league }}
+                            </span>
                         </div>
                         <span class="forecast-vs">VS</span>
                         <div class="forecast-team forecast-team-away">
                             <strong>{{ prediction.away_name }}</strong>
-                            <span class="forecast-team-logo">
+                            <span class="forecast-league-meta">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                                {{ prediction.league }}
+                            </span>
+                            <span class="forecast-team-logo" data-skeleton-image>
                                 {% if prediction.away_logo %}
-                                    <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy">
+                                    <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" width="86" height="86">
                                 {% else %}
                                     {{ prediction.away_name|slice:":1" }}
                                 {% endif %}
@@ -81,7 +116,39 @@
                         <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
                             <p class="forecast-label">Матч</p>
                             <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
-                            {% if prediction.note %}<p class="forecast-note">{{ prediction.note|truncatechars:190 }}</p>{% endif %}
+                            <div class="forecast-bottom forecast-bottom-real">
+                                <div class="forecast-time">
+                                    <span>
+                                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    <strong>{{ prediction.starts_at }}</strong>
+                                </div>
+                                <div class="forecast-time">
+                                    <span>
+                                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                        </svg>
+                                    </span>
+                                    <strong>{{ prediction.league }}</strong>
+                                </div>
+                                <span class="forecast-result is-{{ prediction.status_key }}">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                                        <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    {{ prediction.status_label }}
+                                </span>
+                            </div>
+                            <p class="forecast-note">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 19v-6m4 6V9m4 10V5m4 14v-8m4 8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                                Статистика игроков, форма и актуальные коэффициенты в одном месте
+                                <span aria-hidden="true">›</span>
+                            </p>
                         </a>
 
                         <div class="forecast-pick-card">
@@ -96,12 +163,17 @@
                     </div>
 
                     <div class="forecast-bottom forecast-bottom-real">
-                        <span class="forecast-result is-{{ prediction.status_key }}">{{ prediction.status_label }}</span>
-                        <div class="forecast-time">
-                            <span>Начало матча</span>
-                            <strong>{{ prediction.starts_at }}</strong>
-                        </div>
-                        <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">Посмотреть купон →</a>
+                        <span></span>
+                        <span></span>
+                        <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M5.5 8.5 8.5 5.5l2 2 6-6 6 6-6 6 2 2-3 3-2-2-6 6-6-6 6-6-2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Посмотреть купон
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M6 12h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
                     </div>
                 </article>
                 {% endfor %}
