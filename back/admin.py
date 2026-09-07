@@ -7,15 +7,78 @@ from .models import Bonus, Bookmaker, FooterButton, FooterLink, FooterLinkGroup,
 class BookmakerAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "category",
+        "is_reliable",
+        "is_popular",
+        "for_beginners",
         "show_on_home",
         "home_order",
         "bonus_text",
         "exclusive",
         "order",
     )
-    list_editable = ("show_on_home", "home_order", "exclusive", "order")
-    list_filter = ("show_on_home", "exclusive")
-    search_fields = ("name", "bonus_text", "description")
+    list_editable = (
+        "category",
+        "is_reliable",
+        "is_popular",
+        "for_beginners",
+        "show_on_home",
+        "home_order",
+        "exclusive",
+        "order",
+    )
+    list_filter = (
+        "category",
+        "show_on_home",
+        "is_reliable",
+        "is_popular",
+        "for_beginners",
+        "exclusive",
+    )
+    search_fields = ("name", "bonus_text", "description", "advantages")
+    fieldsets = (
+        (
+            "Основное",
+            {
+                "fields": (
+                    "name",
+                    "icon",
+                    "description",
+                    "link",
+                    "bonus_link",
+                    "bonus_text",
+                )
+            },
+        ),
+        (
+            "Каталог",
+            {
+                "fields": (
+                    "category",
+                    "advantages",
+                    "payout_speed",
+                    "payout_speed_note",
+                    "has_mobile_app",
+                    "mobile_ios",
+                    "mobile_android",
+                    "is_reliable",
+                    "is_popular",
+                    "for_beginners",
+                    "exclusive",
+                )
+            },
+        ),
+        (
+            "Показы",
+            {
+                "fields": (
+                    "show_on_home",
+                    "home_order",
+                    "order",
+                )
+            },
+        ),
+    )
     ordering = ("order", "id")
 
 

@@ -6,11 +6,28 @@ PERCENT_VALIDATORS = [MinValueValidator(0), MaxValueValidator(100)]
 
 
 class Bookmaker(models.Model):
+    class Category(models.TextChoices):
+        STANDARD = "standard", "Обычная"
+        RELIABLE = "reliable", "Надёжная"
+        POPULAR = "popular", "Популярная"
+        NEWBIE = "newbie", "Для новичков"
+
     name = models.CharField("Название", max_length=120)
     icon = models.ImageField("Иконка", upload_to="bookmakers/", blank=True)
     bonus_text = models.CharField("Текст бонуса", max_length=160, blank=True)
     description = models.CharField("Краткое описание", max_length=220, blank=True)
     link = models.URLField("Ссылка", max_length=500)
+    bonus_link = models.URLField("Ссылка кнопки бонуса", max_length=500, blank=True)
+    category = models.CharField("Категория", max_length=32, choices=Category.choices, default=Category.STANDARD)
+    advantages = models.TextField("Преимущества (по одному в строке)", blank=True)
+    payout_speed = models.CharField("Скорость выплат", max_length=120, blank=True)
+    payout_speed_note = models.CharField("Подпись скорости выплат", max_length=160, blank=True)
+    has_mobile_app = models.BooleanField("Есть мобильное приложение", default=False)
+    mobile_ios = models.BooleanField("iOS", default=False)
+    mobile_android = models.BooleanField("Android", default=False)
+    is_reliable = models.BooleanField("Надёжный", default=True)
+    is_popular = models.BooleanField("Популярный", default=False)
+    for_beginners = models.BooleanField("Для новичков", default=False)
     exclusive = models.BooleanField("Эксклюзивно", default=False)
     show_on_home = models.BooleanField("Показывать на главной", default=False)
     home_order = models.PositiveIntegerField("Порядок на главной", default=0, db_index=True)
@@ -23,6 +40,23 @@ class Bookmaker(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def advantages_list(self) -> list[str]:
+        return [line.strip() for line in self.advantages.splitlines() if line.strip()]
+
+    @property
+    def mobile_platforms_label(self) -> str:
+        platforms = []
+        if self.mobile_ios:
+            platforms.append("iOS")
+        if self.mobile_android:
+            platforms.append("Android")
+        return ", ".join(platforms)
+
+    @property
+    def effective_bonus_link(self) -> str:
+        return self.bonus_link or self.link
 
 
 class Bonus(models.Model):

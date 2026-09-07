@@ -6,58 +6,29 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="home-trusted-bookmakers" aria-labelledby="bookmakers-page-title">
-    <header class="home-trusted-bookmakers-head">
-        <div>
-            <p class="home-trusted-bookmakers-eyebrow">Каталог БК</p>
-            <h1 id="bookmakers-page-title">Букмекеры</h1>
-            <p class="home-trusted-bookmakers-copy">Каталог букмекеров КапперХаб с кратким описанием, предложениями и переходом на официальный сайт.</p>
+<section class="bookmakers-page">
+    <header class="bookmakers-hero" style="background-image: linear-gradient(90deg, rgba(17,17,19,.96) 0%, rgba(17,17,19,.82) 42%, rgba(17,17,19,.36) 68%, rgba(17,17,19,.9) 100%), url('{% static 'front/img/bks_bg.png' %}');">
+        <div class="bookmakers-hero-copy">
+            <p>Каталог БК</p>
+            <h1>Букмекеры</h1>
+            <span>Проверенные букмекерские конторы с выгодными бонусами, быстрыми выплатами и надежной репутацией. Выбирайте лучшего партнера и делайте ставки с преимуществом.</span>
         </div>
-        <span class="home-trusted-bookmakers-count" aria-label="Букмекеров: {{ bookmakers|length }}">{{ bookmakers|length }}</span>
+        <div class="bookmakers-hero-features">
+            <div>
+                <strong>Надежные БК</strong>
+                <span>Только проверенные бренды</span>
+            </div>
+            <div>
+                <strong>Выгодные бонусы</strong>
+                <span>Эксклюзивные предложения</span>
+            </div>
+            <div>
+                <strong>Быстрые выплаты</strong>
+                <span>Вывод без задержек</span>
+            </div>
+        </div>
     </header>
 
-    {% if bookmakers %}
-    <div class="home-trusted-bookmakers-list">
-        {% for bookmaker in bookmakers %}
-        <a
-            class="home-trusted-bookmaker"
-            href="{{ bookmaker.link }}"
-            target="_blank"
-            rel="noopener noreferrer nofollow sponsored"
-        >
-            <span class="home-trusted-bookmaker-logo{% if bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
-                {% if bookmaker.icon %}
-                    <img src="{{ bookmaker.icon.url }}" width="100" height="76" alt="{{ bookmaker.name }}" loading="lazy">
-                {% else %}
-                    <strong>{{ bookmaker.name|slice:":2"|upper }}</strong>
-                {% endif %}
-            </span>
-
-            <span class="home-trusted-bookmaker-body">
-                <span class="home-trusted-bookmaker-name">{{ bookmaker.name }}</span>
-                {% if bookmaker.description %}
-                <span class="home-trusted-bookmaker-description">{{ bookmaker.description }}</span>
-                {% endif %}
-                <span class="home-trusted-bookmaker-meta">
-                    {% if bookmaker.bonus_text %}
-                    <span class="home-trusted-bookmaker-bonus">{{ bookmaker.bonus_text }}</span>
-                    {% endif %}
-                    {% if bookmaker.exclusive %}
-                    <span class="home-trusted-bookmaker-exclusive">Эксклюзив</span>
-                    {% endif %}
-                </span>
-            </span>
-
-            <span class="home-trusted-bookmaker-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg>
-            </span>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="articles-empty">
-        <strong>Букмекеров пока нет</strong>
-    </div>
-    {% endif %}
+    {% include "front/includes/_home_bookmakers.html" with bookmakers=bookmakers show_empty=True %}
 </section>
 {% endblock %}
