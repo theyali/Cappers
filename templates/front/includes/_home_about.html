@@ -95,7 +95,7 @@
         </div>
         <a class="home-best-experts-all" href="{% url 'front:wiki' %}#wiki-videos">Все видео</a>
     </header>
-    <div class="wiki-video-grid home-wiki-videos-grid profile-fields-grid">
+    <div class="home-wiki-videos-grid profile-fields-grid">
         {% for video in home_wiki_videos %}
             {% include "front/includes/_wiki_video_card.html" with video=video only %}
         {% endfor %}
