@@ -3,6 +3,7 @@ from django.db.models import Prefetch
 from django.urls import NoReverseMatch, reverse
 
 from back.models import FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
+from front.models import WikiVideo
 
 
 def _route_url(name: str):
@@ -106,10 +107,25 @@ def website_settings(request):
     request.website_settings = settings
     view_name = request.resolver_match.view_name if request.resolver_match else ""
 
+    home_wiki_videos = []
+    if view_name == "front:index":
+        try:
+            home_wiki_videos = list(
+                WikiVideo.objects.filter(
+                    is_published=True,
+                    section__is_active=True,
+                )
+                .select_related("section")
+                .order_by("sort_order", "id")[:2]
+            )
+        except (OperationalError, ProgrammingError):
+            home_wiki_videos = []
+
     return {
         "website_settings": settings,
         "footer_link_groups": footer_groups,
         "footer_buttons": footer_buttons_by_kind,
         "breadcrumbs": _breadcrumbs_for_request(request),
         "hide_footer": view_name == "front:prediction_detail",
+        "home_wiki_videos": home_wiki_videos,
     }

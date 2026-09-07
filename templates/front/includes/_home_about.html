@@ -85,3 +85,14 @@
         </article>
     </div>
 </section>
+
+{% if home_wiki_videos %}
+<section class="home-wiki-videos" aria-label="Видео Wiki">
+    <div class="wiki-video-grid">
+        {% for video in home_wiki_videos %}
+            {% include "front/includes/_wiki_video_card.html" with video=video only %}
+        {% endfor %}
+    </div>
+</section>
+{% include "front/includes/_wiki_video_player.html" %}
+{% endif %}

@@ -1,0 +1,13 @@
+{% load static %}
+<div class="wiki-video-player" data-wiki-video-modal hidden aria-hidden="true">
+    <div class="wiki-video-player-shell" role="dialog" aria-modal="true" aria-labelledby="wiki-video-player-title">
+        <div class="wiki-video-player-head">
+            <strong id="wiki-video-player-title" data-wiki-video-player-title>Видео</strong>
+            <button class="wiki-video-player-close" type="button" data-wiki-video-close aria-label="Закрыть видео">×</button>
+        </div>
+        <div class="wiki-video-player-media">
+            <video controls playsinline preload="metadata" data-wiki-video-player></video>
+        </div>
+    </div>
+</div>
+<script src="{% static 'front/js/wiki-videos.js' %}" defer></script>

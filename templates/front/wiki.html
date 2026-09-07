@@ -49,56 +49,7 @@
         {% if wiki_videos %}
             <div class="wiki-video-grid">
                 {% for video in wiki_videos %}
-                    <article
-                        class="wiki-video-card"
-                        role="button"
-                        tabindex="0"
-                        data-wiki-video-card
-                        data-video-url="{{ video.video.url }}"
-                        data-video-title="{{ video.title }}"
-                        aria-label="Смотреть видео: {{ video.title }}"
-                    >
-                        <div class="wiki-video-preview" data-skeleton-image>
-                            {% if video.preview_image %}
-                                <img
-                                    src="{{ video.preview_image.url }}"
-                                    width="720"
-                                    height="540"
-                                    loading="lazy"
-                                    alt="{{ video.title }}"
-                                >
-                            {% else %}
-                                <span class="wiki-video-preview-placeholder" aria-hidden="true">
-                                    {% include "front/includes/_wiki_video_section_icon.html" with icon=video.section.icon %}
-                                </span>
-                            {% endif %}
-                            <span class="wiki-video-play" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="68" height="68" fill="currentColor">
-                                    <path d="M9 7.2v9.6L17 12 9 7.2Z"></path>
-                                </svg>
-                            </span>
-                            <span
-                                class="wiki-video-duration"
-                                data-wiki-video-duration
-                                {% if not video.duration %}hidden{% endif %}
-                            >{{ video.duration }}</span>
-                        </div>
-
-                        <div class="wiki-video-copy">
-                            <div class="wiki-video-meta">
-                                <span class="wiki-video-category">{{ video.section.name }}</span>
-                                <span class="wiki-video-type">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                                        <path d="M4 6h11a2 2 0 0 1 2 2v1.2l4-2.2v10l-4-2.2V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path>
-                                    </svg>
-                                    Видео
-                                </span>
-                            </div>
-
-                            <h3>{{ video.title }}</h3>
-                            <p>{{ video.description }}</p>
-                        </div>
-                    </article>
+                    {% include "front/includes/_wiki_video_card.html" with video=video only %}
                 {% endfor %}
             </div>
         {% else %}
@@ -184,21 +135,10 @@
     </section>
 </section>
 
-<div class="wiki-video-player" data-wiki-video-modal hidden aria-hidden="true">
-    <div class="wiki-video-player-shell" role="dialog" aria-modal="true" aria-labelledby="wiki-video-player-title">
-        <div class="wiki-video-player-head">
-            <strong id="wiki-video-player-title" data-wiki-video-player-title>Видео</strong>
-            <button class="wiki-video-player-close" type="button" data-wiki-video-close aria-label="Закрыть видео">×</button>
-        </div>
-        <div class="wiki-video-player-media">
-            <video controls playsinline preload="metadata" data-wiki-video-player></video>
-        </div>
-    </div>
-</div>
+{% include "front/includes/_wiki_video_player.html" %}
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous" defer></script>
-<script src="{% static 'front/js/wiki-videos.js' %}" defer></script>
 <script src="{% static 'front/js/wiki-terms.js' %}" defer></script>
 {% endblock %}
