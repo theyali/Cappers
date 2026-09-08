@@ -1,0 +1,22 @@
+{% load match_ui %}
+{% if team and team.country %}
+    <span class="home-match-country">
+        {% if team.country.logo %}
+            <img src="{{ team.country.logo }}" alt="">
+        {% else %}
+            {{ team.country|country_flag }}
+        {% endif %}
+    </span>
+{% elif team|team_gender_key %}
+    <span class="home-match-country is-gender">
+        {% with gender=team|team_gender_key %}
+            {% if gender == "male" %}
+                <img src="/static/front/img/mens.png" alt="">
+            {% elif gender == "female" %}
+                <img src="/static/front/img/womens.png" alt="">
+            {% elif gender == "mix" %}
+                <img src="/static/front/img/mix.png" alt="">
+            {% endif %}
+        {% endwith %}
+    </span>
+{% endif %}

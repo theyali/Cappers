@@ -44,8 +44,8 @@ def match_list(request):
     matches = Match.objects.select_related(
         "sport",
         "league__country",
-        "home_team",
-        "away_team",
+        "home_team__country",
+        "away_team__country",
         "odds",
     )
     if active_scope != "all":
@@ -114,8 +114,8 @@ def match_detail(request, slug: str):
         Match.objects.select_related(
             "sport",
             "league__country",
-            "home_team",
-            "away_team",
+            "home_team__country",
+            "away_team__country",
             "odds",
         ),
         slug=slug,

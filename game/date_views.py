@@ -113,7 +113,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
     base_matches = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
 
     matches_queryset = base_matches.select_related(
-        "sport", "league__country", "home_team", "away_team", "odds"
+        "sport", "league__country", "home_team__country", "away_team__country", "odds"
     )
 
     if active_scope == WATCHED_SCOPE:

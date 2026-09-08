@@ -163,8 +163,8 @@ def build_popular_matches(limit: int = 5) -> list:
             "sport",
             "league",
             "league__country",
-            "home_team",
-            "away_team",
+            "home_team__country",
+            "away_team__country",
             "odds",
         )
         .annotate(

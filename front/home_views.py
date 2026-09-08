@@ -24,9 +24,9 @@ from notifications.models import MatchWatch
 HOME_PREDICTIONS_LIMIT = 8
 HOME_BEST_PREDICTIONS_LIMIT = 10
 HOME_ARTICLES_LIMIT = 6
-HOME_MATCHES_LIMIT = 12
+HOME_MATCHES_LIMIT = 9
 HOME_EXPERTS_LIMIT = 8
-HOME_TOP_EXPERTS_LIMIT = 7
+HOME_TOP_EXPERTS_LIMIT = 8
 HOME_MATCH_CANDIDATE_LIMIT = 120
 
 
@@ -317,8 +317,8 @@ def _home_match_queryset(now):
         .select_related(
             "sport",
             "league__country",
-            "home_team",
-            "away_team",
+            "home_team__country",
+            "away_team__country",
             "odds",
         )
         .annotate(

@@ -160,10 +160,89 @@
         if (!option || option.disabled) return;
 
         const card = option.closest("[data-match-card]");
-        const matchLink = card?.querySelector(".match-card-main");
+        const matchLink = card?.querySelector(".home-match-main, .match-card-main");
         if (!matchLink?.href) return;
 
         window.location.assign(matchLink.href);
+    });
+})();
+
+(() => {
+    const sliders = document.querySelectorAll("[data-home-card-slider]");
+    if (!sliders.length) return;
+
+    sliders.forEach((slider) => {
+        const windowNode = slider.querySelector("[data-home-card-window]");
+        const track = slider.querySelector("[data-home-card-track]");
+        const previousButton = slider.querySelector("[data-home-card-prev]");
+        const nextButton = slider.querySelector("[data-home-card-next]");
+        const dotsNode = slider.querySelector("[data-home-card-dots]");
+        if (!windowNode || !track) return;
+
+        const cards = Array.from(track.children);
+        if (cards.length < 2) return;
+
+        let pages = [];
+        const scrollNode = track;
+
+        const cardLeft = (card) => card.offsetLeft - track.offsetLeft;
+
+        const getGap = () => {
+            const styles = window.getComputedStyle(track);
+            return Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+        };
+
+        const buildPages = () => {
+            const cardWidth = cards[0]?.getBoundingClientRect().width || 1;
+            const perPage = Math.max(1, Math.floor((scrollNode.clientWidth + getGap()) / (cardWidth + getGap())));
+            pages = [];
+            for (let index = 0; index < cards.length; index += perPage) pages.push(index);
+
+            if (dotsNode) {
+                dotsNode.innerHTML = pages.map((_, index) => (
+                    `<button type="button" data-home-card-dot="${index}" aria-label="Страница матчей ${index + 1}"></button>`
+                )).join("");
+            }
+        };
+
+        const activePage = () => {
+            const current = scrollNode.scrollLeft;
+            let active = 0;
+            pages.forEach((cardIndex, pageIndex) => {
+                if (cardLeft(cards[cardIndex]) - 4 <= current) active = pageIndex;
+            });
+            return active;
+        };
+
+        const render = () => {
+            const active = activePage();
+            previousButton?.toggleAttribute("disabled", active <= 0);
+            nextButton?.toggleAttribute("disabled", active >= pages.length - 1);
+            dotsNode?.querySelectorAll("button").forEach((dot, index) => {
+                dot.classList.toggle("is-active", index === active);
+            });
+        };
+
+        const scrollToPage = (pageIndex) => {
+            const card = cards[pages[Math.max(0, Math.min(pageIndex, pages.length - 1))]];
+            if (!card) return;
+            scrollNode.scrollTo({ left: cardLeft(card), behavior: "smooth" });
+        };
+
+        previousButton?.addEventListener("click", () => scrollToPage(activePage() - 1));
+        nextButton?.addEventListener("click", () => scrollToPage(activePage() + 1));
+        dotsNode?.addEventListener("click", (event) => {
+            const dot = event.target.closest("[data-home-card-dot]");
+            if (dot) scrollToPage(Number(dot.dataset.homeCardDot || 0));
+        });
+        scrollNode.addEventListener("scroll", () => window.requestAnimationFrame(render), { passive: true });
+        window.addEventListener("resize", () => {
+            buildPages();
+            render();
+        });
+
+        buildPages();
+        render();
     });
 })();
 

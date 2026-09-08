@@ -2,7 +2,7 @@
 {% match_coupon_options match as coupon_quick %}
 {% match_card_status match as card_status %}
 
-<article class="match-card" data-match-card data-match-id="{{ match.id }}">
+<article class="match-card is-{{ card_status.state }}" data-match-card data-match-id="{{ match.id }}">
     <div class="match-card-sport-label">
         <span class="match-card-sport-copy">
             <span class="matches-sport-icon" aria-hidden="true">
@@ -68,6 +68,7 @@
                     {% else %}
                         <span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>
                     {% endif %}
+                    {% include "game/includes/_team_country_or_gender_badge.html" with team=match.home_team only %}
                 </span>
                 <strong data-home-name>{{ match.home_team_name|default:"Хозяева" }}</strong>
             </div>
@@ -92,6 +93,7 @@
                     {% else %}
                         <span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>
                     {% endif %}
+                    {% include "game/includes/_team_country_or_gender_badge.html" with team=match.away_team only %}
                 </span>
                 <strong data-away-name>{{ match.away_team_name|default:"Гости" }}</strong>
             </div>

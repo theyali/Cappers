@@ -232,8 +232,8 @@ def match_odds(request, slug: str, match_id: int):
         Match.objects.select_related(
             "sport",
             "league__country",
-            "home_team",
-            "away_team",
+            "home_team__country",
+            "away_team__country",
             "odds",
         ),
         pk=match_id,
@@ -358,7 +358,7 @@ class MatchQuery:
             watched_annotation = Value(False, output_field=BooleanField())
 
         return (
-            queryset.select_related("sport", "league__country", "home_team", "away_team", "odds")
+            queryset.select_related("sport", "league__country", "home_team__country", "away_team__country", "odds")
             .annotate(
                 is_watched=watched_annotation,
                 scope_order=Case(

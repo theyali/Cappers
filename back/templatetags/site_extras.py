@@ -135,7 +135,7 @@ def home_bookmakers():
     bookmakers = list(
         Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")
     )
-    return {"bookmakers": bookmakers}
+    return {"bookmakers": bookmakers[:3], "is_home_bookmakers": True}
 
 
 @register.inclusion_tag("front/includes/_hot_matches_sidebar.html")

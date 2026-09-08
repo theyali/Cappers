@@ -269,19 +269,19 @@
     </header>
 
     {% if best_predictions %}
-    <div class="content-table-view predictions-table-view predictions-table-view-flat">
-        <div class="content-table-scroll">
-            <div class="content-table-head prediction-table-head" aria-hidden="true">
+    <div class="home-best-predictions-table">
+        <div class="home-best-predictions-scroll">
+            <div class="home-best-predictions-head-row" aria-hidden="true">
                 <span>Матч</span>
                 <span>Каппер</span>
                 <span>Прогноз</span>
                 <span>КФ</span>
                 <span>Статус</span>
-                <span></span>
+                <span>Действия</span>
             </div>
-            <div class="prediction-table-body">
+            <div class="home-best-predictions-body">
                 {% for prediction in best_predictions %}
-                    {% include "front/includes/_prediction_table_row.html" %}
+                    {% include "front/includes/_home_best_prediction_row.html" %}
                 {% endfor %}
             </div>
         </div>
@@ -294,22 +294,33 @@
     {% endif %}
 </section>
 
-<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title">
+<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title" data-home-card-slider>
     <header class="home-articles-head">
         <div>
             <p class="home-eyebrow">Прематч</p>
             <h2 id="home-important-matches-title">Важные матчи</h2>
             <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
         </div>
-        <a class="home-best-experts-all" href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
+        <div class="home-slider-controls">
+            <a class="home-best-experts-all" href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
+            {% if important_matches|length > 3 %}
+            <button class="home-card-slider-arrow" type="button" data-home-card-prev aria-label="Предыдущие матчи">‹</button>
+            <button class="home-card-slider-arrow" type="button" data-home-card-next aria-label="Следующие матчи">›</button>
+            {% endif %}
+        </div>
     </header>
 
     {% if important_matches %}
-    <div class="matches-grid-home">
-        {% for match in important_matches %}
-            {% include "game/_home_match_card.html" with match=match request=request website_settings=website_settings only %}
-        {% endfor %}
+    <div class="home-card-slider-window" data-home-card-window>
+        <div class="home-card-slider-track" data-home-card-track>
+            {% for match in important_matches %}
+                {% include "game/includes/_match_card_home.html" with match=match request=request website_settings=website_settings can_write_coupon=can_write_coupon only %}
+            {% endfor %}
+        </div>
     </div>
+    {% if important_matches|length > 3 %}
+    <div class="home-card-slider-dots" data-home-card-dots aria-label="Навигация по матчам"></div>
+    {% endif %}
     {% else %}
     <div class="matches-empty">
         <h2>Прематчей пока нет</h2>

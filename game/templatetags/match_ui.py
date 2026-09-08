@@ -17,6 +17,34 @@ _HOCKEY_WORDS = ("hockey", "ice-hockey", "ice_hockey")
 _TENNIS_WORDS = ("tennis",)
 
 
+@register.filter
+def country_flag(value) -> str:
+    raw_data = getattr(value, "raw_data", None)
+    raw_code = ""
+    if isinstance(raw_data, dict):
+        raw_code = raw_data.get("code") or raw_data.get("iso") or raw_data.get("iso2") or ""
+    code = str(getattr(value, "code", "") or raw_code or value or "").strip().upper()
+    if len(code) != 2 or not code.isalpha():
+        return ""
+    return "".join(chr(127397 + ord(char)) for char in code)
+
+
+@register.filter
+def team_gender_key(team) -> str:
+    raw_data = getattr(team, "raw_data", None)
+    raw_gender = ""
+    if isinstance(raw_data, dict):
+        raw_gender = raw_data.get("gender") or ""
+    gender = str(getattr(team, "gender", "") or raw_gender).strip().lower()
+    if gender in {"men", "male", "m", "man", "мужчины", "мужской"}:
+        return "male"
+    if gender in {"women", "female", "w", "f", "woman", "женщины", "женский"}:
+        return "female"
+    if gender in {"mix", "mixed", "mixed_double", "mixed_doubles", "смешанный"}:
+        return "mix"
+    return ""
+
+
 def _minute_value(match) -> int | None:
     raw_label = str(getattr(match, "live_minute_label", "") or "").strip()
     found = _MINUTE_RE.search(raw_label)

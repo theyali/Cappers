@@ -41,8 +41,8 @@ def match_table_odds(request):
         for match in Match.objects.filter(pk__in=ids).select_related(
             "sport",
             "league__country",
-            "home_team",
-            "away_team",
+            "home_team__country",
+            "away_team__country",
             "odds",
         )
     }

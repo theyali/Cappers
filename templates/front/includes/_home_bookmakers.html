@@ -1,6 +1,16 @@
 {% if bookmakers or show_empty %}
-<section class="home-trusted-bookmakers bookmakers-catalog" aria-label="Каталог букмекеров">
+<section class="home-trusted-bookmakers bookmakers-catalog{% if is_home_bookmakers %} is-home-bookmakers{% endif %}" aria-label="Каталог букмекеров">
     {% url 'front:bookmakers' as bookmakers_url %}
+    {% if is_home_bookmakers %}
+    <header class="home-bookmakers-hero">
+        <div>
+            <p class="home-bookmakers-eyebrow">Букмекеры</p>
+            <h2>Лучшие бонусы от проверенных букмекеров</h2>
+            <p>Сравнивайте условия, выбирайте лучший бонус и начинайте играть с преимуществом</p>
+        </div>
+        <a class="home-bookmakers-all-link" href="{{ bookmakers_url }}">Смотреть всех букмекеров <span aria-hidden="true">→</span></a>
+    </header>
+    {% else %}
     <div class="bookmakers-filter-bar">
         <div class="bookmakers-filter-group">
             <span>Фильтры:</span>
@@ -24,6 +34,7 @@
         </form>
         <strong class="home-trusted-bookmakers-count" aria-label="Найдено букмекеров: {{ bookmakers|length }}">Найдено {{ bookmakers|length }} букмекера</strong>
     </div>
+    {% endif %}
 
     <div class="bookmakers-catalog-head" aria-hidden="true">
         <span>Букмекер</span>
@@ -31,7 +42,7 @@
         <span>Основные преимущества</span>
         <span>Скорость выплат</span>
         <span>Мобильное приложение</span>
-        <span></span>
+        <span>Действия</span>
     </div>
 
     {% if bookmakers %}
@@ -97,7 +108,7 @@
 
             <div class="home-trusted-bookmaker-actions">
                 <a class="bookmaker-bonus-button" href="{{ bookmaker.effective_bonus_link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">Забрать бонус</a>
-                <a class="bookmaker-main-link" href="{{ bookmaker.link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">Перейти на сайт</a>
+                <a class="bookmaker-main-link" href="{{ bookmaker.link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">Перейти на сайт <span aria-hidden="true">→</span></a>
             </div>
         </article>
         {% endfor %}
@@ -106,6 +117,12 @@
     <div class="articles-empty">
         <strong>Букмекеров для этого фильтра пока нет</strong>
     </div>
+    {% endif %}
+    {% if is_home_bookmakers %}
+    <footer class="home-bookmakers-note">
+        <strong>Только проверенные букмекеры</strong>
+        <span>Актуальные бонусы, честные обзоры, реальные отзывы</span>
+    </footer>
     {% endif %}
 </section>
 {% endif %}

@@ -1,0 +1,109 @@
+{% load capper_trust %}
+<article
+    class="home-best-prediction-row{% if prediction.is_own %} is-own-prediction{% endif %}"
+    data-prediction-card="{{ prediction.coupon.id }}"
+    data-analyst-id="{{ prediction.coupon.author_id }}"
+    data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+    onclick="if (!event.target.closest('a, button')) window.location.href=this.dataset.couponUrl;"
+>
+    <a class="home-best-prediction-match" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <span class="home-best-prediction-teams" aria-hidden="true">
+            <span class="home-best-team-logo">
+                {% if prediction.match.home_team_logo %}
+                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                {% else %}
+                    {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                {% endif %}
+            </span>
+            <span class="home-best-team-logo">
+                {% if prediction.match.away_team_logo %}
+                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                {% else %}
+                    {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                {% endif %}
+            </span>
+        </span>
+        <span class="home-best-prediction-match-copy">
+            <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
+            <span>
+                {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m H:i" }}{% endif %}
+                {% if prediction.match.score %} · {{ prediction.match.score }}{% endif %}
+            </span>
+        </span>
+    </a>
+
+    <a class="home-best-prediction-expert" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
+        <span class="home-best-prediction-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+            {% capper_trust_badge prediction.expert_trust_index %}
+            {% if prediction.expert_avatar_url %}
+                <img src="{{ prediction.expert_avatar_url }}" width="48" height="48" loading="lazy" alt="">
+            {% elif prediction.coupon.author.avatar %}
+                <img src="{{ prediction.coupon.author.avatar.url }}" width="48" height="48" loading="lazy" alt="">
+            {% else %}
+                {{ prediction.expert_initials }}
+            {% endif %}
+        </span>
+        <strong>{{ prediction.expert_name }}</strong>
+        {% if prediction.expert_verified %}
+        <span class="capper-verified-badge home-best-prediction-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+            </svg>
+        </span>
+        {% endif %}
+        {% if prediction.coupon.author.analyst_profile.is_vip %}
+        <span class="home-best-prediction-vip">VIP</span>
+        {% endif %}
+    </a>
+
+    <a class="home-best-prediction-pick" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <span>{{ prediction.market }}</span>
+        <strong>{{ prediction.selection }}</strong>
+    </a>
+
+    <a class="home-best-prediction-coefficient" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        {{ prediction.coefficient|floatformat:2 }}
+    </a>
+
+    <span class="home-best-prediction-status{% if prediction.state_status == 'win' %} is-win{% elif prediction.state_status == 'lose' %} is-lose{% elif prediction.state_status == 'refund' %} is-refund{% endif %}">
+        {% if prediction.state_status == 'win' %}Выигрыш{% elif prediction.state_status == 'lose' %}Проигрыш{% elif prediction.state_status == 'refund' %}Возврат{% else %}Ожидает{% endif %}
+    </span>
+
+    <div class="home-best-prediction-actions" aria-label="Действия с прогнозом">
+        <button
+            class="home-best-prediction-action prediction-like{% if prediction.is_liked %} is-active{% endif %}"
+            type="button"
+            data-prediction-reaction
+            data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+            data-url="{% url 'front:prediction_like' prediction_id=prediction.coupon.id %}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            aria-pressed="{% if prediction.is_liked %}true{% else %}false{% endif %}"
+            {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
+            title="{% if prediction.is_own %}Нельзя лайкать свой прогноз{% elif prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3"></path></svg>
+        </button>
+        <button
+            class="home-best-prediction-action prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
+            type="button"
+            data-prediction-reaction
+            data-authenticated="{% if request.user.is_authenticated %}true{% else %}false{% endif %}"
+            data-url="{% url 'front:prediction_favorite' prediction_id=prediction.coupon.id %}"
+            data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
+            aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
+            {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
+            title="{% if prediction.is_own %}Нельзя сохранять свой прогноз в избранное{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-3.5L6 20V4Z"></path></svg>
+        </button>
+        <a
+            class="home-best-prediction-action home-best-prediction-open"
+            href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            title="Открыть прогноз"
+            aria-label="Открыть прогноз"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
+        </a>
+    </div>
+</article>

@@ -1,0 +1,105 @@
+{% load coupon_options match_ui %}
+{% match_coupon_options match as coupon_quick %}
+{% match_card_status match as card_status %}
+
+<article class="home-match-card is-{{ card_status.state }}" data-match-card data-match-id="{{ match.id }}">
+    <div class="home-match-card-top">
+        <span class="home-match-sport">
+            <span class="matches-sport-icon" aria-hidden="true">
+                <span class="match-card-sport-icon-inner">
+                    {% if match.sport_code == 'football' %}
+                        {% include "front/svgs/soccer.svg" %}
+                    {% elif match.sport_code == 'hockey' %}
+                        {% include "front/svgs/hockey.svg" %}
+                    {% elif match.sport_code == 'basketball' %}
+                        {% include "front/svgs/basketball.svg" %}
+                    {% elif match.sport_code == 'tennis' %}
+                        {% include "front/svgs/tennis.svg" %}
+                    {% else %}
+                        {% include "front/svgs/nav-matches.svg" %}
+                    {% endif %}
+                </span>
+            </span>
+            <span>{% if match.sport %}{{ match.sport.name_ru|default:match.sport.name }}{% else %}Футбол{% endif %}</span>
+        </span>
+
+        <span class="home-match-bookmaker"{% if not website_settings.match_bookmaker %} aria-hidden="true"{% endif %}>
+            {% include "front/includes/_bookmaker_link.html" with bookmaker=website_settings.match_bookmaker variant="compact" only %}
+        </span>
+
+        <span class="match-status match-status-{{ card_status.state }}">
+            {% if card_status.state == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
+            <span>{{ card_status.label }}</span>
+        </span>
+    </div>
+
+    <a class="home-match-main" href="{{ match.get_absolute_url }}">
+        <div class="home-match-league">
+            <span class="home-match-league-logo">
+                {% if match.league and match.league.logo %}
+                    <img src="{{ match.league.logo }}" alt="" loading="lazy">
+                {% else %}
+                    {{ match.league_name|default:"Л"|slice:":1" }}
+                {% endif %}
+            </span>
+            <span>
+                <strong>{{ match.league_name|default:"Лига не указана" }}</strong>
+                {% if match.league_country %}<small>{{ match.league_country }}</small>{% endif %}
+            </span>
+        </div>
+
+        <div class="home-match-teams">
+            <span class="home-match-team">
+                <span class="home-match-team-logo">
+                    {% if match.home_team_logo %}
+                        <img src="{{ match.home_team_logo }}" alt="{{ match.home_team_name }}" loading="lazy" class='home-about-team-logo-img'>
+                    {% else %}
+                        {{ match.home_team_name|default:"Х"|slice:":1" }}
+                    {% endif %}
+                    {% include "game/includes/_team_country_or_gender_badge.html" with team=match.home_team only %}
+                </span>
+                <strong>{{ match.home_team_name|default:"Хозяева" }}</strong>
+            </span>
+
+            <span class="home-match-score">
+                {% if match.score %}<strong>{{ match.score }}</strong>{% else %}<strong>VS</strong>{% endif %}
+                {% if match.sync_scope == 'live' %}
+                    <small>{{ match|live_status_label }}</small>
+                {% elif match.starts_at %}
+                    <small>{{ match.starts_at|date:"d.m H:i" }}</small>
+                {% endif %}
+            </span>
+
+            <span class="home-match-team">
+                <span class="home-match-team-logo">
+                    {% if match.away_team_logo %}
+                        <img src="{{ match.away_team_logo }}" alt="" loading="lazy" class='home-about-team-logo-img'>
+                    {% else %}
+                        {{ match.away_team_name|default:"Г"|slice:":1" }}
+                    {% endif %}
+                    {% include "game/includes/_team_country_or_gender_badge.html" with team=match.away_team only %}
+                </span>
+                <strong>{{ match.away_team_name|default:"Гости" }}</strong>
+            </span>
+        </div>
+    </a>
+
+    <a class="home-match-predictions-button" href="{{ match.get_absolute_url }}">Посмотреть прогнозы <span aria-hidden="true">→</span></a>
+
+    <div class="home-match-odds" aria-label="Коэффициенты матча">
+        {% for option in coupon_quick.items|slice:":3" %}
+        <button
+            class="home-match-odd match-bet-option{% if not option.coefficient or not can_write_coupon or match.sync_scope != 'prematch' %} is-locked-odd{% endif %}"
+            type="button"
+            {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
+                data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-coefficient="{{ option.coefficient }}"
+            {% else %}
+                disabled aria-disabled="true"
+            {% endif %}
+        >
+            <span>{{ option.label }}</span>
+            {% if option.coefficient %}<strong>{{ option.coefficient }}</strong>{% endif %}
+        </button>
+        {% endfor %}
+    </div>
+</article>
