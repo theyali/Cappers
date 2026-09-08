@@ -277,7 +277,6 @@
         gap: 10px;
         overflow: hidden;
     }
-
     .site-nav .brand {
         position: static;
         order: 1;
@@ -2277,7 +2276,6 @@ summary:focus-visible,
     .matches-table-view .content-sport-summary {
         display: none !important;
     }
-
     .matches-table-view .content-sport-accordion,
     .matches-table-view .content-sport-body,
     .matches-table-view .content-league-accordion,
@@ -2677,7 +2675,6 @@ summary:focus-visible,
     .tournament-prize-grid {
         grid-template-columns: 1fr;
     }
-
     .tournament-predict-page {
         width: min(100% - 20px, 720px);
     }
@@ -3544,5 +3541,615 @@ body.expert-public-details-open {
 
     .slider-footer {
         padding: 16px 8px 0;
+    }
+}
+
+/* Home best experts podium */
+.home-best-experts-v2-all-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+}
+
+.home-best-experts-stage {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(460px, .92fr);
+    align-items: end;
+    gap: 22px;
+}
+
+.home-best-experts-podium {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px;
+    padding-top: 64px;
+}
+
+.home-best-expert-podium-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+}
+
+.home-best-expert-podium-card.is-rank-1 { order: 2; }
+.home-best-expert-podium-card.is-rank-2 { order: 1; }
+.home-best-expert-podium-card.is-rank-3 { order: 3; }
+
+.home-best-expert-podium-link {
+    position: relative;
+    min-width: 0;
+    min-height: 404px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 14px 78px;
+    border-radius: 20px 20px 8px 8px;
+    color: var(--text);
+    background: var(--panel);
+    text-align: center;
+}
+
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-podium-link {
+    min-height: 454px;
+}
+
+.home-best-expert-crown {
+    width: 72px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    margin: -58px auto 4px;
+}
+
+.home-best-expert-crown img {
+    width: 72px;
+    height: 58px;
+    display: block;
+    object-fit: contain;
+}
+
+.home-best-expert-rank-badge {
+    min-width: 42px;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.home-best-expert-podium-card.is-rank-2 .home-best-expert-rank-badge {
+    background: #cfd5e4;
+}
+
+.home-best-expert-podium-card.is-rank-3 .home-best-expert-rank-badge {
+    background: #e79a57;
+}
+
+.home-best-expert-portrait {
+    position: relative;
+    width: 100%;
+    min-height: 126px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 9px;
+}
+
+.home-best-expert-laurel {
+    position: absolute;
+    top: 50%;
+    width: 70px;
+    height: 132px;
+    display: grid;
+    place-items: center;
+    opacity: .34;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.home-best-expert-laurel.is-left { left: 2px; }
+.home-best-expert-laurel.is-right { right: 2px; }
+
+.home-best-expert-laurel img {
+    width: 70px;
+    height: 132px;
+    display: block;
+    object-fit: contain;
+}
+
+.home-best-expert-avatar,
+.home-best-expert-row-avatar {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--yellow);
+    font-weight: 900;
+}
+
+.home-best-expert-avatar {
+    position: relative;
+    z-index: 2;
+    width: 104px;
+    height: 104px;
+    font-size: 25px;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .82);
+}
+
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-avatar {
+    width: 116px;
+    height: 116px;
+    box-shadow: 0 0 0 4px var(--yellow);
+}
+
+.home-best-expert-avatar img,
+.home-best-expert-row-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.home-best-expert-verified {
+    position: absolute;
+    z-index: 3;
+    right: calc(50% - 61px);
+    bottom: 8px;
+}
+
+.home-best-expert-roi {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 9px;
+    color: #fff;
+    background: #5ea731;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.home-best-expert-roi.is-negative {
+    background: var(--danger);
+}
+
+.home-best-expert-name {
+    max-width: 100%;
+    overflow: hidden;
+    margin-top: 10px;
+    color: var(--text);
+    font-size: 20px;
+    line-height: 1.12;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-name {
+    font-size: 23px;
+}
+
+.home-best-expert-username {
+    max-width: 100%;
+    overflow: hidden;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.home-best-expert-achievements,
+.home-best-expert-row-achievements {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.home-best-expert-achievements {
+    min-height: 38px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.home-best-expert-achievement {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #171719;
+}
+
+.home-best-expert-achievement img {
+    width: 27px;
+    height: 27px;
+    display: block;
+    object-fit: contain;
+}
+
+.home-best-expert-stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+.home-best-expert-stats > span {
+    min-width: 0;
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 12px;
+    background: #171719;
+}
+
+.home-best-expert-stats small,
+.home-best-expert-row-stat small {
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.home-best-expert-stats strong {
+    color: var(--text);
+    font-size: 21px;
+}
+
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-stats > span:first-child strong {
+    color: var(--blue);
+}
+
+.home-best-expert-follow,
+.home-best-expert-row-follow {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    background: var(--blue);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.home-best-expert-follow {
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 24px);
+    margin: -62px auto 12px;
+}
+
+.home-best-expert-follow.is-active,
+.home-best-expert-row-follow.is-active,
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-follow {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.home-best-expert-pedestal {
+    height: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px 8px 0 0;
+    background: #1b1b1d;
+    box-shadow: inset 0 2px rgba(255, 255, 255, .05);
+}
+
+.home-best-expert-podium-card.is-rank-1 .home-best-expert-pedestal { height: 112px; }
+.home-best-expert-podium-card.is-rank-2 .home-best-expert-pedestal { height: 90px; }
+.home-best-expert-podium-card.is-rank-3 .home-best-expert-pedestal { height: 70px; }
+
+.home-best-expert-pedestal span {
+    color: var(--yellow);
+    font-size: 34px;
+    font-weight: 900;
+}
+
+.home-best-expert-podium-card.is-rank-2 .home-best-expert-pedestal span { color: #cfd5e4; }
+.home-best-expert-podium-card.is-rank-3 .home-best-expert-pedestal span { color: #e79a57; }
+
+.home-best-experts-runners {
+    min-width: 0;
+    display: grid;
+    gap: 9px;
+    align-self: end;
+}
+
+.home-best-expert-row {
+    min-width: 0;
+    min-height: 104px;
+    display: grid;
+    grid-template-columns: 34px minmax(135px, 1.2fr) minmax(128px, .9fr) 58px 66px minmax(106px, auto);
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 15px;
+    background: var(--panel);
+}
+
+.home-best-expert-row-rank {
+    color: var(--text);
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.home-best-expert-row-profile {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-best-expert-row-avatar {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+    font-size: 16px;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .76);
+}
+
+.home-best-expert-row-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.home-best-expert-row-name {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.home-best-expert-row-name strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text);
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.home-best-expert-row-copy > span:last-child {
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 10px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.home-best-expert-row-performance {
+    min-width: 0;
+    display: grid;
+    justify-items: start;
+    gap: 7px;
+}
+
+.home-best-expert-row-achievements {
+    justify-content: flex-start;
+    gap: 4px;
+}
+
+.home-best-expert-row-achievements .home-best-expert-achievement {
+    width: 29px;
+    height: 29px;
+}
+
+.home-best-expert-row-achievements .home-best-expert-achievement img {
+    width: 25px;
+    height: 25px;
+}
+
+.home-best-expert-row-stat {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.home-best-expert-row-stat strong {
+    color: var(--text);
+    font-size: 16px;
+}
+
+.home-best-expert-row-follow {
+    width: 100%;
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+.home-best-experts-proof {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(280px, 1.5fr) repeat(3, minmax(160px, .65fr));
+    align-items: center;
+    gap: 0;
+    padding-top: 20px;
+    box-shadow: inset 0 1px rgba(255, 255, 255, .08);
+}
+
+.home-best-experts-proof-lead,
+.home-best-experts-proof-item {
+    min-width: 0;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 0 20px;
+}
+
+.home-best-experts-proof-lead {
+    padding-left: 8px;
+}
+
+.home-best-experts-proof-lead svg,
+.home-best-experts-proof-item svg {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    fill: #a6a6ad;
+}
+
+.home-best-experts-proof-lead svg {
+    fill: var(--yellow);
+}
+
+.home-best-experts-proof-lead > span,
+.home-best-experts-proof-item > span {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.home-best-experts-proof strong {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.home-best-experts-proof small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.home-best-experts-proof-item + .home-best-experts-proof-item {
+    box-shadow: inset 1px 0 rgba(255, 255, 255, .08);
+}
+
+@media (max-width: 1380px) {
+    .home-best-experts-stage {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .home-best-experts-runners {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-best-expert-row {
+        grid-template-columns: 32px minmax(150px, 1fr) minmax(126px, .8fr) minmax(108px, auto);
+    }
+
+    .home-best-expert-row-stat {
+        display: none;
+    }
+
+    .home-best-experts-proof {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .home-best-experts-proof-lead {
+        grid-column: 1 / -1;
+        padding: 0 8px 10px;
+    }
+}
+
+@media (max-width: 860px) {
+    .home-best-experts-runners {
+        grid-template-columns: 1fr;
+    }
+
+    .home-best-expert-row {
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+    }
+
+    .home-best-expert-row-profile {
+        min-width: 0;
+    }
+
+    .home-best-expert-row-performance {
+        justify-items: end;
+    }
+
+    .home-best-expert-row-achievements {
+        display: none;
+    }
+
+    .home-best-expert-row-follow {
+        grid-column: 2 / -1;
+    }
+}
+
+@media (max-width: 760px) {
+    .home-best-experts-podium {
+        grid-template-columns: 1fr;
+        gap: 22px;
+        padding-top: 52px;
+    }
+
+    .home-best-expert-podium-card.is-rank-1 { order: 1; }
+    .home-best-expert-podium-card.is-rank-2 { order: 2; }
+    .home-best-expert-podium-card.is-rank-3 { order: 3; }
+
+    .home-best-expert-podium-card.is-rank-1 .home-best-expert-podium-link,
+    .home-best-expert-podium-link {
+        min-height: 396px;
+    }
+
+    .home-best-expert-pedestal,
+    .home-best-expert-podium-card.is-rank-1 .home-best-expert-pedestal,
+    .home-best-expert-podium-card.is-rank-2 .home-best-expert-pedestal,
+    .home-best-expert-podium-card.is-rank-3 .home-best-expert-pedestal {
+        height: 62px;
+    }
+
+    .home-best-expert-row {
+        grid-template-columns: 31px minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .home-best-expert-row-avatar {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+    }
+
+    .home-best-expert-row .home-best-expert-roi {
+        min-height: 27px;
+        padding: 0 8px;
+        font-size: 9px;
+    }
+
+    .home-best-expert-row-follow {
+        grid-column: 2 / -1;
+    }
+
+    .home-best-experts-proof {
+        grid-template-columns: 1fr;
+        padding-top: 14px;
+    }
+
+    .home-best-experts-proof-lead,
+    .home-best-experts-proof-item {
+        min-height: 56px;
+        padding: 0 8px;
+    }
+
+    .home-best-experts-proof-item + .home-best-experts-proof-item {
+        box-shadow: inset 0 1px rgba(255, 255, 255, .08);
     }
 }
