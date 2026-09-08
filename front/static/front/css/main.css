@@ -360,11 +360,14 @@ mark{
         transition: none;
     }
 }
-
+/* 
 .site-main {
+    padding: 28px 0 44px;
+} */
+.container{
     width: min(1680px, calc(100% - 32px));
     margin: 0 auto;
-    padding: 28px 0 44px;
+
 }
 
 .site-breadcrumbs {
