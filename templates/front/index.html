@@ -316,9 +316,9 @@
                 <span class="home-best-featured-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
                     {% capper_trust_badge prediction.expert_trust_index %}
                     {% if prediction.expert_avatar_url %}
-                        <img src="{{ prediction.expert_avatar_url }}" loading="lazy" alt="">
+                        <img src="{{ prediction.expert_avatar_url }}" width="64" height="64" loading="lazy" alt="">
                     {% elif prediction.coupon.author.avatar %}
-                        <img src="{{ prediction.coupon.author.avatar.url }}" loading="lazy" alt="">
+                        <img src="{{ prediction.coupon.author.avatar.url }}" width="64" height="64" loading="lazy" alt="">
                     {% else %}
                         {{ prediction.expert_initials }}
                     {% endif %}
@@ -327,6 +327,20 @@
                     <strong>{{ prediction.expert_name }}</strong>
                     <small>Профессиональный каппер</small>
                     <em>Топ-10 за месяц</em>
+                    <span class="quick-stats" aria-label="Статистика каппера за всё время">
+                        <span class="home-best-expert-row-stat">
+                            <strong>{{ prediction.expert_predictions_count }}</strong>
+                            <small>Прогнозов</small>
+                        </span>
+                        <span class="home-best-expert-row-stat">
+                            <strong>{{ prediction.expert_hit_rate|floatformat:"-1" }}%</strong>
+                            <small>Проходимость</small>
+                        </span>
+                        <span class="home-best-expert-row-stat">
+                            <strong{% if prediction.expert_profit > 0 %} class="is-positive"{% elif prediction.expert_profit < 0 %} class="is-negative"{% endif %}>{% if prediction.expert_profit > 0 %}+{% endif %}{{ prediction.expert_profit|floatformat:1 }}</strong>
+                            <small>Прибыль, ед.</small>
+                        </span>
+                    </span>
                 </span>
             </a>
 

@@ -1,6 +1,16 @@
 from decimal import Decimal
 
-from django.db.models import Count, Prefetch, Q
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    F,
+    Prefetch,
+    Q,
+    Sum,
+    Value,
+    When,
+)
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -150,7 +160,52 @@ def _best_home_predictions(request):
         "-created_at",
         "-id",
     )[:HOME_BEST_PREDICTIONS_LIMIT]
-    return _decorate_predictions(request, queryset)
+    cards = _decorate_predictions(request, queryset)
+    if not cards:
+        return cards
+
+    featured = cards[0]
+    money_field = DecimalField(max_digits=18, decimal_places=4)
+    stats = PredictionCoupon.objects.filter(
+        author_id=featured.coupon.author_id,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).aggregate(
+        predictions_count=Count("id"),
+        wins_count=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+        ),
+        losses_count=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
+        ),
+        total_profit=Sum(
+            Case(
+                When(
+                    state_status=PredictionCoupon.StateStatus.WIN,
+                    then=F("possible_payout") - F("total_stake"),
+                ),
+                When(
+                    state_status=PredictionCoupon.StateStatus.LOSE,
+                    then=-F("total_stake"),
+                ),
+                default=Value(Decimal("0")),
+                output_field=money_field,
+            )
+        ),
+    )
+
+    wins_count = stats["wins_count"] or 0
+    losses_count = stats["losses_count"] or 0
+    decided_count = wins_count + losses_count
+    featured.expert_predictions_count = stats["predictions_count"] or 0
+    featured.expert_hit_rate = (
+        Decimal(wins_count) * Decimal("100") / Decimal(decided_count)
+        if decided_count
+        else Decimal("0")
+    )
+    featured.expert_profit = stats["total_profit"] or Decimal("0")
+    return cards
 
 
 def _top_home_profiles(all_time_profiles, monthly_top_ids: list[int]) -> tuple[list, str]:
