@@ -3,11 +3,19 @@
     if (!overlay) return;
 
     let isLeaving = false;
+    let resetTimer = 0;
+
+    const hideTransition = () => {
+        isLeaving = false;
+        window.clearTimeout(resetTimer);
+        overlay.classList.remove("is-active");
+    };
 
     const showTransition = () => {
         if (isLeaving) return;
         isLeaving = true;
         overlay.classList.add("is-active");
+        resetTimer = window.setTimeout(hideTransition, 3000);
     };
 
     const transitionDuration = 420;
@@ -70,9 +78,11 @@
         }, transitionDuration);
     });
 
-    window.addEventListener("pageshow", () => {
-        isLeaving = false;
-        overlay.classList.remove("is-active");
+    window.addEventListener("pageshow", hideTransition);
+    window.addEventListener("load", hideTransition);
+    window.addEventListener("focus", hideTransition);
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) hideTransition();
     });
 })();
 
@@ -165,7 +175,7 @@
 
 (() => {
     const legacyBadges = document.querySelectorAll(
-        ".forecast-verified, .verified-mark, .prediction-verified, .home-best-expert-verified"
+        ".forecast-verified, .verified-mark, .prediction-verified"
     );
     if (!legacyBadges.length) return;
 

@@ -6,6 +6,8 @@
     data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
     onclick="if (!event.target.closest('a, button')) window.location.href=this.dataset.couponUrl;"
 >
+    <span class="home-best-prediction-number">{{ prediction_number }}</span>
+
     <a class="home-best-prediction-match" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
         <span class="home-best-prediction-teams" aria-hidden="true">
             <span class="home-best-team-logo">

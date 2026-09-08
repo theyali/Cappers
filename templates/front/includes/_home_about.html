@@ -10,7 +10,7 @@
                 <span>Прогнозы с открытой историей результатов</span>
             </div>
         </div>
-        <a class="home-about-rating-link" href="{% url 'front:cappers_stats' %}">Рейтинг капперов <span aria-hidden="true">→</span></a>
+        <a class="home-all-link" href="{% url 'front:cappers_stats' %}">Рейтинг капперов <span aria-hidden="true">→</span></a>
     </div>
 
     <div class="home-about-intro">
@@ -93,7 +93,7 @@
             <p class="home-eyebrow">Обучение</p>
             <h2 id="home-wiki-videos-title">Видео</h2>
         </div>
-        <a class="home-best-experts-all" href="{% url 'front:wiki' %}#wiki-videos">Все видео</a>
+        <a class="home-all-link" href="{% url 'front:wiki' %}#wiki-videos">Все видео</a>
     </header>
     <div class="home-wiki-videos-grid profile-fields-grid">
         {% for video in home_wiki_videos %}

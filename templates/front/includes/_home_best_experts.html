@@ -6,9 +6,9 @@
             <h2 id="home-best-experts-title">Лучшие прогнозисты</h2>
             <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
         </div>
-        <a class="home-best-experts-all" href="{% url 'front:cappers_stats' %}">
+        <a class="home-all-link" href="{% url 'front:cappers_stats' %}">
             <span>Все прогнозисты</span>
-            <svg class="home-best-experts-v2-all-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M1 8h12M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </a>
@@ -22,18 +22,17 @@
                 <a class="home-best-expert-podium-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
                     <span class="home-best-expert-crown" data-skeleton-image>
                         {% if forloop.counter == 1 %}
-                            <img src="{% static 'front/img/gold_crown.png' %}" width="72" height="58" alt="" loading="lazy">
+                            <img src="/static/front/img/gold_crown.png" width="72" height="58" alt="" loading="lazy">
                         {% elif forloop.counter == 2 %}
-                            <img src="{% static 'front/img/silver_crown.png' %}" width="72" height="58" alt="" loading="lazy">
+                            <img src="/static/front/img/silver_crown.png" width="72" height="58" alt="" loading="lazy">
                         {% else %}
-                            <img src="{% static 'front/img/bronze_crown.png' %}" width="72" height="58" alt="" loading="lazy">
+                            <img src="/static/front/img/bronze_crown.png" width="72" height="58" alt="" loading="lazy">
                         {% endif %}
                     </span>
                     <span class="home-best-expert-rank-badge">#{{ forloop.counter }}</span>
-
                     <span class="home-best-expert-portrait">
                         <span class="home-best-expert-laurel is-left" data-skeleton-image>
-                            <img src="{% static 'front/img/clever.png' %}" width="70" height="132" alt="" loading="lazy">
+                            <img src="/static/front/img/clever.png" width="70" height="132" alt="" loading="lazy">
                         </span>
                         <span class="home-best-expert-avatar{% if not expert.avatar_url %} is-initials{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
                             {% if expert.avatar_url %}
@@ -43,7 +42,7 @@
                             {% endif %}
                         </span>
                         <span class="home-best-expert-laurel is-right" data-skeleton-image>
-                            <img src="{% static 'front/img/clever2.png' %}" width="70" height="132" alt="" loading="lazy">
+                            <img src="/static/front/img/clever2.png" width="70" height="132" alt="" loading="lazy">
                         </span>
                         {% if expert.verified %}
                         <span class="capper-verified-badge home-best-expert-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
@@ -61,11 +60,19 @@
 
                     {% if expert.latest_achievements %}
                     <span class="home-best-expert-achievements" aria-label="Достижения {{ expert.name }}">
-                        {% for achievement in expert.latest_achievements|slice:":4" %}
-                        <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
-                            <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
-                        </span>
-                        {% endfor %}
+                        {% if forloop.counter == 1 %}
+                            {% for achievement in expert.latest_achievements|slice:":5" %}
+                            <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
+                                <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            {% for achievement in expert.latest_achievements|slice:":4" %}
+                            <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
+                                <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
+                            </span>
+                            {% endfor %}
+                        {% endif %}
                     </span>
                     {% endif %}
 
@@ -76,20 +83,13 @@
                 </a>
                 {% include "front/includes/_home_expert_follow_action.html" with expert=expert action_class="home-best-expert-follow" %}
                 <div class="home-best-expert-pedestal" aria-hidden="true">
-                    <svg width="100%" height="100%" viewBox="0 0 240 112" preserveAspectRatio="none" focusable="false" aria-hidden="true">
-                        <defs>
-                            <filter id="home-best-pedestal-glow-{{ forloop.counter }}" x="-40%" y="-60%" width="180%" height="220%">
-                                <feColorMatrix type="matrix" values="{% if forloop.counter == 1 %}0 0 0 0 .984  0 0 0 0 .945  0 0 0 0 .063  0 0 0 1 0{% elif forloop.counter == 2 %}0 0 0 0 .812  0 0 0 0 .835  0 0 0 0 .894  0 0 0 1 0{% else %}0 0 0 0 .906  0 0 0 0 .604  0 0 0 0 .341  0 0 0 1 0{% endif %}"/>
-                                <feDropShadow dx="0" dy="0" stdDeviation="4.5" flood-color="{% if forloop.counter == 1 %}#fbf110{% elif forloop.counter == 2 %}#cfd5e4{% else %}#e79a57{% endif %}" flood-opacity=".7"/>
-                            </filter>
-                        </defs>
-                        <g filter="url(#home-best-pedestal-glow-{{ forloop.counter }})">
-                            <line x1="14" y1="4" x2="226" y2="4" stroke="{% if forloop.counter == 1 %}#fbf110{% elif forloop.counter == 2 %}#cfd5e4{% else %}#e79a57{% endif %}" stroke-width="2" stroke-linecap="round" opacity=".82"/>
-                            <image href="{% static 'front/img/clever.png' %}" x="58" y="21" width="46" height="72" preserveAspectRatio="xMidYMid meet"/>
-                            <text x="120" y="61" fill="{% if forloop.counter == 1 %}#fbf110{% elif forloop.counter == 2 %}#cfd5e4{% else %}#e79a57{% endif %}" font-family="Arial, sans-serif" font-size="36" font-weight="900" text-anchor="middle" dominant-baseline="middle">{{ forloop.counter }}</text>
-                            <image href="{% static 'front/img/clever2.png' %}" x="136" y="21" width="46" height="72" preserveAspectRatio="xMidYMid meet"/>
-                        </g>
-                    </svg>
+                    <span class="home-best-expert-pedestal-laurel is-left">
+                        <img src="/static/front/img/clever.png" alt="" loading="lazy">
+                    </span>
+                    <strong>{{ forloop.counter }}</strong>
+                    <span class="home-best-expert-pedestal-laurel is-right">
+                        <img src="/static/front/img/clever2.png" alt="" loading="lazy">
+                    </span>
                 </div>
             </article>
             {% endfor %}
@@ -124,7 +124,7 @@
                 </a>
 
                 <div class="home-best-expert-row-performance">
-                    <span class="home-best-expert-roi{% if expert.roi < 0 %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%</span>
+                    <span class="home-best-expert-roi{% if expert.roi < 0 %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · всё время</span>
                     {% if expert.latest_achievements %}
                     <div class="home-best-expert-row-achievements" aria-label="Достижения {{ expert.name }}">
                         {% for achievement in expert.latest_achievements|slice:":4" %}
