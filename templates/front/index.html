@@ -331,32 +331,7 @@
 
 {% home_bookmakers %}
 
-<section class="home-best-experts" aria-labelledby="home-best-experts-title">
-    <header class="home-best-experts-head">
-        <div>
-            <p class="home-eyebrow">Рейтинг экспертов</p>
-            <h2 id="home-best-experts-title">Лучшие прогнозисты</h2>
-            <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
-        </div>
-        <a class="home-best-experts-all" href="{% url 'front:cappers_stats' %}">Все прогнозисты</a>
-        {% if not request.user.is_analyst %}
-        <a class="capper-growth-link is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-        {% endif %}
-    </header>
-
-    {% if best_experts %}
-    <div class="home-best-experts-grid">
-        {% for expert in best_experts %}
-        {% include "front/includes/_capper_pro_card.html" with expert=expert rank=forloop.counter show_follow=1 %}
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="home-best-experts-empty">
-        <strong>Прогнозисты скоро появятся</strong>
-        <p>После публикации первых прогнозов рейтинг лучших экспертов автоматически появится здесь.</p>
-    </div>
-    {% endif %}
-</section>
+{% include "front/includes/_home_best_experts.html" %}
 
 <section class="home-articles" aria-labelledby="home-articles-title" data-article-slider tabindex="0">
     <header class="home-articles-head">
