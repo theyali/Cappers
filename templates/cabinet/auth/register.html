@@ -7,7 +7,7 @@
 {% block content %}
 <section class="auth-stage auth-stage-register">
     <div class="container auth-register-grid">
-        <div class="capper-onboarding">
+        <div>
             <p class="capper-kicker">Больше чем прогнозы</p>
             <h1>
                 Твой следующий<br>
@@ -44,33 +44,29 @@
                     value="{% if selected_type == 'capper' %}analyst{% else %}reader{% endif %}"
                 >
 
-                <div class="capper-register-selected auth-grid-full" data-register-role-switch>
+                <div class="auth-register-grid auth-grid-full" data-register-role-switch>
                     <button
                         type="button"
-                        class="capper-growth-link{% if selected_type != 'capper' %} is-blue{% endif %}"
+                        class="auth-input-wrap{% if selected_type != 'capper' %} capper-growth-link is-blue{% endif %}"
                         data-register-role="reader"
                         aria-pressed="{% if selected_type != 'capper' %}true{% else %}false{% endif %}"
                     >
-                        <span class="role-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <span>
-                            <strong>Пользователь</strong>
+                            <strong>Пользователь</strong><br>
                             <small>Прогнозы, подписки, уведомления</small>
                         </span>
                     </button>
 
                     <button
                         type="button"
-                        class="capper-growth-link{% if selected_type == 'capper' %} is-blue{% endif %}"
+                        class="auth-input-wrap{% if selected_type == 'capper' %} capper-growth-link is-blue{% endif %}"
                         data-register-role="analyst"
                         aria-pressed="{% if selected_type == 'capper' %}true{% else %}false{% endif %}"
                     >
-                        <span class="role-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M5 19V12M10 19V8M15 19V4M20 19V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-                        </span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V12M10 19V8M15 19V4M20 19V10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
                         <span>
-                            <strong>Каппер</strong>
+                            <strong>Каппер</strong><br>
                             <small>Публикуйте прогнозы и зарабатывайте</small>
                         </span>
                     </button>
@@ -236,6 +232,7 @@
 
             switcher.querySelectorAll("[data-register-role]").forEach((button) => {
                 const isActive = button === option;
+                button.classList.toggle("capper-growth-link", isActive);
                 button.classList.toggle("is-blue", isActive);
                 button.setAttribute("aria-pressed", isActive ? "true" : "false");
             });
