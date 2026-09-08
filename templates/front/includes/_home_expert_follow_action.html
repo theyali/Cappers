@@ -1,0 +1,22 @@
+{% load capper_trust %}
+{% if not expert.is_self %}
+    {% if expert.paid_predictions_enabled %}
+        {% if expert.is_paid_subscribed %}
+            <a class="{{ action_class }} is-active" href="{% url 'front:following_feed' %}">В ленту</a>
+        {% elif request.user.is_authenticated %}
+            <a class="{{ action_class }}" href="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.path|urlencode }}">Оплатить {{ expert.paid_predictions_price|money }} ₽/мес</a>
+        {% else %}
+            <a class="{{ action_class }}" href="{% url 'cabinet:login' %}?next={% url 'front:expert_profile' expert.username %}">Оплатить {{ expert.paid_predictions_price|money }} ₽/мес</a>
+        {% endif %}
+    {% elif request.user.is_authenticated %}
+        <button
+            class="{{ action_class }}{% if expert.is_following %} is-active{% endif %}"
+            type="button"
+            data-expert-follow
+            data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+            aria-pressed="{% if expert.is_following %}true{% else %}false{% endif %}"
+        ><span data-follow-label>{% if expert.is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span></button>
+    {% else %}
+        <a class="{{ action_class }}" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">Подписаться</a>
+    {% endif %}
+{% endif %}
