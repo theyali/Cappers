@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="{% static 'front/css/mobile.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{{ page_class|default:'' }}">
     {% include "front/includes/_top_header.html" %}
 
     <header class="site-header">
@@ -211,17 +211,20 @@
         </div>
     {% endif %}
 
-    <main class="site-main">
+    <main class="site-main {{ page_class|default:'' }}">
         {% if breadcrumbs %}
-        <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
-            {% for crumb in breadcrumbs %}
-                {% if crumb.url and not forloop.last %}
-                    <a href="{{ crumb.url }}">{{ crumb.title }}</a>
-                {% else %}
-                    <span {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.title }}</span>
-                {% endif %}
-            {% endfor %}
-        </nav>
+        <div class="container">
+            <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
+                {% for crumb in breadcrumbs %}
+                    {% if crumb.url and not forloop.last %}
+                        <a href="{{ crumb.url }}">{{ crumb.title }}</a>
+                    {% else %}
+                        <span {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.title }}</span>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        </div>
+
         {% endif %}
         {% block content %}{% endblock %}
         {% if adv_banners and adv_placement == 'content' %}

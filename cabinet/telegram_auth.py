@@ -50,6 +50,7 @@ class TelegramAwareLoginView(auth_views.LoginView):
         context = super().get_context_data(**kwargs)
         context["telegram_bot_id"] = _telegram_bot_id()
         context["telegram_auth_url"] = reverse("cabinet:telegram_login")
+        context["page_class"] = "auth"
 
         next_url = self.request.GET.get(self.redirect_field_name, "")
         if next_url and url_has_allowed_host_and_scheme(

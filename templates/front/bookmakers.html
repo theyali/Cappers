@@ -7,28 +7,30 @@
 
 {% block content %}
 <section class="bookmakers-page">
-    <header class="bookmakers-hero" style="background-image: linear-gradient(90deg, rgba(17,17,19,.96) 0%, rgba(17,17,19,.82) 42%, rgba(17,17,19,.36) 68%, rgba(17,17,19,.9) 100%), url('{% static 'front/img/bks_bg.png' %}');">
-        <div class="bookmakers-hero-copy">
-            <p>Каталог БК</p>
-            <h1>Букмекеры</h1>
-            <span>Проверенные букмекерские конторы с выгодными бонусами, быстрыми выплатами и надежной репутацией. Выбирайте лучшего партнера и делайте ставки с преимуществом.</span>
-        </div>
-        <div class="bookmakers-hero-features">
-            <div>
-                <strong>Надежные БК</strong>
-                <span>Только проверенные бренды</span>
+    <div class="container">
+        <header class="bookmakers-hero" style="background-image: linear-gradient(90deg, rgba(17,17,19,.96) 0%, rgba(17,17,19,.82) 42%, rgba(17,17,19,.36) 68%, rgba(17,17,19,.9) 100%), url('{% static 'front/img/bks_bg.png' %}');">
+            <div class="bookmakers-hero-copy">
+                <p>Каталог БК</p>
+                <h1>Букмекеры</h1>
+                <span>Проверенные букмекерские конторы с выгодными бонусами, быстрыми выплатами и надежной репутацией. Выбирайте лучшего партнера и делайте ставки с преимуществом.</span>
             </div>
-            <div>
-                <strong>Выгодные бонусы</strong>
-                <span>Эксклюзивные предложения</span>
+            <div class="bookmakers-hero-features">
+                <div>
+                    <strong>Надежные БК</strong>
+                    <span>Только проверенные бренды</span>
+                </div>
+                <div>
+                    <strong>Выгодные бонусы</strong>
+                    <span>Эксклюзивные предложения</span>
+                </div>
+                <div>
+                    <strong>Быстрые выплаты</strong>
+                    <span>Вывод без задержек</span>
+                </div>
             </div>
-            <div>
-                <strong>Быстрые выплаты</strong>
-                <span>Вывод без задержек</span>
-            </div>
-        </div>
-    </header>
+        </header>
 
-    {% include "front/includes/_home_bookmakers.html" with bookmakers=bookmakers show_empty=True %}
+        {% include "front/includes/_home_bookmakers.html" with bookmakers=bookmakers show_empty=True %}
+    </div>
 </section>
 {% endblock %}

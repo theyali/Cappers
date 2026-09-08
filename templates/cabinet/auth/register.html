@@ -10,7 +10,7 @@
         <a class="auth-back" href="{% url 'front:index' %}"><span>←</span> На главную</a>
 
         <p class="capper-kicker">Новый аккаунт</p>
-        <h1>{% if selected_type %}Регистрация{% else %}Как вы хотите использовать КапперХаб?{% endif %}</h1>
+        <h2>{% if selected_type %}Регистрация{% else %}Как вы хотите использовать КапперХаб?{% endif %}</h2>
         {% if not selected_type %}
             <p>Сначала выберите сценарий. Форму покажем уже после выбора, чтобы не заставлять вас разбираться в ролях и настройках.</p>
 
@@ -121,18 +121,10 @@
                 </div>
 
                 <button class="auth-submit auth-grid-full" type="submit">
-                    <span>{% if selected_type == 'capper' %}Создать профиль каппера{% else %}Создать аккаунт{% endif %}</span>
+                    <span>Создать аккаунт</span>
                     <span class="auth-submit-arrow">→</span>
                 </button>
             </form>
-
-            {% if selected_type == 'capper' %}
-            <div class="capper-telegram-path">
-                <span>Уже есть аккаунт или хотите войти через Telegram?</span>
-                <a href="{% url 'cabinet:login' %}?next={% url 'cabinet:become_capper_start' %}">Войти и продолжить как каппер →</a>
-            </div>
-            {% endif %}
-
             <div class="auth-bottom-line">
                 <span>Уже зарегистрированы?</span>
                 <a href="{% url 'cabinet:login' %}">Войти</a>

@@ -56,7 +56,7 @@ def register(request):
         messages.success(request, "Регистрация завершена.")
         return redirect("cabinet:profile")
 
-    return render(request, "cabinet/auth/register.html", {"form": form})
+    return render(request, "cabinet/auth/register.html", {"form": form, "page_class": "register"})
 
 
 @login_required

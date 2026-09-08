@@ -129,6 +129,7 @@ def register(request):
         {
             "form": form,
             "selected_type": selected_type,
+            "page_class": "register",
             "selected_role": (
                 User.Role.ANALYST
                 if selected_type == ACCOUNT_CAPPER

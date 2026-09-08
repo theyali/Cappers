@@ -6,491 +6,494 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="home-layout" aria-label="Главная лента прогнозов">
-    <div class="forecast-area">
-        <div class="home-heading">
-  <div class="home-heading-copy">
-      <p class="home-eyebrow">Свежая лента</p>
-      <h1>Последние <mark>прогнозы</mark></h1>
-      <p class="home-heading-subtitle">Актуальные прогнозы от проверенных экспертов. Следи, анализируй, выигрывай.</p>
-  </div>
-  <div class="slider-actions" aria-label="Управление слайдером">
-      <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-      </button>
-      <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-      </button>
-  </div>
-        </div>
-
-        <div class="forecast-slider" data-forecast-slider data-direction="next">
-  {% if latest_predictions %}
-  <div class="forecast-track">
-      {% for prediction in latest_predictions %}
-      <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
-          <div class="forecast-topline">
-              <div class="forecast-expert">
-                  <span class="forecast-avatar" data-skeleton-image>
-                      {% capper_trust_badge prediction.expert_trust_index %}
-                      {% if prediction.expert_avatar_url %}
-                          <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" width="58" height="58">
-                      {% else %}
-                          <span class="forecast-avatar-initials">{{ prediction.expert_initials }}</span>
-                      {% endif %}
-                  </span>
-                  <div>
-                      <strong>
-                          {{ prediction.expert }}
-                          {% if prediction.expert_verified %}
-                          <span class="forecast-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                  <path d="M10 1.8l2.05 1.35 2.45-.13 1.08 2.2 2.08 1.3-.38 2.43.86 2.3-1.68 1.79-.12 2.45-2.34.76-1.48 1.96L10 17.5l-2.52.71L6 16.25l-2.34-.76-.12-2.45-1.68-1.79.86-2.3-.38-2.43 2.08-1.3 1.08-2.2 2.45.13L10 1.8Z" fill="currentColor"/>
-                                  <path d="m6.8 10.1 2.05 2.05 4.35-4.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                          </span>
-                          {% endif %}
-                      </strong>
-                      <span>Эксперт КапперХаб</span>
-                  </div>
-              </div>
-              <div class="forecast-meta">
-                  <span>{{ prediction.sport }}</span>
-                  <span class="forecast-league-meta">
-                      {% if prediction.league_logo %}
-                      <span class="forecast-league-logo" data-skeleton-image>
-                          <img src="{{ prediction.league_logo }}" alt="" loading="lazy" width="20" height="20">
-                      </span>
-                      {% else %}
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M4 19V9l4-3 4 3 4-5 4 3v12H4Z" fill="#2dbd87"/>
-                          <path d="M8 19v-5m4 5v-7m4 7v-9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
-                      </svg>
-                      {% endif %}
-                      {{ prediction.league }}
-                  </span>
-              </div>
-          </div>
-
-          <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
-              <div class="forecast-team forecast-team-home">
-                  <span class="forecast-team-logo" data-skeleton-image>
-                      {% if prediction.home_logo %}
-                          <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" width="112" height="112">
-                      {% else %}
-                          {{ prediction.home_name|slice:":1" }}
-                      {% endif %}
-                  </span>
-                  <div class="forecast-team-copy">
-                      <strong>{{ prediction.home_name }}</strong>
-                      <span class="forecast-league-meta">
-                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                          </svg>
-                          {{ prediction.league }}
-                      </span>
-                  </div>
-              </div>
-              <span class="forecast-vs">VS</span>
-              <div class="forecast-team forecast-team-away">
-                  <span class="forecast-team-logo" data-skeleton-image>
-                      {% if prediction.away_logo %}
-                          <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" width="112" height="112">
-                      {% else %}
-                          {{ prediction.away_name|slice:":1" }}
-                      {% endif %}
-                  </span>
-                  <div class="forecast-team-copy">
-                      <strong>{{ prediction.away_name }}</strong>
-                      <span class="forecast-league-meta">
-                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                          </svg>
-                          {{ prediction.league }}
-                      </span>
-                  </div>
-              </div>
-          </a>
-
-          <div class="forecast-body">
-              <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
-                  <p class="forecast-label">Матч</p>
-                  <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
-                  <div class="forecast-match-details">
-                      <span class="forecast-match-detail">
-                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                          <strong>{{ prediction.starts_at }}</strong>
-                      </span>
-                      <span class="forecast-match-detail">
-                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                              <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                          </svg>
-                          <strong>{{ prediction.league }}</strong>
-                      </span>
-                      <span class="forecast-result is-{{ prediction.status_key }}">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-                              <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                          {{ prediction.status_label }}
-                      </span>
-                  </div>
-                  <div class="forecast-note">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M4 19v-6m4 6V9m4 10V5m4 14v-8m4 8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      </svg>
-                      <span>Статистика игроков, форма и актуальные коэффициенты в одном месте</span>
-                      <span class="forecast-note-arrow" aria-hidden="true">›</span>
-                  </div>
-              </a>
-
-              <div class="forecast-pick-column">
-                  <div class="forecast-pick-card">
-                      <span>Прогноз</span>
-                      <strong>{{ prediction.pick }}</strong>
-                      <small class="forecast-market">{{ prediction.market }}</small>
-                      <div class="forecast-coefficient">
-                          <small>Коэффициент</small>
-                          <b>{{ prediction.coefficient }}</b>
-                      </div>
-                  </div>
-                  <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M5.5 8.5 8.5 5.5l2 2 6-6 6 6-6 6 2 2-3 3-2-2-6 6-6-6 6-6-2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      <span>Посмотреть купон</span>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M6 12h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                  </a>
-              </div>
-          </div>
-      </article>
-      {% endfor %}
-  </div>
-
-  <div class="slider-footer">
-      <div class="slider-dots" role="tablist" aria-label="Выбор прогноза">
-          {% for prediction in latest_predictions %}
-          <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
-          {% endfor %}
-      </div>
-      <div class="slider-progress" aria-hidden="true">
-          <span data-slider-progress></span>
-      </div>
-      <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
-  </div>
-  {% else %}
-  <div class="forecast-empty">
-      <strong>Опубликованных прогнозов пока нет</strong>
-      <p>Как только капперы опубликуют первый прогноз, он автоматически появится в этом слайдере.</p>
-  </div>
-  {% endif %}
-        </div>
+<div class="container">
+    <section class="home-layout" aria-label="Главная лента прогнозов">
+        <div class="forecast-area">
+            <div class="home-heading">
+    <div class="home-heading-copy">
+        <p class="home-eyebrow">Свежая лента</p>
+        <h1>Последние <mark>прогнозы</mark></h1>
+        <p class="home-heading-subtitle">Актуальные прогнозы от проверенных экспертов. Следи, анализируй, выигрывай.</p>
     </div>
-    <aside class="home-sidebar">
-        <section class="follow-card">
-            <div class="follow-visual" aria-hidden="true">
-                <span>МО</span>
-                <span>АБ</span>
-                <span>РК</span>
-            </div>
-            <p class="home-eyebrow">Персональная лента</p>
-            <h2>Подпишись на лучших экспертов</h2>
-            <p class="follow-copy">Собери свою ленту и быстрее замечай новые прогнозы тех, кому доверяешь.</p>
-            {% if request.user.is_authenticated %}
-                <a class="home-primary-action" href="{% url 'cabinet:profile' %}?tab=following">Мои подписки <span>→</span></a>
-            {% else %}
-                <a class="home-primary-action" href="{% url 'cabinet:register' %}">Создать аккаунт <span>→</span></a>
-            {% endif %}
-        </section>
-
-        <section class="experts-card" id="experts">
-            <div class="experts-title-row">
-                <div>
-                    <h2>{% if top_experts_scope == "month" %}Топовые эксперты месяца{% else %}Топовые эксперты{% endif %}</h2>
-                </div>
-                <span class="experts-live">{{ top_experts_scope_label|default:"LIVE" }}</span>
-            </div>
-
-            <div class="experts-list">
-                {% for expert in top_experts %}
-                <div class="expert-row">
-                    <span class="expert-rank">{{ forloop.counter }}</span>
-                    <div class="expert-avatar">
-                        {% capper_trust_badge expert.trust_index %}
-                        {% if expert.avatar_url %}
-                            <img src="{{ expert.avatar_url }}" alt="">
-                        {% else %}
-                            <span>{{ expert.initials }}</span>
-                        {% endif %}
-                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges only %}
-                    </div>
-                    <div class="expert-copy">
-                        <div class="expert-name-line">
-                            <strong>{{ expert.name }}</strong>
-                            {% if expert.verified %}<span class="verified-mark" title="Проверенный эксперт">✓</span>{% endif %}
-                        </div>
-                        <span>@{{ expert.username }}</span>
-                    </div>
-                    <div class="expert-score">
-                        <strong>{{ expert.followers }}</strong>
-                        <span>подписчиков</span>
-                    </div>
-                    <span class="expert-arrow">›</span>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if request.user.is_authenticated %}
-                <a class="experts-bottom-action" href="{% url 'cabinet:profile' %}?tab=following">Мои эксперты</a>
-            {% else %}
-                <a class="experts-bottom-action" href="{% url 'cabinet:register' %}">Присоединиться</a>
-            {% endif %}
-        </section>
-    </aside>
-</section>
-
-{% include "cabinet/_expert_recommendations.html" %}
-
-<section class="home-articles home-best-predictions" aria-labelledby="home-best-predictions-title">
-    <header class="home-articles-head">
-        <div>
-            <h2 id="home-best-predictions-title">Прогнозы с высоким Коэффициентом</h2>
-        </div>
-        <a class="home-all-link" href="{% url 'front:predictions' %}">Все прогнозы</a>
-    </header>
-
-    {% if best_predictions %}
-    {% with prediction=best_predictions.0 %}
-    <article class="home-best-prediction-featured" data-prediction-card="{{ prediction.coupon.id }}" data-analyst-id="{{ prediction.coupon.author_id }}">
-        <div class="home-best-prediction-featured-label">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="m4 18 1.8-10.2 4 4.1L12 5l2.2 6.9 4-4.1L20 18H4Z"></path>
-                <path d="M4 20h16"></path>
+    <div class="slider-actions" aria-label="Управление слайдером">
+        <button class="slider-arrow" type="button" data-slider-prev aria-label="Предыдущий прогноз">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>Лучший прогноз</span>
-        </div>
-        <div class="home-best-prediction-featured-grid">
-            <a class="home-best-featured-match" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
-                <span class="home-best-featured-meta">
-                    {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m. H:i" }}{% endif %}
-                    {% if prediction.match.league_name %}<span>|</span>{{ prediction.match.league_name }}{% endif %}
-                </span>
-                <span class="home-best-featured-teams">
-                    <span class="home-best-featured-team">
-                        <span class="home-best-featured-logo">
-                            {% if prediction.match.home_team_logo %}
-                                <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
-                    </span>
-                    <span class="home-best-featured-vs">VS</span>
-                    <span class="home-best-featured-team">
-                        <span class="home-best-featured-logo">
-                            {% if prediction.match.away_team_logo %}
-                                <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
-                            {% else %}
-                                {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                            {% endif %}
-                        </span>
-                        <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
-                    </span>
-                </span>
-                {% if prediction.match.score %}
-                <span class="home-best-featured-score">{{ prediction.match.score }}</span>
-                {% endif %}
-            </a>
-
-            <a class="home-best-featured-expert" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
-                <span class="home-best-featured-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
-                    {% capper_trust_badge prediction.expert_trust_index %}
-                    {% if prediction.expert_avatar_url %}
-                        <img src="{{ prediction.expert_avatar_url }}" width="64" height="64" loading="lazy" alt="">
-                    {% elif prediction.coupon.author.avatar %}
-                        <img src="{{ prediction.coupon.author.avatar.url }}" width="64" height="64" loading="lazy" alt="">
-                    {% else %}
-                        {{ prediction.expert_initials }}
-                    {% endif %}
-                </span>
-                <span>
-                    <strong>{{ prediction.expert_name }}</strong>
-                    <small>Профессиональный каппер</small>
-                    <em>Топ-10 за месяц</em>
-                    <span class="quick-stats" aria-label="Статистика каппера за всё время">
-                        <span class="home-best-expert-row-stat">
-                            <strong>{{ prediction.expert_predictions_count }}</strong>
-                            <small>Прогнозов</small>
-                        </span>
-                        <span class="home-best-expert-row-stat">
-                            <strong>{{ prediction.expert_hit_rate|floatformat:"-1" }}%</strong>
-                            <small>Проходимость</small>
-                        </span>
-                        <span class="home-best-expert-row-stat">
-                            <strong{% if prediction.expert_profit > 0 %} class="is-positive"{% elif prediction.expert_profit < 0 %} class="is-negative"{% endif %}>{% if prediction.expert_profit > 0 %}+{% endif %}{{ prediction.expert_profit|floatformat:1 }}</strong>
-                            <small>Прибыль, ед.</small>
-                        </span>
-                    </span>
-                </span>
-            </a>
-
-            <a class="home-best-featured-pick" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
-                <span>Прогноз</span>
-                <strong>{{ prediction.selection }}</strong>
-                <small>{{ prediction.market }}</small>
-            </a>
-
-            <div class="home-best-featured-result">
-                <span>Коэффициент</span>
-                <a class="home-best-featured-coefficient" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
-                    {{ prediction.coefficient|floatformat:2 }}
-                </a>
-            </div>
-
-            <div class="home-best-featured-status">
-                <span>Статус</span>
-                <span class="home-best-featured-status-pill{% if prediction.state_status == 'win' %} is-win{% elif prediction.state_status == 'lose' %} is-lose{% elif prediction.state_status == 'refund' %} is-refund{% endif %}">
-                    {% if prediction.state_status == 'win' %}Выигрыш{% elif prediction.state_status == 'lose' %}Проигрыш{% elif prediction.state_status == 'refund' %}Возврат{% else %}Ожидает{% endif %}
-                </span>
-                <a class="home-best-featured-open" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
-                    Смотреть прогноз
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 12h14m-6-6 6 6-6 6"></path>
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </article>
-    {% endwith %}
-    <div class="home-best-predictions-table">
-        <div class="home-best-predictions-scroll">
-            <div class="home-best-predictions-head-row" aria-hidden="true">
-                <span>#</span>
-                <span>Матч</span>
-                <span>Каппер</span>
-                <span>Прогноз</span>
-                <span>КФ</span>
-                <span>Статус</span>
-                <span>Действия</span>
-            </div>
-            <div class="home-best-predictions-body">
-                {% for prediction in best_predictions %}
-                    {% if not forloop.first %}
-                        {% include "front/includes/_home_best_prediction_row.html" with prediction_number=forloop.counter %}
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
+        </button>
+        <button class="slider-arrow slider-arrow-accent" type="button" data-slider-next aria-label="Следующий прогноз">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
     </div>
-    {% else %}
-    <div class="predictions-empty">
-        <h2>Прогнозов пока нет</h2>
-        <p>Лучшие прогнозы появятся здесь после первых публикаций.</p>
+            </div>
+
+            <div class="forecast-slider" data-forecast-slider data-direction="next">
+    {% if latest_predictions %}
+    <div class="forecast-track">
+        {% for prediction in latest_predictions %}
+        <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
+            <div class="forecast-topline">
+                <div class="forecast-expert">
+                    <span class="forecast-avatar" data-skeleton-image>
+                        {% capper_trust_badge prediction.expert_trust_index %}
+                        {% if prediction.expert_avatar_url %}
+                            <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" width="58" height="58">
+                        {% else %}
+                            <span class="forecast-avatar-initials">{{ prediction.expert_initials }}</span>
+                        {% endif %}
+                    </span>
+                    <div>
+                        <strong>
+                            {{ prediction.expert }}
+                            {% if prediction.expert_verified %}
+                            <span class="forecast-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                    <path d="M10 1.8l2.05 1.35 2.45-.13 1.08 2.2 2.08 1.3-.38 2.43.86 2.3-1.68 1.79-.12 2.45-2.34.76-1.48 1.96L10 17.5l-2.52.71L6 16.25l-2.34-.76-.12-2.45-1.68-1.79.86-2.3-.38-2.43 2.08-1.3 1.08-2.2 2.45.13L10 1.8Z" fill="currentColor"/>
+                                    <path d="m6.8 10.1 2.05 2.05 4.35-4.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            {% endif %}
+                        </strong>
+                        <span>Эксперт КапперХаб</span>
+                    </div>
+                </div>
+                <div class="forecast-meta">
+                    <span>{{ prediction.sport }}</span>
+                    <span class="forecast-league-meta">
+                        {% if prediction.league_logo %}
+                        <span class="forecast-league-logo" data-skeleton-image>
+                            <img src="{{ prediction.league_logo }}" alt="" loading="lazy" width="20" height="20">
+                        </span>
+                        {% else %}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 19V9l4-3 4 3 4-5 4 3v12H4Z" fill="#2dbd87"/>
+                            <path d="M8 19v-5m4 5v-7m4 7v-9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        {% endif %}
+                        {{ prediction.league }}
+                    </span>
+                </div>
+            </div>
+
+            <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
+                <div class="forecast-team forecast-team-home">
+                    <span class="forecast-team-logo" data-skeleton-image>
+                        {% if prediction.home_logo %}
+                            <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" width="112" height="112">
+                        {% else %}
+                            {{ prediction.home_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <div class="forecast-team-copy">
+                        <strong>{{ prediction.home_name }}</strong>
+                        <span class="forecast-league-meta">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            {{ prediction.league }}
+                        </span>
+                    </div>
+                </div>
+                <span class="forecast-vs">VS</span>
+                <div class="forecast-team forecast-team-away">
+                    <span class="forecast-team-logo" data-skeleton-image>
+                        {% if prediction.away_logo %}
+                            <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" width="112" height="112">
+                        {% else %}
+                            {{ prediction.away_name|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <div class="forecast-team-copy">
+                        <strong>{{ prediction.away_name }}</strong>
+                        <span class="forecast-league-meta">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            {{ prediction.league }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <div class="forecast-body">
+                <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
+                    <p class="forecast-label">Матч</p>
+                    <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
+                    <div class="forecast-match-details">
+                        <span class="forecast-match-detail">
+                            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <strong>{{ prediction.starts_at }}</strong>
+                        </span>
+                        <span class="forecast-match-detail">
+                            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            <strong>{{ prediction.league }}</strong>
+                        </span>
+                        <span class="forecast-result is-{{ prediction.status_key }}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            {{ prediction.status_label }}
+                        </span>
+                    </div>
+                    <div class="forecast-note">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 19v-6m4 6V9m4 10V5m4 14v-8m4 8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <span>Статистика игроков, форма и актуальные коэффициенты в одном месте</span>
+                        <span class="forecast-note-arrow" aria-hidden="true">›</span>
+                    </div>
+                </a>
+
+                <div class="forecast-pick-column">
+                    <div class="forecast-pick-card">
+                        <span>Прогноз</span>
+                        <strong>{{ prediction.pick }}</strong>
+                        <small class="forecast-market">{{ prediction.market }}</small>
+                        <div class="forecast-coefficient">
+                            <small>Коэффициент</small>
+                            <b>{{ prediction.coefficient }}</b>
+                        </div>
+                    </div>
+                    <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M5.5 8.5 8.5 5.5l2 2 6-6 6 6-6 6 2 2-3 3-2-2-6 6-6-6 6-6-2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Посмотреть купон</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M6 12h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
     </div>
-    {% endif %}
-</section>
 
-<section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title" data-home-card-slider>
-    <header class="home-articles-head">
-        <div>
-            <p class="home-eyebrow">Прематч</p>
-            <h2 id="home-important-matches-title">Важные матчи</h2>
-            <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
-        </div>
-        <div class="home-slider-controls">
-            <a class="home-all-link" href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
-            {% if important_matches|length > 3 %}
-            <button class="home-card-slider-arrow" type="button" data-home-card-prev aria-label="Предыдущие матчи">‹</button>
-            <button class="home-card-slider-arrow" type="button" data-home-card-next aria-label="Следующие матчи">›</button>
-            {% endif %}
-        </div>
-    </header>
-
-    {% if important_matches %}
-    <div class="home-card-slider-window" data-home-card-window>
-        <div class="home-card-slider-track" data-home-card-track>
-            {% for match in important_matches %}
-                {% include "game/includes/_match_card_home.html" with match=match request=request website_settings=website_settings can_write_coupon=can_write_coupon only %}
+    <div class="slider-footer">
+        <div class="slider-dots" role="tablist" aria-label="Выбор прогноза">
+            {% for prediction in latest_predictions %}
+            <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
             {% endfor %}
         </div>
-    </div>
-    {% if important_matches|length > 3 %}
-    <div class="home-card-slider-dots" data-home-card-dots aria-label="Навигация по матчам"></div>
-    {% endif %}
-    {% else %}
-    <div class="matches-empty">
-        <h2>Прематчей пока нет</h2>
-        <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
-    </div>
-    {% endif %}
-</section>
-
-{% home_bookmakers %}
-
-{% include "front/includes/_home_best_experts.html" %}
-
-<section class="home-articles" aria-labelledby="home-articles-title" data-article-slider tabindex="0">
-    <header class="home-articles-head">
-        <div>
-            <p class="home-eyebrow">Редакция</p>
-            <h2 id="home-articles-title">Новые статьи</h2>
-            <p>Разборы матчей, полезные материалы и идеи от команды КапперХаб.</p>
+        <div class="slider-progress" aria-hidden="true">
+            <span data-slider-progress></span>
         </div>
-        {% if latest_articles|length > 1 %}
-        <div class="home-articles-actions">
-            <button type="button" data-article-prev aria-label="Предыдущая страница статей">←</button>
-            <button class="is-accent" type="button" data-article-next aria-label="Следующая страница статей">→</button>
+        <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
+    </div>
+    {% else %}
+    <div class="forecast-empty">
+        <strong>Опубликованных прогнозов пока нет</strong>
+        <p>Как только капперы опубликуют первый прогноз, он автоматически появится в этом слайдере.</p>
+    </div>
+    {% endif %}
+            </div>
+        </div>
+        <aside class="home-sidebar">
+            <section class="follow-card">
+                <div class="follow-visual" aria-hidden="true">
+                    <span>МО</span>
+                    <span>АБ</span>
+                    <span>РК</span>
+                </div>
+                <p class="home-eyebrow">Персональная лента</p>
+                <h2>Подпишись на лучших экспертов</h2>
+                <p class="follow-copy">Собери свою ленту и быстрее замечай новые прогнозы тех, кому доверяешь.</p>
+                {% if request.user.is_authenticated %}
+                    <a class="home-primary-action" href="{% url 'cabinet:profile' %}?tab=following">Мои подписки <span>→</span></a>
+                {% else %}
+                    <a class="home-primary-action" href="{% url 'cabinet:register' %}">Создать аккаунт <span>→</span></a>
+                {% endif %}
+            </section>
+
+            <section class="experts-card" id="experts">
+                <div class="experts-title-row">
+                    <div>
+                        <h2>{% if top_experts_scope == "month" %}Топовые эксперты месяца{% else %}Топовые эксперты{% endif %}</h2>
+                    </div>
+                    <span class="experts-live">{{ top_experts_scope_label|default:"LIVE" }}</span>
+                </div>
+
+                <div class="experts-list">
+                    {% for expert in top_experts %}
+                    <div class="expert-row">
+                        <span class="expert-rank">{{ forloop.counter }}</span>
+                        <div class="expert-avatar">
+                            {% capper_trust_badge expert.trust_index %}
+                            {% if expert.avatar_url %}
+                                <img src="{{ expert.avatar_url }}" alt="">
+                            {% else %}
+                                <span>{{ expert.initials }}</span>
+                            {% endif %}
+                            {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges only %}
+                        </div>
+                        <div class="expert-copy">
+                            <div class="expert-name-line">
+                                <strong>{{ expert.name }}</strong>
+                                {% if expert.verified %}<span class="verified-mark" title="Проверенный эксперт">✓</span>{% endif %}
+                            </div>
+                            <span>@{{ expert.username }}</span>
+                        </div>
+                        <div class="expert-score">
+                            <strong>{{ expert.followers }}</strong>
+                            <span>подписчиков</span>
+                        </div>
+                        <span class="expert-arrow">›</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if request.user.is_authenticated %}
+                    <a class="experts-bottom-action" href="{% url 'cabinet:profile' %}?tab=following">Мои эксперты</a>
+                {% else %}
+                    <a class="experts-bottom-action" href="{% url 'cabinet:register' %}">Присоединиться</a>
+                {% endif %}
+            </section>
+        </aside>
+    </section>
+
+    {% include "cabinet/_expert_recommendations.html" %}
+
+    <section class="home-articles home-best-predictions" aria-labelledby="home-best-predictions-title">
+        <header class="home-articles-head">
+            <div>
+                <h2 id="home-best-predictions-title">Прогнозы с высоким Коэффициентом</h2>
+            </div>
+            <a class="home-all-link" href="{% url 'front:predictions' %}">Все прогнозы</a>
+        </header>
+
+        {% if best_predictions %}
+        {% with prediction=best_predictions.0 %}
+        <article class="home-best-prediction-featured" data-prediction-card="{{ prediction.coupon.id }}" data-analyst-id="{{ prediction.coupon.author_id }}">
+            <div class="home-best-prediction-featured-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4 18 1.8-10.2 4 4.1L12 5l2.2 6.9 4-4.1L20 18H4Z"></path>
+                    <path d="M4 20h16"></path>
+                </svg>
+                <span>Лучший прогноз</span>
+            </div>
+            <div class="home-best-prediction-featured-grid">
+                <a class="home-best-featured-match" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+                    <span class="home-best-featured-meta">
+                        {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m. H:i" }}{% endif %}
+                        {% if prediction.match.league_name %}<span>|</span>{{ prediction.match.league_name }}{% endif %}
+                    </span>
+                    <span class="home-best-featured-teams">
+                        <span class="home-best-featured-team">
+                            <span class="home-best-featured-logo">
+                                {% if prediction.match.home_team_logo %}
+                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
+                        </span>
+                        <span class="home-best-featured-vs">VS</span>
+                        <span class="home-best-featured-team">
+                            <span class="home-best-featured-logo">
+                                {% if prediction.match.away_team_logo %}
+                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                                {% else %}
+                                    {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
+                        </span>
+                    </span>
+                    {% if prediction.match.score %}
+                    <span class="home-best-featured-score">{{ prediction.match.score }}</span>
+                    {% endif %}
+                </a>
+
+                <a class="home-best-featured-expert" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
+                    <span class="home-best-featured-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+                        {% capper_trust_badge prediction.expert_trust_index %}
+                        {% if prediction.expert_avatar_url %}
+                            <img src="{{ prediction.expert_avatar_url }}" width="64" height="64" loading="lazy" alt="">
+                        {% elif prediction.coupon.author.avatar %}
+                            <img src="{{ prediction.coupon.author.avatar.url }}" width="64" height="64" loading="lazy" alt="">
+                        {% else %}
+                            {{ prediction.expert_initials }}
+                        {% endif %}
+                    </span>
+                    <span>
+                        <strong>{{ prediction.expert_name }}</strong>
+                        <small>Профессиональный каппер</small>
+                        <em>Топ-10 за месяц</em>
+                        <span class="quick-stats" aria-label="Статистика каппера за всё время">
+                            <span class="home-best-expert-row-stat">
+                                <strong>{{ prediction.expert_predictions_count }}</strong>
+                                <small>Прогнозов</small>
+                            </span>
+                            <span class="home-best-expert-row-stat">
+                                <strong>{{ prediction.expert_hit_rate|floatformat:"-1" }}%</strong>
+                                <small>Проходимость</small>
+                            </span>
+                            <span class="home-best-expert-row-stat">
+                                <strong{% if prediction.expert_profit > 0 %} class="is-positive"{% elif prediction.expert_profit < 0 %} class="is-negative"{% endif %}>{% if prediction.expert_profit > 0 %}+{% endif %}{{ prediction.expert_profit|floatformat:1 }}</strong>
+                                <small>Прибыль, ед.</small>
+                            </span>
+                        </span>
+                    </span>
+                </a>
+
+                <a class="home-best-featured-pick" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+                    <span>Прогноз</span>
+                    <strong>{{ prediction.selection }}</strong>
+                    <small>{{ prediction.market }}</small>
+                </a>
+
+                <div class="home-best-featured-result">
+                    <span>Коэффициент</span>
+                    <a class="home-best-featured-coefficient" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+                        {{ prediction.coefficient|floatformat:2 }}
+                    </a>
+                </div>
+
+                <div class="home-best-featured-status">
+                    <span>Статус</span>
+                    <span class="home-best-featured-status-pill{% if prediction.state_status == 'win' %} is-win{% elif prediction.state_status == 'lose' %} is-lose{% elif prediction.state_status == 'refund' %} is-refund{% endif %}">
+                        {% if prediction.state_status == 'win' %}Выигрыш{% elif prediction.state_status == 'lose' %}Проигрыш{% elif prediction.state_status == 'refund' %}Возврат{% else %}Ожидает{% endif %}
+                    </span>
+                    <a class="home-best-featured-open" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+                        Смотреть прогноз
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 12h14m-6-6 6 6-6 6"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endwith %}
+        <div class="home-best-predictions-table">
+            <div class="home-best-predictions-scroll">
+                <div class="home-best-predictions-head-row" aria-hidden="true">
+                    <span>#</span>
+                    <span>Матч</span>
+                    <span>Каппер</span>
+                    <span>Прогноз</span>
+                    <span>КФ</span>
+                    <span>Статус</span>
+                    <span>Действия</span>
+                </div>
+                <div class="home-best-predictions-body">
+                    {% for prediction in best_predictions %}
+                        {% if not forloop.first %}
+                            {% include "front/includes/_home_best_prediction_row.html" with prediction_number=forloop.counter %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="predictions-empty">
+            <h2>Прогнозов пока нет</h2>
+            <p>Лучшие прогнозы появятся здесь после первых публикаций.</p>
         </div>
         {% endif %}
-    </header>
+    </section>
 
-    {% if latest_articles %}
-    <div class="home-articles-window" data-article-window>
-        <div class="home-articles-track" data-article-track>
-            {% for article in latest_articles %}
-            <article class="home-article-card" data-article-card>
-                <a class="home-article-image" href="{{ article.get_absolute_url }}">
-                    {% if article.image %}
-                        <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-                    {% else %}
-                        <span>{{ forloop.counter|stringformat:"02d" }}</span>
-                    {% endif %}
-                </a>
-                <div class="home-article-copy">
-                    <div class="home-article-meta">
-                        <span>{{ article.created_at|date:"d.m.Y" }}</span>
-                        <span>Статья</span>
-                    </div>
-                    <div class="home-article-title heading-style-h3"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></div>
-                    <p>{{ article.description|truncatechars:150 }}</p>
-                    <a class="home-article-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
-                </div>
-            </article>
-            {% endfor %}
+    <section class="home-articles home-important-matches" aria-labelledby="home-important-matches-title" data-home-card-slider>
+        <header class="home-articles-head">
+            <div>
+                <p class="home-eyebrow">Прематч</p>
+                <h2 id="home-important-matches-title">Важные матчи</h2>
+                <p>Главные предстоящие игры из самых рейтинговых лиг.</p>
+            </div>
+            <div class="home-slider-controls">
+                <a class="home-all-link" href="{% url 'game:match_list' %}?scope=prematch">Все матчи</a>
+                {% if important_matches|length > 3 %}
+                <button class="home-card-slider-arrow" type="button" data-home-card-prev aria-label="Предыдущие матчи">‹</button>
+                <button class="home-card-slider-arrow" type="button" data-home-card-next aria-label="Следующие матчи">›</button>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if important_matches %}
+        <div class="home-card-slider-window" data-home-card-window>
+            <div class="home-card-slider-track" data-home-card-track>
+                {% for match in important_matches %}
+                    {% include "game/includes/_match_card_home.html" with match=match request=request website_settings=website_settings can_write_coupon=can_write_coupon only %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
-    <div class="home-articles-footer">
-        <div class="home-article-dots" data-article-dots aria-label="Навигация по страницам статей"></div>
-        <span><b data-article-current>01</b> / {{ latest_articles|length|stringformat:"02d" }}</span>
-    </div>
-    {% else %}
-    <div class="home-articles-empty">
-        <strong>Статьи скоро появятся</strong>
-        <p>Добавьте первую статью через админку — она автоматически попадёт на главную.</p>
-        <a href="{% url 'front:articles' %}">Открыть раздел →</a>
-    </div>
-    {% endif %}
-</section>
+        {% if important_matches|length > 3 %}
+        <div class="home-card-slider-dots" data-home-card-dots aria-label="Навигация по матчам"></div>
+        {% endif %}
+        {% else %}
+        <div class="matches-empty">
+            <h2>Прематчей пока нет</h2>
+            <p>Как только появятся новые матчи, здесь автоматически появится сетка из девяти игр.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% home_bookmakers %}
+
+    {% include "front/includes/_home_best_experts.html" %}
+
+    <section class="home-articles" aria-labelledby="home-articles-title" data-article-slider tabindex="0">
+        <header class="home-articles-head">
+            <div>
+                <p class="home-eyebrow">Редакция</p>
+                <h2 id="home-articles-title">Новые статьи</h2>
+                <p>Разборы матчей, полезные материалы и идеи от команды КапперХаб.</p>
+            </div>
+            {% if latest_articles|length > 1 %}
+            <div class="home-articles-actions">
+                <button type="button" data-article-prev aria-label="Предыдущая страница статей">←</button>
+                <button class="is-accent" type="button" data-article-next aria-label="Следующая страница статей">→</button>
+            </div>
+            {% endif %}
+        </header>
+
+        {% if latest_articles %}
+        <div class="home-articles-window" data-article-window>
+            <div class="home-articles-track" data-article-track>
+                {% for article in latest_articles %}
+                <article class="home-article-card" data-article-card>
+                    <a class="home-article-image" href="{{ article.get_absolute_url }}">
+                        {% if article.image %}
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+                        {% else %}
+                            <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="home-article-copy">
+                        <div class="home-article-meta">
+                            <span>{{ article.created_at|date:"d.m.Y" }}</span>
+                            <span>Статья</span>
+                        </div>
+                        <div class="home-article-title heading-style-h3"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></div>
+                        <p>{{ article.description|truncatechars:150 }}</p>
+                        <a class="home-article-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="home-articles-footer">
+            <div class="home-article-dots" data-article-dots aria-label="Навигация по страницам статей"></div>
+            <span><b data-article-current>01</b> / {{ latest_articles|length|stringformat:"02d" }}</span>
+        </div>
+        {% else %}
+        <div class="home-articles-empty">
+            <strong>Статьи скоро появятся</strong>
+            <p>Добавьте первую статью через админку — она автоматически попадёт на главную.</p>
+            <a href="{% url 'front:articles' %}">Открыть раздел →</a>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
 {% endblock %}
 
 {% block extra_js %}
