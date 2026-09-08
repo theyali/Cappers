@@ -1,0 +1,92 @@
+name: Finish homepage best experts redesign
+
+on:
+  push:
+    paths:
+      - '.github/workflows/home-best-experts-redesign-retry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply original redesign patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          workflow_path = Path('.github/workflows/home-best-experts-redesign.yml')
+          workflow = workflow_path.read_text()
+          start_marker = "      - name: Apply homepage experts redesign\n        shell: python\n        run: |\n"
+          end_marker = "\n      - name: Validate templates and CSS"
+
+          if start_marker not in workflow or end_marker not in workflow:
+              raise SystemExit('Original redesign patch block not found')
+
+          code = workflow.split(start_marker, 1)[1].split(end_marker, 1)[0]
+          code = '\n'.join(line[10:] if line.startswith('          ') else line for line in code.splitlines())
+          exec(compile(code, 'home-best-experts-patch', 'exec'), {})
+
+          follow_path = Path('templates/front/includes/_home_expert_follow_action.html')
+          follow = follow_path.read_text()
+          if not follow.lstrip().startswith('{% load capper_trust %}'):
+              follow_path.write_text('{% load capper_trust %}\n' + follow.lstrip())
+
+          main_path = Path('front/static/front/css/main.css')
+          main = main_path.read_text()
+          main = main.replace(
+              'button.home-best-expert-follow,\nbutton.home-best-expert-row-follow {\n    appearance: none;\n    outline: 0;\n    box-shadow: none;\n}',
+              'button.home-best-expert-follow,\nbutton.home-best-expert-row-follow {\n    appearance: none;\n    border: 0;\n    outline: 0;\n    box-shadow: none;\n}'
+          )
+          main = main.replace(
+              'grid-template-columns: 38px minmax(180px, 1.4fr) minmax(150px, 1fr) 72px 80px minmax(112px, auto);\n    align-items: center;\n    gap: 12px;',
+              'grid-template-columns: 36px minmax(140px, 1.25fr) minmax(120px, .9fr) 58px 66px minmax(108px, auto);\n    align-items: center;\n    gap: 9px;'
+          )
+          main_path.write_text(main)
+
+          mobile_path = Path('front/static/front/css/mobile.css')
+          mobile = mobile_path.read_text()
+          mobile = mobile.replace(
+              '.home-best-experts-runners {\n        grid-template-columns: repeat(2, minmax(0, 1fr));\n    }',
+              '.home-best-experts-runners {\n        grid-template-columns: 1fr;\n    }'
+          )
+          mobile_path.write_text(mobile)
+
+      - name: Validate generated redesign
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('templates/front/index.html').read_text()
+          main = Path('front/static/front/css/main.css').read_text()
+          mobile = Path('front/static/front/css/mobile.css').read_text()
+          follow = Path('templates/front/includes/_home_expert_follow_action.html').read_text()
+
+          assert index.count('home-best-experts-stage') == 1
+          assert index.count('home-best-experts-podium') >= 1
+          assert index.count('home-best-experts-runners') == 1
+          assert index.count('home-best-experts-proof') >= 1
+          assert 'home-best-experts-grid' not in index
+          assert 'style=' not in index[index.index('<section class="home-best-experts"'):index.index('</section>', index.index('<section class="home-best-experts"'))]
+          assert main.count('Legacy source: front/static/front/css/home-experts.css') == 1
+          assert main.count('.home-best-experts-stage {') == 1
+          assert mobile.count('/* Home best experts responsive */') == 1
+          assert follow.startswith('{% load capper_trust %}')
+          assert 'linear-gradient' not in main[main.index('/* Legacy source: front/static/front/css/home-experts.css */'):]
+          print('homepage experts redesign structural validation passed')
+          PY
+
+      - name: Commit redesign
+        run: |
+          git config user.name "Cappers Bot"
+          git config user.email "actions@github.com"
+          git add templates/front/index.html templates/front/includes/_home_expert_follow_action.html front/static/front/css/main.css front/static/front/css/mobile.css
+          git rm .github/workflows/home-best-experts-redesign.yml .github/workflows/home-best-experts-redesign-retry.yml
+          git commit -m "Redesign homepage best experts podium"
+          git push
