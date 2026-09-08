@@ -31955,3 +31955,367 @@ body.wiki-video-player-open {
         text-align: left;
     }
 }
+
+
+/* Forecast reference alignment v2 */
+.home-heading {
+    min-height: 148px;
+    align-items: flex-end;
+    margin-bottom: 22px;
+}
+
+.home-heading-copy {
+    min-width: 0;
+}
+
+.home-heading h1 {
+    max-width: none;
+    font-size: clamp(46px, 4.7vw, 68px);
+    line-height: .96;
+}
+
+.home-heading-subtitle {
+    max-width: 900px;
+    margin: 15px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.slider-actions {
+    gap: 12px;
+    padding-bottom: 18px;
+}
+
+.slider-arrow {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+}
+
+.forecast-slider {
+    min-height: 790px;
+    padding: 22px;
+    border-radius: 28px;
+    background: var(--panel);
+}
+
+.forecast-slide {
+    min-height: 650px;
+    padding: 28px 32px;
+    border-radius: 22px;
+    background: #171718;
+}
+
+.forecast-topline {
+    min-height: 72px;
+}
+
+.forecast-expert {
+    gap: 14px;
+}
+
+.forecast-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    font-size: 14px;
+}
+
+.forecast-expert strong {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.forecast-expert > div > span {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+.forecast-meta {
+    gap: 10px;
+}
+
+.forecast-meta > span:first-child,
+.forecast-meta > .forecast-league-meta {
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.forecast-meta > span:first-child {
+    color: #fff;
+    background: var(--blue);
+}
+
+.forecast-meta > .forecast-league-meta {
+    color: rgba(255, 255, 255, .76);
+    background: #28282b;
+}
+
+.forecast-meta .forecast-league-logo {
+    width: 20px;
+    height: 20px;
+    min-height: 20px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 5px;
+    color: inherit;
+    background: transparent;
+}
+
+.forecast-meta .forecast-league-logo img {
+    width: 20px;
+    height: 20px;
+}
+
+.forecast-matchup {
+    min-height: 190px;
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    gap: 28px;
+    margin-top: 28px;
+    padding: 20px 26px;
+    border-radius: 22px;
+    background: #202022;
+}
+
+.forecast-team,
+.forecast-team-away {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: center;
+    justify-content: stretch;
+    gap: 22px;
+    text-align: left;
+}
+
+.forecast-team-logo {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+    background: #2a2a2d;
+}
+
+.forecast-team-logo img {
+    width: 86%;
+    height: 86%;
+}
+
+.forecast-team-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.forecast-team strong {
+    width: 100%;
+    overflow: visible;
+    color: var(--text);
+    font-size: clamp(24px, 2.25vw, 34px);
+    line-height: 1.05;
+    white-space: normal;
+    text-overflow: clip;
+}
+
+.forecast-team .forecast-league-meta {
+    width: fit-content;
+    min-height: 36px;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, .76);
+    background: #303033;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.forecast-team .forecast-league-meta svg {
+    color: rgba(255, 255, 255, .78);
+}
+
+.forecast-vs {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    font-size: 15px;
+    letter-spacing: .03em;
+}
+
+.forecast-body {
+    grid-template-columns: minmax(0, 1.22fr) minmax(330px, .88fr);
+    gap: 38px;
+    align-items: stretch;
+    margin-top: 0;
+    padding-top: 28px;
+}
+
+.forecast-match-copy {
+    min-width: 0;
+    justify-content: flex-start;
+    padding-top: 20px;
+}
+
+.forecast-label {
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.forecast-match-copy h2 {
+    max-width: none;
+    font-size: clamp(25px, 2.3vw, 36px);
+    line-height: 1.08;
+}
+
+.forecast-match-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 24px;
+    margin-top: 28px;
+}
+
+.forecast-match-detail {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, .72);
+}
+
+.forecast-match-detail svg {
+    flex: 0 0 auto;
+    color: rgba(255, 255, 255, .62);
+}
+
+.forecast-match-detail strong {
+    color: rgba(255, 255, 255, .78);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.forecast-result {
+    min-height: 42px;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.forecast-note {
+    width: 100%;
+    max-width: none;
+    min-height: 88px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 16px;
+    margin: 28px 0 0;
+    padding: 16px 20px;
+    border-radius: 16px;
+    color: rgba(255, 255, 255, .7);
+    background: #202022;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.forecast-note > svg {
+    color: rgba(255, 255, 255, .88);
+}
+
+.forecast-note-arrow {
+    color: rgba(255, 255, 255, .62);
+    font-size: 31px;
+    line-height: 1;
+    text-align: right;
+}
+
+.forecast-pick-column {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: minmax(250px, 1fr) 66px;
+    gap: 14px;
+}
+
+.forecast-pick-card {
+    min-height: 250px;
+    padding: 26px 30px;
+    border-radius: 20px;
+}
+
+.forecast-pick-card > span {
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.forecast-pick-card > strong {
+    margin-top: 13px;
+    font-size: clamp(27px, 2.45vw, 38px);
+}
+
+.forecast-market {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.forecast-coefficient {
+    margin-top: auto;
+    padding-top: 20px;
+    box-shadow: inset 0 1px 0 rgba(19, 19, 19, .16);
+}
+
+.forecast-coefficient small {
+    font-size: 13px;
+}
+
+.forecast-coefficient b {
+    font-size: 58px;
+}
+
+.forecast-open-match {
+    width: 100%;
+    min-height: 66px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 0 22px;
+    border-radius: 18px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.forecast-open-match svg {
+    flex: 0 0 auto;
+}
+
+.slider-footer {
+    min-height: 76px;
+    padding: 18px 8px 0;
+}
+
+.slider-dot {
+    width: 10px;
+    height: 10px;
+}
+
+.slider-dot.is-active {
+    width: 38px;
+}
+
+.slider-counter {
+    font-size: 14px;
+}
