@@ -17647,7 +17647,7 @@ font-size: 14px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 280px;
     align-items: start;
-    gap: 18px;
+    gap: 8px;
     transition: grid-template-columns .2s ease;
 }
 
