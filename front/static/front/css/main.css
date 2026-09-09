@@ -1731,13 +1731,13 @@ h2 {
 
 .nav-wallet {
     min-height: 42px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
     margin: 0;
     padding: 4px;
-    border-radius: 12px;
-    background: #2a2a2d;
+    border-radius: 30px;
+    background: var(--line);
 }
 
 .nav-wallet-balance {
@@ -1749,7 +1749,7 @@ h2 {
 }
 
 .nav-wallet-balance span {
-    color: var(--muted);
+    color: white;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
@@ -1761,24 +1761,6 @@ h2 {
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-}
-
-.site-nav-actions .nav-wallet-topup {
-    min-height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 11px;
-    border: 0;
-    border-radius: 9px;
-    color: var(--ink);
-    background: var(--yellow);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform .18s ease, background .18s ease;
 }
 
 
@@ -1799,11 +1781,7 @@ h2 {
     cursor: pointer;
     transition: background .18s ease, color .18s ease, transform .18s ease;
 }
-.site-nav-actions .nav-wallet-topup:hover {
-    background: #fff200;
-    transform: translateY(-1px);
-    color: var(--ink);
-}
+
 .site-nav-center a {
     gap: 7px;
 }
@@ -33594,12 +33572,11 @@ body.wiki-video-player-open {
 }
 
 .site-footer-main {
-    width: min(100%, 1920px);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(420px, .92fr);
+    grid-template-columns: minmax(0, 1.08fr) minmax(420px, .9fr);
     gap: clamp(36px, 5vw, 88px);
-    padding: clamp(70px, 7vw, 136px) clamp(32px, 5vw, 92px) clamp(54px, 6vw, 96px);
+    padding: 40px;
 }
 
 .site-footer-brand,
@@ -33610,7 +33587,6 @@ body.wiki-video-player-open {
 .site-footer-brand {
     display: grid;
     align-content: start;
-    gap: clamp(30px, 4vw, 66px);
 }
 
 .site-footer-logo {
@@ -33634,19 +33610,19 @@ body.wiki-video-player-open {
 }
 
 .site-footer-brand > p {
-    max-width: 600px;
-    margin: -36px 0 0;
+    margin: 0;
     color: rgba(255, 255, 255, .62);
-    font-size: clamp(18px, 1.55vw, 28px);
-    line-height: 1.45;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 500;
     text-shadow: 0 2px 12px rgba(0, 0, 0, .72);
+    width: 46%;
+    margin-bottom: 69px;
+    margin-top: 10px;
 }
 
 .site-footer-nav {
     display: grid;
     grid-template-columns: repeat(3, minmax(150px, 1fr));
-    gap: 32px clamp(28px, 5vw, 82px);
 }
 
 .site-footer-group {
@@ -33666,15 +33642,14 @@ body.wiki-video-player-open {
 
 .site-footer-links {
     display: grid;
-    gap: 15px;
+    gap: 11px;
 }
 
 .site-footer-links a {
     width: fit-content;
     color: rgba(255, 255, 255, .56);
-    font-size: clamp(16px, 1.2vw, 23px);
-    line-height: 1.22;
-    font-weight: 600;
+    font-size: clamp(16px, 1vw, 23px);
+    font-weight: 500;
     transition: color .22s ease, transform .22s ease;
 }
 
@@ -33687,8 +33662,8 @@ body.wiki-video-player-open {
 .site-footer-support {
     display: grid;
     align-content: start;
-    gap: clamp(28px, 3vw, 44px);
-    padding-top: clamp(18px, 4vw, 78px);
+    gap: 19px;
+    padding-top:80px;
 }
 
 .site-footer-support-copy {
