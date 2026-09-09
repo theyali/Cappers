@@ -17,6 +17,7 @@ def bookmakers_sidebar(context, force_sidebar_ads=False):
     return {
         "bookmakers": Bookmaker.objects.all(),
         "website_settings": WebsiteSettings.load(),
+        "promo_banners": context.get("promo_banners", []),
         "adv_banners": adv_banners,
         "adv_placement": adv_placement,
         "show_sidebar_ads": bool(
