@@ -20996,8 +20996,8 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-avatar {
     position: relative;
-    width: 212px;
-    height: 212px;
+    width: 170px;
+    height: 170px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
@@ -21170,7 +21170,6 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .expert-public-buy-button {
-    width: clamp(210px, 14vw, 260px);
     min-width: 0;
     min-height: 54px;
     display: inline-flex;
@@ -21183,9 +21182,10 @@ body:has(.predictions-scroll-page) .site-footer {
     background: #ffe500;
     cursor: pointer;
     font: inherit;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     text-decoration: none;
+    padding: 0 17px;
 }
 
 .expert-public-buy-button:hover,
@@ -22260,6 +22260,7 @@ body:has(.predictions-scroll-page) .site-footer {
 }
 
 .expert-public-stats-compact .expert-public-stat-card {
+    height: 90px;
     min-width: 0;
     display: flex;
     align-items: center;
@@ -22307,14 +22308,14 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-stats-compact .expert-public-stat-card span:not(.expert-public-stat-icon) {
     color: rgba(255, 255, 255, .58);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
 }
 
 .expert-public-stats-compact .expert-public-stat-card strong {
     overflow: hidden;
     color: #fff;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
     line-height: 1;
     white-space: nowrap;
@@ -22323,7 +22324,7 @@ body:has(.predictions-scroll-page) .site-footer {
 
 .expert-public-stats-compact .expert-public-stat-card small {
     color: rgba(255, 255, 255, .5);
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
 }
 
