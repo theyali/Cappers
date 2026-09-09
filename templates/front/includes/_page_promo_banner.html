@@ -1,24 +1,53 @@
 {% if promo_banner %}
-<section
-    class="page-promo-banner{% if promo_banner_mod %} {{ promo_banner_mod }}{% endif %}"
-    style="--promo-title-color: {{ promo_banner.title_color }}; --promo-text-color: {{ promo_banner.text_color }}; --promo-button-color: {{ promo_banner.button_color }}; --promo-button-text-color: {{ promo_banner.button_text_color }};"
-    aria-label="{{ promo_banner.eyebrow|default:promo_banner.name }}"
->
-    <picture class="page-promo-banner-media" aria-hidden="true">
-        {% if promo_banner.mobile_image %}
-            <source media="(max-width: 767px)" srcset="{{ promo_banner.mobile_image.url }}">
-        {% endif %}
-        <img src="{{ promo_banner.image.url }}" alt="" loading="lazy" decoding="async">
-    </picture>
-    <div class="page-promo-banner-copy">
-        {% if promo_banner.eyebrow %}
-        <p>{{ promo_banner.eyebrow }}</p>
-        {% endif %}
-        <h2>{{ promo_banner.title|linebreaksbr }}</h2>
-        {% if promo_banner.text %}
-        <span>{{ promo_banner.text }}</span>
-        {% endif %}
-        <a href="{{ promo_banner.button_url }}">{{ promo_banner.button_label }} <b aria-hidden="true">→</b></a>
+    {% if not promo_banner.eyebrow and not promo_banner.title and not promo_banner.text and not promo_banner.button_label %}
+    <div class="adv-banners {% if promo_banner_mod == 'is-home-sidebar' %}adv-banners--sidebar{% else %}adv-banners--content{% endif %}" aria-label="Промо">
+        <a
+            class="adv-banner {% if promo_banner_mod == 'is-page-wide' %}adv-banner--full_450{% else %}adv-banner--full_240{% endif %}"
+            href="{{ promo_banner.button_url }}"
+            aria-label="Открыть промо-баннер"
+        >
+            <picture>
+                {% if promo_banner.mobile_image %}
+                <source
+                    media="(max-width: 767px)"
+                    srcset="{{ promo_banner.mobile_image.url }}"
+                    width="{{ promo_banner.mobile_image.width }}"
+                    height="{{ promo_banner.mobile_image.height }}"
+                >
+                {% endif %}
+                <img
+                    src="{{ promo_banner.image.url }}"
+                    alt=""
+                    width="{{ promo_banner.image.width }}"
+                    height="{{ promo_banner.image.height }}"
+                    loading="lazy"
+                    decoding="async"
+                >
+            </picture>
+        </a>
     </div>
-</section>
+    {% else %}
+    <section
+        class="page-promo-banner{% if promo_banner_mod %} {{ promo_banner_mod }}{% endif %}"
+        style="--promo-title-color: {{ promo_banner.title_color }}; --promo-text-color: {{ promo_banner.text_color }}; --promo-button-color: {{ promo_banner.button_color }}; --promo-button-text-color: {{ promo_banner.button_text_color }};"
+        aria-label="{{ promo_banner.eyebrow|default:promo_banner.name }}"
+    >
+        <picture class="page-promo-banner-media" aria-hidden="true">
+            {% if promo_banner.mobile_image %}
+                <source media="(max-width: 767px)" srcset="{{ promo_banner.mobile_image.url }}">
+            {% endif %}
+            <img src="{{ promo_banner.image.url }}" alt="" loading="lazy" decoding="async">
+        </picture>
+        <div class="page-promo-banner-copy">
+            {% if promo_banner.eyebrow %}
+            <p>{{ promo_banner.eyebrow }}</p>
+            {% endif %}
+            <h2>{{ promo_banner.title|linebreaksbr }}</h2>
+            {% if promo_banner.text %}
+            <span>{{ promo_banner.text }}</span>
+            {% endif %}
+            <a href="{{ promo_banner.button_url }}">{{ promo_banner.button_label }} <b aria-hidden="true">→</b></a>
+        </div>
+    </section>
+    {% endif %}
 {% endif %}

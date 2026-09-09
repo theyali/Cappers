@@ -68,7 +68,7 @@ class PromoBanner(models.Model):
         ordering = ("name", "id")
 
     def __str__(self) -> str:
-        return self.name
+        return self.name or self.title or self.button_url or f"Промо-баннер #{self.pk or 'новый'}"
 
 
 class HelpBlock(models.Model):
