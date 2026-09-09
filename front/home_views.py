@@ -221,6 +221,18 @@ def _top_home_profiles(all_time_profiles, monthly_top_ids: list[int]) -> tuple[l
     return list(all_time_profiles[:HOME_TOP_EXPERTS_LIMIT]), "all_time"
 
 
+def _home_articles() -> tuple[Article | None, list[Article]]:
+    queryset = Article.objects.filter(is_published=True).select_related("category")
+    main_article = queryset.filter(is_main=True).order_by("-created_at", "-id").first()
+    if main_article is None:
+        main_article = queryset.order_by("-created_at", "-id").first()
+
+    latest_articles = queryset.order_by("-created_at", "-id")
+    if main_article is not None:
+        latest_articles = latest_articles.exclude(pk=main_article.pk)
+    return main_article, list(latest_articles[:HOME_ARTICLES_LIMIT])
+
+
 def _top_home_experts(
     profiles,
     *,
@@ -447,6 +459,7 @@ def index(request):
         all_time_profiles,
         monthly_top_ids,
     )
+    main_article, latest_articles = _home_articles()
 
     return render(
         request,
@@ -469,9 +482,8 @@ def index(request):
                 monthly_leader_id=monthly_leader_id,
                 all_time_leader_id=all_time_leader_id,
             ),
-            "latest_articles": Article.objects.filter(is_published=True).order_by(
-                "-created_at", "-id"
-            )[:HOME_ARTICLES_LIMIT],
+            "main_article": main_article,
+            "latest_articles": latest_articles,
             "recommended_experts": _recommended_experts(request),
             "important_matches": _important_home_matches(request, can_write_coupon),
             "can_write_coupon": can_write_coupon,

@@ -17,11 +17,39 @@ def _validate_not_own_prediction_reaction(*, prediction_id, user_id):
         raise ValidationError(SELF_REACTION_ERROR)
 
 
+class ArticleCategory(models.Model):
+    name = models.CharField("Название", max_length=120, unique=True)
+    slug = models.SlugField("Slug", max_length=140, unique=True)
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Категория статьи"
+        verbose_name_plural = "Категории статей"
+        ordering = ("sort_order", "name", "id")
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Article(models.Model):
     title = models.CharField("Заголовок", max_length=220)
     slug = models.SlugField("Slug", max_length=240, unique=True)
+    category = models.ForeignKey(
+        ArticleCategory,
+        on_delete=models.SET_NULL,
+        related_name="articles",
+        verbose_name="Категория",
+        blank=True,
+        null=True,
+    )
     description = models.TextField("Краткое описание", max_length=700)
     image = models.ImageField("Изображение", upload_to="articles/%Y/%m/", blank=True, null=True)
+    reading_time_minutes = models.PositiveSmallIntegerField("Время чтения, мин", default=5)
+    tags = models.CharField("Теги", max_length=300, blank=True, help_text="Через запятую")
+    is_main = models.BooleanField("Главная статья", default=False, db_index=True)
     content = HTMLField("Контент")
     is_published = models.BooleanField("Опубликована", default=True, db_index=True)
     created_at = models.DateTimeField("Создана", auto_now_add=True, db_index=True)
@@ -34,6 +62,10 @@ class Article(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def tag_list(self) -> list[str]:
+        return [tag.strip() for tag in self.tags.split(",") if tag.strip()]
 
     def get_absolute_url(self) -> str:
         return reverse("front:article_detail", kwargs={"slug": self.slug})

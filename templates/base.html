@@ -224,15 +224,18 @@
                 {% endfor %}
             </nav>
         </div>
+        {% endif %}
 
-        {% endif %}
         {% block content %}{% endblock %}
-        {% if adv_banners and adv_placement == 'content' %}
-            {% include "pages/_adv_banners.html" with placement="content" %}
-        {% endif %}
-        {% if request.resolver_match.view_name == 'front:index' and website_settings.home_about_enabled %}
-            {% include "front/includes/_home_about.html" %}
-        {% endif %}
+        <div class="container">
+            {% if adv_banners and adv_placement == 'content' %}
+                {% include "pages/_adv_banners.html" with placement="content" %}
+            {% endif %}
+            {% if request.resolver_match.view_name == 'front:index' and website_settings.home_about_enabled %}
+                {% include "front/includes/_home_about.html" %}
+            {% endif %}
+        </div>
+
     </main>
 
     {% if not hide_footer %}
