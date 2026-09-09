@@ -13,32 +13,59 @@ class AdvBannerAdmin(admin.ModelAdmin):
 
 @admin.register(PromoBanner)
 class PromoBannerAdmin(admin.ModelAdmin):
-    list_display = ("id", "button_url", "is_active", "updated_at")
+    list_display = ("name", "title", "button_label", "button_url", "is_active", "updated_at")
     list_filter = ("is_active",)
     list_editable = ("is_active",)
-    search_fields = ("button_url",)
-    ordering = ("-updated_at", "-id")
+    search_fields = ("name", "eyebrow", "title", "text", "button_label", "button_url")
+    readonly_fields = ("updated_at",)
+    ordering = ("name", "id")
     fieldsets = (
         (
-            "Промо-баннер",
+            "Контент",
+            {
+                "description": (
+                    "Для простого промо достаточно заполнить только изображение и ссылку. "
+                    "Если заполнить текстовые поля, баннер будет работать в старом текстовом формате."
+                ),
+                "fields": (
+                    "name",
+                    "eyebrow",
+                    "title",
+                    "text",
+                    "button_label",
+                    "button_url",
+                    "is_active",
+                ),
+            },
+        ),
+        (
+            "Изображения",
             {
                 "fields": (
                     "image",
-                    "button_url",
-                    "is_active",
+                    "mobile_image",
                 )
             },
         ),
+        (
+            "Цвета",
+            {
+                "fields": (
+                    "title_color",
+                    "text_color",
+                    "button_color",
+                    "button_text_color",
+                )
+            },
+        ),
+        (
+            "Система",
+            {
+                "fields": ("updated_at",),
+                "classes": ("collapse",),
+            },
+        ),
     )
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        if "button_url" in form.base_fields:
-            form.base_fields["button_url"].label = "Ссылка"
-            form.base_fields["button_url"].help_text = (
-                "Можно указать внутренний путь, например /tournaments/, или полный URL."
-            )
-        return form
 
 
 class HelpAccordionItemInline(admin.StackedInline):
