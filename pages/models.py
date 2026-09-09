@@ -38,15 +38,19 @@ class AdvBanner(models.Model):
 
 
 class PromoBanner(models.Model):
-    name = models.CharField("Название в админке", max_length=160)
+    name = models.CharField("Название в админке", max_length=160, blank=True)
     eyebrow = models.CharField("Метка", max_length=80, blank=True)
-    title = models.CharField("Title", max_length=180)
+    title = models.CharField("Title", max_length=180, blank=True)
     text = models.TextField("Текст", blank=True)
-    button_label = models.CharField("Текст кнопки", max_length=80)
+    button_label = models.CharField("Текст кнопки", max_length=80, blank=True)
     button_url = models.CharField(
-        "Ссылка кнопки",
+        "Ссылка",
         max_length=1000,
-        help_text="Можно указать относительный путь, например /tournaments/, или полный URL.",
+        help_text=(
+            "Для баннера только с изображением ссылка открывается по клику на весь баннер. "
+            "Для старого текстового варианта используется как ссылка кнопки. Можно указать "
+            "относительный путь, например /tournaments/, или полный URL."
+        ),
     )
     image = models.ImageField("Изображение", upload_to="promo_banners/")
     mobile_image = models.ImageField(
