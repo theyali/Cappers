@@ -98,3 +98,9 @@ class CapperSocialsForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
     )
+    x = forms.CharField(
+        label="X",
+        max_length=160,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
+    )

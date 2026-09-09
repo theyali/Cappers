@@ -37,6 +37,40 @@ class AdvBanner(models.Model):
         return self.name
 
 
+class PromoBanner(models.Model):
+    name = models.CharField("Название в админке", max_length=160)
+    eyebrow = models.CharField("Метка", max_length=80, blank=True)
+    title = models.CharField("Title", max_length=180)
+    text = models.TextField("Текст", blank=True)
+    button_label = models.CharField("Текст кнопки", max_length=80)
+    button_url = models.CharField(
+        "Ссылка кнопки",
+        max_length=1000,
+        help_text="Можно указать относительный путь, например /tournaments/, или полный URL.",
+    )
+    image = models.ImageField("Изображение", upload_to="promo_banners/")
+    mobile_image = models.ImageField(
+        "Мобильное изображение",
+        upload_to="promo_banners/mobile/",
+        blank=True,
+        help_text="Если заполнено, используется на экранах до 767 px.",
+    )
+    title_color = models.CharField("Цвет title", max_length=32, default="#050505")
+    text_color = models.CharField("Цвет текста", max_length=32, default="rgba(0, 0, 0, .76)")
+    button_color = models.CharField("Цвет кнопки", max_length=32, default="#151719")
+    button_text_color = models.CharField("Цвет текста кнопки", max_length=32, default="#fff200")
+    is_active = models.BooleanField("Показывать", default=True, db_index=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Промо-баннер"
+        verbose_name_plural = "Промо-баннеры"
+        ordering = ("name", "id")
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class HelpBlock(models.Model):
     key = models.SlugField(
         "Ключ блока",
@@ -176,6 +210,12 @@ class PageSEO(models.Model):
         choices=AdvPlacement.choices,
         default=AdvPlacement.CONTENT,
         help_text="Для страниц с сайдбаром выберите размещение в сайдбаре.",
+    )
+    promo_banners = models.ManyToManyField(
+        PromoBanner,
+        blank=True,
+        related_name="pages",
+        verbose_name="Промо-баннеры",
     )
     is_active = models.BooleanField("Использовать SEO-настройки", default=True, db_index=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)

@@ -35,6 +35,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "specialization",
         "telegram_channel",
         "telegram_account",
+        "x",
         "is_verified",
         "verification_requested_at",
         "is_vip",
@@ -70,6 +71,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "telegram_account",
         "tiktok",
         "facebook",
+        "x",
     )
     autocomplete_fields = ("user",)
     readonly_fields = (
@@ -105,6 +107,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                     "youtube",
                     "tiktok",
                     "facebook",
+                    "x",
                 )
             },
         ),

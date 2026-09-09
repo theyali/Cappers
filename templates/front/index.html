@@ -194,26 +194,12 @@
         <p>Как только капперы опубликуют первый прогноз, он автоматически появится в этом слайдере.</p>
     </div>
     {% endif %}
-            </div>
         </div>
-        <aside class="home-sidebar">
-            <section class="follow-card">
-                <div class="follow-visual" aria-hidden="true">
-                    <span>МО</span>
-                    <span>АБ</span>
-                    <span>РК</span>
-                </div>
-                <p class="home-eyebrow">Персональная лента</p>
-                <h2>Подпишись на лучших экспертов</h2>
-                <p class="follow-copy">Собери свою ленту и быстрее замечай новые прогнозы тех, кому доверяешь.</p>
-                {% if request.user.is_authenticated %}
-                    <a class="home-primary-action" href="{% url 'cabinet:profile' %}?tab=following">Мои подписки <span>→</span></a>
-                {% else %}
-                    <a class="home-primary-action" href="{% url 'cabinet:register' %}">Создать аккаунт <span>→</span></a>
-                {% endif %}
-            </section>
+    </div>
+    <aside class="home-sidebar">
+        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" %}
 
-            <section class="experts-card" id="experts">
+        <section class="experts-card" id="experts">
                 <div class="experts-title-row">
                     <div>
                         <h2>{% if top_experts_scope == "month" %}Топовые эксперты месяца{% else %}Топовые эксперты{% endif %}</h2>

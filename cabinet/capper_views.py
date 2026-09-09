@@ -35,7 +35,7 @@ def _account_type_from_request(request) -> str:
         return ACCOUNT_CAPPER
     if posted_role == User.Role.READER:
         return ACCOUNT_READER
-    return ""
+    return ACCOUNT_READER
 
 
 def _display_name_for(user: User) -> str:
@@ -252,6 +252,7 @@ def capper_onboarding(request, step: int):
                 "instagram": profile.instagram,
                 "youtube": profile.youtube,
                 "tiktok": profile.tiktok,
+                "x": profile.x,
             },
         )
         if request.method == "POST" and form.is_valid():
@@ -260,6 +261,7 @@ def capper_onboarding(request, step: int):
             profile.instagram = form.cleaned_data["instagram"].strip()
             profile.youtube = form.cleaned_data["youtube"].strip()
             profile.tiktok = form.cleaned_data["tiktok"].strip()
+            profile.x = form.cleaned_data["x"].strip()
             profile.save(
                 update_fields=[
                     "telegram_channel",
@@ -267,6 +269,7 @@ def capper_onboarding(request, step: int):
                     "instagram",
                     "youtube",
                     "tiktok",
+                    "x",
                     "updated_at",
                 ]
             )

@@ -1,3 +1,5 @@
+from random import randint
+
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, render
@@ -309,6 +311,7 @@ def expert_profile(request, username: str):
     )
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
+    context["expert_public_hero_index"] = randint(1, 5)
     context["profile_presence"] = presence_payload(profile.user)
     monthly_top_ids = current_month_top_expert_ids()
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None

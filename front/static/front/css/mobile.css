@@ -124,7 +124,8 @@
         display: none;
     }
 
-    .auth-heading h1 {
+    .auth-heading h1,
+    .auth-heading h2 {
         max-width: none;
         min-height: 42px;
         display: flex;

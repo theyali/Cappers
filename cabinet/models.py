@@ -104,6 +104,7 @@ class AnalystProfile(models.Model):
     youtube = models.CharField("YouTube канал", max_length=200, blank=True)
     tiktok = models.CharField("TikTok", max_length=160, blank=True)
     facebook = models.CharField("Facebook", max_length=200, blank=True)
+    x = models.CharField("X", max_length=160, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
     verification_requested_at = models.DateTimeField(
         "Запрос проверки отправлен",
@@ -170,6 +171,7 @@ class AnalystProfile(models.Model):
             ("youtube", "YouTube", self.youtube, "youtube"),
             ("tiktok", "TikTok", self.tiktok, "tiktok"),
             ("facebook", "Facebook", self.facebook, "facebook"),
+            ("x", "X", self.x, "x"),
         ]
         return [
             {"key": key, "label": label, "value": value, "url": _social_url(value, network)}
@@ -200,6 +202,8 @@ def _social_url(value: str, network: str) -> str:
         return f"https://www.tiktok.com/@{handle}"
     if network == "facebook":
         return f"https://www.facebook.com/{handle}"
+    if network == "x":
+        return f"https://x.com/{handle}"
     return text
 
 

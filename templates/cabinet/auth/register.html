@@ -7,12 +7,14 @@
 {% block content %}
 <section class="auth-stage auth-stage-register">
     <div class="container auth-register-grid">
-        <div>
+        <div class="capper-landing ca">
             <p class="capper-kicker">Больше чем прогнозы</p>
             <h1>
-                Твой следующий<br>
+                Твой<br>
+                следующий<br>
                 выигрыш<br>
-                начинается <span class="static-page-content"><a href="#register-form">здесь</a></span>
+                начинается<br>
+                <span class="static-page-content"><a href="#register-form">здесь</a></span>
             </h1>
             <p class="capper-landing-lead">
                 Аналитика. Эксперты. Возможности.<br>
@@ -25,7 +27,7 @@
 
             <p class="capper-kicker">Новый аккаунт</p>
             <div class="auth-heading">
-                <h1>Регистрация</h1>
+                <h2>Регистрация</h2>
                 <p data-register-role-description>
                     {% if selected_type == 'capper' %}
                         Создайте аккаунт, затем пройдите 5 коротких шагов и увидите готовый публичный профиль.
@@ -35,13 +37,19 @@
                 </p>
             </div>
 
-            <form method="post" action="{% url 'cabinet:register' %}" class="auth-form auth-form-modern auth-register-grid" novalidate>
+            <form method="post" action="{% url 'cabinet:register' %}" class="auth-form auth-form-modern auth-register-grid" data-required-submit-form novalidate>
                 {% csrf_token %}
                 <input
                     type="hidden"
                     name="role"
                     id="id_role"
                     value="{% if selected_type == 'capper' %}analyst{% else %}reader{% endif %}"
+                >
+                <input
+                    type="hidden"
+                    name="account_type"
+                    id="id_account_type"
+                    value="{% if selected_type == 'capper' %}capper{% else %}user{% endif %}"
                 >
 
                 <div class="auth-register-grid auth-grid-full" data-register-role-switch>
@@ -186,6 +194,7 @@
                             name="accept_terms"
                             class="auth-agreement-checkbox"
                             id="id_accept_terms"
+                            required
                             {% if form.accept_terms.value %}checked{% endif %}
                         >
                         <span>
@@ -196,7 +205,7 @@
                     {{ form.accept_terms.errors }}
                 </div>
 
-                <button class="auth-submit auth-grid-full" type="submit">
+                <button class="auth-submit auth-grid-full" type="submit" disabled>
                     <span>Создать аккаунт</span>
                     <span class="auth-submit-arrow">→</span>
                 </button>
@@ -214,6 +223,7 @@
     (() => {
         const switcher = document.querySelector("[data-register-role-switch]");
         const roleInput = document.getElementById("id_role");
+        const accountTypeInput = document.getElementById("id_account_type");
         const description = document.querySelector("[data-register-role-description]");
 
         if (!switcher || !roleInput) return;
@@ -229,6 +239,9 @@
 
             const role = option.dataset.registerRole;
             roleInput.value = role;
+            if (accountTypeInput) {
+                accountTypeInput.value = role === "analyst" ? "capper" : "user";
+            }
 
             switcher.querySelectorAll("[data-register-role]").forEach((button) => {
                 const isActive = button === option;
@@ -243,4 +256,5 @@
         });
     })();
 </script>
+<script src="{% static 'front/js/auth-required-submit.js' %}" defer></script>
 {% endblock %}

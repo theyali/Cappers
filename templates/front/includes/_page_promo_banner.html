@@ -1,0 +1,24 @@
+{% if promo_banner %}
+<section
+    class="page-promo-banner{% if promo_banner_mod %} {{ promo_banner_mod }}{% endif %}"
+    style="--promo-title-color: {{ promo_banner.title_color }}; --promo-text-color: {{ promo_banner.text_color }}; --promo-button-color: {{ promo_banner.button_color }}; --promo-button-text-color: {{ promo_banner.button_text_color }};"
+    aria-label="{{ promo_banner.eyebrow|default:promo_banner.name }}"
+>
+    <picture class="page-promo-banner-media" aria-hidden="true">
+        {% if promo_banner.mobile_image %}
+            <source media="(max-width: 767px)" srcset="{{ promo_banner.mobile_image.url }}">
+        {% endif %}
+        <img src="{{ promo_banner.image.url }}" alt="" loading="lazy" decoding="async">
+    </picture>
+    <div class="page-promo-banner-copy">
+        {% if promo_banner.eyebrow %}
+        <p>{{ promo_banner.eyebrow }}</p>
+        {% endif %}
+        <h2>{{ promo_banner.title|linebreaksbr }}</h2>
+        {% if promo_banner.text %}
+        <span>{{ promo_banner.text }}</span>
+        {% endif %}
+        <a href="{{ promo_banner.button_url }}">{{ promo_banner.button_label }} <b aria-hidden="true">→</b></a>
+    </div>
+</section>
+{% endif %}

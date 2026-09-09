@@ -67,6 +67,7 @@ class AnalystProfileForm(forms.ModelForm):
             "youtube",
             "tiktok",
             "facebook",
+            "x",
             "paid_predictions_enabled",
             "paid_predictions_price",
             "is_public",
@@ -89,6 +90,7 @@ class AnalystProfileForm(forms.ModelForm):
             "youtube": forms.TextInput(attrs={"placeholder": "@channel или ссылка"}),
             "tiktok": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
             "facebook": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
+            "x": forms.TextInput(attrs={"placeholder": "@username или ссылка"}),
             "paid_predictions_price": forms.NumberInput(
                 attrs={
                     "min": "0",

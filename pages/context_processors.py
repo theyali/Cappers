@@ -7,6 +7,7 @@ from cabinet.models import User
 from cabinet.presence import presence_payload, touch_user_presence
 
 from .models import PageSEO
+from .promo_banners import page_promo_banners
 
 
 ROUTE_FALLBACKS = {
@@ -192,9 +193,18 @@ def page_seo(request):
     if route_name in {"front:prediction_detail", "front:expert_profile"}:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
+    promo_banners = page_promo_banners(
+        route_name,
+        current_path,
+        page,
+        _page_candidates,
+    )
+
     return {
         "seo_meta": seo_meta,
         "adv_banners": adv_banners,
         "adv_placement": adv_placement,
+        "promo_banners": promo_banners,
+        "promo_banner": promo_banners[0] if promo_banners else None,
         "profile_presence": _public_profile_presence(resolver_match, route_name),
     }

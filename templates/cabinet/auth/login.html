@@ -124,7 +124,7 @@
                         <div class="auth-login-divider"><span>или</span></div>
                     </div>
 
-                    <form method="post" class="auth-form auth-form-modern" novalidate>
+                    <form method="post" class="auth-form auth-form-modern" data-required-submit-form novalidate>
                         {% csrf_token %}
                         {% if form.non_field_errors %}
                             <div class="auth-form-alert" role="alert">
@@ -158,7 +158,7 @@
                             <input type="hidden" name="next" value="{{ next }}">
                         {% endif %}
 
-                        <button class="auth-submit" type="submit">
+                        <button class="auth-submit" type="submit" disabled>
                             <span>Войти</span>
                         </button>
                     </form>
@@ -173,4 +173,5 @@
     </div>
 </section>
 
+<script src="{% static 'front/js/auth-required-submit.js' %}" defer></script>
 {% endblock %}
