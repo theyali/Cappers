@@ -169,7 +169,7 @@ class PageSEO(models.Model):
         "Robots",
         max_length=32,
         choices=Robots.choices,
-        default=Robots.Robots.INDEX_FOLLOW if False else Robots.INDEX_FOLLOW,
+        default=Robots.INDEX_FOLLOW,
     )
     og_title = models.CharField("Open Graph title", max_length=255, blank=True)
     og_description = models.TextField("Open Graph description", blank=True)
