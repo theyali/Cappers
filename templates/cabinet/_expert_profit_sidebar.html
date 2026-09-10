@@ -1,5 +1,7 @@
+{% load static %}
 {{ sidebar_profit_dynamics.periods|json_script:"expert-sidebar-profit-data" }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+<script src="{% static 'front/js/expert-bank-chart-glow.js' %}" defer></script>
 <section
     class="expert-profit-sidebar"
     data-sidebar-profit
