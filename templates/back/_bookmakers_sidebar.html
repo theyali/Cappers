@@ -3,6 +3,10 @@
         {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
     {% endfor %}
 
+    {% if show_profit_dynamics and sidebar_profit_dynamics %}
+        {% include "cabinet/_expert_profit_sidebar.html" %}
+    {% endif %}
+
     <section class="bookmakers-panel">
         <div class="bookmakers-head">
             <div>
