@@ -1,0 +1,174 @@
+{{ sidebar_profit_dynamics.periods|json_script:"expert-sidebar-profit-data" }}
+<section
+    class="expert-profit-sidebar"
+    data-sidebar-profit
+    data-skeleton-block
+    data-active-period="all"
+    aria-label="Динамика прибыли эксперта"
+>
+    <svg
+        class="expert-profit-sidebar-svg"
+        viewBox="0 0 394 356"
+        width="100%"
+        height="356"
+        role="img"
+        aria-labelledby="expert-sidebar-profit-title"
+        preserveAspectRatio="xMidYMid meet"
+    >
+        <rect x="0" y="0" width="394" height="356" rx="20" fill="#1f1f21"></rect>
+
+        <text
+            id="expert-sidebar-profit-title"
+            x="22"
+            y="36"
+            fill="#f7f8ff"
+            font-family="Russo One Cappers, Manrope Cappers, sans-serif"
+            font-size="15"
+            letter-spacing="1.1"
+        >ДИНАМИКА ПРИБЫЛИ</text>
+
+        <g
+            data-sidebar-profit-period-control
+            role="button"
+            tabindex="0"
+            aria-label="Сменить период статистики"
+        >
+            <rect x="244" y="18" width="128" height="46" rx="12" fill="#29292c"></rect>
+            <text
+                x="258"
+                y="47"
+                fill="#f7f8ff"
+                font-family="Manrope Cappers, sans-serif"
+                font-size="13"
+                font-weight="700"
+                data-sidebar-profit-period-label
+            >{{ sidebar_profit_dynamics.default.label }}</text>
+            <path
+                d="M350 37l7 7 7-7"
+                fill="none"
+                stroke="#f7f8ff"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            ></path>
+        </g>
+
+        <text
+            x="22"
+            y="102"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="38"
+            font-weight="700"
+        >
+            <tspan
+                data-sidebar-profit-value
+                fill="{% if sidebar_profit_dynamics.default.profit > 0 %}#5ea731{% elif sidebar_profit_dynamics.default.profit < 0 %}#fd1a01{% else %}#f7f8ff{% endif %}"
+            >{{ sidebar_profit_dynamics.default.profit_display }}</tspan>
+            <tspan
+                dx="3"
+                fill="{% if sidebar_profit_dynamics.default.profit > 0 %}#5ea731{% elif sidebar_profit_dynamics.default.profit < 0 %}#fd1a01{% else %}#f7f8ff{% endif %}"
+                font-size="19"
+                data-sidebar-profit-unit
+            >ед.</tspan>
+        </text>
+        <text
+            x="22"
+            y="126"
+            fill="#707072"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="13"
+            font-weight="600"
+        >Чистая прибыль</text>
+
+        {% for y in sidebar_profit_dynamics.default.grid %}
+        <line
+            data-sidebar-profit-grid
+            x1="22"
+            y1="{{ y }}"
+            x2="339"
+            y2="{{ y }}"
+            stroke="#303033"
+            stroke-width="1"
+        ></line>
+        {% endfor %}
+
+        {% for bar in sidebar_profit_dynamics.default.bars %}
+        <rect
+            data-sidebar-profit-bar
+            x="{{ bar.x }}"
+            y="{{ bar.y }}"
+            width="8"
+            height="{{ bar.height }}"
+            rx="1.5"
+            fill="{% if bar.tone == 'positive' %}#5ea731{% elif bar.tone == 'negative' %}#fd1a01{% elif bar.tone == 'neutral' %}#fbf110{% else %}#707072{% endif %}"
+            opacity="{% if bar.visible %}1{% else %}0{% endif %}"
+        ></rect>
+        {% endfor %}
+
+        {% for label in sidebar_profit_dynamics.default.axis %}
+        <text
+            data-sidebar-profit-axis
+            x="351"
+            y="{% if forloop.counter == 1 %}150{% elif forloop.counter == 2 %}184{% elif forloop.counter == 3 %}219{% else %}262{% endif %}"
+            fill="#a2a2a5"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="12"
+            font-weight="600"
+        >{{ label }}</text>
+        {% endfor %}
+
+        <text
+            x="30"
+            y="310"
+            fill="#f7f8ff"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="23"
+            font-weight="700"
+            data-sidebar-profit-count
+        >{{ sidebar_profit_dynamics.default.count }}</text>
+        <text
+            x="30"
+            y="335"
+            fill="#a2a2a5"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="13"
+            font-weight="600"
+        >Прогнозов</text>
+
+        <text
+            x="157"
+            y="310"
+            fill="{% if sidebar_profit_dynamics.default.roi > 0 %}#5ea731{% elif sidebar_profit_dynamics.default.roi < 0 %}#fd1a01{% else %}#f7f8ff{% endif %}"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="23"
+            font-weight="700"
+            data-sidebar-profit-roi
+        >{{ sidebar_profit_dynamics.default.roi_display }}</text>
+        <text
+            x="157"
+            y="335"
+            fill="#a2a2a5"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="13"
+            font-weight="600"
+        >ROI</text>
+
+        <text
+            x="286"
+            y="310"
+            fill="#f7f8ff"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="23"
+            font-weight="700"
+            data-sidebar-profit-avg
+        >{{ sidebar_profit_dynamics.default.avg_coefficient_display }}</text>
+        <text
+            x="286"
+            y="335"
+            fill="#a2a2a5"
+            font-family="Manrope Cappers, sans-serif"
+            font-size="13"
+            font-weight="600"
+        >Ср. кф</text>
+    </svg>
+</section>
