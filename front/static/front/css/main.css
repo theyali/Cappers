@@ -17418,7 +17418,7 @@ font-size: 14px;
 /* Legacy source: front/static/front/css/predictions-sidebar.css */
 .predictions-layout {
     display: grid;
-    grid-template-columns: minmax(220px, 230px) minmax(0, 1fr) minmax(300px, 280px);
+    grid-template-columns: minmax(220px, 230px) minmax(0, 1fr) minmax(400px, 280px);
     align-items: start;
     gap: 8px;
     transition: grid-template-columns .2s ease;
@@ -30453,6 +30453,7 @@ body.register {
 /* Merged from front/static/front/css/expert-public-tabs.css */
 .expert-public-shell {
     display: grid;
+    padding: 0 12px;
 }
 
 .expert-public-shell > .expert-public-page {
