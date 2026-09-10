@@ -237,10 +237,6 @@
 
     </main>
 
-    {% if not hide_footer %}
-        {% include "front/includes/_footer.html" %}
-    {% endif %}
-
     <nav class="mobile-app-nav" aria-label="Мобильная навигация">
         <a class="mobile-app-nav-item mobile-nav-home {% if request.resolver_match.view_name == 'front:index' %}is-active{% endif %}" href="{% url 'front:index' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true">
