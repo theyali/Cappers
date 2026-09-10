@@ -1,6 +1,6 @@
 {% load capper_trust %}
 <article
-    class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}"
+    class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}{% if request.resolver_match.url_name == 'expert_profile' %} has-bank-chart{% endif %}"
     data-prediction-card="{{ prediction.coupon.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
     data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
@@ -58,6 +58,20 @@
         {% if prediction.state_status == 'win' %}Выигрыш{% elif prediction.state_status == 'lose' %}Проигрыш{% elif prediction.state_status == 'refund' %}Возврат{% else %}Ожидает{% endif %}
     </span>
 
+    {% if request.resolver_match.url_name == 'expert_profile' %}
+    <div
+        class="prediction-table-bank-chart"
+        data-prediction-bank-chart
+        data-skeleton-block
+        data-bank-state="{{ prediction.state_status }}"
+        data-bank-stake="{{ prediction.coupon.total_stake|default:0|floatformat:'2u' }}"
+        data-bank-payout="{{ prediction.coupon.possible_payout|default:0|floatformat:'2u' }}"
+        aria-label="График банка"
+    >
+        <canvas width="156" height="40" role="img" aria-label="Динамика банка"></canvas>
+    </div>
+    {% endif %}
+
     <div class="prediction-table-actions">
         {% if website_settings.prediction_bookmaker %}
         <div class="prediction-bookmaker-links is-table" aria-label="Букмекер">
@@ -86,7 +100,7 @@
             data-login-url="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}"
             aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
             {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
-            title="{% if prediction.is_own %}Нельзя сохранять свой прогноз в избранное{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+            title="{% if prediction.is_own %}Нельзя сохранять свой прогноз{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
         >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
         </button>
