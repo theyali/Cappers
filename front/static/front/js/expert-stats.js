@@ -469,3 +469,146 @@
 
     renderPeriod(activeKey);
 })();
+
+(() => {
+    const page = document.querySelector(".expert-public-page");
+    if (!page) return;
+
+    const chartBlocks = Array.from(page.querySelectorAll("[data-prediction-bank-chart]"));
+    if (!chartBlocks.length) return;
+
+    const columns = "minmax(260px, 1.55fr) minmax(170px, .9fr) minmax(180px, 1fr) 94px 94px minmax(156px, .85fr) 88px";
+    const table = chartBlocks[0].closest(".content-table-scroll");
+    const head = table?.querySelector(".prediction-table-head");
+
+    if (head) {
+        head.style.gridTemplateColumns = columns;
+        const labels = Array.from(head.children);
+        const tail = labels[labels.length - 1];
+        if (tail && !head.querySelector("[data-bank-chart-head]")) {
+            tail.textContent = "График банка";
+            tail.dataset.bankChartHead = "";
+            head.appendChild(document.createElement("span"));
+        }
+    }
+
+    chartBlocks.forEach((block) => {
+        const row = block.closest(".prediction-table-row");
+        if (row) row.style.gridTemplateColumns = columns;
+        window.CappersSkeleton?.loading(block);
+    });
+
+    const numberValue = (value) => {
+        const normalized = String(value ?? "0").trim().replace(/\s+/g, "").replace(",", ".");
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const profitFor = (block) => {
+        const state = block.dataset.bankState || "pending";
+        const stake = numberValue(block.dataset.bankStake);
+        const payout = numberValue(block.dataset.bankPayout);
+        if (state === "win") return payout - stake;
+        if (state === "lose") return -stake;
+        return 0;
+    };
+
+    const colorFor = (state) => {
+        if (state === "win") return "#5ea731";
+        if (state === "lose") return "#fd1a01";
+        return "#707072";
+    };
+
+    const chronological = [...chartBlocks].reverse();
+    const bankHistory = [0];
+    const pointsByBlock = new Map();
+
+    chronological.forEach((block) => {
+        const next = bankHistory[bankHistory.length - 1] + profitFor(block);
+        bankHistory.push(Number(next.toFixed(2)));
+
+        let points = bankHistory.slice(Math.max(0, bankHistory.length - 9));
+        while (points.length < 9) points.unshift(points[0] ?? 0);
+
+        const state = block.dataset.bankState || "pending";
+        if (state === "refund" || state === "pending") {
+            const value = points[points.length - 1] ?? 0;
+            points = Array(9).fill(value);
+        }
+        pointsByBlock.set(block, points);
+    });
+
+    if (typeof window.Chart !== "function") {
+        chartBlocks.forEach((block) => window.CappersSkeleton?.ready(block));
+        return;
+    }
+
+    chartBlocks.forEach((block) => {
+        const canvas = block.querySelector("canvas");
+        if (!canvas) {
+            window.CappersSkeleton?.ready(block);
+            return;
+        }
+
+        const state = block.dataset.bankState || "pending";
+        const points = pointsByBlock.get(block) || Array(9).fill(0);
+        const color = colorFor(state);
+
+        new window.Chart(canvas, {
+            type: "line",
+            data: {
+                labels: points.map((_, index) => String(index + 1)),
+                datasets: [
+                    {
+                        data: points,
+                        borderColor: color,
+                        borderWidth: 2.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 0,
+                        tension: 0.34,
+                        fill: false,
+                    },
+                ],
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                animation: false,
+                events: [],
+                layout: {
+                    padding: 2,
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        enabled: false,
+                    },
+                },
+                scales: {
+                    x: {
+                        display: false,
+                        grid: {
+                            display: false,
+                        },
+                        border: {
+                            display: false,
+                        },
+                    },
+                    y: {
+                        display: false,
+                        grid: {
+                            display: false,
+                        },
+                        border: {
+                            display: false,
+                        },
+                    },
+                },
+            },
+        });
+
+        window.CappersSkeleton?.ready(block);
+    });
+})();
