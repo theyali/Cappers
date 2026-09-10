@@ -206,8 +206,11 @@
     const bars = Array.from(root.querySelectorAll("[data-sidebar-profit-bar]"));
     const gridLines = Array.from(root.querySelectorAll("[data-sidebar-profit-grid]"));
     const axisLabels = Array.from(root.querySelectorAll("[data-sidebar-profit-axis]"));
+    const chartCanvas = root.querySelector("[data-sidebar-profit-chart]");
+    const chartFallback = root.querySelector("[data-sidebar-profit-chart-fallback]");
 
     let activeKey = root.dataset.activePeriod || "all";
+    let chart = null;
 
     const toneColor = (value) => {
         const number = Number(value || 0);
@@ -221,6 +224,182 @@
         if (tone === "negative") return "#fd1a01";
         if (tone === "neutral") return "#fbf110";
         return "#707072";
+    };
+
+    const parseCompactNumber = (value) => {
+        const text = String(value ?? "0").trim().toLowerCase().replace(",", ".");
+        const match = text.match(/^(-?[\d.]+)\s*([km])?$/);
+        if (!match) return 0;
+        const number = Number(match[1] || 0);
+        if (!Number.isFinite(number)) return 0;
+        if (match[2] === "k") return number * 1000;
+        if (match[2] === "m") return number * 1000000;
+        return number;
+    };
+
+    const compactNumber = (value) => {
+        const number = Number(value || 0);
+        const absolute = Math.abs(number);
+        if (absolute >= 1000000) return `${(number / 1000000).toFixed(1).replace(".0", "")}m`;
+        if (absolute >= 1000) return `${(number / 1000).toFixed(1).replace(".0", "")}k`;
+        if (absolute >= 100) return String(Math.round(number));
+        return number.toFixed(1).replace(".0", "");
+    };
+
+    const chartBounds = (period) => {
+        const max = Math.max(parseCompactNumber(period.axis?.[0]), 1);
+        const parsedMin = parseCompactNumber(period.axis?.[3]);
+        const min = parsedMin < 0 ? parsedMin : -(max / 2);
+        return { min, max };
+    };
+
+    const chartValues = (period) => {
+        const periodBars = Array.isArray(period.bars) ? period.bars : [];
+        const chartTop = Number(period.grid?.[0] ?? 0);
+        const zeroY = Number(period.grid?.[2] ?? 1);
+        const chartBottom = Number(period.grid?.[3] ?? zeroY + 1);
+        const positiveHeight = Math.max(zeroY - chartTop, 1);
+        const negativeHeight = Math.max(chartBottom - zeroY, 1);
+        const bounds = chartBounds(period);
+
+        return periodBars.map((bar) => {
+            if (!bar?.visible) return null;
+            const height = Math.max(0, Number(bar.height || 0));
+            if (bar.tone === "positive") {
+                return (height / positiveHeight) * bounds.max;
+            }
+            if (bar.tone === "negative") {
+                return -((height / negativeHeight) * Math.abs(bounds.min));
+            }
+            return 0;
+        });
+    };
+
+    const chartConfig = (period) => {
+        const values = chartValues(period);
+        const bounds = chartBounds(period);
+        return {
+            type: "bar",
+            data: {
+                labels: values.map((_, index) => String(index + 1)),
+                datasets: [
+                    {
+                        data: values,
+                        backgroundColor: (context) => {
+                            const value = Number(context.raw || 0);
+                            if (value > 0) return "#5ea731";
+                            if (value < 0) return "#fd1a01";
+                            return "#fbf110";
+                        },
+                        borderWidth: 0,
+                        borderSkipped: false,
+                        borderRadius: 2,
+                        categoryPercentage: 0.74,
+                        barPercentage: 0.72,
+                        maxBarThickness: 10,
+                    },
+                ],
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 220,
+                },
+                interaction: {
+                    mode: "nearest",
+                    axis: "x",
+                    intersect: true,
+                },
+                layout: {
+                    padding: {
+                        top: 4,
+                        right: 0,
+                        bottom: 4,
+                        left: 0,
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        displayColors: false,
+                        backgroundColor: "#131313",
+                        titleColor: "#707072",
+                        bodyColor: "#f7f8ff",
+                        borderWidth: 0,
+                        padding: 8,
+                        cornerRadius: 8,
+                        callbacks: {
+                            title: () => "",
+                            label: (context) => {
+                                const number = Number(context.raw || 0);
+                                const prefix = number > 0 ? "+" : "";
+                                return `${prefix}${number.toFixed(1)} ед.`;
+                            },
+                        },
+                    },
+                },
+                scales: {
+                    x: {
+                        display: false,
+                        grid: {
+                            display: false,
+                        },
+                        border: {
+                            display: false,
+                        },
+                    },
+                    y: {
+                        position: "right",
+                        min: bounds.min,
+                        max: bounds.max,
+                        afterBuildTicks: (scale) => {
+                            const max = Number(scale.max || 0);
+                            const min = Number(scale.min || 0);
+                            scale.ticks = [max, max / 2, 0, min].map((value) => ({ value }));
+                        },
+                        ticks: {
+                            color: "#a2a2a5",
+                            padding: 8,
+                            font: {
+                                family: "Manrope Cappers, sans-serif",
+                                size: 12,
+                                weight: "600",
+                            },
+                            callback: (value) => compactNumber(value),
+                        },
+                        grid: {
+                            color: "#303033",
+                            lineWidth: 1,
+                            drawTicks: false,
+                        },
+                        border: {
+                            display: false,
+                        },
+                    },
+                },
+            },
+        };
+    };
+
+    const updateChart = (period) => {
+        if (!chartCanvas || typeof window.Chart !== "function") return;
+
+        if (!chart) {
+            chart = new window.Chart(chartCanvas, chartConfig(period));
+            if (chartFallback) chartFallback.setAttribute("opacity", "0");
+            return;
+        }
+
+        const values = chartValues(period);
+        const bounds = chartBounds(period);
+        chart.data.labels = values.map((_, index) => String(index + 1));
+        chart.data.datasets[0].data = values;
+        chart.options.scales.y.min = bounds.min;
+        chart.options.scales.y.max = bounds.max;
+        chart.update();
     };
 
     const renderPeriod = (key, showSkeleton = false) => {
@@ -269,6 +448,7 @@
             node.setAttribute("opacity", bar.visible ? "1" : "0");
         });
 
+        updateChart(period);
         window.CappersSkeleton?.ready(root);
     };
 
