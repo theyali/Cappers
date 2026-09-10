@@ -1,4 +1,5 @@
 {{ sidebar_profit_dynamics.periods|json_script:"expert-sidebar-profit-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
 <section
     class="expert-profit-sidebar"
     data-sidebar-profit
@@ -80,42 +81,55 @@
             font-weight="600"
         >Чистая прибыль</text>
 
-        {% for y in sidebar_profit_dynamics.default.grid %}
-        <line
-            data-sidebar-profit-grid
-            x1="22"
-            y1="{{ y }}"
-            x2="339"
-            y2="{{ y }}"
-            stroke="#303033"
-            stroke-width="1"
-        ></line>
-        {% endfor %}
+        <g data-sidebar-profit-chart-fallback>
+            {% for y in sidebar_profit_dynamics.default.grid %}
+            <line
+                data-sidebar-profit-grid
+                x1="22"
+                y1="{{ y }}"
+                x2="339"
+                y2="{{ y }}"
+                stroke="#303033"
+                stroke-width="1"
+            ></line>
+            {% endfor %}
 
-        {% for bar in sidebar_profit_dynamics.default.bars %}
-        <rect
-            data-sidebar-profit-bar
-            x="{{ bar.x }}"
-            y="{{ bar.y }}"
-            width="8"
-            height="{{ bar.height }}"
-            rx="1.5"
-            fill="{% if bar.tone == 'positive' %}#5ea731{% elif bar.tone == 'negative' %}#fd1a01{% elif bar.tone == 'neutral' %}#fbf110{% else %}#707072{% endif %}"
-            opacity="{% if bar.visible %}1{% else %}0{% endif %}"
-        ></rect>
-        {% endfor %}
+            {% for bar in sidebar_profit_dynamics.default.bars %}
+            <rect
+                data-sidebar-profit-bar
+                x="{{ bar.x }}"
+                y="{{ bar.y }}"
+                width="8"
+                height="{{ bar.height }}"
+                rx="1.5"
+                fill="{% if bar.tone == 'positive' %}#5ea731{% elif bar.tone == 'negative' %}#fd1a01{% elif bar.tone == 'neutral' %}#fbf110{% else %}#707072{% endif %}"
+                opacity="{% if bar.visible %}1{% else %}0{% endif %}"
+            ></rect>
+            {% endfor %}
 
-        {% for label in sidebar_profit_dynamics.default.axis %}
-        <text
-            data-sidebar-profit-axis
-            x="351"
-            y="{% if forloop.counter == 1 %}150{% elif forloop.counter == 2 %}184{% elif forloop.counter == 3 %}219{% else %}262{% endif %}"
-            fill="#a2a2a5"
-            font-family="Manrope Cappers, sans-serif"
-            font-size="12"
-            font-weight="600"
-        >{{ label }}</text>
-        {% endfor %}
+            {% for label in sidebar_profit_dynamics.default.axis %}
+            <text
+                data-sidebar-profit-axis
+                x="351"
+                y="{% if forloop.counter == 1 %}150{% elif forloop.counter == 2 %}184{% elif forloop.counter == 3 %}219{% else %}262{% endif %}"
+                fill="#a2a2a5"
+                font-family="Manrope Cappers, sans-serif"
+                font-size="12"
+                font-weight="600"
+            >{{ label }}</text>
+            {% endfor %}
+        </g>
+
+        <foreignObject x="22" y="138" width="350" height="126">
+            <canvas
+                xmlns="http://www.w3.org/1999/xhtml"
+                data-sidebar-profit-chart
+                width="350"
+                height="126"
+                role="img"
+                aria-label="График динамики прибыли"
+            ></canvas>
+        </foreignObject>
 
         <text
             x="30"
