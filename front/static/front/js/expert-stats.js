@@ -181,3 +181,111 @@
 
     render(30);
 })();
+
+(() => {
+    const root = document.querySelector("[data-sidebar-profit]");
+    const dataNode = document.getElementById("expert-sidebar-profit-data");
+    if (!root || !dataNode) return;
+
+    let periods = {};
+    try {
+        periods = JSON.parse(dataNode.textContent || "{}");
+    } catch (error) {
+        window.CappersSkeleton?.ready(root);
+        return;
+    }
+
+    const order = ["all", "90", "30", "7"];
+    const control = root.querySelector("[data-sidebar-profit-period-control]");
+    const periodLabel = root.querySelector("[data-sidebar-profit-period-label]");
+    const valueNode = root.querySelector("[data-sidebar-profit-value]");
+    const unitNode = root.querySelector("[data-sidebar-profit-unit]");
+    const countNode = root.querySelector("[data-sidebar-profit-count]");
+    const roiNode = root.querySelector("[data-sidebar-profit-roi]");
+    const avgNode = root.querySelector("[data-sidebar-profit-avg]");
+    const bars = Array.from(root.querySelectorAll("[data-sidebar-profit-bar]"));
+    const gridLines = Array.from(root.querySelectorAll("[data-sidebar-profit-grid]"));
+    const axisLabels = Array.from(root.querySelectorAll("[data-sidebar-profit-axis]"));
+
+    let activeKey = root.dataset.activePeriod || "all";
+
+    const toneColor = (value) => {
+        const number = Number(value || 0);
+        if (number > 0) return "#5ea731";
+        if (number < 0) return "#fd1a01";
+        return "#f7f8ff";
+    };
+
+    const barColor = (tone) => {
+        if (tone === "positive") return "#5ea731";
+        if (tone === "negative") return "#fd1a01";
+        if (tone === "neutral") return "#fbf110";
+        return "#707072";
+    };
+
+    const renderPeriod = (key, showSkeleton = false) => {
+        const period = periods[key];
+        if (!period) return;
+
+        if (showSkeleton) window.CappersSkeleton?.loading(root);
+
+        activeKey = key;
+        root.dataset.activePeriod = key;
+
+        if (periodLabel) periodLabel.textContent = period.label || "Все время";
+        if (valueNode) {
+            valueNode.textContent = period.profit_display || "0.0";
+            valueNode.setAttribute("fill", toneColor(period.profit));
+        }
+        if (unitNode) unitNode.setAttribute("fill", toneColor(period.profit));
+        if (countNode) countNode.textContent = String(period.count ?? 0);
+        if (roiNode) {
+            roiNode.textContent = period.roi_display || "0.0%";
+            roiNode.setAttribute("fill", toneColor(period.roi));
+        }
+        if (avgNode) avgNode.textContent = period.avg_coefficient_display || "0.00";
+
+        gridLines.forEach((line, index) => {
+            const y = period.grid?.[index];
+            if (y == null) return;
+            line.setAttribute("y1", String(y));
+            line.setAttribute("y2", String(y));
+        });
+
+        axisLabels.forEach((label, index) => {
+            label.textContent = period.axis?.[index] ?? "0";
+        });
+
+        bars.forEach((node, index) => {
+            const bar = period.bars?.[index];
+            if (!bar) {
+                node.setAttribute("opacity", "0");
+                return;
+            }
+            node.setAttribute("x", String(bar.x));
+            node.setAttribute("y", String(bar.y));
+            node.setAttribute("height", String(bar.height));
+            node.setAttribute("fill", barColor(bar.tone));
+            node.setAttribute("opacity", bar.visible ? "1" : "0");
+        });
+
+        window.CappersSkeleton?.ready(root);
+    };
+
+    const selectNextPeriod = () => {
+        const currentIndex = Math.max(0, order.indexOf(activeKey));
+        const nextKey = order[(currentIndex + 1) % order.length];
+        renderPeriod(nextKey, true);
+    };
+
+    if (control) {
+        control.addEventListener("click", selectNextPeriod);
+        control.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            selectNextPeriod();
+        });
+    }
+
+    renderPeriod(activeKey);
+})();
