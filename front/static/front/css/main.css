@@ -23599,6 +23599,9 @@ font-size: 14px;
     font-size: 18px;
     font-weight: 500;
 }
+.profile-user-avatar img{
+    border-radius: inherit;
+}
 
 .profile-user-row strong {
     display: block;

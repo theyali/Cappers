@@ -6,13 +6,13 @@
     <nav class="site-topbar-nav">
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'bookmakers' %} is-active{% endif %}" href="{% url 'front:bookmakers' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 7h16v12H4z"></path><path d="M7 7V5h10v2M8 12h3m2 0h3M8 16h8"></path></svg>
+                {% include "front/svgs/bk.svg" %}
             </span>
             <span>Букмекеры</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'bonuses' %} is-active{% endif %}" href="{% url 'front:bonuses' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 2l3.5 7 7.5 1-5.5 5.5L19 22l-7-3.5L5 22l1.5-6.5L1 10l7.5-1z"></path></svg>
+                {% include "front/svgs/bonus.svg" %}
             </span>
             <span>Бонусы</span>
         </a>

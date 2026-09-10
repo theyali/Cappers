@@ -27,165 +27,7 @@
 </head>
 <body class="{{ page_class|default:'' }}">
     {% include "front/includes/_top_header.html" %}
-
-    <header class="site-header">
-        <nav class="site-nav" aria-label="Главная навигация">
-            <a class="brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
-                <span class="brand-logo" data-skeleton-image><img src="{% static 'front/img/logo.png' %}" width="70" height="70" alt=""></span>
-                <span class="brand-name">Каппер<mark>Хаб</mark></span>
-            </a>
-
-            <div class="site-nav-center">
-                <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
-                    <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
-                    <span>Матчи</span>
-                </a>
-                <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"/></svg></span>
-                    <span>Все прогнозы</span>
-                </a>
-                <a class="{% if request.resolver_match.app_name == 'tournaments' %}is-active{% endif %}" href="{% url 'tournaments:index' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
-                    <span>Турниры</span>
-                </a>
-                {% if request.user.is_authenticated %}
-                <a class="{% if request.resolver_match.url_name == 'following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
-                    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="m17 15 3 3 3-3"></path></svg></span>
-                    <span>Моя лента</span>
-                </a>
-                {% endif %}
-                {% include "front/includes/_cappers_nav_menu.html" %}
-            </div>
-
-            <div class="site-nav-actions">
-                {% if not request.user.is_authenticated %}
-                    <a class="nav-register capper-header-cta" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-                {% elif not request.user.is_analyst %}
-                    <a class="nav-register capper-header-cta" href="{% url 'cabinet:become_capper' %}">Стать каппером</a>
-                {% endif %}
-
-                {% if request.user.is_authenticated %}
-                    <a
-                        class="nav-notification-link{% if request.resolver_match.app_name == 'notifications' %} is-active{% endif %}"
-                        href="{% url 'notifications:center' %}"
-                        title="Уведомления"
-                        aria-label="Уведомления"
-                        data-notification-nav
-                        data-summary-url="{% url 'notifications:summary' %}"
-                        data-sound-url="{% static 'front/sounds/notification.wav' %}"
-                        data-user-id="{{ request.user.username }}"
-                        data-skeleton-block
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
-                        <span class="nav-notification-badge is-empty" data-notification-badge></span>
-                    </a>
-                    {% if nav_virtual_balance is not None %}
-                        <div class="nav-wallet">
-                            <span class="nav-wallet-balance">
-                                <span>Баланс</span>
-                                <strong data-wallet-balance>{{ nav_virtual_balance_display }} ₽</strong>
-                            </span>
-                        </div>
-                    {% endif %}
-                    <div class="nav-profile-menu" data-profile-menu>
-                        <button
-                            class="nav-profile nav-profile-icon"
-                            type="button"
-                            aria-label="Открыть меню профиля"
-                            title="Профиль"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                            data-profile-menu-toggle
-                            data-skeleton-image
-                        >
-                            {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
-                                <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" width="42" height="42" alt="">
-                            {% elif request.user.avatar %}
-                                <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" width="42" height="42" alt="">
-                            {% else %}
-                                <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
-                            {% endif %}
-                        </button>
-                        <div class="nav-profile-dropdown" data-profile-menu-dropdown>
-                            <div class="nav-profile-dropdown-head">
-                                <span class="nav-profile-dropdown-avatar" data-skeleton-image>
-                                    {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
-                                        <img class="nav-profile-avatar-image" src="{{ request.user.analyst_profile.avatar.url }}" width="42" height="42" alt="">
-                                    {% elif request.user.avatar %}
-                                        <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" width="42" height="42" alt="">
-                                    {% else %}
-                                        <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
-                                    {% endif %}
-                                </span>
-                                <div>
-                                    <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                                    <span>@{{ request.user.username }}</span>
-                                </div>
-                            </div>
-                            <a href="{% url 'notifications:center' %}">
-                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
-                                </span>
-                                <span>Уведомления</span>
-                            </a>
-                            <a href="{% url 'cabinet:profile' %}">
-                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
-                                </span>
-                                <span>Профиль</span>
-                            </a>
-                            <a href="{% url 'cabinet:profile' %}?tab=copybetting">
-                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M5 7h10a4 4 0 0 1 4 4v1"></path><path d="m16 9 3 3 3-3"></path><path d="M19 17H9a4 4 0 0 1-4-4v-1"></path><path d="m8 15-3-3-3 3"></path></svg>
-                                </span>
-                                <span>Копибеттинг</span>
-                            </a>
-                            {% if request.user.is_analyst %}
-                            <a href="{% url 'cabinet:profile' %}?tab=predictions">
-                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
-                                </span>
-                                <span>Мои прогнозы</span>
-                            </a>
-                            {% endif %}
-                            <a href="{% url 'front:favorites' %}">
-                                <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
-                                </span>
-                                <span>Избранное</span>
-                            </a>
-                            <form method="post" action="{% url 'cabinet:logout' %}" class="nav-profile-dropdown-logout-form">
-                                {% csrf_token %}
-                                <button type="submit" class="nav-profile-dropdown-logout">
-                                    <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M18 12H9"></path></svg>
-                                    </span>
-                                    <span>Выйти</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                {% else %}
-                    <a class="nav-login" href="{% url 'cabinet:login' %}">Войти</a>
-                    <a class="nav-register" href="{% url 'cabinet:register' %}">Регистрация</a>
-                {% endif %}
-            </div>
-
-            <button
-                class="mobile-menu-toggle"
-                type="button"
-                aria-label="Открыть меню"
-                aria-controls="mobile-offcanvas"
-                aria-expanded="false"
-                data-mobile-offcanvas-toggle
-            >
-                <span class="mobile-menu-toggle-line"></span>
-                <span class="mobile-menu-toggle-line"></span>
-                <span class="mobile-menu-toggle-line"></span>
-            </button>
-        </nav>
-    </header>
-
+    {% include "front/includes/_main_header.html" %}
     {% include "front/includes/_mobile_offcanvas.html" %}
 
     {% if messages %}
@@ -226,14 +68,16 @@
         {% endif %}
 
         {% block content %}{% endblock %}
-        <div class="container">
-            {% if adv_banners and adv_placement == 'content' %}
+        {% if adv_banners and adv_placement == 'content' %}
+            <div class="container">
                 {% include "pages/_adv_banners.html" with placement="content" %}
-            {% endif %}
-            {% if request.resolver_match.view_name == 'front:index' and website_settings.home_about_enabled %}
+            </div>
+        {% endif %}
+        {% if request.resolver_match.view_name == 'front:index' and website_settings.home_about_enabled %}
+            <div class="container">
                 {% include "front/includes/_home_about.html" %}
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
 
     </main>
 
