@@ -1,0 +1,880 @@
+/* Temporary forecast slider redesign. Move these rules into main/mobile after approval. */
+
+.home-layout .forecast-slider {
+    position: relative;
+    min-height: 820px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 26px;
+    background-color: rgba(7, 10, 15, .88);
+    background-image: url("../img/slider_bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-blend-mode: multiply;
+}
+
+.home-layout .forecast-slider::before {
+    display: none;
+}
+
+.home-layout .forecast-slider > * {
+    position: relative;
+    z-index: 1;
+}
+
+.home-layout .forecast-track {
+    flex: 1;
+    min-height: 0;
+}
+
+.home-layout .forecast-slide {
+    position: relative;
+    min-height: 744px;
+    padding: 30px 30px 18px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* Top expert bar */
+.home-layout .forecast-topline {
+    min-height: 86px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.home-layout .forecast-expert {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.home-layout .forecast-avatar {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 50%;
+    background: #262a30;
+}
+
+.home-layout .forecast-avatar > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-layout .forecast-expert > div {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.home-layout .forecast-expert strong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.home-layout .forecast-expert > div > span {
+    color: rgba(255, 255, 255, .5);
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.home-layout .forecast-verified {
+    color: var(--blue);
+}
+
+.home-layout .forecast-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.home-layout .forecast-meta > span:first-child {
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-meta > .forecast-league-meta {
+    min-height: 50px;
+    max-width: 260px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 18px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 13px;
+    color: rgba(255, 255, 255, .84);
+    background: rgba(31, 31, 33, .86);
+    font-size: 13px;
+    font-weight: 650;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Main match stage */
+.home-layout .forecast-matchup {
+    position: relative;
+    height: 410px;
+    margin: 6px -30px 0;
+    padding: 0 34px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 8px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+    background: transparent;
+    transform: none;
+}
+
+.home-layout .forecast-matchup:hover {
+    background: transparent;
+    transform: none;
+}
+
+.home-layout .forecast-team {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    display: block;
+}
+
+.home-layout .forecast-team-logo {
+    position: absolute;
+    top: 24px;
+    width: min(29vw, 320px);
+    height: min(29vw, 320px);
+    display: grid;
+    place-items: center;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    color: rgba(255, 255, 255, .18);
+    background: transparent;
+    font-size: 120px;
+    font-weight: 700;
+    line-height: 1;
+    opacity: .34;
+    filter: brightness(.58) saturate(.72) contrast(1.08);
+}
+
+.home-layout .forecast-team-home .forecast-team-logo {
+    left: 0;
+}
+
+.home-layout .forecast-team-away .forecast-team-logo {
+    right: 0;
+}
+
+.home-layout .forecast-team-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.home-layout .forecast-team-copy {
+    position: absolute;
+    right: auto;
+    bottom: 24px;
+    left: 14px;
+    z-index: 2;
+    max-width: 84%;
+    display: grid;
+    gap: 7px;
+    text-align: left;
+}
+
+.home-layout .forecast-team-away .forecast-team-copy {
+    right: 14px;
+    left: auto;
+    text-align: right;
+}
+
+.home-layout .forecast-team-copy strong {
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: clamp(25px, 2.25vw, 36px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -.02em;
+}
+
+.home-layout .forecast-matchup:hover .forecast-team strong {
+    color: #fff;
+}
+
+.home-layout .forecast-team-copy .forecast-league-meta {
+    display: none;
+}
+
+.home-layout .forecast-vs {
+    position: relative;
+    z-index: 3;
+    width: auto;
+    height: auto;
+    align-self: center;
+    justify-self: center;
+    margin-top: -58px;
+    color: rgba(255, 255, 255, .22);
+    background: transparent;
+    font-family: var(--font-heading);
+    font-size: clamp(58px, 6vw, 84px);
+    font-weight: 400;
+    line-height: .9;
+    letter-spacing: -.05em;
+}
+
+/* Reuse the existing SSR match details and place them around VS. */
+.home-layout .forecast-body {
+    position: static;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, .84fr) minmax(0, 1.16fr);
+    align-items: stretch;
+    gap: 16px;
+    background: transparent;
+}
+
+.home-layout .forecast-match-copy {
+    position: static;
+    min-width: 0;
+    min-height: 152px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.home-layout .forecast-match-copy > .forecast-label,
+.home-layout .forecast-match-copy > h2 {
+    display: none;
+}
+
+.home-layout .forecast-match-details {
+    position: static;
+    margin: 0;
+    padding: 0;
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail,
+.home-layout .forecast-match-details > .forecast-result {
+    z-index: 6;
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
+    position: absolute;
+    top: 135px;
+    left: 50%;
+    max-width: 260px;
+    display: block;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .66);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: .16em;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) svg {
+    display: none;
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
+    position: absolute;
+    top: 356px;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) svg {
+    display: none;
+}
+
+.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) strong {
+    font-weight: 700;
+}
+
+.home-layout .forecast-match-details > .forecast-result {
+    position: absolute;
+    top: 392px;
+    left: 50%;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0;
+    color: rgba(255, 255, 255, .58);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.home-layout .forecast-match-details > .forecast-result svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Lower left statistics card */
+.home-layout .forecast-note {
+    width: 100%;
+    min-height: 152px;
+    margin: 0;
+    padding: 22px 24px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    border: 0;
+    border-radius: 18px;
+    color: rgba(255, 255, 255, .72);
+    background: rgba(31, 31, 33, .92);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.home-layout .forecast-note > svg {
+    width: 36px;
+    height: 36px;
+    color: #fff;
+}
+
+.home-layout .forecast-note-arrow {
+    color: rgba(255, 255, 255, .78);
+    font-size: 40px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+/* Yellow prediction card + blue CTA */
+.home-layout .forecast-pick-column {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: minmax(92px, 1fr) 62px;
+    gap: 12px;
+}
+
+.home-layout .forecast-pick-card {
+    position: relative;
+    min-height: 92px;
+    padding: 19px 170px 17px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 18px;
+    color: #131313;
+    background: var(--yellow);
+}
+
+.home-layout .forecast-pick-card > span:first-child {
+    color: rgba(19, 19, 19, .68);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.home-layout .forecast-pick-card > strong {
+    max-width: 100%;
+    overflow: hidden;
+    color: #131313;
+    font-family: var(--font-heading);
+    font-size: clamp(19px, 1.8vw, 27px);
+    font-weight: 400;
+    line-height: 1.08;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-market {
+    max-width: 100%;
+    overflow: hidden;
+    color: rgba(19, 19, 19, .64);
+    font-size: 12px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-coefficient {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    display: grid;
+    gap: 4px;
+    text-align: right;
+    transform: translateY(-50%);
+}
+
+.home-layout .forecast-coefficient small {
+    color: rgba(19, 19, 19, .64);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.home-layout .forecast-coefficient b {
+    color: #131313;
+    font-size: clamp(34px, 3.3vw, 48px);
+    font-weight: 700;
+    line-height: .9;
+}
+
+.home-layout .forecast-open-match {
+    min-height: 62px;
+    margin: 0;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border: 0;
+    border-radius: 16px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 15px;
+    font-weight: 700;
+    transform: none;
+}
+
+.home-layout .forecast-open-match > span {
+    flex: 1;
+    text-align: center;
+}
+
+.home-layout .forecast-open-match:hover {
+    background: #0b56fa;
+    transform: none;
+}
+
+/* Footer like the reference: dots / progress / counter. */
+.home-layout .slider-footer {
+    min-height: 76px;
+    padding: 0 30px 18px;
+    display: grid;
+    grid-template-columns: minmax(170px, 1fr) minmax(210px, 1.2fr) minmax(74px, .55fr);
+    align-items: end;
+    gap: 20px;
+    background: transparent;
+}
+
+.home-layout .slider-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.home-layout .slider-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .18);
+}
+
+.home-layout .slider-dot.is-active {
+    width: 42px;
+    background: var(--yellow);
+}
+
+.home-layout .slider-progress {
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+}
+
+.home-layout .slider-progress span {
+    height: 100%;
+    background: var(--yellow);
+}
+
+.home-layout .slider-counter {
+    justify-self: end;
+    color: rgba(255, 255, 255, .38);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.home-layout .slider-counter b {
+    color: #fff;
+    font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+    .home-layout .forecast-slider {
+        min-height: 800px;
+    }
+
+    .home-layout .forecast-slide {
+        min-height: 724px;
+    }
+
+    .home-layout .forecast-team-logo {
+        width: 300px;
+        height: 300px;
+    }
+}
+
+@media (max-width: 820px) {
+    .home-layout .forecast-slider {
+        min-height: 730px;
+        border-radius: 22px;
+    }
+
+    .home-layout .forecast-slide {
+        min-height: 662px;
+        padding: 20px 20px 14px;
+    }
+
+    .home-layout .forecast-topline {
+        min-height: 72px;
+        flex-direction: row;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .home-layout .forecast-avatar {
+        width: 58px;
+        height: 58px;
+        flex-basis: 58px;
+    }
+
+    .home-layout .forecast-expert strong {
+        max-width: 230px;
+        overflow: hidden;
+        font-size: 16px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .home-layout .forecast-expert > div > span {
+        font-size: 12px;
+    }
+
+    .home-layout .forecast-meta > span:first-child {
+        min-height: 42px;
+        padding: 0 14px;
+        border-radius: 11px;
+        font-size: 12px;
+    }
+
+    .home-layout .forecast-meta > .forecast-league-meta {
+        min-height: 42px;
+        max-width: 190px;
+        padding: 0 13px;
+        border-radius: 11px;
+        font-size: 11px;
+    }
+
+    .home-layout .forecast-matchup {
+        height: 350px;
+        margin-right: -20px;
+        margin-left: -20px;
+        padding: 0 22px;
+        grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr);
+    }
+
+    .home-layout .forecast-team-logo {
+        top: 22px;
+        width: 230px;
+        height: 230px;
+    }
+
+    .home-layout .forecast-team-copy {
+        bottom: 18px;
+    }
+
+    .home-layout .forecast-team-copy strong {
+        font-size: 24px;
+    }
+
+    .home-layout .forecast-vs {
+        margin-top: -42px;
+        font-size: 56px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
+        top: 116px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
+        top: 305px;
+        font-size: 18px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-result {
+        top: 337px;
+        font-size: 12px;
+    }
+
+    .home-layout .forecast-note {
+        min-height: 128px;
+        padding: 18px;
+        gap: 12px;
+        font-size: 12px;
+    }
+
+    .home-layout .forecast-pick-card {
+        min-height: 84px;
+        padding: 16px 135px 14px 18px;
+    }
+
+    .home-layout .forecast-coefficient {
+        right: 18px;
+    }
+
+    .home-layout .forecast-open-match {
+        min-height: 54px;
+    }
+
+    .home-layout .slider-footer {
+        min-height: 68px;
+        padding: 0 20px 16px;
+    }
+}
+
+@media (max-width: 620px) {
+    .home-layout .forecast-slider {
+        min-height: 790px;
+        border-radius: 18px;
+    }
+
+    .home-layout .forecast-slide {
+        min-height: 716px;
+        padding: 16px 14px 12px;
+    }
+
+    .home-layout .forecast-topline {
+        min-height: 66px;
+        align-items: flex-start;
+    }
+
+    .home-layout .forecast-avatar {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+    }
+
+    .home-layout .forecast-expert {
+        gap: 10px;
+    }
+
+    .home-layout .forecast-expert strong {
+        max-width: 150px;
+        font-size: 14px;
+    }
+
+    .home-layout .forecast-expert > div > span {
+        font-size: 10px;
+    }
+
+    .home-layout .forecast-meta {
+        gap: 6px;
+    }
+
+    .home-layout .forecast-meta > span:first-child {
+        min-height: 36px;
+        padding: 0 10px;
+        border-radius: 9px;
+        font-size: 10px;
+    }
+
+    .home-layout .forecast-meta > .forecast-league-meta {
+        display: none;
+    }
+
+    .home-layout .forecast-matchup {
+        height: 300px;
+        margin: 0 -14px;
+        padding: 0 12px;
+        grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+    }
+
+    .home-layout .forecast-team-logo {
+        top: 26px;
+        width: min(40vw, 160px);
+        height: min(40vw, 160px);
+        font-size: 70px;
+    }
+
+    .home-layout .forecast-team-copy,
+    .home-layout .forecast-team-away .forecast-team-copy {
+        right: 8px;
+        bottom: 14px;
+        left: 8px;
+        max-width: none;
+        text-align: center;
+    }
+
+    .home-layout .forecast-team-copy strong {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: 17px;
+        line-height: 1.08;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .home-layout .forecast-vs {
+        margin-top: -50px;
+        font-size: 38px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
+        top: 92px;
+        max-width: 150px;
+        font-size: 9px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
+        top: 261px;
+        font-size: 14px;
+    }
+
+    .home-layout .forecast-match-details > .forecast-result {
+        top: 288px;
+        font-size: 10px;
+    }
+
+    .home-layout .forecast-body {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .home-layout .forecast-match-copy {
+        min-height: 86px;
+    }
+
+    .home-layout .forecast-note {
+        min-height: 86px;
+        padding: 14px;
+        border-radius: 14px;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .home-layout .forecast-note > svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .home-layout .forecast-note-arrow {
+        font-size: 30px;
+    }
+
+    .home-layout .forecast-pick-column {
+        grid-template-rows: 88px 50px;
+        gap: 8px;
+    }
+
+    .home-layout .forecast-pick-card {
+        min-height: 88px;
+        padding: 14px 108px 12px 16px;
+        border-radius: 14px;
+    }
+
+    .home-layout .forecast-pick-card > strong {
+        font-size: 16px;
+    }
+
+    .home-layout .forecast-pick-card > span:first-child,
+    .home-layout .forecast-market,
+    .home-layout .forecast-coefficient small {
+        font-size: 9px;
+    }
+
+    .home-layout .forecast-coefficient {
+        right: 14px;
+    }
+
+    .home-layout .forecast-coefficient b {
+        font-size: 28px;
+    }
+
+    .home-layout .forecast-open-match {
+        min-height: 50px;
+        padding: 0 16px;
+        border-radius: 13px;
+        font-size: 12px;
+    }
+
+    .home-layout .slider-footer {
+        min-height: 62px;
+        padding: 0 14px 14px;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+    }
+
+    .home-layout .slider-progress {
+        display: none;
+    }
+
+    .home-layout .slider-dot {
+        width: 8px;
+        height: 8px;
+        min-width: 8px;
+        min-height: 8px;
+    }
+
+    .home-layout .slider-dot.is-active {
+        width: 30px;
+    }
+
+    .home-layout .slider-counter {
+        font-size: 12px;
+    }
+}
