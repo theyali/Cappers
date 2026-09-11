@@ -13,6 +13,7 @@ from django.db.models import (
 )
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.achievements import build_achievement_badges
@@ -26,7 +27,7 @@ from front.expert_ranking import (
 from front.models import Article
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
-from game.models import Match, Prediction, PredictionCoupon
+from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.views import _match_winner_odds
 from notifications.models import MatchWatch
 
@@ -58,6 +59,52 @@ def _state_label(prediction: PredictionCoupon) -> tuple[str, str]:
     return "Ожидает", "pending"
 
 
+def _home_cover_pools() -> dict[tuple[str, str, int | None], list[PredictionCoverImage]]:
+    pools: dict[tuple[str, str, int | None], list[PredictionCoverImage]] = {}
+    covers = PredictionCoverImage.objects.filter(is_active=True).only(
+        "id",
+        "placement",
+        "cover_type",
+        "sport_id",
+        "image",
+    ).order_by("id")
+    for cover in covers:
+        key = (cover.placement, cover.cover_type, cover.sport_id)
+        pools.setdefault(key, []).append(cover)
+    return pools
+
+
+def _home_slider_cover(
+    prediction: PredictionCoupon,
+    match: Match,
+    positions_count: int,
+    cover_pools: dict[tuple[str, str, int | None], list[PredictionCoverImage]],
+) -> PredictionCoverImage | None:
+    is_express = (
+        positions_count > 1
+        or prediction.coupon_type == PredictionCoupon.CouponType.EXPRESS
+    )
+    cover_type = (
+        PredictionCoverImage.CoverType.EXPRESS
+        if is_express
+        else PredictionCoverImage.CoverType.SPORT
+    )
+    sport_id = None if is_express else match.sport_id
+
+    for placement in (
+        PredictionCoverImage.Placement.HOME_SLIDER,
+        PredictionCoverImage.Placement.GRID,
+    ):
+        pool = cover_pools.get((placement, cover_type, sport_id), [])
+        if pool:
+            return pool[prediction.id % len(pool)]
+
+    existing_cover = prediction.cover_image
+    if existing_cover and existing_cover.is_active and existing_cover.image:
+        return existing_cover
+    return None
+
+
 def _latest_home_predictions() -> list[dict]:
     positions = Prediction.objects.select_related(
         "match__sport",
@@ -70,13 +117,14 @@ def _latest_home_predictions() -> list[dict]:
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             audience=PredictionCoupon.Audience.FREE,
         )
-        .select_related("author", "author__analyst_profile")
+        .select_related("author", "author__analyst_profile", "cover_image")
         .prefetch_related(
             Prefetch("predictions", queryset=positions, to_attr="home_positions")
         )
         .annotate(positions_count=Count("predictions", distinct=True))
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
+    cover_pools = _home_cover_pools()
 
     cards = []
     for prediction in queryset:
@@ -98,10 +146,18 @@ def _latest_home_predictions() -> list[dict]:
         match = item.match
         status_label, status_key = _state_label(prediction)
         starts_at = "Время не указано"
+        starts_date = "Дата не указана"
+        starts_time = "—"
         if match.starts_at:
-            starts_at = timezone.localtime(match.starts_at).strftime("%d.%m · %H:%M")
+            local_starts_at = timezone.localtime(match.starts_at)
+            starts_at = local_starts_at.strftime("%d.%m · %H:%M")
+            starts_date = date_format(local_starts_at, "j E")
+            starts_time = local_starts_at.strftime("%H:%M")
 
         count = prediction.positions_count or len(positions_list)
+        cover = _home_slider_cover(prediction, match, count, cover_pools)
+        cover_url = cover.image.url if cover and cover.image else ""
+
         if prediction.total_stake:
             coefficient = prediction.possible_payout / prediction.total_stake
         else:
@@ -129,6 +185,7 @@ def _latest_home_predictions() -> list[dict]:
                 "away_name": match.away_team_name or "Гости",
                 "home_logo": _logo_url(match.home_team_logo, match.home_team),
                 "away_logo": _logo_url(match.away_team_logo, match.away_team),
+                "cover_url": cover_url,
                 "score": match.score or "",
                 "pick": pick,
                 "market": market,
@@ -136,6 +193,8 @@ def _latest_home_predictions() -> list[dict]:
                 "confidence": prediction.confidence,
                 "positions_count": count,
                 "starts_at": starts_at,
+                "starts_date": starts_date,
+                "starts_time": starts_time,
                 "expert": expert_name,
                 "expert_username": author.username,
                 "expert_initials": _initials(expert_name),
