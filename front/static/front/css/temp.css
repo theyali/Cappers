@@ -1,0 +1,11 @@
+.predictions-index-page .prediction-card.feed-prediction-card {
+    gap: 10px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.predictions-index-page .prediction-card.feed-prediction-card:hover {
+    transform: none;
+    background: transparent;
+}
