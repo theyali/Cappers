@@ -17360,9 +17360,6 @@ font-size: 14px;
     gap: 18px;
 }
 
-.predictions-layout .predictions-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 
 .predictions-layout.is-filter-collapsed .predictions-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -17391,9 +17388,6 @@ font-size: 14px;
     transform: translateY(8px);
 }
 
-.predictions-grid > * {
-    transition: opacity .2s ease, transform .2s ease;
-}
 
 .prediction-filter-sidebar {
     position: sticky;
@@ -17617,11 +17611,6 @@ font-size: 14px;
 
 .predictions-layout > .bookmakers-sidebar {
     gap: 14px;
-}
-
-.predictions-layout .predictions-grid,
-.predictions-layout.is-filter-collapsed .predictions-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .predictions-filter-sidebar .prediction-filters {
@@ -18051,7 +18040,6 @@ font-size: 14px;
     .predictions-content .predictions-grid,
     .predictions-content .predictions-pagination,
     .predictions-content .predictions-empty,
-    .predictions-grid > *,
     .prediction-results-sort select,
     .prediction-filter-sidebar-chevron {
         transition: none;
@@ -18826,9 +18814,10 @@ font-size: 14px;
 .following-story-avatar.has-ring {
     padding: 3px;
     overflow: visible;
-    background:
+    /* background:
         linear-gradient(#111419, #111419) padding-box,
-        conic-gradient(from 210deg, #ffe82e, #f355a9, #7c3cff, #2d7dff, #ffe82e) border-box;
+        conic-gradient(from 210deg, #ffe82e, #f355a9, #7c3cff, #2d7dff, #ffe82e) border-box; */
+    background: linear-gradient(#111419, #111419) padding-box, conic-gradient(from 210deg, #7a5600, #c98b00, #ffd84d, #fff2a8, #d39a00, #7a5600) border-box;
     border: 3px solid transparent;
     outline: 0;
 }
@@ -18895,14 +18884,7 @@ font-size: 14px;
 }
 
 .feed-prediction-cover {
-    position: relative;
-    display: block;
-    overflow: hidden;
-    aspect-ratio: 16 / 10;
     border-radius: 8px;
-    color: var(--text);
-    background: #171718;
-    outline: 1px solid rgba(255, 255, 255, .08);
 }
 
 .feed-prediction-cover::after {
@@ -18927,21 +18909,23 @@ font-size: 14px;
 }
 
 .feed-prediction-cover-fallback {
-    height: 100%;
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(72px, .7fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 4px;
-    padding: 18px 16px;
-    background:
+    /* background:
         radial-gradient(circle at 18% 48%, rgba(255, 54, 75, .28), transparent 42%),
         radial-gradient(circle at 84% 44%, rgba(44, 107, 255, .30), transparent 45%),
-        linear-gradient(135deg, #28171b 0%, #141923 48%, #10203d 100%);
-    color: rgba(255, 255, 255, .82);
+        linear-gradient(135deg, #28171b 0%, #141923 48%, #10203d 100%); */
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    color: #fff;
     text-align: center;
 }
-
 .feed-prediction-cover-fallback::before {
     content: "";
     position: absolute;
@@ -18959,41 +18943,25 @@ font-size: 14px;
 }
 
 .feed-prediction-cover-team {
-    inline-size: clamp(4.5rem, 42%, 7.25rem);
     aspect-ratio: 1;
+    border-radius: 50%;
+    color: var(--ink);
+    width: clamp(72px, 25%, 104px);
+    height: clamp(72px, 25%, 104px);
     display: grid;
     place-items: center;
     overflow: hidden;
-    border-radius: 50%;
-    color: var(--ink);
-    background: rgba(255, 255, 255, .86);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, .34);
-    font-size: 17px;
-    font-weight: 600;
+    margin-top: 0;
+    box-shadow: none;
+    font-size: 18px;
+    font-weight: 700;
 }
 
-.feed-prediction-cover-team.is-home {
-    justify-self: start;
-    margin-top:60px;
+.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-home,
+.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-away {
+    margin-top: 0;
 }
 
-.feed-prediction-cover-team.is-away {
-    justify-self: end;
-    margin-top:60px;
-}
-
-.feed-prediction-cover-team img {
-    width: 76%;
-    height: 76%;
-    object-fit: contain;
-}
-
-.feed-prediction-cover-center {
-    min-width: 0;
-    display: grid;
-    place-items: center;
-    gap: 8px;
-}
 
 .feed-prediction-cover-league {
     inline-size: clamp(2.9rem, 64%, 4.6rem);
@@ -34851,11 +34819,6 @@ body.wiki-video-player-open {
     outline: none;
 }
 
-.prediction-card.feed-prediction-card .feed-prediction-cover::after,
-.prediction-card.feed-prediction-card .feed-prediction-cover-fallback::before {
-    display: none;
-}
-
 .prediction-card.feed-prediction-card .feed-prediction-cover-image {
     position: absolute;
     inset: 0;
@@ -34876,20 +34839,6 @@ body.wiki-video-player-open {
     filter: none;
 }
 
-.prediction-card.feed-prediction-card .feed-prediction-cover-fallback {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px;
-    color: #fff;
-    text-align: center;
-}
 
 .prediction-card.feed-prediction-card .feed-prediction-cover-center {
     position: relative;
@@ -34943,22 +34892,8 @@ body.wiki-video-player-open {
     gap: 24px;
 }
 
-.prediction-card.feed-prediction-card .feed-prediction-cover-team {
-    width: clamp(72px, 25%, 104px);
-    height: clamp(72px, 25%, 104px);
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    margin-top: 0;
-    box-shadow: none;
-    font-size: 18px;
-    font-weight: 700;
-}
 
-.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-home,
-.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-away {
-    margin-top: 0;
-}
+
 
 .prediction-card.feed-prediction-card .feed-prediction-cover-team img {
     width: 78%;
