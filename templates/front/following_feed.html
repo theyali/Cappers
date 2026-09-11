@@ -19,7 +19,7 @@
         <div class="predictions-content following-feed-content" data-predictions-content>
             <section class="following-stories" aria-labelledby="following-stories-title">
                 <div class="following-stories-head">
-                    <h1 id="following-stories-title">Истории капперов</h1>
+                    <div>VIP Капперы</div>
                     <a href="{% url 'front:cappers_stats' %}">
                         <span>Смотреть все</span>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
@@ -30,9 +30,7 @@
                     <button class="following-story-card following-story-own" type="button">
                         <span class="following-story-avatar">
                             <span class="following-story-plus" aria-hidden="true">+</span>
-                            <span class="following-story-add" aria-hidden="true">+</span>
                         </span>
-                        <span>Ваша история</span>
                     </button>
 
                     {% for follow in following|slice:":9" %}

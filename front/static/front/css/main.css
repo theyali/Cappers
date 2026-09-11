@@ -3476,21 +3476,6 @@ h2 {
     font-size: 11px;
 }
 
-.match-prediction-status.is-win {
-    color: var(--ink);
-    background: var(--yellow);
-}
-
-.match-prediction-status.is-lose {
-    color: #fff;
-    background: var(--danger);
-}
-
-.match-prediction-status.is-refund {
-    color: #fff;
-    background: var(--blue);
-}
-
 .match-prediction-pick {
     min-height: 86px;
     padding: 14px;
@@ -4901,7 +4886,7 @@ h2 {
 /* Legacy source: front/static/front/css/home.css */
 .home-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.75fr) minmax(330px, .75fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(330px, .75fr);
     gap: 20px;
     align-items: stretch;
 }
@@ -5647,8 +5632,8 @@ body:has(.home-layout) .site-main h2 {
 }
 
 .expert-avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     overflow: hidden;
     border-radius: 50%;
     font-size: 10px;
@@ -5664,6 +5649,7 @@ body:has(.home-layout) .site-main h2 {
 
 .expert-copy {
     min-width: 0;
+    margin-left: 10px;
 }
 
 .expert-name-line {
@@ -5676,7 +5662,7 @@ body:has(.home-layout) .site-main h2 {
 .expert-name-line strong {
     overflow: hidden;
     color: var(--text);
-    font-size: 13px;
+    font-size: 16px;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
@@ -6873,7 +6859,7 @@ font-size: 14px;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 20%;
+    border-radius: 50%;
 }
 
 .forecast-avatar {
@@ -6965,42 +6951,12 @@ font-size: 14px;
     font-size: 12px;
 }
 
-.forecast-result.is-win {
-    color: var(--ink);
-    background: var(--yellow);
-}
-
-.forecast-result.is-lose {
-    color: #fff;
-    background: var(--danger);
-}
-
-.forecast-result.is-refund {
-    color: #fff;
-    background: var(--blue);
-}
 
 .forecast-bottom-real {
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
 }
 
-.forecast-open-match {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 14px;
-    border-radius: 10px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 12px;
-    transition: transform .2s ease, background .2s ease;
-}
-
-.forecast-open-match:hover {
-    transform: translateY(-2px);
-    background: #0a4de0;
-}
 
 .forecast-slider[data-direction="next"] .forecast-slide:not(.is-active) {
     transform: translateX(-34px) scale(.985);
@@ -7848,10 +7804,7 @@ font-size: 14px;
     font-size: 15px;
 }
 
-.home-best-featured-status-pill.is-win {
-    background: var(--green);
-    color: #fff;
-}
+
 
 .home-best-featured-status-pill.is-lose {
     background: var(--danger);
@@ -8087,11 +8040,6 @@ font-size: 14px;
     color: #fff;
     background: #2f3236;
 }
-
-.home-best-prediction-status.is-win {
-    background: var(--green);
-}
-
 .home-best-prediction-status.is-lose {
     background: var(--danger);
 }
@@ -8606,10 +8554,7 @@ font-size: 14px;
     font-weight: 700;
 }
 
-.latest-prediction-status.is-win {
-    color: var(--ink);
-    background: var(--yellow);
-}
+
 
 .latest-prediction-status.is-lose {
     color: #fff;
@@ -13543,7 +13488,6 @@ font-size: 14px;
     background: #303034;
 }
 
-.prediction-table-status.is-win { background: var(--green); color: white; }
 .prediction-table-status.is-lose { color: white; background: var(--danger); }
 .prediction-table-status.is-refund { color: white; background: var(--blue); }
 
@@ -15095,30 +15039,7 @@ font-size: 14px;
     white-space: nowrap;
 }
 
-.profile-coupon-status.is-published,
-.coupon-detail-status.is-published {
-    color: #fff;
-    background: var(--green);
-}
 
-.profile-coupon-status.is-won,
-.profile-coupon-status.is-win {
-    color: white;
-    background: var(--green);
-}
-
-.profile-coupon-status.is-lost,
-.profile-coupon-status.is-canceled,
-.coupon-detail-status.is-canceled,
-.profile-coupon-status.is-lose {
-    color: #fff;
-    background: var(--danger, #ff6268);
-}
-
-.profile-coupon-status.is-refund {
-    color: #fff;
-    background: var(--blue);
-}
 
 .profile-coupon-metric {
     min-width: 0;
@@ -15518,23 +15439,6 @@ font-size: 14px;
     font-weight: 800;
 }
 
-.coupon-slip-status-row .is-win {
-    color: var(--green, #35c970);
-}
-
-.coupon-slip-status-row .is-lose,
-.coupon-slip-status-row .is-canceled {
-    color: var(--danger, #ff6268);
-}
-
-.coupon-slip-status-row .is-refund,
-.coupon-slip-status-row .is-pending {
-    color: var(--blue);
-}
-
-.coupon-slip-status-row .is-draft {
-    color: var(--yellow);
-}
 
 .coupon-slip-comment {
     margin-top: 2px;
@@ -16428,14 +16332,6 @@ font-size: 14px;
     color: var(--soft);
 }
 
-.cappers-ranking-table th.is-win {
-    color: var(--yellow);
-}
-
-.cappers-ranking-table th.is-loss {
-    color: var(--danger);
-}
-
 .cappers-ranking-table td {
     height: 54px;
     padding: 5px 9px;
@@ -16580,10 +16476,6 @@ font-size: 14px;
 .cappers-ranking-roi.is-negative,
 .cappers-ranking-table td.is-loss {
     color: var(--danger);
-}
-
-.cappers-ranking-table td.is-win {
-    color: var(--yellow);
 }
 
 .cappers-table-empty {
@@ -17453,6 +17345,9 @@ font-size: 14px;
     align-items: start;
     gap: 8px;
     transition: grid-template-columns .2s ease;
+}
+.predictions-layout.following-feed-layout {
+    grid-template-columns: minmax(220px, 230px) minmax(0, 1fr) minmax(380px, 280px);
 }
 
 .predictions-layout.is-filter-collapsed {
@@ -18951,23 +18846,6 @@ font-size: 14px;
     line-height: 1;
 }
 
-.following-story-add {
-    position: absolute;
-    right: -6px;
-    bottom: -5px;
-    inline-size: 28px;
-    aspect-ratio: 1;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: #fff;
-    background: var(--blue);
-    box-shadow: 0 6px 16px rgba(11, 86, 250, .38);
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1;
-}
-
 .following-story-avatar b {
     position: absolute;
     left: 50%;
@@ -19096,10 +18974,12 @@ font-size: 14px;
 
 .feed-prediction-cover-team.is-home {
     justify-self: start;
+    margin-top:60px;
 }
 
 .feed-prediction-cover-team.is-away {
     justify-self: end;
+    margin-top:60px;
 }
 
 .feed-prediction-cover-team img {
@@ -22435,22 +22315,6 @@ font-size: 14px;
     background: var(--muted);
 }
 
-.expert-result-item.is-win .expert-result-track i {
-    background: var(--green);
-}
-
-.expert-result-item.is-lose .expert-result-track i {
-    background: var(--danger);
-}
-
-.expert-result-item.is-refund .expert-result-track i {
-    background: var(--yellow);
-}
-
-.expert-result-item.is-open .expert-result-track i {
-    background: var(--blue);
-}
-
 .expert-public-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -22754,10 +22618,6 @@ font-size: 14px;
     border-radius: 10px;
     color: #fff;
     background: rgba(255, 255, 255, .12);
-}
-
-.expert-public-stats-compact .is-winrate .expert-public-stat-icon {
-    background: #5bb940;
 }
 
 .expert-public-stats-compact .expert-public-stat-icon svg {
@@ -24515,14 +24375,7 @@ font-size: 14px;
     display: block;
     fill: currentColor;
 }
-.profile-copy-icon-btn.is-stop{
-    background: var(--danger);
-    color: white;
-}
-.profile-copy-icon-btn.pause {
-    background: var(--green);
-    color: white;
-}
+
 .profile-coupon-status.is-active {
     background: var(--yellow);
     color: black;
@@ -25392,19 +25245,6 @@ font-size: 14px;
     color: var(--yellow);
 }
 
-.capper-dashboard-stats article.is-win strong,
-.capper-dashboard-stats article.is-roi.is-positive strong {
-    color: var(--green);
-}
-
-.capper-dashboard-stats article.is-lose strong,
-.capper-dashboard-stats article.is-roi.is-negative strong {
-    color: var(--danger);
-}
-
-.capper-dashboard-stats article.is-followers strong {
-    color: var(--blue);
-}
 
 .capper-dashboard-layout {
     display: grid;
@@ -25772,20 +25612,6 @@ font-size: 14px;
     white-space: nowrap;
 }
 
-.capper-live-status.is-win {
-    color: #fff;
-    background: var(--green);
-}
-
-.capper-live-status.is-lose {
-    color: #fff;
-    background: var(--danger);
-}
-
-.capper-live-status.is-refund {
-    color: var(--ink);
-    background: var(--yellow);
-}
 
 .capper-live-match {
     min-width: 0;
@@ -26316,17 +26142,6 @@ font-size: 14px;
     transition: width .2s ease;
 }
 
-.expert-sport-result-bar .is-win {
-    background: #32a852;
-}
-
-.expert-sport-result-bar .is-loss {
-    background: #ef3131;
-}
-
-.expert-sport-result-bar .is-refund {
-    background: var(--blue);
-}
 
 .expert-sport-profit-metrics {
     width: 100%;
@@ -26484,18 +26299,6 @@ font-size: 14px;
     transition: stroke-dasharray .38s cubic-bezier(.2, .8, .2, 1);
 }
 
-.expert-recent-performance-item.is-win .expert-recent-performance-progress {
-    stroke: var(--green);
-}
-
-.expert-recent-performance-item.is-loss .expert-recent-performance-progress {
-    stroke: var(--danger);
-}
-
-.expert-recent-performance-item.is-refund .expert-recent-performance-progress {
-    stroke: var(--blue);
-}
-
 .expert-recent-performance-copy {
     position: absolute;
     inset: 0;
@@ -26513,17 +26316,6 @@ font-size: 14px;
     line-height: 1;
 }
 
-.expert-recent-performance-item.is-win .expert-recent-performance-copy strong {
-    color: var(--green);
-}
-
-.expert-recent-performance-item.is-loss .expert-recent-performance-copy strong {
-    color: var(--danger);
-}
-
-.expert-recent-performance-item.is-refund .expert-recent-performance-copy strong {
-    color: var(--blue);
-}
 
 .expert-recent-performance-copy span {
     color: var(--text);
@@ -26696,15 +26488,6 @@ font-size: 14px;
     font-weight: 900;
 }
 
-.expert-monthly-table .is-positive,
-.expert-monthly-results .is-win {
-    color: var(--green);
-}
-
-.expert-monthly-table .is-negative,
-.expert-monthly-results .is-loss {
-    color: var(--danger);
-}
 
 .expert-monthly-results {
     font-weight: 900;
@@ -26720,14 +26503,6 @@ font-size: 14px;
 .expert-monthly-results .is-refund,
 .expert-monthly-table thead .is-refund {
     color: var(--blue);
-}
-
-.expert-monthly-table thead .is-win {
-    color: var(--green);
-}
-
-.expert-monthly-table thead .is-loss {
-    color: var(--danger);
 }
 
 .expert-monthly-hit {
@@ -26861,7 +26636,7 @@ font-size: 14px;
     min-width: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(250px, 286px);
+    grid-auto-columns: minmax(270px, 286px);
     gap: 12px;
     overflow-x: auto;
     padding: 2px 0 8px;
@@ -26978,17 +26753,6 @@ font-size: 14px;
     font-variant-numeric: tabular-nums;
 }
 
-.expert-recommendation-results .is-win {
-    color: var(--green);
-}
-
-.expert-recommendation-results .is-refund {
-    color: var(--blue);
-}
-
-.expert-recommendation-results .is-loss {
-    color: var(--danger);
-}
 
 .expert-recommendation-total {
     margin: -2px 0 2px;
@@ -29648,23 +29412,6 @@ body.register {
     font-size: 11px;
 }
 
-.public-coupon-status.is-win,
-.public-coupon-item-foot .is-win {
-    background: var(--yellow);
-    color: var(--ink);
-}
-
-.public-coupon-status.is-lose,
-.public-coupon-item-foot .is-lose {
-    background: #ff3b30;
-    color: #fff;
-}
-
-.public-coupon-status.is-refund,
-.public-coupon-item-foot .is-refund {
-    background: var(--blue);
-    color: #fff;
-}
 
 .public-coupon-metrics {
     display: grid;
@@ -34571,21 +34318,6 @@ body.wiki-video-player-open {
     font-weight: 700;
 }
 
-.forecast-open-match {
-    width: 100%;
-    min-height: 66px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 0 22px;
-    border-radius: 18px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 15px;
-    font-weight: 800;
-}
-
 .forecast-open-match svg {
     flex: 0 0 auto;
 }
@@ -34774,17 +34506,6 @@ body.wiki-video-player-open {
     white-space: nowrap;
 }
 
-.home-layout .forecast-center-status.is-win {
-    color: #45d483;
-}
-
-.home-layout .forecast-center-status.is-lose {
-    color: #ff6262;
-}
-
-.home-layout .forecast-center-status.is-refund {
-    color: var(--yellow);
-}
 
 
 .home-layout .forecast-match-copy {
@@ -34906,4 +34627,216 @@ body.wiki-video-player-open {
 .home-layout .slider-counter b {
     color: #fff;
     font-weight: 700;
+}
+
+/* =========================
+   WIN — BACKGROUND GREEN
+========================= */
+.latest-prediction-status.is-win,
+.match-prediction-status.is-win,
+.profile-coupon-status.is-published,
+.coupon-detail-status.is-published,
+.expert-result-item.is-win .expert-result-track i,
+.home-best-prediction-status.is-win,
+.prediction-table-status.is-win,
+.profile-coupon-status.is-won,
+.profile-coupon-status.is-win,
+.home-best-featured-status-pill.is-win,
+.forecast-result.is-win,
+.public-coupon-status.is-win,
+.public-coupon-item-foot .is-win,
+.capper-live-status.is-win {
+    color: #fff;
+    background: radial-gradient(circle,rgba(94, 167, 49, 1) 0%, rgba(81, 161, 32, 1) 50%, rgba(61, 138, 17, 1) 100%);
+}
+
+/* =========================
+   YELLOW STATUS
+========================= */
+
+.capper-live-status.is-refund
+{
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+
+/* =========================
+   LOSE — BACKGROUND DANGER
+========================= */
+
+.profile-copy-icon-btn.is-stop,
+.profile-coupon-status.is-lost,
+.profile-coupon-status.is-canceled,
+.coupon-detail-status.is-canceled,
+.profile-coupon-status.is-lose,
+.public-coupon-status.is-lose,
+.public-coupon-item-foot .is-lose,
+.profile-copy-icon-btn.pause,
+.expert-result-item.is-lose .expert-result-track i,
+.match-prediction-status.is-lose,
+.forecast-result.is-lose,
+.capper-live-status.is-lose {
+    color: #fff;
+    background: radial-gradient(circle,rgba(253, 26, 1, 1) 0%, rgba(222, 60, 42, 1) 50%, rgba(204, 20, 0, 1) 100%);
+}
+
+
+/* =========================
+   REFUND — BACKGROUND BLUE
+========================= */
+.expert-sport-result-bar .is-refund,
+.expert-result-item.is-open .expert-result-track i,
+.profile-coupon-status.is-refund,
+.match-prediction-status.is-refund,
+.forecast-result.is-refund,
+.public-coupon-status.is-refund,
+.public-coupon-item-foot .is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
+
+/* =========================
+   COUPON SLIP
+========================= */
+
+.coupon-slip-status-row .is-win {
+    color: var(--green, #35c970);
+}
+
+.coupon-slip-status-row .is-lose,
+.coupon-slip-status-row .is-canceled {
+    color: var(--danger, #ff6268);
+}
+
+.coupon-slip-status-row .is-refund,
+.coupon-slip-status-row .is-pending {
+    color: var(--blue);
+}
+
+.coupon-slip-status-row .is-draft {
+    color: var(--yellow);
+}
+
+
+/* =========================
+   RANKING
+========================= */
+
+.cappers-ranking-table th.is-win {
+    color: var(--yellow);
+}
+
+.cappers-ranking-table th.is-loss {
+    color: var(--danger);
+}
+
+.cappers-ranking-table td.is-win {
+    color: var(--green);
+}
+
+
+/* =========================
+   EXPERT RESULT TRACK
+========================= */
+
+.expert-result-item.is-refund .expert-result-track i {
+    background: var(--yellow);
+}
+
+
+/* =========================
+   SPORT RESULT BAR
+========================= */
+
+.expert-sport-result-bar .is-win {
+    background: #32a852;
+}
+
+.expert-sport-result-bar .is-loss {
+    background: #ef3131;
+}
+
+/* =========================
+   PUBLIC STATS
+========================= */
+
+.expert-public-stats-compact .is-winrate .expert-public-stat-icon {
+    background: #5bb940;
+}
+
+
+/* =========================
+   GREEN TEXT
+========================= */
+
+.capper-dashboard-stats article.is-win strong,
+.capper-dashboard-stats article.is-roi.is-positive strong,
+.expert-recent-performance-item.is-win .expert-recent-performance-copy strong,
+.expert-monthly-table .is-positive,
+.expert-monthly-results .is-win,
+.expert-monthly-table thead .is-win,
+.expert-recommendation-results .is-win {
+    color: var(--green);
+}
+
+
+/* =========================
+   DANGER TEXT
+========================= */
+
+.capper-dashboard-stats article.is-lose strong,
+.capper-dashboard-stats article.is-roi.is-negative strong,
+.expert-recent-performance-item.is-loss .expert-recent-performance-copy strong,
+.expert-monthly-table .is-negative,
+.expert-monthly-results .is-loss,
+.expert-monthly-table thead .is-loss,
+.expert-recommendation-results .is-loss {
+    color: var(--danger);
+}
+
+
+/* =========================
+   BLUE TEXT
+========================= */
+
+.capper-dashboard-stats article.is-followers strong,
+.expert-recent-performance-item.is-refund .expert-recent-performance-copy strong,
+.expert-recommendation-results .is-refund {
+    color: var(--blue);
+}
+
+
+/* =========================
+   HOME FORECAST STATUS
+========================= */
+
+.home-layout .forecast-center-status.is-win {
+    color: #45d483;
+}
+
+.home-layout .forecast-center-status.is-lose {
+    color: #ff6262;
+}
+
+.home-layout .forecast-center-status.is-refund {
+    color: var(--yellow);
+}
+
+
+/* =========================
+   PERFORMANCE PROGRESS
+========================= */
+
+.expert-recent-performance-item.is-win .expert-recent-performance-progress {
+    stroke: var(--green);
+}
+
+.expert-recent-performance-item.is-loss .expert-recent-performance-progress {
+    stroke: var(--danger);
+}
+
+.expert-recent-performance-item.is-refund .expert-recent-performance-progress {
+    stroke: var(--blue);
 }
