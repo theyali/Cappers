@@ -13488,7 +13488,6 @@ font-size: 14px;
     background: #303034;
 }
 
-.prediction-table-status.is-lose { color: white; background: var(--danger); }
 .prediction-table-status.is-refund { color: white; background: var(--blue); }
 
 .prediction-table-actions {
@@ -18891,7 +18890,7 @@ font-size: 14px;
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(19, 19, 19, 0) 54%, rgba(19, 19, 19, .42) 100%);
+    background: linear-gradient(180deg, rgb(19 19 19 / 59%) 54%, rgba(19, 19, 19, .42) 100%);
     pointer-events: none;
 }
 
@@ -34629,7 +34628,7 @@ body.wiki-video-player-open {
 /* =========================
    LOSE — BACKGROUND DANGER
 ========================= */
-
+.prediction-table-status.is-lose,
 .profile-copy-icon-btn.is-stop,
 .profile-coupon-status.is-lost,
 .profile-coupon-status.is-canceled,
@@ -34926,13 +34925,14 @@ body.wiki-video-player-open {
 
 .feed-prediction-cover-status {
     left: 18px;
-    width: 37px;
-    height: 37px;
+    width: 27px;
+    height: 27px;
     display: grid;
     place-items: center;
     padding: 0;
-    border-radius: 14px;
+    border-radius: 50%;
     color: var(--yellow);
+    background: var(--panel);
 }
 
 .feed-prediction-cover-status svg {
@@ -34945,10 +34945,10 @@ body.wiki-video-player-open {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.is-lose .feed-prediction-cover-status svg
-{
+.feed-prediction-cover-status.is-lose svg {
     color: #fff;
     background: var(--danger);
+    border-radius: 50%;
 }
 
 .feed-prediction-cover-status.is-win .feed-prediction-status-icon-bg {
@@ -34960,10 +34960,6 @@ body.wiki-video-player-open {
     fill: none;
     stroke: #fff;
     stroke-width: 2.3;
-}
-
-.feed-prediction-cover-status.is-lose {
-    color: #fff;
 }
 
 .feed-prediction-cover-status.is-refund {
