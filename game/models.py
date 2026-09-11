@@ -80,6 +80,17 @@ class PredictionCoverImage(models.Model):
         SPORT = "sport", "Для спорта"
         EXPRESS = "express", "Для экспресса"
 
+    class Placement(models.TextChoices):
+        GRID = "grid", "Для обычной прогнозной сетки"
+        HOME_SLIDER = "home_slider", "Для слайдера в главной"
+
+    placement = models.CharField(
+        "Размещение",
+        max_length=20,
+        choices=Placement.choices,
+        default=Placement.GRID,
+        db_index=True,
+    )
     cover_type = models.CharField(
         "Тип обложки",
         max_length=16,
@@ -103,7 +114,7 @@ class PredictionCoverImage(models.Model):
     class Meta:
         verbose_name = "Обложка прогноза"
         verbose_name_plural = "Обложки прогнозов"
-        ordering = ["cover_type", "sport__name_ru", "sport__name", "-created_at"]
+        ordering = ["placement", "cover_type", "sport__name_ru", "sport__name", "-created_at"]
         indexes = [
             models.Index(fields=["cover_type", "sport", "is_active"]),
         ]
@@ -607,6 +618,7 @@ class PredictionCoupon(models.Model):
         if len(predictions) > 1 or self.coupon_type == self.CouponType.EXPRESS:
             queryset = PredictionCoverImage.objects.filter(
                 cover_type=PredictionCoverImage.CoverType.EXPRESS,
+                placement=PredictionCoverImage.Placement.GRID,
                 is_active=True,
             )
         else:
@@ -615,6 +627,7 @@ class PredictionCoupon(models.Model):
                 return None
             queryset = PredictionCoverImage.objects.filter(
                 cover_type=PredictionCoverImage.CoverType.SPORT,
+                placement=PredictionCoverImage.Placement.GRID,
                 sport_id=sport_id,
                 is_active=True,
             )
