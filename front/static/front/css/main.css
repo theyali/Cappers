@@ -5004,14 +5004,33 @@ body:has(.home-layout) .site-main h2 {
 }
 
 .forecast-slider {
-    min-height: 700px;
+    min-height: 790px;
     display: flex;
     flex-direction: column;
-    padding: 18px;
-    border-radius: 24px;
+    border-radius: 28px;
     background: var(--panel);
     overflow: hidden;
     position: relative;
+    background-image: url("../img/slider_bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Затемнение поверх фонового изображения */
+.forecast-slider::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 18, 0.68);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Весь контент слайдера выше затемнения */
+.forecast-slider > * {
+    position: relative;
+    z-index: 1;
 }
 
 .forecast-track {
@@ -5026,13 +5045,11 @@ body:has(.home-layout) .site-main h2 {
     display: flex;
     flex-direction: column;
     border-radius: 18px;
-    background: #181819;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transform: translateX(26px) scale(.985);
     transition: opacity .38s ease, transform .38s ease, visibility .38s ease;
-    padding: 20px;
 }
 
 .forecast-slide.is-active {
@@ -5704,13 +5721,6 @@ body:has(.home-layout) .site-main h2 {
         min-height: 74px;
         align-items: center;
     }
-
-    .forecast-slider {
-        min-height: 0;
-        padding: 0;
-        border-radius: 18px;
-    }
-
     .forecast-slide {
         min-height: 560px;
         padding: 22px;
@@ -34284,12 +34294,7 @@ body.wiki-video-player-open {
     padding-bottom: 18px;
 }
 
-.forecast-slider {
-    min-height: 790px;
-    padding: 20px;
-    border-radius: 28px;
-    background: var(--panel);
-}
+
 
 
 
