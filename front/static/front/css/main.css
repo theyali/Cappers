@@ -34926,14 +34926,13 @@ body.wiki-video-player-open {
 
 .feed-prediction-cover-status {
     left: 18px;
-    width: 48px;
-    height: 48px;
+    width: 37px;
+    height: 37px;
     display: grid;
     place-items: center;
     padding: 0;
     border-radius: 14px;
     color: var(--yellow);
-    background: var(--ink);
 }
 
 .feed-prediction-cover-status svg {
@@ -34946,10 +34945,10 @@ body.wiki-video-player-open {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-
-.feed-prediction-cover-status.is-win {
+.is-lose .feed-prediction-cover-status svg
+{
     color: #fff;
-    background: var(--green);
+    background: var(--danger);
 }
 
 .feed-prediction-cover-status.is-win .feed-prediction-status-icon-bg {
@@ -34965,17 +34964,15 @@ body.wiki-video-player-open {
 
 .feed-prediction-cover-status.is-lose {
     color: #fff;
-    background: var(--danger);
 }
 
 .feed-prediction-cover-status.is-refund {
     color: #fff;
-    background: var(--blue);
 }
 
 .feed-prediction-cover-confidence {
-    right: 18px;
-    width: 104px;
+    right: 8px;
+    width: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -34987,8 +34984,8 @@ body.wiki-video-player-open {
 
 .feed-prediction-confidence-ring {
     position: relative;
-    width: 88px;
-    height: 88px;
+    width: 43px;
+    height: 43px;
     display: grid;
     place-items: center;
     border-radius: 50%;
@@ -35024,14 +35021,14 @@ body.wiki-video-player-open {
     position: relative;
     z-index: 1;
     color: #fff;
-    font-size: 22px;
+    font-size: 9px;
     font-weight: 700;
     line-height: 1;
 }
 
 .feed-prediction-cover-confidence > span:last-child {
     color: rgba(255, 255, 255, .58);
-    font-size: 11px;
+    font-size: 8px;
     font-weight: 600;
     line-height: 1.1;
 }
@@ -35061,8 +35058,8 @@ body.wiki-video-player-open {
     }
 
     .feed-prediction-confidence-ring {
-        width: 72px;
-        height: 72px;
+        width: 43px;
+        height: 43px;
     }
 
     .feed-prediction-confidence-track,
@@ -35071,7 +35068,7 @@ body.wiki-video-player-open {
     }
 
     .feed-prediction-cover-confidence strong {
-        font-size: 18px;
+        font-size: 9px;
     }
 
     .feed-prediction-cover-confidence > span:last-child {
