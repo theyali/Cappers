@@ -7,7 +7,7 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-<section class="predictions-page following-feed-page predictions-scroll-page" aria-label="Моя лента">
+<section class="predictions-page following-feed-page predictions-scroll-page container" aria-label="Моя лента">
     {% if has_feed_sources %}
     <div
         class="predictions-layout following-feed-layout"
@@ -17,35 +17,79 @@
         {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
 
         <div class="predictions-content following-feed-content" data-predictions-content>
-            <div class="predictions-hero following-feed-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_2.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
-                <div>
-                    <p class="predictions-eyebrow">Персональная лента</p>
-                    <h1>Моя лента</h1>
-                    <p>Здесь только прогнозы капперов, на которых вы подписаны. Сохранённые прогнозы остаются отдельно в разделе «Избранные прогнозы».</p>
+            <section class="following-stories" aria-labelledby="following-stories-title">
+                <div class="following-stories-head">
+                    <h1 id="following-stories-title">Истории капперов</h1>
+                    <a href="{% url 'front:cappers_stats' %}">
+                        <span>Смотреть все</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
+                    </a>
                 </div>
-                <div class="following-feed-summary">
-                    <div>
-                        <strong>{{ following_count }}</strong>
-                        <span>подписок</span>
-                    </div>
-                    <div>
-                        <strong data-predictions-total-value>{{ feed_predictions_count }}</strong>
-                        <span>обычных прогнозов</span>
-                    </div>
-                    <div>
-                        <strong>{{ paid_predictions_count }}</strong>
-                        <span>платных прогнозов</span>
-                    </div>
+
+                <div class="following-stories-row" aria-label="Истории капперов">
+                    <button class="following-story-card following-story-own" type="button">
+                        <span class="following-story-avatar">
+                            <span class="following-story-plus" aria-hidden="true">+</span>
+                            <span class="following-story-add" aria-hidden="true">+</span>
+                        </span>
+                        <span>Ваша история</span>
+                    </button>
+
+                    {% for follow in following|slice:":9" %}
+                    <a class="following-story-card" href="{{ follow.feed_profile_url }}">
+                        <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
+                            {% if follow.feed_avatar_url %}
+                                <img src="{{ follow.feed_avatar_url }}" width="72" height="72" loading="lazy" alt="">
+                            {% elif follow.analyst.avatar %}
+                                <img src="{{ follow.analyst.avatar.url }}" width="72" height="72" loading="lazy" alt="">
+                            {% else %}
+                                {{ follow.feed_initial }}
+                            {% endif %}
+                            {% if forloop.first %}
+                            <b>LIVE</b>
+                            {% else %}
+                            <small aria-hidden="true"></small>
+                            {% endif %}
+                        </span>
+                        <span>{{ follow.feed_name }}</span>
+                    </a>
+                    {% endfor %}
                 </div>
-            </div>
+            </section>
 
             {% if page_obj.object_list or paid_predictions or paid_upgrade_offers %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
                     <div class="prediction-results-head">
-                        <div class="prediction-results-summary">
-                            <strong>{{ feed_total_count }}</strong>
-                            <span>прогнозов по выбранным условиям</span>
-                        </div>
+                        <nav class="feed-sport-tabs" aria-label="Фильтр моей ленты по спорту">
+                            {% for tab in feed_sport_tabs %}
+                            <a
+                                class="feed-sport-tab{% if tab.active %} is-active{% endif %}"
+                                href="{{ tab.href }}"
+                                data-prediction-ajax-link
+                                {% if tab.active %}aria-current="page"{% endif %}
+                            >
+                                {% if tab.code %}
+                                <span class="feed-sport-icon" aria-hidden="true">
+                                    {% if tab.code == 'football' %}
+                                        {% include "front/svgs/soccer.svg" %}
+                                    {% elif tab.code == 'hockey' or tab.code == 'ice-hockey' %}
+                                        {% include "front/svgs/hockey.svg" %}
+                                    {% elif tab.code == 'basketball' %}
+                                        {% include "front/svgs/basketball.svg" %}
+                                    {% elif tab.code == 'tennis' %}
+                                        {% include "front/svgs/tennis.svg" %}
+                                    {% else %}
+                                        {% include "front/svgs/nav-matches.svg" %}
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                                <span>{{ tab.label }}</span>
+                            </a>
+                            {% endfor %}
+                            <button class="feed-sport-tab feed-sport-more" type="button" aria-label="Другие виды спорта">
+                                <span aria-hidden="true">•••</span>
+                            </button>
+                        </nav>
                         <div class="prediction-results-actions">
                             <label class="prediction-results-sort">
                                 <span>Сортировка</span>
@@ -90,10 +134,36 @@
                 {% endif %}
             {% else %}
             <div class="prediction-results-head">
-                <div class="prediction-results-summary">
-                    <strong>{{ feed_predictions_count }}</strong>
-                    <span>прогнозов по выбранным условиям</span>
-                </div>
+                <nav class="feed-sport-tabs" aria-label="Фильтр моей ленты по спорту">
+                    {% for tab in feed_sport_tabs %}
+                    <a
+                        class="feed-sport-tab{% if tab.active %} is-active{% endif %}"
+                        href="{{ tab.href }}"
+                        data-prediction-ajax-link
+                        {% if tab.active %}aria-current="page"{% endif %}
+                    >
+                        {% if tab.code %}
+                        <span class="feed-sport-icon" aria-hidden="true">
+                            {% if tab.code == 'football' %}
+                                {% include "front/svgs/soccer.svg" %}
+                            {% elif tab.code == 'hockey' or tab.code == 'ice-hockey' %}
+                                {% include "front/svgs/hockey.svg" %}
+                            {% elif tab.code == 'basketball' %}
+                                {% include "front/svgs/basketball.svg" %}
+                            {% elif tab.code == 'tennis' %}
+                                {% include "front/svgs/tennis.svg" %}
+                            {% else %}
+                                {% include "front/svgs/nav-matches.svg" %}
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                        <span>{{ tab.label }}</span>
+                    </a>
+                    {% endfor %}
+                    <button class="feed-sport-tab feed-sport-more" type="button" aria-label="Другие виды спорта">
+                        <span aria-hidden="true">•••</span>
+                    </button>
+                </nav>
                 <label class="prediction-results-sort">
                     <span>Сортировка</span>
                     <select name="sort" data-prediction-sort aria-label="Сортировка моей ленты">

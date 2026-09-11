@@ -102,6 +102,7 @@ def _published_queryset(*, include_paid: bool = False):
         .select_related(
             "author",
             "author__analyst_profile",
+            "cover_image",
         )
         .prefetch_related(
             Prefetch("predictions", queryset=_positions_queryset(), to_attr="card_positions")
@@ -155,6 +156,7 @@ def _prediction_card(coupon: PredictionCoupon):
         positions_count=count,
         likes_count=getattr(coupon, "likes_count", 0),
         favorites_count=getattr(coupon, "favorites_count", 0),
+        followers_count=0,
         author_roi=getattr(coupon, "author_roi", Decimal("0")),
     )
 
@@ -165,6 +167,13 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
     liked_ids = set()
     favorite_ids = set()
     following_ids = following_ids if following_ids is not None else _following_ids(request.user)
+    author_ids = {coupon.author_id for coupon in coupons}
+    follower_counts = {
+        row["analyst_id"]: row["total"]
+        for row in AnalystFollow.objects.filter(analyst_id__in=author_ids)
+        .values("analyst_id")
+        .annotate(total=Count("id"))
+    }
 
     if request.user.is_authenticated and prediction_ids:
         liked_ids = set(
@@ -198,6 +207,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
         card.expert_avatar_url = profile.avatar.url if profile and profile.avatar else ""
         card.expert_verified = bool(profile and profile.is_verified)
         card.expert_trust_index = profile.trust_index if profile else Decimal("0.0")
+        card.followers_count = follower_counts.get(author.pk, 0)
         card.is_liked = coupon.pk in liked_ids
         card.is_favorite = coupon.pk in favorite_ids
         card.is_own = bool(request.user.is_authenticated and author.pk == request.user.pk)

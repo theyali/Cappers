@@ -201,7 +201,7 @@
         if (!value || value === "new") url.searchParams.delete("sort");
         else url.searchParams.set("sort", value);
         if (url.searchParams.get("status") === "all") url.searchParams.delete("status");
-        url.searchParams.delete("sport");
+        if (!document.querySelector(".following-feed-page")) url.searchParams.delete("sport");
         url.searchParams.delete("page");
         return url.href;
     };

@@ -1,3 +1,5 @@
+import random
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -71,6 +73,53 @@ class Sport(models.Model):
 
     def __str__(self) -> str:
         return self.name_ru or self.name
+
+
+class PredictionCoverImage(models.Model):
+    class CoverType(models.TextChoices):
+        SPORT = "sport", "Для спорта"
+        EXPRESS = "express", "Для экспресса"
+
+    cover_type = models.CharField(
+        "Тип обложки",
+        max_length=16,
+        choices=CoverType.choices,
+        default=CoverType.SPORT,
+        db_index=True,
+    )
+    sport = models.ForeignKey(
+        Sport,
+        on_delete=models.CASCADE,
+        related_name="prediction_cover_images",
+        verbose_name="Спорт",
+        null=True,
+        blank=True,
+    )
+    image = models.ImageField("Изображение", upload_to="prediction_covers/")
+    title = models.CharField("Название", max_length=120, blank=True)
+    is_active = models.BooleanField("Активно", default=True, db_index=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Обложка прогноза"
+        verbose_name_plural = "Обложки прогнозов"
+        ordering = ["cover_type", "sport__name_ru", "sport__name", "-created_at"]
+        indexes = [
+            models.Index(fields=["cover_type", "sport", "is_active"]),
+        ]
+
+    def clean(self) -> None:
+        if self.cover_type == self.CoverType.SPORT and not self.sport_id:
+            raise ValidationError("Для спортивной обложки нужно выбрать спорт.")
+        if self.cover_type == self.CoverType.EXPRESS and self.sport_id:
+            raise ValidationError("Для экспресс-обложки спорт не выбирается.")
+
+    def __str__(self) -> str:
+        if self.title:
+            return self.title
+        if self.cover_type == self.CoverType.EXPRESS:
+            return "Обложка экспресса"
+        return f"Обложка: {self.sport}"
 
 
 class Venue(models.Model):
@@ -502,6 +551,14 @@ class PredictionCoupon(models.Model):
         default=Audience.FREE,
         db_index=True,
     )
+    cover_image = models.ForeignKey(
+        PredictionCoverImage,
+        on_delete=models.SET_NULL,
+        related_name="prediction_coupons",
+        verbose_name="Обложка",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
@@ -536,6 +593,42 @@ class PredictionCoupon(models.Model):
             type(self).objects.filter(pk=self.pk).update(coupon_type=coupon_type)
             self.coupon_type = coupon_type
         return coupon_type
+
+    def assign_cover_image(self, *, save: bool = True) -> PredictionCoverImage | None:
+        if self.cover_image_id:
+            return self.cover_image
+
+        predictions = list(
+            self.predictions.select_related("match__sport").order_by("id")
+        )
+        if not predictions:
+            return None
+
+        if len(predictions) > 1 or self.coupon_type == self.CouponType.EXPRESS:
+            queryset = PredictionCoverImage.objects.filter(
+                cover_type=PredictionCoverImage.CoverType.EXPRESS,
+                is_active=True,
+            )
+        else:
+            sport_id = predictions[0].match.sport_id
+            if not sport_id:
+                return None
+            queryset = PredictionCoverImage.objects.filter(
+                cover_type=PredictionCoverImage.CoverType.SPORT,
+                sport_id=sport_id,
+                is_active=True,
+            )
+
+        cover_ids = list(queryset.values_list("id", flat=True))
+        if not cover_ids:
+            return None
+
+        self.cover_image_id = random.choice(cover_ids)
+        if save:
+            type(self).objects.filter(pk=self.pk, cover_image__isnull=True).update(
+                cover_image_id=self.cover_image_id
+            )
+        return self.cover_image
 
     def __str__(self) -> str:
         return f"Прогноз #{self.pk or 'new'}"

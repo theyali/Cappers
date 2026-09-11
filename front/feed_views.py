@@ -8,7 +8,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystFollow, AnalystPaidSubscription
 from cabinet.paid_predictions import active_paid_subscription_analyst_ids
-from game.models import PredictionCoupon
+from game.models import PredictionCoupon, Sport
 
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
@@ -32,9 +32,69 @@ def _feed_url(request, params) -> str:
     return f"{request.path}?{query}" if query else request.path
 
 
-def _apply_feed_filters(queryset, *, selected_capper, only_live, only_today):
+def _sport_from_filter(value: str) -> Sport | None:
+    if not value:
+        return None
+    queryset = Sport.objects.all()
+    if value.isdigit():
+        return queryset.filter(pk=int(value)).first()
+    return queryset.filter(code__iexact=value).first()
+
+
+def _feed_sport_url(request, sport: Sport | None) -> str:
+    params = request.GET.copy()
+    params.pop("page", None)
+    if sport is None:
+        params.pop("sport", None)
+    else:
+        params["sport"] = sport.code
+    return _feed_url(request, params)
+
+
+def _feed_sport_tabs(request, queryset, paid_queryset, active_sport: Sport | None):
+    source = queryset | paid_queryset
+    rows = list(
+        source.exclude(predictions__match__sport_id__isnull=True)
+        .values(
+            "predictions__match__sport_id",
+            "predictions__match__sport__code",
+            "predictions__match__sport__name_ru",
+            "predictions__match__sport__name",
+        )
+        .annotate(count=Count("id", distinct=True))
+        .order_by("predictions__match__sport__name_ru", "predictions__match__sport__name")
+    )
+    tabs = [
+        {
+            "code": "",
+            "label": "Все",
+            "href": _feed_sport_url(request, None),
+            "active": active_sport is None,
+        }
+    ]
+    for row in rows:
+        sport = Sport(
+            id=row["predictions__match__sport_id"],
+            code=row["predictions__match__sport__code"],
+            name=row["predictions__match__sport__name"] or "",
+            name_ru=row["predictions__match__sport__name_ru"] or "",
+        )
+        tabs.append(
+            {
+                "code": sport.code,
+                "label": sport.name_ru or sport.name or sport.code,
+                "href": _feed_sport_url(request, sport),
+                "active": bool(active_sport and active_sport.pk == sport.pk),
+            }
+        )
+    return tabs
+
+
+def _apply_feed_filters(queryset, *, selected_capper, selected_sport, only_live, only_today):
     if selected_capper:
         queryset = queryset.filter(author__username=selected_capper)
+    if selected_sport:
+        queryset = queryset.filter(predictions__match__sport=selected_sport)
     if only_live:
         queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
@@ -103,24 +163,38 @@ def following_feed(request):
     if selected_capper and selected_capper not in followed_usernames | paid_usernames:
         selected_capper = ""
 
+    selected_sport = _sport_from_filter(request.GET.get("sport", "").strip())
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
 
-    queryset = _apply_feed_filters(
+    sport_tabs_queryset = _apply_feed_filters(
         _published_queryset().filter(author_id__in=following_ids),
         selected_capper=selected_capper,
+        selected_sport=None,
         only_live=only_live,
         only_today=only_today,
     )
-    paid_queryset = _apply_feed_filters(
+    sport_tabs_paid_queryset = _apply_feed_filters(
         _published_queryset(include_paid=True).filter(
             audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_analyst_ids,
         ),
         selected_capper=selected_capper,
+        selected_sport=None,
         only_live=only_live,
         only_today=only_today,
     )
+    feed_sport_tabs = _feed_sport_tabs(
+        request,
+        sport_tabs_queryset,
+        sport_tabs_paid_queryset,
+        selected_sport,
+    )
+    queryset = sport_tabs_queryset
+    paid_queryset = sport_tabs_paid_queryset
+    if selected_sport:
+        queryset = queryset.filter(predictions__match__sport=selected_sport).distinct()
+        paid_queryset = paid_queryset.filter(predictions__match__sport=selected_sport).distinct()
 
     count_keys = ("total", "pending", "win", "lose", "refund")
     free_counts = _feed_counts(queryset)
@@ -235,6 +309,7 @@ def following_feed(request):
     active_filter_count = sum(
         [
             bool(selected_capper),
+            bool(selected_sport),
             only_live,
             only_today,
             active_status != "all",
@@ -257,6 +332,7 @@ def following_feed(request):
             "paid_upgrade_offers_count": len(paid_upgrade_follows),
             "feed_total_count": paginator.count + paid_predictions_count,
             "feed_predictions_count": paginator.count,
+            "feed_sport_tabs": feed_sport_tabs,
             "status_tabs": _status_tabs(request, counts, active_status),
             "active_status": active_status,
             "active_sort": active_sort,

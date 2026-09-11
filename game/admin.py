@@ -1,6 +1,29 @@
 from django.contrib import admin
 
-from game.models import Country, League, LeagueSeason, Match, MatchOdds, Prediction, PredictionCoupon, Sport, Team, Venue
+from game.models import (
+    Country,
+    League,
+    LeagueSeason,
+    Match,
+    MatchOdds,
+    Prediction,
+    PredictionCoupon,
+    PredictionCoverImage,
+    Sport,
+    Team,
+    Venue,
+)
+
+
+class PredictionCoverImageInline(admin.TabularInline):
+    model = PredictionCoverImage
+    extra = 1
+    fields = ("image", "title", "is_active")
+    verbose_name = "Обложка прогноза"
+    verbose_name_plural = "Обложки прогнозов"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(cover_type=PredictionCoverImage.CoverType.SPORT)
 
 
 @admin.register(Sport)
@@ -8,6 +31,17 @@ class SportAdmin(admin.ModelAdmin):
     list_display = ("name_ru", "name", "code", "external_id", "provider")
     search_fields = ("name", "name_ru", "code", "=external_id")
     list_filter = ("provider",)
+    inlines = (PredictionCoverImageInline,)
+
+
+@admin.register(PredictionCoverImage)
+class PredictionCoverImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "cover_type", "sport", "title", "is_active", "created_at")
+    list_filter = ("cover_type", "sport", "is_active", "created_at")
+    search_fields = ("title", "sport__name", "sport__name_ru", "sport__code")
+    autocomplete_fields = ("sport",)
+    readonly_fields = ("created_at",)
+    fields = ("cover_type", "sport", "image", "title", "is_active", "created_at")
 
 
 @admin.register(Country)
@@ -110,6 +144,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "published_status",
         "state_status",
         "audience",
+        "cover_image",
         "total_stake",
         "possible_payout",
         "published_at",
@@ -124,6 +159,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "settled_at",
     )
     search_fields = ("author__username",)
+    autocomplete_fields = ("cover_image",)
     readonly_fields = ("coupon_type",)
     fields = (
         "author",
@@ -132,6 +168,7 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "published_status",
         "state_status",
         "audience",
+        "cover_image",
         "total_stake",
         "possible_payout",
         "published_at",

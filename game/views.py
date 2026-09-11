@@ -289,6 +289,9 @@ def create_coupon(request):
                 for item in normalized_items
             ]
         )
+        coupon.sync_coupon_type()
+        if not autosave:
+            coupon.assign_cover_image()
         if not autosave:
             copy_published_coupon(coupon)
 

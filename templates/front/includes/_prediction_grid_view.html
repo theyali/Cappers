@@ -1,7 +1,11 @@
 {% if page_obj.object_list %}
 <div class="predictions-grid" data-predictions-grid{% if favorites_view %} data-favorites-grid{% endif %}>
     {% for prediction in page_obj.object_list %}
-        {% include "front/_prediction_card.html" %}
+        {% if feed_card_view %}
+            {% include "front/includes/_feed_prediction_card.html" %}
+        {% else %}
+            {% include "front/_prediction_card.html" %}
+        {% endif %}
     {% endfor %}
 </div>
 {% else %}

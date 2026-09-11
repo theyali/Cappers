@@ -1970,6 +1970,7 @@ def _create_coupon(
         for match, pick in items
     ]
     predictions = list(Prediction.objects.bulk_create(predictions))
+    coupon.assign_cover_image()
     return coupon, predictions, True
 
 

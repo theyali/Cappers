@@ -29,7 +29,7 @@
     {% else %}
     <div class="predictions-grid paid-feed-grid">
         {% for prediction in paid_predictions %}
-            {% include "front/_prediction_card.html" %}
+            {% include "front/includes/_feed_prediction_card.html" %}
         {% endfor %}
     </div>
     {% endif %}

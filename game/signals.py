@@ -10,6 +10,14 @@ def _sync_coupon_type(coupon_id: int | None) -> None:
     coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
     if coupon is not None:
         coupon.sync_coupon_type()
+        if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
+            coupon.assign_cover_image()
+
+
+@receiver(post_save, sender=PredictionCoupon)
+def assign_cover_after_coupon_publish(sender, instance: PredictionCoupon, **kwargs) -> None:
+    if instance.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
+        instance.assign_cover_image()
 
 
 @receiver(post_save, sender=Prediction)
