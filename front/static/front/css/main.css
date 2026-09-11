@@ -34995,33 +34995,163 @@ body.wiki-video-player-open {
 
 @media (max-width: 760px) {
     .feed-prediction-cover-status,
+.feed-prediction-cover-confidence {
+    position: absolute;
+    top: 18px;
+    z-index: 4;
+}
+
+.feed-prediction-cover-status {
+    left: 18px;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 14px;
+    color: var(--yellow);
+    background: var(--ink);
+}
+
+.feed-prediction-cover-status svg {
+    width: 25px;
+    height: 25px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.feed-prediction-cover-status.is-win {
+    color: #fff;
+    background: var(--green);
+}
+
+.feed-prediction-cover-status.is-win .feed-prediction-status-icon-bg {
+    fill: #4f972b;
+    stroke: none;
+}
+
+.feed-prediction-cover-status.is-win .feed-prediction-status-icon-mark {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.3;
+}
+
+.feed-prediction-cover-status.is-lose {
+    color: #fff;
+    background: var(--danger);
+}
+
+.feed-prediction-cover-status.is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
+.feed-prediction-cover-confidence {
+    right: 18px;
+    width: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    color: #fff;
+    background: transparent;
+    text-align: center;
+}
+
+.feed-prediction-confidence-ring {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #101114;
+}
+
+.feed-prediction-confidence-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+    transform: rotate(-90deg);
+}
+
+.feed-prediction-confidence-track,
+.feed-prediction-confidence-progress {
+    fill: none;
+    stroke-width: 5;
+}
+
+.feed-prediction-confidence-track {
+    stroke: #2b3036;
+}
+
+.feed-prediction-confidence-progress {
+    stroke: #1595ff;
+    stroke-linecap: butt;
+}
+
+.feed-prediction-cover-confidence strong {
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.feed-prediction-cover-confidence > span:last-child {
+    color: rgba(255, 255, 255, .58);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+@media (max-width: 760px) {
+    .feed-prediction-cover-status,
     .feed-prediction-cover-confidence {
         top: 12px;
     }
 
     .feed-prediction-cover-status {
         left: 12px;
-        min-height: 34px;
-        padding: 0 10px;
-        font-size: 11px;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
     }
 
     .feed-prediction-cover-status svg {
-        width: 16px;
-        height: 16px;
-        flex-basis: 16px;
+        width: 22px;
+        height: 22px;
     }
 
     .feed-prediction-cover-confidence {
         right: 12px;
-        width: 64px;
+        width: 86px;
+        gap: 5px;
+    }
+
+    .feed-prediction-confidence-ring {
+        width: 72px;
+        height: 72px;
+    }
+
+    .feed-prediction-confidence-track,
+    .feed-prediction-confidence-progress {
+        stroke-width: 4.5;
     }
 
     .feed-prediction-cover-confidence strong {
-        font-size: 17px;
+        font-size: 18px;
     }
 
-    .feed-prediction-cover-confidence span {
-        font-size: 8px;
+    .feed-prediction-cover-confidence > span:last-child {
+        font-size: 9px;
     }
 }
