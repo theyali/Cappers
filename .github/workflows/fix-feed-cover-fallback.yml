@@ -1,0 +1,46 @@
+name: Fix feed cover fallback
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fix-feed-cover-fallback.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply fallback background only without cover image
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('front/static/front/css/main.css')
+          css = path.read_text()
+          rule = '''
+
+/* Keep the generated fallback background only when the prediction has no cover image. */
+.prediction-card.feed-prediction-card .feed-prediction-cover-image + .feed-prediction-cover-fallback {
+    background: transparent;
+}
+'''
+          if '.feed-prediction-cover-image + .feed-prediction-cover-fallback' not in css:
+              path.write_text(css.rstrip() + rule + '\n')
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "Ali Hajiyev"
+          git config user.email "83508265+theyali@users.noreply.github.com"
+          git add front/static/front/css/main.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Show feed fallback background only without cover"
+          git push origin main
