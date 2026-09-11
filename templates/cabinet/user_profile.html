@@ -6,7 +6,7 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-{% with left_adv_banners=adv_banners|slice:":1" right_adv_banners=adv_banners|slice:"1:2" %}
+{% with left_adv_banners=adv_banners|slice:":1" right_adv_banners=adv_banners|slice:"1:" %}
 <section class="predictions-page predictions-index-page predictions-scroll-page container" aria-label="Профиль пользователя">
     <div class="predictions-layout">
         <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Реклама слева">
@@ -190,6 +190,9 @@
         </div>
 
         <aside class="bookmakers-sidebar" aria-label="Реклама справа">
+            {% for promo_banner in promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
             {% include "pages/_adv_banners.html" with adv_banners=right_adv_banners placement="sidebar" only %}
         </aside>
     </div>
