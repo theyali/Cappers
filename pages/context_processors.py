@@ -190,7 +190,11 @@ def page_seo(request):
         except (OperationalError, ProgrammingError):
             adv_banners = []
 
-    if route_name in {"front:prediction_detail", "front:expert_profile"}:
+    if route_name in {
+        "front:prediction_detail",
+        "front:expert_profile",
+        "cabinet:user_profile",
+    }:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
     promo_banners = page_promo_banners(

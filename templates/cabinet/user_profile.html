@@ -6,93 +6,193 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="user-public-page">
-    <a class="user-public-back" href="{% url 'front:cappers_stats' %}">← Назад</a>
+{% with left_adv_banners=adv_banners|slice:":1" right_adv_banners=adv_banners|slice:"1:2" %}
+<section class="predictions-page predictions-index-page predictions-scroll-page container" aria-label="Профиль пользователя">
+    <div class="predictions-layout">
+        <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Реклама слева">
+            {% include "pages/_adv_banners.html" with adv_banners=left_adv_banners placement="sidebar" only %}
+        </aside>
 
-    <section class="user-public-hero" aria-label="Профиль пользователя">
-        <div class="user-public-identity">
-            <div class="user-public-avatar">
-                {% if profile_user.avatar %}
-                    <img src="{{ profile_user.avatar.url }}" alt="Аватар {{ display_name }}">
-                {% else %}
-                    <span>{{ initials }}</span>
-                {% endif %}
-            </div>
-            <div class="user-public-title">
-                <span class="user-public-role">Пользователь</span>
-                <h1>{{ display_name }}</h1>
-                <p>@{{ profile_user.username }}</p>
-                {% if profile_presence %}
-                <span class="public-presence-status{% if profile_presence.is_online %} is-online{% endif %}">
-                    <span class="public-presence-dot" aria-hidden="true"></span>
-                    <span>{{ profile_presence.label }}</span>
-                </span>
-                {% endif %}
-                <small>На платформе с {{ profile_user.date_joined|date:"d.m.Y" }}</small>
-            </div>
-        </div>
-        {% if is_self %}
-            <a class="user-public-action" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
-        {% endif %}
-    </section>
+        <div class="predictions-content">
+            <section class="expert-public-page" aria-label="Публичный профиль пользователя">
+                <section class="expert-public-hero is-bg-1">
+                    <div class="expert-public-main-stack">
+                        <div class="expert-public-main">
+                            <span class="expert-public-avatar" data-skeleton-image>
+                                {% if profile_user.avatar %}
+                                    <img src="{{ profile_user.avatar.url }}" width="128" height="128" alt="Аватар {{ display_name }}">
+                                {% else %}
+                                    {{ initials }}
+                                {% endif %}
+                            </span>
 
-    <section class="user-public-stats" aria-label="Активность пользователя">
-        <article><span>Матчи</span><strong>{{ match_watches_count }}</strong><small>в отслеживании</small></article>
-        <article><span>Сохранено</span><strong>{{ favorites_count }}</strong><small>прогнозов</small></article>
-        <article><span>Лайков</span><strong>{{ likes_count }}</strong><small>прогнозам</small></article>
-        <article><span>Подписки</span><strong>{{ following_count }}</strong><small>на капперов</small></article>
-        <article><span>Хочу прогноз</span><strong>{{ prediction_requests_count }}</strong><small>запросов</small></article>
-    </section>
-
-    <div class="user-public-grid">
-        <section class="user-public-card">
-            <div class="user-public-section-head">
-                <div>
-                    <p class="eyebrow">Активность</p>
-                    <h2>Последние действия</h2>
-                </div>
-            </div>
-            {% if recent_activity %}
-                <div class="user-public-activity">
-                    {% for item in recent_activity %}
-                        <a class="user-public-activity-row" href="{{ item.url }}">
-                            <span class="user-public-activity-kind">{{ item.kind }}</span>
-                            <div>
-                                <strong>{{ item.title }}</strong>
-                                <span>{{ item.description }}</span>
+                            <div class="expert-public-copy">
+                                <p class="expert-public-kicker">Пользователь КапперХаб</p>
+                                <div class="expert-public-name-row">
+                                    <h1>{{ display_name }}</h1>
+                                </div>
+                                <div class="expert-public-meta">
+                                    <span class="expert-public-username">@{{ profile_user.username }}</span>
+                                    <span class="expert-public-since">На КапперХаб с {{ profile_user.date_joined|date:"Y" }} года</span>
+                                </div>
+                                {% if profile_presence %}
+                                <span class="public-presence-status{% if profile_presence.is_online %} is-online{% endif %}">
+                                    <span class="public-presence-dot" aria-hidden="true"></span>
+                                    <span>{{ profile_presence.label }}</span>
+                                </span>
+                                {% endif %}
                             </div>
-                            <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"d.m.Y H:i" }}</time>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="user-public-empty">Публичной активности пока нет.</div>
-            {% endif %}
-        </section>
+                        </div>
 
-        <aside class="user-public-card user-public-achievements">
-            <div class="user-public-section-head">
-                <div>
-                    <p class="eyebrow">Достижения</p>
-                    <h2>{{ achievement_unlocked_count }}/{{ achievement_total }}</h2>
-                </div>
-            </div>
-            {% if unlocked_achievements %}
-                <div class="user-public-badges">
-                    {% for achievement in unlocked_achievements %}
-                        <article class="user-public-badge" data-achievement="{{ achievement.key }}">
-                            <img src="{% static achievement.icon %}" alt="">
-                            <div>
-                                <strong>{{ achievement.label }}</strong>
-                                <span>{{ achievement.description }}</span>
+                        <div class="expert-public-tags" aria-label="Тип профиля">
+                            <span>Пользователь</span>
+                            <span>Участник сообщества</span>
+                        </div>
+                    </div>
+
+                    <div class="expert-public-side">
+                        <p class="expert-public-quote">Публичный профиль пользователя</p>
+                        {% if is_self %}
+                        <div class="expert-public-actions">
+                            <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
+                        </div>
+                        {% endif %}
+                        <div class="expert-public-hero-followers">
+                            <strong>{{ achievement_unlocked_count }}/{{ achievement_total }}</strong>
+                            <span>достижений</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="expert-public-stats expert-public-stats-compact" aria-label="Активность пользователя">
+                    <article class="expert-public-stat-card is-followers">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"></path><path d="M8 3v4M16 3v4M4 10h16"></path></svg>
+                        </span>
+                        <div>
+                            <span>Матчи</span>
+                            <strong>{{ match_watches_count }}</strong>
+                            <small>в отслеживании</small>
+                        </div>
+                    </article>
+
+                    <article class="expert-public-stat-card is-predictions">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-6-4-6 4V4Z"></path></svg>
+                        </span>
+                        <div>
+                            <span>Сохранено</span>
+                            <strong>{{ favorites_count }}</strong>
+                            <small>прогнозов</small>
+                        </div>
+                    </article>
+
+                    <article class="expert-public-stat-card is-winrate">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M7 10v10H4V10h3Zm3 10V9l4-6 1 1-1 5h5a2 2 0 0 1 2 2l-2 7a3 3 0 0 1-3 2h-6Z"></path></svg>
+                        </span>
+                        <div>
+                            <span>Лайков</span>
+                            <strong>{{ likes_count }}</strong>
+                            <small>прогнозам</small>
+                        </div>
+                    </article>
+
+                    <article class="expert-public-stat-card is-avg">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M16 11h6"></path></svg>
+                        </span>
+                        <div>
+                            <span>Подписки</span>
+                            <strong>{{ following_count }}</strong>
+                            <small>на капперов</small>
+                        </div>
+                    </article>
+
+                    <article class="expert-public-stat-card is-roi">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4L16.5 3.5Z"></path></svg>
+                        </span>
+                        <div>
+                            <span>Хочу прогноз</span>
+                            <strong>{{ prediction_requests_count }}</strong>
+                            <small>запросов</small>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="expert-public-analytics" aria-label="Активность и достижения пользователя">
+                    <div class="expert-public-section-head">
+                        <div>
+                            <p class="expert-public-kicker">Профиль пользователя</p>
+                            <h2>Активность и достижения</h2>
+                        </div>
+                    </div>
+
+                    <div class="expert-public-analytics-grid">
+                        <article class="expert-public-chart-card">
+                            <div class="expert-public-chart-head">
+                                <div>
+                                    <span>Активность</span>
+                                    <h3>Последние действия</h3>
+                                </div>
+                                <span>{{ recent_activity|length }}</span>
                             </div>
+
+                            {% if recent_activity %}
+                            <div class="user-public-activity">
+                                {% for item in recent_activity %}
+                                <a class="user-public-activity-row" href="{{ item.url }}">
+                                    <span class="user-public-activity-kind">{{ item.kind }}</span>
+                                    <div>
+                                        <strong>{{ item.title }}</strong>
+                                        <span>{{ item.description }}</span>
+                                    </div>
+                                    <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"d.m.Y H:i" }}</time>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="expert-public-muted">Публичной активности пока нет.</p>
+                            {% endif %}
                         </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="user-public-empty">Первые ачивки появятся после 5 лайков или сохранений.</div>
-            {% endif %}
+
+                        <article class="expert-public-chart-card">
+                            <div class="expert-public-chart-head">
+                                <div>
+                                    <span>Достижения</span>
+                                    <h3>Открытые награды</h3>
+                                </div>
+                                <span>{{ achievement_unlocked_count }}/{{ achievement_total }}</span>
+                            </div>
+
+                            {% if unlocked_achievements %}
+                            <div class="user-public-badges">
+                                {% for achievement in unlocked_achievements %}
+                                <article class="user-public-badge" data-achievement="{{ achievement.key }}">
+                                    <span data-skeleton-image>
+                                        <img src="{% static achievement.icon %}" width="40" height="40" alt="">
+                                    </span>
+                                    <div>
+                                        <strong>{{ achievement.label }}</strong>
+                                        <span>{{ achievement.description }}</span>
+                                    </div>
+                                </article>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="expert-public-muted">Первые достижения появятся после активности на платформе.</p>
+                            {% endif %}
+                        </article>
+                    </div>
+                </section>
+            </section>
+        </div>
+
+        <aside class="bookmakers-sidebar" aria-label="Реклама справа">
+            {% include "pages/_adv_banners.html" with adv_banners=right_adv_banners placement="sidebar" only %}
         </aside>
     </div>
 </section>
+{% endwith %}
 {% endblock %}
