@@ -29,7 +29,7 @@
                 <div class="following-stories-row" aria-label="Истории капперов">
                     <button class="following-story-card following-story-own" type="button">
                         <span class="following-story-avatar">
-                            <span class="following-story-plus" aria-hidden="true">+</span>
+                            <img src="{% static 'front/img/vip-users.png' %}" width="72" height="72" loading="lazy" alt="VIP капперы">
                         </span>
                     </button>
 
@@ -46,7 +46,7 @@
                             {% if forloop.first %}
                             <b>LIVE</b>
                             {% else %}
-                            <small aria-hidden="true"></small>
+                            <small class="capper-verified-badge prediction-verified" aria-hidden="true"></small>
                             {% endif %}
                         </span>
                         <span>{{ follow.feed_name }}</span>
