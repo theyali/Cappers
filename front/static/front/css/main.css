@@ -4060,21 +4060,12 @@ h2 {
 
 /* Legacy source: front/static/front/css/prediction-cards.css */
 .prediction-card.prediction-card-rich {
-    min-width: 0;
-    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
-    padding: 16px;
     border-radius: 18px;
-    background: var(--panel);
-    transition: transform .18s ease, background .18s ease;
 }
 
-.prediction-card.prediction-card-rich:hover {
-    transform: translateY(-2px);
-    background: #242426;
-}
 
 .prediction-card-head,
 .prediction-author-row,
