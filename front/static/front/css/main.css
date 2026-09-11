@@ -11134,10 +11134,7 @@ font-size: 14px;
     background: var(--yellow);
 }
 
-.match-status-prematch {
-    color: white;
-    background: var(--green);
-}
+
 
 .match-status-finished {
     color: rgba(255, 255, 255, .62);
@@ -34609,7 +34606,8 @@ body.wiki-video-player-open {
 .forecast-result.is-win,
 .public-coupon-status.is-win,
 .public-coupon-item-foot .is-win,
-.capper-live-status.is-win {
+.capper-live-status.is-win,
+.match-status-prematch {
     color: #fff;
     background: radial-gradient(circle,rgba(94, 167, 49, 1) 0%, rgba(81, 161, 32, 1) 50%, rgba(61, 138, 17, 1) 100%);
 }
