@@ -1,0 +1,362 @@
+name: Apply feed status and confidence
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-feed-status-confidence.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update feed prediction card markup and styles
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          template_path = Path('templates/front/includes/_feed_prediction_card.html')
+          css_path = Path('front/static/front/css/main.css')
+
+          template = template_path.read_text()
+          old_markup = '''        <span class="feed-prediction-cover-status is-{{ prediction.state_status }}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+              <span>Статус:
+                  <strong>
+                      {% if prediction.state_status == 'pending' %}Ожидает{% elif prediction.state_status == 'win' %}Выиграл{% elif prediction.state_status == 'lose' %}Проиграл{% elif prediction.state_status == 'refund' %}Возврат{% else %}{{ prediction.coupon.get_state_status_display }}{% endif %}
+                  </strong>
+              </span>
+          </span>
+
+          <span class="feed-prediction-cover-confidence" aria-label="Уверенность {{ prediction.coupon.confidence }} процентов">
+              <strong>{{ prediction.coupon.confidence }}%</strong>
+              <span>Уверенность</span>
+          </span>'''
+          new_markup = '''        <span class="feed-prediction-cover-status is-{{ prediction.state_status }}" aria-label="{{ prediction.coupon.get_state_status_display }}">
+              {% if prediction.state_status == 'pending' %}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="8.5"></circle>
+                      <path d="M12 7.5v5l3.2 1.8"></path>
+                  </svg>
+              {% elif prediction.state_status == 'win' %}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle class="feed-prediction-status-icon-bg" cx="12" cy="12" r="9"></circle>
+                      <path class="feed-prediction-status-icon-mark" d="M7.8 12.2 10.6 15l5.8-6.1"></path>
+                  </svg>
+              {% elif prediction.state_status == 'lose' %}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M8 8l8 8M16 8l-8 8"></path>
+                  </svg>
+              {% else %}
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M7.2 8.2A7 7 0 1 1 5 13"></path>
+                      <path d="M7.2 4.8v3.4H3.8"></path>
+                  </svg>
+              {% endif %}
+          </span>
+
+          <span class="feed-prediction-cover-confidence" aria-label="Уверенность {{ prediction.coupon.confidence }} процентов">
+              <span class="feed-prediction-confidence-ring">
+                  <svg viewBox="0 0 44 44" aria-hidden="true">
+                      <circle class="feed-prediction-confidence-track" cx="22" cy="22" r="18"></circle>
+                      <circle class="feed-prediction-confidence-progress" cx="22" cy="22" r="18" pathLength="100" stroke-dasharray="{{ prediction.coupon.confidence|default:0 }} 100"></circle>
+                  </svg>
+                  <strong>{{ prediction.coupon.confidence }}%</strong>
+              </span>
+              <span>Уверенность</span>
+          </span>'''
+          if old_markup not in template:
+              raise SystemExit('Expected feed status/confidence markup not found')
+          template_path.write_text(template.replace(old_markup, new_markup, 1))
+
+          css = css_path.read_text()
+          old_css = '''.feed-prediction-cover-status,
+.feed-prediction-cover-confidence {
+    position: absolute;
+    top: 18px;
+    z-index: 4;
+}
+
+.feed-prediction-cover-status {
+    left: 18px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    border-radius: 999px;
+    color: var(--yellow);
+    background: var(--ink);
+    font-size: 13px;
+    line-height: 1;
+}
+
+.feed-prediction-cover-status svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.feed-prediction-cover-status strong {
+    color: inherit;
+    font-weight: 700;
+}
+
+.feed-prediction-cover-status.is-win {
+    color: #fff;
+    background: var(--green);
+}
+
+.feed-prediction-cover-status.is-lose {
+    color: #fff;
+    background: var(--danger);
+}
+
+.feed-prediction-cover-status.is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
+.feed-prediction-cover-confidence {
+    right: 18px;
+    width: 78px;
+    aspect-ratio: 1;
+    display: grid;
+    place-content: center;
+    gap: 3px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--blue);
+    text-align: center;
+}
+
+.feed-prediction-cover-confidence strong {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.feed-prediction-cover-confidence span {
+    font-size: 9px;
+    line-height: 1.1;
+}
+
+@media (max-width: 760px) {
+    .feed-prediction-cover-status,
+    .feed-prediction-cover-confidence {
+        top: 12px;
+    }
+
+    .feed-prediction-cover-status {
+        left: 12px;
+        min-height: 34px;
+        padding: 0 10px;
+        font-size: 11px;
+    }
+
+    .feed-prediction-cover-status svg {
+        width: 16px;
+        height: 16px;
+        flex-basis: 16px;
+    }
+
+    .feed-prediction-cover-confidence {
+        right: 12px;
+        width: 64px;
+    }
+
+    .feed-prediction-cover-confidence strong {
+        font-size: 17px;
+    }
+
+    .feed-prediction-cover-confidence span {
+        font-size: 8px;
+    }
+}'''
+          new_css = '''.feed-prediction-cover-status,
+.feed-prediction-cover-confidence {
+    position: absolute;
+    top: 18px;
+    z-index: 4;
+}
+
+.feed-prediction-cover-status {
+    left: 18px;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 14px;
+    color: var(--yellow);
+    background: var(--ink);
+}
+
+.feed-prediction-cover-status svg {
+    width: 25px;
+    height: 25px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.feed-prediction-cover-status.is-win {
+    color: #fff;
+    background: var(--green);
+}
+
+.feed-prediction-cover-status.is-win .feed-prediction-status-icon-bg {
+    fill: #4f972b;
+    stroke: none;
+}
+
+.feed-prediction-cover-status.is-win .feed-prediction-status-icon-mark {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.3;
+}
+
+.feed-prediction-cover-status.is-lose {
+    color: #fff;
+    background: var(--danger);
+}
+
+.feed-prediction-cover-status.is-refund {
+    color: #fff;
+    background: var(--blue);
+}
+
+.feed-prediction-cover-confidence {
+    right: 18px;
+    width: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    color: #fff;
+    background: transparent;
+    text-align: center;
+}
+
+.feed-prediction-confidence-ring {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #101114;
+}
+
+.feed-prediction-confidence-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+    transform: rotate(-90deg);
+}
+
+.feed-prediction-confidence-track,
+.feed-prediction-confidence-progress {
+    fill: none;
+    stroke-width: 5;
+}
+
+.feed-prediction-confidence-track {
+    stroke: #2b3036;
+}
+
+.feed-prediction-confidence-progress {
+    stroke: #1595ff;
+    stroke-linecap: butt;
+}
+
+.feed-prediction-cover-confidence strong {
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.feed-prediction-cover-confidence > span:last-child {
+    color: rgba(255, 255, 255, .58);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+@media (max-width: 760px) {
+    .feed-prediction-cover-status,
+    .feed-prediction-cover-confidence {
+        top: 12px;
+    }
+
+    .feed-prediction-cover-status {
+        left: 12px;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+    }
+
+    .feed-prediction-cover-status svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .feed-prediction-cover-confidence {
+        right: 12px;
+        width: 86px;
+        gap: 5px;
+    }
+
+    .feed-prediction-confidence-ring {
+        width: 72px;
+        height: 72px;
+    }
+
+    .feed-prediction-confidence-track,
+    .feed-prediction-confidence-progress {
+        stroke-width: 4.5;
+    }
+
+    .feed-prediction-cover-confidence strong {
+        font-size: 18px;
+    }
+
+    .feed-prediction-cover-confidence > span:last-child {
+        font-size: 9px;
+    }
+}'''
+          if old_css not in css:
+              raise SystemExit('Expected feed status/confidence CSS not found')
+          css_path.write_text(css.replace(old_css, new_css, 1))
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "Ali Hajiyev"
+          git config user.email "83508265+theyali@users.noreply.github.com"
+          git add templates/front/includes/_feed_prediction_card.html front/static/front/css/main.css
+          git diff --cached --quiet && exit 0
+          git commit -m "Refine feed status icons and confidence ring"
+          git push origin main
