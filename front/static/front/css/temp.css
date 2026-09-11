@@ -1,0 +1,143 @@
+/* Feed prediction visual: league on top, teams at the bottom. */
+.prediction-card.feed-prediction-card .feed-prediction-cover {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    background: var(--panel);
+    outline: none;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover::after,
+.prediction-card.feed-prediction-card .feed-prediction-cover-fallback::before {
+    display: none;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.prediction-card.feed-prediction-card:hover .feed-prediction-cover-image img {
+    transform: none;
+    filter: none;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-fallback {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    background: transparent;
+    color: #fff;
+    text-align: center;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-center {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    gap: 8px;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-league {
+    width: clamp(52px, 18%, 72px);
+    height: clamp(52px, 18%, 72px);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--ink);
+    box-shadow: none;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-league img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-center > span:last-child {
+    max-width: min(82%, 260px);
+    overflow: hidden;
+    padding: 5px 10px;
+    color: #fff;
+    background: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-teams {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-team {
+    width: clamp(72px, 25%, 104px);
+    height: clamp(72px, 25%, 104px);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    margin-top: 0;
+    background: var(--ink);
+    box-shadow: none;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-home,
+.prediction-card.feed-prediction-card .feed-prediction-cover-team.is-away {
+    margin-top: 0;
+}
+
+.prediction-card.feed-prediction-card .feed-prediction-cover-team img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+}
+
+@media (max-width: 760px) {
+    .prediction-card.feed-prediction-card .feed-prediction-cover-fallback {
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .prediction-card.feed-prediction-card .feed-prediction-cover-center > span:last-child {
+        max-width: min(86%, 230px);
+        font-size: 12px;
+    }
+
+    .prediction-card.feed-prediction-card .feed-prediction-cover-team {
+        width: clamp(66px, 24%, 92px);
+        height: clamp(66px, 24%, 92px);
+    }
+}
