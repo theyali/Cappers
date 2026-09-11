@@ -6,21 +6,11 @@
     overflow: hidden;
     border: 0;
     border-radius: 26px;
-    background-color: rgba(7, 10, 15, .88);
-    background-image: url("../img/slider_bg.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-blend-mode: multiply;
+    background: #090b0f;
 }
 
 .home-layout .forecast-slider::before {
     display: none;
-}
-
-.home-layout .forecast-slider > * {
-    position: relative;
-    z-index: 1;
 }
 
 .home-layout .forecast-track {
@@ -38,7 +28,33 @@
     background: transparent;
 }
 
-/* Top expert bar */
+.home-layout .forecast-cover-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.home-layout .forecast-cover-background img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    opacity: .7;
+    filter: brightness(.31) saturate(.72) contrast(1.08);
+}
+
+.home-layout .forecast-slide > :not(.forecast-cover-background) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Верхняя строка эксперта. */
 .home-layout .forecast-topline {
     min-height: 86px;
     margin: 0;
@@ -129,23 +145,23 @@
     border: 0;
     border-radius: 13px;
     color: rgba(255, 255, 255, .84);
-    background: rgba(31, 31, 33, .86);
+    background: rgba(31, 31, 33, .92);
     font-size: 13px;
     font-weight: 650;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-/* Main match stage */
+/* Матч: затемнённые логотипы команд и центральная информация. */
 .home-layout .forecast-matchup {
     position: relative;
     height: 410px;
     margin: 6px -30px 0;
     padding: 0 34px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 190px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 210px minmax(0, 1fr);
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     overflow: hidden;
     border: 0;
     border-radius: 0;
@@ -169,7 +185,7 @@
 
 .home-layout .forecast-team-logo {
     position: absolute;
-    top: 24px;
+    top: 20px;
     width: min(29vw, 320px);
     height: min(29vw, 320px);
     display: grid;
@@ -182,8 +198,8 @@
     font-size: 120px;
     font-weight: 700;
     line-height: 1;
-    opacity: .34;
-    filter: brightness(.58) saturate(.72) contrast(1.08);
+    opacity: .38;
+    filter: brightness(.56) saturate(.65) contrast(1.08);
 }
 
 .home-layout .forecast-team-home .forecast-team-logo {
@@ -203,10 +219,10 @@
 .home-layout .forecast-team-copy {
     position: absolute;
     right: auto;
-    bottom: 24px;
+    bottom: 22px;
     left: 14px;
     z-index: 2;
-    max-width: 84%;
+    max-width: 86%;
     display: grid;
     gap: 7px;
     text-align: left;
@@ -235,24 +251,99 @@
     display: none;
 }
 
-.home-layout .forecast-vs {
+.home-layout .forecast-center {
     position: relative;
-    z-index: 3;
-    width: auto;
-    height: auto;
+    z-index: 4;
+    width: 210px;
     align-self: center;
     justify-self: center;
-    margin-top: -58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.home-layout .forecast-center-sport {
+    max-width: 100%;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .55);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: .22em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center-league {
+    max-width: 100%;
+    margin-top: 7px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .78);
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center .forecast-vs {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 42px 0 38px;
     color: rgba(255, 255, 255, .22);
     background: transparent;
     font-family: var(--font-heading);
-    font-size: clamp(58px, 6vw, 84px);
+    font-size: clamp(58px, 6vw, 82px);
     font-weight: 400;
-    line-height: .9;
+    line-height: .82;
     letter-spacing: -.05em;
 }
 
-/* Reuse the existing SSR match details and place them around VS. */
+.home-layout .forecast-center-date {
+    color: rgba(255, 255, 255, .58);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.home-layout .forecast-center-time {
+    margin-top: 7px;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.home-layout .forecast-center-status {
+    min-height: 28px;
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: rgba(255, 255, 255, .6);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center-status.is-win {
+    color: #45d483;
+}
+
+.home-layout .forecast-center-status.is-lose {
+    color: #ff6262;
+}
+
+.home-layout .forecast-center-status.is-refund {
+    color: var(--yellow);
+}
+
+/* Старые метаданные остаются в SSR для совместимости, но визуально уже перенесены в центр. */
 .home-layout .forecast-body {
     position: static;
     margin: 0;
@@ -274,92 +365,12 @@
 }
 
 .home-layout .forecast-match-copy > .forecast-label,
-.home-layout .forecast-match-copy > h2 {
-    display: none;
-}
-
+.home-layout .forecast-match-copy > h2,
 .home-layout .forecast-match-details {
-    position: static;
-    margin: 0;
-    padding: 0;
-}
-
-.home-layout .forecast-match-details > .forecast-match-detail,
-.home-layout .forecast-match-details > .forecast-result {
-    z-index: 6;
-}
-
-.home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
-    position: absolute;
-    top: 135px;
-    left: 50%;
-    max-width: 260px;
-    display: block;
-    overflow: hidden;
-    color: rgba(255, 255, 255, .66);
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: .16em;
-    text-align: center;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
-    transform: translateX(-50%);
-}
-
-.home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) svg {
     display: none;
 }
 
-.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
-    position: absolute;
-    top: 356px;
-    left: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #fff;
-    font-size: 22px;
-    line-height: 1;
-    white-space: nowrap;
-    transform: translateX(-50%);
-}
-
-.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) svg {
-    display: none;
-}
-
-.home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) strong {
-    font-weight: 700;
-}
-
-.home-layout .forecast-match-details > .forecast-result {
-    position: absolute;
-    top: 392px;
-    left: 50%;
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 0;
-    color: rgba(255, 255, 255, .58);
-    background: transparent;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
-    transform: translateX(-50%);
-}
-
-.home-layout .forecast-match-details > .forecast-result svg {
-    width: 18px;
-    height: 18px;
-}
-
-/* Lower left statistics card */
+/* Нижняя левая карточка. */
 .home-layout .forecast-note {
     width: 100%;
     min-height: 152px;
@@ -372,7 +383,7 @@
     border: 0;
     border-radius: 18px;
     color: rgba(255, 255, 255, .72);
-    background: rgba(31, 31, 33, .92);
+    background: rgba(31, 31, 33, .94);
     font-size: 14px;
     line-height: 1.55;
 }
@@ -390,7 +401,7 @@
     line-height: 1;
 }
 
-/* Yellow prediction card + blue CTA */
+/* Жёлтая карточка прогноза и синяя CTA. */
 .home-layout .forecast-pick-column {
     min-width: 0;
     display: grid;
@@ -491,11 +502,11 @@
 }
 
 .home-layout .forecast-open-match:hover {
-    background: #0b56fa;
+    background: var(--blue);
     transform: none;
 }
 
-/* Footer like the reference: dots / progress / counter. */
+/* Нижняя навигация слайдера. */
 .home-layout .slider-footer {
     min-height: 76px;
     padding: 0 30px 18px;
@@ -625,7 +636,7 @@
         margin-right: -20px;
         margin-left: -20px;
         padding: 0 22px;
-        grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr);
     }
 
     .home-layout .forecast-team-logo {
@@ -642,23 +653,26 @@
         font-size: 24px;
     }
 
-    .home-layout .forecast-vs {
-        margin-top: -42px;
-        font-size: 56px;
+    .home-layout .forecast-center {
+        width: 150px;
     }
 
-    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
-        top: 116px;
+    .home-layout .forecast-center .forecast-vs {
+        margin: 30px 0 25px;
+        font-size: 54px;
     }
 
-    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
-        top: 305px;
-        font-size: 18px;
+    .home-layout .forecast-center-league {
+        font-size: 11px;
     }
 
-    .home-layout .forecast-match-details > .forecast-result {
-        top: 337px;
-        font-size: 12px;
+    .home-layout .forecast-center-time {
+        font-size: 26px;
+    }
+
+    .home-layout .forecast-center-status {
+        margin-top: 13px;
+        font-size: 11px;
     }
 
     .home-layout .forecast-note {
@@ -741,7 +755,7 @@
         height: 300px;
         margin: 0 -14px;
         padding: 0 12px;
-        grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr);
     }
 
     .home-layout .forecast-team-logo {
@@ -769,25 +783,45 @@
         -webkit-line-clamp: 2;
     }
 
-    .home-layout .forecast-vs {
-        margin-top: -50px;
-        font-size: 38px;
+    .home-layout .forecast-center {
+        width: 92px;
     }
 
-    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(2) {
-        top: 92px;
-        max-width: 150px;
+    .home-layout .forecast-center-sport {
+        font-size: 8px;
+        letter-spacing: .13em;
+    }
+
+    .home-layout .forecast-center-league {
+        max-width: 92px;
+        margin-top: 4px;
         font-size: 9px;
     }
 
-    .home-layout .forecast-match-details > .forecast-match-detail:nth-child(1) {
-        top: 261px;
-        font-size: 14px;
+    .home-layout .forecast-center .forecast-vs {
+        margin: 24px 0 21px;
+        font-size: 38px;
     }
 
-    .home-layout .forecast-match-details > .forecast-result {
-        top: 288px;
-        font-size: 10px;
+    .home-layout .forecast-center-date {
+        font-size: 9px;
+    }
+
+    .home-layout .forecast-center-time {
+        margin-top: 4px;
+        font-size: 18px;
+    }
+
+    .home-layout .forecast-center-status {
+        min-height: 22px;
+        margin-top: 9px;
+        gap: 4px;
+        font-size: 9px;
+    }
+
+    .home-layout .forecast-center-status svg {
+        width: 14px;
+        height: 14px;
     }
 
     .home-layout .forecast-body {
