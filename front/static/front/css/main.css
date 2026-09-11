@@ -34612,3 +34612,298 @@ body.wiki-video-player-open {
 .slider-counter {
     font-size: 14px;
 }
+
+/* Temporary forecast slider redesign. Move these rules into main/mobile after approval. */
+
+
+
+.home-layout .forecast-track {
+    flex: 1;
+    min-height: 0;
+}
+
+
+.home-layout .forecast-cover-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.home-layout .forecast-cover-background img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    opacity: .7;
+    filter: brightness(.31) saturate(.72) contrast(1.08);
+}
+
+.home-layout .forecast-slide > :not(.forecast-cover-background) {
+    position: relative;
+    z-index: 1;
+}
+
+
+
+.home-layout .forecast-avatar {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 50%;
+    background: #262a30;
+}
+
+.home-layout .forecast-avatar > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+.home-layout .forecast-verified {
+    color: var(--blue);
+}
+
+.home-layout .forecast-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.home-layout .forecast-meta > span:first-child {
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center {
+    position: relative;
+    z-index: 4;
+    width: 210px;
+    align-self: center;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.home-layout .forecast-center-sport {
+    max-width: 100%;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .55);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: .22em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center-league {
+    max-width: 100%;
+    margin-top: 7px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .78);
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center .forecast-vs {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 42px 0 38px;
+    color: rgba(255, 255, 255, .22);
+    background: transparent;
+    font-family: var(--font-heading);
+    font-size: clamp(58px, 6vw, 82px);
+    font-weight: 400;
+    line-height: .82;
+    letter-spacing: -.05em;
+}
+
+.home-layout .forecast-center-date {
+    color: rgba(255, 255, 255, .58);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.home-layout .forecast-center-time {
+    margin-top: 7px;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.home-layout .forecast-center-status {
+    min-height: 28px;
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: rgba(255, 255, 255, .6);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.home-layout .forecast-center-status.is-win {
+    color: #45d483;
+}
+
+.home-layout .forecast-center-status.is-lose {
+    color: #ff6262;
+}
+
+.home-layout .forecast-center-status.is-refund {
+    color: var(--yellow);
+}
+
+
+.home-layout .forecast-match-copy {
+    position: static;
+    min-width: 0;
+    min-height: 152px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.home-layout .forecast-match-copy > .forecast-label,
+.home-layout .forecast-match-copy > h2,
+.home-layout .forecast-match-details {
+    display: none;
+}
+
+
+
+
+/* Жёлтая карточка прогноза и синяя CTA. */
+.home-layout .forecast-pick-column {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: minmax(92px, 1fr) 62px;
+    gap: 12px;
+}
+
+
+.home-layout .forecast-coefficient {
+    position: absolute;
+    top: 50%;
+    right: 24px;
+    display: grid;
+    gap: 4px;
+    text-align: right;
+    transform: translateY(-50%);
+}
+
+.home-layout .forecast-coefficient small {
+    color: rgba(19, 19, 19, .64);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+
+
+.home-layout .forecast-open-match {
+    min-height: 62px;
+    margin: 0;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border: 0;
+    border-radius: 16px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 15px;
+    font-weight: 700;
+    transform: none;
+}
+
+.home-layout .forecast-open-match > span {
+    flex: 1;
+    text-align: center;
+}
+
+.home-layout .forecast-open-match:hover {
+    background: var(--blue);
+    transform: none;
+}
+
+
+.home-layout .slider-dots {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.home-layout .slider-dot {
+    width: 10px;
+    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .18);
+}
+
+.home-layout .slider-dot.is-active {
+    width: 42px;
+    background: var(--yellow);
+}
+
+.home-layout .slider-progress {
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+}
+
+.home-layout .slider-progress span {
+    height: 100%;
+    background: var(--yellow);
+}
+
+.home-layout .slider-counter {
+    justify-self: end;
+    color: rgba(255, 255, 255, .38);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.home-layout .slider-counter b {
+    color: #fff;
+    font-weight: 700;
+}
