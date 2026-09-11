@@ -18,7 +18,7 @@ from game.models import (
 class PredictionCoverImageInline(admin.TabularInline):
     model = PredictionCoverImage
     extra = 1
-    fields = ("image", "title", "is_active")
+    fields = ("placement", "image", "title", "is_active")
     verbose_name = "Обложка прогноза"
     verbose_name_plural = "Обложки прогнозов"
 
@@ -36,12 +36,12 @@ class SportAdmin(admin.ModelAdmin):
 
 @admin.register(PredictionCoverImage)
 class PredictionCoverImageAdmin(admin.ModelAdmin):
-    list_display = ("id", "cover_type", "sport", "title", "is_active", "created_at")
-    list_filter = ("cover_type", "sport", "is_active", "created_at")
+    list_display = ("id", "placement", "cover_type", "sport", "title", "is_active", "created_at")
+    list_filter = ("placement", "cover_type", "sport", "is_active", "created_at")
     search_fields = ("title", "sport__name", "sport__name_ru", "sport__code")
     autocomplete_fields = ("sport",)
     readonly_fields = ("created_at",)
-    fields = ("cover_type", "sport", "image", "title", "is_active", "created_at")
+    fields = ("placement", "cover_type", "sport", "image", "title", "is_active", "created_at")
 
 
 @admin.register(Country)
