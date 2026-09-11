@@ -105,7 +105,7 @@
     </section>
     {% endif %}
 
-    {% if following %}
+    {% comment %} {% if following %}
     <section class="matches-table-filter-group" aria-labelledby="{{ filter_id_prefix }}-cappers-title">
         <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-cappers-title">
             <span>Капперы</span>
@@ -151,7 +151,7 @@
             {% endfor %}
         </nav>
     </section>
-    {% endif %}
+    {% endif %} {% endcomment %}
 
     <section class="matches-table-filter-group predictions-sidebar-form-group" aria-labelledby="{{ filter_id_prefix }}-details-title">
         <div class="matches-table-filter-title" id="{{ filter_id_prefix }}-details-title">
