@@ -20,21 +20,7 @@ jobs:
 
       - name: Apply fallback background only without cover image
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('front/static/front/css/main.css')
-          css = path.read_text()
-          rule = '''
-
-/* Keep the generated fallback background only when the prediction has no cover image. */
-.prediction-card.feed-prediction-card .feed-prediction-cover-image + .feed-prediction-cover-fallback {
-    background: transparent;
-}
-'''
-          if '.feed-prediction-cover-image + .feed-prediction-cover-fallback' not in css:
-              path.write_text(css.rstrip() + rule + '\n')
-          PY
+          python3 -c "from pathlib import Path; p=Path('front/static/front/css/main.css'); s=p.read_text(); rule='\n\n/* Feed fallback background is visible only when there is no cover image. */\n.prediction-card.feed-prediction-card .feed-prediction-cover-image + .feed-prediction-cover-fallback {\n    background: transparent;\n}\n'; p.write_text(s if '.feed-prediction-cover-image + .feed-prediction-cover-fallback' in s else s.rstrip()+rule+'\n')"
 
       - name: Commit changes
         run: |
