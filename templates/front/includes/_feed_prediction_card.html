@@ -40,6 +40,20 @@
                 </span>
             </span>
         </span>
+
+        <span class="feed-prediction-cover-status is-{{ prediction.state_status }}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+            <span>Статус:
+                <strong>
+                    {% if prediction.state_status == 'pending' %}Ожидает{% elif prediction.state_status == 'win' %}Выиграл{% elif prediction.state_status == 'lose' %}Проиграл{% elif prediction.state_status == 'refund' %}Возврат{% else %}{{ prediction.coupon.get_state_status_display }}{% endif %}
+                </strong>
+            </span>
+        </span>
+
+        <span class="feed-prediction-cover-confidence" aria-label="Уверенность {{ prediction.coupon.confidence }} процентов">
+            <strong>{{ prediction.coupon.confidence }}%</strong>
+            <span>Уверенность</span>
+        </span>
     </a>
 
     <div class="feed-prediction-main">
