@@ -41,17 +41,37 @@
             </span>
         </span>
 
-        <span class="feed-prediction-cover-status is-{{ prediction.state_status }}">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
-            <span>Статус:
-                <strong>
-                    {% if prediction.state_status == 'pending' %}Ожидает{% elif prediction.state_status == 'win' %}Выиграл{% elif prediction.state_status == 'lose' %}Проиграл{% elif prediction.state_status == 'refund' %}Возврат{% else %}{{ prediction.coupon.get_state_status_display }}{% endif %}
-                </strong>
-            </span>
+        <span class="feed-prediction-cover-status is-{{ prediction.state_status }}" aria-label="{{ prediction.coupon.get_state_status_display }}">
+            {% if prediction.state_status == 'pending' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8.5"></circle>
+                    <path d="M12 7.5v5l3.2 1.8"></path>
+                </svg>
+            {% elif prediction.state_status == 'win' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="feed-prediction-status-icon-bg" cx="12" cy="12" r="9"></circle>
+                    <path class="feed-prediction-status-icon-mark" d="M7.8 12.2 10.6 15l5.8-6.1"></path>
+                </svg>
+            {% elif prediction.state_status == 'lose' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 8l8 8M16 8l-8 8"></path>
+                </svg>
+            {% else %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7.2 8.2A7 7 0 1 1 5 13"></path>
+                    <path d="M7.2 4.8v3.4H3.8"></path>
+                </svg>
+            {% endif %}
         </span>
 
         <span class="feed-prediction-cover-confidence" aria-label="Уверенность {{ prediction.coupon.confidence }} процентов">
-            <strong>{{ prediction.coupon.confidence }}%</strong>
+            <span class="feed-prediction-confidence-ring">
+                <svg viewBox="0 0 44 44" aria-hidden="true">
+                    <circle class="feed-prediction-confidence-track" cx="22" cy="22" r="18"></circle>
+                    <circle class="feed-prediction-confidence-progress" cx="22" cy="22" r="18" pathLength="100" stroke-dasharray="{{ prediction.coupon.confidence|default:0 }} 100"></circle>
+                </svg>
+                <strong>{{ prediction.coupon.confidence }}%</strong>
+            </span>
             <span>Уверенность</span>
         </span>
     </a>
