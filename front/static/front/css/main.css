@@ -18853,11 +18853,6 @@ font-size: 14px;
     position: absolute;
     right: 2px;
     bottom: 4px;
-    inline-size: 16px;
-    aspect-ratio: 1;
-    border: 3px solid #111419;
-    border-radius: 50%;
-    background: var(--blue);
 }
 
 .following-feed-page .predictions-grid,
