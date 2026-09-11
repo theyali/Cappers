@@ -35075,3 +35075,9 @@ body.wiki-video-player-open {
         font-size: 9px;
     }
 }
+
+/* Feed fallback background is visible only when there is no cover image. */
+.prediction-card.feed-prediction-card .feed-prediction-cover-image + .feed-prediction-cover-fallback {
+    background: transparent;
+}
+
