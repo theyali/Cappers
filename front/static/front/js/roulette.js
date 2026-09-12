@@ -458,12 +458,18 @@
         ctx.shadowBlur = 18;
         ctx.fillStyle = colors.yellow;
         ctx.beginPath();
-        ctx.moveTo(cx, cy - radius - 50);
-        ctx.lineTo(cx + 27, cy - radius - 2);
-        ctx.lineTo(cx - 27, cy - radius - 2);
+        ctx.moveTo(cx, cy - radius - 2);
+        ctx.lineTo(cx + 27, cy - radius - 50);
+        ctx.lineTo(cx - 27, cy - radius - 50);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
+    };
+
+    const drawNextSpinCountdown = () => {
+        if (!stateLoaded || stateError || !enabled || !nextSpinAt) return;
+        text('ДО СЛЕДУЮЩЕЙ ПОПЫТКИ', 24, 34, 10, 'rgba(255,255,255,.72)', 800, 'left');
+        text(formatCountdown(nextSpinRemainingMs()), 24, 58, 22, colors.yellow, 800, 'left');
     };
 
     const drawAttemptStatus = () => {
@@ -558,6 +564,7 @@
         drawWheel();
         drawCenter();
         drawPointer();
+        drawNextSpinCountdown();
         drawAttemptStatus();
         drawWinCard();
         drawStatusMessage();
