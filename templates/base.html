@@ -39,12 +39,21 @@
         </ul>
     {% endif %}
 
-    <a href="{% url 'cabinet:bonuses' %}" class='fixed-roulette' aria-label="Ежедневная рулетка">
+    <a
+        href="{% url 'cabinet:bonuses' %}"
+        class="fixed-roulette"
+        aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
+        data-fixed-roulette
+        data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
+    >
         <svg width="100%" height="72" pointer-events="none" focusable="false" aria-hidden="true">
             <g transform="translate(0 0) scale(.06)" pointer-events="all">
                 {% include "front/svgs/roulette.svg" %}
             </g>
         </svg>
+        {% if roulette_available_spins %}
+            <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
+        {% endif %}
     </a>
 
     {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link %}
