@@ -107,19 +107,21 @@ def _prize_within_limits(prize, *, user, window_start, next_reset) -> bool:
     return True
 
 
-def _available_prizes(*, user, reward_state, roulette_settings, now):
+def _available_prizes(*, user, reward_state, roulette_settings, now, lock=False):
     window_start, next_reset = roulette_daily_window(roulette_settings, now)
     activity_count = _activity_count(user)
 
-    prizes = list(
-        RoulettePrize.objects.select_for_update()
-        .filter(is_active=True)
+    queryset = (
+        RoulettePrize.objects.filter(is_active=True)
         .filter(Q(active_from__isnull=True) | Q(active_from__lte=now))
         .filter(Q(active_until__isnull=True) | Q(active_until__gt=now))
         .prefetch_related("conditions")
         .order_by("sector_order", "id")
     )
+    if lock:
+        queryset = queryset.select_for_update()
 
+    prizes = list(queryset)
     return [
         prize
         for prize in prizes
@@ -137,6 +139,26 @@ def _available_prizes(*, user, reward_state, roulette_settings, now):
             activity_count=activity_count,
         )
     ]
+
+
+def get_available_roulette_prizes(*, user, now=None):
+    """Return sectors the current user can actually win, without exposing weights."""
+    if not getattr(user, "is_authenticated", False):
+        raise PermissionDenied("Войдите, чтобы посмотреть рулетку.")
+
+    now = now or timezone.now()
+    roulette_settings = RouletteSettings.load()
+    if not roulette_settings.is_enabled:
+        return []
+
+    reward_state, _ = UserRouletteRewardState.objects.get_or_create(user=user)
+    return _available_prizes(
+        user=user,
+        reward_state=reward_state,
+        roulette_settings=roulette_settings,
+        now=now,
+        lock=False,
+    )
 
 
 def _choose_weighted_prize(prizes):
@@ -224,6 +246,7 @@ def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
             reward_state=reward_state,
             roulette_settings=roulette_settings,
             now=now,
+            lock=True,
         )
         if not prizes:
             raise _error("Сейчас нет доступных призов для этой рулетки.", "no_available_prizes")
