@@ -22,14 +22,17 @@
         yellow: '#fbf110',
         white: '#ffffff',
     };
-    const visualThemes = {
-        virtual_balance: { fill: colors.blue, text: colors.white },
-        vip_days: { fill: colors.yellow, text: colors.ink },
-        free_predictions: { fill: '#1748b6', text: colors.white },
-        promo_code: { fill: colors.panel, text: colors.white },
-        rating_boost: { fill: '#19346f', text: colors.white },
-        extra_spin: { fill: colors.blue, text: colors.white },
-        nothing: { fill: colors.ink, text: colors.white },
+    const sectorGradients = {
+        dark: [
+            [0, '#162037'],
+            [0.55, '#121c2e'],
+            [1, '#0e1829'],
+        ],
+        blue: [
+            [0, '#0f45b3'],
+            [0.55, '#0d4dd3'],
+            [1, '#0b56fa'],
+        ],
     };
     const deterministicErrorCodes = new Set([
         'authentication_required',
@@ -268,12 +271,18 @@
 
     const currentSlice = () => (prizes.length ? TAU / prizes.length : TAU);
 
-    const themeFor = (item, index) => {
-        const theme = visualThemes[item.visualType];
-        if (theme) return theme;
-        return index % 2 === 0
-            ? { fill: colors.panel, text: colors.white }
-            : { fill: colors.blue, text: colors.white };
+    const sectorFillFor = (index, mid) => {
+        const stops = index % 2 === 0 ? sectorGradients.dark : sectorGradients.blue;
+        const startRadius = innerRadius + 4;
+        const endRadius = radius + 2;
+        const gradient = ctx.createLinearGradient(
+            Math.cos(mid) * startRadius,
+            Math.sin(mid) * startRadius,
+            Math.cos(mid) * endRadius,
+            Math.sin(mid) * endRadius,
+        );
+        stops.forEach(([offset, color]) => gradient.addColorStop(offset, color));
+        return gradient;
     };
 
     const drawRing = () => {
@@ -337,7 +346,6 @@
             const mid = -Math.PI / 2 + index * slice;
             const start = mid - slice / 2;
             const end = mid + slice / 2;
-            const theme = themeFor(item, index);
             const isWinner = item.prizeId === winningPrizeId && winHighlight > 0;
 
             ctx.save();
@@ -345,7 +353,7 @@
                 ctx.shadowColor = colors.yellow;
                 ctx.shadowBlur = 34 * winHighlight;
             }
-            ctx.fillStyle = theme.fill;
+            ctx.fillStyle = sectorFillFor(index, mid);
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.arc(0, 0, radius, start, end);
@@ -362,7 +370,6 @@
             const x = cx + Math.cos(angle) * labelRadius;
             const y = cy + Math.sin(angle) * labelRadius;
             const image = images.get(item.icon);
-            const theme = themeFor(item, index);
             const title = clampText(item.title, prizes.length >= 9 ? 12 : 16);
             const titleSize = prizes.length >= 9
                 ? (title.length > 10 ? 14 : 16)
@@ -378,14 +385,14 @@
                 );
             }
 
-            text(title, x, y + 12, titleSize, theme.text, 800);
+            text(title, x, y + 12, titleSize, colors.white, 800);
             item.sub.forEach((line, lineIndex) => {
                 text(
                     line,
                     x,
                     y + 37 + lineIndex * 18,
                     prizes.length >= 9 ? 12 : 14,
-                    theme.text,
+                    colors.white,
                     700,
                 );
             });
