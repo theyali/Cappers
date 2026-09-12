@@ -20,14 +20,7 @@
                 data-roulette-root
                 data-skeleton-block
                 data-roulette-bg="{% static 'front/img/login.png' %}"
-                data-roulette-icon-1="{% static 'front/img/roulette/b1.png' %}"
-                data-roulette-icon-2="{% static 'front/img/roulette/b2.png' %}"
-                data-roulette-icon-3="{% static 'front/img/roulette/b3.png' %}"
-                data-roulette-icon-4="{% static 'front/img/roulette/b4.png' %}"
-                data-roulette-icon-5="{% static 'front/img/roulette/b5.png' %}"
-                data-roulette-icon-6="{% static 'front/img/roulette/b6.png' %}"
-                data-roulette-icon-7="{% static 'front/img/roulette/b7.png' %}"
-                data-roulette-icon-8="{% static 'front/img/roulette/b8.png' %}"
+                data-roulette-state-url="{% url 'cabinet:roulette_state' %}"
             >
                 <canvas
                     data-roulette-canvas
@@ -36,6 +29,7 @@
                     role="button"
                     tabindex="0"
                     aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
+                    aria-busy="true"
                 >
                     Ваш браузер не поддерживает canvas.
                 </canvas>
