@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".32"/>
+  </filter>
+
+  <symbol id="coins" viewBox="-55 -55 110 110">
+    <g fill="currentColor">
+      <ellipse cx="14" cy="-24" rx="23" ry="9"/>
+      <rect x="-9" y="-24" width="46" height="13" rx="6"/>
+      <ellipse cx="14" cy="-11" rx="23" ry="9"/>
+      <rect x="-9" y="-11" width="46" height="13" rx="6"/>
+      <ellipse cx="14" cy="2" rx="23" ry="9"/>
+      <ellipse cx="-17" cy="-7" rx="23" ry="9"/>
+      <rect x="-40" y="-7" width="46" height="13" rx="6"/>
+      <ellipse cx="-17" cy="6" rx="23" ry="9"/>
+      <rect x="-40" y="6" width="46" height="13" rx="6"/>
+      <ellipse cx="-17" cy="19" rx="23" ry="9"/>
+    </g>
+  </symbol>
+
+  <symbol id="crown" viewBox="-55 -55 110 110">
+    <g fill="currentColor">
+      <circle cx="-34" cy="-24" r="5"/>
+      <circle cx="0" cy="-36" r="5"/>
+      <circle cx="34" cy="-24" r="5"/>
+      <path d="M-42 26 L-34 -18 L-11 5 L0 -30 L13 5 L34 -18 L42 26 Z"/>
+      <rect x="-39" y="28" width="78" height="10" rx="5"/>
+    </g>
+  </symbol>
+
+  <symbol id="ticket" viewBox="-60 -55 120 110">
+    <g transform="rotate(-10)" fill="currentColor">
+      <path d="M-47 -24 Q-47 -34 -37 -34 H37 Q47 -34 47 -24 V24 Q47 34 37 34 H-37 Q-47 34 -47 24 V14 Q-34 11 -34 0 Q-34 -11 -47 -14 Z"/>
+      <path d="M-14 -15 V15 M-28 0 H0 M19 -15 V15" stroke="#0c2d66" stroke-width="8" stroke-linecap="round"/>
+      <path d="M5 -15 V15 M-9 0 H19" stroke="#0c2d66" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </symbol>
+
+  <symbol id="bars" viewBox="-55 -55 110 110">
+    <g fill="currentColor">
+      <rect x="-34" y="8" width="18" height="29" rx="5"/>
+      <rect x="-9" y="-5" width="18" height="42" rx="5"/>
+      <rect x="16" y="-24" width="18" height="61" rx="5"/>
+    </g>
+  </symbol>
+
+  <symbol id="gift" viewBox="-55 -55 110 110">
+    <g fill="currentColor">
+      <rect x="-35" y="-9" width="70" height="47" rx="5"/>
+      <rect x="-40" y="-21" width="80" height="16" rx="5"/>
+      <rect x="-5" y="-21" width="10" height="59" fill="#7fc8ff"/>
+      <path d="M-3 -21 C-30 -44,-43 -17,-16 -8 C-7 -5,-2 -13,-3 -21 Z" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+      <path d="M3 -21 C30 -44,43 -17,16 -8 C7 -5,2 -13,3 -21 Z" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </symbol>
+
+  <symbol id="calendar" viewBox="-55 -55 110 110">
+    <g fill="currentColor">
+      <rect x="-36" y="-28" width="72" height="66" rx="8"/>
+      <rect x="-23" y="-38" width="9" height="18" rx="4.5"/>
+      <rect x="14" y="-38" width="9" height="18" rx="4.5"/>
+    </g>
+    <g fill="#182433">
+      <rect x="-25" y="-8" width="12" height="10" rx="2"/>
+      <rect x="-6" y="-8" width="12" height="10" rx="2"/>
+      <rect x="13" y="-8" width="12" height="10" rx="2"/>
+      <rect x="-25" y="9" width="12" height="10" rx="2"/>
+      <rect x="-6" y="9" width="12" height="10" rx="2"/>
+      <rect x="13" y="9" width="12" height="10" rx="2"/>
+    </g>
+  </symbol>
+
+  <symbol id="percent" viewBox="-60 -55 120 110">
+    <g transform="rotate(-8)">
+      <path d="M-44 -25 Q-44 -35 -34 -35 H34 Q44 -35 44 -25 V25 Q44 35 34 35 H-34 Q-44 35 -44 25 V13 Q-31 10 -31 0 Q-31 -10 -44 -13 Z" fill="currentColor"/>
+      <circle cx="-14" cy="-11" r="7" fill="#0c2d66"/>
+      <circle cx="16" cy="11" r="7" fill="#0c2d66"/>
+      <rect x="-4" y="-30" width="8" height="60" rx="4" transform="rotate(34)" fill="#0c2d66"/>
+    </g>
+  </symbol>
+
+  <symbol id="refresh" viewBox="-55 -55 110 110">
+    <path d="M31 -9 A33 33 0 0 0 -23 -22" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    <path d="M-26 -31 L-24 -17 L-10 -20" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-31 9 A33 33 0 0 0 23 22" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    <path d="M26 31 L24 17 L10 20" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</defs>
+
+<circle cx="600" cy="600" r="548" fill="#0b1118" filter="url(#shadow)"/>
+<circle cx="600" cy="600" r="536" fill="#253449"/>
+<circle cx="600" cy="600" r="520" fill="#101722"/>
+<circle cx="600" cy="600" r="508" fill="#0b56fa"/>
+<path d="M408.66,138.06 A500,500 0 0 1 791.34,138.06 L673.48,422.62 A192,192 0 0 0 526.52,422.62 Z" fill="#182433" stroke="#09111b" stroke-width="3"/>
+<path d="M791.34,138.06 A500,500 0 0 1 1061.94,408.66 L777.38,526.52 A192,192 0 0 0 673.48,422.62 Z" fill="#103a83" stroke="#09111b" stroke-width="3"/>
+<path d="M1061.94,408.66 A500,500 0 0 1 1061.94,791.34 L777.38,673.48 A192,192 0 0 0 777.38,526.52 Z" fill="#182433" stroke="#09111b" stroke-width="3"/>
+<path d="M1061.94,791.34 A500,500 0 0 1 791.34,1061.94 L673.48,777.38 A192,192 0 0 0 777.38,673.48 Z" fill="#103a83" stroke="#09111b" stroke-width="3"/>
+<path d="M791.34,1061.94 A500,500 0 0 1 408.66,1061.94 L526.52,777.38 A192,192 0 0 0 673.48,777.38 Z" fill="#182433" stroke="#09111b" stroke-width="3"/>
+<path d="M408.66,1061.94 A500,500 0 0 1 138.06,791.34 L422.62,673.48 A192,192 0 0 0 526.52,777.38 Z" fill="#103a83" stroke="#09111b" stroke-width="3"/>
+<path d="M138.06,791.34 A500,500 0 0 1 138.06,408.66 L422.62,526.52 A192,192 0 0 0 422.62,673.48 Z" fill="#182433" stroke="#09111b" stroke-width="3"/>
+<path d="M138.06,408.66 A500,500 0 0 1 408.66,138.06 L526.52,422.62 A192,192 0 0 0 422.62,526.52 Z" fill="#103a83" stroke="#09111b" stroke-width="3"/>
+<circle cx="600" cy="600" r="497" fill="none" stroke="#0b56fa" stroke-width="7"/>
+<circle cx="600" cy="600" r="526" fill="none" stroke="#34445a" stroke-width="6"/>
+<circle cx="600.00" cy="74.00" r="6.2" fill="#f7fbff"/>
+<circle cx="736.14" cy="91.92" r="6.2" fill="#f7fbff"/>
+<circle cx="863.00" cy="144.47" r="6.2" fill="#f7fbff"/>
+<circle cx="971.94" cy="228.06" r="6.2" fill="#f7fbff"/>
+<circle cx="1055.53" cy="337.00" r="6.2" fill="#f7fbff"/>
+<circle cx="1108.08" cy="463.86" r="6.2" fill="#f7fbff"/>
+<circle cx="1126.00" cy="600.00" r="6.2" fill="#f7fbff"/>
+<circle cx="1108.08" cy="736.14" r="6.2" fill="#f7fbff"/>
+<circle cx="1055.53" cy="863.00" r="6.2" fill="#f7fbff"/>
+<circle cx="971.94" cy="971.94" r="6.2" fill="#f7fbff"/>
+<circle cx="863.00" cy="1055.53" r="6.2" fill="#f7fbff"/>
+<circle cx="736.14" cy="1108.08" r="6.2" fill="#f7fbff"/>
+<circle cx="600.00" cy="1126.00" r="6.2" fill="#f7fbff"/>
+<circle cx="463.86" cy="1108.08" r="6.2" fill="#f7fbff"/>
+<circle cx="337.00" cy="1055.53" r="6.2" fill="#f7fbff"/>
+<circle cx="228.06" cy="971.94" r="6.2" fill="#f7fbff"/>
+<circle cx="144.47" cy="863.00" r="6.2" fill="#f7fbff"/>
+<circle cx="91.92" cy="736.14" r="6.2" fill="#f7fbff"/>
+<circle cx="74.00" cy="600.00" r="6.2" fill="#f7fbff"/>
+<circle cx="91.92" cy="463.86" r="6.2" fill="#f7fbff"/>
+<circle cx="144.47" cy="337.00" r="6.2" fill="#f7fbff"/>
+<circle cx="228.06" cy="228.06" r="6.2" fill="#f7fbff"/>
+<circle cx="337.00" cy="144.47" r="6.2" fill="#f7fbff"/>
+<circle cx="463.86" cy="91.92" r="6.2" fill="#f7fbff"/>
+<circle cx="600" cy="600" r="196" fill="#09101a"/>
+<circle cx="600" cy="600" r="185" fill="#26364c"/>
+<circle cx="600" cy="600" r="178" fill="#0b56fa"/>
+<use href="#refresh" x="558" y="482" width="84" height="84" color="#dbe7ff"/>
+<text x="600" y="640" text-anchor="middle" fill="#ffffff" font-family="Arial,Helvetica,sans-serif" font-size="46" font-weight="700">Крутить</text>
+<use href="#coins" x="560.00" y="220.00" width="80" height="80" color="#fbf110"/>
+<use href="#crown" x="794.76" y="317.24" width="80" height="80" color="#fbf110"/>
+<use href="#ticket" x="892.00" y="552.00" width="80" height="80" color="#0b56fa"/>
+<use href="#coins" x="794.76" y="786.76" width="80" height="80" color="#fbf110"/>
+<use href="#bars" x="560.00" y="884.00" width="80" height="80" color="#ffffff"/>
+<use href="#gift" x="325.24" y="786.76" width="80" height="80" color="#36a9ff"/>
+<use href="#calendar" x="228.00" y="552.00" width="80" height="80" color="#c7d6f2"/>
+<use href="#percent" x="325.24" y="317.24" width="80" height="80" color="#0b56fa"/>
+<path d="M 558 36 L 642 36 L 600 132 Z" fill="#fbf110" filter="url(#shadow)"/>
+</svg>
