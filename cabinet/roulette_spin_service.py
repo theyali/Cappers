@@ -15,6 +15,9 @@ from .roulette_rewards import UserRouletteRewardState
 from .roulette_state import UserRouletteState, roulette_daily_window
 
 
+MAX_ACTIVE_ROULETTE_SECTORS = 10
+
+
 class RouletteSpinError(ValidationError):
     pass
 
@@ -122,7 +125,7 @@ def _available_prizes(*, user, reward_state, roulette_settings, now, lock=False)
         queryset = queryset.select_for_update()
 
     prizes = list(queryset)
-    return [
+    eligible = [
         prize
         for prize in prizes
         if _prize_within_limits(
@@ -139,6 +142,7 @@ def _available_prizes(*, user, reward_state, roulette_settings, now, lock=False)
             activity_count=activity_count,
         )
     ]
+    return eligible[:MAX_ACTIVE_ROULETTE_SECTORS]
 
 
 def get_available_roulette_prizes(*, user, now=None):
