@@ -257,4 +257,5 @@ class CapperMonthlyStatAdmin(admin.ModelAdmin):
 
 
 from . import roulette_admin  # noqa: E402,F401
+from . import roulette_history_admin  # noqa: E402,F401
 from . import roulette_state_admin  # noqa: E402,F401
