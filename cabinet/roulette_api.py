@@ -8,8 +8,11 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
+from wallets.models import CapperBalance
+
 from .roulette_history import RouletteSpin
-from .roulette_models import RouletteSettings
+from .roulette_models import RoulettePrize, RouletteSettings
+from .roulette_rewards import UserRouletteRewardState
 from .roulette_services import get_user_roulette_state
 from .roulette_spin_service import (
     RouletteSpinError,
@@ -99,6 +102,32 @@ def _serialize_spin_prize(request, spin: RouletteSpin) -> dict:
     }
 
 
+def _serialize_reward_result(user, spin: RouletteSpin) -> dict:
+    result = {"type": spin.reward_type}
+
+    if spin.reward_type == RoulettePrize.RewardType.VIRTUAL_BALANCE:
+        balance = (
+            CapperBalance.objects.filter(user=user)
+            .values_list("balance", flat=True)
+            .first()
+        )
+        result["virtual_balance"] = str(balance) if balance is not None else None
+        return result
+
+    reward_state = UserRouletteRewardState.objects.filter(user=user).first()
+
+    if spin.reward_type == RoulettePrize.RewardType.VIP_DAYS:
+        result["vip_until"] = _iso(reward_state.vip_until) if reward_state else None
+    elif spin.reward_type == RoulettePrize.RewardType.FREE_PREDICTIONS:
+        result["free_predictions"] = reward_state.free_predictions if reward_state else 0
+    elif spin.reward_type == RoulettePrize.RewardType.RATING_BOOST:
+        result["rating_boost"] = str(reward_state.rating_boost) if reward_state else "0"
+    elif spin.reward_type == RoulettePrize.RewardType.PROMO_CODE:
+        result["promo_code"] = spin.reward_text
+
+    return result
+
+
 def _serialize_recent_win(request, spin: RouletteSpin) -> dict:
     return {
         "spin_id": spin.pk,
@@ -184,6 +213,7 @@ def roulette_spin(request):
             "prize_id": spin.prize_id,
             "sector_index": spin.prize_sector_order,
             "prize": _serialize_spin_prize(request, spin),
+            "reward_result": _serialize_reward_result(request.user, spin),
             "reward_status": spin.reward_status,
             "available_spins": spin.attempts_after,
             "next_spin_at": _iso(spin.next_spin_at),
