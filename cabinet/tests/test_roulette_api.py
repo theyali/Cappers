@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from cabinet.roulette_history import RouletteSpin
 from cabinet.roulette_models import RoulettePrize, RouletteSettings
+from cabinet.roulette_rewards import UserRouletteRewardState
 from cabinet.roulette_state import UserRouletteState
 
 
@@ -132,6 +133,29 @@ class RouletteApiTests(TestCase):
         state = UserRouletteState.objects.get(user=self.user)
         self.assertEqual(state.available_spins, 0)
         self.assertEqual(state.total_spins, 1)
+
+    def test_spin_returns_reward_result_for_win_screen(self):
+        self.create_prize(
+            title="VIP",
+            short_text="на 1 день",
+            reward_type=RoulettePrize.RewardType.VIP_DAYS,
+            reward_value=1,
+            weight=1,
+            sector_order=0,
+        )
+        UserRouletteState.objects.create(user=self.user, available_spins=1)
+
+        response = self.post_spin(uuid.uuid4())
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["reward_status"], RouletteSpin.RewardStatus.ISSUED)
+        self.assertEqual(payload["reward_result"]["type"], RoulettePrize.RewardType.VIP_DAYS)
+        self.assertIsNotNone(payload["reward_result"]["vip_until"])
+
+        reward_state = UserRouletteRewardState.objects.get(user=self.user)
+        self.assertIsNotNone(reward_state.vip_until)
 
     def test_spin_rejects_invalid_operation_id(self):
         response = self.client.post(
