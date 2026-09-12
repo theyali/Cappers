@@ -9,4 +9,5 @@ class CabinetConfig(AppConfig):
     def ready(self) -> None:
         from . import presence  # noqa: F401
         from . import roulette_models  # noqa: F401
+        from . import roulette_state  # noqa: F401
         from . import signals  # noqa: F401
