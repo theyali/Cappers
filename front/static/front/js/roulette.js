@@ -6,15 +6,22 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const W = 1180;
-    const H = 840;
+    const W = 720;
+    const H = 720;
     const TAU = Math.PI * 2;
-    const cx = 590;
-    const cy = 454;
+    const cx = 360;
+    const cy = 365;
     const radius = 286;
     const innerRadius = 95;
     const slice = TAU / 8;
-    const colors = { blue: '#0b56fa', ink: '#131313', panel: '#1f1f21', muted: '#707072', yellow: '#fbf110', white: '#ffffff' };
+    const colors = {
+        blue: '#0b56fa',
+        ink: '#131313',
+        panel: '#1f1f21',
+        muted: '#707072',
+        yellow: '#fbf110',
+        white: '#ffffff',
+    };
 
     const prizes = [
         { title: '+500 ₽', sub: ['на виртуальный', 'баланс'], icon: root.dataset.rouletteIcon1 },
@@ -28,11 +35,9 @@
     ];
 
     const images = new Map();
-    let background = null;
     let rotation = 0;
     let spinning = false;
     let demoIndex = 0;
-    let countdown = '--:--:--';
 
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
@@ -61,65 +66,13 @@
         image.src = src;
     });
 
-    const cover = (image, x, y, width, height) => {
-        if (!image?.naturalWidth || !image?.naturalHeight) return;
-        const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-        const sw = width / scale;
-        const sh = height / scale;
-        ctx.drawImage(image, (image.naturalWidth - sw) / 2, (image.naturalHeight - sh) / 2, sw, sh, x, y, width, height);
-    };
-
     const prepare = async () => {
         window.CappersSkeleton?.loading(root);
-        const loaded = await Promise.all([loadImage(root.dataset.rouletteBg), ...prizes.map((item) => loadImage(item.icon))]);
-        background = loaded[0];
-        loaded.slice(1).forEach((image, index) => { if (image) images.set(prizes[index].icon, image); });
+        const loaded = await Promise.all(prizes.map((item) => loadImage(item.icon)));
+        loaded.forEach((image, index) => {
+            if (image) images.set(prizes[index].icon, image);
+        });
         window.CappersSkeleton?.ready(root);
-    };
-
-    const drawBackground = () => {
-        ctx.clearRect(0, 0, W, H);
-    };
-
-    const drawHeader = () => {
-        text('Личный кабинет   ›   Мои бонусы   ›   Ежедневная рулетка', 38, 40, 13, 'rgba(220,228,246,.62)', 700, 'left');
-        text('Ежедневная рулетка', 38, 92, 40, colors.white, 800, 'left');
-        text('Крути колесо и получай приятные бонусы каждый день', 38, 130, 17, 'rgba(233,238,251,.74)', 600, 'left');
-    };
-
-    const drawNotes = () => {
-        ctx.save();
-        ctx.translate(986, 92);
-        ctx.rotate(-.10);
-        text('Маленькие бонусы', 0, 0, 17, 'rgba(160,181,224,.58)', 700);
-        text('большим победам', 0, 24, 17, 'rgba(160,181,224,.58)', 700);
-        ctx.fillStyle = colors.blue;
-        ctx.fillRect(-38, 43, 76, 3);
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(1035, 352);
-        ctx.rotate(-.17);
-        ['УДАЧА', 'ТОЖЕ', 'СТРАТЕГИЯ'].forEach((line, i) => text(line, 0, i * 24, 19, 'rgba(170,190,232,.56)', 800));
-        ctx.strokeStyle = 'rgba(170,190,232,.56)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-38, 69);
-        ctx.lineTo(39, 55);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(118, 646);
-        ctx.rotate(-.14);
-        ['СЕГОДНЯ', 'БЛИЖЕ', 'К ПОБЕДЕ'].forEach((line, i) => text(line, 0, i * 26, 20, 'rgba(170,190,232,.56)', 800));
-        ctx.strokeStyle = colors.blue;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(-34, 74);
-        ctx.lineTo(45, 74);
-        ctx.stroke();
-        ctx.restore();
     };
 
     const drawRing = () => {
@@ -143,6 +96,7 @@
         ctx.beginPath();
         ctx.arc(0, 0, radius + 9, 0, TAU);
         ctx.stroke();
+
         for (let i = 0; i < 16; i += 1) {
             const angle = -Math.PI / 2 + i * TAU / 16;
             const r = radius + 24;
@@ -167,6 +121,7 @@
             const start = mid - slice / 2;
             const end = mid + slice / 2;
             const fill = ctx.createRadialGradient(0, 0, 70, 0, 0, radius);
+
             if (index % 2 === 0) {
                 fill.addColorStop(0, '#18243a');
                 fill.addColorStop(1, '#0d1727');
@@ -174,6 +129,7 @@
                 fill.addColorStop(0, '#123d92');
                 fill.addColorStop(1, colors.blue);
             }
+
             ctx.fillStyle = fill;
             ctx.beginPath();
             ctx.moveTo(0, 0);
@@ -192,9 +148,12 @@
             const x = cx + Math.cos(angle) * labelRadius;
             const y = cy + Math.sin(angle) * labelRadius;
             const image = images.get(item.icon);
+
             if (image) ctx.drawImage(image, x - 27, y - 57, 54, 54);
             text(item.title, x, y + 12, item.title.length > 11 ? 16 : 20, colors.white, 800);
-            item.sub.forEach((line, i) => text(line, x, y + 37 + i * 18, 14, 'rgba(255,255,255,.88)', 700));
+            item.sub.forEach((line, i) => {
+                text(line, x, y + 37 + i * 18, 14, 'rgba(255,255,255,.88)', 700);
+            });
         });
     };
 
@@ -205,6 +164,7 @@
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
+
         const fill = ctx.createRadialGradient(-24, -34, 12, 0, 0, innerRadius);
         fill.addColorStop(0, '#397fff');
         fill.addColorStop(.6, colors.blue);
@@ -213,17 +173,20 @@
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius, 0, TAU);
         ctx.fill();
+
         ctx.strokeStyle = 'rgba(255,255,255,.28)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius - 3, 0, TAU);
         ctx.stroke();
+
         ctx.strokeStyle = colors.white;
         ctx.lineWidth = 5;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.arc(0, -20, 24, Math.PI * 1.12, Math.PI * 1.86);
         ctx.stroke();
+
         ctx.fillStyle = colors.white;
         ctx.beginPath();
         ctx.moveTo(20, -43);
@@ -231,6 +194,7 @@
         ctx.lineTo(10, -22);
         ctx.closePath();
         ctx.fill();
+
         text(spinning ? 'Крутим…' : 'Крутить', 0, 28, 26, colors.white, 800);
         ctx.restore();
     };
@@ -249,37 +213,12 @@
         ctx.restore();
     };
 
-    const drawFooter = () => {
-        const y = 786;
-        const gift = images.get(prizes[5].icon);
-        if (gift) ctx.drawImage(gift, 215, y - 23, 44, 44);
-        text('1 бесплатное вращение каждый день', 273, y, 16, colors.white, 800, 'left');
-        ctx.fillStyle = 'rgba(255,255,255,.18)';
-        ctx.fillRect(585, y - 17, 2, 34);
-        ctx.strokeStyle = 'rgba(255,255,255,.85)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(625, y, 13, 0, TAU);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(625, y - 7);
-        ctx.lineTo(625, y);
-        ctx.lineTo(631, y + 4);
-        ctx.stroke();
-        text('Следующая попытка через', 651, y, 15, 'rgba(224,231,246,.68)', 700, 'left');
-        text(countdown, 847, y, 17, colors.white, 800, 'left');
-    };
-
     const draw = () => {
         ctx.clearRect(0, 0, W, H);
-        drawBackground();
-        drawHeader();
-        drawNotes();
         drawRing();
         drawWheel();
         drawCenter();
         drawPointer();
-        drawFooter();
     };
 
     const resize = () => {
@@ -294,6 +233,7 @@
     };
 
     const ease = (value) => 1 - Math.pow(1 - value, 5);
+
     const spin = () => {
         if (spinning) return;
         spinning = true;
@@ -302,27 +242,19 @@
         const finish = rotation + TAU * 5 + slice * 3;
         const started = performance.now();
         const duration = 4300;
+
         const frame = (now) => {
             const progress = Math.min((now - started) / duration, 1);
             rotation = start + (finish - start) * ease(progress);
             draw();
+
             if (progress < 1) return requestAnimationFrame(frame);
             rotation = finish % TAU;
             spinning = false;
             draw();
         };
-        requestAnimationFrame(frame);
-    };
 
-    const updateCountdown = () => {
-        const now = new Date();
-        const next = new Date(now);
-        next.setHours(24, 0, 0, 0);
-        const left = Math.max(0, Math.floor((next - now) / 1000));
-        countdown = [Math.floor(left / 3600), Math.floor((left % 3600) / 60), left % 60]
-            .map((value) => String(value).padStart(2, '0'))
-            .join(':');
-        draw();
+        requestAnimationFrame(frame);
     };
 
     canvas.addEventListener('click', spin);
@@ -333,9 +265,5 @@
     });
     window.addEventListener('resize', resize);
 
-    prepare().finally(() => {
-        resize();
-        updateCountdown();
-        window.setInterval(updateCountdown, 1000);
-    });
+    prepare().finally(resize);
 })();
