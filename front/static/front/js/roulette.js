@@ -61,6 +61,9 @@
     let winCard = null;
     let winCardProgress = 0;
     let winHighlight = 0;
+    let serverClockBaseMs = 0;
+    let serverClockPerfMs = 0;
+    let countdownRefreshAfterPerfMs = 0;
 
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
@@ -132,6 +135,57 @@
         rewardText: String(item?.reward_text || ''),
     });
 
+    const syncServerClock = (serverTime) => {
+        const parsed = Date.parse(serverTime || '');
+        if (!Number.isFinite(parsed)) return;
+        serverClockBaseMs = parsed;
+        serverClockPerfMs = performance.now();
+    };
+
+    const serverNowMs = () => {
+        if (!serverClockBaseMs) return Date.now();
+        return serverClockBaseMs + (performance.now() - serverClockPerfMs);
+    };
+
+    const nextSpinRemainingMs = () => {
+        if (!nextSpinAt) return 0;
+        const target = Date.parse(nextSpinAt);
+        if (!Number.isFinite(target)) return 0;
+        return Math.max(0, target - serverNowMs());
+    };
+
+    const formatCountdown = (milliseconds) => {
+        const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return [hours, minutes, seconds]
+            .map((value) => String(value).padStart(2, '0'))
+            .join(':');
+    };
+
+    const attemptStatusText = () => {
+        if (!stateLoaded) return 'Загрузка состояния рулетки…';
+        if (stateError) return stateError;
+        if (!enabled || !prizes.length) return 'Рулетка сейчас недоступна';
+        if (availableSpins > 0) return `Доступно попыток: ${availableSpins}`;
+        if (nextSpinAt) return `Следующая попытка через ${formatCountdown(nextSpinRemainingMs())}`;
+        return 'Доступных попыток пока нет';
+    };
+
+    const publishAttempts = () => {
+        window.dispatchEvent(new CustomEvent('cappers:roulette-attempts', {
+            detail: { availableSpins },
+        }));
+    };
+
+    const updateCanvasA11y = () => {
+        canvas.setAttribute(
+            'aria-label',
+            `${attemptStatusText()}. ${availableSpins > 0 ? 'Нажмите, чтобы крутить.' : ''}`.trim(),
+        );
+    };
+
     const loadImage = (src) => new Promise((resolve) => {
         if (!src) return resolve(null);
         if (images.has(src)) return resolve(images.get(src));
@@ -151,15 +205,32 @@
         });
     };
 
-    const prepare = async () => {
-        const stateUrl = root.dataset.rouletteStateUrl;
-        window.CappersSkeleton?.loading(root);
-        canvas.setAttribute('aria-busy', 'true');
+    const applyStatePayload = async (payload) => {
+        syncServerClock(payload.server_time);
+        enabled = Boolean(payload.enabled);
+        availableSpins = Math.max(0, Number(payload.available_spins) || 0);
+        nextSpinAt = payload.next_spin_at || null;
+        prizes = Array.isArray(payload.sectors)
+            ? payload.sectors.slice(0, MAX_SECTORS).map(normalizeSector)
+            : [];
+        stateLoaded = true;
         stateError = '';
+        countdownRefreshAfterPerfMs = 0;
+        await prepareImages();
+        publishAttempts();
+        updateCanvasA11y();
+    };
+
+    const fetchState = async ({ withSkeleton = false } = {}) => {
+        const stateUrl = root.dataset.rouletteStateUrl;
+        if (!stateUrl) throw new Error('Не настроен URL состояния рулетки.');
+
+        if (withSkeleton) {
+            window.CappersSkeleton?.loading(root);
+            canvas.setAttribute('aria-busy', 'true');
+        }
 
         try {
-            if (!stateUrl) throw new Error('Не настроен URL состояния рулетки.');
-
             const response = await fetch(stateUrl, {
                 method: 'GET',
                 credentials: 'same-origin',
@@ -169,16 +240,20 @@
             if (!response.ok || !payload?.ok) {
                 throw new Error(payload?.error || 'Не удалось загрузить рулетку.');
             }
+            await applyStatePayload(payload);
+            return payload;
+        } finally {
+            if (withSkeleton) {
+                canvas.setAttribute('aria-busy', 'false');
+                window.CappersSkeleton?.ready(root);
+            }
+        }
+    };
 
-            enabled = Boolean(payload.enabled);
-            availableSpins = Math.max(0, Number(payload.available_spins) || 0);
-            nextSpinAt = payload.next_spin_at || null;
-            prizes = Array.isArray(payload.sectors)
-                ? payload.sectors.slice(0, MAX_SECTORS).map(normalizeSector)
-                : [];
-            stateLoaded = true;
-
-            await prepareImages();
+    const prepare = async () => {
+        stateError = '';
+        try {
+            await fetchState({ withSkeleton: true });
         } catch (error) {
             prizes = [];
             enabled = false;
@@ -186,9 +261,8 @@
             nextSpinAt = null;
             stateLoaded = true;
             stateError = error instanceof Error ? error.message : 'Не удалось загрузить рулетку.';
-        } finally {
-            canvas.setAttribute('aria-busy', 'false');
-            window.CappersSkeleton?.ready(root);
+            publishAttempts();
+            updateCanvasA11y();
         }
     };
 
@@ -318,6 +392,16 @@
         });
     };
 
+    const canSpin = () => (
+        stateLoaded
+        && !stateError
+        && enabled
+        && availableSpins > 0
+        && prizes.length > 0
+        && !requestPending
+        && !spinning
+    );
+
     const centerLabel = () => {
         if (!stateLoaded) return 'Загрузка…';
         if (requestPending) return 'Проверяем…';
@@ -336,7 +420,7 @@
         ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
 
-        ctx.fillStyle = colors.blue;
+        ctx.fillStyle = canSpin() || requestPending || spinning ? colors.blue : '#303033';
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius, 0, TAU);
         ctx.fill();
@@ -373,6 +457,13 @@
         ctx.closePath();
         ctx.fill();
         ctx.restore();
+    };
+
+    const drawAttemptStatus = () => {
+        if (winCard) return;
+        const label = attemptStatusText();
+        const color = availableSpins > 0 ? colors.yellow : colors.white;
+        text(clampText(label, 66), cx, H - 26, 15, color, 800);
     };
 
     const roundedRect = (x, y, width, height, radiusValue) => {
@@ -451,7 +542,7 @@
 
     const drawStatusMessage = () => {
         if (!transientError || winCard) return;
-        text(clampText(transientError, 72), cx, H - 25, 14, colors.yellow, 700);
+        text(clampText(transientError, 72), cx, H - 50, 14, colors.yellow, 700);
     };
 
     const draw = () => {
@@ -460,8 +551,10 @@
         drawWheel();
         drawCenter();
         drawPointer();
+        drawAttemptStatus();
         drawWinCard();
         drawStatusMessage();
+        updateCanvasA11y();
     };
 
     const resize = () => {
@@ -678,16 +771,29 @@
         draw();
     };
 
-    const spin = async () => {
+    const refreshAfterCountdown = async () => {
         if (
-            requestPending
+            availableSpins > 0
+            || requestPending
             || spinning
             || !stateLoaded
-            || stateError
             || !enabled
-            || availableSpins <= 0
-            || !prizes.length
+            || performance.now() < countdownRefreshAfterPerfMs
         ) return;
+
+        if (!nextSpinAt || nextSpinRemainingMs() > 0) return;
+        countdownRefreshAfterPerfMs = performance.now() + 30000;
+
+        try {
+            await fetchState();
+            draw();
+        } catch (error) {
+            showTransientError(error instanceof Error ? error.message : 'Не удалось обновить попытки.');
+        }
+    };
+
+    const spin = async () => {
+        if (!canSpin()) return;
 
         requestPending = true;
         transientError = '';
@@ -699,8 +805,11 @@
 
         try {
             const payload = await requestSpin();
+            syncServerClock(payload.server_time);
             availableSpins = Math.max(0, Number(payload.available_spins) || 0);
             nextSpinAt = payload.next_spin_at || null;
+            countdownRefreshAfterPerfMs = 0;
+            publishAttempts();
 
             const winnerIndex = await ensureWinnerOnWheel(payload);
             if (winnerIndex < 0) {
@@ -716,13 +825,22 @@
         } catch (error) {
             requestPending = false;
             spinning = false;
-            if (error?.code === 'no_spins') availableSpins = 0;
+            if (error?.code === 'no_spins') {
+                availableSpins = 0;
+                publishAttempts();
+            }
             showTransientError(error instanceof Error ? error.message : 'Не удалось выполнить прокрутку.');
         } finally {
             requestPending = false;
             spinning = false;
             draw();
         }
+    };
+
+    const tickCountdown = () => {
+        if (!stateLoaded) return;
+        draw();
+        refreshAfterCountdown();
     };
 
     canvas.addEventListener('click', spin);
@@ -732,6 +850,7 @@
         spin();
     });
     window.addEventListener('resize', resize);
+    window.setInterval(tickCountdown, 1000);
 
     prepare().finally(resize);
 })();
