@@ -68,9 +68,29 @@ class RouletteApiTests(TestCase):
         sector = payload["sectors"][0]
         self.assertEqual(sector["prize_id"], prize.pk)
         self.assertEqual(sector["sector_index"], 2)
+        self.assertEqual(sector["visual_type"], RoulettePrize.RewardType.PROMO_CODE)
         self.assertNotIn("weight", sector)
         self.assertNotIn("reward_text", sector)
         self.assertNotIn("SECRET-20", response.content.decode("utf-8"))
+
+    def test_state_limits_canvas_to_ten_active_sectors(self):
+        for sector_order in range(12):
+            self.create_prize(
+                title=f"Приз {sector_order}",
+                reward_type=RoulettePrize.RewardType.NOTHING,
+                reward_value=0,
+                sector_order=sector_order,
+            )
+
+        response = self.client.get(reverse("cabinet:roulette_state"))
+
+        self.assertEqual(response.status_code, 200)
+        sectors = response.json()["sectors"]
+        self.assertEqual(len(sectors), 10)
+        self.assertEqual(
+            [sector["sector_index"] for sector in sectors],
+            list(range(10)),
+        )
 
     def test_spin_returns_no_spins_code_when_user_has_no_attempts(self):
         self.create_prize(reward_type=RoulettePrize.RewardType.NOTHING, reward_value=0)
