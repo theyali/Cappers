@@ -15,19 +15,24 @@
                 </nav>
             </div>
 
-            <div class="profile-list-card" data-roulette-root>
-                <div class="profile-section-heading">
-                    <div>
-                        <p class="eyebrow">Мои бонусы</p>
-                        <h1>Ежедневная рулетка</h1>
-                        <p>Крути колесо и получай приятные бонусы каждый день.</p>
-                    </div>
-                </div>
-
+            <div
+                class="profile-list-card"
+                data-roulette-root
+                data-skeleton-block
+                data-roulette-bg="{% static 'front/img/bks_bg.png' %}"
+                data-roulette-icon-1="{% static 'front/img/roulette/b1.png' %}"
+                data-roulette-icon-2="{% static 'front/img/roulette/b2.png' %}"
+                data-roulette-icon-3="{% static 'front/img/roulette/b3.png' %}"
+                data-roulette-icon-4="{% static 'front/img/roulette/b4.png' %}"
+                data-roulette-icon-5="{% static 'front/img/roulette/b5.png' %}"
+                data-roulette-icon-6="{% static 'front/img/roulette/b6.png' %}"
+                data-roulette-icon-7="{% static 'front/img/roulette/b7.png' %}"
+                data-roulette-icon-8="{% static 'front/img/roulette/b8.png' %}"
+            >
                 <canvas
                     data-roulette-canvas
-                    width="940"
-                    height="640"
+                    width="1180"
+                    height="840"
                     role="button"
                     tabindex="0"
                     aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
