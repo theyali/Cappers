@@ -254,3 +254,6 @@ class CapperMonthlyStatAdmin(admin.ModelAdmin):
         "hit_rate",
         "calculated_at",
     )
+
+
+from . import roulette_admin  # noqa: E402,F401
