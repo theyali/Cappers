@@ -40,6 +40,11 @@
     canvas.style.cursor = 'pointer';
     canvas.style.touchAction = 'manipulation';
 
+    root.style.backgroundImage = `linear-gradient(271deg, rgba(3, 10, 24, 0.18) 0%, rgba(3, 8, 18, 0.38) 55%, rgba(2, 6, 14, 0.72) 100%), url("${root.dataset.rouletteBg}")`;
+    root.style.backgroundPosition = 'center';
+    root.style.backgroundSize = 'cover';
+    root.style.backgroundRepeat = 'no-repeat';
+
     const text = (value, x, y, size, color, weight = 700, align = 'center') => {
         ctx.fillStyle = color;
         ctx.font = `${weight} ${size}px "Manrope Cappers", Inter, Arial, sans-serif`;
@@ -73,29 +78,7 @@
     };
 
     const drawBackground = () => {
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(10, 10, W - 20, H - 20, 22);
-        ctx.clip();
-        ctx.fillStyle = '#07111e';
-        ctx.fillRect(10, 10, W - 20, H - 20);
-        if (background) {
-            ctx.globalAlpha = .34;
-            cover(background, 10, 10, W - 20, H - 20);
-            ctx.globalAlpha = 1;
-        }
-        const glow = ctx.createRadialGradient(cx, 220, 10, cx, 260, 530);
-        glow.addColorStop(0, 'rgba(40,91,180,.34)');
-        glow.addColorStop(.55, 'rgba(7,20,40,.34)');
-        glow.addColorStop(1, 'rgba(3,8,15,.90)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(10, 10, W - 20, H - 20);
-        const shade = ctx.createLinearGradient(0, 170, 0, H);
-        shade.addColorStop(0, 'rgba(0,0,0,.02)');
-        shade.addColorStop(1, 'rgba(0,0,0,.60)');
-        ctx.fillStyle = shade;
-        ctx.fillRect(10, 10, W - 20, H - 20);
-        ctx.restore();
+        ctx.clearRect(0, 0, W, H);
     };
 
     const drawHeader = () => {
