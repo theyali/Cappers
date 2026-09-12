@@ -13,7 +13,7 @@
     const cy = 365;
     const radius = 286;
     const innerRadius = 95;
-    const slice = TAU / 8;
+    const MAX_SECTORS = 10;
     const colors = {
         blue: '#0b56fa',
         ink: '#131313',
@@ -22,23 +22,25 @@
         yellow: '#fbf110',
         white: '#ffffff',
     };
-    const iconSrc = (index) => root.getAttribute(`data-roulette-icon-${index}`);
-
-    const prizes = [
-        { title: '+500 ₽', sub: ['на виртуальный', 'баланс'], icon: iconSrc(1) },
-        { title: 'VIP', sub: ['на 1 день'], icon: iconSrc(2) },
-        { title: '5 бесплатных', sub: ['прогнозов'], icon: iconSrc(3) },
-        { title: '1000 ₽', sub: ['бонус'], icon: iconSrc(4) },
-        { title: 'Буст', sub: ['рейтинга'], icon: iconSrc(5) },
-        { title: 'Промокод', sub: [], icon: iconSrc(6) },
-        { title: 'Попытка', sub: ['завтра'], icon: iconSrc(7) },
-        { title: 'Скидка 20%', sub: ['на VIP'], icon: iconSrc(8) },
-    ];
+    const visualThemes = {
+        virtual_balance: { fill: colors.blue, text: colors.white },
+        vip_days: { fill: colors.yellow, text: colors.ink },
+        free_predictions: { fill: '#1748b6', text: colors.white },
+        promo_code: { fill: colors.panel, text: colors.white },
+        rating_boost: { fill: '#19346f', text: colors.white },
+        extra_spin: { fill: colors.blue, text: colors.white },
+        nothing: { fill: colors.ink, text: colors.white },
+    };
 
     const images = new Map();
+    let prizes = [];
     let rotation = 0;
     let spinning = false;
     let demoIndex = 0;
+    let enabled = false;
+    let availableSpins = 0;
+    let stateLoaded = false;
+    let stateError = '';
 
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
@@ -59,6 +61,49 @@
         ctx.fillText(value, x, y);
     };
 
+    const clampText = (value, maxLength) => {
+        const normalized = String(value || '').trim();
+        if (normalized.length <= maxLength) return normalized;
+        return `${normalized.slice(0, Math.max(1, maxLength - 1)).trim()}…`;
+    };
+
+    const splitSubtitle = (value, maxChars = 17, maxLines = 2) => {
+        const normalized = String(value || '').trim();
+        if (!normalized) return [];
+
+        const words = normalized.split(/\s+/);
+        const lines = [];
+        let current = '';
+
+        words.forEach((word) => {
+            if (lines.length >= maxLines) return;
+            const candidate = current ? `${current} ${word}` : word;
+            if (candidate.length <= maxChars) {
+                current = candidate;
+                return;
+            }
+            if (current) lines.push(current);
+            current = word;
+        });
+
+        if (current && lines.length < maxLines) lines.push(current);
+        if (lines.length === maxLines && words.join(' ').length > lines.join(' ').length) {
+            lines[maxLines - 1] = clampText(lines[maxLines - 1], maxChars);
+        }
+        return lines.slice(0, maxLines);
+    };
+
+    const normalizeSector = (item) => ({
+        prizeId: Number(item?.prize_id) || 0,
+        sectorOrder: Number(item?.sector_index) || 0,
+        title: String(item?.title || '').trim() || 'Приз',
+        sub: splitSubtitle(item?.short_text),
+        icon: String(item?.icon_url || '').trim(),
+        visualType: String(item?.visual_type || item?.reward_type || 'nothing'),
+        rewardType: String(item?.reward_type || ''),
+        rewardValue: String(item?.reward_value || ''),
+    });
+
     const loadImage = (src) => new Promise((resolve) => {
         if (!src) return resolve(null);
         const image = new Image();
@@ -67,13 +112,61 @@
         image.src = src;
     });
 
-    const prepare = async () => {
-        window.CappersSkeleton?.loading(root);
+    const prepareImages = async () => {
+        images.clear();
         const loaded = await Promise.all(prizes.map((item) => loadImage(item.icon)));
         loaded.forEach((image, index) => {
-            if (image) images.set(prizes[index].icon, image);
+            if (image && prizes[index]?.icon) images.set(prizes[index].icon, image);
         });
-        window.CappersSkeleton?.ready(root);
+    };
+
+    const prepare = async () => {
+        const stateUrl = root.dataset.rouletteStateUrl;
+        window.CappersSkeleton?.loading(root);
+        canvas.setAttribute('aria-busy', 'true');
+        stateError = '';
+
+        try {
+            if (!stateUrl) throw new Error('Не настроен URL состояния рулетки.');
+
+            const response = await fetch(stateUrl, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json' },
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload?.ok) {
+                throw new Error(payload?.error || 'Не удалось загрузить рулетку.');
+            }
+
+            enabled = Boolean(payload.enabled);
+            availableSpins = Math.max(0, Number(payload.available_spins) || 0);
+            prizes = Array.isArray(payload.sectors)
+                ? payload.sectors.slice(0, MAX_SECTORS).map(normalizeSector)
+                : [];
+            stateLoaded = true;
+
+            await prepareImages();
+        } catch (error) {
+            prizes = [];
+            enabled = false;
+            availableSpins = 0;
+            stateLoaded = true;
+            stateError = error instanceof Error ? error.message : 'Не удалось загрузить рулетку.';
+        } finally {
+            canvas.setAttribute('aria-busy', 'false');
+            window.CappersSkeleton?.ready(root);
+        }
+    };
+
+    const currentSlice = () => (prizes.length ? TAU / prizes.length : TAU);
+
+    const themeFor = (item, index) => {
+        const theme = visualThemes[item.visualType];
+        if (theme) return theme;
+        return index % 2 === 0
+            ? { fill: colors.panel, text: colors.white }
+            : { fill: colors.blue, text: colors.white };
     };
 
     const drawRing = () => {
@@ -113,7 +206,23 @@
         ctx.restore();
     };
 
+    const drawEmptyWheel = () => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = colors.panel;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+    };
+
     const drawWheel = () => {
+        if (!prizes.length) {
+            drawEmptyWheel();
+            return;
+        }
+
+        const slice = currentSlice();
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(rotation);
@@ -121,41 +230,61 @@
             const mid = -Math.PI / 2 + index * slice;
             const start = mid - slice / 2;
             const end = mid + slice / 2;
-            const fill = ctx.createRadialGradient(0, 0, 70, 0, 0, radius);
+            const theme = themeFor(item, index);
 
-            if (index % 2 === 0) {
-                fill.addColorStop(0, '#18243a');
-                fill.addColorStop(1, '#0d1727');
-            } else {
-                fill.addColorStop(0, '#123d92');
-                fill.addColorStop(1, colors.blue);
-            }
-
-            ctx.fillStyle = fill;
+            ctx.fillStyle = theme.fill;
             ctx.beginPath();
             ctx.moveTo(0, 0);
             ctx.arc(0, 0, radius, start, end);
             ctx.closePath();
             ctx.fill();
-            ctx.strokeStyle = '#08101c';
-            ctx.lineWidth = 2;
-            ctx.stroke();
         });
         ctx.restore();
 
-        const labelRadius = 205;
+        const labelRadius = prizes.length >= 9 ? 212 : 205;
+        const iconSize = prizes.length >= 9 ? 44 : 54;
         prizes.forEach((item, index) => {
             const angle = -Math.PI / 2 + index * slice + rotation;
             const x = cx + Math.cos(angle) * labelRadius;
             const y = cy + Math.sin(angle) * labelRadius;
             const image = images.get(item.icon);
+            const theme = themeFor(item, index);
+            const title = clampText(item.title, prizes.length >= 9 ? 12 : 16);
+            const titleSize = prizes.length >= 9
+                ? (title.length > 10 ? 14 : 16)
+                : (title.length > 11 ? 16 : 20);
 
-            if (image) ctx.drawImage(image, x - 27, y - 57, 54, 54);
-            text(item.title, x, y + 12, item.title.length > 11 ? 16 : 20, colors.white, 800);
-            item.sub.forEach((line, i) => {
-                text(line, x, y + 37 + i * 18, 14, 'rgba(255,255,255,.88)', 700);
+            if (image) {
+                ctx.drawImage(
+                    image,
+                    x - iconSize / 2,
+                    y - (prizes.length >= 9 ? 52 : 57),
+                    iconSize,
+                    iconSize,
+                );
+            }
+
+            text(title, x, y + 12, titleSize, theme.text, 800);
+            item.sub.forEach((line, lineIndex) => {
+                text(
+                    line,
+                    x,
+                    y + 37 + lineIndex * 18,
+                    prizes.length >= 9 ? 12 : 14,
+                    theme.text,
+                    700,
+                );
             });
         });
+    };
+
+    const centerLabel = () => {
+        if (!stateLoaded) return 'Загрузка…';
+        if (stateError) return 'Недоступно';
+        if (!enabled || !prizes.length) return 'Нет призов';
+        if (availableSpins <= 0) return 'Нет попыток';
+        if (spinning) return 'Крутим…';
+        return 'Крутить';
     };
 
     const drawCenter = () => {
@@ -166,20 +295,10 @@
         ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
 
-        const fill = ctx.createRadialGradient(-24, -34, 12, 0, 0, innerRadius);
-        fill.addColorStop(0, '#397fff');
-        fill.addColorStop(.6, colors.blue);
-        fill.addColorStop(1, '#0844c8');
-        ctx.fillStyle = fill;
+        ctx.fillStyle = colors.blue;
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius, 0, TAU);
         ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255,255,255,.28)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, innerRadius - 3, 0, TAU);
-        ctx.stroke();
 
         ctx.strokeStyle = colors.white;
         ctx.lineWidth = 5;
@@ -196,7 +315,8 @@
         ctx.closePath();
         ctx.fill();
 
-        text(spinning ? 'Крутим…' : 'Крутить', 0, 28, 26, colors.white, 800);
+        const label = centerLabel();
+        text(label, 0, 28, label.length > 10 ? 19 : 26, colors.white, 800);
         ctx.restore();
     };
 
@@ -236,11 +356,20 @@
     const ease = (value) => 1 - Math.pow(1 - value, 5);
 
     const spin = () => {
-        if (spinning) return;
+        if (
+            spinning
+            || !stateLoaded
+            || stateError
+            || !enabled
+            || availableSpins <= 0
+            || !prizes.length
+        ) return;
+
         spinning = true;
+        const slice = currentSlice();
         demoIndex = (demoIndex + 3) % prizes.length;
         const start = rotation;
-        const finish = rotation + TAU * 5 + slice * 3;
+        const finish = rotation + TAU * 5 + slice * demoIndex;
         const started = performance.now();
         const duration = 4300;
 
