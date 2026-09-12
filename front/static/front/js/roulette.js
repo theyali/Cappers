@@ -22,16 +22,17 @@
         yellow: '#fbf110',
         white: '#ffffff',
     };
+    const iconSrc = (index) => root.getAttribute(`data-roulette-icon-${index}`);
 
     const prizes = [
-        { title: '+500 ₽', sub: ['на виртуальный', 'баланс'], icon: root.dataset.rouletteIcon1 },
-        { title: 'VIP', sub: ['на 1 день'], icon: root.dataset.rouletteIcon2 },
-        { title: '5 бесплатных', sub: ['прогнозов'], icon: root.dataset.rouletteIcon3 },
-        { title: '1000 ₽', sub: ['бонус'], icon: root.dataset.rouletteIcon4 },
-        { title: 'Буст', sub: ['рейтинга'], icon: root.dataset.rouletteIcon5 },
-        { title: 'Промокод', sub: [], icon: root.dataset.rouletteIcon6 },
-        { title: 'Попытка', sub: ['завтра'], icon: root.dataset.rouletteIcon7 },
-        { title: 'Скидка 20%', sub: ['на VIP'], icon: root.dataset.rouletteIcon8 },
+        { title: '+500 ₽', sub: ['на виртуальный', 'баланс'], icon: iconSrc(1) },
+        { title: 'VIP', sub: ['на 1 день'], icon: iconSrc(2) },
+        { title: '5 бесплатных', sub: ['прогнозов'], icon: iconSrc(3) },
+        { title: '1000 ₽', sub: ['бонус'], icon: iconSrc(4) },
+        { title: 'Буст', sub: ['рейтинга'], icon: iconSrc(5) },
+        { title: 'Промокод', sub: [], icon: iconSrc(6) },
+        { title: 'Попытка', sub: ['завтра'], icon: iconSrc(7) },
+        { title: 'Скидка 20%', sub: ['на VIP'], icon: iconSrc(8) },
     ];
 
     const images = new Map();
