@@ -32,6 +32,10 @@
     <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5h14a2 2 0 0 1 2 2v8.5H6a2 2 0 0 1-2-2V7.5Zm0 0V6a2 2 0 0 1 2-2h10M15 12h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <span class="matches-table-scope-copy">Баланс</span>
 </a>
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'bonuses' %} is-active{% endif %}" href="{% url 'cabinet:bonuses' %}"{% if active_tab == 'bonuses' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="matches-table-scope-copy">Мои бонусы</span>
+</a>
 {% if request.user.is_staff or request.user.is_superuser %}
 <a class="{{ profile_tab_link_class }}{% if bots_admin_active %} is-active{% endif %}" href="{% url 'bots:manage_accounts' %}"{% if bots_admin_active %} aria-current="page"{% endif %}>
     <span class="matches-table-scope-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="8" r="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c.6-3.4 2.4-5.1 5.5-5.1s4.9 1.7 5.5 5.1M14 13.5c3.5-.4 5.7 1.3 6.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
