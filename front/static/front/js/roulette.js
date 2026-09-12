@@ -6,40 +6,33 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const WIDTH = 940;
-    const HEIGHT = 640;
-    const CENTER_X = 365;
-    const CENTER_Y = 310;
-    const WHEEL_RADIUS = 238;
-    const SEGMENT_ANGLE = (Math.PI * 2) / 6;
+    const W = 1180;
+    const H = 840;
     const TAU = Math.PI * 2;
-
-    const colors = {
-        blue: '#0b56fa',
-        ink: '#131313',
-        panel: '#1f1f21',
-        muted: '#707072',
-        yellow: '#fbf110',
-        white: '#ffffff',
-        black: '#0c0c0d',
-    };
+    const cx = 590;
+    const cy = 454;
+    const radius = 286;
+    const innerRadius = 95;
+    const slice = TAU / 8;
+    const colors = { blue: '#0b56fa', ink: '#131313', panel: '#1f1f21', muted: '#707072', yellow: '#fbf110', white: '#ffffff' };
 
     const prizes = [
-        { title: 'VIP', subtitle: 'на 1 день', icon: 'crown' },
-        { title: '+500 ₽', subtitle: 'на баланс', icon: 'coins' },
-        { title: '5 бесплатных', subtitle: 'прогнозов', icon: 'ticket' },
-        { title: 'Промокод', subtitle: '', icon: 'gift' },
-        { title: 'Буст', subtitle: 'рейтинга', icon: 'bars' },
-        { title: '1000 ₽', subtitle: 'freebet', icon: 'ball' },
+        { title: '+500 ₽', sub: ['на виртуальный', 'баланс'], icon: root.dataset.rouletteIcon1 },
+        { title: 'VIP', sub: ['на 1 день'], icon: root.dataset.rouletteIcon2 },
+        { title: '5 бесплатных', sub: ['прогнозов'], icon: root.dataset.rouletteIcon3 },
+        { title: '1000 ₽', sub: ['бонус'], icon: root.dataset.rouletteIcon4 },
+        { title: 'Буст', sub: ['рейтинга'], icon: root.dataset.rouletteIcon5 },
+        { title: 'Промокод', sub: [], icon: root.dataset.rouletteIcon6 },
+        { title: 'Попытка', sub: ['завтра'], icon: root.dataset.rouletteIcon7 },
+        { title: 'Скидка 20%', sub: ['на VIP'], icon: root.dataset.rouletteIcon8 },
     ];
 
-    const labelRotations = [0, 56, -56, 0, 56, -56].map((value) => value * Math.PI / 180);
-
+    const images = new Map();
+    let background = null;
     let rotation = 0;
     let spinning = false;
-    let selectedPrize = null;
-    let statusText = 'Нажми «Крутить», чтобы испытать удачу';
-    let countdownText = '--:--:--';
+    let demoIndex = 0;
+    let countdown = '--:--:--';
 
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
@@ -47,377 +40,319 @@
     canvas.style.cursor = 'pointer';
     canvas.style.touchAction = 'manipulation';
 
-    const roundedRect = (context, x, y, width, height, radius) => {
-        const r = Math.min(radius, width / 2, height / 2);
-        context.beginPath();
-        context.moveTo(x + r, y);
-        context.arcTo(x + width, y, x + width, y + height, r);
-        context.arcTo(x + width, y + height, x, y + height, r);
-        context.arcTo(x, y + height, x, y, r);
-        context.arcTo(x, y, x + width, y, r);
-        context.closePath();
-    };
-
-    const drawText = (text, x, y, size, color, weight = 700, align = 'center') => {
+    const text = (value, x, y, size, color, weight = 700, align = 'center') => {
         ctx.fillStyle = color;
         ctx.font = `${weight} ${size}px "Manrope Cappers", Inter, Arial, sans-serif`;
         ctx.textAlign = align;
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, x, y);
+        ctx.fillText(value, x, y);
     };
 
-    const drawCrown = () => {
-        ctx.fillStyle = colors.yellow;
+    const loadImage = (src) => new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+    });
+
+    const cover = (image, x, y, width, height) => {
+        if (!image?.naturalWidth || !image?.naturalHeight) return;
+        const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+        const sw = width / scale;
+        const sh = height / scale;
+        ctx.drawImage(image, (image.naturalWidth - sw) / 2, (image.naturalHeight - sh) / 2, sw, sh, x, y, width, height);
+    };
+
+    const prepare = async () => {
+        window.CappersSkeleton?.loading(root);
+        const loaded = await Promise.all([loadImage(root.dataset.rouletteBg), ...prizes.map((item) => loadImage(item.icon))]);
+        background = loaded[0];
+        loaded.slice(1).forEach((image, index) => { if (image) images.set(prizes[index].icon, image); });
+        window.CappersSkeleton?.ready(root);
+    };
+
+    const drawBackground = () => {
+        ctx.save();
         ctx.beginPath();
-        ctx.moveTo(-25, -5);
-        ctx.lineTo(-15, 17);
-        ctx.lineTo(0, 2);
-        ctx.lineTo(15, 17);
-        ctx.lineTo(25, -5);
-        ctx.lineTo(19, 24);
-        ctx.lineTo(-19, 24);
-        ctx.closePath();
-        ctx.fill();
-        roundedRect(ctx, -20, 29, 40, 7, 3.5);
-        ctx.fill();
-    };
-
-    const drawCoins = () => {
-        ctx.fillStyle = colors.yellow;
-        [-14, -5, 4].forEach((y) => {
-            ctx.beginPath();
-            ctx.ellipse(0, y, 23, 8, 0, 0, TAU);
-            ctx.fill();
-            ctx.fillRect(-23, y, 46, 8);
-        });
-    };
-
-    const drawTicket = () => {
-        ctx.fillStyle = colors.yellow;
-        ctx.beginPath();
-        ctx.moveTo(-31, -18);
-        ctx.lineTo(31, -18);
-        ctx.lineTo(31, -7);
-        ctx.arc(31, 0, 7, -Math.PI / 2, Math.PI / 2, true);
-        ctx.lineTo(31, 18);
-        ctx.lineTo(-31, 18);
-        ctx.lineTo(-31, 7);
-        ctx.arc(-31, 0, 7, Math.PI / 2, -Math.PI / 2, true);
-        ctx.closePath();
-        ctx.fill();
-        drawText('1+1', 0, 1, 16, colors.ink, 800);
-    };
-
-    const drawGift = () => {
-        ctx.fillStyle = colors.yellow;
-        roundedRect(ctx, -28, -8, 56, 38, 6);
-        ctx.fill();
-        ctx.fillStyle = colors.ink;
-        ctx.fillRect(-4, -8, 8, 38);
-        ctx.fillStyle = colors.yellow;
-        ctx.beginPath();
-        ctx.moveTo(0, -8);
-        ctx.bezierCurveTo(-3, -28, -25, -30, -24, -15);
-        ctx.bezierCurveTo(-23, -5, -10, -3, 0, 1);
-        ctx.bezierCurveTo(10, -3, 23, -5, 24, -15);
-        ctx.bezierCurveTo(25, -30, 3, -28, 0, -8);
-        ctx.fill();
-    };
-
-    const drawBars = () => {
-        ctx.fillStyle = colors.yellow;
-        roundedRect(ctx, -29, 5, 14, 29, 3);
-        ctx.fill();
-        roundedRect(ctx, -7, -10, 14, 44, 3);
-        ctx.fill();
-        roundedRect(ctx, 15, -28, 14, 62, 3);
-        ctx.fill();
-    };
-
-    const drawBall = () => {
-        ctx.fillStyle = colors.yellow;
-        ctx.beginPath();
-        ctx.arc(0, 0, 28, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = colors.ink;
-        ctx.beginPath();
-        for (let i = 0; i < 5; i += 1) {
-            const angle = -Math.PI / 2 + i * TAU / 5;
-            const x = Math.cos(angle) * 10;
-            const y = Math.sin(angle) * 10;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+        ctx.roundRect(10, 10, W - 20, H - 20, 22);
+        ctx.clip();
+        ctx.fillStyle = '#07111e';
+        ctx.fillRect(10, 10, W - 20, H - 20);
+        if (background) {
+            ctx.globalAlpha = .34;
+            cover(background, 10, 10, W - 20, H - 20);
+            ctx.globalAlpha = 1;
         }
-        ctx.closePath();
-        ctx.fill();
-        for (let i = 0; i < 5; i += 1) {
-            const angle = -Math.PI / 2 + i * TAU / 5;
+        const glow = ctx.createRadialGradient(cx, 220, 10, cx, 260, 530);
+        glow.addColorStop(0, 'rgba(40,91,180,.34)');
+        glow.addColorStop(.55, 'rgba(7,20,40,.34)');
+        glow.addColorStop(1, 'rgba(3,8,15,.90)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(10, 10, W - 20, H - 20);
+        const shade = ctx.createLinearGradient(0, 170, 0, H);
+        shade.addColorStop(0, 'rgba(0,0,0,.02)');
+        shade.addColorStop(1, 'rgba(0,0,0,.60)');
+        ctx.fillStyle = shade;
+        ctx.fillRect(10, 10, W - 20, H - 20);
+        ctx.restore();
+    };
+
+    const drawHeader = () => {
+        text('Личный кабинет   ›   Мои бонусы   ›   Ежедневная рулетка', 38, 40, 13, 'rgba(220,228,246,.62)', 700, 'left');
+        text('Ежедневная рулетка', 38, 92, 40, colors.white, 800, 'left');
+        text('Крути колесо и получай приятные бонусы каждый день', 38, 130, 17, 'rgba(233,238,251,.74)', 600, 'left');
+    };
+
+    const drawNotes = () => {
+        ctx.save();
+        ctx.translate(986, 92);
+        ctx.rotate(-.10);
+        text('Маленькие бонусы', 0, 0, 17, 'rgba(160,181,224,.58)', 700);
+        text('большим победам', 0, 24, 17, 'rgba(160,181,224,.58)', 700);
+        ctx.fillStyle = colors.blue;
+        ctx.fillRect(-38, 43, 76, 3);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(1035, 352);
+        ctx.rotate(-.17);
+        ['УДАЧА', 'ТОЖЕ', 'СТРАТЕГИЯ'].forEach((line, i) => text(line, 0, i * 24, 19, 'rgba(170,190,232,.56)', 800));
+        ctx.strokeStyle = 'rgba(170,190,232,.56)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-38, 69);
+        ctx.lineTo(39, 55);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(118, 646);
+        ctx.rotate(-.14);
+        ['СЕГОДНЯ', 'БЛИЖЕ', 'К ПОБЕДЕ'].forEach((line, i) => text(line, 0, i * 26, 20, 'rgba(170,190,232,.56)', 800));
+        ctx.strokeStyle = colors.blue;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-34, 74);
+        ctx.lineTo(45, 74);
+        ctx.stroke();
+        ctx.restore();
+    };
+
+    const drawRing = () => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.shadowColor = 'rgba(62,122,255,.72)';
+        ctx.shadowBlur = 28;
+        ctx.strokeStyle = 'rgba(49,101,213,.36)';
+        ctx.lineWidth = 18;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 24, 0, TAU);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#1b2637';
+        ctx.lineWidth = 17;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 20, 0, TAU);
+        ctx.stroke();
+        ctx.strokeStyle = colors.blue;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 9, 0, TAU);
+        ctx.stroke();
+        for (let i = 0; i < 16; i += 1) {
+            const angle = -Math.PI / 2 + i * TAU / 16;
+            const r = radius + 24;
+            ctx.save();
+            ctx.shadowColor = '#fff';
+            ctx.shadowBlur = 11;
+            ctx.fillStyle = '#f7fbff';
             ctx.beginPath();
-            ctx.arc(Math.cos(angle) * 19, Math.sin(angle) * 19, 4, 0, TAU);
+            ctx.arc(Math.cos(angle) * r, Math.sin(angle) * r, 4, 0, TAU);
             ctx.fill();
+            ctx.restore();
         }
-    };
-
-    const drawIcon = (icon) => {
-        if (icon === 'crown') drawCrown();
-        if (icon === 'coins') drawCoins();
-        if (icon === 'ticket') drawTicket();
-        if (icon === 'gift') drawGift();
-        if (icon === 'bars') drawBars();
-        if (icon === 'ball') drawBall();
-    };
-
-    const drawPanel = () => {
-        ctx.fillStyle = colors.ink;
-        roundedRect(ctx, 18, 18, 904, 604, 28);
-        ctx.fill();
+        ctx.restore();
     };
 
     const drawWheel = () => {
         ctx.save();
-        ctx.translate(CENTER_X, CENTER_Y);
-
-        ctx.fillStyle = colors.blue;
-        ctx.beginPath();
-        ctx.arc(0, 0, WHEEL_RADIUS + 16, 0, TAU);
-        ctx.fill();
-
-        ctx.fillStyle = colors.black;
-        ctx.beginPath();
-        ctx.arc(0, 0, WHEEL_RADIUS + 8, 0, TAU);
-        ctx.fill();
-
-        ctx.save();
+        ctx.translate(cx, cy);
         ctx.rotate(rotation);
-
-        prizes.forEach((prize, index) => {
-            const centerAngle = -Math.PI / 2 + index * SEGMENT_ANGLE;
-            const startAngle = centerAngle - SEGMENT_ANGLE / 2;
-            const endAngle = centerAngle + SEGMENT_ANGLE / 2;
-
-            ctx.fillStyle = index % 2 === 0 ? colors.panel : colors.blue;
+        prizes.forEach((item, index) => {
+            const mid = -Math.PI / 2 + index * slice;
+            const start = mid - slice / 2;
+            const end = mid + slice / 2;
+            const fill = ctx.createRadialGradient(0, 0, 70, 0, 0, radius);
+            if (index % 2 === 0) {
+                fill.addColorStop(0, '#18243a');
+                fill.addColorStop(1, '#0d1727');
+            } else {
+                fill.addColorStop(0, '#123d92');
+                fill.addColorStop(1, colors.blue);
+            }
+            ctx.fillStyle = fill;
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.arc(0, 0, WHEEL_RADIUS, startAngle, endAngle);
+            ctx.arc(0, 0, radius, start, end);
             ctx.closePath();
             ctx.fill();
-
-            const labelRadius = 156;
-            const labelX = Math.cos(centerAngle) * labelRadius;
-            const labelY = Math.sin(centerAngle) * labelRadius;
-
-            ctx.save();
-            ctx.translate(labelX, labelY);
-            ctx.rotate(labelRotations[index]);
-            ctx.save();
-            ctx.translate(0, -34);
-            drawIcon(prize.icon);
-            ctx.restore();
-            drawText(prize.title, 0, 16, prize.title.length > 10 ? 17 : 20, colors.white, 800);
-            if (prize.subtitle) drawText(prize.subtitle, 0, 39, 14, colors.white, 700);
-            ctx.restore();
+            ctx.strokeStyle = '#08101c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         });
-
         ctx.restore();
 
-        ctx.fillStyle = colors.black;
-        ctx.beginPath();
-        ctx.arc(0, 0, 98, 0, TAU);
-        ctx.fill();
+        const labelRadius = 205;
+        prizes.forEach((item, index) => {
+            const angle = -Math.PI / 2 + index * slice + rotation;
+            const x = cx + Math.cos(angle) * labelRadius;
+            const y = cy + Math.sin(angle) * labelRadius;
+            const image = images.get(item.icon);
+            if (image) ctx.drawImage(image, x - 27, y - 57, 54, 54);
+            text(item.title, x, y + 12, item.title.length > 11 ? 16 : 20, colors.white, 800);
+            item.sub.forEach((line, i) => text(line, x, y + 37 + i * 18, 14, 'rgba(255,255,255,.88)', 700));
+        });
+    };
 
-        ctx.fillStyle = colors.blue;
+    const drawCenter = () => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = '#07111f';
         ctx.beginPath();
-        ctx.arc(0, 0, 87, 0, TAU);
+        ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
-
+        const fill = ctx.createRadialGradient(-24, -34, 12, 0, 0, innerRadius);
+        fill.addColorStop(0, '#397fff');
+        fill.addColorStop(.6, colors.blue);
+        fill.addColorStop(1, '#0844c8');
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.arc(0, 0, innerRadius, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.28)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, innerRadius - 3, 0, TAU);
+        ctx.stroke();
         ctx.strokeStyle = colors.white;
-        ctx.lineWidth = 7;
+        ctx.lineWidth = 5;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(0, -16, 28, Math.PI * 1.15, Math.PI * 1.88);
+        ctx.arc(0, -20, 24, Math.PI * 1.12, Math.PI * 1.86);
         ctx.stroke();
-
         ctx.fillStyle = colors.white;
         ctx.beginPath();
-        ctx.moveTo(24, -40);
-        ctx.lineTo(35, -19);
-        ctx.lineTo(12, -18);
+        ctx.moveTo(20, -43);
+        ctx.lineTo(31, -24);
+        ctx.lineTo(10, -22);
         ctx.closePath();
         ctx.fill();
-
-        drawText(spinning ? 'Крутим' : 'Крутить', 0, 28, 25, colors.white, 800);
+        text(spinning ? 'Крутим…' : 'Крутить', 0, 28, 26, colors.white, 800);
         ctx.restore();
     };
 
     const drawPointer = () => {
+        ctx.save();
+        ctx.shadowColor = 'rgba(251,241,16,.55)';
+        ctx.shadowBlur = 18;
         ctx.fillStyle = colors.yellow;
         ctx.beginPath();
-        ctx.moveTo(CENTER_X, 43);
-        ctx.lineTo(CENTER_X + 31, 93);
-        ctx.lineTo(CENTER_X - 31, 93);
+        ctx.moveTo(cx, cy - radius - 50);
+        ctx.lineTo(cx + 27, cy - radius - 2);
+        ctx.lineTo(cx - 27, cy - radius - 2);
         ctx.closePath();
         ctx.fill();
-    };
-
-    const drawInfo = () => {
-        drawText('МАЛЕНЬКИЕ БОНУСЫ', 665, 116, 15, colors.muted, 800, 'left');
-        drawText('БОЛЬШИМ ПОБЕДАМ', 665, 142, 18, colors.blue, 800, 'left');
-
-        ctx.fillStyle = colors.panel;
-        roundedRect(ctx, 650, 210, 236, 172, 18);
-        ctx.fill();
-
-        drawText('ДЕМО-РЕЖИМ', 674, 238, 12, colors.yellow, 800, 'left');
-        drawText(selectedPrize ? 'ТВОЙ ПРИЗ' : 'ЕЖЕДНЕВНЫЙ ШАНС', 674, 270, 14, colors.muted, 800, 'left');
-
-        if (selectedPrize) {
-            drawText(selectedPrize.title, 674, 305, selectedPrize.title.length > 12 ? 20 : 25, colors.white, 800, 'left');
-            if (selectedPrize.subtitle) drawText(selectedPrize.subtitle, 674, 334, 16, colors.white, 700, 'left');
-        } else {
-            drawText('6 возможных призов', 674, 306, 21, colors.white, 800, 'left');
-            drawText('1 вращение каждый день', 674, 337, 15, colors.white, 700, 'left');
-        }
-
-        drawText('Начисление подключим позже', 674, 362, 12, colors.muted, 700, 'left');
-
-        ctx.fillStyle = colors.blue;
-        roundedRect(ctx, 650, 412, 236, 94, 18);
-        ctx.fill();
-        drawText('СЛЕДУЮЩАЯ ПОПЫТКА', 674, 437, 12, colors.white, 800, 'left');
-        drawText(countdownText, 674, 472, 29, colors.white, 800, 'left');
+        ctx.restore();
     };
 
     const drawFooter = () => {
-        ctx.save();
-        ctx.translate(72, 575);
-        drawGift();
-        ctx.restore();
-        drawText('1 бесплатное вращение каждый день', 112, 578, 16, colors.white, 800, 'left');
-        drawText(statusText, 470, 606, 13, colors.muted, 700, 'center');
+        const y = 786;
+        const gift = images.get(prizes[5].icon);
+        if (gift) ctx.drawImage(gift, 215, y - 23, 44, 44);
+        text('1 бесплатное вращение каждый день', 273, y, 16, colors.white, 800, 'left');
+        ctx.fillStyle = 'rgba(255,255,255,.18)';
+        ctx.fillRect(585, y - 17, 2, 34);
+        ctx.strokeStyle = 'rgba(255,255,255,.85)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(625, y, 13, 0, TAU);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(625, y - 7);
+        ctx.lineTo(625, y);
+        ctx.lineTo(631, y + 4);
+        ctx.stroke();
+        text('Следующая попытка через', 651, y, 15, 'rgba(224,231,246,.68)', 700, 'left');
+        text(countdown, 847, y, 17, colors.white, 800, 'left');
     };
 
     const draw = () => {
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
-        drawPanel();
+        ctx.clearRect(0, 0, W, H);
+        drawBackground();
+        drawHeader();
+        drawNotes();
+        drawRing();
         drawWheel();
+        drawCenter();
         drawPointer();
-        drawInfo();
         drawFooter();
     };
 
-    const setCanvasSize = () => {
+    const resize = () => {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const availableWidth = Math.max(220, root.clientWidth - 48);
-        const displayWidth = Math.min(WIDTH, availableWidth);
-        const displayHeight = Math.round(displayWidth * HEIGHT / WIDTH);
-
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-        canvas.width = Math.round(WIDTH * dpr);
-        canvas.height = Math.round(HEIGHT * dpr);
+        const width = Math.min(W, Math.max(260, root.clientWidth - 40));
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${Math.round(width * H / W)}px`;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         draw();
     };
 
-    const normalizeDegrees = (value) => ((value % 360) + 360) % 360;
-    const easeOutQuint = (value) => 1 - Math.pow(1 - value, 5);
-
+    const ease = (value) => 1 - Math.pow(1 - value, 5);
     const spin = () => {
         if (spinning) return;
-
         spinning = true;
-        selectedPrize = null;
-        statusText = 'Рулетка крутится…';
-        canvas.setAttribute('aria-disabled', 'true');
-
-        const prizeIndex = Math.floor(Math.random() * prizes.length);
-        const landingJitter = (Math.random() * 28) - 14;
-        const currentDegrees = normalizeDegrees(rotation * 180 / Math.PI);
-        const targetDegrees = normalizeDegrees(-prizeIndex * 60 + landingJitter);
-        const delta = normalizeDegrees(targetDegrees - currentDegrees);
-        const startDegrees = rotation * 180 / Math.PI;
-        const endDegrees = startDegrees + 6 * 360 + delta;
+        demoIndex = (demoIndex + 3) % prizes.length;
+        const start = rotation;
+        const finish = rotation + TAU * 5 + slice * 3;
+        const started = performance.now();
         const duration = 4300;
-        const startedAt = performance.now();
-
-        const animate = (now) => {
-            const progress = Math.min((now - startedAt) / duration, 1);
-            const eased = easeOutQuint(progress);
-            const degrees = startDegrees + (endDegrees - startDegrees) * eased;
-            rotation = degrees * Math.PI / 180;
+        const frame = (now) => {
+            const progress = Math.min((now - started) / duration, 1);
+            rotation = start + (finish - start) * ease(progress);
             draw();
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-                return;
-            }
-
-            rotation = normalizeDegrees(endDegrees) * Math.PI / 180;
+            if (progress < 1) return requestAnimationFrame(frame);
+            rotation = finish % TAU;
             spinning = false;
-            selectedPrize = prizes[prizeIndex];
-            statusText = `Выпало: ${selectedPrize.title}${selectedPrize.subtitle ? ` — ${selectedPrize.subtitle}` : ''}`;
-            canvas.removeAttribute('aria-disabled');
-            canvas.setAttribute('aria-label', `${statusText}. Демо-режим, приз пока не начисляется.`);
             draw();
         };
-
-        requestAnimationFrame(animate);
+        requestAnimationFrame(frame);
     };
-
-    const eventPoint = (event) => {
-        const rect = canvas.getBoundingClientRect();
-        return {
-            x: (event.clientX - rect.left) * WIDTH / rect.width,
-            y: (event.clientY - rect.top) * HEIGHT / rect.height,
-        };
-    };
-
-    canvas.addEventListener('click', (event) => {
-        const point = eventPoint(event);
-        const distance = Math.hypot(point.x - CENTER_X, point.y - CENTER_Y);
-        if (distance <= 105) spin();
-    });
-
-    canvas.addEventListener('mousemove', (event) => {
-        const point = eventPoint(event);
-        const distance = Math.hypot(point.x - CENTER_X, point.y - CENTER_Y);
-        canvas.style.cursor = distance <= 105 && !spinning ? 'pointer' : 'default';
-    });
-
-    canvas.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        spin();
-    });
 
     const updateCountdown = () => {
         const now = new Date();
-        const nextAttempt = new Date(now);
-        nextAttempt.setHours(24, 0, 0, 0);
-        const secondsLeft = Math.max(0, Math.floor((nextAttempt - now) / 1000));
-        const hours = Math.floor(secondsLeft / 3600);
-        const minutes = Math.floor((secondsLeft % 3600) / 60);
-        const seconds = secondsLeft % 60;
-        countdownText = [hours, minutes, seconds]
+        const next = new Date(now);
+        next.setHours(24, 0, 0, 0);
+        const left = Math.max(0, Math.floor((next - now) / 1000));
+        countdown = [Math.floor(left / 3600), Math.floor((left % 3600) / 60), left % 60]
             .map((value) => String(value).padStart(2, '0'))
             .join(':');
         draw();
     };
 
-    let resizeFrame = 0;
-    const resize = () => {
-        cancelAnimationFrame(resizeFrame);
-        resizeFrame = requestAnimationFrame(setCanvasSize);
-    };
+    canvas.addEventListener('click', spin);
+    canvas.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        spin();
+    });
+    window.addEventListener('resize', resize);
 
-    if ('ResizeObserver' in window) {
-        const observer = new ResizeObserver(resize);
-        observer.observe(root);
-    } else {
-        window.addEventListener('resize', resize);
-    }
-
-    setCanvasSize();
-    updateCountdown();
-    window.setInterval(updateCountdown, 1000);
+    prepare().finally(() => {
+        resize();
+        updateCountdown();
+        window.setInterval(updateCountdown, 1000);
+    });
 })();
