@@ -69,7 +69,7 @@ class RouletteApiTests(TestCase):
         sector = payload["sectors"][0]
         self.assertEqual(sector["prize_id"], prize.pk)
         self.assertEqual(sector["sector_index"], 2)
-        self.assertEqual(sector["visual_type"], RoulettePrize.RewardType.PROMO_CODE)
+        self.assertEqual(sector["visual_type"], "default")
         self.assertNotIn("weight", sector)
         self.assertNotIn("reward_text", sector)
         self.assertNotIn("SECRET-20", response.content.decode("utf-8"))
