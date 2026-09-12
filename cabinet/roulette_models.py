@@ -131,7 +131,7 @@ class RoulettePrize(models.Model):
         verbose_name_plural = "Призы рулетки"
         ordering = ("sector_order", "id")
         indexes = [
-            models.Index(fields=("is_active", "sector_order"), name="roulette_prize_active_order_idx"),
+            models.Index(fields=("is_active", "sector_order"), name="roulette_prize_active_idx"),
             models.Index(fields=("is_active", "active_from", "active_until"), name="roulette_prize_period_idx"),
         ]
         constraints = [
