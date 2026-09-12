@@ -133,6 +133,7 @@ class RouletteSpin(models.Model):
         next_spin_at=None,
         spun_at=None,
         reward_status=None,
+        operation_id=None,
     ):
         if attempts_before < 0 or attempts_after < 0:
             raise ValidationError("Количество попыток не может быть отрицательным.")
@@ -144,16 +145,19 @@ class RouletteSpin(models.Model):
                 else cls.RewardStatus.PENDING
             )
 
-        return cls.objects.create(
-            user=user,
-            prize=prize,
-            spun_at=spun_at or timezone.now(),
-            attempts_before=attempts_before,
-            attempts_after=attempts_after,
-            next_spin_at=next_spin_at,
-            reward_status=reward_status,
+        create_kwargs = {
+            "user": user,
+            "prize": prize,
+            "spun_at": spun_at or timezone.now(),
+            "attempts_before": attempts_before,
+            "attempts_after": attempts_after,
+            "next_spin_at": next_spin_at,
+            "reward_status": reward_status,
             **cls.snapshot_from_prize(prize),
-        )
+        }
+        if operation_id is not None:
+            create_kwargs["operation_id"] = operation_id
+        return cls.objects.create(**create_kwargs)
 
     def mark_issued(self, *, issued_at=None) -> None:
         self.reward_status = self.RewardStatus.ISSUED
