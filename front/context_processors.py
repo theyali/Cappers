@@ -13,6 +13,24 @@ def _route_url(name: str):
         return None
 
 
+def _roulette_available_spins(request) -> int:
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        return 0
+
+    try:
+        from cabinet.roulette_models import RouletteSettings
+        from cabinet.roulette_services import get_user_roulette_state
+
+        roulette_settings = RouletteSettings.load()
+        if not roulette_settings.is_enabled:
+            return 0
+        return max(0, int(get_user_roulette_state(user).available_spins))
+    except (OperationalError, ProgrammingError):
+        # Keep global pages available during deploys before roulette migrations finish.
+        return 0
+
+
 def _breadcrumbs_for_request(request):
     match = request.resolver_match
     view_name = match.view_name if match else ""
@@ -128,4 +146,5 @@ def website_settings(request):
         "breadcrumbs": _breadcrumbs_for_request(request),
         "hide_footer": view_name == "front:prediction_detail",
         "home_wiki_videos": home_wiki_videos,
+        "roulette_available_spins": _roulette_available_spins(request),
     }
