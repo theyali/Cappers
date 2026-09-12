@@ -24,107 +24,16 @@
                     </div>
                 </div>
 
-                <svg
-                    data-roulette-stage
-                    width="100%"
-                    height="680"
-                    viewBox="0 0 940 720"
-                    preserveAspectRatio="xMidYMin meet"
-                    role="img"
-                    aria-labelledby="roulette-title roulette-description"
+                <canvas
+                    data-roulette-canvas
+                    width="940"
+                    height="640"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
                 >
-                    <title id="roulette-title">Ежедневная рулетка бонусов</title>
-                    <desc id="roulette-description">Демонстрационная рулетка с шестью видами бонусов. Начисление призов пока не подключено.</desc>
-
-                    <rect x="18" y="18" width="904" height="666" rx="28" fill="#131313"/>
-
-                    <text x="720" y="78" fill="#707072" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle">МАЛЕНЬКИЕ БОНУСЫ</text>
-                    <text x="720" y="102" fill="#0b56fa" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle">БОЛЬШИМ ПОБЕДАМ</text>
-
-                    <circle cx="470" cy="350" r="270" fill="#0b56fa"/>
-                    <circle cx="470" cy="350" r="261" fill="#131313"/>
-
-                    <g data-roulette-rotor>
-                        <path d="M470 350 L470 104 A246 246 0 0 1 683.04 227 Z" fill="#1f1f21"/>
-                        <path d="M470 350 L683.04 227 A246 246 0 0 1 683.04 473 Z" fill="#0b56fa"/>
-                        <path d="M470 350 L683.04 473 A246 246 0 0 1 470 596 Z" fill="#1f1f21"/>
-                        <path d="M470 350 L470 596 A246 246 0 0 1 256.96 473 Z" fill="#0b56fa"/>
-                        <path d="M470 350 L256.96 473 A246 246 0 0 1 256.96 227 Z" fill="#1f1f21"/>
-                        <path d="M470 350 L256.96 227 A246 246 0 0 1 470 104 Z" fill="#0b56fa"/>
-
-                        <g transform="translate(470 178)" aria-label="VIP на 1 день">
-                            <path d="M-24 -18 L-11 4 L0 -13 L11 4 L24 -18 L19 13 L-19 13 Z" fill="#fbf110"/>
-                            <rect x="-19" y="18" width="38" height="7" rx="3.5" fill="#fbf110"/>
-                            <text x="0" y="52" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">VIP</text>
-                            <text x="0" y="73" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">на 1 день</text>
-                        </g>
-
-                        <g transform="translate(610 260)" aria-label="500 рублей на виртуальный баланс">
-                            <ellipse cx="0" cy="-23" rx="23" ry="8" fill="#fbf110"/>
-                            <rect x="-23" y="-23" width="46" height="11" fill="#fbf110"/>
-                            <ellipse cx="0" cy="-12" rx="23" ry="8" fill="#fbf110"/>
-                            <rect x="-23" y="-12" width="46" height="11" fill="#fbf110"/>
-                            <ellipse cx="0" cy="-1" rx="23" ry="8" fill="#fbf110"/>
-                            <text x="0" y="36" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="700" text-anchor="middle">+500 ₽</text>
-                            <text x="0" y="57" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">на баланс</text>
-                        </g>
-
-                        <g transform="translate(610 438)" aria-label="5 бесплатных прогнозов">
-                            <path d="M-34 -26 H34 V-8 C26 -8 26 8 34 8 V26 H-34 V8 C-26 8 -26 -8 -34 -8 Z" fill="#0b56fa"/>
-                            <text x="0" y="7" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">1+1</text>
-                            <text x="0" y="58" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="700" text-anchor="middle">5 бесплатных</text>
-                            <text x="0" y="80" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">прогнозов</text>
-                        </g>
-
-                        <g transform="translate(470 520)" aria-label="Промокод">
-                            <rect x="-31" y="-19" width="62" height="46" rx="7" fill="#fbf110"/>
-                            <rect x="-5" y="-19" width="10" height="46" fill="#131313"/>
-                            <path d="M0 -19 C-4 -34 -23 -37 -25 -24 C-26 -14 -12 -10 0 -3 C12 -10 26 -14 25 -24 C23 -37 4 -34 0 -19 Z" fill="#fbf110"/>
-                            <text x="0" y="58" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Промокод</text>
-                        </g>
-
-                        <g transform="translate(330 438)" aria-label="Буст рейтинга">
-                            <rect x="-29" y="5" width="14" height="29" rx="3" fill="#ffffff"/>
-                            <rect x="-7" y="-10" width="14" height="44" rx="3" fill="#ffffff"/>
-                            <rect x="15" y="-28" width="14" height="62" rx="3" fill="#ffffff"/>
-                            <text x="0" y="62" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle">Буст</text>
-                            <text x="0" y="83" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">рейтинга</text>
-                        </g>
-
-                        <g transform="translate(330 260)" aria-label="1000 рублей freebet">
-                            <circle cx="0" cy="-13" r="29" fill="#fbf110"/>
-                            <circle cx="0" cy="-13" r="14" fill="#131313"/>
-                            <text x="0" y="-7" fill="#fbf110" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="800" text-anchor="middle">₽</text>
-                            <text x="0" y="38" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="700" text-anchor="middle">1000 ₽</text>
-                            <text x="0" y="59" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">freebet</text>
-                        </g>
-                    </g>
-
-                    <circle cx="470" cy="350" r="98" fill="#131313"/>
-                    <circle cx="470" cy="350" r="88" fill="#0b56fa"/>
-                    <g data-roulette-spin role="button" tabindex="0" aria-label="Крутить рулетку" cursor="pointer">
-                        <path d="M448 325 A30 30 0 0 1 496 320" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-                        <path d="M493 306 L500 321 L484 323 Z" fill="#ffffff"/>
-                        <text x="470" y="371" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="800" text-anchor="middle">Крутить</text>
-                    </g>
-
-                    <path d="M470 70 L500 116 H440 Z" fill="#fbf110"/>
-
-                    <g transform="translate(225 639)">
-                        <rect x="-18" y="-20" width="36" height="34" rx="6" fill="#0b56fa"/>
-                        <path d="M0 -20 V14 M-18 -7 H18 M0 -20 C-2 -33 -18 -34 -18 -23 C-18 -15 -8 -12 0 -7 C8 -12 18 -15 18 -23 C18 -34 2 -33 0 -20 Z" fill="none" stroke="#ffffff" stroke-width="4"/>
-                        <text x="34" y="4" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">1 бесплатное вращение каждый день</text>
-                    </g>
-
-                    <g transform="translate(625 639)">
-                        <circle cx="0" cy="-2" r="20" fill="#1f1f21"/>
-                        <path d="M0 -13 V-1 L9 5" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
-                        <text x="34" y="4" fill="#707072" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600">Следующая попытка через</text>
-                        <text data-roulette-countdown x="256" y="4" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="end">23:41:12</text>
-                    </g>
-
-                    <text data-roulette-result x="470" y="676" fill="#707072" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">Демо-режим: начисление призов будет подключено позже</text>
-                </svg>
+                    Ваш браузер не поддерживает canvas.
+                </canvas>
             </div>
         </section>
     </div>
