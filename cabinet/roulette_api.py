@@ -76,6 +76,8 @@ def _snapshot_icon_url(request, icon_name: str) -> str:
 
 def _serialize_sector(request, prize) -> dict:
     # Deliberately do not expose `weight` or promo-code `reward_text` here.
+    # The canvas owns the classic alternating dark/blue palette. Reward type
+    # must not recolor a sector (for example VIP must not become yellow).
     return {
         "prize_id": prize.pk,
         "sector_index": prize.sector_order,
@@ -83,7 +85,7 @@ def _serialize_sector(request, prize) -> dict:
         "short_text": prize.short_text,
         "icon_url": _current_prize_icon_url(request, prize),
         "reward_type": prize.reward_type,
-        "visual_type": prize.reward_type,
+        "visual_type": "default",
         "reward_value": str(prize.reward_value),
     }
 
@@ -96,7 +98,7 @@ def _serialize_spin_prize(request, spin: RouletteSpin) -> dict:
         "short_text": spin.prize_short_text,
         "icon_url": _snapshot_icon_url(request, spin.prize_icon),
         "reward_type": spin.reward_type,
-        "visual_type": spin.reward_type,
+        "visual_type": "default",
         "reward_value": str(spin.reward_value),
         "reward_text": spin.reward_text,
     }
