@@ -411,12 +411,29 @@ mark{
 
 .fixed-tg-btn-wrapper {
     position: fixed;
-    right: 0;
-    top: 50%;
+    right: 24px;
+    top: auto;
+    bottom: 24px;
     z-index: 50;
-    transform: translateY(-50%);
+    transform: none;
 }
-
+.fixed-roulette{
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--green);
+    text-align: center;
+    position: fixed;
+    left: 24px;
+    top: auto;
+    width: 72px;
+    height: 72px;
+    bottom: 24px;
+    z-index: 50;
+    transform: none;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
 .fixed-tg-btn {
     min-width: 120px;
     min-height: 88px;
@@ -30889,14 +30906,6 @@ body.register {
 }
 
 
-/* Merged from front/static/front/css/floating-actions.css */
-.fixed-tg-btn-wrapper {
-    right: 24px;
-    top: auto;
-    bottom: 24px;
-    z-index: 50;
-    transform: none;
-}
 
 .fixed-tg-btn {
     width: 50px;

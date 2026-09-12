@@ -39,9 +39,9 @@
         </ul>
     {% endif %}
 
-    <a href="{% url 'cabinet:bonuses' %}" aria-label="Ежедневная рулетка">
-        <svg class="fixed-tg-btn-wrapper" width="100%" height="72" pointer-events="none" focusable="false" aria-hidden="true">
-            <g transform="translate(12 0) scale(.06)" pointer-events="all">
+    <a href="{% url 'cabinet:bonuses' %}" class='fixed-roulette' aria-label="Ежедневная рулетка">
+        <svg width="100%" height="72" pointer-events="none" focusable="false" aria-hidden="true">
+            <g transform="translate(0 0) scale(.06)" pointer-events="all">
                 {% include "front/svgs/roulette.svg" %}
             </g>
         </svg>
