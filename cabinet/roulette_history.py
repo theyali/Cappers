@@ -102,11 +102,11 @@ class RouletteSpin(models.Model):
         constraints = [
             models.CheckConstraint(
                 check=models.Q(attempts_before__gte=0),
-                name="roulette_spin_before_nonnegative",
+                name="roulette_spin_before_nonneg",
             ),
             models.CheckConstraint(
                 check=models.Q(attempts_after__gte=0),
-                name="roulette_spin_after_nonnegative",
+                name="roulette_spin_after_nonneg",
             ),
         ]
 
@@ -136,8 +136,6 @@ class RouletteSpin(models.Model):
     ):
         if attempts_before < 0 or attempts_after < 0:
             raise ValidationError("Количество попыток не может быть отрицательным.")
-        if attempts_after > attempts_before:
-            raise ValidationError("После обычной прокрутки попыток не может стать больше, чем было до неё.")
 
         if reward_status is None:
             reward_status = (
