@@ -21,6 +21,8 @@
                 data-skeleton-block
                 data-roulette-bg="{% static 'front/img/login.png' %}"
                 data-roulette-state-url="{% url 'cabinet:roulette_state' %}"
+                data-roulette-spin-url="{% url 'cabinet:roulette_spin' %}"
+                data-roulette-csrf="{{ csrf_token }}"
             >
                 <canvas
                     data-roulette-canvas
