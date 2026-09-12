@@ -80,6 +80,7 @@ def _serialize_sector(request, prize) -> dict:
         "short_text": prize.short_text,
         "icon_url": _current_prize_icon_url(request, prize),
         "reward_type": prize.reward_type,
+        "visual_type": prize.reward_type,
         "reward_value": str(prize.reward_value),
     }
 
@@ -92,6 +93,7 @@ def _serialize_spin_prize(request, spin: RouletteSpin) -> dict:
         "short_text": spin.prize_short_text,
         "icon_url": _snapshot_icon_url(request, spin.prize_icon),
         "reward_type": spin.reward_type,
+        "visual_type": spin.reward_type,
         "reward_value": str(spin.reward_value),
         "reward_text": spin.reward_text,
     }
