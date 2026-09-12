@@ -1,6 +1,5 @@
 import secrets
 import uuid
-from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -8,10 +7,10 @@ from django.db.models import Q
 from django.utils import timezone
 
 from front.models import PredictionFavorite, PredictionLike
-from wallets.services import top_up_virtual_balance
 
 from .roulette_history import RouletteSpin
 from .roulette_models import RoulettePrize, RouletteSettings
+from .roulette_reward_service import issue_roulette_reward
 from .roulette_rewards import UserRouletteRewardState
 from .roulette_state import UserRouletteState, roulette_daily_window
 
@@ -154,45 +153,6 @@ def _choose_weighted_prize(prizes):
     return prizes[-1]
 
 
-def _issue_reward(*, spin, prize, user, state, reward_state, now) -> None:
-    reward_type = prize.reward_type
-    reward_value = Decimal(str(prize.reward_value or 0))
-
-    if reward_type == RoulettePrize.RewardType.NOTHING:
-        return
-
-    if reward_type == RoulettePrize.RewardType.VIRTUAL_BALANCE:
-        top_up_virtual_balance(
-            user,
-            reward_value,
-            note=f"Приз рулетки: {prize.title} · операция {spin.operation_id}",
-        )
-        return
-
-    if reward_type == RoulettePrize.RewardType.VIP_DAYS:
-        reward_state.grant_vip_days(int(reward_value), now=now, save=False)
-        return
-
-    if reward_type == RoulettePrize.RewardType.FREE_PREDICTIONS:
-        reward_state.grant_free_predictions(int(reward_value), save=False)
-        return
-
-    if reward_type == RoulettePrize.RewardType.PROMO_CODE:
-        if not prize.reward_text.strip():
-            raise _error("У выпавшего приза не настроен промокод.", "invalid_promo_reward")
-        return
-
-    if reward_type == RoulettePrize.RewardType.RATING_BOOST:
-        reward_state.grant_rating_boost(reward_value, save=False)
-        return
-
-    if reward_type == RoulettePrize.RewardType.EXTRA_SPIN:
-        state.grant_spins(int(reward_value), save=False)
-        return
-
-    raise _error("Неизвестный тип награды рулетки.", "unsupported_reward_type")
-
-
 def _save_reward_state(reward_state: UserRouletteRewardState) -> None:
     reward_state.save(
         update_fields=(
@@ -234,8 +194,8 @@ def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
         return existing
 
     with transaction.atomic():
-        # Lock the user first. This serializes first-time state creation and also
-        # makes two concurrent spin requests for the same user execute one-by-one.
+        # The user row is the first lock for every spin of this user. It protects
+        # one-to-one state creation and serializes simultaneous POST requests.
         locked_user = user.__class__.objects.select_for_update().get(pk=user.pk)
 
         existing = _existing_spin_for_operation(operation_id, locked_user)
@@ -287,7 +247,7 @@ def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
             operation_id=operation_id,
         )
 
-        _issue_reward(
+        issue_roulette_reward(
             spin=spin,
             prize=prize,
             user=locked_user,
