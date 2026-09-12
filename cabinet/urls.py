@@ -5,6 +5,7 @@ from account_email import password_reset as password_reset_views
 
 from . import (
     avatar_views,
+    bonus_views,
     capper_views,
     dashboard_views,
     demand_views,
@@ -22,6 +23,7 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("bonuses/", bonus_views.bonuses, name="bonuses"),
     path("profile/request-verification/", views.request_verification, name="request_verification"),
     path("profile/delete-account/", views.delete_account, name="delete_account"),
     path("profile/earnings/", earnings_views.profile_earnings, name="profile_earnings"),
