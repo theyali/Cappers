@@ -93,6 +93,25 @@ class RouletteApiTests(TestCase):
             list(range(10)),
         )
 
+    def test_fixed_roulette_renders_ssr_badge_when_spins_are_available(self):
+        UserRouletteState.objects.create(user=self.user, available_spins=3)
+
+        response = self.client.get(reverse("cabinet:bonuses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-roulette-available-spins="3"')
+        self.assertContains(response, 'data-roulette-badge')
+        self.assertContains(response, '>3</span>')
+
+    def test_fixed_roulette_omits_ssr_badge_when_no_spins_are_available(self):
+        UserRouletteState.objects.create(user=self.user, available_spins=0)
+
+        response = self.client.get(reverse("cabinet:bonuses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-roulette-available-spins="0"')
+        self.assertNotContains(response, 'data-roulette-badge')
+
     def test_spin_returns_no_spins_code_when_user_has_no_attempts(self):
         self.create_prize(reward_type=RoulettePrize.RewardType.NOTHING, reward_value=0)
 
