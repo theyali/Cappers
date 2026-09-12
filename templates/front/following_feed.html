@@ -27,12 +27,6 @@
                 </div>
 
                 <div class="following-stories-row" aria-label="Истории капперов">
-                    <button class="following-story-card following-story-own" type="button">
-                        <span class="following-story-avatar">
-                            <img src="{% static 'front/img/vip-users.png' %}" width="72" height="72" loading="lazy" alt="VIP капперы">
-                        </span>
-                    </button>
-
                     {% for follow in following|slice:":9" %}
                     <a class="following-story-card" href="{{ follow.feed_profile_url }}">
                         <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
