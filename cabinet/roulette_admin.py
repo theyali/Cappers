@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.db.models import Count, Q
 from django.utils.html import format_html
 
 from .roulette_models import RoulettePrize, RoulettePrizeCondition, RouletteSettings
@@ -168,7 +169,7 @@ class RoulettePrizeAdmin(admin.ModelAdmin):
             "Статистика",
             {
                 "fields": ("drawn_count", "issued_count"),
-                "description": "Статистика начнёт заполняться после подключения истории прокруток.",
+                "description": "Статистика считается по сохранённой истории прокруток.",
             },
         ),
         (
@@ -179,6 +180,16 @@ class RoulettePrizeAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            _drawn_count=Count("spins", distinct=True),
+            _issued_count=Count(
+                "spins",
+                filter=Q(spins__reward_status="issued"),
+                distinct=True,
+            ),
+        )
 
     @admin.display(description="Иконка")
     def icon_preview_small(self, obj):
@@ -200,26 +211,17 @@ class RoulettePrizeAdmin(admin.ModelAdmin):
         end = obj.active_until.strftime("%d.%m.%Y %H:%M") if obj.active_until else "—"
         return f"{start} — {end}"
 
-    @admin.display(description="Выпало")
+    @admin.display(description="Выпало", ordering="_drawn_count")
     def drawn_count(self, obj):
-        spins = getattr(obj, "spins", None)
-        if spins is None:
-            return 0
-        return spins.count()
+        if hasattr(obj, "_drawn_count"):
+            return obj._drawn_count
+        return obj.spins.count()
 
-    @admin.display(description="Выдано")
+    @admin.display(description="Выдано", ordering="_issued_count")
     def issued_count(self, obj):
-        spins = getattr(obj, "spins", None)
-        if spins is None:
-            return 0
-
-        spin_model = spins.model
-        field_names = {field.name for field in spin_model._meta.get_fields()}
-        if "issued_at" in field_names:
-            return spins.filter(issued_at__isnull=False).count()
-        if "reward_issued_at" in field_names:
-            return spins.filter(reward_issued_at__isnull=False).count()
-        return 0
+        if hasattr(obj, "_issued_count"):
+            return obj._issued_count
+        return obj.spins.filter(reward_status="issued").count()
 
 
 @admin.register(RoulettePrizeCondition)
