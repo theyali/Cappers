@@ -67,7 +67,29 @@ replace_once(
     '''        reader.coin_wallet.refresh_from_db()\n        self.assertEqual(reader.coin_wallet.balance, 1100)\n        self.assertTrue(\n            CoinTransaction.objects.filter(\n                user=reader,\n                kind=CoinTransaction.Kind.COPYBET_PAYOUT,\n                amount=200,\n                balance_after=1100,\n            ).exists()\n        )\n        subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)\n''',
 )
 
+# Wallet UI tests should assert the SVG-backed coin presentation, not stale text.
+replace_once(
+    "wallets/tests.py",
+    '''        self.assertContains(response, "1 000 коинов")\n        self.assertContains(response, reverse("wallets:top_up"))\n''',
+    '''        self.assertContains(response, 'class="coin-icon"')\n        self.assertContains(response, 'data-wallet-balance')\n        self.assertContains(response, "1 000")\n        self.assertContains(response, reverse("wallets:top_up"))\n''',
+)
+replace_once(
+    "wallets/tests.py",
+    '''        self.assertContains(response, "1 000 коинов")\n        self.assertContains(response, "500.00 ₽")\n''',
+    '''        self.assertContains(response, 'class="coin-icon"')\n        self.assertContains(response, "1 000")\n        self.assertContains(response, "500,00 ₽")\n''',
+)
+
 # Roulette reward must be a coin-ledger operation only.
+replace_once(
+    "cabinet/tests/test_roulette_api.py",
+    '''from django.test import Client, TestCase, TransactionTestCase\n''',
+    '''from django.test import Client, TestCase, TransactionTestCase, override_settings\n''',
+)
+replace_once(
+    "cabinet/tests/test_roulette_api.py",
+    '''from wallets.services import ensure_coin_wallet\n\n\nclass RouletteApiTests(TestCase):\n''',
+    '''from wallets.services import ensure_coin_wallet\n\n\nTEST_STORAGES = {\n    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},\n    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},\n}\n\n\n@override_settings(STORAGES=TEST_STORAGES)\nclass RouletteApiTests(TestCase):\n''',
+)
 replace_once(
     "cabinet/tests/test_roulette_api.py",
     '''        self.assertEqual(\n            CoinTransaction.objects.filter(\n                user=self.user,\n                kind=CoinTransaction.Kind.ROULETTE_REWARD,\n                related_id=first_payload["spin_id"],\n            ).count(),\n            1,\n        )\n''',
