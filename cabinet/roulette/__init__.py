@@ -1,5 +1,5 @@
-"""Roulette application services.
+"""Roulette models, services, API and admin modules.
 
-Models intentionally remain in the parent ``cabinet`` package to preserve the
-existing Django migration/model paths while service code is being reorganized.
+Legacy ``cabinet.roulette_*`` modules remain as compatibility wrappers while
+imports are migrated to this package.
 """
