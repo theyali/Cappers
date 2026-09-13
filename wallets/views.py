@@ -36,10 +36,18 @@ def top_up_balance(request):
     packages = CoinPackage.objects.filter(is_active=True).order_by("order", "id")
 
     if request.method == "POST":
-        messages.info(
-            request,
-            "Покупка пакетов коинов будет доступна после подключения платежного сценария.",
-        )
+        package_id = request.POST.get("package_id")
+        if package_id:
+            package = get_object_or_404(CoinPackage, pk=package_id, is_active=True)
+            messages.info(
+                request,
+                f"Покупка пакета «{package.title}» за {format_money(package.price_rub)} ₽ будет доступна после подключения платежного сценария.",
+            )
+        else:
+            messages.info(
+                request,
+                "Покупка пакетов коинов будет доступна после подключения платежного сценария.",
+            )
         return redirect(_safe_next(request, reverse("wallets:top_up")))
 
     real_balance = None
@@ -73,13 +81,8 @@ def real_balance_action(request):
         if action == "withdraw":
             request_real_withdrawal(request.user, amount)
             messages.success(request, "Заявка на вывод создана.")
-        elif action == "transfer_to_virtual":
-            messages.error(
-                request,
-                "Перевод реальных денег во внутреннюю валюту отключен. Коины покупаются отдельными пакетами.",
-            )
         else:
-            messages.error(request, "Неизвестное действие с балансом.")
+            messages.error(request, "Неизвестное действие с реальным балансом.")
     except (ValidationError, InsufficientBalance) as exc:
         messages.error(request, _error_message(exc))
 
