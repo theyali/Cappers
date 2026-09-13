@@ -1,0 +1,109 @@
+name: Apply coin icon CSS cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/coin-ui-css.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-css:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch coin UI styles
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          main_path = Path('front/static/front/css/main.css')
+          main = main_path.read_text()
+          old = '''.nav-wallet-balance {
+              min-width: 92px;
+              display: grid;
+              gap: 2px;
+              padding: 0 8px;
+              line-height: 1.05;
+          }
+
+          .nav-wallet-balance span {
+              color: white;
+              font-size: 10px;
+              font-weight: 700;
+              text-transform: uppercase;
+          }
+          '''
+          new = '''.nav-wallet-balance {
+              min-width: 92px;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 0 8px;
+              line-height: 1.05;
+          }
+          '''
+          if old not in main:
+              raise SystemExit('Expected nav wallet CSS block not found')
+          main = main.replace(old, new)
+          coin_styles = '''
+
+          .coin-amount {
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              white-space: nowrap;
+          }
+
+          .coin-icon {
+              width: 18px;
+              height: 18px;
+              flex: 0 0 18px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              line-height: 0;
+          }
+
+          .coin-icon svg {
+              width: 18px;
+              height: 18px;
+              display: block;
+          }
+          '''
+          if '.coin-icon {' not in main:
+              main = main.rstrip() + coin_styles + '\n'
+          main_path.write_text(main)
+
+          mobile_path = Path('front/static/front/css/mobile.css')
+          mobile = mobile_path.read_text()
+          mobile_old = '''    .mobile-offcanvas-wallet span {
+                  min-width: 0;
+                  display: grid;
+                  gap: 3px;
+              }
+          '''
+          mobile_new = '''    .mobile-offcanvas-wallet > .coin-amount {
+                  min-width: 0;
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+              }
+          '''
+          if mobile_old not in mobile:
+              raise SystemExit('Expected mobile wallet CSS block not found')
+          mobile = mobile.replace(mobile_old, mobile_new)
+          mobile_path.write_text(mobile)
+          PY
+      - name: Commit CSS and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm .github/workflows/coin-ui-css.yml
+          git add front/static/front/css/main.css front/static/front/css/mobile.css .github/workflows/coin-ui-css.yml
+          git commit -m "ui: align reusable coin icons"
+          git push origin main
