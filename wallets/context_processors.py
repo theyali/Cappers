@@ -1,7 +1,7 @@
 from .services import ensure_coin_wallet, format_coins
 
 
-def capper_balance(request) -> dict:
+def coin_wallet(request) -> dict:
     user = getattr(request, "user", None)
     if not user or not user.is_authenticated:
         return {
