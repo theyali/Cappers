@@ -10,13 +10,13 @@ from django.views.decorators.http import require_GET, require_POST
 
 from wallets.services import ensure_coin_wallet
 
+from .errors import RouletteSpinError
 from .history import RouletteSpin
 from .models import RoulettePrize, RouletteSettings
 from .rewards import UserRouletteRewardState
-from .errors import RouletteSpinError
 from .selectors import get_available_roulette_prizes
-from .spin_service import spin_roulette
 from .services import get_user_roulette_state
+from .spin_service import spin_roulette
 
 
 RECENT_WINS_LIMIT = 5
@@ -52,6 +52,10 @@ def _spin_error_status(code: str) -> int:
         "roulette_disabled": 503,
         "invalid_prize_weights": 503,
     }.get(code, 400)
+
+
+def _current_coin_balance(user) -> int:
+    return int(ensure_coin_wallet(user).balance)
 
 
 def _current_prize_icon_url(request, prize) -> str:
@@ -103,8 +107,7 @@ def _serialize_reward_result(user, spin: RouletteSpin) -> dict:
     result = {"type": spin.reward_type}
 
     if spin.reward_type == RoulettePrize.RewardType.COINS:
-        wallet = ensure_coin_wallet(user)
-        result["coin_balance"] = int(wallet.balance)
+        result["coin_balance"] = _current_coin_balance(user)
         return result
 
     reward_state = UserRouletteRewardState.objects.filter(user=user).first()
@@ -157,6 +160,7 @@ def roulette_state(request):
             "ok": True,
             "enabled": roulette_settings.is_enabled,
             "server_time": _iso(now),
+            "coin_balance": _current_coin_balance(request.user),
             "available_spins": state.available_spins,
             "next_spin_at": _iso(state.next_spin_at),
             "last_spin_at": _iso(state.last_spin_at),
@@ -212,6 +216,11 @@ def roulette_spin(request):
             status=422,
         )
 
+    coin_balance = _current_coin_balance(request.user)
+    reward_result = _serialize_reward_result(request.user, spin)
+    if spin.reward_type == RoulettePrize.RewardType.COINS:
+        reward_result["coin_balance"] = coin_balance
+
     return JsonResponse(
         {
             "ok": True,
@@ -221,8 +230,9 @@ def roulette_spin(request):
             "prize_id": spin.prize_id,
             "sector_index": spin.prize_sector_order,
             "prize": _serialize_spin_prize(request, spin),
-            "reward_result": _serialize_reward_result(request.user, spin),
+            "reward_result": reward_result,
             "reward_status": spin.reward_status,
+            "coin_balance": coin_balance,
             "available_spins": spin.attempts_after,
             "next_spin_at": _iso(spin.next_spin_at),
             "server_time": _iso(timezone.now()),
