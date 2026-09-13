@@ -150,6 +150,7 @@ templates/wallets/copybetting_setup.html
 templates/cabinet/profile.html
 templates/front/includes/_main_header.html
 templates/front/includes/_mobile_offcanvas.html
+templates/front/svgs/coin.svg
 ```
 
 Что поменять:
@@ -180,7 +181,74 @@ templates/front/includes/_mobile_offcanvas.html
 - реальные рубли видны только в real balance, выводах, доходах каппера и покупке coin-пакетов;
 - рулетка начисляет коины через `credit_coins()`.
 
-## 4. Сделать миграцию данных и убрать старый virtual balance без fallback
+## 4. Добавить coin-иконку в UI вместо рубля у всех coin-балансов
+
+Везде, где раньше отображался виртуальный баланс в рублях, теперь показывать коины с иконкой из:
+
+```text
+templates/front/svgs/coin.svg
+```
+
+Главное место: `templates/front/includes/_main_header.html`. Рядом с балансом в `.nav-wallet` должна быть coin-иконка, а не символ `₽`.
+
+Пример целевой структуры:
+
+```html
+<div class="nav-wallet">
+    <span class="nav-wallet-balance">
+        {% include "front/svgs/coin.svg" %}
+        <strong data-wallet-balance>{{ nav_coin_balance_display }}</strong>
+    </span>
+    <a class="nav-wallet-topup" href="{% url 'wallets:top_up' %}">Пополнить</a>
+</div>
+```
+
+Если `coin.svg` нельзя вставить напрямую через `{% include %}` из-за структуры SVG, сделать маленький include-обертку, например:
+
+```text
+templates/front/includes/_coin_icon.html
+```
+
+и использовать ее во всех местах coin-баланса.
+
+Обновить отображение в файлах:
+
+```text
+templates/front/includes/_main_header.html
+templates/front/includes/_mobile_offcanvas.html
+templates/wallets/top_up.html
+templates/wallets/copybetting_setup.html
+templates/cabinet/profile.html
+templates/cabinet/profile_earnings.html
+front/static/front/js/matches.js
+front/static/front/js/roulette.js
+```
+
+Правила отображения:
+
+- у coin-баланса не должно быть `₽`;
+- рядом с числом коинов должна быть иконка `coin.svg`;
+- для ставок, копибеттинга, рулетки, профиля и header использовать один визуальный паттерн;
+- real balance продолжает отображаться с `₽`;
+- покупка coin-пакета показывает обе сущности: `1000 коинов` и `500 ₽`;
+- `data-wallet-balance` должен обновлять только число коинов, не перерисовывая SVG.
+
+CSS обновить в `front/static/front/css/main.css`:
+
+- добавить стиль для иконки внутри `.nav-wallet-balance`;
+- проверить мобильное меню `.mobile-offcanvas-wallet`;
+- сделать иконку 16-20px, без сдвигов строки;
+- не использовать emoji или текстовую замену вместо SVG.
+
+Критерии готовности шага:
+
+- в header рядом с балансом видна `coin.svg`;
+- в мобильном меню рядом с балансом видна `coin.svg`;
+- во всех бывших местах виртуального баланса нет `₽`;
+- реальные рубли не потеряли `₽`;
+- JS-обновление баланса не удаляет иконку.
+
+## 5. Сделать миграцию данных и полностью убрать старый virtual balance без fallback
 
 Нужна миграция, которая переносит старые данные из `CapperBalance`/`BalanceTransaction` в новые `CoinWallet`/`CoinTransaction`.
 
@@ -212,6 +280,18 @@ coins = old_balance / coin_price_rub
 - убрать старые настройки `CAPPER_STARTING_BALANCE`, `CAPPER_VIRTUAL_TOP_UP_AMOUNT` или заменить их на coin-настройки;
 - удалить старые admin-классы `CapperBalanceAdmin` и `BalanceTransactionAdmin`.
 
+Полная очистка обязательна:
+
+- удалить из рабочего кода модели `CapperBalance` и `BalanceTransaction`, если миграции уже перенесли данные;
+- удалить старые сервисные функции, а не оставлять их как wrappers;
+- удалить старые view/action для "виртуального пополнения" и "перевода real -> virtual";
+- удалить неиспользуемые формы, admin-классы, context processor-поля и template variables старого баланса;
+- удалить старые JS-ветки, которые ждут `virtual_balance` или `balance_display` в рублях;
+- удалить неиспользуемые template-блоки "Виртуальный баланс";
+- удалить неиспользуемые CSS-классы только если они больше нигде не применяются;
+- не оставлять файлов-заглушек, которые импортируют старый баланс и больше нигде не нужны;
+- если старые файлы нельзя удалить из-за миграций, оставить их только как historical migrations, не как runtime-код.
+
 Важно: не оставлять compatibility layer, который продолжает читать `CapperBalance`. После миграции источник истины только `CoinWallet`.
 
 Команды проверки:
@@ -235,9 +315,10 @@ CoinTransaction.objects.count()
 - новые пользователи получают `CoinWallet`;
 - старые пользователи имеют перенесенный coin-баланс;
 - старые virtual-модели не используются приложением;
+- старые runtime-файлы/функции virtual balance удалены, если они больше не используются;
 - real balance migration не затронут.
 
-## 5. Переписать тесты, проверить поиском и закрыть старые упоминания
+## 6. Переписать тесты, проверить поиском и закрыть старые упоминания
 
 Обновить тесты:
 
@@ -263,7 +344,8 @@ tournaments/tests.py
 Запустить проверки:
 
 ```bash
-rg -n "Виртуальный баланс|виртуальный баланс|virtual_balance|CapperBalance|BalanceTransaction|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT|₽" wallets cabinet tournaments front templates
+rg -n "Виртуальный баланс|виртуальный баланс|virtual_balance|CapperBalance|BalanceTransaction|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT" wallets cabinet tournaments front templates
+rg -n "₽" wallets cabinet tournaments front templates
 python manage.py test wallets cabinet.tests.test_roulette_api tournaments
 ```
 
@@ -273,10 +355,13 @@ python manage.py test wallets cabinet.tests.test_roulette_api tournaments
 - документация, если она явно помечена как историческая;
 - реальные рубли в `CapperRealBalance`, `RealBalanceTransaction`, покупке coin-пакетов и платежке.
 
+После отдельного поиска `₽` проверить вручную: символ рубля допустим только для реальных денег и цены покупки coin-пакетов. Для coin-баланса, ставок, копибеттинга и roulette reward должен использоваться `coin.svg`.
+
 Финальные критерии готовности:
 
 - во всех пользовательских сценариях используется `CoinWallet`;
 - старый virtual balance не читается и не пополняется;
+- старые fallback-функции, старые runtime-файлы и неиспользуемые wrappers удалены;
 - в админке можно управлять курсом и пакетами коинов;
-- в UI коины отображаются как коины, а рубли только как реальные деньги;
+- в UI коины отображаются с `coin.svg`, а рубли только как реальные деньги;
 - тесты проходят.
