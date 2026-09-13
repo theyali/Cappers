@@ -185,7 +185,7 @@
         const display = result?.coin_balance_display;
         if (!display) return;
         document.querySelectorAll("[data-wallet-balance]").forEach((node) => {
-            node.textContent = `${display} коинов`;
+            node.textContent = display;
         });
     };
 
