@@ -5,7 +5,7 @@ from django.db import connection
 
 from wallets.services import top_up_virtual_balance
 
-from ..roulette_models import RoulettePrize
+from .models import RoulettePrize
 
 
 def issue_roulette_reward(*, spin, prize, user, state, reward_state, now) -> None:
