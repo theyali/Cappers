@@ -16,7 +16,7 @@ from game.services.match_timing import prediction_window_open
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.join import get_active_participant
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
-from wallets.services import InsufficientBalance, charge_prediction_stake, copy_published_coupon
+from wallets.services import InsufficientCoins, charge_prediction_stake, copy_published_coupon
 
 
 class TournamentCouponCreateError(ValidationError):
@@ -162,7 +162,7 @@ def create_tournament_coupon(
         ) from exc
     except TournamentRuleError:
         raise
-    except InsufficientBalance:
+    except InsufficientCoins:
         raise
 
     return coupon, tournament_coupon
