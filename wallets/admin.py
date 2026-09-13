@@ -199,10 +199,12 @@ class CoinPackageAdmin(admin.ModelAdmin):
 
     @admin.display(description="Всего coins")
     def total_coins_display(self, obj):
-        return obj.total_coins
+        return obj.total_coins if obj is not None else "—"
 
     @admin.display(description="Фактическая цена 1 coin")
     def effective_coin_price_display(self, obj):
+        if obj is None:
+            return "—"
         return f"{format_effective_coin_price_rub(obj.price_rub, obj.total_coins)} ₽"
 
 
