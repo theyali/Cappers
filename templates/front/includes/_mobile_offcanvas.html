@@ -34,9 +34,9 @@
         </div>
         {% if nav_coin_balance is not None %}
             <div class="mobile-offcanvas-wallet">
-                <span>
-                    <small>Коины</small>
-                    <strong data-wallet-balance>{{ nav_coin_balance_display }} коинов</strong>
+                <span class="coin-amount">
+                    {% include "front/includes/_coin_icon.html" %}
+                    <strong data-wallet-balance>{{ nav_coin_balance_display }}</strong>
                 </span>
                 <a href="{% url 'wallets:top_up' %}">Пополнить</a>
             </div>
