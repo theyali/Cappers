@@ -199,7 +199,6 @@ templates/front/svgs/coin.svg
         {% include "front/svgs/coin.svg" %}
         <strong data-wallet-balance>{{ nav_coin_balance_display }}</strong>
     </span>
-    <a class="nav-wallet-topup" href="{% url 'wallets:top_up' %}">Пополнить</a>
 </div>
 ```
 
