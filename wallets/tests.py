@@ -11,7 +11,7 @@ from game.models import Match, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
-from wallets.models import BalanceTransaction, CopiedBet, CopyBettingSubscription, RealBalanceTransaction
+from wallets.models import CoinPackage, CoinTransaction, CopiedBet, CopyBettingSubscription, RealBalanceTransaction
 from wallets.services import (
     activate_copybetting,
     approve_real_withdrawal,
@@ -32,7 +32,7 @@ TEST_STORAGES = {
 }
 
 
-class CapperBalanceTests(TestCase):
+class CoinWalletIntegrationTests(TestCase):
     def setUp(self):
         self.analyst = User.objects.create_user(
             username="balance-capper",
@@ -66,36 +66,38 @@ class CapperBalanceTests(TestCase):
             ],
         }
 
-    def test_new_analyst_gets_starting_virtual_balance(self):
-        self.analyst.capper_balance.refresh_from_db()
+    def test_new_analyst_gets_initial_coins(self):
+        self.analyst.coin_wallet.refresh_from_db()
 
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("10000.00"))
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
         self.assertTrue(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.INITIAL_BONUS,
-                amount=Decimal("10000.00"),
+                kind=CoinTransaction.Kind.INITIAL_GRANT,
+                amount=1000,
+                balance_after=1000,
             ).exists()
         )
 
-    def test_new_reader_gets_same_virtual_balance(self):
+    def test_new_reader_gets_initial_coins(self):
         reader = User.objects.create_user(
             username="balance-reader",
             password="safe-test-password",
             role=User.Role.READER,
         )
 
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("10000.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 1000)
         self.assertTrue(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=reader,
-                kind=BalanceTransaction.Kind.INITIAL_BONUS,
-                amount=Decimal("10000.00"),
+                kind=CoinTransaction.Kind.INITIAL_GRANT,
+                amount=1000,
+                balance_after=1000,
             ).exists()
         )
 
-    def test_publishing_coupon_charges_stake(self):
+    def test_publishing_coupon_charges_coins(self):
         self.client.force_login(self.analyst)
 
         response = self.client.post(
@@ -105,21 +107,22 @@ class CapperBalanceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["balance"], "9500.00")
-        self.assertEqual(response.json()["balance_display"], "9 500")
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("9500.00"))
+        self.assertEqual(response.json()["coin_balance"], 500)
+        self.assertEqual(response.json()["coin_balance_display"], "500")
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 500)
         self.assertTrue(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.PREDICTION_STAKE,
-                amount=Decimal("-500.00"),
+                kind=CoinTransaction.Kind.PREDICTION_STAKE,
+                amount=-500,
+                balance_after=500,
             ).exists()
         )
 
-    def test_coupon_is_not_created_when_balance_is_too_low(self):
-        self.analyst.capper_balance.balance = Decimal("50.00")
-        self.analyst.capper_balance.save(update_fields=["balance", "updated_at"])
+    def test_coupon_is_not_created_when_coin_balance_is_too_low(self):
+        self.analyst.coin_wallet.balance = 50
+        self.analyst.coin_wallet.save(update_fields=["balance", "updated_at"])
         self.client.force_login(self.analyst)
 
         response = self.client.post(
@@ -129,10 +132,23 @@ class CapperBalanceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 402)
-        self.assertIn("Недостаточно средств", response.json()["error"])
+        self.assertIn("Недостаточно коинов", response.json()["error"])
         self.assertFalse(PredictionCoupon.objects.filter(author=self.analyst).exists())
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("50.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 50)
+
+    def test_fractional_prediction_stake_is_rejected(self):
+        self.client.force_login(self.analyst)
+
+        response = self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(self._payload("100.5")),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("целым числом коинов", response.json()["error"])
+        self.assertFalse(PredictionCoupon.objects.filter(author=self.analyst).exists())
 
     def test_settled_winning_coupon_credits_payout_once(self):
         coupon = PredictionCoupon.objects.create(
@@ -157,12 +173,12 @@ class CapperBalanceTests(TestCase):
         settle_coupon(coupon.id)
         settle_coupon(coupon.id)
 
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("10150.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1150)
         self.assertEqual(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.PREDICTION_PAYOUT,
+                kind=CoinTransaction.Kind.PREDICTION_PAYOUT,
                 related_id=coupon.id,
             ).count(),
             1,
@@ -190,57 +206,48 @@ class CapperBalanceTests(TestCase):
         settle_coupon(coupon.id)
         settle_coupon(coupon.id)
 
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("10150.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1150)
         self.assertEqual(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.PREDICTION_STAKE,
+                kind=CoinTransaction.Kind.PREDICTION_STAKE,
                 related_id=coupon.id,
             ).count(),
             1,
         )
         self.assertEqual(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.PREDICTION_PAYOUT,
+                kind=CoinTransaction.Kind.PREDICTION_PAYOUT,
                 related_id=coupon.id,
             ).count(),
             1,
         )
 
-    def test_top_up_view_adds_virtual_money_and_redirects_back(self):
+    def test_top_up_post_does_not_mint_coins_without_payment(self):
+        CoinPackage.objects.create(
+            title="Стартовый пакет",
+            coins=1000,
+            bonus_coins=100,
+            price_rub=Decimal("500.00"),
+        )
         self.client.force_login(self.analyst)
 
         response = self.client.post(
             reverse("wallets:top_up"),
-            data={"next": reverse("cabinet:profile")},
+            data={"package_id": 1, "next": reverse("cabinet:profile")},
         )
 
         self.assertEqual(response.status_code, 302)
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("20000.00"))
-        self.assertTrue(
-            BalanceTransaction.objects.filter(
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+        self.assertFalse(
+            CoinTransaction.objects.filter(
                 user=self.analyst,
-                kind=BalanceTransaction.Kind.VIRTUAL_DEPOSIT,
-                amount=Decimal("10000.00"),
+                kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
             ).exists()
         )
-
-    def test_reader_can_top_up_virtual_balance(self):
-        reader = User.objects.create_user(
-            username="top-up-reader",
-            password="safe-test-password",
-            role=User.Role.READER,
-        )
-        self.client.force_login(reader)
-
-        response = self.client.post(reverse("wallets:top_up"))
-
-        self.assertEqual(response.status_code, 302)
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("20000.00"))
 
     def test_copybetting_copies_published_coupon_and_charges_reader(self):
         reader = User.objects.create_user(
@@ -271,13 +278,14 @@ class CapperBalanceTests(TestCase):
         self.assertEqual(copied_bet.subscription, subscription)
         self.assertEqual(copied_bet.stake, Decimal("100.00"))
         self.assertEqual(copied_bet.possible_payout, Decimal("200.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 900)
         self.assertTrue(
-            BalanceTransaction.objects.filter(
+            CoinTransaction.objects.filter(
                 user=reader,
-                kind=BalanceTransaction.Kind.COPYBET_STAKE,
-                amount=Decimal("-100.00"),
+                kind=CoinTransaction.Kind.COPYBET_STAKE,
+                amount=-100,
+                balance_after=900,
             ).exists()
         )
 
@@ -318,8 +326,8 @@ class CapperBalanceTests(TestCase):
         self.assertEqual(copied_bet.subscription, subscription)
         self.assertEqual(copied_bet.stake, Decimal("100.00"))
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.PENDING)
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 900)
 
     def test_published_coupon_signal_copies_after_predictions_are_saved(self):
         reader = User.objects.create_user(
@@ -355,8 +363,8 @@ class CapperBalanceTests(TestCase):
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.stake, Decimal("100.00"))
         self.assertEqual(copied_bet.possible_payout, Decimal("200.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("9900.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 900)
 
     def test_copying_settled_coupon_settles_copied_bet_immediately(self):
         reader = User.objects.create_user(
@@ -386,8 +394,8 @@ class CapperBalanceTests(TestCase):
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
         self.assertEqual(copied_bet.profit, Decimal("100.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 1100)
         subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
         self.assertEqual(subscription.total_profit, Decimal("100.00"))
 
@@ -428,8 +436,8 @@ class CapperBalanceTests(TestCase):
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
         self.assertEqual(copied_bet.profit, Decimal("100.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 1100)
         subscription = CopyBettingSubscription.objects.get(user=reader, analyst=self.analyst)
         self.assertEqual(subscription.total_profit, Decimal("100.00"))
 
@@ -469,8 +477,8 @@ class CapperBalanceTests(TestCase):
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
         self.assertEqual(copied_bet.profit, Decimal("100.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 1100)
 
     def test_orphaned_pending_copied_bets_are_reconciled(self):
         reader = User.objects.create_user(
@@ -503,8 +511,8 @@ class CapperBalanceTests(TestCase):
         copied_bet = CopiedBet.objects.get(user=reader, source_coupon=coupon)
         self.assertEqual(copied_bet.state_status, CopiedBet.StateStatus.WIN)
         self.assertEqual(copied_bet.profit, Decimal("100.00"))
-        reader.capper_balance.refresh_from_db()
-        self.assertEqual(reader.capper_balance.balance, Decimal("10100.00"))
+        reader.coin_wallet.refresh_from_db()
+        self.assertEqual(reader.coin_wallet.balance, 1100)
 
     def test_copybetting_respects_pause_and_resume(self):
         reader = User.objects.create_user(
@@ -818,8 +826,8 @@ class CapperBalanceTests(TestCase):
 
 
 @override_settings(STORAGES=TEST_STORAGES)
-class CapperBalanceHeaderTests(TestCase):
-    def test_analyst_header_shows_balance_and_top_up_button(self):
+class CoinWalletHeaderTests(TestCase):
+    def test_analyst_header_shows_coin_balance_and_top_up_button(self):
         analyst = User.objects.create_user(
             username="header-balance-capper",
             password="safe-test-password",
@@ -831,22 +839,27 @@ class CapperBalanceHeaderTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="nav-wallet"')
-        self.assertContains(response, 'class="nav-wallet-topup"')
-        self.assertContains(response, "10 000 ₽")
+        self.assertContains(response, "1 000 коинов")
         self.assertContains(response, reverse("wallets:top_up"))
-        self.assertContains(response, "Пополнить")
 
-    def test_top_up_link_opens_wallet_methods_page(self):
+    def test_top_up_link_opens_coin_packages_page(self):
         analyst = User.objects.create_user(
             username="wallet-page-capper",
             password="safe-test-password",
             role=User.Role.ANALYST,
+        )
+        CoinPackage.objects.create(
+            title="Стартовый пакет",
+            coins=1000,
+            bonus_coins=100,
+            price_rub=Decimal("500.00"),
         )
         self.client.force_login(analyst)
 
         response = self.client.get(reverse("wallets:top_up"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Способы пополнения")
-        self.assertContains(response, "Виртуальное пополнение")
-        self.assertContains(response, "10 000 ₽")
+        self.assertContains(response, "Пополнение коинов")
+        self.assertContains(response, "Стартовый пакет")
+        self.assertContains(response, "1 000 коинов")
+        self.assertContains(response, "500.00 ₽")
