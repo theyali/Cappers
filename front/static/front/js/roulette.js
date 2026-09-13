@@ -50,8 +50,7 @@
     const images = new Map();
     let prizes = [];
     let rotation = 0;
-    let spinning = false;
-    let requestPending = false;
+    let spinPhase = 'idle';
     let pendingOperationId = '';
     let enabled = false;
     let availableSpins = 0;
@@ -61,7 +60,7 @@
     let transientError = '';
     let transientErrorTimer = null;
     let winningPrizeId = 0;
-    let winCard = null;
+    let resultCard = null;
     let winCardProgress = 0;
     let winHighlight = 0;
     let serverClockBaseMs = 0;
@@ -400,19 +399,18 @@
     };
 
     const canSpin = () => (
-        stateLoaded
-        && !stateError
+        spinPhase === 'idle'
+        && stateLoaded
         && enabled
         && availableSpins > 0
         && prizes.length > 0
-        && !requestPending
-        && !spinning
     );
 
     const centerLabel = () => {
         if (!stateLoaded) return 'Загрузка…';
-        if (requestPending) return 'Проверяем…';
-        if (spinning) return 'Крутим…';
+        if (spinPhase === 'requesting') return 'Проверяем…';
+        if (spinPhase === 'animating') return 'Крутим…';
+        if (spinPhase === 'showing_result') return 'Результат';
         if (stateError) return 'Недоступно';
         if (!enabled || !prizes.length) return 'Нет призов';
         if (availableSpins <= 0) return 'Нет попыток';
@@ -427,7 +425,7 @@
         ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
 
-        ctx.fillStyle = canSpin() || requestPending || spinning ? colors.blue : '#303033';
+        ctx.fillStyle = canSpin() || spinPhase !== 'idle' ? colors.blue : '#303033';
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius, 0, TAU);
         ctx.fill();
@@ -473,7 +471,7 @@
     };
 
     const drawAttemptStatus = () => {
-        if (winCard) return;
+        if (spinPhase === 'showing_result') return;
         const label = attemptStatusText();
         const color = availableSpins > 0 ? colors.yellow : colors.white;
         text(clampText(label, 66), cx, H - 26, 15, color, 800);
@@ -502,7 +500,7 @@
     };
 
     const drawWinCard = () => {
-        if (!winCard || winCardProgress <= 0) return;
+        if (!resultCard || winCardProgress <= 0) return;
 
         const progress = Math.max(0, Math.min(winCardProgress, 1));
         const scale = 0.82 + 0.18 * popScale(progress);
@@ -527,7 +525,7 @@
         ctx.fill();
         text('ВЫ ВЫИГРАЛИ', cx, cardY + 33, 13, colors.ink, 800);
 
-        const image = images.get(winCard.icon);
+        const image = images.get(resultCard.icon);
         const iconY = cardY + 76;
         if (image) {
             ctx.drawImage(image, cx - 30, iconY, 60, 60);
@@ -538,14 +536,14 @@
             text('★', cx, iconY + 31, 28, colors.white, 800);
         }
 
-        text(clampText(winCard.title, 28), cx, cardY + 153, 25, colors.white, 800);
+        text(clampText(resultCard.title, 28), cx, cardY + 153, 25, colors.white, 800);
 
-        const subtitleLines = splitLines(winCard.shortText, 34, 1);
+        const subtitleLines = splitLines(resultCard.shortText, 34, 1);
         subtitleLines.forEach((line, index) => {
             text(line, cx, cardY + 181 + index * 18, 14, '#d1d1d3', 700);
         });
 
-        const actionLines = splitLines(winCard.action, 42, 2);
+        const actionLines = splitLines(resultCard.action, 42, 2);
         actionLines.forEach((line, index) => {
             text(line, cx, cardY + 211 + index * 19, 14, colors.yellow, 800);
         });
@@ -554,7 +552,7 @@
     };
 
     const drawStatusMessage = () => {
-        if (!transientError || winCard) return;
+        if (!transientError || spinPhase === 'showing_result') return;
         text(clampText(transientError, 72), cx, H - 50, 14, colors.yellow, 700);
     };
 
@@ -659,7 +657,6 @@
         const finish = start + TAU * fullTurns + targetDelta;
         const started = performance.now();
         const duration = 4300;
-        spinning = true;
 
         const frame = (now) => {
             const progress = Math.min((now - started) / duration, 1);
@@ -672,7 +669,6 @@
             }
 
             rotation = normalizeAngle(finish);
-            spinning = false;
             draw();
             resolve();
         };
@@ -742,7 +738,8 @@
     };
 
     const animateWinCard = (payload, winner) => new Promise((resolve) => {
-        winCard = {
+        spinPhase = 'showing_result';
+        resultCard = {
             title: String(payload?.prize?.title || winner?.title || 'Приз'),
             shortText: String(payload?.prize?.short_text || winner?.shortText || ''),
             icon: String(payload?.prize?.icon_url || winner?.icon || ''),
@@ -788,8 +785,7 @@
     const refreshAfterCountdown = async () => {
         if (
             availableSpins > 0
-            || requestPending
-            || spinning
+            || spinPhase !== 'idle'
             || !stateLoaded
             || !enabled
             || performance.now() < countdownRefreshAfterPerfMs
@@ -809,9 +805,9 @@
     const spin = async () => {
         if (!canSpin()) return;
 
-        requestPending = true;
+        spinPhase = 'requesting';
         transientError = '';
-        winCard = null;
+        resultCard = null;
         winCardProgress = 0;
         winHighlight = 0;
         winningPrizeId = 0;
@@ -832,21 +828,18 @@
 
             const winner = prizes[winnerIndex];
             const winnerIconPromise = loadImage(payload?.prize?.icon_url || winner.icon);
-            requestPending = false;
+            spinPhase = 'animating';
             await animateWheelTo(winnerIndex);
             await winnerIconPromise;
             await animateWinCard(payload, winner);
         } catch (error) {
-            requestPending = false;
-            spinning = false;
+            spinPhase = 'idle';
             if (error?.code === 'no_spins') {
                 availableSpins = 0;
                 publishAttempts();
             }
             showTransientError(error instanceof Error ? error.message : 'Не удалось выполнить прокрутку.');
         } finally {
-            requestPending = false;
-            spinning = false;
             draw();
         }
     };
