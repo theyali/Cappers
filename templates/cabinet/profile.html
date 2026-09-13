@@ -157,9 +157,9 @@
 
                     <div class="profile-wallet-grid">
                         <article class="profile-wallet-card">
-                            <span>Виртуальный баланс</span>
-                            <strong>{{ virtual_balance_display }} ₽</strong>
-                            <small>Используется для прогнозов и копибеттинга.</small>
+                            <span>Коины</span>
+                            <strong>{{ coin_balance_display }} коинов</strong>
+                            <small>Используются для прогнозов и копибеттинга.</small>
                         </article>
                         {% if request.user.is_analyst and real_balance %}
                         <article class="profile-wallet-card">
@@ -172,12 +172,12 @@
 
                     <div class="profile-wallet-history">
                         <div>
-                            <h3>Виртуальные операции</h3>
+                            <h3>Операции с коинами</h3>
                             <div class="profile-transaction-list">
-                                {% for transaction in virtual_transactions %}
+                                {% for transaction in coin_transactions %}
                                     <div class="profile-transaction-row">
                                         <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span></div>
-                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount|money }} ₽</strong><span>после: {{ transaction.balance_after|money }} ₽</span></div>
+                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount }} коинов</strong><span>после: {{ transaction.balance_after }} коинов</span></div>
                                     </div>
                                 {% empty %}
                                     <div class="profile-empty-state"><p>Операций пока нет.</p></div>
@@ -236,7 +236,7 @@
                         </article>
                         <article class="profile-wallet-card">
                             <span>Прибыль аудитории</span>
-                            <strong>{{ copybetting_audience_profit_display }} ₽</strong>
+                            <strong>{{ copybetting_audience_profit_display }} коинов</strong>
                             <small>Суммарный результат пользователей по копибеттингу.</small>
                         </article>
                     </div>
@@ -273,7 +273,7 @@
                                 <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
                                 <div class="profile-copy-table-cell">
                                     <span>Банк</span>
-                                    <strong>{{ subscription.bank_amount|money }} ₽</strong>
+                                    <strong>{{ subscription.bank_amount|floatformat:"0" }} коинов</strong>
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Ставка</span>
@@ -285,7 +285,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Прибыль</span>
-                                    <strong>{{ subscription.total_profit|money }} ₽</strong>
+                                    <strong>{{ subscription.total_profit|floatformat:"0" }} коинов</strong>
                                 </div>
                             </article>
                         {% empty %}
@@ -302,7 +302,7 @@
                     <div class="profile-coupons-list" data-profile-coupon-inline="false">
                         {% for copied_bet in copybetting_audience_copied_bets %}
                             {% url 'front:prediction_detail' copied_bet.source_coupon_id as copied_bet_href %}
-                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.user row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix="₽" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix="₽" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix="₽" only %}
+                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.user row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix=" коинов" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix=" коинов" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix=" коинов" only %}
                         {% empty %}
                             <div class="profile-empty-state"><p>Скопированных ставок по вашим прогнозам пока нет.</p></div>
                         {% endfor %}
@@ -379,7 +379,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Банк</span>
-                                    <strong>{{ subscription.bank_amount|money }} ₽</strong>
+                                    <strong>{{ subscription.bank_amount|floatformat:"0" }} коинов</strong>
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Ставка</span>
@@ -387,7 +387,7 @@
                                 </div>
                                 <div class="profile-copy-table-cell">
                                     <span>Прибыль</span>
-                                    <strong>{{ subscription.total_profit|money }} ₽</strong>
+                                    <strong>{{ subscription.total_profit|floatformat:"0" }} коинов</strong>
                                 </div>
                                 <div class="profile-copy-actions">
                                     <a class="profile-row-action profile-copybetting-action-btns" href="{% url 'wallets:copybetting_setup' subscription.analyst_id %}">Настроить</a>
@@ -407,7 +407,7 @@
                     <div class="profile-coupons-list" data-profile-coupon-inline="false">
                         {% for copied_bet in copied_bets %}
                             {% url 'front:prediction_detail' copied_bet.source_coupon_id as copied_bet_href %}
-                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.analyst row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix="₽" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix="₽" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix="₽" only %}
+                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=copied_bet_href row_user=copied_bet.analyst row_date=copied_bet.created_at row_status_key=copied_bet.state_status row_status_label=copied_bet.get_state_status_display metric_1_label="Сумма" metric_1_value=copied_bet.stake metric_1_suffix=" коинов" metric_2_label="Возможный выигрыш" metric_2_value=copied_bet.possible_payout metric_2_suffix=" коинов" metric_3_label="Прибыль" metric_3_value=copied_bet.profit metric_3_suffix=" коинов" only %}
                         {% empty %}
                             <div class="profile-empty-state"><p>Скопированных ставок пока нет.</p></div>
                         {% endfor %}
@@ -442,7 +442,7 @@
                     <div class="profile-coupons-list" data-profile-coupon-sort-list>
                         {% for coupon in my_coupons %}
                             {% url 'cabinet:coupon_detail' coupon.id as coupon_href %}
-                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix="₽" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix="₽" only %}
+                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix=" коинов" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix=" коинов" only %}
                         {% endfor %}
                     </div>
                     {% else %}
