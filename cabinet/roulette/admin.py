@@ -18,13 +18,14 @@ class RoulettePrizeAdminForm(forms.ModelForm):
         reward_text = (cleaned_data.get("reward_text") or "").strip()
 
         value_required_types = {
-            RoulettePrize.RewardType.VIRTUAL_BALANCE,
+            RoulettePrize.RewardType.COINS,
             RoulettePrize.RewardType.VIP_DAYS,
             RoulettePrize.RewardType.FREE_PREDICTIONS,
             RoulettePrize.RewardType.RATING_BOOST,
             RoulettePrize.RewardType.EXTRA_SPIN,
         }
         integer_value_types = {
+            RoulettePrize.RewardType.COINS,
             RoulettePrize.RewardType.VIP_DAYS,
             RoulettePrize.RewardType.FREE_PREDICTIONS,
             RoulettePrize.RewardType.EXTRA_SPIN,
