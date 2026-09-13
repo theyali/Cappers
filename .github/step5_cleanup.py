@@ -18,6 +18,23 @@ legacy_real_kind = '        VIRTUAL_TOP_UP = "virtual_top_up", "Пополнен
 if legacy_real_kind not in models:
     raise SystemExit("Legacy real->virtual transaction kind not found")
 models = models.replace(legacy_real_kind, "", 1)
+old_coin_settings_save = '''    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+'''
+new_coin_settings_save = '''    def save(self, *args, **kwargs):
+        self.pk = 1
+        if self._state.adding and type(self).objects.filter(pk=1).exists():
+            if self.created_at is None:
+                self.created_at = type(self).objects.values_list("created_at", flat=True).get(pk=1)
+            self._state.adding = False
+            kwargs.pop("force_insert", None)
+            kwargs["force_update"] = True
+        super().save(*args, **kwargs)
+'''
+if old_coin_settings_save not in models:
+    raise SystemExit("CoinSettings.save block not found")
+models = models.replace(old_coin_settings_save, new_coin_settings_save, 1)
 models_path.write_text(models)
 
 settings_path = Path("cappers/settings.py")
@@ -46,6 +63,12 @@ replace_once(
     '        self.assertEqual(self.analyst.capper_balance.balance, Decimal("9900.00"))\n',
     '        self.analyst.coin_wallet.refresh_from_db()\n'
     '        self.assertEqual(self.analyst.coin_wallet.balance, 900)\n',
+)
+
+replace_once(
+    "wallets/tests.py",
+    '            data={"package_id": 1, "next": reverse("cabinet:profile")},\n',
+    '            data={"package_id": package.pk, "next": reverse("cabinet:profile")},\n',
 )
 
 errors_path = Path("Errors to fix.md")
