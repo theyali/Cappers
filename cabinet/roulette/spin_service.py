@@ -8,13 +8,15 @@ from ..roulette_history import RouletteSpin
 from ..roulette_models import RoulettePrize, RouletteSettings
 from ..roulette_rewards import UserRouletteRewardState
 from ..roulette_state import UserRouletteState
-from .errors import RouletteSpinError, roulette_error
+from .errors import roulette_error
 from .reward_service import issue_roulette_reward
 from .selectors import (
-    available_prizes,
-    choose_weighted_prize,
-    get_available_roulette_prizes,
+    available_prizes as _available_prizes,
+    choose_weighted_prize as _choose_weighted_prize,
 )
+
+
+__all__ = ("spin_roulette",)
 
 
 def _normalize_operation_id(value) -> uuid.UUID:
@@ -59,13 +61,8 @@ def _existing_spin_for_operation(operation_id: uuid.UUID, user):
     return spin
 
 
-def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
-    """Perform one server-authoritative roulette spin.
-
-    ``operation_id`` is the idempotency key. The API/client must reuse the same
-    UUID while retrying the same user action. Prize choice never comes from the
-    client.
-    """
+def spin_roulette(user, operation_id, now=None) -> RouletteSpin:
+    """Perform one server-authoritative roulette spin."""
     if not getattr(user, "is_authenticated", False):
         raise PermissionDenied("Войдите, чтобы крутить рулетку.")
 
@@ -105,7 +102,7 @@ def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
             pk=reward_state.pk
         )
 
-        prizes = available_prizes(
+        prizes = _available_prizes(
             user=locked_user,
             reward_state=reward_state,
             roulette_settings=roulette_settings,
@@ -118,7 +115,7 @@ def spin_roulette(*, user, operation_id, now=None) -> RouletteSpin:
                 "no_available_prizes",
             )
 
-        prize = choose_weighted_prize(prizes)
+        prize = _choose_weighted_prize(prizes)
         attempts_before = state.available_spins
 
         state.consume_spin(
