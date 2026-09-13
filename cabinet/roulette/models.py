@@ -48,7 +48,7 @@ class RouletteSettings(models.Model):
 
 class RoulettePrize(models.Model):
     class RewardType(models.TextChoices):
-        VIRTUAL_BALANCE = "virtual_balance", "Виртуальный баланс"
+        COINS = "coins", "Коины"
         VIP_DAYS = "vip_days", "VIP на несколько дней"
         FREE_PREDICTIONS = "free_predictions", "Бесплатные прогнозы"
         PROMO_CODE = "promo_code", "Промокод"
@@ -80,7 +80,7 @@ class RoulettePrize(models.Model):
         max_digits=12,
         decimal_places=2,
         default=0,
-        help_text="Сумма, количество дней, прогнозов, попыток или размер буста — зависит от типа награды.",
+        help_text="Количество коинов, дней, прогнозов, попыток или размер буста — зависит от типа награды.",
     )
     reward_text = models.CharField(
         "Текстовое значение награды",
@@ -174,13 +174,14 @@ class RoulettePrize(models.Model):
 
         value = Decimal(str(self.reward_value or 0))
         value_required_types = {
-            self.RewardType.VIRTUAL_BALANCE,
+            self.RewardType.COINS,
             self.RewardType.VIP_DAYS,
             self.RewardType.FREE_PREDICTIONS,
             self.RewardType.RATING_BOOST,
             self.RewardType.EXTRA_SPIN,
         }
         integer_value_types = {
+            self.RewardType.COINS,
             self.RewardType.VIP_DAYS,
             self.RewardType.FREE_PREDICTIONS,
             self.RewardType.EXTRA_SPIN,
