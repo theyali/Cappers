@@ -77,6 +77,12 @@ class UserRouletteState(models.Model):
                 name="roulette_state_ready_idx",
             ),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(available_spins__gte=0),
+                name="roulette_state_available_spins_nonneg",
+            ),
+        ]
 
     @classmethod
     def for_user(cls, user, *, now=None, refresh=True):
