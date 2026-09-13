@@ -1026,10 +1026,11 @@ summary:focus-visible,
         background: #2a2a2d;
     }
 
-    .mobile-offcanvas-wallet span {
+    .mobile-offcanvas-wallet > .coin-amount {
         min-width: 0;
-        display: grid;
-        gap: 3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .mobile-offcanvas-wallet small {

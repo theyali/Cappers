@@ -1759,17 +1759,11 @@ h2 {
 
 .nav-wallet-balance {
     min-width: 92px;
-    display: grid;
-    gap: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 0 8px;
     line-height: 1.05;
-}
-
-.nav-wallet-balance span {
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
 }
 
 .nav-wallet-balance strong {
@@ -35068,5 +35062,28 @@ body.wiki-video-player-open {
 /* Feed fallback background is visible only when there is no cover image. */
 .prediction-card.feed-prediction-card .feed-prediction-cover-image + .feed-prediction-cover-fallback {
     background: transparent;
+}
+
+.coin-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.coin-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.coin-icon svg {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
