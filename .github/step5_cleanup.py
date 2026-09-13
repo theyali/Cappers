@@ -67,6 +67,13 @@ replace_once(
 
 replace_once(
     "wallets/tests.py",
+    '    def test_top_up_post_does_not_mint_coins_without_payment(self):\n'
+    '        CoinPackage.objects.create(\n',
+    '    def test_top_up_post_does_not_mint_coins_without_payment(self):\n'
+    '        package = CoinPackage.objects.create(\n',
+)
+replace_once(
+    "wallets/tests.py",
     '            data={"package_id": 1, "next": reverse("cabinet:profile")},\n',
     '            data={"package_id": package.pk, "next": reverse("cabinet:profile")},\n',
 )
