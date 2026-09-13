@@ -19,16 +19,17 @@
     const noteNode = root.querySelector("[data-coupon-note]");
     let lastConstraintMessage = "";
 
-    const rubles = (value) => new Intl.NumberFormat("ru-RU", {
+    const coins = (value) => new Intl.NumberFormat("ru-RU", {
         maximumFractionDigits: 0,
     }).format(value);
 
     const stakeError = () => {
         if (!stakeInput || !stakeInput.value.trim()) return "";
         const value = toNumber(stakeInput.value);
-        if (value === null) return "Укажите корректную сумму в рублях.";
-        if (value < MIN_STAKE) return `Минимальная сумма прогноза — ${rubles(MIN_STAKE)} ₽.`;
-        if (value > MAX_STAKE) return `Максимальная сумма прогноза — ${rubles(MAX_STAKE)} ₽.`;
+        if (value === null) return "Укажите корректное количество коинов.";
+        if (!Number.isInteger(value)) return "Сумма прогноза должна быть целым числом коинов.";
+        if (value < MIN_STAKE) return `Минимальная сумма прогноза — ${coins(MIN_STAKE)} коинов.`;
+        if (value > MAX_STAKE) return `Максимальная сумма прогноза — ${coins(MAX_STAKE)} коинов.`;
         return "";
     };
 
