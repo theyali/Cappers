@@ -133,7 +133,10 @@
     };
 
     const currentConfidence = () => normalizeConfidence(confidenceInput?.value);
-    const hasPositiveStake = () => toNumber(stakeInput?.value) > 0;
+    const hasPositiveStake = () => {
+        const stake = toNumber(stakeInput?.value);
+        return Number.isInteger(stake) && stake > 0;
+    };
 
     const couponCountMatchesRule = () => {
         if (items.size < 1 || items.size > 20) return false;
@@ -160,9 +163,8 @@
         noteNode.classList.toggle("is-success", state === "success");
     };
 
-    const formatMoney = (value) => value.toLocaleString("ru-RU", {
-        minimumFractionDigits: value % 1 ? 2 : 0,
-        maximumFractionDigits: 2,
+    const formatCoins = (value) => Math.round(value).toLocaleString("ru-RU", {
+        maximumFractionDigits: 0,
     });
 
     const formatOdd = (value) => toNumber(value, 0).toLocaleString("ru-RU", {
@@ -176,14 +178,14 @@
             : 0;
         const stake = toNumber(stakeInput?.value);
         if (coefficientNode) coefficientNode.textContent = formatOdd(coefficient);
-        if (totalNode) totalNode.textContent = formatMoney(stake * coefficient);
+        if (totalNode) totalNode.textContent = formatCoins(stake * coefficient);
     };
 
     const updateWalletBalance = (result) => {
-        const display = result?.balance_display;
+        const display = result?.coin_balance_display;
         if (!display) return;
         document.querySelectorAll("[data-wallet-balance]").forEach((node) => {
-            node.textContent = `${display} ₽`;
+            node.textContent = `${display} коинов`;
         });
     };
 
@@ -655,7 +657,7 @@
             return;
         }
         if (!couponIsComplete()) {
-            setNote("Укажите сумму и общую уверенность в прогнозе.", "error");
+            setNote("Укажите целое количество коинов и общую уверенность в прогнозе.", "error");
             return;
         }
 
