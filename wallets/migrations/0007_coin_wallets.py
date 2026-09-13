@@ -6,41 +6,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
-def seed_coin_wallets(apps, schema_editor):
-    CoinSettings = apps.get_model("wallets", "CoinSettings")
-    CoinTransaction = apps.get_model("wallets", "CoinTransaction")
-    CoinWallet = apps.get_model("wallets", "CoinWallet")
-    user_app_label, user_model_name = settings.AUTH_USER_MODEL.split(".")
-    User = apps.get_model(user_app_label, user_model_name)
-
-    coin_settings, _ = CoinSettings.objects.get_or_create(
-        pk=1,
-        defaults={
-            "coin_price_rub": Decimal("5.00"),
-            "initial_grant": 1000,
-            "is_enabled": True,
-        },
-    )
-    initial_grant = int(coin_settings.initial_grant) if coin_settings.is_enabled else 0
-
-    for user_id in User.objects.values_list("pk", flat=True).iterator(chunk_size=1000):
-        wallet, _ = CoinWallet.objects.get_or_create(
-            user_id=user_id,
-            defaults={"balance": initial_grant},
-        )
-        if initial_grant <= 0:
-            continue
-        CoinTransaction.objects.get_or_create(
-            user_id=user_id,
-            kind="initial_grant",
-            defaults={
-                "amount": initial_grant,
-                "balance_after": wallet.balance,
-                "note": "Стартовые коины",
-            },
-        )
-
-
 class Migration(migrations.Migration):
     dependencies = [
         ("wallets", "0006_real_balance_referral_kinds"),
@@ -244,5 +209,4 @@ class Migration(migrations.Migration):
             model_name="cointransaction",
             index=models.Index(fields=["related_model", "related_id"], name="coin_tx_subject_idx"),
         ),
-        migrations.RunPython(seed_coin_wallets, migrations.RunPython.noop),
     ]
