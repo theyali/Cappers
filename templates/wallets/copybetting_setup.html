@@ -333,7 +333,10 @@
         </div>
         <div class="wallet-balance-card">
             <span>Баланс коинов</span>
-            <strong>{{ coin_wallet.balance }} коинов</strong>
+            <strong class="coin-amount">
+                {% include "front/includes/_coin_icon.html" %}
+                <span>{{ coin_wallet.balance }}</span>
+            </strong>
         </div>
     </div>
 
