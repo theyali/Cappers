@@ -17,9 +17,8 @@ class CoinWalletTests(TestCase):
             role=User.Role.READER,
         )
 
-    def test_new_user_gets_initial_coins_once(self):
-        wallet = self.user.coin_wallet
-        wallet.refresh_from_db()
+    def test_ensure_coin_wallet_applies_initial_grant_once(self):
+        wallet = ensure_coin_wallet(self.user)
 
         self.assertEqual(wallet.balance, 1000)
         self.assertEqual(
