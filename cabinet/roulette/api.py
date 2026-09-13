@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from wallets.models import CoinWallet
+from wallets.services import ensure_coin_wallet
 
 from .history import RouletteSpin
 from .models import RoulettePrize, RouletteSettings
@@ -102,13 +102,9 @@ def _serialize_spin_prize(request, spin: RouletteSpin) -> dict:
 def _serialize_reward_result(user, spin: RouletteSpin) -> dict:
     result = {"type": spin.reward_type}
 
-    if spin.reward_type == RoulettePrize.RewardType.VIRTUAL_BALANCE:
-        balance = (
-            CoinWallet.objects.filter(user=user)
-            .values_list("balance", flat=True)
-            .first()
-        )
-        result["coin_balance"] = int(balance) if balance is not None else None
+    if spin.reward_type == RoulettePrize.RewardType.COINS:
+        wallet = ensure_coin_wallet(user)
+        result["coin_balance"] = int(wallet.balance)
         return result
 
     reward_state = UserRouletteRewardState.objects.filter(user=user).first()
