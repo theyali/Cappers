@@ -30277,9 +30277,9 @@ body.register {
     display: grid;
     grid-template-columns: 48px minmax(0, 1fr) auto 34px;
     align-items: center;
-    gap: 14px;
-    min-height: 86px;
-    padding: 14px 16px;
+    gap: 10px;
+    min-height: auto;
+    padding: 0px 9px;
     background: var(--panel-soft);
     color: var(--text);
     border-radius: 16px;
