@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Пополнение баланса — КапперХаб{% endblock %}
+{% block title %}Пополнение коинов — КапперХаб{% endblock %}
 
 {% block content %}
 <section class="wallet-page">
     <div class="wallet-hero">
         <div class="wallet-hero-copy">
-            <p class="wallet-kicker">Виртуальный баланс</p>
-            <h1>Способы пополнения</h1>
+            <p class="wallet-kicker">Коины</p>
+            <h1>Пополнение коинов</h1>
         </div>
         <div class="wallet-balance-card">
-            <span>Виртуальный баланс</span>
-            <strong>{{ balance_display }} баллов</strong>
+            <span>Баланс коинов</span>
+            <strong>{{ coin_balance_display }} коинов</strong>
             {% if real_balance %}
             <span>Реальный баланс</span>
             <strong>{{ real_balance_display }} ₽</strong>
@@ -19,44 +19,37 @@
         </div>
     </div>
 
-    <div class="wallet-methods" aria-label="Способы пополнения">
-        <article class="wallet-method is-active">
+    <div class="wallet-methods" aria-label="Пакеты коинов">
+        {% for package in coin_packages %}
+        <article class="wallet-method{% if forloop.first %} is-active{% endif %}">
             <div class="wallet-method-body">
                 <div class="wallet-method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"></path><path d="M7 11h5"></path><path d="M17 14h.01"></path></svg>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8M12 8v8"></path></svg>
                 </div>
                 <div class="wallet-method-copy">
-                    <h2>Пополнить виртуальный баланс</h2>
-                    <p>+{{ top_up_amount_display }} баллов для ставок, прогнозов и копибеттинга.</p>
+                    <h2>{{ package.title }}</h2>
+                    <p>{{ package.total_coins }} коинов{% if package.bonus_coins %}, включая {{ package.bonus_coins }} бонусных{% endif %}.</p>
                 </div>
             </div>
             <form class="wallet-method-action" method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
-                <button type="submit">Пополнить</button>
+                <input type="hidden" name="package_id" value="{{ package.id }}">
+                <button type="submit">{{ package.price_rub }} ₽</button>
             </form>
         </article>
-
-        {% if real_balance %}
-        <article class="wallet-method">
+        {% empty %}
+        <article class="wallet-method is-disabled" aria-disabled="true">
             <div class="wallet-method-body">
-                <div class="wallet-method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
                 <div class="wallet-method-copy">
-                    <h2>Перевести реальный в виртуальный</h2>
-                    <p>Доступно: {{ real_balance_display }} ₽. Перевод добавит выбранную сумму в виртуальный баланс.</p>
+                    <h2>Пакеты пока недоступны</h2>
+                    <p>Администратор ещё не добавил активные пакеты коинов.</p>
                 </div>
             </div>
-            <form class="wallet-method-action" method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
-                <input type="hidden" name="action" value="transfer_to_virtual">
-                <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" placeholder="Сумма ₽">
-                <button type="submit">В виртуальный</button>
-            </form>
         </article>
+        {% endfor %}
 
+        {% if real_balance %}
         <article class="wallet-method">
             <div class="wallet-method-body">
                 <div class="wallet-method-icon" aria-hidden="true">
@@ -76,19 +69,6 @@
             </form>
         </article>
         {% endif %}
-
-        <article class="wallet-method is-disabled" aria-disabled="true">
-            <div class="wallet-method-body">
-                <div class="wallet-method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M3 8h18"></path><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"></path><path d="M7 15h4"></path></svg>
-                </div>
-                <div class="wallet-method-copy">
-                    <h2>Банковская карта</h2>
-                    <p>Скоро появится в списке доступных способов.</p>
-                </div>
-            </div>
-            <span class="wallet-method-status wallet-method-action">Скоро</span>
-        </article>
     </div>
 </section>
 {% endblock %}
