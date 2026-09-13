@@ -399,7 +399,7 @@
         const endRadius = radius + 2;
         const gradient = ctx.createLinearGradient(
             Math.cos(mid) * startRadius,
-            Math.sin(mid) * startRadius,
+            Math.sin(mid) * endRadius,
             Math.cos(mid) * endRadius,
             Math.sin(mid) * endRadius,
         );
@@ -697,7 +697,6 @@
         subtitleLines.forEach((line, index) => {
             text(line, cx, cardY + 181 + index * 18, 14, '#d1d1d3', 700);
         });
-
         const actionLines = splitLines(resultCard.action, 42, 2);
         actionLines.forEach((line, index) => {
             text(line, cx, cardY + 211 + index * 19, 14, colors.yellow, 800);
@@ -874,8 +873,8 @@
         const formattedValue = formatRewardValue(prize.reward_value);
 
         switch (prize.reward_type) {
-            case 'virtual_balance':
-                return `+${formattedValue} ₽ зачислено на виртуальный баланс`;
+            case 'coins':
+                return `+${formattedValue} коинов начислено`;
             case 'vip_days': {
                 const until = formatVipUntil(result.vip_until);
                 return until
