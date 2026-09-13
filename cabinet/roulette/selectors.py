@@ -6,10 +6,10 @@ from django.utils import timezone
 
 from front.models import PredictionFavorite, PredictionLike
 
-from ..roulette_history import RouletteSpin
-from ..roulette_models import RoulettePrize, RouletteSettings
-from ..roulette_rewards import UserRouletteRewardState
-from ..roulette_state import roulette_daily_window
+from .history import RouletteSpin
+from .models import RoulettePrize, RouletteSettings
+from .rewards import UserRouletteRewardState
+from .state import roulette_daily_window
 from .errors import roulette_error
 
 
