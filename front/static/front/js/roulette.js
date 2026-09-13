@@ -66,11 +66,13 @@
     let serverClockBaseMs = 0;
     let serverClockPerfMs = 0;
     let countdownRefreshAfterPerfMs = 0;
+    let centerButtonRgb = [48, 48, 51];
+    let centerButtonFrame = 0;
 
     canvas.style.display = 'block';
     canvas.style.margin = '0 auto';
     canvas.style.maxWidth = '100%';
-    canvas.style.cursor = 'pointer';
+    canvas.style.cursor = 'default';
     canvas.style.touchAction = 'manipulation';
 
     if (root.dataset.rouletteBg) {
@@ -181,10 +183,18 @@
         }));
     };
 
+    const canvasActionText = () => {
+        if (spinPhase === 'requesting') return 'Загрузка... Новый запуск временно недоступен.';
+        if (spinPhase === 'animating') return 'Крутится... Новый запуск временно недоступен.';
+        if (spinPhase === 'showing_result') return 'Закрыть приз.';
+        if (canSpin()) return 'Нажмите, чтобы крутить.';
+        return '';
+    };
+
     const updateCanvasA11y = () => {
         canvas.setAttribute(
             'aria-label',
-            `${attemptStatusText()}. ${availableSpins > 0 ? 'Нажмите, чтобы крутить.' : ''}`.trim(),
+            `${attemptStatusText()}. ${canvasActionText()}`.trim(),
         );
     };
 
@@ -407,17 +417,46 @@
     );
 
     const centerLabel = () => {
-        if (!stateLoaded) return 'Загрузка…';
-        if (spinPhase === 'requesting') return 'Проверяем…';
-        if (spinPhase === 'animating') return 'Крутим…';
-        if (spinPhase === 'showing_result') return 'Результат';
+        if (!stateLoaded || spinPhase === 'requesting') return 'Загрузка...';
+        if (spinPhase === 'animating') return 'Крутится...';
+        if (spinPhase === 'showing_result') return 'Закрыть приз';
         if (stateError) return 'Недоступно';
         if (!enabled || !prizes.length) return 'Нет призов';
         if (availableSpins <= 0) return 'Нет попыток';
         return 'Крутить';
     };
 
+    const hexToRgb = (hex) => {
+        const value = String(hex || '').replace('#', '');
+        if (!/^[0-9a-f]{6}$/i.test(value)) return [48, 48, 51];
+        return [
+            parseInt(value.slice(0, 2), 16),
+            parseInt(value.slice(2, 4), 16),
+            parseInt(value.slice(4, 6), 16),
+        ];
+    };
+
+    const centerTargetColor = () => {
+        if (spinPhase === 'requesting' || spinPhase === 'showing_result') return colors.yellow;
+        if (spinPhase === 'animating' || canSpin()) return colors.blue;
+        return '#303033';
+    };
+
     const drawCenter = () => {
+        const targetRgb = hexToRgb(centerTargetColor());
+        centerButtonRgb = centerButtonRgb.map(
+            (value, index) => value + (targetRgb[index] - value) * 0.18,
+        );
+        const colorDelta = Math.max(
+            ...centerButtonRgb.map((value, index) => Math.abs(targetRgb[index] - value)),
+        );
+        if (colorDelta > 0.8 && !centerButtonFrame) {
+            centerButtonFrame = requestAnimationFrame(() => {
+                centerButtonFrame = 0;
+                draw();
+            });
+        }
+
         ctx.save();
         ctx.translate(cx, cy);
         ctx.fillStyle = '#07111f';
@@ -425,19 +464,22 @@
         ctx.arc(0, 0, innerRadius + 13, 0, TAU);
         ctx.fill();
 
-        ctx.fillStyle = canSpin() || spinPhase !== 'idle' ? colors.blue : '#303033';
+        ctx.fillStyle = `rgb(${centerButtonRgb.map((value) => Math.round(value)).join(',')})`;
         ctx.beginPath();
         ctx.arc(0, 0, innerRadius, 0, TAU);
         ctx.fill();
 
-        ctx.strokeStyle = colors.white;
+        const centerInk = spinPhase === 'requesting' || spinPhase === 'showing_result'
+            ? colors.ink
+            : colors.white;
+        ctx.strokeStyle = centerInk;
         ctx.lineWidth = 5;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.arc(0, -20, 24, Math.PI * 1.12, Math.PI * 1.86);
         ctx.stroke();
 
-        ctx.fillStyle = colors.white;
+        ctx.fillStyle = centerInk;
         ctx.beginPath();
         ctx.moveTo(20, -43);
         ctx.lineTo(31, -24);
@@ -446,7 +488,7 @@
         ctx.fill();
 
         const label = centerLabel();
-        text(label, 0, 28, label.length > 10 ? 19 : 26, colors.white, 800);
+        text(label, 0, 28, label.length > 10 ? 17 : 26, centerInk, 800);
         ctx.restore();
     };
 
@@ -566,6 +608,15 @@
         drawAttemptStatus();
         drawWinCard();
         drawStatusMessage();
+        if (spinPhase === 'requesting') {
+            canvas.style.cursor = 'wait';
+        } else if (spinPhase === 'animating') {
+            canvas.style.cursor = 'default';
+        } else if (spinPhase === 'showing_result') {
+            canvas.style.cursor = 'pointer';
+        } else {
+            canvas.style.cursor = canSpin() ? 'pointer' : 'default';
+        }
         updateCanvasA11y();
     };
 
@@ -851,19 +902,24 @@
         refreshAfterCountdown();
     };
 
-    canvas.addEventListener('click', () => {
+    const activateCanvas = () => {
+        if (spinPhase === 'requesting' || spinPhase === 'animating') return;
+
         if (spinPhase === 'showing_result') {
             resultCard = null;
             spinPhase = 'idle';
             draw();
             return;
         }
+
         spin();
-    });
+    };
+
+    canvas.addEventListener('click', activateCanvas);
     canvas.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
-        spin();
+        activateCanvas();
     });
     window.addEventListener('resize', resize);
     window.setInterval(tickCountdown, 1000);
