@@ -15,10 +15,10 @@ jobs:
         run: |
           python .github/step6_apply.py
           python .github/step6_finalize_patch.py
-          git diff --name-only -z | tar --null -T - -czf /tmp/step6-patched.tar.gz
-          echo '===STEP6_BUNDLE_BEGIN==='
-          base64 -w0 /tmp/step6-patched.tar.gz
-          echo
-          echo '===STEP6_BUNDLE_END==='
-          echo '===STEP6_FILES==='
+          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
           git diff --name-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: step6-patched
+          path: step6-patched.tar.gz
+          if-no-files-found: error
