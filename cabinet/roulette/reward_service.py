@@ -20,7 +20,7 @@ def issue_roulette_reward(*, spin, prize, user, state, reward_state, now) -> Non
     if reward_type == RoulettePrize.RewardType.NOTHING:
         return
 
-    if reward_type == RoulettePrize.RewardType.VIRTUAL_BALANCE:
+    if reward_type == RoulettePrize.RewardType.COINS:
         coin_amount = int(reward_value)
         if reward_value != Decimal(coin_amount) or coin_amount <= 0:
             raise ValidationError(
