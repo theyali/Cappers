@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -8,22 +7,20 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_http_methods
 
 from cabinet.models import User
-from cabinet.referrals import REFERRAL_ACTION_BALANCE_TOP_UP, credit_referral_income
 
 from .forms import CopyBettingForm
-from .models import CopyBettingSubscription
+from .models import CoinPackage, CopyBettingSubscription
 from .services import (
     InsufficientBalance,
     activate_copybetting,
+    ensure_coin_wallet,
     ensure_real_balance,
-    ensure_virtual_balance,
+    format_coins,
     format_money,
     pause_copybetting,
     request_real_withdrawal,
     resume_copybetting,
     stop_copybetting,
-    top_up_virtual_balance,
-    transfer_real_to_virtual,
 )
 
 
@@ -35,46 +32,31 @@ def _ensure_copybetting_reader(user) -> None:
 @login_required
 @require_http_methods(["GET", "POST"])
 def top_up_balance(request):
-    amount = getattr(settings, "CAPPER_VIRTUAL_TOP_UP_AMOUNT", "10000.00")
+    wallet = ensure_coin_wallet(request.user)
+    packages = CoinPackage.objects.filter(is_active=True).order_by("order", "id")
+
     if request.method == "POST":
-        try:
-            top_up_virtual_balance(request.user, amount)
-            if request.user.role == User.Role.ANALYST:
-                credit_referral_income(
-                    request.user,
-                    amount,
-                    REFERRAL_ACTION_BALANCE_TOP_UP,
-                    note=f"Реферал @{request.user.username}: пополнение баланса",
-                )
-        except ValidationError as exc:
-            messages.error(request, exc.messages[0] if exc.messages else str(exc))
-        else:
-            messages.success(request, f"Баланс пополнен на {format_money(amount)} ₽.")
+        messages.info(
+            request,
+            "Покупка пакетов коинов будет доступна после подключения платежного сценария.",
+        )
+        return redirect(_safe_next(request, reverse("wallets:top_up")))
 
-        next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
-        if not url_has_allowed_host_and_scheme(
-            next_url,
-            allowed_hosts={request.get_host()},
-            require_https=request.is_secure(),
-        ):
-            next_url = "wallets:top_up"
-        return redirect(next_url)
-
-    balance = ensure_virtual_balance(request.user).balance
     real_balance = None
     if request.user.role == User.Role.ANALYST:
         real_balance = ensure_real_balance(request.user)
+
     return render(
         request,
         "wallets/top_up.html",
         {
-            "balance": balance,
-            "balance_display": format_money(balance),
+            "coin_wallet": wallet,
+            "coin_balance": wallet.balance,
+            "coin_balance_display": format_coins(wallet.balance),
+            "coin_packages": packages,
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance) if real_balance else "",
             "pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
-            "top_up_amount": amount,
-            "top_up_amount_display": format_money(amount),
         },
     )
 
@@ -88,12 +70,14 @@ def real_balance_action(request):
     action = request.POST.get("action")
     amount = request.POST.get("amount")
     try:
-        if action == "transfer_to_virtual":
-            transfer_real_to_virtual(request.user, amount)
-            messages.success(request, "Средства переведены на виртуальный баланс.")
-        elif action == "withdraw":
+        if action == "withdraw":
             request_real_withdrawal(request.user, amount)
             messages.success(request, "Заявка на вывод создана.")
+        elif action == "transfer_to_virtual":
+            messages.error(
+                request,
+                "Перевод реальных денег во внутреннюю валюту отключен. Коины покупаются отдельными пакетами.",
+            )
         else:
             messages.error(request, "Неизвестное действие с балансом.")
     except (ValidationError, InsufficientBalance) as exc:
@@ -154,7 +138,7 @@ def copybetting_setup(request, analyst_id: int):
             "analyst": analyst,
             "expert_name": expert_name,
             "subscription": subscription,
-            "virtual_balance": ensure_virtual_balance(request.user),
+            "coin_wallet": ensure_coin_wallet(request.user),
         },
     )
 
