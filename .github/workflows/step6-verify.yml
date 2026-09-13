@@ -1,0 +1,63 @@
+name: Verify step 6 coin cutover
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/step6-verify.yml
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cappers
+          POSTGRES_USER: cappers
+          POSTGRES_PASSWORD: cappers_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cappers -d cappers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    env:
+      DEBUG: "True"
+      SECRET_KEY: test-step6
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: cappers
+      POSTGRES_USER: cappers
+      POSTGRES_PASSWORD: cappers_dev_password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
+      CACHE_URL: redis://127.0.0.1:6379/2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python .github/step6_apply.py
+          python .github/step6_finalize_patch.py
+          python -m pip install -r requirements.txt
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py test wallets cabinet.tests.test_roulette_api tournaments
+      - name: Search legacy and ruble references
+        run: |
+          echo '=== legacy ==='
+          grep -RInE 'Виртуальный баланс|виртуальный баланс|virtual_balance|CapperBalance|BalanceTransaction|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT' wallets cabinet tournaments front templates || true
+          echo '=== rubles ==='
+          grep -RIn '₽' wallets cabinet tournaments front templates || true
+          matches=$(grep -RInE 'Виртуальный баланс|виртуальный баланс|virtual_balance|(^|[^[:alnum:]_])CapperBalance([^[:alnum:]_]|$)|(^|[^[:alnum:]_])BalanceTransaction([^[:alnum:]_]|$)|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT' wallets cabinet tournaments front templates --exclude-dir=migrations || true)
+          test -z "$matches"
+
+# rerun after wallet-header and roulette static-storage test fixes

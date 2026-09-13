@@ -1,0 +1,19 @@
+name: Step 6 coin cutover audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/step6-audit.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Legacy virtual balance search
+        run: |
+          echo '=== LEGACY REFERENCES ==='
+          grep -RInE 'Виртуальный баланс|виртуальный баланс|virtual_balance|CapperBalance|BalanceTransaction|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT' wallets cabinet tournaments front templates || true
+          echo '=== RUBLE REFERENCES ==='
+          grep -RIn '₽' wallets cabinet tournaments front templates || true
