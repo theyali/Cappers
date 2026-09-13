@@ -22,7 +22,7 @@ from game.services.coupon_validation import (
 from game.services.match_sync import MatchSyncService
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
-from wallets.services import InsufficientBalance, charge_prediction_stake, copy_published_coupon, format_money
+from wallets.services import InsufficientCoins, charge_prediction_stake, copy_published_coupon, format_coins
 
 
 logger = logging.getLogger(__name__)
@@ -250,6 +250,7 @@ def create_coupon(request):
     for item in normalized_items:
         total_coefficient *= item["coefficient"]
     possible_payout = stake * total_coefficient if stake > 0 else Decimal("0")
+    coin_wallet = None
 
     with transaction.atomic():
         coupon = _draft_for_update(request.user, coupon_id)
@@ -270,8 +271,8 @@ def create_coupon(request):
 
         if not autosave:
             try:
-                charge_prediction_stake(request.user, coupon, stake)
-            except InsufficientBalance as exc:
+                coin_wallet = charge_prediction_stake(request.user, coupon, stake)
+            except InsufficientCoins as exc:
                 transaction.set_rollback(True)
                 return JsonResponse({"ok": False, "error": str(exc)}, status=402)
 
@@ -314,10 +315,10 @@ def create_coupon(request):
     if verification is not None:
         response["remote_checked"] = verification.remote_checked
         response["cache_used"] = verification.cache_used
-    if not autosave:
-        request.user.capper_balance.refresh_from_db()
-        response["balance"] = str(request.user.capper_balance.balance)
-        response["balance_display"] = format_money(request.user.capper_balance.balance)
+    if not autosave and coin_wallet is not None:
+        coin_wallet.refresh_from_db()
+        response["coin_balance"] = coin_wallet.balance
+        response["coin_balance_display"] = format_coins(coin_wallet.balance)
     return JsonResponse(response)
 
 
