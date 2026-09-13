@@ -1,0 +1,21 @@
+name: Audit legacy virtual balance references
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/wallet-step5-audit.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find legacy virtual balance references
+        run: |
+          echo '=== runtime/source references ==='
+          grep -RInE 'CapperBalance|BalanceTransaction|capper_balance|virtual_balance|CAPPER_STARTING_BALANCE|CAPPER_VIRTUAL_TOP_UP_AMOUNT|virtual_top_up|VIRTUAL_TOP_UP|VIRTUAL_DEPOSIT|REAL_TO_VIRTUAL|initial_bonus' \
+            --exclude-dir=.git \
+            --exclude='COINS_MIGRATION_PLAN.md' \
+            --exclude='wallet-step5-audit.yml' \
+            . || true
