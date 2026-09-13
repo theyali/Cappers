@@ -48,8 +48,8 @@
                 {% if nav_coin_balance is not None %}
                     <div class="nav-wallet">
                         <span class="nav-wallet-balance">
-                            <span>Коины</span>
-                            <strong data-wallet-balance>{{ nav_coin_balance_display }} коинов</strong>
+                            {% include "front/includes/_coin_icon.html" %}
+                            <strong data-wallet-balance>{{ nav_coin_balance_display }}</strong>
                         </span>
                         <a class="nav-wallet-topup" href="{% url 'wallets:top_up' %}" aria-label="Пополнить коины" title="Пополнить коины">+</a>
                     </div>
