@@ -738,7 +738,6 @@
     };
 
     const animateWinCard = (payload, winner) => new Promise((resolve) => {
-        spinPhase = 'showing_result';
         resultCard = {
             title: String(payload?.prize?.title || winner?.title || 'Приз'),
             shortText: String(payload?.prize?.short_text || winner?.shortText || ''),
@@ -832,6 +831,8 @@
             await animateWheelTo(winnerIndex);
             await winnerIconPromise;
             await animateWinCard(payload, winner);
+            spinPhase = 'showing_result';
+            draw();
         } catch (error) {
             spinPhase = 'idle';
             if (error?.code === 'no_spins') {
@@ -850,7 +851,15 @@
         refreshAfterCountdown();
     };
 
-    canvas.addEventListener('click', spin);
+    canvas.addEventListener('click', () => {
+        if (spinPhase === 'showing_result') {
+            resultCard = null;
+            spinPhase = 'idle';
+            draw();
+            return;
+        }
+        spin();
+    });
     canvas.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
         event.preventDefault();
