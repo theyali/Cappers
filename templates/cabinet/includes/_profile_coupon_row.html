@@ -59,8 +59,8 @@
     </div>
 
     <span class="profile-coupon-status is-{{ row_status_key }}">{{ row_status_label }}</span>
-    <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{% if metric_1_suffix == '₽' %}{{ metric_1_value|money }}{% else %}{{ metric_1_value }}{% endif %}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}</strong></div>
-    <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{% if metric_2_suffix == '₽' %}{{ metric_2_value|money }}{% else %}{{ metric_2_value }}{% endif %}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}</strong></div>
-    <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{% if metric_3_suffix == '₽' %}{{ metric_3_value|money }}{% else %}{{ metric_3_value }}{% endif %}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{% if metric_1_suffix == '₽' %}{{ metric_1_value|money }} ₽{% elif metric_1_suffix == 'коинов' or metric_1_suffix == ' коинов' %}{{ metric_1_value|floatformat:"0" }} коинов{% else %}{{ metric_1_value }}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{% if metric_2_suffix == '₽' %}{{ metric_2_value|money }} ₽{% elif metric_2_suffix == 'коинов' or metric_2_suffix == ' коинов' %}{{ metric_2_value|floatformat:"0" }} коинов{% else %}{{ metric_2_value }}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}{% endif %}</strong></div>
+    <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{% if metric_3_suffix == '₽' %}{{ metric_3_value|money }} ₽{% elif metric_3_suffix == 'коинов' or metric_3_suffix == ' коинов' %}{{ metric_3_value|floatformat:"0" }} коинов{% else %}{{ metric_3_value }}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}{% endif %}</strong></div>
     <span class="profile-coupon-open" aria-hidden="true">→</span>
 </a>
