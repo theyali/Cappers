@@ -651,7 +651,6 @@
 
         const operationId = pendingOperationId || makeOperationId();
         pendingOperationId = operationId;
-        window.CappersSkeleton?.loading(root);
         canvas.setAttribute('aria-busy', 'true');
 
         try {
@@ -678,7 +677,6 @@
             return payload;
         } finally {
             canvas.setAttribute('aria-busy', 'false');
-            window.CappersSkeleton?.ready(root);
         }
     };
 
