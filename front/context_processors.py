@@ -19,8 +19,8 @@ def _roulette_available_spins(request) -> int:
         return 0
 
     try:
-        from cabinet.roulette_models import RouletteSettings
-        from cabinet.roulette_services import get_user_roulette_state
+        from cabinet.roulette.models import RouletteSettings
+        from cabinet.roulette.services import get_user_roulette_state
 
         roulette_settings = RouletteSettings.load()
         if not roulette_settings.is_enabled:
