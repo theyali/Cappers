@@ -1,6 +1,8 @@
 (() => {
     const root = document.querySelector('[data-roulette-root]');
     const canvas = root?.querySelector('[data-roulette-canvas]');
+    const recentWinsBlock = document.querySelector('[data-roulette-recent]');
+    const recentWinSlots = Array.from(document.querySelectorAll('[data-roulette-recent-slot]')).slice(0, 5);
     if (!root || !canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -49,6 +51,7 @@
 
     const images = new Map();
     let prizes = [];
+    let recentWins = [];
     let rotation = 0;
     let spinPhase = 'idle';
     let pendingOperationId = '';
@@ -139,6 +142,19 @@
         rewardText: String(item?.reward_text || ''),
     });
 
+    const normalizeRecentWin = (item) => {
+        const prize = item?.prize || {};
+        return {
+            spinId: Number(item?.spin_id) || 0,
+            operationId: String(item?.operation_id || ''),
+            spunAt: String(item?.spun_at || ''),
+            title: String(prize.title || '').trim() || 'Подарок',
+            shortText: String(prize.short_text || '').trim(),
+            icon: String(prize.icon_url || '').trim(),
+            rewardType: String(prize.reward_type || ''),
+        };
+    };
+
     const syncServerClock = (serverTime) => {
         const parsed = Date.parse(serverTime || '');
         if (!Number.isFinite(parsed)) return;
@@ -149,6 +165,95 @@
     const serverNowMs = () => {
         if (!serverClockBaseMs) return Date.now();
         return serverClockBaseMs + (performance.now() - serverClockPerfMs);
+    };
+
+    const formatRecentWinTime = (value) => {
+        const date = new Date(value || '');
+        if (Number.isNaN(date.getTime())) return '';
+
+        const now = new Date(serverNowMs());
+        const time = new Intl.DateTimeFormat('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
+        const isToday = date.getFullYear() === now.getFullYear()
+            && date.getMonth() === now.getMonth()
+            && date.getDate() === now.getDate();
+        if (isToday) return `Сегодня, ${time}`;
+
+        const day = new Intl.DateTimeFormat('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+        }).format(date);
+        return `${day}, ${time}`;
+    };
+
+    const renderRecentWins = () => {
+        if (!recentWinsBlock || !recentWinSlots.length) return;
+
+        recentWinSlots.forEach((slot, index) => {
+            const item = recentWins[index];
+            const imageWrapper = slot.querySelector('[data-skeleton-image]');
+            const image = slot.querySelector('[data-roulette-recent-icon]');
+            const fallback = slot.querySelector('[data-roulette-recent-fallback]');
+            const title = slot.querySelector('[data-roulette-recent-title]');
+            const subtitle = slot.querySelector('[data-roulette-recent-subtitle]');
+            const time = slot.querySelector('[data-roulette-recent-time]');
+
+            if (!item) {
+                slot.style.visibility = 'hidden';
+                slot.setAttribute('aria-hidden', 'true');
+                if (image) {
+                    image.hidden = true;
+                    image.removeAttribute('src');
+                }
+                if (fallback) fallback.hidden = false;
+                window.CappersSkeleton?.ready(imageWrapper);
+                return;
+            }
+
+            slot.style.visibility = 'visible';
+            slot.setAttribute('aria-hidden', 'false');
+            if (title) title.textContent = item.title;
+            if (subtitle) subtitle.textContent = item.shortText || 'Получено в рулетке';
+            if (time) time.textContent = formatRecentWinTime(item.spunAt);
+
+            if (image && item.icon) {
+                if (fallback) fallback.hidden = true;
+                image.hidden = false;
+                if (image.getAttribute('src') !== item.icon) image.src = item.icon;
+                window.CappersSkeleton?.watchImage(imageWrapper);
+            } else {
+                if (image) {
+                    image.hidden = true;
+                    image.removeAttribute('src');
+                }
+                if (fallback) fallback.hidden = false;
+                window.CappersSkeleton?.ready(imageWrapper);
+            }
+        });
+
+        recentWinsBlock.setAttribute('aria-busy', 'false');
+        window.CappersSkeleton?.ready(recentWinsBlock);
+    };
+
+    const appendRecentWin = (payload) => {
+        if (payload?.prize?.reward_type === 'nothing') return;
+
+        const item = normalizeRecentWin({
+            spin_id: payload?.spin_id,
+            operation_id: payload?.operation_id,
+            spun_at: payload?.spun_at,
+            reward_status: payload?.reward_status,
+            prize: payload?.prize,
+        });
+        if (!item.spinId) return;
+
+        recentWins = [
+            item,
+            ...recentWins.filter((entry) => entry.spinId !== item.spinId),
+        ].slice(0, recentWinSlots.length || 5);
+        renderRecentWins();
     };
 
     const nextSpinRemainingMs = () => {
@@ -225,9 +330,13 @@
         prizes = Array.isArray(payload.sectors)
             ? payload.sectors.slice(0, MAX_SECTORS).map(normalizeSector)
             : [];
+        recentWins = Array.isArray(payload.recent_wins)
+            ? payload.recent_wins.map(normalizeRecentWin).filter((item) => item.spinId).slice(0, 5)
+            : [];
         stateLoaded = true;
         stateError = '';
         countdownRefreshAfterPerfMs = 0;
+        renderRecentWins();
         await prepareImages();
         publishAttempts();
         updateCanvasA11y();
@@ -239,6 +348,7 @@
 
         if (withSkeleton) {
             window.CappersSkeleton?.loading(root);
+            window.CappersSkeleton?.loading(recentWinsBlock);
             canvas.setAttribute('aria-busy', 'true');
         }
 
@@ -258,6 +368,7 @@
             if (withSkeleton) {
                 canvas.setAttribute('aria-busy', 'false');
                 window.CappersSkeleton?.ready(root);
+                window.CappersSkeleton?.ready(recentWinsBlock);
             }
         }
     };
@@ -268,11 +379,13 @@
             await fetchState({ withSkeleton: true });
         } catch (error) {
             prizes = [];
+            recentWins = [];
             enabled = false;
             availableSpins = 0;
             nextSpinAt = null;
             stateLoaded = true;
             stateError = error instanceof Error ? error.message : 'Не удалось загрузить рулетку.';
+            renderRecentWins();
             publishAttempts();
             updateCanvasA11y();
         }
@@ -881,6 +994,7 @@
             await winnerIconPromise;
             await animateWinCard(payload, winner);
             spinPhase = 'showing_result';
+            appendRecentWin(payload);
             draw();
         } catch (error) {
             spinPhase = 'idle';
