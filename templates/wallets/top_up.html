@@ -11,7 +11,10 @@
         </div>
         <div class="wallet-balance-card">
             <span>Баланс коинов</span>
-            <strong>{{ coin_balance_display }} коинов</strong>
+            <strong class="coin-amount">
+                {% include "front/includes/_coin_icon.html" %}
+                <span>{{ coin_balance_display }}</span>
+            </strong>
             {% if real_balance %}
             <span>Реальный баланс</span>
             <strong>{{ real_balance_display }} ₽</strong>
@@ -28,7 +31,7 @@
                 </div>
                 <div class="wallet-method-copy">
                     <h2>{{ package.title }}</h2>
-                    <p>{{ package.total_coins }} коинов{% if package.bonus_coins %}, включая {{ package.bonus_coins }} бонусных{% endif %}.</p>
+                    <p><span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<strong>{{ package.total_coins }}</strong></span> коинов{% if package.bonus_coins %}, включая {{ package.bonus_coins }} бонусных{% endif %}.</p>
                 </div>
             </div>
             <form class="wallet-method-action" method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
