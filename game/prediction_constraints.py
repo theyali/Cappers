@@ -10,8 +10,8 @@ from .models import Match
 from .services.match_timing import prediction_window_open
 
 
-PREDICTION_STAKE_MIN_RUB = Decimal("100")
-PREDICTION_STAKE_MAX_RUB = Decimal("1000000")
+PREDICTION_STAKE_MIN_COINS = Decimal("100")
+PREDICTION_STAKE_MAX_COINS = Decimal("1000000")
 MIN_ALLOWED_COEFFICIENT = Decimal("1.01")
 
 
@@ -86,10 +86,12 @@ def _validate_payload_limits(payload: dict) -> str:
         except (InvalidOperation, ValueError):
             stake = None
         if stake is not None:
-            if stake < PREDICTION_STAKE_MIN_RUB:
-                return f"Минимальная сумма прогноза — {int(PREDICTION_STAKE_MIN_RUB)} ₽."
-            if stake > PREDICTION_STAKE_MAX_RUB:
-                return f"Максимальная сумма прогноза — {int(PREDICTION_STAKE_MAX_RUB):,} ₽.".replace(",", " ")
+            if stake != stake.to_integral_value():
+                return "Сумма прогноза должна быть целым числом коинов."
+            if stake < PREDICTION_STAKE_MIN_COINS:
+                return f"Минимальная сумма прогноза — {int(PREDICTION_STAKE_MIN_COINS)} коинов."
+            if stake > PREDICTION_STAKE_MAX_COINS:
+                return f"Максимальная сумма прогноза — {int(PREDICTION_STAKE_MAX_COINS):,} коинов.".replace(",", " ")
 
     items = payload.get("items")
     if not isinstance(items, list):
