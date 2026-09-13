@@ -288,6 +288,15 @@
         }));
     };
 
+    const updateWalletBalance = (value) => {
+        const balance = Number(value);
+        if (!Number.isFinite(balance)) return;
+        const display = Math.trunc(balance).toLocaleString('ru-RU');
+        document.querySelectorAll('[data-wallet-balance]').forEach((node) => {
+            node.textContent = display;
+        });
+    };
+
     const canvasActionText = () => {
         if (spinPhase === 'requesting') return 'Загрузка... Новый запуск временно недоступен.';
         if (spinPhase === 'animating') return 'Крутится... Новый запуск временно недоступен.';
@@ -324,6 +333,7 @@
 
     const applyStatePayload = async (payload) => {
         syncServerClock(payload.server_time);
+        updateWalletBalance(payload.coin_balance);
         enabled = Boolean(payload.enabled);
         availableSpins = Math.max(0, Number(payload.available_spins) || 0);
         nextSpinAt = payload.next_spin_at || null;
@@ -977,6 +987,7 @@
         try {
             const payload = await requestSpin();
             syncServerClock(payload.server_time);
+            updateWalletBalance(payload.coin_balance ?? payload.reward_result?.coin_balance);
             availableSpins = Math.max(0, Number(payload.available_spins) || 0);
             nextSpinAt = payload.next_spin_at || null;
             countdownRefreshAfterPerfMs = 0;
