@@ -8,10 +8,10 @@ from django.db import close_old_connections
 from django.test import Client, TestCase, TransactionTestCase
 from django.urls import reverse
 
-from cabinet.roulette_history import RouletteSpin
-from cabinet.roulette_models import RoulettePrize, RouletteSettings
-from cabinet.roulette_rewards import UserRouletteRewardState
-from cabinet.roulette_state import UserRouletteState
+from cabinet.roulette.history import RouletteSpin
+from cabinet.roulette.models import RoulettePrize, RouletteSettings
+from cabinet.roulette.rewards import UserRouletteRewardState
+from cabinet.roulette.state import UserRouletteState
 
 
 class RouletteApiTests(TestCase):
