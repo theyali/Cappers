@@ -191,3 +191,89 @@ python manage.py test cabinet.tests.test_roulette_api
 - повторный `operation_id` возвращает тот же `spin_id`;
 - fixed badge обновляется через событие `cappers:roulette-attempts`;
 - приз `extra_spin` корректно прибавляет попытку и не дублируется при повторе запроса.
+
+## 11. Физически перенести отмеченные roulette-файлы в пакет
+
+После того как совместимые обертки из шага 3 работают, перенести отмеченные файлы из корня `cabinet` внутрь `cabinet/roulette/`.
+
+Целевая структура:
+
+```text
+cabinet/roulette/admin.py
+cabinet/roulette/api.py
+cabinet/roulette/history_admin.py
+cabinet/roulette/history.py
+cabinet/roulette/models.py
+cabinet/roulette/reward_service.py
+cabinet/roulette/rewards_admin.py
+cabinet/roulette/rewards.py
+cabinet/roulette/services.py
+cabinet/roulette/spin_service.py
+cabinet/roulette/state_admin.py
+cabinet/roulette/state.py
+```
+
+Старые файлы в корне `cabinet` временно оставить как thin wrappers, чтобы Django imports и миграции не сломались:
+
+```python
+from .roulette.models import *
+```
+
+Так сделать для каждого старого `cabinet/roulette_*.py`. После полного обновления импортов и прохождения тестов эти wrappers можно удалить отдельной задачей.
+
+## 12. Обновить импорты после переноса
+
+После переноса заменить импорты по проекту с корневых файлов на новый пакет.
+
+Примеры:
+
+```python
+from cabinet.roulette_spin_service import spin_roulette
+```
+
+заменить на:
+
+```python
+from cabinet.roulette.spin_service import spin_roulette
+```
+
+Проверить и обновить места:
+
+- `cabinet/urls.py`;
+- `front/context_processors.py`;
+- `cabinet/tests/test_roulette_api.py`;
+- все admin-файлы;
+- все сервисы, которые импортируют `RouletteSpin`, `RoulettePrize`, `UserRouletteState`, `UserRouletteRewardState`.
+
+После замены выполнить:
+
+```bash
+rg "roulette_" cabinet front templates
+python manage.py test cabinet.tests.test_roulette_api
+```
+
+В `rg` не должно остаться импортов старых сервисных файлов, кроме временных wrappers и миграций.
+
+## 13. Добавить фронтовую защиту от флуда с видимым состоянием кнопки
+
+В `front/static/front/js/roulette.js` запретить повторный запуск, пока колесо крутится или результат показывается.
+
+Для этого:
+
+- при старте запроса выставлять `spinPhase = 'requesting'`;
+- во время анимации выставлять `spinPhase = 'animating'`;
+- после показа выигрыша выставлять `spinPhase = 'showing_result'`;
+- разрешать новый spin только при `spinPhase === 'idle'`;
+- клики во время `requesting` и `animating` полностью игнорировать.
+
+Также изменить визуальное состояние центральной кнопки на canvas:
+
+- текст в обычном состоянии: `Крутить`;
+- во время запроса: `Загрузка...`;
+- во время вращения: `Крутится...`;
+- при открытой карточке выигрыша: `Закрыть приз`;
+- цвет кнопки плавно менять через интерполяцию или CSS-подобную анимацию в `drawCenter()`;
+- курсор во время блокировки менять с `pointer` на `wait` или `default`;
+- `aria-label` тоже должен отражать текущее состояние, чтобы не было ложного "Нажмите, чтобы крутить".
+
+Главное условие: пока колесо крутится, ни один новый POST на `data-roulette-spin-url` не должен уходить с фронта.
