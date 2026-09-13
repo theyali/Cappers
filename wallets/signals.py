@@ -9,7 +9,7 @@ from game.models import PredictionCoupon
 
 from .capper_bank import ensure_empty_capper_bank_stats, refresh_capper_bank_stats
 from .models import CopyBettingSubscription
-from .services import copy_published_coupon, ensure_real_balance, ensure_virtual_balance
+from .services import copy_published_coupon, ensure_coin_wallet, ensure_real_balance
 
 
 @receiver(pre_save, sender=CopyBettingSubscription)
@@ -66,7 +66,7 @@ def sync_capper_bank_after_coupon_delete(sender, instance: PredictionCoupon, **k
 
 @receiver(post_save, sender=User)
 def create_balance_for_new_user(sender, instance: User, **kwargs) -> None:
-    ensure_virtual_balance(instance)
+    ensure_coin_wallet(instance)
     if instance.role == User.Role.ANALYST:
         ensure_real_balance(instance)
         ensure_empty_capper_bank_stats(instance.pk)

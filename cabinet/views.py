@@ -16,12 +16,12 @@ from notifications.models import TelegramAccount
 from notifications.services import get_preferences
 from notifications.telegram_bot import get_bot_token
 from wallets.models import (
-    BalanceTransaction,
+    CoinTransaction,
     CopiedBet,
     CopyBettingSubscription,
     RealBalanceTransaction,
 )
-from wallets.services import ensure_real_balance, ensure_virtual_balance, format_money
+from wallets.services import ensure_coin_wallet, ensure_real_balance, format_coins, format_money
 
 from .achievements import build_achievement_overview
 from .dashboard_views import build_dashboard_context
@@ -184,7 +184,7 @@ def _copybetting_audience_context(user) -> dict:
         "copybetting_audience_active_count": active_count,
         "copybetting_audience_total_count": all_audience.count(),
         "copybetting_audience_profit": audience_profit,
-        "copybetting_audience_profit_display": format_money(audience_profit),
+        "copybetting_audience_profit_display": format_coins(int(audience_profit)),
         "copybetting_audience_copied_bets_count": audience_copied_bets_count,
         "copybetting_audience_copied_bets": (
             CopiedBet.objects.filter(analyst=user)
@@ -248,9 +248,9 @@ def profile(request):
     )
     notification_preferences = get_preferences(request.user)
     telegram_account = TelegramAccount.objects.filter(user=request.user).first()
-    virtual_balance = ensure_virtual_balance(request.user)
+    coin_wallet = ensure_coin_wallet(request.user)
     real_balance = ensure_real_balance(request.user) if request.user.role == User.Role.ANALYST else None
-    virtual_transactions = BalanceTransaction.objects.filter(user=request.user).order_by("-created_at", "-id")[:20]
+    coin_transactions = CoinTransaction.objects.filter(user=request.user).order_by("-created_at", "-id")[:20]
     real_transactions = (
         RealBalanceTransaction.objects.filter(user=request.user).order_by("-created_at", "-id")[:20]
         if request.user.role == User.Role.ANALYST
@@ -332,12 +332,12 @@ def profile(request):
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
-        "virtual_balance": virtual_balance,
-        "virtual_balance_display": format_money(virtual_balance.balance),
+        "coin_wallet": coin_wallet,
+        "coin_balance_display": format_coins(coin_wallet.balance),
         "real_balance": real_balance,
         "real_balance_display": format_money(real_balance.balance) if real_balance else "",
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
-        "virtual_transactions": virtual_transactions,
+        "coin_transactions": coin_transactions,
         "real_transactions": real_transactions,
         "copybetting_subscriptions": copybetting_subscriptions,
         "copied_bets": copied_bets,

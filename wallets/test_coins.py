@@ -5,8 +5,15 @@ from django.test import TestCase
 
 from cabinet.models import User
 
-from .coin_services import adjust_coin_balance, credit_coins, ensure_coin_wallet
 from .models import CoinPackage, CoinSettings, CoinTransaction
+from .services import (
+    InsufficientCoins,
+    adjust_coin_balance,
+    charge_coins,
+    credit_coins,
+    ensure_coin_wallet,
+    purchase_coin_package,
+)
 
 
 class CoinWalletTests(TestCase):
@@ -90,6 +97,36 @@ class CoinWalletTests(TestCase):
             ).exists()
         )
 
+    def test_public_coin_api_accepts_only_integer_amounts(self):
+        for invalid_amount in (Decimal("10"), Decimal("10.50"), "10", 10.5, True):
+            with self.subTest(invalid_amount=invalid_amount):
+                with self.assertRaises(ValidationError):
+                    credit_coins(
+                        self.user,
+                        invalid_amount,
+                        CoinTransaction.Kind.DAILY_TASK_REWARD,
+                    )
+
+        self.user.coin_wallet.refresh_from_db()
+        self.assertEqual(self.user.coin_wallet.balance, 1000)
+
+    def test_charge_coins_prevents_overdraft_and_writes_no_failed_ledger(self):
+        with self.assertRaises(InsufficientCoins):
+            charge_coins(
+                self.user,
+                1001,
+                CoinTransaction.Kind.PREDICTION_STAKE,
+            )
+
+        self.user.coin_wallet.refresh_from_db()
+        self.assertEqual(self.user.coin_wallet.balance, 1000)
+        self.assertFalse(
+            CoinTransaction.objects.filter(
+                user=self.user,
+                kind=CoinTransaction.Kind.PREDICTION_STAKE,
+            ).exists()
+        )
+
     def test_related_coin_credit_is_idempotent(self):
         credit_coins(
             self.user,
@@ -128,3 +165,22 @@ class CoinWalletTests(TestCase):
         self.assertEqual(package.total_coins, 1100)
         self.assertIsInstance(package.coins, int)
         self.assertEqual(package.price_rub, Decimal("500.00"))
+
+    def test_purchase_coin_package_credits_integer_coins(self):
+        package = CoinPackage.objects.create(
+            title="Большой пакет",
+            coins=2000,
+            bonus_coins=250,
+            price_rub=Decimal("900.00"),
+        )
+
+        wallet = purchase_coin_package(self.user, package)
+
+        self.assertEqual(wallet.balance, 3250)
+        transaction = CoinTransaction.objects.get(
+            user=self.user,
+            kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
+        )
+        self.assertEqual(transaction.amount, 2250)
+        self.assertEqual(transaction.balance_after, 3250)
+        self.assertIsInstance(transaction.amount, int)

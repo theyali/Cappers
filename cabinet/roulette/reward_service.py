@@ -3,7 +3,8 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import connection
 
-from wallets.services import top_up_virtual_balance
+from wallets.models import CoinTransaction
+from wallets.services import credit_coins
 
 from .models import RoulettePrize
 
@@ -20,9 +21,17 @@ def issue_roulette_reward(*, spin, prize, user, state, reward_state, now) -> Non
         return
 
     if reward_type == RoulettePrize.RewardType.VIRTUAL_BALANCE:
-        top_up_virtual_balance(
+        coin_amount = int(reward_value)
+        if reward_value != Decimal(coin_amount) or coin_amount <= 0:
+            raise ValidationError(
+                "Приз рулетки в коинах должен быть положительным целым числом.",
+                code="invalid_coin_reward",
+            )
+        credit_coins(
             user,
-            reward_value,
+            coin_amount,
+            CoinTransaction.Kind.ROULETTE_REWARD,
+            related_obj=spin,
             note=f"Приз рулетки: {prize.title} · операция {spin.operation_id}",
         )
         return

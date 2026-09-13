@@ -4,10 +4,7 @@ from django.contrib.admin import helpers
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 
-from .coin_services import adjust_coin_balance
 from .models import (
-    BalanceTransaction,
-    CapperBalance,
     CapperBankStats,
     CapperRealBalance,
     CoinPackage,
@@ -18,7 +15,7 @@ from .models import (
     CopyBettingSubscription,
     RealBalanceTransaction,
 )
-from .services import approve_real_withdrawal, cancel_real_withdrawal
+from .services import adjust_coin_balance, approve_real_withdrawal, cancel_real_withdrawal
 
 
 class CoinWalletActionForm(helpers.ActionForm):
@@ -153,21 +150,6 @@ class CoinPackageAdmin(admin.ModelAdmin):
     @admin.display(description="Всего коинов")
     def total_coins_display(self, obj):
         return obj.total_coins
-
-
-@admin.register(CapperBalance)
-class CapperBalanceAdmin(admin.ModelAdmin):
-    list_display = ("user", "balance", "updated_at")
-    search_fields = ("user__username", "user__email")
-    readonly_fields = ("created_at", "updated_at")
-
-
-@admin.register(BalanceTransaction)
-class BalanceTransactionAdmin(admin.ModelAdmin):
-    list_display = ("user", "kind", "amount", "balance_after", "related_model", "related_id", "created_at")
-    list_filter = ("kind", "created_at")
-    search_fields = ("user__username", "user__email", "note", "related_model", "related_id")
-    readonly_fields = ("created_at",)
 
 
 @admin.register(CapperRealBalance)

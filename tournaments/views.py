@@ -26,7 +26,7 @@ from tournaments.models import Tournament, TournamentParticipant, TournamentPred
 from tournaments.services.coupons import create_tournament_coupon
 from tournaments.services.join import TournamentJoinError, get_active_participant, join_tournament
 from tournaments.services.leaderboard import tournament_leaderboard
-from wallets.services import InsufficientBalance, format_money
+from wallets.services import InsufficientCoins, ensure_coin_wallet, format_coins
 
 
 def index(request):
@@ -305,14 +305,14 @@ def create_coupon(request, slug: str):
         )
     except PermissionDenied as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=403)
-    except InsufficientBalance as exc:
+    except InsufficientCoins as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=402)
     except CouponMatchVerificationError as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=503)
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
-    request.user.capper_balance.refresh_from_db()
+    coin_wallet = ensure_coin_wallet(request.user)
     return JsonResponse(
         {
             "ok": True,
@@ -321,8 +321,8 @@ def create_coupon(request, slug: str):
             "tournament_id": tournament.id,
             "message": "Прогноз турнира опубликован.",
             "coupon_url": reverse("front:prediction_detail", kwargs={"prediction_id": coupon.id}),
-            "balance": str(request.user.capper_balance.balance),
-            "balance_display": format_money(request.user.capper_balance.balance),
+            "coin_balance": coin_wallet.balance,
+            "coin_balance_display": format_coins(coin_wallet.balance),
         }
     )
 
