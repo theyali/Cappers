@@ -1,17 +1,158 @@
+from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.core.exceptions import ValidationError
 from django.db.models import Count
 
+from .coin_services import adjust_coin_balance
 from .models import (
     BalanceTransaction,
     CapperBalance,
     CapperBankStats,
     CapperRealBalance,
+    CoinPackage,
+    CoinSettings,
+    CoinTransaction,
+    CoinWallet,
     CopiedBet,
     CopyBettingSubscription,
     RealBalanceTransaction,
 )
 from .services import approve_real_withdrawal, cancel_real_withdrawal
+
+
+class CoinWalletActionForm(helpers.ActionForm):
+    coin_adjustment = forms.IntegerField(
+        required=False,
+        label="Изменение коинов",
+        help_text="Например 500 или -250.",
+    )
+    coin_adjustment_note = forms.CharField(
+        required=False,
+        max_length=180,
+        label="Комментарий",
+    )
+
+
+@admin.register(CoinWallet)
+class CoinWalletAdmin(admin.ModelAdmin):
+    list_display = ("user", "balance", "updated_at")
+    search_fields = ("user__username", "user__email")
+    list_select_related = ("user",)
+    readonly_fields = ("user", "balance", "created_at", "updated_at")
+    action_form = CoinWalletActionForm
+    actions = ("adjust_selected_wallets",)
+
+    @admin.action(description="Скорректировать коины выбранных кошельков")
+    def adjust_selected_wallets(self, request, queryset):
+        raw_amount = str(request.POST.get("coin_adjustment", "")).strip()
+        note = str(request.POST.get("coin_adjustment_note", "")).strip()
+        try:
+            amount = int(raw_amount)
+        except (TypeError, ValueError):
+            self.message_user(
+                request,
+                "Укажите целое значение в поле «Изменение коинов».",
+                level=messages.ERROR,
+            )
+            return
+        if amount == 0:
+            self.message_user(
+                request,
+                "Корректировка коинов не может быть нулевой.",
+                level=messages.ERROR,
+            )
+            return
+
+        processed = 0
+        failed = 0
+        admin_note = note or "Ручная корректировка через Django admin"
+        admin_note = f"{admin_note} · администратор: {request.user}"
+        for wallet in queryset.select_related("user"):
+            try:
+                adjust_coin_balance(wallet.user, amount, note=admin_note)
+            except ValidationError:
+                failed += 1
+            else:
+                processed += 1
+
+        self.message_user(
+            request,
+            f"Скорректировано кошельков: {processed}. Пропущено: {failed}.",
+            level=messages.SUCCESS if failed == 0 else messages.WARNING,
+        )
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(CoinTransaction)
+class CoinTransactionAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "kind",
+        "amount",
+        "balance_after",
+        "related_model",
+        "related_id",
+        "created_at",
+    )
+    list_filter = ("kind", "created_at")
+    search_fields = ("user__username", "user__email", "note", "related_model", "related_id")
+    list_select_related = ("user",)
+    readonly_fields = (
+        "user",
+        "kind",
+        "amount",
+        "balance_after",
+        "related_model",
+        "related_id",
+        "note",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CoinSettings)
+class CoinSettingsAdmin(admin.ModelAdmin):
+    list_display = ("coin_price_rub", "initial_grant", "is_enabled", "updated_at")
+    readonly_fields = ("created_at", "updated_at")
+
+    def has_add_permission(self, request):
+        return not CoinSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CoinPackage)
+class CoinPackageAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "coins",
+        "bonus_coins",
+        "total_coins_display",
+        "price_rub",
+        "is_active",
+        "order",
+    )
+    list_editable = ("is_active", "order")
+    list_filter = ("is_active",)
+    search_fields = ("title",)
+    ordering = ("order", "id")
+    readonly_fields = ("created_at", "updated_at")
+
+    @admin.display(description="Всего коинов")
+    def total_coins_display(self, obj):
+        return obj.total_coins
 
 
 @admin.register(CapperBalance)
