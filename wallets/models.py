@@ -1,8 +1,157 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+
+
+class CoinWallet(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="coin_wallet",
+        verbose_name="Пользователь",
+    )
+    balance = models.PositiveBigIntegerField("Коины", default=0)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлен", auto_now=True)
+
+    class Meta:
+        verbose_name = "Кошелек коинов"
+        verbose_name_plural = "Кошельки коинов"
+        ordering = ["user_id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(balance__gte=0),
+                name="coin_wallet_balance_nonneg",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.balance} коинов"
+
+
+class CoinTransaction(models.Model):
+    class Kind(models.TextChoices):
+        INITIAL_GRANT = "initial_grant", "Стартовые коины"
+        PACKAGE_PURCHASE = "package_purchase", "Покупка пакета"
+        ROULETTE_REWARD = "roulette_reward", "Приз рулетки"
+        PREDICTION_STAKE = "prediction_stake", "Списание за прогноз"
+        PREDICTION_PAYOUT = "prediction_payout", "Выплата по прогнозу"
+        PREDICTION_REFUND = "prediction_refund", "Возврат прогноза"
+        COPYBET_STAKE = "copybet_stake", "Списание за копиставку"
+        COPYBET_PAYOUT = "copybet_payout", "Выплата по копиставке"
+        COPYBET_REFUND = "copybet_refund", "Возврат копиставки"
+        DAILY_TASK_REWARD = "daily_task_reward", "Ежедневное задание"
+        ADJUSTMENT = "adjustment", "Корректировка"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="coin_transactions",
+        verbose_name="Пользователь",
+    )
+    kind = models.CharField("Тип", max_length=32, choices=Kind.choices, db_index=True)
+    amount = models.BigIntegerField("Изменение коинов")
+    balance_after = models.PositiveBigIntegerField("Коинов после операции")
+    related_model = models.CharField("Связанная модель", max_length=100, blank=True)
+    related_id = models.PositiveBigIntegerField("Связанный объект", null=True, blank=True)
+    note = models.CharField("Комментарий", max_length=255, blank=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Транзакция коинов"
+        verbose_name_plural = "Транзакции коинов"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "kind"],
+                condition=Q(kind="initial_grant"),
+                name="unique_coin_initial_grant",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "kind", "related_model", "related_id"],
+                condition=Q(related_id__isnull=False),
+                name="unique_coin_transaction_subject",
+            ),
+            models.CheckConstraint(
+                condition=Q(balance_after__gte=0),
+                name="coin_tx_balance_after_nonneg",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "created_at"], name="coin_tx_user_created_idx"),
+            models.Index(fields=["related_model", "related_id"], name="coin_tx_subject_idx"),
+        ]
+
+    def __str__(self) -> str:
+        sign = "+" if self.amount > 0 else ""
+        return f"{self.get_kind_display()}: {sign}{self.amount}"
+
+
+class CoinSettings(models.Model):
+    coin_price_rub = models.DecimalField(
+        "Цена 1 коина, ₽",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("5.00"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    initial_grant = models.PositiveIntegerField("Стартовые коины", default=1000)
+    is_enabled = models.BooleanField("Коины включены", default=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Настройки коинов"
+        verbose_name_plural = "Настройки коинов"
+
+    @classmethod
+    def load(cls):
+        coin_settings, _ = cls.objects.get_or_create(pk=1)
+        return coin_settings
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        status = "включены" if self.is_enabled else "выключены"
+        return f"Коины {status}: {self.coin_price_rub} ₽/коин"
+
+
+class CoinPackage(models.Model):
+    title = models.CharField("Название", max_length=80)
+    coins = models.PositiveIntegerField(
+        "Коины",
+        validators=[MinValueValidator(1)],
+    )
+    price_rub = models.DecimalField(
+        "Цена, ₽",
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    bonus_coins = models.PositiveIntegerField("Бонусные коины", default=0)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+    order = models.PositiveSmallIntegerField("Порядок", default=0, db_index=True)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлен", auto_now=True)
+
+    class Meta:
+        verbose_name = "Пакет коинов"
+        verbose_name_plural = "Пакеты коинов"
+        ordering = ["order", "id"]
+
+    @property
+    def total_coins(self) -> int:
+        return self.coins + self.bonus_coins
+
+    def __str__(self) -> str:
+        return f"{self.title}: {self.total_coins} коинов за {self.price_rub} ₽"
 
 
 class CapperBalance(models.Model):
