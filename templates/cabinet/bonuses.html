@@ -37,6 +37,37 @@
                 </canvas>
             </div>
         </section>
+
+        <aside class="coupon-sidebar" aria-label="Последние подарки рулетки">
+            <section
+                class="notifications-main"
+                data-roulette-recent
+                data-skeleton-block
+                aria-live="polite"
+                aria-busy="true"
+            >
+                <div class="notifications-toolbar">
+                    <h3 class="profile-side-title">Последние подарки</h3>
+                </div>
+                <div class="notifications-list" data-roulette-recent-list>
+                    {% for _ in "12345" %}
+                        <article class="notification-row" data-roulette-recent-slot aria-hidden="true">
+                            <span class="notification-kind" data-skeleton-image>
+                                <img data-roulette-recent-icon width="40" height="40" alt="" hidden>
+                                <span data-roulette-recent-fallback aria-hidden="true">🎁</span>
+                            </span>
+                            <span class="notification-copy">
+                                <strong data-roulette-recent-title>Подарок</strong>
+                                <span data-roulette-recent-subtitle>Выигрыш рулетки</span>
+                                <small data-roulette-recent-time>—</small>
+                            </span>
+                            <span aria-hidden="true"></span>
+                            <span class="notification-arrow" aria-hidden="true">✓</span>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
     </div>
 </section>
 {% endblock %}
