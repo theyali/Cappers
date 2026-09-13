@@ -59,3 +59,5 @@ jobs:
           grep -RIn '₽' wallets cabinet tournaments front templates || true
           matches=$(grep -RInE 'Виртуальный баланс|виртуальный баланс|virtual_balance|(^|[^[:alnum:]_])CapperBalance([^[:alnum:]_]|$)|(^|[^[:alnum:]_])BalanceTransaction([^[:alnum:]_]|$)|top_up_virtual_balance|ensure_virtual_balance|transfer_real_to_virtual|REAL_TO_VIRTUAL|VIRTUAL_DEPOSIT' wallets cabinet tournaments front templates --exclude-dir=migrations || true)
           test -z "$matches"
+
+# rerun after cabinet migration alignment
