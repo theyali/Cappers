@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% block title %}Пополнение коинов — КапперХаб{% endblock %}
 
@@ -8,6 +9,7 @@
         <div class="wallet-hero-copy">
             <p class="wallet-kicker">Коины</p>
             <h1>Пополнение коинов</h1>
+            <p>Коины — внутренняя валюта сайта. ₽ используются только при покупке пакета и в реальном балансе.</p>
         </div>
         <div class="wallet-balance-card">
             <span>Баланс коинов</span>
@@ -31,14 +33,15 @@
                 </div>
                 <div class="wallet-method-copy">
                     <h2>{{ package.title }}</h2>
-                    <p><span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<strong>{{ package.total_coins }}</strong></span> коинов{% if package.bonus_coins %}, включая {{ package.bonus_coins }} бонусных{% endif %}.</p>
+                    <p><span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<strong>{{ package.total_coins }}</strong></span> coins за <strong>{{ package.price_rub|money }} ₽</strong>.</p>
+                    <p>{% if package.bonus_coins %}{{ package.coins }} coins + {{ package.bonus_coins }} бонусом · {% endif %}примерно 1 coin = {{ package|coin_package_rate }} ₽.</p>
                 </div>
             </div>
             <form class="wallet-method-action" method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
                 <input type="hidden" name="package_id" value="{{ package.id }}">
-                <button type="submit">{{ package.price_rub }} ₽</button>
+                <button type="submit">Выбрать · {{ package.price_rub|money }} ₽</button>
             </form>
         </article>
         {% empty %}

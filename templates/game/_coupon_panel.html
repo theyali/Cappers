@@ -50,7 +50,7 @@
 
         <div class="coupon-shared">
             <label class="coupon-field">
-                <span>Сумма, от 100 до 1 000 000 коинов</span>
+                <span>Ставка, от 100 до 1 000 000 coins</span>
                 <input type="number" name="stake" min="100" max="1000000" step="1" placeholder="100" data-coupon-stake>
                 <small class="coupon-confidence-hint"></small>
             </label>
@@ -79,8 +79,8 @@
         </div>
 
         <div class="coupon-total">
-            <span>Стоимость купона</span>
-            <strong><span data-coupon-total>0</span> коинов</strong>
+            <span>Возможная выплата</span>
+            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span data-coupon-total>0</span></strong>
         </div>
 
         <button class="coupon-submit" type="submit" data-coupon-submit>

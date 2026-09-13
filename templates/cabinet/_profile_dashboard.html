@@ -19,7 +19,7 @@
             </article>
             <article>
                 <span>Прибыль аудитории</span>
-                <strong>{{ copybetting_audience_profit_display }} ₽</strong>
+                <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ copybetting_audience_profit_display }}</span></strong>
             </article>
         </div>
         <a class="capper-dashboard-copy-link" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link>Открыть копибеттинг</a>

@@ -15,6 +15,7 @@ from .models import (
     CopyBettingSubscription,
     RealBalanceTransaction,
 )
+from .package_pricing import format_effective_coin_price_rub
 from .services import adjust_coin_balance, approve_real_withdrawal, cancel_real_withdrawal
 
 
@@ -122,6 +123,27 @@ class CoinTransactionAdmin(admin.ModelAdmin):
 class CoinSettingsAdmin(admin.ModelAdmin):
     list_display = ("coin_price_rub", "initial_grant", "is_enabled", "updated_at")
     readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (
+            "Базовый справочный курс",
+            {
+                "fields": ("coin_price_rub",),
+                "description": (
+                    "coin_price_rub — базовый справочный курс внутренней валюты. "
+                    "Он не обязан совпадать с фактической ценой коина в пакетах: "
+                    "для пакета она считается как price_rub / (coins + bonus_coins)."
+                ),
+            },
+        ),
+        (
+            "Выдача коинов",
+            {
+                "fields": ("initial_grant",),
+                "description": "initial_grant — стартовое количество coins для нового пользователя.",
+            },
+        ),
+        ("Система", {"fields": ("is_enabled", "created_at", "updated_at")}),
+    )
 
     def has_add_permission(self, request):
         return not CoinSettings.objects.exists()
@@ -135,9 +157,10 @@ class CoinPackageAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "coins",
+        "price_rub",
         "bonus_coins",
         "total_coins_display",
-        "price_rub",
+        "effective_coin_price_display",
         "is_active",
         "order",
     )
@@ -145,11 +168,42 @@ class CoinPackageAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("title",)
     ordering = ("order", "id")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = (
+        "total_coins_display",
+        "effective_coin_price_display",
+        "created_at",
+        "updated_at",
+    )
+    fieldsets = (
+        (
+            "Пакет коинов",
+            {
+                "fields": (
+                    "title",
+                    "coins",
+                    "price_rub",
+                    "bonus_coins",
+                    "total_coins_display",
+                    "effective_coin_price_display",
+                ),
+                "description": (
+                    "coins — базовый объём пакета; price_rub — цена покупки в рублях; "
+                    "bonus_coins — промо-надбавка. Фактическая цена 1 coin считается "
+                    "по всему объёму пакета и может отличаться от базового coin_price_rub."
+                ),
+            },
+        ),
+        ("Публикация", {"fields": ("is_active", "order")}),
+        ("Служебные данные", {"fields": ("created_at", "updated_at")}),
+    )
 
-    @admin.display(description="Всего коинов")
+    @admin.display(description="Всего coins")
     def total_coins_display(self, obj):
         return obj.total_coins
+
+    @admin.display(description="Фактическая цена 1 coin")
+    def effective_coin_price_display(self, obj):
+        return f"{format_effective_coin_price_rub(obj.price_rub, obj.total_coins)} ₽"
 
 
 @admin.register(CapperRealBalance)

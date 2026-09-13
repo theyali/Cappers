@@ -18,7 +18,7 @@
     </div>
     <div class="profile-coupon-metric">
         <span>Прибыль</span>
-        <strong class="{% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">{{ row.profit|money }} ₽</strong>
+        <strong class="coin-amount{% if row.profit > 0 %} is-positive{% elif row.profit < 0 %} is-negative{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{{ row.profit|floatformat:"0" }}</span></strong>
     </div>
     <div class="profile-coupon-metric">
         <span>ROI</span>

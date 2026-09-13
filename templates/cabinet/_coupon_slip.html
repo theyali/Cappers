@@ -6,16 +6,16 @@
             <strong>{{ coupon_total_coefficient }}</strong>
         </div>
         <div class="coupon-slip-overview-row">
-            <span>Сумма:</span>
-            <strong>{{ coupon.total_stake|money }} ₽</strong>
+            <span>Ставка:</span>
+            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ coupon.total_stake|floatformat:"0" }}</span></strong>
         </div>
         <div class="coupon-slip-overview-row">
             <span>Уверенность:</span>
             <strong>{{ coupon.confidence }}%</strong>
         </div>
         <div class="coupon-slip-overview-row is-payout">
-            <span>{% if coupon.coupon_type == 'express' %}Стоимость экспресса{% else %}Стоимость купона{% endif %}:</span>
-            <strong>{{ coupon.possible_payout|money }} ₽</strong>
+            <span>Возможная выплата:</span>
+            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ coupon.possible_payout|floatformat:"0" }}</span></strong>
         </div>
     </div>
 
