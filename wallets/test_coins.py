@@ -154,6 +154,33 @@ class CoinWalletTests(TestCase):
             1,
         )
 
+    def test_related_coin_charge_is_idempotent(self):
+        charge_coins(
+            self.user,
+            100,
+            CoinTransaction.Kind.PREDICTION_STAKE,
+            related_obj=self.user,
+            note="Первая попытка списания",
+        )
+        charge_coins(
+            self.user,
+            100,
+            CoinTransaction.Kind.PREDICTION_STAKE,
+            related_obj=self.user,
+            note="Повтор того же списания",
+        )
+
+        self.user.coin_wallet.refresh_from_db()
+        self.assertEqual(self.user.coin_wallet.balance, 900)
+        self.assertEqual(
+            CoinTransaction.objects.filter(
+                user=self.user,
+                kind=CoinTransaction.Kind.PREDICTION_STAKE,
+                related_id=self.user.pk,
+            ).count(),
+            1,
+        )
+
     def test_coin_package_keeps_rubles_decimal_and_coins_integer(self):
         package = CoinPackage.objects.create(
             title="Стартовый пакет",
@@ -184,3 +211,24 @@ class CoinWalletTests(TestCase):
         self.assertEqual(transaction.amount, 2250)
         self.assertEqual(transaction.balance_after, 3250)
         self.assertIsInstance(transaction.amount, int)
+
+    def test_purchase_coin_package_is_idempotent_for_same_payment(self):
+        package = CoinPackage.objects.create(
+            title="Пакет с платежом",
+            coins=1000,
+            bonus_coins=100,
+            price_rub=Decimal("500.00"),
+        )
+
+        purchase_coin_package(self.user, package, payment=self.user)
+        wallet = purchase_coin_package(self.user, package, payment=self.user)
+
+        self.assertEqual(wallet.balance, 2100)
+        self.assertEqual(
+            CoinTransaction.objects.filter(
+                user=self.user,
+                kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
+                related_id=self.user.pk,
+            ).count(),
+            1,
+        )
