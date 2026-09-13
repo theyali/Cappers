@@ -24,3 +24,10 @@ replace_once(
     '        self.assertNotIn("virtual_balance", first_payload["reward_result"])\n',
     '',
 )
+
+for metric in ("1", "2", "3"):
+    replace_once(
+        "templates/cabinet/includes/_profile_coupon_row.html",
+        f"{{% if metric_{metric}_suffix == '₽' %}}{{{{ metric_{metric}_value|money }}}} ₽{{% elif metric_{metric}_suffix == 'коинов' or metric_{metric}_suffix == ' коинов' %}}",
+        f"{{% if metric_{metric}_suffix == 'коинов' or metric_{metric}_suffix == ' коинов' %}}",
+    )
