@@ -11,11 +11,11 @@ from . import (
     demand_views,
     earnings_views,
     referral_views,
-    roulette_api,
     telegram_auth,
     user_public_views,
     views,
 )
+from .roulette import api as roulette_api
 
 app_name = "cabinet"
 
