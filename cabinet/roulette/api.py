@@ -10,13 +10,13 @@ from django.views.decorators.http import require_GET, require_POST
 
 from wallets.models import CapperBalance
 
-from ..roulette_history import RouletteSpin
-from ..roulette_models import RoulettePrize, RouletteSettings
-from ..roulette_rewards import UserRouletteRewardState
+from .history import RouletteSpin
+from .models import RoulettePrize, RouletteSettings
+from .rewards import UserRouletteRewardState
 from .errors import RouletteSpinError
 from .selectors import get_available_roulette_prizes
 from .spin_service import spin_roulette
-from .state_service import get_user_roulette_state
+from .services import get_user_roulette_state
 
 
 RECENT_WINS_LIMIT = 10
