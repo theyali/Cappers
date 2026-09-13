@@ -4,10 +4,10 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 
-from ..roulette_history import RouletteSpin
-from ..roulette_models import RoulettePrize, RouletteSettings
-from ..roulette_rewards import UserRouletteRewardState
-from ..roulette_state import UserRouletteState
+from .history import RouletteSpin
+from .models import RoulettePrize, RouletteSettings
+from .rewards import UserRouletteRewardState
+from .state import UserRouletteState
 from .errors import roulette_error
 from .reward_service import issue_roulette_reward
 from .selectors import (
