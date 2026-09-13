@@ -1,0 +1,105 @@
+name: Verify legacy balance migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/wallet-step5-verify.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cappers
+          POSTGRES_USER: cappers
+          POSTGRES_PASSWORD: cappers_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cappers -d cappers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DEBUG: "True"
+      SECRET_KEY: test-wallet-step5
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: cappers
+      POSTGRES_USER: cappers
+      POSTGRES_PASSWORD: cappers_dev_password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
+      CACHE_URL: redis://127.0.0.1:6379/2
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Apply runtime cleanup
+        run: python .github/step5_cleanup.py
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Validate Django state
+        run: |
+          python -m compileall -q wallets cappers tournaments cabinet game front
+          python manage.py check
+          python manage.py makemigrations --check --dry-run wallets
+
+      - name: Seed legacy state at wallets 0007
+        run: |
+          python manage.py migrate wallets 0007 --noinput
+          python manage.py shell < .github/step5_seed_legacy.py
+
+      - name: Apply migration and verify cutover
+        run: |
+          python manage.py migrate --noinput
+          python manage.py shell < .github/step5_verify_migration.py
+
+      - name: Run focused tests
+        run: |
+          python manage.py test wallets.test_coins wallets.tests.CoinWalletIntegrationTests
+          python manage.py test tournaments.tests.TournamentServiceTests.test_create_tournament_coupon_creates_public_coupon_and_tournament_links
+
+      - name: Assert legacy runtime is gone
+        run: |
+          if grep -RInE '\bCapperBalance\b|\bBalanceTransaction\b|capper_balance|virtual_balance|CAPPER_STARTING_BALANCE|CAPPER_VIRTUAL_TOP_UP_AMOUNT|virtual_top_up|VIRTUAL_TOP_UP|VIRTUAL_DEPOSIT|REAL_TO_VIRTUAL|Виртуальн' wallets cappers cabinet game tournaments templates front --exclude-dir=migrations --exclude='test*.py'; then
+            echo 'Legacy virtual balance reference remains in runtime code.'
+            exit 1
+          fi
+
+      - name: Commit verified implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/step5_cleanup.py
+          rm -f .github/step5_seed_legacy.py
+          rm -f .github/step5_verify_migration.py
+          rm -f .github/workflows/wallet-step5-audit.yml
+          rm -f .github/workflows/wallet-step5-verify.yml
+          git add -A
+          git commit -m "wallets: complete legacy balance cutover"
+          git push origin main
