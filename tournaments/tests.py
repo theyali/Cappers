@@ -224,8 +224,8 @@ class TournamentServiceTests(TestCase):
         self.assertEqual(tournament_coupon.tournament, self.tournament)
         self.assertEqual(tournament_coupon.participant, self.participant)
         self.assertEqual(TournamentPredictionEntry.objects.filter(tournament=self.tournament).count(), 1)
-        self.analyst.capper_balance.refresh_from_db()
-        self.assertEqual(self.analyst.capper_balance.balance, Decimal("9900.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 900)
 
     def test_create_tournament_coupon_rejects_second_prediction_for_same_match(self):
         create_tournament_coupon(

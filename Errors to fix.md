@@ -37,7 +37,6 @@ models.py — f"match-{self.external_id or self.pk}" → None для несох�
 
 12. website_settings context processor молча возвращает None при недоступности БД → шаблоны могут упасть с AttributeError.
 
-13. _ensure_initial_bonus_locked в services.py — создаёт транзакцию INITIAL_BONUS даже при CAPPER_STARTING_BALANCE=0.
 
 14. League.save() — slug из f"{self.name}-{self.external_id}" при пустом name даёт "-{id}".
 

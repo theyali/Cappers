@@ -226,7 +226,7 @@ class CoinWalletIntegrationTests(TestCase):
         )
 
     def test_top_up_post_does_not_mint_coins_without_payment(self):
-        CoinPackage.objects.create(
+        package = CoinPackage.objects.create(
             title="Стартовый пакет",
             coins=1000,
             bonus_coins=100,
@@ -236,7 +236,7 @@ class CoinWalletIntegrationTests(TestCase):
 
         response = self.client.post(
             reverse("wallets:top_up"),
-            data={"package_id": 1, "next": reverse("cabinet:profile")},
+            data={"package_id": package.pk, "next": reverse("cabinet:profile")},
         )
 
         self.assertEqual(response.status_code, 302)

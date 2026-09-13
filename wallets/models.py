@@ -116,6 +116,12 @@ class CoinSettings(models.Model):
 
     def save(self, *args, **kwargs):
         self.pk = 1
+        if self._state.adding and type(self).objects.filter(pk=1).exists():
+            if self.created_at is None:
+                self.created_at = type(self).objects.values_list("created_at", flat=True).get(pk=1)
+            self._state.adding = False
+            kwargs.pop("force_insert", None)
+            kwargs["force_update"] = True
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -154,71 +160,6 @@ class CoinPackage(models.Model):
         return f"{self.title}: {self.total_coins} коинов за {self.price_rub} ₽"
 
 
-class CapperBalance(models.Model):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="capper_balance",
-        verbose_name="Пользователь",
-    )
-    balance = models.DecimalField("Виртуальный баланс", max_digits=12, decimal_places=2, default=0)
-    created_at = models.DateTimeField("Создан", auto_now_add=True)
-    updated_at = models.DateTimeField("Обновлен", auto_now=True)
-
-    class Meta:
-        verbose_name = "Виртуальный баланс пользователя"
-        verbose_name_plural = "Виртуальные балансы пользователей"
-        ordering = ["user_id"]
-
-    def __str__(self) -> str:
-        return f"{self.user}: {self.balance}"
-
-
-class BalanceTransaction(models.Model):
-    class Kind(models.TextChoices):
-        INITIAL_BONUS = "initial_bonus", "Стартовый баланс"
-        VIRTUAL_DEPOSIT = "virtual_deposit", "Виртуальное пополнение"
-        REAL_TO_VIRTUAL = "real_to_virtual", "Перевод с реального баланса"
-        PREDICTION_STAKE = "prediction_stake", "Списание за прогноз"
-        PREDICTION_PAYOUT = "prediction_payout", "Выплата по прогнозу"
-        PREDICTION_REFUND = "prediction_refund", "Возврат прогноза"
-        COPYBET_STAKE = "copybet_stake", "Списание за копиставку"
-        COPYBET_PAYOUT = "copybet_payout", "Выплата по копиставке"
-        COPYBET_REFUND = "copybet_refund", "Возврат копиставки"
-        ADJUSTMENT = "adjustment", "Корректировка"
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="balance_transactions",
-        verbose_name="Пользователь",
-    )
-    kind = models.CharField("Тип", max_length=32, choices=Kind.choices, db_index=True)
-    amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2)
-    balance_after = models.DecimalField("Баланс после операции", max_digits=12, decimal_places=2)
-    related_model = models.CharField("Связанная модель", max_length=100, blank=True)
-    related_id = models.PositiveBigIntegerField("Связанный объект", null=True, blank=True)
-    note = models.CharField("Комментарий", max_length=255, blank=True)
-    created_at = models.DateTimeField("Создана", auto_now_add=True)
-
-    class Meta:
-        verbose_name = "Транзакция баланса"
-        verbose_name_plural = "Транзакции баланса"
-        ordering = ["-created_at", "-id"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "kind", "related_model", "related_id"],
-                condition=Q(related_id__isnull=False),
-                name="unique_balance_transaction_subject",
-            )
-        ]
-        indexes = [
-            models.Index(fields=["user", "created_at"]),
-            models.Index(fields=["related_model", "related_id"]),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.get_kind_display()}: {self.amount}"
 
 
 class CapperRealBalance(models.Model):
@@ -277,7 +218,6 @@ class RealBalanceTransaction(models.Model):
         REFERRAL_TOURNAMENT = "referral_tournament", "Реферал: приз турнира"
         REFERRAL_BALANCE_TOP_UP = "referral_balance_top_up", "Реферал: пополнение баланса"
         REAL_DEPOSIT = "real_deposit", "Реальное пополнение"
-        VIRTUAL_TOP_UP = "virtual_top_up", "Пополнение виртуального баланса"
         WITHDRAWAL_REQUEST = "withdrawal_request", "Заявка на вывод"
         WITHDRAWAL_CANCEL = "withdrawal_cancel", "Отмена вывода"
         ADJUSTMENT = "adjustment", "Корректировка"
