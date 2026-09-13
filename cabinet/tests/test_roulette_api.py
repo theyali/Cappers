@@ -12,6 +12,8 @@ from cabinet.roulette.history import RouletteSpin
 from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
 from cabinet.roulette.state import UserRouletteState
+from wallets.models import CoinTransaction
+from wallets.services import ensure_coin_wallet
 
 
 class RouletteApiTests(TestCase):
@@ -235,6 +237,43 @@ class RouletteApiTests(TestCase):
         self.assertEqual(state.available_spins, 1)
         self.assertEqual(state.total_spins, 1)
         self.assertEqual(RouletteSpin.objects.filter(user=self.user).count(), 1)
+
+    def test_coin_reward_credits_coin_wallet_once_and_returns_coin_balance(self):
+        self.create_prize(
+            title="250 коинов",
+            short_text="На ваш баланс",
+            reward_type=RoulettePrize.RewardType.COINS,
+            reward_value=250,
+            weight=1,
+            sector_order=0,
+        )
+        UserRouletteState.objects.create(user=self.user, available_spins=1)
+        wallet = ensure_coin_wallet(self.user)
+        starting_balance = wallet.balance
+        operation_id = uuid.uuid4()
+
+        first_response = self.post_spin(operation_id)
+        second_response = self.post_spin(operation_id)
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        first_payload = first_response.json()
+        second_payload = second_response.json()
+        self.assertEqual(first_payload["reward_result"]["type"], RoulettePrize.RewardType.COINS)
+        self.assertEqual(first_payload["reward_result"]["coin_balance"], starting_balance + 250)
+        self.assertEqual(second_payload["reward_result"]["coin_balance"], starting_balance + 250)
+        self.assertNotIn("virtual_balance", first_payload["reward_result"])
+
+        wallet.refresh_from_db()
+        self.assertEqual(wallet.balance, starting_balance + 250)
+        self.assertEqual(
+            CoinTransaction.objects.filter(
+                user=self.user,
+                kind=CoinTransaction.Kind.ROULETTE_REWARD,
+                related_id=first_payload["spin_id"],
+            ).count(),
+            1,
+        )
 
     def test_spin_returns_reward_result_for_win_screen(self):
         self.create_prize(
