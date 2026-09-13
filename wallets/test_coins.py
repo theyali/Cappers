@@ -5,8 +5,8 @@ from django.test import TestCase
 
 from cabinet.models import User
 
-from .coin_services import adjust_coin_balance, credit_coins, ensure_coin_wallet
 from .models import CoinPackage, CoinSettings, CoinTransaction
+from .services import adjust_coin_balance, credit_coins, ensure_coin_wallet
 
 
 class CoinWalletTests(TestCase):
