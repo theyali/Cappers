@@ -19,7 +19,7 @@ from .spin_service import spin_roulette
 from .services import get_user_roulette_state
 
 
-RECENT_WINS_LIMIT = 10
+RECENT_WINS_LIMIT = 5
 
 
 def _iso(value):
@@ -151,6 +151,7 @@ def roulette_state(request):
     sectors = get_available_roulette_prizes(user=request.user, now=now)
     recent_spins = (
         RouletteSpin.objects.filter(user=request.user)
+        .exclude(reward_type=RoulettePrize.RewardType.NOTHING)
         .select_related("prize")
         .order_by("-spun_at", "-id")[:RECENT_WINS_LIMIT]
     )
