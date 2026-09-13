@@ -1,8 +1,7 @@
 import logging
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
-from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -10,9 +9,11 @@ from django.utils import timezone
 from cabinet.models import User
 
 from .models import (
-    BalanceTransaction,
-    CapperBalance,
     CapperRealBalance,
+    CoinPackage,
+    CoinSettings,
+    CoinTransaction,
+    CoinWallet,
     CopiedBet,
     CopyBettingSubscription,
     RealBalanceTransaction,
@@ -20,23 +21,15 @@ from .models import (
 
 
 MONEY_QUANT = Decimal("0.01")
-DEFAULT_CAPPER_STARTING_BALANCE = Decimal("10000.00")
-DEFAULT_VIRTUAL_TOP_UP_AMOUNT = Decimal("10000.00")
 logger = logging.getLogger(__name__)
 
 
 class InsufficientBalance(Exception):
-    pass
+    """Insufficient real-money balance."""
 
 
-def starting_balance() -> Decimal:
-    raw = getattr(settings, "CAPPER_STARTING_BALANCE", DEFAULT_CAPPER_STARTING_BALANCE)
-    return _money(raw)
-
-
-def virtual_top_up_amount() -> Decimal:
-    raw = getattr(settings, "CAPPER_VIRTUAL_TOP_UP_AMOUNT", DEFAULT_VIRTUAL_TOP_UP_AMOUNT)
-    return _money(raw)
+class InsufficientCoins(ValidationError):
+    """Insufficient application coins."""
 
 
 def format_money(value) -> str:
@@ -46,29 +39,112 @@ def format_money(value) -> str:
     return f"{amount:,.2f}".replace(",", " ")
 
 
-def ensure_capper_balance(user) -> CapperBalance:
-    return ensure_virtual_balance(user)
+def format_coins(value) -> str:
+    amount = _coin_int(value)
+    return f"{amount:,}".replace(",", " ")
 
 
-def ensure_virtual_balance(user) -> CapperBalance:
+def ensure_coin_wallet(user) -> CoinWallet:
+    """Create and lock a coin wallet, granting configured starting coins once."""
     with transaction.atomic():
-        balance = _balance_for_update(user)
-        _ensure_initial_bonus_locked(balance)
-        return balance
+        wallet = _coin_wallet_for_update(user)
+        _ensure_initial_coin_grant_locked(wallet)
+        return wallet
 
 
-def top_up_virtual_balance(user, amount, *, note: str = "") -> CapperBalance:
-    amount = _money(amount)
+def credit_coins(
+    user,
+    amount: int,
+    kind: str,
+    related_obj=None,
+    note: str = "",
+) -> CoinWallet:
+    amount = _coin_int(amount)
     if amount <= 0:
-        raise ValidationError("Сумма пополнения должна быть больше нуля.")
+        raise ValidationError("Количество коинов для начисления должно быть больше нуля.")
+    _validate_coin_kind(kind)
+    related_model, related_id = _coin_related_subject(related_obj)
+
     with transaction.atomic():
-        balance = _balance_for_update(user)
-        _ensure_initial_bonus_locked(balance)
-        return _apply_locked(
-            balance,
+        _require_coin_system_enabled()
+        wallet = _coin_wallet_for_update(user)
+        _ensure_initial_coin_grant_locked(wallet)
+        if _has_coin_transaction(user, kind, related_model, related_id):
+            return wallet
+        return _apply_coin_delta_locked(
+            wallet,
             amount,
-            BalanceTransaction.Kind.VIRTUAL_DEPOSIT,
-            note=note or "Виртуальное пополнение баланса",
+            kind,
+            related_model=related_model,
+            related_id=related_id,
+            note=note,
+        )
+
+
+def charge_coins(
+    user,
+    amount: int,
+    kind: str,
+    related_obj=None,
+    note: str = "",
+) -> CoinWallet:
+    amount = _coin_int(amount)
+    if amount <= 0:
+        raise ValidationError("Количество коинов для списания должно быть больше нуля.")
+    _validate_coin_kind(kind)
+    related_model, related_id = _coin_related_subject(related_obj)
+
+    with transaction.atomic():
+        _require_coin_system_enabled()
+        wallet = _coin_wallet_for_update(user)
+        _ensure_initial_coin_grant_locked(wallet)
+        if _has_coin_transaction(user, kind, related_model, related_id):
+            return wallet
+        return _apply_coin_delta_locked(
+            wallet,
+            -amount,
+            kind,
+            related_model=related_model,
+            related_id=related_id,
+            note=note,
+        )
+
+
+def purchase_coin_package(
+    user,
+    package: CoinPackage,
+    payment=None,
+    note: str = "",
+) -> CoinWallet:
+    if not package or not getattr(package, "pk", None):
+        raise ValidationError("Пакет коинов не найден.")
+
+    with transaction.atomic():
+        current_package = CoinPackage.objects.get(pk=package.pk)
+        if not current_package.is_active:
+            raise ValidationError("Этот пакет коинов больше недоступен.")
+        return credit_coins(
+            user,
+            int(current_package.total_coins),
+            CoinTransaction.Kind.PACKAGE_PURCHASE,
+            related_obj=payment,
+            note=note or f"Покупка пакета «{current_package.title}»",
+        )
+
+
+def adjust_coin_balance(user, amount: int, *, note: str = "") -> CoinWallet:
+    amount = _coin_int(amount)
+    if amount == 0:
+        raise ValidationError("Корректировка коинов не может быть нулевой.")
+
+    with transaction.atomic():
+        wallet = _coin_wallet_for_update(user)
+        _ensure_initial_coin_grant_locked(wallet)
+        return _apply_coin_delta_locked(
+            wallet,
+            amount,
+            CoinTransaction.Kind.ADJUSTMENT,
+            note=note or "Ручная корректировка коинов",
         )
 
 
@@ -106,35 +182,6 @@ def credit_real_balance(
         )
 
 
-def transfer_real_to_virtual(user, amount, *, note: str = "") -> tuple[CapperRealBalance, CapperBalance]:
-    _validate_analyst(user)
-    amount = _money(amount)
-    if amount <= 0:
-        raise ValidationError("Сумма перевода должна быть больше нуля.")
-
-    with transaction.atomic():
-        real_balance = _real_balance_for_update(user)
-        if real_balance.balance < amount:
-            raise InsufficientBalance(
-                f"Недостаточно средств на реальном балансе. Доступно {real_balance.balance} ₽, нужно {amount} ₽."
-            )
-        _apply_real_locked(
-            real_balance,
-            -amount,
-            RealBalanceTransaction.Kind.VIRTUAL_TOP_UP,
-            note=note or "Пополнение виртуального баланса",
-        )
-        virtual_balance = _balance_for_update(user)
-        _ensure_initial_bonus_locked(virtual_balance)
-        _apply_locked(
-            virtual_balance,
-            amount,
-            BalanceTransaction.Kind.REAL_TO_VIRTUAL,
-            note=note or "Пополнение с реального баланса",
-        )
-        return real_balance, virtual_balance
-
-
 def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalance:
     _validate_analyst(user)
     amount = _money(amount)
@@ -147,7 +194,10 @@ def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalanc
             raise InsufficientBalance(
                 f"Недостаточно средств на реальном балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
             )
-        balance.pending_withdrawal = _money(balance.pending_withdrawal + amount)
+        balance.pending_withdrawal = max(
+            Decimal("0.00"),
+            _money(balance.pending_withdrawal + amount),
+        )
         balance.save(update_fields=["pending_withdrawal", "updated_at"])
         _apply_real_locked(
             balance,
@@ -205,37 +255,20 @@ def cancel_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTra
         return locked
 
 
-def charge_prediction_stake(user, coupon, amount) -> CapperBalance:
-    amount = _money(amount)
-    if amount <= 0:
-        return ensure_capper_balance(user)
-
-    related_model, related_id = _related_subject(coupon)
-    with transaction.atomic():
-        balance = _balance_for_update(user)
-        _ensure_initial_bonus_locked(balance)
-        if _has_transaction(
-            user,
-            BalanceTransaction.Kind.PREDICTION_STAKE,
-            related_model,
-            related_id,
-        ):
-            return balance
-        if balance.balance < amount:
-            raise InsufficientBalance(
-                f"Недостаточно средств на балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
-            )
-        return _apply_locked(
-            balance,
-            -amount,
-            BalanceTransaction.Kind.PREDICTION_STAKE,
-            related_model=related_model,
-            related_id=related_id,
-            note=f"Публикация прогноза #{related_id}",
-        )
+def charge_prediction_stake(user, coupon, amount) -> CoinWallet:
+    coin_amount = _coin_amount_from_model(amount, field_name="Ставка")
+    if coin_amount <= 0:
+        return ensure_coin_wallet(user)
+    return charge_coins(
+        user,
+        coin_amount,
+        CoinTransaction.Kind.PREDICTION_STAKE,
+        related_obj=coupon,
+        note=f"Публикация прогноза #{coupon.pk}",
+    )
 
 
-def settle_prediction_coupon(coupon) -> CapperBalance | None:
+def settle_prediction_coupon(coupon) -> CoinWallet | None:
     from game.models import PredictionCoupon
 
     if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
@@ -243,54 +276,39 @@ def settle_prediction_coupon(coupon) -> CapperBalance | None:
     if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
         return None
 
-    related_model, related_id = _related_subject(coupon)
-    balance = None
+    wallet = ensure_coin_wallet(coupon.author)
+    stake_amount = _coin_amount_from_model(coupon.total_stake, field_name="Ставка")
+    if stake_amount > 0:
+        wallet = charge_coins(
+            coupon.author,
+            stake_amount,
+            CoinTransaction.Kind.PREDICTION_STAKE,
+            related_obj=coupon,
+            note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
+        )
 
     if coupon.state_status == PredictionCoupon.StateStatus.WIN:
-        kind = BalanceTransaction.Kind.PREDICTION_PAYOUT
-        amount = _money(coupon.possible_payout)
-        note = f"Выплата по прогнозу #{coupon.pk}"
-    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
-        kind = BalanceTransaction.Kind.PREDICTION_REFUND
-        amount = _money(coupon.total_stake)
-        note = f"Возврат по прогнозу #{coupon.pk}"
-    else:
-        kind = ""
-        amount = Decimal("0.00")
-        note = ""
-
-    with transaction.atomic():
-        balance = _balance_for_update(coupon.author)
-        _ensure_initial_bonus_locked(balance)
-        if (
-            coupon.total_stake > 0
-            and not _has_transaction(
+        payout = _rounded_coin_amount(coupon.possible_payout)
+        if payout > 0:
+            wallet = credit_coins(
                 coupon.author,
-                BalanceTransaction.Kind.PREDICTION_STAKE,
-                related_model,
-                related_id,
+                payout,
+                CoinTransaction.Kind.PREDICTION_PAYOUT,
+                related_obj=coupon,
+                note=f"Выплата по прогнозу #{coupon.pk}",
             )
-        ):
-            balance = _apply_locked(
-                balance,
-                -coupon.total_stake,
-                BalanceTransaction.Kind.PREDICTION_STAKE,
-                related_model=related_model,
-                related_id=related_id,
-                note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
-            )
-        if amount > 0 and not _has_transaction(coupon.author, kind, related_model, related_id):
-            balance = _apply_locked(
-                balance,
-                amount,
-                kind,
-                related_model=related_model,
-                related_id=related_id,
-                note=note,
-            )
+    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND and stake_amount > 0:
+        wallet = credit_coins(
+            coupon.author,
+            stake_amount,
+            CoinTransaction.Kind.PREDICTION_REFUND,
+            related_obj=coupon,
+            note=f"Возврат по прогнозу #{coupon.pk}",
+        )
+
     _copy_missing_bets_for_settlement(coupon)
     settle_copied_bets_for_coupon(coupon)
-    return balance
+    return wallet
 
 
 def activate_copybetting(
@@ -313,23 +331,21 @@ def activate_copybetting(
     if analyst.role != User.Role.ANALYST:
         raise ValidationError("Копировать можно только каппера.")
 
-    bank_amount = _money(bank_amount)
-    stop_loss_amount = _money(stop_loss_amount)
-    max_single_stake = _money(max_single_stake)
+    bank_amount = _coin_decimal_input(bank_amount, "Банк для копирования")
+    stop_loss_amount = _coin_decimal_input(stop_loss_amount, "Стоп-лосс", allow_zero=True)
+    max_single_stake = _coin_decimal_input(max_single_stake, "Максимум ставки", allow_zero=True)
     min_total_coefficient = _money(min_total_coefficient)
     stake_percent = _money(stake_percent)
     if bank_amount <= 0:
         raise ValidationError("Укажите банк для копирования.")
     if not Decimal("0.01") <= stake_percent <= Decimal("100.00"):
         raise ValidationError("Процент от банка должен быть от 0.01 до 100.")
-    if stop_loss_amount < 0 or max_single_stake < 0:
-        raise ValidationError("Стоп-лосс и максимум ставки не могут быть отрицательными.")
     if min_total_coefficient < 0:
         raise ValidationError("Минимальный коэффициент не может быть отрицательным.")
     if not copy_regular_coupons and not copy_tournament_coupons:
         raise ValidationError("Выберите хотя бы один тип прогнозов для копирования.")
 
-    ensure_virtual_balance(user)
+    ensure_coin_wallet(user)
     active_since = timezone.now()
     with transaction.atomic():
         subscription, _ = CopyBettingSubscription.objects.select_for_update().get_or_create(
@@ -363,7 +379,7 @@ def activate_copybetting(
         if was_inactive or had_pending_status or not subscription.active_since:
             subscription.active_since = active_since
         if was_stopped:
-            subscription.current_loss = Decimal("0.00")
+            subscription.current_loss = Decimal("0")
         subscription.save(
             update_fields=[
                 "bank_amount",
@@ -573,11 +589,11 @@ def _copy_coupon_for_subscription(
 
         try:
             _charge_copied_bet_stake(copied_bet)
-        except InsufficientBalance:
+        except InsufficientCoins:
             copied_bet.delete()
             return None
 
-        locked_subscription.total_staked = _money(locked_subscription.total_staked + stake)
+        locked_subscription.total_staked = _coin_decimal_total(locked_subscription.total_staked + stake)
         locked_subscription.save(update_fields=["total_staked", "updated_at"])
         subscription.total_staked = locked_subscription.total_staked
         return copied_bet
@@ -704,27 +720,41 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
     for copied_bet in copied_bets:
         try:
             with transaction.atomic():
-                locked_bet = CopiedBet.objects.select_for_update().select_related("subscription", "user").get(pk=copied_bet.pk)
+                locked_bet = (
+                    CopiedBet.objects.select_for_update()
+                    .select_related("subscription", "user")
+                    .get(pk=copied_bet.pk)
+                )
                 if locked_bet.state_status != CopiedBet.StateStatus.PENDING:
                     continue
 
-                subscription = CopyBettingSubscription.objects.select_for_update().get(pk=locked_bet.subscription_id)
+                subscription = CopyBettingSubscription.objects.select_for_update().get(
+                    pk=locked_bet.subscription_id
+                )
                 if coupon.state_status == PredictionCoupon.StateStatus.WIN:
                     locked_bet.possible_payout = _copy_possible_payout(coupon, locked_bet.stake)
-                    kind = BalanceTransaction.Kind.COPYBET_PAYOUT
-                    amount = locked_bet.possible_payout
+                    kind = CoinTransaction.Kind.COPYBET_PAYOUT
+                    amount = _coin_amount_from_model(
+                        locked_bet.possible_payout,
+                        field_name="Выплата по копиставке",
+                    )
                     locked_bet.state_status = CopiedBet.StateStatus.WIN
-                    locked_bet.profit = _money(locked_bet.possible_payout - locked_bet.stake)
+                    locked_bet.profit = _coin_decimal_total(
+                        locked_bet.possible_payout - locked_bet.stake
+                    )
                 elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
-                    kind = BalanceTransaction.Kind.COPYBET_REFUND
-                    amount = locked_bet.stake
+                    kind = CoinTransaction.Kind.COPYBET_REFUND
+                    amount = _coin_amount_from_model(
+                        locked_bet.stake,
+                        field_name="Возврат копиставки",
+                    )
                     locked_bet.state_status = CopiedBet.StateStatus.REFUND
-                    locked_bet.profit = Decimal("0.00")
+                    locked_bet.profit = Decimal("0")
                 else:
                     kind = ""
-                    amount = Decimal("0.00")
+                    amount = 0
                     locked_bet.state_status = CopiedBet.StateStatus.LOSE
-                    locked_bet.profit = -locked_bet.stake
+                    locked_bet.profit = -_coin_decimal_total(locked_bet.stake)
 
                 locked_bet.settled_at = timezone.now()
                 locked_bet.save(
@@ -737,34 +767,38 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                 )
 
                 if amount > 0:
-                    balance = _balance_for_update(locked_bet.user)
-                    _ensure_initial_bonus_locked(balance)
-                    related_model, related_id = _related_subject(locked_bet)
-                    if not _has_transaction(locked_bet.user, kind, related_model, related_id):
-                        _apply_locked(
-                            balance,
-                            amount,
-                            kind,
-                            related_model=related_model,
-                            related_id=related_id,
-                            note=f"Расчет копиставки #{locked_bet.pk}",
-                        )
+                    credit_coins(
+                        locked_bet.user,
+                        amount,
+                        kind,
+                        related_obj=locked_bet,
+                        note=f"Расчет копиставки #{locked_bet.pk}",
+                    )
 
-                subscription.total_profit = _money(subscription.total_profit + locked_bet.profit)
+                subscription.total_profit = _coin_decimal_total(
+                    subscription.total_profit + locked_bet.profit
+                )
                 if locked_bet.profit < 0:
-                    subscription.current_loss = _money(subscription.current_loss + abs(locked_bet.profit))
+                    subscription.current_loss = _coin_decimal_total(
+                        subscription.current_loss + abs(locked_bet.profit)
+                    )
                 elif locked_bet.profit > 0:
                     subscription.current_loss = max(
-                        Decimal("0.00"),
-                        _money(subscription.current_loss - locked_bet.profit),
+                        Decimal("0"),
+                        _coin_decimal_total(subscription.current_loss - locked_bet.profit),
                     )
                 update_fields = ["total_profit", "current_loss", "updated_at"]
-                if subscription.stop_loss_amount > 0 and subscription.current_loss >= subscription.stop_loss_amount:
+                if (
+                    subscription.stop_loss_amount > 0
+                    and subscription.current_loss >= subscription.stop_loss_amount
+                ):
                     subscription.status = CopyBettingSubscription.Status.STOPPED
                     subscription.pending_status = ""
                     subscription.pending_status_requested_at = None
                     subscription.stopped_at = timezone.now()
-                    update_fields.extend(["status", "pending_status", "pending_status_requested_at", "stopped_at"])
+                    update_fields.extend(
+                        ["status", "pending_status", "pending_status_requested_at", "stopped_at"]
+                    )
                 subscription.save(update_fields=update_fields)
                 _apply_pending_copybetting_status_if_ready(subscription)
                 settled.append(locked_bet)
@@ -773,28 +807,134 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
     return settled
 
 
-def _balance_for_update(user) -> CapperBalance:
-    balance = CapperBalance.objects.select_for_update().filter(user=user).first()
-    if balance is not None:
-        return balance
-    try:
-        return CapperBalance.objects.create(user=user, balance=Decimal("0.00"))
-    except IntegrityError:
-        return CapperBalance.objects.select_for_update().get(user=user)
+def _coin_wallet_for_update(user) -> CoinWallet:
+    locked_user = User.objects.select_for_update().get(pk=user.pk)
+    wallet, _ = CoinWallet.objects.get_or_create(user=locked_user)
+    return CoinWallet.objects.select_for_update().get(pk=wallet.pk)
 
 
-def _ensure_initial_bonus_locked(balance: CapperBalance) -> None:
-    if BalanceTransaction.objects.filter(
-        user=balance.user,
-        kind=BalanceTransaction.Kind.INITIAL_BONUS,
+def _ensure_initial_coin_grant_locked(wallet: CoinWallet) -> None:
+    if CoinTransaction.objects.filter(
+        user=wallet.user,
+        kind=CoinTransaction.Kind.INITIAL_GRANT,
     ).exists():
         return
-    _apply_locked(
-        balance,
-        starting_balance(),
-        BalanceTransaction.Kind.INITIAL_BONUS,
-        note="Стартовый виртуальный баланс пользователя",
+
+    coin_settings = CoinSettings.load()
+    if not coin_settings.is_enabled:
+        return
+
+    amount = int(coin_settings.initial_grant)
+    _apply_coin_delta_locked(
+        wallet,
+        amount,
+        CoinTransaction.Kind.INITIAL_GRANT,
+        note="Стартовые коины",
     )
+
+
+def _apply_coin_delta_locked(
+    wallet: CoinWallet,
+    amount: int,
+    kind: str,
+    *,
+    related_model: str = "",
+    related_id: int | None = None,
+    note: str = "",
+) -> CoinWallet:
+    amount = _coin_int(amount)
+    new_balance = int(wallet.balance) + amount
+    if new_balance < 0:
+        raise InsufficientCoins(
+            f"Недостаточно коинов. Доступно {wallet.balance}, нужно {abs(amount)}."
+        )
+
+    wallet.balance = new_balance
+    wallet.save(update_fields=["balance", "updated_at"])
+    CoinTransaction.objects.create(
+        user=wallet.user,
+        kind=kind,
+        amount=amount,
+        balance_after=new_balance,
+        related_model=related_model,
+        related_id=related_id,
+        note=note[:255],
+    )
+    return wallet
+
+
+def _has_coin_transaction(
+    user,
+    kind: str,
+    related_model: str,
+    related_id: int | None,
+) -> bool:
+    if related_id is None:
+        return False
+    return CoinTransaction.objects.filter(
+        user=user,
+        kind=kind,
+        related_model=related_model,
+        related_id=related_id,
+    ).exists()
+
+
+def _coin_related_subject(obj) -> tuple[str, int | None]:
+    if obj is None:
+        return "", None
+    pk = getattr(obj, "pk", None)
+    if pk is None:
+        raise ValidationError("Связанный объект должен быть сохранен до операции с коинами.")
+    return str(obj._meta.label_lower), int(pk)
+
+
+def _require_coin_system_enabled() -> CoinSettings:
+    coin_settings = CoinSettings.load()
+    if not coin_settings.is_enabled:
+        raise ValidationError("Система коинов временно отключена.")
+    return coin_settings
+
+
+def _validate_coin_kind(kind: str) -> None:
+    if kind not in CoinTransaction.Kind.values:
+        raise ValidationError("Неизвестный тип coin-транзакции.")
+
+
+def _coin_int(value) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValidationError("Количество коинов должно быть целым числом.")
+    return value
+
+
+def _coin_amount_from_model(value, *, field_name: str = "Коины") -> int:
+    try:
+        numeric = Decimal(str(value or 0))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValidationError(f"{field_name} должны быть целым числом коинов.") from exc
+    if not numeric.is_finite() or numeric != numeric.to_integral_value():
+        raise ValidationError(f"{field_name} должны быть целым числом коинов.")
+    return int(numeric)
+
+
+def _rounded_coin_amount(value) -> int:
+    try:
+        numeric = Decimal(str(value or 0))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ValidationError("Некорректная сумма коинов.") from exc
+    if not numeric.is_finite():
+        raise ValidationError("Некорректная сумма коинов.")
+    return int(numeric.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def _coin_decimal_input(value, field_name: str, *, allow_zero: bool = False) -> Decimal:
+    amount = _coin_amount_from_model(value, field_name=field_name)
+    if amount < 0 or (amount == 0 and not allow_zero):
+        raise ValidationError(f"{field_name} должны быть больше нуля.")
+    return Decimal(amount)
+
+
+def _coin_decimal_total(value) -> Decimal:
+    return Decimal(_rounded_coin_amount(value))
 
 
 def _real_balance_for_update(user) -> CapperRealBalance:
@@ -814,30 +954,6 @@ def _validate_pending_withdrawal_transaction(transaction_obj: RealBalanceTransac
         raise ValidationError("Заявка уже обработана.")
     if transaction_obj.amount >= 0:
         raise ValidationError("Некорректная сумма заявки на вывод.")
-
-
-def _apply_locked(
-    balance: CapperBalance,
-    amount: Decimal,
-    kind: str,
-    *,
-    related_model: str = "",
-    related_id: int | None = None,
-    note: str = "",
-) -> CapperBalance:
-    amount = _money(amount)
-    balance.balance = _money(balance.balance + amount)
-    balance.save(update_fields=["balance", "updated_at"])
-    BalanceTransaction.objects.create(
-        user=balance.user,
-        kind=kind,
-        amount=amount,
-        balance_after=balance.balance,
-        related_model=related_model,
-        related_id=related_id,
-        note=note[:255],
-    )
-    return balance
 
 
 def _apply_real_locked(
@@ -866,17 +982,6 @@ def _apply_real_locked(
     return balance
 
 
-def _has_transaction(user, kind: str, related_model: str, related_id: int | None) -> bool:
-    if related_id is None:
-        return False
-    return BalanceTransaction.objects.filter(
-        user=user,
-        kind=kind,
-        related_model=related_model,
-        related_id=related_id,
-    ).exists()
-
-
 def _has_real_transaction(user, kind: str, related_model: str, related_id: int | None) -> bool:
     if related_id is None:
         return False
@@ -898,10 +1003,11 @@ def _money(value) -> Decimal:
 
 
 def _copy_stake(subscription: CopyBettingSubscription) -> Decimal:
-    stake = _money(subscription.bank_amount * subscription.stake_percent / Decimal("100"))
+    raw_stake = subscription.bank_amount * subscription.stake_percent / Decimal("100")
+    stake = Decimal(_rounded_coin_amount(raw_stake))
     if subscription.max_single_stake > 0:
         stake = min(stake, subscription.max_single_stake)
-    return _money(stake)
+    return Decimal(_rounded_coin_amount(stake))
 
 
 def _copybetting_allows_coupon(subscription: CopyBettingSubscription, coupon) -> bool:
@@ -946,35 +1052,20 @@ def _coupon_total_coefficient(coupon) -> Decimal:
 
 def _copy_possible_payout(coupon, stake: Decimal) -> Decimal:
     if coupon.total_stake <= 0:
-        return Decimal("0.00")
-    coefficient = _money(coupon.possible_payout / coupon.total_stake)
-    return _money(stake * coefficient)
+        return Decimal("0")
+    coefficient = coupon.possible_payout / coupon.total_stake
+    return Decimal(_rounded_coin_amount(stake * coefficient))
 
 
-def _charge_copied_bet_stake(copied_bet: CopiedBet) -> CapperBalance:
-    related_model, related_id = _related_subject(copied_bet)
-    with transaction.atomic():
-        balance = _balance_for_update(copied_bet.user)
-        _ensure_initial_bonus_locked(balance)
-        if _has_transaction(
-            copied_bet.user,
-            BalanceTransaction.Kind.COPYBET_STAKE,
-            related_model,
-            related_id,
-        ):
-            return balance
-        if balance.balance < copied_bet.stake:
-            raise InsufficientBalance(
-                f"Недостаточно средств на виртуальном балансе. Доступно {balance.balance} ₽, нужно {copied_bet.stake} ₽."
-            )
-        return _apply_locked(
-            balance,
-            -copied_bet.stake,
-            BalanceTransaction.Kind.COPYBET_STAKE,
-            related_model=related_model,
-            related_id=related_id,
-            note=f"Копирование прогноза #{copied_bet.source_coupon_id}",
-        )
+def _charge_copied_bet_stake(copied_bet: CopiedBet) -> CoinWallet:
+    amount = _coin_amount_from_model(copied_bet.stake, field_name="Копиставка")
+    return charge_coins(
+        copied_bet.user,
+        amount,
+        CoinTransaction.Kind.COPYBET_STAKE,
+        related_obj=copied_bet,
+        note=f"Копирование прогноза #{copied_bet.source_coupon_id}",
+    )
 
 
 def _validate_analyst(user) -> None:
