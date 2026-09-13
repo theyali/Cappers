@@ -104,4 +104,4 @@ jobs:
           git commit -m "wallets: complete legacy balance cutover"
           git push origin main
 
-# rerun after fixing existing coin regressions
+# rerun after fixing the top-up package fixture
