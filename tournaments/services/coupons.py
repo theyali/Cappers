@@ -8,8 +8,8 @@ from cabinet.models import User
 from game.models import Match, Prediction, PredictionCoupon
 from game.prediction_constraints import (
     MIN_ALLOWED_COEFFICIENT,
-    PREDICTION_STAKE_MAX_RUB,
-    PREDICTION_STAKE_MIN_RUB,
+    PREDICTION_STAKE_MAX_COINS,
+    PREDICTION_STAKE_MIN_COINS,
 )
 from game.services.coupon_validation import verify_matches_for_coupon
 from game.services.match_timing import prediction_window_open
@@ -206,10 +206,12 @@ def _validate_payload_limits(payload: dict) -> str:
         except (InvalidOperation, ValueError):
             stake = None
         if stake is not None:
-            if stake < PREDICTION_STAKE_MIN_RUB:
-                return f"Минимальная сумма прогноза — {int(PREDICTION_STAKE_MIN_RUB)} ₽."
-            if stake > PREDICTION_STAKE_MAX_RUB:
-                return f"Максимальная сумма прогноза — {int(PREDICTION_STAKE_MAX_RUB):,} ₽.".replace(",", " ")
+            if stake != stake.to_integral_value():
+                return "Сумма прогноза должна быть целым числом коинов."
+            if stake < PREDICTION_STAKE_MIN_COINS:
+                return f"Минимальная сумма прогноза — {int(PREDICTION_STAKE_MIN_COINS)} коинов."
+            if stake > PREDICTION_STAKE_MAX_COINS:
+                return f"Максимальная сумма прогноза — {int(PREDICTION_STAKE_MAX_COINS):,} коинов.".replace(",", " ")
 
     items = payload.get("items")
     if not isinstance(items, list):
@@ -252,6 +254,8 @@ def _parse_stake(value) -> Decimal:
         raise TournamentCouponCreateError("Укажите корректную сумму ставки.")
     if stake <= 0:
         raise TournamentCouponCreateError("Сумма ставки должна быть больше нуля.")
+    if stake != stake.to_integral_value():
+        raise TournamentCouponCreateError("Сумма ставки должна быть целым числом коинов.")
     return stake
 
 
