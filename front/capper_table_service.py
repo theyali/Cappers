@@ -190,13 +190,17 @@ def _sport_metrics(payload: dict | None) -> dict | None:
     }
 
 
-def _general_metrics(stat: CapperMonthlyStat) -> dict:
+def _general_metrics(stat: CapperMonthlyStat) -> dict | None:
     bets = int(stat.bets_count or 0)
+    if bets <= 0:
+        return None
     return {
         "bets": bets,
         "wins": int(stat.wins_count or 0),
         "losses": int(stat.losses_count or 0),
         "refunds": int(stat.refunds_count or 0),
+        "total_stake": _decimal(stat.total_stake),
+        "total_profit": _decimal(stat.total_profit),
         "flat_profit_percent": _decimal(stat.flat_profit_percent).quantize(
             PERCENT_STEP,
             rounding=ROUND_HALF_UP,
@@ -314,6 +318,8 @@ def _all_time_rows(
                 "wins": bucket["wins"],
                 "losses": bucket["losses"],
                 "refunds": bucket["refunds"],
+                "total_stake": _decimal(bucket["total_stake"]),
+                "total_profit": _decimal(bucket["total_profit"]),
                 "flat_profit_percent": _percent(
                     _decimal(bucket["flat_units"]),
                     Decimal(bets),
@@ -382,16 +388,35 @@ def _canonical_rank_order(*, period_days: int | None = None) -> dict[int, int]:
     }
 
 
-def _contextual_rank_key(row: dict) -> tuple:
-    """Trust first, then metrics from the selected month/sport context."""
-    return (
-        -_decimal(row.get("trust_index")),
-        -_decimal(row.get("roi")),
-        -int(row.get("bets") or 0),
-        -int(row.get("wins") or 0),
-        -int(row.get("followers") or 0),
-        (row.get("username") or "").lower(),
-        int(row.get("id") or 0),
+def _sort_all_time_rows(rows: list[dict]) -> list[dict]:
+    """Keep all-time tables aligned with the canonical trust-first ranking."""
+    rank_order = _canonical_rank_order(period_days=None)
+    return sorted(
+        rows,
+        key=lambda row: (
+            rank_order.get(row["id"], len(rank_order) + 1),
+            (row.get("username") or "").lower(),
+            int(row.get("id") or 0),
+        ),
+    )
+
+
+def _sort_month_rows(rows: list[dict]) -> list[dict]:
+    """Rank active cappers by the selected month's result, not lifetime trust."""
+    active_rows = [row for row in rows if int(row.get("bets") or 0) > 0]
+    return sorted(
+        active_rows,
+        key=lambda row: (
+            -_decimal(row.get("roi")),
+            -_decimal(row.get("flat_profit_percent")),
+            -int(row.get("wins") or 0),
+            -_decimal(row.get("total_profit")),
+            -int(row.get("bets") or 0),
+            -_decimal(row.get("trust_index")),
+            -int(row.get("followers") or 0),
+            (row.get("username") or "").lower(),
+            int(row.get("id") or 0),
+        ),
     )
 
 
@@ -399,24 +424,10 @@ def _sort_ranking_rows(
     rows: list[dict],
     *,
     selected_month: date | None,
-    selected_sport_code: str,
-) -> None:
-    if selected_month is None and selected_sport_code == ALL_SPORTS:
-        # Keep the all-time table aligned with the canonical trust-first ranking.
-        # period_days=None makes stabilized ROI/history use the same all-time scope.
-        rank_order = _canonical_rank_order(period_days=None)
-        rows.sort(
-            key=lambda row: (
-                rank_order.get(row["id"], len(rank_order) + 1),
-                (row.get("username") or "").lower(),
-                int(row.get("id") or 0),
-            )
-        )
-        return
-
-    # A selected month or sport keeps trust_index as the primary signal while
-    # ROI, volume and wins from that exact context only break equal-index ties.
-    rows.sort(key=_contextual_rank_key)
+) -> list[dict]:
+    if selected_month is None:
+        return _sort_all_time_rows(rows)
+    return _sort_month_rows(rows)
 
 
 def build_capper_table_context(
@@ -473,10 +484,9 @@ def build_capper_table_context(
         else _all_time_rows(profiles_by_user, selected_sport_code)
     )
 
-    _sort_ranking_rows(
+    rows = _sort_ranking_rows(
         rows,
         selected_month=selected_month,
-        selected_sport_code=selected_sport_code,
     )
 
     group_tabs = [
