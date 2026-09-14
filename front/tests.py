@@ -7,8 +7,7 @@ from django.urls import reverse
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 
-from .capper_table_service import _sort_month_rows
-from .expert_ranking import expert_ranking_score
+from .expert_ranking import expert_ranking_score, rank_experts
 
 
 class ExpertRankingScoreTests(SimpleTestCase):
@@ -40,135 +39,178 @@ class ExpertRankingScoreTests(SimpleTestCase):
         )
 
 
-class CapperMonthlyRankingSortTests(SimpleTestCase):
-    def test_equal_month_metrics_use_trust_index_as_tie_breaker(self):
-        base = {
-            "roi": Decimal("12.0"),
-            "flat_profit_percent": Decimal("8.0"),
-            "wins": 7,
-            "total_profit": Decimal("120"),
-            "bets": 10,
-            "followers": 100,
-        }
-        lower_trust = {
-            **base,
-            "id": 1,
-            "username": "lower_trust",
-            "trust_index": Decimal("6.0"),
-        }
-        higher_trust = {
-            **base,
-            "id": 2,
-            "username": "higher_trust",
-            "trust_index": Decimal("7.0"),
-        }
-
-        rows = _sort_month_rows([lower_trust, higher_trust])
-
-        self.assertEqual(
-            [row["username"] for row in rows],
-            ["higher_trust", "lower_trust"],
-        )
-
-
 class CapperTrustRankingIntegrationTests(TestCase):
-    month = date(2026, 8, 1)
+    august = date(2026, 8, 1)
+    september = date(2026, 9, 1)
+
+    @classmethod
+    def _create_capper(cls, username: str, trust_index: str):
+        user = User.objects.create_user(
+            username=username,
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        profile, _ = AnalystProfile.objects.get_or_create(user=user)
+        AnalystProfile.objects.filter(pk=profile.pk).update(
+            is_public=True,
+            trust_index=Decimal(trust_index),
+        )
+        return user
+
+    @classmethod
+    def _create_stat(
+        cls,
+        user,
+        month,
+        *,
+        bets,
+        wins,
+        losses,
+        refunds=0,
+        stake="1000",
+        profit="0",
+        flat="0",
+        roi="0",
+        coefficient="1.90",
+        hit_rate="50.0",
+    ):
+        return CapperMonthlyStat.objects.create(
+            analyst=user,
+            month=month,
+            bets_count=bets,
+            wins_count=wins,
+            losses_count=losses,
+            refunds_count=refunds,
+            total_stake=Decimal(stake),
+            total_profit=Decimal(profit),
+            flat_profit_percent=Decimal(flat),
+            roi=Decimal(roi),
+            avg_coefficient=Decimal(coefficient),
+            hit_rate=Decimal(hit_rate),
+        )
 
     @classmethod
     def setUpTestData(cls):
-        cls.high_trust_user = User.objects.create_user(
-            username="stable_trust",
-            password="test-password",
-            role=User.Role.ANALYST,
+        # A: strongest all-time trust, no activity in August/September.
+        cls.inactive_month_user = cls._create_capper("capper_a_trust", "9.5")
+        # B: lower trust, strongest monthly result.
+        cls.high_roi_user = cls._create_capper("capper_b_month", "6.0")
+        # C: higher trust than B, but weaker monthly result.
+        cls.high_trust_user = cls._create_capper("capper_c_month", "7.0")
+        cls.third_month_user = cls._create_capper("capper_d_month", "5.0")
+        cls.tie_high_trust_user = cls._create_capper("capper_e_tie_high", "8.0")
+        cls.tie_low_trust_user = cls._create_capper("capper_f_tie_low", "3.0")
+
+        cls._create_stat(
+            cls.inactive_month_user,
+            date(2026, 7, 1),
+            bets=12,
+            wins=8,
+            losses=4,
+            stake="1200",
+            profit="180",
+            flat="15.0",
+            roi="15.0",
+            coefficient="1.85",
+            hit_rate="66.7",
         )
-        cls.high_roi_user = User.objects.create_user(
-            username="high_roi_low_trust",
-            password="test-password",
-            role=User.Role.ANALYST,
-        )
-        cls.inactive_month_user = User.objects.create_user(
-            username="inactive_month_top_trust",
-            password="test-password",
-            role=User.Role.ANALYST,
+        cls._create_stat(
+            cls.inactive_month_user,
+            cls.august,
+            bets=0,
+            wins=0,
+            losses=0,
+            stake="0",
+            profit="0",
         )
 
-        high_trust_profile, _ = AnalystProfile.objects.get_or_create(
-            user=cls.high_trust_user,
+        cls._create_stat(
+            cls.high_trust_user,
+            cls.august,
+            bets=20,
+            wins=11,
+            losses=8,
+            refunds=1,
+            stake="2000",
+            profit="60",
+            flat="3.0",
+            roi="3.0",
+            hit_rate="55.0",
         )
-        high_roi_profile, _ = AnalystProfile.objects.get_or_create(
-            user=cls.high_roi_user,
-        )
-        inactive_profile, _ = AnalystProfile.objects.get_or_create(
-            user=cls.inactive_month_user,
-        )
-        AnalystProfile.objects.filter(pk=high_trust_profile.pk).update(
-            is_public=True,
-            trust_index=Decimal("7.0"),
-        )
-        AnalystProfile.objects.filter(pk=high_roi_profile.pk).update(
-            is_public=True,
-            trust_index=Decimal("6.0"),
-        )
-        AnalystProfile.objects.filter(pk=inactive_profile.pk).update(
-            is_public=True,
-            trust_index=Decimal("9.5"),
+        cls._create_stat(
+            cls.high_roi_user,
+            cls.august,
+            bets=3,
+            wins=3,
+            losses=0,
+            stake="300",
+            profit="600",
+            flat="200.0",
+            roi="200.0",
+            coefficient="3.00",
+            hit_rate="100.0",
         )
 
-        CapperMonthlyStat.objects.create(
-            analyst=cls.high_trust_user,
-            month=cls.month,
-            bets_count=20,
-            wins_count=11,
-            losses_count=8,
-            refunds_count=1,
-            total_stake=Decimal("2000"),
-            total_profit=Decimal("60"),
-            flat_profit_percent=Decimal("3.0"),
-            roi=Decimal("3.0"),
-            avg_coefficient=Decimal("1.90"),
-            hit_rate=Decimal("55.0"),
+        # September data is used by the homepage "experts of the month" block.
+        cls._create_stat(
+            cls.high_roi_user,
+            cls.september,
+            bets=12,
+            wins=9,
+            losses=3,
+            stake="1200",
+            profit="240",
+            flat="20.0",
+            roi="20.0",
+            hit_rate="75.0",
         )
-        CapperMonthlyStat.objects.create(
-            analyst=cls.high_roi_user,
-            month=cls.month,
-            bets_count=3,
-            wins_count=3,
-            losses_count=0,
-            refunds_count=0,
-            total_stake=Decimal("300"),
-            total_profit=Decimal("600"),
-            flat_profit_percent=Decimal("200.0"),
-            roi=Decimal("200.0"),
-            avg_coefficient=Decimal("3.00"),
-            hit_rate=Decimal("100.0"),
+        cls._create_stat(
+            cls.high_trust_user,
+            cls.september,
+            bets=14,
+            wins=9,
+            losses=5,
+            stake="1400",
+            profit="140",
+            flat="10.0",
+            roi="10.0",
+            hit_rate="64.3",
         )
-        CapperMonthlyStat.objects.create(
-            analyst=cls.inactive_month_user,
-            month=cls.month,
-            bets_count=0,
-            wins_count=0,
-            losses_count=0,
-            refunds_count=0,
-            total_stake=Decimal("0"),
-            total_profit=Decimal("0"),
-            flat_profit_percent=Decimal("0"),
-            roi=Decimal("0"),
-            avg_coefficient=Decimal("0"),
-            hit_rate=Decimal("0"),
+        cls._create_stat(
+            cls.third_month_user,
+            cls.september,
+            bets=10,
+            wins=6,
+            losses=4,
+            stake="1000",
+            profit="50",
+            flat="5.0",
+            roi="5.0",
+            hit_rate="60.0",
         )
-        CapperMonthlyStat.objects.create(
-            analyst=cls.inactive_month_user,
-            month=date(2026, 7, 1),
-            bets_count=12,
-            wins_count=8,
-            losses_count=4,
-            refunds_count=0,
-            total_stake=Decimal("1200"),
-            total_profit=Decimal("180"),
-            flat_profit_percent=Decimal("15.0"),
-            roi=Decimal("15.0"),
-            avg_coefficient=Decimal("1.85"),
-            hit_rate=Decimal("66.7"),
+        cls._create_stat(
+            cls.tie_high_trust_user,
+            cls.september,
+            bets=8,
+            wins=3,
+            losses=5,
+            stake="800",
+            profit="-80",
+            flat="-10.0",
+            roi="-10.0",
+            hit_rate="37.5",
+        )
+        cls._create_stat(
+            cls.tie_low_trust_user,
+            cls.september,
+            bets=8,
+            wins=3,
+            losses=5,
+            stake="800",
+            profit="-80",
+            flat="-10.0",
+            roi="-10.0",
+            hit_rate="37.5",
         )
 
     def test_month_table_uses_month_results_and_excludes_inactive_cappers(self):
@@ -182,13 +224,47 @@ class CapperTrustRankingIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         usernames = [row["username"] for row in response.context["ranking_rows"]]
         self.assertEqual(
-            usernames,
+            usernames[:2],
             [self.high_roi_user.username, self.high_trust_user.username],
         )
         self.assertNotIn(self.inactive_month_user.username, usernames)
         self.assertContains(response, ">Индекс</th>", html=False)
         self.assertContains(response, 'title="Общий индекс"')
         self.assertContains(response, "capper-trust-badge")
+
+    def test_equal_month_metrics_use_trust_index_as_tie_breaker(self):
+        usernames = [
+            entry["profile"].user.username
+            for entry in rank_experts(period="2026-09")
+        ]
+        self.assertLess(
+            usernames.index(self.tie_high_trust_user.username),
+            usernames.index(self.tie_low_trust_user.username),
+        )
+
+    def test_month_table_and_home_month_block_share_same_top_three(self):
+        table_response = self.client.get(
+            reverse(
+                "front:cappers_table_period",
+                kwargs={"group": "all", "period": "2026-09"},
+            )
+        )
+        home_response = self.client.get(reverse("front:index"))
+
+        self.assertEqual(table_response.status_code, 200)
+        self.assertEqual(home_response.status_code, 200)
+        table_top = [
+            row["username"]
+            for row in table_response.context["ranking_rows"][:3]
+        ]
+        home_top = [expert["username"] for expert in home_response.context["top_experts"][:3]]
+        service_top = [
+            entry["profile"].user.username
+            for entry in rank_experts(period="2026-09", limit=3)
+        ]
+
+        self.assertEqual(table_top, service_top)
+        self.assertEqual(home_top, service_top)
 
     def test_all_time_statistics_and_table_share_canonical_trust_order(self):
         stats_response = self.client.get(
@@ -200,31 +276,45 @@ class CapperTrustRankingIntegrationTests(TestCase):
         self.assertEqual(stats_response.status_code, 200)
         self.assertEqual(table_response.status_code, 200)
 
-        expected_users = {
-            self.inactive_month_user.username,
-            self.high_trust_user.username,
-            self.high_roi_user.username,
-        }
-        stats_order = [
-            expert["username"]
-            for expert in stats_response.context["experts"]
-            if expert["username"] in expected_users
+        service_order = [
+            entry["profile"].user.username
+            for entry in rank_experts(period="all-time")
         ]
-        table_order = [
-            row["username"]
-            for row in table_response.context["ranking_rows"]
-            if row["username"] in expected_users
+        stats_order = [expert["username"] for expert in stats_response.context["experts"]]
+        table_order = [row["username"] for row in table_response.context["ranking_rows"]]
+
+        self.assertEqual(stats_order, service_order)
+        self.assertEqual(table_order, service_order)
+        self.assertEqual(service_order[0], self.inactive_month_user.username)
+
+    def test_changing_month_changes_order_only_through_shared_service(self):
+        august_response = self.client.get(
+            reverse(
+                "front:cappers_table_period",
+                kwargs={"group": "all", "period": "2026-08"},
+            )
+        )
+        september_response = self.client.get(
+            reverse(
+                "front:cappers_table_period",
+                kwargs={"group": "all", "period": "2026-09"},
+            )
+        )
+
+        august_table = [row["username"] for row in august_response.context["ranking_rows"]]
+        september_table = [row["username"] for row in september_response.context["ranking_rows"]]
+        august_service = [
+            entry["profile"].user.username
+            for entry in rank_experts(period="2026-08")
+        ]
+        september_service = [
+            entry["profile"].user.username
+            for entry in rank_experts(period="2026-09")
         ]
 
-        self.assertEqual(
-            stats_order,
-            [
-                self.inactive_month_user.username,
-                self.high_trust_user.username,
-                self.high_roi_user.username,
-            ],
-        )
-        self.assertEqual(table_order, stats_order)
+        self.assertEqual(august_table, august_service)
+        self.assertEqual(september_table, september_service)
+        self.assertNotEqual(august_table, september_table)
 
     def test_table_explains_all_time_and_month_ranking_modes(self):
         all_time_response = self.client.get(reverse("front:cappers_table"))
@@ -235,10 +325,7 @@ class CapperTrustRankingIntegrationTests(TestCase):
             )
         )
 
-        self.assertContains(
-            all_time_response,
-            "Общий рейтинг по индексу доверия.",
-        )
+        self.assertContains(all_time_response, "Общий рейтинг по индексу доверия.")
         self.assertNotContains(
             all_time_response,
             "Рейтинг за Август 2026 по месячным результатам.",
@@ -247,10 +334,7 @@ class CapperTrustRankingIntegrationTests(TestCase):
             month_response,
             "Рейтинг за Август 2026 по месячным результатам.",
         )
-        self.assertNotContains(
-            month_response,
-            "Общий рейтинг по индексу доверия.",
-        )
+        self.assertNotContains(month_response, "Общий рейтинг по индексу доверия.")
 
     def test_statistics_explains_trust_index_ranking(self):
         response = self.client.get(reverse("front:cappers_stats"))
