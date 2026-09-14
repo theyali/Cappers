@@ -8,13 +8,14 @@ TRUST_STEP = Decimal("0.1")
 
 
 @register.inclusion_tag("front/includes/_capper_trust_badge.html")
-def capper_trust_badge(value):
+def capper_trust_badge(value, variant="default"):
     trust_index = _decimal(value)
     trust_index = trust_index.quantize(TRUST_STEP, rounding=ROUND_HALF_UP)
     return {
         "trust_index": trust_index,
         "trust_display": f"{trust_index:.1f}",
         "trust_level": _trust_level(trust_index),
+        "trust_variant": variant,
     }
 
 
