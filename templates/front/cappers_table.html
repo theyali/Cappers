@@ -160,6 +160,7 @@
                         <tr>
                             <th class="is-rank">#</th>
                             <th>Прогнозист</th>
+                            <th title="Общий индекс">Индекс</th>
                             <th aria-label="Динамика"></th>
                             <th class="is-profit">Прибыль</th>
                             <th class="is-result is-win" title="Выигрыши">W</th>
@@ -179,7 +180,6 @@
                             <td>
                                 <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
                                     <span class="cappers-ranking-avatar{% if expert.is_vip %} is-vip{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
-                                        {% capper_trust_badge expert.trust_index %}
                                         {% if expert.avatar_url %}
                                             <img src="{{ expert.avatar_url }}" width="34" height="34" loading="lazy" alt="">
                                         {% else %}
@@ -203,6 +203,7 @@
                                     </span>
                                 </a>
                             </td>
+                            <td>{% capper_trust_badge expert.trust_index %}</td>
                             {% with trend=capper_trends|dict_get:expert.id %}
                             <td>
                                 <div class="prediction-table-bank-chart cappers-ranking-profit{% if trend.tone == 'positive' %} is-positive{% elif trend.tone == 'negative' %} is-negative{% endif %}" aria-label="Динамика ROI">
