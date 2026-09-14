@@ -34,6 +34,17 @@ class PackagePricingTests(SimpleTestCase):
             "0.25",
         )
 
+    def test_unsaved_package_total_coins_handles_empty_admin_form(self):
+        package = CoinPackage()
+
+        self.assertEqual(package.total_coins, 0)
+
+        package.coins = 1000
+        self.assertEqual(package.total_coins, 1000)
+
+        package.bonus_coins = 250
+        self.assertEqual(package.total_coins, 1250)
+
 
 class CoinPackageUxTests(TestCase):
     def setUp(self):
