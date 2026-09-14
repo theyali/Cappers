@@ -123,6 +123,11 @@
                 <div>
                     <h2>Прогнозисты</h2>
                     <span>{{ selected_month_label }} · {{ selected_sport_name }}</span>
+                    {% if period_is_all %}
+                    <span title="Общий рейтинг строится по индексу доверия.">Общий рейтинг по индексу доверия.</span>
+                    {% else %}
+                    <span title="Рейтинг строится по результатам выбранного месяца, индекс доверия используется как дополнительный фактор.">Рейтинг за {{ selected_month_label }} по месячным результатам.</span>
+                    {% endif %}
                 </div>
 
                 <details class="cappers-period-filter">
