@@ -1,11 +1,12 @@
 {% extends "base.html" %}
-{% load capper_trust static %}
+{% load capper_trust capper_table_stats static %}
 
 {% block title %}Таблица капперов — КапперХаб{% endblock %}
 
 {% block extra_css %}{% endblock %}
 
 {% block content %}
+{% capper_table_hero_stats as hero_stats %}
 <section class="predictions-page predictions-scroll-page container" aria-labelledby="cappers-table-title">
     <div class="predictions-layout">
         <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Фильтры рейтинга капперов">
@@ -86,20 +87,32 @@
                     <h1 id="cappers-table-title">Таблица капперов</h1>
                     <p>Лучшие прогнозисты на одном экране. Реальная статистика, прибыль, ROI и результаты за каждый месяц.</p>
                     <div class="profile-hero-stats" aria-label="Статистика рейтинга">
-                        <div class="profile-stat-pill">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M2.5 20c0-4 2.6-6.5 6-6.5s6 2.5 6 6.5"></path><path d="M16 8.5a3 3 0 1 0 0-6"></path><path d="M16.5 13.5c2.9.3 5 2.6 5 6.5"></path></svg>
-                            <strong>2 847</strong>
-                            <span>активных капперов</span>
+                        <div class="cappers-ranking-expert">
+                            <span data-skeleton-image>
+                                <img src="{% static 'front/img/cappers_stat_users.svg' %}" width="36" height="36" alt="" loading="eager">
+                            </span>
+                            <div>
+                                <div><strong class="home-best-expert-name">{{ hero_stats.active_cappers }}</strong></div>
+                                <div><span class="home-best-expert-username">активных капперов</span></div>
+                            </div>
                         </div>
-                        <div class="profile-stat-pill">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2L5 9Z"></path><path d="m7 9 2.2-5 2.8 5 2.8-5L17 9"></path></svg>
-                            <strong>387 421</strong>
-                            <span>прогнозов за месяц</span>
+                        <div class="cappers-ranking-expert">
+                            <span data-skeleton-image>
+                                <img src="{% static 'front/img/cappers_stat_crown.svg' %}" width="36" height="36" alt="" loading="eager">
+                            </span>
+                            <div>
+                                <div><strong class="home-best-expert-name">{{ hero_stats.predictions_month }}</strong></div>
+                                <div><span class="home-best-expert-username">прогнозов за месяц</span></div>
+                            </div>
                         </div>
-                        <div class="profile-stat-pill">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M15.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M2.5 20c0-4 2.6-6.5 6-6.5 1.4 0 2.6.4 3.5 1.1"></path><path d="M11 20c0-4 2.6-6.5 6-6.5s5 2.5 5 6.5"></path></svg>
-                            <strong>156 320</strong>
-                            <span>реальных подписчиков</span>
+                        <div class="cappers-ranking-expert">
+                            <span data-skeleton-image>
+                                <img src="{% static 'front/img/cappers_stat_users.svg' %}" width="36" height="36" alt="" loading="eager">
+                            </span>
+                            <div>
+                                <div><strong class="home-best-expert-name">{{ hero_stats.predictions_all_time }}</strong></div>
+                                <div><span class="home-best-expert-username">прогнозов за все время</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
