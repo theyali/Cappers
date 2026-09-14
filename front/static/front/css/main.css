@@ -31112,7 +31112,6 @@ top: -8px;
 /* Shared VIP avatar treatment. Keep the badge attached to the person, not the card. */
 .expert-public-shell.is-vip .expert-public-avatar,
 .prediction-expert-avatar.is-vip,
-.cappers-ranking-avatar.is-vip,
 .expert-recommendation-avatar.is-vip,
 .following-capper-avatar.is-vip,
 .prediction-table-avatar.is-vip,
@@ -31124,7 +31123,6 @@ top: -8px;
 
 .expert-public-shell.is-vip .expert-public-avatar > img,
 .prediction-expert-avatar.is-vip > img,
-.cappers-ranking-avatar.is-vip > img,
 .expert-recommendation-avatar.is-vip > img,
 .following-capper-avatar.is-vip > img,
 .prediction-table-avatar.is-vip > img,
@@ -31135,7 +31133,6 @@ top: -8px;
 /* VIP fallback avatars must not merge with the yellow frame and badge. */
 .expert-public-shell.is-vip .expert-public-avatar:not(:has(img)),
 .prediction-expert-avatar.is-vip:not(:has(img)),
-.cappers-ranking-avatar.is-vip:not(:has(img)),
 .expert-recommendation-avatar.is-vip:not(:has(img)),
 .following-capper-avatar.is-vip:not(:has(img)),
 .prediction-table-avatar.is-vip:not(:has(img)),
@@ -31145,7 +31142,6 @@ top: -8px;
 }
 
 .prediction-expert-avatar.is-vip::after,
-.cappers-ranking-avatar.is-vip::after,
 .expert-recommendation-avatar.is-vip::after,
 .following-capper-avatar.is-vip::after,
 .prediction-table-avatar.is-vip::after,
