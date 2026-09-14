@@ -15912,7 +15912,7 @@ font-size: 14px;
 }
 
 .cappers-table-hero {
-    min-height: 154px;
+    min-height: 400px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
