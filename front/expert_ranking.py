@@ -11,6 +11,10 @@ from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period
 
 
 RANKING_HISTORY_PRIOR = 10
+RANKING_TRUST_WEIGHT = Decimal("1000")
+RANKING_STABILIZED_ROI_CAP = Decimal("25")
+RANKING_ACTIVITY_MAX_BONUS = Decimal("5")
+RANKING_ACTIVITY_FULL_COUNT = 50
 SETTLED_EXPERT_STATES = (
     PredictionCoupon.StateStatus.WIN,
     PredictionCoupon.StateStatus.LOSE,
@@ -51,23 +55,44 @@ def expert_leader_badges(
 
 
 def expert_ranking_score(profile) -> Decimal:
-    """Return the single ranking score used everywhere experts are ordered.
+    """Return the canonical trust-first score used to order experts.
 
-    Raw ROI is shrunk toward zero for experts with a short result history so a
-    single lucky coupon cannot immediately put a new profile at the top.
+    The persisted trust index is the primary ranking signal. ROI is still used,
+    but it is stabilised against short histories and capped so even an extreme
+    ROI cannot move a profile above an expert with a higher trust index.
+    Activity gives a small bonus inside the same trust-index band.
     """
+    trust_index = Decimal(str(getattr(profile, "trust_index", 0) or 0))
+    trust_score = trust_index * RANKING_TRUST_WEIGHT
+
     settled_count = int(
         getattr(profile, "roi_settled_count", getattr(profile, "settled_count", 0)) or 0
     )
     if settled_count <= 0:
-        return Decimal("0")
+        return trust_score
 
-    roi = Decimal(getattr(profile, "author_roi", 0) or 0)
-    return (
+    roi = Decimal(str(getattr(profile, "author_roi", 0) or 0))
+    stabilized_roi = (
         roi
         * Decimal(settled_count)
         / Decimal(settled_count + RANKING_HISTORY_PRIOR)
     )
+    stabilized_roi_score = max(
+        -RANKING_STABILIZED_ROI_CAP,
+        min(RANKING_STABILIZED_ROI_CAP, stabilized_roi),
+    )
+
+    activity_count = min(settled_count, RANKING_ACTIVITY_FULL_COUNT)
+    activity_bonus = (
+        Decimal(activity_count)
+        / Decimal(RANKING_ACTIVITY_FULL_COUNT)
+        * RANKING_ACTIVITY_MAX_BONUS
+    )
+
+    # trust_index has one decimal place. A 0.1 increase is therefore +100
+    # points, while all ROI/activity adjustments stay between -25 and +30.
+    # This guarantees that trust_index remains the primary ranking factor.
+    return trust_score + stabilized_roi_score + activity_bonus
 
 
 def ranked_expert_profiles(
@@ -77,8 +102,9 @@ def ranked_expert_profiles(
 ) -> list[AnalystProfile]:
     """Return public analysts in the canonical Cappers ranking order.
 
-    ``period_days`` controls both ROI calculation and the amount of settled
-    history used to stabilise the ranking. ``None`` means all available time.
+    ``trust_index`` is the primary signal. ``period_days`` controls the ROI
+    calculation and settled history used only as secondary ranking signals.
+    ``None`` means all available time.
     """
     recent_cutoff = timezone.now() - timedelta(days=30)
     published_filter = Q(
@@ -168,12 +194,12 @@ def ranked_expert_profiles(
     for profile in profiles:
         profile.ranking_score = expert_ranking_score(profile)
 
-    # Username makes exact ties deterministic. The second stable sort applies
-    # the actual ranking rule shared by the catalog and the home page.
+    # Username makes exact ties deterministic. ranking_score already contains
+    # trust_index as its dominant component, so it is intentionally not added
+    # to the tuple a second time.
     profiles.sort(key=lambda profile: profile.user.username.lower())
     profiles.sort(
         key=lambda profile: (
-            1 if profile.roi_settled_count else 0,
             profile.ranking_score,
             profile.roi_settled_count,
             profile.settled_count,
