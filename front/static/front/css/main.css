@@ -35072,9 +35072,9 @@ body.wiki-video-player-open {
 }
 
 .coin-icon {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -35082,8 +35082,8 @@ body.wiki-video-player-open {
 }
 
 .coin-icon svg {
-    width: 18px;
-    height: 18px;
+    width: inherit;
+    height: inherit;
     display: block;
 }
 
