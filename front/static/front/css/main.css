@@ -35091,3 +35091,6 @@ body.wiki-video-player-open {
     bottom: 0;
 }
 
+.cappers-ranking-table .capper-trust-badge{
+    position: static;
+}
