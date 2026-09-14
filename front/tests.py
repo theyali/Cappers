@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 
+from .capper_table_service import _sort_month_rows
 from .expert_ranking import expert_ranking_score
 
 
@@ -36,6 +37,37 @@ class ExpertRankingScoreTests(SimpleTestCase):
         self.assertGreater(
             expert_ranking_score(stronger_roi),
             expert_ranking_score(weaker_roi),
+        )
+
+
+class CapperMonthlyRankingSortTests(SimpleTestCase):
+    def test_equal_month_metrics_use_trust_index_as_tie_breaker(self):
+        base = {
+            "roi": Decimal("12.0"),
+            "flat_profit_percent": Decimal("8.0"),
+            "wins": 7,
+            "total_profit": Decimal("120"),
+            "bets": 10,
+            "followers": 100,
+        }
+        lower_trust = {
+            **base,
+            "id": 1,
+            "username": "lower_trust",
+            "trust_index": Decimal("6.0"),
+        }
+        higher_trust = {
+            **base,
+            "id": 2,
+            "username": "higher_trust",
+            "trust_index": Decimal("7.0"),
+        }
+
+        rows = _sort_month_rows([lower_trust, higher_trust])
+
+        self.assertEqual(
+            [row["username"] for row in rows],
+            ["higher_trust", "lower_trust"],
         )
 
 
@@ -71,15 +103,15 @@ class CapperTrustRankingIntegrationTests(TestCase):
         )
         AnalystProfile.objects.filter(pk=high_trust_profile.pk).update(
             is_public=True,
-            trust_index=Decimal("8.8"),
+            trust_index=Decimal("7.0"),
         )
         AnalystProfile.objects.filter(pk=high_roi_profile.pk).update(
             is_public=True,
-            trust_index=Decimal("4.2"),
+            trust_index=Decimal("6.0"),
         )
         AnalystProfile.objects.filter(pk=inactive_profile.pk).update(
             is_public=True,
-            trust_index=Decimal("9.9"),
+            trust_index=Decimal("9.5"),
         )
 
         CapperMonthlyStat.objects.create(
@@ -193,6 +225,32 @@ class CapperTrustRankingIntegrationTests(TestCase):
             ],
         )
         self.assertEqual(table_order, stats_order)
+
+    def test_table_explains_all_time_and_month_ranking_modes(self):
+        all_time_response = self.client.get(reverse("front:cappers_table"))
+        month_response = self.client.get(
+            reverse(
+                "front:cappers_table_period",
+                kwargs={"group": "all", "period": "2026-08"},
+            )
+        )
+
+        self.assertContains(
+            all_time_response,
+            "Общий рейтинг по индексу доверия.",
+        )
+        self.assertNotContains(
+            all_time_response,
+            "Рейтинг за Август 2026 по месячным результатам.",
+        )
+        self.assertContains(
+            month_response,
+            "Рейтинг за Август 2026 по месячным результатам.",
+        )
+        self.assertNotContains(
+            month_response,
+            "Общий рейтинг по индексу доверия.",
+        )
 
     def test_statistics_explains_trust_index_ranking(self):
         response = self.client.get(reverse("front:cappers_stats"))
