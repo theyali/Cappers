@@ -9,6 +9,7 @@ from .capper_table_service import build_capper_table_context
 from .expert_ranking import (
     current_month_top_expert_ids,
     expert_leader_badges,
+    rank_experts,
     ranked_expert_profiles,
 )
 
@@ -45,13 +46,23 @@ def _ranking_cards(
     period_label: str,
     paid_only: bool = False,
 ) -> list[dict]:
-    profiles = ranked_expert_profiles(period_days=period_days)
-    if paid_only:
-        profiles = [
-            profile
-            for profile in profiles
-            if profile.paid_predictions_enabled and profile.paid_predictions_price > 0
-        ]
+    ranking_group = "paid" if paid_only else "all"
+    canonical_entries = rank_experts(period="all-time", group=ranking_group)
+
+    # ROI selector changes the metric displayed on the card, not the canonical
+    # all-time place. The order and rank always come from rank_experts().
+    metric_profiles = {
+        profile.user_id: profile
+        for profile in ranked_expert_profiles(period_days=period_days)
+    }
+    profiles = []
+    for entry in canonical_entries:
+        profile = metric_profiles.get(entry["profile"].user_id)
+        if profile is None:
+            continue
+        profile.rank = entry["rank"]
+        profiles.append(profile)
+
     profile_ids = [profile.user_id for profile in profiles]
     best_streaks = _best_streaks_for_authors(profile_ids)
     confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
@@ -59,8 +70,10 @@ def _ranking_cards(
     paid_subscription_ids = service._paid_subscription_ids(profile_ids)
     monthly_top_ids = current_month_top_expert_ids()
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
-    all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)
-    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
+    all_time_entries = rank_experts(period="all-time", limit=1)
+    all_time_leader_id = (
+        all_time_entries[0]["profile"].user_id if all_time_entries else None
+    )
 
     cards = []
     for profile in profiles:
@@ -71,7 +84,7 @@ def _ranking_cards(
             best_streak=best_streaks.get(profile.user_id, 0),
             confidence_calibration=confidence_calibrations.get(profile.user_id),
         )
-        card["rank"] = getattr(profile, "rank", len(cards) + 1)
+        card["rank"] = profile.rank
         card["leader_badges"] = expert_leader_badges(
             profile.user_id,
             monthly_leader_id=monthly_leader_id,
