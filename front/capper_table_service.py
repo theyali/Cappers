@@ -372,14 +372,51 @@ def _sport_catalog(stats_queryset) -> list[dict]:
     )
 
 
-def _canonical_rank_order() -> dict[int, int]:
+def _canonical_rank_order(*, period_days: int | None = None) -> dict[int, int]:
     return {
         profile.user_id: index
         for index, profile in enumerate(
-            ranked_expert_profiles(),
+            ranked_expert_profiles(period_days=period_days),
             start=1,
         )
     }
+
+
+def _contextual_rank_key(row: dict) -> tuple:
+    """Trust first, then metrics from the selected month/sport context."""
+    return (
+        -_decimal(row.get("trust_index")),
+        -_decimal(row.get("roi")),
+        -int(row.get("bets") or 0),
+        -int(row.get("wins") or 0),
+        -int(row.get("followers") or 0),
+        (row.get("username") or "").lower(),
+        int(row.get("id") or 0),
+    )
+
+
+def _sort_ranking_rows(
+    rows: list[dict],
+    *,
+    selected_month: date | None,
+    selected_sport_code: str,
+) -> None:
+    if selected_month is None and selected_sport_code == ALL_SPORTS:
+        # Keep the all-time table aligned with the canonical trust-first ranking.
+        # period_days=None makes stabilized ROI/history use the same all-time scope.
+        rank_order = _canonical_rank_order(period_days=None)
+        rows.sort(
+            key=lambda row: (
+                rank_order.get(row["id"], len(rank_order) + 1),
+                (row.get("username") or "").lower(),
+                int(row.get("id") or 0),
+            )
+        )
+        return
+
+    # A selected month or sport keeps trust_index as the primary signal while
+    # ROI, volume and wins from that exact context only break equal-index ties.
+    rows.sort(key=_contextual_rank_key)
 
 
 def build_capper_table_context(
@@ -436,12 +473,10 @@ def build_capper_table_context(
         else _all_time_rows(profiles_by_user, selected_sport_code)
     )
 
-    rank_order = _canonical_rank_order()
-    rows.sort(
-        key=lambda row: (
-            rank_order.get(row["id"], len(rank_order) + 1),
-            row["username"].lower(),
-        )
+    _sort_ranking_rows(
+        rows,
+        selected_month=selected_month,
+        selected_sport_code=selected_sport_code,
     )
 
     group_tabs = [
