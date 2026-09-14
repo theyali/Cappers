@@ -52,6 +52,43 @@ def _percent(numerator: Decimal, denominator: Decimal) -> Decimal:
     )
 
 
+def _ranking_score_values(*, trust_index, roi, settled_count) -> Decimal:
+    trust_score = _decimal(trust_index) * RANKING_TRUST_WEIGHT
+    settled_count = int(settled_count or 0)
+    if settled_count <= 0:
+        return trust_score
+
+    stabilized_roi = (
+        _decimal(roi)
+        * Decimal(settled_count)
+        / Decimal(settled_count + RANKING_HISTORY_PRIOR)
+    )
+    stabilized_roi_score = max(
+        -RANKING_STABILIZED_ROI_CAP,
+        min(RANKING_STABILIZED_ROI_CAP, stabilized_roi),
+    )
+    activity_count = min(settled_count, RANKING_ACTIVITY_FULL_COUNT)
+    activity_bonus = (
+        Decimal(activity_count)
+        / Decimal(RANKING_ACTIVITY_FULL_COUNT)
+        * RANKING_ACTIVITY_MAX_BONUS
+    )
+    return trust_score + stabilized_roi_score + activity_bonus
+
+
+def expert_ranking_score(profile) -> Decimal:
+    """Trust-first score used by tests and compatibility callers."""
+    return _ranking_score_values(
+        trust_index=getattr(profile, "trust_index", 0),
+        roi=getattr(profile, "author_roi", 0),
+        settled_count=getattr(
+            profile,
+            "roi_settled_count",
+            getattr(profile, "settled_count", 0),
+        ),
+    )
+
+
 def _resolve_period(period) -> tuple[date | None, str]:
     if period is None:
         return None, ALL_TIME
@@ -80,6 +117,12 @@ def _annotated_public_profiles(
     *,
     period_days: int | None,
 ) -> list[AnalystProfile]:
+    """Load public capper profiles once with all fields used by ranking/cards.
+
+    ``author_roi`` follows the requested display period, while ``ranking_score``
+    is always calculated from all-time ROI/history. This keeps the canonical
+    all-time place stable when a page merely switches the ROI display period.
+    """
     recent_cutoff = timezone.now() - timedelta(days=30)
     published_filter = Q(
         user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
@@ -164,8 +207,13 @@ def _annotated_public_profiles(
             period_days=None,
         )
     )
+
     for profile in profiles:
-        profile.ranking_score = expert_ranking_score(profile)
+        profile.ranking_score = _ranking_score_values(
+            trust_index=profile.trust_index,
+            roi=profile.author_roi_all_time,
+            settled_count=profile.settled_count,
+        )
     return profiles
 
 
@@ -364,36 +412,6 @@ def _all_time_metrics_map(
     return result
 
 
-def expert_ranking_score(profile) -> Decimal:
-    """Return the canonical trust-first score used for the all-time ranking."""
-    trust_index = Decimal(str(getattr(profile, "trust_index", 0) or 0))
-    trust_score = trust_index * RANKING_TRUST_WEIGHT
-
-    settled_count = int(
-        getattr(profile, "roi_settled_count", getattr(profile, "settled_count", 0)) or 0
-    )
-    if settled_count <= 0:
-        return trust_score
-
-    roi = Decimal(str(getattr(profile, "author_roi", 0) or 0))
-    stabilized_roi = (
-        roi
-        * Decimal(settled_count)
-        / Decimal(settled_count + RANKING_HISTORY_PRIOR)
-    )
-    stabilized_roi_score = max(
-        -RANKING_STABILIZED_ROI_CAP,
-        min(RANKING_STABILIZED_ROI_CAP, stabilized_roi),
-    )
-    activity_count = min(settled_count, RANKING_ACTIVITY_FULL_COUNT)
-    activity_bonus = (
-        Decimal(activity_count)
-        / Decimal(RANKING_ACTIVITY_FULL_COUNT)
-        * RANKING_ACTIVITY_MAX_BONUS
-    )
-    return trust_score + stabilized_roi_score + activity_bonus
-
-
 def _all_time_entries(
     *,
     sport_code: str,
@@ -414,7 +432,6 @@ def _all_time_entries(
     profiles.sort(
         key=lambda profile: (
             profile.ranking_score,
-            profile.roi_settled_count,
             profile.settled_count,
             profile.followers_count,
             profile.publications_count,
@@ -547,10 +564,11 @@ def ranked_expert_profiles(
     limit: int | None = None,
     period_days: int | None = ROI_PERIOD_DAYS,
 ) -> list[AnalystProfile]:
-    """Compatibility API backed by the shared ranking service.
+    """Compatibility layer over the same canonical all-time ranking.
 
-    The order remains all-time trust-first. ``period_days`` only controls the ROI
-    annotation used by consumers and as a secondary score inside one trust band.
+    ``period_days`` changes ``profile.author_roi`` for display only. It no longer
+    changes the order, because ``ranking_score`` is always based on all-time
+    trust/ROI/history in ``_annotated_public_profiles``.
     """
     entries = _all_time_entries(
         sport_code=ALL_SPORTS,
