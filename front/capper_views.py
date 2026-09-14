@@ -71,6 +71,7 @@ def _ranking_cards(
             best_streak=best_streaks.get(profile.user_id, 0),
             confidence_calibration=confidence_calibrations.get(profile.user_id),
         )
+        card["rank"] = getattr(profile, "rank", len(cards) + 1)
         card["leader_badges"] = expert_leader_badges(
             profile.user_id,
             monthly_leader_id=monthly_leader_id,
@@ -88,13 +89,14 @@ def cappers_stats(request):
     stats_group = _stats_group(request)
     paid_only = stats_group == "paid"
 
+    experts = _ranking_cards(
+        service,
+        period_days=period["days"],
+        period_label=period["label"],
+        paid_only=paid_only,
+    )
+
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        experts = _ranking_cards(
-            service,
-            period_days=period["days"],
-            period_label=period["label"],
-            paid_only=paid_only,
-        )
         html = render_to_string(
             "front/includes/_cappers_pro_cards.html",
             {"experts": experts},
@@ -112,21 +114,8 @@ def cappers_stats(request):
         )
 
     context = service.build_catalog_context(paid_only=paid_only)
-    if period_key == DEFAULT_CAPPERS_ROI_PERIOD:
-        experts = context["experts"]
-        for card in experts:
-            card["roi_period_days"] = period["days"]
-            card["roi_period_label"] = period["label"]
-    else:
-        experts = _ranking_cards(
-            service,
-            period_days=period["days"],
-            period_label=period["label"],
-            paid_only=paid_only,
-        )
-        context["experts"] = experts
-        context["experts_count"] = len(experts)
-
+    context["experts"] = experts
+    context["experts_count"] = len(experts)
     context.update(
         {
             "roi_period_key": period_key,
