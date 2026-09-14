@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.http import Http404
 from django.urls import reverse
 
@@ -13,7 +11,7 @@ from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from cabinet.presence import presence_payload
 from game.models import Sport
 
-from .expert_ranking import ranked_expert_profiles
+from .expert_ranking import rank_experts
 
 
 GROUP_ALL = "all"
@@ -23,8 +21,6 @@ GROUP_PAID = "paid"
 VALID_GROUPS = {GROUP_ALL, GROUP_VIP, GROUP_POPULAR, GROUP_PAID}
 ALL_SPORTS = "all"
 ALL_TIME = "all-time"
-PERCENT_STEP = Decimal("0.1")
-COEFFICIENT_STEP = Decimal("0.01")
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 MONTH_NAMES = (
     "",
@@ -59,24 +55,6 @@ SPORT_ORDER = {
     "formula_1": 120,
     "f1": 120,
 }
-
-
-def _percent(numerator: Decimal, denominator: Decimal) -> Decimal:
-    if denominator <= 0:
-        return Decimal("0.0")
-    return (numerator / denominator * Decimal("100")).quantize(
-        PERCENT_STEP,
-        rounding=ROUND_HALF_UP,
-    )
-
-
-def _decimal(value) -> Decimal:
-    if isinstance(value, Decimal):
-        return value
-    try:
-        return Decimal(str(value or 0))
-    except (InvalidOperation, TypeError, ValueError):
-        return Decimal("0")
 
 
 def _initials(name: str) -> str:
@@ -153,192 +131,6 @@ def _profile_payload(profile: AnalystProfile) -> dict:
     }
 
 
-def _sport_metrics(payload: dict | None) -> dict | None:
-    if not isinstance(payload, dict):
-        return None
-    bets = int(payload.get("predictions_count") or 0)
-    if bets <= 0:
-        return None
-
-    wins = int(payload.get("wins_count") or 0)
-    losses = int(payload.get("losses_count") or 0)
-    refunds = int(payload.get("refunds_count") or 0)
-    stake = _decimal(payload.get("allocated_stake"))
-    profit = _decimal(payload.get("allocated_profit"))
-    flat_units = _decimal(payload.get("flat_units"))
-    coefficient_sum = _decimal(payload.get("coefficient_sum"))
-    weight = _decimal(payload.get("weight"))
-    avg_coefficient = coefficient_sum / weight if weight > 0 else Decimal("0")
-
-    return {
-        "bets": bets,
-        "wins": wins,
-        "losses": losses,
-        "refunds": refunds,
-        "total_stake": stake,
-        "total_profit": profit,
-        "flat_units": flat_units,
-        "coefficient_sum": coefficient_sum,
-        "coefficient_weight": weight,
-        "flat_profit_percent": _percent(flat_units, Decimal(bets)),
-        "roi": _percent(profit, stake),
-        "avg_coefficient": avg_coefficient.quantize(
-            COEFFICIENT_STEP,
-            rounding=ROUND_HALF_UP,
-        ),
-        "hit_rate": _percent(Decimal(wins), Decimal(bets)),
-    }
-
-
-def _general_metrics(stat: CapperMonthlyStat) -> dict | None:
-    bets = int(stat.bets_count or 0)
-    if bets <= 0:
-        return None
-    return {
-        "bets": bets,
-        "wins": int(stat.wins_count or 0),
-        "losses": int(stat.losses_count or 0),
-        "refunds": int(stat.refunds_count or 0),
-        "total_stake": _decimal(stat.total_stake),
-        "total_profit": _decimal(stat.total_profit),
-        "flat_profit_percent": _decimal(stat.flat_profit_percent).quantize(
-            PERCENT_STEP,
-            rounding=ROUND_HALF_UP,
-        ),
-        "roi": _decimal(stat.roi).quantize(PERCENT_STEP, rounding=ROUND_HALF_UP),
-        "avg_coefficient": _decimal(stat.avg_coefficient).quantize(
-            COEFFICIENT_STEP,
-            rounding=ROUND_HALF_UP,
-        ),
-        "hit_rate": _decimal(stat.hit_rate).quantize(
-            PERCENT_STEP,
-            rounding=ROUND_HALF_UP,
-        ),
-    }
-
-
-def _monthly_rows(
-    profiles_by_user: dict[int, AnalystProfile],
-    month: date,
-    sport_code: str,
-) -> list[dict]:
-    stats = CapperMonthlyStat.objects.filter(
-        month=month,
-        analyst_id__in=profiles_by_user.keys(),
-    ).order_by()
-
-    rows = []
-    for stat in stats:
-        profile = profiles_by_user.get(stat.analyst_id)
-        if profile is None:
-            continue
-        metrics = (
-            _general_metrics(stat)
-            if sport_code == ALL_SPORTS
-            else _sport_metrics((stat.sports_data or {}).get(sport_code))
-        )
-        if not metrics:
-            continue
-        row = _profile_payload(profile)
-        row.update(metrics)
-        rows.append(row)
-    return rows
-
-
-def _all_time_rows(
-    profiles_by_user: dict[int, AnalystProfile],
-    sport_code: str,
-) -> list[dict]:
-    buckets = defaultdict(
-        lambda: {
-            "bets": 0,
-            "wins": 0,
-            "losses": 0,
-            "refunds": 0,
-            "total_stake": Decimal("0"),
-            "total_profit": Decimal("0"),
-            "flat_units": Decimal("0"),
-            "coefficient_sum": Decimal("0"),
-            "coefficient_weight": Decimal("0"),
-        }
-    )
-
-    stats = CapperMonthlyStat.objects.filter(
-        analyst_id__in=profiles_by_user.keys(),
-    ).order_by()
-
-    for stat in stats:
-        bucket = buckets[stat.analyst_id]
-        if sport_code == ALL_SPORTS:
-            bets = int(stat.bets_count or 0)
-            bucket["bets"] += bets
-            bucket["wins"] += int(stat.wins_count or 0)
-            bucket["losses"] += int(stat.losses_count or 0)
-            bucket["refunds"] += int(stat.refunds_count or 0)
-            bucket["total_stake"] += _decimal(stat.total_stake)
-            bucket["total_profit"] += _decimal(stat.total_profit)
-            bucket["flat_units"] += (
-                _decimal(stat.flat_profit_percent) / Decimal("100") * Decimal(bets)
-            )
-            if bets:
-                bucket["coefficient_sum"] += _decimal(stat.avg_coefficient) * Decimal(bets)
-                bucket["coefficient_weight"] += Decimal(bets)
-            continue
-
-        metrics = _sport_metrics((stat.sports_data or {}).get(sport_code))
-        if not metrics:
-            continue
-        bucket["bets"] += metrics["bets"]
-        bucket["wins"] += metrics["wins"]
-        bucket["losses"] += metrics["losses"]
-        bucket["refunds"] += metrics["refunds"]
-        bucket["total_stake"] += metrics["total_stake"]
-        bucket["total_profit"] += metrics["total_profit"]
-        bucket["flat_units"] += metrics["flat_units"]
-        bucket["coefficient_sum"] += metrics["coefficient_sum"]
-        bucket["coefficient_weight"] += metrics["coefficient_weight"]
-
-    rows = []
-    for analyst_id, bucket in buckets.items():
-        profile = profiles_by_user.get(analyst_id)
-        bets = int(bucket["bets"] or 0)
-        if profile is None or not bets:
-            continue
-
-        coefficient_weight = _decimal(bucket["coefficient_weight"])
-        avg_coefficient = (
-            _decimal(bucket["coefficient_sum"]) / coefficient_weight
-            if coefficient_weight > 0
-            else Decimal("0")
-        )
-        row = _profile_payload(profile)
-        row.update(
-            {
-                "bets": bets,
-                "wins": bucket["wins"],
-                "losses": bucket["losses"],
-                "refunds": bucket["refunds"],
-                "total_stake": _decimal(bucket["total_stake"]),
-                "total_profit": _decimal(bucket["total_profit"]),
-                "flat_profit_percent": _percent(
-                    _decimal(bucket["flat_units"]),
-                    Decimal(bets),
-                ),
-                "roi": _percent(
-                    _decimal(bucket["total_profit"]),
-                    _decimal(bucket["total_stake"]),
-                ),
-                "avg_coefficient": avg_coefficient.quantize(
-                    COEFFICIENT_STEP,
-                    rounding=ROUND_HALF_UP,
-                ),
-                "hit_rate": _percent(Decimal(bucket["wins"]), Decimal(bets)),
-            }
-        )
-        rows.append(row)
-    return rows
-
-
 def _sport_catalog(stats_queryset) -> list[dict]:
     snapshots: dict[str, dict] = {}
     for sports_data in stats_queryset.values_list("sports_data", flat=True).iterator(chunk_size=1000):
@@ -378,56 +170,34 @@ def _sport_catalog(stats_queryset) -> list[dict]:
     )
 
 
-def _canonical_rank_order(*, period_days: int | None = None) -> dict[int, int]:
-    return {
-        profile.user_id: index
-        for index, profile in enumerate(
-            ranked_expert_profiles(period_days=period_days),
-            start=1,
-        )
-    }
+def _matches_search(row: dict, search_query: str) -> bool:
+    if not search_query:
+        return True
+    needle = search_query.casefold()
+    return needle in row["name"].casefold() or needle in row["username"].casefold()
 
 
-def _sort_all_time_rows(rows: list[dict]) -> list[dict]:
-    """Keep all-time tables aligned with the canonical trust-first ranking."""
-    rank_order = _canonical_rank_order(period_days=None)
-    return sorted(
-        rows,
-        key=lambda row: (
-            rank_order.get(row["id"], len(rank_order) + 1),
-            (row.get("username") or "").lower(),
-            int(row.get("id") or 0),
-        ),
-    )
-
-
-def _sort_month_rows(rows: list[dict]) -> list[dict]:
-    """Rank active cappers by the selected month's result, not lifetime trust."""
-    active_rows = [row for row in rows if int(row.get("bets") or 0) > 0]
-    return sorted(
-        active_rows,
-        key=lambda row: (
-            -_decimal(row.get("roi")),
-            -_decimal(row.get("flat_profit_percent")),
-            -int(row.get("wins") or 0),
-            -_decimal(row.get("total_profit")),
-            -int(row.get("bets") or 0),
-            -_decimal(row.get("trust_index")),
-            -int(row.get("followers") or 0),
-            (row.get("username") or "").lower(),
-            int(row.get("id") or 0),
-        ),
-    )
-
-
-def _sort_ranking_rows(
-    rows: list[dict],
+def _ranking_rows(
     *,
-    selected_month: date | None,
+    period: str,
+    sport_code: str,
+    group: str,
+    search_query: str,
 ) -> list[dict]:
-    if selected_month is None:
-        return _sort_all_time_rows(rows)
-    return _sort_month_rows(rows)
+    rows = []
+    for entry in rank_experts(
+        period=period,
+        sport_code=sport_code,
+        group=group,
+    ):
+        profile = entry["profile"]
+        row = _profile_payload(profile)
+        row.update(entry["metrics"])
+        row["rank"] = entry["rank"]
+        row["ranking_reason"] = entry["ranking_reason"]
+        if _matches_search(row, search_query):
+            rows.append(row)
+    return rows
 
 
 def build_capper_table_context(
@@ -437,17 +207,13 @@ def build_capper_table_context(
     period: str | None = None,
     sport_code: str | None = None,
 ) -> dict:
-    base_profiles = (
+    public_profile_ids = list(
         AnalystProfile.objects.filter(
             is_public=True,
             user__role=User.Role.ANALYST,
-        )
-        .select_related("user")
-        .annotate(followers_count=Count("user__analyst_followers", distinct=True))
+        ).values_list("user_id", flat=True)
     )
-
-    all_public_ids = list(base_profiles.values_list("user_id", flat=True))
-    public_stats = CapperMonthlyStat.objects.filter(analyst_id__in=all_public_ids)
+    public_stats = CapperMonthlyStat.objects.filter(analyst_id__in=public_profile_ids)
     available_months = list(
         public_stats.order_by("-month").values_list("month", flat=True).distinct()
     )
@@ -461,32 +227,11 @@ def build_capper_table_context(
         raise Http404("Неизвестный вид спорта")
 
     search_query = (request.GET.get("q") or "").strip()[:120]
-    profiles = base_profiles
-    if search_query:
-        profiles = profiles.filter(
-            Q(display_name__icontains=search_query)
-            | Q(user__username__icontains=search_query)
-            | Q(user__first_name__icontains=search_query)
-            | Q(user__last_name__icontains=search_query)
-        )
-    if selected_group == GROUP_VIP:
-        profiles = profiles.filter(is_vip=True)
-    elif selected_group == GROUP_PAID:
-        profiles = profiles.filter(
-            paid_predictions_enabled=True,
-            paid_predictions_price__gt=0,
-        )
-
-    profiles_by_user = {profile.user_id: profile for profile in profiles}
-    rows = (
-        _monthly_rows(profiles_by_user, selected_month, selected_sport_code)
-        if selected_month is not None
-        else _all_time_rows(profiles_by_user, selected_sport_code)
-    )
-
-    rows = _sort_ranking_rows(
-        rows,
-        selected_month=selected_month,
+    rows = _ranking_rows(
+        period=selected_period,
+        sport_code=selected_sport_code,
+        group=selected_group,
+        search_query=search_query,
     )
 
     group_tabs = [
