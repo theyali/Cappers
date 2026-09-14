@@ -154,12 +154,10 @@ class CoinPackage(models.Model):
 
     @property
     def total_coins(self) -> int:
-        return self.coins + self.bonus_coins
+        return int(self.coins or 0) + int(self.bonus_coins or 0)
 
     def __str__(self) -> str:
         return f"{self.title}: {self.total_coins} коинов за {self.price_rub} ₽"
-
-
 
 
 class CapperRealBalance(models.Model):
