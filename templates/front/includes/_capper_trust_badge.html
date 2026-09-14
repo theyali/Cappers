@@ -1,1 +1,5 @@
+{% if trust_variant == "table" %}
+<span class="capper-pro-rank is-{{ trust_level }}" title="Общий индекс {{ trust_display }}" aria-label="Общий индекс {{ trust_display }}"><strong class="heading-style-h3">{{ trust_display }}</strong></span>
+{% else %}
 <span class="capper-trust-badge is-{{ trust_level }}" title="Индекс доверия {{ trust_display }}" aria-label="Индекс доверия {{ trust_display }}">{{ trust_display }}</span>
+{% endif %}
