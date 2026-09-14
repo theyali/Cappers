@@ -54,12 +54,20 @@ class CapperTrustRankingIntegrationTests(TestCase):
             password="test-password",
             role=User.Role.ANALYST,
         )
+        cls.inactive_month_user = User.objects.create_user(
+            username="inactive_month_top_trust",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
 
         high_trust_profile, _ = AnalystProfile.objects.get_or_create(
             user=cls.high_trust_user,
         )
         high_roi_profile, _ = AnalystProfile.objects.get_or_create(
             user=cls.high_roi_user,
+        )
+        inactive_profile, _ = AnalystProfile.objects.get_or_create(
+            user=cls.inactive_month_user,
         )
         AnalystProfile.objects.filter(pk=high_trust_profile.pk).update(
             is_public=True,
@@ -68,6 +76,10 @@ class CapperTrustRankingIntegrationTests(TestCase):
         AnalystProfile.objects.filter(pk=high_roi_profile.pk).update(
             is_public=True,
             trust_index=Decimal("4.2"),
+        )
+        AnalystProfile.objects.filter(pk=inactive_profile.pk).update(
+            is_public=True,
+            trust_index=Decimal("9.9"),
         )
 
         CapperMonthlyStat.objects.create(
@@ -98,8 +110,36 @@ class CapperTrustRankingIntegrationTests(TestCase):
             avg_coefficient=Decimal("3.00"),
             hit_rate=Decimal("100.0"),
         )
+        CapperMonthlyStat.objects.create(
+            analyst=cls.inactive_month_user,
+            month=cls.month,
+            bets_count=0,
+            wins_count=0,
+            losses_count=0,
+            refunds_count=0,
+            total_stake=Decimal("0"),
+            total_profit=Decimal("0"),
+            flat_profit_percent=Decimal("0"),
+            roi=Decimal("0"),
+            avg_coefficient=Decimal("0"),
+            hit_rate=Decimal("0"),
+        )
+        CapperMonthlyStat.objects.create(
+            analyst=cls.inactive_month_user,
+            month=date(2026, 7, 1),
+            bets_count=12,
+            wins_count=8,
+            losses_count=4,
+            refunds_count=0,
+            total_stake=Decimal("1200"),
+            total_profit=Decimal("180"),
+            flat_profit_percent=Decimal("15.0"),
+            roi=Decimal("15.0"),
+            avg_coefficient=Decimal("1.85"),
+            hit_rate=Decimal("66.7"),
+        )
 
-    def test_month_table_returns_trust_first_order_and_visible_index_column(self):
+    def test_month_table_uses_month_results_and_excludes_inactive_cappers(self):
         response = self.client.get(
             reverse(
                 "front:cappers_table_period",
@@ -111,13 +151,14 @@ class CapperTrustRankingIntegrationTests(TestCase):
         usernames = [row["username"] for row in response.context["ranking_rows"]]
         self.assertEqual(
             usernames,
-            [self.high_trust_user.username, self.high_roi_user.username],
+            [self.high_roi_user.username, self.high_trust_user.username],
         )
+        self.assertNotIn(self.inactive_month_user.username, usernames)
         self.assertContains(response, ">Индекс</th>", html=False)
         self.assertContains(response, 'title="Общий индекс"')
         self.assertContains(response, "capper-trust-badge")
 
-    def test_cappers_statistics_and_table_share_canonical_trust_order(self):
+    def test_all_time_statistics_and_table_share_canonical_trust_order(self):
         stats_response = self.client.get(
             reverse("front:cappers_stats"),
             {"roi_period": "all"},
@@ -128,6 +169,7 @@ class CapperTrustRankingIntegrationTests(TestCase):
         self.assertEqual(table_response.status_code, 200)
 
         expected_users = {
+            self.inactive_month_user.username,
             self.high_trust_user.username,
             self.high_roi_user.username,
         }
@@ -144,7 +186,11 @@ class CapperTrustRankingIntegrationTests(TestCase):
 
         self.assertEqual(
             stats_order,
-            [self.high_trust_user.username, self.high_roi_user.username],
+            [
+                self.inactive_month_user.username,
+                self.high_trust_user.username,
+                self.high_roi_user.username,
+            ],
         )
         self.assertEqual(table_order, stats_order)
 
