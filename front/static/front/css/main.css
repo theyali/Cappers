@@ -35083,3 +35083,11 @@ body.wiki-video-player-open {
     display: block;
 }
 
+.best-capper-banner .home-best-expert-laurel{
+    opacity: 1;
+}
+.best-capper-banner .is-rank-1 .home-best-expert-verified {
+    right: calc(50% - 45px);
+    bottom: 0;
+}
+

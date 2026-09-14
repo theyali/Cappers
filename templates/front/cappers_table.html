@@ -243,7 +243,7 @@
 
         <div class="predictions-ad-sidebar cappers-side-column">
             {% for expert in ranking_rows|slice:":1" %}
-            <div>
+            <div class="best-capper-banner">
                 <article class="home-best-expert-podium-card is-rank-1" data-follow-card>
                     <a class="home-best-expert-podium-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
                         <span data-skeleton-image>
