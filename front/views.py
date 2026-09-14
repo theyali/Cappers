@@ -5,7 +5,7 @@ from django.shortcuts import render
 from game.models import PredictionCoupon
 
 from .capper_stats_service import CapperStatsService
-from .expert_ranking import ranked_expert_profiles
+from .expert_ranking import rank_experts
 
 
 LATEST_PREDICTIONS = [
@@ -41,15 +41,17 @@ def _initials(name: str) -> str:
 
 
 def _top_experts():
-    profiles = ranked_expert_profiles(limit=5)
-    if not profiles:
+    ranking = rank_experts(period="all-time", limit=5)
+    if not ranking:
         return DEMO_EXPERTS
 
     experts = []
-    for profile in profiles:
+    for entry in ranking:
+        profile = entry["profile"]
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         experts.append(
             {
+                "rank": entry["rank"],
                 "name": name,
                 "username": profile.user.username,
                 "followers": profile.followers_count,
