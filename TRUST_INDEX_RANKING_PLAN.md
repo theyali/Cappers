@@ -94,7 +94,7 @@ rows.sort(
 
 - `cabinet/signals.py` уже вызывает `refresh_capper_trust_index`;
 - есть команда `cabinet/management/commands/refresh_trust_indexes.py`;
-- после изменения формулы/влияния запустить полный пересчет:
+- после изменения формулы/влияния запустить полный пересчет или дать мне команду готовую я сам запущу у тебя нет доступов к тестам и запуску:
 
 ```bash
 python manage.py refresh_trust_indexes
