@@ -7,10 +7,17 @@ register = template.Library()
 TRUST_STEP = Decimal("0.1")
 
 
-@register.inclusion_tag("front/includes/_capper_trust_badge.html")
-def capper_trust_badge(value, variant="default"):
+@register.inclusion_tag("front/includes/_capper_trust_badge.html", takes_context=True)
+def capper_trust_badge(context, value, variant="default"):
     trust_index = _decimal(value)
     trust_index = trust_index.quantize(TRUST_STEP, rounding=ROUND_HALF_UP)
+
+    request = context.get("request")
+    resolver_match = getattr(request, "resolver_match", None)
+    url_name = getattr(resolver_match, "url_name", "") or ""
+    if variant == "default" and url_name.startswith("cappers_table"):
+        variant = "table"
+
     return {
         "trust_index": trust_index,
         "trust_display": f"{trust_index:.1f}",
