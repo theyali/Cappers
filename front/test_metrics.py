@@ -87,6 +87,24 @@ class PersistedMetricsTests(TestCase):
         self.assertEqual(metrics.views_count, 1)
         self.assertEqual(metrics.shares_count, 1)
 
+    def test_direct_comment_changes_keep_prediction_metrics_synced(self):
+        content_type = ContentType.objects.get_for_model(
+            PredictionCoupon,
+            for_concrete_model=False,
+        )
+        comment = Comment.objects.create(
+            user=self.reader,
+            content_type=content_type,
+            object_id=self.coupon.pk,
+            text="Слежу за прогнозом",
+            status=Comment.Status.PUBLISHED,
+        )
+        self.assertEqual(get_prediction_metrics(self.coupon.pk).comments_count, 1)
+
+        comment.status = Comment.Status.DELETED
+        comment.save(update_fields=("status", "updated_at"))
+        self.assertEqual(get_prediction_metrics(self.coupon.pk).comments_count, 0)
+
     def test_prediction_comment_increment_and_decrement_never_go_negative(self):
         metrics = increment_prediction_comments(self.coupon.pk)
         self.assertEqual(metrics.comments_count, 1)
@@ -115,14 +133,6 @@ class PersistedMetricsTests(TestCase):
         self.assertEqual(metrics.favorites_count, 0)
 
     def test_refresh_match_metrics_counts_distinct_public_coupons_and_activity(self):
-        Prediction.objects.create(
-            coupon=self.coupon,
-            match=self.match,
-            market="total",
-            selection="over",
-            coefficient=Decimal("1.60"),
-            stake=Decimal("50.00"),
-        )
         second_coupon = PredictionCoupon.objects.create(
             author=self.analyst,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -159,6 +169,17 @@ class PersistedMetricsTests(TestCase):
         self.assertEqual(metrics.favorites_count, 1)
         self.assertEqual(metrics.comments_count, 1)
         self.assertEqual(metrics.activity_count, 4)
+
+    def test_match_watch_signals_keep_favorite_and_activity_counts_synced(self):
+        watch = MatchWatch.objects.create(user=self.reader, match=self.match)
+        metrics = get_match_metrics(self.match.pk)
+        self.assertEqual(metrics.favorites_count, 1)
+        self.assertEqual(metrics.activity_count, metrics.predictions_count + 1)
+
+        watch.delete()
+        metrics = get_match_metrics(self.match.pk)
+        self.assertEqual(metrics.favorites_count, 0)
+        self.assertEqual(metrics.activity_count, metrics.predictions_count)
 
     def test_match_and_prediction_views_are_persisted(self):
         prediction_metrics = increment_prediction_views(self.coupon.pk)
