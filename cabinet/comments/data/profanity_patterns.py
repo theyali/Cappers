@@ -1,10 +1,12 @@
 import re
 import unicodedata
 from functools import lru_cache
-from pathlib import Path
 
+from .forbidden_source import (
+    load_forbidden_lexicon,
+    reset_forbidden_lexicon_source_cache,
+)
 
-_DATA_FILE = Path(__file__).with_name("profanity_ru.txt")
 
 # Устойчивые транслит-варианты заменяем целиком после удаления маскирующих разделителей.
 _TRANSLIT_ALIASES = {
@@ -53,7 +55,10 @@ _CHAR_TRANSLATION = str.maketrans(
 )
 
 _ZERO_WIDTH_RE = re.compile(r"[\u200b-\u200f\u2060\ufeff]")
-_MASK_BETWEEN_CHARS_RE = re.compile(r"(?<=[a-zа-яё0-9])[*._~`'\-]+(?=[a-zа-яё0-9])", re.IGNORECASE)
+_MASK_BETWEEN_CHARS_RE = re.compile(
+    r"(?<=[a-zа-яё0-9])[*._~`'\-]+(?=[a-zа-яё0-9])",
+    re.IGNORECASE,
+)
 _SINGLE_LETTER_CHAIN_RE = re.compile(
     r"(?<![a-zа-яё0-9])(?:[a-zа-яё0-9](?:[\s._*~`'\-]+)){2,}[a-zа-яё0-9](?![a-zа-яё0-9])",
     re.IGNORECASE,
@@ -61,6 +66,8 @@ _SINGLE_LETTER_CHAIN_RE = re.compile(
 _WORD_RE = re.compile(r"[a-zа-яё0-9]+", re.IGNORECASE)
 
 # Корневые шаблоны нужны для склонений и частичных маскировок, когда одна буква пропущена.
+# Они остаются встроенным safety baseline. Дополнительные regex можно будет хранить
+# в ForbiddenPattern через сменный ForbiddenLexiconSource.
 _ROOT_PATTERNS = (
     re.compile(r"(?<![а-я0-9])бл(?:я)?д[а-я]*(?![а-я0-9])", re.IGNORECASE),
     re.compile(r"(?<![а-я0-9])сук(?:а|и|у|ой|е)(?![а-я0-9])", re.IGNORECASE),
@@ -94,7 +101,11 @@ def normalize_obfuscated_text(text: str) -> str:
     normalized = _MASK_BETWEEN_CHARS_RE.sub("", normalized)
 
     for alias, replacement in _TRANSLIT_ALIASES.items():
-        normalized = re.sub(rf"(?<![a-z]){re.escape(alias)}(?![a-z])", replacement, normalized)
+        normalized = re.sub(
+            rf"(?<![a-z]){re.escape(alias)}(?![a-z])",
+            replacement,
+            normalized,
+        )
 
     normalized = normalized.translate(_CHAR_TRANSLATION)
     normalized = re.sub(r"\s+", " ", normalized).strip()
@@ -102,15 +113,41 @@ def normalize_obfuscated_text(text: str) -> str:
 
 
 @lru_cache(maxsize=1)
+def _active_lexicon():
+    return load_forbidden_lexicon()
+
+
+@lru_cache(maxsize=1)
 def load_profanity_terms() -> frozenset[str]:
-    terms = set()
-    with _DATA_FILE.open("r", encoding="utf-8") as source:
-        for raw_line in source:
-            line = raw_line.strip().casefold()
-            if not line or line.startswith("#"):
-                continue
-            terms.add(normalize_obfuscated_text(line))
-    return frozenset(terms)
+    terms = {
+        normalize_obfuscated_text(term)
+        for term in _active_lexicon().words
+        if str(term).strip()
+    }
+    return frozenset(term for term in terms if term)
+
+
+@lru_cache(maxsize=1)
+def load_forbidden_patterns() -> tuple[re.Pattern, ...]:
+    patterns = []
+    for expression in _active_lexicon().patterns:
+        expression = str(expression).strip()
+        if expression:
+            patterns.append(re.compile(expression, re.IGNORECASE))
+    return tuple(patterns)
+
+
+def clear_profanity_cache() -> None:
+    """
+    Invalidate source and normalized caches.
+
+    A future ForbiddenWord/ForbiddenPattern admin can call this after save/delete
+    so moderation starts using changed database rules without process restart.
+    """
+    reset_forbidden_lexicon_source_cache()
+    _active_lexicon.cache_clear()
+    load_profanity_terms.cache_clear()
+    load_forbidden_patterns.cache_clear()
 
 
 def matches_profanity(text: str) -> bool:
@@ -122,8 +159,20 @@ def matches_profanity(text: str) -> bool:
     if not normalized:
         return False
 
+    if any(pattern.search(normalized) for pattern in load_forbidden_patterns()):
+        return True
+
     words = set(_WORD_RE.findall(normalized))
     if words.intersection(load_profanity_terms()):
         return True
 
     return any(pattern.search(normalized) for pattern in _ROOT_PATTERNS)
+
+
+__all__ = [
+    "clear_profanity_cache",
+    "load_forbidden_patterns",
+    "load_profanity_terms",
+    "matches_profanity",
+    "normalize_obfuscated_text",
+]
