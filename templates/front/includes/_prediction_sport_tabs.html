@@ -1,0 +1,30 @@
+<nav class="feed-sport-tabs" aria-label="{{ sport_tabs_aria_label|default:'Фильтр по спорту' }}">
+    {% for tab in sport_tabs %}
+    <a
+        class="feed-sport-tab{% if tab.active %} is-active{% endif %}"
+        href="{{ tab.href }}"
+        data-prediction-ajax-link
+        {% if tab.active %}aria-current="page"{% endif %}
+    >
+        {% if tab.code %}
+        <span class="feed-sport-icon" aria-hidden="true">
+            {% if tab.code == 'football' %}
+                {% include "front/svgs/soccer.svg" %}
+            {% elif tab.code == 'hockey' or tab.code == 'ice-hockey' %}
+                {% include "front/svgs/hockey.svg" %}
+            {% elif tab.code == 'basketball' %}
+                {% include "front/svgs/basketball.svg" %}
+            {% elif tab.code == 'tennis' %}
+                {% include "front/svgs/tennis.svg" %}
+            {% else %}
+                {% include "front/svgs/nav-matches.svg" %}
+            {% endif %}
+        </span>
+        {% endif %}
+        <span>{{ tab.label }}</span>
+    </a>
+    {% endfor %}
+    <button class="feed-sport-tab feed-sport-more" type="button" aria-label="Другие виды спорта">
+        <span aria-hidden="true">•••</span>
+    </button>
+</nav>
