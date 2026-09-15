@@ -140,6 +140,8 @@
             <b data-like-count>{{ prediction.likes_count }}</b>
         </button>
 
+        {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="feed-prediction-action feed-prediction-comments" only %}
+
         <button
             class="feed-prediction-action feed-prediction-save prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
             type="button"
@@ -154,6 +156,17 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
         </button>
 
-        {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="feed-prediction-action feed-prediction-comments" only %}
+        <a
+            class="feed-prediction-action feed-prediction-menu"
+            href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            aria-label="Открыть дополнительные действия прогноза"
+            title="Открыть прогноз"
+        >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.7" fill="currentColor" stroke="none"></circle>
+                <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"></circle>
+                <circle cx="12" cy="19" r="1.7" fill="currentColor" stroke="none"></circle>
+            </svg>
+        </a>
     </div>
 </article>

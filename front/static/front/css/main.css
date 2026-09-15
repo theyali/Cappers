@@ -19133,11 +19133,10 @@ font-size: 14px;
 }
 
 .feed-prediction-actions {
-    display: grid;
-    grid-template-columns: max-content max-content max-content;
+    min-height: 38px;
+    display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 22px;
     color: var(--muted);
 }
 
@@ -19199,13 +19198,23 @@ font-size: 14px;
     background: transparent;
 
 }
+.feed-prediction-save {
+    margin-left: auto;
+}
+
 .feed-prediction-save.is-active {
     color: var(--yellow);
     background: transparent;
 }
 
+.feed-prediction-comments > span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .feed-prediction-menu {
     padding-right: 0;
+    padding-left: 0;
 }
 
 .feed-prediction-menu svg {
