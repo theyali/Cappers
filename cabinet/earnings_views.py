@@ -108,8 +108,9 @@ def _svg_number(value: float) -> str:
 
 
 def _signed_coins(value: Decimal) -> str:
-    prefix = "+" if value > 0 else ""
-    return f"{prefix}{format_coins(value)}"
+    integer_value = int(value)
+    prefix = "+" if integer_value > 0 else ""
+    return f"{prefix}{format_coins(integer_value)}"
 
 
 def _coupon_profit(*, state_status: str, stake: Decimal, possible_payout: Decimal) -> Decimal:
@@ -311,7 +312,7 @@ def _build_income_chart(
         "zero_y": _svg_number(zero_y),
         "plot_left": _svg_number(plot_left),
         "plot_right": _svg_number(plot_right),
-        "total_display": format_coins(total),
+        "total_display": format_coins(int(total)),
         "total_sign": "+" if total > 0 else "",
         "total_color": total_color,
     }
