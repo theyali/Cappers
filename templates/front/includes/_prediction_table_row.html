@@ -104,5 +104,6 @@
         >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
         </button>
+        {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="prediction-table-action" only %}
     </div>
 </article>

@@ -1,0 +1,9 @@
+<a
+    class="prediction-comment-metric{% if metric_class %} {{ metric_class }}{% endif %}"
+    href="{% url 'front:prediction_detail' prediction_id=prediction_id %}"
+    aria-label="Открыть прогноз и комментарии, комментариев: {{ comments_count|default:0 }}"
+    title="Комментарии"
+>
+    {% include "front/svgs/comment.svg" %}
+    <span>{{ comments_count|default:0 }}</span>
+</a>

@@ -4052,7 +4052,7 @@ h2 {
 @media (max-width: 520px) {
     .prediction-reactions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .prediction-reaction {
@@ -35093,4 +35093,24 @@ body.wiki-video-player-open {
 
 .cappers-ranking-table .capper-trust-badge{
     position: static;
+}
+
+
+/* Prediction comment metric */
+.prediction-comment-metric {
+    text-decoration: none;
+}
+
+.prediction-comment-metric > span {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.prediction-table-action.prediction-comment-metric {
+    width: auto;
+    min-width: 44px;
+    grid-template-columns: auto auto;
+    gap: 4px;
+    padding: 0 7px;
 }

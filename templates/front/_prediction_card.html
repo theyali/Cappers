@@ -212,6 +212,7 @@
             </svg>
             <span class="prediction-reaction-label">В избранное</span>
         </button>
+        {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="prediction-reaction" only %}
     </div>
 
     <div class="prediction-published-at">
