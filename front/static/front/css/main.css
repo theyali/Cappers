@@ -22989,6 +22989,10 @@ font-size: 14px;
     overflow: hidden;
     border-radius: 22px;
     background-color: #171718;
+    background-image: url("../img/public_hero/publ_5.png");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 .profile-page .profile-hero.is-reader {
