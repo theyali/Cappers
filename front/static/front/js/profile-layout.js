@@ -76,7 +76,9 @@
             link.className = "adv-banner";
             link.href = banner.url || "#";
             link.setAttribute("aria-label", banner.name || "Открыть промо-баннер");
+            link.setAttribute("data-skeleton-block", "");
             link.appendChild(picture);
+            window.CappersSkeleton?.loading(link);
 
             promoBlock.replaceWith(link);
             window.CappersSkeleton?.watchImage(picture);
