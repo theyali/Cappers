@@ -57,6 +57,10 @@ class Comment(models.Model):
                 fields=("content_type", "object_id", "status", "created_at"),
                 name="comment_target_status_idx",
             ),
+            models.Index(
+                fields=("user", "created_at"),
+                name="comment_user_created_idx",
+            ),
         ]
 
     def __str__(self) -> str:

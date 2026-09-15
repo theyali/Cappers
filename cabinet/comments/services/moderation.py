@@ -1,17 +1,12 @@
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import timedelta
 from typing import Any
-
-from django.utils import timezone
 
 from cabinet.comments.data.profanity_patterns import matches_profanity, normalize_obfuscated_text
 
 
 COMMENT_MAX_LENGTH = 1000
-REPEAT_WINDOW = timedelta(hours=24)
-REPEAT_LIMIT = 3
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _HTML_TAG_RE = re.compile(r"<!--.*?-->|</?[a-z][^>]*>", re.IGNORECASE | re.DOTALL)
@@ -40,7 +35,12 @@ class ModerationCode:
     HTML = "html"
     FORBIDDEN_LINK = "forbidden_link"
     PROFANITY = "profanity"
-    REPEATED = "repeated"
+    RATE_LIMIT_MINUTE = "rate_limit_minute"
+    RATE_LIMIT_HOUR = "rate_limit_hour"
+    DUPLICATE = "duplicate"
+    REPEATED = DUPLICATE
+    SHORT_REPEAT = "short_repeat"
+    MASS_TARGETS = "mass_targets"
 
 
 @dataclass(frozen=True)
@@ -94,7 +94,14 @@ def contains_profanity(text: str) -> bool:
     return matches_profanity(normalize_comment_text(text))
 
 
-def validate_comment_text(text: str, user: Any = None) -> ModerationResult:
+def validate_comment_text(
+    text: str,
+    user: Any = None,
+    *,
+    target: Any = None,
+    content_type: Any = None,
+    object_id: Any = None,
+) -> ModerationResult:
     normalized = normalize_comment_text(text)
 
     if not normalized:
@@ -124,39 +131,28 @@ def validate_comment_text(text: str, user: Any = None) -> ModerationResult:
             "Комментарий содержит запрещенные слова.",
         )
 
-    if _is_repeated_comment(normalized, user):
-        return _rejected(
+    if user is not None:
+        from cabinet.comments.services.anti_spam import check_comment_spam
+
+        anti_spam_result = check_comment_spam(
             normalized,
-            ModerationCode.REPEATED,
-            "Одинаковый комментарий нельзя отправлять много раз.",
+            user,
+            target=target,
+            content_type=content_type,
+            object_id=object_id,
         )
+        if not anti_spam_result.allowed:
+            return _rejected(
+                normalized,
+                anti_spam_result.code,
+                anti_spam_result.public_message,
+            )
 
     return ModerationResult(
         is_allowed=True,
         normalized_text=normalized,
         status="published",
     )
-
-
-def _is_repeated_comment(text: str, user: Any) -> bool:
-    user_id = getattr(user, "pk", None)
-    if not user_id:
-        return False
-
-    from cabinet.comments.models import Comment
-
-    since = timezone.now() - REPEAT_WINDOW
-    repeated_count = (
-        Comment.objects.filter(
-            user_id=user_id,
-            text__iexact=text,
-            status__in=(Comment.Status.PUBLISHED, Comment.Status.PENDING),
-            created_at__gte=since,
-        )
-        .order_by()
-        .count()
-    )
-    return repeated_count >= REPEAT_LIMIT
 
 
 def _rejected(text: str, code: str, public_message: str) -> ModerationResult:
@@ -172,8 +168,6 @@ def _rejected(text: str, code: str, public_message: str) -> ModerationResult:
 
 __all__ = [
     "COMMENT_MAX_LENGTH",
-    "REPEAT_LIMIT",
-    "REPEAT_WINDOW",
     "ModerationCode",
     "ModerationResult",
     "contains_forbidden_link",
