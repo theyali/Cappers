@@ -9,6 +9,7 @@ from . import (
     article_views,
     bookmaker_views,
     capper_views,
+    comment_views,
     favorites_views,
     feed_views,
     home_views,
@@ -40,6 +41,11 @@ urlpatterns = [
         name="prediction_filter_state",
     ),
     path(
+        "predictions/<int:prediction_id>/comments/",
+        comment_views.prediction_comments,
+        name="prediction_comments",
+    ),
+    path(
         "predictions/<int:prediction_id>/",
         prediction_views.prediction_detail,
         name="prediction_detail",
@@ -53,6 +59,11 @@ urlpatterns = [
         "predictions/<int:prediction_id>/favorite/",
         reaction_views.toggle_prediction_favorite,
         name="prediction_favorite",
+    ),
+    path(
+        "comments/<int:comment_id>/delete/",
+        comment_views.delete_comment,
+        name="comment_delete",
     ),
     path(
         "predictions/express/",

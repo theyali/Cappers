@@ -25,6 +25,16 @@ from .anti_spam import (
     AntiSpamResult,
     check_comment_spam,
 )
+from .predictions import (
+    CommentServiceError,
+    can_delete_comment,
+    create_prediction_comment,
+    get_accessible_prediction,
+    prediction_comments_count,
+    prediction_comments_queryset,
+    serialize_comment,
+    soft_delete_comment,
+)
 
 __all__ = [
     "COMMENT_MAX_LENGTH",
@@ -42,12 +52,20 @@ __all__ = [
     "SHORT_REPEAT_WINDOW",
     "AntiSpamCode",
     "AntiSpamResult",
+    "CommentServiceError",
     "ModerationCode",
     "ModerationResult",
+    "can_delete_comment",
     "check_comment_spam",
     "contains_forbidden_link",
     "contains_profanity",
+    "create_prediction_comment",
+    "get_accessible_prediction",
     "normalize_comment_text",
     "normalize_obfuscated_text",
+    "prediction_comments_count",
+    "prediction_comments_queryset",
+    "serialize_comment",
+    "soft_delete_comment",
     "validate_comment_text",
 ]
