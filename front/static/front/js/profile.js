@@ -289,11 +289,17 @@
             image = document.createElement("img");
             image.id = "profileAvatarImage";
             image.alt = "Аватар профиля";
+            image.width = 128;
+            image.height = 128;
+            image.decoding = "async";
             if (fallback) fallback.remove();
             avatar.appendChild(image);
         }
 
+        image.width = 128;
+        image.height = 128;
         image.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        window.CappersSkeleton?.watchImage(avatar);
     };
 
     input.addEventListener("change", async () => {
