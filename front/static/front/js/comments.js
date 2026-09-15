@@ -11,14 +11,17 @@
     const loadError = root.querySelector("[data-comments-load-error]");
     const moreButton = root.querySelector("[data-comments-more]");
     const totalNode = root.querySelector("[data-comments-total]");
+    const totalLabel = root.querySelector("[data-comments-total-label]");
     const commentsUrl = root.dataset.commentsUrl || "";
     const deleteUrlTemplate = root.dataset.deleteUrlTemplate || "";
     const predictionId = root.dataset.predictionId || "";
+    const authorId = root.dataset.authorId || "";
     const LATEST_PAGE = 999999999;
 
     let previousPage = Number.parseInt(root.dataset.previousPage || "", 10) || null;
     let loading = false;
     let submitting = false;
+    let totalCount = Number.parseInt(totalNode?.textContent || "0", 10) || 0;
 
     const getCookie = (name) => {
         const prefix = `${name}=`;
@@ -62,7 +65,11 @@
         if (!Number.isFinite(parsed)) return;
         const safeCount = Math.max(0, parsed);
 
+        totalCount = safeCount;
         if (totalNode) totalNode.textContent = String(safeCount);
+        if (totalLabel) {
+            totalLabel.textContent = russianPlural(safeCount, "комментарий", "комментария", "комментариев");
+        }
 
         document.querySelectorAll("[data-comment-count]").forEach((node) => {
             if (node.dataset.commentCount !== predictionId) return;
@@ -77,16 +84,42 @@
         });
     };
 
+    const russianPlural = (value, one, few, many) => {
+        const absolute = Math.abs(Number(value) || 0);
+        const mod100 = absolute % 100;
+        const mod10 = absolute % 10;
+        if (mod100 >= 11 && mod100 <= 14) return many;
+        if (mod10 === 1) return one;
+        if (mod10 >= 2 && mod10 <= 4) return few;
+        return many;
+    };
+
     const formatDate = (value) => {
         if (!value) return "";
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return "";
+
+        const diffMs = Math.max(0, Date.now() - date.getTime());
+        const minutes = Math.floor(diffMs / 60000);
+        if (minutes < 1) return "только что";
+        if (minutes < 60) {
+            return `${minutes} ${russianPlural(minutes, "минуту", "минуты", "минут")} назад`;
+        }
+
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) {
+            return `${hours} ${russianPlural(hours, "час", "часа", "часов")} назад`;
+        }
+
+        const days = Math.floor(hours / 24);
+        if (days < 7) {
+            return `${days} ${russianPlural(days, "день", "дня", "дней")} назад`;
+        }
+
         return new Intl.DateTimeFormat("ru-RU", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
         }).format(date);
     };
 
@@ -128,8 +161,8 @@
             avatar.dataset.skeletonImage = "";
             const image = document.createElement("img");
             image.src = avatarUrl;
-            image.width = 40;
-            image.height = 40;
+            image.width = 52;
+            image.height = 52;
             image.loading = "lazy";
             image.alt = "";
             avatar.append(image);
@@ -147,7 +180,14 @@
         time.dateTime = comment.created_at || "";
         time.textContent = formatDate(comment.created_at);
 
-        meta.append(author, time);
+        meta.append(author);
+        if (String(comment.user?.id || "") === authorId) {
+            const authorBadge = document.createElement("span");
+            authorBadge.className = "prediction-comment-author-badge";
+            authorBadge.textContent = "Автор";
+            meta.append(authorBadge);
+        }
+        meta.append(time);
 
         const text = document.createElement("p");
         text.className = "prediction-comment-text";
@@ -212,6 +252,11 @@
         if (!moreButton) return;
         moreButton.hidden = !previousPage;
         moreButton.disabled = loading;
+        if (!previousPage) return;
+
+        const shownCount = list?.querySelectorAll(".prediction-comment").length || 0;
+        const remaining = Math.max(0, totalCount - shownCount);
+        moreButton.textContent = `Показать ещё комментарии${remaining ? ` (${remaining})` : ""}`;
     };
 
     const loadComments = async (page = LATEST_PAGE, { prepend = false } = {}) => {
@@ -395,6 +440,7 @@
         if (button) void deleteComment(button);
     });
 
+    updateCounters(totalCount);
     syncComposer();
     syncMoreButton();
 })();

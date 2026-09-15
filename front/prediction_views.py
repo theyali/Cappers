@@ -823,7 +823,7 @@ def prediction_detail(request, prediction_id: int):
         is_liked = PredictionLike.objects.filter(prediction=coupon, user=request.user).exists()
         is_favorite = PredictionFavorite.objects.filter(prediction=coupon, user=request.user).exists()
 
-    comments_page_size = 20
+    comments_page_size = 3
     comments_last_page = max(1, (coupon.comments_count + comments_page_size - 1) // comments_page_size)
     comments_start = (comments_last_page - 1) * comments_page_size
     initial_comments = list(

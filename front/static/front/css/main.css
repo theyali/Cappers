@@ -34575,31 +34575,27 @@ body.wiki-video-player-open {
 /* Prediction detail comments */
 .prediction-comments {
     display: grid;
-    gap: 16px;
-    padding: 20px;
-    border-radius: 18px;
+    gap: 22px;
+    padding: 28px;
+    border-radius: 24px;
     background: var(--panel);
 }
 
 .prediction-comments-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 18px;
 }
 
-.prediction-comments-head p,
 .prediction-comments-head h2 {
     margin: 0;
-}
-
-.prediction-comments-head p {
-    margin-bottom: 5px;
-    color: var(--yellow);
-    font-size: 12px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 28px;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .04em;
+    line-height: 1.1;
+    letter-spacing: -.02em;
 }
 
 .prediction-comments-total {
@@ -34608,44 +34604,61 @@ body.wiki-video-player-open {
     gap: 5px;
     color: var(--muted);
     font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: .04em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
 .prediction-comments-total strong {
-    color: var(--text);
-    font-size: 16px;
+    color: inherit;
+    font-size: inherit;
     font-weight: 800;
 }
 
-.prediction-comment-form,
-.prediction-comments-auth {
+.prediction-comment-form {
+    position: relative;
+    min-height: 56px;
     display: grid;
-    gap: 10px;
-    padding: 14px;
-    border-radius: 14px;
-    background: #29292b;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
 }
 
-.prediction-comment-form label {
-    font-size: 13px;
-    font-weight: 800;
+.prediction-comment-form label,
+.prediction-comment-submit span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .prediction-comment-form textarea {
     width: 100%;
-    min-height: 112px;
-    resize: vertical;
-    padding: 12px 14px;
+    height: 56px;
+    min-height: 56px;
+    max-height: 120px;
+    resize: none;
+    padding: 17px 68px 17px 18px;
     border: 0;
-    border-radius: 12px;
+    border-radius: 14px;
     outline: 0;
     color: var(--text);
-    background: #18181a;
-    line-height: 1.45;
+    background: #29292d;
+    font-size: 15px;
+    line-height: 22px;
+}
+
+.prediction-comment-form textarea::placeholder {
+    color: #8a8a8d;
 }
 
 .prediction-comment-form textarea:focus {
-    box-shadow: 0 0 0 2px var(--blue);
+    background: #303034;
 }
 
 .prediction-comment-form textarea:disabled {
@@ -34653,24 +34666,17 @@ body.wiki-video-player-open {
     cursor: wait;
 }
 
-.prediction-comment-form-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.prediction-comment-form-meta strong {
-    color: var(--text);
-}
-
 .prediction-comment-feedback,
 .prediction-comments-load-error {
     margin: 0;
+    color: var(--muted);
     font-size: 13px;
     line-height: 1.4;
+}
+
+.prediction-comment-feedback {
+    grid-column: 2;
+    padding-right: 58px;
 }
 
 .prediction-comment-feedback.is-error,
@@ -34696,23 +34702,42 @@ body.wiki-video-player-open {
 }
 
 .prediction-comment-submit {
-    min-height: 42px;
-    justify-self: start;
-    padding: 0 18px;
-    border-radius: 11px;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 9px;
     color: #fff;
     background: var(--blue);
-    font-weight: 800;
+}
+
+.prediction-comment-submit svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .prediction-comment-submit:disabled {
-    color: #9b9b9d;
-    background: #3a3a3d;
+    color: #fff;
+    background: var(--blue);
+    opacity: .62;
     cursor: not-allowed;
 }
 
 .prediction-comments-auth {
-    align-items: start;
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 14px;
+    background: #29292d;
 }
 
 .prediction-comments-auth span {
@@ -34727,89 +34752,139 @@ body.wiki-video-player-open {
     align-items: center;
     padding: 0 15px;
     border-radius: 10px;
-    color: var(--ink);
-    background: var(--yellow);
+    color: #fff;
+    background: var(--blue);
     font-weight: 800;
 }
 
 .prediction-comments-list {
-    min-height: 176px;
+    min-height: 300px;
     display: grid;
-    gap: 10px;
     align-content: start;
 }
 
 .prediction-comment {
+    position: relative;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-    gap: 10px 12px;
-    padding: 14px;
-    border-radius: 14px;
-    background: #29292b;
+    grid-template-columns: 52px minmax(0, 1fr) 32px;
+    column-gap: 14px;
+    row-gap: 7px;
+    padding: 17px 0 21px;
+    background: transparent;
+}
+
+.prediction-comment::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 66px;
+    height: 1px;
+    background: rgba(255, 255, 255, .08);
+}
+
+.prediction-comment:last-child::after {
+    display: none;
 }
 
 .prediction-comment-avatar {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
     display: grid;
     place-items: center;
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 50%;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
 }
 
 .prediction-comment-avatar img {
-    width: 40px;
-    height: 40px;
+    width: 100%;
+    height: 100%;
     display: block;
     object-fit: cover;
 }
 
 .prediction-comment-meta {
     min-width: 0;
-    display: grid;
-    align-content: center;
-    gap: 2px;
+    display: flex;
+    align-items: center;
+    align-self: start;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    min-height: 26px;
 }
 
 .prediction-comment-meta strong {
+    min-width: 0;
     overflow: hidden;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 14px;
 }
 
 .prediction-comment-meta time {
     color: var(--muted);
-    font-size: 11px;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.prediction-comment-author-badge {
+    min-height: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    border-radius: 5px;
+    color: var(--ink);
+    background: #9aa0a8;
+    font-size: 10px;
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
 }
 
 .prediction-comment-text {
     grid-column: 2 / -1;
     margin: 0;
-    color: rgba(255, 255, 255, .88);
-    line-height: 1.5;
+    padding-right: 8px;
+    color: rgba(255, 255, 255, .82);
+    font-size: 15px;
+    line-height: 1.55;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
 
 .prediction-comment-delete {
-    align-self: center;
-    min-height: 32px;
-    padding: 0 10px;
-    border-radius: 9px;
-    color: var(--muted);
-    background: #343437;
-    font-size: 12px;
-    font-weight: 700;
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 8px;
+    color: #8a919b;
+    background: transparent;
+    font-size: 0;
+}
+
+.prediction-comment-delete::before {
+    content: "⋮";
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .prediction-comment-delete:hover {
     color: #fff;
-    background: #434347;
+    background: transparent;
 }
 
 .prediction-comment-delete:disabled {
@@ -34818,7 +34893,7 @@ body.wiki-video-player-open {
 }
 
 .prediction-comments-empty {
-    min-height: 176px;
+    min-height: 300px;
     display: grid;
     place-items: center;
     align-content: center;
@@ -34835,17 +34910,22 @@ body.wiki-video-player-open {
 }
 
 .prediction-comments-more {
-    min-height: 40px;
-    justify-self: center;
-    padding: 0 16px;
+    width: 100%;
+    min-height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: stretch;
+    padding: 0 18px;
     border-radius: 10px;
     color: var(--text);
-    background: #303033;
+    background: #29292d;
+    font-size: 14px;
     font-weight: 800;
 }
 
 .prediction-comments-more:hover {
-    background: #3a3a3d;
+    background: #343438;
 }
 
 .prediction-comments-more:disabled {
@@ -34855,38 +34935,89 @@ body.wiki-video-player-open {
 
 @media (max-width: 640px) {
     .prediction-comments {
-        gap: 14px;
-        padding: 14px;
-        border-radius: 15px;
+        gap: 18px;
+        padding: 18px;
+        border-radius: 18px;
     }
 
     .prediction-comments-head {
         align-items: flex-start;
     }
 
-    .prediction-comment-form-meta {
-        align-items: flex-start;
+    .prediction-comments-head h2 {
+        font-size: 24px;
+    }
+
+    .prediction-comments-total {
+        padding-top: 5px;
+        font-size: 11px;
+    }
+
+    .prediction-comment-form {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 10px;
+        min-height: 52px;
+    }
+
+    .prediction-comment-form .prediction-comment-avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .prediction-comment-form textarea {
+        height: 52px;
+        min-height: 52px;
+        padding: 15px 60px 15px 14px;
+        font-size: 14px;
+    }
+
+    .prediction-comment-submit {
+        top: 6px;
+        right: 6px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .prediction-comments-list,
+    .prediction-comments-empty {
+        min-height: 260px;
     }
 
     .prediction-comment {
-        grid-template-columns: 36px minmax(0, 1fr);
-        gap: 9px 10px;
-        padding: 12px;
+        grid-template-columns: 46px minmax(0, 1fr) 28px;
+        column-gap: 11px;
+        padding: 15px 0 18px;
     }
 
-    .prediction-comment-avatar,
-    .prediction-comment-avatar img {
-        width: 36px;
-        height: 36px;
+    .prediction-comment > .prediction-comment-avatar {
+        width: 46px;
+        height: 46px;
+    }
+
+    .prediction-comment::after {
+        left: 57px;
+    }
+
+    .prediction-comment-meta {
+        gap: 5px 8px;
+    }
+
+    .prediction-comment-meta strong,
+    .prediction-comment-text {
+        font-size: 14px;
+    }
+
+    .prediction-comment-meta time {
+        font-size: 12px;
     }
 
     .prediction-comment-delete {
-        grid-column: 2;
-        justify-self: start;
+        width: 28px;
+        height: 28px;
     }
 
     .prediction-comment-text {
-        grid-column: 1 / -1;
+        padding-right: 0;
     }
 }
 

@@ -14,7 +14,7 @@ from cabinet.comments.services.predictions import (
 )
 
 
-COMMENTS_PAGE_SIZE = 20
+COMMENTS_PAGE_SIZE = 3
 
 
 @require_http_methods(["GET", "POST"])

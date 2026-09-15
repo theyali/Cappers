@@ -78,40 +78,50 @@
                     id="comments"
                     data-prediction-comments
                     data-prediction-id="{{ coupon.id }}"
+                    data-author-id="{{ coupon.author_id }}"
                     data-comments-url="{% url 'front:prediction_comments' prediction_id=coupon.id %}"
                     data-delete-url-template="{% url 'front:comment_delete' comment_id=0 %}"
                     data-previous-page="{{ comments_previous_page|default:'' }}"
                     aria-labelledby="prediction-comments-title"
                 >
                     <header class="prediction-comments-head">
-                        <div>
-                            <p>Обсуждение прогноза</p>
-                            <h2 id="prediction-comments-title">Комментарии</h2>
-                        </div>
+                        <h2 id="prediction-comments-title">Комментарии</h2>
                         <span class="prediction-comments-total" aria-live="polite">
                             <strong data-comments-total>{{ coupon.comments_count }}</strong>
-                            <span>комментариев</span>
+                            <span data-comments-total-label>комментариев</span>
                         </span>
                     </header>
 
                     {% if request.user.is_authenticated %}
                     <form class="prediction-comment-form" data-comment-form novalidate>
+                        <span class="prediction-comment-avatar"{% if request.user.avatar %} data-skeleton-image{% endif %}>
+                            {% if request.user.avatar %}
+                                <img src="{{ request.user.avatar.url }}" width="52" height="52" loading="lazy" alt="">
+                            {% else %}
+                                {{ request.user.username|slice:":1"|upper }}
+                            {% endif %}
+                        </span>
                         <label for="prediction-comment-text-{{ coupon.id }}">Ваш комментарий</label>
                         <textarea
                             id="prediction-comment-text-{{ coupon.id }}"
                             name="text"
-                            rows="4"
+                            rows="1"
                             maxlength="1000"
-                            placeholder="Напишите, что думаете о прогнозе"
+                            placeholder="Напишите комментарий..."
                             data-comment-text
                         ></textarea>
-                        <div class="prediction-comment-form-meta">
-                            <span>Без ссылок и запрещенной лексики.</span>
-                            <span><strong data-comment-length>0</strong>/1000</span>
-                        </div>
                         <p class="prediction-comment-feedback" data-comment-feedback role="status" aria-live="polite" hidden></p>
-                        <button class="prediction-comment-submit" type="submit" data-comment-submit disabled>
-                            Отправить
+                        <button
+                            class="prediction-comment-submit"
+                            type="submit"
+                            data-comment-submit
+                            aria-label="Отправить комментарий"
+                            disabled
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"></path>
+                            </svg>
+                            <span>Отправить</span>
                         </button>
                     </form>
                     {% else %}
@@ -135,14 +145,17 @@
                         <article class="prediction-comment" data-comment-id="{{ comment.id }}">
                             <span class="prediction-comment-avatar"{% if comment.user.avatar %} data-skeleton-image{% endif %}>
                                 {% if comment.user.avatar %}
-                                    <img src="{{ comment.user.avatar.url }}" width="40" height="40" loading="lazy" alt="">
+                                    <img src="{{ comment.user.avatar.url }}" width="52" height="52" loading="lazy" alt="">
                                 {% else %}
                                     {{ comment.user.username|slice:":1"|upper }}
                                 {% endif %}
                             </span>
                             <div class="prediction-comment-meta">
                                 <strong>{% firstof comment.user.get_full_name comment.user.username %}</strong>
-                                <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"d.m.Y H:i" }}</time>
+                                {% if comment.user_id == coupon.author_id %}
+                                <span class="prediction-comment-author-badge">Автор</span>
+                                {% endif %}
+                                <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|timesince }} назад</time>
                             </div>
                             {% if comment.can_delete %}
                             <button
@@ -165,7 +178,7 @@
                     </div>
 
                     <button class="prediction-comments-more" type="button" data-comments-more hidden>
-                        Показать предыдущие
+                        Показать ещё комментарии
                     </button>
                 </section>
             </section>
