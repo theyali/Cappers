@@ -189,7 +189,7 @@
 
             <section class="profile-tab-panel {% if active_tab == 'profile' %}is-active{% endif %}" id="profile-tab-profile" data-profile-tab-panel="profile">
                 {% if request.user.is_analyst %}
-                    {# Следующие аналитические блоки добавляются поэтапно. #}
+                    {% include "cabinet/includes/_profile_overview_analytics.html" %}
                 {% else %}
                     <div class="profile-list-card">
                         <div class="profile-section-heading">
