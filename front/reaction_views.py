@@ -6,6 +6,11 @@ from django.views.decorators.http import require_POST
 from cabinet.paid_predictions import user_can_view_paid_predictions
 from game.models import PredictionCoupon
 
+from .metrics import (
+    refresh_prediction_metrics,
+    toggle_prediction_favorite_metric,
+    toggle_prediction_like_metric,
+)
 from .models import PredictionFavorite, PredictionLike
 
 
@@ -33,30 +38,23 @@ def toggle_prediction_like(request, prediction_id: int):
     prediction = _accessible_published_prediction(request.user, prediction_id)
     if prediction.author_id == request.user.id:
         PredictionLike.objects.filter(prediction=prediction, user=request.user).delete()
+        metrics = refresh_prediction_metrics(prediction.pk)
         return JsonResponse(
             {
                 "ok": False,
                 "active": False,
-                "count": PredictionLike.objects.filter(prediction=prediction).count(),
+                "count": metrics.likes_count if metrics else 0,
                 "error": OWN_LIKE_ERROR,
             },
             status=403,
         )
 
-    reaction, created = PredictionLike.objects.get_or_create(
-        prediction=prediction,
-        user=request.user,
-    )
-    active = created
-    if not created:
-        reaction.delete()
-        active = False
-
+    active, metrics = toggle_prediction_like_metric(prediction, request.user)
     return JsonResponse(
         {
             "ok": True,
             "active": active,
-            "count": PredictionLike.objects.filter(prediction=prediction).count(),
+            "count": metrics.likes_count,
         }
     )
 
@@ -67,29 +65,22 @@ def toggle_prediction_favorite(request, prediction_id: int):
     prediction = _accessible_published_prediction(request.user, prediction_id)
     if prediction.author_id == request.user.id:
         PredictionFavorite.objects.filter(prediction=prediction, user=request.user).delete()
+        metrics = refresh_prediction_metrics(prediction.pk)
         return JsonResponse(
             {
                 "ok": False,
                 "active": False,
-                "count": PredictionFavorite.objects.filter(prediction=prediction).count(),
+                "count": metrics.favorites_count if metrics else 0,
                 "error": OWN_FAVORITE_ERROR,
             },
             status=403,
         )
 
-    favorite, created = PredictionFavorite.objects.get_or_create(
-        prediction=prediction,
-        user=request.user,
-    )
-    active = created
-    if not created:
-        favorite.delete()
-        active = False
-
+    active, metrics = toggle_prediction_favorite_metric(prediction, request.user)
     return JsonResponse(
         {
             "ok": True,
             "active": active,
-            "count": PredictionFavorite.objects.filter(prediction=prediction).count(),
+            "count": metrics.favorites_count,
         }
     )
