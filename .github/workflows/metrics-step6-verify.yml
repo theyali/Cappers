@@ -65,7 +65,7 @@ jobs:
             cabinet.tests.test_comment_model \
             cabinet.tests.test_comment_moderation \
             cabinet.tests.test_comment_anti_spam \
-            notifications.test_match_watch
+            cabinet.tests.test_comment_profanity
       - name: Ensure page queries use persisted metrics
         run: |
           ! grep -n 'likes_count=Count("likes"' front/prediction_views.py
