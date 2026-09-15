@@ -11,6 +11,11 @@ from cabinet.comments.models import Comment
 from cabinet.comments.services.anti_spam import check_comment_spam
 from cabinet.comments.services.moderation import validate_comment_text
 from cabinet.paid_predictions import user_can_view_paid_predictions
+from front.metrics import (
+    decrement_prediction_comments,
+    get_prediction_metrics,
+    increment_prediction_comments,
+)
 from game.models import PredictionCoupon
 
 
@@ -53,7 +58,7 @@ def prediction_comments_queryset(prediction: PredictionCoupon):
 
 
 def prediction_comments_count(prediction: PredictionCoupon) -> int:
-    return prediction_comments_queryset(prediction).order_by().count()
+    return get_prediction_metrics(prediction.pk).comments_count
 
 
 def create_prediction_comment(
@@ -84,13 +89,15 @@ def create_prediction_comment(
                 http_status=429,
             )
 
-        return Comment.objects.create(
+        comment = Comment.objects.create(
             user=locked_user,
             content_type=_prediction_content_type(),
             object_id=prediction.pk,
             text=moderation.normalized_text,
             status=Comment.Status.PUBLISHED,
         )
+        increment_prediction_comments(prediction.pk)
+        return comment
 
 
 def soft_delete_comment(*, comment_id: int, actor: Any) -> tuple[Comment, int | None]:
@@ -106,6 +113,7 @@ def soft_delete_comment(*, comment_id: int, actor: Any) -> tuple[Comment, int | 
                 http_status=403,
             )
 
+        was_published = comment.status == Comment.Status.PUBLISHED
         if comment.status != Comment.Status.DELETED:
             reason = (
                 "deleted_by_user"
@@ -116,7 +124,10 @@ def soft_delete_comment(*, comment_id: int, actor: Any) -> tuple[Comment, int | 
             comment.moderation_reason = reason
             comment.save(update_fields=("status", "moderation_reason", "updated_at"))
 
-        comments_count = _comments_count_for_comment_target(comment)
+        comments_count = _comments_count_for_comment_target(
+            comment,
+            decrement=was_published,
+        )
         return comment, comments_count
 
 
@@ -163,20 +174,20 @@ def _prediction_content_type() -> ContentType:
     )
 
 
-def _comments_count_for_comment_target(comment: Comment) -> int | None:
+def _comments_count_for_comment_target(
+    comment: Comment,
+    *,
+    decrement: bool = False,
+) -> int | None:
     prediction_content_type = _prediction_content_type()
     if comment.content_type_id != prediction_content_type.pk:
         return None
-    return (
-        Comment.objects.filter(
-            content_type_id=comment.content_type_id,
-            object_id=comment.object_id,
-            status=Comment.Status.PUBLISHED,
-            parent__isnull=True,
-        )
-        .order_by()
-        .count()
+    metrics = (
+        decrement_prediction_comments(comment.object_id)
+        if decrement
+        else get_prediction_metrics(comment.object_id)
     )
+    return metrics.comments_count
 
 
 __all__ = [
