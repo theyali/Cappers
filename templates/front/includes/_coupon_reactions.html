@@ -38,4 +38,6 @@
         </svg>
         <b data-reaction-count>{{ favorites_count }}</b>
     </button>
+
+    {% include "front/includes/_comment_metric.html" with prediction_id=coupon.id comments_count=coupon.comments_count metric_class="prediction-reaction" only %}
 </div>

@@ -72,6 +72,102 @@
                 <section class="coupon-detail-panel" aria-label="{% if coupon.coupon_type == 'express' %}Состав экспресса{% else %}Состав купона{% endif %}">
                     {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True compact=True %}
                 </section>
+
+                <section
+                    class="prediction-comments"
+                    id="comments"
+                    data-prediction-comments
+                    data-prediction-id="{{ coupon.id }}"
+                    data-comments-url="{% url 'front:prediction_comments' prediction_id=coupon.id %}"
+                    data-delete-url-template="{% url 'front:comment_delete' comment_id=0 %}"
+                    data-previous-page="{{ comments_previous_page|default:'' }}"
+                    aria-labelledby="prediction-comments-title"
+                >
+                    <header class="prediction-comments-head">
+                        <div>
+                            <p>Обсуждение прогноза</p>
+                            <h2 id="prediction-comments-title">Комментарии</h2>
+                        </div>
+                        <span class="prediction-comments-total" aria-live="polite">
+                            <strong data-comments-total>{{ coupon.comments_count }}</strong>
+                            <span>комментариев</span>
+                        </span>
+                    </header>
+
+                    {% if request.user.is_authenticated %}
+                    <form class="prediction-comment-form" data-comment-form novalidate>
+                        <label for="prediction-comment-text-{{ coupon.id }}">Ваш комментарий</label>
+                        <textarea
+                            id="prediction-comment-text-{{ coupon.id }}"
+                            name="text"
+                            rows="4"
+                            maxlength="1000"
+                            placeholder="Напишите, что думаете о прогнозе"
+                            data-comment-text
+                        ></textarea>
+                        <div class="prediction-comment-form-meta">
+                            <span>Без ссылок и запрещенной лексики.</span>
+                            <span><strong data-comment-length>0</strong>/1000</span>
+                        </div>
+                        <p class="prediction-comment-feedback" data-comment-feedback role="status" aria-live="polite" hidden></p>
+                        <button class="prediction-comment-submit" type="submit" data-comment-submit disabled>
+                            Отправить
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="prediction-comments-auth">
+                        <strong>Хотите участвовать в обсуждении?</strong>
+                        <span>Войдите в аккаунт, чтобы оставить комментарий.</span>
+                        <a href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}">Войти</a>
+                    </div>
+                    {% endif %}
+
+                    <p class="prediction-comments-load-error" data-comments-load-error role="alert" hidden></p>
+
+                    <div
+                        class="prediction-comments-list"
+                        data-comments-list
+                        data-skeleton-block
+                        aria-live="polite"
+                        aria-busy="false"
+                    >
+                        {% for comment in initial_comments %}
+                        <article class="prediction-comment" data-comment-id="{{ comment.id }}">
+                            <span class="prediction-comment-avatar"{% if comment.user.avatar %} data-skeleton-image{% endif %}>
+                                {% if comment.user.avatar %}
+                                    <img src="{{ comment.user.avatar.url }}" width="40" height="40" loading="lazy" alt="">
+                                {% else %}
+                                    {{ comment.user.username|slice:":1"|upper }}
+                                {% endif %}
+                            </span>
+                            <div class="prediction-comment-meta">
+                                <strong>{% firstof comment.user.get_full_name comment.user.username %}</strong>
+                                <time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"d.m.Y H:i" }}</time>
+                            </div>
+                            {% if comment.can_delete %}
+                            <button
+                                class="prediction-comment-delete"
+                                type="button"
+                                data-comment-delete="{{ comment.id }}"
+                                aria-label="Удалить комментарий пользователя {% firstof comment.user.get_full_name comment.user.username %}"
+                            >
+                                Удалить
+                            </button>
+                            {% endif %}
+                            <p class="prediction-comment-text">{{ comment.text }}</p>
+                        </article>
+                        {% empty %}
+                        <div class="prediction-comments-empty">
+                            <strong>Пока нет комментариев</strong>
+                            <span>Будьте первым, кто обсудит этот прогноз.</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button class="prediction-comments-more" type="button" data-comments-more hidden>
+                        Показать предыдущие
+                    </button>
+                </section>
             </section>
         </div>
 
@@ -82,4 +178,5 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
+<script src="{% static 'front/js/comments.js' %}" defer></script>
 {% endblock %}

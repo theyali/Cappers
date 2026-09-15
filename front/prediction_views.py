@@ -24,6 +24,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
+from cabinet.comments.services import can_delete_comment, prediction_comments_queryset
 from cabinet.models import AnalystFollow
 from cabinet.paid_predictions import user_can_view_paid_predictions
 from game.models import Prediction, PredictionCoupon, Sport
@@ -822,6 +823,18 @@ def prediction_detail(request, prediction_id: int):
         is_liked = PredictionLike.objects.filter(prediction=coupon, user=request.user).exists()
         is_favorite = PredictionFavorite.objects.filter(prediction=coupon, user=request.user).exists()
 
+    comments_page_size = 20
+    comments_last_page = max(1, (coupon.comments_count + comments_page_size - 1) // comments_page_size)
+    comments_start = (comments_last_page - 1) * comments_page_size
+    initial_comments = list(
+        prediction_comments_queryset(coupon)[
+            comments_start : comments_start + comments_page_size
+        ]
+    )
+    for comment in initial_comments:
+        comment.can_delete = can_delete_comment(comment, request.user)
+    comments_previous_page = comments_last_page - 1 if comments_last_page > 1 else None
+
     return render(
         request,
         "front/prediction_detail.html",
@@ -836,6 +849,8 @@ def prediction_detail(request, prediction_id: int):
             "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
             "is_liked": is_liked,
             "is_favorite": is_favorite,
+            "initial_comments": initial_comments,
+            "comments_previous_page": comments_previous_page,
         },
     )
 

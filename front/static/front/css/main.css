@@ -35114,3 +35114,322 @@ body.wiki-video-player-open {
     gap: 4px;
     padding: 0 7px;
 }
+
+
+/* Prediction detail comments */
+.prediction-comments {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.prediction-comments-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.prediction-comments-head p,
+.prediction-comments-head h2 {
+    margin: 0;
+}
+
+.prediction-comments-head p {
+    margin-bottom: 5px;
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.prediction-comments-total {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.prediction-comments-total strong {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.prediction-comment-form,
+.prediction-comments-auth {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #29292b;
+}
+
+.prediction-comment-form label {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.prediction-comment-form textarea {
+    width: 100%;
+    min-height: 112px;
+    resize: vertical;
+    padding: 12px 14px;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    color: var(--text);
+    background: #18181a;
+    line-height: 1.45;
+}
+
+.prediction-comment-form textarea:focus {
+    box-shadow: 0 0 0 2px var(--blue);
+}
+
+.prediction-comment-form textarea:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+.prediction-comment-form-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.prediction-comment-form-meta strong {
+    color: var(--text);
+}
+
+.prediction-comment-feedback,
+.prediction-comments-load-error {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.prediction-comment-feedback.is-error,
+.prediction-comments-load-error {
+    color: #ff6f61;
+}
+
+.prediction-comment-feedback.is-rate-limit {
+    color: var(--yellow);
+}
+
+.prediction-comment-feedback.is-success {
+    color: #8fd26a;
+}
+
+.prediction-comment-submit,
+.prediction-comments-more,
+.prediction-comments-auth a,
+.prediction-comment-delete {
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.prediction-comment-submit {
+    min-height: 42px;
+    justify-self: start;
+    padding: 0 18px;
+    border-radius: 11px;
+    color: #fff;
+    background: var(--blue);
+    font-weight: 800;
+}
+
+.prediction-comment-submit:disabled {
+    color: #9b9b9d;
+    background: #3a3a3d;
+    cursor: not-allowed;
+}
+
+.prediction-comments-auth {
+    align-items: start;
+}
+
+.prediction-comments-auth span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.prediction-comments-auth a {
+    width: fit-content;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 15px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-weight: 800;
+}
+
+.prediction-comments-list {
+    min-height: 176px;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+.prediction-comment {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #29292b;
+}
+
+.prediction-comment-avatar {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.prediction-comment-avatar img {
+    width: 40px;
+    height: 40px;
+    display: block;
+    object-fit: cover;
+}
+
+.prediction-comment-meta {
+    min-width: 0;
+    display: grid;
+    align-content: center;
+    gap: 2px;
+}
+
+.prediction-comment-meta strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.prediction-comment-meta time {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.prediction-comment-text {
+    grid-column: 2 / -1;
+    margin: 0;
+    color: rgba(255, 255, 255, .88);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.prediction-comment-delete {
+    align-self: center;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: var(--muted);
+    background: #343437;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.prediction-comment-delete:hover {
+    color: #fff;
+    background: #434347;
+}
+
+.prediction-comment-delete:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.prediction-comments-empty {
+    min-height: 176px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 6px;
+    padding: 24px;
+    border-radius: 14px;
+    color: var(--muted);
+    background: #252527;
+    text-align: center;
+}
+
+.prediction-comments-empty strong {
+    color: var(--text);
+}
+
+.prediction-comments-more {
+    min-height: 40px;
+    justify-self: center;
+    padding: 0 16px;
+    border-radius: 10px;
+    color: var(--text);
+    background: #303033;
+    font-weight: 800;
+}
+
+.prediction-comments-more:hover {
+    background: #3a3a3d;
+}
+
+.prediction-comments-more:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+@media (max-width: 640px) {
+    .prediction-comments {
+        gap: 14px;
+        padding: 14px;
+        border-radius: 15px;
+    }
+
+    .prediction-comments-head {
+        align-items: flex-start;
+    }
+
+    .prediction-comment-form-meta {
+        align-items: flex-start;
+    }
+
+    .prediction-comment {
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 9px 10px;
+        padding: 12px;
+    }
+
+    .prediction-comment-avatar,
+    .prediction-comment-avatar img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .prediction-comment-delete {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .prediction-comment-text {
+        grid-column: 1 / -1;
+    }
+}
