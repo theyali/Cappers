@@ -1,6 +1,5 @@
 import json
 
-from django.core.paginator import Paginator
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 
@@ -39,21 +38,25 @@ def prediction_comments(request, prediction_id: int):
         )
 
     if request.method == "GET":
-        queryset = prediction_comments_queryset(prediction)
-        paginator = Paginator(queryset, COMMENTS_PAGE_SIZE)
-        page_obj = paginator.get_page(request.GET.get("page") or 1)
+        comments_count = prediction_comments_count(prediction)
+        pages = max(1, (comments_count + COMMENTS_PAGE_SIZE - 1) // COMMENTS_PAGE_SIZE)
+        page = _page_number(request.GET.get("page"), pages)
+        offset = (page - 1) * COMMENTS_PAGE_SIZE
+        comments = prediction_comments_queryset(prediction)[
+            offset : offset + COMMENTS_PAGE_SIZE
+        ]
         return JsonResponse(
             {
                 "ok": True,
                 "comments": [
                     serialize_comment(comment, viewer=request.user)
-                    for comment in page_obj.object_list
+                    for comment in comments
                 ],
-                "comments_count": paginator.count,
-                "page": page_obj.number,
-                "pages": paginator.num_pages,
-                "has_next": page_obj.has_next(),
-                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
+                "comments_count": comments_count,
+                "page": page,
+                "pages": pages,
+                "has_next": page < pages,
+                "next_page": page + 1 if page < pages else None,
             }
         )
 
@@ -135,6 +138,14 @@ def delete_comment(request, comment_id: int):
             "comments_count": comments_count,
         }
     )
+
+
+def _page_number(raw_value, pages: int) -> int:
+    try:
+        value = int(raw_value or 1)
+    except (TypeError, ValueError):
+        value = 1
+    return min(max(value, 1), pages)
 
 
 def _comment_text_from_request(request) -> str:
