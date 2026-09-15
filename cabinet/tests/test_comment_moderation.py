@@ -122,18 +122,24 @@ class CommentModerationServiceTests(TestCase):
 
     def test_deleted_and_rejected_comments_do_not_count_as_repeat_spam(self):
         text = "Повтор после удаления"
+        comments = []
         for status in (
             Comment.Status.DELETED,
             Comment.Status.REJECTED,
             Comment.Status.DELETED,
         ):
-            Comment.objects.create(
-                user=self.user,
-                content_type=self.content_type,
-                object_id=self.user.pk,
-                text=text,
-                status=status,
+            comments.append(
+                Comment.objects.create(
+                    user=self.user,
+                    content_type=self.content_type,
+                    object_id=self.user.pk,
+                    text=text,
+                    status=status,
+                )
             )
+        Comment.objects.filter(pk__in=[comment.pk for comment in comments]).update(
+            created_at=timezone.now() - timedelta(minutes=2)
+        )
 
         result = validate_comment_text(text, user=self.user)
 
