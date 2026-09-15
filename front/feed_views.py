@@ -1,4 +1,7 @@
+import hashlib
+
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import render
@@ -7,7 +10,6 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystFollow, AnalystPaidSubscription
-from cabinet.paid_predictions import active_paid_subscription_analyst_ids
 from game.models import PredictionCoupon, Sport
 
 from .prediction_views import (
@@ -25,6 +27,12 @@ FEED_SORT_OPTIONS = (
     ("popular", "Популярные"),
 )
 PAID_FEED_LIMIT = 12
+FEED_META_CACHE_TTL = 60
+
+
+def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
+    signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
+    return f"front:feed:{namespace}:v2:{user_id}:{signature}"
 
 
 def _feed_url(request, params) -> str:
@@ -51,19 +59,30 @@ def _feed_sport_url(request, sport: Sport | None) -> str:
     return _feed_url(request, params)
 
 
-def _feed_sport_tabs(request, queryset, paid_queryset, active_sport: Sport | None):
-    source = queryset | paid_queryset
-    rows = list(
-        source.exclude(predictions__match__sport_id__isnull=True)
-        .values(
-            "predictions__match__sport_id",
-            "predictions__match__sport__code",
-            "predictions__match__sport__name_ru",
-            "predictions__match__sport__name",
+def _feed_sport_tabs(
+    request,
+    queryset,
+    paid_queryset,
+    active_sport: Sport | None,
+    *,
+    cache_key: str,
+):
+    rows = cache.get(cache_key)
+    if rows is None:
+        source = queryset | paid_queryset
+        rows = list(
+            source.exclude(predictions__match__sport_id__isnull=True)
+            .values(
+                "predictions__match__sport_id",
+                "predictions__match__sport__code",
+                "predictions__match__sport__name_ru",
+                "predictions__match__sport__name",
+            )
+            .annotate(count=Count("id", distinct=True))
+            .order_by("predictions__match__sport__name_ru", "predictions__match__sport__name")
         )
-        .annotate(count=Count("id", distinct=True))
-        .order_by("predictions__match__sport__name_ru", "predictions__match__sport__name")
-    )
+        cache.set(cache_key, rows, FEED_META_CACHE_TTL)
+
     tabs = [
         {
             "code": "",
@@ -102,8 +121,12 @@ def _apply_feed_filters(queryset, *, selected_capper, selected_sport, only_live,
     return queryset.distinct()
 
 
-def _feed_counts(queryset) -> dict:
-    return queryset.aggregate(
+def _feed_counts(queryset, *, cache_key: str) -> dict:
+    counts = cache.get(cache_key)
+    if counts is not None:
+        return counts
+
+    counts = queryset.aggregate(
         total=Count("id", distinct=True),
         pending=Count(
             "id",
@@ -126,6 +149,60 @@ def _feed_counts(queryset) -> dict:
             distinct=True,
         ),
     )
+    cache.set(cache_key, counts, FEED_META_CACHE_TTL)
+    return counts
+
+
+def _feed_status_count(counts: dict, active_status: str) -> int:
+    key = "total" if active_status == "all" else active_status
+    return counts.get(key, 0) or 0
+
+
+def _feed_author_counts(
+    user_id: int,
+    *,
+    following_ids: set[int],
+    paid_upgrade_ids: list[int],
+) -> tuple[dict[int, int], dict[int, int]]:
+    cache_key = _feed_cache_key(
+        user_id,
+        "author-counts",
+        tuple(sorted(following_ids)),
+        tuple(sorted(paid_upgrade_ids)),
+    )
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached["author_counts"], cached["locked_paid_counts"]
+
+    locked_paid_counts = {
+        row["author_id"]: row["total"]
+        for row in PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            audience=PredictionCoupon.Audience.PAID,
+            author_id__in=paid_upgrade_ids,
+        )
+        .values("author_id")
+        .annotate(total=Count("id"))
+    }
+    author_counts = {
+        row["author_id"]: row["total"]
+        for row in PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            audience=PredictionCoupon.Audience.FREE,
+            author_id__in=following_ids,
+        )
+        .values("author_id")
+        .annotate(total=Count("id"))
+    }
+    cache.set(
+        cache_key,
+        {
+            "author_counts": author_counts,
+            "locked_paid_counts": locked_paid_counts,
+        },
+        FEED_META_CACHE_TTL,
+    )
+    return author_counts, locked_paid_counts
 
 
 @login_required
@@ -156,7 +233,7 @@ def following_feed(request):
         .select_related("analyst", "analyst__analyst_profile")
         .order_by("-expires_at", "-id")
     )
-    paid_analyst_ids = active_paid_subscription_analyst_ids(request.user)
+    paid_analyst_ids = {subscription.analyst_id for subscription in paid_subscriptions}
     paid_usernames = {subscription.analyst.username for subscription in paid_subscriptions}
 
     selected_capper = request.GET.get("capper", "").strip()
@@ -167,6 +244,13 @@ def following_feed(request):
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
 
+    feed_source_signature = (
+        tuple(sorted(following_ids)),
+        tuple(sorted(paid_analyst_ids)),
+        selected_capper,
+        only_live,
+        only_today,
+    )
     sport_tabs_queryset = _apply_feed_filters(
         _published_queryset().filter(author_id__in=following_ids),
         selected_capper=selected_capper,
@@ -189,6 +273,11 @@ def following_feed(request):
         sport_tabs_queryset,
         sport_tabs_paid_queryset,
         selected_sport,
+        cache_key=_feed_cache_key(
+            request.user.pk,
+            "sport-tabs",
+            *feed_source_signature,
+        ),
     )
     queryset = sport_tabs_queryset
     paid_queryset = sport_tabs_paid_queryset
@@ -196,9 +285,16 @@ def following_feed(request):
         queryset = queryset.filter(predictions__match__sport=selected_sport).distinct()
         paid_queryset = paid_queryset.filter(predictions__match__sport=selected_sport).distinct()
 
+    count_signature = (*feed_source_signature, selected_sport.pk if selected_sport else None)
     count_keys = ("total", "pending", "win", "lose", "refund")
-    free_counts = _feed_counts(queryset)
-    paid_counts = _feed_counts(paid_queryset)
+    free_counts = _feed_counts(
+        queryset,
+        cache_key=_feed_cache_key(request.user.pk, "free-counts", *count_signature),
+    )
+    paid_counts = _feed_counts(
+        paid_queryset,
+        cache_key=_feed_cache_key(request.user.pk, "paid-counts", *count_signature),
+    )
     counts = {
         key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
         for key in count_keys
@@ -232,17 +328,26 @@ def following_feed(request):
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
-    page_obj.object_list = _decorate_predictions(
+    free_coupons = list(page_obj.object_list)
+    paid_coupons = list(paid_queryset[:PAID_FEED_LIMIT])
+    decorated = _decorate_predictions(
         request,
-        page_obj.object_list,
+        [*free_coupons, *paid_coupons],
         following_ids=following_ids,
     )
-    paid_predictions_count = paid_queryset.count()
-    paid_predictions = _decorate_predictions(
-        request,
-        paid_queryset[:PAID_FEED_LIMIT],
-        following_ids=following_ids,
-    )
+    decorated_by_id = {card.id: card for card in decorated}
+    page_obj.object_list = [
+        decorated_by_id[coupon.pk]
+        for coupon in free_coupons
+        if coupon.pk in decorated_by_id
+    ]
+    paid_predictions = [
+        decorated_by_id[coupon.pk]
+        for coupon in paid_coupons
+        if coupon.pk in decorated_by_id
+    ]
+    paid_predictions_count = _feed_status_count(paid_counts, active_status)
+
     paid_upgrade_follows = [
         follow
         for follow in following
@@ -253,27 +358,11 @@ def following_feed(request):
         and (not selected_capper or follow.analyst.username == selected_capper)
     ]
     paid_upgrade_ids = [follow.analyst_id for follow in paid_upgrade_follows]
-    locked_paid_counts = {
-        row["author_id"]: row["total"]
-        for row in PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            audience=PredictionCoupon.Audience.PAID,
-            author_id__in=paid_upgrade_ids,
-        )
-        .values("author_id")
-        .annotate(total=Count("id"))
-    }
-
-    author_counts = {
-        row["author_id"]: row["total"]
-        for row in PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            audience=PredictionCoupon.Audience.FREE,
-            author_id__in=following_ids,
-        )
-        .values("author_id")
-        .annotate(total=Count("id"))
-    }
+    author_counts, locked_paid_counts = _feed_author_counts(
+        request.user.pk,
+        following_ids=following_ids,
+        paid_upgrade_ids=paid_upgrade_ids,
+    )
 
     capper_params = request.GET.copy()
     capper_params.pop("page", None)
