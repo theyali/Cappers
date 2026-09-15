@@ -6,6 +6,8 @@ from typing import Any
 
 from django.utils import timezone
 
+from cabinet.comments.data.profanity_patterns import matches_profanity, normalize_obfuscated_text
+
 
 COMMENT_MAX_LENGTH = 1000
 REPEAT_WINDOW = timedelta(hours=24)
@@ -30,17 +32,6 @@ _DOMAIN_RE = re.compile(
     r"(?::\d{2,5})?(?:[/?:#][^\s]*)?",
     re.IGNORECASE,
 )
-_PROFANITY_RE = re.compile(
-    r"(?<![a-zа-яё0-9])(?:"
-    r"бля(?:дь|ть)|"
-    r"сука|"
-    r"хуй|хуя|хуе(?:в|т|м|й)?|хуё(?:в|т|м|й)?|"
-    r"пизд[a-zа-яё]*|"
-    r"[её]б(?:ать|ал|ала|али|ан|ану|ёт|ет|ут|уч|учий|ись|иська|нут|нулся|аный|анный)|"
-    r"fuck[a-z]*|shit[a-z]*|bitch(?:es)?"
-    r")(?![a-zа-яё0-9])",
-    re.IGNORECASE,
-)
 
 
 class ModerationCode:
@@ -58,6 +49,12 @@ class ModerationResult:
     normalized_text: str
     code: str = ""
     reason: str = ""
+    status: str = "published"
+    public_message: str = ""
+
+    @property
+    def allowed(self) -> bool:
+        return self.is_allowed
 
     @property
     def ok(self) -> bool:
@@ -94,8 +91,7 @@ def contains_forbidden_link(text: str) -> bool:
 
 
 def contains_profanity(text: str) -> bool:
-    normalized = normalize_comment_text(text)
-    return bool(normalized and _PROFANITY_RE.search(normalized))
+    return matches_profanity(normalize_comment_text(text))
 
 
 def validate_comment_text(text: str, user: Any = None) -> ModerationResult:
@@ -125,7 +121,7 @@ def validate_comment_text(text: str, user: Any = None) -> ModerationResult:
         return _rejected(
             normalized,
             ModerationCode.PROFANITY,
-            "Комментарий содержит запрещённую лексику.",
+            "Комментарий содержит запрещенные слова.",
         )
 
     if _is_repeated_comment(normalized, user):
@@ -135,7 +131,11 @@ def validate_comment_text(text: str, user: Any = None) -> ModerationResult:
             "Одинаковый комментарий нельзя отправлять много раз.",
         )
 
-    return ModerationResult(is_allowed=True, normalized_text=normalized)
+    return ModerationResult(
+        is_allowed=True,
+        normalized_text=normalized,
+        status="published",
+    )
 
 
 def _is_repeated_comment(text: str, user: Any) -> bool:
@@ -159,10 +159,26 @@ def _is_repeated_comment(text: str, user: Any) -> bool:
     return repeated_count >= REPEAT_LIMIT
 
 
-def _rejected(text: str, code: str, reason: str) -> ModerationResult:
+def _rejected(text: str, code: str, public_message: str) -> ModerationResult:
     return ModerationResult(
         is_allowed=False,
         normalized_text=text,
         code=code,
-        reason=reason,
+        reason=code,
+        status="rejected",
+        public_message=public_message,
     )
+
+
+__all__ = [
+    "COMMENT_MAX_LENGTH",
+    "REPEAT_LIMIT",
+    "REPEAT_WINDOW",
+    "ModerationCode",
+    "ModerationResult",
+    "contains_forbidden_link",
+    "contains_profanity",
+    "normalize_comment_text",
+    "normalize_obfuscated_text",
+    "validate_comment_text",
+]

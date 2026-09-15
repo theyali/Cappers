@@ -7,6 +7,7 @@ from .moderation import (
     contains_forbidden_link,
     contains_profanity,
     normalize_comment_text,
+    normalize_obfuscated_text,
     validate_comment_text,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "contains_forbidden_link",
     "contains_profanity",
     "normalize_comment_text",
+    "normalize_obfuscated_text",
     "validate_comment_text",
 ]
