@@ -27,6 +27,21 @@ REFERRAL_EARNING_KINDS = (
     RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
 )
 
+_CHART_MONTHS = {
+    1: "янв",
+    2: "фев",
+    3: "мар",
+    4: "апр",
+    5: "май",
+    6: "июн",
+    7: "июл",
+    8: "авг",
+    9: "сен",
+    10: "окт",
+    11: "ноя",
+    12: "дек",
+}
+
 
 def _period_summary(queryset, *, label: str, days: int | None = None) -> dict:
     period_queryset = queryset
@@ -72,14 +87,113 @@ def _period_summary(queryset, *, label: str, days: int | None = None) -> dict:
     }
 
 
+def _compact_chart_value(value: Decimal) -> str:
+    value = Decimal(value)
+    sign = "-" if value < 0 else ""
+    absolute = abs(value)
+    if absolute >= Decimal("1000000"):
+        compact = absolute / Decimal("1000000")
+        text = f"{compact:.1f}".rstrip("0").rstrip(".")
+        return f"{sign}{text}M"
+    if absolute >= Decimal("1000"):
+        compact = absolute / Decimal("1000")
+        text = f"{compact:.0f}" if compact >= 10 else f"{compact:.1f}".rstrip("0").rstrip(".")
+        return f"{sign}{text}K"
+    return f"{sign}{absolute:.0f}"
+
+
+def _build_income_chart(queryset, *, days: int = 30) -> dict:
+    end_day = timezone.localdate()
+    start_day = end_day - timedelta(days=days - 1)
+    daily = {start_day + timedelta(days=index): Decimal("0.00") for index in range(days)}
+
+    for created_at, amount in queryset.filter(
+        created_at__gte=timezone.now() - timedelta(days=days)
+    ).values_list("created_at", "amount"):
+        created_day = timezone.localtime(created_at).date() if timezone.is_aware(created_at) else created_at.date()
+        if created_day in daily:
+            daily[created_day] += amount or Decimal("0.00")
+
+    cumulative = Decimal("0.00")
+    raw_points = []
+    scale_candidates = [Decimal("1.00")]
+    for day, amount in daily.items():
+        cumulative += amount
+        raw_points.append((day, amount, cumulative))
+        scale_candidates.extend((amount, cumulative))
+
+    scale = max(scale_candidates)
+    plot_left = 42.0
+    plot_right = 530.0
+    zero_y = 166.0
+    positive_height = 116.0
+    negative_height = 34.0
+    step = (plot_right - plot_left) / max(days - 1, 1)
+    bar_width = max(4.0, min(10.0, step * 0.56))
+
+    points = []
+    line_parts = []
+    labels = []
+    for index, (day, amount, running_total) in enumerate(raw_points):
+        x = plot_left + (step * index)
+        bar_height = float((amount / scale) * Decimal(str(positive_height))) if amount > 0 else 0.0
+        line_y = zero_y - float((running_total / scale) * Decimal(str(positive_height)))
+        point = {
+            "x": round(x, 2),
+            "bar_x": round(x - (bar_width / 2), 2),
+            "bar_y": round(zero_y - bar_height, 2),
+            "bar_height": round(max(bar_height, 1.2) if amount > 0 else 0.0, 2),
+            "line_y": round(line_y, 2),
+            "amount": amount,
+            "cumulative": running_total,
+        }
+        points.append(point)
+        line_parts.append(f"{'M' if index == 0 else 'L'} {point['x']} {point['line_y']}")
+
+        if index % 5 == 0 or index == days - 1:
+            labels.append(
+                {
+                    "x": point["x"],
+                    "text": f"{day.day} {_CHART_MONTHS[day.month]}",
+                }
+            )
+
+    half_scale = scale / Decimal("2")
+    ticks = [
+        {"y": round(zero_y - positive_height, 2), "label": _compact_chart_value(scale)},
+        {"y": round(zero_y - (positive_height / 2), 2), "label": _compact_chart_value(half_scale)},
+        {"y": zero_y, "label": "0"},
+        {"y": round(zero_y + negative_height, 2), "label": _compact_chart_value(-half_scale)},
+    ]
+
+    total = raw_points[-1][2] if raw_points else Decimal("0.00")
+    return {
+        "days": days,
+        "period_label": "30 дней",
+        "points": points,
+        "labels": labels,
+        "ticks": ticks,
+        "line_path": " ".join(line_parts),
+        "bar_width": round(bar_width, 2),
+        "zero_y": zero_y,
+        "plot_left": plot_left,
+        "plot_right": plot_right,
+        "total": total,
+        "total_display": format_money(total),
+        "total_sign": "+" if total > 0 else "",
+    }
+
+
 def build_earnings_context(user) -> dict:
     if user.role != User.Role.ANALYST:
+        empty_transactions = RealBalanceTransaction.objects.none()
         return {
             "earnings_all_time": _period_summary(
-                RealBalanceTransaction.objects.none(),
+                empty_transactions,
                 label="За всё время",
             ),
             "earnings_periods": [],
+            "earnings_chart": _build_income_chart(empty_transactions),
             "active_paid_subscribers": 0,
             "paid_subscribers_total": 0,
             "active_paid_subscriptions": [],
@@ -114,6 +228,7 @@ def build_earnings_context(user) -> dict:
             _period_summary(earning_transactions, label="Месяц", days=30),
             _period_summary(earning_transactions, label="Квартал", days=90),
         ],
+        "earnings_chart": _build_income_chart(earning_transactions),
         "active_paid_subscribers": len(active_paid_subscriptions),
         "paid_subscribers_total": AnalystPaidSubscription.objects.filter(
             analyst=user,
