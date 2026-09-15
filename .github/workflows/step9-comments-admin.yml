@@ -1,0 +1,52 @@
+name: Verify comment moderation admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/step9-comments-admin.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cappers
+          POSTGRES_USER: cappers
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cappers -d cappers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      POSTGRES_DB: cappers
+      POSTGRES_USER: cappers
+      CACHE_URL: redis://127.0.0.1:6379/2
+      REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: python manage.py check
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python -m compileall cabinet/comments cabinet/tests/test_comment_admin.py
+      - run: >-
+          python manage.py test
+          cabinet.tests.test_comment_admin
+          cabinet.tests.test_comment_profanity
+          cabinet.tests.test_comment_moderation
+          cabinet.tests.test_prediction_comment_api
+          front.test_metrics
