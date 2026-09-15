@@ -341,6 +341,7 @@ def profile(request):
         "real_transactions": real_transactions,
         "copybetting_subscriptions": copybetting_subscriptions,
         "copied_bets": copied_bets,
+        "page_class": "profile",
     }
     context.update(_copybetting_audience_context(request.user))
     if request.user.role == User.Role.ANALYST:

@@ -35,10 +35,10 @@
                                 </label>
                                 <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
                             {% endif %}
+                            <a class="profile-hero-edit" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Редактировать</a>
                         </div>
 
                         <div class="profile-title-block">
-                            <span class="profile-role">{{ request.user.get_role_display }}</span>
                             <div class="profile-name-line">
                                 <h1>
                                     {% if analyst_profile and analyst_profile.display_name %}
@@ -70,7 +70,6 @@
                             </p>
 
                             <div class="profile-hero-actions">
-                                <a class="profile-hero-edit" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Редактировать</a>
                                 <div class="profile-hero-meta" aria-label="Краткая статистика профиля">
                                     <span class="profile-meta-item">
                                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v3M17 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v12H3V7a2 2 0 0 1 2-2Z"></path></svg>
@@ -92,7 +91,7 @@
                         </div>
                     </div>
 
-                    {% if request.user.is_analyst %}
+                    {% comment %} {% if request.user.is_analyst %}
                     <section class="profile-hero-status" aria-label="Статус и заполнение профиля">
                         <div class="profile-status-heading">
                             <span class="profile-status-crown" aria-hidden="true">♛</span>
@@ -129,7 +128,7 @@
                             <a class="profile-status-action" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Улучшить профиль</a>
                         {% endif %}
                     </section>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                 </div>
 
                 {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
