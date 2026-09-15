@@ -16,7 +16,7 @@
                 </nav>
             </div>
 
-            <div class="profile-dashboard-head is-reader">
+            <div class="profile-dashboard-head">
                 <div class="profile-hero{% if not request.user.is_analyst %} is-reader{% endif %}">
                     <div class="profile-identity">
                         <div class="profile-avatar-wrap">
@@ -131,6 +131,8 @@
                     </section>
                     {% endif %}
                 </div>
+
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
             </div>
 
             {% if request.user.is_analyst %}
