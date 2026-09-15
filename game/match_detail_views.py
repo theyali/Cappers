@@ -10,7 +10,8 @@ from django.utils import timezone
 
 from cabinet.models import MatchPredictionRequest, User
 from cabinet.paid_predictions import profile_paid_predictions_enabled
-from game.models import Match, Prediction, PredictionCoupon
+from front.metrics import increment_match_views
+from game.models import Match
 from game.tasks import refresh_match_provider_predictions
 from notifications.models import MatchWatch
 
@@ -60,19 +61,6 @@ def _queue_provider_predictions_refresh(match: Match) -> None:
             pass
 
 
-def _published_match_predictions_count(match: Match) -> int:
-    return (
-        Prediction.objects.filter(
-            match=match,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__audience=PredictionCoupon.Audience.FREE,
-        )
-        .values("coupon_id")
-        .distinct()
-        .count()
-    )
-
-
 def _match_demand_context(request, match: Match) -> dict | None:
     if match.sync_scope != Match.SyncScope.PREMATCH:
         return None
@@ -108,6 +96,7 @@ def match_detail(request, slug: str):
         ),
         slug=slug,
     )
+    match_metrics = increment_match_views(match.pk)
 
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
@@ -129,6 +118,7 @@ def match_detail(request, slug: str):
 
     context = {
         "match": match,
+        "match_metrics": match_metrics,
         "hide_footer": True,
         "can_write_coupon": can_write_coupon,
         "can_create_paid_coupon": (
@@ -143,7 +133,7 @@ def match_detail(request, slug: str):
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": legacy_views._match_odds_tabs(match),
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
-        "match_predictions_total": _published_match_predictions_count(match),
+        "match_predictions_total": match_metrics.predictions_count,
         "match_demand": _match_demand_context(request, match),
         "is_watched": match.is_watched,
     }
