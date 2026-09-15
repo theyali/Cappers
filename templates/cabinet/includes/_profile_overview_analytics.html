@@ -1,0 +1,143 @@
+{% widthratio achievement_overview.metrics.wins achievement_overview.metrics.predictions 100 as profile_overview_win_rate %}
+
+<div class="profile-wallet-history" aria-label="Обзор аналитики профиля">
+    <section class="profile-list-card" aria-labelledby="profile-income-dynamics-title">
+        <div class="profile-section-heading">
+            <div>
+                <p class="eyebrow">Доход</p>
+                <h2 id="profile-income-dynamics-title">Динамика дохода</h2>
+            </div>
+            <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=earnings" data-profile-tab-link>Подробнее</a>
+        </div>
+
+        <div class="profile-wallet-grid profile-copy-audience-summary">
+            {% for period in earnings_periods %}
+            <article class="profile-wallet-card">
+                <span>{{ period.label }}</span>
+                <strong>{{ period.total_display }} ₽</strong>
+                <small>Подписки {{ period.subscription_income_display }} ₽ · турниры {{ period.tournament_income_display }} ₽</small>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="profile-transaction-list" aria-label="Доход по периодам">
+            {% for period in earnings_periods %}
+            <div class="profile-transaction-row">
+                <div>
+                    <strong>{{ period.label }}</strong>
+                    <span>Суммарный подтверждённый доход</span>
+                </div>
+                <div>
+                    <strong>{{ period.total_display }} ₽</strong>
+                    {% if earnings_periods.2.total > 0 %}
+                    <progress class="profile-status-progress" max="{{ earnings_periods.2.total }}" value="{{ period.total }}">{{ period.total_display }} ₽</progress>
+                    {% else %}
+                    <progress class="profile-status-progress" max="1" value="0">0 ₽</progress>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="profile-empty-state"><p>Доходов пока нет.</p></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="profile-list-card" aria-labelledby="profile-prediction-distribution-title">
+        <div class="profile-section-heading">
+            <div>
+                <p class="eyebrow">Прогнозы</p>
+                <h2 id="profile-prediction-distribution-title">Распределение прогнозов</h2>
+            </div>
+            <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link>Все прогнозы</a>
+        </div>
+
+        <div class="profile-wallet-grid profile-copy-audience-summary">
+            <article class="profile-wallet-card">
+                <span>Всего прогнозов</span>
+                <strong>{{ achievement_overview.metrics.predictions }}</strong>
+                <small>Опубликовано за всё время</small>
+            </article>
+            <article class="profile-wallet-card">
+                <span>Победы</span>
+                <strong>{{ achievement_overview.metrics.wins }}</strong>
+                <small>Проходимость {{ profile_overview_win_rate }}%</small>
+            </article>
+            <article class="profile-wallet-card">
+                <span>Возвраты</span>
+                <strong>{{ dashboard_confidence_calibration.refunds }}</strong>
+                <small>Не входят в победы и поражения</small>
+            </article>
+        </div>
+
+        <div class="profile-transaction-list">
+            <div class="profile-transaction-row">
+                <div><strong>Победы</strong><span>Доля от всех опубликованных прогнозов</span></div>
+                <div>
+                    <strong>{{ profile_overview_win_rate }}%</strong>
+                    {% if achievement_overview.metrics.predictions > 0 %}
+                    <progress class="profile-status-progress" max="{{ achievement_overview.metrics.predictions }}" value="{{ achievement_overview.metrics.wins }}">{{ profile_overview_win_rate }}%</progress>
+                    {% else %}
+                    <progress class="profile-status-progress" max="1" value="0">0%</progress>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-transaction-row">
+                <div><strong>Рассчитано</strong><span>Прогнозы с фактическим результатом в калибровке</span></div>
+                <div>
+                    <strong>{{ dashboard_confidence_calibration.total }}</strong>
+                    {% if achievement_overview.metrics.predictions > 0 %}
+                    <progress class="profile-status-progress" max="{{ achievement_overview.metrics.predictions }}" value="{{ dashboard_confidence_calibration.total }}">{{ dashboard_confidence_calibration.total }}</progress>
+                    {% else %}
+                    <progress class="profile-status-progress" max="1" value="0">0</progress>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="profile-list-card" aria-labelledby="profile-copybetting-overview-title">
+        <div class="profile-section-heading">
+            <div>
+                <p class="eyebrow">Копибеттинг</p>
+                <h2 id="profile-copybetting-overview-title">Копируют ваши прогнозы</h2>
+            </div>
+            <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link>Открыть</a>
+        </div>
+
+        <div class="profile-wallet-grid profile-copy-audience-summary">
+            <article class="profile-wallet-card">
+                <span>Активно копируют</span>
+                <strong>{{ copybetting_audience_active_count }}</strong>
+                <small>Пользователей прямо сейчас</small>
+            </article>
+            <article class="profile-wallet-card">
+                <span>Скопировано ставок</span>
+                <strong>{{ copybetting_audience_copied_bets_count }}</strong>
+                <small>За всё время</small>
+            </article>
+            <article class="profile-wallet-card">
+                <span>Результат аудитории</span>
+                <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ copybetting_audience_profit_display }}</span></strong>
+                <small>Суммарная прибыль пользователей</small>
+            </article>
+        </div>
+
+        <div class="profile-transaction-list">
+            <div class="profile-transaction-row">
+                <div><strong>Активные пользователи</strong><span>{{ copybetting_audience_active_count }} из {{ copybetting_audience_total_count }}</span></div>
+                <div>
+                    <strong>{{ copybetting_audience_active_count }}</strong>
+                    {% if copybetting_audience_total_count > 0 %}
+                    <progress class="profile-status-progress" max="{{ copybetting_audience_total_count }}" value="{{ copybetting_audience_active_count }}">{{ copybetting_audience_active_count }}</progress>
+                    {% else %}
+                    <progress class="profile-status-progress" max="1" value="0">0</progress>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-transaction-row">
+                <div><strong>Всего пользователей</strong><span>Запускали копирование хотя бы один раз</span></div>
+                <div><strong>{{ copybetting_audience_total_count }}</strong><span>пользователей</span></div>
+            </div>
+        </div>
+    </section>
+</div>
