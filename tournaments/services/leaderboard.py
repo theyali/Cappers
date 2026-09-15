@@ -1,5 +1,6 @@
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -19,9 +20,24 @@ from wallets.services import credit_real_balance
 
 MONEY_STEP = Decimal("0.01")
 PERCENT_STEP = Decimal("0.01")
+TOURNAMENT_LEADERBOARD_CACHE_TTL = 60
 
 
-def tournament_leaderboard(tournament: Tournament) -> list[dict]:
+def _leaderboard_cache_key(tournament: Tournament) -> str:
+    return f"tournaments:leaderboard:v2:{tournament.pk}"
+
+
+def tournament_leaderboard(
+    tournament: Tournament,
+    *,
+    use_cache: bool = True,
+) -> list[dict]:
+    cache_key = _leaderboard_cache_key(tournament)
+    if use_cache:
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return cached
+
     rows = _empty_rows(tournament)
     coupons = (
         TournamentCoupon.objects.filter(
@@ -61,6 +77,9 @@ def tournament_leaderboard(tournament: Tournament) -> list[dict]:
     )
     for index, row in enumerate(ordered, start=1):
         row["rank"] = index
+
+    if use_cache:
+        cache.set(cache_key, ordered, TOURNAMENT_LEADERBOARD_CACHE_TTL)
     return ordered
 
 
@@ -69,7 +88,7 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
     if timezone.now() <= tournament.ends_at:
         raise ValidationError("Итоги можно зафиксировать только после окончания турнира.")
 
-    rows = tournament_leaderboard(tournament)
+    rows = tournament_leaderboard(tournament, use_cache=False)
     TournamentResult.objects.filter(tournament=tournament).delete()
     results = [
         TournamentResult(
