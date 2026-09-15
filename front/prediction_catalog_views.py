@@ -1,5 +1,7 @@
+import hashlib
 import json
 
+from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
 from django.http import HttpResponseRedirect
@@ -32,6 +34,12 @@ from .views import PREDICTION_STATUS_FILTERS
 
 
 MAX_CONSECUTIVE_AUTHOR_CARDS = 3
+PREDICTIONS_META_CACHE_TTL = 60
+
+
+def _catalog_cache_key(namespace: str, *parts) -> str:
+    signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
+    return f"front:predictions:{namespace}:v2:{signature}"
 
 
 def _express_path() -> str:
@@ -51,6 +59,11 @@ def _express_published_items(published_items):
 
 
 def _filter_options(published_items, selected_sport: str, *, express_only: bool):
+    cache_key = _catalog_cache_key("filters", selected_sport, express_only)
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached["sports"], cached["leagues"], cached["cappers"]
+
     single_items = _single_published_items(published_items)
 
     sports = list(
@@ -95,6 +108,11 @@ def _filter_options(published_items, selected_sport: str, *, express_only: bool)
         )
     )
 
+    cache.set(
+        cache_key,
+        {"sports": sports, "leagues": leagues, "cappers": cappers},
+        PREDICTIONS_META_CACHE_TTL,
+    )
     return sports, leagues, cappers
 
 
@@ -103,45 +121,52 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
     params.pop("league", None)
     params.pop("express", None)
 
-    single_items = _single_published_items(published_items)
-    rows = list(
-        single_items.exclude(match__sport_id__isnull=True)
-        .values(
-            "match__sport_id",
-            "match__sport__code",
-            "match__sport__name_ru",
-            "match__sport__name",
+    cache_key = "front:predictions:sport-tabs:v2"
+    cached = cache.get(cache_key)
+    if cached is None:
+        single_items = _single_published_items(published_items)
+        rows = list(
+            single_items.exclude(match__sport_id__isnull=True)
+            .values(
+                "match__sport_id",
+                "match__sport__code",
+                "match__sport__name_ru",
+                "match__sport__name",
+            )
+            .annotate(count=Count("coupon_id", distinct=True))
+            .order_by("match__sport__name_ru", "match__sport__name")
         )
-        .annotate(count=Count("coupon_id", distinct=True))
-        .order_by("match__sport__name_ru", "match__sport__name")
-    )
-    all_count = published_items.values("coupon_id").distinct().count()
-    express_count = (
-        PredictionCoupon.objects.filter(
+        all_count = published_items.values("coupon_id").distinct().count()
+        express_count = PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             coupon_type=PredictionCoupon.CouponType.EXPRESS,
             audience=PredictionCoupon.Audience.FREE,
         ).count()
-    )
+        cached = {
+            "rows": rows,
+            "all_count": all_count,
+            "express_count": express_count,
+        }
+        cache.set(cache_key, cached, PREDICTIONS_META_CACHE_TTL)
 
     tabs = [
         {
             "code": "",
             "label": "Все",
-            "count": all_count,
+            "count": cached["all_count"],
             "href": _url_with_query(_prediction_sport_path(), params),
             "active": active_sport is None and not express_only,
         },
         {
             "code": "express",
             "label": "Экспрессы",
-            "count": express_count,
+            "count": cached["express_count"],
             "href": _url_with_query(_express_path(), params),
             "active": express_only,
         },
     ]
 
-    for row in rows:
+    for row in cached["rows"]:
         code = row["match__sport__code"]
         tabs.append(
             {
@@ -153,6 +178,43 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
             }
         )
     return tabs
+
+
+def _catalog_counts(queryset, top_queryset, *, cache_key: str) -> tuple[dict, int]:
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached["counts"], cached["top_experts_count"]
+
+    counts = queryset.aggregate(
+        total=Count("id", distinct=True),
+        pending=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.PENDING),
+            distinct=True,
+        ),
+        win=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+            distinct=True,
+        ),
+        lose=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
+            distinct=True,
+        ),
+        refund=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.REFUND),
+            distinct=True,
+        ),
+    )
+    top_experts_count = top_queryset.count()
+    cache.set(
+        cache_key,
+        {"counts": counts, "top_experts_count": top_experts_count},
+        PREDICTIONS_META_CACHE_TTL,
+    )
+    return counts, top_experts_count
 
 
 def _apply_position_filters(
@@ -334,33 +396,26 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         filtered = filtered.filter(combined_coefficient__lte=coefficient_max)
 
     top_filtered = filtered.filter(author_id__in=top_expert_ids)
-    top_experts_count = top_filtered.count()
-    if top_experts_only:
-        filtered = top_filtered
-
-    counts = filtered.aggregate(
-        total=Count("id", distinct=True),
-        pending=Count(
-            "id",
-            filter=Q(state_status=PredictionCoupon.StateStatus.PENDING),
-            distinct=True,
-        ),
-        win=Count(
-            "id",
-            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
-            distinct=True,
-        ),
-        lose=Count(
-            "id",
-            filter=Q(state_status=PredictionCoupon.StateStatus.LOSE),
-            distinct=True,
-        ),
-        refund=Count(
-            "id",
-            filter=Q(state_status=PredictionCoupon.StateStatus.REFUND),
-            distinct=True,
+    counts_queryset = top_filtered if top_experts_only else filtered
+    counts, top_experts_count = _catalog_counts(
+        counts_queryset,
+        top_filtered,
+        cache_key=_catalog_cache_key(
+            "counts",
+            selected_sport,
+            selected_league,
+            selected_capper,
+            str(coefficient_min) if coefficient_min is not None else "",
+            str(coefficient_max) if coefficient_max is not None else "",
+            only_live,
+            only_today,
+            express_only,
+            top_experts_only,
+            tuple(top_expert_ids),
         ),
     )
+    if top_experts_only:
+        filtered = top_filtered
 
     queryset = filtered
     if active_status == "pending":
