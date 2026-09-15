@@ -135,56 +135,56 @@
 
             {% if request.user.is_analyst %}
             {% widthratio achievement_overview.metrics.wins achievement_overview.metrics.predictions 100 as profile_win_rate %}
-            <section class="expert-public-stats expert-public-stats-compact" aria-label="Ключевые показатели">
-                <article class="expert-public-stat-card">
-                    <span class="expert-public-stat-icon" aria-hidden="true">₽</span>
-                    <div>
-                        <span>Доход за всё время</span>
-                        <strong>{{ earnings_all_time.total_display }} ₽</strong>
-                        <small>выплаты на платформе</small>
-                    </div>
-                </article>
-                <article class="expert-public-stat-card is-roi">
-                    <span class="expert-public-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M4 19V9"></path><path d="M10 19V5"></path><path d="M16 19v-7"></path><path d="m4 7 6-4 6 5 4-3"></path></svg>
-                    </span>
-                    <div>
-                        <span>ROI</span>
-                        <strong>{{ achievement_overview.metrics.roi }}%</strong>
-                        <small>все опубликованные прогнозы</small>
-                    </div>
-                </article>
-                <article class="expert-public-stat-card is-winrate">
-                    <span class="expert-public-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="m8.5 12 2.3 2.3 4.8-5"></path></svg>
-                    </span>
-                    <div>
-                        <span>Проходимость</span>
-                        <strong>{{ profile_win_rate }}%</strong>
-                        <small>{{ achievement_overview.metrics.wins }} побед</small>
-                    </div>
-                </article>
-                <article class="expert-public-stat-card is-predictions">
-                    <span class="expert-public-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
-                    </span>
-                    <div>
-                        <span>Всего прогнозов</span>
-                        <strong>{{ achievement_overview.metrics.predictions }}</strong>
-                        <small>за всё время</small>
-                    </div>
-                </article>
-                <article class="expert-public-stat-card">
-                    <span class="expert-public-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    </span>
-                    <div>
-                        <span>Подписчики</span>
-                        <strong>{{ followers_count }}</strong>
-                        <small>аудитория профиля</small>
-                    </div>
-                </article>
-            </section>
+                <section class="expert-public-stats expert-public-stats-compact" aria-label="Ключевые показатели">
+                    <article class="expert-public-stat-card">
+                        <span class="expert-public-stat-icon" aria-hidden="true">₽</span>
+                        <div>
+                            <span>Доход за всё время</span>
+                            <strong>{{ earnings_all_time.total_display }} ₽</strong>
+                            <small>выплаты на платформе</small>
+                        </div>
+                    </article>
+                    <article class="expert-public-stat-card is-roi">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 19V9"></path><path d="M10 19V5"></path><path d="M16 19v-7"></path><path d="m4 7 6-4 6 5 4-3"></path></svg>
+                        </span>
+                        <div>
+                            <span>ROI</span>
+                            <strong>{{ achievement_overview.metrics.roi }}%</strong>
+                            <small>все опубликованные прогнозы</small>
+                        </div>
+                    </article>
+                    <article class="expert-public-stat-card is-winrate">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="m8.5 12 2.3 2.3 4.8-5"></path></svg>
+                        </span>
+                        <div>
+                            <span>Проходимость</span>
+                            <strong>{{ profile_win_rate }}%</strong>
+                            <small>{{ achievement_overview.metrics.wins }} побед</small>
+                        </div>
+                    </article>
+                    <article class="expert-public-stat-card is-predictions">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
+                        </span>
+                        <div>
+                            <span>Всего прогнозов</span>
+                            <strong>{{ achievement_overview.metrics.predictions }}</strong>
+                            <small>за всё время</small>
+                        </div>
+                    </article>
+                    <article class="expert-public-stat-card">
+                        <span class="expert-public-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </span>
+                        <div>
+                            <span>Подписчики</span>
+                            <strong>{{ followers_count }}</strong>
+                            <small>аудитория профиля</small>
+                        </div>
+                    </article>
+                </section>
             {% endif %}
 
             <section class="profile-tab-panel {% if active_tab == 'profile' %}is-active{% endif %}" id="profile-tab-profile" data-profile-tab-panel="profile">
@@ -673,27 +673,6 @@
                 {% include "cabinet/_profile_settings.html" %}
             </section>
         </section>
-
-        {% if request.user.is_analyst %}
-        <aside class="coupon-sidebar" aria-label="Возможности PRO">
-            <div class="profile-pro-promo">
-                <div class="profile-pro-visual" data-skeleton-image>
-                    <img src="{% static 'front/svgs/trophy.svg' %}" width="180" height="180" alt="" decoding="async">
-                </div>
-                <div class="profile-pro-copy">
-                    <span>PRO</span>
-                    <h2>{% if analyst_profile.is_vip %}PRO уже активен{% else %}Больше возможностей с PRO{% endif %}</h2>
-                    <ul>
-                        <li>Расширенная аналитика</li>
-                        <li>Глубокая статистика</li>
-                        <li>Приоритет в рейтинге</li>
-                        <li>Эксклюзивные турниры</li>
-                    </ul>
-                </div>
-                <a class="profile-pro-action" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>{% if analyst_profile.is_vip %}Настройки PRO{% else %}Перейти на PRO{% endif %}</a>
-            </div>
-        </aside>
-        {% endif %}
     </div>
 </section>
 {% endblock %}
