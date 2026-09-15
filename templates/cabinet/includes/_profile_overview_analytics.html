@@ -16,15 +16,15 @@
             </svg>
         </div>
 
-        <svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="График дохода за последние 30 дней">
+        <svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="График прибыли в коинах за последние 30 дней">
             {% for tick in earnings_chart.ticks %}
             <line x1="42" y1="{{ tick.y }}" x2="530" y2="{{ tick.y }}" stroke="rgba(255,255,255,.10)" stroke-width="1" stroke-dasharray="3 5"></line>
-            <text x="0" y="{{ tick.y|add:'3' }}" fill="#707072" font-size="9" font-weight="600">{{ tick.label }}</text>
+            <text x="0" y="{{ tick.label_y }}" fill="#707072" font-size="9" font-weight="600">{{ tick.label }}</text>
             {% endfor %}
 
             {% for point in earnings_chart.points %}
-                {% if point.bar_height > 0 %}
-                <rect x="{{ point.bar_x }}" y="{{ point.bar_y }}" width="{{ earnings_chart.bar_width }}" height="{{ point.bar_height }}" rx="1.5" fill="#0b56fa"></rect>
+                {% if point.has_bar %}
+                <rect x="{{ point.bar_x }}" y="{{ point.bar_y }}" width="{{ earnings_chart.bar_width }}" height="{{ point.bar_height }}" rx="1.5" fill="{{ point.bar_fill }}"></rect>
                 {% endif %}
             {% endfor %}
 
@@ -37,7 +37,7 @@
 
             <g aria-label="Итог за 30 дней">
                 <rect x="402" y="8" width="128" height="45" rx="7" fill="#17231c"></rect>
-                <text x="414" y="27" fill="#54db87" font-size="13" font-weight="800">{{ earnings_chart.total_sign }}{{ earnings_chart.total_display }} ₽</text>
+                <text x="414" y="27" fill="#54db87" font-size="13" font-weight="800">{{ earnings_chart.total_sign }}{{ earnings_chart.total_display }} коинов</text>
                 <text x="414" y="42" fill="#8b938e" font-size="8.5" font-weight="600">за 30 дней</text>
             </g>
 
@@ -46,9 +46,9 @@
             {% endfor %}
 
             <rect x="42" y="233" width="10" height="10" rx="2" fill="#0b56fa"></rect>
-            <text x="58" y="242" fill="#929296" font-size="9" font-weight="600">Прибыль, ₽</text>
-            <line x1="144" y1="238" x2="160" y2="238" stroke="#fbf110" stroke-width="3" stroke-linecap="round"></line>
-            <text x="166" y="242" fill="#929296" font-size="9" font-weight="600">Накопительный итог</text>
+            <text x="58" y="242" fill="#929296" font-size="9" font-weight="600">Прибыль, коины</text>
+            <line x1="154" y1="238" x2="170" y2="238" stroke="#fbf110" stroke-width="3" stroke-linecap="round"></line>
+            <text x="176" y="242" fill="#929296" font-size="9" font-weight="600">Накопительный итог</text>
         </svg>
     </section>
 
