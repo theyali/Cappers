@@ -136,13 +136,24 @@ def predict(request, slug: str):
     page_obj = _tournament_page(matches_queryset, request.GET.get("page"))
     matches = list(page_obj.object_list)
     total_count = matches_queryset.count()
-    _decorate_tournament_matches(matches, tournament, participant)
+    used_match_ids = _tournament_used_match_ids(tournament, participant)
+    _decorate_tournament_matches(
+        matches,
+        tournament,
+        participant,
+        used_match_ids=used_match_ids,
+    )
     table_groups = date_views._table_match_groups(
         matches_queryset,
         active_sport=active_sport,
         limit=date_views.TABLE_MATCHES_PER_SPORT,
     )
-    _decorate_tournament_table_groups(table_groups, tournament, participant)
+    _decorate_tournament_table_groups(
+        table_groups,
+        tournament,
+        participant,
+        used_match_ids=used_match_ids,
+    )
 
     if date_views._is_lazy_request(request):
         html = render_to_string(
@@ -475,7 +486,13 @@ def _tournament_table_lazy_response(
     html = ""
     if sport_group is not None:
         sport_group["open"] = True
-        _decorate_tournament_table_groups([sport_group], tournament, participant)
+        used_match_ids = _tournament_used_match_ids(tournament, participant)
+        _decorate_tournament_table_groups(
+            [sport_group],
+            tournament,
+            participant,
+            used_match_ids=used_match_ids,
+        )
         html = render_to_string(
             "game/includes/_match_table_sport.html",
             {
@@ -500,18 +517,28 @@ def _tournament_table_lazy_response(
     )
 
 
-def _decorate_tournament_matches(
-    matches: list[Match],
+def _tournament_used_match_ids(
     tournament: Tournament,
     participant: TournamentParticipant,
-) -> None:
-    used_match_ids = set(
+) -> set[int]:
+    return set(
         TournamentPredictionEntry.objects.filter(
             tournament=tournament,
             participant=participant,
             tournament_coupon__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         ).values_list("match_id", flat=True)
     )
+
+
+def _decorate_tournament_matches(
+    matches: list[Match],
+    tournament: Tournament,
+    participant: TournamentParticipant,
+    *,
+    used_match_ids: set[int] | None = None,
+) -> None:
+    if used_match_ids is None:
+        used_match_ids = _tournament_used_match_ids(tournament, participant)
     for match in matches:
         match.coupon_odds = _match_winner_odds(match)
         match.tournament_match_used = match.id in used_match_ids
@@ -521,13 +548,18 @@ def _decorate_tournament_table_groups(
     table_groups: list[dict],
     tournament: Tournament,
     participant: TournamentParticipant,
+    *,
+    used_match_ids: set[int] | None = None,
 ) -> None:
+    if used_match_ids is None:
+        used_match_ids = _tournament_used_match_ids(tournament, participant)
     for sport_group in table_groups:
         for league_group in sport_group.get("leagues", []):
             _decorate_tournament_matches(
                 list(league_group.get("items", [])),
                 tournament,
                 participant,
+                used_match_ids=used_match_ids,
             )
 
 
@@ -576,19 +608,31 @@ def _tournament_sport_tabs(
     period_end,
     allowed_sport_codes: set[str],
 ) -> list[dict]:
-    tabs = []
     base_queryset = MatchQuery.base(period_start, period_end, active_scope)
     base_queryset = _filter_tournament_allowed_sports(base_queryset, allowed_sport_codes)
     if active_scope == PredictionMatchScope.WATCHED:
         base_queryset = base_queryset.filter(notification_watchers__user=request.user).distinct()
     base_queryset = _exclude_tournament_used_matches(base_queryset, tournament, participant)
+
+    count_rows = list(
+        base_queryset.values("sport__code")
+        .annotate(total=Count("id", distinct=True))
+        .order_by()
+    )
+    sport_counts = {
+        row["sport__code"]: row["total"]
+        for row in count_rows
+        if row["sport__code"]
+    }
+    all_count = sum(row["total"] for row in count_rows)
+
+    tabs = []
     for sport, label in _tournament_sport_filters(allowed_sport_codes):
-        queryset = base_queryset if sport == "all" else base_queryset.filter(sport__code=sport)
         tabs.append(
             {
                 "code": sport,
                 "label": label,
-                "count": queryset.count(),
+                "count": all_count if sport == "all" else sport_counts.get(sport, 0),
                 "url": _tournament_predict_url(
                     tournament,
                     scope=active_scope,
