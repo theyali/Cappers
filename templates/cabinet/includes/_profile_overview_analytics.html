@@ -1,55 +1,87 @@
+{% load static %}
 {% widthratio achievement_overview.metrics.wins achievement_overview.metrics.predictions 100 as profile_overview_win_rate %}
 
 <div class="profile-wallet-history" aria-label="Обзор аналитики профиля">
-    <section class="profile-list-card" aria-labelledby="profile-income-dynamics-title">
+    <section class="profile-list-card" aria-labelledby="profile-income-dynamics-title" data-income-chart data-skeleton-block>
         <div class="profile-list-head">
             <h3 id="profile-income-dynamics-title">Динамика дохода</h3>
-            <svg viewBox="0 0 236 30" width="236" height="30" role="img" aria-label="Выбран период 30 дней">
-                <rect x="0" y="0" width="48" height="30" rx="7" fill="#29292c"></rect>
-                <text x="24" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">7 дней</text>
-                <rect x="52" y="0" width="58" height="30" rx="7" fill="#0b56fa"></rect>
-                <text x="81" y="19" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">30 дней</text>
-                <rect x="114" y="0" width="58" height="30" rx="7" fill="#29292c"></rect>
-                <text x="143" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">90 дней</text>
-                <rect x="176" y="0" width="60" height="30" rx="7" fill="#29292c"></rect>
-                <text x="206" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">Все время</text>
+            <svg viewBox="0 0 236 30" width="236" height="30" role="group" aria-label="Период графика дохода">
+                <g data-income-period="7" role="button" tabindex="0" aria-pressed="false" aria-label="Показать 7 дней">
+                    <rect x="0" y="0" width="48" height="30" rx="7" fill="#29292c"></rect>
+                    <text x="24" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">7 дней</text>
+                </g>
+                <g data-income-period="30" role="button" tabindex="0" aria-pressed="true" aria-label="Показать 30 дней">
+                    <rect x="52" y="0" width="58" height="30" rx="7" fill="#0b56fa"></rect>
+                    <text x="81" y="19" text-anchor="middle" fill="#ffffff" font-size="9" font-weight="700">30 дней</text>
+                </g>
+                <g data-income-period="90" role="button" tabindex="0" aria-pressed="false" aria-label="Показать 90 дней">
+                    <rect x="114" y="0" width="58" height="30" rx="7" fill="#29292c"></rect>
+                    <text x="143" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">90 дней</text>
+                </g>
+                <g data-income-period="all" role="button" tabindex="0" aria-pressed="false" aria-label="Показать всё время">
+                    <rect x="176" y="0" width="60" height="30" rx="7" fill="#29292c"></rect>
+                    <text x="206" y="19" text-anchor="middle" fill="#9a9a9d" font-size="9" font-weight="600">Все время</text>
+                </g>
             </svg>
         </div>
 
-        <svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="График прибыли в коинах за последние 30 дней">
-            {% for tick in earnings_chart.ticks %}
-            <line x1="42" y1="{{ tick.y }}" x2="530" y2="{{ tick.y }}" stroke="rgba(255,255,255,.10)" stroke-width="1" stroke-dasharray="3 5"></line>
-            <text x="0" y="{{ tick.label_y }}" fill="#707072" font-size="9" font-weight="600">{{ tick.label }}</text>
-            {% endfor %}
-
-            {% for point in earnings_chart.points %}
-                {% if point.has_bar %}
-                <rect x="{{ point.bar_x }}" y="{{ point.bar_y }}" width="{{ earnings_chart.bar_width }}" height="{{ point.bar_height }}" rx="1.5" fill="{{ point.bar_fill }}"></rect>
-                {% endif %}
-            {% endfor %}
-
-            {% if earnings_chart.line_path %}
-            <path d="{{ earnings_chart.line_path }}" fill="none" stroke="#fbf110" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            {% with last_point=earnings_chart.points|last %}
-            <circle cx="{{ last_point.x }}" cy="{{ last_point.line_y }}" r="4" fill="#fbf110"></circle>
-            {% endwith %}
-            {% endif %}
-
-            <g aria-label="Итог за 30 дней">
-                <rect x="402" y="8" width="128" height="45" rx="7" fill="#17231c"></rect>
-                <text x="414" y="27" fill="#54db87" font-size="13" font-weight="800">{{ earnings_chart.total_sign }}{{ earnings_chart.total_display }} коинов</text>
-                <text x="414" y="42" fill="#8b938e" font-size="8.5" font-weight="600">за 30 дней</text>
+        <svg viewBox="0 0 560 250" width="100%" height="250" role="img" aria-label="График прибыли в коинах за последние 30 дней" data-income-chart-svg>
+            <g data-income-grid>
+                {% for tick in earnings_chart.ticks %}
+                <line x1="42" y1="{{ tick.y }}" x2="530" y2="{{ tick.y }}" stroke="rgba(255,255,255,.10)" stroke-width="1" stroke-dasharray="3 5"></line>
+                <text x="0" y="{{ tick.label_y }}" fill="#707072" font-size="9" font-weight="600">{{ tick.label }}</text>
+                {% endfor %}
             </g>
 
-            {% for label in earnings_chart.labels %}
-            <text x="{{ label.x }}" y="219" text-anchor="middle" fill="#707072" font-size="8" font-weight="600">{{ label.text }}</text>
-            {% endfor %}
+            <g data-income-bars>
+                {% for point in earnings_chart.points %}
+                    {% if point.has_bar %}
+                    <rect x="{{ point.bar_x }}" y="{{ point.bar_y }}" width="{{ earnings_chart.bar_width }}" height="{{ point.bar_height }}" rx="1.5" fill="{{ point.bar_fill }}"></rect>
+                    {% endif %}
+                {% endfor %}
+            </g>
+
+            <g data-income-line>
+                {% if earnings_chart.line_path %}
+                <path d="{{ earnings_chart.line_path }}" fill="none" stroke="#fbf110" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                {% with last_point=earnings_chart.points|last %}
+                <circle cx="{{ last_point.x }}" cy="{{ last_point.line_y }}" r="4" fill="#fbf110"></circle>
+                {% endwith %}
+                {% endif %}
+            </g>
+
+            <g data-income-total aria-label="Итог выбранного периода">
+                <rect x="390" y="8" width="140" height="45" rx="7" fill="#17231c"></rect>
+                <text x="402" y="27" fill="{{ earnings_chart.total_color }}" font-size="12" font-weight="800" data-income-total-value>{{ earnings_chart.total_sign }}{{ earnings_chart.total_display }} коинов</text>
+                <text x="402" y="42" fill="#8b938e" font-size="8.5" font-weight="600" data-income-total-caption>{{ earnings_chart.period_caption }}</text>
+            </g>
+
+            <g data-income-labels>
+                {% for label in earnings_chart.labels %}
+                <text x="{{ label.x }}" y="219" text-anchor="middle" fill="#707072" font-size="8" font-weight="600">{{ label.text }}</text>
+                {% endfor %}
+            </g>
+
+            <g data-income-hit-zones></g>
+
+            <g data-income-tooltip visibility="hidden" pointer-events="none">
+                <line data-income-tooltip-guide x1="42" y1="45" x2="42" y2="200" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="3 4"></line>
+                <circle data-income-tooltip-marker cx="42" cy="166" r="4" fill="#fbf110"></circle>
+                <g data-income-tooltip-box>
+                    <rect x="0" y="0" width="148" height="62" rx="7" fill="#131313"></rect>
+                    <text data-income-tooltip-date x="10" y="16" fill="#929296" font-size="8" font-weight="600"></text>
+                    <text data-income-tooltip-profit x="10" y="34" fill="#54db87" font-size="9.5" font-weight="800"></text>
+                    <text data-income-tooltip-total x="10" y="50" fill="#ffffff" font-size="8" font-weight="600"></text>
+                </g>
+            </g>
 
             <rect x="42" y="233" width="10" height="10" rx="2" fill="#0b56fa"></rect>
             <text x="58" y="242" fill="#929296" font-size="9" font-weight="600">Прибыль, коины</text>
             <line x1="154" y1="238" x2="170" y2="238" stroke="#fbf110" stroke-width="3" stroke-linecap="round"></line>
             <text x="176" y="242" fill="#929296" font-size="9" font-weight="600">Накопительный итог</text>
         </svg>
+
+        {{ earnings_charts|json_script:"profile-income-chart-data" }}
     </section>
 
     <section class="profile-list-card" aria-labelledby="profile-prediction-distribution-title">
@@ -151,3 +183,5 @@
         </div>
     </section>
 </div>
+
+<script src="{% static 'front/js/profile-income-chart.js' %}" defer></script>
