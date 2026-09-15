@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from game.models import PredictionCoupon
 from wallets.models import RealBalanceTransaction
-from wallets.services import ensure_real_balance, format_money
+from wallets.services import ensure_real_balance, format_coins, format_money
 
 from .models import AnalystPaidSubscription, User
 
@@ -107,6 +107,11 @@ def _svg_number(value: float) -> str:
     return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
+def _signed_coins(value: Decimal) -> str:
+    prefix = "+" if value > 0 else ""
+    return f"{prefix}{format_coins(value)}"
+
+
 def _coupon_profit(*, state_status: str, stake: Decimal, possible_payout: Decimal) -> Decimal:
     stake = stake or Decimal("0.00")
     possible_payout = possible_payout or Decimal("0.00")
@@ -117,15 +122,48 @@ def _coupon_profit(*, state_status: str, stake: Decimal, possible_payout: Decima
     return Decimal("0.00")
 
 
-def _build_income_chart(queryset, *, days: int = 30) -> dict:
+def _build_income_chart(
+    queryset,
+    *,
+    days: int | None = 30,
+    period_label: str = "30 дней",
+    period_caption: str = "за 30 дней",
+) -> dict:
+    settled_queryset = queryset.filter(settled_at__isnull=False)
     end_day = timezone.localdate()
-    start_day = end_day - timedelta(days=days - 1)
-    daily = {start_day + timedelta(days=index): Decimal("0.00") for index in range(days)}
 
-    settled_coupons = queryset.filter(
-        settled_at__gte=timezone.now() - timedelta(days=days),
-        settled_at__isnull=False,
-    ).values_list("settled_at", "state_status", "total_stake", "possible_payout")
+    if days is None:
+        earliest_settled_at = (
+            settled_queryset.order_by("settled_at")
+            .values_list("settled_at", flat=True)
+            .first()
+        )
+        if earliest_settled_at:
+            start_day = (
+                timezone.localtime(earliest_settled_at).date()
+                if timezone.is_aware(earliest_settled_at)
+                else earliest_settled_at.date()
+            )
+        else:
+            start_day = end_day - timedelta(days=29)
+    else:
+        start_day = end_day - timedelta(days=days - 1)
+        settled_queryset = settled_queryset.filter(
+            settled_at__gte=timezone.now() - timedelta(days=days)
+        )
+
+    day_count = max((end_day - start_day).days + 1, 1)
+    daily = {
+        start_day + timedelta(days=index): Decimal("0.00")
+        for index in range(day_count)
+    }
+
+    settled_coupons = settled_queryset.values_list(
+        "settled_at",
+        "state_status",
+        "total_stake",
+        "possible_payout",
+    )
 
     for settled_at, state_status, total_stake, possible_payout in settled_coupons:
         settled_day = (
@@ -149,11 +187,21 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
 
     positive_scale = max(
         [Decimal("1.00")]
-        + [value for _, amount, running in raw_points for value in (amount, running) if value > 0]
+        + [
+            value
+            for _, amount, running in raw_points
+            for value in (amount, running)
+            if value > 0
+        ]
     )
     negative_scale = max(
         [Decimal("1.00")]
-        + [abs(value) for _, amount, running in raw_points for value in (amount, running) if value < 0]
+        + [
+            abs(value)
+            for _, amount, running in raw_points
+            for value in (amount, running)
+            if value < 0
+        ]
     )
 
     plot_left = 42.0
@@ -161,12 +209,14 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
     zero_y = 166.0
     positive_height = 116.0
     negative_height = 34.0
-    step = (plot_right - plot_left) / max(days - 1, 1)
-    bar_width = max(4.0, min(10.0, step * 0.56))
+    step = (plot_right - plot_left) / max(day_count - 1, 1)
+    bar_width = max(2.0, min(10.0, step * 0.56))
 
     points = []
     line_parts = []
     labels = []
+    label_step = max(1, round((day_count - 1) / 5))
+
     for index, (day, amount, running_total) in enumerate(raw_points):
         x = plot_left + (step * index)
 
@@ -184,9 +234,13 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
             bar_fill = "#0b56fa"
 
         if running_total >= 0:
-            line_y = zero_y - float((running_total / positive_scale) * Decimal(str(positive_height)))
+            line_y = zero_y - float(
+                (running_total / positive_scale) * Decimal(str(positive_height))
+            )
         else:
-            line_y = zero_y + float((abs(running_total) / negative_scale) * Decimal(str(negative_height)))
+            line_y = zero_y + float(
+                (abs(running_total) / negative_scale) * Decimal(str(negative_height))
+            )
 
         point = {
             "x": _svg_number(x),
@@ -196,17 +250,21 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
             "has_bar": bool(amount),
             "bar_fill": bar_fill,
             "line_y": _svg_number(line_y),
-            "amount": amount,
-            "cumulative": running_total,
+            "date": day.strftime("%d.%m.%Y"),
+            "date_short": f"{day.day} {_CHART_MONTHS[day.month]}",
+            "amount_display": _signed_coins(amount),
+            "cumulative_display": _signed_coins(running_total),
         }
         points.append(point)
-        line_parts.append(f"{'M' if index == 0 else 'L'} {point['x']} {point['line_y']}")
+        line_parts.append(
+            f"{'M' if index == 0 else 'L'} {point['x']} {point['line_y']}"
+        )
 
-        if index % 5 == 0 or index == days - 1:
+        if index % label_step == 0 or index == day_count - 1:
             labels.append(
                 {
                     "x": point["x"],
-                    "text": f"{day.day} {_CHART_MONTHS[day.month]}",
+                    "text": point["date_short"],
                 }
             )
 
@@ -234,9 +292,17 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
     ]
 
     total = raw_points[-1][2] if raw_points else Decimal("0.00")
+    if total > 0:
+        total_color = "#54db87"
+    elif total < 0:
+        total_color = "#ff5c67"
+    else:
+        total_color = "#ffffff"
+
     return {
-        "days": days,
-        "period_label": "30 дней",
+        "days": day_count,
+        "period_label": period_label,
+        "period_caption": period_caption,
         "points": points,
         "labels": labels,
         "ticks": ticks,
@@ -245,22 +311,53 @@ def _build_income_chart(queryset, *, days: int = 30) -> dict:
         "zero_y": _svg_number(zero_y),
         "plot_left": _svg_number(plot_left),
         "plot_right": _svg_number(plot_right),
-        "total": total,
-        "total_display": format_money(total),
+        "total_display": format_coins(total),
         "total_sign": "+" if total > 0 else "",
+        "total_color": total_color,
+    }
+
+
+def _income_charts(queryset) -> dict:
+    return {
+        "7": _build_income_chart(
+            queryset,
+            days=7,
+            period_label="7 дней",
+            period_caption="за 7 дней",
+        ),
+        "30": _build_income_chart(
+            queryset,
+            days=30,
+            period_label="30 дней",
+            period_caption="за 30 дней",
+        ),
+        "90": _build_income_chart(
+            queryset,
+            days=90,
+            period_label="90 дней",
+            period_caption="за 90 дней",
+        ),
+        "all": _build_income_chart(
+            queryset,
+            days=None,
+            period_label="Все время",
+            period_caption="за всё время",
+        ),
     }
 
 
 def build_earnings_context(user) -> dict:
     if user.role != User.Role.ANALYST:
         empty_transactions = RealBalanceTransaction.objects.none()
+        empty_charts = _income_charts(PredictionCoupon.objects.none())
         return {
             "earnings_all_time": _period_summary(
                 empty_transactions,
                 label="За всё время",
             ),
             "earnings_periods": [],
-            "earnings_chart": _build_income_chart(PredictionCoupon.objects.none()),
+            "earnings_chart": empty_charts["30"],
+            "earnings_charts": empty_charts,
             "active_paid_subscribers": 0,
             "paid_subscribers_total": 0,
             "active_paid_subscriptions": [],
@@ -284,6 +381,7 @@ def build_earnings_context(user) -> dict:
             PredictionCoupon.StateStatus.REFUND,
         ),
     )
+    earnings_charts = _income_charts(settled_prediction_coupons)
 
     active_paid_subscriptions = list(
         AnalystPaidSubscription.objects.filter(
@@ -304,7 +402,8 @@ def build_earnings_context(user) -> dict:
             _period_summary(earning_transactions, label="Месяц", days=30),
             _period_summary(earning_transactions, label="Квартал", days=90),
         ],
-        "earnings_chart": _build_income_chart(settled_prediction_coupons),
+        "earnings_chart": earnings_charts["30"],
+        "earnings_charts": earnings_charts,
         "active_paid_subscribers": len(active_paid_subscriptions),
         "paid_subscribers_total": AnalystPaidSubscription.objects.filter(
             analyst=user,
