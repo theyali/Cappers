@@ -227,7 +227,6 @@ def toggle_prediction_favorite_metric(
 
 def toggle_match_favorite_metric(match: Match, user) -> tuple[bool, MatchMetrics]:
     with transaction.atomic():
-        metrics = _locked_match_metrics(match.pk)
         watch = MatchWatch.objects.select_for_update().filter(
             user=user,
             match=match,
@@ -235,12 +234,13 @@ def toggle_match_favorite_metric(match: Match, user) -> tuple[bool, MatchMetrics
         if watch is None:
             MatchWatch.objects.create(user=user, match=match)
             watching = True
-            _update_match_counter_locked(metrics.pk, "favorites_count", 1, True)
         else:
             watch.delete()
             watching = False
-            _update_match_counter_locked(metrics.pk, "favorites_count", -1, True)
-        metrics.refresh_from_db()
+
+        metrics = refresh_match_metrics(match.pk)
+        if metrics is None:
+            raise Match.DoesNotExist(match.pk)
     return watching, metrics
 
 
