@@ -2,6 +2,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from game.models import Match, Prediction, PredictionCoupon
+from notifications.models import MatchWatch
 
 from .metrics import (
     get_match_metrics,
@@ -59,3 +60,13 @@ def sync_coupon_metrics(sender, instance: PredictionCoupon, created: bool, **kwa
     current_visibility = (instance.published_status, instance.audience)
     if created or previous_visibility != current_visibility:
         refresh_match_metrics_for_coupon(instance.pk)
+
+
+@receiver(post_save, sender=MatchWatch)
+def sync_match_watch_metrics(sender, instance: MatchWatch, **kwargs) -> None:
+    refresh_match_metrics(instance.match_id)
+
+
+@receiver(post_delete, sender=MatchWatch)
+def sync_deleted_match_watch_metrics(sender, instance: MatchWatch, **kwargs) -> None:
+    refresh_match_metrics(instance.match_id)
