@@ -1,6 +1,8 @@
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from cabinet.comments.models import Comment
 from game.models import Match, Prediction, PredictionCoupon
 from notifications.models import MatchWatch
 
@@ -9,6 +11,7 @@ from .metrics import (
     get_prediction_metrics,
     refresh_match_metrics,
     refresh_match_metrics_for_coupon,
+    refresh_prediction_metrics,
 )
 
 
@@ -70,3 +73,30 @@ def sync_match_watch_metrics(sender, instance: MatchWatch, **kwargs) -> None:
 @receiver(post_delete, sender=MatchWatch)
 def sync_deleted_match_watch_metrics(sender, instance: MatchWatch, **kwargs) -> None:
     refresh_match_metrics(instance.match_id)
+
+
+def _sync_comment_target_metrics(comment: Comment) -> None:
+    prediction_content_type = ContentType.objects.get_for_model(
+        PredictionCoupon,
+        for_concrete_model=False,
+    )
+    if comment.content_type_id == prediction_content_type.pk:
+        refresh_prediction_metrics(comment.object_id)
+        return
+
+    match_content_type = ContentType.objects.get_for_model(
+        Match,
+        for_concrete_model=False,
+    )
+    if comment.content_type_id == match_content_type.pk:
+        refresh_match_metrics(comment.object_id)
+
+
+@receiver(post_save, sender=Comment)
+def sync_comment_metrics(sender, instance: Comment, **kwargs) -> None:
+    _sync_comment_target_metrics(instance)
+
+
+@receiver(post_delete, sender=Comment)
+def sync_deleted_comment_metrics(sender, instance: Comment, **kwargs) -> None:
+    _sync_comment_target_metrics(instance)
