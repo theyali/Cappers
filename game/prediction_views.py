@@ -1,5 +1,6 @@
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, F, IntegerField, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -56,11 +57,33 @@ def match_predictions(request, slug: str):
         base_queryset.select_related(
             "coupon__author",
             "coupon__author__analyst_profile",
+            "coupon__metrics",
             "match__league__country",
             "match__home_team",
             "match__away_team",
         )
-        .annotate(likes_count=Count("coupon__likes", distinct=True))
+        .annotate(
+            likes_count=Coalesce(
+                F("coupon__metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            favorites_count=Coalesce(
+                F("coupon__metrics__favorites_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            comments_count=Coalesce(
+                F("coupon__metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            views_count=Coalesce(
+                F("coupon__metrics__views_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+        )
     )
     queryset = annotate_author_roi(queryset).order_by(
         "-coupon__published_at",
