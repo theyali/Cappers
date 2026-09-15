@@ -1,4 +1,4 @@
-name: Apply profile hero background
+name: Export verified step 6 patch
 
 on:
   push:
@@ -6,38 +6,19 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
-permissions:
-  contents: write
-
 jobs:
-  apply:
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply profile hero background
+      - name: Build verified patch bundle
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path("front/static/front/css/main.css")
-          text = path.read_text(encoding="utf-8")
-          selector = ".profile-page .profile-hero {"
-          start = text.index(selector)
-          end = text.index("\n}", start)
-          block = text[start:end]
-          needle = "    background-color: #171718;"
-          if block.count(needle) != 1:
-              raise SystemExit("profile hero background-color anchor not found exactly once")
-          if "publ_5.png" in block:
-              raise SystemExit("profile hero background is already present")
-          replacement = needle + "\n    background-image: url(\"../img/public_hero/publ_5.png\");\n    background-position: center;\n    background-size: cover;\n    background-repeat: no-repeat;"
-          updated_block = block.replace(needle, replacement, 1)
-          text = text[:start] + updated_block + text[end:]
-          path.write_text(text, encoding="utf-8")
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add front/static/front/css/main.css
-          git diff --cached --check
-          git commit -m "style: add profile hero background"
-          git push origin HEAD:main
+          python .github/step6_apply.py
+          python .github/step6_finalize_patch.py
+          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
+          git diff --name-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: step6-patched
+          path: step6-patched.tar.gz
+          if-no-files-found: error
