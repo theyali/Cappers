@@ -16,6 +16,7 @@ from django.db.models import (
     Value,
     When,
 )
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -28,6 +29,11 @@ from cabinet.paid_predictions import user_can_view_paid_predictions
 from game.models import Prediction, PredictionCoupon, Sport
 
 from .expert_ranking import ranked_expert_profiles
+from .metrics import (
+    increment_prediction_views,
+    toggle_prediction_favorite_metric,
+    toggle_prediction_like_metric,
+)
 from .models import PredictionFavorite, PredictionLike
 from .prediction_metrics import annotate_author_roi
 from .views import PREDICTION_STATUS_FILTERS, _initials
@@ -103,13 +109,37 @@ def _published_queryset(*, include_paid: bool = False):
             "author",
             "author__analyst_profile",
             "cover_image",
+            "metrics",
         )
         .prefetch_related(
             Prefetch("predictions", queryset=_positions_queryset(), to_attr="card_positions")
         )
         .annotate(
-            likes_count=Count("likes", distinct=True),
-            favorites_count=Count("favorites", distinct=True),
+            likes_count=Coalesce(
+                F("metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            favorites_count=Coalesce(
+                F("metrics__favorites_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            comments_count=Coalesce(
+                F("metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            views_count=Coalesce(
+                F("metrics__views_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            shares_count=Coalesce(
+                F("metrics__shares_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
             positions_count=Count("predictions", distinct=True),
             combined_coefficient=_combined_coefficient_expression(),
         )
@@ -156,6 +186,9 @@ def _prediction_card(coupon: PredictionCoupon):
         positions_count=count,
         likes_count=getattr(coupon, "likes_count", 0),
         favorites_count=getattr(coupon, "favorites_count", 0),
+        comments_count=getattr(coupon, "comments_count", 0),
+        views_count=getattr(coupon, "views_count", 0),
+        shares_count=getattr(coupon, "shares_count", 0),
         followers_count=0,
         author_roi=getattr(coupon, "author_roi", Decimal("0")),
     )
@@ -723,13 +756,36 @@ def prediction_detail(request, prediction_id: int):
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
-        .select_related("author", "author__analyst_profile")
+        .select_related("author", "author__analyst_profile", "metrics")
         .prefetch_related(
             Prefetch("predictions", queryset=_positions_queryset(), to_attr="detail_positions")
         )
         .annotate(
-            likes_count=Count("likes", distinct=True),
-            favorites_count=Count("favorites", distinct=True),
+            likes_count=Coalesce(
+                F("metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            favorites_count=Coalesce(
+                F("metrics__favorites_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            comments_count=Coalesce(
+                F("metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            views_count=Coalesce(
+                F("metrics__views_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            shares_count=Coalesce(
+                F("metrics__shares_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
         ),
         pk=prediction_id,
     )
@@ -738,6 +794,13 @@ def prediction_detail(request, prediction_id: int):
         and not user_can_view_paid_predictions(request.user, coupon.author)
     ):
         raise Http404("Прогноз не найден.")
+
+    metrics = increment_prediction_views(coupon.pk)
+    coupon.likes_count = metrics.likes_count
+    coupon.favorites_count = metrics.favorites_count
+    coupon.comments_count = metrics.comments_count
+    coupon.views_count = metrics.views_count
+    coupon.shares_count = metrics.shares_count
     positions = list(getattr(coupon, "detail_positions", []) or [])
 
     total_coefficient = Decimal("1")
@@ -828,20 +891,12 @@ def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoup
 @require_POST
 def toggle_prediction_like(request, prediction_id: int):
     prediction = _accessible_published_prediction(request.user, prediction_id)
-    reaction, created = PredictionLike.objects.get_or_create(
-        prediction=prediction,
-        user=request.user,
-    )
-    active = created
-    if not created:
-        reaction.delete()
-        active = False
-
+    active, metrics = toggle_prediction_like_metric(prediction, request.user)
     return JsonResponse(
         {
             "ok": True,
             "active": active,
-            "count": PredictionLike.objects.filter(prediction=prediction).count(),
+            "count": metrics.likes_count,
         }
     )
 
@@ -850,13 +905,11 @@ def toggle_prediction_like(request, prediction_id: int):
 @require_POST
 def toggle_prediction_favorite(request, prediction_id: int):
     prediction = _accessible_published_prediction(request.user, prediction_id)
-    favorite, created = PredictionFavorite.objects.get_or_create(
-        prediction=prediction,
-        user=request.user,
+    active, metrics = toggle_prediction_favorite_metric(prediction, request.user)
+    return JsonResponse(
+        {
+            "ok": True,
+            "active": active,
+            "count": metrics.favorites_count,
+        }
     )
-    active = created
-    if not created:
-        favorite.delete()
-        active = False
-
-    return JsonResponse({"ok": True, "active": active})

@@ -5,12 +5,14 @@ from django.db.models import (
     Count,
     DecimalField,
     F,
+    IntegerField,
     Prefetch,
     Q,
     Sum,
     Value,
     When,
 )
+from django.db.models.functions import Coalesce
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.formats import date_format
@@ -446,15 +448,13 @@ def _home_match_queryset(now):
             "home_team__country",
             "away_team__country",
             "odds",
+            "metrics",
         )
         .annotate(
-            predictions_count=Count(
-                "predictions__coupon",
-                filter=Q(
-                    predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    predictions__coupon__audience=PredictionCoupon.Audience.FREE,
-                ),
-                distinct=True,
+            predictions_count=Coalesce(
+                F("metrics__predictions_count"),
+                Value(0),
+                output_field=IntegerField(),
             )
         )
     )
