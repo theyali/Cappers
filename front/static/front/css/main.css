@@ -19186,9 +19186,6 @@ font-size: 14px;
     stroke: none;
 }
 
-.feed-prediction-like {
-    color: #ff405f;
-}
 
 .feed-prediction-like b {
     color: var(--soft);
@@ -19197,7 +19194,11 @@ font-size: 14px;
     font-variant-numeric: tabular-nums;
 }
 
-.feed-prediction-like.is-active,
+.feed-prediction-like.is-active{
+    color: var(--danger);
+    background: transparent;
+
+}
 .feed-prediction-save.is-active {
     color: var(--yellow);
     background: transparent;
