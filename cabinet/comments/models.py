@@ -67,6 +67,26 @@ class Comment(models.Model):
         return f"Комментарий #{self.pk or 'new'} пользователя {self.user_id}"
 
 
+class CommentMetrics(models.Model):
+    comment = models.OneToOneField(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name="metrics",
+        verbose_name="Комментарий",
+    )
+    likes_count = models.PositiveIntegerField("Лайки", default=0)
+    dislikes_count = models.PositiveIntegerField("Дизлайки", default=0)
+    replies_count = models.PositiveIntegerField("Ответы", default=0)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Метрики комментария"
+        verbose_name_plural = "Метрики комментариев"
+
+    def __str__(self) -> str:
+        return f"Метрики комментария #{self.comment_id}"
+
+
 class CommentReaction(models.Model):
     class Kind(models.TextChoices):
         LIKE = "like", "Лайк"
