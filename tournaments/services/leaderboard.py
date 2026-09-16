@@ -46,6 +46,7 @@ def tournament_leaderboard(
         )
         .select_related(
             "participant__user",
+            "participant__user__analyst_profile",
             "coupon",
         )
         .order_by("created_at", "id")
@@ -154,7 +155,7 @@ def achievement_for_rank(tournament: Tournament, rank: int) -> TournamentAchieve
 def _empty_rows(tournament: Tournament) -> dict[int, dict]:
     participants = (
         TournamentParticipant.objects.filter(tournament=tournament)
-        .select_related("user")
+        .select_related("user", "user__analyst_profile")
         .order_by("joined_at", "id")
     )
     return {participant.id: _empty_row(participant) for participant in participants}
