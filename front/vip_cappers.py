@@ -1,11 +1,9 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 
-from cabinet.models import AnalystProfile, User
+from cabinet.models import AnalystFollow, AnalystProfile, User
 from game.models import PredictionCoupon
-
-from .prediction_metrics import annotate_author_roi
 
 
 DEFAULT_VIP_CAPPERS_LIMIT = 6
@@ -53,18 +51,23 @@ def _card_payload(profile: AnalystProfile) -> dict:
         "losses_count": losses_count,
         "main_sport_category": _main_sport_category(profile),
         "profile_url": reverse("front:expert_profile", args=[user.username]),
+        "follow_url": reverse("cabinet:toggle_follow", args=[user.pk]),
+        "is_following": bool(getattr(profile, "is_following", False)),
         "vip_sort_at": getattr(profile, "vip_sort_at", None),
     }
 
 
-def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT) -> dict:
-    """Return one canonical VIP capper source for every public banner/sidebar.
+def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> dict:
+    """Return the canonical VIP capper source used by every public banner.
 
-    The queryset deliberately prepares all card counters in one SQL query. Existing
-    VIP rows do not have a dedicated activation timestamp yet, so ``updated_at`` is
-    used as the temporary sort source with ``user.date_joined`` as the legacy
-    fallback. Replace ``vip_sort_at`` with ``vip_activated_at`` once every VIP grant
-    flow persists the real activation time.
+    Followers, wins, losses and viewer follow state are SQL annotations on the same
+    queryset, while ``user`` is joined with ``select_related``. Rendering the six
+    cards therefore does not execute per-capper queries.
+
+    Existing VIP rows do not have a dedicated activation timestamp yet, so
+    ``updated_at`` is used as the temporary sort source with ``user.date_joined`` as
+    the legacy fallback. Replace ``vip_sort_at`` with ``vip_activated_at`` once every
+    VIP purchase/grant flow persists the real activation time.
     """
 
     safe_limit = _normalize_limit(limit)
@@ -102,19 +105,23 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT) -> dict:
             vip_sort_at=Coalesce("updated_at", "user__date_joined"),
         )
     )
-    queryset = annotate_author_roi(
-        queryset,
-        author_outer_ref="user_id",
-        annotation_name="author_roi",
-        period_days=None,
-    ).order_by("-vip_sort_at", "-id")
 
-    vip_profiles = list(queryset[:safe_limit])
+    if getattr(viewer, "is_authenticated", False):
+        queryset = queryset.annotate(
+            is_following=Exists(
+                AnalystFollow.objects.filter(
+                    follower=viewer,
+                    analyst_id=OuterRef("user_id"),
+                )
+            )
+        )
+
+    vip_profiles = list(queryset.order_by("-vip_sort_at", "-id")[:safe_limit])
     vip_cappers = [_card_payload(profile) for profile in vip_profiles]
 
     return {
         "vip_cappers": vip_cappers,
-        "vip_profiles": vip_profiles,
         "vip_main": vip_cappers[0] if vip_cappers else None,
         "vip_list": vip_cappers[1:],
+        "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
     }
