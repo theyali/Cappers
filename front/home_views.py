@@ -123,7 +123,6 @@ def _latest_home_predictions() -> list[dict]:
         .prefetch_related(
             Prefetch("predictions", queryset=positions, to_attr="home_positions")
         )
-        .annotate(positions_count=Count("predictions", distinct=True))
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
     cover_pools = _home_cover_pools()
@@ -156,7 +155,7 @@ def _latest_home_predictions() -> list[dict]:
             starts_date = date_format(local_starts_at, "j E")
             starts_time = local_starts_at.strftime("%H:%M")
 
-        count = prediction.positions_count or len(positions_list)
+        count = len(positions_list)
         cover = _home_slider_cover(prediction, match, count, cover_pools)
         cover_url = cover.image.url if cover and cover.image else ""
 
