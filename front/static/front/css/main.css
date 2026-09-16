@@ -35802,10 +35802,13 @@ position: relative;
     align-items: center;
     justify-content: center;
     padding: 11px 14px;
+    border: 0;
     color: var(--ink);
     background: var(--yellow);
+    font: inherit;
     font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
     line-height: 1.1;
     text-align: center;
 }
@@ -35814,6 +35817,16 @@ position: relative;
 .vip-cappers-banner__subscribe:focus-visible {
     color: var(--ink);
     background: var(--yellow);
+}
+
+.vip-cappers-banner__subscribe.is-active {
+    color: #fff;
+    background: var(--blue);
+}
+
+.vip-cappers-banner__subscribe:disabled {
+    cursor: wait;
+    opacity: .68;
 }
 
 .vip-cappers-banner__list-box {
