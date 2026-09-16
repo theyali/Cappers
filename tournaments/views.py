@@ -5,7 +5,8 @@ from types import SimpleNamespace
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import BooleanField, Case, Count, Exists, IntegerField, OuterRef, Prefetch, Q, Value, When
+from django.db.models import BooleanField, Case, Count, Exists, F, IntegerField, OuterRef, Prefetch, Q, Value, When
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -688,7 +689,7 @@ def _tournament_prediction_cards(request, tournament: Tournament):
             tournament_link__tournament=tournament,
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
-        .select_related("author", "author__analyst_profile")
+        .select_related("author", "author__analyst_profile", "metrics")
         .prefetch_related(
             Prefetch(
                 "predictions",
@@ -702,9 +703,26 @@ def _tournament_prediction_cards(request, tournament: Tournament):
             )
         )
         .annotate(
-            likes_count=Count("likes", distinct=True),
-            favorites_count=Count("favorites", distinct=True),
-            positions_count=Count("predictions", distinct=True),
+            likes_count=Coalesce(
+                F("metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            favorites_count=Coalesce(
+                F("metrics__favorites_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            comments_count=Coalesce(
+                F("metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            views_count=Coalesce(
+                F("metrics__views_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
         )
         .order_by("-published_at", "-created_at")[:12]
     )
@@ -780,6 +798,8 @@ def _prediction_card(coupon: PredictionCoupon):
         positions_count=count,
         likes_count=getattr(coupon, "likes_count", 0),
         favorites_count=getattr(coupon, "favorites_count", 0),
+        comments_count=getattr(coupon, "comments_count", 0),
+        views_count=getattr(coupon, "views_count", 0),
         expert_name=expert_name,
         expert_initials=_initials(expert_name),
         expert_avatar_url=profile.avatar.url if profile and profile.avatar else "",
