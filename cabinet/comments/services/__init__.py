@@ -28,6 +28,7 @@ from .anti_spam import (
 from .predictions import (
     CommentServiceError,
     attach_comment_replies,
+    attach_viewer_reactions,
     can_delete_comment,
     comment_replies_count,
     comment_replies_queryset,
@@ -63,6 +64,7 @@ __all__ = [
     "ModerationCode",
     "ModerationResult",
     "attach_comment_replies",
+    "attach_viewer_reactions",
     "can_delete_comment",
     "check_comment_spam",
     "comment_replies_count",
