@@ -18,6 +18,7 @@ from .prediction_views import (
     SORT_OPTIONS,
     TOP_EXPERTS_LIMIT,
     _clean_prediction_params,
+    _combined_coefficient_expression,
     _decorate_predictions,
     _following_ids,
     _parse_decimal,
@@ -39,7 +40,7 @@ PREDICTIONS_META_CACHE_TTL = 60
 
 def _catalog_cache_key(namespace: str, *parts) -> str:
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
-    return f"front:predictions:{namespace}:v2:{signature}"
+    return f"front:predictions:{namespace}:v3:{signature}"
 
 
 def _express_path() -> str:
@@ -56,6 +57,14 @@ def _express_published_items(published_items):
     return published_items.filter(
         coupon__coupon_type=PredictionCoupon.CouponType.EXPRESS,
     )
+
+
+def _catalog_meta_queryset():
+    """Cheap coupon queryset for status/count metadata without card hydration/ROI."""
+    return PredictionCoupon.objects.filter(
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        audience=PredictionCoupon.Audience.FREE,
+    ).annotate(combined_coefficient=_combined_coefficient_expression())
 
 
 def _filter_options(published_items, selected_sport: str, *, express_only: bool):
@@ -121,7 +130,7 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
     params.pop("league", None)
     params.pop("express", None)
 
-    cache_key = "front:predictions:sport-tabs:v2"
+    cache_key = "front:predictions:sport-tabs:v3"
     cached = cache.get(cache_key)
     if cached is None:
         single_items = _single_published_items(published_items)
@@ -215,6 +224,11 @@ def _catalog_counts(queryset, top_queryset, *, cache_key: str) -> tuple[dict, in
         PREDICTIONS_META_CACHE_TTL,
     )
     return counts, top_experts_count
+
+
+def _catalog_status_count(counts: dict, active_status: str) -> int:
+    key = "total" if active_status == "all" else active_status
+    return counts.get(key, 0) or 0
 
 
 def _apply_position_filters(
@@ -388,18 +402,30 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         only_today=only_today,
         express_only=express_only,
     )
+    meta_filtered = _apply_position_filters(
+        _catalog_meta_queryset(),
+        selected_sport=selected_sport,
+        selected_league=selected_league,
+        only_live=only_live,
+        only_today=only_today,
+        express_only=express_only,
+    )
     if selected_capper:
         filtered = filtered.filter(author__username=selected_capper)
+        meta_filtered = meta_filtered.filter(author__username=selected_capper)
     if coefficient_min is not None:
         filtered = filtered.filter(combined_coefficient__gte=coefficient_min)
+        meta_filtered = meta_filtered.filter(combined_coefficient__gte=coefficient_min)
     if coefficient_max is not None:
         filtered = filtered.filter(combined_coefficient__lte=coefficient_max)
+        meta_filtered = meta_filtered.filter(combined_coefficient__lte=coefficient_max)
 
     top_filtered = filtered.filter(author_id__in=top_expert_ids)
-    counts_queryset = top_filtered if top_experts_only else filtered
+    top_meta_filtered = meta_filtered.filter(author_id__in=top_expert_ids)
+    counts_queryset = top_meta_filtered if top_experts_only else meta_filtered
     counts, top_experts_count = _catalog_counts(
         counts_queryset,
-        top_filtered,
+        top_meta_filtered,
         cache_key=_catalog_cache_key(
             "counts",
             selected_sport,
@@ -450,6 +476,8 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         queryset = queryset.order_by("-published_at", "-created_at", "-id")
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
+    # Avoid a second COUNT() over the fully annotated ROI/card queryset.
+    paginator.__dict__["count"] = _catalog_status_count(counts, active_status)
     page_obj = paginator.get_page(request.GET.get("page"))
     if active_sort == "new" and not selected_capper:
         page_obj.object_list = _diversify_author_streaks(page_obj.object_list)
