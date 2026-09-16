@@ -312,9 +312,15 @@ def latest_match_predictions(limit=5):
     return {"latest_match_predictions": items}
 
 
-@register.inclusion_tag("front/banners/vip_cappers.html")
-def vip_cappers_banner(limit=6):
-    return build_vip_cappers_data(limit=limit)
+@register.inclusion_tag("front/banners/vip_cappers.html", takes_context=True)
+def vip_cappers_banner(context, limit=6):
+    request = context.get("request")
+    data = build_vip_cappers_data(
+        limit=limit,
+        viewer=getattr(request, "user", None),
+    )
+    data["request"] = request
+    return data
 
 
 @register.inclusion_tag("front/includes/_home_bookmakers.html")
