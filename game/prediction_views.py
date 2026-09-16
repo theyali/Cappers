@@ -93,6 +93,9 @@ def match_predictions(request, slug: str):
     )
 
     paginator = Paginator(queryset, MATCH_PREDICTIONS_PAGE_SIZE)
+    # _prediction_distribution() already computed the exact number of coupons for this match.
+    # Reuse it instead of COUNT() over the hydrated/ROI-annotated card queryset.
+    paginator.__dict__["count"] = total
     page_obj = paginator.get_page(request.GET.get("page") or 1)
 
     prediction_ids = [prediction.coupon_id for prediction in page_obj.object_list]

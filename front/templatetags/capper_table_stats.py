@@ -2,13 +2,15 @@ from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
 from django import template
-from django.db.models import Sum
+from django.core.cache import cache
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 
 
 register = template.Library()
+CAPPER_TABLE_HERO_CACHE_TTL = 60
 
 
 def _format_count(value) -> str:
@@ -113,25 +115,30 @@ def _sparkline(values: list[float]) -> dict:
 
 @register.simple_tag
 def capper_table_hero_stats() -> dict:
+    current_month = timezone.localdate().replace(day=1)
+    cache_key = f"capper-table:hero-stats:v1:{current_month.isoformat()}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     active_profiles = AnalystProfile.objects.filter(
         is_public=True,
         user__role=User.Role.ANALYST,
         user__is_active=True,
     )
     active_ids = active_profiles.values_list("user_id", flat=True)
-    stats = CapperMonthlyStat.objects.filter(analyst_id__in=active_ids)
-    current_month = timezone.localdate().replace(day=1)
-
-    predictions_month = (
-        stats.filter(month=current_month).aggregate(total=Sum("bets_count"))["total"] or 0
+    stats = CapperMonthlyStat.objects.filter(analyst_id__in=active_ids).aggregate(
+        predictions_month=Sum("bets_count", filter=Q(month=current_month)),
+        predictions_all_time=Sum("bets_count"),
     )
-    predictions_all_time = stats.aggregate(total=Sum("bets_count"))["total"] or 0
 
-    return {
+    result = {
         "active_cappers": _format_count(active_profiles.count()),
-        "predictions_month": _format_count(predictions_month),
-        "predictions_all_time": _format_count(predictions_all_time),
+        "predictions_month": _format_count(stats["predictions_month"] or 0),
+        "predictions_all_time": _format_count(stats["predictions_all_time"] or 0),
     }
+    cache.set(cache_key, result, CAPPER_TABLE_HERO_CACHE_TTL)
+    return result
 
 
 @register.simple_tag
