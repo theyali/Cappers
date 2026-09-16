@@ -7,6 +7,7 @@ from front.models import PredictionFavorite, PredictionLike
 
 
 register = template.Library()
+PROFILE_REACTION_CACHE_ATTR = "_profile_coupon_reaction_metrics"
 
 
 def _reaction_metric_counts(coupon: PredictionCoupon) -> tuple[int, int]:
@@ -39,6 +40,43 @@ def _reaction_metric_counts(coupon: PredictionCoupon) -> tuple[int, int]:
     if not row:
         return 0, 0
     return int(row["metric_likes_count"] or 0), int(row["metric_favorites_count"] or 0)
+
+
+def _profile_reaction_metrics(request) -> dict[int, dict[str, int]]:
+    cached = getattr(request, PROFILE_REACTION_CACHE_ATTR, None)
+    if cached is not None:
+        return cached
+
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated:
+        cached = {}
+    else:
+        rows = (
+            PredictionCoupon.objects.filter(author_id=user.pk)
+            .annotate(
+                likes_count=Coalesce(
+                    F("metrics__likes_count"),
+                    Value(0),
+                    output_field=IntegerField(),
+                ),
+                favorites_count=Coalesce(
+                    F("metrics__favorites_count"),
+                    Value(0),
+                    output_field=IntegerField(),
+                ),
+            )
+            .values("id", "likes_count", "favorites_count")
+        )
+        cached = {
+            int(row["id"]): {
+                "likes": int(row["likes_count"] or 0),
+                "favorites": int(row["favorites_count"] or 0),
+            }
+            for row in rows
+        }
+
+    setattr(request, PROFILE_REACTION_CACHE_ATTR, cached)
+    return cached
 
 
 @register.inclusion_tag("front/includes/_coupon_reactions.html", takes_context=True)
@@ -75,10 +113,21 @@ def coupon_reactions(context, coupon: PredictionCoupon):
     }
 
 
-@register.simple_tag
-def profile_coupon_reaction_counts(coupon_id):
+@register.simple_tag(takes_context=True)
+def profile_coupon_reaction_counts(context, coupon_id):
+    try:
+        normalized_id = int(coupon_id)
+    except (TypeError, ValueError):
+        return {"likes": 0, "favorites": 0}
+
+    request = context.get("request")
+    if request is not None:
+        cached = _profile_reaction_metrics(request)
+        if normalized_id in cached:
+            return cached[normalized_id]
+
     row = (
-        PredictionCoupon.objects.filter(pk=coupon_id)
+        PredictionCoupon.objects.filter(pk=normalized_id)
         .annotate(
             likes_count=Coalesce(
                 F("metrics__likes_count"),
@@ -97,6 +146,6 @@ def profile_coupon_reaction_counts(coupon_id):
     if not row:
         return {"likes": 0, "favorites": 0}
     return {
-        "likes": row["likes_count"],
-        "favorites": row["favorites_count"],
+        "likes": int(row["likes_count"] or 0),
+        "favorites": int(row["favorites_count"] or 0),
     }
