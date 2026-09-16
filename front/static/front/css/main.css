@@ -18172,7 +18172,7 @@ font-size: 14px;
         z-index: 58;
         margin: -2px 0 0;
         padding: 8px 4px 10px;
-        background: #131313;
+        background: var(--ink);
     }
 
     .predictions-content::-webkit-scrollbar,
