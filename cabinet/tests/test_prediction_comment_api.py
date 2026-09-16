@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.comments.models import Comment
+from cabinet.comments.models import Comment, CommentMetrics, CommentReaction
 from game.models import PredictionCoupon
 
 
@@ -56,6 +56,12 @@ class PredictionCommentApiTests(TestCase):
     def delete_url(self, comment):
         return reverse(
             "front:comment_delete",
+            kwargs={"comment_id": comment.pk},
+        )
+
+    def reaction_url(self, comment):
+        return reverse(
+            "front:comment_reaction",
             kwargs={"comment_id": comment.pk},
         )
 
@@ -110,6 +116,7 @@ class PredictionCommentApiTests(TestCase):
         self.assertEqual(comment.object_id, self.prediction.pk)
         self.assertEqual(payload["comment"]["id"], comment.pk)
         self.assertTrue(payload["comment"]["can_delete"])
+        self.assertTrue(CommentMetrics.objects.filter(comment=comment).exists())
 
     def test_comment_rejected_by_moderation_service(self):
         self.client.force_login(self.user)
@@ -227,3 +234,62 @@ class PredictionCommentApiTests(TestCase):
         self.assertEqual(response.status_code, 401)
         comment.refresh_from_db()
         self.assertEqual(comment.status, Comment.Status.PUBLISHED)
+
+    def test_reaction_toggle_updates_comment_metrics(self):
+        comment = self.make_comment()
+        self.client.force_login(self.user)
+
+        like_response = self.client.post(
+            self.reaction_url(comment),
+            data=json.dumps({"kind": CommentReaction.Kind.LIKE}),
+            content_type="application/json",
+        )
+        self.assertEqual(like_response.status_code, 200)
+        metrics = CommentMetrics.objects.get(comment=comment)
+        self.assertEqual(metrics.likes_count, 1)
+        self.assertEqual(metrics.dislikes_count, 0)
+
+        dislike_response = self.client.post(
+            self.reaction_url(comment),
+            data=json.dumps({"kind": CommentReaction.Kind.DISLIKE}),
+            content_type="application/json",
+        )
+        self.assertEqual(dislike_response.status_code, 200)
+        metrics.refresh_from_db()
+        self.assertEqual(metrics.likes_count, 0)
+        self.assertEqual(metrics.dislikes_count, 1)
+
+        remove_response = self.client.post(
+            self.reaction_url(comment),
+            data=json.dumps({"kind": CommentReaction.Kind.DISLIKE}),
+            content_type="application/json",
+        )
+        self.assertEqual(remove_response.status_code, 200)
+        metrics.refresh_from_db()
+        self.assertEqual(metrics.likes_count, 0)
+        self.assertEqual(metrics.dislikes_count, 0)
+        self.assertEqual(remove_response.json()["comment"]["viewer_reaction"], "")
+
+    def test_reply_create_and_delete_updates_parent_metrics(self):
+        parent = self.make_comment(text="Основной комментарий")
+        self.client.force_login(self.user)
+
+        create_response = self.client.post(
+            self.comments_url(),
+            data=json.dumps(
+                {
+                    "text": "Ответ на основной комментарий",
+                    "parent_id": parent.pk,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(create_response.status_code, 201)
+        parent_metrics = CommentMetrics.objects.get(comment=parent)
+        self.assertEqual(parent_metrics.replies_count, 1)
+
+        reply = Comment.objects.get(pk=create_response.json()["comment"]["id"])
+        delete_response = self.client.post(self.delete_url(reply))
+        self.assertEqual(delete_response.status_code, 200)
+        parent_metrics.refresh_from_db()
+        self.assertEqual(parent_metrics.replies_count, 0)
