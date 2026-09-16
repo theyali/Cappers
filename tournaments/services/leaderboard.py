@@ -24,7 +24,7 @@ TOURNAMENT_LEADERBOARD_CACHE_TTL = 60
 
 
 def _leaderboard_cache_key(tournament: Tournament) -> str:
-    return f"tournaments:leaderboard:v2:{tournament.pk}"
+    return f"tournaments:leaderboard:v3:{tournament.pk}"
 
 
 def tournament_leaderboard(
