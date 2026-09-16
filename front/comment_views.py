@@ -6,6 +6,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from cabinet.comments.services.predictions import (
     CommentServiceError,
     attach_comment_replies,
+    attach_viewer_reactions,
     comment_replies_count,
     comment_replies_queryset,
     create_prediction_comment,
@@ -55,6 +56,7 @@ def prediction_comments(request, prediction_id: int):
             offset : offset + COMMENTS_PAGE_SIZE
         ])
         attach_comment_replies(comments, limit=0)
+        attach_viewer_reactions(comments, request.user)
         return JsonResponse(
             {
                 "ok": True,
@@ -125,7 +127,10 @@ def comment_replies(request, comment_id: int):
     pages = max(1, (replies_count + COMMENT_REPLIES_PAGE_SIZE - 1) // COMMENT_REPLIES_PAGE_SIZE)
     page = _page_number(request.GET.get("page"), pages)
     offset = (page - 1) * COMMENT_REPLIES_PAGE_SIZE
-    replies = comment_replies_queryset(parent)[offset : offset + COMMENT_REPLIES_PAGE_SIZE]
+    replies = list(
+        comment_replies_queryset(parent)[offset : offset + COMMENT_REPLIES_PAGE_SIZE]
+    )
+    attach_viewer_reactions(replies, request.user)
     return JsonResponse(
         {
             "ok": True,
