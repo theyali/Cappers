@@ -2,7 +2,7 @@
 <section class="vip-cappers-banner" aria-label="VIP капперы">
     <div class="vip-cappers-banner__panel">
         <div class="vip-cappers-banner__head">
-            <a class="vip-cappers-banner__head-link" href="{{ vip_main.profile_url }}">
+            <a class="vip-cappers-banner__head-link" href="{{ vip_ranking_url }}">
                 <span class="vip-cappers-banner__head-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M3 18.5L4.7 8.6C4.77 8.19 5.25 8.03 5.54 8.33L9.14 12.01C9.41 12.29 9.87 12.22 10.05 11.88L11.66 8.77C11.82 8.46 12.18 8.46 12.34 8.77L13.95 11.88C14.13 12.22 14.59 12.29 14.86 12.01L18.46 8.33C18.75 8.03 19.23 8.19 19.3 8.6L21 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -77,16 +77,28 @@
             </a>
 
             <div class="vip-cappers-banner__hero-actions">
-                <a class="vip-cappers-banner__subscribe" href="{% url 'cabinet:toggle_follow' vip_main.user.id %}">
-                    Подписаться
-                </a>
+                {% if request.user.is_authenticated %}
+                    {% if request.user.id == vip_main.user.id %}
+                        <a class="vip-cappers-banner__subscribe" href="{{ vip_main.profile_url }}">Мой профиль</a>
+                    {% else %}
+                        <button
+                            class="vip-cappers-banner__subscribe{% if vip_main.is_following %} is-active{% endif %}"
+                            type="button"
+                            data-expert-follow
+                            data-url="{{ vip_main.follow_url }}"
+                            aria-pressed="{% if vip_main.is_following %}true{% else %}false{% endif %}"
+                        ><span data-follow-label>{% if vip_main.is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span></button>
+                    {% endif %}
+                {% else %}
+                    <a class="vip-cappers-banner__subscribe" href="{% url 'cabinet:login' %}?next={{ vip_main.profile_url|urlencode }}">Подписаться</a>
+                {% endif %}
             </div>
         </div>
 
         {% if vip_list %}
             <div class="vip-cappers-banner__list-box">
                 <div class="vip-cappers-banner__list-head">
-                    <strong>Рейтинг недели</strong>
+                    <strong>VIP капперы</strong>
                     <span class="vip-cappers-banner__info" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none">
                             <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
@@ -138,7 +150,7 @@
                     {% endfor %}
                 </div>
 
-                <a class="vip-cappers-banner__footer-link" href="{{ vip_main.profile_url }}">
+                <a class="vip-cappers-banner__footer-link" href="{{ vip_ranking_url }}">
                     <span>Все VIP капперы</span>
                     <span class="vip-cappers-banner__footer-arrow" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none">
