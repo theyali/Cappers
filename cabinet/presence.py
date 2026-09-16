@@ -94,6 +94,16 @@ def _offline_label(last_seen, now) -> str:
     return f"Был(а) {_local(last_seen):%d.%m.%Y}"
 
 
+def _presence_payload_from_last_seen(last_seen, moment) -> dict:
+    is_online = bool(last_seen and moment - last_seen <= ONLINE_WINDOW)
+    label = "В сети" if is_online else _offline_label(last_seen, moment)
+    return {
+        "is_online": is_online,
+        "label": label,
+        "last_seen_at": last_seen,
+    }
+
+
 def presence_payload(user, *, now=None) -> dict:
     moment = now or timezone.now()
     last_seen = None
@@ -108,11 +118,48 @@ def presence_payload(user, *, now=None) -> dict:
     if last_seen is None:
         last_seen = getattr(user, "last_login", None)
 
-    is_online = bool(last_seen and moment - last_seen <= ONLINE_WINDOW)
-    label = "В сети" if is_online else _offline_label(last_seen, moment)
+    return _presence_payload_from_last_seen(last_seen, moment)
 
+
+def presence_payloads(
+    user_ids,
+    *,
+    fallback_last_seen: dict[int, object] | None = None,
+    now=None,
+) -> dict[int, dict]:
+    """Load presence for many users with one query instead of N per table row."""
+    ids = []
+    seen = set()
+    for value in user_ids or ():
+        try:
+            user_id = int(value)
+        except (TypeError, ValueError):
+            continue
+        if user_id <= 0 or user_id in seen:
+            continue
+        seen.add(user_id)
+        ids.append(user_id)
+
+    if not ids:
+        return {}
+
+    last_seen_by_id = {}
+    try:
+        last_seen_by_id = dict(
+            UserPresence.objects.filter(user_id__in=ids).values_list(
+                "user_id",
+                "last_seen_at",
+            )
+        )
+    except (OperationalError, ProgrammingError):
+        last_seen_by_id = {}
+
+    fallbacks = fallback_last_seen or {}
+    moment = now or timezone.now()
     return {
-        "is_online": is_online,
-        "label": label,
-        "last_seen_at": last_seen,
+        user_id: _presence_payload_from_last_seen(
+            last_seen_by_id.get(user_id) or fallbacks.get(user_id),
+            moment,
+        )
+        for user_id in ids
     }
