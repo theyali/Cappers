@@ -3,15 +3,15 @@ from __future__ import annotations
 from datetime import date
 import re
 
-from django.db.models import Count
+from django.core.cache import cache
 from django.http import Http404
 from django.urls import reverse
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
-from cabinet.presence import presence_payload
+from cabinet.presence import presence_payloads
 from game.models import Sport
 
-from .expert_ranking import rank_experts
+from .expert_ranking import rank_experts, ranking_cache_version
 
 
 GROUP_ALL = "all"
@@ -21,6 +21,7 @@ GROUP_PAID = "paid"
 VALID_GROUPS = {GROUP_ALL, GROUP_VIP, GROUP_POPULAR, GROUP_PAID}
 ALL_SPORTS = "all"
 ALL_TIME = "all-time"
+CAPPER_TABLE_CACHE_TIMEOUT = 300
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 MONTH_NAMES = (
     "",
@@ -55,6 +56,20 @@ SPORT_ORDER = {
     "formula_1": 120,
     "f1": 120,
 }
+
+
+def _cache_get(key: str):
+    try:
+        return cache.get(key)
+    except Exception:
+        return None
+
+
+def _cache_set(key: str, value) -> None:
+    try:
+        cache.set(key, value, timeout=CAPPER_TABLE_CACHE_TIMEOUT)
+    except Exception:
+        pass
 
 
 def _initials(name: str) -> str:
@@ -106,7 +121,6 @@ def _table_url(*, group: str, period: str, sport_code: str) -> str:
 
 def _profile_payload(profile: AnalystProfile) -> dict:
     name = profile.display_name or profile.user.get_full_name() or profile.user.username
-    presence = presence_payload(profile.user)
     avatar_url = ""
     if profile.avatar:
         avatar_url = profile.avatar.url
@@ -121,13 +135,12 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "is_verified": profile.is_verified,
         "is_vip": profile.is_vip,
         "trust_index": profile.trust_index,
-        "presence": presence,
-        "is_online": presence["is_online"],
         "paid_predictions_enabled": bool(
             profile.paid_predictions_enabled and profile.paid_predictions_price > 0
         ),
         "paid_predictions_price": profile.paid_predictions_price,
         "followers": int(getattr(profile, "followers_count", 0) or 0),
+        "_last_login": profile.user.last_login,
     }
 
 
@@ -182,7 +195,6 @@ def _ranking_rows(
     period: str,
     sport_code: str,
     group: str,
-    search_query: str,
 ) -> list[dict]:
     rows = []
     for entry in rank_experts(
@@ -195,17 +207,15 @@ def _ranking_rows(
         row.update(entry["metrics"])
         row["rank"] = entry["rank"]
         row["ranking_reason"] = entry["ranking_reason"]
-        if _matches_search(row, search_query):
-            rows.append(row)
+        rows.append(row)
     return rows
 
 
-def build_capper_table_context(
-    request,
+def _build_capper_table_base_context(
     *,
-    group: str | None = None,
-    period: str | None = None,
-    sport_code: str | None = None,
+    group: str,
+    period: str,
+    sport_code: str,
 ) -> dict:
     public_profile_ids = list(
         AnalystProfile.objects.filter(
@@ -220,18 +230,15 @@ def build_capper_table_context(
     sports = _sport_catalog(public_stats)
     available_sport_codes = {item["code"] for item in sports}
 
-    selected_group = _resolve_group(group)
     selected_month, selected_period = _resolve_period(period, available_months)
-    selected_sport_code = (sport_code or ALL_SPORTS).strip().lower()
+    selected_sport_code = sport_code
     if selected_sport_code != ALL_SPORTS and selected_sport_code not in available_sport_codes:
         raise Http404("Неизвестный вид спорта")
 
-    search_query = (request.GET.get("q") or "").strip()[:120]
     rows = _ranking_rows(
         period=selected_period,
         sport_code=selected_sport_code,
-        group=selected_group,
-        search_query=search_query,
+        group=group,
     )
 
     group_tabs = [
@@ -278,7 +285,7 @@ def build_capper_table_context(
             "value": ALL_TIME,
             "label": "Все время",
             "url": _table_url(
-                group=selected_group,
+                group=group,
                 period=ALL_TIME,
                 sport_code=selected_sport_code,
             ),
@@ -289,7 +296,7 @@ def build_capper_table_context(
             "value": month.strftime("%Y-%m"),
             "label": _month_label(month),
             "url": _table_url(
-                group=selected_group,
+                group=group,
                 period=month.strftime("%Y-%m"),
                 sport_code=selected_sport_code,
             ),
@@ -304,7 +311,7 @@ def build_capper_table_context(
             "image": "",
             "icon_key": "all",
             "url": _table_url(
-                group=selected_group,
+                group=group,
                 period=selected_period,
                 sport_code=ALL_SPORTS,
             ),
@@ -314,7 +321,7 @@ def build_capper_table_context(
         {
             **sport,
             "url": _table_url(
-                group=selected_group,
+                group=group,
                 period=selected_period,
                 sport_code=sport["code"],
             ),
@@ -331,8 +338,7 @@ def build_capper_table_context(
 
     return {
         "ranking_rows": rows,
-        "experts_count": len(rows),
-        "selected_group": selected_group,
+        "selected_group": group,
         "selected_month": selected_month,
         "selected_period": selected_period,
         "selected_month_value": selected_period,
@@ -340,13 +346,68 @@ def build_capper_table_context(
         "period_is_all": selected_month is None,
         "selected_sport_code": selected_sport_code,
         "selected_sport_name": selected_sport_name,
-        "search_query": search_query,
         "current_table_url": _table_url(
-            group=selected_group,
+            group=group,
             period=selected_period,
             sport_code=selected_sport_code,
         ),
         "group_tabs": group_tabs,
         "month_options": month_options,
         "sport_filters": sport_filters,
+    }
+
+
+def build_capper_table_context(
+    request,
+    *,
+    group: str | None = None,
+    period: str | None = None,
+    sport_code: str | None = None,
+) -> dict:
+    selected_group = _resolve_group(group)
+    requested_period = (period or ALL_TIME).strip().lower()
+    requested_sport_code = (sport_code or ALL_SPORTS).strip().lower()
+    cache_key = (
+        f"capper-table:v{ranking_cache_version()}:"
+        f"group={selected_group}:period={requested_period}:sport={requested_sport_code}"
+    )
+    base_context = _cache_get(cache_key)
+    if base_context is None:
+        base_context = _build_capper_table_base_context(
+            group=selected_group,
+            period=requested_period,
+            sport_code=requested_sport_code,
+        )
+        _cache_set(cache_key, base_context)
+
+    search_query = (request.GET.get("q") or "").strip()[:120]
+    rows = [
+        dict(row)
+        for row in base_context["ranking_rows"]
+        if _matches_search(row, search_query)
+    ]
+
+    fallback_last_seen = {
+        row["id"]: row.get("_last_login")
+        for row in rows
+        if row.get("id")
+    }
+    presence_by_id = presence_payloads(
+        [row["id"] for row in rows],
+        fallback_last_seen=fallback_last_seen,
+    )
+    for row in rows:
+        row.pop("_last_login", None)
+        presence = presence_by_id.get(
+            row["id"],
+            {"is_online": False, "label": "Нет данных о последней активности", "last_seen_at": None},
+        )
+        row["presence"] = presence
+        row["is_online"] = presence["is_online"]
+
+    return {
+        **base_context,
+        "ranking_rows": rows,
+        "experts_count": len(rows),
+        "search_query": search_query,
     }
