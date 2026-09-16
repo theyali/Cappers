@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load capper_trust capper_table_stats static %}
+{% load capper_trust capper_table_stats static site_extras %}
 
 {% block title %}Таблица капперов — КапперХаб{% endblock %}
 
@@ -79,6 +79,8 @@
                     {% endfor %}
                 </nav>
             </section>
+
+            {% vip_cappers_banner 6 %}
         </aside>
 
         <div class="predictions-content cappers-table-page">

@@ -7,11 +7,7 @@
 {% block content %}
 <section class="predictions-page tournaments-page predictions-scroll-page" aria-labelledby="tournaments-title">
     <div class="predictions-layout tournaments-layout">
-        <div class="predictions-filter-sidebar tournaments-left-sidebar">
-            <aside class="bookmakers-sidebar" aria-label="VIP прогнозисты и реклама">
-                {% vip_cappers_banner 6 %}
-            </aside>
-        </div>
+        {% vip_cappers_banner 6 %}
 
         <div class="predictions-content tournaments-content">
             <header class="tournaments-hero" data-site-help-anchor style="background-color:#0b56fa;background-image:url('{% static 'front/img/tournaments/tournaments.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
