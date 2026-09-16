@@ -1,15 +1,17 @@
 import json
 
+from django.core.cache import cache
 from django.db.utils import OperationalError, ProgrammingError
 from django.urls import NoReverseMatch, reverse
 
 from cabinet.models import User
-from cabinet.presence import presence_payload, touch_user_presence
+from cabinet.presence import presence_payload
 
 from .models import PageSEO
 from .promo_banners import page_promo_banners
 
 
+PAGE_CONTEXT_CACHE_SECONDS = 120
 ROUTE_FALLBACKS = {
     "front:prediction_detail": ("front:predictions",),
     "front:favorites": ("front:predictions",),
@@ -123,6 +125,53 @@ def _resolve_ad_page(route_name: str, current_path: str, primary_page):
     return primary_page
 
 
+def _page_context_cache_key(route_name: str, current_path: str) -> str:
+    return f"page-seo-context:v1:{route_name}:{current_path}"
+
+
+def _build_page_context(route_name: str, current_path: str) -> dict:
+    page = _resolve_page(route_name, current_path) if route_name else None
+    adv_banners = []
+    adv_placement = PageSEO.AdvPlacement.CONTENT
+
+    if page:
+        ad_page = _resolve_ad_page(route_name, current_path, page)
+        if ad_page is not None:
+            adv_placement = ad_page.adv_placement
+            adv_banners = list(ad_page.adv_banners.all())
+
+    promo_banners = page_promo_banners(
+        route_name,
+        current_path,
+        page,
+        _page_candidates,
+    )
+
+    return {
+        "page": page,
+        "adv_banners": adv_banners,
+        "adv_placement": adv_placement,
+        "promo_banners": promo_banners,
+    }
+
+
+def _cached_page_context(route_name: str, current_path: str) -> dict:
+    cache_key = _page_context_cache_key(route_name, current_path)
+    try:
+        cached = cache.get(cache_key)
+    except Exception:
+        cached = None
+    if cached is not None:
+        return cached
+
+    context = _build_page_context(route_name, current_path)
+    try:
+        cache.set(cache_key, context, timeout=PAGE_CONTEXT_CACHE_SECONDS)
+    except Exception:
+        pass
+    return context
+
+
 def _public_profile_presence(resolver_match, route_name: str) -> dict:
     if route_name not in PUBLIC_PROFILE_ROUTES or resolver_match is None:
         return {}
@@ -147,18 +196,18 @@ def page_seo(request):
     resolver_match = getattr(request, "resolver_match", None)
     route_name = resolver_match.view_name if resolver_match else ""
     current_path = request.path or "/"
-    page = None
 
-    # Presence is persisted in the database on normal page views. Writes are
-    # throttled in the helper, so navigation does not hammer PostgreSQL.
-    touch_user_presence(getattr(request, "user", None))
+    try:
+        page_context = _cached_page_context(route_name, current_path)
+    except (OperationalError, ProgrammingError):
+        page_context = {
+            "page": None,
+            "adv_banners": [],
+            "adv_placement": PageSEO.AdvPlacement.CONTENT,
+            "promo_banners": [],
+        }
 
-    if route_name:
-        try:
-            page = _resolve_page(route_name, current_path)
-        except (OperationalError, ProgrammingError):
-            page = None
-
+    page = page_context["page"]
     canonical_url = request.build_absolute_uri(current_path)
     if page and page.canonical_url:
         canonical_url = page.canonical_url
@@ -179,17 +228,7 @@ def page_seo(request):
         "schema_json_ld": _schema_json(page, canonical_url),
     }
 
-    adv_banners = []
-    adv_placement = PageSEO.AdvPlacement.CONTENT
-    if page:
-        try:
-            ad_page = _resolve_ad_page(route_name, current_path, page)
-            if ad_page is not None:
-                adv_placement = ad_page.adv_placement
-                adv_banners = list(ad_page.adv_banners.all())
-        except (OperationalError, ProgrammingError):
-            adv_banners = []
-
+    adv_placement = page_context["adv_placement"]
     if route_name in {
         "front:prediction_detail",
         "front:expert_profile",
@@ -197,16 +236,10 @@ def page_seo(request):
     }:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
-    promo_banners = page_promo_banners(
-        route_name,
-        current_path,
-        page,
-        _page_candidates,
-    )
-
+    promo_banners = page_context["promo_banners"]
     return {
         "seo_meta": seo_meta,
-        "adv_banners": adv_banners,
+        "adv_banners": page_context["adv_banners"],
         "adv_placement": adv_placement,
         "promo_banners": promo_banners,
         "promo_banner": promo_banners[0] if promo_banners else None,
