@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core.cache import cache
 
 from cappers.timezone_service import activate_request_timezone, deactivate_request_timezone
 
@@ -33,20 +34,34 @@ class UserContextMiddleware:
         activate_request_timezone(request)
 
         try:
-            user = getattr(request, "user", None)
-            if getattr(user, "is_authenticated", False):
-                try:
-                    from cabinet.presence import touch_user_presence
-
-                    touch_user_presence(user)
-                except Exception:
-                    # Presence must never break a normal page request.
-                    pass
-
+            self._touch_presence(request)
             response = self.get_response(request)
             return self._inject_html(response)
         finally:
             deactivate_request_timezone()
+
+    def _touch_presence(self, request) -> None:
+        user = getattr(request, "user", None)
+        if not getattr(user, "is_authenticated", False) or not getattr(user, "pk", None):
+            return
+
+        try:
+            from cabinet.presence import WRITE_THROTTLE_SECONDS, touch_user_presence
+
+            try:
+                should_touch = cache.add(
+                    f"user-presence-touch:{user.pk}",
+                    "1",
+                    timeout=WRITE_THROTTLE_SECONDS,
+                )
+            except Exception:
+                should_touch = True
+
+            if should_touch:
+                touch_user_presence(user, force=True)
+        except Exception:
+            # Presence must never break a normal page request.
+            pass
 
     def _inject_html(self, response):
         if getattr(response, "streaming", False):
