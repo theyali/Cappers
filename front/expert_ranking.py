@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
+from django.core.cache import cache
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 
@@ -16,6 +17,8 @@ RANKING_TRUST_WEIGHT = Decimal("1000")
 RANKING_STABILIZED_ROI_CAP = Decimal("25")
 RANKING_ACTIVITY_MAX_BONUS = Decimal("5")
 RANKING_ACTIVITY_FULL_COUNT = 50
+RANKING_CACHE_TIMEOUT = 300
+RANKING_CACHE_VERSION_KEY = "expert-ranking:version"
 ALL_TIME = "all-time"
 ALL_SPORTS = "all"
 VALID_GROUPS = {"all", "vip", "paid", "popular"}
@@ -32,6 +35,58 @@ SETTLED_EXPERT_STATES = (
 def current_month_start():
     today = timezone.localdate()
     return today.replace(day=1)
+
+
+def ranking_cache_version() -> int:
+    """Return the shared generation used by all ranking-derived caches."""
+    try:
+        version = cache.get(RANKING_CACHE_VERSION_KEY)
+        if version is None:
+            cache.add(RANKING_CACHE_VERSION_KEY, 1, timeout=None)
+            version = cache.get(RANKING_CACHE_VERSION_KEY)
+        return int(version or 1)
+    except Exception:
+        return 1
+
+
+def invalidate_expert_ranking_cache() -> None:
+    """Invalidate every ranking/table variant without backend-specific wildcard deletes."""
+    try:
+        if cache.add(RANKING_CACHE_VERSION_KEY, 2, timeout=None):
+            return
+        cache.incr(RANKING_CACHE_VERSION_KEY)
+    except Exception:
+        try:
+            cache.set(
+                RANKING_CACHE_VERSION_KEY,
+                max(2, int(timezone.now().timestamp())),
+                timeout=None,
+            )
+        except Exception:
+            pass
+
+
+def _cache_get(key: str):
+    try:
+        return cache.get(key)
+    except Exception:
+        return None
+
+
+def _cache_set(key: str, value) -> None:
+    try:
+        cache.set(key, value, timeout=RANKING_CACHE_TIMEOUT)
+    except Exception:
+        pass
+
+
+def _normalize_limit(limit: int | None) -> int | None:
+    if limit is None:
+        return None
+    try:
+        return max(0, int(limit))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _decimal(value) -> Decimal:
@@ -526,6 +581,16 @@ def rank_experts(
     selected_month, selected_period = _resolve_period(period)
     selected_group = _resolve_group(group)
     selected_sport = (sport_code or ALL_SPORTS).strip().lower()
+    safe_limit = _normalize_limit(limit)
+    limit_key = "all" if safe_limit is None else str(safe_limit)
+    cache_key = (
+        f"expert-ranking:v{ranking_cache_version()}:"
+        f"period={selected_period}:sport={selected_sport}:"
+        f"group={selected_group}:limit={limit_key}"
+    )
+    cached_entries = _cache_get(cache_key)
+    if cached_entries is not None:
+        return cached_entries
 
     if selected_month is None:
         entries = _all_time_entries(
@@ -550,13 +615,9 @@ def rank_experts(
         profile.ranking_metrics = entry["metrics"]
         profile.ranking_reason = entry["ranking_reason"]
 
-    if limit is not None:
-        try:
-            safe_limit = max(0, int(limit))
-        except (TypeError, ValueError):
-            safe_limit = 0
-        return entries[:safe_limit]
-    return entries
+    result = entries if safe_limit is None else entries[:safe_limit]
+    _cache_set(cache_key, result)
+    return result
 
 
 def ranked_expert_profiles(
@@ -570,6 +631,28 @@ def ranked_expert_profiles(
     changes the order, because ``ranking_score`` is always based on all-time
     trust/ROI/history in ``_annotated_public_profiles``.
     """
+    safe_limit = _normalize_limit(limit)
+    if period_days is None:
+        return [
+            entry["profile"]
+            for entry in rank_experts(
+                period=ALL_TIME,
+                sport_code=ALL_SPORTS,
+                group="all",
+                limit=safe_limit,
+            )
+        ]
+
+    days_key = str(period_days)
+    limit_key = "all" if safe_limit is None else str(safe_limit)
+    cache_key = (
+        f"expert-ranking-profiles:v{ranking_cache_version()}:"
+        f"days={days_key}:limit={limit_key}"
+    )
+    cached_profiles = _cache_get(cache_key)
+    if cached_profiles is not None:
+        return cached_profiles
+
     entries = _all_time_entries(
         sport_code=ALL_SPORTS,
         group="all",
@@ -583,13 +666,9 @@ def ranked_expert_profiles(
         profile.ranking_reason = entry["ranking_reason"]
 
     profiles = [entry["profile"] for entry in entries]
-    if limit is not None:
-        try:
-            safe_limit = max(0, int(limit))
-        except (TypeError, ValueError):
-            safe_limit = 0
-        return profiles[:safe_limit]
-    return profiles
+    result = profiles if safe_limit is None else profiles[:safe_limit]
+    _cache_set(cache_key, result)
+    return result
 
 
 def current_month_top_expert_ids(limit: int = 1) -> list[int]:
