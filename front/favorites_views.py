@@ -66,7 +66,7 @@ def _favorites_status_tabs(request, counts, active_status):
     return tabs
 
 
-def _favorites_sport_tabs(request, favorite_positions, active_sport):
+def _favorites_sport_tabs(request, favorite_positions, active_sport, *, all_count):
     rows = list(
         favorite_positions.exclude(match__sport_id__isnull=True)
         .values(
@@ -78,7 +78,6 @@ def _favorites_sport_tabs(request, favorite_positions, active_sport):
         .annotate(count=Count("coupon_id", distinct=True))
         .order_by("match__sport__name_ru", "match__sport__name")
     )
-    all_count = favorite_positions.values("coupon_id").distinct().count()
 
     params = _query_without_page(request)
     params.pop("sport", None)
@@ -275,7 +274,12 @@ def favorites(request):
             "total_predictions": total_predictions,
             "filtered_predictions": paginator.count,
             "status_tabs": _favorites_status_tabs(request, counts, active_status),
-            "sport_tabs": _favorites_sport_tabs(request, favorite_positions, active_sport),
+            "sport_tabs": _favorites_sport_tabs(
+                request,
+                favorite_positions,
+                active_sport,
+                all_count=total_predictions,
+            ),
             "active_status": active_status,
             "active_sort": active_sort,
             "sort_options": SORT_OPTIONS,
