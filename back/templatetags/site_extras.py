@@ -5,8 +5,8 @@ from django.db.models import Count, Q
 from django.urls import reverse
 
 from back.models import Bookmaker, WebsiteSettings
-from front.expert_ranking import ranked_expert_profiles
 from front.popular_matches import build_popular_matches
+from front.vip_cappers import build_vip_cappers_data
 from game.models import Match, Prediction, PredictionCoupon
 
 register = template.Library()
@@ -314,20 +314,13 @@ def latest_match_predictions(limit=5):
 
 @register.inclusion_tag("front/includes/_vip_experts_sidebar.html")
 def vip_experts_sidebar(limit=5):
-    try:
-        safe_limit = max(1, min(int(limit), 12))
-    except (TypeError, ValueError):
-        safe_limit = 5
+    data = build_vip_cappers_data(limit=limit)
+    return {"vip_experts": data["vip_profiles"]}
 
-    vip_experts = []
-    for profile in ranked_expert_profiles():
-        if not profile.is_vip:
-            continue
-        vip_experts.append(profile)
-        if len(vip_experts) >= safe_limit:
-            break
 
-    return {"vip_experts": vip_experts}
+@register.inclusion_tag("front/banners/vip_cappers.html")
+def vip_cappers_banner(limit=6):
+    return build_vip_cappers_data(limit=limit)
 
 
 @register.inclusion_tag("front/includes/_home_bookmakers.html")
