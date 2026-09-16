@@ -9,6 +9,7 @@ class CabinetConfig(AppConfig):
     def ready(self) -> None:
         from . import presence  # noqa: F401
         from .comments import models as comment_models  # noqa: F401
+        from .comments import signals as comment_signals  # noqa: F401
         from .comments import admin as comment_admin  # noqa: F401
         from .roulette import history  # noqa: F401
         from .roulette import models as roulette_models  # noqa: F401
