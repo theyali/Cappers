@@ -32,7 +32,7 @@ FEED_META_CACHE_TTL = 60
 
 def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
-    return f"front:feed:{namespace}:v2:{user_id}:{signature}"
+    return f"front:feed:{namespace}:v3:{user_id}:{signature}"
 
 
 def _feed_url(request, params) -> str:
@@ -57,6 +57,15 @@ def _feed_sport_url(request, sport: Sport | None) -> str:
     else:
         params["sport"] = sport.code
     return _feed_url(request, params)
+
+
+def _feed_meta_queryset(*, audience: str, author_ids) -> object:
+    """Cheap coupon queryset for tabs/counts without card annotations or ROI subqueries."""
+    return PredictionCoupon.objects.filter(
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        audience=audience,
+        author_id__in=author_ids,
+    )
 
 
 def _feed_sport_tabs(
@@ -251,17 +260,24 @@ def following_feed(request):
         only_live,
         only_today,
     )
-    sport_tabs_queryset = _apply_feed_filters(
-        _published_queryset().filter(author_id__in=following_ids),
+
+    # Metadata (tabs/counts) intentionally uses lightweight querysets. The full
+    # card queryset contains ROI annotations/selects/prefetches and is much more
+    # expensive to aggregate over.
+    free_meta_queryset = _apply_feed_filters(
+        _feed_meta_queryset(
+            audience=PredictionCoupon.Audience.FREE,
+            author_ids=following_ids,
+        ),
         selected_capper=selected_capper,
         selected_sport=None,
         only_live=only_live,
         only_today=only_today,
     )
-    sport_tabs_paid_queryset = _apply_feed_filters(
-        _published_queryset(include_paid=True).filter(
+    paid_meta_queryset = _apply_feed_filters(
+        _feed_meta_queryset(
             audience=PredictionCoupon.Audience.PAID,
-            author_id__in=paid_analyst_ids,
+            author_ids=paid_analyst_ids,
         ),
         selected_capper=selected_capper,
         selected_sport=None,
@@ -270,8 +286,8 @@ def following_feed(request):
     )
     feed_sport_tabs = _feed_sport_tabs(
         request,
-        sport_tabs_queryset,
-        sport_tabs_paid_queryset,
+        free_meta_queryset,
+        paid_meta_queryset,
         selected_sport,
         cache_key=_feed_cache_key(
             request.user.pk,
@@ -279,26 +295,50 @@ def following_feed(request):
             *feed_source_signature,
         ),
     )
-    queryset = sport_tabs_queryset
-    paid_queryset = sport_tabs_paid_queryset
+
+    free_count_queryset = free_meta_queryset
+    paid_count_queryset = paid_meta_queryset
     if selected_sport:
-        queryset = queryset.filter(predictions__match__sport=selected_sport).distinct()
-        paid_queryset = paid_queryset.filter(predictions__match__sport=selected_sport).distinct()
+        free_count_queryset = free_count_queryset.filter(
+            predictions__match__sport=selected_sport
+        ).distinct()
+        paid_count_queryset = paid_count_queryset.filter(
+            predictions__match__sport=selected_sport
+        ).distinct()
 
     count_signature = (*feed_source_signature, selected_sport.pk if selected_sport else None)
     count_keys = ("total", "pending", "win", "lose", "refund")
     free_counts = _feed_counts(
-        queryset,
+        free_count_queryset,
         cache_key=_feed_cache_key(request.user.pk, "free-counts", *count_signature),
     )
     paid_counts = _feed_counts(
-        paid_queryset,
+        paid_count_queryset,
         cache_key=_feed_cache_key(request.user.pk, "paid-counts", *count_signature),
     )
     counts = {
         key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
         for key in count_keys
     }
+
+    # Full querysets are evaluated only for the cards that will actually render.
+    queryset = _apply_feed_filters(
+        _published_queryset().filter(author_id__in=following_ids),
+        selected_capper=selected_capper,
+        selected_sport=selected_sport,
+        only_live=only_live,
+        only_today=only_today,
+    )
+    paid_queryset = _apply_feed_filters(
+        _published_queryset(include_paid=True).filter(
+            audience=PredictionCoupon.Audience.PAID,
+            author_id__in=paid_analyst_ids,
+        ),
+        selected_capper=selected_capper,
+        selected_sport=selected_sport,
+        only_live=only_live,
+        only_today=only_today,
+    )
 
     if active_status == "pending":
         queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
@@ -326,7 +366,11 @@ def following_feed(request):
         queryset = queryset.order_by("-published_at", "-created_at")
         paid_queryset = paid_queryset.order_by("-published_at", "-created_at")
 
+    free_predictions_count = _feed_status_count(free_counts, active_status)
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
+    # Paginator otherwise calls COUNT() on the fully annotated card queryset.
+    # We already have the exact count from the lightweight cached aggregate.
+    paginator.__dict__["count"] = free_predictions_count
     page_obj = paginator.get_page(request.GET.get("page"))
     free_coupons = list(page_obj.object_list)
     paid_coupons = list(paid_queryset[:PAID_FEED_LIMIT])
