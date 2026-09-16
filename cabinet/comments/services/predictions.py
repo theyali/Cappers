@@ -4,12 +4,13 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import F, IntegerField, Q, Value
+from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
-from cabinet.comments.models import Comment, CommentReaction
+from cabinet.comments.models import Comment, CommentMetrics, CommentReaction
 from cabinet.comments.services.anti_spam import check_comment_spam
 from cabinet.comments.services.moderation import validate_comment_text
 from cabinet.paid_predictions import user_can_view_paid_predictions
@@ -98,12 +99,10 @@ def comment_replies_queryset(parent: Comment):
 
 
 def comment_replies_count(parent: Comment) -> int:
-    return Comment.objects.filter(
-        content_type_id=parent.content_type_id,
-        object_id=parent.object_id,
-        status=Comment.Status.PUBLISHED,
-        parent=parent,
-    ).count()
+    annotated = getattr(parent, "replies_count", None)
+    if annotated is not None:
+        return int(annotated or 0)
+    return int(_get_comment_metrics(parent.pk).replies_count or 0)
 
 
 def attach_comment_replies(
@@ -113,7 +112,7 @@ def attach_comment_replies(
 ) -> None:
     for comment in comments:
         replies_count = comment_replies_count(comment)
-        replies = list(comment_replies_queryset(comment)[:limit])
+        replies = list(comment_replies_queryset(comment)[:limit]) if limit else []
         comment.published_replies = replies
         comment.replies_total_count = replies_count
         comment.replies_count = replies_count
@@ -123,9 +122,32 @@ def attach_comment_replies(
             comment.replies_next_page = 2 if limit else 1
 
 
+def attach_viewer_reactions(comments, viewer: Any) -> None:
+    visible_comments = []
+    for comment in comments:
+        visible_comments.append(comment)
+        visible_comments.extend(getattr(comment, "published_replies", []) or [])
+
+    if not visible_comments:
+        return
+    if not getattr(viewer, "is_authenticated", False):
+        for comment in visible_comments:
+            comment.viewer_reaction = ""
+        return
+
+    reaction_map = dict(
+        CommentReaction.objects.filter(
+            user=viewer,
+            comment_id__in=[comment.pk for comment in visible_comments],
+        ).values_list("comment_id", "kind")
+    )
+    for comment in visible_comments:
+        comment.viewer_reaction = reaction_map.get(comment.pk, "")
+
+
 def get_accessible_comment_parent(user: Any, comment_id: int) -> Comment:
     comment = get_object_or_404(
-        Comment.objects.select_related("content_type", "user"),
+        Comment.objects.select_related("content_type", "user", "metrics"),
         pk=comment_id,
         status=Comment.Status.PUBLISHED,
         parent__isnull=True,
@@ -164,7 +186,7 @@ def create_prediction_comment(
                 http_status=429,
             )
 
-        return Comment.objects.create(
+        comment = Comment.objects.create(
             user=locked_user,
             content_type=_prediction_content_type(),
             object_id=prediction.pk,
@@ -172,6 +194,14 @@ def create_prediction_comment(
             status=Comment.Status.PUBLISHED,
             parent=parent,
         )
+        comment.likes_count = 0
+        comment.dislikes_count = 0
+        comment.replies_count = 0
+        comment.replies_total_count = 0
+        comment.replies_next_page = None
+        comment.published_replies = []
+        comment.viewer_reaction = ""
+        return comment
 
 
 def soft_delete_comment(*, comment_id: int, actor: Any) -> tuple[Comment, int | None]:
@@ -232,6 +262,7 @@ def set_comment_reaction(*, comment_id: int, user: Any, kind: str) -> Comment:
             http_status=400,
         )
 
+    active_kind = ""
     with transaction.atomic():
         existing = CommentReaction.objects.select_for_update().filter(
             comment=comment,
@@ -243,32 +274,22 @@ def set_comment_reaction(*, comment_id: int, user: Any, kind: str) -> Comment:
         elif existing:
             existing.kind = normalized_kind
             existing.save(update_fields=("kind",))
+            active_kind = normalized_kind
         else:
             CommentReaction.objects.create(
                 comment=comment,
                 user=user,
                 kind=normalized_kind,
             )
+            active_kind = normalized_kind
 
-    refreshed = (
-        Comment.objects.filter(pk=comment.pk)
-        .select_related("user")
-        .annotate(
-            likes_count=Count(
-                "reactions",
-                filter=Q(reactions__kind=CommentReaction.Kind.LIKE),
-                distinct=True,
-            ),
-            dislikes_count=Count(
-                "reactions",
-                filter=Q(reactions__kind=CommentReaction.Kind.DISLIKE),
-                distinct=True,
-            ),
-        )
-        .get()
-    )
-    refreshed.viewer_reaction = _viewer_reaction(refreshed, user)
-    return refreshed
+        metrics = CommentMetrics.objects.select_for_update().get(comment_id=comment.pk)
+
+    comment.likes_count = int(metrics.likes_count or 0)
+    comment.dislikes_count = int(metrics.dislikes_count or 0)
+    comment.replies_count = int(metrics.replies_count or 0)
+    comment.viewer_reaction = active_kind
+    return comment
 
 
 def serialize_comment(comment: Comment, *, viewer: Any = None) -> dict:
@@ -299,14 +320,7 @@ def serialize_comment(comment: Comment, *, viewer: Any = None) -> dict:
         "likes_count": _reaction_count(comment, CommentReaction.Kind.LIKE),
         "dislikes_count": _reaction_count(comment, CommentReaction.Kind.DISLIKE),
         "viewer_reaction": _viewer_reaction(comment, viewer),
-        "replies_count": int(
-            getattr(
-                comment,
-                "replies_total_count",
-                len(getattr(comment, "published_replies", []) or []),
-            )
-            or 0
-        ),
+        "replies_count": _replies_metric_count(comment),
         "replies_next_page": getattr(comment, "replies_next_page", None),
         "replies_has_next": bool(getattr(comment, "replies_next_page", None)),
         "replies": [
@@ -325,17 +339,22 @@ def _prediction_content_type() -> ContentType:
 
 def _comment_queryset_base():
     return (
-        Comment.objects.select_related("user")
+        Comment.objects.select_related("user", "metrics")
         .annotate(
-            likes_count=Count(
-                "reactions",
-                filter=Q(reactions__kind=CommentReaction.Kind.LIKE),
-                distinct=True,
+            likes_count=Coalesce(
+                F("metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
             ),
-            dislikes_count=Count(
-                "reactions",
-                filter=Q(reactions__kind=CommentReaction.Kind.DISLIKE),
-                distinct=True,
+            dislikes_count=Coalesce(
+                F("metrics__dislikes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            replies_count=Coalesce(
+                F("metrics__replies_count"),
+                Value(0),
+                output_field=IntegerField(),
             ),
         )
     )
@@ -387,12 +406,28 @@ def _ensure_comment_target_access(comment: Comment, user: Any) -> None:
         raise Http404("Комментарий не найден.")
 
 
+def _get_comment_metrics(comment_id: int) -> CommentMetrics:
+    metrics, _ = CommentMetrics.objects.get_or_create(comment_id=comment_id)
+    return metrics
+
+
 def _reaction_count(comment: Comment, kind: str) -> int:
     annotated_name = "likes_count" if kind == CommentReaction.Kind.LIKE else "dislikes_count"
     annotated = getattr(comment, annotated_name, None)
     if annotated is not None:
         return int(annotated or 0)
-    return CommentReaction.objects.filter(comment=comment, kind=kind).count()
+    metrics = _get_comment_metrics(comment.pk)
+    return int(getattr(metrics, annotated_name) or 0)
+
+
+def _replies_metric_count(comment: Comment) -> int:
+    total = getattr(comment, "replies_total_count", None)
+    if total is not None:
+        return int(total or 0)
+    annotated = getattr(comment, "replies_count", None)
+    if annotated is not None:
+        return int(annotated or 0)
+    return int(_get_comment_metrics(comment.pk).replies_count or 0)
 
 
 def _viewer_reaction(comment: Comment, viewer: Any) -> str:
@@ -411,8 +446,9 @@ def _viewer_reaction(comment: Comment, viewer: Any) -> str:
 
 __all__ = [
     "CommentServiceError",
-    "can_delete_comment",
     "attach_comment_replies",
+    "attach_viewer_reactions",
+    "can_delete_comment",
     "comment_replies_count",
     "comment_replies_queryset",
     "create_prediction_comment",
