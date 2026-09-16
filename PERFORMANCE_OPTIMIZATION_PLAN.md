@@ -188,3 +188,83 @@
 - `http://127.0.0.1:8000/feed/`
 - `http://127.0.0.1:8000/cappers-table/`
 - `http://127.0.0.1:8000/tournaments/`
+
+## Шаг 4: Перевести все карточки на готовые PredictionMetrics
+
+1. Найти все места с Count("likes"), Count("favorites"), coupon.likes.count(), coupon.favorites.count().
+2. Для карточек прогнозов использовать только:
+   - select_related("metrics")
+   - Coalesce(F("metrics__likes_count"), 0)
+   - Coalesce(F("metrics__favorites_count"), 0)
+   - Coalesce(F("metrics__comments_count"), 0)
+   - Coalesce(F("metrics__views_count"), 0)
+3. Обновить:
+   - tournaments/views.py::_tournament_prediction_cards()
+   - front/templatetags/prediction_reactions.py
+   - game/prediction_views.py проверить, там уже почти готово
+   - favorites/catalog/feed проверить на отсутствие live Count по reactions
+4. Не считать comments_count через Comment.objects на карточках.
+
+
+## Шаг 5: Оптимизировать метрики комментариев и реакций комментариев
+
+1. Проверить comment queryset:
+   - likes_count/dislikes_count сейчас считаются через Count("reactions")
+   - viewer_reaction берется отдельным батчем, это нормально
+2. Если на странице может быть много комментариев/ответов, добавить CommentMetrics:
+   - comment_id
+   - likes_count
+   - dislikes_count
+   - replies_count
+3. При toggle CommentReaction обновлять CommentMetrics атомарно.
+4. Для replies использовать replies_count из метрик, а не COUNT по replies.
+5. Для initial comments и load more отдавать уже готовые счетчики без annotate Count.
+
+## Шаг 6: Финальный SQL-аудит, индексы и оставшиеся N+1
+
+### Что проверить
+
+После шагов 1-5 нужно пройтись по оставшимся источникам скрытых запросов:
+
+- `PredictionCoverImage`
+- template tags для реакций и карточек
+- шаблоны карточек прогнозов
+- `Paginator.count`
+- фильтры/табы, которые вызывают `.count()` или `.aggregate()`
+- индексы на таблицах метрик, реакций, комментариев и прогнозов
+
+### Что сделать
+
+1. Проверить `PredictionCoverImage`:
+   - на публичных списках обложка должна приходить через `select_related("cover_image")`;
+   - на главной пул обложек должен грузиться одним запросом и дальше выбираться из памяти;
+   - `assign_cover_image()` не должен вызываться во время render публичных страниц;
+   - если массовая публикация прогнозов тормозит, добавить кеш активных cover ids по ключу `cover_type + placement + sport_id`.
+2. Найти все скрытые запросы в шаблонах и templatetags:
+   - `coupon.likes.count`
+   - `coupon.favorites.count`
+   - `comment.reactions.count`
+   - `prediction.predictions.count`
+   - доступ к `author.analyst_profile` без `select_related`
+   - доступ к `match.sport`, `match.league`, teams без `select_related`.
+3. Проверить индексы:
+   - `PredictionCoupon(published_status, audience, published_at/created_at)`
+   - `PredictionCoupon(author, published_status, audience)`
+   - `Prediction(coupon, match)`
+   - `PredictionLike(prediction, user)`
+   - `PredictionFavorite(prediction, user)`
+   - `Comment(content_type, object_id, status, parent, created_at)`
+   - `CommentReaction(comment, user)`
+   - `PredictionMetrics(coupon)` и `CommentMetrics(comment)`, если CommentMetrics добавлен.
+4. Проверить, что `Paginator` не делает тяжелый `COUNT()` поверх queryset с `annotate/prefetch/subquery`:
+   - для `/feed/` использовать уже посчитанный cached count;
+   - для `/predictions/` по возможности использовать cached count из metadata;
+   - для страниц с фильтрами не считать count повторно в нескольких местах.
+5. После всех правок сделать контрольный замер SQL по целевым URL:
+   - записать SQL count до/после;
+   - записать total SQL time;
+   - отдельно проверить первый заход после очистки кеша и повторный заход с теплым кешем.
+
+### Ожидаемый результат
+
+После шага 6 не должно остаться скрытых N+1 в карточках, templatetags и обложках. Все тяжелые counts должны либо идти из готовых metrics-таблиц, либо кешироваться коротким TTL, либо выполняться один раз на страницу.
