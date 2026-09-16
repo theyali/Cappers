@@ -13,6 +13,7 @@ from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     SORT_OPTIONS,
     _apply_position_filters,
+    _combined_coefficient_expression,
     _decorate_predictions,
     _filter_options,
     _following_ids,
@@ -108,6 +109,23 @@ def _favorites_sport_tabs(request, favorite_positions, active_sport):
     return tabs
 
 
+def _favorites_meta_queryset(user):
+    return (
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            audience=PredictionCoupon.Audience.FREE,
+            favorites__user=user,
+        )
+        .annotate(combined_coefficient=_combined_coefficient_expression())
+        .distinct()
+    )
+
+
+def _favorites_status_count(counts, active_status):
+    key = "total" if active_status == "all" else active_status
+    return int(counts.get(key, 0) or 0)
+
+
 @login_required
 @ensure_csrf_cookie
 def favorites(request):
@@ -141,7 +159,8 @@ def favorites(request):
         .filter(favorites__user=request.user)
         .distinct()
     )
-    total_predictions = base_queryset.count()
+    meta_base_queryset = _favorites_meta_queryset(request.user)
+    total_predictions = meta_base_queryset.count()
 
     filtered = _apply_position_filters(
         base_queryset,
@@ -150,14 +169,24 @@ def favorites(request):
         only_live=only_live,
         only_today=only_today,
     )
+    meta_filtered = _apply_position_filters(
+        meta_base_queryset,
+        selected_sport=selected_sport,
+        selected_league=selected_league,
+        only_live=only_live,
+        only_today=only_today,
+    )
     if selected_capper:
         filtered = filtered.filter(author__username=selected_capper)
+        meta_filtered = meta_filtered.filter(author__username=selected_capper)
     if coefficient_min is not None:
         filtered = filtered.filter(combined_coefficient__gte=coefficient_min)
+        meta_filtered = meta_filtered.filter(combined_coefficient__gte=coefficient_min)
     if coefficient_max is not None:
         filtered = filtered.filter(combined_coefficient__lte=coefficient_max)
+        meta_filtered = meta_filtered.filter(combined_coefficient__lte=coefficient_max)
 
-    counts = filtered.aggregate(
+    counts = meta_filtered.aggregate(
         total=Count("id", distinct=True),
         pending=Count(
             "id",
@@ -211,6 +240,8 @@ def favorites(request):
 
     following_ids = _following_ids(request.user)
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
+    # The exact filtered count is already available from the lightweight metadata query.
+    paginator.__dict__["count"] = _favorites_status_count(counts, active_status)
     page_obj = paginator.get_page(request.GET.get("page"))
     page_obj.object_list = _decorate_predictions(
         request,
