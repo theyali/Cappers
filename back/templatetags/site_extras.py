@@ -312,12 +312,6 @@ def latest_match_predictions(limit=5):
     return {"latest_match_predictions": items}
 
 
-@register.inclusion_tag("front/includes/_vip_experts_sidebar.html")
-def vip_experts_sidebar(limit=5):
-    data = build_vip_cappers_data(limit=limit)
-    return {"vip_experts": data["vip_profiles"]}
-
-
 @register.inclusion_tag("front/banners/vip_cappers.html")
 def vip_cappers_banner(limit=6):
     return build_vip_cappers_data(limit=limit)
