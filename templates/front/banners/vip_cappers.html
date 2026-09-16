@@ -1,1 +1,153 @@
-{% include "front/includes/_vip_experts_sidebar.html" with vip_experts=vip_profiles only %}
+{% if vip_main %}
+<section class="vip-cappers-banner" aria-label="VIP капперы">
+    <div class="vip-cappers-banner__panel">
+        <div class="vip-cappers-banner__head">
+            <a class="vip-cappers-banner__head-link" href="{{ vip_main.profile_url }}">
+                <span class="vip-cappers-banner__head-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M3 18.5L4.7 8.6C4.77 8.19 5.25 8.03 5.54 8.33L9.14 12.01C9.41 12.29 9.87 12.22 10.05 11.88L11.66 8.77C11.82 8.46 12.18 8.46 12.34 8.77L13.95 11.88C14.13 12.22 14.59 12.29 14.86 12.01L18.46 8.33C18.75 8.03 19.23 8.19 19.3 8.6L21 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4.5 20.5H19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <circle cx="6" cy="5" r="1.5" fill="currentColor"/>
+                        <circle cx="12" cy="3.5" r="1.5" fill="currentColor"/>
+                        <circle cx="18" cy="5" r="1.5" fill="currentColor"/>
+                    </svg>
+                </span>
+
+                <span class="vip-cappers-banner__head-copy">
+                    <strong class="vip-cappers-banner__title">VIP Капперы</strong>
+                    <span class="vip-cappers-banner__subtitle">Проверенные эксперты недели</span>
+                </span>
+
+                <span class="vip-cappers-banner__head-arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </a>
+        </div>
+
+        <div class="vip-cappers-banner__hero">
+            <a class="vip-cappers-banner__hero-card" href="{{ vip_main.profile_url }}">
+                <div class="vip-cappers-banner__hero-main">
+                    <span class="vip-cappers-banner__week-badge">ЭКСПЕРТ НЕДЕЛИ</span>
+
+                    <div class="vip-cappers-banner__hero-name-row">
+                        <strong class="vip-cappers-banner__hero-name">{{ vip_main.display_name }}</strong>
+
+                        {% if vip_main.verified %}
+                            <span class="capper-verified-badge vip-cappers-banner__verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                <svg viewBox="0 0 16 16" aria-hidden="true">
+                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                                </svg>
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="vip-cappers-banner__hero-meta">
+                        {{ vip_main.main_sport_category }}
+                    </div>
+
+                    <div class="vip-cappers-banner__hero-stats">
+                        <div class="vip-cappers-banner__hero-stat">
+                            <strong>{{ vip_main.success_rate|floatformat:0 }}%</strong>
+                            <span>Успешность</span>
+                        </div>
+
+                        <span class="vip-cappers-banner__hero-divider" aria-hidden="true"></span>
+
+                        <div class="vip-cappers-banner__hero-stat">
+                            <strong>{{ vip_main.followers_count }}</strong>
+                            <span>Подписчики</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vip-cappers-banner__hero-side">
+                    <span class="vip-cappers-banner__hero-avatar" {% if vip_main.avatar %}data-skeleton-image{% endif %}>
+                        {% if vip_main.avatar %}
+                            <img src="{{ vip_main.avatar.url }}" width="220" height="220" alt="{{ vip_main.display_name }}" loading="lazy">
+                        {% else %}
+                            <span class="vip-cappers-banner__hero-avatar-fallback">
+                                {{ vip_main.display_name|slice:":2"|upper }}
+                            </span>
+                        {% endif %}
+                    </span>
+                </div>
+            </a>
+
+            <div class="vip-cappers-banner__hero-actions">
+                <a class="vip-cappers-banner__subscribe" href="{% url 'cabinet:toggle_follow' vip_main.user.id %}">
+                    Подписаться
+                </a>
+            </div>
+        </div>
+
+        {% if vip_list %}
+            <div class="vip-cappers-banner__list-box">
+                <div class="vip-cappers-banner__list-head">
+                    <strong>Рейтинг недели</strong>
+                    <span class="vip-cappers-banner__info" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M12 10V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="12" cy="7.2" r="1" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </div>
+
+                <div class="vip-cappers-banner__list">
+                    {% for item in vip_list %}
+                        <a class="vip-cappers-banner__row" href="{{ item.profile_url }}">
+                            <span class="vip-cappers-banner__row-rank vip-cappers-banner__row-rank--{{ forloop.counter }}">
+                                {{ forloop.counter }}
+                            </span>
+
+                            <span class="vip-cappers-banner__row-avatar" {% if item.avatar %}data-skeleton-image{% endif %}>
+                                {% if item.avatar %}
+                                    <img src="{{ item.avatar.url }}" width="56" height="56" alt="{{ item.display_name }}" loading="lazy">
+                                {% else %}
+                                    <span class="vip-cappers-banner__row-avatar-fallback">
+                                        {{ item.display_name|slice:":2"|upper }}
+                                    </span>
+                                {% endif %}
+                            </span>
+
+                            <span class="vip-cappers-banner__row-copy">
+                                <span class="vip-cappers-banner__row-name-line">
+                                    <strong>{{ item.display_name }}</strong>
+                                    {% if item.verified %}
+                                        <span class="capper-verified-badge vip-cappers-banner__verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                            <svg viewBox="0 0 16 16" aria-hidden="true">
+                                                <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                                                <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                                            </svg>
+                                        </span>
+                                    {% endif %}
+                                </span>
+                                <span class="vip-cappers-banner__row-subscribers">
+                                    {{ item.followers_count }} подписчиков
+                                </span>
+                            </span>
+
+                            <span class="vip-cappers-banner__row-metric">
+                                <strong>{{ item.success_rate|floatformat:0 }}%</strong>
+                                <span>Успешность</span>
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <a class="vip-cappers-banner__footer-link" href="{{ vip_main.profile_url }}">
+                    <span>Все VIP капперы</span>
+                    <span class="vip-cappers-banner__footer-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
