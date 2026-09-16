@@ -4,10 +4,12 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
-from cabinet.comments.models import Comment
+from cabinet.comments.models import Comment, CommentReaction
 from cabinet.comments.services.anti_spam import check_comment_spam
 from cabinet.comments.services.moderation import validate_comment_text
 from cabinet.paid_predictions import user_can_view_paid_predictions
@@ -42,13 +44,12 @@ def get_accessible_prediction(user: Any, prediction_id: int) -> PredictionCoupon
 def prediction_comments_queryset(prediction: PredictionCoupon):
     content_type = _prediction_content_type()
     return (
-        Comment.objects.filter(
+        _comment_queryset_base().filter(
             content_type=content_type,
             object_id=prediction.pk,
             status=Comment.Status.PUBLISHED,
             parent__isnull=True,
         )
-        .select_related("user")
         .order_by("created_at", "id")
     )
 
@@ -57,11 +58,88 @@ def prediction_comments_count(prediction: PredictionCoupon) -> int:
     return get_prediction_metrics(prediction.pk).comments_count
 
 
+def prediction_comments_total_count(prediction: PredictionCoupon) -> int:
+    return Comment.objects.filter(
+        content_type=_prediction_content_type(),
+        object_id=prediction.pk,
+        status=Comment.Status.PUBLISHED,
+    ).filter(
+        Q(parent__isnull=True) | Q(parent__status=Comment.Status.PUBLISHED)
+    ).count()
+
+
+def prediction_comment_target_counts(comment: Comment) -> dict[str, int | None]:
+    prediction_content_type = _prediction_content_type()
+    if comment.content_type_id != prediction_content_type.pk:
+        return {"comments_count": None, "root_comments_count": None}
+    total_count = Comment.objects.filter(
+        content_type=prediction_content_type,
+        object_id=comment.object_id,
+        status=Comment.Status.PUBLISHED,
+    ).filter(
+        Q(parent__isnull=True) | Q(parent__status=Comment.Status.PUBLISHED)
+    ).count()
+    return {
+        "comments_count": total_count,
+        "root_comments_count": get_prediction_metrics(comment.object_id).comments_count,
+    }
+
+
+def comment_replies_queryset(parent: Comment):
+    return (
+        _comment_queryset_base().filter(
+            content_type_id=parent.content_type_id,
+            object_id=parent.object_id,
+            status=Comment.Status.PUBLISHED,
+            parent=parent,
+        )
+        .order_by("created_at", "id")
+    )
+
+
+def comment_replies_count(parent: Comment) -> int:
+    return Comment.objects.filter(
+        content_type_id=parent.content_type_id,
+        object_id=parent.object_id,
+        status=Comment.Status.PUBLISHED,
+        parent=parent,
+    ).count()
+
+
+def attach_comment_replies(
+    comments,
+    *,
+    limit: int,
+) -> None:
+    for comment in comments:
+        replies_count = comment_replies_count(comment)
+        replies = list(comment_replies_queryset(comment)[:limit])
+        comment.published_replies = replies
+        comment.replies_total_count = replies_count
+        comment.replies_count = replies_count
+        if replies_count <= len(replies):
+            comment.replies_next_page = None
+        else:
+            comment.replies_next_page = 2 if limit else 1
+
+
+def get_accessible_comment_parent(user: Any, comment_id: int) -> Comment:
+    comment = get_object_or_404(
+        Comment.objects.select_related("content_type", "user"),
+        pk=comment_id,
+        status=Comment.Status.PUBLISHED,
+        parent__isnull=True,
+    )
+    _ensure_comment_target_access(comment, user)
+    return comment
+
+
 def create_prediction_comment(
     *,
     prediction: PredictionCoupon,
     user: Any,
     text: str,
+    parent_id: int | None = None,
 ) -> Comment:
     moderation = validate_comment_text(text)
     if not moderation.allowed:
@@ -73,6 +151,7 @@ def create_prediction_comment(
 
     with transaction.atomic():
         locked_user = get_user_model().objects.select_for_update().get(pk=user.pk)
+        parent = _resolve_reply_parent(prediction=prediction, parent_id=parent_id)
         anti_spam = check_comment_spam(
             moderation.normalized_text,
             locked_user,
@@ -91,6 +170,7 @@ def create_prediction_comment(
             object_id=prediction.pk,
             text=moderation.normalized_text,
             status=Comment.Status.PUBLISHED,
+            parent=parent,
         )
 
 
@@ -130,6 +210,67 @@ def can_delete_comment(comment: Comment, user: Any) -> bool:
     )
 
 
+def set_comment_reaction(*, comment_id: int, user: Any, kind: str) -> Comment:
+    if not getattr(user, "is_authenticated", False):
+        raise CommentServiceError(
+            code="authentication_required",
+            public_message="Для реакции на комментарий нужно войти в аккаунт.",
+            http_status=401,
+        )
+
+    comment = get_object_or_404(
+        Comment.objects.select_related("content_type", "user"),
+        pk=comment_id,
+        status=Comment.Status.PUBLISHED,
+    )
+    _ensure_comment_target_access(comment, user)
+    normalized_kind = (kind or "").strip().lower()
+    if normalized_kind not in {"", CommentReaction.Kind.LIKE, CommentReaction.Kind.DISLIKE}:
+        raise CommentServiceError(
+            code="invalid_reaction",
+            public_message="Некорректная реакция на комментарий.",
+            http_status=400,
+        )
+
+    with transaction.atomic():
+        existing = CommentReaction.objects.select_for_update().filter(
+            comment=comment,
+            user=user,
+        ).first()
+        if not normalized_kind or (existing and existing.kind == normalized_kind):
+            if existing:
+                existing.delete()
+        elif existing:
+            existing.kind = normalized_kind
+            existing.save(update_fields=("kind",))
+        else:
+            CommentReaction.objects.create(
+                comment=comment,
+                user=user,
+                kind=normalized_kind,
+            )
+
+    refreshed = (
+        Comment.objects.filter(pk=comment.pk)
+        .select_related("user")
+        .annotate(
+            likes_count=Count(
+                "reactions",
+                filter=Q(reactions__kind=CommentReaction.Kind.LIKE),
+                distinct=True,
+            ),
+            dislikes_count=Count(
+                "reactions",
+                filter=Q(reactions__kind=CommentReaction.Kind.DISLIKE),
+                distinct=True,
+            ),
+        )
+        .get()
+    )
+    refreshed.viewer_reaction = _viewer_reaction(refreshed, user)
+    return refreshed
+
+
 def serialize_comment(comment: Comment, *, viewer: Any = None) -> dict:
     user = comment.user
     display_name = (user.get_full_name() or "").strip() or user.username
@@ -146,13 +287,32 @@ def serialize_comment(comment: Comment, *, viewer: Any = None) -> dict:
         "status": comment.status,
         "created_at": comment.created_at.isoformat(),
         "updated_at": comment.updated_at.isoformat(),
+        "parent_id": comment.parent_id,
         "user": {
             "id": user.pk,
             "username": user.username,
             "display_name": display_name,
             "avatar_url": avatar_url,
+            "profile_url": reverse("front:expert_profile", kwargs={"username": user.username}),
         },
         "can_delete": can_delete_comment(comment, viewer),
+        "likes_count": _reaction_count(comment, CommentReaction.Kind.LIKE),
+        "dislikes_count": _reaction_count(comment, CommentReaction.Kind.DISLIKE),
+        "viewer_reaction": _viewer_reaction(comment, viewer),
+        "replies_count": int(
+            getattr(
+                comment,
+                "replies_total_count",
+                len(getattr(comment, "published_replies", []) or []),
+            )
+            or 0
+        ),
+        "replies_next_page": getattr(comment, "replies_next_page", None),
+        "replies_has_next": bool(getattr(comment, "replies_next_page", None)),
+        "replies": [
+            serialize_comment(reply, viewer=viewer)
+            for reply in getattr(comment, "published_replies", []) or []
+        ],
     }
 
 
@@ -163,6 +323,47 @@ def _prediction_content_type() -> ContentType:
     )
 
 
+def _comment_queryset_base():
+    return (
+        Comment.objects.select_related("user")
+        .annotate(
+            likes_count=Count(
+                "reactions",
+                filter=Q(reactions__kind=CommentReaction.Kind.LIKE),
+                distinct=True,
+            ),
+            dislikes_count=Count(
+                "reactions",
+                filter=Q(reactions__kind=CommentReaction.Kind.DISLIKE),
+                distinct=True,
+            ),
+        )
+    )
+
+
+def _resolve_reply_parent(
+    *,
+    prediction: PredictionCoupon,
+    parent_id: int | None,
+) -> Comment | None:
+    if not parent_id:
+        return None
+    parent = get_object_or_404(
+        Comment.objects.select_for_update(),
+        pk=parent_id,
+        content_type=_prediction_content_type(),
+        object_id=prediction.pk,
+        status=Comment.Status.PUBLISHED,
+    )
+    if parent.parent_id:
+        raise CommentServiceError(
+            code="nested_reply_not_allowed",
+            public_message="Можно отвечать только на основной комментарий.",
+            http_status=422,
+        )
+    return parent
+
+
 def _comments_count_for_comment_target(comment: Comment) -> int | None:
     prediction_content_type = _prediction_content_type()
     if comment.content_type_id != prediction_content_type.pk:
@@ -170,13 +371,58 @@ def _comments_count_for_comment_target(comment: Comment) -> int | None:
     return get_prediction_metrics(comment.object_id).comments_count
 
 
+def _ensure_comment_target_access(comment: Comment, user: Any) -> None:
+    prediction_content_type = _prediction_content_type()
+    if comment.content_type_id != prediction_content_type.pk:
+        return
+    prediction = get_object_or_404(
+        PredictionCoupon.objects.select_related("author"),
+        pk=comment.object_id,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    )
+    if (
+        prediction.audience == PredictionCoupon.Audience.PAID
+        and not user_can_view_paid_predictions(user, prediction.author)
+    ):
+        raise Http404("Комментарий не найден.")
+
+
+def _reaction_count(comment: Comment, kind: str) -> int:
+    annotated_name = "likes_count" if kind == CommentReaction.Kind.LIKE else "dislikes_count"
+    annotated = getattr(comment, annotated_name, None)
+    if annotated is not None:
+        return int(annotated or 0)
+    return CommentReaction.objects.filter(comment=comment, kind=kind).count()
+
+
+def _viewer_reaction(comment: Comment, viewer: Any) -> str:
+    if not getattr(viewer, "is_authenticated", False):
+        return ""
+    annotated = getattr(comment, "viewer_reaction", None)
+    if annotated is not None:
+        return annotated
+    return (
+        CommentReaction.objects.filter(comment=comment, user=viewer)
+        .values_list("kind", flat=True)
+        .first()
+        or ""
+    )
+
+
 __all__ = [
     "CommentServiceError",
     "can_delete_comment",
+    "attach_comment_replies",
+    "comment_replies_count",
+    "comment_replies_queryset",
     "create_prediction_comment",
+    "get_accessible_comment_parent",
     "get_accessible_prediction",
     "prediction_comments_count",
+    "prediction_comment_target_counts",
+    "prediction_comments_total_count",
     "prediction_comments_queryset",
     "serialize_comment",
+    "set_comment_reaction",
     "soft_delete_comment",
 ]

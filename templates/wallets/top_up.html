@@ -1,47 +1,49 @@
 {% extends "base.html" %}
-{% load money %}
+{% load money static %}
 
 {% block title %}Пополнение коинов — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="wallet-page">
-    <div class="wallet-hero">
-        <div class="wallet-hero-copy">
-            <p class="wallet-kicker">Коины</p>
-            <h1>Пополнение коинов</h1>
-            <p>Коины — внутренняя валюта сайта. ₽ используются только при покупке пакета и в реальном балансе.</p>
-        </div>
-        <div class="wallet-balance-card">
-            <span>Баланс коинов</span>
-            <strong class="coin-amount">
-                {% include "front/includes/_coin_icon.html" %}
-                <span>{{ coin_balance_display }}</span>
-            </strong>
-            {% if real_balance %}
-            <span>Реальный баланс</span>
-            <strong>{{ real_balance_display }} ₽</strong>
-            {% endif %}
-        </div>
+<section class="wallet-page wallet-topup-page container">
+    <div class="wallet-hero" aria-labelledby="wallet-title">
+        <h1 id="wallet-title">Коины и пакеты</h1>
+        <p>Пополни баланс коинов и используй их для покупки прогнозов, подписок и участия в турнирах.</p>
     </div>
 
     <div class="wallet-methods" aria-label="Пакеты коинов">
         {% for package in coin_packages %}
-        <article class="wallet-method{% if forloop.first %} is-active{% endif %}">
+        <article class="wallet-method{% if forloop.counter == 3 %} is-featured{% endif %}">
+            {% if forloop.counter == 3 %}
+                <span class="wallet-method-badge">Лучший выбор</span>
+            {% endif %}
             <div class="wallet-method-body">
-                <div class="wallet-method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8M12 8v8"></path></svg>
-                </div>
                 <div class="wallet-method-copy">
                     <h2>{{ package.title }}</h2>
-                    <p><span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<strong>{{ package.total_coins }}</strong></span> coins за <strong>{{ package.price_rub|money }} ₽</strong>.</p>
-                    <p>{% if package.bonus_coins %}{{ package.coins }} coins + {{ package.bonus_coins }} бонусом · {% endif %}примерно 1 coin = {{ package|coin_package_rate }} ₽.</p>
+                    {% if forloop.first %}
+                        <p>Для старта</p>
+                    {% elif forloop.counter == 2 %}
+                        <p>Оптимальный выбор</p>
+                    {% elif forloop.counter == 3 %}
+                        <p>Больше возможностей</p>
+                    {% else %}
+                        <p>Максимальная выгода</p>
+                    {% endif %}
+                </div>
+                <div class="wallet-coin-stack" aria-hidden="true">
+                    <img src="{% static 'front/img/coins.png' %}" alt="">
+                </div>
+                <div class="wallet-method-copy">
+                    <p class="wallet-method-coins"><strong>{{ package.coins|coins }}</strong><span>коинов</span></p>
+                    <p class="wallet-method-bonus"><strong>+ {{ package.bonus_coins|coins }} </strong><span>бонусных коинов</span></p>
+                    <p class="wallet-method-price">{{ package.price_rub|money }} ₽</p>
+                    <p class="wallet-method-rate"><strong>≈ {{ package|coin_package_rate }} ₽</strong><span>за 1 коин</span></p>
                 </div>
             </div>
             <form class="wallet-method-action" method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
                 <input type="hidden" name="package_id" value="{{ package.id }}">
-                <button type="submit">Выбрать · {{ package.price_rub|money }} ₽</button>
+                <button type="submit">Выбрать пакет</button>
             </form>
         </article>
         {% empty %}
@@ -54,27 +56,46 @@
             </div>
         </article>
         {% endfor %}
+    </div>
 
+    <div class="wallet-summary-grid">
+        <article class="wallet-balance-card wallet-balance-image-card" aria-label="Ваш баланс коинов">
+            <img src="{% static 'front/img/balance_bg.png' %}" alt="Ваш баланс коинов">
+        </article>
         {% if real_balance %}
-        <article class="wallet-method">
-            <div class="wallet-method-body">
-                <div class="wallet-method-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
-                </div>
-                <div class="wallet-method-copy">
-                    <h2>Запросить вывод реального баланса</h2>
-                    <p>Ожидает вывода: {{ pending_withdrawal_display }} ₽. Новая заявка попадёт администратору.</p>
-                </div>
+        <article class="wallet-withdraw-card">
+            <span class="wallet-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M19 7H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"></path><path d="M16 7V5a2 2 0 0 0-2-2H6"></path><path d="M17 13h.01"></path></svg>
+            </span>
+            <div class="wallet-withdraw-copy">
+                <h2>Запросить вывод реального баланса</h2>
+                <p>Обменяйте выигранные средства на реальные деньги. Заявка будет обработана администратором.</p>
+                <small>Ожидает вывода: {{ pending_withdrawal_display }} ₽</small>
             </div>
-            <form class="wallet-method-action" method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
+            <form class="wallet-withdraw-form" method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
                 <input type="hidden" name="action" value="withdraw">
                 <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" placeholder="Сумма ₽">
-                <button type="submit">Вывести</button>
+                <button type="submit">Отправить заявку</button>
             </form>
         </article>
         {% endif %}
+    </div>
+
+    <div class="wallet-benefits" aria-label="Преимущества">
+        <div>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.2 2.7 8.1 7 10 4.3-1.9 7-5.8 7-10V6l-7-3Z"></path><path d="m9 12 2 2 4-5"></path></svg>
+            <p><strong>Безопасные платежи</strong><span>Ваши данные под защитой</span></p>
+        </div>
+        <div>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z"></path></svg>
+            <p><strong>Моментальное зачисление</strong><span>Коины придут сразу после оплаты</span></p>
+        </div>
+        <div>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
+            <p><strong>Выгодные пакеты</strong><span>Больше коинов — меньше цена</span></p>
+        </div>
     </div>
 </section>
 {% endblock %}

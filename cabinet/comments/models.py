@@ -65,3 +65,47 @@ class Comment(models.Model):
 
     def __str__(self) -> str:
         return f"Комментарий #{self.pk or 'new'} пользователя {self.user_id}"
+
+
+class CommentReaction(models.Model):
+    class Kind(models.TextChoices):
+        LIKE = "like", "Лайк"
+        DISLIKE = "dislike", "Дизлайк"
+
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name="reactions",
+        verbose_name="Комментарий",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="comment_reactions",
+        verbose_name="Пользователь",
+    )
+    kind = models.CharField(
+        max_length=8,
+        choices=Kind.choices,
+        verbose_name="Реакция",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создана")
+
+    class Meta:
+        verbose_name = "Реакция на комментарий"
+        verbose_name_plural = "Реакции на комментарии"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("comment", "user"),
+                name="unique_comment_reaction_user",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("comment", "kind"),
+                name="comment_reaction_kind_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_kind_display()} к комментарию #{self.comment_id}"

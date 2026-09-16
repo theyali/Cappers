@@ -178,6 +178,9 @@ body {
     margin: 0;
     color: var(--text);
     background:#131313;
+    background:
+        radial-gradient(circle at 50% 4%, rgba(255, 255, 255, .06), transparent 28%),
+        linear-gradient(180deg, #151516 0%, #101011 42%, #0d0e0e 100%);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 15px;
     font-weight: 500;
@@ -560,99 +563,6 @@ mark{
     white-space: nowrap;
 }
 
-.wallet-methods {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-}
-
-.wallet-method {
-    min-height: 176px;
-    display: grid;
-    grid-template-rows: 1fr auto;
-    gap: 16px;
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, .08);
-    border-radius: 16px;
-    background: var(--panel);
-}
-
-.wallet-method.is-active {
-    border-color: rgba(255, 238, 0, .26);
-}
-
-.wallet-method-body {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 46px minmax(0, 1fr);
-    align-items: start;
-    gap: 16px;
-}
-
-.wallet-method-icon {
-    width: 46px;
-    height: 46px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    color: var(--yellow);
-    background: #2a2a2d;
-}
-
-.wallet-method-icon svg {
-    width: 23px;
-    height: 23px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.wallet-method-copy {
-    min-width: 0;
-    display: grid;
-    gap: 5px;
-}
-
-.wallet-method-copy h2,
-.wallet-method-copy p {
-    margin: 0;
-}
-
-.wallet-method-copy h2 {
-    color: var(--text);
-    font-size: 18px;
-    line-height: 1.15;
-}
-
-.wallet-method-copy p {
-    color: var(--muted);
-    font-size: 13px;
-    line-height: 1.35;
-}
-
-.wallet-method form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-
-.wallet-method-input {
-    width: 100%;
-    min-height: 42px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 12px;
-    outline: 0;
-    color: var(--text);
-    background: #171718;
-    font: inherit;
-    font-size: 13px;
-}
-
 .wallet-form-card {
     display: grid;
     gap: 22px;
@@ -694,33 +604,387 @@ mark{
     background: rgba(255, 255, 255, .08);
 }
 
-.wallet-method button,
-.wallet-method-status {
-    min-height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    border: 0;
-    border-radius: 12px;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 900;
+.wallet-topup-page {
+    margin: 0 auto;
+    gap: 26px;
+    color: var(--text);
+
+}
+
+.wallet-topup-page .wallet-hero {
+    min-height: 0;
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: center;
+    margin:auto;
+}
+
+.wallet-topup-page .wallet-hero h1,
+.wallet-topup-page .wallet-hero p {
+    margin: 0;
+}
+
+.wallet-topup-page .wallet-hero h1 {
+    max-width: 720px;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.wallet-topup-page .wallet-hero p {
+    max-width: 760px;
+    color: #9a9ca5;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+
+.wallet-topup-page .wallet-methods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.wallet-topup-page .wallet-method {
+    position: relative;
+    display: grid;
+    align-content: space-between;
+    gap: 18px;
+    padding: 28px 26px 22px;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 24%, rgba(255, 255, 255, .05), transparent 36%),
+        #171719;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+.wallet-topup-page .wallet-method.is-featured {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 1px rgba(0, 100, 255, .72), inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+.wallet-topup-page .wallet-method-badge {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 8px 22px;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
-.wallet-method-action {
-    align-self: end;
+.wallet-topup-page .wallet-method-body {
+    display: grid;
+    gap: 22px;
 }
 
-.wallet-method button {
+.wallet-topup-page .wallet-method-copy {
+    min-width: 0;
+    display: grid;
+    justify-items: start;
+    gap: 9px;
+}
+
+.wallet-topup-page .wallet-method-copy h2,
+.wallet-topup-page .wallet-method-copy p {
+    margin: 0;
+}
+
+.wallet-topup-page .wallet-method-copy h2 {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.wallet-topup-page .wallet-method-copy p {
+    color: #9799a2;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.wallet-topup-page .wallet-coin-stack {
+    width: min(48%, 120px);
+    justify-self: center;
+    margin: 8px 0 0;
+}
+
+.wallet-topup-page .wallet-coin-stack img {
+    width: 100%;
+    display: block;
+}
+
+
+.wallet-topup-page .wallet-method-coins,
+.wallet-topup-page .wallet-method-bonus,
+.wallet-topup-page .wallet-method-price,
+.wallet-topup-page .wallet-method-rate {
+    justify-self: stretch;
+    text-align: center;
+}
+
+.wallet-topup-page .wallet-method-coins {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 12px;
+    color: #9799a2;
+}
+
+.wallet-topup-page .wallet-method-coins strong,
+.wallet-topup-page .wallet-balance-value {
+    color: var(--yellow);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.wallet-topup-page .wallet-method-bonus {
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, .11);
+}
+
+.wallet-topup-page .wallet-method-bonus strong,
+.wallet-topup-page .wallet-method-price,
+.wallet-topup-page .wallet-method-rate strong {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.wallet-topup-page .wallet-method-bonus span,
+.wallet-topup-page .wallet-method-rate span,
+.wallet-topup-page .wallet-balance-value span {
+    color: #8d8f98;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.wallet-topup-page .wallet-method-rate {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .06);
+}
+
+.wallet-topup-page .wallet-method-action,
+.wallet-topup-page .wallet-withdraw-form {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+.wallet-topup-page .wallet-method button,
+.wallet-topup-page .wallet-withdraw-form button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 11px;
     color: var(--ink);
     background: var(--yellow);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.15;
     cursor: pointer;
 }
 
-.wallet-method.is-disabled {
+.wallet-topup-page .wallet-method.is-featured button {
+    color: #fff;
+    background: var(--blue);
+}
+
+.wallet-topup-page .wallet-summary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, .98fr);
+    gap: 18px;
+}
+
+.wallet-topup-page .wallet-balance-card,
+.wallet-topup-page .wallet-withdraw-card {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 16% 0, rgba(255, 255, 255, .05), transparent 30%),
+        #1a1a1d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+.wallet-topup-page .wallet-balance-image-card {
+    display: block;
+    padding: 0;
+    border: 0;
+    border-radius: 14px;
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.wallet-topup-page .wallet-balance-image-card img {
+    width: 43%;
+    display: block;
+    border-radius: inherit;
+    margin: auto;
+}
+
+.wallet-topup-page .wallet-card-icon {
+    width: 64px;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: var(--yellow);
+    background: #27282b;
+}
+
+.wallet-topup-page .wallet-card-icon .coin-icon,
+.wallet-topup-page .wallet-card-icon svg {
+    width: 32px;
+    aspect-ratio: 1;
+}
+
+.wallet-topup-page .wallet-card-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wallet-topup-page .wallet-balance-card h2,
+.wallet-topup-page .wallet-withdraw-card h2,
+.wallet-topup-page .wallet-balance-card p,
+.wallet-topup-page .wallet-withdraw-card p,
+.wallet-topup-page .wallet-withdraw-card small {
+    margin: 0;
+}
+
+.wallet-topup-page .wallet-balance-card h2,
+.wallet-topup-page .wallet-withdraw-card h2 {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.wallet-topup-page .wallet-balance-card > div,
+.wallet-topup-page .wallet-withdraw-copy {
+    display: grid;
+    gap: 10px;
+}
+
+.wallet-topup-page .wallet-balance-card p,
+.wallet-topup-page .wallet-withdraw-card p,
+.wallet-topup-page .wallet-withdraw-card small {
+    color: #90929a;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.wallet-topup-page .wallet-balance-card span {
+    text-transform: none;
+}
+
+.wallet-topup-page .wallet-withdraw-form {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+}
+
+.wallet-topup-page .wallet-method-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 11px;
+    outline: 0;
+    color: var(--text);
+    background: #111113;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.wallet-topup-page .wallet-method-input::placeholder {
+    color: #777981;
+}
+
+.wallet-topup-page .wallet-withdraw-form button {
+    width: auto;
+    white-space: nowrap;
+}
+
+.wallet-topup-page .wallet-method.is-disabled {
     opacity: .68;
+}
+
+.wallet-topup-page .wallet-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    padding: 8px 32px 0;
+}
+
+.wallet-topup-page .wallet-benefits div {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+}
+
+.wallet-topup-page .wallet-benefits svg {
+    width: 32px;
+    aspect-ratio: 1;
+    color: #b3b5bd;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wallet-topup-page .wallet-benefits p {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+}
+
+.wallet-topup-page .wallet-benefits strong {
+    color: #d7d8dd;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.wallet-topup-page .wallet-benefits span {
+    color: #8d8f98;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .paid-checkout-page {
@@ -847,35 +1111,44 @@ mark{
     background: #2a2a2d;
 }
 
+@media (max-width: 1080px) {
+    .wallet-topup-page .wallet-methods {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wallet-topup-page .wallet-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 720px) {
-    .wallet-hero {
-        align-items: stretch;
-        flex-direction: column;
+    .wallet-topup-page {
+        padding-inline: 16px;
     }
 
-    .wallet-balance-card {
-        min-width: 0;
-    }
-
-    .wallet-methods {
+    .wallet-topup-page .wallet-methods,
+    .wallet-topup-page .wallet-benefits {
         grid-template-columns: 1fr;
     }
 
-    .wallet-method form,
-    .wallet-method-status {
-        width: 100%;
+    .wallet-topup-page .wallet-method,
+    .wallet-topup-page .wallet-balance-card,
+    .wallet-topup-page .wallet-withdraw-card {
+        padding: 22px;
     }
 
-    .wallet-method button,
-    .wallet-method-input,
-    .wallet-method-status {
-        width: 100%;
-    }
-
-    .wallet-method form {
+    .wallet-topup-page .wallet-balance-card,
+    .wallet-topup-page .wallet-withdraw-card,
+    .wallet-topup-page .wallet-withdraw-form {
         grid-template-columns: 1fr;
-        flex-direction: column;
-        align-items: stretch;
+    }
+
+    .wallet-topup-page .wallet-withdraw-form button {
+        width: 100%;
+    }
+
+    .wallet-topup-page .wallet-benefits {
+        padding-inline: 4px;
     }
 }
 
@@ -18990,6 +19263,7 @@ font-size: 14px;
     grid-template-columns: minmax(0, 1fr) max-content;
     align-items: start;
     gap: 10px;
+    height: 65px;
 }
 
 .feed-prediction-event {
@@ -19076,7 +19350,6 @@ font-size: 14px;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    overflow: hidden;
     border-radius: 50%;
     color: var(--ink);
     background: var(--yellow);
@@ -19085,9 +19358,10 @@ font-size: 14px;
 }
 
 .feed-prediction-avatar img {
-    width: 100%;
-    height: 100%;
+    width: inherit;
+    height: inherit;
     object-fit: cover;
+    border-radius: 50%;
 }
 
 .feed-prediction-author-copy {
@@ -34575,10 +34849,10 @@ body.wiki-video-player-open {
 /* Prediction detail comments */
 .prediction-comments {
     display: grid;
-    gap: 22px;
-    padding: 28px;
-    border-radius: 24px;
-    background: var(--panel);
+    gap: 26px;
+    padding: 30px 22px 32px;
+    border-radius: 13px;
+    background: #1f1f2129;
 }
 
 .prediction-comments-head {
@@ -34592,22 +34866,22 @@ body.wiki-video-player-open {
     margin: 0;
     color: var(--text);
     font-family: var(--font-body);
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 34px;
+    font-weight: 900;
     line-height: 1.1;
-    letter-spacing: -.02em;
+    letter-spacing: 0;
 }
 
 .prediction-comments-total {
     display: inline-flex;
     align-items: baseline;
     gap: 5px;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 700;
+    color: #798291;
+    font-size: 16px;
+    font-weight: 500;
     line-height: 1;
-    letter-spacing: .04em;
-    text-transform: uppercase;
+    letter-spacing: 0;
+    text-transform: none;
     white-space: nowrap;
 }
 
@@ -34618,12 +34892,12 @@ body.wiki-video-player-open {
 }
 
 .prediction-comment-form {
-    position: relative;
-    min-height: 56px;
+position: relative;
+    min-height: 66px;
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
-    align-items: center;
-    gap: 14px;
+    grid-template-columns: 50px minmax(0, 1fr);
+    align-items: start;
+    gap: 11px;
 }
 
 .prediction-comment-form label,
@@ -34636,29 +34910,31 @@ body.wiki-video-player-open {
     clip-path: inset(50%);
     white-space: nowrap;
 }
-
 .prediction-comment-form textarea {
     width: 100%;
-    height: 56px;
-    min-height: 56px;
+    height: auto;
+    min-height: auto;
     max-height: 120px;
     resize: none;
-    padding: 17px 68px 17px 18px;
-    border: 0;
-    border-radius: 14px;
+    padding: 13px 67px 11px 18px;
+    border: 1px solid rgba(117, 132, 154, .18);
+    border-radius: 9px;
     outline: 0;
     color: var(--text);
-    background: #29292d;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025);
     font-size: 15px;
-    line-height: 22px;
+    font-weight: 500;
+    line-height: 26px;
 }
 
 .prediction-comment-form textarea::placeholder {
-    color: #8a8a8d;
+    color: #747d8c;
 }
 
 .prediction-comment-form textarea:focus {
-    background: #303034;
+    border-color: rgb(172 172 172 / 42%);
+    background: rgb(32 32 32 / 96%);
 }
 
 .prediction-comment-form textarea:disabled {
@@ -34677,6 +34953,30 @@ body.wiki-video-player-open {
 .prediction-comment-feedback {
     grid-column: 2;
     padding-right: 58px;
+}
+
+.prediction-comment-replying {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.prediction-comment-replying strong {
+    color: var(--text);
+}
+
+.prediction-comment-replying button {
+    border: 0;
+    color: var(--blue);
+    background: transparent;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
 }
 
 .prediction-comment-feedback.is-error,
@@ -34703,16 +35003,17 @@ body.wiki-video-player-open {
 
 .prediction-comment-submit {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 44px;
-    height: 44px;
+    top: 5px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
     display: grid;
     place-items: center;
     padding: 0;
     border-radius: 9px;
     color: #fff;
-    background: var(--blue);
+    background: linear-gradient(180deg, #2474ff, #0b56fa);
+    box-shadow: 0 10px 22px rgba(11, 86, 250, .28);
 }
 
 .prediction-comment-submit svg {
@@ -34727,7 +35028,7 @@ body.wiki-video-player-open {
 
 .prediction-comment-submit:disabled {
     color: #fff;
-    background: var(--blue);
+    background: #1f61de;
     opacity: .62;
     cursor: not-allowed;
 }
@@ -34758,7 +35059,7 @@ body.wiki-video-player-open {
 }
 
 .prediction-comments-list {
-    min-height: 300px;
+    min-height: 0;
     display: grid;
     align-content: start;
 }
@@ -34766,11 +35067,26 @@ body.wiki-video-player-open {
 .prediction-comment {
     position: relative;
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) 32px;
-    column-gap: 14px;
-    row-gap: 7px;
-    padding: 17px 0 21px;
+    grid-template-columns: 64px minmax(0, 1fr) 34px;
+    column-gap: 0px;
+    row-gap: 2px;
+    padding: 22px 0 24px;
     background: transparent;
+}
+
+.prediction-comment.is-new {
+    animation: prediction-comment-in .24s ease-out both;
+}
+
+@keyframes prediction-comment-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .prediction-comment::after {
@@ -34778,9 +35094,9 @@ body.wiki-video-player-open {
     position: absolute;
     right: 0;
     bottom: 0;
-    left: 66px;
+    left: 80px;
     height: 1px;
-    background: rgba(255, 255, 255, .08);
+    background: rgba(255, 255, 255, .075);
 }
 
 .prediction-comment:last-child::after {
@@ -34788,15 +35104,16 @@ body.wiki-video-player-open {
 }
 
 .prediction-comment-avatar {
-    width: 52px;
-    height: 52px;
+    width: 47px;
+    height: 47px;
     display: grid;
     place-items: center;
     overflow: hidden;
     border-radius: 50%;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 13px;
+    border: 1px solid rgba(255, 255, 255, .10);
+    font-size: 15px;
     font-weight: 900;
 }
 
@@ -34813,8 +35130,8 @@ body.wiki-video-player-open {
     align-items: center;
     align-self: start;
     flex-wrap: wrap;
-    gap: 6px 10px;
-    min-height: 26px;
+    gap: 7px 11px;
+    min-height: 30px;
 }
 
 .prediction-comment-meta strong {
@@ -34822,28 +35139,39 @@ body.wiki-video-player-open {
     overflow: hidden;
     color: var(--text);
     font-size: 15px;
-    font-weight: 800;
+    font-weight: 500;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+.prediction-comment-author-link {
+    min-width: 0;
+    display: inline-flex;
+    color: inherit;
+}
+
+.prediction-comment-author-link:hover strong {
+    color: var(--blue);
+}
+
 .prediction-comment-meta time {
-    color: var(--muted);
-    font-size: 13px;
+    color: #747d8c;
+    font-size: 11px;
+    font-weight: 500;
     line-height: 1.25;
     white-space: nowrap;
 }
 
 .prediction-comment-author-badge {
-    min-height: 20px;
+    min-height: 18px;
     display: inline-flex;
     align-items: center;
-    padding: 0 6px;
+    padding: 0 4px;
     border-radius: 5px;
-    color: var(--ink);
-    background: #9aa0a8;
-    font-size: 10px;
+    color: #111820;
+    background: var(--green);
+    font-size: 9px;
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
@@ -34853,19 +35181,144 @@ body.wiki-video-player-open {
     grid-column: 2 / -1;
     margin: 0;
     padding-right: 8px;
-    color: rgba(255, 255, 255, .82);
+    color: rgba(241, 245, 251, .84);
     font-size: 15px;
-    line-height: 1.55;
+    font-weight: 500;
+    line-height: 1.45;
+    margin-top: -15px;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+}
+
+.prediction-comment-actions {
+    grid-column: 2 / -1;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 4px;
+}
+
+.prediction-comment-reaction {
+    min-width: 34px;
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    color: #8a919b;
+    background: transparent;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+
+
+.prediction-comment-reaction svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.prediction-comment-reaction:hover,
+.prediction-comment-reaction.is-active {
+    color: var(--blue);
+}
+
+.prediction-comment-reaction:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.prediction-comment-reply {
+    min-height: 34px;
+    padding: 0 2px;
+    border: 0;
+    color: #8a919b;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.prediction-comment-reply:hover {
+    color: var(--text);
+}
+
+.prediction-comment-replies {
+    grid-column: 2 / -1;
+    display: grid;
+    gap: 0;
+    margin-top: 10px;
+}
+
+.prediction-comment-reply-item {
+    grid-template-columns: 48px minmax(0, 1fr) 28px;
+    column-gap: 12px;
+    padding: 16px 0 0;
+}
+
+.prediction-comment-reply-item::after {
+    display: none;
+}
+
+.prediction-comment-reply-item .prediction-comment-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 12px;
+}
+
+.prediction-comment-reply-item .prediction-comment-meta strong,
+.prediction-comment-reply-item .prediction-comment-text,
+.prediction-comment-reply-item .prediction-comment-reaction,
+.prediction-comment-reply-item .prediction-comment-reply {
+    font-size: 15px;
+}
+
+.prediction-comment-reply-item .prediction-comment-meta time {
+    font-size: 13px;
+}
+
+.prediction-comment-replies-more {
+    width: fit-content;
+    min-height: 32px;
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0;
+    color: var(--text);
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.prediction-comment-replies-more:hover {
+    color: var(--blue);
+}
+
+.prediction-comment-replies-more.is-loading {
+    opacity: .55;
+    pointer-events: none;
 }
 
 .prediction-comment-delete {
     grid-column: 3;
     grid-row: 1;
     align-self: start;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
     padding: 0;
@@ -34877,7 +35330,7 @@ body.wiki-video-player-open {
 
 .prediction-comment-delete::before {
     content: "⋮";
-    font-size: 24px;
+    font-size: 30px;
     font-weight: 800;
     line-height: 1;
 }
@@ -34911,26 +35364,39 @@ body.wiki-video-player-open {
 
 .prediction-comments-more {
     width: 100%;
-    min-height: 52px;
+    min-height: 56px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     justify-self: stretch;
-    padding: 0 18px;
-    border-radius: 10px;
+    padding: 0 14px;
+    border: 1px solid rgba(117, 132, 154, .18);
+    border-radius: 16px;
     color: var(--text);
-    background: #29292d;
-    font-size: 14px;
-    font-weight: 800;
+    background: var(--panel);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.prediction-comments-more[hidden],
+.prediction-comment-replies-more[hidden] {
+    display: none !important;
 }
 
 .prediction-comments-more:hover {
-    background: #343438;
+    background: rgba(40, 51, 64, .92);
 }
 
 .prediction-comments-more:disabled {
     opacity: .55;
     cursor: wait;
+}
+
+.prediction-comments-more.is-hiding {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .18s ease, transform .18s ease;
 }
 
 @media (max-width: 640px) {
@@ -34950,7 +35416,7 @@ body.wiki-video-player-open {
 
     .prediction-comments-total {
         padding-top: 5px;
-        font-size: 11px;
+        font-size: 13px;
     }
 
     .prediction-comment-form {
@@ -35011,6 +35477,22 @@ body.wiki-video-player-open {
         font-size: 12px;
     }
 
+    .prediction-comment-actions {
+        gap: 10px;
+        margin-top: 0;
+    }
+
+    .prediction-comment-reaction,
+    .prediction-comment-reply {
+        min-height: 30px;
+        font-size: 13px;
+    }
+
+    .prediction-comment-reaction svg {
+        width: 18px;
+        height: 18px;
+    }
+
     .prediction-comment-delete {
         width: 28px;
         height: 28px;
@@ -35018,6 +35500,26 @@ body.wiki-video-player-open {
 
     .prediction-comment-text {
         padding-right: 0;
+    }
+
+    .prediction-comment-replies {
+        grid-column: 1 / -1;
+        margin-left: 42px;
+    }
+
+    .prediction-comment-reply-item {
+        grid-template-columns: 38px minmax(0, 1fr) 28px;
+        column-gap: 9px;
+    }
+
+    .prediction-comment-reply-item .prediction-comment-avatar {
+        width: 38px;
+        height: 38px;
+    }
+
+    .prediction-comments-more {
+        min-height: 52px;
+        font-size: 14px;
     }
 }
 

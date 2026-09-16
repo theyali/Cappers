@@ -24,7 +24,13 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from cabinet.comments.services import can_delete_comment, prediction_comments_queryset
+from cabinet.comments.models import CommentReaction
+from cabinet.comments.services import (
+    attach_comment_replies,
+    can_delete_comment,
+    prediction_comments_queryset,
+    prediction_comments_total_count,
+)
 from cabinet.models import AnalystFollow
 from cabinet.paid_predictions import user_can_view_paid_predictions
 from game.models import Prediction, PredictionCoupon, Sport
@@ -831,9 +837,26 @@ def prediction_detail(request, prediction_id: int):
             comments_start : comments_start + comments_page_size
         ]
     )
+    attach_comment_replies(initial_comments, limit=0)
     for comment in initial_comments:
         comment.can_delete = can_delete_comment(comment, request.user)
+        for reply in getattr(comment, "published_replies", []) or []:
+            reply.can_delete = can_delete_comment(reply, request.user)
+    if request.user.is_authenticated and initial_comments:
+        visible_comments = []
+        for comment in initial_comments:
+            visible_comments.append(comment)
+            visible_comments.extend(getattr(comment, "published_replies", []) or [])
+        viewer_reactions = dict(
+            CommentReaction.objects.filter(
+                user=request.user,
+                comment_id__in=[comment.id for comment in visible_comments],
+            ).values_list("comment_id", "kind")
+        )
+        for comment in visible_comments:
+            comment.viewer_reaction = viewer_reactions.get(comment.id, "")
     comments_previous_page = comments_last_page - 1 if comments_last_page > 1 else None
+    comments_total_count = prediction_comments_total_count(coupon)
 
     return render(
         request,
@@ -851,6 +874,7 @@ def prediction_detail(request, prediction_id: int):
             "is_favorite": is_favorite,
             "initial_comments": initial_comments,
             "comments_previous_page": comments_previous_page,
+            "comments_total_count": comments_total_count,
         },
     )
 

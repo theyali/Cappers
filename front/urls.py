@@ -66,6 +66,16 @@ urlpatterns = [
         name="comment_delete",
     ),
     path(
+        "comments/<int:comment_id>/reaction/",
+        comment_views.comment_reaction,
+        name="comment_reaction",
+    ),
+    path(
+        "comments/<int:comment_id>/replies/",
+        comment_views.comment_replies,
+        name="comment_replies",
+    ),
+    path(
         "predictions/express/",
         prediction_catalog_views.predictions,
         {"express_only": True},

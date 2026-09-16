@@ -1,7 +1,7 @@
 from django import template
 
 from wallets.package_pricing import format_effective_coin_price_rub
-from wallets.services import format_money
+from wallets.services import format_coins, format_money
 
 register = template.Library()
 
@@ -10,6 +10,12 @@ register = template.Library()
 def money(value):
     """Format a monetary value: strip trailing zeros, space as thousands separator."""
     return format_money(value)
+
+
+@register.filter
+def coins(value):
+    """Format a coin amount with spaces as thousands separator."""
+    return format_coins(value)
 
 
 @register.filter
