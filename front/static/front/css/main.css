@@ -10205,6 +10205,7 @@ font-size: 14px;
 
 .home-best-expert-roi.is-negative {
     background: var(--danger);
+    color:white;
 }
 
 .home-best-expert-name {
@@ -10984,7 +10985,6 @@ font-size: 14px;
     overflow: hidden;
     border-radius: 10px;
     color: var(--ink);
-    background: var(--yellow);
     font-size: 14px;
     font-weight: 700;
 }
@@ -10995,7 +10995,7 @@ font-size: 14px;
     object-fit: contain;
 }
 .home-about-team-logo-img{
-    width: 100%;
+    width: 75%;
     height: 92px;
     border-radius: inherit;
     object-fit: contain;
