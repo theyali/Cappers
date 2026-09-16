@@ -6,7 +6,13 @@ from django.utils import timezone
 
 from game.models import Prediction, PredictionCoupon
 
-from .models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
+from .models import (
+    AnalystFollow,
+    AnalystPaidSubscription,
+    AnalystProfile,
+    CapperMonthlyStat,
+    User,
+)
 from .monthly_stats import monthly_stat_key, rebuild_capper_month
 from .trust_index import refresh_capper_trust_index
 
@@ -17,6 +23,15 @@ def _profile_has_paid_predictions(profile: AnalystProfile) -> bool:
 
 def _field_name(field) -> str:
     return field.name if field else ""
+
+
+def _invalidate_ranking_cache_on_commit() -> None:
+    def invalidate() -> None:
+        from front.expert_ranking import invalidate_expert_ranking_cache
+
+        invalidate_expert_ranking_cache()
+
+    transaction.on_commit(invalidate)
 
 
 @receiver(post_save, sender=User)
@@ -47,6 +62,9 @@ def sync_capper_avatar_to_user(sender, instance: AnalystProfile, **kwargs) -> No
         User.objects.filter(pk=instance.user_id).update(avatar=profile_avatar)
     elif user_avatar and not profile_avatar:
         AnalystProfile.objects.filter(pk=instance.pk).update(avatar=user_avatar)
+
+    # Publicity, VIP/paid flags, trust index and profile card fields all feed rankings.
+    _invalidate_ranking_cache_on_commit()
 
 
 @receiver(pre_save, sender=AnalystProfile)
@@ -151,6 +169,9 @@ def sync_coupon_monthly_stat(sender, instance: PredictionCoupon, **kwargs) -> No
         if analyst_id:
             refresh_capper_trust_index(analyst_id)
 
+    # Published/status/stake changes affect annotations even before a month is settled.
+    _invalidate_ranking_cache_on_commit()
+
 
 @receiver(post_delete, sender=PredictionCoupon)
 def remove_coupon_from_monthly_stat(sender, instance: PredictionCoupon, **kwargs) -> None:
@@ -159,6 +180,7 @@ def remove_coupon_from_monthly_stat(sender, instance: PredictionCoupon, **kwargs
         rebuild_capper_month(*key)
     if instance.author_id:
         refresh_capper_trust_index(instance.author_id)
+    _invalidate_ranking_cache_on_commit()
 
 
 def _rebuild_prediction_coupon_month(instance: Prediction) -> None:
@@ -174,8 +196,23 @@ def _rebuild_prediction_coupon_month(instance: Prediction) -> None:
 def sync_prediction_sport_monthly_stat(sender, instance: Prediction, **kwargs) -> None:
     """Keep the persisted per-sport split in sync when prediction items change."""
     _rebuild_prediction_coupon_month(instance)
+    _invalidate_ranking_cache_on_commit()
 
 
 @receiver(post_delete, sender=Prediction)
 def remove_prediction_from_sport_monthly_stat(sender, instance: Prediction, **kwargs) -> None:
     _rebuild_prediction_coupon_month(instance)
+    _invalidate_ranking_cache_on_commit()
+
+
+@receiver(post_save, sender=CapperMonthlyStat)
+@receiver(post_delete, sender=CapperMonthlyStat)
+def invalidate_ranking_after_monthly_stat_change(sender, instance: CapperMonthlyStat, **kwargs) -> None:
+    _invalidate_ranking_cache_on_commit()
+
+
+@receiver(post_save, sender=AnalystFollow)
+@receiver(post_delete, sender=AnalystFollow)
+def invalidate_ranking_after_follow_change(sender, instance: AnalystFollow, **kwargs) -> None:
+    # Followers participate in the popular group and ranking tie-breakers.
+    _invalidate_ranking_cache_on_commit()
