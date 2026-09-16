@@ -35556,6 +35556,7 @@ position: relative;
     width: 100%;
     min-width: 0;
     color: #fff;
+    isolation: isolate;
 }
 
 .vip-cappers-banner,
@@ -35564,30 +35565,52 @@ position: relative;
 }
 
 .vip-cappers-banner__panel {
+    position: relative;
     min-width: 0;
     display: grid;
-    gap: 14px;
-    padding: 16px;
-    background: #101113;
-    box-shadow: inset 0 0 0 1px rgba(112, 112, 114, .26), 0 14px 34px rgba(0, 0, 0, .2);
+    gap: 16px;
+    padding: 18px;
+    overflow: hidden;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 78% 8%, rgba(11, 86, 250, .28), transparent 24%),
+        radial-gradient(circle at 4% 34%, rgba(11, 86, 250, .22), transparent 27%),
+        linear-gradient(145deg, rgba(24, 31, 38, .88), rgba(11, 13, 14, .98) 54%, rgba(13, 18, 20, .96));
+    box-shadow:
+        inset 0 0 0 1px rgba(101, 122, 149, .24),
+        0 18px 44px rgba(0, 0, 0, .34);
+}
+
+.vip-cappers-banner__panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255, 255, 255, .02) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity: .14;
+    pointer-events: none;
 }
 
 .vip-cappers-banner__head-link {
     min-width: 0;
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) 22px;
+    grid-template-columns: 40px minmax(0, 1fr) 24px;
     align-items: center;
-    gap: 10px;
-    padding: 3px 2px 0;
+    gap: 12px;
+    padding: 4px 4px 0;
     color: inherit;
 }
 
 .vip-cappers-banner__head-icon {
-    width: 34px;
+    width: 40px;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     color: var(--yellow);
+    filter: drop-shadow(0 0 10px rgba(255, 238, 0, .24));
 }
 
 .vip-cappers-banner__head-icon svg,
@@ -35618,8 +35641,8 @@ position: relative;
 
 .vip-cappers-banner__subtitle {
     overflow: hidden;
-    color: var(--muted);
-    font-size: 11px;
+    color: #9ca2ad;
+    font-size: 14px;
     font-weight: 500;
     line-height: 1.3;
     text-overflow: ellipsis;
@@ -35628,28 +35651,43 @@ position: relative;
 
 .vip-cappers-banner__head-arrow,
 .vip-cappers-banner__footer-arrow {
-    width: 22px;
+    width: 24px;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    color: var(--muted);
+    color: #9ca2ad;
 }
 
 .vip-cappers-banner__hero {
+    position: relative;
     min-width: 0;
     display: grid;
     gap: 12px;
-    padding: 14px;
-    background: #151618;
-    box-shadow: inset 0 0 0 1px rgba(11, 86, 250, .34);
+    padding: 12px;
+    overflow: hidden;
+}
+
+.vip-cappers-banner__hero::before {
+    content: "";
+    position: absolute;
+    right: -22%;
+    bottom: -38%;
+    width: 80%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgba(11, 86, 250, .20);
+    filter: blur(4px);
+    pointer-events: none;
 }
 
 .vip-cappers-banner__hero-card {
+    position: relative;
+    z-index: 1;
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(96px, 34%, 136px);
+    grid-template-columns: minmax(0, 1fr) minmax(69px, 28%);
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     color: inherit;
 }
 
@@ -35657,17 +35695,18 @@ position: relative;
     min-width: 0;
     display: grid;
     align-content: center;
-    gap: 9px;
+    gap: 11px;
 }
 
 .vip-cappers-banner__week-badge {
     width: max-content;
     max-width: 100%;
     overflow: hidden;
-    padding: 7px 10px;
+    padding: 6px 9px;
+    border-radius: 5px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 600;
     line-height: 1;
     text-overflow: ellipsis;
@@ -35694,6 +35733,10 @@ position: relative;
     white-space: nowrap;
 }
 
+.vip-cappers-banner__hero-name {
+    text-shadow: 0 0 14px rgba(255, 255, 255, .12);
+}
+
 .vip-cappers-banner__verified,
 .vip-cappers-banner__verified svg {
     width: 18px;
@@ -35711,8 +35754,8 @@ position: relative;
 
 .vip-cappers-banner__hero-meta {
     overflow: hidden;
-    color: var(--muted);
-    font-size: 11px;
+    color: #a3a8b2;
+    font-size: 14px;
     font-weight: 500;
     line-height: 1.3;
     text-overflow: ellipsis;
@@ -35723,7 +35766,7 @@ position: relative;
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-top: 2px;
 }
 
@@ -35742,8 +35785,8 @@ position: relative;
 }
 
 .vip-cappers-banner__hero-stat span {
-    color: var(--muted);
-    font-size: 10px;
+    color: #9ca2ad;
+    font-size: 13px;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
@@ -35762,14 +35805,14 @@ position: relative;
 }
 
 .vip-cappers-banner__hero-avatar {
-    width: 100%;
-    max-width: 136px;
+    width: min(100%, 164px);
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: var(--panel);
-    box-shadow: 0 0 0 2px var(--blue), 0 0 24px rgba(11, 86, 250, .5);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(11, 86, 250, .38), rgba(7, 17, 31, .96));
+    box-shadow: 0 0 0 2px #126dff, 0 0 0 6px rgba(11, 86, 250, .13), 0 0 36px rgba(11, 86, 250, .86);
 }
 
 .vip-cappers-banner__hero-avatar img,
@@ -35778,6 +35821,10 @@ position: relative;
     height: 100%;
     display: block;
     object-fit: cover;
+}
+
+.vip-cappers-banner__hero-avatar img {
+    border-radius: 50%;
 }
 
 .vip-cappers-banner__hero-avatar-fallback,
@@ -35793,6 +35840,8 @@ position: relative;
 }
 
 .vip-cappers-banner__hero-actions {
+    position: relative;
+    z-index: 1;
     min-width: 0;
 }
 
@@ -35801,12 +35850,13 @@ position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 11px 14px;
+    padding: 7px 10px;
     border: 0;
+    border-radius: 5px;
     color: var(--ink);
     background: var(--yellow);
     font: inherit;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     line-height: 1.1;
@@ -35830,12 +35880,11 @@ position: relative;
 }
 
 .vip-cappers-banner__list-box {
+    position: relative;
     min-width: 0;
     display: grid;
-    gap: 11px;
-    padding: 14px;
-    background: #151618;
-    box-shadow: inset 0 0 0 1px rgba(112, 112, 114, .22);
+    gap: 7px;
+    overflow: hidden;
 }
 
 .vip-cappers-banner__list-head {
@@ -35848,40 +35897,42 @@ position: relative;
 }
 
 .vip-cappers-banner__info {
-    width: 20px;
+    width: 24px;
     aspect-ratio: 1;
-    flex: 0 0 20px;
+    flex: 0 0 24px;
     display: grid;
     place-items: center;
-    color: var(--muted);
+    color: #9ca2ad;
 }
 
 .vip-cappers-banner__list {
     min-width: 0;
     display: grid;
-    gap: 7px;
+    gap: 8px;
 }
 
 .vip-cappers-banner__row {
     min-width: 0;
     display: grid;
-    grid-template-columns: 30px 42px minmax(0, 1fr) auto;
+    grid-template-columns: 28px 41px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 9px;
-    padding: 8px;
+    gap: 4px;
+    padding: 7px;
+    border-radius: 12px;
     color: inherit;
-    background: #111214;
-    box-shadow: inset 0 0 0 1px rgba(112, 112, 114, .18);
 }
 
+
+
 .vip-cappers-banner__row-rank {
-    width: 30px;
+    width: 26px;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
+    border-radius: 5px;
     color: #fff;
-    background: var(--panel);
-    font-size: 13px;
+    background: #3b404a;
+    font-size: 12px;
     font-weight: 600;
     line-height: 1;
 }
@@ -35892,18 +35943,26 @@ position: relative;
 }
 
 .vip-cappers-banner__row-rank--2,
-.vip-cappers-banner__row-rank--3 {
-    background: var(--muted);
+.vip-cappers-banner__row-rank--3,
+.vip-cappers-banner__row-rank--4,
+.vip-cappers-banner__row-rank--5 {
+    color: #111214;
+    background: #9fa4ad;
 }
 
 .vip-cappers-banner__row-avatar {
-    width: 42px;
+    width: 35px;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     overflow: hidden;
+    border-radius: 50%;
     background: var(--panel);
-    box-shadow: 0 0 0 1px rgba(11, 86, 250, .72);
+    box-shadow: 0 0 0 2px rgba(11, 86, 250, .82);
+}
+
+.vip-cappers-banner__row-rank--1 + .vip-cappers-banner__row-avatar {
+    box-shadow: 0 0 0 2px var(--yellow), 0 0 18px rgba(255, 238, 0, .16);
 }
 
 .vip-cappers-banner__row-copy {
@@ -35913,13 +35972,13 @@ position: relative;
 }
 
 .vip-cappers-banner__row-name-line strong {
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .vip-cappers-banner__row-subscribers {
     overflow: hidden;
-    color: var(--muted);
-    font-size: 10px;
+    color: #9ca2ad;
+    font-size: 9px;
     font-weight: 500;
     line-height: 1.2;
     text-overflow: ellipsis;
@@ -35927,7 +35986,7 @@ position: relative;
 }
 
 .vip-cappers-banner__row-metric {
-    min-width: 48px;
+    min-width: 62px;
     display: grid;
     justify-items: end;
     gap: 3px;
@@ -35936,14 +35995,14 @@ position: relative;
 
 .vip-cappers-banner__row-metric strong {
     color: var(--yellow);
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
 }
 
 .vip-cappers-banner__row-metric span {
-    color: var(--muted);
+    color: #9ca2ad;
     font-size: 9px;
     font-weight: 500;
     line-height: 1;
@@ -35953,14 +36012,15 @@ position: relative;
 .vip-cappers-banner__footer-link {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 20px;
+    grid-template-columns: minmax(0, 1fr) 24px;
     align-items: center;
     gap: 10px;
-    padding: 12px 13px;
+    padding: 15px 16px;
+    border-radius: 12px;
     color: #fff;
-    background: var(--panel);
-    box-shadow: inset 0 0 0 1px rgba(112, 112, 114, .5);
-    font-size: 13px;
+    background: linear-gradient(135deg, rgba(28, 34, 39, .82), rgba(19, 21, 24, .94));
+    box-shadow: inset 0 0 0 1px rgba(128, 139, 154, .40);
+    font-size: 16px;
     font-weight: 600;
     line-height: 1.1;
     text-align: center;
@@ -35970,8 +36030,4 @@ position: relative;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.vip-cappers-banner__footer-arrow {
-    width: 20px;
 }

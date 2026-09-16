@@ -64,10 +64,9 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
     queryset, while ``user`` is joined with ``select_related``. Rendering the six
     cards therefore does not execute per-capper queries.
 
-    Existing VIP rows do not have a dedicated activation timestamp yet, so
-    ``updated_at`` is used as the temporary sort source with ``user.date_joined`` as
-    the legacy fallback. Replace ``vip_sort_at`` with ``vip_activated_at`` once every
-    VIP purchase/grant flow persists the real activation time.
+    The top card is the latest VIP activation. Existing legacy rows can still have
+    an empty activation date, so ``updated_at`` and ``user.date_joined`` remain as
+    fallbacks.
     """
 
     safe_limit = _normalize_limit(limit)
@@ -100,9 +99,7 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
                 filter=losses_filter,
                 distinct=True,
             ),
-            # TODO: replace this fallback with AnalystProfile.vip_activated_at when
-            # the VIP purchase/grant flow stores an exact activation timestamp.
-            vip_sort_at=Coalesce("updated_at", "user__date_joined"),
+            vip_sort_at=Coalesce("vip_activated_at", "updated_at", "user__date_joined"),
         )
     )
 

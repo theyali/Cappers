@@ -113,6 +113,12 @@ class AnalystProfile(models.Model):
         db_index=True,
     )
     is_vip = models.BooleanField("VIP прогнозист", default=False, db_index=True)
+    vip_activated_at = models.DateTimeField(
+        "VIP активирован",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     is_recommended = models.BooleanField(
         "Рекомендовать подписаться",
         default=False,
@@ -160,6 +166,28 @@ class AnalystProfile(models.Model):
         super().clean()
         if self.paid_predictions_price is None:
             self.paid_predictions_price = 0
+
+    def save(self, *args, **kwargs):
+        vip_timestamp_changed = False
+        if self.is_vip and not self.vip_activated_at:
+            self.vip_activated_at = timezone.now()
+            vip_timestamp_changed = True
+
+        if self.pk and self.is_vip:
+            previous = (
+                type(self).objects.filter(pk=self.pk)
+                .values("is_vip", "vip_activated_at")
+                .first()
+            )
+            if previous and not previous["is_vip"]:
+                self.vip_activated_at = timezone.now()
+                vip_timestamp_changed = True
+
+        update_fields = kwargs.get("update_fields")
+        if vip_timestamp_changed and update_fields is not None:
+            kwargs["update_fields"] = set(update_fields) | {"vip_activated_at"}
+
+        super().save(*args, **kwargs)
 
     @property
     def social_links(self) -> list[dict]:

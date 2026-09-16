@@ -3928,91 +3928,138 @@ body.expert-public-details-open {
 /* VIP cappers banner responsive */
 @media (max-width: 1120px) {
     .vip-cappers-banner__panel {
-        gap: 12px;
-        padding: 14px;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 18px;
     }
 
     .vip-cappers-banner__hero {
-        padding: 13px;
+        padding: 16px;
+        border-radius: 18px;
     }
 
     .vip-cappers-banner__hero-card {
-        grid-template-columns: minmax(0, 1fr) clamp(92px, 31vw, 128px);
+        grid-template-columns: minmax(0, 1fr) minmax(106px, 36%);
     }
 
     .vip-cappers-banner__list-box {
-        padding: 13px;
+        padding: 15px;
+        border-radius: 18px;
     }
 }
 
 @media (max-width: 560px) {
     .vip-cappers-banner__panel {
-        gap: 10px;
-        padding: 12px;
+        gap: 12px;
+        padding: 13px;
     }
 
     .vip-cappers-banner__head-link {
-        grid-template-columns: 30px minmax(0, 1fr) 19px;
-        gap: 8px;
+        grid-template-columns: 34px minmax(0, 1fr) 22px;
+        gap: 9px;
     }
 
     .vip-cappers-banner__head-icon {
-        width: 30px;
+        width: 34px;
     }
 
-    .vip-cappers-banner__title,
-    .vip-cappers-banner__list-head strong {
-        font-size: 16px;
+    .vip-cappers-banner__subtitle {
+        font-size: 12px;
     }
 
     .vip-cappers-banner__hero {
-        gap: 10px;
-        padding: 12px;
+        padding: 14px;
     }
 
     .vip-cappers-banner__hero-card {
-        grid-template-columns: minmax(0, 1fr) clamp(84px, 29vw, 112px);
-        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) minmax(92px, 34%);
+        gap: 10px;
     }
 
     .vip-cappers-banner__hero-main {
-        gap: 7px;
+        gap: 8px;
     }
 
     .vip-cappers-banner__week-badge {
-        padding: 6px 8px;
-        font-size: 9px;
+        padding: 7px 10px;
+        font-size: 10px;
     }
 
     .vip-cappers-banner__hero-name {
         font-size: 15px;
     }
 
-    .vip-cappers-banner__hero-stats {
-        gap: 9px;
+    .vip-cappers-banner__hero-meta,
+    .vip-cappers-banner__hero-stat span {
+        font-size: 11px;
     }
 
-    .vip-cappers-banner__hero-stat strong {
-        font-size: 15px;
-    }
-
-    .vip-cappers-banner__hero-stat span,
-    .vip-cappers-banner__hero-meta {
-        font-size: 9px;
+    .vip-cappers-banner__hero-avatar {
+        box-shadow:
+            0 0 0 2px #126dff,
+            0 0 0 8px rgba(11, 86, 250, .12),
+            0 0 28px rgba(11, 86, 250, .78);
     }
 
     .vip-cappers-banner__subscribe {
-        padding: 10px 12px;
-        font-size: 13px;
+        padding: 12px 14px;
+        font-size: 15px;
     }
 
     .vip-cappers-banner__list-box {
-        gap: 9px;
-        padding: 11px;
+        gap: 10px;
+        padding: 13px;
     }
 
     .vip-cappers-banner__row {
-        grid-template-columns: 28px 38px minmax(0, 1fr) auto;
+        grid-template-columns: 32px 42px minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 11px;
+    }
+
+    .vip-cappers-banner__row-rank {
+        width: 32px;
+        font-size: 13px;
+    }
+
+    .vip-cappers-banner__row-avatar {
+        width: 42px;
+    }
+
+    .vip-cappers-banner__row-name-line strong {
+        font-size: 13px;
+    }
+
+    .vip-cappers-banner__row-subscribers,
+    .vip-cappers-banner__row-metric span {
+        font-size: 10px;
+    }
+
+    .vip-cappers-banner__row-metric {
+        min-width: 48px;
+    }
+
+    .vip-cappers-banner__row-metric strong {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 390px) {
+    .vip-cappers-banner__panel {
+        padding: 11px;
+    }
+
+    .vip-cappers-banner__hero-card {
+        grid-template-columns: minmax(0, 1fr) 82px;
+    }
+
+    .vip-cappers-banner__hero-meta {
+        white-space: normal;
+    }
+
+    .vip-cappers-banner__row {
+        grid-template-columns: 28px 36px minmax(0, 1fr) auto;
         gap: 7px;
         padding: 7px;
     }
@@ -4023,79 +4070,11 @@ body.expert-public-details-open {
     }
 
     .vip-cappers-banner__row-avatar {
-        width: 38px;
-    }
-
-    .vip-cappers-banner__row-name-line {
-        gap: 4px;
-    }
-
-    .vip-cappers-banner__row-name-line strong {
-        font-size: 12px;
-    }
-
-    .vip-cappers-banner__row-subscribers {
-        font-size: 9px;
+        width: 36px;
     }
 
     .vip-cappers-banner__row-metric {
-        min-width: 42px;
-    }
-
-    .vip-cappers-banner__row-metric strong {
-        font-size: 13px;
-    }
-
-    .vip-cappers-banner__row-metric span {
-        font-size: 8px;
-    }
-
-    .vip-cappers-banner__verified,
-    .vip-cappers-banner__verified svg {
-        width: 16px;
-        height: 16px;
-        flex-basis: 16px;
-    }
-}
-
-@media (max-width: 390px) {
-    .vip-cappers-banner__panel {
-        padding: 10px;
-    }
-
-    .vip-cappers-banner__subtitle {
-        font-size: 10px;
-    }
-
-    .vip-cappers-banner__hero-card {
-        grid-template-columns: minmax(0, 1fr) 82px;
-    }
-
-    .vip-cappers-banner__hero-stats {
-        gap: 7px;
-    }
-
-    .vip-cappers-banner__row {
-        grid-template-columns: 26px 34px minmax(0, 1fr) auto;
-        gap: 6px;
-        padding: 6px;
-    }
-
-    .vip-cappers-banner__row-rank {
-        width: 26px;
-        font-size: 11px;
-    }
-
-    .vip-cappers-banner__row-avatar {
-        width: 34px;
-    }
-
-    .vip-cappers-banner__row-metric {
-        min-width: 38px;
-    }
-
-    .vip-cappers-banner__row-metric strong {
-        font-size: 12px;
+        min-width: 40px;
     }
 
     .vip-cappers-banner__row-metric span {

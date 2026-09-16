@@ -111,8 +111,8 @@
                 <div class="vip-cappers-banner__list">
                     {% for item in vip_list %}
                         <a class="vip-cappers-banner__row" href="{{ item.profile_url }}">
-                            <span class="vip-cappers-banner__row-rank vip-cappers-banner__row-rank--{{ forloop.counter }}">
-                                {{ forloop.counter }}
+                            <span class="vip-cappers-banner__row-rank vip-cappers-banner__row-rank--{{ forloop.counter|add:'1' }}">
+                                {{ forloop.counter|add:"1" }}
                             </span>
 
                             <span class="vip-cappers-banner__row-avatar" {% if item.avatar %}data-skeleton-image{% endif %}>
