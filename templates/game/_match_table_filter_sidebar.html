@@ -46,43 +46,6 @@
         </nav>
     </section>
 
-    <section class="matches-table-filter-group" aria-labelledby="table-sports-title">
-        <div class="matches-table-filter-title" id="table-sports-title">
-            <span>Виды спорта</span>
-            <small>{{ sport_tabs|length }}</small>
-        </div>
-        <nav class="matches-table-sport-list" aria-label="Фильтр по виду спорта">
-            {% for tab in sport_tabs %}
-            <a
-                class="matches-table-sport-link{% if active_sport == tab.code %} is-active{% endif %}"
-                href="{{ tab.url }}"
-                {% if active_sport == tab.code %}aria-current="page"{% endif %}
-            >
-                <span class="matches-table-sport-icon" aria-hidden="true">
-                    {% if tab.code == 'all' %}
-                        {% include "front/svgs/nav-matches.svg" %}
-                    {% elif tab.code == 'football' %}
-                        {% include "front/svgs/soccer.svg" %}
-                    {% elif tab.code == 'hockey' %}
-                        {% include "front/svgs/hockey.svg" %}
-                    {% elif tab.code == 'basketball' %}
-                        {% include "front/svgs/basketball.svg" %}
-                    {% elif tab.code == 'tennis' %}
-                        {% include "front/svgs/tennis.svg" %}
-                    {% else %}
-                        {% include "front/svgs/nav-matches.svg" %}
-                    {% endif %}
-                </span>
-                <span class="matches-table-sport-copy">{{ tab.label }}</span>
-                <b>{{ tab.count }}</b>
-                <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
-            {% endfor %}
-        </nav>
-    </section>
-
     {% if not hide_date_filter %}
     <section class="matches-table-filter-group matches-table-date-group" aria-labelledby="table-date-title">
         <div class="matches-table-filter-title" id="table-date-title">

@@ -14,7 +14,7 @@ from django.utils.dateparse import parse_date
 from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
 from cabinet.paid_predictions import profile_paid_predictions_enabled
-from game.models import Match, PredictionCoupon
+from game.models import Match, PredictionCoupon, Sport
 from game.views import (
     _active_draft_coupon,
     _latest_predictions,
@@ -39,6 +39,12 @@ SPORT_FILTERS = (
     ("basketball", "Баскетбол"),
     ("tennis", "Теннис"),
 )
+SPORT_ORDER = {
+    "football": 10,
+    "hockey": 20,
+    "basketball": 30,
+    "tennis": 40,
+}
 SPORT_SEO_LABELS = {
     "all": "по всем видам спорта",
     "football": "по футболу",
@@ -71,7 +77,8 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         active_scope = "all"
 
     active_sport = sport or request.GET.get("sport", "all")
-    valid_sports = {sport for sport, _ in SPORT_FILTERS}
+    sport_catalog = _sport_catalog()
+    valid_sports = {"all"} | {item["code"] for item in sport_catalog}
     if active_sport not in valid_sports:
         active_sport = "all"
 
@@ -255,32 +262,13 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             }
         )
 
-    sport_count_source = _sport_count_source(
-        date_matches_all,
-        live_matches_all,
-        active_scope,
-        request.user,
+    sport_tabs = _match_sport_filter_tabs(
+        request,
+        active_scope=active_scope,
+        selected_date=selected_date,
+        active_sport=active_sport,
+        sport_catalog=sport_catalog,
     )
-    sport_tabs = []
-    for sport, label in SPORT_FILTERS:
-        count = (
-            sport_count_source.count()
-            if sport == "all"
-            else sport_count_source.filter(sport__code=sport).count()
-        )
-        sport_tabs.append(
-            {
-                "code": sport,
-                "label": label,
-                "count": count,
-                "url": _match_list_url(
-                    request,
-                    scope=active_scope,
-                    selected_date=selected_date,
-                    sport=sport,
-                ),
-            }
-        )
 
     date_shortcuts = []
     for label, shortcut_date in (
@@ -339,6 +327,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "content_view_mode": content_view_mode(request),
         "scope_tabs": scope_tabs,
         "sport_tabs": sport_tabs,
+        "sport_filter_tabs": sport_tabs,
         "matches": matches,
         "table_grouped_matches": table_groups,
         "page_obj": page_obj,
@@ -438,6 +427,80 @@ def _filter_by_sport(queryset, sport_code: str):
     return queryset.filter(sport__code=sport_code)
 
 
+def _sport_catalog() -> list[dict]:
+    sports = sorted(
+        Sport.objects.all(),
+        key=lambda sport: (
+            SPORT_ORDER.get((sport.code or "").lower(), 999),
+            (sport.name_ru or sport.name or sport.code or "").lower(),
+        ),
+    )
+    if not sports:
+        return [
+            {"code": code, "label": label}
+            for code, label in SPORT_FILTERS
+            if code != "all"
+        ]
+    return [
+        {
+            "code": sport.code,
+            "label": sport.name_ru or sport.name or sport.code,
+        }
+        for sport in sports
+        if sport.code
+    ]
+
+
+def _sport_label_map() -> dict[str, str]:
+    return {item["code"]: item["label"] for item in _sport_catalog()}
+
+
+def _match_sport_filter_tabs(
+    request,
+    *,
+    active_scope,
+    selected_date,
+    active_sport,
+    sport_catalog,
+) -> list[dict]:
+    tabs = [
+        {
+            "code": "",
+            "label": "Все",
+            "href": _match_list_url(
+                request,
+                scope=active_scope,
+                selected_date=selected_date,
+                sport="all",
+            ),
+            "url": _match_list_url(
+                request,
+                scope=active_scope,
+                selected_date=selected_date,
+                sport="all",
+            ),
+            "active": active_sport == "all",
+        }
+    ]
+    for sport in sport_catalog:
+        url = _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=selected_date,
+            sport=sport["code"],
+        )
+        tabs.append(
+            {
+                "code": sport["code"],
+                "label": sport["label"],
+                "href": url,
+                "url": url,
+                "active": active_sport == sport["code"],
+            }
+        )
+    return tabs
+
+
 def _sport_count_source(date_matches, live_matches, active_scope: str, user):
     queryset = live_matches if active_scope == Match.SyncScope.LIVE else date_matches
     if active_scope == WATCHED_SCOPE:
@@ -463,7 +526,7 @@ def _decorate_matches(matches):
 def _table_sport_codes(active_sport: str) -> list[str]:
     if active_sport != "all":
         return [active_sport]
-    return [sport for sport, _ in SPORT_FILTERS if sport != "all"]
+    return [sport["code"] for sport in _sport_catalog()]
 
 
 def _table_match_groups(matches_queryset, *, active_sport: str, limit: int) -> list[dict]:
@@ -480,9 +543,10 @@ def _table_match_groups(matches_queryset, *, active_sport: str, limit: int) -> l
         if grouped:
             sport_group = grouped[0]
         else:
+            sport_labels = _sport_label_map()
             sport_group = {
                 "code": sport_code,
-                "name": dict(SPORT_FILTERS).get(sport_code, sport_code.title()),
+                "name": sport_labels.get(sport_code, sport_code.title()),
                 "leagues": [],
             }
 
@@ -516,7 +580,7 @@ def _table_window_size(raw_value):
 
 def _table_lazy_response(request, *, matches_queryset, can_write_coupon: bool):
     sport_code = request.GET.get("table_sport", "").strip().lower()
-    valid_sports = {sport for sport, _ in SPORT_FILTERS if sport != "all"}
+    valid_sports = {sport["code"] for sport in _sport_catalog()}
     if sport_code not in valid_sports:
         return JsonResponse(
             {"ok": False, "error": "Некорректный вид спорта."},

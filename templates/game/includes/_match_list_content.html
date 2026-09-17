@@ -1,9 +1,7 @@
 {% load static %}
 <div class="matches-content-region" data-matches-content-region>
     {% if matches %}
-        <div class="content-view-toolbar">
-            {% include "front/includes/_content_view_switcher.html" %}
-        </div>
+        {% include "front/includes/_prediction_results_head.html" with show_sort=False show_content_view_switcher=True %}
         <div class="content-view-container" data-content-view-container>
             <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                 {% include "game/includes/_match_grid_view.html" %}

@@ -5,3 +5,6 @@ class PagesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "pages"
     verbose_name = "Страницы и SEO"
+
+    def ready(self):
+        from . import signals  # noqa: F401

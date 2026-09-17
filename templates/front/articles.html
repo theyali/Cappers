@@ -6,18 +6,30 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="articles-page" aria-label="Все статьи">
-    <header class="articles-hero">
-        <div>
-            <p class="articles-eyebrow">Редакция КапперХаб</p>
-            <h1>Все статьи</h1>
-            <p>Материалы о матчах, аналитике, подходах к прогнозам и работе со спортивной статистикой.</p>
-        </div>
-        <div class="articles-total">
-            <strong>{{ total_articles }}</strong>
-            <span>материалов</span>
-        </div>
-    </header>
+<section class="predictions-page articles-page predictions-scroll-page container" aria-label="Все статьи">
+    <div class="predictions-layout articles-layout">
+        <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Промо слева">
+            {% for promo_banner in left_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+        </aside>
+
+        <div class="predictions-content articles-content">
+            {% for promo_banner in center_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
+            {% endfor %}
+
+            <header class="articles-hero">
+                <div>
+                    <p class="articles-eyebrow">Редакция КапперХаб</p>
+                    <h1>Все статьи</h1>
+                    <p>Материалы о матчах, аналитике, подходах к прогнозам и работе со спортивной статистикой.</p>
+                </div>
+                <div class="articles-total">
+                    <strong>{{ total_articles }}</strong>
+                    <span>материалов</span>
+                </div>
+            </header>
 
     {% if article_categories %}
     <nav class="articles-categories" aria-label="Категории статей">
@@ -77,5 +89,16 @@
         <p>Новые материалы появятся здесь после публикации через админку.</p>
     </div>
     {% endif %}
+        </div>
+
+        <aside class="bookmakers-sidebar" aria-label="Промо и реклама справа">
+            {% for promo_banner in right_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+            {% if adv_placement == 'sidebar' %}
+                {% include "pages/_adv_banners.html" with placement="sidebar" %}
+            {% endif %}
+        </aside>
+    </div>
 </section>
 {% endblock %}

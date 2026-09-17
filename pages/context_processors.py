@@ -12,6 +12,7 @@ from .promo_banners import page_promo_banner_groups
 
 
 PAGE_CONTEXT_CACHE_SECONDS = 120
+PAGE_CONTEXT_CACHE_VERSION_KEY = "page-seo-context-version"
 ROUTE_FALLBACKS = {
     "front:prediction_detail": ("front:predictions",),
     "front:favorites": ("front:predictions",),
@@ -126,7 +127,11 @@ def _resolve_ad_page(route_name: str, current_path: str, primary_page):
 
 
 def _page_context_cache_key(route_name: str, current_path: str) -> str:
-    return f"page-seo-context:v2:{route_name}:{current_path}"
+    try:
+        version = cache.get(PAGE_CONTEXT_CACHE_VERSION_KEY) or 1
+    except Exception:
+        version = 1
+    return f"page-seo-context:v3:{version}:{route_name}:{current_path}"
 
 
 def _build_page_context(route_name: str, current_path: str) -> dict:

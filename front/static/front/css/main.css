@@ -15353,9 +15353,8 @@ font-size: 14px;
 .coupon-detail-page {
     width: min(980px, 100%);
     display: grid;
-    gap: 20px;
+    gap: 10px;
     margin: 0 auto;
-    padding: 10px;
 }
 
 .coupon-detail-back {
@@ -15824,6 +15823,10 @@ font-size: 14px;
     padding: 8px 14px 9px;
 }
 
+.expert-panel{
+    background: var(--panel);
+    padding:10px;
+}
 @media (max-width: 1100px) {
     .profile-coupon-row {
         grid-template-columns: minmax(180px, 1fr) auto repeat(2, minmax(90px, .6fr)) 28px;
@@ -17700,9 +17703,11 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     min-width: 0;
     overflow: hidden;
     border-radius: 16px;
+}
+.filter_matches{
+    padding: 10px;
     background: var(--panel);
 }
-
 .prediction-filter-sidebar-toggle {
     width: 100%;
     min-height: 54px;
@@ -17880,13 +17885,11 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     display: grid !important;
     align-content: start;
     gap: 12px;
-    padding: 12px;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-gutter: stable;
     border-radius: 18px;
-    background: var(--panel);
     scrollbar-width: thin;
     scrollbar-color: #3a3a3d transparent;
     animation: matchesTableSidebarIn .22s ease both;
@@ -18965,7 +18968,7 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     gap: 5px;
     padding: 0 10px;
     border: 1px solid rgba(255, 255, 255, .09);
-    border-radius: 12px;
+    border-radius: 9px;
     color: rgba(255, 255, 255, .76);
     background: linear-gradient(180deg, rgba(255, 255, 255, .055), rgba(255, 255, 255, .025));
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
@@ -18988,7 +18991,6 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     color: var(--ink);
     border-color: rgba(255, 238, 45, .5);
     background: var(--yellow);
-    box-shadow: 0 10px 24px rgba(255, 238, 45, .16);
 }
 
 .feed-sport-icon {
@@ -29894,7 +29896,6 @@ body.register {
     --panel-hover: #323236;
     --text: #f7f8ff;
     --soft: rgba(255, 255, 255, .62);
-    width: 100%;
     margin: 28px auto 72px;
     color: var(--text);
 }
@@ -32889,7 +32890,6 @@ font-size: 13px;
         flex-direction: column;
         align-self: start;
         gap: 8px;
-        padding: 4px 10px 10px;
     }
 
     .coupon-detail-page .coupon-detail-heading {

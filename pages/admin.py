@@ -107,6 +107,7 @@ class PageSEOAdmin(admin.ModelAdmin):
         "name",
         "route_name",
         "exact_path",
+        "meta_title",
         "layout_columns",
         "adv_placement",
         "robots",
@@ -144,7 +145,12 @@ class PageSEOAdmin(admin.ModelAdmin):
                     "exact_path",
                     "layout_columns",
                     "is_active",
-                )
+                ),
+                "description": (
+                    "Для /articles/ используйте route_name='front:articles'. "
+                    "Пустой exact_path действует на весь view; exact_path='/articles/' "
+                    "имеет приоритет только для этого URL."
+                ),
             },
         ),
         (

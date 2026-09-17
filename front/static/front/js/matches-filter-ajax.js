@@ -7,6 +7,7 @@
     const LINK_SELECTOR = [
         ".matches-table-filter-sidebar a[href]",
         ".matches-sport-tabs a[href]",
+        ".feed-sport-tabs a[href]",
         ".matches-tabs a[href]",
         ".matches-date-filter a[href]",
     ].join(",");

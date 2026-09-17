@@ -1,5 +1,3 @@
-import hashlib
-
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
@@ -20,6 +18,7 @@ from .prediction_views import (
     _status_tabs,
     prediction_filter_collapsed,
 )
+from .sport_tabs import build_sport_filter_tabs
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -33,6 +32,8 @@ FEED_META_CACHE_TTL = 60
 
 
 def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
+    import hashlib
+
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
     return f"front:feed:{namespace}:v3:{user_id}:{signature}"
 
@@ -88,16 +89,6 @@ def _sport_from_filter(value: str) -> Sport | None:
     return queryset.filter(code__iexact=value).first()
 
 
-def _feed_sport_url(request, sport: Sport | None) -> str:
-    params = request.GET.copy()
-    params.pop("page", None)
-    if sport is None:
-        params.pop("sport", None)
-    else:
-        params["sport"] = sport.code
-    return _feed_url(request, params)
-
-
 def _feed_meta_queryset(*, audience: str, author_ids) -> object:
     """Cheap coupon queryset for tabs/counts without card annotations or ROI subqueries."""
     return PredictionCoupon.objects.filter(
@@ -105,57 +96,6 @@ def _feed_meta_queryset(*, audience: str, author_ids) -> object:
         audience=audience,
         author_id__in=author_ids,
     )
-
-
-def _feed_sport_tabs(
-    request,
-    queryset,
-    paid_queryset,
-    active_sport: Sport | None,
-    *,
-    cache_key: str,
-):
-    rows = cache.get(cache_key)
-    if rows is None:
-        source = queryset | paid_queryset
-        rows = list(
-            source.exclude(predictions__match__sport_id__isnull=True)
-            .values(
-                "predictions__match__sport_id",
-                "predictions__match__sport__code",
-                "predictions__match__sport__name_ru",
-                "predictions__match__sport__name",
-            )
-            .annotate(count=Count("id", distinct=True))
-            .order_by("predictions__match__sport__name_ru", "predictions__match__sport__name")
-        )
-        cache.set(cache_key, rows, FEED_META_CACHE_TTL)
-
-    tabs = [
-        {
-            "code": "",
-            "label": "Все",
-            "href": _feed_sport_url(request, None),
-            "active": active_sport is None,
-        }
-    ]
-    for row in rows:
-        sport = Sport(
-            id=row["predictions__match__sport_id"],
-            code=row["predictions__match__sport__code"],
-            name=row["predictions__match__sport__name"] or "",
-            name_ru=row["predictions__match__sport__name_ru"] or "",
-        )
-        tabs.append(
-            {
-                "code": sport.code,
-                "label": sport.name_ru or sport.name or sport.code,
-                "href": _feed_sport_url(request, sport),
-                "active": bool(active_sport and active_sport.pk == sport.pk),
-            }
-        )
-    return tabs
-
 
 def _apply_feed_filters(queryset, *, selected_capper, selected_sport, only_live, only_today):
     if selected_capper:
@@ -331,17 +271,7 @@ def following_feed(request):
         only_live=only_live,
         only_today=only_today,
     )
-    feed_sport_tabs = _feed_sport_tabs(
-        request,
-        free_meta_queryset,
-        paid_meta_queryset,
-        selected_sport,
-        cache_key=_feed_cache_key(
-            request.user.pk,
-            "sport-tabs",
-            *feed_source_signature,
-        ),
-    )
+    sport_filter_tabs = build_sport_filter_tabs(request, active_sport=selected_sport)
 
     free_count_queryset = free_meta_queryset
     paid_count_queryset = paid_meta_queryset
@@ -514,7 +444,7 @@ def following_feed(request):
             "paid_upgrade_offers_count": len(paid_upgrade_follows),
             "feed_total_count": paginator.count + paid_predictions_count,
             "feed_predictions_count": paginator.count,
-            "feed_sport_tabs": feed_sport_tabs,
+            "sport_filter_tabs": sport_filter_tabs,
             "status_tabs": _status_tabs(request, counts, active_status),
             "active_status": active_status,
             "active_sort": active_sort,

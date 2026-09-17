@@ -1,0 +1,47 @@
+<div class="prediction-results-head">
+    <nav class="feed-sport-tabs" aria-label="Фильтр по спорту">
+        {% for tab in sport_filter_tabs %}
+        <a
+            class="feed-sport-tab{% if tab.active %} is-active{% endif %}"
+            href="{{ tab.href }}"
+            data-prediction-ajax-link
+            {% if tab.active %}aria-current="page"{% endif %}
+        >
+            {% if tab.code %}
+            <span class="feed-sport-icon" aria-hidden="true">
+                {% if tab.code == 'football' %}
+                    {% include "front/svgs/soccer.svg" %}
+                {% elif tab.code == 'hockey' or tab.code == 'ice-hockey' %}
+                    {% include "front/svgs/hockey.svg" %}
+                {% elif tab.code == 'basketball' %}
+                    {% include "front/svgs/basketball.svg" %}
+                {% elif tab.code == 'tennis' %}
+                    {% include "front/svgs/tennis.svg" %}
+                {% else %}
+                    {% include "front/svgs/nav-matches.svg" %}
+                {% endif %}
+            </span>
+            {% endif %}
+            <span>{{ tab.label }}</span>
+        </a>
+        {% endfor %}
+    </nav>
+
+    <div class="prediction-results-actions">
+        {% if show_sort %}
+        <label class="prediction-results-sort">
+            <span>Сортировка</span>
+            <select name="sort" data-prediction-sort aria-label="Сортировка">
+                {% for value, label in sort_options %}
+                <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        {% endif %}
+        {% if show_content_view_switcher %}
+        <div class="content-view-toolbar">
+            {% include "front/includes/_content_view_switcher.html" %}
+        </div>
+        {% endif %}
+    </div>
+</div>

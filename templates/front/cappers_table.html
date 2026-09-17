@@ -55,31 +55,6 @@
                     {% endfor %}
                 </nav>
             </section>
-
-            <section class="matches-table-filter-group" aria-labelledby="cappers-sports-filter-title">
-                <div class="matches-table-filter-title" id="cappers-sports-filter-title">
-                    <span>Виды спорта</span>
-                    <small>{{ sport_filters|length }}</small>
-                </div>
-                <nav class="matches-table-sport-list" aria-label="Вид спорта">
-                    {% for sport in sport_filters %}
-                    <a
-                        class="matches-table-sport-link{% if selected_sport_code == sport.code %} is-active{% endif %}"
-                        href="{{ sport.url }}"
-                        {% if selected_sport_code == sport.code %}aria-current="page"{% endif %}
-                    >
-                        <span class="matches-table-sport-icon" aria-hidden="true">
-                            {% include "front/includes/_capper_sport_icon.html" with icon_key=sport.icon_key %}
-                        </span>
-                        <span class="matches-table-sport-copy">{{ sport.name }}</span>
-                        <svg class="matches-table-filter-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </a>
-                    {% endfor %}
-                </nav>
-            </section>
-
             {% vip_cappers_banner 6 %}
         </aside>
 

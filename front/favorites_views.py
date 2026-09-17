@@ -21,6 +21,7 @@ from .prediction_views import (
     _published_queryset,
     _sport_from_filter,
 )
+from .sport_tabs import build_sport_filter_tabs
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -61,48 +62,6 @@ def _favorites_status_tabs(request, counts, active_status):
                 "count": count_map.get(key, 0),
                 "href": _url_with_query(request.path, params),
                 "active": active_status == key,
-            }
-        )
-    return tabs
-
-
-def _favorites_sport_tabs(request, favorite_positions, active_sport, *, all_count):
-    rows = list(
-        favorite_positions.exclude(match__sport_id__isnull=True)
-        .values(
-            "match__sport_id",
-            "match__sport__code",
-            "match__sport__name_ru",
-            "match__sport__name",
-        )
-        .annotate(count=Count("coupon_id", distinct=True))
-        .order_by("match__sport__name_ru", "match__sport__name")
-    )
-
-    params = _query_without_page(request)
-    params.pop("sport", None)
-    params.pop("league", None)
-    tabs = [
-        {
-            "code": "",
-            "label": "Все",
-            "count": all_count,
-            "href": _url_with_query(request.path, params),
-            "active": active_sport is None,
-        }
-    ]
-    for row in rows:
-        tab_params = params.copy()
-        tab_params["sport"] = str(row["match__sport_id"])
-        tabs.append(
-            {
-                "code": row["match__sport__code"],
-                "label": row["match__sport__name_ru"]
-                or row["match__sport__name"]
-                or row["match__sport__code"],
-                "count": row["count"],
-                "href": _url_with_query(request.path, tab_params),
-                "active": bool(active_sport and active_sport.pk == row["match__sport_id"]),
             }
         )
     return tabs
@@ -274,11 +233,10 @@ def favorites(request):
             "total_predictions": total_predictions,
             "filtered_predictions": paginator.count,
             "status_tabs": _favorites_status_tabs(request, counts, active_status),
-            "sport_tabs": _favorites_sport_tabs(
+            "sport_filter_tabs": build_sport_filter_tabs(
                 request,
-                favorite_positions,
-                active_sport,
-                all_count=total_predictions,
+                active_sport=active_sport,
+                drop_params=("league",),
             ),
             "active_status": active_status,
             "active_sort": active_sort,
