@@ -531,3 +531,69 @@ class CapperMonthlyStat(models.Model):
 
     def __str__(self) -> str:
         return f"{self.analyst} · {self.month:%Y-%m}"
+
+
+class VipPlan(models.Model):
+    title = models.CharField("Название", max_length=120)
+    duration_days = models.PositiveIntegerField("Срок, дней")
+    price_coins = models.PositiveIntegerField("Стоимость, коинов", default=0)
+    is_active = models.BooleanField("Активен", default=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлён", auto_now=True)
+
+    class Meta:
+        verbose_name = "VIP-тариф"
+        verbose_name_plural = "VIP-тарифы"
+        ordering = ("order", "duration_days", "id")
+
+    def __str__(self) -> str:
+        return f"{self.title} · {self.duration_days} дн. · {self.price_coins} коинов"
+
+
+class UserVipSubscription(models.Model):
+    class Source(models.TextChoices):
+        PURCHASE = "purchase", "Покупка"
+        ADMIN = "admin", "Администратор"
+        ROULETTE = "roulette", "Рулетка"
+        BONUS = "bonus", "Бонус"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="vip_subscriptions",
+        verbose_name="Пользователь",
+    )
+    plan = models.ForeignKey(
+        VipPlan,
+        on_delete=models.SET_NULL,
+        related_name="subscriptions",
+        verbose_name="VIP-тариф",
+        null=True,
+        blank=True,
+    )
+    starts_at = models.DateTimeField("Начало VIP", default=timezone.now)
+    ends_at = models.DateTimeField("Окончание VIP")
+    duration_days = models.PositiveIntegerField("Срок, дней")
+    source = models.CharField(
+        "Источник",
+        max_length=16,
+        choices=Source.choices,
+        default=Source.PURCHASE,
+    )
+    is_active = models.BooleanField("Активен", default=True)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлён", auto_now=True)
+
+    class Meta:
+        verbose_name = "VIP-период пользователя"
+        verbose_name_plural = "VIP-периоды пользователей"
+        ordering = ("-ends_at", "-id")
+        indexes = [
+            models.Index(fields=("user", "starts_at", "ends_at"), name="vip_sub_user_period_idx"),
+            models.Index(fields=("user", "is_active", "ends_at"), name="vip_sub_user_active_idx"),
+            models.Index(fields=("ends_at",), name="vip_sub_ends_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} · VIP до {self.ends_at:%Y-%m-%d %H:%M}"
