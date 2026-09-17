@@ -7,6 +7,7 @@ from django.db.models import Count, Max, Q
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
+from cabinet.vip import annotate_vip_status
 from game.models import PredictionCoupon
 
 from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period_q
@@ -248,6 +249,11 @@ def _annotated_public_profiles(
             ),
         )
     )
+    queryset = annotate_vip_status(
+        queryset,
+        user_outer_ref="user_id",
+        activated_annotation_name="vip_subscription_activated_at",
+    )
     queryset = annotate_author_roi(
         queryset,
         author_outer_ref="user_id",
@@ -264,6 +270,9 @@ def _annotated_public_profiles(
     )
 
     for profile in profiles:
+        profile.user.is_vip_active = profile.is_vip_active
+        profile.user.vip_ends_at = profile.vip_ends_at
+        profile.user.vip_activated_at = profile.vip_subscription_activated_at
         profile.ranking_score = _ranking_score_values(
             trust_index=profile.trust_index,
             roi=profile.author_roi_all_time,

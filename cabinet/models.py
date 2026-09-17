@@ -68,6 +68,18 @@ class User(AbstractUser):
     def is_reader(self) -> bool:
         return self.role == self.Role.READER
 
+    @property
+    def is_vip(self) -> bool:
+        prepared_status = self.__dict__.get("is_vip_active")
+        if prepared_status is not None:
+            return bool(prepared_status)
+        if not self.pk:
+            return False
+
+        from .vip import active_vip_subscriptions
+
+        return active_vip_subscriptions().filter(user_id=self.pk).exists()
+
 
 class AnalystProfile(models.Model):
     user = models.OneToOneField(
