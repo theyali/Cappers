@@ -569,6 +569,7 @@ class UserVipSubscription(models.Model):
         ADMIN = "admin", "Администратор"
         ROULETTE = "roulette", "Рулетка"
         BONUS = "bonus", "Бонус"
+        LEGACY_ADMIN = "legacy_admin", "Перенос старого VIP"
 
     user = models.ForeignKey(
         User,
