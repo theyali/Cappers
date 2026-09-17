@@ -163,3 +163,22 @@ class VipPurchaseTests(TestCase):
         latest = UserVipSubscription.objects.filter(user=self.user).order_by("-ends_at").first()
         self.assertEqual(latest.starts_at, current_end)
         self.assertEqual(latest.ends_at, current_end + timedelta(days=7))
+
+    def test_failed_payment_rolls_back_new_vip_period(self):
+        self.user.coin_wallet.balance = 10
+        self.user.coin_wallet.save(update_fields=["balance", "updated_at"])
+
+        response = self.client.post(
+            reverse("cabinet:vip_purchase"),
+            {"plan_id": self.plan.pk},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(
+            UserVipSubscription.objects.filter(
+                user=self.user,
+                source=UserVipSubscription.Source.PURCHASE,
+            ).exists()
+        )
+        self.user.coin_wallet.refresh_from_db()
+        self.assertEqual(self.user.coin_wallet.balance, 10)
