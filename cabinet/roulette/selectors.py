@@ -25,7 +25,11 @@ def _activity_count(user) -> int:
 
 
 def _has_active_vip(user, reward_state: UserRouletteRewardState, now) -> bool:
-    return get_active_vip(user, at=now) is not None
+    if get_active_vip(user, at=now) is not None:
+        return True
+    # Transitional fallback for VIP days won before UserVipSubscription became
+    # the source of truth. New roulette rewards are always written via extend_vip().
+    return bool(reward_state.vip_until and reward_state.vip_until > now)
 
 
 def _condition_matches(condition, *, user, reward_state, now, activity_count) -> bool:
