@@ -15,6 +15,7 @@ from . import (
     telegram_auth,
     user_public_views,
     views,
+    vip_views,
 )
 from .roulette import api as roulette_api
 
@@ -30,6 +31,7 @@ urlpatterns = [
         profile_promo_views.profile_promo_banner,
         name="profile_promo_banner",
     ),
+    path("vip/purchase/", vip_views.vip_purchase, name="vip_purchase"),
     path("bonuses/", bonus_views.bonuses, name="bonuses"),
     path("bonuses/roulette/state/", roulette_api.roulette_state, name="roulette_state"),
     path("bonuses/roulette/spin/", roulette_api.roulette_spin, name="roulette_spin"),
