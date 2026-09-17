@@ -283,7 +283,11 @@ def _annotated_public_profiles(
 
 def _filter_group(profiles: list[AnalystProfile], group: str) -> list[AnalystProfile]:
     if group == "vip":
-        return [profile for profile in profiles if profile.is_vip]
+        return [
+            profile
+            for profile in profiles
+            if bool(getattr(profile, "is_vip_active", False))
+        ]
     if group == "paid":
         return [
             profile
