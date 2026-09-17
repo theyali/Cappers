@@ -98,7 +98,7 @@
     </div>
 
     <a class="feed-prediction-author" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
-        <span class="feed-prediction-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+        <span class="feed-prediction-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% capper_trust_badge prediction.expert_trust_index %}
             {% if prediction.expert_avatar_url %}
                 <img src="{{ prediction.expert_avatar_url }}" width="36" height="36" alt="" loading="lazy">

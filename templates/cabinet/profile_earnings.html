@@ -39,7 +39,7 @@
     <div class="profile-user-list">
         {% for subscription in active_paid_subscriptions %}
             <article class="profile-user-row">
-                <div class="profile-user-avatar prediction-table-avatar{% if subscription.subscriber.is_analyst and subscription.subscriber.analyst_profile.is_vip %} is-vip{% endif %}" data-skeleton-image>
+                <div class="profile-user-avatar prediction-table-avatar{% if subscription.subscriber.is_analyst and subscription.subscriber.is_vip %} is-vip{% endif %}" data-skeleton-image>
                     {% if subscription.subscriber.is_analyst %}
                         {% capper_trust_badge subscription.subscriber.analyst_profile.trust_index %}
                     {% endif %}

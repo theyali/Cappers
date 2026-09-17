@@ -170,3 +170,12 @@ def annotate_vip_status(
         activated_annotation_name: Subquery(latest_activated.values("starts_at")[:1]),
     }
     return queryset.annotate(**annotations)
+
+
+def attach_vip_status_to_user(user, source) -> None:
+    """Copy queryset VIP annotations from a row/card object to its related user."""
+    if user is None:
+        return
+    user.is_vip_active = bool(getattr(source, "is_vip_active", False))
+    user.vip_ends_at = getattr(source, "vip_ends_at", None)
+    user.vip_activated_at = getattr(source, "vip_activated_at", None)

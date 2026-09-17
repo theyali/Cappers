@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import AdvBanner, HelpAccordionItem, HelpBlock, PageSEO, PromoBanner
+from .models import (
+    AdvBanner,
+    HelpAccordionItem,
+    HelpBlock,
+    PagePromoBanner,
+    PageSEO,
+    PromoBanner,
+)
 
 
 @admin.register(AdvBanner)
@@ -75,6 +82,14 @@ class HelpAccordionItemInline(admin.StackedInline):
     ordering = ("sort_order", "id")
 
 
+class PagePromoBannerInline(admin.TabularInline):
+    model = PagePromoBanner
+    extra = 1
+    fields = ("sort_order", "placement", "banner")
+    ordering = ("placement", "sort_order", "id")
+    autocomplete_fields = ("banner",)
+
+
 @admin.register(HelpBlock)
 class HelpBlockAdmin(admin.ModelAdmin):
     list_display = ("title", "key", "is_active", "updated_at")
@@ -92,12 +107,20 @@ class PageSEOAdmin(admin.ModelAdmin):
         "name",
         "route_name",
         "exact_path",
+        "layout_columns",
         "adv_placement",
         "robots",
         "is_active",
         "updated_at",
     )
-    list_filter = ("is_active", "adv_placement", "robots", "og_type", "twitter_card")
+    list_filter = (
+        "is_active",
+        "layout_columns",
+        "adv_placement",
+        "robots",
+        "og_type",
+        "twitter_card",
+    )
     list_editable = ("is_active",)
     search_fields = (
         "name",
@@ -109,7 +132,8 @@ class PageSEOAdmin(admin.ModelAdmin):
     )
     ordering = ("route_name", "exact_path", "name")
     readonly_fields = ("updated_at",)
-    filter_horizontal = ("adv_banners", "promo_banners")
+    filter_horizontal = ("adv_banners",)
+    inlines = (PagePromoBannerInline,)
     fieldsets = (
         (
             "Страница",
@@ -118,15 +142,8 @@ class PageSEOAdmin(admin.ModelAdmin):
                     "name",
                     "route_name",
                     "exact_path",
+                    "layout_columns",
                     "is_active",
-                )
-            },
-        ),
-        (
-            "Промо-баннеры",
-            {
-                "fields": (
-                    "promo_banners",
                 )
             },
         ),

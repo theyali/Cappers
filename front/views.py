@@ -2,6 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import render
 
+from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon
 
 from .capper_stats_service import CapperStatsService
@@ -93,7 +94,10 @@ def predictions(request):
         ),
     )
 
-    queryset = published.select_related("author", "author__analyst_profile")
+    queryset = annotate_vip_status(
+        published.select_related("author", "author__analyst_profile"),
+        user_outer_ref="author_id",
+    )
     if active_status == "pending":
         queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
     elif active_status != "all":
@@ -101,6 +105,8 @@ def predictions(request):
 
     paginator = Paginator(queryset.order_by("-published_at", "-created_at"), 24)
     page_obj = paginator.get_page(request.GET.get("page"))
+    for coupon in page_obj.object_list:
+        attach_vip_status_to_user(coupon.author, coupon)
 
     count_map = {
         "all": counts["total"],

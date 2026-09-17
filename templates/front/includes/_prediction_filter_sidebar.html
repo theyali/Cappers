@@ -132,7 +132,7 @@
                 data-prediction-ajax-link
                 {% if selected_capper == follow.analyst.username %}aria-current="page"{% endif %}
             >
-                <span class="matches-table-sport-icon following-capper-sidebar-avatar{% if follow.analyst.analyst_profile.is_vip %} is-vip{% endif %}"{% if follow.feed_avatar_url or follow.analyst.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
+                <span class="matches-table-sport-icon following-capper-sidebar-avatar{% if follow.analyst.is_vip %} is-vip{% endif %}"{% if follow.feed_avatar_url or follow.analyst.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
                     {% capper_trust_badge follow.feed_trust_index %}
                     {% if follow.feed_avatar_url %}
                         <img src="{{ follow.feed_avatar_url }}" width="28" height="28" alt="">
@@ -231,4 +231,7 @@
             </div>
         </form>
     </section>
+    {% for promo_banner in left_promo_banners %}
+        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+    {% endfor %}
 </aside>

@@ -12,6 +12,7 @@ from wallets.models import RealBalanceTransaction
 from wallets.services import ensure_real_balance, format_coins, format_money
 
 from .models import AnalystPaidSubscription, User
+from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 EARNING_KINDS = (
@@ -385,13 +386,17 @@ def build_earnings_context(user) -> dict:
     earnings_charts = _income_charts(settled_prediction_coupons)
 
     active_paid_subscriptions = list(
-        AnalystPaidSubscription.objects.filter(
-            analyst=user,
-            expires_at__gt=now,
+        annotate_vip_status(
+            AnalystPaidSubscription.objects.filter(
+                analyst=user,
+                expires_at__gt=now,
+            ).select_related("subscriber", "subscriber__analyst_profile", "plan"),
+            user_outer_ref="subscriber_id",
         )
-        .select_related("subscriber", "subscriber__analyst_profile", "plan")
         .order_by("-expires_at", "-id")
     )
+    for subscription in active_paid_subscriptions:
+        attach_vip_status_to_user(subscription.subscriber, subscription)
 
     return {
         "real_balance": real_balance,

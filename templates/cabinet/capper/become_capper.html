@@ -6,7 +6,9 @@
 
 {% block content %}
 <section class="capper-landing" aria-label="Стать каппером">
-    {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" %}
+    {% for promo_banner in center_promo_banners %}
+        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
+    {% endfor %}
 
     <div class="capper-landing-hero">
         <div>

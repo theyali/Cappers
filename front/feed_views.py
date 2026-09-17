@@ -9,7 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from cabinet.models import AnalystFollow, AnalystPaidSubscription
+from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
+from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon, Sport
 
 from .prediction_views import (
@@ -27,6 +28,7 @@ FEED_SORT_OPTIONS = (
     ("popular", "Популярные"),
 )
 PAID_FEED_LIMIT = 12
+VIP_STORIES_LIMIT = 30
 FEED_META_CACHE_TTL = 60
 
 
@@ -38,6 +40,43 @@ def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
 def _feed_url(request, params) -> str:
     query = params.urlencode()
     return f"{request.path}?{query}" if query else request.path
+
+
+def _vip_story_payloads(limit: int = VIP_STORIES_LIMIT) -> list[dict]:
+    queryset = annotate_vip_status(
+        AnalystProfile.objects.filter(
+            is_public=True,
+            user__role=User.Role.ANALYST,
+        ).select_related("user"),
+        user_outer_ref="user_id",
+        activated_annotation_name="vip_subscription_activated_at",
+    ).filter(is_vip_active=True)
+
+    stories = []
+    for profile in queryset.order_by("-vip_subscription_activated_at", "-user_id")[:limit]:
+        user = profile.user
+        name = profile.display_name or user.get_full_name() or user.username
+        avatar_url = ""
+        if profile.avatar:
+            avatar_url = profile.avatar.url
+        elif user.avatar:
+            avatar_url = user.avatar.url
+        stories.append(
+            {
+                "id": user.pk,
+                "name": name,
+                "username": user.username,
+                "initial": (name or user.username or "К")[0].upper(),
+                "avatar_url": avatar_url,
+                "profile_url": reverse(
+                    "front:expert_profile",
+                    kwargs={"username": user.username},
+                ),
+                "vip_activated_at": getattr(profile, "vip_subscription_activated_at", None),
+                "vip_ends_at": getattr(profile, "vip_ends_at", None),
+            }
+        )
+    return stories
 
 
 def _sport_from_filter(value: str) -> Sport | None:
@@ -228,10 +267,17 @@ def following_feed(request):
         active_sort = "new"
 
     following = list(
-        AnalystFollow.objects.filter(follower=request.user)
-        .select_related("analyst", "analyst__analyst_profile")
+        annotate_vip_status(
+            AnalystFollow.objects.filter(follower=request.user).select_related(
+                "analyst",
+                "analyst__analyst_profile",
+            ),
+            user_outer_ref="analyst_id",
+        )
         .order_by("-created_at")
     )
+    for follow in following:
+        attach_vip_status_to_user(follow.analyst, follow)
     following_ids = {follow.analyst_id for follow in following}
     followed_usernames = {follow.analyst.username for follow in following}
     paid_subscriptions = list(
@@ -244,6 +290,7 @@ def following_feed(request):
     )
     paid_analyst_ids = {subscription.analyst_id for subscription in paid_subscriptions}
     paid_usernames = {subscription.analyst.username for subscription in paid_subscriptions}
+    vip_stories = _vip_story_payloads()
 
     selected_capper = request.GET.get("capper", "").strip()
     if selected_capper and selected_capper not in followed_usernames | paid_usernames:
@@ -455,8 +502,10 @@ def following_feed(request):
         {
             "page_obj": page_obj,
             "following": following,
+            "vip_stories": vip_stories,
+            "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
             "paid_subscriptions": paid_subscriptions,
-            "has_feed_sources": bool(following or paid_subscriptions),
+            "has_feed_sources": bool(following or paid_subscriptions or vip_stories),
             "following_count": len(following),
             "paid_subscriptions_count": len(paid_subscriptions),
             "paid_predictions": paid_predictions,

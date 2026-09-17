@@ -20,22 +20,20 @@
             <section class="following-stories" aria-labelledby="following-stories-title">
                 <div class="following-stories-head">
                     <div>VIP Капперы</div>
-                    <a href="{% url 'front:cappers_stats' %}">
+                    <a href="{{ vip_ranking_url }}">
                         <span>Смотреть все</span>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
                     </a>
                 </div>
 
                 <div class="following-stories-row" aria-label="Истории капперов">
-                    {% for follow in following|slice:":9" %}
-                    <a class="following-story-card" href="{{ follow.feed_profile_url }}">
+                    {% for story in vip_stories %}
+                    <a class="following-story-card" href="{{ story.profile_url }}">
                         <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
-                            {% if follow.feed_avatar_url %}
-                                <img src="{{ follow.feed_avatar_url }}" width="72" height="72" loading="lazy" alt="">
-                            {% elif follow.analyst.avatar %}
-                                <img src="{{ follow.analyst.avatar.url }}" width="72" height="72" loading="lazy" alt="">
+                            {% if story.avatar_url %}
+                                <img src="{{ story.avatar_url }}" width="72" height="72" loading="lazy" alt="">
                             {% else %}
-                                {{ follow.feed_initial }}
+                                {{ story.initial }}
                             {% endif %}
                             {% if forloop.first %}
                             <b>1</b>
@@ -43,7 +41,7 @@
                             <small class="capper-verified-badge prediction-verified" aria-hidden="true"></small>
                             {% endif %}
                         </span>
-                        <span>{{ follow.feed_name }}</span>
+                        <span>{{ story.name }}</span>
                     </a>
                     {% endfor %}
                 </div>

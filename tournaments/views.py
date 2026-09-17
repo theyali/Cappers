@@ -16,6 +16,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
 from cabinet.models import AnalystFollow
+from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from front.models import PredictionFavorite, PredictionLike
 from front.views import _initials
 from game import date_views
@@ -724,8 +725,11 @@ def _tournament_prediction_cards(request, tournament: Tournament):
                 output_field=IntegerField(),
             ),
         )
-        .order_by("-published_at", "-created_at")[:12]
     )
+    coupons = annotate_vip_status(coupons, user_outer_ref="author_id").order_by(
+        "-published_at",
+        "-created_at",
+    )[:12]
 
     liked_ids: set[int] = set()
     favorite_ids: set[int] = set()
@@ -757,6 +761,7 @@ def _tournament_prediction_cards(request, tournament: Tournament):
         if card is None:
             continue
         author = coupon.author
+        attach_vip_status_to_user(author, coupon)
         card.is_liked = coupon.id in liked_ids
         card.is_favorite = coupon.id in favorite_ids
         card.is_own = request.user.is_authenticated and request.user.id == author.id

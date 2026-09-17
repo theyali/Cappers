@@ -83,7 +83,7 @@
             </section>
         </aside>
 
-        <section class="predictions-content expert-public-shell{% if analyst_profile.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
+        <section class="predictions-content expert-public-shell{% if analyst_profile.user.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
             {{ block.super }}
 
             {% if profile_presence %}

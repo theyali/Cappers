@@ -75,6 +75,54 @@ class PromoBanner(models.Model):
         return self.name or self.title or self.button_url or f"Промо-баннер #{self.pk or 'новый'}"
 
 
+class PagePromoBanner(models.Model):
+    class Placement(models.TextChoices):
+        LEFT = "left", "Левый сайдбар"
+        CENTER = "center", "Центр"
+        RIGHT = "right", "Правый сайдбар"
+
+    page = models.ForeignKey(
+        "PageSEO",
+        on_delete=models.CASCADE,
+        related_name="promo_banner_placements",
+        verbose_name="Страница",
+    )
+    banner = models.ForeignKey(
+        PromoBanner,
+        on_delete=models.CASCADE,
+        related_name="page_placements",
+        verbose_name="Промо-баннер",
+    )
+    placement = models.CharField(
+        "Где показывать",
+        max_length=16,
+        choices=Placement.choices,
+        default=Placement.CENTER,
+        db_index=True,
+    )
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+
+    class Meta:
+        verbose_name = "Размещение промо-баннера"
+        verbose_name_plural = "Размещения промо-баннеров"
+        ordering = ("placement", "sort_order", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("page", "banner", "placement"),
+                name="pages_promo_placement_unique",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("page", "placement", "sort_order"),
+                name="pages_promo_place_order_idx",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.page} · {self.banner} · {self.get_placement_display()}"
+
+
 class HelpBlock(models.Model):
     key = models.SlugField(
         "Ключ блока",
@@ -141,6 +189,12 @@ class PageSEO(models.Model):
     class AdvPlacement(models.TextChoices):
         CONTENT = "content", "На странице"
         SIDEBAR = "sidebar", "В сайдбаре"
+
+    class LayoutColumns(models.TextChoices):
+        THREE = "three", "3 колонки"
+        LEFT_CENTER = "left_center", "2 колонки: левый сайдбар + центр"
+        CENTER_RIGHT = "center_right", "2 колонки: центр + правый сайдбар"
+        CENTER_ONLY = "center_only", "1 колонка: центр"
 
     name = models.CharField("Название страницы в админке", max_length=160)
     route_name = models.CharField(
@@ -214,6 +268,13 @@ class PageSEO(models.Model):
         choices=AdvPlacement.choices,
         default=AdvPlacement.CONTENT,
         help_text="Для страниц с сайдбаром выберите размещение в сайдбаре.",
+    )
+    layout_columns = models.CharField(
+        "Колонки страницы",
+        max_length=24,
+        choices=LayoutColumns.choices,
+        default=LayoutColumns.THREE,
+        help_text="Используется общим layout CSS для страниц с predictions-layout.",
     )
     promo_banners = models.ManyToManyField(
         PromoBanner,

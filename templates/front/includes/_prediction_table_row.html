@@ -24,7 +24,7 @@
         onmouseenter="this.querySelector('strong').style.color='var(--yellow)'"
         onmouseleave="this.querySelector('strong').style.color=''"
     >
-        <span class="prediction-table-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+        <span class="prediction-table-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% capper_trust_badge prediction.expert_trust_index %}
             {% if prediction.expert_avatar_url %}
                 <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">

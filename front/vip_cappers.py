@@ -1,8 +1,8 @@
 from django.db.models import Count, Exists, OuterRef, Q
-from django.db.models.functions import Coalesce
 from django.urls import reverse
 
 from cabinet.models import AnalystFollow, AnalystProfile, User
+from cabinet.vip import annotate_vip_status
 from game.models import PredictionCoupon
 
 
@@ -53,6 +53,8 @@ def _card_payload(profile: AnalystProfile) -> dict:
         "profile_url": reverse("front:expert_profile", args=[user.username]),
         "follow_url": reverse("cabinet:toggle_follow", args=[user.pk]),
         "is_following": bool(getattr(profile, "is_following", False)),
+        "is_vip": bool(getattr(profile, "is_vip_active", False)),
+        "vip_ends_at": getattr(profile, "vip_ends_at", None),
         "vip_sort_at": getattr(profile, "vip_sort_at", None),
     }
 
@@ -64,9 +66,7 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
     queryset, while ``user`` is joined with ``select_related``. Rendering the six
     cards therefore does not execute per-capper queries.
 
-    The top card is the latest VIP activation. Existing legacy rows can still have
-    an empty activation date, so ``updated_at`` and ``user.date_joined`` remain as
-    fallbacks.
+    The top card is the latest active VIP activation.
     """
 
     safe_limit = _normalize_limit(limit)
@@ -81,11 +81,7 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
     )
 
     queryset = (
-        AnalystProfile.objects.filter(
-            is_vip=True,
-            is_public=True,
-            user__role=User.Role.ANALYST,
-        )
+        AnalystProfile.objects.filter(is_public=True, user__role=User.Role.ANALYST)
         .select_related("user")
         .annotate(
             followers_count=Count("user__analyst_followers", distinct=True),
@@ -99,9 +95,13 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
                 filter=losses_filter,
                 distinct=True,
             ),
-            vip_sort_at=Coalesce("vip_activated_at", "updated_at", "user__date_joined"),
         )
     )
+    queryset = annotate_vip_status(
+        queryset,
+        user_outer_ref="user_id",
+        activated_annotation_name="vip_sort_at",
+    ).filter(is_vip_active=True)
 
     if getattr(viewer, "is_authenticated", False):
         queryset = queryset.annotate(

@@ -7,7 +7,7 @@
     <div class="prediction-card-head">
         <div class="prediction-author-row">
             <a class="prediction-expert prediction-expert-link" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
-                <span class="prediction-expert-avatar{% if prediction.coupon.author.analyst_profile.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+                <span class="prediction-expert-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
                     {% capper_trust_badge prediction.expert_trust_index %}
                     {% if prediction.expert_avatar_url %}
                         <img src="{{ prediction.expert_avatar_url }}" width="46" height="46" alt="">

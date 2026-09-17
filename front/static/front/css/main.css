@@ -177,10 +177,7 @@ body {
     min-height: 100vh;
     margin: 0;
     color: var(--text);
-    background:#131313;
-    background:
-        radial-gradient(circle at 50% 4%, rgba(255, 255, 255, .06), transparent 28%),
-        linear-gradient(180deg, #151516 0%, #101011 42%, #0d0e0e 100%);
+    background:#121212;
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 15px;
     font-weight: 500;
@@ -17612,17 +17609,54 @@ font-size: 14px;
 /* Legacy source: front/static/front/css/predictions-sidebar.css */
 .predictions-layout {
     display: grid;
-    grid-template-columns: minmax(260px, 230px) minmax(0, 1fr) minmax(300px, 280px);
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(300px, 340px);
     align-items: start;
     gap: 8px;
     transition: grid-template-columns .2s ease;
 }
-.predictions-layout.following-feed-layout {
-    grid-template-columns: minmax(220px, 230px) minmax(0, 1fr) minmax(380px, 280px);
-}
 
 .predictions-layout.is-filter-collapsed {
     grid-template-columns: minmax(0, 1fr) 52px;
+}
+
+body.layout-columns-left_center .predictions-layout {
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+}
+
+body.layout-columns-left_center .predictions-layout > .bookmakers-sidebar,
+body.layout-columns-left_center .predictions-layout > .predictions-ad-sidebar {
+    display: none;
+}
+
+body.layout-columns-center_right .predictions-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+}
+
+body.layout-columns-center_right .predictions-content {
+    grid-column: 1;
+}
+
+body.layout-columns-center_right .predictions-layout > .predictions-filter-sidebar {
+    display: none !important;
+}
+
+body.layout-columns-center_right .predictions-layout > .bookmakers-sidebar,
+body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
+    grid-column: 2;
+}
+
+body.layout-columns-center_only .predictions-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+body.layout-columns-center_only .predictions-content {
+    grid-column: 1;
+}
+
+body.layout-columns-center_only .predictions-layout > .predictions-filter-sidebar,
+body.layout-columns-center_only .predictions-layout > .bookmakers-sidebar,
+body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
+    display: none !important;
 }
 
 .predictions-content {
@@ -18252,6 +18286,12 @@ font-size: 14px;
         grid-template-columns: 1fr;
     }
 
+    body.layout-columns-left_center .predictions-layout,
+    body.layout-columns-center_right .predictions-layout,
+    body.layout-columns-center_only .predictions-layout {
+        grid-template-columns: 1fr;
+    }
+
     .prediction-filter-sidebar {
         position: static;
         grid-row: 1;
@@ -18266,6 +18306,11 @@ font-size: 14px;
     .predictions-content {
         grid-column: 1;
         grid-row: 2;
+    }
+
+    body.layout-columns-center_right .predictions-content,
+    body.layout-columns-center_only .predictions-content {
+        grid-row: 1;
     }
 
     .predictions-layout.is-filter-collapsed .prediction-filter-sidebar-toggle {
@@ -18912,13 +18957,13 @@ font-size: 14px;
 }
 
 .feed-sport-tab {
-    min-height: 42px;
+    min-height: 37px;
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 0 16px;
+    gap: 5px;
+    padding: 0 10px;
     border: 1px solid rgba(255, 255, 255, .09);
     border-radius: 12px;
     color: rgba(255, 255, 255, .76);
@@ -18926,7 +18971,7 @@ font-size: 14px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045);
     cursor: pointer;
     font: inherit;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
@@ -18947,8 +18992,8 @@ font-size: 14px;
 }
 
 .feed-sport-icon {
-    inline-size: 20px;
-    block-size: 20px;
+    inline-size: 15px;
+    block-size: 15px;
     display: grid;
     place-items: center;
     color: currentColor;
@@ -21581,7 +21626,7 @@ font-size: 14px;
 
 .expert-public-main {
     min-width: 0;
-    max-width: 980px;
+    max-width: 860px;
     display: flex;
     align-items: center;
     gap: 34px;
@@ -32216,10 +32261,6 @@ font-size: 13px;
     color: #f87171;
 }
 
-.tournaments-page .tournaments-layout {
-    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(300px, 340px);
-}
-
 .tournaments-page .tournaments-content {
     align-content: start;
     grid-auto-rows: max-content;
@@ -32457,20 +32498,12 @@ font-size: 13px;
 }
 
 @media (max-width: 1120px) {
-    .tournaments-page .tournaments-layout {
-        grid-template-columns: minmax(208px, 240px) minmax(0, 1fr);
-    }
-
     .tournaments-page .tournament-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 900px) {
-    .tournaments-page .tournaments-layout {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
     .tournaments-page .tournament-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -35329,7 +35362,7 @@ position: relative;
 }
 
 .prediction-comment-delete::before {
-    content: "⋮";
+    content: "\22EE";
     font-size: 30px;
     font-weight: 800;
     line-height: 1;

@@ -179,7 +179,7 @@ def _recommended_experts(
                 "name": name,
                 "initials": _initials(name),
                 "avatar_url": avatar_url,
-                "is_vip": bool(profile.is_vip),
+                "is_vip": bool(user.is_vip),
                 "trust_index": profile.trust_index,
                 "profile_url": reverse(
                     "front:expert_profile",

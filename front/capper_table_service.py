@@ -133,7 +133,7 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "initials": _initials(name),
         "avatar_url": avatar_url,
         "is_verified": profile.is_verified,
-        "is_vip": profile.is_vip,
+        "is_vip": bool(getattr(profile, "is_vip_active", False)),
         "trust_index": profile.trust_index,
         "paid_predictions_enabled": bool(
             profile.paid_predictions_enabled and profile.paid_predictions_price > 0

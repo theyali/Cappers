@@ -40,6 +40,7 @@ from .paid_predictions import (
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
+from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 @require_http_methods(["GET", "POST"])
@@ -238,13 +239,22 @@ def profile(request):
     following_count = request.user.analyst_follows.count()
     following_ids = set(request.user.analyst_follows.values_list("analyst_id", flat=True))
     followers = (
-        AnalystFollow.objects.filter(analyst=request.user)
-        .select_related("follower", "follower__analyst_profile")
+        annotate_vip_status(
+            AnalystFollow.objects.filter(analyst=request.user).select_related(
+                "follower",
+                "follower__analyst_profile",
+            ),
+            user_outer_ref="follower_id",
+        )
         if request.user.role == User.Role.ANALYST
         else AnalystFollow.objects.none()
     )
-    following = AnalystFollow.objects.filter(follower=request.user).select_related(
-        "analyst", "analyst__analyst_profile"
+    following = annotate_vip_status(
+        AnalystFollow.objects.filter(follower=request.user).select_related(
+            "analyst",
+            "analyst__analyst_profile",
+        ),
+        user_outer_ref="analyst_id",
     )
     notification_preferences = get_preferences(request.user)
     telegram_account = TelegramAccount.objects.filter(user=request.user).first()
@@ -277,6 +287,11 @@ def profile(request):
             for subscription in earnings_context["active_paid_subscriptions"]
         }
     active_paid_subscribers = len(active_paid_subscriber_ids)
+
+    for follow in followers:
+        attach_vip_status_to_user(follow.follower, follow)
+    for follow in following:
+        attach_vip_status_to_user(follow.analyst, follow)
 
     my_coupons = []
     coupons_count = 0

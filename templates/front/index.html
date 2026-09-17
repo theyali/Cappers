@@ -218,7 +218,9 @@
         </div>
     </div>
     <aside class="home-sidebar">
-        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" %}
+        {% for promo_banner in right_promo_banners %}
+            {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+        {% endfor %}
 
         <section class="experts-card" id="experts">
                 <div class="experts-title-row">

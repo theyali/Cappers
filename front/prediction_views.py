@@ -33,6 +33,7 @@ from cabinet.comments.services import (
 )
 from cabinet.models import AnalystFollow
 from cabinet.paid_predictions import user_can_view_paid_predictions
+from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import Prediction, PredictionCoupon, Sport
 
 from .expert_ranking import ranked_expert_profiles
@@ -153,6 +154,7 @@ def _published_queryset(*, include_paid: bool = False):
     )
     if not include_paid:
         queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
+    queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
     return annotate_author_roi(
         queryset,
         author_outer_ref="author_id",
@@ -236,6 +238,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
             continue
 
         author = coupon.author
+        attach_vip_status_to_user(author, coupon)
         profile = getattr(author, "analyst_profile", None)
         name = (
             profile.display_name
@@ -759,7 +762,7 @@ def predictions(request, sport_code: str | None = None):
 
 @ensure_csrf_cookie
 def prediction_detail(request, prediction_id: int):
-    coupon = get_object_or_404(
+    detail_queryset = (
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
@@ -793,9 +796,14 @@ def prediction_detail(request, prediction_id: int):
                 Value(0),
                 output_field=IntegerField(),
             ),
-        ),
+        )
+    )
+    detail_queryset = annotate_vip_status(detail_queryset, user_outer_ref="author_id")
+    coupon = get_object_or_404(
+        detail_queryset,
         pk=prediction_id,
     )
+    attach_vip_status_to_user(coupon.author, coupon)
     if (
         coupon.audience == PredictionCoupon.Audience.PAID
         and not user_can_view_paid_predictions(request.user, coupon.author)

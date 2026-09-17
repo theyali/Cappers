@@ -212,7 +212,7 @@ def bookmakers_sidebar(context, force_sidebar_ads=False, show_profit_dynamics=Fa
     return {
         "bookmakers": Bookmaker.objects.all(),
         "website_settings": WebsiteSettings.load(),
-        "promo_banners": context.get("promo_banners", []),
+        "promo_banners": context.get("right_promo_banners", []),
         "adv_banners": adv_banners,
         "adv_placement": adv_placement,
         "show_sidebar_ads": bool(

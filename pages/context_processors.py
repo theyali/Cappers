@@ -8,7 +8,7 @@ from cabinet.models import User
 from cabinet.presence import presence_payload
 
 from .models import PageSEO
-from .promo_banners import page_promo_banners
+from .promo_banners import page_promo_banner_groups
 
 
 PAGE_CONTEXT_CACHE_SECONDS = 120
@@ -126,7 +126,7 @@ def _resolve_ad_page(route_name: str, current_path: str, primary_page):
 
 
 def _page_context_cache_key(route_name: str, current_path: str) -> str:
-    return f"page-seo-context:v1:{route_name}:{current_path}"
+    return f"page-seo-context:v2:{route_name}:{current_path}"
 
 
 def _build_page_context(route_name: str, current_path: str) -> dict:
@@ -140,18 +140,20 @@ def _build_page_context(route_name: str, current_path: str) -> dict:
             adv_placement = ad_page.adv_placement
             adv_banners = list(ad_page.adv_banners.all())
 
-    promo_banners = page_promo_banners(
+    promo_banner_groups = page_promo_banner_groups(
         route_name,
         current_path,
         page,
         _page_candidates,
     )
+    promo_banners = promo_banner_groups["all"]
 
     return {
         "page": page,
         "adv_banners": adv_banners,
         "adv_placement": adv_placement,
         "promo_banners": promo_banners,
+        "promo_banner_groups": promo_banner_groups,
     }
 
 
@@ -205,6 +207,12 @@ def page_seo(request):
             "adv_banners": [],
             "adv_placement": PageSEO.AdvPlacement.CONTENT,
             "promo_banners": [],
+            "promo_banner_groups": {
+                "left": [],
+                "center": [],
+                "right": [],
+                "all": [],
+            },
         }
 
     page = page_context["page"]
@@ -237,11 +245,25 @@ def page_seo(request):
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
     promo_banners = page_context["promo_banners"]
+    promo_banner_groups = page_context.get("promo_banner_groups") or {
+        "left": [],
+        "center": promo_banners,
+        "right": [],
+        "all": promo_banners,
+    }
+    page_layout_columns = page.layout_columns if page else PageSEO.LayoutColumns.THREE
     return {
         "seo_meta": seo_meta,
         "adv_banners": page_context["adv_banners"],
         "adv_placement": adv_placement,
         "promo_banners": promo_banners,
-        "promo_banner": promo_banners[0] if promo_banners else None,
+        "left_promo_banners": promo_banner_groups.get("left", []),
+        "center_promo_banners": promo_banner_groups.get("center", []),
+        "right_promo_banners": promo_banner_groups.get("right", []),
+        "promo_banner": (
+            (promo_banner_groups.get("center") or promo_banners or [None])[0]
+        ),
+        "page_layout_columns": page_layout_columns,
+        "page_layout_class": f"layout-columns-{page_layout_columns}",
         "profile_presence": _public_profile_presence(resolver_match, route_name),
     }
