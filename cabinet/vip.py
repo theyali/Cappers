@@ -117,6 +117,36 @@ def extend_vip(user, days, source, starts_at=None):
     )
 
 
+def purchase_vip(user, plan):
+    """Purchase an active VIP tariff with coins in a single transaction."""
+    from wallets.models import CoinTransaction
+    from wallets.services import charge_coins
+
+    from .models import UserVipSubscription, VipPlan
+
+    if plan is None or not getattr(plan, "pk", None):
+        raise ValidationError("VIP-тариф не найден.")
+
+    with transaction.atomic():
+        current_plan = VipPlan.objects.select_for_update().get(pk=plan.pk)
+        if not current_plan.is_active:
+            raise ValidationError("Этот VIP-тариф больше недоступен.")
+
+        subscription = activate_vip(
+            user,
+            current_plan,
+            UserVipSubscription.Source.PURCHASE,
+        )
+        wallet = charge_coins(
+            user,
+            current_plan.price_coins,
+            CoinTransaction.Kind.ADJUSTMENT,
+            related_obj=subscription,
+            note=f"Покупка VIP «{current_plan.title}»",
+        )
+        return subscription, wallet
+
+
 def annotate_vip_status(
     queryset: QuerySet,
     *,
