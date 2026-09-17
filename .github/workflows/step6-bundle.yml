@@ -1,4 +1,4 @@
-name: Export verified step 6 patch
+name: Scope how-it-works hero styles
 
 on:
   push:
@@ -6,19 +6,50 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
+permissions:
+  contents: write
+
 jobs:
-  export:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build verified patch bundle
+      - name: Scope hero kicker styles
         run: |
-          python .github/step6_apply.py
-          python .github/step6_finalize_patch.py
-          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
-          git diff --name-only
-      - uses: actions/upload-artifact@v4
-        with:
-          name: step6-patched
-          path: step6-patched.tar.gz
-          if-no-files-found: error
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("front/static/front/css/main.css")
+          css = path.read_text()
+          old = '''.how-kicker {
+              margin: 0 0 16px;
+              color: var(--yellow);
+              font-size: 12px;
+              font-weight: 600;
+              letter-spacing: .12em;
+              text-transform: uppercase;
+          }'''.replace('          ', '')
+          new = '''.how-kicker {
+              margin: 0 0 12px;
+              color: var(--yellow);
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: .12em;
+              text-transform: uppercase;
+          }
+
+          .how-hero .how-kicker {
+              margin-bottom: 16px;
+              font-size: 12px;
+              font-weight: 600;
+          }'''.replace('          ', '')
+          if old not in css:
+              raise SystemExit("Expected how-kicker block was not found")
+          path.write_text(css.replace(old, new, 1))
+          PY
+      - name: Commit scoped hero styles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add front/static/front/css/main.css
+          git commit -m "Scope how-it-works hero styles"
+          git push origin HEAD:main
