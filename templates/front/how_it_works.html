@@ -7,10 +7,6 @@
 
 {% block content %}
 <section class="how-page" data-how-page>
-    {% for promo_banner in center_promo_banners %}
-        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
-    {% endfor %}
-
     <div class="how-hero">
         <div class="how-hero-copy">
             <p class="how-kicker">Как это работает</p>

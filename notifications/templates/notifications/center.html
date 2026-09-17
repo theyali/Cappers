@@ -165,7 +165,7 @@
             {% if promo_banner %}
             <div data-skeleton-image>
                 {% if promo_banner.link %}<a href="{{ promo_banner.link }}" target="_blank" rel="noopener noreferrer">{% endif %}
-                    <img src="{{ promo_banner.image.url }}" alt="{{ promo_banner.alt_text|default:promo_banner.name }}" width="360" height="198" loading="eager" decoding="async">
+                    <img src="{{ promo_banner.image.url }}" alt="{{ promo_banner.alt_text|default:promo_banner.name }}" width="360" height="198" loading="eager" decoding="async" class="promo-banner-img">
                 {% if promo_banner.link %}</a>{% endif %}
             </div>
             {% endif %}
