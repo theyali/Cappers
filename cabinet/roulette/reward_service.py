@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import connection
 
+from cabinet.models import UserVipSubscription
+from cabinet.vip import extend_vip
 from wallets.models import CoinTransaction
 from wallets.services import credit_coins
 
@@ -37,7 +39,16 @@ def issue_roulette_reward(*, spin, prize, user, state, reward_state, now) -> Non
         return
 
     if reward_type == RoulettePrize.RewardType.VIP_DAYS:
-        reward_state.grant_vip_days(int(reward_value), now=now, save=False)
+        days = int(reward_value)
+        subscription = extend_vip(
+            user,
+            days,
+            UserVipSubscription.Source.ROULETTE,
+            starts_at=now,
+        )
+        # Compatibility cache for the existing roulette state/API. The source of
+        # truth for VIP status is UserVipSubscription.
+        reward_state.vip_until = subscription.ends_at
         return
 
     if reward_type == RoulettePrize.RewardType.FREE_PREDICTIONS:
