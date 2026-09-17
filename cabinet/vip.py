@@ -120,7 +120,7 @@ def extend_vip(user, days, source, starts_at=None):
 def purchase_vip(user, plan):
     """Purchase an active VIP tariff with coins in a single transaction."""
     from wallets.models import CoinTransaction
-    from wallets.services import charge_coins
+    from wallets.services import charge_coins, ensure_coin_wallet
 
     from .models import UserVipSubscription, VipPlan
 
@@ -137,13 +137,16 @@ def purchase_vip(user, plan):
             current_plan,
             UserVipSubscription.Source.PURCHASE,
         )
-        wallet = charge_coins(
-            user,
-            current_plan.price_coins,
-            CoinTransaction.Kind.ADJUSTMENT,
-            related_obj=subscription,
-            note=f"Покупка VIP «{current_plan.title}»",
-        )
+        if current_plan.price_coins > 0:
+            wallet = charge_coins(
+                user,
+                current_plan.price_coins,
+                CoinTransaction.Kind.ADJUSTMENT,
+                related_obj=subscription,
+                note=f"Покупка VIP «{current_plan.title}»",
+            )
+        else:
+            wallet = ensure_coin_wallet(user)
         return subscription, wallet
 
 
