@@ -10,6 +10,8 @@ from .models import (
     MatchPredictionRequest,
     ReferralVisit,
     User,
+    UserVipSubscription,
+    VipPlan,
 )
 
 
@@ -49,7 +51,7 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "onboarding_completed_at",
         "created_at",
     )
-    list_editable = ("is_verified", "is_vip", "is_recommended", "paid_predictions_enabled", "is_public")
+    list_editable = ("is_verified", "is_recommended", "paid_predictions_enabled", "is_public")
     list_filter = (
         "is_verified",
         "verification_requested_at",
@@ -77,6 +79,8 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("user",)
     readonly_fields = (
+        "is_vip",
+        "vip_activated_at",
         "trust_index",
         "trust_index_updated_at",
         "onboarding_completed_at",
@@ -119,8 +123,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 "fields": (
                     "is_verified",
                     "verification_requested_at",
-                    "is_vip",
-                    "vip_activated_at",
                     "is_recommended",
                     "trust_index",
                     "trust_index_updated_at",
@@ -132,10 +134,50 @@ class AnalystProfileAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Legacy VIP — только для проверки миграции",
+            {"fields": ("is_vip", "vip_activated_at")},
+        ),
+        (
             "Системная информация",
             {"fields": ("created_at", "updated_at")},
         ),
     )
+
+
+@admin.register(VipPlan)
+class VipPlanAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "duration_days",
+        "price_coins",
+        "is_active",
+        "order",
+        "updated_at",
+    )
+    list_editable = ("price_coins", "is_active", "order")
+    list_filter = ("is_active", "duration_days")
+    search_fields = ("title",)
+    ordering = ("order", "duration_days", "id")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(UserVipSubscription)
+class UserVipSubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "plan",
+        "source",
+        "starts_at",
+        "ends_at",
+        "duration_days",
+        "is_active",
+    )
+    list_filter = ("source", "is_active", "plan", "starts_at", "ends_at")
+    search_fields = ("user__username", "user__email", "plan__title")
+    autocomplete_fields = ("user", "plan")
+    list_select_related = ("user", "plan")
+    readonly_fields = ("created_at", "updated_at")
+    date_hierarchy = "starts_at"
 
 
 @admin.register(AnalystFollow)
