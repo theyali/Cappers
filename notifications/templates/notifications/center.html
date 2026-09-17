@@ -168,18 +168,36 @@
                         <strong>Каналы уведомлений</strong>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
-                            <span>Email</span>
-                            <input type="checkbox" name="email_enabled" {% if preferences.email_enabled %}checked{% endif %}>
+                            <span class="notification-copy">
+                                <strong>Email</strong>
+                                <small>Важные события и дайджест</small>
+                            </span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="email_enabled" {% if preferences.email_enabled %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 4-8 16-3.5-6.5L3 10l18-6Z"></path><path d="m9.5 13.5 5-4"></path></svg>
-                            <span>Telegram</span>
-                            <input type="checkbox" name="telegram_enabled" {% if preferences.telegram_enabled %}checked{% endif %}>
+                            <span class="notification-copy">
+                                <strong>Telegram</strong>
+                                <small>Мгновенные уведомления</small>
+                            </span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="telegram_enabled" {% if preferences.telegram_enabled %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="1"></rect><path d="M8 21h8M12 17v4"></path></svg>
-                            <span>На сайте</span>
-                            <input type="checkbox" name="in_app_enabled" {% if preferences.in_app_enabled %}checked{% endif %}>
+                            <span class="notification-copy">
+                                <strong>На сайте</strong>
+                                <small>Уведомления в браузере</small>
+                            </span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="in_app_enabled" {% if preferences.in_app_enabled %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                     </div>
 
@@ -188,32 +206,50 @@
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
                             <span>Новые прогнозы</span>
-                            <input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 8.6c0 5.4-8.8 10.4-8.8 10.4S3.2 14 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
                             <span>Реакции на прогнозы</span>
-                            <input type="checkbox" name="prediction_like" {% if preferences.prediction_like %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="prediction_like" {% if preferences.prediction_like %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
                             <span>Новые подписчики</span>
-                            <input type="checkbox" name="new_follower" {% if preferences.new_follower %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="new_follower" {% if preferences.new_follower %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="m12 7 3 2-.8 3.5H9.8L9 9l3-2ZM9.8 12.5 7 15m7.2-2.5L17 15M12 17v3"></path></svg>
                             <span>События матчей</span>
-                            <input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
                             <span>Достижения капперов</span>
-                            <input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                         <label>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M14.5 8.5c-.6-.7-1.4-1-2.5-1-1.4 0-2.5.7-2.5 1.8 0 2.8 5.4 1.3 5.4 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.2-.4-2.9-1.2M12 5.5v13"></path></svg>
                             <span>Расчёты прогнозов</span>
-                            <input type="checkbox" name="own_coupon_settled" {% if preferences.own_coupon_settled %}checked{% endif %}>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="own_coupon_settled" {% if preferences.own_coupon_settled %}checked{% endif %}>
+                                <span></span>
+                            </span>
                         </label>
                     </div>
 
