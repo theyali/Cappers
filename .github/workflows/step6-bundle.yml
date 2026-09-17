@@ -254,11 +254,10 @@ jobs:
               raise SystemExit("Expected how-hero 760px rules were not found")
           css_path.write_text(css.replace(old_760, new_760, 1))
           PY
-      - name: Commit hero changes and restore workflow
+      - name: Commit hero changes
         run: |
-          echo 'bmFtZTogRXhwb3J0IHZlcmlmaWVkIHN0ZXAgNiBwYXRjaAoKb246CiAgcHVzaDoKICAgIGJyYW5jaGVzOiBbbWFpbl0KICAgIHBhdGhzOgogICAgICAtIC5naXRodWIvd29ya2Zsb3dzL3N0ZXA2LWJ1bmRsZS55bWwKCmpvYnM6CiAgZXhwb3J0OgogICAgcnVucy1vbjogdWJ1bnR1LWxhdGVzdAogICAgc3RlcHM6CiAgICAgIC0gdXNlczogYWN0aW9ucy9jaGVja291dEB2NAogICAgICAtIG5hbWU6IEJ1aWxkIHZlcmlmaWVkIHBhdGNoIGJ1bmRsZQogICAgICAgIHJ1bjogfAogICAgICAgICAgcHl0aG9uIC5naXRodWIvc3RlcDZfYXBwbHkucHkKICAgICAgICAgIHB5dGhvbiAuZ2l0aHViL3N0ZXA2X2ZpbmFsaXplX3BhdGNoLnB5CiAgICAgICAgICBnaXQgZGlmZiAtLW5hbWUtb25seSAteiB8IHRhciAtLW51bGwgLVQgLSAtY3pmIHN0ZXA2LXBhdGNoZWQudGFyLmd6CiAgICAgICAgICBnaXQgZGlmZiAtLW5hbWUtb25seQogICAgICAtIHVzZXM6IGFjdGlvbnMvdXBsb2FkLWFydGlmYWN0QHY0CiAgICAgICAgd2l0aDoKICAgICAgICAgIG5hbWU6IHN0ZXA2LXBhdGNoZWQKICAgICAgICAgIHBhdGg6IHN0ZXA2LXBhdGNoZWQudGFyLmd6CiAgICAgICAgICBpZi1uby1maWxlcy1mb3VuZDogZXJyb3IK' | base64 -d > .github/workflows/step6-bundle.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add templates/front/how_it_works.html front/static/front/css/main.css .github/workflows/step6-bundle.yml
+          git add templates/front/how_it_works.html front/static/front/css/main.css
           git commit -m "Match how-it-works hero to reference"
           git push origin HEAD:main
