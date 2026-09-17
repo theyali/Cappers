@@ -1,6 +1,7 @@
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Case, IntegerField, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -9,13 +10,25 @@ from django.views.decorators.http import require_http_methods
 
 from game.models import Match
 
-from .models import MatchWatch, Notification, TelegramAccount
+from .models import MatchWatch, Notification
 from .services import get_preferences
-from .telegram_bot import get_bot_token
 
 
 PAGE_SIZE = 30
 ACTIVE_WATCH_SCOPES = (Match.SyncScope.PREMATCH, Match.SyncScope.LIVE)
+PREDICTION_ALERT_KINDS = (
+    Notification.Kind.NEW_PREDICTION,
+    Notification.Kind.REQUESTED_MATCH_PREDICTION,
+    Notification.Kind.PREDICTION_LIKE,
+    Notification.Kind.PREDICTION_FAVORITE,
+    Notification.Kind.NEW_FOLLOWER,
+    Notification.Kind.COPYBETTING,
+    Notification.Kind.PAID_SUBSCRIPTION,
+)
+MATCH_EVENT_KINDS = (
+    Notification.Kind.MATCH_REMINDER,
+    Notification.Kind.MATCH_PREDICTION,
+)
 
 
 def _selected_watch_date(request):
@@ -39,45 +52,62 @@ def _watched_count(request) -> int:
     ).count()
 
 
+def _group_notifications(page_obj):
+    today = timezone.localdate()
+    yesterday = today - timedelta(days=1)
+    groups = {
+        "today": [],
+        "yesterday": [],
+        "earlier": [],
+    }
+
+    for notification in page_obj.object_list:
+        created_date = timezone.localtime(notification.created_at).date()
+        if created_date == today:
+            groups["today"].append(notification)
+        elif created_date == yesterday:
+            groups["yesterday"].append(notification)
+        else:
+            groups["earlier"].append(notification)
+
+    return (
+        {"key": "today", "title": "Сегодня", "items": groups["today"]},
+        {"key": "yesterday", "title": "Вчера", "items": groups["yesterday"]},
+        {"key": "earlier", "title": "Ранее", "items": groups["earlier"]},
+    )
+
+
 @login_required
 def center(request):
     active_filter = request.GET.get("filter", "all")
     if active_filter not in {"all", "unread"}:
         active_filter = "all"
 
-    queryset = Notification.objects.filter(recipient=request.user, show_in_app=True).select_related("actor")
+    base_queryset = Notification.objects.filter(
+        recipient=request.user,
+        show_in_app=True,
+    )
+    queryset = base_queryset.select_related("actor")
     if active_filter == "unread":
         queryset = queryset.filter(is_read=False)
 
     paginator = Paginator(queryset, PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
     preferences = get_preferences(request.user)
-    telegram_account = TelegramAccount.objects.filter(user=request.user).first()
-    unread_count = Notification.objects.filter(recipient=request.user, show_in_app=True, is_read=False).count()
-    watched_matches = (
-        MatchWatch.objects.filter(user=request.user, match__sync_scope__in=ACTIVE_WATCH_SCOPES)
-        .select_related("match__home_team", "match__away_team", "match__league")
-        .annotate(
-            watch_scope_order=Case(
-                When(match__sync_scope=Match.SyncScope.LIVE, then=Value(0)),
-                default=Value(1),
-                output_field=IntegerField(),
-            )
-        )
-        .order_by("watch_scope_order", "match__starts_at", "id")[:8]
-    )
+    unread_queryset = base_queryset.filter(is_read=False)
+    unread_count = unread_queryset.count()
 
     return render(
         request,
         "notifications/center.html",
         {
             "page_obj": page_obj,
+            "notification_groups": _group_notifications(page_obj),
             "preferences": preferences,
-            "telegram_account": telegram_account,
             "active_filter": active_filter,
             "unread_count": unread_count,
-            "watched_matches": watched_matches,
-            "telegram_bot_configured": bool(get_bot_token()),
+            "prediction_alert_count": unread_queryset.filter(kind__in=PREDICTION_ALERT_KINDS).count(),
+            "match_event_count": unread_queryset.filter(kind__in=MATCH_EVENT_KINDS).count(),
         },
     )
 
