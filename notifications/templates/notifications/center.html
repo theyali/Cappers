@@ -17,36 +17,39 @@
                 </div>
 
                 <div class="notifications-filters" aria-label="Сводка уведомлений">
-                    <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}?filter=unread">
-                            <span class="notification-kind is-achievement" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
-                            </span>
-                            <h2 data-unread-count>{{ unread_count }}</h2>
+                    <a class="notification-row" href="{% url 'notifications:center' %}?filter=unread">
+                        <span class="nav-notification-link is-active" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg>
+                        </span>
+                        <h2 data-unread-count>{{ unread_count }}</h2>
+                        <span class="notification-copy">
                             <strong>Непрочитанные</strong>
-                            <span>Новые уведомления</span>
-                        </a>
-                    </div>
-                    <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}">
-                            <span class="notification-kind is-new_prediction" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
-                            </span>
-                            <h2>{{ prediction_alert_count }}</h2>
+                            <small>Новые уведомления</small>
+                        </span>
+                        <span class="notification-arrow" aria-hidden="true">›</span>
+                    </a>
+                    <a class="notification-row" href="{% url 'notifications:center' %}">
+                        <span class="notification-kind is-new_prediction" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
+                        </span>
+                        <h2>{{ prediction_alert_count }}</h2>
+                        <span class="notification-copy">
                             <strong>Оповещения по прогнозам</strong>
-                            <span>Лайки, подписки, реакции</span>
-                        </a>
-                    </div>
-                    <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}">
-                            <span class="notification-kind" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="m12 7 3 2-.8 3.5H9.8L9 9l3-2ZM9.8 12.5 7 15m7.2-2.5L17 15M12 17v3M7.4 9.2 5 8M16.6 9.2 19 8"></path></svg>
-                            </span>
-                            <h2>{{ match_event_count }}</h2>
+                            <small>Лайки, подписки, комментарии</small>
+                        </span>
+                        <span class="notification-arrow" aria-hidden="true">›</span>
+                    </a>
+                    <a class="notification-row" href="{% url 'notifications:center' %}">
+                        <span class="notification-kind" aria-hidden="true">
+                            <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
+                        </span>
+                        <h2>{{ match_event_count }}</h2>
+                        <span class="notification-copy">
                             <strong>События матчей</strong>
-                            <span>Голы, начало, результаты</span>
-                        </a>
-                    </div>
+                            <small>Голы, начало, результаты</small>
+                        </span>
+                        <span class="notification-arrow" aria-hidden="true">›</span>
+                    </a>
                 </div>
             </header>
 
