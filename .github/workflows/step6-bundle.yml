@@ -22,23 +22,23 @@ jobs:
           template_path = Path("templates/front/how_it_works.html")
           template = template_path.read_text()
           old_hero = '''    <div class="how-hero">
-        <div class="how-hero-copy">
-            <p class="how-kicker">Как это работает</p>
-            <h1>КапперХаб по шагам</h1>
-            <p>Матчи, прогнозы, запросы на прогноз, уведомления, Telegram и профиль каппера — без лишних действий.</p>
-        </div>
-        <div class="how-hero-mark" aria-hidden="true">
-            <span>?</span>
-        </div>
-    </div>'''
+                  <div class="how-hero-copy">
+                      <p class="how-kicker">Как это работает</p>
+                      <h1>КапперХаб по шагам</h1>
+                      <p>Матчи, прогнозы, запросы на прогноз, уведомления, Telegram и профиль каппера — без лишних действий.</p>
+                  </div>
+                  <div class="how-hero-mark" aria-hidden="true">
+                      <span>?</span>
+                  </div>
+              </div>'''.replace('              ', '    ')
           new_hero = '''    <div class="how-hero">
-        <div class="how-hero-copy">
-            <p class="how-kicker">Как это работает</p>
-            <h1>КапперХаб по шагам</h1>
-            <p>Матчи, прогнозы, эксперты, турниры и уведомления — всё, что вам нужно, в одном месте. Следуйте простым шагам и начните использовать КапперХаб уже сегодня.</p>
-            <a class="how-action is-blue how-hero-action" href="{% url 'game:match_list' %}">Начать сейчас <span>→</span></a>
-        </div>
-    </div>'''
+                  <div class="how-hero-copy">
+                      <p class="how-kicker">Как это работает</p>
+                      <h1>КапперХаб по шагам</h1>
+                      <p>Матчи, прогнозы, эксперты, турниры и уведомления — всё, что вам нужно, в одном месте. Следуйте простым шагам и начните использовать КапперХаб уже сегодня.</p>
+                      <a class="how-action is-blue how-hero-action" href="{% url 'game:match_list' %}">Начать сейчас <span>→</span></a>
+                  </div>
+              </div>'''.replace('              ', '    ')
           if old_hero not in template:
               raise SystemExit("Expected how-hero markup was not found")
           template_path.write_text(template.replace(old_hero, new_hero, 1))
@@ -46,242 +46,217 @@ jobs:
           css_path = Path("front/static/front/css/main.css")
           css = css_path.read_text()
           old_css = '''.how-hero,
-.how-panel,
-.how-role-tabs {
-    background: var(--panel);
-}
+          .how-panel,
+          .how-role-tabs {
+              background: var(--panel);
+          }
 
-.how-hero,
-.how-panel {
-    border-radius: 24px;
-}
+          .how-hero,
+          .how-panel {
+              border-radius: 24px;
+          }
 
-.how-hero {
-    min-height: 300px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 190px;
-    align-items: center;
-    gap: 30px;
-    padding: clamp(28px, 4vw, 52px);
-}
+          .how-hero {
+              min-height: 300px;
+              display: grid;
+              grid-template-columns: minmax(0, 1fr) 190px;
+              align-items: center;
+              gap: 30px;
+              padding: clamp(28px, 4vw, 52px);
+          }
 
-.how-hero-copy {
-    max-width: 820px;
-}
+          .how-hero-copy {
+              max-width: 820px;
+          }
 
-.how-kicker {
-    margin: 0 0 12px;
-    color: var(--yellow);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-}
+          .how-kicker {
+              margin: 0 0 12px;
+              color: var(--yellow);
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: .12em;
+              text-transform: uppercase;
+          }
 
-.how-hero h1 {
-    margin: 0;
-    max-width: 820px;
-    font-size: clamp(40px, 5vw, 72px);
-    line-height: .96;
-    letter-spacing: -.045em;
-}
+          .how-hero h1 {
+              margin: 0;
+              max-width: 820px;
+              font-size: clamp(40px, 5vw, 72px);
+              line-height: .96;
+              letter-spacing: -.045em;
+          }
 
-.how-hero-copy > p:last-child {
-    max-width: 760px;
-    margin: 20px 0 0;
-    color: rgba(255, 255, 255, .64);
-    font-size: 15px;
-    line-height: 1.65;
-}
+          .how-hero-copy > p:last-child {
+              max-width: 760px;
+              margin: 20px 0 0;
+              color: rgba(255, 255, 255, .64);
+              font-size: 15px;
+              line-height: 1.65;
+          }
 
-.how-hero-mark {
-    width: 150px;
-    height: 150px;
-    justify-self: end;
-    display: grid;
-    place-items: center;
-    border-radius: 34px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 74px;
-    line-height: 1;
-}'''
+          .how-hero-mark {
+              width: 150px;
+              height: 150px;
+              justify-self: end;
+              display: grid;
+              place-items: center;
+              border-radius: 34px;
+              color: var(--ink);
+              background: var(--yellow);
+              font-size: 74px;
+              line-height: 1;
+          }'''.replace('          ', '')
           new_css = '''.how-panel,
-.how-role-tabs {
-    background: var(--panel);
-}
+          .how-role-tabs {
+              background: var(--panel);
+          }
 
-.how-panel {
-    border-radius: 24px;
-}
+          .how-panel {
+              border-radius: 24px;
+          }
 
-.how-hero {
-    min-height: 390px;
-    display: flex;
-    align-items: center;
-    padding: 56px 54px;
-    overflow: hidden;
-    background-color: #0d0f12;
-    background-image: url("../img/how_it_works.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-}
+          .how-hero {
+              min-height: 390px;
+              display: flex;
+              align-items: center;
+              padding: 56px 54px;
+              overflow: hidden;
+              background-color: #0d0f12;
+              background-image: url("../img/how_it_works.png");
+              background-repeat: no-repeat;
+              background-position: center;
+              background-size: cover;
+          }
 
-.how-hero-copy {
-    width: min(100%, 650px);
-}
+          .how-hero-copy {
+              width: min(100%, 650px);
+          }
 
-.how-kicker {
-    margin: 0 0 16px;
-    color: var(--yellow);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-}
+          .how-kicker {
+              margin: 0 0 16px;
+              color: var(--yellow);
+              font-size: 12px;
+              font-weight: 600;
+              letter-spacing: .12em;
+              text-transform: uppercase;
+          }
 
-.how-hero h1 {
-    max-width: 650px;
-    margin: 0;
-    color: #fff;
-    font-size: clamp(46px, 4.2vw, 66px);
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -.035em;
-}
+          .how-hero h1 {
+              max-width: 650px;
+              margin: 0;
+              color: #fff;
+              font-size: clamp(46px, 4.2vw, 66px);
+              font-weight: 600;
+              line-height: 1;
+              letter-spacing: -.035em;
+          }
 
-.how-hero-copy > p:last-of-type {
-    max-width: 620px;
-    margin: 22px 0 0;
-    color: rgba(255, 255, 255, .68);
-    font-size: 16px;
-    line-height: 1.6;
-}
+          .how-hero-copy > p:last-of-type {
+              max-width: 620px;
+              margin: 22px 0 0;
+              color: rgba(255, 255, 255, .68);
+              font-size: 16px;
+              line-height: 1.6;
+          }
 
-.how-hero .how-hero-action {
-    width: 260px;
-    min-height: 56px;
-    margin-top: 28px;
-    padding: 0 24px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 500;
-}'''
+          .how-hero .how-hero-action {
+              width: 260px;
+              min-height: 56px;
+              margin-top: 28px;
+              padding: 0 24px;
+              border-radius: 12px;
+              font-size: 16px;
+              font-weight: 500;
+          }'''.replace('          ', '')
           if old_css not in css:
               raise SystemExit("Expected how-hero CSS was not found")
           css = css.replace(old_css, new_css, 1)
 
           old_1100 = '''@media (max-width: 1100px) {
-    .how-hero {
-        grid-template-columns: 1fr;
-    }
+              .how-hero {
+                  grid-template-columns: 1fr;
+              }
 
-    .how-hero-mark {
-        display: none;
-    }
+              .how-hero-mark {
+                  display: none;
+              }
 
-    .how-intro {'''
+              .how-intro {'''.replace('          ', '')
           new_1100 = '''@media (max-width: 1100px) {
-    .how-hero {
-        min-height: 360px;
-        padding: 44px 32px;
-        background-position: 62% center;
-    }
+              .how-hero {
+                  min-height: 360px;
+                  padding: 44px 32px;
+                  background-position: 62% center;
+              }
 
-    .how-hero-copy {
-        width: min(100%, 570px);
-    }
+              .how-hero-copy {
+                  width: min(100%, 570px);
+              }
 
-    .how-intro {'''
+              .how-intro {'''.replace('          ', '')
           if old_1100 not in css:
               raise SystemExit("Expected how-hero 1100px rules were not found")
           css = css.replace(old_1100, new_1100, 1)
 
           old_760 = '''@media (max-width: 760px) {
-    .how-hero,
-    .how-panel {
-        border-radius: 18px;
-    }
+              .how-hero,
+              .how-panel {
+                  border-radius: 18px;
+              }
 
-    .how-hero {
-        min-height: 0;
-        padding: 24px 18px;
-    }
+              .how-hero {
+                  min-height: 0;
+                  padding: 24px 18px;
+              }
 
-    .how-hero h1 {
-        font-size: clamp(36px, 12vw, 52px);
-    }
+              .how-hero h1 {
+                  font-size: clamp(36px, 12vw, 52px);
+              }
 
-    .how-role-tabs {'''
+              .how-role-tabs {'''.replace('          ', '')
           new_760 = '''@media (max-width: 760px) {
-    .how-panel {
-        border-radius: 18px;
-    }
+              .how-panel {
+                  border-radius: 18px;
+              }
 
-    .how-hero {
-        min-height: 420px;
-        align-items: flex-end;
-        padding: 28px 18px;
-        background-position: 68% center;
-        background-size: auto 100%;
-    }
+              .how-hero {
+                  min-height: 420px;
+                  align-items: flex-end;
+                  padding: 28px 18px;
+                  background-position: 68% center;
+                  background-size: auto 100%;
+              }
 
-    .how-hero-copy {
-        width: 100%;
-    }
+              .how-hero-copy {
+                  width: 100%;
+              }
 
-    .how-hero h1 {
-        font-size: clamp(36px, 12vw, 52px);
-    }
+              .how-hero h1 {
+                  font-size: clamp(36px, 12vw, 52px);
+              }
 
-    .how-hero-copy > p:last-of-type {
-        max-width: 460px;
-        margin-top: 16px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
+              .how-hero-copy > p:last-of-type {
+                  max-width: 460px;
+                  margin-top: 16px;
+                  font-size: 14px;
+                  line-height: 1.5;
+              }
 
-    .how-hero .how-hero-action {
-        width: min(100%, 280px);
-        min-height: 52px;
-        margin-top: 20px;
-        font-size: 14px;
-    }
+              .how-hero .how-hero-action {
+                  width: min(100%, 280px);
+                  min-height: 52px;
+                  margin-top: 20px;
+                  font-size: 14px;
+              }
 
-    .how-role-tabs {'''
+              .how-role-tabs {'''.replace('          ', '')
           if old_760 not in css:
               raise SystemExit("Expected how-hero 760px rules were not found")
           css_path.write_text(css.replace(old_760, new_760, 1))
           PY
       - name: Commit hero changes and restore workflow
         run: |
-          cat > .github/workflows/step6-bundle.yml <<'YML'
-          name: Export verified step 6 patch
-
-          on:
-            push:
-              branches: [main]
-              paths:
-                - .github/workflows/step6-bundle.yml
-
-          jobs:
-            export:
-              runs-on: ubuntu-latest
-              steps:
-                - uses: actions/checkout@v4
-                - name: Build verified patch bundle
-                  run: |
-                    python .github/step6_apply.py
-                    python .github/step6_finalize_patch.py
-                    git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
-                    git diff --name-only
-                - uses: actions/upload-artifact@v4
-                  with:
-                    name: step6-patched
-                    path: step6-patched.tar.gz
-                    if-no-files-found: error
-          YML
+          echo 'bmFtZTogRXhwb3J0IHZlcmlmaWVkIHN0ZXAgNiBwYXRjaAoKb246CiAgcHVzaDoKICAgIGJyYW5jaGVzOiBbbWFpbl0KICAgIHBhdGhzOgogICAgICAtIC5naXRodWIvd29ya2Zsb3dzL3N0ZXA2LWJ1bmRsZS55bWwKCmpvYnM6CiAgZXhwb3J0OgogICAgcnVucy1vbjogdWJ1bnR1LWxhdGVzdAogICAgc3RlcHM6CiAgICAgIC0gdXNlczogYWN0aW9ucy9jaGVja291dEB2NAogICAgICAtIG5hbWU6IEJ1aWxkIHZlcmlmaWVkIHBhdGNoIGJ1bmRsZQogICAgICAgIHJ1bjogfAogICAgICAgICAgcHl0aG9uIC5naXRodWIvc3RlcDZfYXBwbHkucHkKICAgICAgICAgIHB5dGhvbiAuZ2l0aHViL3N0ZXA2X2ZpbmFsaXplX3BhdGNoLnB5CiAgICAgICAgICBnaXQgZGlmZiAtLW5hbWUtb25seSAteiB8IHRhciAtLW51bGwgLVQgLSAtY3pmIHN0ZXA2LXBhdGNoZWQudGFyLmd6CiAgICAgICAgICBnaXQgZGlmZiAtLW5hbWUtb25seQogICAgICAtIHVzZXM6IGFjdGlvbnMvdXBsb2FkLWFydGlmYWN0QHY0CiAgICAgICAgd2l0aDoKICAgICAgICAgIG5hbWU6IHN0ZXA2LXBhdGNoZWQKICAgICAgICAgIHBhdGg6IHN0ZXA2LXBhdGNoZWQudGFyLmd6CiAgICAgICAgICBpZi1uby1maWxlcy1mb3VuZDogZXJyb3IK' | base64 -d > .github/workflows/step6-bundle.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add templates/front/how_it_works.html front/static/front/css/main.css .github/workflows/step6-bundle.yml
