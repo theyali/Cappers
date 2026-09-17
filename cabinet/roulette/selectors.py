@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils import timezone
 
+from cabinet.vip import get_active_vip
 from front.models import PredictionFavorite, PredictionLike
 
 from .history import RouletteSpin
@@ -24,10 +25,7 @@ def _activity_count(user) -> int:
 
 
 def _has_active_vip(user, reward_state: UserRouletteRewardState, now) -> bool:
-    if reward_state.vip_until and reward_state.vip_until > now:
-        return True
-    analyst_profile = getattr(user, "analyst_profile", None)
-    return bool(analyst_profile and analyst_profile.is_vip)
+    return get_active_vip(user, at=now) is not None
 
 
 def _condition_matches(condition, *, user, reward_state, now, activity_count) -> bool:
