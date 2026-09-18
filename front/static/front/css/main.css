@@ -37087,8 +37087,11 @@ padding:40px 0px;
 
 .cabinet-bonuses-page .bonus-center-layout {
     min-width: 0;
+    grid-column: 2 / 4;
     display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
     gap: 14px;
+    align-items: start;
 }
 
 .cabinet-bonuses-page .bonus-hero {
