@@ -765,3 +765,48 @@ class UserXpState(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · уровень {self.level} · {self.xp} XP"
+
+
+
+class UserDailyStreak(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="daily_streak",
+        verbose_name="Пользователь",
+    )
+    current_days = models.PositiveIntegerField("Текущая серия, дней", default=0)
+    best_days = models.PositiveIntegerField("Лучшая серия, дней", default=0)
+    last_seen_date = models.DateField("Последний активный день", null=True, blank=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Серия дней пользователя"
+        verbose_name_plural = "Серии дней пользователей"
+        ordering = ("-current_days", "-best_days", "id")
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.current_days} дн."
+
+
+class StreakReward(models.Model):
+    day_number = models.PositiveIntegerField("День серии", unique=True)
+    reward_xp = models.PositiveIntegerField("Награда XP", default=0)
+    reward_coins = models.PositiveIntegerField("Награда, коинов", default=0)
+    reward_spins = models.PositiveIntegerField("Награда, попыток", default=0)
+    title = models.CharField("Название", max_length=120)
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Награда за серию дней"
+        verbose_name_plural = "Награды за серию дней"
+        ordering = ("day_number", "id")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(day_number__gt=0),
+                name="streak_reward_day_positive",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"День {self.day_number} · {self.title}"
