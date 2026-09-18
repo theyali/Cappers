@@ -5752,27 +5752,27 @@ body:has(.home-layout) .site-main h2 {
 }
 
 .promo-banner--sidebar_small {
-    height: 180px;
+    height: auto;
 }
 
 .promo-banner--sidebar_medium {
-    height: 270px;
+    height: auto;
 }
 
 .promo-banner--sidebar_tall {
-    height: 360px;
+    height: auto;
 }
 
 .promo-banner--center_wide {
-    height: 360px;
+    height: auto;
 }
 
 .promo-banner--center_compact {
-    height: 240px;
+    height: auto;
 }
 
 .promo-banner--feed_inline {
-    height: 180px;
+    height: auto;
 }
 
 .promo-banner.adv-banners {
