@@ -4,7 +4,8 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 
-from cabinet.models import BonusEvent
+from cabinet.models import BonusEvent, DailyTask
+from cabinet.services.daily_tasks import record_daily_task_action
 
 from .history import RouletteSpin
 from .models import RoulettePrize, RouletteSettings
@@ -199,4 +200,9 @@ def spin_roulette(user, operation_id, now=None) -> RouletteSpin:
                 },
             )
 
+        record_daily_task_action(
+            locked_user,
+            DailyTask.TaskType.SPIN_ROULETTE,
+            related_obj=spin,
+        )
         return spin
