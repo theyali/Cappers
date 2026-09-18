@@ -1,8 +1,11 @@
 from django.middleware.csrf import get_token
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import BonusEvent
+from cabinet.roulette.history import RouletteSpin
+from cabinet.roulette.models import RoulettePrize
 
 from .daily_tasks import build_daily_tasks_card
 from .referral_bonuses import build_referral_bonus_card
@@ -50,25 +53,38 @@ def _serialize_bonus_event(event) -> dict:
     }
 
 
-def _recent_bonus_events(user) -> tuple[list[dict], list[dict]]:
-    recent_gifts = list(
-        BonusEvent.objects.filter(user=user).order_by("-created_at", "-id")[:5]
+def _serialize_roulette_spin(spin) -> dict:
+    spun_at = timezone.localtime(spin.spun_at)
+    return {
+        "title": spin.prize_title or "Подарок",
+        "subtitle": spin.prize_short_text or spin.get_reward_type_display(),
+        "time_label": spun_at.strftime("%d.%m, %H:%M"),
+        "icon": "🎁",
+    }
+
+
+def _recent_bonus_content(user) -> tuple[list[dict], list[dict]]:
+    events = list(
+        BonusEvent.objects.filter(user=user)
+        .select_related("user")
+        .order_by("-created_at", "-id")[:5]
     )
-    recent_wins = list(
-        BonusEvent.objects.filter(
-            user=user,
-            event_type=BonusEvent.EventType.ROULETTE,
-        ).order_by("-created_at", "-id")[:3]
+    spins = list(
+        RouletteSpin.objects.filter(user=user)
+        .exclude(reward_type=RoulettePrize.RewardType.NOTHING)
+        .select_related("user")
+        .order_by("-spun_at", "-id")[:3]
     )
-    serialized_gifts = [_serialize_bonus_event(event) for event in recent_gifts]
-    serialized_wins = [_serialize_bonus_event(event) for event in recent_wins]
-    serialized_wins.extend([None] * (3 - len(serialized_wins)))
-    return serialized_gifts, serialized_wins
+
+    recent_gifts = [_serialize_bonus_event(event) for event in events]
+    recent_wins = [_serialize_roulette_spin(spin) for spin in spins]
+    recent_wins.extend([None] * (3 - len(recent_wins)))
+    return recent_gifts, recent_wins
 
 
 def build_bonus_center_context(user, request=None) -> dict:
-    """Build the bonus-center page context without template-side data access."""
-    recent_gifts, recent_wins = _recent_bonus_events(user)
+    """Build the complete bonus-center context without template-side data access."""
+    recent_gifts, recent_wins = _recent_bonus_content(user)
     daily_tasks_card = build_daily_tasks_card(user)
     streak_card = build_streak_card(user)
     referral_card = build_referral_bonus_card(user, request=request)
@@ -77,6 +93,7 @@ def build_bonus_center_context(user, request=None) -> dict:
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
         "roulette_spin_url": reverse("cabinet:roulette_spin"),
+        "roulette_bg": static("front/img/login.png"),
         "roulette_csrf_token": get_token(request) if request is not None else "",
         "next_bonus": {
             "title": "Следующий бонус",
