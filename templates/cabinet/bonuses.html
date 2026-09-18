@@ -86,10 +86,15 @@
                             <span class="bonus-card-arrow" aria-hidden="true">›</span>
                         </div>
                         <div class="bonus-task-progress" aria-hidden="true">
-                            {% for _ in daily_tasks_card.progress_slots %}
-                                <span></span>
+                            {% for slot in daily_tasks_card.progress_slots %}
+                                <span{% if slot.is_completed %} class="is-done"{% endif %}></span>
                             {% endfor %}
                         </div>
+                        {% if daily_tasks_card.status_label %}
+                            <strong class="bonus-task-card-status is-{{ daily_tasks_card.status }}">
+                                {{ daily_tasks_card.status_label }}
+                            </strong>
+                        {% endif %}
                         <p>{{ daily_tasks_card.description }}</p>
                     </article>
 
