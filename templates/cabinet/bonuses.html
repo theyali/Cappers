@@ -8,64 +8,263 @@
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 
-        <section class="matches-list-panel profile-page">
+        <section class="matches-list-panel profile-page bonus-center-main">
             <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
                 <nav class="matches-tabs" aria-label="Разделы профиля">
                     {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
                 </nav>
             </div>
 
-            <div
-                class="profile-list-card"
-                data-roulette-root
-                data-skeleton-block
-                data-roulette-bg="{% static 'front/img/login.png' %}"
-                data-roulette-state-url="{% url 'cabinet:roulette_state' %}"
-                data-roulette-spin-url="{% url 'cabinet:roulette_spin' %}"
-                data-roulette-csrf="{{ csrf_token }}"
-            >
-                <canvas
-                    data-roulette-canvas
-                    width="1180"
-                    height="840"
-                    role="button"
-                    tabindex="0"
-                    aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
-                    aria-busy="true"
-                >
-                    Ваш браузер не поддерживает canvas.
-                </canvas>
+            <div class="bonus-center-layout">
+                <section class="bonus-hero" aria-labelledby="bonus-center-title">
+                    <div class="bonus-hero-copy">
+                        <h1 id="bonus-center-title">Бонусы каждый день<br>с <span>КапперХаб</span></h1>
+                        <p>
+                            Получайте бесплатные прогнозы, бонусы на баланс, VIP-доступ
+                            и другие награды. Заходите каждый день и увеличивайте свои шансы.
+                        </p>
+                        <div class="bonus-hero-countdown">
+                            <span>До следующей попытки</span>
+                            <strong data-bonus-countdown>--:--:--</strong>
+                            <small data-bonus-status>Загрузка состояния рулетки…</small>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bonus-wheel"
+                        data-roulette-root
+                        data-skeleton-block
+                        data-roulette-state-url="{% url 'cabinet:roulette_state' %}"
+                        data-roulette-spin-url="{% url 'cabinet:roulette_spin' %}"
+                        data-roulette-csrf="{{ csrf_token }}"
+                    >
+                        <canvas
+                            data-roulette-canvas
+                            width="720"
+                            height="720"
+                            role="button"
+                            tabindex="0"
+                            aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
+                            aria-busy="true"
+                        >
+                            Ваш браузер не поддерживает canvas.
+                        </canvas>
+                    </div>
+                </section>
+
+                <div class="bonus-dashboard-grid">
+                    <article class="bonus-dashboard-card">
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-blue" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Следующий бонус</h2>
+                                <span>Через</span>
+                            </div>
+                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                        </div>
+                        <strong class="bonus-card-value is-yellow" data-bonus-countdown>--:--:--</strong>
+                        <p>Возвращайтесь, чтобы снова крутить колесо и получать награды.</p>
+                    </article>
+
+                    <article class="bonus-dashboard-card">
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-blue" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M8 4h8M9 2h6v4H9zM6 5h12v16H6z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 10h6M9 14h6M9 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Ежедневные задания</h2>
+                                <span>0 из 4 выполнено</span>
+                            </div>
+                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                        </div>
+                        <div class="bonus-task-progress" aria-hidden="true">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                        <p>Выполняйте простые задания и получайте дополнительные бонусы.</p>
+                    </article>
+
+                    <article class="bonus-dashboard-card">
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-fire" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M13 3c1 4-2 4-1 7 1-2 3-2 4-4 3 3 4 6 3 9a7 7 0 1 1-13-5c1.2-1.7 2.7-2.8 4.5-4.5C10 9 12 10 13 3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Серия дней</h2>
+                                <span>Заходите ежедневно</span>
+                            </div>
+                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                        </div>
+                        <strong class="bonus-card-value is-yellow">— дней</strong>
+                        <div class="bonus-streak-days" aria-label="Дни серии">
+                            {% for day in "1234567" %}
+                                <span>{{ day }}</span>
+                            {% endfor %}
+                        </div>
+                    </article>
+
+                    <article class="bonus-dashboard-card">
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-blue" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                    <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M3.5 19c.6-3.4 2.4-5.1 5.5-5.1s4.9 1.7 5.5 5.1M14 14c3.4-.4 5.6 1.3 6.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Бонус за рефералов</h2>
+                                <span>Приглашайте друзей</span>
+                            </div>
+                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                        </div>
+                        <strong class="bonus-card-value is-yellow">До 1000 монет</strong>
+                        <p>Приглашайте друзей и получайте дополнительные бонусы на баланс.</p>
+                    </article>
+
+                    <article
+                        class="bonus-dashboard-card bonus-wins-card is-skeleton-loading"
+                        data-roulette-history
+                        data-skeleton-block
+                        aria-live="polite"
+                        aria-busy="true"
+                    >
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-yellow" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M8 4h8v4a4 4 0 0 1-8 0V4ZM8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Последние выигрыши</h2>
+                                <span>Результаты рулетки</span>
+                            </div>
+                        </div>
+                        <div class="bonus-wins-list">
+                            {% for _ in "123" %}
+                                <div class="bonus-win-row" data-roulette-history-slot aria-hidden="true">
+                                    <span class="bonus-win-icon" data-skeleton-image>
+                                        <img data-roulette-recent-icon width="34" height="34" alt="" hidden>
+                                        <span data-roulette-recent-fallback aria-hidden="true">🎁</span>
+                                    </span>
+                                    <span class="bonus-win-copy">
+                                        <strong data-roulette-recent-title>Подарок</strong>
+                                        <small data-roulette-recent-subtitle>Выигрыш рулетки</small>
+                                    </span>
+                                    <time data-roulette-recent-time>—</time>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+
+                    <article class="bonus-dashboard-card">
+                        <div class="bonus-card-head">
+                            <span class="bonus-card-icon is-blue" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 20V11M10 20V5M15 20v-7M20 20V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Мои уровни</h2>
+                                <span>Прогресс активности</span>
+                            </div>
+                        </div>
+                        <div class="bonus-level-list">
+                            <span><b>Уровень 1</b><small>Новичок</small></span>
+                            <span><b>Уровень 2</b><small>Активный</small></span>
+                            <span><b>Уровень 3</b><small>Эксперт</small></span>
+                            <span><b>Уровень 4</b><small>Профи</small></span>
+                            <span><b>Уровень 5</b><small>Легенда</small></span>
+                        </div>
+                    </article>
+                </div>
             </div>
         </section>
 
-        <aside class="coupon-sidebar" aria-label="Последние подарки рулетки">
+        <aside class="coupon-sidebar bonus-center-aside" aria-label="Бонусный центр">
             <section
-                class="notifications-main is-skeleton-loading"
+                class="bonus-side-card bonus-gifts-card is-skeleton-loading"
                 data-roulette-recent
                 data-skeleton-block
                 aria-live="polite"
                 aria-busy="true"
             >
-                <div class="notifications-toolbar">
-                    <h3 class="profile-side-title">Последние подарки</h3>
+                <div class="bonus-side-head">
+                    <h2>Последние подарки</h2>
+                    <span>Все</span>
                 </div>
-                <div class="notifications-list" data-roulette-recent-list>
+                <div class="bonus-gifts-list" data-roulette-recent-list>
                     {% for _ in "12345" %}
-                        <article class="notification-row" data-roulette-recent-slot aria-hidden="true">
-                            <span class="notification-kind" data-skeleton-image>
+                        <article class="bonus-gift-row" data-roulette-recent-slot aria-hidden="true">
+                            <span class="bonus-gift-icon" data-skeleton-image>
                                 <img data-roulette-recent-icon width="40" height="40" alt="" hidden>
                                 <span data-roulette-recent-fallback aria-hidden="true">🎁</span>
                             </span>
-                            <span class="notification-copy">
+                            <span class="bonus-gift-copy">
                                 <strong data-roulette-recent-title>Подарок</strong>
                                 <span data-roulette-recent-subtitle>Выигрыш рулетки</span>
                                 <small data-roulette-recent-time>—</small>
                             </span>
-                            <span aria-hidden="true"></span>
-                            <span class="notification-arrow" aria-hidden="true">✓</span>
                         </article>
                     {% endfor %}
                 </div>
+            </section>
+
+            <section class="bonus-side-card bonus-progress-card">
+                <div class="bonus-side-head">
+                    <h2>Прогресс к большему</h2>
+                    <span>Ур. 1</span>
+                </div>
+                <div class="bonus-progress-body">
+                    <div class="bonus-progress-ring" aria-label="Прогресс уровня">
+                        <svg viewBox="0 0 120 120" aria-hidden="true">
+                            <circle cx="60" cy="60" r="48"></circle>
+                            <circle class="is-progress" cx="60" cy="60" r="48"></circle>
+                        </svg>
+                        <div>
+                            <span>★</span>
+                            <strong>0</strong>
+                            <small>из 5</small>
+                        </div>
+                    </div>
+                    <div class="bonus-progress-steps">
+                        <span class="is-done">Заходите ежедневно</span>
+                        <span>Выполняйте задания</span>
+                        <span>Получайте бонусы</span>
+                        <span>Открывайте новые уровни</span>
+                    </div>
+                </div>
+                <p>— XP до следующего уровня</p>
+            </section>
+
+            <section class="bonus-side-card bonus-balance-cta">
+                <div class="bonus-balance-copy">
+                    <h2>Пополните баланс<br>и получайте больше</h2>
+                    <p>Чем больше монет на балансе — тем больше возможностей на платформе.</p>
+                </div>
+                <span class="bonus-balance-coins" aria-hidden="true">
+                    <svg viewBox="0 0 150 100" fill="none">
+                        <ellipse cx="103" cy="25" rx="28" ry="10" fill="currentColor"/>
+                        <path d="M75 25v18c0 6 13 10 28 10s28-4 28-10V25" fill="currentColor" opacity=".78"/>
+                        <ellipse cx="103" cy="43" rx="28" ry="10" fill="currentColor"/>
+                        <ellipse cx="77" cy="52" rx="28" ry="10" fill="currentColor" opacity=".88"/>
+                        <path d="M49 52v18c0 6 13 10 28 10s28-4 28-10V52" fill="currentColor" opacity=".72"/>
+                        <ellipse cx="77" cy="70" rx="28" ry="10" fill="currentColor"/>
+                    </svg>
+                </span>
+                <a href="{% url 'cabinet:profile' %}?tab=wallet">
+                    <span>Пополнить баланс</span>
+                    <span aria-hidden="true">→</span>
+                </a>
             </section>
         </aside>
     </div>
