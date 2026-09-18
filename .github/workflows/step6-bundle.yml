@@ -18,7 +18,7 @@ jobs:
         run: |
           {
             echo "=== STYLE REFERENCES ==="
-            rg -n "capper-landing-hero|capper-landing-promise|capper-kicker|capper-growth-link|capper-landing-lead|capper-landing-actions" front/static/front/css templates || true
+            rg -n --hidden --glob '!.git/**' "capper-landing-hero|capper-landing-promise|capper-kicker|capper-growth-link|capper-landing-lead|capper-landing-actions" . || true
           } > .github/become_capper_scan.txt
       - name: Commit scan output
         run: |
