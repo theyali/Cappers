@@ -23,6 +23,10 @@ class NotificationServiceTests(TestCase):
         )
 
     def test_event_key_is_idempotent(self):
+        preferences = get_preferences(self.user)
+        preferences.match_reminder = True
+        preferences.save(update_fields=["match_reminder", "updated_at"])
+
         first = create_notification(
             recipient=self.user,
             kind=Notification.Kind.MATCH_REMINDER,

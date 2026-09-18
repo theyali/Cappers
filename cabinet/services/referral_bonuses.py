@@ -39,7 +39,7 @@ def _registered_referral_visit_for_user(user, *, lock=False):
 
     visits = ReferralVisit.objects
     if lock:
-        visits = visits.select_for_update()
+        visits = visits.select_for_update(of=("self",))
 
     return (
         visits.filter(
@@ -71,7 +71,7 @@ def grant_referral_registration_bonus(visit):
         return None
 
     visit = (
-        ReferralVisit.objects.select_for_update()
+        ReferralVisit.objects.select_for_update(of=("self",))
         .select_related("referrer", "visitor")
         .filter(pk=visit.pk)
         .first()

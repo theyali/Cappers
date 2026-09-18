@@ -80,6 +80,16 @@ jobs:
           assert DailyTask.Audience.CAPPER in capper_audiences
           assert DailyTask.Audience.READER not in capper_audiences
           '
+      - name: Run referral and bonus notification checks
+        run: |
+          python manage.py test \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_referral_link_registration_creates_bonus_event_and_notification \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_first_referral_topup_creates_bonus_event_and_notification \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_first_referral_subscription_creates_bonus_event_and_notification \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_disabled_referral_notification_keeps_bonus_event \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_disabled_daily_task_notifications_skip_completion_notification \
+            notifications.tests.NotificationServiceTests.test_disabled_bonus_referral_category_does_not_create_notification \
+            notifications.tests.NotificationServiceTests.test_disabled_bonus_daily_task_category_does_not_create_notification
       - name: Run bonus center checks
         run: |
           python manage.py check
