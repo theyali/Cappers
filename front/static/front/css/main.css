@@ -18504,19 +18504,6 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     gap: 22px;
 }
 
-.capper-landing-hero,
-.capper-onboarding-shell{
-    padding: clamp(22px, 4vw, 44px);
-    border-radius: 24px;
-    background: var(--panel);
-}
-
-.capper-landing-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr);
-    gap: 28px;
-    align-items: center;
-}
 
 .capper-kicker {
     margin: 0 0 9px;
@@ -35859,7 +35846,7 @@ position: relative;
     background: transparent;
 }
 
-.profile .site-header{
+.profile .site-header, .become_capper .site-header{
     margin: 0;
 }
 .profile-dashboard-head{
@@ -36361,8 +36348,7 @@ position: relative;
     display: flex;
     align-items: stretch;
     overflow: hidden;
-    padding: 28px 46px 22px;
-    border-radius: 20px;
+    border-radius: 0;
     background-color: #101216;
     background-image: url("../img/become_capper.jpg");
     background-repeat: no-repeat;
@@ -36371,10 +36357,7 @@ position: relative;
 }
 
 .capper-landing-copy {
-    width: min(100%, 660px);
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
+padding:40px 0px;
 }
 
 .capper-kicker {

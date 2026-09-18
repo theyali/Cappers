@@ -7,7 +7,7 @@
 {% block content %}
 <section class="capper-landing" aria-label="Стать каппером">
     <div class="capper-landing-hero">
-        <div class="capper-landing-copy">
+        <div class="capper-landing-copy container">
             {% if already_capper %}
                 <p class="capper-kicker">Как стать каппером</p>
                 <h1>Ваш профиль каппера<br>уже <span>активен.</span></h1>
@@ -73,12 +73,14 @@
             </div>
         </div>
     </div>
-
-    <div class="capper-benefits">
-        <article class="capper-benefit"><span>✓</span><h2>Подтверждённая статистика</h2><p>Не нужно вручную собирать таблицы: результаты, ROI и серии считаются на платформе.</p></article>
-        <article class="capper-benefit"><span>↗</span><h2>Ссылка для соцсетей</h2><p>Один публичный профиль для Telegram, Instagram и других площадок.</p></article>
-        <article class="capper-benefit"><span>★</span><h2>Рейтинг экспертов</h2><p>Чем сильнее история прогнозов и активнее аудитория, тем выше вы в каталоге.</p></article>
-        <article class="capper-benefit"><span>⚡</span><h2>Быстрый старт</h2><p>Пять коротких шагов: профиль, специализация, лиги, соцсети и первый прогноз.</p></article>
+    <div class="container">
+        <div class="capper-benefits">
+            <article class="capper-benefit"><span>✓</span><h2>Подтверждённая статистика</h2><p>Не нужно вручную собирать таблицы: результаты, ROI и серии считаются на платформе.</p></article>
+            <article class="capper-benefit"><span>↗</span><h2>Ссылка для соцсетей</h2><p>Один публичный профиль для Telegram, Instagram и других площадок.</p></article>
+            <article class="capper-benefit"><span>★</span><h2>Рейтинг экспертов</h2><p>Чем сильнее история прогнозов и активнее аудитория, тем выше вы в каталоге.</p></article>
+            <article class="capper-benefit"><span>⚡</span><h2>Быстрый старт</h2><p>Пять коротких шагов: профиль, специализация, лиги, соцсети и первый прогноз.</p></article>
+        </div>
     </div>
+
 </section>
 {% endblock %}

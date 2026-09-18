@@ -148,6 +148,7 @@ def become_capper(request):
         "cabinet/capper/become_capper.html",
         {
             "capper_profile": profile,
+            "page_class":"become_capper",
             "already_capper": bool(
                 request.user.is_authenticated and request.user.role == User.Role.ANALYST
             ),
