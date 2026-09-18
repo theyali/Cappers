@@ -713,3 +713,55 @@ class UserDailyTaskProgress(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · {self.task} · {self.progress_date}"
+
+
+
+class XpLevel(models.Model):
+    level = models.PositiveIntegerField("Уровень", unique=True)
+    title = models.CharField("Название", max_length=80)
+    required_xp = models.PositiveBigIntegerField("Требуется XP", default=0)
+    reward_coins = models.PositiveIntegerField("Награда, коинов", default=0)
+    reward_spins = models.PositiveIntegerField("Награда, попыток", default=0)
+    is_active = models.BooleanField("Активен", default=True, db_index=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+
+    class Meta:
+        verbose_name = "XP-уровень"
+        verbose_name_plural = "XP-уровни"
+        ordering = ("order", "level", "id")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(level__gt=0),
+                name="xp_level_number_positive",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"Уровень {self.level} · {self.title}"
+
+
+class UserXpState(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="xp_state",
+        verbose_name="Пользователь",
+    )
+    level = models.PositiveIntegerField("Уровень", default=1)
+    xp = models.PositiveBigIntegerField("XP", default=0)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "XP пользователя"
+        verbose_name_plural = "XP пользователей"
+        ordering = ("-xp", "id")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(level__gt=0),
+                name="user_xp_level_positive",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} · уровень {self.level} · {self.xp} XP"
