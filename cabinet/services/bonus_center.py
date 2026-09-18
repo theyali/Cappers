@@ -166,6 +166,37 @@ def build_bonus_reward_update_context(user) -> dict:
     }
 
 
+
+def build_profile_bonus_summary(user) -> dict:
+    """Build the compact bonus summary used on the profile overview tab."""
+    daily_tasks_card = _prepare_daily_tasks_card(build_daily_tasks_card(user))
+    level_progress = _prepare_level_progress(build_level_progress(user))
+    streak_card = _prepare_streak_card(build_streak_card(user))
+
+    return {
+        "daily_tasks_card": {
+            **daily_tasks_card,
+            "title": "Быстрые задания",
+            "tasks": daily_tasks_card["tasks"][:3],
+            "url": reverse("cabinet:bonus_tasks"),
+            "link_label": "Открыть ежедневные задания",
+        },
+        "level_progress": {
+            **level_progress,
+            "title": "Прогресс уровня",
+            "star_label": "★",
+            "url": reverse("cabinet:bonus_levels"),
+            "link_label": "Открыть уровни",
+            "arrow_label": "→",
+        },
+        "streak_card": {
+            **streak_card,
+            "url": reverse("cabinet:bonuses"),
+            "link_label": "Открыть бонусный центр",
+        },
+    }
+
+
 def build_bonus_center_context(user, request=None) -> dict:
     """Build the complete bonus-center context without template-side data access."""
     recent_gifts, recent_wins = _recent_bonus_content(user)
