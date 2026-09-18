@@ -62,6 +62,7 @@ def bonuses(request):
 - `DailyTask`
   - `title`
   - `description`
+  - `audience`
   - `task_type`
   - `target_value`
   - `reward_xp`
@@ -81,6 +82,14 @@ def bonuses(request):
   - `reward_claimed_at`
   - unique constraint по `user + task + progress_date`
 
+Поле `DailyTask.audience` сделать через `TextChoices`:
+
+- `all` — общее задание для всех пользователей;
+- `reader` — только для обычных пользователей;
+- `capper` — только для капперов/аналитиков.
+
+Не делать отдельные таблицы `ReaderDailyTask` и `CapperDailyTask`. Одна модель `DailyTask` с полем `audience` проще и не дублирует логику прогресса/наград.
+
 Типы заданий держать простыми `TextChoices`:
 
 - `daily_login`
@@ -89,8 +98,30 @@ def bonuses(request):
 - `view_prediction`
 - `add_favorite`
 - `follow_capper`
+- `create_prediction`
+- `publish_prediction`
+- `answer_comment`
+- `update_profile`
 
 Не добавлять сложный rule engine.
+
+Для капперов использовать задания типа `create_prediction`, `publish_prediction`, `answer_comment`, `update_profile`.
+Для обычных пользователей использовать `view_prediction`, `add_favorite`, `follow_capper`.
+Общие задания: `daily_login`, `spin_roulette`, `open_feed`.
+
+В сервисе выборки заданий сразу фильтровать по роли:
+
+```python
+def daily_tasks_for_user(user):
+    audiences = [DailyTask.Audience.ALL]
+    if user.is_analyst:
+        audiences.append(DailyTask.Audience.CAPPER)
+    else:
+        audiences.append(DailyTask.Audience.READER)
+    return DailyTask.objects.filter(is_active=True, audience__in=audiences).order_by("order", "id")
+```
+
+Эту выборку использовать и для карточки заданий, и для записи прогресса, чтобы пользователь не мог выполнить задание чужой роли.
 
 ## Шаг 4. Добавить модели XP и уровней
 
