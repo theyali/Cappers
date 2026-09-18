@@ -35,6 +35,12 @@ class NotificationPreference(models.Model):
     match_reminder = models.BooleanField("Напоминания о матчах", default=False)
     achievement = models.BooleanField("Достижения капперов", default=False)
 
+    bonus_daily_task = models.BooleanField("Награды за ежедневные задания", default=True)
+    bonus_streak = models.BooleanField("Награды за серию дней", default=True)
+    bonus_level = models.BooleanField("Новый уровень", default=True)
+    bonus_roulette = models.BooleanField("Призы рулетки", default=False)
+    bonus_referral = models.BooleanField("Реферальные бонусы", default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -113,6 +119,11 @@ class Notification(models.Model):
         FAVORITE_SETTLED = "favorite_settled", "Избранный прогноз рассчитан"
         MATCH_REMINDER = "match_reminder", "Скоро матч"
         ACHIEVEMENT = "achievement", "Достижение каппера"
+        BONUS_DAILY_TASK = "bonus_daily_task", "Награда за ежедневное задание"
+        BONUS_STREAK = "bonus_streak", "Награда за серию дней"
+        BONUS_LEVEL = "bonus_level", "Новый уровень"
+        BONUS_ROULETTE = "bonus_roulette", "Приз рулетки"
+        BONUS_REFERRAL = "bonus_referral", "Реферальный бонус"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
