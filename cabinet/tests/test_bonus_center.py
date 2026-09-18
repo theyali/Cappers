@@ -502,6 +502,33 @@ class BonusCenterServiceTests(TestCase):
             1,
         )
 
+    def test_bonus_page_uses_prepared_navigation_links(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:bonuses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["daily_tasks_card"]["url"],
+            reverse("cabinet:bonus_tasks"),
+        )
+        self.assertEqual(
+            response.context["bonus_page"]["levels"]["url"],
+            reverse("cabinet:bonus_levels"),
+        )
+        self.assertEqual(
+            response.context["referral_card"]["url"],
+            reverse("cabinet:referrals"),
+        )
+        self.assertEqual(
+            response.context["bonus_page"]["notification_settings"]["url"],
+            reverse("notifications:center"),
+        )
+        self.assertContains(response, reverse("cabinet:bonus_tasks"))
+        self.assertContains(response, reverse("cabinet:bonus_levels"))
+        self.assertContains(response, reverse("cabinet:referrals"))
+        self.assertContains(response, reverse("notifications:center"))
+
     def test_bonus_page_shows_claim_button_for_completed_task(self):
         task = DailyTask.objects.create(
             title="Получить бонус",
