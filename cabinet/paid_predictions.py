@@ -186,6 +186,7 @@ def subscribe_to_paid_predictions(
                 subscriber,
                 price,
                 REFERRAL_ACTION_SUBSCRIPTION,
+                related_obj=subscription,
                 note=f"Реферал @{subscriber.username}: покупка подписки «{plan_title}»",
             )
             return subscription
