@@ -1338,3 +1338,196 @@
     renderRouletteMeta();
     prepare().finally(resize);
 })();
+
+(() => {
+    const detailClaimButtons = Array.from(document.querySelectorAll('[data-bonus-task-claim]'));
+    if (!detailClaimButtons.length) return;
+
+    const summary = document.querySelector('[data-daily-tasks-summary]');
+    const bonusEventsList = document.querySelector('[data-bonus-events-list]');
+    const levelProgressCard = document.querySelector('.bonus-progress-card');
+    const levelProgressRing = levelProgressCard?.querySelector('.bonus-progress-ring');
+    const levelProgressCircle = levelProgressRing?.querySelector('.is-progress');
+    const levelProgressBadge = levelProgressCard?.querySelector('.bonus-side-head > span');
+    const levelProgressXp = levelProgressRing?.querySelector('strong');
+    const levelProgressTarget = levelProgressRing?.querySelector('small');
+    const levelProgressStatus = Array.from(levelProgressCard?.children || [])
+        .find((node) => node.tagName === 'P');
+
+    const csrfToken = () => {
+        const input = document.querySelector('[name="csrfmiddlewaretoken"]');
+        if (input?.value) return input.value;
+
+        const cookie = document.cookie
+            .split(';')
+            .map((item) => item.trim())
+            .find((item) => item.startsWith('csrftoken='));
+        return cookie ? decodeURIComponent(cookie.slice('csrftoken='.length)) : '';
+    };
+
+    const renderTaskRow = (button, card) => {
+        const row = button.closest('[data-bonus-task-id]');
+        const taskId = Number(row?.dataset.bonusTaskId) || 0;
+        const task = Array.isArray(card?.tasks)
+            ? card.tasks.find((item) => Number(item?.id) === taskId)
+            : null;
+        if (!row || !task) return;
+
+        const progress = row.querySelector('progress');
+        const progressLabel = row.querySelector('.bonus-task-meta span');
+        if (progress) {
+            progress.value = Number(task.current_value) || 0;
+            progress.max = Math.max(1, Number(task.target_value) || 1);
+        }
+        if (progressLabel) {
+            progressLabel.textContent = `${task.current_value} / ${task.target_value}`;
+        }
+
+        button.textContent = String(task.status_label || '');
+        button.disabled = !task.can_claim;
+    };
+
+    const renderRecentGifts = (items) => {
+        if (!bonusEventsList || !Array.isArray(items)) return;
+
+        bonusEventsList.replaceChildren();
+        if (!items.length) {
+            const row = document.createElement('article');
+            row.className = 'bonus-gift-row';
+            row.dataset.bonusEventEmpty = '';
+
+            const icon = document.createElement('span');
+            icon.className = 'bonus-gift-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = '🎁';
+
+            const copy = document.createElement('span');
+            copy.className = 'bonus-gift-copy';
+
+            const title = document.createElement('strong');
+            title.textContent = 'Подарков пока нет';
+
+            const description = document.createElement('span');
+            description.textContent = 'Новые бонусы появятся здесь.';
+
+            copy.append(title, description);
+            row.append(icon, copy);
+            bonusEventsList.append(row);
+            return;
+        }
+
+        items.slice(0, 5).forEach((item) => {
+            const row = document.createElement('article');
+            row.className = 'bonus-gift-row';
+            row.dataset.bonusEventRow = '';
+
+            const icon = document.createElement('span');
+            icon.className = 'bonus-gift-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = String(item?.icon || '🎁');
+
+            const copy = document.createElement('span');
+            copy.className = 'bonus-gift-copy';
+
+            const title = document.createElement('strong');
+            title.textContent = String(item?.title || '').trim() || 'Подарок';
+
+            const subtitle = document.createElement('span');
+            subtitle.textContent = String(item?.subtitle || '').trim();
+
+            const time = document.createElement('small');
+            time.textContent = String(item?.time_label || '').trim();
+
+            copy.append(title, subtitle, time);
+            row.append(icon, copy);
+            bonusEventsList.append(row);
+        });
+    };
+
+    const renderLevelProgress = (progress) => {
+        if (!progress) return;
+
+        if (levelProgressRing) {
+            levelProgressRing.setAttribute('aria-label', String(progress.aria_label || ''));
+        }
+        if (levelProgressCircle) {
+            Array.from(levelProgressCircle.classList)
+                .filter((name) => name.startsWith('is-progress-'))
+                .forEach((name) => levelProgressCircle.classList.remove(name));
+            if (progress.progress_class) {
+                levelProgressCircle.classList.add(String(progress.progress_class));
+            }
+        }
+        if (levelProgressBadge) {
+            levelProgressBadge.textContent = String(progress.badge_label || '');
+        }
+        if (levelProgressXp) {
+            levelProgressXp.textContent = String(progress.xp ?? 0);
+        }
+        if (levelProgressTarget) {
+            levelProgressTarget.textContent = String(progress.target_label || '');
+        }
+        if (levelProgressStatus) {
+            levelProgressStatus.textContent = String(progress.status_label || '');
+        }
+    };
+
+    const publishAttempts = (value) => {
+        if (value === undefined || value === null) return;
+        window.dispatchEvent(new CustomEvent('cappers:roulette-attempts', {
+            detail: { availableSpins: Math.max(0, Number(value) || 0) },
+        }));
+    };
+
+    const claimTask = async (button) => {
+        if (button.disabled) return;
+
+        const url = String(button.dataset.url || '');
+        if (!url) return;
+
+        const status = button
+            .closest('.bonus-task-actions')
+            ?.querySelector('[data-bonus-task-status]');
+        const defaultLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Получаем…';
+        if (status) status.textContent = '';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRFToken': csrfToken(),
+                },
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload?.ok) {
+                throw new Error(payload?.error || 'Не удалось получить награду.');
+            }
+
+            if (summary) {
+                summary.textContent = String(payload.daily_tasks_card?.summary_label || '');
+            }
+            renderTaskRow(button, payload.daily_tasks_card);
+            renderRecentGifts(payload.recent_gifts);
+            renderLevelProgress(payload.level_progress);
+            publishAttempts(payload.available_spins);
+            if (status) status.textContent = '';
+        } catch (error) {
+            button.disabled = false;
+            button.textContent = defaultLabel;
+            if (status) {
+                status.textContent = error instanceof Error
+                    ? error.message
+                    : 'Не удалось получить награду.';
+            }
+        }
+    };
+
+    detailClaimButtons.forEach((button) => {
+        button.addEventListener('click', () => claimTask(button));
+    });
+})();
+
