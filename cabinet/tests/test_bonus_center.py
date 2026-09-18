@@ -22,6 +22,7 @@ from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.spin_service import spin_roulette
 from cabinet.roulette.state import UserRouletteState
 from cabinet.services.bonus_rewards import grant_bonus_reward
+from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.services.referral_bonuses import grant_referral_registration_bonus
 from cabinet.services.streaks import touch_daily_streak
 from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
