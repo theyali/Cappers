@@ -1,4 +1,4 @@
-name: Inspect become capper styles
+name: Export verified step 6 patch
 
 on:
   push:
@@ -6,24 +6,19 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
-permissions:
-  contents: write
-
 jobs:
-  inspect:
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture existing styles
+      - name: Build verified patch bundle
         run: |
-          {
-            echo "=== STYLE REFERENCES ==="
-            rg -n --hidden --glob '!.git/**' "capper-landing-hero|capper-landing-promise|capper-kicker|capper-growth-link|capper-landing-lead|capper-landing-actions" . || true
-          } > .github/become_capper_scan.txt
-      - name: Commit scan output
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/become_capper_scan.txt
-          git commit -m "Capture become capper style references"
-          git push origin HEAD:main
+          python .github/step6_apply.py
+          python .github/step6_finalize_patch.py
+          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
+          git diff --name-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: step6-patched
+          path: step6-patched.tar.gz
+          if-no-files-found: error
