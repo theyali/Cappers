@@ -33,13 +33,14 @@ from .forms import (
     RegistrationForm,
     UserProfileForm,
 )
-from .models import AnalystFollow, AnalystProfile, User
+from .models import AnalystFollow, AnalystProfile, DailyTask, User
 from .paid_predictions import (
     get_active_paid_plans,
     profile_paid_predictions_enabled,
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
+from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
@@ -231,6 +232,11 @@ def profile(request):
                     analyst_form.save()
                 if paid_plan_form is not None:
                     paid_plan_form.save(request.user)
+            record_daily_task_action(
+                request.user,
+                DailyTask.TaskType.UPDATE_PROFILE,
+                related_obj=request.user,
+            )
             messages.success(request, "Профиль обновлён.")
             return redirect(f"{reverse('cabinet:profile')}?tab=settings")
         active_tab = "settings"
@@ -532,6 +538,11 @@ def upload_avatar(request):
         if storage.exists(previous_avatar):
             storage.delete(previous_avatar)
 
+    record_daily_task_action(
+        request.user,
+        DailyTask.TaskType.UPDATE_PROFILE,
+        related_obj=profile,
+    )
     return JsonResponse({"ok": True, "avatar_url": profile.avatar.url, "message": "Аватар обновлён."})
 
 
@@ -546,7 +557,16 @@ def follow_analyst(request, user_id):
     if analyst.pk == request.user.pk:
         return JsonResponse({"ok": False, "error": "Нельзя подписаться на самого себя."}, status=400)
 
-    AnalystFollow.objects.get_or_create(follower=request.user, analyst=analyst)
+    follow, created = AnalystFollow.objects.get_or_create(
+        follower=request.user,
+        analyst=analyst,
+    )
+    if created:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.FOLLOW_CAPPER,
+            related_obj=follow,
+        )
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
 
 
