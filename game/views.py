@@ -12,7 +12,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from cabinet.models import User
+from cabinet.models import DailyTask, User
+from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.paid_predictions import profile_paid_predictions_enabled
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
 from game.services.coupon_validation import (
@@ -251,11 +252,13 @@ def create_coupon(request):
         total_coefficient *= item["coefficient"]
     possible_payout = stake * total_coefficient if stake > 0 else Decimal("0")
     coin_wallet = None
+    coupon_created = False
 
     with transaction.atomic():
         coupon = _draft_for_update(request.user, coupon_id)
         if coupon is None:
             coupon = PredictionCoupon(author=request.user)
+            coupon_created = True
 
         coupon.total_stake = stake
         coupon.possible_payout = possible_payout
@@ -300,6 +303,19 @@ def create_coupon(request):
         PredictionCoupon.objects.prefetch_related("predictions__match")
         .get(pk=coupon.pk)
     )
+    if coupon_created:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.CREATE_PREDICTION,
+            related_obj=coupon,
+        )
+    if not autosave:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.PUBLISH_PREDICTION,
+            related_obj=coupon,
+        )
+
     response = {
         "ok": True,
         "coupon_id": coupon.id,
