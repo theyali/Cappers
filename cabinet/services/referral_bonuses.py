@@ -1,7 +1,12 @@
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
+from django.db.models import Sum
 from django.urls import reverse
+from django.utils import timezone
+
+from wallets.models import RealBalanceTransaction
+from wallets.services import format_money
 
 from cabinet.models import (
     AnalystPaidSubscription,
@@ -242,3 +247,232 @@ def build_referral_bonus_card(user, request=None) -> dict:
         "first_topup_reward_coins": settings_obj.first_topup_reward_coins,
         "first_subscription_reward_coins": settings_obj.first_subscription_reward_coins,
     }
+
+def _referral_datetime_label(value) -> str:
+    if value is None:
+        return ""
+    return timezone.localtime(value).strftime("%d.%m.%Y, %H:%M")
+
+
+def _referral_event_context(event) -> dict:
+    rewards = []
+    if event.coin_delta:
+        rewards.append(f"{event.coin_delta:+d} монет")
+    if event.xp_delta:
+        rewards.append(f"{event.xp_delta:+d} XP")
+    if event.spin_delta:
+        rewards.append(f"{event.spin_delta:+d} попыток")
+
+    return {
+        "title": event.title,
+        "description": event.description,
+        "reward_label": " · ".join(rewards),
+        "created_at_label": _referral_datetime_label(event.created_at),
+    }
+
+
+def build_referrals_page_context(user, request=None) -> dict:
+    """Build referral statistics and rewards for SSR and the legacy JSON endpoint."""
+    visits = ReferralVisit.objects.filter(referrer=user)
+    authenticated_visitors = (
+        visits.filter(visitor__isnull=False)
+        .values("visitor_id")
+        .distinct()
+        .count()
+    )
+    anonymous_visitors = visits.filter(visitor__isnull=True).count()
+    visitors_count = authenticated_visitors + anonymous_visitors
+    clicks_count = visits.aggregate(total=Sum("visits_count"))["total"] or 0
+    registrations_count = (
+        visits.filter(
+            registered_at__isnull=False,
+            visitor__isnull=False,
+        )
+        .values("visitor_id")
+        .distinct()
+        .count()
+    )
+    subscriptions_count = (
+        visits.filter(
+            subscribed_at__isnull=False,
+            visitor__isnull=False,
+        )
+        .values("visitor_id")
+        .distinct()
+        .count()
+    )
+    conversion = (
+        round(registrations_count / visitors_count * 100, 1)
+        if visitors_count
+        else 0
+    )
+
+    recent_visits = []
+    for visit in visits.select_related("visitor")[:40]:
+        visitor = visit.visitor
+        registered = visit.registered_at is not None
+        subscribed = visit.subscribed_at is not None
+
+        if subscribed:
+            status = "subscribed"
+            status_label = "Подписался"
+        elif registered:
+            status = "registered"
+            status_label = "Зарегистрировался"
+        else:
+            status = "visited"
+            status_label = "Перешёл по ссылке"
+
+        recent_visits.append(
+            {
+                "username": visitor.username if visitor else "",
+                "name": (
+                    visitor.get_full_name().strip() or visitor.username
+                    if visitor
+                    else "Неавторизованный посетитель"
+                ),
+                "visits_count": visit.visits_count,
+                "first_seen_label": _referral_datetime_label(visit.first_seen_at),
+                "last_seen_label": _referral_datetime_label(visit.last_seen_at),
+                "registered": registered,
+                "registered_label": (
+                    _referral_datetime_label(visit.registered_at)
+                    if registered
+                    else "Нет"
+                ),
+                "subscribed": subscribed,
+                "subscribed_label": (
+                    _referral_datetime_label(visit.subscribed_at)
+                    if subscribed
+                    else "Нет"
+                ),
+                "status": status,
+                "status_label": status_label,
+                "first_seen_at": visit.first_seen_at.isoformat(),
+                "last_seen_at": visit.last_seen_at.isoformat(),
+                "registered_at": (
+                    visit.registered_at.isoformat()
+                    if visit.registered_at
+                    else ""
+                ),
+                "subscribed_at": (
+                    visit.subscribed_at.isoformat()
+                    if visit.subscribed_at
+                    else ""
+                ),
+            }
+        )
+
+    referral_path = reverse(
+        "front:capper_referral_code",
+        kwargs={
+            "username": user.username,
+            "code": user.referral_code,
+        },
+    )
+    referral_url = (
+        request.build_absolute_uri(referral_path)
+        if request is not None
+        else referral_path
+    )
+
+    referral_income = 0
+    if user.is_analyst:
+        referral_income = (
+            RealBalanceTransaction.objects.filter(
+                user=user,
+                status=RealBalanceTransaction.Status.COMPLETED,
+                amount__gt=0,
+                kind__in=[
+                    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
+                    RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
+                    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
+                ],
+            ).aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
+
+    settings_obj = ReferralBonusSettings.load()
+    bonus_settings = {
+        "is_enabled": settings_obj.is_enabled,
+        "registration_reward_coins": settings_obj.registration_reward_coins,
+        "registration_reward_xp": settings_obj.registration_reward_xp,
+        "first_topup_reward_coins": settings_obj.first_topup_reward_coins,
+        "first_subscription_reward_coins": (
+            settings_obj.first_subscription_reward_coins
+        ),
+        "max_visible_reward_text": settings_obj.max_visible_reward_text,
+    }
+    registration_rewards = []
+    if settings_obj.registration_reward_coins:
+        registration_rewards.append(
+            f"+{settings_obj.registration_reward_coins} монет"
+        )
+    if settings_obj.registration_reward_xp:
+        registration_rewards.append(
+            f"+{settings_obj.registration_reward_xp} XP"
+        )
+
+    bonus_cards = [
+        {
+            "key": "registration",
+            "title": "За регистрацию",
+            "description": "Друг зарегистрировался по вашей ссылке.",
+            "reward_label": " · ".join(registration_rewards) or "Без награды",
+        },
+        {
+            "key": "first_topup",
+            "title": "За первое пополнение",
+            "description": "Друг впервые пополнил баланс.",
+            "reward_label": (
+                f"+{settings_obj.first_topup_reward_coins} монет"
+                if settings_obj.first_topup_reward_coins
+                else "Без награды"
+            ),
+        },
+        {
+            "key": "first_subscription",
+            "title": "За первую подписку",
+            "description": "Друг впервые оформил платную подписку.",
+            "reward_label": (
+                f"+{settings_obj.first_subscription_reward_coins} монет"
+                if settings_obj.first_subscription_reward_coins
+                else "Без награды"
+            ),
+        },
+    ]
+
+    recent_bonus_events = [
+        _referral_event_context(event)
+        for event in BonusEvent.objects.filter(
+            user=user,
+            event_type=BonusEvent.EventType.REFERRAL,
+        ).order_by("-created_at", "-id")[:40]
+    ]
+
+    return {
+        "page": {
+            "title": "Рефералы — КапперХаб",
+            "heading": "Рефералы",
+            "description": (
+                "Приглашайте пользователей по своей ссылке и следите "
+                "за переходами, регистрациями и бонусами."
+            ),
+            "mobile_nav_label": "Разделы профиля на мобильных устройствах",
+            "profile_nav_label": "Разделы профиля",
+        },
+        "referral_url": referral_url,
+        "referral_code": user.referral_code,
+        "can_earn_referrals": user.is_analyst,
+        "referral_income_display": format_money(referral_income),
+        "visitors_count": visitors_count,
+        "clicks_count": clicks_count,
+        "registrations_count": registrations_count,
+        "subscriptions_count": subscriptions_count,
+        "conversion": conversion,
+        "bonus_settings": bonus_settings,
+        "bonus_cards": bonus_cards,
+        "recent_visits": recent_visits,
+        "recent_bonus_events": recent_bonus_events,
+    }
+
