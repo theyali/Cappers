@@ -410,10 +410,12 @@
             levelProgressRing.setAttribute('aria-label', String(progress.aria_label || ''));
         }
         if (levelProgressCircle) {
-            levelProgressCircle.setAttribute(
-                'stroke-dasharray',
-                String(progress.progress_dasharray || '0 302'),
-            );
+            Array.from(levelProgressCircle.classList)
+                .filter((name) => name.startsWith('is-progress-'))
+                .forEach((name) => levelProgressCircle.classList.remove(name));
+            if (progress.progress_class) {
+                levelProgressCircle.classList.add(String(progress.progress_class));
+            }
         }
         if (levelProgressBadge) {
             levelProgressBadge.textContent = String(progress.badge_label || '');
