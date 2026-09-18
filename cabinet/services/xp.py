@@ -141,6 +141,7 @@ def build_level_progress(user) -> dict:
         "current_level_xp": current_level_xp,
         "next_level_xp": next_level_xp,
         "progress_percent": progress_percent,
+        "progress_bucket": progress_bucket,
         "progress_class": f"is-progress-{progress_bucket}",
         "xp_to_next_level": xp_to_next_level,
         "levels_preview": levels_preview,
