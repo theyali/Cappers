@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from decimal import Decimal
 
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -23,6 +24,8 @@ from cabinet.roulette.state import UserRouletteState
 from cabinet.services.bonus_rewards import grant_bonus_reward
 from cabinet.services.referral_bonuses import grant_referral_registration_bonus
 from cabinet.services.streaks import touch_daily_streak
+from cabinet.services.xp import build_level_progress
+from game.models import PredictionCoupon
 from wallets.models import CoinSettings, CoinWallet
 
 
@@ -227,6 +230,65 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(coin_wallet.balance, 25)
 
 
+    def test_level_progress_uses_ten_percent_bucket_class(self):
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            order=1,
+        )
+        XpLevel.objects.create(
+            level=2,
+            title="Участник",
+            required_xp=100,
+            order=2,
+        )
+        UserXpState.objects.create(
+            user=self.user,
+            level=1,
+            xp=54,
+        )
+
+        progress = build_level_progress(self.user)
+
+        self.assertEqual(progress["progress_percent"], 54)
+        self.assertEqual(progress["progress_class"], "is-progress-50")
+
+    def test_daily_task_claim_rejects_incomplete_task(self):
+        task = DailyTask.objects.create(
+            title="Невыполненное задание",
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=2,
+            reward_xp=15,
+            reward_coins=20,
+            reward_spins=1,
+        )
+        UserDailyTaskProgress.objects.create(
+            user=self.user,
+            task=task,
+            progress_date=timezone.localdate(),
+            current_value=1,
+            is_completed=False,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("cabinet:daily_task_claim", args=(task.pk,))
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+        self.assertEqual(
+            BonusEvent.objects.filter(
+                user=self.user,
+                event_type=BonusEvent.EventType.DAILY_TASK,
+            ).count(),
+            0,
+        )
+        self.assertFalse(UserXpState.objects.filter(user=self.user).exists())
+        self.assertFalse(CoinWallet.objects.filter(user=self.user).exists())
+        self.assertFalse(UserRouletteState.objects.filter(user=self.user).exists())
+
     def test_daily_task_claim_endpoint_returns_updated_bonus_state_once(self):
         task = DailyTask.objects.create(
             title="Забрать награду",
@@ -252,6 +314,7 @@ class BonusCenterServiceTests(TestCase):
 
         self.assertEqual(first_response.status_code, 200)
         self.assertEqual(second_response.status_code, 200)
+        self.assertTrue(second_response.json()["ok"])
         payload = first_response.json()
         self.assertTrue(payload["ok"])
         self.assertIn("daily_tasks_card", payload)
@@ -310,6 +373,46 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
 
+
+    def test_prediction_favorite_route_records_daily_task_only_on_add(self):
+        analyst = User.objects.create_user(
+            username="bonus-favorite-analyst",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        prediction = PredictionCoupon.objects.create(
+            author=analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            audience=PredictionCoupon.Audience.FREE,
+            total_stake=Decimal("100.00"),
+            possible_payout=Decimal("180.00"),
+            confidence=70,
+        )
+        task = DailyTask.objects.create(
+            title="Добавить в избранное",
+            task_type=DailyTask.TaskType.ADD_FAVORITE,
+            target_value=2,
+        )
+        self.client.force_login(self.user)
+        url = reverse("front:prediction_favorite", args=(prediction.pk,))
+
+        add_response = self.client.post(url)
+
+        self.assertEqual(add_response.status_code, 200)
+        self.assertTrue(add_response.json()["active"])
+        progress = UserDailyTaskProgress.objects.get(
+            user=self.user,
+            task=task,
+            progress_date=timezone.localdate(),
+        )
+        self.assertEqual(progress.current_value, 1)
+
+        remove_response = self.client.post(url)
+
+        self.assertEqual(remove_response.status_code, 200)
+        self.assertFalse(remove_response.json()["active"])
+        progress.refresh_from_db()
+        self.assertEqual(progress.current_value, 1)
 
     def test_bonus_page_shows_claim_button_for_completed_task(self):
         task = DailyTask.objects.create(
