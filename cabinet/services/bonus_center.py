@@ -176,6 +176,8 @@ def build_profile_bonus_summary(user) -> dict:
     return {
         "quick_tasks": daily_tasks_card["tasks"][:3],
         "quick_tasks_title": "Быстрые задания",
+        "quick_tasks_empty_title": "Заданий пока нет",
+        "quick_tasks_empty_description": "Новые задания появятся здесь",
         "tasks_summary_label": daily_tasks_card["summary_label"],
         "tasks_url": reverse("cabinet:bonus_tasks"),
         "tasks_link_label": "Открыть ежедневные задания",
