@@ -3,7 +3,9 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
+from cabinet.models import DailyTask
 from cabinet.paid_predictions import user_can_view_paid_predictions
+from cabinet.services.daily_tasks import record_daily_task_action
 from game.models import PredictionCoupon
 
 from .metrics import (
@@ -77,6 +79,12 @@ def toggle_prediction_favorite(request, prediction_id: int):
         )
 
     active, metrics = toggle_prediction_favorite_metric(prediction, request.user)
+    if active:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.ADD_FAVORITE,
+            related_obj=prediction,
+        )
     return JsonResponse(
         {
             "ok": True,

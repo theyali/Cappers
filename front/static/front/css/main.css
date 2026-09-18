@@ -37653,7 +37653,6 @@ padding:40px 0px;
 .cabinet-bonuses-page .bonus-progress-ring circle.is-progress {
     stroke: var(--blue);
     stroke-linecap: round;
-    stroke-dasharray: 0 302;
 }
 
 .cabinet-bonuses-page .bonus-progress-ring > div {
