@@ -38231,10 +38231,25 @@ padding:40px 0px;
     white-space: nowrap;
 }
 
+.cabinet-bonus-tasks-page .bonus-tasks-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.cabinet-bonus-tasks-page .bonus-tasks-main {
+    width: 100%;
+    max-width: 980px;
+}
+
+.cabinet-bonus-tasks-page .bonus-tasks-head {
+    min-height: 0;
+    align-items: center;
+    padding: 20px;
+}
+
 .cabinet-bonuses-page .bonus-task-list {
     min-width: 0;
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cabinet-bonuses-page .bonus-task-row {
@@ -38242,9 +38257,9 @@ padding:40px 0px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px 20px;
-    padding: 18px;
-    border-radius: 16px;
+    gap: 12px 24px;
+    padding: 16px 18px;
+    border-radius: 14px;
     background: var(--panel);
 }
 
@@ -38252,43 +38267,94 @@ padding:40px 0px;
     min-width: 0;
 }
 
+.cabinet-bonuses-page .bonus-task-title-line {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .cabinet-bonuses-page .bonus-task-copy h2 {
+    min-width: 0;
     margin: 0;
     color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.25;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
 }
 
 .cabinet-bonuses-page .bonus-task-copy p {
-    margin: 6px 0 0;
+    max-width: 680px;
+    margin: 5px 0 0;
     color: var(--muted);
     font-size: 11px;
     line-height: 1.45;
 }
 
-.cabinet-bonuses-page .bonus-task-meta {
-    min-width: 124px;
+.cabinet-bonuses-page .bonus-task-state {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #8caeff;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-task-state.is-completed {
+    color: #8b8b8e;
+}
+
+.cabinet-bonuses-page .bonus-task-check {
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-task-row.is-completed .bonus-task-copy h2 {
+    color: #8b8b8e;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+.cabinet-bonuses-page .bonus-task-row.is-completed .bonus-task-copy p {
+    color: #606064;
+}
+
+.cabinet-bonuses-page .bonus-task-info {
+    min-width: 130px;
     display: grid;
     justify-items: end;
     gap: 4px;
     text-align: right;
 }
 
-.cabinet-bonuses-page .bonus-task-meta span {
-    color: #a7a7aa;
+.cabinet-bonuses-page .bonus-task-progress-label {
+    color: #aaaab0;
     font-size: 11px;
+    font-variant-numeric: tabular-nums;
 }
 
-.cabinet-bonuses-page .bonus-task-meta strong {
+.cabinet-bonuses-page .bonus-task-info strong {
     color: var(--yellow);
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cabinet-bonuses-page .bonus-task-row.is-completed .bonus-task-info strong {
+    color: #8b8b8e;
 }
 
 .cabinet-bonuses-page .bonus-task-progress-bar {
     width: 100%;
-    height: 8px;
+    height: 6px;
     grid-column: 1 / -1;
     overflow: hidden;
     appearance: none;
@@ -38317,7 +38383,29 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-task-row .bonus-task-claim {
-    min-width: 110px;
+    min-width: 108px;
+    min-height: 34px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cabinet-bonuses-page .bonus-task-row .bonus-task-claim:disabled {
+    display: none;
+}
+
+.cabinet-bonuses-page .bonus-task-actions small {
+    color: #ff7479;
+    font-size: 9px;
+}
+
+.cabinet-bonuses-page .bonus-task-row-empty {
+    grid-template-columns: 1fr;
 }
 
 .cabinet-bonuses-page .bonus-levels-hero {

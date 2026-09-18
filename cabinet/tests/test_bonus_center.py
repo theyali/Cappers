@@ -22,6 +22,7 @@ from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.spin_service import spin_roulette
 from cabinet.roulette.state import UserRouletteState
 from cabinet.services.bonus_rewards import grant_bonus_reward
+from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.services.referral_bonuses import grant_referral_registration_bonus
 from cabinet.services.streaks import touch_daily_streak
 from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
@@ -613,6 +614,49 @@ class BonusCenterServiceTests(TestCase):
         self.assertIn(capper_task.pk, capper_task_ids)
         self.assertIn(common_task.pk, capper_task_ids)
         self.assertNotIn(reader_task.pk, capper_task_ids)
+        self.assertEqual(
+            reader_response.context["daily_tasks_card"]["summary_label"],
+            "Сегодня выполнено 0 из 2",
+        )
+        reader_common_task = next(
+            task
+            for task in reader_response.context["tasks"]
+            if task["id"] == common_task.pk
+        )
+        self.assertEqual(reader_common_task["progress_label"], "0 / 1")
+        self.assertEqual(reader_common_task["row_class"], "is-in-progress")
+        self.assertEqual(reader_common_task["display_status_label"], "В процессе")
+        self.assertNotContains(reader_response, "bonus-center-aside")
+
+    def test_bonus_tasks_page_only_renders_claim_button_when_claimable(self):
+        task = DailyTask.objects.create(
+            title="Задание с наградой",
+            audience=DailyTask.Audience.ALL,
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=1,
+            reward_coins=10,
+        )
+        self.client.force_login(self.user)
+
+        initial_response = self.client.get(reverse("cabinet:bonus_tasks"))
+        self.assertNotContains(initial_response, "data-bonus-task-claim")
+
+        record_daily_task_action(
+            self.user,
+            DailyTask.TaskType.OPEN_FEED,
+        )
+        claimable_response = self.client.get(reverse("cabinet:bonus_tasks"))
+
+        claimable_task = next(
+            item
+            for item in claimable_response.context["tasks"]
+            if item["id"] == task.pk
+        )
+        self.assertTrue(claimable_task["can_claim"])
+        self.assertEqual(claimable_task["row_class"], "is-completed")
+        self.assertEqual(claimable_task["display_status_label"], "Выполнено")
+        self.assertContains(claimable_response, "data-bonus-task-claim")
+        self.assertContains(claimable_response, "bonus-task-check")
 
     def test_bonus_levels_page_shows_current_level(self):
         XpLevel.objects.create(
