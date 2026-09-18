@@ -429,6 +429,12 @@ def build_referrals_page_context(user, request=None) -> dict:
 
     bonus_settings = {
         "is_enabled": settings_obj.is_enabled,
+        "is_disabled": not settings_obj.is_enabled,
+        "status_label": (
+            "Бонусная программа активна"
+            if settings_obj.is_enabled
+            else "Реферальные бонусы временно отключены"
+        ),
         "registration_reward_coins": settings_obj.registration_reward_coins,
         "registration_reward_xp": settings_obj.registration_reward_xp,
         "first_topup_reward_coins": settings_obj.first_topup_reward_coins,
@@ -499,7 +505,11 @@ def build_referrals_page_context(user, request=None) -> dict:
         "referral_url": referral_url,
         "referral_code": user.referral_code,
         "can_earn_referrals": user.is_analyst,
-        "referral_income_display": format_money(referral_income),
+        "referral_income_display": (
+            format_money(referral_income)
+            if user.is_analyst
+            else ""
+        ),
         "visitors_count": visitors_count,
         "clicks_count": clicks_count,
         "registrations_count": registrations_count,
