@@ -627,6 +627,12 @@ class BonusCenterServiceTests(TestCase):
             required_xp=100,
             order=2,
         )
+        XpLevel.objects.create(
+            level=3,
+            title="Опытный",
+            required_xp=200,
+            order=3,
+        )
         UserXpState.objects.create(
             user=self.user,
             level=2,
@@ -639,6 +645,31 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["level_progress"]["level"], 2)
         self.assertEqual(response.context["level_progress"]["level_title"], "Участник")
+
+        levels = {
+            level["level"]: level
+            for level in response.context["levels"]
+        }
+        self.assertEqual(levels[1]["progress_percent"], 100)
+        self.assertEqual(levels[1]["progress_class"], "is-progress-100")
+        self.assertEqual(levels[1]["status_label"], "Открыт")
+        self.assertTrue(levels[1]["is_unlocked"])
+        self.assertFalse(levels[1]["is_current"])
+        self.assertFalse(levels[1]["is_locked"])
+
+        self.assertEqual(levels[2]["progress_percent"], 20)
+        self.assertEqual(levels[2]["progress_class"], "is-progress-20")
+        self.assertEqual(levels[2]["status_label"], "Текущий")
+        self.assertFalse(levels[2]["is_unlocked"])
+        self.assertTrue(levels[2]["is_current"])
+        self.assertFalse(levels[2]["is_locked"])
+
+        self.assertEqual(levels[3]["progress_percent"], 0)
+        self.assertEqual(levels[3]["progress_class"], "is-progress-0")
+        self.assertEqual(levels[3]["status_label"], "Впереди")
+        self.assertFalse(levels[3]["is_unlocked"])
+        self.assertFalse(levels[3]["is_current"])
+        self.assertTrue(levels[3]["is_locked"])
         self.assertContains(response, "Участник")
 
     def test_referrals_page_returns_url_and_stats(self):
