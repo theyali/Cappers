@@ -188,7 +188,10 @@ def roulette_state(request):
     state = get_user_roulette_state(request.user, now=now)
     sectors = get_available_roulette_prizes(user=request.user, now=now)
     recent_wins = _recent_roulette_wins(request, request.user)
-    live_state = build_bonus_live_state(request.user)
+    live_state = build_bonus_live_state(
+        request.user,
+        roulette_state=state,
+    )
 
     return JsonResponse(
         {
