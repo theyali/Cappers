@@ -126,16 +126,29 @@ def grant_bonus_reward(
     notification_config = NOTIFICATION_BY_EVENT_TYPE.get(event_type)
     if notification_config is not None:
         notification_kind, url_name = notification_config
+        notification_title = (
+            "Награда получена"
+            if event_type == BonusEvent.EventType.DAILY_TASK
+            else title
+        )
+        notification_message = _bonus_notification_message(
+            xp=xp,
+            coins=coins,
+            spins=spins,
+            description=description,
+        )
+        if event_type == BonusEvent.EventType.DAILY_TASK:
+            notification_message = " · ".join(
+                part
+                for part in (title, notification_message)
+                if part
+            )
+
         create_notification(
             recipient=locked_user,
             kind=notification_kind,
-            title=title,
-            message=_bonus_notification_message(
-                xp=xp,
-                coins=coins,
-                spins=spins,
-                description=description,
-            ),
+            title=notification_title,
+            message=notification_message,
             url=reverse(url_name),
             event_key=f"bonus:{event.pk}",
             meta={

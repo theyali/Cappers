@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.urls import reverse
+
 from .models import Notification, NotificationPreference
 
 
@@ -69,3 +71,25 @@ def create_notification(
         },
     )
     return notification
+
+
+def create_daily_task_completed_notification(
+    *,
+    recipient,
+    task,
+    progress_date,
+) -> Notification | None:
+    return create_notification(
+        recipient=recipient,
+        kind=Notification.Kind.BONUS_DAILY_TASK,
+        title="Задание выполнено",
+        message=task.title,
+        url=reverse("cabinet:bonus_tasks"),
+        event_key=(
+            f"daily-task-completed:{recipient.pk}:{task.pk}:{progress_date}"
+        ),
+        meta={
+            "daily_task_id": task.pk,
+            "progress_date": str(progress_date),
+        },
+    )

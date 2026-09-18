@@ -339,6 +339,22 @@ class BonusCenterServiceTests(TestCase):
             ).count(),
             1,
         )
+        reward_event = BonusEvent.objects.get(
+            user=self.user,
+            event_type=BonusEvent.EventType.DAILY_TASK,
+            related_model=progress._meta.label_lower,
+            related_id=progress.pk,
+        )
+        reward_notification = Notification.objects.get(
+            event_key=f"bonus:{reward_event.pk}",
+        )
+        self.assertEqual(reward_notification.title, "Награда получена")
+        self.assertEqual(
+            Notification.objects.filter(
+                event_key=f"bonus:{reward_event.pk}",
+            ).count(),
+            1,
+        )
         self.assertEqual(UserXpState.objects.get(user=self.user).xp, 15)
         self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 20)
         self.assertEqual(
@@ -416,6 +432,85 @@ class BonusCenterServiceTests(TestCase):
         progress.refresh_from_db()
         self.assertEqual(progress.current_value, 1)
 
+    def test_daily_task_completion_creates_notification_once(self):
+        task = DailyTask.objects.create(
+            title="Открыть ленту дважды",
+            audience=DailyTask.Audience.ALL,
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=2,
+        )
+        progress_date = timezone.localdate()
+        event_key = (
+            f"daily-task-completed:{self.user.pk}:{task.pk}:{progress_date}"
+        )
+
+        record_daily_task_action(
+            self.user,
+            DailyTask.TaskType.OPEN_FEED,
+        )
+        self.assertFalse(
+            Notification.objects.filter(event_key=event_key).exists()
+        )
+
+        record_daily_task_action(
+            self.user,
+            DailyTask.TaskType.OPEN_FEED,
+        )
+        notification = Notification.objects.get(event_key=event_key)
+
+        self.assertEqual(
+            notification.kind,
+            Notification.Kind.BONUS_DAILY_TASK,
+        )
+        self.assertEqual(notification.title, "Задание выполнено")
+        self.assertEqual(notification.message, task.title)
+        self.assertEqual(
+            notification.url,
+            reverse("cabinet:bonus_tasks"),
+        )
+        self.assertEqual(notification.meta["daily_task_id"], task.pk)
+        self.assertEqual(
+            notification.meta["progress_date"],
+            str(progress_date),
+        )
+
+        record_daily_task_action(
+            self.user,
+            DailyTask.TaskType.OPEN_FEED,
+        )
+        self.assertEqual(
+            Notification.objects.filter(event_key=event_key).count(),
+            1,
+        )
+
+    def test_disabled_daily_task_notifications_skip_completion_notification(self):
+        preferences, _ = NotificationPreference.objects.get_or_create(
+            user=self.user,
+        )
+        preferences.bonus_daily_task = False
+        preferences.save(
+            update_fields=["bonus_daily_task", "updated_at"],
+        )
+        task = DailyTask.objects.create(
+            title="Открыть ленту",
+            audience=DailyTask.Audience.ALL,
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=1,
+        )
+
+        record_daily_task_action(
+            self.user,
+            DailyTask.TaskType.OPEN_FEED,
+        )
+
+        event_key = (
+            f"daily-task-completed:{self.user.pk}:{task.pk}:"
+            f"{timezone.localdate()}"
+        )
+        self.assertFalse(
+            Notification.objects.filter(event_key=event_key).exists()
+        )
+
     def test_bonus_reward_creates_notification_after_event(self):
         preferences = NotificationPreference.objects.create(
             user=self.user,
@@ -455,11 +550,16 @@ class BonusCenterServiceTests(TestCase):
             notification = Notification.objects.get(event_key=f"bonus:{event.pk}")
 
             self.assertEqual(notification.kind, notification_kind)
-            self.assertEqual(notification.title, event.title)
-            self.assertEqual(
-                notification.message,
-                f"+{index} монет · {event.description}",
+            expected_title = (
+                "Награда получена"
+                if event_type == BonusEvent.EventType.DAILY_TASK
+                else event.title
             )
+            self.assertEqual(notification.title, expected_title)
+            expected_message = f"+{index} монет · {event.description}"
+            if event_type == BonusEvent.EventType.DAILY_TASK:
+                expected_message = f"{event.title} · {expected_message}"
+            self.assertEqual(notification.message, expected_message)
             self.assertEqual(notification.url, expected_url)
             self.assertEqual(notification.meta["bonus_event_id"], event.pk)
 

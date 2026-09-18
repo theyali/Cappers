@@ -3,6 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from cabinet.models import BonusEvent, DailyTask, UserDailyTaskProgress
+from notifications.services import create_daily_task_completed_notification
 
 from .bonus_rewards import grant_bonus_reward
 from .streaks import touch_daily_streak
@@ -63,6 +64,7 @@ def record_daily_task_action(user, task_type, amount=1, related_obj=None):
         )
         progress = UserDailyTaskProgress.objects.select_for_update().get(pk=progress.pk)
 
+        became_completed = False
         if not progress.is_completed:
             progress.current_value = min(
                 task.target_value,
@@ -71,6 +73,7 @@ def record_daily_task_action(user, task_type, amount=1, related_obj=None):
             if progress.current_value >= task.target_value:
                 progress.is_completed = True
                 progress.completed_at = now
+                became_completed = True
 
             progress.save(
                 update_fields=(
@@ -78,6 +81,13 @@ def record_daily_task_action(user, task_type, amount=1, related_obj=None):
                     "is_completed",
                     "completed_at",
                 )
+            )
+
+        if became_completed:
+            create_daily_task_completed_notification(
+                recipient=locked_user,
+                task=task,
+                progress_date=progress_date,
             )
 
         updated_progress.append(progress)
