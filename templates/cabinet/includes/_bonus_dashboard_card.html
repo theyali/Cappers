@@ -1,0 +1,29 @@
+<article class="bonus-dashboard-card">
+    <div class="bonus-card-head">
+        <span class="bonus-card-icon is-{{ card.icon_tone }}" aria-hidden="true">
+            {% if card.icon_kind == "clock" %}
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            {% elif card.icon_kind == "referral" %}
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M3.5 19c.6-3.4 2.4-5.1 5.5-5.1s4.9 1.7 5.5 5.1M14 14c3.4-.4 5.6 1.3 6.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            {% endif %}
+        </span>
+        <div>
+            <h2>{{ card.title }}</h2>
+            <span>{{ card.subtitle }}</span>
+        </div>
+        <span class="bonus-card-arrow" aria-hidden="true">{{ card.arrow_label }}</span>
+    </div>
+    {% if card.is_countdown %}
+        <strong class="bonus-card-value is-yellow" data-bonus-countdown>{{ card.value_label }}</strong>
+    {% else %}
+        <strong class="bonus-card-value is-yellow">{{ card.value_label }}</strong>
+    {% endif %}
+    <p>{{ card.description }}</p>
+</article>
