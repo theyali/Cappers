@@ -248,6 +248,11 @@ def build_referral_bonus_card(user, request=None) -> dict:
         "first_subscription_reward_coins": settings_obj.first_subscription_reward_coins,
     }
 
+def _percent_label(value) -> str:
+    text = format(Decimal(str(value or 0)), "f").rstrip("0").rstrip(".")
+    return f"{text or '0'}%"
+
+
 def _referral_datetime_label(value) -> str:
     if value is None:
         return ""
@@ -393,6 +398,35 @@ def build_referrals_page_context(user, request=None) -> dict:
         )
 
     settings_obj = ReferralBonusSettings.load()
+    income_cards = []
+    if user.is_analyst:
+        from back.models import WebsiteSettings
+
+        website_settings = WebsiteSettings.load()
+        income_cards = [
+            {
+                "key": "subscription",
+                "title": "С покупки подписки",
+                "percent_label": _percent_label(
+                    website_settings.referral_subscription_percent
+                ),
+            },
+            {
+                "key": "tournament",
+                "title": "С турнирного приза",
+                "percent_label": _percent_label(
+                    website_settings.referral_tournament_percent
+                ),
+            },
+            {
+                "key": "balance_topup",
+                "title": "С пополнения баланса",
+                "percent_label": _percent_label(
+                    website_settings.referral_balance_topup_percent
+                ),
+            },
+        ]
+
     bonus_settings = {
         "is_enabled": settings_obj.is_enabled,
         "registration_reward_coins": settings_obj.registration_reward_coins,
@@ -402,6 +436,7 @@ def build_referrals_page_context(user, request=None) -> dict:
             settings_obj.first_subscription_reward_coins
         ),
         "max_visible_reward_text": settings_obj.max_visible_reward_text,
+        "income_cards": income_cards,
     }
     registration_rewards = []
     if settings_obj.registration_reward_coins:
