@@ -6,9 +6,19 @@
     const bonusEventsList = document.querySelector('[data-bonus-events-list]');
     const countdownNodes = Array.from(document.querySelectorAll('[data-bonus-countdown]'));
     const statusNodes = Array.from(document.querySelectorAll('[data-bonus-status]'));
+    const dailyTasksSummary = document.querySelector('[data-daily-tasks-summary]');
+    const dailyTasksProgress = document.querySelector('[data-daily-tasks-progress]');
+    const dailyTaskActions = document.querySelector('[data-daily-task-actions]');
     const dailyTaskClaimButton = document.querySelector('[data-daily-task-claim]');
     const dailyTaskClaimLabel = dailyTaskClaimButton?.querySelector('[data-daily-task-claim-label]');
     const dailyTaskClaimStatus = document.querySelector('[data-daily-task-claim-status]');
+    const dailyTaskCardStatus = document.querySelector('[data-daily-task-card-status]');
+    const levelProgressRing = document.querySelector('[data-level-progress-ring]');
+    const levelProgressCircle = document.querySelector('[data-level-progress-circle]');
+    const levelProgressBadge = document.querySelector('[data-level-progress-badge]');
+    const levelProgressXp = document.querySelector('[data-level-progress-xp]');
+    const levelProgressTarget = document.querySelector('[data-level-progress-target]');
+    const levelProgressStatus = document.querySelector('[data-level-progress-status]');
     if (!root || !canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -319,6 +329,101 @@
         Array.from(bonusEventsList.querySelectorAll('[data-bonus-event-row]'))
             .slice(5)
             .forEach((item) => item.remove());
+    };
+
+    const renderBonusEvents = (events) => {
+        if (!bonusEventsList || !Array.isArray(events)) return;
+
+        bonusEventsList.replaceChildren();
+        events.slice(0, 5).forEach((event) => {
+            const row = document.createElement('article');
+            row.className = 'bonus-gift-row';
+            row.dataset.bonusEventRow = '';
+
+            const icon = document.createElement('span');
+            icon.className = 'bonus-gift-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = String(event?.icon || '🎁');
+
+            const copy = document.createElement('span');
+            copy.className = 'bonus-gift-copy';
+
+            const title = document.createElement('strong');
+            title.textContent = String(event?.title || '').trim() || 'Подарок';
+
+            const subtitle = document.createElement('span');
+            subtitle.textContent = String(event?.subtitle || '').trim();
+
+            const time = document.createElement('small');
+            time.textContent = String(event?.time_label || '').trim();
+
+            copy.append(title, subtitle, time);
+            row.append(icon, copy);
+            bonusEventsList.append(row);
+        });
+    };
+
+    const renderDailyTasksCard = (card) => {
+        if (!card) return;
+
+        if (dailyTasksSummary) {
+            dailyTasksSummary.textContent = String(card.summary_label || '');
+        }
+
+        if (dailyTasksProgress && Array.isArray(card.progress_slots)) {
+            dailyTasksProgress.replaceChildren();
+            card.progress_slots.forEach((slot) => {
+                const item = document.createElement('span');
+                if (slot?.is_completed) item.className = 'is-done';
+                dailyTasksProgress.append(item);
+            });
+        }
+
+        const claimUrl = String(card.claim_url || '');
+        if (dailyTaskActions) dailyTaskActions.hidden = !claimUrl;
+        if (dailyTaskClaimButton) {
+            dailyTaskClaimButton.dataset.claimUrl = claimUrl;
+            dailyTaskClaimButton.dataset.pendingLabel = String(card.claim_pending_label || '');
+            dailyTaskClaimButton.dataset.errorLabel = String(card.claim_error_label || '');
+            dailyTaskClaimButton.disabled = false;
+        }
+        if (dailyTaskClaimLabel) {
+            dailyTaskClaimLabel.textContent = String(card.claim_button_label || '');
+        }
+        if (dailyTaskClaimStatus) dailyTaskClaimStatus.textContent = '';
+
+        if (dailyTaskCardStatus) {
+            const statusLabel = String(card.status_label || '');
+            dailyTaskCardStatus.hidden = Boolean(claimUrl) || !statusLabel;
+            dailyTaskCardStatus.className = `bonus-task-card-status is-${String(card.status || 'in_progress')}`;
+            dailyTaskCardStatus.textContent = statusLabel;
+        }
+    };
+
+    const renderLevelProgress = (progress) => {
+        if (!progress) return;
+
+        if (levelProgressRing) {
+            levelProgressRing.setAttribute('aria-label', String(progress.aria_label || ''));
+        }
+        if (levelProgressCircle) {
+            levelProgressCircle.setAttribute(
+                'stroke-dasharray',
+                String(progress.progress_dasharray || '0 302'),
+            );
+        }
+        if (levelProgressBadge) {
+            levelProgressBadge.textContent = String(progress.badge_label || '');
+        }
+        if (levelProgressXp) {
+            levelProgressXp.textContent = String(progress.xp ?? 0);
+        }
+        if (levelProgressTarget) {
+            levelProgressTarget.textContent = String(progress.target_label || '');
+        }
+        if (levelProgressStatus) {
+            levelProgressStatus.textContent = String(progress.status_label || '');
+        }
     };
 
     const nextSpinRemainingMs = () => {
@@ -1154,7 +1259,14 @@
                     || 'Не удалось получить награду.'
                 );
             }
-            window.location.reload();
+            renderDailyTasksCard(payload.daily_tasks_card);
+            renderLevelProgress(payload.level_progress);
+            renderBonusEvents(payload.recent_gifts);
+
+            availableSpins = Math.max(0, Number(payload.available_spins) || 0);
+            publishAttempts();
+            renderRouletteMeta();
+            updateCanvasA11y();
         } catch (error) {
             dailyTaskClaimButton.disabled = false;
             if (dailyTaskClaimLabel) dailyTaskClaimLabel.textContent = defaultLabel;
