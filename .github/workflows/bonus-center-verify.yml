@@ -84,4 +84,4 @@ jobs:
         run: |
           python manage.py check
           python manage.py makemigrations --check --dry-run
-          python manage.py test cabinet.tests.test_bonus_center cabinet.tests.test_roulette_api front.test_metrics
+          python manage.py test cabinet.tests.test_bonus_center cabinet.tests.test_roulette_api front.test_metrics notifications.tests.NotificationServiceTests
