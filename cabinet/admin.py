@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.html import format_html
 
 from .models import (
     AnalystFollow,
@@ -234,6 +235,41 @@ class XpLevelAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("title",)
     ordering = ("order", "level", "id")
+    readonly_fields = ("icon_preview", "image_preview")
+    fields = (
+        "level",
+        "title",
+        "description",
+        "icon",
+        "icon_preview",
+        "image",
+        "image_preview",
+        "required_xp",
+        "reward_coins",
+        "reward_spins",
+        "is_active",
+        "order",
+    )
+
+    @admin.display(description="Иконка")
+    def icon_preview(self, obj):
+        if not obj or not obj.icon:
+            return "Иконка не загружена"
+        return format_html(
+            '<img src="{}" width="96" height="96" alt="{}">',
+            obj.icon.url,
+            obj.title,
+        )
+
+    @admin.display(description="Изображение")
+    def image_preview(self, obj):
+        if not obj or not obj.image:
+            return "Изображение не загружено"
+        return format_html(
+            '<img src="{}" width="240" height="120" alt="{}">',
+            obj.image.url,
+            obj.title,
+        )
 
 
 @admin.register(StreakReward)

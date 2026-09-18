@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
+from tinymce.models import HTMLField
 
 
 REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -719,6 +720,17 @@ class UserDailyTaskProgress(models.Model):
 class XpLevel(models.Model):
     level = models.PositiveIntegerField("Уровень", unique=True)
     title = models.CharField("Название", max_length=80)
+    icon = models.ImageField(
+        "Иконка",
+        upload_to="xp_levels/icons/%Y/%m/",
+        blank=True,
+    )
+    image = models.ImageField(
+        "Изображение",
+        upload_to="xp_levels/images/%Y/%m/",
+        blank=True,
+    )
+    description = HTMLField("Описание", blank=True)
     required_xp = models.PositiveBigIntegerField("Требуется XP", default=0)
     reward_coins = models.PositiveIntegerField("Награда, коинов", default=0)
     reward_spins = models.PositiveIntegerField("Награда, попыток", default=0)
