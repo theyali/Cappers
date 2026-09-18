@@ -55,6 +55,45 @@ class NotificationServiceTests(TestCase):
         self.assertFalse(Notification.objects.exists())
 
 
+    def test_disabled_bonus_referral_category_does_not_create_notification(self):
+        preferences = get_preferences(self.user)
+        preferences.bonus_referral = False
+        preferences.save(update_fields=["bonus_referral", "updated_at"])
+
+        notification = create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.BONUS_REFERRAL,
+            title="Реферальный бонус",
+            event_key="test:bonus-referral:1",
+        )
+
+        self.assertIsNone(notification)
+        self.assertFalse(
+            Notification.objects.filter(
+                event_key="test:bonus-referral:1",
+            ).exists()
+        )
+
+    def test_disabled_bonus_daily_task_category_does_not_create_notification(self):
+        preferences = get_preferences(self.user)
+        preferences.bonus_daily_task = False
+        preferences.save(update_fields=["bonus_daily_task", "updated_at"])
+
+        notification = create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.BONUS_DAILY_TASK,
+            title="Награда за задание",
+            event_key="test:bonus-daily-task:1",
+        )
+
+        self.assertIsNone(notification)
+        self.assertFalse(
+            Notification.objects.filter(
+                event_key="test:bonus-daily-task:1",
+            ).exists()
+        )
+
+
 class TelegramLinkingTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

@@ -8,6 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import (
+    AnalystPaidPlan,
+    AnalystProfile,
     BonusEvent,
     DailyTask,
     ReferralBonusSettings,
@@ -18,17 +20,24 @@ from cabinet.models import (
     UserXpState,
     XpLevel,
 )
+from cabinet.paid_predictions import subscribe_to_paid_predictions
 from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.spin_service import spin_roulette
 from cabinet.roulette.state import UserRouletteState
 from cabinet.services.bonus_rewards import grant_bonus_reward
 from cabinet.services.daily_tasks import record_daily_task_action
-from cabinet.services.referral_bonuses import grant_referral_registration_bonus
+from cabinet.services.referral_bonuses import (
+    FIRST_SUBSCRIPTION_BONUS_TITLE,
+    FIRST_TOPUP_BONUS_TITLE,
+    REGISTRATION_BONUS_TITLE,
+    grant_referral_registration_bonus,
+)
 from cabinet.services.streaks import touch_daily_streak
 from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
 from game.models import PredictionCoupon
 from notifications.models import Notification, NotificationPreference
-from wallets.models import CoinSettings, CoinWallet
+from wallets.models import CoinPackage, CoinSettings, CoinWallet
+from wallets.services import purchase_coin_package
 
 
 class BonusCenterServiceTests(TestCase):
@@ -230,6 +239,229 @@ class BonusCenterServiceTests(TestCase):
         coin_wallet = CoinWallet.objects.get(user=referrer)
         self.assertEqual(xp_state.xp, 10)
         self.assertEqual(coin_wallet.balance, 25)
+        notification = Notification.objects.get(
+            event_key=f"bonus:{first_event.pk}",
+        )
+        self.assertEqual(notification.recipient, referrer)
+        self.assertEqual(notification.kind, Notification.Kind.BONUS_REFERRAL)
+        self.assertEqual(notification.url, reverse("cabinet:referrals"))
+
+
+    def test_referral_link_registration_creates_bonus_event_and_notification(self):
+        referrer = User.objects.create_user(
+            username="link-referrer",
+            password="test-password",
+        )
+        ReferralBonusSettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                "registration_reward_coins": 30,
+                "registration_reward_xp": 0,
+                "first_topup_reward_coins": 0,
+                "first_subscription_reward_coins": 0,
+                "is_enabled": True,
+            },
+        )
+
+        referral_response = self.client.get(
+            reverse(
+                "front:capper_referral_code",
+                kwargs={
+                    "username": referrer.username,
+                    "code": referrer.referral_code,
+                },
+            )
+        )
+        self.assertEqual(referral_response.status_code, 302)
+
+        register_response = self.client.post(
+            reverse("cabinet:register"),
+            {
+                "account_type": "user",
+                "role": User.Role.READER,
+                "username": "referred-by-link",
+                "email": "referred-by-link@example.com",
+                "first_name": "Referral",
+                "last_name": "Reader",
+                "password1": "ReferralPass123!",
+                "password2": "ReferralPass123!",
+                "accept_terms": "on",
+            },
+        )
+
+        self.assertEqual(register_response.status_code, 302)
+        referred_user = User.objects.get(username="referred-by-link")
+        visit = ReferralVisit.objects.get(
+            referrer=referrer,
+            visitor=referred_user,
+        )
+        self.assertIsNotNone(visit.registered_at)
+
+        event = BonusEvent.objects.get(
+            user=referrer,
+            event_type=BonusEvent.EventType.REFERRAL,
+            title=REGISTRATION_BONUS_TITLE,
+            related_model=visit._meta.label_lower,
+            related_id=visit.pk,
+        )
+        notification = Notification.objects.get(
+            event_key=f"bonus:{event.pk}",
+        )
+        self.assertEqual(notification.recipient, referrer)
+        self.assertEqual(notification.kind, Notification.Kind.BONUS_REFERRAL)
+        self.assertEqual(notification.url, reverse("cabinet:referrals"))
+
+    def test_first_referral_topup_creates_bonus_event_and_notification(self):
+        referrer = User.objects.create_user(
+            username="topup-referrer",
+            password="test-password",
+        )
+        ReferralBonusSettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                "registration_reward_coins": 0,
+                "registration_reward_xp": 0,
+                "first_topup_reward_coins": 40,
+                "first_subscription_reward_coins": 0,
+                "is_enabled": True,
+            },
+        )
+        ReferralVisit.objects.create(
+            referrer=referrer,
+            visitor=self.user,
+            session_key="topup-referral-session",
+            registered_at=timezone.now(),
+        )
+        package = CoinPackage.objects.create(
+            title="Referral topup",
+            coins=100,
+            price_rub=Decimal("500.00"),
+        )
+
+        purchase_coin_package(self.user, package)
+
+        event = BonusEvent.objects.get(
+            user=referrer,
+            event_type=BonusEvent.EventType.REFERRAL,
+            title=FIRST_TOPUP_BONUS_TITLE,
+        )
+        notification = Notification.objects.get(
+            event_key=f"bonus:{event.pk}",
+        )
+        self.assertEqual(notification.recipient, referrer)
+        self.assertEqual(notification.kind, Notification.Kind.BONUS_REFERRAL)
+        self.assertEqual(notification.url, reverse("cabinet:referrals"))
+
+    def test_first_referral_subscription_creates_bonus_event_and_notification(self):
+        referrer = User.objects.create_user(
+            username="subscription-referrer",
+            password="test-password",
+        )
+        ReferralBonusSettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                "registration_reward_coins": 0,
+                "registration_reward_xp": 0,
+                "first_topup_reward_coins": 0,
+                "first_subscription_reward_coins": 60,
+                "is_enabled": True,
+            },
+        )
+        ReferralVisit.objects.create(
+            referrer=referrer,
+            visitor=self.user,
+            session_key="subscription-referral-session",
+            registered_at=timezone.now(),
+        )
+        analyst = User.objects.create_user(
+            username="paid-analyst",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        AnalystProfile.objects.create(
+            user=analyst,
+            display_name="Paid analyst",
+            paid_predictions_enabled=True,
+            is_public=True,
+        )
+        plan = AnalystPaidPlan.objects.create(
+            analyst=analyst,
+            title="30 дней",
+            duration_days=30,
+            price=Decimal("300.00"),
+        )
+
+        subscription = subscribe_to_paid_predictions(
+            self.user,
+            analyst,
+            plan,
+        )
+
+        event = BonusEvent.objects.get(
+            user=referrer,
+            event_type=BonusEvent.EventType.REFERRAL,
+            title=FIRST_SUBSCRIPTION_BONUS_TITLE,
+            related_model=subscription._meta.label_lower,
+            related_id=subscription.pk,
+        )
+        notification = Notification.objects.get(
+            event_key=f"bonus:{event.pk}",
+        )
+        self.assertEqual(notification.recipient, referrer)
+        self.assertEqual(notification.kind, Notification.Kind.BONUS_REFERRAL)
+        self.assertEqual(notification.url, reverse("cabinet:referrals"))
+
+        subscribe_to_paid_predictions(self.user, analyst, plan)
+        self.assertEqual(
+            BonusEvent.objects.filter(
+                user=referrer,
+                event_type=BonusEvent.EventType.REFERRAL,
+                title=FIRST_SUBSCRIPTION_BONUS_TITLE,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                event_key=f"bonus:{event.pk}",
+            ).count(),
+            1,
+        )
+
+    def test_disabled_referral_notification_keeps_bonus_event(self):
+        referrer = User.objects.create_user(
+            username="silent-referrer",
+            password="test-password",
+        )
+        NotificationPreference.objects.create(
+            user=referrer,
+            bonus_referral=False,
+        )
+        ReferralBonusSettings.objects.update_or_create(
+            pk=1,
+            defaults={
+                "registration_reward_coins": 20,
+                "registration_reward_xp": 0,
+                "first_topup_reward_coins": 0,
+                "first_subscription_reward_coins": 0,
+                "is_enabled": True,
+            },
+        )
+        visit = ReferralVisit.objects.create(
+            referrer=referrer,
+            visitor=self.user,
+            session_key="silent-referral-session",
+            registered_at=timezone.now(),
+        )
+
+        event = grant_referral_registration_bonus(visit)
+
+        self.assertIsNotNone(event)
+        self.assertTrue(BonusEvent.objects.filter(pk=event.pk).exists())
+        self.assertFalse(
+            Notification.objects.filter(
+                event_key=f"bonus:{event.pk}",
+            ).exists()
+        )
 
 
     def test_level_progress_uses_ten_percent_bucket_class(self):

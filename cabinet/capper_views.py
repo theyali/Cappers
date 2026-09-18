@@ -18,6 +18,7 @@ from .capper_forms import (
 )
 from .forms import RegistrationForm
 from .models import AnalystProfile, User
+from .referrals import mark_referral_registration
 
 
 ACCOUNT_READER = "user"
@@ -116,6 +117,7 @@ def register(request):
                         display_name=_display_name_for(user),
                         is_public=False,
                     )
+                mark_referral_registration(request, user)
             login(request, user)
             if wants_capper:
                 messages.success(request, "Аккаунт создан. Соберём ваш профиль каппера.")
