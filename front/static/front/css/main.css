@@ -37094,6 +37094,7 @@ padding:40px 0px;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
     gap: 14px;
     align-items: start;
+    padding-top:20px;
 }
 
 .cabinet-bonuses-page .bonus-hero {
@@ -37115,7 +37116,7 @@ padding:40px 0px;
     position: absolute;
     inset: 0;
     z-index: 0;
-    background: rgba(0, 0, 0, .38);
+    background: rgb(0 0 0 / 73%);
     pointer-events: none;
 }
 
@@ -37235,6 +37236,7 @@ padding:40px 0px;
     grid-template-columns: 40px minmax(0, 1fr) auto;
     align-items: center;
     gap: 11px;
+    margin-bottom:10px;
 }
 
 .cabinet-bonuses-page .bonus-card-icon {
@@ -37400,7 +37402,7 @@ padding:40px 0px;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 6px;
-    margin-top: auto;
+    margin-top: 10px;
 }
 
 .cabinet-bonuses-page .bonus-streak-days span {
@@ -38285,6 +38287,7 @@ padding:40px 0px;
 
 .profile-bonus-summary .bonus-dashboard-grid {
     padding-bottom: 0;
+    padding-top:10px;
 }
 
 .profile-bonus-summary .bonus-dashboard-card,

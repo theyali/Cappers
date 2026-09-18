@@ -21,7 +21,7 @@ def bonuses(request):
     context.update(
         {
             "active_tab": "bonuses",
-            "page_class": "cabinet-bonuses-page",
+            "page_class": "cabinet-bonuses-page profile",
         }
     )
     return render(request, "cabinet/bonuses.html", context)
@@ -34,7 +34,7 @@ def daily_tasks(request):
     context.update(
         {
             "active_tab": "bonus_tasks",
-            "page_class": "cabinet-bonuses-page cabinet-bonus-tasks-page",
+            "page_class": "cabinet-bonuses-page cabinet-bonus-tasks-page profile",
         }
     )
     return render(request, "cabinet/bonus_tasks.html", context)
@@ -46,7 +46,7 @@ def bonus_levels(request):
     context.update(
         {
             "active_tab": "bonus_levels",
-            "page_class": "cabinet-bonuses-page cabinet-bonus-levels-page",
+            "page_class": "cabinet-bonuses-page cabinet-bonus-levels-page profile",
         }
     )
     return render(request, "cabinet/bonus_levels.html", context)
