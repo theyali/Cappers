@@ -48,6 +48,19 @@ def _non_negative_int(value, label: str) -> int:
     return value
 
 
+def _bonus_notification_message(*, xp: int, coins: int, spins: int, description: str) -> str:
+    parts = []
+    if xp:
+        parts.append(f"+{xp} XP")
+    if coins:
+        parts.append(f"+{coins} монет")
+    if spins:
+        parts.append(f"+{spins} попыток")
+    if description:
+        parts.append(description)
+    return " · ".join(parts)
+
+
 def _related_subject(related_obj) -> tuple[str, int | None]:
     if related_obj is None:
         return "", None
@@ -117,7 +130,12 @@ def grant_bonus_reward(
             recipient=locked_user,
             kind=notification_kind,
             title=title,
-            message=description,
+            message=_bonus_notification_message(
+                xp=xp,
+                coins=coins,
+                spins=spins,
+                description=description,
+            ),
             url=reverse(url_name),
             event_key=f"bonus:{event.pk}",
             meta={
