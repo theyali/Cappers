@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
 from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
@@ -9,6 +9,7 @@ from wallets.models import RealBalanceTransaction
 from wallets.services import format_money
 
 from .models import AnalystFollow, AnalystProfile, ReferralVisit, User
+from .services import referral_bonuses
 from .referrals import mark_referral_subscription, record_referral_visit
 
 
@@ -132,6 +133,22 @@ def follow_analyst(request, user_id: int):
     if created:
         mark_referral_subscription(request, analyst)
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
+
+
+@login_required
+@require_GET
+def referrals(request):
+    context = referral_bonuses.build_referrals_page_context(
+        request.user,
+        request=request,
+    )
+    context.update(
+        {
+            "active_tab": "referrals",
+            "page_class": "cabinet-referrals-page",
+        }
+    )
+    return render(request, "cabinet/referrals.html", context)
 
 
 @login_required
