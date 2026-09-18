@@ -122,6 +122,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         "icon_tone": "blue",
         "is_countdown": False,
         "arrow_label": "›",
+        "url": referral_card["referral_url"],
     }
 
     levels_preview = [
