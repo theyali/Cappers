@@ -38770,10 +38770,6 @@ padding:40px 0px;
     cursor: pointer;
 }
 
-.profile-daily-task-claim:disabled {
-    display: none;
-}
-
 .profile-daily-task-status {
     grid-column: 2 / -1;
     min-height: 0;

@@ -681,7 +681,7 @@
                     payload.daily_tasks_card?.summary_label || ""
                 );
             }
-            button.disabled = true;
+            button.remove();
         } catch (error) {
             button.disabled = false;
             button.textContent = defaultLabel;
