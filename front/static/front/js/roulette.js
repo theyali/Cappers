@@ -335,7 +335,7 @@
     };
 
     const renderBonusEvents = (events) => {
-        if (!bonusEventsList || !Array.isArray(events)) return;
+        if (!bonusEventsList || !Array.isArray(events) || !events.length) return;
 
         bonusEventsList.replaceChildren();
         events.slice(0, 5).forEach((event) => {
