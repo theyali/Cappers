@@ -449,23 +449,23 @@
     }
 
     .site-nav-center a:first-child::after {
-        content: "Матчи";
+        content: "\041C\0430\0442\0447\0438";
     }
 
     .site-nav-center a:nth-child(2)::after {
-        content: "Прогнозы";
+        content: "\041F\0440\043E\0433\043D\043E\0437\044B";
     }
 
     .site-nav-center a:nth-last-child(2)::after {
-        content: "Избранное";
+        content: "\0418\0437\0431\0440\0430\043D\043D\043E\0435";
     }
 
     .site-nav-center a:last-child::after {
-        content: "Капперы";
+        content: "\041A\0430\043F\043F\0435\0440\044B";
     }
 
     .site-nav-center a:nth-child(3):nth-last-child(3)::after {
-        content: "Лента";
+        content: "\041B\0435\043D\0442\0430";
     }
 
     .site-nav-center .nav-icon svg {

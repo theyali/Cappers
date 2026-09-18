@@ -2623,7 +2623,7 @@ h2 {
     }
 
     .site-nav-center .site-nav-cappers-trigger::after {
-        content: "Капперы";
+        content: "\041A\0430\043F\043F\0435\0440\044B";
     }
 }
 
@@ -7843,7 +7843,7 @@ font-size: 14px;
 }
 
 .home-best-prediction-featured-label::after {
-    content: "Самый высокий коэффициент сегодня";
+    content: "\0421\0430\043C\044B\0439 \0432\044B\0441\043E\043A\0438\0439 \043A\043E\044D\0444\0444\0438\0446\0438\0435\043D\0442 \0441\0435\0433\043E\0434\043D\044F";
     color: rgba(255, 255, 255, .48);
     font-size: 12px;
     font-weight: 700;
@@ -15052,7 +15052,7 @@ font-size: 14px;
 }
 
 .match-odds-panel::before {
-    content: "Коэффициенты";
+    content: "\041A\043E\044D\0444\0444\0438\0446\0438\0435\043D\0442\044B";
     position: absolute;
     top: 0;
     left: 18px;
