@@ -861,3 +861,45 @@ class BonusEvent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · {self.title}"
+
+
+
+class ReferralBonusSettings(models.Model):
+    registration_reward_coins = models.PositiveIntegerField(
+        "Коины за регистрацию",
+        default=0,
+    )
+    registration_reward_xp = models.PositiveIntegerField(
+        "XP за регистрацию",
+        default=0,
+    )
+    first_topup_reward_coins = models.PositiveIntegerField(
+        "Коины за первое пополнение",
+        default=0,
+    )
+    first_subscription_reward_coins = models.PositiveIntegerField(
+        "Коины за первую подписку",
+        default=0,
+    )
+    max_visible_reward_text = models.CharField(
+        "Текст максимальной награды",
+        max_length=120,
+        default="До 1000 монет",
+    )
+    is_enabled = models.BooleanField("Реферальные бонусы включены", default=True)
+
+    class Meta:
+        verbose_name = "Настройки реферальных бонусов"
+        verbose_name_plural = "Настройки реферальных бонусов"
+
+    @classmethod
+    def load(cls):
+        settings_obj, _ = cls.objects.get_or_create(pk=1)
+        return settings_obj
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return "Реферальные бонусы"
