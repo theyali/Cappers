@@ -82,20 +82,13 @@ def build_streak_card(user) -> dict:
         .order_by("day_number", "id")
     )
 
-    max_preview_day = max(
-        7,
-        min(
-            7,
-            max((reward.day_number for reward in rewards), default=7),
-        ),
-    )
     day_numbers = [
         {
             "number": day,
             "is_reached": day <= state.current_days,
             "is_current": day == state.current_days,
         }
-        for day in range(1, max_preview_day + 1)
+        for day in range(1, 8)
     ]
 
     next_reward = next(
