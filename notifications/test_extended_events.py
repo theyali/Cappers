@@ -37,8 +37,17 @@ class NotificationPreferenceDefaultsTests(TestCase):
             "tournament_started",
             "tournament_finished",
             "own_coupon_settled",
+            "bonus_daily_task",
+            "bonus_streak",
+            "bonus_level",
+            "bonus_referral",
         )
-        disabled = ("favorite_settled", "match_reminder", "achievement")
+        disabled = (
+            "favorite_settled",
+            "match_reminder",
+            "achievement",
+            "bonus_roulette",
+        )
 
         for field in enabled:
             self.assertTrue(getattr(preferences, field), field)
