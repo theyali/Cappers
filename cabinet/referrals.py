@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.utils import timezone
 
-from .models import ReferralVisit
+from .models import BonusEvent, ReferralVisit
 
 
 REFERRAL_ACTION_SUBSCRIPTION = "subscription"
@@ -142,6 +142,10 @@ def mark_referral_registration(request, user):
     if update_fields:
         update_fields.append("last_seen_at")
         visit.save(update_fields=update_fields)
+
+    from .services.referral_bonuses import grant_referral_registration_bonus
+
+    grant_referral_registration_bonus(visit)
     return visit
 
 
@@ -178,17 +182,26 @@ def _referrer_for_user(user):
     return visit.referrer
 
 
+@transaction.atomic
 def credit_referral_income(referred_user, source_amount, action: str, *, related_obj=None, note: str = ""):
+    source_amount = _decimal(source_amount)
+    if source_amount <= 0:
+        return None
+
+    if action == REFERRAL_ACTION_SUBSCRIPTION:
+        from .services.referral_bonuses import grant_referral_first_subscription_bonus
+
+        grant_referral_first_subscription_bonus(
+            referred_user,
+            related_obj=related_obj,
+        )
+
     referrer = _referrer_for_user(referred_user)
     if referrer is None:
         return None
 
     percent = _referral_percent(action)
     if percent <= 0:
-        return None
-
-    source_amount = _decimal(source_amount)
-    if source_amount <= 0:
         return None
 
     amount = (source_amount * percent / Decimal("100")).quantize(Decimal("0.01"))
@@ -203,14 +216,71 @@ def credit_referral_income(referred_user, source_amount, action: str, *, related
         REFERRAL_ACTION_TOURNAMENT: RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
         REFERRAL_ACTION_BALANCE_TOP_UP: RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
     }
+    title_by_action = {
+        REFERRAL_ACTION_SUBSCRIPTION: "Реферальный доход с подписки",
+        REFERRAL_ACTION_TOURNAMENT: "Реферальный доход с турнира",
+        REFERRAL_ACTION_BALANCE_TOP_UP: "Реферальный доход с пополнения",
+    }
     kind = kind_by_action.get(action)
     if not kind:
         return None
 
-    return credit_real_balance(
+    latest_transaction_id = (
+        RealBalanceTransaction.objects.filter(user=referrer, kind=kind)
+        .order_by("-id")
+        .values_list("id", flat=True)
+        .first()
+        or 0
+    )
+    income_note = note or f"Реферальное начисление @{referred_user.username}"
+    balance = credit_real_balance(
         referrer,
         amount,
         kind,
         related_obj=related_obj,
-        note=note or f"Реферальное начисление @{referred_user.username}",
+        note=income_note,
     )
+
+    income_transaction = None
+    if related_obj is not None and getattr(related_obj, "pk", None):
+        related_model = related_obj._meta.label_lower
+        income_transaction = (
+            RealBalanceTransaction.objects.filter(
+                user=referrer,
+                kind=kind,
+                related_model=related_model,
+                related_id=related_obj.pk,
+            )
+            .order_by("-id")
+            .first()
+        )
+    if income_transaction is None:
+        income_transaction = (
+            RealBalanceTransaction.objects.filter(
+                user=referrer,
+                kind=kind,
+                id__gt=latest_transaction_id,
+            )
+            .order_by("-id")
+            .first()
+        )
+
+    if income_transaction is not None:
+        event_exists = BonusEvent.objects.filter(
+            user=referrer,
+            event_type=BonusEvent.EventType.REFERRAL,
+            related_model=income_transaction._meta.label_lower,
+            related_id=income_transaction.pk,
+        ).exists()
+        if not event_exists:
+            from .services.bonus_rewards import grant_bonus_reward
+
+            grant_bonus_reward(
+                referrer,
+                event_type=BonusEvent.EventType.REFERRAL,
+                title=title_by_action[action],
+                description=f"+{amount} ₽ · {income_note}",
+                related_obj=income_transaction,
+            )
+
+    return balance
