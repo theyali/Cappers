@@ -4418,6 +4418,11 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1120px) {
+    .cabinet-bonuses-page .bonus-center-layout {
+        grid-column: 1;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .cabinet-bonuses-page .bonus-center-main {
         overflow: visible;
     }
