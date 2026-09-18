@@ -6,12 +6,19 @@ from .models import (
     AnalystPaidPlan,
     AnalystPaidSubscription,
     AnalystProfile,
+    BonusEvent,
     CapperMonthlyStat,
+    DailyTask,
     MatchPredictionRequest,
     ReferralVisit,
+    StreakReward,
     User,
+    UserDailyStreak,
+    UserDailyTaskProgress,
     UserVipSubscription,
+    UserXpState,
     VipPlan,
+    XpLevel,
 )
 
 
@@ -178,6 +185,150 @@ class UserVipSubscriptionAdmin(admin.ModelAdmin):
     list_select_related = ("user", "plan")
     readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "starts_at"
+
+
+@admin.register(DailyTask)
+class DailyTaskAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "audience",
+        "task_type",
+        "target_value",
+        "reward_xp",
+        "reward_coins",
+        "reward_spins",
+        "is_active",
+        "order",
+    )
+    list_filter = ("audience", "task_type", "is_active")
+    search_fields = ("title", "description")
+    ordering = ("order", "id")
+
+
+@admin.register(XpLevel)
+class XpLevelAdmin(admin.ModelAdmin):
+    list_display = (
+        "level",
+        "title",
+        "required_xp",
+        "reward_coins",
+        "reward_spins",
+        "is_active",
+        "order",
+    )
+    list_filter = ("is_active",)
+    search_fields = ("title",)
+    ordering = ("order", "level", "id")
+
+
+@admin.register(StreakReward)
+class StreakRewardAdmin(admin.ModelAdmin):
+    list_display = (
+        "day_number",
+        "title",
+        "reward_xp",
+        "reward_coins",
+        "reward_spins",
+        "is_active",
+    )
+    list_filter = ("is_active",)
+    search_fields = ("title",)
+    ordering = ("day_number", "id")
+
+
+@admin.register(UserDailyTaskProgress)
+class UserDailyTaskProgressAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "task",
+        "progress_date",
+        "current_value",
+        "is_completed",
+        "completed_at",
+        "reward_claimed_at",
+    )
+    list_filter = ("is_completed", "progress_date", "task__audience", "task__task_type")
+    search_fields = ("user__username", "user__email", "task__title")
+    autocomplete_fields = ("user", "task")
+    list_select_related = ("user", "task")
+    readonly_fields = (
+        "user",
+        "task",
+        "progress_date",
+        "current_value",
+        "is_completed",
+        "completed_at",
+        "reward_claimed_at",
+    )
+    ordering = ("-progress_date", "-id")
+    date_hierarchy = "progress_date"
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(UserXpState)
+class UserXpStateAdmin(admin.ModelAdmin):
+    list_display = ("user", "level", "xp", "created_at", "updated_at")
+    search_fields = ("user__username", "user__email")
+    autocomplete_fields = ("user",)
+    list_select_related = ("user",)
+    readonly_fields = ("user", "level", "xp", "created_at", "updated_at")
+    ordering = ("-xp", "id")
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(UserDailyStreak)
+class UserDailyStreakAdmin(admin.ModelAdmin):
+    list_display = ("user", "current_days", "best_days", "last_seen_date", "updated_at")
+    list_filter = ("last_seen_date",)
+    search_fields = ("user__username", "user__email")
+    autocomplete_fields = ("user",)
+    list_select_related = ("user",)
+    readonly_fields = ("user", "current_days", "best_days", "last_seen_date", "updated_at")
+    ordering = ("-current_days", "-best_days", "id")
+    date_hierarchy = "last_seen_date"
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(BonusEvent)
+class BonusEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "event_type",
+        "title",
+        "xp_delta",
+        "coin_delta",
+        "spin_delta",
+        "related_model",
+        "related_id",
+        "created_at",
+    )
+    list_filter = ("event_type", "created_at")
+    search_fields = ("user__username", "user__email", "title", "description")
+    autocomplete_fields = ("user",)
+    list_select_related = ("user",)
+    readonly_fields = (
+        "user",
+        "event_type",
+        "title",
+        "description",
+        "xp_delta",
+        "coin_delta",
+        "spin_delta",
+        "related_model",
+        "related_id",
+        "created_at",
+    )
+    ordering = ("-created_at", "-id")
+    date_hierarchy = "created_at"
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(AnalystFollow)
