@@ -10,6 +10,7 @@ from .models import (
     CapperMonthlyStat,
     DailyTask,
     MatchPredictionRequest,
+    ReferralBonusSettings,
     ReferralVisit,
     StreakReward,
     User,
@@ -185,6 +186,20 @@ class UserVipSubscriptionAdmin(admin.ModelAdmin):
     list_select_related = ("user", "plan")
     readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "starts_at"
+
+
+@admin.register(ReferralBonusSettings)
+class ReferralBonusSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "registration_reward_coins",
+        "registration_reward_xp",
+        "first_topup_reward_coins",
+        "first_subscription_reward_coins",
+        "max_visible_reward_text",
+        "is_enabled",
+    )
+    list_filter = ("is_enabled",)
+    ordering = ("id",)
 
 
 @admin.register(DailyTask)
