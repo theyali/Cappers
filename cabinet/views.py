@@ -40,6 +40,7 @@ from .paid_predictions import (
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
+from .services.bonus_center import build_profile_bonus_summary
 from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
@@ -330,6 +331,11 @@ def profile(request):
         if verification_requirements
         else _profile_completion(request.user, analyst_profile)
     )
+    profile_bonus_summary = (
+        build_profile_bonus_summary(request.user)
+        if active_tab == "profile"
+        else None
+    )
 
     context = {
         "analyst_profile": analyst_profile,
@@ -350,6 +356,7 @@ def profile(request):
         "achievement_overview": achievement_overview,
         "profile_completion": profile_completion,
         "verification_requirements": verification_requirements,
+        "profile_bonus_summary": profile_bonus_summary,
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
