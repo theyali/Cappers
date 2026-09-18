@@ -1,4 +1,4 @@
-name: Inspect become capper hero
+name: Inspect become capper styles
 
 on:
   push:
@@ -14,18 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture existing implementation
+      - name: Capture existing styles
         run: |
           {
-            echo "=== ROUTE/TEMPLATE PATTERNS ==="
-            rg -n "become.?capper|capper-landing|Стать каппером|Как стать каппером" templates cabinet front pages -g '!*.pyc' || true
-            echo "=== ASSET ==="
-            find . -iname 'become_capper.jpg' -o -iname '*become*capper*' 2>/dev/null | head -100
+            echo "=== STYLE REFERENCES ==="
+            rg -n "capper-landing-hero|capper-landing-promise|capper-kicker|capper-growth-link|capper-landing-lead|capper-landing-actions" front/static/front/css templates || true
           } > .github/become_capper_scan.txt
       - name: Commit scan output
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/become_capper_scan.txt
-          git commit -m "Capture become capper implementation paths"
+          git commit -m "Capture become capper style references"
           git push origin HEAD:main
