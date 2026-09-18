@@ -4778,3 +4778,15 @@ body.expert-public-details-open {
     }
 }
 
+/* Profile bonus summary responsive */
+@media (max-width: 760px) {
+    .profile-bonus-summary-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-bonus-summary .bonus-dashboard-card,
+    .profile-bonus-summary .bonus-side-card {
+        min-height: 0;
+    }
+}
+
