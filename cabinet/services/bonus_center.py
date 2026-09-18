@@ -186,7 +186,11 @@ def build_bonus_center_context(user, request=None) -> dict:
         "is_countdown": True,
         "arrow_label": "›",
     }
-    daily_tasks_card = _prepare_daily_tasks_card(daily_tasks_card)
+    daily_tasks_card = {
+        **_prepare_daily_tasks_card(daily_tasks_card),
+        "url": reverse("cabinet:bonus_tasks"),
+        "link_label": "Открыть ежедневные задания",
+    }
     streak_card = _prepare_streak_card(streak_card)
     referral_card = {
         **referral_card,
@@ -195,7 +199,8 @@ def build_bonus_center_context(user, request=None) -> dict:
         "icon_tone": "blue",
         "is_countdown": False,
         "arrow_label": "›",
-        "url": referral_card["referral_url"],
+        "url": reverse("cabinet:referrals"),
+        "link_label": "Открыть реферальные бонусы",
     }
 
     levels_preview = [
@@ -239,6 +244,9 @@ def build_bonus_center_context(user, request=None) -> dict:
             "levels": {
                 "title": "Мои уровни",
                 "subtitle": "Прогресс активности",
+                "url": reverse("cabinet:bonus_levels"),
+                "link_label": "Открыть уровни",
+                "arrow_label": "›",
             },
             "recent_gifts": {
                 "title": "Последние подарки",
@@ -250,6 +258,11 @@ def build_bonus_center_context(user, request=None) -> dict:
             "progress": {
                 "title": "Прогресс к большему",
                 "star_label": "★",
+            },
+            "notification_settings": {
+                "label": "Настроить уведомления",
+                "url": reverse("notifications:center"),
+                "arrow_label": "→",
             },
         },
         "next_bonus": next_bonus,
