@@ -212,7 +212,7 @@
                 {% endif %}
 
                 {% if profile_bonus_summary %}
-                <div class="cabinet-bonuses-page" aria-label="Бонусы профиля">
+                <div class="cabinet-bonuses-page profile-bonus-summary" aria-label="Бонусы профиля">
                     <div class="bonus-dashboard-grid">
                         <article class="bonus-dashboard-card">
                             <div class="bonus-card-head">
@@ -223,22 +223,22 @@
                                     </svg>
                                 </span>
                                 <div>
-                                    <h2>{{ profile_bonus_summary.daily_tasks_card.title }}</h2>
-                                    <span>{{ profile_bonus_summary.daily_tasks_card.summary_label }}</span>
+                                    <h2>{{ profile_bonus_summary.quick_tasks_title }}</h2>
+                                    <span>{{ profile_bonus_summary.tasks_summary_label }}</span>
                                 </div>
-                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.daily_tasks_card.url }}" aria-label="{{ profile_bonus_summary.daily_tasks_card.link_label }}">{{ profile_bonus_summary.daily_tasks_card.arrow_label }}</a>
+                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.tasks_url }}" aria-label="{{ profile_bonus_summary.tasks_link_label }}">{{ profile_bonus_summary.tasks_arrow_label }}</a>
                             </div>
 
                             <div class="bonus-level-list">
-                                {% for task in profile_bonus_summary.daily_tasks_card.tasks %}
+                                {% for task in profile_bonus_summary.quick_tasks %}
                                     <span class="{% if task.is_completed %}is-unlocked {% endif %}{% if task.can_claim %}is-current{% endif %}">
                                         <b>{{ task.title }}</b>
                                         <small>{{ task.status_label }}{% if task.reward_label %} · {{ task.reward_label }}{% endif %}</small>
                                     </span>
                                 {% empty %}
                                     <span>
-                                        <b>Заданий пока нет</b>
-                                        <small>Новые задания появятся здесь</small>
+                                        <b>{{ profile_bonus_summary.quick_tasks_empty_title }}</b>
+                                        <small>{{ profile_bonus_summary.quick_tasks_empty_description }}</small>
                                     </span>
                                 {% endfor %}
                             </div>
@@ -268,7 +268,7 @@
                                 </div>
                             </div>
                             <p>{{ profile_bonus_summary.level_progress.status_label }}</p>
-                            <a class="bonus-notification-settings-link" href="{{ profile_bonus_summary.level_progress.url }}">
+                            <a class="bonus-notification-settings-link" href="{{ profile_bonus_summary.levels_url }}">
                                 <span>{{ profile_bonus_summary.level_progress.link_label }}</span>
                                 <span aria-hidden="true">{{ profile_bonus_summary.level_progress.arrow_label }}</span>
                             </a>
@@ -285,7 +285,7 @@
                                     <h2>{{ profile_bonus_summary.streak_card.title }}</h2>
                                     <span>{{ profile_bonus_summary.streak_card.subtitle }}</span>
                                 </div>
-                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.streak_card.url }}" aria-label="{{ profile_bonus_summary.streak_card.link_label }}">{{ profile_bonus_summary.streak_card.arrow_label }}</a>
+                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.bonuses_url }}" aria-label="{{ profile_bonus_summary.bonuses_label }}">{{ profile_bonus_summary.streak_card.arrow_label }}</a>
                             </div>
                             <strong class="bonus-card-value is-yellow">{{ profile_bonus_summary.streak_card.days_label }}</strong>
                             <div class="bonus-streak-days" aria-label="{{ profile_bonus_summary.streak_card.days_aria_label }}">
@@ -296,6 +296,17 @@
                                 {% endfor %}
                             </div>
                         </article>
+                    </div>
+
+                    <div class="profile-bonus-summary-actions">
+                        <a class="bonus-notification-settings-link" href="{{ profile_bonus_summary.bonuses_url }}">
+                            <span>{{ profile_bonus_summary.bonuses_label }}</span>
+                            <span aria-hidden="true">{{ profile_bonus_summary.link_arrow_label }}</span>
+                        </a>
+                        <a class="bonus-notification-settings-link" href="{{ profile_bonus_summary.notifications_url }}">
+                            <span>{{ profile_bonus_summary.notifications_label }}</span>
+                            <span aria-hidden="true">{{ profile_bonus_summary.link_arrow_label }}</span>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
