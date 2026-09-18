@@ -124,7 +124,6 @@ def _prepare_streak_card(card: dict) -> dict:
 
 def _prepare_level_progress(progress: dict) -> dict:
     percent = max(0, min(100, int(progress["progress_percent"])))
-    progress_length = round(302 * percent / 100)
     return {
         **progress,
         "steps": DEFAULT_PROGRESS_STEPS,
@@ -140,7 +139,6 @@ def _prepare_level_progress(progress: dict) -> dict:
             if progress["next_level_xp"]
             else "Максимальный уровень"
         ),
-        "progress_dasharray": f"{progress_length} 302",
     }
 
 
