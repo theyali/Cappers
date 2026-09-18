@@ -3,6 +3,10 @@
     const canvas = root?.querySelector('[data-roulette-canvas]');
     const recentWinsBlock = document.querySelector('[data-roulette-recent]');
     const recentWinSlots = Array.from(document.querySelectorAll('[data-roulette-recent-slot]')).slice(0, 5);
+    const recentHistoryBlock = document.querySelector('[data-roulette-history]');
+    const recentHistorySlots = Array.from(document.querySelectorAll('[data-roulette-history-slot]')).slice(0, 3);
+    const countdownNodes = Array.from(document.querySelectorAll('[data-bonus-countdown]'));
+    const statusNodes = Array.from(document.querySelectorAll('[data-bonus-status]'));
     if (!root || !canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -188,10 +192,8 @@
         return `${day}, ${time}`;
     };
 
-    const renderRecentWins = () => {
-        if (!recentWinsBlock || !recentWinSlots.length) return;
-
-        recentWinSlots.forEach((slot, index) => {
+    const renderRecentWinSlots = (slots) => {
+        slots.forEach((slot, index) => {
             const item = recentWins[index];
             const imageWrapper = slot.querySelector('[data-skeleton-image]');
             const image = slot.querySelector('[data-roulette-recent-icon]');
@@ -232,9 +234,17 @@
                 window.CappersSkeleton?.ready(imageWrapper);
             }
         });
+    };
 
-        recentWinsBlock.setAttribute('aria-busy', 'false');
-        window.CappersSkeleton?.ready(recentWinsBlock);
+    const renderRecentWins = () => {
+        renderRecentWinSlots(recentWinSlots);
+        renderRecentWinSlots(recentHistorySlots);
+
+        [recentWinsBlock, recentHistoryBlock].forEach((block) => {
+            if (!block) return;
+            block.setAttribute('aria-busy', 'false');
+            window.CappersSkeleton?.ready(block);
+        });
     };
 
     const appendRecentWin = (payload) => {
@@ -280,6 +290,33 @@
         if (availableSpins > 0) return `Доступно попыток: ${availableSpins}`;
         if (nextSpinAt) return `Следующая попытка через ${formatCountdown(nextSpinRemainingMs())}`;
         return 'Доступных попыток пока нет';
+    };
+
+    const renderRouletteMeta = () => {
+        let countdown = '--:--:--';
+        let status = '';
+
+        if (!stateLoaded) {
+            status = 'Загрузка состояния рулетки…';
+        } else if (stateError) {
+            status = stateError;
+        } else if (!enabled || !prizes.length) {
+            status = 'Рулетка сейчас недоступна';
+        } else if (availableSpins > 0) {
+            countdown = 'Доступно сейчас';
+            status = `Доступно попыток: ${availableSpins}`;
+        } else if (nextSpinAt) {
+            countdown = formatCountdown(nextSpinRemainingMs());
+        } else {
+            status = 'Доступных попыток пока нет';
+        }
+
+        countdownNodes.forEach((node) => {
+            node.textContent = countdown;
+        });
+        statusNodes.forEach((node) => {
+            node.textContent = status;
+        });
     };
 
     const publishAttempts = () => {
@@ -347,6 +384,7 @@
         stateError = '';
         countdownRefreshAfterPerfMs = 0;
         renderRecentWins();
+        renderRouletteMeta();
         await prepareImages();
         publishAttempts();
         updateCanvasA11y();
@@ -359,6 +397,7 @@
         if (withSkeleton) {
             window.CappersSkeleton?.loading(root);
             window.CappersSkeleton?.loading(recentWinsBlock);
+            window.CappersSkeleton?.loading(recentHistoryBlock);
             canvas.setAttribute('aria-busy', 'true');
         }
 
@@ -379,6 +418,7 @@
                 canvas.setAttribute('aria-busy', 'false');
                 window.CappersSkeleton?.ready(root);
                 window.CappersSkeleton?.ready(recentWinsBlock);
+                window.CappersSkeleton?.ready(recentHistoryBlock);
             }
         }
     };
@@ -396,6 +436,7 @@
             stateLoaded = true;
             stateError = error instanceof Error ? error.message : 'Не удалось загрузить рулетку.';
             renderRecentWins();
+            renderRouletteMeta();
             publishAttempts();
             updateCanvasA11y();
         }
@@ -629,18 +670,6 @@
         ctx.restore();
     };
 
-    const drawNextSpinCountdown = () => {
-        if (!stateLoaded || stateError || !enabled || !nextSpinAt) return;
-        text('ДО СЛЕДУЮЩЕЙ ПОПЫТКИ', 24, 34, 10, 'rgba(255,255,255,.72)', 800, 'left');
-        text(formatCountdown(nextSpinRemainingMs()), 24, 58, 22, colors.yellow, 800, 'left');
-    };
-
-    const drawAttemptStatus = () => {
-        if (spinPhase === 'showing_result') return;
-        const label = attemptStatusText();
-        const color = availableSpins > 0 ? colors.yellow : colors.white;
-        text(clampText(label, 66), cx, H - 26, 15, color, 800);
-    };
 
     const roundedRect = (x, y, width, height, radiusValue) => {
         const r = Math.min(radiusValue, width / 2, height / 2);
@@ -727,8 +756,6 @@
         drawWheel();
         drawCenter();
         drawPointer();
-        drawNextSpinCountdown();
-        drawAttemptStatus();
         drawWinCard();
         drawStatusMessage();
         if (spinPhase === 'requesting') {
@@ -992,6 +1019,7 @@
             nextSpinAt = payload.next_spin_at || null;
             countdownRefreshAfterPerfMs = 0;
             publishAttempts();
+            renderRouletteMeta();
 
             const winnerIndex = await ensureWinnerOnWheel(payload);
             if (winnerIndex < 0) {
@@ -1013,6 +1041,7 @@
                 availableSpins = 0;
                 publishAttempts();
             }
+            renderRouletteMeta();
             showTransientError(error instanceof Error ? error.message : 'Не удалось выполнить прокрутку.');
         } finally {
             draw();
@@ -1021,6 +1050,7 @@
 
     const tickCountdown = () => {
         if (!stateLoaded) return;
+        renderRouletteMeta();
         draw();
         refreshAfterCountdown();
     };
@@ -1047,5 +1077,6 @@
     window.addEventListener('resize', resize);
     window.setInterval(tickCountdown, 1000);
 
+    renderRouletteMeta();
     prepare().finally(resize);
 })();
