@@ -116,7 +116,7 @@ def build_level_progress(user) -> dict:
         for level in preview_levels
     ]
 
-    progress_bucket = min(100, max(0, int(round(progress_percent / 10) * 10)))
+    progress_bucket = min(100, max(0, ((progress_percent + 5) // 10) * 10))
 
     return {
         "level": level_number,
