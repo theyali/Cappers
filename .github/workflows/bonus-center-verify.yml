@@ -1,0 +1,75 @@
+name: Verify bonus center
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/bonus-center-verify.yml
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cappers
+          POSTGRES_USER: cappers
+          POSTGRES_PASSWORD: cappers_dev_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cappers -d cappers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    env:
+      DEBUG: "True"
+      SECRET_KEY: test-bonus-center
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: cappers
+      POSTGRES_USER: cappers
+      POSTGRES_PASSWORD: cappers_dev_password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/1
+      CACHE_URL: redis://127.0.0.1:6379/2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Apply migrations
+        run: python manage.py migrate --noinput
+      - name: Seed bonus center
+        run: |
+          python manage.py seed_bonus_center
+          python manage.py seed_bonus_center
+      - name: Check reader and capper task audiences
+        run: |
+          python manage.py shell -c '
+          from cabinet.models import DailyTask, User
+          from cabinet.services.daily_tasks import daily_tasks_for_user
+          reader = User.objects.create_user(username="bonus-ci-reader", password="test-password")
+          capper = User.objects.create_user(username="bonus-ci-capper", password="test-password", role=User.Role.ANALYST)
+          reader_audiences = set(daily_tasks_for_user(reader).values_list("audience", flat=True))
+          capper_audiences = set(daily_tasks_for_user(capper).values_list("audience", flat=True))
+          assert DailyTask.Audience.ALL in reader_audiences
+          assert DailyTask.Audience.READER in reader_audiences
+          assert DailyTask.Audience.CAPPER not in reader_audiences
+          assert DailyTask.Audience.ALL in capper_audiences
+          assert DailyTask.Audience.CAPPER in capper_audiences
+          assert DailyTask.Audience.READER not in capper_audiences
+          '
+      - name: Run bonus center checks
+        run: |
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py test cabinet.tests.test_bonus_center cabinet.tests.test_roulette_api front.test_metrics
