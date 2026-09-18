@@ -114,7 +114,9 @@
                         <strong class="bonus-card-value is-yellow">{{ streak_card.days_label }}</strong>
                         <div class="bonus-streak-days" aria-label="Дни серии">
                             {% for day in streak_card.day_numbers %}
-                                <span>{{ day }}</span>
+                                <span{% if day.is_reached %} class="is-reached{% if day.is_current %} is-current{% endif %}"{% endif %}>
+                                    {{ day.number }}
+                                </span>
                             {% endfor %}
                         </div>
                     </article>
