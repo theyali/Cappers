@@ -37098,7 +37098,7 @@ padding:40px 0px;
     grid-template-columns: minmax(270px, .82fr) minmax(390px, 1.18fr);
     align-items: center;
     gap: 8px;
-    padding: 28px 24px 24px 28px;
+    padding: 20px 22px 20px 26px;
     overflow: hidden;
     border-radius: 18px;
     background: #071426 url("../img/login.png") center / cover no-repeat;
@@ -37171,7 +37171,7 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-wheel {
-    width: min(100%, 520px);
+    width: min(100%, 350px);
     aspect-ratio: 1;
     justify-self: end;
     display: grid;
