@@ -23,11 +23,6 @@
                             {{ bonus_page.hero.title_prefix }} <span>{{ bonus_page.hero.brand }}</span>
                         </h1>
                         <p>{{ bonus_page.hero.description }}</p>
-                        <div class="bonus-hero-countdown">
-                            <span>{{ bonus_page.hero.countdown_caption }}</span>
-                            <strong data-bonus-countdown>{{ next_bonus.countdown_label }}</strong>
-                            <small data-bonus-status>{{ next_bonus.status_label }}</small>
-                        </div>
                     </div>
 
                     <div
@@ -36,7 +31,6 @@
                         data-skeleton-block
                         data-roulette-state-url="{{ roulette_state_url }}"
                         data-roulette-spin-url="{{ roulette_spin_url }}"
-                        data-roulette-bg="{{ roulette_bg }}"
                         data-roulette-csrf="{{ roulette_csrf_token }}"
                     >
                         <canvas
