@@ -8,6 +8,7 @@ from django.db import close_old_connections
 from django.test import Client, TestCase, TransactionTestCase
 from django.urls import reverse
 
+from cabinet.models import DailyTask
 from cabinet.roulette.history import RouletteSpin
 from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
@@ -79,6 +80,20 @@ class RouletteApiTests(TestCase):
         self.assertNotIn("reward_text", sector)
         self.assertNotIn("SECRET-20", response.content.decode("utf-8"))
 
+    def test_state_returns_bonus_dashboard_state(self):
+        response = self.client.get(reverse("cabinet:roulette_state"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("daily_tasks_summary", payload)
+        self.assertIn("streak", payload)
+        self.assertIn("level_progress", payload)
+        self.assertIn("recent_gifts", payload)
+        self.assertIn("completed", payload["daily_tasks_summary"])
+        self.assertIn("current_days", payload["streak"])
+        self.assertIn("progress_percent", payload["level_progress"])
+        self.assertIsInstance(payload["recent_gifts"], list)
+
     def test_state_limits_canvas_to_ten_active_sectors(self):
         for sector_order in range(12):
             self.create_prize(
@@ -116,6 +131,25 @@ class RouletteApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-roulette-available-spins="0"')
         self.assertNotContains(response, 'data-roulette-badge')
+
+    def test_spin_returns_updated_bonus_dashboard_state(self):
+        DailyTask.objects.create(
+            title="Прокрутить рулетку",
+            task_type=DailyTask.TaskType.SPIN_ROULETTE,
+            target_value=1,
+        )
+        self.create_prize(weight=1, sector_order=0)
+        UserRouletteState.objects.create(user=self.user, available_spins=1)
+
+        response = self.post_spin(uuid.uuid4())
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["daily_tasks_summary"]["completed"], 1)
+        self.assertEqual(payload["streak"]["current_days"], 1)
+        self.assertIn("progress_percent", payload["level_progress"])
+        self.assertTrue(payload["recent_gifts"])
+        self.assertEqual(payload["available_spins"], 0)
 
     def test_spin_returns_no_spins_code_when_user_has_no_attempts(self):
         self.create_prize(reward_type=RoulettePrize.RewardType.NOTHING, reward_value=0)
