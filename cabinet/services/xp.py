@@ -1,7 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.urls import reverse
 
 from cabinet.models import UserXpState, XpLevel
+from notifications.models import Notification
+from notifications.services import create_notification
 
 
 def get_user_xp_state(user) -> UserXpState:
@@ -33,10 +36,23 @@ def sync_user_level(user_or_state) -> UserXpState:
     )
     matched_level = _level_for_xp(levels, state.xp)
     level_number = matched_level.level if matched_level is not None else 1
+    previous_level = state.level
 
-    if state.level != level_number:
+    if previous_level != level_number:
         state.level = level_number
         state.save(update_fields=("level", "updated_at"))
+
+        if level_number > previous_level:
+            level_title = matched_level.title if matched_level is not None else f"Уровень {level_number}"
+            create_notification(
+                recipient=state.user,
+                kind=Notification.Kind.BONUS_LEVEL,
+                title=f"Новый уровень: {level_title}",
+                message=f"Вы достигли {level_number} уровня.",
+                url=reverse("cabinet:bonus_levels"),
+                event_key=f"bonus-level:{state.user_id}:{level_number}:{state.xp}",
+                meta={"level": level_number, "xp": int(state.xp)},
+            )
 
     return state
 
