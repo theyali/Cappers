@@ -37582,8 +37582,51 @@ padding:40px 0px;
     font-weight: 700;
 }
 
+.cabinet-bonuses-page .bonus-gifts-card {
+    padding: 12px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-side-head {
+    margin-bottom: 8px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-side-head h2 {
+    font-size: 15px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-side-head > span {
+    font-size: 11px;
+}
+
 .cabinet-bonuses-page .bonus-gifts-list {
-    gap: 7px;
+    gap: 4px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-row {
+    min-height: 42px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-copy {
+    gap: 1px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-copy strong {
+    font-size: 11px;
+}
+
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-copy span,
+.cabinet-bonuses-page .bonus-gifts-card .bonus-gift-copy small {
+    font-size: 8px;
+    line-height: 1.2;
 }
 
 .cabinet-bonuses-page .bonus-gift-row {
