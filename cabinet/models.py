@@ -810,3 +810,55 @@ class StreakReward(models.Model):
 
     def __str__(self) -> str:
         return f"День {self.day_number} · {self.title}"
+
+
+
+class BonusEvent(models.Model):
+    class EventType(models.TextChoices):
+        DAILY_TASK = "daily_task", "Ежедневное задание"
+        STREAK = "streak", "Серия дней"
+        ROULETTE = "roulette", "Рулетка"
+        REFERRAL = "referral", "Реферальный бонус"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="bonus_events",
+        verbose_name="Пользователь",
+    )
+    event_type = models.CharField(
+        "Тип события",
+        max_length=24,
+        choices=EventType.choices,
+        db_index=True,
+    )
+    title = models.CharField("Название", max_length=160)
+    description = models.CharField("Описание", max_length=255, blank=True)
+    xp_delta = models.BigIntegerField("Изменение XP", default=0)
+    coin_delta = models.BigIntegerField("Изменение коинов", default=0)
+    spin_delta = models.BigIntegerField("Изменение попыток", default=0)
+    related_model = models.CharField("Связанная модель", max_length=100, blank=True)
+    related_id = models.PositiveBigIntegerField("ID связанного объекта", null=True, blank=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Бонусное событие"
+        verbose_name_plural = "Бонусные события"
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(
+                fields=("user", "created_at"),
+                name="bonus_event_user_time_idx",
+            ),
+            models.Index(
+                fields=("event_type", "created_at"),
+                name="bonus_event_type_time_idx",
+            ),
+            models.Index(
+                fields=("related_model", "related_id", "event_type"),
+                name="bonus_event_related_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.title}"
