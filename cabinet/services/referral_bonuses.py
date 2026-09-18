@@ -17,14 +17,21 @@ def _positive_amount(value) -> Decimal:
         amount = Decimal(str(value or 0))
     except (InvalidOperation, TypeError, ValueError):
         return Decimal("0")
-    return amount if amount > 0 else Decimal("0")
+    if not amount.is_finite() or amount <= 0:
+        return Decimal("0")
+    return amount
 
 
-def _registered_referral_visit_for_user(user):
+def _registered_referral_visit_for_user(user, *, lock=False):
     if not getattr(user, "pk", None):
         return None
+
+    visits = ReferralVisit.objects
+    if lock:
+        visits = visits.select_for_update()
+
     return (
-        ReferralVisit.objects.filter(
+        visits.filter(
             visitor=user,
             registered_at__isnull=False,
         )
@@ -101,7 +108,7 @@ def grant_referral_first_topup_bonus(referred_user, amount, related_obj=None):
     if topup_amount <= 0:
         return None
 
-    visit = _registered_referral_visit_for_user(referred_user)
+    visit = _registered_referral_visit_for_user(referred_user, lock=True)
     if visit is None:
         return None
 
