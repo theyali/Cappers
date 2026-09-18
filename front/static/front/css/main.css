@@ -37655,6 +37655,18 @@ padding:40px 0px;
     stroke-linecap: round;
 }
 
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-0 { stroke-dasharray: 0 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-10 { stroke-dasharray: 30 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-20 { stroke-dasharray: 60 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-30 { stroke-dasharray: 91 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-40 { stroke-dasharray: 121 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-50 { stroke-dasharray: 151 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-60 { stroke-dasharray: 181 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-70 { stroke-dasharray: 211 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-80 { stroke-dasharray: 242 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-90 { stroke-dasharray: 272 302; }
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress-100 { stroke-dasharray: 302 302; }
+
 .cabinet-bonuses-page .bonus-progress-ring > div {
     position: relative;
     display: grid;
