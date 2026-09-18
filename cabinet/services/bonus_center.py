@@ -90,28 +90,117 @@ def build_bonus_center_context(user, request=None) -> dict:
     referral_card = build_referral_bonus_card(user, request=request)
     level_progress = build_level_progress(user)
 
+    next_bonus = {
+        "title": "Следующий бонус",
+        "subtitle": "Через",
+        "countdown_label": "--:--:--",
+        "status_label": "Загрузка состояния рулетки…",
+        "description": "Возвращайтесь, чтобы снова крутить колесо и получать награды.",
+        "value_label": "--:--:--",
+        "icon_kind": "clock",
+        "icon_tone": "blue",
+        "is_countdown": True,
+        "arrow_label": "›",
+    }
+    daily_tasks_card = {
+        **daily_tasks_card,
+        "summary_label": (
+            f"{daily_tasks_card['completed']} из {daily_tasks_card['total']} выполнено"
+        ),
+        "progress_aria_label": "Прогресс ежедневных заданий",
+        "arrow_label": "›",
+    }
+    streak_card = {
+        **streak_card,
+        "days_aria_label": "Дни серии",
+        "arrow_label": "›",
+    }
+    referral_card = {
+        **referral_card,
+        "value_label": referral_card["reward_label"],
+        "icon_kind": "referral",
+        "icon_tone": "blue",
+        "is_countdown": False,
+        "arrow_label": "›",
+    }
+
+    levels_preview = [
+        {
+            **level,
+            "label": f"Уровень {level['level']}",
+        }
+        for level in level_progress["levels_preview"]
+    ]
+    level_progress = {
+        **level_progress,
+        "steps": DEFAULT_PROGRESS_STEPS,
+        "badge_label": f"Ур. {level_progress['level']}",
+        "aria_label": f"Прогресс уровня {level_progress['progress_percent']}%",
+        "target_label": (
+            f"из {level_progress['next_level_xp']}"
+            if level_progress["next_level_xp"]
+            else "макс."
+        ),
+        "status_label": (
+            f"{level_progress['xp_to_next_level']} XP до следующего уровня"
+            if level_progress["next_level_xp"]
+            else "Максимальный уровень"
+        ),
+    }
+
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
         "roulette_spin_url": reverse("cabinet:roulette_spin"),
         "roulette_bg": static("front/img/login.png"),
         "roulette_csrf_token": get_token(request) if request is not None else "",
-        "next_bonus": {
-            "title": "Следующий бонус",
-            "subtitle": "Через",
-            "countdown_label": "--:--:--",
-            "status_label": "Загрузка состояния рулетки…",
-            "description": "Возвращайтесь, чтобы снова крутить колесо и получать награды.",
+        "bonus_page": {
+            "title": "Мои бонусы — КапперХаб",
+            "mobile_nav_label": "Разделы профиля на мобильных устройствах",
+            "profile_nav_label": "Разделы профиля",
+            "aside_label": "Бонусный центр",
+            "hero": {
+                "title": "Бонусы каждый день",
+                "title_prefix": "с",
+                "brand": "КапперХаб",
+                "description": (
+                    "Получайте бесплатные прогнозы, бонусы на баланс, VIP-доступ "
+                    "и другие награды. Заходите каждый день и увеличивайте свои шансы."
+                ),
+                "countdown_caption": "До следующей попытки",
+                "canvas_label": "Ежедневная рулетка бонусов. Нажмите, чтобы крутить.",
+                "canvas_fallback": "Ваш браузер не поддерживает canvas.",
+            },
+            "recent_wins": {
+                "title": "Последние выигрыши",
+                "subtitle": "Результаты рулетки",
+                "fallback_title": "Подарок",
+                "fallback_subtitle": "Выигрыш рулетки",
+                "fallback_icon": "🎁",
+            },
+            "levels": {
+                "title": "Мои уровни",
+                "subtitle": "Прогресс активности",
+            },
+            "recent_gifts": {
+                "title": "Последние подарки",
+                "all_label": "Все",
+                "empty_title": "Подарков пока нет",
+                "empty_description": "Новые бонусы появятся здесь.",
+                "empty_icon": "🎁",
+            },
+            "progress": {
+                "title": "Прогресс к большему",
+                "star_label": "★",
+            },
         },
+        "next_bonus": next_bonus,
         "daily_tasks_card": daily_tasks_card,
         "streak_card": streak_card,
         "referral_card": referral_card,
         "recent_wins": recent_wins,
         "recent_gifts": recent_gifts,
-        "level_progress": {
-            **level_progress,
-            "steps": DEFAULT_PROGRESS_STEPS,
-        },
-        "levels_preview": level_progress["levels_preview"],
+        "level_progress": level_progress,
+        "levels_preview": levels_preview,
         "balance_cta": {
             "title": "Пополните баланс\nи получайте больше",
             "description": (
@@ -119,5 +208,6 @@ def build_bonus_center_context(user, request=None) -> dict:
             ),
             "label": "Пополнить баланс",
             "url": f"{reverse('cabinet:profile')}?tab=wallet",
+            "arrow_label": "→",
         },
     }
