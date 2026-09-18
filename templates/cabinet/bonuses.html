@@ -25,8 +25,8 @@
                         </p>
                         <div class="bonus-hero-countdown">
                             <span>До следующей попытки</span>
-                            <strong data-bonus-countdown>--:--:--</strong>
-                            <small data-bonus-status>Загрузка состояния рулетки…</small>
+                            <strong data-bonus-countdown>{{ next_bonus.countdown_label }}</strong>
+                            <small data-bonus-status>{{ next_bonus.status_label }}</small>
                         </div>
                     </div>
 
@@ -34,9 +34,9 @@
                         class="bonus-wheel"
                         data-roulette-root
                         data-skeleton-block
-                        data-roulette-state-url="{% url 'cabinet:roulette_state' %}"
-                        data-roulette-spin-url="{% url 'cabinet:roulette_spin' %}"
-                        data-roulette-csrf="{{ csrf_token }}"
+                        data-roulette-state-url="{{ roulette_state_url }}"
+                        data-roulette-spin-url="{{ roulette_spin_url }}"
+                        data-roulette-csrf="{{ roulette_csrf_token }}"
                     >
                         <canvas
                             data-roulette-canvas
@@ -62,13 +62,13 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Следующий бонус</h2>
-                                <span>Через</span>
+                                <h2>{{ next_bonus.title }}</h2>
+                                <span>{{ next_bonus.subtitle }}</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">›</span>
                         </div>
-                        <strong class="bonus-card-value is-yellow" data-bonus-countdown>--:--:--</strong>
-                        <p>Возвращайтесь, чтобы снова крутить колесо и получать награды.</p>
+                        <strong class="bonus-card-value is-yellow" data-bonus-countdown>{{ next_bonus.countdown_label }}</strong>
+                        <p>{{ next_bonus.description }}</p>
                     </article>
 
                     <article class="bonus-dashboard-card">
@@ -80,15 +80,17 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Ежедневные задания</h2>
-                                <span>0 из 4 выполнено</span>
+                                <h2>{{ daily_tasks_card.title }}</h2>
+                                <span>{{ daily_tasks_card.completed }} из {{ daily_tasks_card.total }} выполнено</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">›</span>
                         </div>
                         <div class="bonus-task-progress" aria-hidden="true">
-                            <span></span><span></span><span></span><span></span>
+                            {% for _ in daily_tasks_card.progress_slots %}
+                                <span></span>
+                            {% endfor %}
                         </div>
-                        <p>Выполняйте простые задания и получайте дополнительные бонусы.</p>
+                        <p>{{ daily_tasks_card.description }}</p>
                     </article>
 
                     <article class="bonus-dashboard-card">
@@ -99,14 +101,14 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Серия дней</h2>
-                                <span>Заходите ежедневно</span>
+                                <h2>{{ streak_card.title }}</h2>
+                                <span>{{ streak_card.subtitle }}</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">›</span>
                         </div>
-                        <strong class="bonus-card-value is-yellow">— дней</strong>
+                        <strong class="bonus-card-value is-yellow">{{ streak_card.days_label }}</strong>
                         <div class="bonus-streak-days" aria-label="Дни серии">
-                            {% for day in "1234567" %}
+                            {% for day in streak_card.day_numbers %}
                                 <span>{{ day }}</span>
                             {% endfor %}
                         </div>
@@ -122,13 +124,13 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Бонус за рефералов</h2>
-                                <span>Приглашайте друзей</span>
+                                <h2>{{ referral_card.title }}</h2>
+                                <span>{{ referral_card.subtitle }}</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">›</span>
                         </div>
-                        <strong class="bonus-card-value is-yellow">До 1000 монет</strong>
-                        <p>Приглашайте друзей и получайте дополнительные бонусы на баланс.</p>
+                        <strong class="bonus-card-value is-yellow">{{ referral_card.reward_label }}</strong>
+                        <p>{{ referral_card.description }}</p>
                     </article>
 
                     <article
@@ -150,7 +152,7 @@
                             </div>
                         </div>
                         <div class="bonus-wins-list">
-                            {% for _ in "123" %}
+                            {% for _ in recent_wins %}
                                 <div class="bonus-win-row" data-roulette-history-slot aria-hidden="true">
                                     <span class="bonus-win-icon" data-skeleton-image>
                                         <img data-roulette-recent-icon width="34" height="34" alt="" hidden>
@@ -179,11 +181,9 @@
                             </div>
                         </div>
                         <div class="bonus-level-list">
-                            <span><b>Уровень 1</b><small>Новичок</small></span>
-                            <span><b>Уровень 2</b><small>Активный</small></span>
-                            <span><b>Уровень 3</b><small>Эксперт</small></span>
-                            <span><b>Уровень 4</b><small>Профи</small></span>
-                            <span><b>Уровень 5</b><small>Легенда</small></span>
+                            {% for level in levels_preview %}
+                                <span><b>Уровень {{ level.level }}</b><small>{{ level.title }}</small></span>
+                            {% endfor %}
                         </div>
                     </article>
                 </div>
@@ -203,7 +203,7 @@
                     <span>Все</span>
                 </div>
                 <div class="bonus-gifts-list" data-roulette-recent-list>
-                    {% for _ in "12345" %}
+                    {% for _ in recent_gifts %}
                         <article class="bonus-gift-row" data-roulette-recent-slot aria-hidden="true">
                             <span class="bonus-gift-icon" data-skeleton-image>
                                 <img data-roulette-recent-icon width="40" height="40" alt="" hidden>
@@ -222,7 +222,7 @@
             <section class="bonus-side-card bonus-progress-card">
                 <div class="bonus-side-head">
                     <h2>Прогресс к большему</h2>
-                    <span>Ур. 1</span>
+                    <span>Ур. {{ level_progress.level }}</span>
                 </div>
                 <div class="bonus-progress-body">
                     <div class="bonus-progress-ring" aria-label="Прогресс уровня">
@@ -232,24 +232,23 @@
                         </svg>
                         <div>
                             <span>★</span>
-                            <strong>0</strong>
-                            <small>из 5</small>
+                            <strong>{{ level_progress.current }}</strong>
+                            <small>из {{ level_progress.target }}</small>
                         </div>
                     </div>
                     <div class="bonus-progress-steps">
-                        <span class="is-done">Заходите ежедневно</span>
-                        <span>Выполняйте задания</span>
-                        <span>Получайте бонусы</span>
-                        <span>Открывайте новые уровни</span>
+                        {% for step in level_progress.steps %}
+                            <span{% if step.is_done %} class="is-done"{% endif %}>{{ step.label }}</span>
+                        {% endfor %}
                     </div>
                 </div>
-                <p>— XP до следующего уровня</p>
+                <p>{{ level_progress.xp_to_next_label }}</p>
             </section>
 
             <section class="bonus-side-card bonus-balance-cta">
                 <div class="bonus-balance-copy">
-                    <h2>Пополните баланс<br>и получайте больше</h2>
-                    <p>Чем больше монет на балансе — тем больше возможностей на платформе.</p>
+                    <h2>{{ balance_cta.title|linebreaksbr }}</h2>
+                    <p>{{ balance_cta.description }}</p>
                 </div>
                 <span class="bonus-balance-coins" aria-hidden="true">
                     <svg viewBox="0 0 150 100" fill="none">
@@ -261,8 +260,8 @@
                         <ellipse cx="77" cy="70" rx="28" ry="10" fill="currentColor"/>
                     </svg>
                 </span>
-                <a href="{% url 'cabinet:profile' %}?tab=wallet">
-                    <span>Пополнить баланс</span>
+                <a href="{{ balance_cta.url }}">
+                    <span>{{ balance_cta.label }}</span>
                     <span aria-hidden="true">→</span>
                 </a>
             </section>
