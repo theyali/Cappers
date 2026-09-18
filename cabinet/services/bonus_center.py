@@ -96,7 +96,7 @@ def _prepare_daily_tasks_card(card: dict) -> dict:
     )
     return {
         **card,
-        "summary_label": f"{card['completed']} из {card['total']} выполнено",
+        "summary_label": f"Сегодня выполнено {card['completed']} из {card['total']}",
         "progress_aria_label": "Прогресс ежедневных заданий",
         "arrow_label": "›",
         "claim_url": (
@@ -227,22 +227,39 @@ def build_profile_bonus_summary(user) -> dict:
 
 
 def build_bonus_tasks_page_context(user, request=None) -> dict:
-    """Build the SSR context for the daily bonus tasks page."""
+    """Build the minimal SSR context for the daily tasks page."""
     daily_tasks_card = build_daily_tasks_card(user)
-    tasks = [
-        {
-            **task,
-            "progress_percent": min(
-                100,
-                int((task["current_value"] * 100) / max(1, task["target_value"])),
-            ),
-            "claim_url": reverse(
-                "cabinet:daily_task_claim",
-                kwargs={"task_id": task["id"]},
-            ),
-        }
-        for task in daily_tasks_card["tasks"]
-    ]
+    tasks = []
+    for task in daily_tasks_card["tasks"]:
+        tasks.append(
+            {
+                **task,
+                "progress_percent": min(
+                    100,
+                    int(
+                        (task["current_value"] * 100)
+                        / max(1, task["target_value"])
+                    ),
+                ),
+                "progress_label": (
+                    f'{task["current_value"]} / {task["target_value"]}'
+                ),
+                "row_class": (
+                    "is-completed" if task["is_completed"] else "is-in-progress"
+                ),
+                "status_class": (
+                    "is-completed" if task["is_completed"] else "is-in-progress"
+                ),
+                "display_status_label": (
+                    "Выполнено" if task["is_completed"] else "В процессе"
+                ),
+                "claim_url": reverse(
+                    "cabinet:daily_task_claim",
+                    kwargs={"task_id": task["id"]},
+                ),
+            }
+        )
+
     daily_tasks_card = {
         **_prepare_daily_tasks_card(daily_tasks_card),
         "tasks": tasks,
@@ -258,9 +275,6 @@ def build_bonus_tasks_page_context(user, request=None) -> dict:
         },
         "daily_tasks_card": daily_tasks_card,
         "tasks": tasks,
-        "streak_card": _prepare_streak_card(build_streak_card(user)),
-        "level_progress": _prepare_level_progress(build_level_progress(user)),
-        "recent_gifts": _recent_bonus_events(user),
     }
 
 

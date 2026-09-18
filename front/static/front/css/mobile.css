@@ -4660,31 +4660,53 @@ body.expert-public-details-open {
         justify-content: center;
     }
 
-    .cabinet-bonuses-page .bonus-task-row,
     .cabinet-bonuses-page .bonus-level-row {
         grid-template-columns: 1fr;
         gap: 10px;
         padding: 15px;
     }
 
-    .cabinet-bonuses-page .bonus-task-meta,
     .cabinet-bonuses-page .bonus-level-row-meta {
         min-width: 0;
         justify-items: start;
         text-align: left;
     }
 
-    .cabinet-bonuses-page .bonus-task-progress-bar,
-    .cabinet-bonuses-page .bonus-task-row .bonus-task-actions,
     .cabinet-bonuses-page .bonus-level-row-status {
         grid-column: 1;
     }
 
-    .cabinet-bonuses-page .bonus-task-row .bonus-task-actions {
+    .cabinet-bonus-tasks-page .bonus-tasks-main {
+        max-width: none;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-title-line {
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-info {
+        min-width: 0;
+        justify-items: start;
+        text-align: left;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-progress-bar,
+    .cabinet-bonus-tasks-page .bonus-task-row .bonus-task-actions {
+        grid-column: 1;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-row .bonus-task-actions {
         justify-content: stretch;
     }
 
-    .cabinet-bonuses-page .bonus-task-row .bonus-task-claim {
+    .cabinet-bonus-tasks-page .bonus-task-row .bonus-task-claim {
         width: 100%;
     }
 
@@ -4889,5 +4911,21 @@ body.expert-public-details-open {
 
     .promo-banner--feed_inline {
         height: 150px;
+    }
+}
+
+
+@media (max-width: 420px) {
+    .cabinet-bonus-tasks-page .bonus-tasks-head {
+        padding: 14px;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-title-line {
+        display: grid;
+        gap: 6px;
+    }
+
+    .cabinet-bonus-tasks-page .bonus-task-state {
+        width: fit-content;
     }
 }
