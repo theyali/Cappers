@@ -1,30 +1,30 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Мои бонусы — КапперХаб{% endblock %}
+{% block title %}{{ bonus_page.title }}{% endblock %}
 
 {% block content %}
 <section class="profile-page matches-page container">
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 
-        <section class="matches-list-panel profile-page bonus-center-main">
-            <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
-                <nav class="matches-tabs" aria-label="Разделы профиля">
-                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
-                </nav>
-            </div>
+        <div class="bonus-center-layout">
+            <section class="matches-list-panel profile-page bonus-center-main">
+                <div class="matches-mobile-scope-panel" aria-label="{{ bonus_page.mobile_nav_label }}">
+                    <nav class="matches-tabs" aria-label="{{ bonus_page.profile_nav_label }}">
+                        {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                    </nav>
+                </div>
 
-            <div class="bonus-center-layout">
                 <section class="bonus-hero" aria-labelledby="bonus-center-title">
                     <div class="bonus-hero-copy">
-                        <h1 id="bonus-center-title">Бонусы каждый день<br>с <span>КапперХаб</span></h1>
-                        <p>
-                            Получайте бесплатные прогнозы, бонусы на баланс, VIP-доступ
-                            и другие награды. Заходите каждый день и увеличивайте свои шансы.
-                        </p>
+                        <h1 id="bonus-center-title">
+                            {{ bonus_page.hero.title }}<br>
+                            {{ bonus_page.hero.title_prefix }} <span>{{ bonus_page.hero.brand }}</span>
+                        </h1>
+                        <p>{{ bonus_page.hero.description }}</p>
                         <div class="bonus-hero-countdown">
-                            <span>До следующей попытки</span>
+                            <span>{{ bonus_page.hero.countdown_caption }}</span>
                             <strong data-bonus-countdown>{{ next_bonus.countdown_label }}</strong>
                             <small data-bonus-status>{{ next_bonus.status_label }}</small>
                         </div>
@@ -36,6 +36,7 @@
                         data-skeleton-block
                         data-roulette-state-url="{{ roulette_state_url }}"
                         data-roulette-spin-url="{{ roulette_spin_url }}"
+                        data-roulette-bg="{{ roulette_bg }}"
                         data-roulette-csrf="{{ roulette_csrf_token }}"
                     >
                         <canvas
@@ -44,32 +45,16 @@
                             height="720"
                             role="button"
                             tabindex="0"
-                            aria-label="Ежедневная рулетка бонусов. Нажмите, чтобы крутить."
+                            aria-label="{{ bonus_page.hero.canvas_label }}"
                             aria-busy="true"
                         >
-                            Ваш браузер не поддерживает canvas.
+                            {{ bonus_page.hero.canvas_fallback }}
                         </canvas>
                     </div>
                 </section>
 
                 <div class="bonus-dashboard-grid">
-                    <article class="bonus-dashboard-card">
-                        <div class="bonus-card-head">
-                            <span class="bonus-card-icon is-blue" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                            <div>
-                                <h2>{{ next_bonus.title }}</h2>
-                                <span>{{ next_bonus.subtitle }}</span>
-                            </div>
-                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
-                        </div>
-                        <strong class="bonus-card-value is-yellow" data-bonus-countdown>{{ next_bonus.countdown_label }}</strong>
-                        <p>{{ next_bonus.description }}</p>
-                    </article>
+                    {% include "cabinet/includes/_bonus_dashboard_card.html" with card=next_bonus only %}
 
                     <article class="bonus-dashboard-card">
                         <div class="bonus-card-head">
@@ -81,11 +66,11 @@
                             </span>
                             <div>
                                 <h2>{{ daily_tasks_card.title }}</h2>
-                                <span>{{ daily_tasks_card.completed }} из {{ daily_tasks_card.total }} выполнено</span>
+                                <span>{{ daily_tasks_card.summary_label }}</span>
                             </div>
-                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                            <span class="bonus-card-arrow" aria-hidden="true">{{ daily_tasks_card.arrow_label }}</span>
                         </div>
-                        <div class="bonus-task-progress" aria-hidden="true">
+                        <div class="bonus-task-progress" aria-label="{{ daily_tasks_card.progress_aria_label }}">
                             {% for slot in daily_tasks_card.progress_slots %}
                                 <span{% if slot.is_completed %} class="is-done"{% endif %}></span>
                             {% endfor %}
@@ -109,10 +94,10 @@
                                 <h2>{{ streak_card.title }}</h2>
                                 <span>{{ streak_card.subtitle }}</span>
                             </div>
-                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
+                            <span class="bonus-card-arrow" aria-hidden="true">{{ streak_card.arrow_label }}</span>
                         </div>
                         <strong class="bonus-card-value is-yellow">{{ streak_card.days_label }}</strong>
-                        <div class="bonus-streak-days" aria-label="Дни серии">
+                        <div class="bonus-streak-days" aria-label="{{ streak_card.days_aria_label }}">
                             {% for day in streak_card.day_numbers %}
                                 <span{% if day.is_reached %} class="is-reached{% if day.is_current %} is-current{% endif %}"{% endif %}>
                                     {{ day.number }}
@@ -121,24 +106,7 @@
                         </div>
                     </article>
 
-                    <article class="bonus-dashboard-card">
-                        <div class="bonus-card-head">
-                            <span class="bonus-card-icon is-blue" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
-                                    <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M3.5 19c.6-3.4 2.4-5.1 5.5-5.1s4.9 1.7 5.5 5.1M14 14c3.4-.4 5.6 1.3 6.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                </svg>
-                            </span>
-                            <div>
-                                <h2>{{ referral_card.title }}</h2>
-                                <span>{{ referral_card.subtitle }}</span>
-                            </div>
-                            <span class="bonus-card-arrow" aria-hidden="true">›</span>
-                        </div>
-                        <strong class="bonus-card-value is-yellow">{{ referral_card.reward_label }}</strong>
-                        <p>{{ referral_card.description }}</p>
-                    </article>
+                    {% include "cabinet/includes/_bonus_dashboard_card.html" with card=referral_card only %}
 
                     <article
                         class="bonus-dashboard-card bonus-wins-card is-skeleton-loading"
@@ -154,8 +122,8 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Последние выигрыши</h2>
-                                <span>Результаты рулетки</span>
+                                <h2>{{ bonus_page.recent_wins.title }}</h2>
+                                <span>{{ bonus_page.recent_wins.subtitle }}</span>
                             </div>
                         </div>
                         <div class="bonus-wins-list">
@@ -163,13 +131,19 @@
                                 <div class="bonus-win-row" data-roulette-history-slot aria-hidden="{% if item %}false{% else %}true{% endif %}">
                                     <span class="bonus-win-icon" data-skeleton-image>
                                         <img data-roulette-recent-icon width="34" height="34" alt="" hidden>
-                                        <span data-roulette-recent-fallback aria-hidden="true">{% if item %}{{ item.icon }}{% else %}🎁{% endif %}</span>
+                                        <span data-roulette-recent-fallback aria-hidden="true">
+                                            {% if item %}{{ item.icon }}{% else %}{{ bonus_page.recent_wins.fallback_icon }}{% endif %}
+                                        </span>
                                     </span>
                                     <span class="bonus-win-copy">
-                                        <strong data-roulette-recent-title>{% if item %}{{ item.title }}{% else %}Подарок{% endif %}</strong>
-                                        <small data-roulette-recent-subtitle>{% if item %}{{ item.subtitle }}{% else %}Выигрыш рулетки{% endif %}</small>
+                                        <strong data-roulette-recent-title>
+                                            {% if item %}{{ item.title }}{% else %}{{ bonus_page.recent_wins.fallback_title }}{% endif %}
+                                        </strong>
+                                        <small data-roulette-recent-subtitle>
+                                            {% if item %}{{ item.subtitle }}{% else %}{{ bonus_page.recent_wins.fallback_subtitle }}{% endif %}
+                                        </small>
                                     </span>
-                                    <time data-roulette-recent-time>{% if item %}{{ item.time_label }}{% else %}—{% endif %}</time>
+                                    <time data-roulette-recent-time>{% if item %}{{ item.time_label }}{% endif %}</time>
                                 </div>
                             {% endfor %}
                         </div>
@@ -183,95 +157,95 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2>Мои уровни</h2>
-                                <span>Прогресс активности</span>
+                                <h2>{{ bonus_page.levels.title }}</h2>
+                                <span>{{ bonus_page.levels.subtitle }}</span>
                             </div>
                         </div>
                         <div class="bonus-level-list">
                             {% for level in levels_preview %}
-                                <span><b>Уровень {{ level.level }}</b><small>{{ level.title }}</small></span>
+                                <span><b>{{ level.label }}</b><small>{{ level.title }}</small></span>
                             {% endfor %}
                         </div>
                     </article>
                 </div>
-            </div>
-        </section>
-
-        <aside class="coupon-sidebar bonus-center-aside" aria-label="Бонусный центр">
-            <section class="bonus-side-card bonus-gifts-card">
-                <div class="bonus-side-head">
-                    <h2>Последние подарки</h2>
-                    <span>Все</span>
-                </div>
-                <div class="bonus-gifts-list" data-bonus-events-list>
-                    {% for item in recent_gifts %}
-                        <article class="bonus-gift-row" data-bonus-event-row>
-                            <span class="bonus-gift-icon" aria-hidden="true">{{ item.icon }}</span>
-                            <span class="bonus-gift-copy">
-                                <strong>{{ item.title }}</strong>
-                                <span>{{ item.subtitle }}</span>
-                                <small>{{ item.time_label }}</small>
-                            </span>
-                        </article>
-                    {% empty %}
-                        <article class="bonus-gift-row" data-bonus-event-empty>
-                            <span class="bonus-gift-icon" aria-hidden="true">🎁</span>
-                            <span class="bonus-gift-copy">
-                                <strong>Подарков пока нет</strong>
-                                <span>Новые бонусы появятся здесь.</span>
-                            </span>
-                        </article>
-                    {% endfor %}
-                </div>
             </section>
 
-            <section class="bonus-side-card bonus-progress-card">
-                <div class="bonus-side-head">
-                    <h2>Прогресс к большему</h2>
-                    <span>Ур. {{ level_progress.level }}</span>
-                </div>
-                <div class="bonus-progress-body">
-                    <div class="bonus-progress-ring" aria-label="Прогресс уровня {{ level_progress.progress_percent }}%">
-                        <svg viewBox="0 0 120 120" aria-hidden="true">
-                            <circle cx="60" cy="60" r="48"></circle>
-                            <circle class="is-progress" cx="60" cy="60" r="48"></circle>
-                        </svg>
-                        <div>
-                            <span>★</span>
-                            <strong>{{ level_progress.xp }}</strong>
-                            <small>{% if level_progress.next_level_xp %}из {{ level_progress.next_level_xp }}{% else %}макс.{% endif %}</small>
-                        </div>
+            <aside class="coupon-sidebar bonus-center-aside" aria-label="{{ bonus_page.aside_label }}">
+                <section class="bonus-side-card bonus-gifts-card">
+                    <div class="bonus-side-head">
+                        <h2>{{ bonus_page.recent_gifts.title }}</h2>
+                        <span>{{ bonus_page.recent_gifts.all_label }}</span>
                     </div>
-                    <div class="bonus-progress-steps">
-                        {% for step in level_progress.steps %}
-                            <span{% if step.is_done %} class="is-done"{% endif %}>{{ step.label }}</span>
+                    <div class="bonus-gifts-list" data-bonus-events-list>
+                        {% for item in recent_gifts %}
+                            <article class="bonus-gift-row" data-bonus-event-row>
+                                <span class="bonus-gift-icon" aria-hidden="true">{{ item.icon }}</span>
+                                <span class="bonus-gift-copy">
+                                    <strong>{{ item.title }}</strong>
+                                    <span>{{ item.subtitle }}</span>
+                                    <small>{{ item.time_label }}</small>
+                                </span>
+                            </article>
+                        {% empty %}
+                            <article class="bonus-gift-row" data-bonus-event-empty>
+                                <span class="bonus-gift-icon" aria-hidden="true">{{ bonus_page.recent_gifts.empty_icon }}</span>
+                                <span class="bonus-gift-copy">
+                                    <strong>{{ bonus_page.recent_gifts.empty_title }}</strong>
+                                    <span>{{ bonus_page.recent_gifts.empty_description }}</span>
+                                </span>
+                            </article>
                         {% endfor %}
                     </div>
-                </div>
-                <p>{% if level_progress.next_level_xp %}{{ level_progress.xp_to_next_level }} XP до следующего уровня{% else %}Максимальный уровень{% endif %}</p>
-            </section>
+                </section>
 
-            <section class="bonus-side-card bonus-balance-cta">
-                <div class="bonus-balance-copy">
-                    <h2>{{ balance_cta.title|linebreaksbr }}</h2>
-                    <p>{{ balance_cta.description }}</p>
-                </div>
-                <span class="bonus-balance-coins" aria-hidden="true">
-                    <svg viewBox="0 0 150 100" fill="none">
-                        <ellipse cx="103" cy="25" rx="28" ry="10" fill="currentColor"/>
-                        <path d="M75 25v18c0 6 13 10 28 10s28-4 28-10V25" fill="currentColor" opacity=".78"/>
-                        <ellipse cx="103" cy="43" rx="28" ry="10" fill="currentColor"/>
-                        <ellipse cx="77" cy="52" rx="28" ry="10" fill="currentColor" opacity=".88"/>
-                        <path d="M49 52v18c0 6 13 10 28 10s28-4 28-10V52" fill="currentColor" opacity=".72"/>
-                        <ellipse cx="77" cy="70" rx="28" ry="10" fill="currentColor"/>
-                    </svg>
-                </span>
-                <a href="{{ balance_cta.url }}">
-                    <span>{{ balance_cta.label }}</span>
-                    <span aria-hidden="true">→</span>
-                </a>
-            </section>
-        </aside>
+                <section class="bonus-side-card bonus-progress-card">
+                    <div class="bonus-side-head">
+                        <h2>{{ bonus_page.progress.title }}</h2>
+                        <span>{{ level_progress.badge_label }}</span>
+                    </div>
+                    <div class="bonus-progress-body">
+                        <div class="bonus-progress-ring" aria-label="{{ level_progress.aria_label }}">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="48"></circle>
+                                <circle class="is-progress" cx="60" cy="60" r="48"></circle>
+                            </svg>
+                            <div>
+                                <span>{{ bonus_page.progress.star_label }}</span>
+                                <strong>{{ level_progress.xp }}</strong>
+                                <small>{{ level_progress.target_label }}</small>
+                            </div>
+                        </div>
+                        <div class="bonus-progress-steps">
+                            {% for step in level_progress.steps %}
+                                <span{% if step.is_done %} class="is-done"{% endif %}>{{ step.label }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p>{{ level_progress.status_label }}</p>
+                </section>
+
+                <section class="bonus-side-card bonus-balance-cta">
+                    <div class="bonus-balance-copy">
+                        <h2>{{ balance_cta.title|linebreaksbr }}</h2>
+                        <p>{{ balance_cta.description }}</p>
+                    </div>
+                    <span class="bonus-balance-coins" aria-hidden="true">
+                        <svg viewBox="0 0 150 100" fill="none">
+                            <ellipse cx="103" cy="25" rx="28" ry="10" fill="currentColor"/>
+                            <path d="M75 25v18c0 6 13 10 28 10s28-4 28-10V25" fill="currentColor" opacity=".78"/>
+                            <ellipse cx="103" cy="43" rx="28" ry="10" fill="currentColor"/>
+                            <ellipse cx="77" cy="52" rx="28" ry="10" fill="currentColor" opacity=".88"/>
+                            <path d="M49 52v18c0 6 13 10 28 10s28-4 28-10V52" fill="currentColor" opacity=".72"/>
+                            <ellipse cx="77" cy="70" rx="28" ry="10" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <a href="{{ balance_cta.url }}">
+                        <span>{{ balance_cta.label }}</span>
+                        <span aria-hidden="true">{{ balance_cta.arrow_label }}</span>
+                    </a>
+                </section>
+            </aside>
+        </div>
     </div>
 </section>
 {% endblock %}
