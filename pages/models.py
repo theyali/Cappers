@@ -38,6 +38,14 @@ class AdvBanner(models.Model):
 
 
 class PromoBanner(models.Model):
+    class Variant(models.TextChoices):
+        SIDEBAR_SMALL = "sidebar_small", "Sidebar · маленький"
+        SIDEBAR_MEDIUM = "sidebar_medium", "Sidebar · средний"
+        SIDEBAR_TALL = "sidebar_tall", "Sidebar · высокий"
+        CENTER_WIDE = "center_wide", "Центр · широкий"
+        CENTER_COMPACT = "center_compact", "Центр · компактный"
+        FEED_INLINE = "feed_inline", "Лента · inline"
+
     name = models.CharField("Название в админке", max_length=160, blank=True)
     eyebrow = models.CharField("Метка", max_length=80, blank=True)
     title = models.CharField("Title", max_length=180, blank=True)
@@ -58,6 +66,13 @@ class PromoBanner(models.Model):
         upload_to="promo_banners/mobile/",
         blank=True,
         help_text="Если заполнено, используется на экранах до 767 px.",
+    )
+    variant = models.CharField(
+        "Размер баннера",
+        max_length=24,
+        choices=Variant.choices,
+        default=Variant.CENTER_WIDE,
+        db_index=True,
     )
     title_color = models.CharField("Цвет title", max_length=32, default="#050505")
     text_color = models.CharField("Цвет текста", max_length=32, default="rgba(0, 0, 0, .76)")

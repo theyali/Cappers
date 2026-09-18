@@ -5741,6 +5741,50 @@ body:has(.home-layout) .site-main h2 {
     padding: clamp(30px, 5vw, 70px);
 }
 
+/* Promo banner size variants */
+.promo-banner {
+    width: 100%;
+    min-width: 0;
+}
+
+.page-promo-banner.promo-banner {
+    min-height: 0;
+}
+
+.promo-banner--sidebar_small {
+    height: 180px;
+}
+
+.promo-banner--sidebar_medium {
+    height: 270px;
+}
+
+.promo-banner--sidebar_tall {
+    height: 360px;
+}
+
+.promo-banner--center_wide {
+    height: 360px;
+}
+
+.promo-banner--center_compact {
+    height: 240px;
+}
+
+.promo-banner--feed_inline {
+    height: 180px;
+}
+
+.promo-banner.adv-banners {
+    display: block;
+}
+
+.promo-banner.adv-banners .adv-banner,
+.promo-banner.adv-banners .adv-banner picture {
+    width: 100%;
+    height: 100%;
+}
+
 .home-sidebar {
     display: grid;
     grid-template-rows: auto 1fr;

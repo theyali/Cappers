@@ -4,7 +4,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 
 from .context_processors import page_seo
-from .models import AdvBanner, PageSEO
+from .models import AdvBanner, PagePromoBanner, PageSEO, PromoBanner
 
 
 class PageSeoRouteInheritanceTests(TestCase):
@@ -74,3 +74,38 @@ class PageSeoRouteInheritanceTests(TestCase):
         self.assertEqual(context["seo_meta"]["title"], "Футбол за дату")
         self.assertNotEqual(context["seo_meta"]["page"].pk, base_page.pk)
         self.assertEqual([item.pk for item in context["adv_banners"]], [banner.pk])
+
+
+    def test_promo_banner_group_preserves_configured_variant(self):
+        banner = PromoBanner.objects.create(
+            name="Sidebar promo",
+            image="promo_banners/sidebar-test.png",
+            button_url="/bonuses/",
+            variant=PromoBanner.Variant.SIDEBAR_TALL,
+        )
+        page = PageSEO.objects.create(
+            name="Профиль",
+            route_name="cabinet:profile",
+            exact_path="/cabinet/profile/",
+        )
+        PagePromoBanner.objects.create(
+            page=page,
+            banner=banner,
+            placement=PagePromoBanner.Placement.RIGHT,
+            sort_order=10,
+        )
+
+        request = self.factory.get("/cabinet/profile/")
+        request.user = AnonymousUser()
+        request.resolver_match = SimpleNamespace(
+            view_name="cabinet:profile",
+            kwargs={},
+        )
+
+        context = page_seo(request)
+        resolved_banner = context["right_promo_banners"][0]
+
+        self.assertEqual(
+            resolved_banner.variant,
+            PromoBanner.Variant.SIDEBAR_TALL,
+        )

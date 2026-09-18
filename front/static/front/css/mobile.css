@@ -4834,3 +4834,54 @@ body.expert-public-details-open {
         display: none;
     }
 }
+
+
+/* Promo banner size variants */
+@media (max-width: 760px) {
+    .promo-banner--sidebar_small {
+        height: 150px;
+    }
+
+    .promo-banner--sidebar_medium {
+        height: 210px;
+    }
+
+    .promo-banner--sidebar_tall {
+        height: 280px;
+    }
+
+    .promo-banner--center_wide {
+        height: 240px;
+    }
+
+    .promo-banner--center_compact {
+        height: 200px;
+    }
+
+    .promo-banner--feed_inline {
+        height: 160px;
+    }
+}
+
+@media (max-width: 420px) {
+    .promo-banner--sidebar_small {
+        height: 140px;
+    }
+
+    .promo-banner--sidebar_medium,
+    .promo-banner--center_compact {
+        height: 190px;
+    }
+
+    .promo-banner--sidebar_tall {
+        height: 250px;
+    }
+
+    .promo-banner--center_wide {
+        height: 220px;
+    }
+
+    .promo-banner--feed_inline {
+        height: 150px;
+    }
+}

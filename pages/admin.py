@@ -20,8 +20,8 @@ class AdvBannerAdmin(admin.ModelAdmin):
 
 @admin.register(PromoBanner)
 class PromoBannerAdmin(admin.ModelAdmin):
-    list_display = ("name", "title", "button_label", "button_url", "is_active", "updated_at")
-    list_filter = ("is_active",)
+    list_display = ("name", "variant", "title", "button_label", "button_url", "is_active", "updated_at")
+    list_filter = ("variant", "is_active")
     list_editable = ("is_active",)
     search_fields = ("name", "eyebrow", "title", "text", "button_label", "button_url")
     readonly_fields = ("updated_at",)
@@ -51,6 +51,7 @@ class PromoBannerAdmin(admin.ModelAdmin):
                 "fields": (
                     "image",
                     "mobile_image",
+                    "variant",
                 )
             },
         ),
