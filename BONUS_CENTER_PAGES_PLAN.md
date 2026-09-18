@@ -12,6 +12,7 @@
 - `/cabinet/bonuses/tasks/` — ежедневные задания.
 - `/cabinet/bonuses/levels/` — уровни и XP.
 - `/cabinet/referrals/` — рефералы как полноценная страница, а не JS-вкладка в профиле.
+- `/notifications/` — существующая страница настроек уведомлений, её нужно расширить бонусными уведомлениями.
 
 Отдельная страница серии дней пока НЕ нужна.
 
@@ -42,6 +43,9 @@
 - `front/static/front/js/roulette.js`
 - `front/static/front/js/profile-referrals.js`
 - `front/static/front/js/profile-menu.js`
+- `notifications/models.py`
+- `notifications/views.py`
+- `notifications/templates/notifications/center.html`
 - `front/static/front/css/main.css`
 - `front/static/front/css/mobile.css`
 
@@ -560,6 +564,8 @@ BonusEvent.objects.filter(user=user, event_type=BonusEvent.EventType.REFERRAL)
 - `streak_card` оставить без отдельной страницы или ссылать на `bonus_tasks`;
 - карточку уровней сделать ссылкой на `reverse("cabinet:bonus_levels")`;
 - `referral_card.url = reverse("cabinet:referrals")`, а не сама referral URL.
+- добавить `notification_settings_url = reverse("notifications:center")`;
+- добавить в context правого сайдбара ссылку “Настроить уведомления”.
 
 Важно: реферальную ссылку копировать на странице `/cabinet/referrals/`, а карточка dashboard должна вести на страницу рефералов.
 
@@ -595,7 +601,143 @@ BonusEvent.objects.filter(user=user, event_type=BonusEvent.EventType.REFERRAL)
 
 Для обычных пользователей показать только бонусы платформы, без блока “заработано ₽”, если `can_earn_referrals=False`.
 
-## Шаг 22. Breadcrumb/title/context processors не трогать без необходимости
+## Шаг 22. Добавить бонусные уведомления
+
+Файл: `notifications/models.py`.
+
+Добавить новые `Notification.Kind`:
+
+- `BONUS_DAILY_TASK = "bonus_daily_task", "Награда за ежедневное задание"`;
+- `BONUS_STREAK = "bonus_streak", "Награда за серию дней"`;
+- `BONUS_LEVEL = "bonus_level", "Новый уровень"`;
+- `BONUS_ROULETTE = "bonus_roulette", "Приз рулетки"`;
+- `BONUS_REFERRAL = "bonus_referral", "Реферальный бонус"`.
+
+В `NotificationPreference` добавить boolean-поля:
+
+- `bonus_daily_task`;
+- `bonus_streak`;
+- `bonus_level`;
+- `bonus_roulette`;
+- `bonus_referral`.
+
+Default:
+
+- `bonus_daily_task=True`;
+- `bonus_streak=True`;
+- `bonus_level=True`;
+- `bonus_referral=True`;
+- `bonus_roulette=False`, чтобы рулетка не спамила, если пользователь часто крутит.
+
+Добавить миграцию.
+
+## Шаг 23. Подключить создание уведомлений к бонусам
+
+Файл: `cabinet/services/bonus_rewards.py`.
+
+После успешного создания `BonusEvent` вызвать `notifications.services.create_notification`.
+
+Маппинг:
+
+- `BonusEvent.EventType.DAILY_TASK` → `Notification.Kind.BONUS_DAILY_TASK`, url `reverse("cabinet:bonus_tasks")`;
+- `BonusEvent.EventType.STREAK` → `Notification.Kind.BONUS_STREAK`, url `reverse("cabinet:bonuses")`;
+- `BonusEvent.EventType.ROULETTE` → `Notification.Kind.BONUS_ROULETTE`, url `reverse("cabinet:bonuses")`;
+- `BonusEvent.EventType.REFERRAL` → `Notification.Kind.BONUS_REFERRAL`, url `reverse("cabinet:referrals")`.
+
+Правила:
+
+- не создавать уведомление до успешного начисления награды;
+- `event_key = f"bonus:{event.pk}"`;
+- title брать из `BonusEvent.title`;
+- message собрать из `xp_delta`, `coin_delta`, `spin_delta` и `description`;
+- если пользователь отключил категорию, `create_notification` должен вернуть `None`, это нормально.
+
+Файл: `cabinet/services/xp.py`.
+
+В `sync_user_level`:
+
+- сохранить старый уровень до пересчёта;
+- если новый уровень больше старого, создать `Notification.Kind.BONUS_LEVEL`;
+- url `reverse("cabinet:bonus_levels")`;
+- `event_key = f"bonus-level:{state.user_id}:{new_level}:{state.xp}"`.
+
+## Шаг 24. Добавить настройки бонусных уведомлений в UI
+
+Файл: `notifications/views.py`.
+
+В `update_preferences.checkbox_fields` добавить:
+
+- `bonus_daily_task`;
+- `bonus_streak`;
+- `bonus_level`;
+- `bonus_roulette`;
+- `bonus_referral`.
+
+Файл: `notifications/templates/notifications/center.html`.
+
+В блоке настроек добавить группу “Бонусы”:
+
+- “Награды за ежедневные задания” → `bonus_daily_task`;
+- “Серия дней” → `bonus_streak`;
+- “Новые уровни” → `bonus_level`;
+- “Призы рулетки” → `bonus_roulette`;
+- “Реферальные бонусы” → `bonus_referral`.
+
+Файл: `templates/cabinet/_profile_settings.html`.
+
+Добавить ссылку на `/notifications/` рядом с настройками уведомлений или продублировать группу “Бонусы”, если там уже есть форма preferences.
+
+## Шаг 25. Добавить бонусный блок на вкладку профиля
+
+Страница: `http://127.0.0.1:8000/cabinet/profile/?tab=profile`.
+
+Файлы:
+
+- `cabinet/views.py`;
+- `cabinet/services/bonus_center.py`;
+- `templates/cabinet/profile.html`;
+- возможно `templates/cabinet/includes/_profile_overview_analytics.html`;
+- `front/static/front/css/main.css`;
+- `front/static/front/css/mobile.css`.
+
+В `cabinet/services/bonus_center.py` добавить:
+
+```python
+def build_profile_bonus_summary(user) -> dict:
+    ...
+```
+
+Context должен вернуть:
+
+- `quick_tasks` — первые 3 задания из `build_daily_tasks_card(user)["tasks"]`;
+- `tasks_url = reverse("cabinet:bonus_tasks")`;
+- `level_progress` — из `build_level_progress(user)`;
+- `levels_url = reverse("cabinet:bonus_levels")`;
+- `streak_card` — из `build_streak_card(user)`;
+- `bonuses_url = reverse("cabinet:bonuses")`;
+- `notifications_url = reverse("notifications:center")`.
+
+В `cabinet/views.py`:
+
+- импортировать `build_profile_bonus_summary`;
+- добавить `profile_bonus_summary` в context профиля.
+
+В `templates/cabinet/profile.html` на вкладке `profile` после overview analytics добавить:
+
+- блок “Быстрые задания” в стиле compact `bonus-dashboard-card`;
+- блок XP progress визуально как `bonus-side-card bonus-progress-card`;
+- блок “Серия дней” в стиле compact `bonus-dashboard-card`;
+- ссылку “Все бонусы” на `/cabinet/bonuses/`;
+- ссылку “Настроить уведомления” на `/notifications/`.
+
+Важно:
+
+- не делать AJAX;
+- не использовать skeleton;
+- не делать inline style;
+- тексты и URL должны прийти из context.
+
+## Шаг 26. Breadcrumb/title/context processors не трогать без необходимости
 
 Не добавлять SEO/страницы в `pages`, если эти страницы закрыты логином.
 
@@ -605,7 +747,7 @@ BonusEvent.objects.filter(user=user, event_type=BonusEvent.EventType.REFERRAL)
 - `page_class`;
 - `active_tab`.
 
-## Шаг 23. Тесты минимально
+## Шаг 27. Тесты минимально
 
 Файл: `cabinet/tests/test_bonus_center.py` или новый `cabinet/tests/test_bonus_pages.py`.
 
@@ -616,10 +758,13 @@ BonusEvent.objects.filter(user=user, event_type=BonusEvent.EventType.REFERRAL)
 - `/cabinet/bonuses/levels/` показывает текущий уровень;
 - `/cabinet/referrals/` отдаёт referral URL и stats;
 - `referral_stats` и SSR context считают одинаковые ключевые метрики.
+- создание бонусной награды создаёт уведомление, если категория включена;
+- отключенная bonus notification preference не создаёт уведомление;
+- `/cabinet/profile/?tab=profile` получает `profile_bonus_summary`.
 
 Если времени мало, тестировать хотя бы view status code и context keys.
 
-## Шаг 24. Ручная проверка
+## Шаг 28. Ручная проверка
 
 После изменений:
 
@@ -640,6 +785,9 @@ python manage.py seed_bonus_center
 - копирование referral URL работает;
 - claim задания работает без skeleton;
 - меню active state работает и в sidebar, и в mobile tabs.
+- `/notifications/` показывает настройки бонусных уведомлений;
+- отключение бонусных уведомлений реально не создаёт новые уведомления;
+- `/cabinet/profile/?tab=profile` показывает быстрые задания, XP progress и серию.
 
 ## Что не делать
 
