@@ -20,6 +20,11 @@ CATEGORY_FIELD_BY_KIND = {
     Notification.Kind.FAVORITE_SETTLED: "favorite_settled",
     Notification.Kind.MATCH_REMINDER: "match_reminder",
     Notification.Kind.ACHIEVEMENT: "achievement",
+    Notification.Kind.BONUS_DAILY_TASK: "bonus_daily_task",
+    Notification.Kind.BONUS_STREAK: "bonus_streak",
+    Notification.Kind.BONUS_LEVEL: "bonus_level",
+    Notification.Kind.BONUS_ROULETTE: "bonus_roulette",
+    Notification.Kind.BONUS_REFERRAL: "bonus_referral",
 }
 
 
