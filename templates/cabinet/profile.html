@@ -210,6 +210,95 @@
                         </dl>
                     </div>
                 {% endif %}
+
+                {% if profile_bonus_summary %}
+                <div class="cabinet-bonuses-page" aria-label="Бонусы профиля">
+                    <div class="bonus-dashboard-grid">
+                        <article class="bonus-dashboard-card">
+                            <div class="bonus-card-head">
+                                <span class="bonus-card-icon is-blue" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M8 4h8M9 2h6v4H9zM6 5h12v16H6z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        <path d="M9 10h6M9 14h6M9 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h2>{{ profile_bonus_summary.daily_tasks_card.title }}</h2>
+                                    <span>{{ profile_bonus_summary.daily_tasks_card.summary_label }}</span>
+                                </div>
+                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.daily_tasks_card.url }}" aria-label="{{ profile_bonus_summary.daily_tasks_card.link_label }}">{{ profile_bonus_summary.daily_tasks_card.arrow_label }}</a>
+                            </div>
+
+                            <div class="bonus-level-list">
+                                {% for task in profile_bonus_summary.daily_tasks_card.tasks %}
+                                    <span class="{% if task.is_completed %}is-unlocked {% endif %}{% if task.can_claim %}is-current{% endif %}">
+                                        <b>{{ task.title }}</b>
+                                        <small>{{ task.status_label }}{% if task.reward_label %} · {{ task.reward_label }}{% endif %}</small>
+                                    </span>
+                                {% empty %}
+                                    <span>
+                                        <b>Заданий пока нет</b>
+                                        <small>Новые задания появятся здесь</small>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </article>
+
+                        <section class="bonus-side-card bonus-progress-card">
+                            <div class="bonus-side-head">
+                                <h2>{{ profile_bonus_summary.level_progress.title }}</h2>
+                                <span>{{ profile_bonus_summary.level_progress.badge_label }}</span>
+                            </div>
+                            <div class="bonus-progress-body">
+                                <div class="bonus-progress-ring" aria-label="{{ profile_bonus_summary.level_progress.aria_label }}">
+                                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                                        <circle cx="60" cy="60" r="48"></circle>
+                                        <circle class="is-progress {{ profile_bonus_summary.level_progress.progress_class }}" cx="60" cy="60" r="48"></circle>
+                                    </svg>
+                                    <div>
+                                        <span>{{ profile_bonus_summary.level_progress.star_label }}</span>
+                                        <strong>{{ profile_bonus_summary.level_progress.xp }}</strong>
+                                        <small>{{ profile_bonus_summary.level_progress.target_label }}</small>
+                                    </div>
+                                </div>
+                                <div class="bonus-progress-steps">
+                                    {% for step in profile_bonus_summary.level_progress.steps %}
+                                        <span{% if step.is_done %} class="is-done"{% endif %}>{{ step.label }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p>{{ profile_bonus_summary.level_progress.status_label }}</p>
+                            <a class="bonus-notification-settings-link" href="{{ profile_bonus_summary.level_progress.url }}">
+                                <span>{{ profile_bonus_summary.level_progress.link_label }}</span>
+                                <span aria-hidden="true">{{ profile_bonus_summary.level_progress.arrow_label }}</span>
+                            </a>
+                        </section>
+
+                        <article class="bonus-dashboard-card">
+                            <div class="bonus-card-head">
+                                <span class="bonus-card-icon is-fire" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M13 3c1 4-2 4-1 7 1-2 3-2 4-4 3 3 4 6 3 9a7 7 0 1 1-13-5c1.2-1.7 2.7-2.8 4.5-4.5C10 9 12 10 13 3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h2>{{ profile_bonus_summary.streak_card.title }}</h2>
+                                    <span>{{ profile_bonus_summary.streak_card.subtitle }}</span>
+                                </div>
+                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.streak_card.url }}" aria-label="{{ profile_bonus_summary.streak_card.link_label }}">{{ profile_bonus_summary.streak_card.arrow_label }}</a>
+                            </div>
+                            <strong class="bonus-card-value is-yellow">{{ profile_bonus_summary.streak_card.days_label }}</strong>
+                            <div class="bonus-streak-days" aria-label="{{ profile_bonus_summary.streak_card.days_aria_label }}">
+                                {% for day in profile_bonus_summary.streak_card.day_numbers %}
+                                    <span{% if day.is_reached %} class="is-reached{% if day.is_current %} is-current{% endif %}"{% endif %}>
+                                        {{ day.number }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </article>
+                    </div>
+                </div>
+                {% endif %}
             </section>
 
             <section class="profile-tab-panel {% if active_tab == 'wallet' %}is-active{% endif %}" id="profile-tab-wallet" data-profile-tab-panel="wallet">
