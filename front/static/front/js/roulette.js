@@ -772,7 +772,7 @@
 
     const resize = () => {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const width = Math.min(W, Math.max(260, root.clientWidth - 40));
+        const width = Math.min(W, Math.max(260, root.clientWidth));
         canvas.style.width = `${width}px`;
         canvas.style.height = `${Math.round(width * H / W)}px`;
         canvas.width = Math.round(W * dpr);
