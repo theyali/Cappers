@@ -197,6 +197,44 @@ def build_profile_bonus_summary(user) -> dict:
     }
 
 
+def build_bonus_tasks_page_context(user, request=None) -> dict:
+    """Build the SSR context for the daily bonus tasks page."""
+    daily_tasks_card = build_daily_tasks_card(user)
+    tasks = [
+        {
+            **task,
+            "progress_percent": min(
+                100,
+                int((task["current_value"] * 100) / max(1, task["target_value"])),
+            ),
+            "claim_url": reverse(
+                "cabinet:daily_task_claim",
+                kwargs={"task_id": task["id"]},
+            ),
+        }
+        for task in daily_tasks_card["tasks"]
+    ]
+    daily_tasks_card = {
+        **_prepare_daily_tasks_card(daily_tasks_card),
+        "tasks": tasks,
+    }
+
+    return {
+        "page": {
+            "title": "Ежедневные задания — КапперХаб",
+            "heading": "Ежедневные задания",
+            "description": daily_tasks_card["description"],
+            "mobile_nav_label": "Разделы профиля на мобильных устройствах",
+            "profile_nav_label": "Разделы профиля",
+        },
+        "daily_tasks_card": daily_tasks_card,
+        "tasks": tasks,
+        "streak_card": _prepare_streak_card(build_streak_card(user)),
+        "level_progress": _prepare_level_progress(build_level_progress(user)),
+        "recent_gifts": _recent_bonus_events(user),
+    }
+
+
 def build_bonus_center_context(user, request=None) -> dict:
     """Build the complete bonus-center context without template-side data access."""
     recent_gifts, recent_wins = _recent_bonus_content(user)
