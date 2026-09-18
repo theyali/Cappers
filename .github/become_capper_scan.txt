@@ -1,0 +1,5 @@
+=== ROUTE/TEMPLATE PATTERNS ===
+=== ASSET ===
+./front/static/front/img/become_capper.jpg
+./templates/cabinet/capper/become_capper.html
+./.github/become_capper_scan.txt
