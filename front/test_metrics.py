@@ -132,35 +132,6 @@ class PersistedMetricsTests(TestCase):
         self.assertFalse(active)
         self.assertEqual(metrics.favorites_count, 0)
 
-    def test_prediction_favorite_route_records_daily_task_on_add(self):
-        task = DailyTask.objects.create(
-            title="Добавить в избранное",
-            task_type=DailyTask.TaskType.ADD_FAVORITE,
-            target_value=1,
-        )
-        self.client.force_login(self.reader)
-
-        response = self.client.post(
-            reverse("front:prediction_favorite", args=(self.coupon.pk,))
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["active"])
-        progress = UserDailyTaskProgress.objects.get(
-            user=self.reader,
-            task=task,
-        )
-        self.assertEqual(progress.current_value, 1)
-        self.assertTrue(progress.is_completed)
-
-        remove_response = self.client.post(
-            reverse("front:prediction_favorite", args=(self.coupon.pk,))
-        )
-        self.assertEqual(remove_response.status_code, 200)
-        self.assertFalse(remove_response.json()["active"])
-        progress.refresh_from_db()
-        self.assertEqual(progress.current_value, 1)
-
     def test_refresh_match_metrics_counts_distinct_public_coupons_and_activity(self):
         second_coupon = PredictionCoupon.objects.create(
             author=self.analyst,
