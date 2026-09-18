@@ -830,7 +830,6 @@ class BonusEvent(models.Model):
         "Тип события",
         max_length=24,
         choices=EventType.choices,
-        db_index=True,
     )
     title = models.CharField("Название", max_length=160)
     description = models.CharField("Описание", max_length=255, blank=True)
@@ -839,7 +838,7 @@ class BonusEvent(models.Model):
     spin_delta = models.BigIntegerField("Изменение попыток", default=0)
     related_model = models.CharField("Связанная модель", max_length=100, blank=True)
     related_id = models.PositiveBigIntegerField("ID связанного объекта", null=True, blank=True)
-    created_at = models.DateTimeField("Создано", auto_now_add=True, db_index=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
 
     class Meta:
         verbose_name = "Бонусное событие"
@@ -855,7 +854,7 @@ class BonusEvent(models.Model):
                 name="bonus_event_type_time_idx",
             ),
             models.Index(
-                fields=("related_model", "related_id", "event_type"),
+                fields=("user", "related_model", "related_id", "event_type"),
                 name="bonus_event_related_idx",
             ),
         ]
