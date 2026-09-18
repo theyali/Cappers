@@ -174,26 +174,26 @@ def build_profile_bonus_summary(user) -> dict:
     streak_card = _prepare_streak_card(build_streak_card(user))
 
     return {
-        "daily_tasks_card": {
-            **daily_tasks_card,
-            "title": "Быстрые задания",
-            "tasks": daily_tasks_card["tasks"][:3],
-            "url": reverse("cabinet:bonus_tasks"),
-            "link_label": "Открыть ежедневные задания",
-        },
+        "quick_tasks": daily_tasks_card["tasks"][:3],
+        "quick_tasks_title": "Быстрые задания",
+        "tasks_summary_label": daily_tasks_card["summary_label"],
+        "tasks_url": reverse("cabinet:bonus_tasks"),
+        "tasks_link_label": "Открыть ежедневные задания",
+        "tasks_arrow_label": daily_tasks_card["arrow_label"],
         "level_progress": {
             **level_progress,
             "title": "Прогресс уровня",
             "star_label": "★",
-            "url": reverse("cabinet:bonus_levels"),
             "link_label": "Открыть уровни",
             "arrow_label": "→",
         },
-        "streak_card": {
-            **streak_card,
-            "url": reverse("cabinet:bonuses"),
-            "link_label": "Открыть бонусный центр",
-        },
+        "levels_url": reverse("cabinet:bonus_levels"),
+        "streak_card": streak_card,
+        "bonuses_url": reverse("cabinet:bonuses"),
+        "bonuses_label": "Все бонусы",
+        "notifications_url": reverse("notifications:center"),
+        "notifications_label": "Настроить уведомления",
+        "link_arrow_label": "→",
     }
 
 
