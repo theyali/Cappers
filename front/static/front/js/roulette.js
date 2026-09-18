@@ -1,10 +1,9 @@
 (() => {
     const root = document.querySelector('[data-roulette-root]');
     const canvas = root?.querySelector('[data-roulette-canvas]');
-    const recentWinsBlock = document.querySelector('[data-roulette-recent]');
-    const recentWinSlots = Array.from(document.querySelectorAll('[data-roulette-recent-slot]')).slice(0, 5);
     const recentHistoryBlock = document.querySelector('[data-roulette-history]');
     const recentHistorySlots = Array.from(document.querySelectorAll('[data-roulette-history-slot]')).slice(0, 3);
+    const bonusEventsList = document.querySelector('[data-bonus-events-list]');
     const countdownNodes = Array.from(document.querySelectorAll('[data-bonus-countdown]'));
     const statusNodes = Array.from(document.querySelectorAll('[data-bonus-status]'));
     if (!root || !canvas) return;
@@ -237,14 +236,12 @@
     };
 
     const renderRecentWins = () => {
-        renderRecentWinSlots(recentWinSlots);
         renderRecentWinSlots(recentHistorySlots);
 
-        [recentWinsBlock, recentHistoryBlock].forEach((block) => {
-            if (!block) return;
-            block.setAttribute('aria-busy', 'false');
-            window.CappersSkeleton?.ready(block);
-        });
+        if (recentHistoryBlock) {
+            recentHistoryBlock.setAttribute('aria-busy', 'false');
+            window.CappersSkeleton?.ready(recentHistoryBlock);
+        }
     };
 
     const appendRecentWin = (payload) => {
@@ -262,8 +259,67 @@
         recentWins = [
             item,
             ...recentWins.filter((entry) => entry.spinId !== item.spinId),
-        ].slice(0, recentWinSlots.length || 5);
+        ].slice(0, recentHistorySlots.length || 3);
         renderRecentWins();
+    };
+
+    const bonusEventIcon = (eventType) => ({
+        daily_task: '✓',
+        streak: '🔥',
+        roulette: '🎁',
+        referral: '👥',
+    }[eventType] || '🎁');
+
+    const bonusEventSubtitle = (event) => {
+        const description = String(event?.description || '').trim();
+        if (description) return description;
+
+        const rewards = [];
+        const coinDelta = Number(event?.coin_delta) || 0;
+        const xpDelta = Number(event?.xp_delta) || 0;
+        const spinDelta = Number(event?.spin_delta) || 0;
+        if (coinDelta) rewards.push(`+${coinDelta} монет`);
+        if (xpDelta) rewards.push(`+${xpDelta} XP`);
+        if (spinDelta) rewards.push(`+${spinDelta} попыток`);
+        return rewards.join(' · ') || 'Бонус получен';
+    };
+
+    const appendBonusEvent = (event) => {
+        const eventId = Number(event?.id) || 0;
+        if (!bonusEventsList || !eventId) return;
+
+        bonusEventsList.querySelector('[data-bonus-event-empty]')?.remove();
+        bonusEventsList.querySelector(`[data-bonus-event-id="${eventId}"]`)?.remove();
+
+        const row = document.createElement('article');
+        row.className = 'bonus-gift-row';
+        row.dataset.bonusEventRow = '';
+        row.dataset.bonusEventId = String(eventId);
+
+        const icon = document.createElement('span');
+        icon.className = 'bonus-gift-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = bonusEventIcon(event.event_type);
+
+        const copy = document.createElement('span');
+        copy.className = 'bonus-gift-copy';
+
+        const title = document.createElement('strong');
+        title.textContent = String(event.title || '').trim() || 'Подарок';
+
+        const subtitle = document.createElement('span');
+        subtitle.textContent = bonusEventSubtitle(event);
+
+        const time = document.createElement('small');
+        time.textContent = formatRecentWinTime(event.created_at);
+
+        copy.append(title, subtitle, time);
+        row.append(icon, copy);
+        bonusEventsList.prepend(row);
+
+        Array.from(bonusEventsList.querySelectorAll('[data-bonus-event-row]'))
+            .slice(5)
+            .forEach((item) => item.remove());
     };
 
     const nextSpinRemainingMs = () => {
@@ -396,7 +452,6 @@
 
         if (withSkeleton) {
             window.CappersSkeleton?.loading(root);
-            window.CappersSkeleton?.loading(recentWinsBlock);
             window.CappersSkeleton?.loading(recentHistoryBlock);
             canvas.setAttribute('aria-busy', 'true');
         }
@@ -417,7 +472,6 @@
             if (withSkeleton) {
                 canvas.setAttribute('aria-busy', 'false');
                 window.CappersSkeleton?.ready(root);
-                window.CappersSkeleton?.ready(recentWinsBlock);
                 window.CappersSkeleton?.ready(recentHistoryBlock);
             }
         }
@@ -1034,6 +1088,7 @@
             await animateWinCard(payload, winner);
             spinPhase = 'showing_result';
             appendRecentWin(payload);
+            appendBonusEvent(payload.bonus_event);
             draw();
         } catch (error) {
             spinPhase = 'idle';
