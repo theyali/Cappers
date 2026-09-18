@@ -1,6 +1,8 @@
 from django.middleware.csrf import get_token
 from django.urls import reverse
 
+from .daily_tasks import daily_tasks_for_user
+
 
 DEFAULT_LEVELS_PREVIEW = (
     {"level": 1, "title": "Новичок"},
@@ -20,6 +22,9 @@ DEFAULT_PROGRESS_STEPS = (
 
 def build_bonus_center_context(user, request=None) -> dict:
     """Build the bonus-center page context without template-side data access."""
+    daily_tasks = list(daily_tasks_for_user(user))
+    daily_tasks_total = len(daily_tasks)
+
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
         "roulette_spin_url": reverse("cabinet:roulette_spin"),
@@ -34,8 +39,8 @@ def build_bonus_center_context(user, request=None) -> dict:
         "daily_tasks_card": {
             "title": "Ежедневные задания",
             "completed": 0,
-            "total": 4,
-            "progress_slots": tuple(range(4)),
+            "total": daily_tasks_total,
+            "progress_slots": tuple(range(daily_tasks_total)),
             "description": "Выполняйте простые задания и получайте дополнительные бонусы.",
         },
         "streak_card": {
