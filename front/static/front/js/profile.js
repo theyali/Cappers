@@ -353,6 +353,98 @@
 
 (() => {
     const page = document.querySelector(".profile-page");
+    const input = document.getElementById("profileCoverInput");
+    const button = document.getElementById("profileCoverButton");
+    const status = document.getElementById("profileCoverStatus");
+    const hero = document.getElementById("profileHero");
+
+    if (!page || !input || !button || !status || !hero) return;
+
+    const uploadUrl = page.dataset.coverUploadUrl;
+    if (!uploadUrl) return;
+
+    const getCookie = (name) => {
+        const prefix = `${name}=`;
+        return document.cookie
+            .split(";")
+            .map((part) => part.trim())
+            .find((part) => part.startsWith(prefix))
+            ?.slice(prefix.length) || "";
+    };
+
+    const showStatus = (message, isError = false) => {
+        status.textContent = message;
+        status.classList.toggle("is-error", isError);
+    };
+
+    const replaceCover = (url) => {
+        let image = document.getElementById("profileHeroCoverImage");
+        if (!image) {
+            image = document.createElement("img");
+            image.id = "profileHeroCoverImage";
+            image.className = "profile-hero-cover";
+            image.alt = "";
+            image.width = 1200;
+            image.height = 360;
+            image.decoding = "async";
+            hero.prepend(image);
+        }
+        image.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+    };
+
+    button.addEventListener("click", () => {
+        if (!button.disabled) input.click();
+    });
+
+    input.addEventListener("change", async () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowed.includes(file.type)) {
+            showStatus("Разрешены только JPG, PNG и WebP.", true);
+            input.value = "";
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showStatus("Файл больше 5 МБ.", true);
+            input.value = "";
+            return;
+        }
+
+        const data = new FormData();
+        data.append("cover_image", file);
+        button.disabled = true;
+        showStatus("Загружаем обложку…");
+
+        try {
+            const response = await fetch(uploadUrl, {
+                method: "POST",
+                body: data,
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) {
+                throw new Error(payload.error || "Не удалось загрузить обложку.");
+            }
+
+            replaceCover(payload.cover_url);
+            showStatus(payload.message || "Обложка профиля обновлена.");
+        } catch (error) {
+            showStatus(error.message || "Ошибка загрузки.", true);
+        } finally {
+            button.disabled = false;
+            input.value = "";
+        }
+    });
+})();
+
+(() => {
+    const page = document.querySelector(".profile-page");
     if (!page) return;
 
     const escapeHtml = (value) => String(value ?? "")

@@ -96,6 +96,11 @@ class AnalystProfile(models.Model):
         blank=True,
         null=True,
     )
+    cover_image = models.ImageField(
+        "Обложка профиля",
+        upload_to="profile_covers/%Y/%m/",
+        blank=True,
+    )
     bio = models.TextField("О себе", max_length=2000, blank=True)
     specialization = models.CharField("Специализация", max_length=220, blank=True)
     favorite_sports = models.CharField("Любимые виды спорта", max_length=320, blank=True)

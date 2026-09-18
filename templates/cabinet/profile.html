@@ -5,7 +5,7 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="profile-page matches-page container" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}">
+<section class="profile-page matches-page container" data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}" data-cover-upload-url="{% url 'cabinet:cover_upload' %}">
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 
@@ -17,7 +17,18 @@
             </div>
 
             <div class="profile-dashboard-head">
-                <div class="profile-hero{% if not request.user.is_analyst %} is-reader{% endif %}">
+                <div class="profile-hero{% if not request.user.is_analyst %} is-reader{% endif %}" id="profileHero">
+                    {% if analyst_profile and analyst_profile.cover_image %}
+                        <img
+                            class="profile-hero-cover"
+                            id="profileHeroCoverImage"
+                            src="{{ analyst_profile.cover_image.url }}"
+                            alt=""
+                            width="1200"
+                            height="360"
+                            decoding="async"
+                        >
+                    {% endif %}
                     <div class="profile-identity">
                         <div class="profile-avatar-wrap">
                             <div class="profile-avatar" id="profileAvatar" data-skeleton-image>
@@ -68,6 +79,32 @@
                                     Ваш профиль на КапперХаб.
                                 {% endif %}
                             </p>
+
+                            {% if request.user.is_analyst %}
+                                {% if request.user.is_vip %}
+                                    <div class="profile-cover-tools">
+                                        <button class="profile-cover-button" id="profileCoverButton" type="button">
+                                            Сменить обложку
+                                        </button>
+                                        <input
+                                            class="avatar-upload-input"
+                                            id="profileCoverInput"
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                        >
+                                        <span class="profile-cover-upload-status" id="profileCoverStatus" aria-live="polite"></span>
+                                    </div>
+                                {% else %}
+                                    <div class="profile-cover-locked">
+                                        <span class="profile-cover-lock" aria-hidden="true">🔒</span>
+                                        <span class="profile-cover-lock-copy">
+                                            <strong>Обложка профиля</strong>
+                                            <small>Добавьте персональную обложку после подключения VIP.</small>
+                                        </span>
+                                        <a href="{% url 'cabinet:vip_purchase' %}">Стать VIP</a>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
 
                             <div class="profile-hero-actions">
                                 <div class="profile-hero-meta" aria-label="Краткая статистика профиля">
