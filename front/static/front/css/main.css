@@ -37100,7 +37100,7 @@ padding:40px 0px;
     min-width: 0;
     min-height: 386px;
     display: grid;
-    grid-template-columns: minmax(270px, .82fr) minmax(390px, 1.18fr);
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 520px);
     align-items: center;
     gap: 8px;
     padding: 20px 22px 20px 26px;
