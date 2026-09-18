@@ -6,14 +6,26 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
+permissions:
+  contents: write
+
 jobs:
   inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Find existing become-capper implementation
+      - name: Capture existing implementation
         run: |
-          echo "=== ROUTE/TEMPLATE PATTERNS ==="
-          rg -n "become.?capper|capper-landing|Стать каппером|Как стать каппером" templates cabinet front pages -g '!*.pyc' || true
-          echo "=== ASSET ==="
-          find front static templates -iname 'become_capper.jpg' -o -iname '*become*capper*' 2>/dev/null | head -100
+          {
+            echo "=== ROUTE/TEMPLATE PATTERNS ==="
+            rg -n "become.?capper|capper-landing|Стать каппером|Как стать каппером" templates cabinet front pages -g '!*.pyc' || true
+            echo "=== ASSET ==="
+            find . -iname 'become_capper.jpg' -o -iname '*become*capper*' 2>/dev/null | head -100
+          } > .github/become_capper_scan.txt
+      - name: Commit scan output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/become_capper_scan.txt
+          git commit -m "Capture become capper implementation paths"
+          git push origin HEAD:main
