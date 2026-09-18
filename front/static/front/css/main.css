@@ -38219,3 +38219,28 @@ padding:40px 0px;
     background: var(--yellow);
 }
 
+/* Profile bonus summary */
+.profile-bonus-summary {
+    display: grid;
+    gap: 12px;
+}
+
+.profile-bonus-summary .bonus-dashboard-grid {
+    padding-bottom: 0;
+}
+
+.profile-bonus-summary .bonus-dashboard-card,
+.profile-bonus-summary .bonus-side-card {
+    min-height: 160px;
+}
+
+.profile-bonus-summary-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-bonus-summary-actions .bonus-notification-settings-link {
+    min-width: 0;
+}
+
