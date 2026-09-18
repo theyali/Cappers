@@ -183,15 +183,6 @@
 
 (() => {
     if (!document.querySelector(".profile-page")) return;
-    if (document.querySelector("script[data-profile-referrals-script]")) return;
-    const script = document.createElement("script");
-    script.src = "/static/front/js/profile-referrals.js";
-    script.dataset.profileReferralsScript = "true";
-    document.body.appendChild(script);
-})();
-
-(() => {
-    if (!document.querySelector(".profile-page")) return;
     if (document.querySelector("script[data-profile-demand-script]")) return;
     const script = document.createElement("script");
     script.src = "/static/front/js/profile-demand.js";
