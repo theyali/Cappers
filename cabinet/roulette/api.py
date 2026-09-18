@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
+from cabinet.models import BonusEvent
 from wallets.services import ensure_coin_wallet
 
 from .errors import RouletteSpinError
@@ -134,6 +135,43 @@ def _serialize_recent_win(request, spin: RouletteSpin) -> dict:
     }
 
 
+def _serialize_bonus_event(event: BonusEvent | None) -> dict | None:
+    if event is None:
+        return None
+    return {
+        "id": event.pk,
+        "event_type": event.event_type,
+        "title": event.title,
+        "description": event.description,
+        "xp_delta": event.xp_delta,
+        "coin_delta": event.coin_delta,
+        "spin_delta": event.spin_delta,
+        "created_at": _iso(event.created_at),
+    }
+
+
+def _recent_roulette_wins(request, user) -> list[dict]:
+    events = list(
+        BonusEvent.objects.filter(
+            user=user,
+            event_type=BonusEvent.EventType.ROULETTE,
+            related_model=RouletteSpin._meta.label_lower,
+            related_id__isnull=False,
+        ).order_by("-created_at", "-id")[:RECENT_WINS_LIMIT]
+    )
+    spins = {
+        spin.pk: spin
+        for spin in RouletteSpin.objects.filter(
+            pk__in=[event.related_id for event in events]
+        ).select_related("prize")
+    }
+    return [
+        _serialize_recent_win(request, spins[event.related_id])
+        for event in events
+        if event.related_id in spins
+    ]
+
+
 @never_cache
 @require_GET
 def roulette_state(request):
@@ -148,12 +186,7 @@ def roulette_state(request):
     roulette_settings = RouletteSettings.load()
     state = get_user_roulette_state(request.user, now=now)
     sectors = get_available_roulette_prizes(user=request.user, now=now)
-    recent_spins = (
-        RouletteSpin.objects.filter(user=request.user)
-        .exclude(reward_type=RoulettePrize.RewardType.NOTHING)
-        .select_related("prize")
-        .order_by("-spun_at", "-id")[:RECENT_WINS_LIMIT]
-    )
+    recent_wins = _recent_roulette_wins(request, request.user)
 
     return JsonResponse(
         {
@@ -166,9 +199,7 @@ def roulette_state(request):
             "last_spin_at": _iso(state.last_spin_at),
             "total_spins": state.total_spins,
             "sectors": [_serialize_sector(request, prize) for prize in sectors],
-            "recent_wins": [
-                _serialize_recent_win(request, spin) for spin in recent_spins
-            ],
+            "recent_wins": recent_wins,
         }
     )
 
@@ -221,6 +252,13 @@ def roulette_spin(request):
     if spin.reward_type == RoulettePrize.RewardType.COINS:
         reward_result["coin_balance"] = coin_balance
 
+    bonus_event = BonusEvent.objects.filter(
+        user=request.user,
+        event_type=BonusEvent.EventType.ROULETTE,
+        related_model=spin._meta.label_lower,
+        related_id=spin.pk,
+    ).first()
+
     return JsonResponse(
         {
             "ok": True,
@@ -236,5 +274,6 @@ def roulette_spin(request):
             "available_spins": spin.attempts_after,
             "next_spin_at": _iso(spin.next_spin_at),
             "server_time": _iso(timezone.now()),
+            "bonus_event": _serialize_bonus_event(bonus_event),
         }
     )
