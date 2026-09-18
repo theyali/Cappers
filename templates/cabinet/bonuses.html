@@ -69,7 +69,21 @@
                                 <span{% if slot.is_completed %} class="is-done"{% endif %}></span>
                             {% endfor %}
                         </div>
-                        {% if daily_tasks_card.status_label %}
+                        {% if daily_tasks_card.claim_url %}
+                            <div class="bonus-task-actions">
+                                <button
+                                    type="button"
+                                    class="bonus-task-claim"
+                                    data-daily-task-claim
+                                    data-claim-url="{{ daily_tasks_card.claim_url }}"
+                                    data-pending-label="{{ daily_tasks_card.claim_pending_label }}"
+                                    data-error-label="{{ daily_tasks_card.claim_error_label }}"
+                                >
+                                    <span data-daily-task-claim-label>{{ daily_tasks_card.claim_button_label }}</span>
+                                </button>
+                                <small data-daily-task-claim-status aria-live="polite"></small>
+                            </div>
+                        {% elif daily_tasks_card.status_label %}
                             <strong class="bonus-task-card-status is-{{ daily_tasks_card.status }}">
                                 {{ daily_tasks_card.status_label }}
                             </strong>
