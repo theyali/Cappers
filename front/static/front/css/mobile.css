@@ -4367,7 +4367,7 @@ body.expert-public-details-open {
     }
 
     .cabinet-bonuses-page .bonus-wheel {
-        width: min(100%, 430px);
+        width: min(100%, 330px);
     }
 
     .cabinet-bonuses-page .bonus-dashboard-card {
@@ -4429,7 +4429,7 @@ body.expert-public-details-open {
     }
 
     .cabinet-bonuses-page .bonus-wheel {
-        width: min(100%, 460px);
+        width: min(100%, 390px);
     }
 
     .cabinet-bonuses-page .bonus-dashboard-grid {
@@ -4501,7 +4501,7 @@ body.expert-public-details-open {
     }
 
     .cabinet-bonuses-page .bonus-wheel {
-        width: min(100%, 420px);
+        width: min(100%, 360px);
         justify-self: center;
     }
 
