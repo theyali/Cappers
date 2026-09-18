@@ -237,11 +237,7 @@
 
     const renderRecentWins = () => {
         renderRecentWinSlots(recentHistorySlots);
-
-        if (recentHistoryBlock) {
-            recentHistoryBlock.setAttribute('aria-busy', 'false');
-            window.CappersSkeleton?.ready(recentHistoryBlock);
-        }
+        if (recentHistoryBlock) recentHistoryBlock.setAttribute('aria-busy', 'false');
     };
 
     const appendRecentWin = (payload) => {
@@ -367,6 +363,8 @@
             status = 'Доступных попыток пока нет';
         }
 
+        if (transientError) status = transientError;
+
         countdownNodes.forEach((node) => {
             node.textContent = countdown;
         });
@@ -418,10 +416,12 @@
     });
 
     const prepareImages = async () => {
-        const loaded = await Promise.all(prizes.map((item) => loadImage(item.icon)));
-        loaded.forEach((image, index) => {
-            if (image && prizes[index]?.icon) images.set(prizes[index].icon, image);
-        });
+        const sectorIcons = prizes.map((item) => item.icon);
+        const sources = [
+            ...sectorIcons,
+            String(root.dataset.rouletteBg || '').trim(),
+        ].filter(Boolean);
+        await Promise.all(sources.map((src) => loadImage(src)));
     };
 
     const applyStatePayload = async (payload) => {
@@ -434,7 +434,10 @@
             ? payload.sectors.slice(0, MAX_SECTORS).map(normalizeSector)
             : [];
         recentWins = Array.isArray(payload.recent_wins)
-            ? payload.recent_wins.map(normalizeRecentWin).filter((item) => item.spinId).slice(0, 5)
+            ? payload.recent_wins
+                .map(normalizeRecentWin)
+                .filter((item) => item.spinId)
+                .slice(0, recentHistorySlots.length || 3)
             : [];
         stateLoaded = true;
         stateError = '';
@@ -799,11 +802,6 @@
         ctx.restore();
     };
 
-    const drawStatusMessage = () => {
-        if (!transientError || spinPhase === 'showing_result') return;
-        text(clampText(transientError, 72), cx, H - 50, 14, colors.yellow, 700);
-    };
-
     const draw = () => {
         ctx.clearRect(0, 0, W, H);
         drawRing();
@@ -811,7 +809,6 @@
         drawCenter();
         drawPointer();
         drawWinCard();
-        drawStatusMessage();
         if (spinPhase === 'requesting') {
             canvas.style.cursor = 'wait';
         } else if (spinPhase === 'animating') {
@@ -1026,12 +1023,14 @@
 
     const showTransientError = (message) => {
         transientError = String(message || 'Не удалось выполнить прокрутку.');
+        renderRouletteMeta();
+        updateCanvasA11y();
         if (transientErrorTimer) window.clearTimeout(transientErrorTimer);
         transientErrorTimer = window.setTimeout(() => {
             transientError = '';
-            draw();
+            renderRouletteMeta();
+            updateCanvasA11y();
         }, 3500);
-        draw();
     };
 
     const refreshAfterCountdown = async () => {
@@ -1106,7 +1105,6 @@
     const tickCountdown = () => {
         if (!stateLoaded) return;
         renderRouletteMeta();
-        draw();
         refreshAfterCountdown();
     };
 
