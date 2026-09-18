@@ -35,7 +35,7 @@ urlpatterns = [
     path("bonuses/", bonus_views.bonuses, name="bonuses"),
     path("bonuses/tasks/", bonus_views.daily_tasks, name="bonus_tasks"),
     path("bonuses/levels/", bonus_views.bonus_levels, name="bonus_levels"),
-    path("referrals/", bonus_views.bonuses, name="referrals"),
+    path("referrals/", referral_views.referrals, name="referrals"),
     path(
         "bonuses/daily-tasks/<int:task_id>/claim/",
         bonus_views.daily_task_claim,
