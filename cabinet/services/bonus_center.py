@@ -89,11 +89,58 @@ def _recent_bonus_content(user) -> tuple[list[dict], list[dict]]:
     return _recent_bonus_events(user), _recent_roulette_wins(user)
 
 
+def _prepare_daily_tasks_card(card: dict) -> dict:
+    claimable_task = next(
+        (task for task in card["tasks"] if task["can_claim"]),
+        None,
+    )
+    return {
+        **card,
+        "summary_label": f"{card['completed']} из {card['total']} выполнено",
+        "progress_aria_label": "Прогресс ежедневных заданий",
+        "arrow_label": "›",
+        "claim_url": (
+            reverse("cabinet:daily_task_claim", args=(claimable_task["id"],))
+            if claimable_task is not None
+            else ""
+        ),
+        "claim_button_label": (
+            "Получить"
+            if card["claimable_count"] <= 1
+            else f"Получить · {card['claimable_count']}"
+        ),
+        "claim_pending_label": "Получаем…",
+        "claim_error_label": "Не удалось получить награду.",
+    }
+
+
+def _prepare_level_progress(progress: dict) -> dict:
+    percent = max(0, min(100, int(progress["progress_percent"])))
+    progress_length = round(302 * percent / 100)
+    return {
+        **progress,
+        "steps": DEFAULT_PROGRESS_STEPS,
+        "badge_label": f"Ур. {progress['level']}",
+        "aria_label": f"Прогресс уровня {percent}%",
+        "target_label": (
+            f"из {progress['next_level_xp']}"
+            if progress["next_level_xp"]
+            else "макс."
+        ),
+        "status_label": (
+            f"{progress['xp_to_next_level']} XP до следующего уровня"
+            if progress["next_level_xp"]
+            else "Максимальный уровень"
+        ),
+        "progress_dasharray": f"{progress_length} 302",
+    }
+
+
 def build_bonus_reward_update_context(user) -> dict:
     roulette_state = get_user_roulette_state(user)
     return {
-        "daily_tasks_card": build_daily_tasks_card(user),
-        "level_progress": build_level_progress(user),
+        "daily_tasks_card": _prepare_daily_tasks_card(build_daily_tasks_card(user)),
+        "level_progress": _prepare_level_progress(build_level_progress(user)),
         "recent_gifts": _recent_bonus_events(user),
         "available_spins": roulette_state.available_spins,
     }
@@ -119,30 +166,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         "is_countdown": True,
         "arrow_label": "›",
     }
-    claimable_task = next(
-        (task for task in daily_tasks_card["tasks"] if task["can_claim"]),
-        None,
-    )
-    daily_tasks_card = {
-        **daily_tasks_card,
-        "summary_label": (
-            f"{daily_tasks_card['completed']} из {daily_tasks_card['total']} выполнено"
-        ),
-        "progress_aria_label": "Прогресс ежедневных заданий",
-        "arrow_label": "›",
-        "claim_url": (
-            reverse("cabinet:daily_task_claim", args=(claimable_task["id"],))
-            if claimable_task is not None
-            else ""
-        ),
-        "claim_button_label": (
-            "Получить"
-            if daily_tasks_card["claimable_count"] <= 1
-            else f"Получить · {daily_tasks_card['claimable_count']}"
-        ),
-        "claim_pending_label": "Получаем…",
-        "claim_error_label": "Не удалось получить награду.",
-    }
+    daily_tasks_card = _prepare_daily_tasks_card(daily_tasks_card)
     streak_card = {
         **streak_card,
         "days_aria_label": "Дни серии",
@@ -165,22 +189,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         }
         for level in level_progress["levels_preview"]
     ]
-    level_progress = {
-        **level_progress,
-        "steps": DEFAULT_PROGRESS_STEPS,
-        "badge_label": f"Ур. {level_progress['level']}",
-        "aria_label": f"Прогресс уровня {level_progress['progress_percent']}%",
-        "target_label": (
-            f"из {level_progress['next_level_xp']}"
-            if level_progress["next_level_xp"]
-            else "макс."
-        ),
-        "status_label": (
-            f"{level_progress['xp_to_next_level']} XP до следующего уровня"
-            if level_progress["next_level_xp"]
-            else "Максимальный уровень"
-        ),
-    }
+    level_progress = _prepare_level_progress(level_progress)
 
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
