@@ -8,6 +8,7 @@ from .models import DailyTask
 from .services.bonus_center import (
     build_bonus_center_context,
     build_bonus_reward_update_context,
+    build_bonus_tasks_page_context,
 )
 from .services.daily_tasks import claim_daily_task_reward, record_daily_task_action
 
@@ -23,6 +24,19 @@ def bonuses(request):
         }
     )
     return render(request, "cabinet/bonuses.html", context)
+
+
+@login_required
+def daily_tasks(request):
+    record_daily_task_action(request.user, DailyTask.TaskType.DAILY_LOGIN)
+    context = build_bonus_tasks_page_context(request.user, request=request)
+    context.update(
+        {
+            "active_tab": "bonus_tasks",
+            "page_class": "cabinet-bonuses-page cabinet-bonus-tasks-page",
+        }
+    )
+    return render(request, "cabinet/bonus_tasks.html", context)
 
 
 @login_required
