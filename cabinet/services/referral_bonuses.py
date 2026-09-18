@@ -553,6 +553,8 @@ def build_referrals_page_context(user, request=None) -> dict:
         "bonus_settings": bonus_settings,
         "bonus_cards": bonus_cards,
         "bonus_steps": bonus_cards,
+        "recent_referrals": recent_visits[:8],
+        "recent_bonuses": recent_bonus_events[:8],
         "recent_visits": recent_visits,
         "recent_bonus_events": recent_bonus_events,
     }
