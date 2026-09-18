@@ -37319,8 +37319,23 @@ padding:40px 0px;
     background: #3a3a3e;
 }
 
-.cabinet-bonuses-page .bonus-task-progress span:first-child {
+.cabinet-bonuses-page .bonus-task-progress span.is-done {
     background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-task-card-status {
+    width: fit-content;
+    color: #a7a7aa;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cabinet-bonuses-page .bonus-task-card-status.is-claim {
+    color: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-task-card-status.is-completed {
+    color: var(--blue);
 }
 
 .cabinet-bonuses-page .bonus-streak-days {
