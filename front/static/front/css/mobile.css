@@ -4837,6 +4837,12 @@ body.expert-public-details-open {
 
 
 /* Promo banner size variants */
+@media (max-width: 1180px) {
+    .page-promo-banner.promo-banner {
+        min-height: 0;
+    }
+}
+
 @media (max-width: 760px) {
     .promo-banner--sidebar_small {
         height: 150px;
