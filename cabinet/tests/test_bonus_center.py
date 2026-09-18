@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import (
@@ -224,3 +225,72 @@ class BonusCenterServiceTests(TestCase):
         coin_wallet = CoinWallet.objects.get(user=referrer)
         self.assertEqual(xp_state.xp, 10)
         self.assertEqual(coin_wallet.balance, 25)
+
+
+    def test_daily_task_claim_endpoint_returns_updated_bonus_state_once(self):
+        task = DailyTask.objects.create(
+            title="Забрать награду",
+            task_type=DailyTask.TaskType.DAILY_LOGIN,
+            target_value=1,
+            reward_xp=15,
+            reward_coins=20,
+            reward_spins=1,
+        )
+        UserDailyTaskProgress.objects.create(
+            user=self.user,
+            task=task,
+            progress_date=timezone.localdate(),
+            current_value=1,
+            is_completed=True,
+            completed_at=timezone.now(),
+        )
+        self.client.force_login(self.user)
+        url = reverse("cabinet:daily_task_claim", args=(task.pk,))
+
+        first_response = self.client.post(url)
+        second_response = self.client.post(url)
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        payload = first_response.json()
+        self.assertTrue(payload["ok"])
+        self.assertIn("daily_tasks_card", payload)
+        self.assertIn("level_progress", payload)
+        self.assertIn("recent_gifts", payload)
+        self.assertEqual(payload["available_spins"], 1)
+
+        progress = UserDailyTaskProgress.objects.get(
+            user=self.user,
+            task=task,
+            progress_date=timezone.localdate(),
+        )
+        self.assertIsNotNone(progress.reward_claimed_at)
+        self.assertEqual(
+            BonusEvent.objects.filter(
+                user=self.user,
+                event_type=BonusEvent.EventType.DAILY_TASK,
+                related_model=progress._meta.label_lower,
+                related_id=progress.pk,
+            ).count(),
+            1,
+        )
+        self.assertEqual(UserXpState.objects.get(user=self.user).xp, 15)
+        self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 20)
+        self.assertEqual(
+            UserRouletteState.objects.get(user=self.user).available_spins,
+            1,
+        )
+
+    def test_daily_task_claim_endpoint_requires_post(self):
+        task = DailyTask.objects.create(
+            title="Награда только POST",
+            task_type=DailyTask.TaskType.DAILY_LOGIN,
+            target_value=1,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("cabinet:daily_task_claim", args=(task.pk,))
+        )
+
+        self.assertEqual(response.status_code, 405)
