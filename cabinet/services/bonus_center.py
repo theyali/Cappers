@@ -65,10 +65,10 @@ def _recent_bonus_events(user) -> tuple[list[dict], list[dict]]:
             event_type=BonusEvent.EventType.ROULETTE,
         ).order_by("-created_at", "-id")[:3]
     )
-    return (
-        [_serialize_bonus_event(event) for event in recent_gifts],
-        [_serialize_bonus_event(event) for event in recent_wins],
-    )
+    serialized_gifts = [_serialize_bonus_event(event) for event in recent_gifts]
+    serialized_wins = [_serialize_bonus_event(event) for event in recent_wins]
+    serialized_wins.extend([None] * (3 - len(serialized_wins)))
+    return serialized_gifts, serialized_wins
 
 
 def build_bonus_center_context(user, request=None) -> dict:
