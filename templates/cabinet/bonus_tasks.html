@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <div class="bonus-center-layout">
+            <section class="matches-list-panel profile-page bonus-detail-main">
+                <div class="matches-mobile-scope-panel" aria-label="{{ page.mobile_nav_label }}">
+                    <nav class="matches-tabs" aria-label="{{ page.profile_nav_label }}">
+                        {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                    </nav>
+                </div>
+
+                <header class="bonus-page-head">
+                    <div>
+                        <h1>{{ page.heading }}</h1>
+                        <p>{{ page.description }}</p>
+                    </div>
+                    <strong data-daily-tasks-summary>{{ daily_tasks_card.summary_label }}</strong>
+                </header>
+
+                <div class="bonus-task-list" data-bonus-task-list>
+                    {% for task in tasks %}
+                        <article class="bonus-task-row" data-bonus-task-id="{{ task.id }}">
+                            <div class="bonus-task-copy">
+                                <h2>{{ task.title }}</h2>
+                                {% if task.description %}
+                                    <p>{{ task.description }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="bonus-task-meta">
+                                <span>{{ task.current_value }} / {{ task.target_value }}</span>
+                                {% if task.reward_label %}
+                                    <strong>{{ task.reward_label }}</strong>
+                                {% endif %}
+                            </div>
+
+                            <progress
+                                class="bonus-task-progress-bar"
+                                value="{{ task.current_value }}"
+                                max="{{ task.target_value }}"
+                                aria-label="Прогресс задания {{ task.title }}"
+                            >
+                                {{ task.progress_percent }}%
+                            </progress>
+
+                            <div class="bonus-task-actions">
+                                <button
+                                    type="button"
+                                    class="bonus-task-claim"
+                                    data-bonus-task-claim
+                                    data-url="{{ task.claim_url }}"
+                                    {% if not task.can_claim %}disabled{% endif %}
+                                >
+                                    {{ task.status_label }}
+                                </button>
+                                <small data-bonus-task-status aria-live="polite"></small>
+                            </div>
+                        </article>
+                    {% empty %}
+                        <article class="bonus-task-row">
+                            <div class="bonus-task-copy">
+                                <h2>Заданий пока нет</h2>
+                                <p>Новые ежедневные задания появятся здесь.</p>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <aside class="coupon-sidebar bonus-center-aside" aria-label="Бонусы">
+                <section class="bonus-side-card">
+                    <div class="bonus-card-head">
+                        <span class="bonus-card-icon is-fire" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M13 3c1 4-2 4-1 7 1-2 3-2 4-4 3 3 4 6 3 9a7 7 0 1 1-13-5c1.2-1.7 2.7-2.8 4.5-4.5C10 9 12 10 13 3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <h2>{{ streak_card.title }}</h2>
+                            <span>{{ streak_card.subtitle }}</span>
+                        </div>
+                    </div>
+                    <strong class="bonus-card-value is-yellow">{{ streak_card.days_label }}</strong>
+                    <div class="bonus-streak-days" aria-label="{{ streak_card.days_aria_label }}">
+                        {% for day in streak_card.day_numbers %}
+                            <span{% if day.is_reached %} class="is-reached{% if day.is_current %} is-current{% endif %}"{% endif %}>{{ day.number }}</span>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="bonus-side-card bonus-progress-card">
+                    <div class="bonus-side-head">
+                        <h2>Прогресс уровня</h2>
+                        <span>{{ level_progress.badge_label }}</span>
+                    </div>
+                    <div class="bonus-progress-body">
+                        <div class="bonus-progress-ring" aria-label="{{ level_progress.aria_label }}">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="48"></circle>
+                                <circle class="is-progress {{ level_progress.progress_class }}" cx="60" cy="60" r="48"></circle>
+                            </svg>
+                            <div>
+                                <span>★</span>
+                                <strong>{{ level_progress.xp }}</strong>
+                                <small>{{ level_progress.target_label }}</small>
+                            </div>
+                        </div>
+                        <div class="bonus-progress-steps">
+                            {% for step in level_progress.steps %}
+                                <span{% if step.is_done %} class="is-done"{% endif %}>{{ step.label }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p>{{ level_progress.status_label }}</p>
+                </section>
+
+                <section class="bonus-side-card bonus-gifts-card">
+                    <div class="bonus-side-head">
+                        <h2>Последние подарки</h2>
+                    </div>
+                    <div class="bonus-gifts-list" data-bonus-events-list>
+                        {% for item in recent_gifts %}
+                            <article class="bonus-gift-row" data-bonus-event-row>
+                                <span class="bonus-gift-icon" aria-hidden="true">{{ item.icon }}</span>
+                                <span class="bonus-gift-copy">
+                                    <strong>{{ item.title }}</strong>
+                                    <span>{{ item.subtitle }}</span>
+                                    <small>{{ item.time_label }}</small>
+                                </span>
+                            </article>
+                        {% empty %}
+                            <article class="bonus-gift-row" data-bonus-event-empty>
+                                <span class="bonus-gift-icon" aria-hidden="true">🎁</span>
+                                <span class="bonus-gift-copy">
+                                    <strong>Подарков пока нет</strong>
+                                    <span>Новые бонусы появятся здесь.</span>
+                                </span>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </section>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/roulette.js' %}"></script>
+{% endblock %}
