@@ -1,5 +1,8 @@
 from django.middleware.csrf import get_token
 from django.urls import reverse
+from django.utils import timezone
+
+from cabinet.models import BonusEvent
 
 from .daily_tasks import daily_tasks_for_user
 
@@ -20,10 +23,59 @@ DEFAULT_PROGRESS_STEPS = (
 )
 
 
+BONUS_EVENT_ICONS = {
+    BonusEvent.EventType.DAILY_TASK: "✓",
+    BonusEvent.EventType.STREAK: "🔥",
+    BonusEvent.EventType.ROULETTE: "🎁",
+    BonusEvent.EventType.REFERRAL: "👥",
+}
+
+
+def _bonus_event_subtitle(event) -> str:
+    if event.description:
+        return event.description
+
+    rewards = []
+    if event.coin_delta:
+        rewards.append(f"{event.coin_delta:+d} монет")
+    if event.xp_delta:
+        rewards.append(f"{event.xp_delta:+d} XP")
+    if event.spin_delta:
+        rewards.append(f"{event.spin_delta:+d} попыток")
+    return " · ".join(rewards) or event.get_event_type_display()
+
+
+def _serialize_bonus_event(event) -> dict:
+    created_at = timezone.localtime(event.created_at)
+    return {
+        "title": event.title,
+        "subtitle": _bonus_event_subtitle(event),
+        "time_label": created_at.strftime("%d.%m, %H:%M"),
+        "icon": BONUS_EVENT_ICONS.get(event.event_type, "🎁"),
+    }
+
+
+def _recent_bonus_events(user) -> tuple[list[dict], list[dict]]:
+    recent_gifts = list(
+        BonusEvent.objects.filter(user=user).order_by("-created_at", "-id")[:5]
+    )
+    recent_wins = list(
+        BonusEvent.objects.filter(
+            user=user,
+            event_type=BonusEvent.EventType.ROULETTE,
+        ).order_by("-created_at", "-id")[:3]
+    )
+    return (
+        [_serialize_bonus_event(event) for event in recent_gifts],
+        [_serialize_bonus_event(event) for event in recent_wins],
+    )
+
+
 def build_bonus_center_context(user, request=None) -> dict:
     """Build the bonus-center page context without template-side data access."""
     daily_tasks = list(daily_tasks_for_user(user))
     daily_tasks_total = len(daily_tasks)
+    recent_gifts, recent_wins = _recent_bonus_events(user)
 
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
@@ -55,8 +107,8 @@ def build_bonus_center_context(user, request=None) -> dict:
             "reward_label": "До 1000 монет",
             "description": "Приглашайте друзей и получайте дополнительные бонусы на баланс.",
         },
-        "recent_wins": (None, None, None),
-        "recent_gifts": (None, None, None, None, None),
+        "recent_wins": recent_wins,
+        "recent_gifts": recent_gifts,
         "level_progress": {
             "level": 1,
             "current": 0,
