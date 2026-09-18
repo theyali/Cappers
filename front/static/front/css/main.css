@@ -1,7 +1,3 @@
-/* main.css. Consolidated stylesheet bundle. */
-
-
-/* Legacy source: front/static/front/fonts/fonts.css */
 @font-face {
     font-family: "Manrope Cappers";
     font-style: normal;
@@ -21219,9 +21215,7 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
 /* how-it-works: reader panel */
 [data-how-panel="reader"] {
     gap: 0;
-    padding: 36px 48px 40px;
     border-radius: 0;
-    background: #111315;
 }
 
 [data-how-panel="reader"] .how-reader-start {
