@@ -245,30 +245,47 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
         .order_by("required_xp", "level", "id")
     )
 
+    current_level_number = level_progress["level"]
+    current_progress_percent = max(
+        0,
+        min(100, int(level_progress["progress_percent"])),
+    )
+
     level_items = []
     for level in levels:
         required_xp = int(level.required_xp)
-        is_unlocked = level_progress["xp"] >= required_xp
+        is_current = level.level == current_level_number
+        is_unlocked = level.level < current_level_number
+        is_locked = level.level > current_level_number
+        is_next = (
+            is_locked
+            and level_progress["next_level_xp"] is not None
+            and required_xp == level_progress["next_level_xp"]
+        )
+
+        if is_current:
+            status = "current"
+            status_label = "Текущий"
+            progress_percent = current_progress_percent
+        elif is_unlocked:
+            status = "unlocked"
+            status_label = "Открыт"
+            progress_percent = 100
+        else:
+            status = "locked"
+            status_label = "Впереди"
+            progress_percent = 0
+
+        progress_bucket = min(
+            100,
+            max(0, ((progress_percent + 5) // 10) * 10),
+        )
+
         rewards = []
         if level.reward_coins:
             rewards.append(f"+{level.reward_coins} монет")
         if level.reward_spins:
             rewards.append(f"+{level.reward_spins} попыток")
-
-        is_current = level.level == level_progress["level"]
-        is_next = (
-            level_progress["next_level_xp"] is not None
-            and required_xp == level_progress["next_level_xp"]
-        )
-        if is_current:
-            status = "current"
-            status_label = "Текущий"
-        elif is_unlocked:
-            status = "unlocked"
-            status_label = "Открыт"
-        else:
-            status = "locked"
-            status_label = "Впереди"
 
         level_items.append(
             {
@@ -277,19 +294,14 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
                 "required_xp": required_xp,
                 "required_xp_label": f"{required_xp} XP",
                 "reward_label": " · ".join(rewards) or "Без награды",
-                "is_unlocked": is_unlocked,
                 "is_current": is_current,
+                "is_unlocked": is_unlocked,
+                "is_locked": is_locked,
                 "is_next": is_next,
                 "status": status,
                 "status_label": status_label,
-                "progress_percent": (
-                    100
-                    if is_unlocked or required_xp <= 0
-                    else min(
-                        100,
-                        int((level_progress["xp"] * 100) / required_xp),
-                    )
-                ),
+                "progress_percent": progress_percent,
+                "progress_class": f"is-progress-{progress_bucket}",
             }
         )
 
