@@ -4419,11 +4419,16 @@ body.expert-public-details-open {
 
 @media (max-width: 1120px) {
     .cabinet-bonuses-page .bonus-center-layout {
+        width: 100%;
+        min-height: 0;
+        height: auto;
         grid-column: 1;
         grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
     }
 
     .cabinet-bonuses-page .bonus-center-main {
+        width: 100%;
         overflow: visible;
     }
 
@@ -4442,6 +4447,7 @@ body.expert-public-details-open {
     }
 
     .cabinet-bonuses-page .bonus-center-aside {
+        width: 100%;
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
@@ -4468,7 +4474,9 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 760px) {
-    .cabinet-bonuses-page .bonus-center-layout {
+    .cabinet-bonuses-page .bonus-center-layout,
+    .cabinet-bonuses-page .bonus-center-main,
+    .cabinet-bonuses-page .bonus-center-aside {
         gap: 12px;
     }
 
@@ -4517,7 +4525,7 @@ body.expert-public-details-open {
     }
 
     .cabinet-bonuses-page .bonus-dashboard-card {
-        min-height: 164px;
+        min-height: 154px;
         padding: 15px;
         border-radius: 15px;
     }
@@ -4530,7 +4538,9 @@ body.expert-public-details-open {
         font-size: 23px;
     }
 
+    .cabinet-bonuses-page .bonus-task-progress,
     .cabinet-bonuses-page .bonus-streak-days {
+        width: 100%;
         max-width: 320px;
     }
 
@@ -4559,6 +4569,12 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 420px) {
+    .cabinet-bonuses-page .bonus-center-layout,
+    .cabinet-bonuses-page .bonus-center-main,
+    .cabinet-bonuses-page .bonus-center-aside {
+        gap: 10px;
+    }
+
     .cabinet-bonuses-page .bonus-hero {
         padding: 18px 14px 14px;
     }
@@ -4575,6 +4591,11 @@ body.expert-public-details-open {
         width: 100%;
     }
 
+    .cabinet-bonuses-page .bonus-dashboard-card,
+    .cabinet-bonuses-page .bonus-side-card {
+        padding: 14px;
+    }
+
     .cabinet-bonuses-page .bonus-card-head {
         grid-template-columns: 38px minmax(0, 1fr) auto;
         gap: 9px;
@@ -4588,6 +4609,14 @@ body.expert-public-details-open {
     .cabinet-bonuses-page .bonus-card-arrow {
         width: 31px;
         height: 31px;
+    }
+
+    .cabinet-bonuses-page .bonus-win-row {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .cabinet-bonuses-page .bonus-win-row > time {
+        display: none;
     }
 
     .cabinet-bonuses-page .bonus-progress-body {
