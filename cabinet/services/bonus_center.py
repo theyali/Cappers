@@ -5,6 +5,7 @@ from django.utils import timezone
 from cabinet.models import BonusEvent
 
 from .daily_tasks import build_daily_tasks_card
+from .referral_bonuses import build_referral_bonus_card
 from .streaks import build_streak_card
 from .xp import build_level_progress
 
@@ -70,6 +71,7 @@ def build_bonus_center_context(user, request=None) -> dict:
     recent_gifts, recent_wins = _recent_bonus_events(user)
     daily_tasks_card = build_daily_tasks_card(user)
     streak_card = build_streak_card(user)
+    referral_card = build_referral_bonus_card(user, request=request)
     level_progress = build_level_progress(user)
 
     return {
@@ -85,12 +87,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         },
         "daily_tasks_card": daily_tasks_card,
         "streak_card": streak_card,
-        "referral_card": {
-            "title": "Бонус за рефералов",
-            "subtitle": "Приглашайте друзей",
-            "reward_label": "До 1000 монет",
-            "description": "Приглашайте друзей и получайте дополнительные бонусы на баланс.",
-        },
+        "referral_card": referral_card,
         "recent_wins": recent_wins,
         "recent_gifts": recent_gifts,
         "level_progress": {
