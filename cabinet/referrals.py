@@ -266,21 +266,15 @@ def credit_referral_income(referred_user, source_amount, action: str, *, related
         )
 
     if income_transaction is not None:
-        event_exists = BonusEvent.objects.filter(
+        BonusEvent.objects.get_or_create(
             user=referrer,
             event_type=BonusEvent.EventType.REFERRAL,
             related_model=income_transaction._meta.label_lower,
             related_id=income_transaction.pk,
-        ).exists()
-        if not event_exists:
-            from .services.bonus_rewards import grant_bonus_reward
-
-            grant_bonus_reward(
-                referrer,
-                event_type=BonusEvent.EventType.REFERRAL,
-                title=title_by_action[action],
-                description=f"+{amount} ₽ · {income_note}",
-                related_obj=income_transaction,
-            )
+            defaults={
+                "title": title_by_action[action],
+                "description": f"+{amount} ₽ · {income_note}",
+            },
+        )
 
     return balance
