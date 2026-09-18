@@ -116,6 +116,8 @@ def build_level_progress(user) -> dict:
         for level in preview_levels
     ]
 
+    progress_bucket = min(100, max(0, int(round(progress_percent / 10) * 10)))
+
     return {
         "level": level_number,
         "level_title": current_level.title if current_level is not None else f"Уровень {level_number}",
@@ -123,6 +125,7 @@ def build_level_progress(user) -> dict:
         "current_level_xp": current_level_xp,
         "next_level_xp": next_level_xp,
         "progress_percent": progress_percent,
+        "progress_class": f"is-progress-{progress_bucket}",
         "xp_to_next_level": xp_to_next_level,
         "levels_preview": levels_preview,
     }
