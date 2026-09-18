@@ -119,6 +119,10 @@ def build_bonus_center_context(user, request=None) -> dict:
         "is_countdown": True,
         "arrow_label": "›",
     }
+    claimable_task = next(
+        (task for task in daily_tasks_card["tasks"] if task["can_claim"]),
+        None,
+    )
     daily_tasks_card = {
         **daily_tasks_card,
         "summary_label": (
@@ -126,6 +130,18 @@ def build_bonus_center_context(user, request=None) -> dict:
         ),
         "progress_aria_label": "Прогресс ежедневных заданий",
         "arrow_label": "›",
+        "claim_url": (
+            reverse("cabinet:daily_task_claim", args=(claimable_task["id"],))
+            if claimable_task is not None
+            else ""
+        ),
+        "claim_button_label": (
+            "Получить"
+            if daily_tasks_card["claimable_count"] <= 1
+            else f"Получить · {daily_tasks_card['claimable_count']}"
+        ),
+        "claim_pending_label": "Получаем…",
+        "claim_error_label": "Не удалось получить награду.",
     }
     streak_card = {
         **streak_card,
