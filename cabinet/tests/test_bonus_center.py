@@ -309,3 +309,31 @@ class BonusCenterServiceTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response.url)
+
+
+    def test_bonus_page_shows_claim_button_for_completed_task(self):
+        task = DailyTask.objects.create(
+            title="Получить бонус",
+            task_type=DailyTask.TaskType.ADD_FAVORITE,
+            target_value=1,
+            reward_xp=5,
+        )
+        UserDailyTaskProgress.objects.create(
+            user=self.user,
+            task=task,
+            progress_date=timezone.localdate(),
+            current_value=1,
+            is_completed=True,
+            completed_at=timezone.now(),
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:bonuses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "data-daily-task-claim")
+        self.assertContains(
+            response,
+            reverse("cabinet:daily_task_claim", args=(task.pk,)),
+        )
+        self.assertContains(response, ">Получить</span>")
