@@ -4176,3 +4176,166 @@ body.expert-public-details-open {
         display: none;
     }
 }
+
+/* become-capper benefits responsive */
+@media (max-width: 1180px) {
+    .capper-benefits-top {
+        grid-template-columns: 1fr;
+    }
+
+    .capper-journey {
+        padding: 22px;
+    }
+
+    .capper-profile-demo-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .capper-profile-demo-bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .capper-benefit-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .capper-benefits-cta {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .capper-benefits-cta-note {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .capper-benefits {
+        gap: 14px;
+        padding-top: 14px;
+    }
+
+    .capper-journey,
+    .capper-profile-demo {
+        border-radius: 16px;
+    }
+
+    .capper-journey {
+        padding: 18px 16px;
+    }
+
+    .capper-journey-heading h2,
+    .capper-benefits-reasons h2 {
+        font-size: 22px;
+    }
+
+    .capper-journey-step {
+        grid-template-columns: 42px 48px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .capper-journey-step:not(:last-child)::before {
+        left: 20px;
+    }
+
+    .capper-journey-step:not(:last-child)::after {
+        left: 75px;
+    }
+
+    .capper-journey-number {
+        width: 42px;
+        height: 42px;
+        font-size: 13px;
+    }
+
+    .capper-journey-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .capper-journey-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .capper-journey-step h3 {
+        font-size: 15px;
+    }
+
+    .capper-journey-step p {
+        font-size: 12px;
+    }
+
+    .capper-profile-demo-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .capper-profile-demo-follow {
+        width: 100%;
+        justify-items: stretch;
+    }
+
+    .capper-profile-demo-follow button {
+        width: 100%;
+    }
+
+    .capper-profile-demo-stats,
+    .capper-profile-demo-achievement-list,
+    .capper-benefit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .capper-profile-demo-stats article {
+        min-height: 68px;
+    }
+
+    .capper-profile-demo-achievement-list > span {
+        min-height: 48px;
+    }
+
+    .capper-benefits-cta {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .capper-benefits-cta-copy {
+        align-items: flex-start;
+    }
+
+    .capper-benefits-cta-button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 430px) {
+    .capper-profile-demo-user {
+        align-items: flex-start;
+    }
+
+    .capper-profile-demo-name {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .capper-profile-demo-user p {
+        font-size: 11px;
+    }
+
+    .capper-benefit {
+        align-items: flex-start;
+    }
+
+    .capper-benefits-cta-copy {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .capper-benefits-cta-icon {
+        width: 48px;
+        height: 48px;
+    }
+}
