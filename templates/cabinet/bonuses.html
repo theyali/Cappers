@@ -92,7 +92,7 @@
                         <p>{{ daily_tasks_card.description }}</p>
                     </article>
 
-                    <article class="bonus-dashboard-card">
+                    <article class="bonus-dashboard-card" data-streak-card>
                         <div class="bonus-card-head">
                             <span class="bonus-card-icon is-fire" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none">
@@ -101,12 +101,12 @@
                             </span>
                             <div>
                                 <h2>{{ streak_card.title }}</h2>
-                                <span>{{ streak_card.subtitle }}</span>
+                                <span data-streak-subtitle>{{ streak_card.subtitle }}</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">{{ streak_card.arrow_label }}</span>
                         </div>
-                        <strong class="bonus-card-value is-yellow">{{ streak_card.days_label }}</strong>
-                        <div class="bonus-streak-days" aria-label="{{ streak_card.days_aria_label }}">
+                        <strong class="bonus-card-value is-yellow" data-streak-days-label>{{ streak_card.days_label }}</strong>
+                        <div class="bonus-streak-days" data-streak-days aria-label="{{ streak_card.days_aria_label }}">
                             {% for day in streak_card.day_numbers %}
                                 <span{% if day.is_reached %} class="is-reached{% if day.is_current %} is-current{% endif %}"{% endif %}>
                                     {{ day.number }}
