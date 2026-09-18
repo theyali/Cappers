@@ -212,10 +212,20 @@ def build_referral_bonus_card(user, request=None) -> dict:
         if request is not None
         else referral_path
     )
+    registrations_count = (
+        ReferralVisit.objects.filter(
+            referrer=user,
+            registered_at__isnull=False,
+            visitor__isnull=False,
+        )
+        .values("visitor_id")
+        .distinct()
+        .count()
+    )
 
     return {
         "title": "Бонус за рефералов",
-        "subtitle": "Приглашайте друзей",
+        "subtitle": f"Приглашено: {registrations_count}",
         "reward_label": settings_obj.max_visible_reward_text,
         "description": (
             "Приглашайте друзей и получайте дополнительные бонусы на баланс."
@@ -225,6 +235,8 @@ def build_referral_bonus_card(user, request=None) -> dict:
         "is_enabled": settings_obj.is_enabled,
         "referral_url": referral_url,
         "referral_code": user.referral_code,
+        "registrations_count": registrations_count,
+        "link_label": "Открыть реферальную ссылку",
         "registration_reward_coins": settings_obj.registration_reward_coins,
         "registration_reward_xp": settings_obj.registration_reward_xp,
         "first_topup_reward_coins": settings_obj.first_topup_reward_coins,
