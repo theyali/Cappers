@@ -1,14 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
-from wallets.models import RealBalanceTransaction
-from wallets.services import format_money
-
-from .models import AnalystFollow, AnalystProfile, ReferralVisit, User
+from .models import AnalystFollow, AnalystProfile, User
 from .services import referral_bonuses
 from .referrals import mark_referral_subscription, record_referral_visit
 
@@ -154,87 +150,26 @@ def referrals(request):
 @login_required
 @require_GET
 def referral_stats(request):
-    visits = ReferralVisit.objects.filter(referrer=request.user)
-    authenticated_visitors = (
-        visits.filter(visitor__isnull=False)
-        .values("visitor_id")
-        .distinct()
-        .count()
+    context = referral_bonuses.build_referrals_page_context(
+        request.user,
+        request=request,
     )
-    anonymous_visitors = visits.filter(visitor__isnull=True).count()
-    visitors_count = authenticated_visitors + anonymous_visitors
-    clicks_count = visits.aggregate(total=Sum("visits_count"))["total"] or 0
-    registrations_count = (
-        visits.filter(registered_at__isnull=False, visitor__isnull=False)
-        .values("visitor_id")
-        .distinct()
-        .count()
-    )
-    subscriptions_count = (
-        visits.filter(subscribed_at__isnull=False, visitor__isnull=False)
-        .values("visitor_id")
-        .distinct()
-        .count()
-    )
-    conversion = round(registrations_count / visitors_count * 100, 1) if visitors_count else 0
-
-    recent = []
-    for visit in visits.select_related("visitor")[:40]:
-        visitor = visit.visitor
-        recent.append(
-            {
-                "username": visitor.username if visitor else "",
-                "name": (
-                    visitor.get_full_name().strip() or visitor.username
-                    if visitor
-                    else "Неавторизованный посетитель"
-                ),
-                "visits_count": visit.visits_count,
-                "first_seen_at": visit.first_seen_at.isoformat(),
-                "last_seen_at": visit.last_seen_at.isoformat(),
-                "registered": visit.registered_at is not None,
-                "registered_at": visit.registered_at.isoformat() if visit.registered_at else "",
-                "subscribed": visit.subscribed_at is not None,
-                "subscribed_at": visit.subscribed_at.isoformat() if visit.subscribed_at else "",
-            }
-        )
-
-    referral_url = request.build_absolute_uri(
-        reverse(
-            "front:capper_referral_code",
-            kwargs={
-                "username": request.user.username,
-                "code": request.user.referral_code,
-            },
-        )
-    )
-    referral_income = 0
-    if request.user.is_analyst:
-        referral_income = (
-            RealBalanceTransaction.objects.filter(
-                user=request.user,
-                status=RealBalanceTransaction.Status.COMPLETED,
-                amount__gt=0,
-                kind__in=[
-                    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
-                    RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
-                    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
-                ],
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
     return JsonResponse(
         {
             "ok": True,
-            "referral_url": referral_url,
-            "referral_code": request.user.referral_code,
-            "can_earn_referrals": request.user.is_analyst,
-            "referral_income_display": format_money(referral_income),
-            "visitors_count": visitors_count,
-            "clicks_count": clicks_count,
-            "registrations_count": registrations_count,
-            "subscriptions_count": subscriptions_count,
-            "conversion": conversion,
-            "recent": recent,
+            "referral_url": context["referral_url"],
+            "referral_code": context["referral_code"],
+            "can_earn_referrals": context["can_earn_referrals"],
+            "referral_income_display": context["referral_income_display"],
+            "visitors_count": context["visitors_count"],
+            "clicks_count": context["clicks_count"],
+            "registrations_count": context["registrations_count"],
+            "subscriptions_count": context["subscriptions_count"],
+            "conversion": context["conversion"],
+            "bonus_settings": context["bonus_settings"],
+            "bonus_cards": context["bonus_cards"],
+            "recent": context["recent_visits"],
+            "recent_visits": context["recent_visits"],
+            "recent_bonus_events": context["recent_bonus_events"],
         }
     )
