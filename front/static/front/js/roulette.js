@@ -13,6 +13,9 @@
     const dailyTaskClaimLabel = dailyTaskClaimButton?.querySelector('[data-daily-task-claim-label]');
     const dailyTaskClaimStatus = document.querySelector('[data-daily-task-claim-status]');
     const dailyTaskCardStatus = document.querySelector('[data-daily-task-card-status]');
+    const streakSubtitle = document.querySelector('[data-streak-subtitle]');
+    const streakDaysLabel = document.querySelector('[data-streak-days-label]');
+    const streakDays = document.querySelector('[data-streak-days]');
     const levelProgressRing = document.querySelector('[data-level-progress-ring]');
     const levelProgressCircle = document.querySelector('[data-level-progress-circle]');
     const levelProgressBadge = document.querySelector('[data-level-progress-badge]');
@@ -426,6 +429,41 @@
         }
     };
 
+    const renderStreakCard = (streak) => {
+        if (!streak) return;
+
+        if (streakSubtitle) {
+            streakSubtitle.textContent = String(streak.subtitle || '');
+        }
+        if (streakDaysLabel) {
+            streakDaysLabel.textContent = String(streak.days_label || '');
+        }
+        if (streakDays) {
+            streakDays.setAttribute(
+                'aria-label',
+                String(streak.days_aria_label || ''),
+            );
+            streakDays.replaceChildren();
+            (Array.isArray(streak.day_numbers) ? streak.day_numbers : []).forEach((day) => {
+                const item = document.createElement('span');
+                const classes = [];
+                if (day?.is_reached) classes.push('is-reached');
+                if (day?.is_current) classes.push('is-current');
+                if (classes.length) item.className = classes.join(' ');
+                item.textContent = String(day?.number ?? '');
+                streakDays.append(item);
+            });
+        }
+    };
+
+    const renderBonusDashboardState = (payload) => {
+        if (!payload) return;
+        renderDailyTasksCard(payload.daily_tasks_summary || payload.daily_tasks_card);
+        renderStreakCard(payload.streak);
+        renderLevelProgress(payload.level_progress);
+        renderBonusEvents(payload.recent_gifts);
+    };
+
     const nextSpinRemainingMs = () => {
         if (!nextSpinAt) return 0;
         const target = Date.parse(nextSpinAt);
@@ -551,6 +589,7 @@
         stateError = '';
         countdownRefreshAfterPerfMs = 0;
         renderRecentWins();
+        renderBonusDashboardState(payload);
         renderRouletteMeta();
         await prepareImages();
         publishAttempts();
@@ -1195,7 +1234,14 @@
             await animateWinCard(payload, winner);
             spinPhase = 'showing_result';
             appendRecentWin(payload);
-            appendBonusEvent(payload.bonus_event);
+            if (Array.isArray(payload.recent_gifts)) {
+                renderBonusEvents(payload.recent_gifts);
+            } else {
+                appendBonusEvent(payload.bonus_event);
+            }
+            renderDailyTasksCard(payload.daily_tasks_summary);
+            renderStreakCard(payload.streak);
+            renderLevelProgress(payload.level_progress);
             draw();
         } catch (error) {
             spinPhase = 'idle';
@@ -1259,9 +1305,7 @@
                     || 'Не удалось получить награду.'
                 );
             }
-            renderDailyTasksCard(payload.daily_tasks_card);
-            renderLevelProgress(payload.level_progress);
-            renderBonusEvents(payload.recent_gifts);
+            renderBonusDashboardState(payload);
 
             availableSpins = Math.max(0, Number(payload.available_spins) || 0);
             publishAttempts();
