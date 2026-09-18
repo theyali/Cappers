@@ -610,3 +610,106 @@ class UserVipSubscription(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · VIP до {self.ends_at:%Y-%m-%d %H:%M}"
+
+
+
+class DailyTask(models.Model):
+    class Audience(models.TextChoices):
+        ALL = "all", "Все пользователи"
+        READER = "reader", "Обычные пользователи"
+        CAPPER = "capper", "Капперы"
+
+    class TaskType(models.TextChoices):
+        DAILY_LOGIN = "daily_login", "Ежедневный вход"
+        SPIN_ROULETTE = "spin_roulette", "Прокрутить рулетку"
+        OPEN_FEED = "open_feed", "Открыть ленту"
+        VIEW_PREDICTION = "view_prediction", "Посмотреть прогноз"
+        ADD_FAVORITE = "add_favorite", "Добавить в избранное"
+        FOLLOW_CAPPER = "follow_capper", "Подписаться на каппера"
+        CREATE_PREDICTION = "create_prediction", "Создать прогноз"
+        PUBLISH_PREDICTION = "publish_prediction", "Опубликовать прогноз"
+        ANSWER_COMMENT = "answer_comment", "Ответить на комментарий"
+        UPDATE_PROFILE = "update_profile", "Обновить профиль"
+
+    title = models.CharField("Название", max_length=160)
+    description = models.TextField("Описание", blank=True)
+    audience = models.CharField(
+        "Аудитория",
+        max_length=16,
+        choices=Audience.choices,
+        default=Audience.ALL,
+    )
+    task_type = models.CharField(
+        "Тип задания",
+        max_length=32,
+        choices=TaskType.choices,
+        db_index=True,
+    )
+    target_value = models.PositiveIntegerField("Целевое значение", default=1)
+    reward_xp = models.PositiveIntegerField("Награда XP", default=0)
+    reward_coins = models.PositiveIntegerField("Награда, коинов", default=0)
+    reward_spins = models.PositiveIntegerField("Награда, попыток", default=0)
+    is_active = models.BooleanField("Активно", default=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Ежедневное задание"
+        verbose_name_plural = "Ежедневные задания"
+        ordering = ("order", "id")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(target_value__gt=0),
+                name="daily_task_target_positive",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("is_active", "audience", "order"),
+                name="dailytask_active_aud_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class UserDailyTaskProgress(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="daily_task_progress",
+        verbose_name="Пользователь",
+    )
+    task = models.ForeignKey(
+        DailyTask,
+        on_delete=models.CASCADE,
+        related_name="user_progress",
+        verbose_name="Задание",
+    )
+    progress_date = models.DateField("Дата прогресса")
+    current_value = models.PositiveIntegerField("Текущее значение", default=0)
+    is_completed = models.BooleanField("Выполнено", default=False)
+    completed_at = models.DateTimeField("Выполнено в", null=True, blank=True)
+    reward_claimed_at = models.DateTimeField("Награда получена в", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Прогресс ежедневного задания"
+        verbose_name_plural = "Прогресс ежедневных заданий"
+        ordering = ("-progress_date", "task_id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "task", "progress_date"),
+                name="unique_user_daily_task_progress",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "progress_date"),
+                name="dayprog_user_date_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} · {self.task} · {self.progress_date}"
