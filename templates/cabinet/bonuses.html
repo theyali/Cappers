@@ -219,7 +219,7 @@
                         <div class="bonus-progress-ring" data-level-progress-ring aria-label="{{ level_progress.aria_label }}">
                             <svg viewBox="0 0 120 120" aria-hidden="true">
                                 <circle cx="60" cy="60" r="48"></circle>
-                                <circle class="is-progress" data-level-progress-circle cx="60" cy="60" r="48" stroke-dasharray="{{ level_progress.progress_dasharray }}"></circle>
+                                <circle class="is-progress {{ level_progress.progress_class }}" data-level-progress-circle cx="60" cy="60" r="48"></circle>
                             </svg>
                             <div>
                                 <span>{{ bonus_page.progress.star_label }}</span>
