@@ -56,7 +56,12 @@ def grant_bonus_reward(
     locked_user = user.__class__.objects.select_for_update().get(pk=user.pk)
 
     if xp:
-        grant_xp(locked_user, xp)
+        grant_xp(
+            locked_user,
+            xp,
+            related_obj=related_obj,
+            note=description or title,
+        )
 
     if coins:
         credit_coins(
