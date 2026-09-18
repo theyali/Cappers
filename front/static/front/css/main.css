@@ -37087,6 +37087,8 @@ padding:40px 0px;
 
 .cabinet-bonuses-page .bonus-center-layout {
     min-width: 0;
+    min-height: 0;
+    height: 100%;
     grid-column: 2 / 4;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
@@ -37234,7 +37236,7 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-card-icon.is-blue {
-    color: #1d73ff;
+    color: var(--blue);
 }
 
 .cabinet-bonuses-page .bonus-card-icon.is-yellow {
@@ -37311,9 +37313,13 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-task-progress {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
     gap: 5px;
+}
+
+.cabinet-bonuses-page .bonus-task-progress span {
+    min-width: 0;
+    flex: 1 1 0;
 }
 
 .cabinet-bonuses-page .bonus-task-progress span {
@@ -37468,6 +37474,18 @@ padding:40px 0px;
     background: #19191b;
 }
 
+.cabinet-bonuses-page .bonus-level-list > span.is-unlocked b {
+    color: #9ab8ff;
+}
+
+.cabinet-bonuses-page .bonus-level-list > span.is-current {
+    background: #252526;
+}
+
+.cabinet-bonuses-page .bonus-level-list > span.is-current b {
+    color: var(--yellow);
+}
+
 .cabinet-bonuses-page .bonus-level-list b {
     color: #d7d7da;
     font-size: 9px;
@@ -37480,6 +37498,7 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-center-aside {
+    min-width: 0;
     display: grid;
     align-content: start;
     gap: 14px;
@@ -37509,7 +37528,7 @@ padding:40px 0px;
 
 .cabinet-bonuses-page .bonus-side-head > span {
     flex: 0 0 auto;
-    color: #4b86ff;
+    color: var(--blue);
     font-size: 12px;
     font-weight: 700;
 }
