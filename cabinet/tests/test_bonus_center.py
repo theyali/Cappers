@@ -378,11 +378,16 @@ class BonusCenterServiceTests(TestCase):
             password="test-password",
             role=User.Role.ANALYST,
         )
-        AnalystProfile.objects.create(
-            user=analyst,
-            display_name="Paid analyst",
-            paid_predictions_enabled=True,
-            is_public=True,
+        analyst_profile = AnalystProfile.objects.get(user=analyst)
+        analyst_profile.display_name = "Paid analyst"
+        analyst_profile.paid_predictions_enabled = True
+        analyst_profile.is_public = True
+        analyst_profile.save(
+            update_fields=[
+                "display_name",
+                "paid_predictions_enabled",
+                "is_public",
+            ]
         )
         plan = AnalystPaidPlan.objects.create(
             analyst=analyst,
