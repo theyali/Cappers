@@ -114,6 +114,14 @@ def _prepare_daily_tasks_card(card: dict) -> dict:
     }
 
 
+def _prepare_streak_card(card: dict) -> dict:
+    return {
+        **card,
+        "days_aria_label": "Дни серии",
+        "arrow_label": "›",
+    }
+
+
 def _prepare_level_progress(progress: dict) -> dict:
     percent = max(0, min(100, int(progress["progress_percent"])))
     progress_length = round(302 * percent / 100)
@@ -136,13 +144,27 @@ def _prepare_level_progress(progress: dict) -> dict:
     }
 
 
-def build_bonus_reward_update_context(user) -> dict:
+def build_bonus_live_state(user) -> dict:
     roulette_state = get_user_roulette_state(user)
     return {
-        "daily_tasks_card": _prepare_daily_tasks_card(build_daily_tasks_card(user)),
+        "daily_tasks_summary": _prepare_daily_tasks_card(
+            build_daily_tasks_card(user)
+        ),
+        "streak": _prepare_streak_card(build_streak_card(user)),
         "level_progress": _prepare_level_progress(build_level_progress(user)),
         "recent_gifts": _recent_bonus_events(user),
         "available_spins": roulette_state.available_spins,
+    }
+
+
+def build_bonus_reward_update_context(user) -> dict:
+    live_state = build_bonus_live_state(user)
+    return {
+        "daily_tasks_card": live_state["daily_tasks_summary"],
+        "streak": live_state["streak"],
+        "level_progress": live_state["level_progress"],
+        "recent_gifts": live_state["recent_gifts"],
+        "available_spins": live_state["available_spins"],
     }
 
 
@@ -167,11 +189,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         "arrow_label": "›",
     }
     daily_tasks_card = _prepare_daily_tasks_card(daily_tasks_card)
-    streak_card = {
-        **streak_card,
-        "days_aria_label": "Дни серии",
-        "arrow_label": "›",
-    }
+    streak_card = _prepare_streak_card(streak_card)
     referral_card = {
         **referral_card,
         "value_label": referral_card["reward_label"],
