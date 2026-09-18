@@ -1,4 +1,4 @@
-name: Apply expert how-it-works design
+name: Export verified step 6 patch
 
 on:
   push:
@@ -6,152 +6,19 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
-permissions:
-  contents: write
-
 jobs:
-  apply:
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Reuse onboarding layout for expert panel
+      - name: Build verified patch bundle
         run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          template_path = Path("templates/front/how_it_works.html")
-          template = template_path.read_text()
-
-          replacements = {
-              'class="how-panel is-active" data-how-panel="reader"': 'class="how-panel how-start-panel is-active" data-how-panel="reader"',
-              'how-reader-start': 'how-start-content',
-              'how-reader-head': 'how-start-head',
-              'how-reader-cta-copy': 'how-start-cta-copy',
-              'how-reader-cta-action': 'how-start-cta-action',
-              'how-reader-cta': 'how-start-cta',
-          }
-          for old, new in replacements.items():
-              template = template.replace(old, new)
-
-          expert_start = '    <div class="how-panel" data-how-panel="expert" role="tabpanel" hidden>'
-          page_end = '    </div>\n</section>\n{% endblock %}'
-          start = template.index(expert_start)
-          end = template.index(page_end, start) + len('    </div>')
-
-          expert = '''    <div class="how-panel how-start-panel" data-how-panel="expert" role="tabpanel" hidden>
-              <section class="how-start-content">
-                  <div class="how-start-head">
-                      <p class="how-kicker">Простые шаги</p>
-                      <h2>Как начать публиковать прогнозы</h2>
-                  </div>
-
-                  <div class="how-steps">
-                      <article class="how-step">
-                          <span class="how-step-number">1</span>
-                          <div class="how-step-icon" aria-hidden="true">
-                              <svg viewBox="0 0 64 64" fill="none">
-                                  <circle cx="32" cy="18" r="10" stroke="currentColor" stroke-width="4"/>
-                                  <path d="M15 49c0-9 7-16 17-16s17 7 17 16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                                  <path d="M46 17h10M51 12v10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                              </svg>
-                          </div>
-                          <h3>Станьте каппером</h3>
-                          <p>Создайте публичный профиль<br>и откройте возможность<br>публиковать прогнозы.</p>
-                      </article>
-
-                      <article class="how-step">
-                          <span class="how-step-number">2</span>
-                          <div class="how-step-icon" aria-hidden="true">
-                              <svg viewBox="0 0 64 64" fill="none">
-                                  <path d="M13 50V31M26 50V19M39 50V27M52 50V11" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                              </svg>
-                          </div>
-                          <h3>Настройте профиль</h3>
-                          <p>Укажите специализацию,<br>основные виды спорта<br>и лиги.</p>
-                      </article>
-
-                      <article class="how-step">
-                          <span class="how-step-number">3</span>
-                          <div class="how-step-icon" aria-hidden="true">
-                              <svg viewBox="0 0 64 64" fill="none">
-                                  <circle cx="28" cy="27" r="18" stroke="currentColor" stroke-width="4"/>
-                                  <path d="M41 40 55 54" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                              </svg>
-                          </div>
-                          <h3>Выберите матч</h3>
-                          <p>Откройте предстоящую игру.<br>Новые прогнозы создаются<br>только до начала матча.</p>
-                      </article>
-
-                      <article class="how-step">
-                          <span class="how-step-number">4</span>
-                          <div class="how-step-icon" aria-hidden="true">
-                              <svg viewBox="0 0 64 64" fill="none">
-                                  <path d="M18 8h24l8 8v40H18V8Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
-                                  <path d="M42 8v10h8M26 29h16M26 39h16M26 49h10" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                          </div>
-                          <h3>Создайте прогноз</h3>
-                          <p>Выберите исходы, укажите<br>сумму и уверенность,<br>затем опубликуйте купон.</p>
-                      </article>
-
-                      <article class="how-step">
-                          <span class="how-step-number">5</span>
-                          <div class="how-step-icon" aria-hidden="true">
-                              <svg viewBox="0 0 64 64" fill="none">
-                                  <path d="M13 48V34M25 48V25M37 48V30M49 48V15" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-                                  <path d="m13 22 11-8 12 5 14-10" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                          </div>
-                          <h3>Развивайте статистику</h3>
-                          <p>ROI, результаты, серии,<br>подписчики и достижения<br>считаются автоматически.</p>
-                      </article>
-                  </div>
-
-                  <div class="how-start-cta">
-                      <div class="how-start-cta-copy">
-                          <p class="how-kicker">Готовы начать?</p>
-                          <h3>Создайте профиль каппера и публикуйте прогнозы</h3>
-                          <p>Собирайте статистику, аудиторию и репутацию в одном профиле.</p>
-                      </div>
-                      <div class="how-start-cta-action">
-                          <a class="how-action is-blue" href="{% url 'cabinet:become_capper' %}">Стать каппером <span>→</span></a>
-                          <small>Статистика профиля формируется автоматически</small>
-                      </div>
-                  </div>
-              </section>
-          </div>'''
-
-          template_path.write_text(template[:start] + expert + template[end:])
-
-          css_path = Path("front/static/front/css/main.css")
-          css = css_path.read_text()
-
-          css_replacements = {
-              '/* how-it-works: reader panel */': '/* how-it-works: onboarding panels */',
-              '[data-how-panel="reader"]': '.how-start-panel',
-              '.how-reader-start': '.how-start-content',
-              '.how-reader-head': '.how-start-head',
-              '.how-reader-cta-copy': '.how-start-cta-copy',
-              '.how-reader-cta-action': '.how-start-cta-action',
-              '.how-reader-cta': '.how-start-cta',
-          }
-          for old, new in css_replacements.items():
-              css = css.replace(old, new)
-
-          css_path.write_text(css)
-          PY
-
-      - name: Check scope
-        run: |
-          git diff --check
+          python .github/step6_apply.py
+          python .github/step6_finalize_patch.py
+          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
           git diff --name-only
-          test "$(git diff --name-only | sort | tr '\n' ' ')" = "front/static/front/css/main.css templates/front/how_it_works.html "
-
-      - name: Commit expert panel
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add templates/front/how_it_works.html front/static/front/css/main.css
-          git commit -m "Match expert how-it-works panel to reader layout"
-          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        with:
+          name: step6-patched
+          path: step6-patched.tar.gz
+          if-no-files-found: error
