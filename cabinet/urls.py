@@ -33,6 +33,11 @@ urlpatterns = [
     ),
     path("vip/purchase/", vip_views.vip_purchase, name="vip_purchase"),
     path("bonuses/", bonus_views.bonuses, name="bonuses"),
+    path(
+        "bonuses/daily-tasks/<int:task_id>/claim/",
+        bonus_views.daily_task_claim,
+        name="daily_task_claim",
+    ),
     path("bonuses/roulette/state/", roulette_api.roulette_state, name="roulette_state"),
     path("bonuses/roulette/spin/", roulette_api.roulette_spin, name="roulette_spin"),
     path("profile/request-verification/", views.request_verification, name="request_verification"),
