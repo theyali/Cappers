@@ -8,7 +8,7 @@ from cabinet.models import User
 from cabinet.presence import presence_payload
 
 from .models import PageSEO
-from .promo_banners import page_promo_banner_groups
+from .promo_banners import filter_promo_banner_groups, page_promo_banner_groups
 
 
 PAGE_CONTEXT_CACHE_SECONDS = 120
@@ -249,13 +249,16 @@ def page_seo(request):
     }:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
-    promo_banners = page_context["promo_banners"]
-    promo_banner_groups = page_context.get("promo_banner_groups") or {
-        "left": [],
-        "center": promo_banners,
-        "right": [],
-        "all": promo_banners,
-    }
+    promo_banner_groups = filter_promo_banner_groups(
+        page_context.get("promo_banner_groups") or {
+            "left": [],
+            "center": page_context["promo_banners"],
+            "right": [],
+            "all": page_context["promo_banners"],
+        },
+        request.user,
+    )
+    promo_banners = promo_banner_groups["all"]
     page_layout_columns = page.layout_columns if page else PageSEO.LayoutColumns.THREE
     return {
         "seo_meta": seo_meta,

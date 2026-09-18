@@ -46,6 +46,15 @@ class PromoBanner(models.Model):
         CENTER_COMPACT = "center_compact", "Центр · компактный"
         FEED_INLINE = "feed_inline", "Лента · inline"
 
+    class Audience(models.TextChoices):
+        ALL = "all", "Всем"
+        ANONYMOUS = "anonymous", "Только гостям"
+        AUTHENTICATED = "authenticated", "Авторизованным"
+        READER = "reader", "Обычным пользователям"
+        CAPPER = "capper", "Капперам"
+        VIP_CAPPER = "vip_capper", "VIP-капперам"
+        NON_VIP_CAPPER = "non_vip_capper", "Капперам без VIP"
+
     name = models.CharField("Название в админке", max_length=160, blank=True)
     eyebrow = models.CharField("Метка", max_length=80, blank=True)
     title = models.CharField("Title", max_length=180, blank=True)
@@ -72,6 +81,13 @@ class PromoBanner(models.Model):
         max_length=24,
         choices=Variant.choices,
         default=Variant.CENTER_WIDE,
+        db_index=True,
+    )
+    audience = models.CharField(
+        "Аудитория",
+        max_length=24,
+        choices=Audience.choices,
+        default=Audience.ALL,
         db_index=True,
     )
     title_color = models.CharField("Цвет title", max_length=32, default="#050505")

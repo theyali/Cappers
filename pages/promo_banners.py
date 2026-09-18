@@ -1,6 +1,6 @@
 from django.db.utils import OperationalError, ProgrammingError
 
-from .models import PagePromoBanner, PageSEO
+from .models import PagePromoBanner, PageSEO, PromoBanner
 
 
 PROMO_PLACEMENTS = (
@@ -12,6 +12,58 @@ PROMO_PLACEMENTS = (
 
 def _empty_groups() -> dict:
     return {placement: [] for placement in PROMO_PLACEMENTS} | {"all": []}
+
+
+_VIP_CACHE_ATTR = "_promo_banner_is_vip"
+
+
+def _promo_user_is_vip(user) -> bool:
+    cached = getattr(user, _VIP_CACHE_ATTR, None)
+    if cached is not None:
+        return bool(cached)
+
+    is_vip = bool(user.is_vip)
+    try:
+        setattr(user, _VIP_CACHE_ATTR, is_vip)
+    except (AttributeError, TypeError):
+        pass
+    return is_vip
+
+
+def promo_banner_matches_user(banner, user) -> bool:
+    audience = banner.audience
+    is_authenticated = bool(getattr(user, "is_authenticated", False))
+
+    if audience == PromoBanner.Audience.ALL:
+        return True
+    if audience == PromoBanner.Audience.ANONYMOUS:
+        return not is_authenticated
+    if not is_authenticated:
+        return False
+    if audience == PromoBanner.Audience.AUTHENTICATED:
+        return True
+
+    is_capper = bool(getattr(user, "is_analyst", False))
+    if audience == PromoBanner.Audience.READER:
+        return bool(getattr(user, "is_reader", False))
+    if audience == PromoBanner.Audience.CAPPER:
+        return is_capper
+    if audience == PromoBanner.Audience.VIP_CAPPER:
+        return is_capper and _promo_user_is_vip(user)
+    if audience == PromoBanner.Audience.NON_VIP_CAPPER:
+        return is_capper and not _promo_user_is_vip(user)
+    return False
+
+
+def filter_promo_banner_groups(groups: dict, user) -> dict:
+    filtered = _empty_groups()
+    for key in (*PROMO_PLACEMENTS, "all"):
+        filtered[key] = [
+            banner
+            for banner in groups.get(key, [])
+            if promo_banner_matches_user(banner, user)
+        ]
+    return filtered
 
 
 def _page_has_active_promos(page) -> bool:
