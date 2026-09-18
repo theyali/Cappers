@@ -16,6 +16,7 @@ on:
       - front/static/front/css/main.css
       - templates/cabinet/bonuses.html
       - wallets/**
+      - notifications/**
 
 jobs:
   verify:
