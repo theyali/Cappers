@@ -4637,3 +4637,144 @@ body.expert-public-details-open {
         width: 86px;
     }
 }
+
+/* Bonus detail and referrals responsive */
+@media (max-width: 760px) {
+    .cabinet-bonuses-page .bonus-detail-main,
+    .cabinet-referrals-page .bonus-detail-main {
+        width: 100%;
+        grid-column: 1;
+    }
+
+    .cabinet-bonuses-page .bonus-page-head {
+        min-height: 0;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .cabinet-bonuses-page .bonus-page-head > strong,
+    .cabinet-bonuses-page .bonus-page-summary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cabinet-bonuses-page .bonus-task-row,
+    .cabinet-bonuses-page .bonus-level-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .cabinet-bonuses-page .bonus-task-meta,
+    .cabinet-bonuses-page .bonus-level-row-meta {
+        min-width: 0;
+        justify-items: start;
+        text-align: left;
+    }
+
+    .cabinet-bonuses-page .bonus-task-progress-bar,
+    .cabinet-bonuses-page .bonus-task-row .bonus-task-actions,
+    .cabinet-bonuses-page .bonus-level-row-status {
+        grid-column: 1;
+    }
+
+    .cabinet-bonuses-page .bonus-task-row .bonus-task-actions {
+        justify-content: stretch;
+    }
+
+    .cabinet-bonuses-page .bonus-task-row .bonus-task-claim {
+        width: 100%;
+    }
+
+    .cabinet-bonuses-page .bonus-levels-hero .bonus-progress-body {
+        grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .cabinet-bonuses-page .bonus-levels-hero .bonus-progress-ring {
+        width: 96px;
+        height: 96px;
+    }
+
+    .cabinet-referrals-page .profile-referrals-shell {
+        gap: 12px;
+    }
+
+    .cabinet-referrals-page .profile-referrals-hero {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .cabinet-referrals-page .profile-referral-link-wrap {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .cabinet-referrals-page .profile-referral-copy {
+        width: 100%;
+    }
+
+    .cabinet-referrals-page .profile-referrals-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cabinet-referrals-page .bonus-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cabinet-referrals-page .profile-referrals-recent {
+        padding: 16px;
+    }
+
+    .cabinet-referrals-page .profile-referral-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .cabinet-referrals-page .profile-referral-row .profile-referral-metric {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .cabinet-referrals-page .profile-referral-row .profile-referral-metric span {
+        margin-top: 0;
+    }
+
+    .cabinet-referrals-page .profile-referral-status {
+        justify-self: start;
+    }
+}
+
+@media (max-width: 420px) {
+    .cabinet-bonuses-page .bonus-page-head h1,
+    .cabinet-referrals-page .profile-referrals-hero h1 {
+        font-size: 25px;
+    }
+
+    .cabinet-bonuses-page .bonus-levels-hero .bonus-progress-body {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .cabinet-referrals-page .profile-referrals-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .cabinet-referrals-page .profile-referral-stat {
+        min-height: 96px;
+    }
+
+    .cabinet-referrals-page .profile-referrals-recent-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
