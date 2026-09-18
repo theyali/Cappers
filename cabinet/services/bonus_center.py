@@ -3,7 +3,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import BonusEvent
+from cabinet.models import BonusEvent, XpLevel
 from cabinet.roulette.history import RouletteSpin
 from cabinet.roulette.models import RoulettePrize
 from cabinet.roulette.services import get_user_roulette_state
@@ -232,6 +232,66 @@ def build_bonus_tasks_page_context(user, request=None) -> dict:
         "streak_card": _prepare_streak_card(build_streak_card(user)),
         "level_progress": _prepare_level_progress(build_level_progress(user)),
         "recent_gifts": _recent_bonus_events(user),
+    }
+
+
+def build_bonus_levels_page_context(user, request=None) -> dict:
+    """Build the SSR context for the bonus levels page."""
+    level_progress = _prepare_level_progress(build_level_progress(user))
+    levels = list(
+        XpLevel.objects.filter(is_active=True)
+        .order_by("required_xp", "level", "id")
+    )
+
+    level_items = []
+    for level in levels:
+        required_xp = int(level.required_xp)
+        is_unlocked = level_progress["xp"] >= required_xp
+        rewards = []
+        if level.reward_coins:
+            rewards.append(f"+{level.reward_coins} монет")
+        if level.reward_spins:
+            rewards.append(f"+{level.reward_spins} попыток")
+
+        level_items.append(
+            {
+                "level": level.level,
+                "title": level.title,
+                "required_xp": required_xp,
+                "required_xp_label": f"{required_xp} XP",
+                "reward_label": " · ".join(rewards) or "Без награды",
+                "is_unlocked": is_unlocked,
+                "is_current": level.level == level_progress["level"],
+                "is_next": (
+                    level_progress["next_level_xp"] is not None
+                    and required_xp == level_progress["next_level_xp"]
+                ),
+                "progress_percent": (
+                    100
+                    if is_unlocked or required_xp <= 0
+                    else min(
+                        100,
+                        int((level_progress["xp"] * 100) / required_xp),
+                    )
+                ),
+            }
+        )
+
+    return {
+        "page": {
+            "title": "Уровни и XP — КапперХаб",
+            "heading": "Уровни и XP",
+            "description": (
+                "Повышайте уровень активности, набирайте XP и открывайте новые награды."
+            ),
+            "mobile_nav_label": "Разделы профиля на мобильных устройствах",
+            "profile_nav_label": "Разделы профиля",
+        },
+        "level_progress": level_progress,
+        "levels": level_items,
+        "recent_gifts": _recent_bonus_events(user),
+        "daily_tasks_card": _prepare_daily_tasks_card(build_daily_tasks_card(user)),
+        "streak_card": _prepare_streak_card(build_streak_card(user)),
     }
 
 
