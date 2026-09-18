@@ -63,10 +63,12 @@
                         <span>Конверсия</span>
                         <strong>{{ conversion }}%</strong>
                     </article>
-                    <article class="profile-referral-stat">
-                        <span>Заработано</span>
-                        <strong>{{ referral_income_display }} ₽</strong>
-                    </article>
+                    {% if can_earn_referrals %}
+                        <article class="profile-referral-stat">
+                            <span>Заработано</span>
+                            <strong>{{ referral_income_display }} ₽</strong>
+                        </article>
+                    {% endif %}
                 </section>
 
                 <section class="profile-referrals-recent" aria-labelledby="referral-bonus-model-title">
@@ -75,13 +77,7 @@
                             <p class="eyebrow">Награды</p>
                             <h2 class="profile-referrals-recent-title" id="referral-bonus-model-title">Бонусная модель</h2>
                         </div>
-                        <span>
-                            {% if bonus_settings.is_enabled %}
-                                Активна
-                            {% else %}
-                                Временно отключена
-                            {% endif %}
-                        </span>
+                        <span>{{ bonus_settings.status_label }}</span>
                     </div>
 
                     <div class="bonus-dashboard-grid">
