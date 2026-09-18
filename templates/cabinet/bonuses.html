@@ -224,15 +224,15 @@
                     <span>Ур. {{ level_progress.level }}</span>
                 </div>
                 <div class="bonus-progress-body">
-                    <div class="bonus-progress-ring" aria-label="Прогресс уровня">
+                    <div class="bonus-progress-ring" aria-label="Прогресс уровня {{ level_progress.progress_percent }}%">
                         <svg viewBox="0 0 120 120" aria-hidden="true">
                             <circle cx="60" cy="60" r="48"></circle>
                             <circle class="is-progress" cx="60" cy="60" r="48"></circle>
                         </svg>
                         <div>
                             <span>★</span>
-                            <strong>{{ level_progress.current }}</strong>
-                            <small>из {{ level_progress.target }}</small>
+                            <strong>{{ level_progress.xp }}</strong>
+                            <small>{% if level_progress.next_level_xp %}из {{ level_progress.next_level_xp }}{% else %}макс.{% endif %}</small>
                         </div>
                     </div>
                     <div class="bonus-progress-steps">
@@ -241,7 +241,7 @@
                         {% endfor %}
                     </div>
                 </div>
-                <p>{{ level_progress.xp_to_next_label }}</p>
+                <p>{% if level_progress.next_level_xp %}{{ level_progress.xp_to_next_level }} XP до следующего уровня{% else %}Максимальный уровень{% endif %}</p>
             </section>
 
             <section class="bonus-side-card bonus-balance-cta">
