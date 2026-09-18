@@ -172,8 +172,35 @@ def build_profile_bonus_summary(user) -> dict:
     daily_tasks_card = _prepare_daily_tasks_card(build_daily_tasks_card(user))
     level_progress = _prepare_level_progress(build_level_progress(user))
     streak_card = _prepare_streak_card(build_streak_card(user))
+    current_level = (
+        XpLevel.objects.filter(
+            is_active=True,
+            level=level_progress["level"],
+        )
+        .only("icon", "image")
+        .first()
+    )
+    hero = {
+        "current_level_title": level_progress["level_title"],
+        "current_level_number": level_progress["level"],
+        "xp": level_progress["xp"],
+        "target_label": level_progress["target_label"],
+        "status_label": level_progress["status_label"],
+        "progress_class": level_progress["progress_class"],
+        "icon_url": (
+            current_level.icon.url
+            if current_level is not None and current_level.icon
+            else ""
+        ),
+        "image_url": (
+            current_level.image.url
+            if current_level is not None and current_level.image
+            else ""
+        ),
+    }
 
     return {
+        "hero": hero,
         "quick_tasks": daily_tasks_card["tasks"][:3],
         "quick_tasks_title": "Быстрые задания",
         "quick_tasks_empty_title": "Заданий пока нет",

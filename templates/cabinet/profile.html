@@ -91,6 +91,42 @@
                         </div>
                     </div>
 
+                    {% if profile_bonus_summary.hero %}
+                    <a
+                        class="profile-xp-card bonus-side-card bonus-progress-card"
+                        href="{{ profile_bonus_summary.levels_url }}"
+                        aria-label="Открыть уровни: {{ profile_bonus_summary.hero.current_level_title }}"
+                    >
+                        <span class="profile-xp-ring" aria-hidden="true">
+                            <svg viewBox="0 0 72 72">
+                                <circle cx="36" cy="36" r="28" pathLength="100"></circle>
+                                <circle class="is-progress {{ profile_bonus_summary.hero.progress_class }}" cx="36" cy="36" r="28" pathLength="100"></circle>
+                            </svg>
+                            <span class="profile-xp-ring-center">
+                                {% if profile_bonus_summary.hero.icon_url %}
+                                    <img src="{{ profile_bonus_summary.hero.icon_url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
+                                {% else %}
+                                    <strong>{{ profile_bonus_summary.hero.current_level_number }}</strong>
+                                    <small>ур.</small>
+                                {% endif %}
+                            </span>
+                        </span>
+
+                        <span class="profile-xp-copy">
+                            <small>Уровень {{ profile_bonus_summary.hero.current_level_number }}</small>
+                            <strong>{{ profile_bonus_summary.hero.current_level_title }}</strong>
+                            <span>{{ profile_bonus_summary.hero.xp }} XP {{ profile_bonus_summary.hero.target_label }}</span>
+                            <b>{{ profile_bonus_summary.hero.status_label }}</b>
+                        </span>
+
+                        {% if profile_bonus_summary.hero.image_url %}
+                            <span class="profile-xp-art" aria-hidden="true">
+                                <img src="{{ profile_bonus_summary.hero.image_url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+                            </span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+
                     {% comment %} {% if request.user.is_analyst %}
                     <section class="profile-hero-status" aria-label="Статус и заполнение профиля">
                         <div class="profile-status-heading">

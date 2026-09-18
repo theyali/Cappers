@@ -771,8 +771,16 @@ class BonusCenterServiceTests(TestCase):
         XpLevel.objects.create(
             level=1,
             title="Новичок",
+            icon="xp_levels/icons/test-icon.png",
+            image="xp_levels/images/test-image.png",
             required_xp=0,
             order=1,
+        )
+        XpLevel.objects.create(
+            level=2,
+            title="Участник",
+            required_xp=100,
+            order=2,
         )
         self.client.force_login(self.user)
 
@@ -785,6 +793,16 @@ class BonusCenterServiceTests(TestCase):
         summary = response.context["profile_bonus_summary"]
         self.assertIsNotNone(summary)
         self.assertIn("quick_tasks", summary)
+        hero = summary["hero"]
+        self.assertEqual(hero["current_level_title"], "Новичок")
+        self.assertEqual(hero["current_level_number"], 1)
+        self.assertEqual(hero["xp"], 0)
+        self.assertEqual(hero["target_label"], "из 100")
+        self.assertEqual(hero["status_label"], "100 XP до следующего уровня")
+        self.assertEqual(hero["progress_class"], "is-progress-0")
+        self.assertTrue(hero["icon_url"].endswith("xp_levels/icons/test-icon.png"))
+        self.assertTrue(hero["image_url"].endswith("xp_levels/images/test-image.png"))
+        self.assertContains(response, "profile-xp-card")
         self.assertEqual(summary["tasks_url"], reverse("cabinet:bonus_tasks"))
         self.assertEqual(summary["levels_url"], reverse("cabinet:bonus_levels"))
         self.assertEqual(summary["bonuses_url"], reverse("cabinet:bonuses"))

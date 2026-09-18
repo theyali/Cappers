@@ -4790,3 +4790,47 @@ body.expert-public-details-open {
     }
 }
 
+
+
+/* Profile XP hero */
+@media (max-width: 820px) {
+    .profile-page .profile-hero.is-reader .profile-xp-card {
+        width: 100%;
+        justify-self: stretch;
+    }
+}
+
+@media (max-width: 560px) {
+    .profile-xp-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 10px;
+        padding: 12px;
+        border-radius: 15px;
+    }
+
+    .profile-xp-ring {
+        width: 58px;
+        height: 58px;
+    }
+
+    .profile-xp-ring circle {
+        stroke-width: 7;
+    }
+
+    .profile-xp-ring-center img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .profile-xp-ring-center strong {
+        font-size: 17px;
+    }
+
+    .profile-xp-copy > strong {
+        font-size: 15px;
+    }
+
+    .profile-xp-art {
+        display: none;
+    }
+}
