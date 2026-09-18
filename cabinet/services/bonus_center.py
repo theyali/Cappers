@@ -144,8 +144,8 @@ def _prepare_level_progress(progress: dict) -> dict:
     }
 
 
-def build_bonus_live_state(user) -> dict:
-    roulette_state = get_user_roulette_state(user)
+def build_bonus_live_state(user, roulette_state=None) -> dict:
+    roulette_state = roulette_state or get_user_roulette_state(user)
     return {
         "daily_tasks_summary": _prepare_daily_tasks_card(
             build_daily_tasks_card(user)
