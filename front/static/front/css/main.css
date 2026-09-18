@@ -37602,6 +37602,21 @@ padding:40px 0px;
     font-size: 18px;
 }
 
+.cabinet-bonuses-page .bonus-gift-row.is-completed .bonus-gift-icon {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-gift-row.is-claim .bonus-gift-icon {
+    color: var(--yellow);
+    background: #171718;
+}
+
+.cabinet-bonuses-page .bonus-gift-row.is-in_progress .bonus-gift-icon {
+    color: var(--blue);
+    background: #171718;
+}
+
 .cabinet-bonuses-page .bonus-gift-copy {
     gap: 2px;
 }
@@ -38243,4 +38258,3 @@ padding:40px 0px;
 .profile-bonus-summary-actions .bonus-notification-settings-link {
     min-width: 0;
 }
-

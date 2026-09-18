@@ -395,12 +395,12 @@ def build_bonus_center_context(user, request=None) -> dict:
                 "link_label": "Открыть уровни",
                 "arrow_label": "›",
             },
-            "recent_gifts": {
-                "title": "Последние подарки",
+            "side_tasks": {
+                "title": "Актуальные задания",
                 "all_label": "Все",
-                "empty_title": "Подарков пока нет",
-                "empty_description": "Новые бонусы появятся здесь.",
-                "empty_icon": "🎁",
+                "empty_title": "Заданий пока нет",
+                "empty_description": "Новые задания появятся здесь.",
+                "empty_icon": "✓",
             },
             "progress": {
                 "title": "Прогресс к большему",
