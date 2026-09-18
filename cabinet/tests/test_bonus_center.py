@@ -446,6 +446,7 @@ class BonusCenterServiceTests(TestCase):
         for index, (event_type, notification_kind, expected_url) in enumerate(cases, start=1):
             event = grant_bonus_reward(
                 self.user,
+                coins=index,
                 event_type=event_type,
                 title=f"Бонус {index}",
                 description=f"Описание {index}",
@@ -454,7 +455,10 @@ class BonusCenterServiceTests(TestCase):
 
             self.assertEqual(notification.kind, notification_kind)
             self.assertEqual(notification.title, event.title)
-            self.assertEqual(notification.message, event.description)
+            self.assertEqual(
+                notification.message,
+                f"+{index} монет · {event.description}",
+            )
             self.assertEqual(notification.url, expected_url)
             self.assertEqual(notification.meta["bonus_event_id"], event.pk)
 
@@ -555,3 +559,206 @@ class BonusCenterServiceTests(TestCase):
             reverse("cabinet:daily_task_claim", args=(task.pk,)),
         )
         self.assertContains(response, ">Получить</span>")
+
+    def test_daily_tasks_page_requires_login(self):
+        response = self.client.get(reverse("cabinet:bonus_tasks"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    def test_daily_tasks_page_filters_tasks_by_user_role(self):
+        reader_task = DailyTask.objects.create(
+            title="Задание читателя",
+            audience=DailyTask.Audience.READER,
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=1,
+        )
+        capper_task = DailyTask.objects.create(
+            title="Задание каппера",
+            audience=DailyTask.Audience.CAPPER,
+            task_type=DailyTask.TaskType.CREATE_PREDICTION,
+            target_value=1,
+        )
+        common_task = DailyTask.objects.create(
+            title="Общее задание",
+            audience=DailyTask.Audience.ALL,
+            task_type=DailyTask.TaskType.VIEW_PREDICTION,
+            target_value=1,
+        )
+        capper = User.objects.create_user(
+            username="bonus-page-capper",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+
+        self.client.force_login(self.user)
+        reader_response = self.client.get(reverse("cabinet:bonus_tasks"))
+        reader_task_ids = {
+            task["id"]
+            for task in reader_response.context["tasks"]
+        }
+
+        self.client.force_login(capper)
+        capper_response = self.client.get(reverse("cabinet:bonus_tasks"))
+        capper_task_ids = {
+            task["id"]
+            for task in capper_response.context["tasks"]
+        }
+
+        self.assertEqual(reader_response.status_code, 200)
+        self.assertEqual(capper_response.status_code, 200)
+        self.assertIn(reader_task.pk, reader_task_ids)
+        self.assertIn(common_task.pk, reader_task_ids)
+        self.assertNotIn(capper_task.pk, reader_task_ids)
+        self.assertIn(capper_task.pk, capper_task_ids)
+        self.assertIn(common_task.pk, capper_task_ids)
+        self.assertNotIn(reader_task.pk, capper_task_ids)
+
+    def test_bonus_levels_page_shows_current_level(self):
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            order=1,
+        )
+        XpLevel.objects.create(
+            level=2,
+            title="Участник",
+            required_xp=100,
+            order=2,
+        )
+        UserXpState.objects.create(
+            user=self.user,
+            level=2,
+            xp=120,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:bonus_levels"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["level_progress"]["level"], 2)
+        self.assertEqual(response.context["level_progress"]["level_title"], "Участник")
+        self.assertContains(response, "Участник")
+
+    def test_referrals_page_returns_url_and_stats(self):
+        visitor = User.objects.create_user(
+            username="referral-page-visitor",
+            password="test-password",
+        )
+        now = timezone.now()
+        ReferralVisit.objects.create(
+            referrer=self.user,
+            visitor=visitor,
+            session_key="registered-visitor",
+            visits_count=3,
+            registered_at=now,
+            subscribed_at=now,
+        )
+        ReferralVisit.objects.create(
+            referrer=self.user,
+            session_key="anonymous-visitor",
+            visits_count=2,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:referrals"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.user.referral_code, response.context["referral_url"])
+        self.assertEqual(response.context["visitors_count"], 2)
+        self.assertEqual(response.context["clicks_count"], 5)
+        self.assertEqual(response.context["registrations_count"], 1)
+        self.assertEqual(response.context["subscriptions_count"], 1)
+        self.assertEqual(response.context["conversion"], 50.0)
+
+    def test_referral_stats_matches_ssr_context_metrics(self):
+        visitor = User.objects.create_user(
+            username="referral-stats-visitor",
+            password="test-password",
+        )
+        now = timezone.now()
+        ReferralVisit.objects.create(
+            referrer=self.user,
+            visitor=visitor,
+            session_key="stats-registered",
+            visits_count=4,
+            registered_at=now,
+        )
+        ReferralVisit.objects.create(
+            referrer=self.user,
+            session_key="stats-anonymous",
+            visits_count=1,
+        )
+        self.client.force_login(self.user)
+
+        page_response = self.client.get(reverse("cabinet:referrals"))
+        stats_response = self.client.get(reverse("cabinet:referral_stats"))
+        payload = stats_response.json()
+
+        self.assertEqual(page_response.status_code, 200)
+        self.assertEqual(stats_response.status_code, 200)
+        for key in (
+            "referral_url",
+            "referral_code",
+            "visitors_count",
+            "clicks_count",
+            "registrations_count",
+            "subscriptions_count",
+            "conversion",
+        ):
+            self.assertEqual(payload[key], page_response.context[key])
+
+    def test_disabled_bonus_notification_preference_skips_notification(self):
+        NotificationPreference.objects.create(
+            user=self.user,
+            bonus_daily_task=False,
+        )
+
+        event = grant_bonus_reward(
+            self.user,
+            coins=10,
+            event_type=BonusEvent.EventType.DAILY_TASK,
+            title="Отключённое уведомление",
+            description="Награда начислена",
+        )
+
+        self.assertFalse(
+            Notification.objects.filter(event_key=f"bonus:{event.pk}").exists()
+        )
+        self.assertTrue(
+            BonusEvent.objects.filter(pk=event.pk, user=self.user).exists()
+        )
+
+    def test_profile_tab_receives_bonus_summary(self):
+        DailyTask.objects.create(
+            title="Задание профиля",
+            audience=DailyTask.Audience.ALL,
+            task_type=DailyTask.TaskType.OPEN_FEED,
+            target_value=1,
+        )
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            order=1,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("cabinet:profile"),
+            {"tab": "profile"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        summary = response.context["profile_bonus_summary"]
+        self.assertIsNotNone(summary)
+        self.assertIn("quick_tasks", summary)
+        self.assertEqual(summary["tasks_url"], reverse("cabinet:bonus_tasks"))
+        self.assertEqual(summary["levels_url"], reverse("cabinet:bonus_levels"))
+        self.assertEqual(summary["bonuses_url"], reverse("cabinet:bonuses"))
+        self.assertEqual(
+            summary["notifications_url"],
+            reverse("notifications:center"),
+        )
+
