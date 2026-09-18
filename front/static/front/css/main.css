@@ -37075,3 +37075,616 @@ padding:40px 0px;
     text-align: center;
     transform: rotate(-5deg);
 }
+
+
+/* Cabinet bonus center */
+.cabinet-bonuses-page .bonus-center-main {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.cabinet-bonuses-page .bonus-center-layout {
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+}
+
+.cabinet-bonuses-page .bonus-hero {
+    min-width: 0;
+    min-height: 386px;
+    display: grid;
+    grid-template-columns: minmax(270px, .82fr) minmax(390px, 1.18fr);
+    align-items: center;
+    gap: 8px;
+    padding: 28px 24px 24px 28px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #071426 url("../img/login.png") center / cover no-repeat;
+}
+
+.cabinet-bonuses-page .bonus-hero-copy {
+    min-width: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.cabinet-bonuses-page .bonus-hero-copy h1 {
+    max-width: 440px;
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: clamp(30px, 2.4vw, 36px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -.04em;
+}
+
+.cabinet-bonuses-page .bonus-hero-copy h1 span {
+    color: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-hero-copy > p {
+    max-width: 400px;
+    margin: 20px 0 0;
+    color: rgba(255,255,255,.78);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.cabinet-bonuses-page .bonus-hero-countdown {
+    display: grid;
+    gap: 3px;
+    margin-top: auto;
+    padding-top: 26px;
+}
+
+.cabinet-bonuses-page .bonus-hero-countdown > span {
+    color: rgba(255,255,255,.68);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.cabinet-bonuses-page .bonus-hero-countdown > strong {
+    color: var(--yellow);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: .01em;
+}
+
+.cabinet-bonuses-page .bonus-hero-countdown > small {
+    min-height: 17px;
+    color: rgba(255,255,255,.66);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.cabinet-bonuses-page .bonus-hero-countdown > small:empty {
+    display: none;
+}
+
+.cabinet-bonuses-page .bonus-wheel {
+    width: min(100%, 520px);
+    aspect-ratio: 1;
+    justify-self: end;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.cabinet-bonuses-page .bonus-wheel canvas {
+    display: block;
+    max-width: 100%;
+}
+
+.cabinet-bonuses-page .bonus-dashboard-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.cabinet-bonuses-page .bonus-dashboard-card,
+.cabinet-bonuses-page .bonus-side-card {
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.cabinet-bonuses-page .bonus-dashboard-card {
+    min-height: 178px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+}
+
+.cabinet-bonuses-page .bonus-card-head {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 11px;
+}
+
+.cabinet-bonuses-page .bonus-card-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: #29292c;
+}
+
+.cabinet-bonuses-page .bonus-card-icon svg {
+    width: 23px;
+    height: 23px;
+}
+
+.cabinet-bonuses-page .bonus-card-icon.is-blue {
+    color: #1d73ff;
+}
+
+.cabinet-bonuses-page .bonus-card-icon.is-yellow {
+    color: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-card-icon.is-fire {
+    color: #ff7a1a;
+}
+
+.cabinet-bonuses-page .bonus-card-head > div {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.cabinet-bonuses-page .bonus-card-head h2,
+.cabinet-bonuses-page .bonus-side-head h2,
+.cabinet-bonuses-page .bonus-balance-copy h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.cabinet-bonuses-page .bonus-card-head h2 {
+    overflow: hidden;
+    font-size: 15px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-card-head > div > span {
+    overflow: hidden;
+    color: #8d8d91;
+    font-size: 11px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-card-arrow {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #ddd;
+    background: #333336;
+    font-size: 25px;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.cabinet-bonuses-page .bonus-card-value {
+    margin-top: -3px;
+    color: #fff;
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.05;
+}
+
+.cabinet-bonuses-page .bonus-card-value.is-yellow {
+    color: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-dashboard-card > p {
+    margin: auto 0 0;
+    color: #8e8e92;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.cabinet-bonuses-page .bonus-task-progress {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.cabinet-bonuses-page .bonus-task-progress span {
+    height: 7px;
+    border-radius: 999px;
+    background: #3a3a3e;
+}
+
+.cabinet-bonuses-page .bonus-task-progress span:first-child {
+    background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-streak-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: auto;
+}
+
+.cabinet-bonuses-page .bonus-streak-days span {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #a7a7aa;
+    background: #333336;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-wins-card {
+    gap: 11px;
+}
+
+.cabinet-bonuses-page .bonus-wins-list,
+.cabinet-bonuses-page .bonus-gifts-list,
+.cabinet-bonuses-page .bonus-level-list {
+    min-width: 0;
+    display: grid;
+}
+
+.cabinet-bonuses-page .bonus-wins-list {
+    gap: 5px;
+}
+
+.cabinet-bonuses-page .bonus-win-row {
+    min-width: 0;
+    min-height: 34px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.cabinet-bonuses-page .bonus-win-icon,
+.cabinet-bonuses-page .bonus-gift-icon {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--yellow);
+    background: #171718;
+}
+
+.cabinet-bonuses-page .bonus-win-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 16px;
+}
+
+.cabinet-bonuses-page .bonus-win-icon img,
+.cabinet-bonuses-page .bonus-gift-icon img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.cabinet-bonuses-page .bonus-win-copy,
+.cabinet-bonuses-page .bonus-gift-copy {
+    min-width: 0;
+    display: grid;
+}
+
+.cabinet-bonuses-page .bonus-win-copy {
+    gap: 1px;
+}
+
+.cabinet-bonuses-page .bonus-win-copy strong,
+.cabinet-bonuses-page .bonus-gift-copy strong {
+    overflow: hidden;
+    color: #eee;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-win-copy small,
+.cabinet-bonuses-page .bonus-gift-copy span,
+.cabinet-bonuses-page .bonus-gift-copy small,
+.cabinet-bonuses-page .bonus-win-row > time {
+    color: #747478;
+    font-size: 9px;
+    line-height: 1.25;
+}
+
+.cabinet-bonuses-page .bonus-win-row > time {
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-level-list {
+    gap: 3px;
+    margin-top: -2px;
+}
+
+.cabinet-bonuses-page .bonus-level-list > span {
+    min-width: 0;
+    min-height: 23px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: #19191b;
+}
+
+.cabinet-bonuses-page .bonus-level-list b {
+    color: #d7d7da;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-level-list small {
+    color: #85858a;
+    font-size: 9px;
+}
+
+.cabinet-bonuses-page .bonus-center-aside {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.cabinet-bonuses-page .bonus-side-card {
+    padding: 16px;
+}
+
+.cabinet-bonuses-page .bonus-side-head {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+}
+
+.cabinet-bonuses-page .bonus-side-head h2 {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 17px;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-side-head > span {
+    flex: 0 0 auto;
+    color: #4b86ff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-gifts-list {
+    gap: 7px;
+}
+
+.cabinet-bonuses-page .bonus-gift-row {
+    min-width: 0;
+    min-height: 54px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+}
+
+.cabinet-bonuses-page .bonus-gift-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 18px;
+}
+
+.cabinet-bonuses-page .bonus-gift-copy {
+    gap: 2px;
+}
+
+.cabinet-bonuses-page .bonus-gift-copy strong {
+    font-size: 12px;
+}
+
+.cabinet-bonuses-page .bonus-gift-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-progress-card > p {
+    margin: 12px 0 0;
+    color: #85858a;
+    font-size: 11px;
+}
+
+.cabinet-bonuses-page .bonus-progress-body {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring {
+    position: relative;
+    width: 112px;
+    height: 112px;
+    display: grid;
+    place-items: center;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.cabinet-bonuses-page .bonus-progress-ring circle {
+    fill: none;
+    stroke: #38383c;
+    stroke-width: 8;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring circle.is-progress {
+    stroke: var(--blue);
+    stroke-linecap: round;
+    stroke-dasharray: 0 302;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring > div {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 0;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring > div span {
+    color: var(--yellow);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring > div strong {
+    margin-top: 2px;
+    color: #fff;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.cabinet-bonuses-page .bonus-progress-ring > div small {
+    margin-top: 2px;
+    color: #86868a;
+    font-size: 9px;
+}
+
+.cabinet-bonuses-page .bonus-progress-steps {
+    min-width: 0;
+    display: grid;
+    gap: 9px;
+}
+
+.cabinet-bonuses-page .bonus-progress-steps span {
+    position: relative;
+    min-width: 0;
+    padding-left: 20px;
+    color: #7e7e82;
+    font-size: 10px;
+    line-height: 1.3;
+}
+
+.cabinet-bonuses-page .bonus-progress-steps span::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #303034;
+    transform: translateY(-50%);
+}
+
+.cabinet-bonuses-page .bonus-progress-steps span.is-done {
+    color: #b9b9bc;
+}
+
+.cabinet-bonuses-page .bonus-progress-steps span.is-done::before {
+    background: #5bc331;
+}
+
+.cabinet-bonuses-page .bonus-balance-cta {
+    position: relative;
+    min-height: 190px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 115px;
+    grid-template-rows: 1fr auto;
+    gap: 12px;
+    background: #0c1728;
+}
+
+.cabinet-bonuses-page .bonus-balance-copy {
+    min-width: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.cabinet-bonuses-page .bonus-balance-copy h2 {
+    font-size: 17px;
+    line-height: 1.2;
+}
+
+.cabinet-bonuses-page .bonus-balance-copy p {
+    max-width: 205px;
+    margin: 11px 0 0;
+    color: #a1a8b3;
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.cabinet-bonuses-page .bonus-balance-coins {
+    width: 115px;
+    align-self: start;
+    color: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-balance-coins svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.cabinet-bonuses-page .bonus-balance-cta > a {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 14px;
+    border-radius: 10px;
+    color: #111;
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.cabinet-bonuses-page .bonus-balance-cta > a span:last-child {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.cabinet-bonuses-page .bonus-dashboard-card.is-skeleton-loading,
+.cabinet-bonuses-page .bonus-side-card.is-skeleton-loading {
+    min-height: inherit;
+}
