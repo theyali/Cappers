@@ -9,6 +9,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from cabinet.models import BonusEvent
+from cabinet.services.bonus_center import build_bonus_live_state
 from wallets.services import ensure_coin_wallet
 
 from .errors import RouletteSpinError
@@ -187,6 +188,7 @@ def roulette_state(request):
     state = get_user_roulette_state(request.user, now=now)
     sectors = get_available_roulette_prizes(user=request.user, now=now)
     recent_wins = _recent_roulette_wins(request, request.user)
+    live_state = build_bonus_live_state(request.user)
 
     return JsonResponse(
         {
@@ -194,12 +196,16 @@ def roulette_state(request):
             "enabled": roulette_settings.is_enabled,
             "server_time": _iso(now),
             "coin_balance": _current_coin_balance(request.user),
-            "available_spins": state.available_spins,
+            "available_spins": live_state["available_spins"],
             "next_spin_at": _iso(state.next_spin_at),
             "last_spin_at": _iso(state.last_spin_at),
             "total_spins": state.total_spins,
             "sectors": [_serialize_sector(request, prize) for prize in sectors],
             "recent_wins": recent_wins,
+            "daily_tasks_summary": live_state["daily_tasks_summary"],
+            "streak": live_state["streak"],
+            "level_progress": live_state["level_progress"],
+            "recent_gifts": live_state["recent_gifts"],
         }
     )
 
@@ -258,6 +264,7 @@ def roulette_spin(request):
         related_model=spin._meta.label_lower,
         related_id=spin.pk,
     ).first()
+    live_state = build_bonus_live_state(request.user)
 
     return JsonResponse(
         {
@@ -271,9 +278,13 @@ def roulette_spin(request):
             "reward_result": reward_result,
             "reward_status": spin.reward_status,
             "coin_balance": coin_balance,
-            "available_spins": spin.attempts_after,
+            "available_spins": live_state["available_spins"],
             "next_spin_at": _iso(spin.next_spin_at),
             "server_time": _iso(timezone.now()),
             "bonus_event": _serialize_bonus_event(bonus_event),
+            "daily_tasks_summary": live_state["daily_tasks_summary"],
+            "streak": live_state["streak"],
+            "level_progress": live_state["level_progress"],
+            "recent_gifts": live_state["recent_gifts"],
         }
     )
