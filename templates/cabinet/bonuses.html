@@ -163,7 +163,10 @@
                         </div>
                         <div class="bonus-level-list">
                             {% for level in levels_preview %}
-                                <span><b>{{ level.label }}</b><small>{{ level.title }}</small></span>
+                                <span class="{% if level.is_unlocked %}is-unlocked {% endif %}{% if level.is_current %}is-current{% endif %}">
+                                    <b>{{ level.label }}</b>
+                                    <small>{{ level.title }}</small>
+                                </span>
                             {% endfor %}
                         </div>
                     </article>
