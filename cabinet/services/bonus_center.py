@@ -6,6 +6,7 @@ from django.utils import timezone
 from cabinet.models import BonusEvent
 from cabinet.roulette.history import RouletteSpin
 from cabinet.roulette.models import RoulettePrize
+from cabinet.roulette.services import get_user_roulette_state
 
 from .daily_tasks import build_daily_tasks_card
 from .referral_bonuses import build_referral_bonus_card
@@ -63,23 +64,39 @@ def _serialize_roulette_spin(spin) -> dict:
     }
 
 
-def _recent_bonus_content(user) -> tuple[list[dict], list[dict]]:
+def _recent_bonus_events(user) -> list[dict]:
     events = list(
         BonusEvent.objects.filter(user=user)
         .select_related("user")
         .order_by("-created_at", "-id")[:5]
     )
+    return [_serialize_bonus_event(event) for event in events]
+
+
+def _recent_roulette_wins(user) -> list[dict]:
     spins = list(
         RouletteSpin.objects.filter(user=user)
         .exclude(reward_type=RoulettePrize.RewardType.NOTHING)
         .select_related("user")
         .order_by("-spun_at", "-id")[:3]
     )
-
-    recent_gifts = [_serialize_bonus_event(event) for event in events]
     recent_wins = [_serialize_roulette_spin(spin) for spin in spins]
     recent_wins.extend([None] * (3 - len(recent_wins)))
-    return recent_gifts, recent_wins
+    return recent_wins
+
+
+def _recent_bonus_content(user) -> tuple[list[dict], list[dict]]:
+    return _recent_bonus_events(user), _recent_roulette_wins(user)
+
+
+def build_bonus_reward_update_context(user) -> dict:
+    roulette_state = get_user_roulette_state(user)
+    return {
+        "daily_tasks_card": build_daily_tasks_card(user),
+        "level_progress": build_level_progress(user),
+        "recent_gifts": _recent_bonus_events(user),
+        "available_spins": roulette_state.available_spins,
+    }
 
 
 def build_bonus_center_context(user, request=None) -> dict:
