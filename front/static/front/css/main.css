@@ -37356,6 +37356,16 @@ padding:40px 0px;
     font-weight: 700;
 }
 
+.cabinet-bonuses-page .bonus-streak-days span.is-reached {
+    color: #fff;
+    background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-streak-days span.is-current {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
 .cabinet-bonuses-page .bonus-wins-card {
     gap: 11px;
 }
