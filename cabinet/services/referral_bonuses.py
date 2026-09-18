@@ -3,13 +3,19 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.urls import reverse
 
-from cabinet.models import BonusEvent, ReferralBonusSettings, ReferralVisit
+from cabinet.models import (
+    AnalystPaidSubscription,
+    BonusEvent,
+    ReferralBonusSettings,
+    ReferralVisit,
+)
 
 from .bonus_rewards import grant_bonus_reward
 
 
 REGISTRATION_BONUS_TITLE = "Реферальный бонус за регистрацию"
 FIRST_TOPUP_BONUS_TITLE = "Реферальный бонус за первое пополнение"
+FIRST_SUBSCRIPTION_BONUS_TITLE = "Реферальный бонус за первую подписку"
 
 
 def _positive_amount(value) -> Decimal:
@@ -138,6 +144,57 @@ def grant_referral_first_topup_bonus(referred_user, amount, related_obj=None):
         title=FIRST_TOPUP_BONUS_TITLE,
         description=description,
         related_obj=referred_user,
+    )
+
+
+@transaction.atomic
+def grant_referral_first_subscription_bonus(referred_user, related_obj=None):
+    visit = _registered_referral_visit_for_user(referred_user, lock=True)
+    if visit is None:
+        return None
+
+    settings_obj = ReferralBonusSettings.load()
+    if (
+        not settings_obj.is_enabled
+        or settings_obj.first_subscription_reward_coins <= 0
+    ):
+        return None
+
+    subscriptions = AnalystPaidSubscription.objects.filter(
+        subscriber=referred_user,
+    ).order_by("starts_at", "id")
+    subscription_ids = list(subscriptions.values_list("id", flat=True))
+    if not subscription_ids:
+        return None
+
+    if BonusEvent.objects.filter(
+        user=visit.referrer,
+        event_type=BonusEvent.EventType.REFERRAL,
+        title=FIRST_SUBSCRIPTION_BONUS_TITLE,
+        related_model=AnalystPaidSubscription._meta.label_lower,
+        related_id__in=subscription_ids,
+    ).exists():
+        return None
+
+    subscription = None
+    if (
+        isinstance(related_obj, AnalystPaidSubscription)
+        and related_obj.pk
+        and related_obj.subscriber_id == referred_user.pk
+    ):
+        subscription = related_obj
+    if subscription is None:
+        subscription = subscriptions.first()
+    if subscription is None:
+        return None
+
+    return grant_bonus_reward(
+        visit.referrer,
+        coins=settings_obj.first_subscription_reward_coins,
+        event_type=BonusEvent.EventType.REFERRAL,
+        title=FIRST_SUBSCRIPTION_BONUS_TITLE,
+        description=f"Первая платная подписка @{referred_user.username}",
+        related_obj=subscription,
     )
 
 
