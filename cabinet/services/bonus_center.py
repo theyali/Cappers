@@ -5,15 +5,8 @@ from django.utils import timezone
 from cabinet.models import BonusEvent
 
 from .daily_tasks import daily_tasks_for_user
+from .xp import build_level_progress
 
-
-DEFAULT_LEVELS_PREVIEW = (
-    {"level": 1, "title": "Новичок"},
-    {"level": 2, "title": "Активный"},
-    {"level": 3, "title": "Эксперт"},
-    {"level": 4, "title": "Профи"},
-    {"level": 5, "title": "Легенда"},
-)
 
 DEFAULT_PROGRESS_STEPS = (
     {"label": "Заходите ежедневно", "is_done": False},
@@ -76,6 +69,7 @@ def build_bonus_center_context(user, request=None) -> dict:
     daily_tasks = list(daily_tasks_for_user(user))
     daily_tasks_total = len(daily_tasks)
     recent_gifts, recent_wins = _recent_bonus_events(user)
+    level_progress = build_level_progress(user)
 
     return {
         "roulette_state_url": reverse("cabinet:roulette_state"),
@@ -110,13 +104,10 @@ def build_bonus_center_context(user, request=None) -> dict:
         "recent_wins": recent_wins,
         "recent_gifts": recent_gifts,
         "level_progress": {
-            "level": 1,
-            "current": 0,
-            "target": 5,
-            "xp_to_next_label": "— XP до следующего уровня",
+            **level_progress,
             "steps": DEFAULT_PROGRESS_STEPS,
         },
-        "levels_preview": DEFAULT_LEVELS_PREVIEW,
+        "levels_preview": level_progress["levels_preview"],
         "balance_cta": {
             "title": "Пополните баланс\nи получайте больше",
             "description": (
