@@ -24,8 +24,9 @@ from cabinet.roulette.state import UserRouletteState
 from cabinet.services.bonus_rewards import grant_bonus_reward
 from cabinet.services.referral_bonuses import grant_referral_registration_bonus
 from cabinet.services.streaks import touch_daily_streak
-from cabinet.services.xp import build_level_progress
+from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
 from game.models import PredictionCoupon
+from notifications.models import Notification, NotificationPreference
 from wallets.models import CoinSettings, CoinWallet
 
 
@@ -413,6 +414,120 @@ class BonusCenterServiceTests(TestCase):
         self.assertFalse(remove_response.json()["active"])
         progress.refresh_from_db()
         self.assertEqual(progress.current_value, 1)
+
+    def test_bonus_reward_creates_notification_after_event(self):
+        preferences = NotificationPreference.objects.create(
+            user=self.user,
+            bonus_roulette=True,
+        )
+        cases = (
+            (
+                BonusEvent.EventType.DAILY_TASK,
+                Notification.Kind.BONUS_DAILY_TASK,
+                reverse("cabinet:bonus_tasks"),
+            ),
+            (
+                BonusEvent.EventType.STREAK,
+                Notification.Kind.BONUS_STREAK,
+                reverse("cabinet:bonuses"),
+            ),
+            (
+                BonusEvent.EventType.ROULETTE,
+                Notification.Kind.BONUS_ROULETTE,
+                reverse("cabinet:bonuses"),
+            ),
+            (
+                BonusEvent.EventType.REFERRAL,
+                Notification.Kind.BONUS_REFERRAL,
+                reverse("cabinet:referrals"),
+            ),
+        )
+
+        for index, (event_type, notification_kind, expected_url) in enumerate(cases, start=1):
+            event = grant_bonus_reward(
+                self.user,
+                event_type=event_type,
+                title=f"Бонус {index}",
+                description=f"Описание {index}",
+            )
+            notification = Notification.objects.get(event_key=f"bonus:{event.pk}")
+
+            self.assertEqual(notification.kind, notification_kind)
+            self.assertEqual(notification.title, event.title)
+            self.assertEqual(notification.message, event.description)
+            self.assertEqual(notification.url, expected_url)
+            self.assertEqual(notification.meta["bonus_event_id"], event.pk)
+
+        preferences.refresh_from_db()
+        self.assertTrue(preferences.bonus_roulette)
+
+    def test_level_notification_created_only_when_level_increases(self):
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            order=1,
+        )
+        XpLevel.objects.create(
+            level=2,
+            title="Участник",
+            required_xp=100,
+            order=2,
+        )
+        state = UserXpState.objects.create(
+            user=self.user,
+            level=1,
+            xp=90,
+        )
+
+        sync_user_level(state)
+        self.assertFalse(
+            Notification.objects.filter(kind=Notification.Kind.BONUS_LEVEL).exists()
+        )
+
+        grant_xp(self.user, 10)
+
+        state.refresh_from_db()
+        self.assertEqual(state.level, 2)
+        notification = Notification.objects.get(kind=Notification.Kind.BONUS_LEVEL)
+        self.assertEqual(notification.url, reverse("cabinet:bonus_levels"))
+        self.assertEqual(
+            notification.event_key,
+            f"bonus-level:{self.user.pk}:2:{state.xp}",
+        )
+
+        sync_user_level(state)
+        self.assertEqual(
+            Notification.objects.filter(kind=Notification.Kind.BONUS_LEVEL).count(),
+            1,
+        )
+
+    def test_bonus_page_uses_prepared_navigation_links(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:bonuses"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["daily_tasks_card"]["url"],
+            reverse("cabinet:bonus_tasks"),
+        )
+        self.assertEqual(
+            response.context["bonus_page"]["levels"]["url"],
+            reverse("cabinet:bonus_levels"),
+        )
+        self.assertEqual(
+            response.context["referral_card"]["url"],
+            reverse("cabinet:referrals"),
+        )
+        self.assertEqual(
+            response.context["bonus_page"]["notification_settings"]["url"],
+            reverse("notifications:center"),
+        )
+        self.assertContains(response, reverse("cabinet:bonus_tasks"))
+        self.assertContains(response, reverse("cabinet:bonus_levels"))
+        self.assertContains(response, reverse("cabinet:referrals"))
+        self.assertContains(response, reverse("notifications:center"))
 
     def test_bonus_page_shows_claim_button_for_completed_task(self):
         task = DailyTask.objects.create(

@@ -149,6 +149,11 @@ def update_preferences(request):
         "favorite_settled",
         "match_reminder",
         "achievement",
+        "bonus_daily_task",
+        "bonus_streak",
+        "bonus_level",
+        "bonus_roulette",
+        "bonus_referral",
     )
     for field in checkbox_fields:
         setattr(preferences, field, field in request.POST)

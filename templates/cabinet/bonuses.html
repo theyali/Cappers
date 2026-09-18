@@ -62,7 +62,7 @@
                                 <h2>{{ daily_tasks_card.title }}</h2>
                                 <span data-daily-tasks-summary>{{ daily_tasks_card.summary_label }}</span>
                             </div>
-                            <span class="bonus-card-arrow" aria-hidden="true">{{ daily_tasks_card.arrow_label }}</span>
+                            <a class="bonus-card-arrow" href="{{ daily_tasks_card.url }}" aria-label="{{ daily_tasks_card.link_label }}">{{ daily_tasks_card.arrow_label }}</a>
                         </div>
                         <div class="bonus-task-progress" data-daily-tasks-progress aria-label="{{ daily_tasks_card.progress_aria_label }}">
                             {% for slot in daily_tasks_card.progress_slots %}
@@ -169,6 +169,7 @@
                                 <h2>{{ bonus_page.levels.title }}</h2>
                                 <span>{{ bonus_page.levels.subtitle }}</span>
                             </div>
+                            <a class="bonus-card-arrow" href="{{ bonus_page.levels.url }}" aria-label="{{ bonus_page.levels.link_label }}">{{ bonus_page.levels.arrow_label }}</a>
                         </div>
                         <div class="bonus-level-list">
                             {% for level in levels_preview %}
@@ -235,6 +236,11 @@
                     </div>
                     <p data-level-progress-status>{{ level_progress.status_label }}</p>
                 </section>
+
+                <a class="bonus-notification-settings-link" href="{{ bonus_page.notification_settings.url }}">
+                    <span>{{ bonus_page.notification_settings.label }}</span>
+                    <span aria-hidden="true">{{ bonus_page.notification_settings.arrow_label }}</span>
+                </a>
 
                 <section class="bonus-side-card bonus-balance-cta">
                     <div class="bonus-balance-copy">
