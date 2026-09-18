@@ -37816,3 +37816,406 @@ padding:40px 0px;
 .cabinet-bonuses-page .bonus-side-card.is-skeleton-loading {
     min-height: inherit;
 }
+
+/* Cabinet bonus detail pages */
+.cabinet-bonuses-page .bonus-detail-main {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.cabinet-bonuses-page .bonus-page-head {
+    min-width: 0;
+    min-height: 124px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.cabinet-bonuses-page .bonus-page-head > div {
+    min-width: 0;
+}
+
+.cabinet-bonuses-page .bonus-page-head h1 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.035em;
+}
+
+.cabinet-bonuses-page .bonus-page-head p {
+    max-width: 680px;
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.cabinet-bonuses-page .bonus-page-head > strong,
+.cabinet-bonuses-page .bonus-page-summary {
+    flex: 0 0 auto;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 14px;
+    border-radius: 11px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-task-list {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.cabinet-bonuses-page .bonus-task-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px 20px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.cabinet-bonuses-page .bonus-task-copy {
+    min-width: 0;
+}
+
+.cabinet-bonuses-page .bonus-task-copy h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.cabinet-bonuses-page .bonus-task-copy p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.cabinet-bonuses-page .bonus-task-meta {
+    min-width: 124px;
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    text-align: right;
+}
+
+.cabinet-bonuses-page .bonus-task-meta span {
+    color: #a7a7aa;
+    font-size: 11px;
+}
+
+.cabinet-bonuses-page .bonus-task-meta strong {
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-task-progress-bar {
+    width: 100%;
+    height: 8px;
+    grid-column: 1 / -1;
+    overflow: hidden;
+    appearance: none;
+    border-radius: 999px;
+    background: #303034;
+}
+
+.cabinet-bonuses-page .bonus-task-progress-bar::-webkit-progress-bar {
+    border-radius: 999px;
+    background: #303034;
+}
+
+.cabinet-bonuses-page .bonus-task-progress-bar::-webkit-progress-value {
+    border-radius: 999px;
+    background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-task-progress-bar::-moz-progress-bar {
+    border-radius: 999px;
+    background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-task-row .bonus-task-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+}
+
+.cabinet-bonuses-page .bonus-task-row .bonus-task-claim {
+    min-width: 110px;
+}
+
+.cabinet-bonuses-page .bonus-levels-hero {
+    min-height: 196px;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+}
+
+.cabinet-bonuses-page .bonus-levels-current-copy {
+    min-width: 0;
+    display: grid;
+    gap: 9px;
+}
+
+.cabinet-bonuses-page .bonus-levels-current-copy > strong {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.cabinet-bonuses-page .bonus-levels-current-copy > span {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.cabinet-bonuses-page .bonus-levels-list {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.cabinet-bonuses-page .bonus-level-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) auto;
+    align-items: center;
+    gap: 12px 20px;
+    padding: 18px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.cabinet-bonuses-page .bonus-level-row.is-current {
+    background: #262628;
+}
+
+.cabinet-bonuses-page .bonus-level-row-copy,
+.cabinet-bonuses-page .bonus-level-row-meta {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.cabinet-bonuses-page .bonus-level-row-copy > span,
+.cabinet-bonuses-page .bonus-level-row-meta > span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.cabinet-bonuses-page .bonus-level-row-copy h2 {
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-bonuses-page .bonus-level-row-meta {
+    justify-items: end;
+    text-align: right;
+}
+
+.cabinet-bonuses-page .bonus-level-row-meta strong {
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-level-row-status {
+    grid-column: 1 / -1;
+    width: fit-content;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: var(--muted);
+    background: #303034;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.cabinet-bonuses-page .bonus-level-row-status.is-current {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.cabinet-bonuses-page .bonus-level-row-status.is-unlocked {
+    color: #fff;
+    background: var(--blue);
+}
+
+.cabinet-bonuses-page .bonus-level-row-status.is-next {
+    color: #fff;
+    background: #2d4b90;
+}
+
+/* Referrals SSR page: reuse the existing profile-referrals component system. */
+.cabinet-referrals-page .bonus-detail-main {
+    min-width: 0;
+    grid-column: 2 / 4;
+    display: grid;
+    align-content: start;
+    gap: 18px;
+}
+
+.cabinet-referrals-page .profile-referrals-shell,
+.cabinet-referrals-page .referrals-page-shell {
+    min-width: 0;
+}
+
+.cabinet-referrals-page .profile-referrals-hero h1,
+.cabinet-referrals-page .referrals-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.035em;
+}
+
+.cabinet-referrals-page .profile-referrals-stats,
+.cabinet-referrals-page .referrals-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cabinet-referrals-page .bonus-dashboard-grid,
+.cabinet-referrals-page .referrals-bonus-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.cabinet-referrals-page .bonus-dashboard-card {
+    min-width: 0;
+    min-height: 138px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.cabinet-referrals-page .bonus-card-head {
+    min-width: 0;
+}
+
+.cabinet-referrals-page .bonus-card-head h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.cabinet-referrals-page .bonus-card-head span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.cabinet-referrals-page .bonus-card-value {
+    margin-top: auto;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.cabinet-referrals-page .bonus-card-value.is-yellow {
+    color: var(--yellow);
+}
+
+.cabinet-referrals-page .profile-referral-list,
+.cabinet-referrals-page .referrals-visits-list {
+    min-width: 0;
+}
+
+.cabinet-referrals-page .bonus-gifts-list,
+.cabinet-referrals-page .referrals-bonus-events {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.cabinet-referrals-page .bonus-gift-row {
+    min-width: 0;
+    min-height: 58px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #171718;
+}
+
+.cabinet-referrals-page .bonus-gift-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--yellow);
+    background: #29292c;
+    font-size: 17px;
+}
+
+.cabinet-referrals-page .bonus-gift-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.cabinet-referrals-page .bonus-gift-copy strong {
+    overflow: hidden;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cabinet-referrals-page .bonus-gift-copy span,
+.cabinet-referrals-page .bonus-gift-copy small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.cabinet-referrals-page .profile-referral-status.is-registered {
+    color: #fff;
+    background: var(--blue);
+}
+
+.cabinet-referrals-page .profile-referral-status.is-subscribed {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
