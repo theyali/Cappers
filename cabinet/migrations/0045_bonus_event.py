@@ -36,14 +36,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("title", models.CharField(max_length=160, verbose_name="Название")),
-                (
-                    "description",
-                    models.CharField(
-                        blank=True,
-                        max_length=255,
-                        verbose_name="Описание",
-                    ),
-                ),
+                ("description", models.TextField(blank=True, verbose_name="Описание")),
                 ("xp_delta", models.BigIntegerField(default=0, verbose_name="Изменение XP")),
                 (
                     "coin_delta",
