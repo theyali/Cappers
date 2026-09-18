@@ -1,4 +1,4 @@
-name: Export verified step 6 patch
+name: Inspect become capper hero
 
 on:
   push:
@@ -7,18 +7,13 @@ on:
       - .github/workflows/step6-bundle.yml
 
 jobs:
-  export:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build verified patch bundle
+      - name: Find existing become-capper implementation
         run: |
-          python .github/step6_apply.py
-          python .github/step6_finalize_patch.py
-          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
-          git diff --name-only
-      - uses: actions/upload-artifact@v4
-        with:
-          name: step6-patched
-          path: step6-patched.tar.gz
-          if-no-files-found: error
+          echo "=== ROUTE/TEMPLATE PATTERNS ==="
+          rg -n "become.?capper|capper-landing|Стать каппером|Как стать каппером" templates cabinet front pages -g '!*.pyc' || true
+          echo "=== ASSET ==="
+          find front static templates -iname 'become_capper.jpg' -o -iname '*become*capper*' 2>/dev/null | head -100
