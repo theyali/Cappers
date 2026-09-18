@@ -253,6 +253,21 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
         if level.reward_spins:
             rewards.append(f"+{level.reward_spins} попыток")
 
+        is_current = level.level == level_progress["level"]
+        is_next = (
+            level_progress["next_level_xp"] is not None
+            and required_xp == level_progress["next_level_xp"]
+        )
+        if is_current:
+            status = "current"
+            status_label = "Текущий"
+        elif is_unlocked:
+            status = "unlocked"
+            status_label = "Открыт"
+        else:
+            status = "locked"
+            status_label = "Впереди"
+
         level_items.append(
             {
                 "level": level.level,
@@ -261,11 +276,10 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
                 "required_xp_label": f"{required_xp} XP",
                 "reward_label": " · ".join(rewards) or "Без награды",
                 "is_unlocked": is_unlocked,
-                "is_current": level.level == level_progress["level"],
-                "is_next": (
-                    level_progress["next_level_xp"] is not None
-                    and required_xp == level_progress["next_level_xp"]
-                ),
+                "is_current": is_current,
+                "is_next": is_next,
+                "status": status,
+                "status_label": status_label,
                 "progress_percent": (
                     100
                     if is_unlocked or required_xp <= 0
