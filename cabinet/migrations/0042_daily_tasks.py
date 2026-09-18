@@ -152,7 +152,7 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name": "Прогресс ежедневного задания",
                 "verbose_name_plural": "Прогресс ежедневных заданий",
-                "ordering": ("-progress_date", "task_id"),
+                "ordering": ("-progress_date", "id"),
                 "indexes": [
                     models.Index(
                         fields=["user", "progress_date"],
