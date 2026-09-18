@@ -61,7 +61,7 @@
 
                 <div class="bonus-levels-list">
                     {% for level in levels %}
-                        <article class="bonus-level-row{% if level.is_unlocked %} is-unlocked{% endif %}{% if level.is_current %} is-current{% endif %}{% if level.is_next %} is-next{% endif %}">
+                        <article class="bonus-level-row is-{{ level.status }}{% if level.is_next %} is-next{% endif %}">
                             <div class="bonus-level-row-copy">
                                 <span>Уровень {{ level.level }}</span>
                                 <h2>{{ level.title }}</h2>
@@ -73,7 +73,7 @@
                             </div>
 
                             <progress
-                                class="bonus-task-progress-bar"
+                                class="bonus-task-progress-bar {{ level.progress_class }}"
                                 value="{{ level.progress_percent }}"
                                 max="100"
                                 aria-label="Прогресс уровня {{ level.level }}"
@@ -81,18 +81,8 @@
                                 {{ level.progress_percent }}%
                             </progress>
 
-                            <div class="bonus-level-row-status{% if level.is_current %} is-current{% elif level.is_unlocked %} is-unlocked{% elif level.is_next %} is-next{% else %} is-locked{% endif %}">
-                                <span>
-                                    {% if level.is_current %}
-                                        Текущий
-                                    {% elif level.is_unlocked %}
-                                        Открыт
-                                    {% elif level.is_next %}
-                                        Следующий
-                                    {% else %}
-                                        Впереди
-                                    {% endif %}
-                                </span>
+                            <div class="bonus-level-row-status is-{{ level.status }}">
+                                <span>{{ level.status_label }}</span>
                             </div>
                         </article>
                     {% empty %}
