@@ -170,6 +170,34 @@ class NotificationViewsTests(TestCase):
         self.assertFalse(second.json()["watching"])
         self.assertFalse(MatchWatch.objects.filter(user=self.user, match=match).exists())
 
+    def test_update_preferences_saves_bonus_notification_fields(self):
+        response = self.client.post(
+            reverse("notifications:preferences"),
+            {
+                "in_app_enabled": "on",
+                "bonus_daily_task": "on",
+                "bonus_streak": "on",
+                "bonus_level": "on",
+                "bonus_roulette": "on",
+                "bonus_referral": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        preferences = get_preferences(self.user)
+        self.assertTrue(preferences.bonus_daily_task)
+        self.assertTrue(preferences.bonus_streak)
+        self.assertTrue(preferences.bonus_level)
+        self.assertTrue(preferences.bonus_roulette)
+        self.assertTrue(preferences.bonus_referral)
+
+        center_response = self.client.get(reverse("notifications:center"))
+        self.assertContains(center_response, 'name="bonus_daily_task"')
+        self.assertContains(center_response, 'name="bonus_streak"')
+        self.assertContains(center_response, 'name="bonus_level"')
+        self.assertContains(center_response, 'name="bonus_roulette"')
+        self.assertContains(center_response, 'name="bonus_referral"')
+
     def test_telegram_disconnect_view(self):
         preferences = get_preferences(self.user)
         preferences.telegram_chat_id = "999"
