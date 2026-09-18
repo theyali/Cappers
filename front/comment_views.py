@@ -3,6 +3,9 @@ import json
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 
+from cabinet.models import DailyTask
+from cabinet.services.daily_tasks import record_daily_task_action
+
 from cabinet.comments.services.predictions import (
     CommentServiceError,
     attach_comment_replies,
@@ -100,6 +103,13 @@ def prediction_comments(request, prediction_id: int):
                 "error": exc.public_message,
             },
             status=exc.http_status,
+        )
+
+    if getattr(comment, "parent_id", None):
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.ANSWER_COMMENT,
+            related_obj=comment,
         )
 
     return JsonResponse(
