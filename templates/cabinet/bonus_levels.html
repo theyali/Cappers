@@ -81,8 +81,18 @@
                                 {{ level.progress_percent }}%
                             </progress>
 
-                            <div class="bonus-level-row-status is-{{ level.status }}">
-                                <span>{{ level.status_label }}</span>
+                            <div class="bonus-level-row-status{% if level.is_current %} is-current{% elif level.is_unlocked %} is-unlocked{% elif level.is_next %} is-next{% else %} is-locked{% endif %}">
+                                <span>
+                                    {% if level.is_current %}
+                                        Текущий
+                                    {% elif level.is_unlocked %}
+                                        Открыт
+                                    {% elif level.is_next %}
+                                        Следующий
+                                    {% else %}
+                                        Впереди
+                                    {% endif %}
+                                </span>
                             </div>
                         </article>
                     {% empty %}
