@@ -4,6 +4,8 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils import timezone
 
+from cabinet.models import BonusEvent
+
 from .history import RouletteSpin
 from .models import RoulettePrize, RouletteSettings
 from .rewards import UserRouletteRewardState
@@ -172,5 +174,29 @@ def spin_roulette(user, operation_id, now=None) -> RouletteSpin:
                 "updated_at",
             )
         )
+
+        if prize.reward_type != RoulettePrize.RewardType.NOTHING:
+            coin_delta = (
+                int(prize.reward_value)
+                if prize.reward_type == RoulettePrize.RewardType.COINS
+                else 0
+            )
+            spin_delta = (
+                int(prize.reward_value)
+                if prize.reward_type == RoulettePrize.RewardType.EXTRA_SPIN
+                else 0
+            )
+            BonusEvent.objects.get_or_create(
+                user=locked_user,
+                event_type=BonusEvent.EventType.ROULETTE,
+                related_model=spin._meta.label_lower,
+                related_id=spin.pk,
+                defaults={
+                    "title": prize.title,
+                    "description": prize.short_text or prize.get_reward_type_display(),
+                    "coin_delta": coin_delta,
+                    "spin_delta": spin_delta,
+                },
+            )
 
         return spin
