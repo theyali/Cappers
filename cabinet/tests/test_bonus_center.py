@@ -294,3 +294,18 @@ class BonusCenterServiceTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 405)
+
+
+    def test_daily_task_claim_endpoint_requires_login(self):
+        task = DailyTask.objects.create(
+            title="Награда после входа",
+            task_type=DailyTask.TaskType.DAILY_LOGIN,
+            target_value=1,
+        )
+
+        response = self.client.post(
+            reverse("cabinet:daily_task_claim", args=(task.pk,))
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
