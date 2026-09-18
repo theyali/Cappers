@@ -188,7 +188,7 @@ def credit_referral_income(referred_user, source_amount, action: str, *, related
     if source_amount <= 0:
         return None
 
-    if action == REFERRAL_ACTION_SUBSCRIPTION:
+    if action == REFERRAL_ACTION_SUBSCRIPTION and related_obj is not None:
         from .services.referral_bonuses import grant_referral_first_subscription_bonus
 
         grant_referral_first_subscription_bonus(
