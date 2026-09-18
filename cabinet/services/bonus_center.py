@@ -5,6 +5,7 @@ from django.utils import timezone
 from cabinet.models import BonusEvent
 
 from .daily_tasks import build_daily_tasks_card
+from .streaks import build_streak_card
 from .xp import build_level_progress
 
 
@@ -68,6 +69,7 @@ def build_bonus_center_context(user, request=None) -> dict:
     """Build the bonus-center page context without template-side data access."""
     recent_gifts, recent_wins = _recent_bonus_events(user)
     daily_tasks_card = build_daily_tasks_card(user)
+    streak_card = build_streak_card(user)
     level_progress = build_level_progress(user)
 
     return {
@@ -82,12 +84,7 @@ def build_bonus_center_context(user, request=None) -> dict:
             "description": "Возвращайтесь, чтобы снова крутить колесо и получать награды.",
         },
         "daily_tasks_card": daily_tasks_card,
-        "streak_card": {
-            "title": "Серия дней",
-            "subtitle": "Заходите ежедневно",
-            "days_label": "— дней",
-            "day_numbers": tuple(range(1, 8)),
-        },
+        "streak_card": streak_card,
         "referral_card": {
             "title": "Бонус за рефералов",
             "subtitle": "Приглашайте друзей",
