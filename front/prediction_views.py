@@ -31,7 +31,8 @@ from cabinet.comments.services import (
     prediction_comments_queryset,
     prediction_comments_total_count,
 )
-from cabinet.models import AnalystFollow
+from cabinet.models import AnalystFollow, DailyTask
+from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.paid_predictions import user_can_view_paid_predictions
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import Prediction, PredictionCoupon, Sport
@@ -810,6 +811,13 @@ def prediction_detail(request, prediction_id: int):
     ):
         raise Http404("Прогноз не найден.")
 
+    if request.user.is_authenticated:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.VIEW_PREDICTION,
+            related_obj=coupon,
+        )
+
     metrics = increment_prediction_views(coupon.pk)
     coupon.likes_count = metrics.likes_count
     coupon.favorites_count = metrics.favorites_count
@@ -953,6 +961,12 @@ def toggle_prediction_like(request, prediction_id: int):
 def toggle_prediction_favorite(request, prediction_id: int):
     prediction = _accessible_published_prediction(request.user, prediction_id)
     active, metrics = toggle_prediction_favorite_metric(prediction, request.user)
+    if active:
+        record_daily_task_action(
+            request.user,
+            DailyTask.TaskType.ADD_FAVORITE,
+            related_obj=prediction,
+        )
     return JsonResponse(
         {
             "ok": True,
