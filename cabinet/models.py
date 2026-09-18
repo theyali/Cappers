@@ -697,7 +697,7 @@ class UserDailyTaskProgress(models.Model):
     class Meta:
         verbose_name = "Прогресс ежедневного задания"
         verbose_name_plural = "Прогресс ежедневных заданий"
-        ordering = ("-progress_date", "task_id")
+        ordering = ("-progress_date", "id")
         constraints = [
             models.UniqueConstraint(
                 fields=("user", "task", "progress_date"),
