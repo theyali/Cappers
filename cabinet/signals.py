@@ -1,3 +1,4 @@
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.db import connection, transaction
 from django.dispatch import receiver
@@ -11,10 +12,17 @@ from .models import (
     AnalystPaidSubscription,
     AnalystProfile,
     CapperMonthlyStat,
+    DailyTask,
     User,
 )
 from .monthly_stats import monthly_stat_key, rebuild_capper_month
+from .services.daily_tasks import record_daily_task_action
 from .trust_index import refresh_capper_trust_index
+
+
+@receiver(user_logged_in)
+def record_daily_login(sender, request, user, **kwargs) -> None:
+    record_daily_task_action(user, DailyTask.TaskType.DAILY_LOGIN)
 
 
 def _profile_has_paid_predictions(profile: AnalystProfile) -> bool:
