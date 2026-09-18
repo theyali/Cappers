@@ -266,6 +266,50 @@
                         </label>
                     </div>
 
+                    <div class="notification-settings-group">
+                        <strong>Бонусы</strong>
+                        <label>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v4H7zM5 8h14v12H5z"></path><path d="M12 8v12M5 12h14M9 4c-1.6 0-3-1-3-2 2.8-.2 5 .5 6 2M15 4c1.6 0 3-1 3-2-2.8-.2-5 .5-6 2"></path></svg>
+                            <span>Ежедневные задания</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="bonus_daily_task" {% if preferences.bonus_daily_task %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3c1 4-2 4-1 7 1-2 3-2 4-4 3 3 4 6 3 9a7 7 0 1 1-13-5c1.2-1.7 2.7-2.8 4.5-4.5C10 9 12 10 13 3Z"></path></svg>
+                            <span>Серия дней</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="bonus_streak" {% if preferences.bonus_streak %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8L12 3Z"></path></svg>
+                            <span>Новый уровень</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="bonus_level" {% if preferences.bonus_level %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4v3M18.9 8l-2.6 1.5M18.9 16l-2.6-1.5M12 20v-3M5.1 16l2.6-1.5M5.1 8l2.6 1.5"></path></svg>
+                            <span>Призы рулетки</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="bonus_roulette" {% if preferences.bonus_roulette %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5"></path></svg>
+                            <span>Реферальные бонусы</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="bonus_referral" {% if preferences.bonus_referral %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                    </div>
+
                     {% if preferences.prediction_favorite %}<input type="hidden" name="prediction_favorite" value="on">{% endif %}
                     {% if preferences.copybetting %}<input type="hidden" name="copybetting" value="on">{% endif %}
                     {% if preferences.paid_subscription %}<input type="hidden" name="paid_subscription" value="on">{% endif %}
