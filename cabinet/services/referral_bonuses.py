@@ -483,13 +483,46 @@ def build_referrals_page_context(user, request=None) -> dict:
         },
     ]
 
+    referral_bonus_events = BonusEvent.objects.filter(
+        user=user,
+        event_type=BonusEvent.EventType.REFERRAL,
+    )
+    bonus_events_count = referral_bonus_events.count()
     recent_bonus_events = [
         _referral_event_context(event)
-        for event in BonusEvent.objects.filter(
-            user=user,
-            event_type=BonusEvent.EventType.REFERRAL,
-        ).order_by("-created_at", "-id")[:40]
+        for event in referral_bonus_events.order_by("-created_at", "-id")[:40]
     ]
+
+    metrics = [
+        {
+            "key": "clicks",
+            "label": "Переходы",
+            "value": clicks_count,
+        },
+        {
+            "key": "registrations",
+            "label": "Регистрации",
+            "value": registrations_count,
+        },
+        {
+            "key": "subscriptions",
+            "label": "Подписки",
+            "value": subscriptions_count,
+        },
+        {
+            "key": "bonuses",
+            "label": "Бонусы",
+            "value": bonus_events_count,
+        },
+    ]
+    if user.is_analyst:
+        metrics.append(
+            {
+                "key": "income",
+                "label": "Заработано",
+                "value": f"{format_money(referral_income)} ₽",
+            }
+        )
 
     return {
         "page": {
@@ -515,8 +548,11 @@ def build_referrals_page_context(user, request=None) -> dict:
         "registrations_count": registrations_count,
         "subscriptions_count": subscriptions_count,
         "conversion": conversion,
+        "bonus_events_count": bonus_events_count,
+        "metrics": metrics,
         "bonus_settings": bonus_settings,
         "bonus_cards": bonus_cards,
+        "bonus_steps": bonus_cards,
         "recent_visits": recent_visits,
         "recent_bonus_events": recent_bonus_events,
     }

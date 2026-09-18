@@ -15,190 +15,118 @@
                 </nav>
             </div>
 
-            <div class="profile-referrals-shell">
-                <section class="profile-referrals-hero">
+            <div class="referrals-simple">
+                <header class="referrals-simple-head">
                     <div>
-                        <p class="eyebrow">Ваша реферальная ссылка</p>
+                        <p class="eyebrow">Реферальная программа</p>
                         <h1>{{ page.heading }}</h1>
                         <p>{{ page.description }}</p>
                     </div>
 
-                    <div class="profile-referral-link-wrap">
-                        <input
-                            class="profile-referral-link"
-                            type="text"
-                            value="{{ referral_url }}"
-                            readonly
-                            aria-label="Реферальная ссылка"
-                            data-referral-link
-                        >
-                        <button
-                            class="profile-referral-copy"
-                            type="button"
-                            data-referral-copy
-                        >
-                            Скопировать
-                        </button>
-                    </div>
-                </section>
-
-                <section class="profile-referrals-stats" aria-label="Реферальная статистика">
-                    <article class="profile-referral-stat is-accent">
-                        <span>Уникальные посетители</span>
-                        <strong>{{ visitors_count }}</strong>
-                    </article>
-                    <article class="profile-referral-stat">
-                        <span>Все переходы</span>
-                        <strong>{{ clicks_count }}</strong>
-                    </article>
-                    <article class="profile-referral-stat">
-                        <span>Регистрации</span>
-                        <strong>{{ registrations_count }}</strong>
-                    </article>
-                    <article class="profile-referral-stat">
-                        <span>Подписки</span>
-                        <strong>{{ subscriptions_count }}</strong>
-                    </article>
-                    <article class="profile-referral-stat">
-                        <span>Конверсия</span>
-                        <strong>{{ conversion }}%</strong>
-                    </article>
-                    {% if can_earn_referrals %}
-                        <article class="profile-referral-stat">
-                            <span>Заработано</span>
-                            <strong>{{ referral_income_display }} ₽</strong>
-                        </article>
-                    {% endif %}
-                </section>
-
-                <section class="profile-referrals-recent" aria-labelledby="referral-bonus-model-title">
-                    <div class="profile-referrals-recent-head">
-                        <div>
-                            <p class="eyebrow">Награды</p>
-                            <h2 class="profile-referrals-recent-title" id="referral-bonus-model-title">Бонусная модель</h2>
+                    <div class="referrals-link-block">
+                        <span>Ваша реферальная ссылка</span>
+                        <div class="profile-referral-link-wrap">
+                            <input
+                                class="profile-referral-link"
+                                type="text"
+                                value="{{ referral_url }}"
+                                readonly
+                                aria-label="Реферальная ссылка"
+                                data-referral-link
+                            >
+                            <button
+                                class="profile-referral-copy"
+                                type="button"
+                                data-referral-copy
+                            >
+                                Скопировать
+                            </button>
                         </div>
+                        <small>Отправьте ссылку другу. Переходы, регистрации и начисления появятся на этой странице автоматически.</small>
+                    </div>
+                </header>
+
+                <section class="referrals-metrics" aria-label="Реферальная статистика">
+                    {% for metric in metrics %}
+                        <div class="referrals-metric">
+                            <span>{{ metric.label }}</span>
+                            <strong>{{ metric.value }}</strong>
+                        </div>
+                    {% endfor %}
+                </section>
+
+                <section class="referrals-simple-section" aria-labelledby="referral-how-title">
+                    <div class="referrals-section-head">
+                        <h2 id="referral-how-title">Как начисляются бонусы</h2>
                         <span>{{ bonus_settings.status_label }}</span>
                     </div>
 
-                    <div class="bonus-dashboard-grid">
-                        {% for card in bonus_cards %}
-                            <article class="bonus-dashboard-card">
-                                <div class="bonus-card-head">
-                                    <div>
-                                        <h2>{{ card.title }}</h2>
-                                        <span>{{ card.description }}</span>
-                                    </div>
+                    <div class="referrals-steps">
+                        {% for step in bonus_steps %}
+                            <article class="referrals-step">
+                                <span>{{ forloop.counter }}</span>
+                                <div>
+                                    <strong>{{ step.title }}</strong>
+                                    <p>{{ step.description }}</p>
                                 </div>
-                                <strong class="bonus-card-value is-yellow">{{ card.reward_label }}</strong>
+                                <b>{{ step.reward_label }}</b>
                             </article>
                         {% endfor %}
                     </div>
+                </section>
 
-                    {% if can_earn_referrals and bonus_settings.income_cards %}
-                        <div class="profile-referrals-recent-head">
-                            <div>
-                                <p class="eyebrow">Для каппера</p>
-                                <h2 class="profile-referrals-recent-title">Проценты заработка</h2>
-                            </div>
+                <div class="referrals-lists-grid">
+                    <section class="referrals-simple-section" aria-labelledby="referral-latest-title">
+                        <div class="referrals-section-head">
+                            <h2 id="referral-latest-title">Последние рефералы</h2>
                         </div>
-                        <div class="profile-referrals-stats" aria-label="Проценты реферального заработка">
-                            {% for card in bonus_settings.income_cards %}
-                                <article class="profile-referral-stat">
-                                    <span>{{ card.title }}</span>
-                                    <strong>{{ card.percent_label }}</strong>
+
+                        <div class="referrals-simple-list">
+                            {% for visit in recent_visits %}
+                                <article class="referrals-simple-row">
+                                    <div>
+                                        <strong>
+                                            {% if visit.username %}
+                                                @{{ visit.username }}
+                                            {% else %}
+                                                {{ visit.name }}
+                                            {% endif %}
+                                        </strong>
+                                        <span>{{ visit.status_label }}</span>
+                                    </div>
+                                    <small>{{ visit.last_seen_label }}</small>
                                 </article>
+                            {% empty %}
+                                <div class="referrals-simple-empty">Рефералов пока нет.</div>
                             {% endfor %}
                         </div>
-                    {% endif %}
-                </section>
+                    </section>
 
-                <section class="profile-referrals-recent" aria-labelledby="referral-visits-title">
-                    <div class="profile-referrals-recent-head">
-                        <div>
-                            <p class="eyebrow">Последние переходы</p>
-                            <h2 class="profile-referrals-recent-title" id="referral-visits-title">Кто пришёл по ссылке</h2>
+                    <section class="referrals-simple-section" aria-labelledby="referral-bonus-title">
+                        <div class="referrals-section-head">
+                            <h2 id="referral-bonus-title">Последние бонусы</h2>
                         </div>
-                        <span>До 40 записей</span>
-                    </div>
 
-                    <div class="profile-referral-list">
-                        {% for visit in recent_visits %}
-                            <article class="profile-referral-row">
-                                <div class="profile-referral-user">
-                                    <strong>
-                                        {% if visit.username %}
-                                            @{{ visit.username }}
-                                        {% else %}
-                                            {{ visit.name }}
+                        <div class="referrals-simple-list">
+                            {% for event in recent_bonus_events %}
+                                <article class="referrals-simple-row">
+                                    <div>
+                                        <strong>{{ event.title }}</strong>
+                                        {% if event.description %}
+                                            <span>{{ event.description }}</span>
                                         {% endif %}
-                                    </strong>
-                                    <span>
-                                        {% if visit.username %}
-                                            {{ visit.name }}
-                                        {% else %}
-                                            Без входа в аккаунт
-                                        {% endif %}
-                                    </span>
-                                </div>
-
-                                <div class="profile-referral-metric">
-                                    <strong>{{ visit.visits_count }}</strong>
-                                    <span>переходов</span>
-                                </div>
-
-                                <div class="profile-referral-metric">
-                                    <strong>{{ visit.first_seen_label }}</strong>
-                                    <span>первый переход</span>
-                                </div>
-
-                                <div class="profile-referral-metric">
-                                    <strong>{{ visit.last_seen_label }}</strong>
-                                    <span>последний переход</span>
-                                </div>
-
-                                <span class="profile-referral-status is-{{ visit.status }}">
-                                    {{ visit.status_label }}
-                                </span>
-                            </article>
-                        {% empty %}
-                            <div class="profile-referrals-empty">
-                                Переходов по вашей ссылке пока нет.
-                            </div>
-                        {% endfor %}
-                    </div>
-                </section>
-
-                <section class="profile-referrals-recent" aria-labelledby="referral-bonuses-title">
-                    <div class="profile-referrals-recent-head">
-                        <div>
-                            <p class="eyebrow">История начислений</p>
-                            <h2 class="profile-referrals-recent-title" id="referral-bonuses-title">Последние реферальные бонусы</h2>
-                        </div>
-                        <span>До 40 записей</span>
-                    </div>
-
-                    <div class="bonus-gifts-list">
-                        {% for event in recent_bonus_events %}
-                            <article class="bonus-gift-row">
-                                <span class="bonus-gift-icon" aria-hidden="true">👥</span>
-                                <span class="bonus-gift-copy">
-                                    <strong>{{ event.title }}</strong>
-                                    {% if event.description %}
-                                        <span>{{ event.description }}</span>
-                                    {% endif %}
+                                    </div>
                                     <small>
                                         {{ event.created_at_label }}
                                         {% if event.reward_label %} · {{ event.reward_label }}{% endif %}
                                     </small>
-                                </span>
-                            </article>
-                        {% empty %}
-                            <div class="profile-referrals-empty">
-                                Реферальных начислений пока нет.
-                            </div>
-                        {% endfor %}
-                    </div>
-                </section>
+                                </article>
+                            {% empty %}
+                                <div class="referrals-simple-empty">Начислений пока нет.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
             </div>
         </section>
     </div>

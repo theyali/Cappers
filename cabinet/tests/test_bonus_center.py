@@ -846,6 +846,34 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(response.context["registrations_count"], 1)
         self.assertEqual(response.context["subscriptions_count"], 1)
         self.assertEqual(response.context["conversion"], 50.0)
+        self.assertEqual(response.context["bonus_events_count"], 0)
+        self.assertEqual(
+            [metric["key"] for metric in response.context["metrics"]],
+            ["clicks", "registrations", "subscriptions", "bonuses"],
+        )
+        self.assertEqual(len(response.context["bonus_steps"]), 3)
+        self.assertContains(response, "Как начисляются бонусы")
+        self.assertContains(response, "Последние рефералы")
+        self.assertContains(response, "Последние бонусы")
+        self.assertNotContains(response, "Уникальные посетители")
+        self.assertNotContains(response, "Конверсия")
+
+    def test_referrals_page_shows_income_metric_for_capper(self):
+        capper = User.objects.create_user(
+            username="referral-page-capper",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        self.client.force_login(capper)
+
+        response = self.client.get(reverse("cabinet:referrals"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [metric["key"] for metric in response.context["metrics"]],
+            ["clicks", "registrations", "subscriptions", "bonuses", "income"],
+        )
+        self.assertContains(response, "Заработано")
 
     def test_referral_stats_matches_ssr_context_metrics(self):
         visitor = User.objects.create_user(
