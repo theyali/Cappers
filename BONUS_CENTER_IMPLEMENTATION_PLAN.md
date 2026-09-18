@@ -4,6 +4,105 @@
 
 План писать и выполнять по правилам `Agent.md`: минимальные изменения, без лишней архитектуры, без inline styles, стили только в `front/static/front/css/main.css` и `front/static/front/css/mobile.css`, бизнес-логика не в templates.
 
+## Аудит текущего внедрения
+
+Проверено по коду: большая часть плана уже внедрена.
+
+Сделано:
+
+- модели ежедневных заданий, XP, серий, журнала бонусов и настроек рефералки добавлены в `cabinet/models.py`;
+- миграции есть: `0042_daily_tasks`, `0043_xp_levels`, `0044_daily_streaks`, `0045_bonus_event`, `0046_referral_bonus_settings`;
+- админка добавлена в `cabinet/admin.py`;
+- сервисы есть: `cabinet/services/bonus_center.py`, `bonus_rewards.py`, `daily_tasks.py`, `streaks.py`, `xp.py`, `referral_bonuses.py`;
+- `cabinet/bonus_views.py` строит context через `build_bonus_center_context`;
+- `/cabinet/bonuses/` перевёрстан в `templates/cabinet/bonuses.html`;
+- общий include карточки есть: `templates/cabinet/includes/_bonus_dashboard_card.html`;
+- стили бонусного центра добавлены в `main.css`, адаптивы добавлены в `mobile.css`;
+- JS рулетки обновлён в `front/static/front/js/roulette.js`;
+- seed command есть: `cabinet/management/commands/seed_bonus_center.py`;
+- часть тестов есть: `cabinet/tests/test_bonus_center.py`;
+- daily actions подключены для входа в бонусы, ленты, просмотра прогноза, создания/публикации прогноза, ответа на комментарий, обновления профиля, подписки на каппера и spin roulette.
+
+Не добито:
+
+- получение награды за ежедневное задание есть в сервисе `claim_daily_task_reward`, но нет URL/view/ajax endpoint и нет кнопки в интерфейсе;
+- `ADD_FAVORITE` подключён в `front/prediction_views.py`, но реальный маршрут `front:prediction_favorite` использует `front/reaction_views.py`, поэтому задание “Добавить в избранное” сейчас может не засчитываться;
+- после spin JS обновляет историю/подарок, но карточки daily tasks, streak и XP level не обновляются без перезагрузки страницы;
+- `roulette_state` отдаёт только состояние рулетки и recent wins, но не отдаёт `daily_tasks_summary`, `streak`, `level_progress`, `recent_gifts`;
+- для `claim_daily_task_reward` нет теста и нет защиты на уровне endpoint;
+- прогресс-кольцо уровня в шаблоне не получает динамический процент через CSS-переменную/атрибут, нужно проверить визуально;
+- нужно вручную проверить страницу после `seed_bonus_center` и миграций.
+
+## Следующие шаги, чтобы добить
+
+1. Добавить endpoint получения награды ежедневного задания.
+   - Файл: `cabinet/bonus_views.py` или `cabinet/ajax.py`, если в проекте будет принято вынести AJAX туда.
+   - URL: `cabinet/urls.py`, например `path("bonuses/daily-tasks/<int:task_id>/claim/", ..., name="daily_task_claim")`.
+   - View должен принимать только `POST`, требовать login, вызывать `claim_daily_task_reward(request.user, task_id)` и возвращать JSON с обновлёнными `daily_tasks_card`, `level_progress`, `recent_gifts`, `available_spins`.
+
+2. Добавить UI для получения награды задания.
+   - Файл: `templates/cabinet/bonuses.html`.
+   - В карточке ежедневных заданий вывести список `daily_tasks_card.tasks` или компактную кнопку “Получить”, если `claimable_count > 0`.
+   - Не делать сложную бизнес-логику в template: все labels/status/url подготовить в context.
+
+3. Добавить JS для claim daily task.
+   - Файл: `front/static/front/js/roulette.js` или отдельный существующий JS, если уже есть логика бонусов.
+   - Для маленького AJAX не использовать skeleton.
+   - На submit: disable кнопки, POST с CSRF, после ответа обновить карточку заданий, XP/progress, recent gifts и счётчик попыток.
+
+4. Исправить засчитывание `ADD_FAVORITE`.
+   - Файл: `front/reaction_views.py`.
+   - Добавить импорт `DailyTask` и `record_daily_task_action`.
+   - В `toggle_prediction_favorite`, после `active=True`, вызвать:
+
+```python
+record_daily_task_action(
+    request.user,
+    DailyTask.TaskType.ADD_FAVORITE,
+    related_obj=prediction,
+)
+```
+
+   - Старый вызов в `front/prediction_views.py` можно оставить, если view ещё где-то используется, но основной маршрут должен работать через `reaction_views.py`.
+
+5. Расширить JSON `roulette_state`.
+   - Файл: `cabinet/roulette/api.py`.
+   - Добавить в ответ минимум:
+     - `daily_tasks_summary`;
+     - `streak`;
+     - `level_progress`;
+     - `recent_gifts`.
+   - Использовать уже готовые builder-функции, не дублировать сбор данных.
+
+6. После успешного spin обновлять не только recent wins.
+   - Файл: `front/static/front/js/roulette.js`.
+   - После `roulette_spin` обновить:
+     - доступные попытки;
+     - daily task progress для `spin_roulette`;
+     - streak;
+     - XP/level progress;
+     - recent gifts.
+
+7. Исправить progress ring уровня, если визуально процент не двигается.
+   - Файлы: `templates/cabinet/bonuses.html`, `front/static/front/css/main.css`.
+   - Лучше передать CSS custom property через class/data-attribute нельзя без inline style, поэтому предпочтительно сделать несколько классов бакетов: `is-progress-0`, `is-progress-10`, ..., `is-progress-100`.
+   - Класс подготовить в `build_level_progress`.
+
+8. Добавить недостающие тесты.
+   - Файл: `cabinet/tests/test_bonus_center.py`.
+   - Проверить claim daily task:
+     - нельзя получить невыполненное;
+     - выполненное начисляет XP/coins/spins;
+     - повторный claim не начисляет повторно.
+   - Проверить `front/reaction_views.py::toggle_prediction_favorite`, что active favorite засчитывает daily task.
+
+9. Ручная проверка после миграций и seed.
+   - `python manage.py migrate`
+   - `python manage.py seed_bonus_center`
+   - открыть `/cabinet/bonuses/`;
+   - проверить обычного пользователя и каппера: задания должны отличаться по `audience`;
+   - проверить spin, claim, favorite, feed, prediction detail, referral bonus.
+
 ## Текущая база
 
 Уже есть:
