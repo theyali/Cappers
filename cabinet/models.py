@@ -832,7 +832,7 @@ class BonusEvent(models.Model):
         choices=EventType.choices,
     )
     title = models.CharField("Название", max_length=160)
-    description = models.CharField("Описание", max_length=255, blank=True)
+    description = models.TextField("Описание", blank=True)
     xp_delta = models.BigIntegerField("Изменение XP", default=0)
     coin_delta = models.BigIntegerField("Изменение коинов", default=0)
     spin_delta = models.BigIntegerField("Изменение попыток", default=0)
