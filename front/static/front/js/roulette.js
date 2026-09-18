@@ -6,6 +6,9 @@
     const bonusEventsList = document.querySelector('[data-bonus-events-list]');
     const countdownNodes = Array.from(document.querySelectorAll('[data-bonus-countdown]'));
     const statusNodes = Array.from(document.querySelectorAll('[data-bonus-status]'));
+    const dailyTaskClaimButton = document.querySelector('[data-daily-task-claim]');
+    const dailyTaskClaimLabel = dailyTaskClaimButton?.querySelector('[data-daily-task-claim-label]');
+    const dailyTaskClaimStatus = document.querySelector('[data-daily-task-claim-status]');
     if (!root || !canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -1120,6 +1123,50 @@
 
         spin();
     };
+
+    const claimDailyTask = async () => {
+        if (!dailyTaskClaimButton || dailyTaskClaimButton.disabled) return;
+
+        const claimUrl = dailyTaskClaimButton.dataset.claimUrl;
+        if (!claimUrl) return;
+
+        const defaultLabel = dailyTaskClaimLabel?.textContent || '';
+        dailyTaskClaimButton.disabled = true;
+        if (dailyTaskClaimLabel) {
+            dailyTaskClaimLabel.textContent = dailyTaskClaimButton.dataset.pendingLabel || defaultLabel;
+        }
+        if (dailyTaskClaimStatus) dailyTaskClaimStatus.textContent = '';
+
+        try {
+            const response = await fetch(claimUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRFToken': root.dataset.rouletteCsrf,
+                },
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload?.ok) {
+                throw new Error(
+                    payload?.error
+                    || dailyTaskClaimButton.dataset.errorLabel
+                    || 'Не удалось получить награду.'
+                );
+            }
+            window.location.reload();
+        } catch (error) {
+            dailyTaskClaimButton.disabled = false;
+            if (dailyTaskClaimLabel) dailyTaskClaimLabel.textContent = defaultLabel;
+            if (dailyTaskClaimStatus) {
+                dailyTaskClaimStatus.textContent = error instanceof Error
+                    ? error.message
+                    : dailyTaskClaimButton.dataset.errorLabel;
+            }
+        }
+    };
+
+    dailyTaskClaimButton?.addEventListener('click', claimDailyTask);
 
     canvas.addEventListener('click', activateCanvas);
     canvas.addEventListener('keydown', (event) => {
