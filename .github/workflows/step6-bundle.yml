@@ -1,4 +1,4 @@
-name: Export verified step 6 patch
+name: Apply reader how-it-works design
 
 on:
   push:
@@ -6,19 +6,390 @@ on:
     paths:
       - .github/workflows/step6-bundle.yml
 
+permissions:
+  contents: write
+
 jobs:
-  export:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build verified patch bundle
+      - name: Update reader panel
         run: |
-          python .github/step6_apply.py
-          python .github/step6_finalize_patch.py
-          git diff --name-only -z | tar --null -T - -czf step6-patched.tar.gz
-          git diff --name-only
-      - uses: actions/upload-artifact@v4
-        with:
-          name: step6-patched
-          path: step6-patched.tar.gz
-          if-no-files-found: error
+          python - <<'PY'
+          from pathlib import Path
+
+          template_path = Path("templates/front/how_it_works.html")
+          template = template_path.read_text()
+          start_marker = '    <div class="how-panel is-active" data-how-panel="reader" role="tabpanel">'
+          end_marker = '    <div class="how-panel" data-how-panel="expert" role="tabpanel" hidden>'
+          start = template.index(start_marker)
+          end = template.index(end_marker)
+
+          reader = '''    <div class="how-panel is-active" data-how-panel="reader" role="tabpanel">
+              <section class="how-reader-start">
+                  <div class="how-reader-head">
+                      <p class="how-kicker">Простые шаги</p>
+                      <h2>Как начать пользоваться</h2>
+                  </div>
+
+                  <div class="how-steps">
+                      <article class="how-step">
+                          <span class="how-step-number">1</span>
+                          <div class="how-step-icon" aria-hidden="true">
+                              <svg viewBox="0 0 64 64" fill="none">
+                                  <circle cx="32" cy="19" r="11" stroke="currentColor" stroke-width="4"/>
+                                  <path d="M14 52c0-10 8-17 18-17s18 7 18 17H14Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                              </svg>
+                          </div>
+                          <h3>Зарегистрируйтесь</h3>
+                          <p>Создайте аккаунт<br>за пару минут и войдите<br>в систему.</p>
+                      </article>
+
+                      <article class="how-step">
+                          <span class="how-step-number">2</span>
+                          <div class="how-step-icon" aria-hidden="true">
+                              <svg viewBox="0 0 64 64" fill="none">
+                                  <circle cx="28" cy="27" r="18" stroke="currentColor" stroke-width="4"/>
+                                  <path d="M41 40 55 54" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                              </svg>
+                          </div>
+                          <h3>Выберите матч</h3>
+                          <p>Найдите интересующий<br>вас матч через поиск<br>или в расписании.</p>
+                      </article>
+
+                      <article class="how-step">
+                          <span class="how-step-number">3</span>
+                          <div class="how-step-icon" aria-hidden="true">
+                              <svg viewBox="0 0 64 64" fill="none">
+                                  <path d="M20 8h20l9 9v39H20V8Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                                  <path d="M40 8v11h9M27 29h15M27 39h15M27 49h10" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>
+                          </div>
+                          <h3>Изучите прогнозы</h3>
+                          <p>Смотрите прогнозы<br>от опытных капперов,<br>их аналитику и статистику.</p>
+                      </article>
+
+                      <article class="how-step">
+                          <span class="how-step-number">4</span>
+                          <div class="how-step-icon" aria-hidden="true">
+                              <svg viewBox="0 0 64 64" fill="none">
+                                  <path d="M32 53S10 40 10 23c0-8 6-13 13-13 5 0 8 2 9 6 2-4 5-6 10-6 7 0 12 5 12 13 0 17-22 30-22 30Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                              </svg>
+                          </div>
+                          <h3>Подпишитесь</h3>
+                          <p>Добавляйте капперов<br>в избранное, чтобы<br>не пропускать их прогнозы.</p>
+                      </article>
+
+                      <article class="how-step">
+                          <span class="how-step-number">5</span>
+                          <div class="how-step-icon" aria-hidden="true">
+                              <svg viewBox="0 0 64 64" fill="none">
+                                  <path d="M18 46h28l-4-6V27c0-7-4-13-10-14v-4" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                  <path d="M32 9v4c-6 1-10 7-10 14v13l-4 6M27 52c1 3 3 4 5 4s4-1 5-4" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                              </svg>
+                          </div>
+                          <h3>Получайте уведомления</h3>
+                          <p>Будьте в курсе новых<br>прогнозов, результатов<br>и важных событий.</p>
+                      </article>
+                  </div>
+
+                  <div class="how-reader-cta">
+                      <div class="how-reader-cta-copy">
+                          <p class="how-kicker">Готовы начать?</p>
+                          <h3>Присоединяйтесь к тысячам пользователей</h3>
+                          <p>Откройте для себя мир спортивной аналитики вместе с КапперХаб.</p>
+                      </div>
+                      <div class="how-reader-cta-action">
+                          <a class="how-action is-blue" href="{% url 'cabinet:register' %}">Создать аккаунт <span>→</span></a>
+                          <small>Это бесплатно и займет меньше минуты</small>
+                      </div>
+                  </div>
+              </section>
+          </div>
+
+          '''
+
+          template_path.write_text(template[:start] + reader + template[end:])
+
+          css_path = Path("front/static/front/css/main.css")
+          css = css_path.read_text()
+          marker = "/* Legacy source: front/static/front/css/user-public-profile.css */"
+          if marker not in css:
+              raise SystemExit("Could not find insertion point in main.css")
+
+          reader_css = r'''
+          /* how-it-works: reader panel */
+          [data-how-panel="reader"] {
+              gap: 0;
+              padding: 36px 48px 40px;
+              border-radius: 0;
+              background: #111315;
+          }
+
+          [data-how-panel="reader"] .how-reader-start {
+              display: grid;
+              gap: 30px;
+          }
+
+          [data-how-panel="reader"] .how-reader-head {
+              display: grid;
+              gap: 0;
+          }
+
+          [data-how-panel="reader"] .how-reader-head .how-kicker {
+              margin-bottom: 10px;
+              font-size: 12px;
+              font-weight: 600;
+              letter-spacing: .11em;
+          }
+
+          [data-how-panel="reader"] .how-reader-head h2 {
+              margin: 0;
+              color: #fff;
+              font-size: clamp(34px, 3vw, 46px);
+              font-weight: 600;
+              line-height: 1;
+              letter-spacing: -.035em;
+          }
+
+          [data-how-panel="reader"] .how-steps {
+              display: grid;
+              grid-template-columns: repeat(5, minmax(0, 1fr));
+              gap: 24px;
+          }
+
+          [data-how-panel="reader"] .how-step {
+              position: relative;
+              min-width: 0;
+              min-height: 320px;
+              display: flex;
+              flex-direction: column;
+              padding: 20px 30px 28px;
+              border-radius: 18px;
+              background: #1b1d20;
+          }
+
+          [data-how-panel="reader"] .how-step-number {
+              position: absolute;
+              top: 20px;
+              left: 22px;
+              width: 58px;
+              height: 58px;
+              display: grid;
+              place-items: center;
+              border-radius: 50%;
+              color: #fff;
+              background: var(--blue);
+              font-size: 18px;
+              font-weight: 600;
+              line-height: 1;
+          }
+
+          [data-how-panel="reader"] .how-step-icon {
+              width: 72px;
+              height: 72px;
+              margin: 18px auto 38px;
+              padding: 0;
+              display: grid;
+              place-items: center;
+              border-radius: 0;
+              color: #367ffb;
+              background: transparent;
+          }
+
+          [data-how-panel="reader"] .how-step:nth-child(even) .how-step-icon {
+              color: #367ffb;
+              background: transparent;
+          }
+
+          [data-how-panel="reader"] .how-step-icon svg {
+              width: 100%;
+              height: 100%;
+          }
+
+          [data-how-panel="reader"] .how-step h3 {
+              margin: 0 0 12px;
+              color: #fff;
+              font-size: 20px;
+              font-weight: 600;
+              line-height: 1.2;
+              letter-spacing: -.015em;
+          }
+
+          [data-how-panel="reader"] .how-step p {
+              margin: 0;
+              color: rgba(255, 255, 255, .62);
+              font-size: 16px;
+              line-height: 1.55;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta {
+              min-height: 200px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 36px;
+              margin-top: 18px;
+              padding: 34px 48px;
+              border-radius: 20px;
+              background: #1b1d20;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-copy {
+              min-width: 0;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-copy .how-kicker {
+              margin-bottom: 10px;
+              font-size: 12px;
+              font-weight: 600;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta h3 {
+              margin: 0;
+              color: #fff;
+              font-size: clamp(27px, 2.4vw, 36px);
+              font-weight: 600;
+              line-height: 1.08;
+              letter-spacing: -.025em;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-copy > p:last-child {
+              margin: 10px 0 0;
+              color: rgba(255, 255, 255, .62);
+              font-size: 16px;
+              line-height: 1.5;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-action {
+              width: min(100%, 430px);
+              flex: 0 0 430px;
+              display: grid;
+              gap: 10px;
+              justify-items: center;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-action .how-action {
+              width: 100%;
+              min-height: 60px;
+              border-radius: 14px;
+              font-size: 16px;
+              font-weight: 500;
+          }
+
+          [data-how-panel="reader"] .how-reader-cta-action small {
+              color: rgba(255, 255, 255, .58);
+              font-size: 13px;
+              line-height: 1.35;
+              text-align: center;
+          }
+
+          @media (max-width: 1400px) {
+              [data-how-panel="reader"] {
+                  padding-right: 30px;
+                  padding-left: 30px;
+              }
+
+              [data-how-panel="reader"] .how-steps {
+                  gap: 16px;
+              }
+
+              [data-how-panel="reader"] .how-step {
+                  padding-right: 22px;
+                  padding-left: 22px;
+              }
+
+              [data-how-panel="reader"] .how-step p {
+                  font-size: 14px;
+              }
+          }
+
+          @media (max-width: 1100px) {
+              [data-how-panel="reader"] .how-steps {
+                  grid-template-columns: repeat(2, minmax(0, 1fr));
+              }
+
+              [data-how-panel="reader"] .how-step {
+                  min-height: 280px;
+              }
+
+              [data-how-panel="reader"] .how-reader-cta {
+                  align-items: flex-start;
+                  flex-direction: column;
+              }
+
+              [data-how-panel="reader"] .how-reader-cta-action {
+                  width: 100%;
+                  flex-basis: auto;
+              }
+          }
+
+          @media (max-width: 760px) {
+              [data-how-panel="reader"] {
+                  padding: 24px 14px;
+              }
+
+              [data-how-panel="reader"] .how-reader-start {
+                  gap: 22px;
+              }
+
+              [data-how-panel="reader"] .how-reader-head h2 {
+                  font-size: 32px;
+              }
+
+              [data-how-panel="reader"] .how-steps {
+                  grid-template-columns: 1fr;
+                  gap: 12px;
+              }
+
+              [data-how-panel="reader"] .how-step {
+                  min-height: 250px;
+                  padding: 18px 22px 22px;
+              }
+
+              [data-how-panel="reader"] .how-step-number {
+                  top: 18px;
+                  left: 20px;
+                  width: 50px;
+                  height: 50px;
+                  font-size: 16px;
+              }
+
+              [data-how-panel="reader"] .how-step-icon {
+                  width: 62px;
+                  height: 62px;
+                  margin-bottom: 28px;
+              }
+
+              [data-how-panel="reader"] .how-step p br {
+                  display: none;
+              }
+
+              [data-how-panel="reader"] .how-reader-cta {
+                  min-height: 0;
+                  margin-top: 8px;
+                  padding: 26px 22px;
+              }
+
+              [data-how-panel="reader"] .how-reader-cta h3 {
+                  font-size: 28px;
+              }
+
+              [data-how-panel="reader"] .how-reader-cta-copy > p:last-child {
+                  font-size: 14px;
+              }
+          }
+
+
+          '''
+          css_path.write_text(css.replace(marker, reader_css + marker, 1))
+          PY
+
+      - name: Commit reader panel
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add templates/front/how_it_works.html front/static/front/css/main.css
+          git commit -m "Match reader how-it-works panel to reference"
+          git push origin HEAD:main
