@@ -37097,6 +37097,7 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-hero {
+    position: relative;
     min-width: 0;
     min-height: 386px;
     display: grid;
@@ -37107,6 +37108,20 @@ padding:40px 0px;
     overflow: hidden;
     border-radius: 18px;
     background: #071426 url("../img/login.png") center / cover no-repeat;
+}
+
+.cabinet-bonuses-page .bonus-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(0, 0, 0, .38);
+    pointer-events: none;
+}
+
+.cabinet-bonuses-page .bonus-hero > * {
+    position: relative;
+    z-index: 1;
 }
 
 .cabinet-bonuses-page .bonus-hero-copy {
@@ -37176,7 +37191,7 @@ padding:40px 0px;
 }
 
 .cabinet-bonuses-page .bonus-wheel {
-    width: min(100%, 350px);
+    width: min(100%, 420px);
     aspect-ratio: 1;
     justify-self: end;
     display: grid;
