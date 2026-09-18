@@ -1,8 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.urls import reverse
 
 from cabinet.models import BonusEvent
 from cabinet.roulette.services import get_user_roulette_state
+from notifications.models import Notification
+from notifications.services import create_notification
 from wallets.models import CoinTransaction
 from wallets.services import credit_coins
 
@@ -12,6 +15,25 @@ from .xp import grant_xp
 COIN_KIND_BY_EVENT_TYPE = {
     BonusEvent.EventType.DAILY_TASK: CoinTransaction.Kind.DAILY_TASK_REWARD,
     BonusEvent.EventType.ROULETTE: CoinTransaction.Kind.ROULETTE_REWARD,
+}
+
+NOTIFICATION_BY_EVENT_TYPE = {
+    BonusEvent.EventType.DAILY_TASK: (
+        Notification.Kind.BONUS_DAILY_TASK,
+        "cabinet:bonus_tasks",
+    ),
+    BonusEvent.EventType.STREAK: (
+        Notification.Kind.BONUS_STREAK,
+        "cabinet:bonuses",
+    ),
+    BonusEvent.EventType.ROULETTE: (
+        Notification.Kind.BONUS_ROULETTE,
+        "cabinet:bonuses",
+    ),
+    BonusEvent.EventType.REFERRAL: (
+        Notification.Kind.BONUS_REFERRAL,
+        "cabinet:referrals",
+    ),
 }
 
 
@@ -76,7 +98,7 @@ def grant_bonus_reward(
         get_user_roulette_state(locked_user).grant_spins(spins)
 
     related_model, related_id = _related_subject(related_obj)
-    return BonusEvent.objects.create(
+    event = BonusEvent.objects.create(
         user=locked_user,
         event_type=event_type,
         title=title,
@@ -87,3 +109,23 @@ def grant_bonus_reward(
         related_model=related_model,
         related_id=related_id,
     )
+
+    notification_config = NOTIFICATION_BY_EVENT_TYPE.get(event_type)
+    if notification_config is not None:
+        notification_kind, url_name = notification_config
+        create_notification(
+            recipient=locked_user,
+            kind=notification_kind,
+            title=title,
+            message=description,
+            url=reverse(url_name),
+            event_key=f"bonus:{event.pk}",
+            meta={
+                "bonus_event_id": event.pk,
+                "xp_delta": xp,
+                "coin_delta": coins,
+                "spin_delta": spins,
+            },
+        )
+
+    return event
