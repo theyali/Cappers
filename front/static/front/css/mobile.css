@@ -4810,6 +4810,29 @@ body.expert-public-details-open {
     .profile-bonus-summary .bonus-side-card {
         min-height: 0;
     }
+
+    .profile-daily-task-row {
+        grid-template-columns: 20px minmax(0, 1fr) auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-daily-task-row {
+        grid-template-columns: 20px minmax(0, 1fr);
+    }
+
+    .profile-daily-task-claim {
+        grid-column: 2;
+        width: fit-content;
+    }
+
+    .profile-daily-task-status {
+        grid-column: 2;
+    }
+
+    .profile-daily-task-copy b {
+        white-space: normal;
+    }
 }
 
 

@@ -936,7 +936,10 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         summary = response.context["profile_bonus_summary"]
         self.assertIsNotNone(summary)
-        self.assertIn("quick_tasks", summary)
+        self.assertIn("daily_tasks", summary)
+        self.assertEqual(summary["daily_tasks_title"], "Ежедневные задания")
+        self.assertEqual(len(summary["daily_tasks"]), 1)
+        self.assertEqual(summary["daily_tasks"][0]["progress_label"], "0 / 1")
         hero = summary["hero"]
         self.assertEqual(hero["current_level_title"], "Новичок")
         self.assertEqual(hero["current_level_number"], 1)
@@ -948,6 +951,9 @@ class BonusCenterServiceTests(TestCase):
         self.assertTrue(hero["image_url"].endswith("xp_levels/images/test-image.png"))
         self.assertContains(response, "profile-xp-card")
         self.assertEqual(summary["tasks_url"], reverse("cabinet:bonus_tasks"))
+        self.assertEqual(summary["tasks_link_label"], "Все задания")
+        self.assertContains(response, "Ежедневные задания")
+        self.assertContains(response, "Все задания")
         self.assertEqual(summary["levels_url"], reverse("cabinet:bonus_levels"))
         self.assertEqual(summary["bonuses_url"], reverse("cabinet:bonuses"))
         self.assertEqual(
@@ -955,3 +961,46 @@ class BonusCenterServiceTests(TestCase):
             reverse("notifications:center"),
         )
 
+
+
+    def test_profile_daily_tasks_show_all_today_tasks_and_claim_button(self):
+        tasks = [
+            DailyTask.objects.create(
+                title=f"Задание профиля {index}",
+                audience=DailyTask.Audience.ALL,
+                task_type=DailyTask.TaskType.OPEN_FEED,
+                target_value=1,
+                order=index,
+            )
+            for index in range(1, 5)
+        ]
+        UserDailyTaskProgress.objects.create(
+            user=self.user,
+            task=tasks[0],
+            progress_date=timezone.localdate(),
+            current_value=1,
+            is_completed=True,
+            completed_at=timezone.now(),
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("cabinet:profile"),
+            {"tab": "profile"},
+        )
+
+        summary = response.context["profile_bonus_summary"]
+        self.assertEqual(len(summary["daily_tasks"]), 4)
+        self.assertTrue(summary["daily_tasks"][0]["can_claim"])
+        self.assertEqual(
+            summary["daily_tasks"][0]["row_class"],
+            "is-completed",
+        )
+        self.assertEqual(
+            summary["daily_tasks"][1]["progress_label"],
+            "0 / 1",
+        )
+        self.assertContains(response, "data-profile-daily-task-claim")
+        self.assertContains(response, "profile-daily-task-check")
+        for task in tasks:
+            self.assertContains(response, task.title)

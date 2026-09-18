@@ -623,3 +623,77 @@
         })
         .catch(() => {});
 })();
+
+
+(() => {
+    const buttons = Array.from(
+        document.querySelectorAll("[data-profile-daily-task-claim]")
+    );
+    if (!buttons.length) return;
+
+    const summary = document.querySelector(
+        "[data-profile-daily-tasks-summary]"
+    );
+
+    const getCookie = (name) => {
+        const item = document.cookie
+            .split(";")
+            .map((value) => value.trim())
+            .find((value) => value.startsWith(`${name}=`));
+        return item
+            ? decodeURIComponent(item.slice(name.length + 1))
+            : "";
+    };
+
+    const claimTask = async (button) => {
+        if (button.disabled) return;
+
+        const url = String(button.dataset.url || "");
+        const row = button.closest("[data-profile-daily-task-id]");
+        const status = row?.querySelector(
+            "[data-profile-daily-task-status]"
+        );
+        if (!url || !row) return;
+
+        const defaultLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Получаем…";
+        if (status) status.textContent = "";
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    Accept: "application/json",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload?.ok) {
+                throw new Error(
+                    payload?.error || "Не удалось получить награду."
+                );
+            }
+
+            if (summary) {
+                summary.textContent = String(
+                    payload.daily_tasks_card?.summary_label || ""
+                );
+            }
+            button.disabled = true;
+        } catch (error) {
+            button.disabled = false;
+            button.textContent = defaultLabel;
+            if (status) {
+                status.textContent = error instanceof Error
+                    ? error.message
+                    : "Не удалось получить награду.";
+            }
+        }
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => claimTask(button));
+    });
+})();

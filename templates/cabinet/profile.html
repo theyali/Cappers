@@ -287,7 +287,7 @@
                 {% if profile_bonus_summary %}
                 <div class="cabinet-bonuses-page profile-bonus-summary" aria-label="Бонусы профиля">
                     <div class="bonus-dashboard-grid">
-                        <article class="bonus-dashboard-card">
+                        <article class="bonus-dashboard-card profile-daily-tasks-card">
                             <div class="bonus-card-head">
                                 <span class="bonus-card-icon is-blue" aria-hidden="true">
                                     <svg viewBox="0 0 24 24" fill="none">
@@ -296,25 +296,51 @@
                                     </svg>
                                 </span>
                                 <div>
-                                    <h2>{{ profile_bonus_summary.quick_tasks_title }}</h2>
-                                    <span>{{ profile_bonus_summary.tasks_summary_label }}</span>
+                                    <h2>{{ profile_bonus_summary.daily_tasks_title }}</h2>
+                                    <span data-profile-daily-tasks-summary>{{ profile_bonus_summary.tasks_summary_label }}</span>
                                 </div>
-                                <a class="bonus-card-arrow" href="{{ profile_bonus_summary.tasks_url }}" aria-label="{{ profile_bonus_summary.tasks_link_label }}">{{ profile_bonus_summary.tasks_arrow_label }}</a>
                             </div>
 
-                            <div class="bonus-level-list">
-                                {% for task in profile_bonus_summary.quick_tasks %}
-                                    <span class="{% if task.is_completed %}is-unlocked {% endif %}{% if task.can_claim %}is-current{% endif %}">
-                                        <b>{{ task.title }}</b>
-                                        <small>{{ task.status_label }}{% if task.reward_label %} · {{ task.reward_label }}{% endif %}</small>
-                                    </span>
+                            <div class="profile-daily-task-list" data-profile-daily-task-list>
+                                {% for task in profile_bonus_summary.daily_tasks %}
+                                    <div
+                                        class="profile-daily-task-row {{ task.row_class }}"
+                                        data-profile-daily-task-id="{{ task.id }}"
+                                    >
+                                        <span class="profile-daily-task-check" aria-hidden="true">{% if task.is_completed %}✓{% endif %}</span>
+                                        <span class="profile-daily-task-copy">
+                                            <b>{{ task.title }}</b>
+                                            <small>
+                                                {% if task.is_completed %}
+                                                    {{ task.display_status_label }}
+                                                {% else %}
+                                                    {{ task.progress_label }}
+                                                {% endif %}
+                                                {% if task.reward_label %} · {{ task.reward_label }}{% endif %}
+                                            </small>
+                                        </span>
+                                        {% if task.can_claim %}
+                                            <button
+                                                class="profile-daily-task-claim"
+                                                type="button"
+                                                data-profile-daily-task-claim
+                                                data-url="{{ task.claim_url }}"
+                                            >Получить</button>
+                                        {% endif %}
+                                        <small class="profile-daily-task-status" data-profile-daily-task-status aria-live="polite"></small>
+                                    </div>
                                 {% empty %}
-                                    <span>
-                                        <b>{{ profile_bonus_summary.quick_tasks_empty_title }}</b>
-                                        <small>{{ profile_bonus_summary.quick_tasks_empty_description }}</small>
-                                    </span>
+                                    <div class="profile-daily-task-empty">
+                                        <b>{{ profile_bonus_summary.daily_tasks_empty_title }}</b>
+                                        <small>{{ profile_bonus_summary.daily_tasks_empty_description }}</small>
+                                    </div>
                                 {% endfor %}
                             </div>
+
+                            <a class="profile-daily-tasks-link" href="{{ profile_bonus_summary.tasks_url }}">
+                                <span>{{ profile_bonus_summary.tasks_link_label }}</span>
+                                <span aria-hidden="true">→</span>
+                            </a>
                         </article>
 
                         <section class="bonus-side-card bonus-progress-card">
