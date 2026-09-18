@@ -18,7 +18,11 @@
             <h2>{{ card.title }}</h2>
             <span>{{ card.subtitle }}</span>
         </div>
-        <span class="bonus-card-arrow" aria-hidden="true">{{ card.arrow_label }}</span>
+        {% if card.url %}
+            <a class="bonus-card-arrow" href="{{ card.url }}" aria-label="{{ card.link_label }}">{{ card.arrow_label }}</a>
+        {% else %}
+            <span class="bonus-card-arrow" aria-hidden="true">{{ card.arrow_label }}</span>
+        {% endif %}
     </div>
     {% if card.is_countdown %}
         <strong class="bonus-card-value is-yellow" data-bonus-countdown>{{ card.value_label }}</strong>
