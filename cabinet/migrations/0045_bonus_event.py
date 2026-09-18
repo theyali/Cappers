@@ -31,7 +31,6 @@ class Migration(migrations.Migration):
                             ("roulette", "Рулетка"),
                             ("referral", "Реферальный бонус"),
                         ],
-                        db_index=True,
                         max_length=24,
                         verbose_name="Тип события",
                     ),
@@ -74,7 +73,6 @@ class Migration(migrations.Migration):
                     "created_at",
                     models.DateTimeField(
                         auto_now_add=True,
-                        db_index=True,
                         verbose_name="Создано",
                     ),
                 ),
@@ -102,7 +100,7 @@ class Migration(migrations.Migration):
                         name="bonus_event_type_time_idx",
                     ),
                     models.Index(
-                        fields=["related_model", "related_id", "event_type"],
+                        fields=["user", "related_model", "related_id", "event_type"],
                         name="bonus_event_related_idx",
                     ),
                 ],
