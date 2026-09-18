@@ -316,6 +316,7 @@ def build_bonus_center_context(user, request=None) -> dict:
     streak_card = build_streak_card(user)
     referral_card = build_referral_bonus_card(user, request=request)
     level_progress = build_level_progress(user)
+    notification_settings_url = reverse("notifications:center")
 
     next_bonus = {
         "title": "Следующий бонус",
@@ -360,6 +361,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         "roulette_spin_url": reverse("cabinet:roulette_spin"),
         "roulette_bg": static("front/img/login.png"),
         "roulette_csrf_token": get_token(request) if request is not None else "",
+        "notification_settings_url": notification_settings_url,
         "bonus_page": {
             "title": "Мои бонусы — КапперХаб",
             "mobile_nav_label": "Разделы профиля на мобильных устройствах",
@@ -404,7 +406,7 @@ def build_bonus_center_context(user, request=None) -> dict:
             },
             "notification_settings": {
                 "label": "Настроить уведомления",
-                "url": reverse("notifications:center"),
+                "url": notification_settings_url,
                 "arrow_label": "→",
             },
         },
