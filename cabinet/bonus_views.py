@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from .models import DailyTask
 from .services.bonus_center import (
     build_bonus_center_context,
+    build_bonus_levels_page_context,
     build_bonus_reward_update_context,
     build_bonus_tasks_page_context,
 )
@@ -37,6 +38,18 @@ def daily_tasks(request):
         }
     )
     return render(request, "cabinet/bonus_tasks.html", context)
+
+
+@login_required
+def bonus_levels(request):
+    context = build_bonus_levels_page_context(request.user, request=request)
+    context.update(
+        {
+            "active_tab": "bonus_levels",
+            "page_class": "cabinet-bonuses-page cabinet-bonus-levels-page",
+        }
+    )
+    return render(request, "cabinet/bonus_levels.html", context)
 
 
 @login_required
