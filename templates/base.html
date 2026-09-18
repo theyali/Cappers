@@ -71,7 +71,7 @@
 
     <main class="site-main {{ page_class|default:'' }} {{ page_layout_class|default:'' }}">
         {% if breadcrumbs and page_class != 'profile' %}
-            <div class="container">
+            <div class="container breadcrumbs-container">
                 <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
                     {% for crumb in breadcrumbs %}
                         {% if crumb.url and not forloop.last %}

@@ -20481,6 +20481,12 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
 
 
 /* Legacy source: front/static/front/css/how-it-works.css */
+.how_it_works .site-header{
+    margin: 0;
+}
+.how_it_works .breadcrumbs-container{
+    display: none;
+}
 .how-page {
     display: grid;
     gap: 18px;
@@ -20499,17 +20505,12 @@ body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar {
     min-height: 390px;
     display: flex;
     align-items: center;
-    padding: 56px 54px;
     overflow: hidden;
     background-color: #0d0f12;
     background-image: url("../img/how_it_works.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
-}
-
-.how-hero-copy {
-    width: min(100%, 650px);
 }
 
 .how-kicker {
