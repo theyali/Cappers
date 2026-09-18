@@ -123,13 +123,69 @@ def purchase_coin_package(
         current_package = CoinPackage.objects.get(pk=package.pk)
         if not current_package.is_active:
             raise ValidationError("Этот пакет коинов больше недоступен.")
-        return credit_coins(
+
+        latest_purchase_id = (
+            CoinTransaction.objects.filter(
+                user=user,
+                kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
+            )
+            .order_by("-id")
+            .values_list("id", flat=True)
+            .first()
+            or 0
+        )
+        wallet = credit_coins(
             user,
             int(current_package.total_coins),
             CoinTransaction.Kind.PACKAGE_PURCHASE,
             related_obj=payment,
             note=note or f"Покупка пакета «{current_package.title}»",
         )
+
+        purchase_transaction = None
+        if payment is not None and getattr(payment, "pk", None):
+            purchase_transaction = (
+                CoinTransaction.objects.filter(
+                    user=user,
+                    kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
+                    related_model=payment._meta.label_lower,
+                    related_id=payment.pk,
+                )
+                .order_by("-id")
+                .first()
+            )
+        if purchase_transaction is None:
+            purchase_transaction = (
+                CoinTransaction.objects.filter(
+                    user=user,
+                    kind=CoinTransaction.Kind.PACKAGE_PURCHASE,
+                    id__gt=latest_purchase_id,
+                )
+                .order_by("-id")
+                .first()
+            )
+
+        from cabinet.referrals import (
+            REFERRAL_ACTION_BALANCE_TOP_UP,
+            credit_referral_income,
+        )
+        from cabinet.services.referral_bonuses import (
+            grant_referral_first_topup_bonus,
+        )
+
+        grant_referral_first_topup_bonus(
+            user,
+            current_package.price_rub,
+            related_obj=purchase_transaction,
+        )
+        credit_referral_income(
+            user,
+            current_package.price_rub,
+            REFERRAL_ACTION_BALANCE_TOP_UP,
+            related_obj=purchase_transaction,
+            note=f"Реферал @{user.username}: пополнение через «{current_package.title}»",
+        )
+        return wallet
 
 
 def adjust_coin_balance(user, amount: int, *, note: str = "") -> CoinWallet:
