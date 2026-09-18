@@ -152,17 +152,17 @@
                             </div>
                         </div>
                         <div class="bonus-wins-list">
-                            {% for _ in recent_wins %}
-                                <div class="bonus-win-row" data-roulette-history-slot aria-hidden="true">
+                            {% for item in recent_wins %}
+                                <div class="bonus-win-row" data-roulette-history-slot aria-hidden="{% if item %}false{% else %}true{% endif %}">
                                     <span class="bonus-win-icon" data-skeleton-image>
                                         <img data-roulette-recent-icon width="34" height="34" alt="" hidden>
-                                        <span data-roulette-recent-fallback aria-hidden="true">🎁</span>
+                                        <span data-roulette-recent-fallback aria-hidden="true">{% if item %}{{ item.icon }}{% else %}🎁{% endif %}</span>
                                     </span>
                                     <span class="bonus-win-copy">
-                                        <strong data-roulette-recent-title>Подарок</strong>
-                                        <small data-roulette-recent-subtitle>Выигрыш рулетки</small>
+                                        <strong data-roulette-recent-title>{% if item %}{{ item.title }}{% else %}Подарок{% endif %}</strong>
+                                        <small data-roulette-recent-subtitle>{% if item %}{{ item.subtitle }}{% else %}Выигрыш рулетки{% endif %}</small>
                                     </span>
-                                    <time data-roulette-recent-time>—</time>
+                                    <time data-roulette-recent-time>{% if item %}{{ item.time_label }}{% else %}—{% endif %}</time>
                                 </div>
                             {% endfor %}
                         </div>
@@ -191,28 +191,27 @@
         </section>
 
         <aside class="coupon-sidebar bonus-center-aside" aria-label="Бонусный центр">
-            <section
-                class="bonus-side-card bonus-gifts-card is-skeleton-loading"
-                data-roulette-recent
-                data-skeleton-block
-                aria-live="polite"
-                aria-busy="true"
-            >
+            <section class="bonus-side-card bonus-gifts-card">
                 <div class="bonus-side-head">
                     <h2>Последние подарки</h2>
                     <span>Все</span>
                 </div>
-                <div class="bonus-gifts-list" data-roulette-recent-list>
-                    {% for _ in recent_gifts %}
-                        <article class="bonus-gift-row" data-roulette-recent-slot aria-hidden="true">
-                            <span class="bonus-gift-icon" data-skeleton-image>
-                                <img data-roulette-recent-icon width="40" height="40" alt="" hidden>
-                                <span data-roulette-recent-fallback aria-hidden="true">🎁</span>
-                            </span>
+                <div class="bonus-gifts-list">
+                    {% for item in recent_gifts %}
+                        <article class="bonus-gift-row">
+                            <span class="bonus-gift-icon" aria-hidden="true">{{ item.icon }}</span>
                             <span class="bonus-gift-copy">
-                                <strong data-roulette-recent-title>Подарок</strong>
-                                <span data-roulette-recent-subtitle>Выигрыш рулетки</span>
-                                <small data-roulette-recent-time>—</small>
+                                <strong>{{ item.title }}</strong>
+                                <span>{{ item.subtitle }}</span>
+                                <small>{{ item.time_label }}</small>
+                            </span>
+                        </article>
+                    {% empty %}
+                        <article class="bonus-gift-row">
+                            <span class="bonus-gift-icon" aria-hidden="true">🎁</span>
+                            <span class="bonus-gift-copy">
+                                <strong>Подарков пока нет</strong>
+                                <span>Новые бонусы появятся здесь.</span>
                             </span>
                         </article>
                     {% endfor %}
