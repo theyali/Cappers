@@ -50,7 +50,7 @@
                 <div class="bonus-dashboard-grid">
                     {% include "cabinet/includes/_bonus_dashboard_card.html" with card=next_bonus only %}
 
-                    <article class="bonus-dashboard-card">
+                    <article class="bonus-dashboard-card" data-daily-tasks-card>
                         <div class="bonus-card-head">
                             <span class="bonus-card-icon is-blue" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none">
@@ -60,34 +60,35 @@
                             </span>
                             <div>
                                 <h2>{{ daily_tasks_card.title }}</h2>
-                                <span>{{ daily_tasks_card.summary_label }}</span>
+                                <span data-daily-tasks-summary>{{ daily_tasks_card.summary_label }}</span>
                             </div>
                             <span class="bonus-card-arrow" aria-hidden="true">{{ daily_tasks_card.arrow_label }}</span>
                         </div>
-                        <div class="bonus-task-progress" aria-label="{{ daily_tasks_card.progress_aria_label }}">
+                        <div class="bonus-task-progress" data-daily-tasks-progress aria-label="{{ daily_tasks_card.progress_aria_label }}">
                             {% for slot in daily_tasks_card.progress_slots %}
                                 <span{% if slot.is_completed %} class="is-done"{% endif %}></span>
                             {% endfor %}
                         </div>
-                        {% if daily_tasks_card.claim_url %}
-                            <div class="bonus-task-actions">
-                                <button
-                                    type="button"
-                                    class="bonus-task-claim"
-                                    data-daily-task-claim
-                                    data-claim-url="{{ daily_tasks_card.claim_url }}"
-                                    data-pending-label="{{ daily_tasks_card.claim_pending_label }}"
-                                    data-error-label="{{ daily_tasks_card.claim_error_label }}"
-                                >
-                                    <span data-daily-task-claim-label>{{ daily_tasks_card.claim_button_label }}</span>
-                                </button>
-                                <small data-daily-task-claim-status aria-live="polite"></small>
-                            </div>
-                        {% elif daily_tasks_card.status_label %}
-                            <strong class="bonus-task-card-status is-{{ daily_tasks_card.status }}">
-                                {{ daily_tasks_card.status_label }}
-                            </strong>
-                        {% endif %}
+                        <div class="bonus-task-actions" data-daily-task-actions{% if not daily_tasks_card.claim_url %} hidden{% endif %}>
+                            <button
+                                type="button"
+                                class="bonus-task-claim"
+                                data-daily-task-claim
+                                data-claim-url="{{ daily_tasks_card.claim_url }}"
+                                data-pending-label="{{ daily_tasks_card.claim_pending_label }}"
+                                data-error-label="{{ daily_tasks_card.claim_error_label }}"
+                            >
+                                <span data-daily-task-claim-label>{{ daily_tasks_card.claim_button_label }}</span>
+                            </button>
+                            <small data-daily-task-claim-status aria-live="polite"></small>
+                        </div>
+                        <strong
+                            class="bonus-task-card-status is-{{ daily_tasks_card.status }}"
+                            data-daily-task-card-status
+                            {% if daily_tasks_card.claim_url or not daily_tasks_card.status_label %}hidden{% endif %}
+                        >
+                            {{ daily_tasks_card.status_label }}
+                        </strong>
                         <p>{{ daily_tasks_card.description }}</p>
                     </article>
 
@@ -209,21 +210,21 @@
                     </div>
                 </section>
 
-                <section class="bonus-side-card bonus-progress-card">
+                <section class="bonus-side-card bonus-progress-card" data-level-progress-card>
                     <div class="bonus-side-head">
                         <h2>{{ bonus_page.progress.title }}</h2>
-                        <span>{{ level_progress.badge_label }}</span>
+                        <span data-level-progress-badge>{{ level_progress.badge_label }}</span>
                     </div>
                     <div class="bonus-progress-body">
-                        <div class="bonus-progress-ring" aria-label="{{ level_progress.aria_label }}">
+                        <div class="bonus-progress-ring" data-level-progress-ring aria-label="{{ level_progress.aria_label }}">
                             <svg viewBox="0 0 120 120" aria-hidden="true">
                                 <circle cx="60" cy="60" r="48"></circle>
-                                <circle class="is-progress" cx="60" cy="60" r="48"></circle>
+                                <circle class="is-progress" data-level-progress-circle cx="60" cy="60" r="48" stroke-dasharray="{{ level_progress.progress_dasharray }}"></circle>
                             </svg>
                             <div>
                                 <span>{{ bonus_page.progress.star_label }}</span>
-                                <strong>{{ level_progress.xp }}</strong>
-                                <small>{{ level_progress.target_label }}</small>
+                                <strong data-level-progress-xp>{{ level_progress.xp }}</strong>
+                                <small data-level-progress-target>{{ level_progress.target_label }}</small>
                             </div>
                         </div>
                         <div class="bonus-progress-steps">
@@ -232,7 +233,7 @@
                             {% endfor %}
                         </div>
                     </div>
-                    <p>{{ level_progress.status_label }}</p>
+                    <p data-level-progress-status>{{ level_progress.status_label }}</p>
                 </section>
 
                 <section class="bonus-side-card bonus-balance-cta">
