@@ -5,6 +5,17 @@ on:
     branches: [main]
     paths:
       - .github/workflows/bonus-center-verify.yml
+      - cabinet/bonus_views.py
+      - cabinet/models.py
+      - cabinet/services/**
+      - cabinet/roulette/**
+      - cabinet/tests/test_bonus_center.py
+      - cabinet/tests/test_roulette_api.py
+      - front/reaction_views.py
+      - front/static/front/js/roulette.js
+      - front/static/front/css/main.css
+      - templates/cabinet/bonuses.html
+      - wallets/**
 
 jobs:
   verify:
