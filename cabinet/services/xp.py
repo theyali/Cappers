@@ -70,14 +70,11 @@ def build_level_progress(user) -> dict:
 
     matched_level = _level_for_xp(levels, state.xp)
     level_number = matched_level.level if matched_level is not None else 1
-    if state.level != level_number:
-        UserXpState.objects.filter(pk=state.pk).update(level=level_number)
-        state.level = level_number
 
     current_level = matched_level
     if current_level is None:
         current_level = next(
-            (level for level in levels if level.level == state.level),
+            (level for level in levels if level.level == level_number),
             None,
         )
 
@@ -103,7 +100,7 @@ def build_level_progress(user) -> dict:
         xp_to_next_level = max(0, next_level_xp - int(state.xp))
 
     current_index = next(
-        (index for index, level in enumerate(levels) if level.level == state.level),
+        (index for index, level in enumerate(levels) if level.level == level_number),
         0,
     )
     preview_start = max(0, current_index - 2)
@@ -113,15 +110,15 @@ def build_level_progress(user) -> dict:
             "level": level.level,
             "title": level.title,
             "required_xp": int(level.required_xp),
-            "is_current": level.level == state.level,
+            "is_current": level.level == level_number,
             "is_unlocked": state.xp >= level.required_xp,
         }
         for level in preview_levels
     ]
 
     return {
-        "level": state.level,
-        "level_title": current_level.title if current_level is not None else f"Уровень {state.level}",
+        "level": level_number,
+        "level_title": current_level.title if current_level is not None else f"Уровень {level_number}",
         "xp": int(state.xp),
         "current_level_xp": current_level_xp,
         "next_level_xp": next_level_xp,
