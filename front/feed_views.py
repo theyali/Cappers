@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
+from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, DailyTask, User
+from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon, Sport
 
@@ -196,6 +197,7 @@ def _feed_author_counts(
 @login_required
 @ensure_csrf_cookie
 def following_feed(request):
+    record_daily_task_action(request.user, DailyTask.TaskType.OPEN_FEED)
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
