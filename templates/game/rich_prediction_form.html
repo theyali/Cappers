@@ -58,7 +58,7 @@
                 {% endif %}
             </header>
 
-            <form class="rich-prediction-form" method="post" enctype="multipart/form-data" aria-label="{{ submit_label }}">
+            <form class="rich-prediction-form" method="post" enctype="multipart/form-data" aria-label="{{ submit_label }}" data-disable-on-submit>
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
@@ -66,6 +66,7 @@
                     {{ form.non_field_errors }}
                 </div>
                 {% endif %}
+                <div class="rich-prediction-form-errors" role="alert" data-form-client-error hidden tabindex="-1"></div>
 
                 <section class="rich-prediction-section">
                     <div class="rich-prediction-section-head">
@@ -188,6 +189,13 @@
                             <span class="capper-field-label">{{ form.cover_image.label }}</span>
                             {{ form.cover_image }}
                             {% if form.cover_image.errors %}<span class="capper-field-errors">{{ form.cover_image.errors }}</span>{% endif %}
+                            <span hidden data-rich-cover-options>
+                                {% for cover in available_covers %}
+                                    {% if cover.image %}
+                                        <i data-rich-cover-option data-cover-id="{{ cover.id }}" data-cover-url="{{ cover.image.url }}"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
                         </label>
 
                         <label class="capper-field">
@@ -208,11 +216,11 @@
 
         <aside class="coupon-sidebar rich-prediction-preview" aria-label="Предпросмотр прогноза">
             <article class="prediction-card prediction-card-rich rich-prediction-preview-card">
-                <div class="rich-prediction-preview-cover">
+                <div class="rich-prediction-preview-cover" data-rich-cover-preview>
                     {% if preview_prediction.cover_url %}
-                        <img src="{{ preview_prediction.cover_url }}" width="640" height="400" alt="">
+                        <img src="{{ preview_prediction.cover_url }}" width="640" height="400" alt="" data-rich-cover-preview-image>
                     {% else %}
-                        <div class="rich-prediction-preview-cover-empty">
+                        <div class="rich-prediction-preview-cover-empty" data-rich-cover-preview-empty>
                             <span>Предпросмотр</span>
                             <strong>Обложка прогноза</strong>
                         </div>
@@ -253,4 +261,8 @@
         </aside>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}
