@@ -521,6 +521,10 @@ class PredictionCoupon(models.Model):
         SINGLE = "single", "Одиночный"
         EXPRESS = "express", "Экспресс"
 
+    class PredictionFormat(models.TextChoices):
+        QUICK = "quick", "Быстрый купон"
+        RICH = "rich", "Расширенный прогноз"
+
     class Audience(models.TextChoices):
         FREE = "free", "Бесплатная аудитория"
         PAID = "paid", "Платная аудитория"
@@ -552,6 +556,13 @@ class PredictionCoupon(models.Model):
         default=CouponType.SINGLE,
         db_index=True,
     )
+    prediction_format = models.CharField(
+        "Формат прогноза",
+        max_length=16,
+        choices=PredictionFormat.choices,
+        default=PredictionFormat.QUICK,
+        db_index=True,
+    )
     total_stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     possible_payout = models.DecimalField("Возможный выигрыш", max_digits=12, decimal_places=2, default=0)
     confidence = models.PositiveSmallIntegerField("Уверенность", default=50)
@@ -562,6 +573,8 @@ class PredictionCoupon(models.Model):
         default=Audience.FREE,
         db_index=True,
     )
+    headline = models.CharField("Заголовок", max_length=160, blank=True)
+    description = models.TextField("Описание прогноза", blank=True)
     cover_image = models.ForeignKey(
         PredictionCoverImage,
         on_delete=models.SET_NULL,
@@ -570,6 +583,12 @@ class PredictionCoupon(models.Model):
         null=True,
         blank=True,
     )
+    custom_cover_image = models.ImageField(
+        "Своя обложка",
+        upload_to="prediction_covers/custom/%Y/%m/",
+        blank=True,
+    )
+    tags = models.JSONField("Теги", default=list, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
     published_at = models.DateTimeField("Опубликован", null=True, blank=True)
