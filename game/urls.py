@@ -7,6 +7,7 @@ from . import (
     prediction_constraints,
     prediction_views,
     timing_views,
+    views,
 )
 
 app_name = "game"
@@ -14,6 +15,16 @@ app_name = "game"
 urlpatterns = [
     path("", date_views.match_list, name="match_list"),
     path("coupon/create/", prediction_constraints.create_coupon, name="create_coupon"),
+    path(
+        "predictions/new/",
+        views.rich_prediction_create,
+        name="rich_prediction_create",
+    ),
+    path(
+        "predictions/<int:coupon_id>/edit/",
+        views.rich_prediction_edit,
+        name="rich_prediction_edit",
+    ),
     path("timing/", timing_views.match_timing, name="match_timing"),
     path(
         "demand/<int:match_id>/",

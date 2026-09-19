@@ -33,13 +33,29 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
             .order_by("cover_type", "sport__name_ru", "sport__name", "id")
         )
 
+    preview_prediction = _build_preview_prediction(coupon)
+    form_initial = {}
+    if coupon is not None:
+        form_initial = {
+            "match": preview_prediction["match"],
+            "coupon_type": coupon.coupon_type,
+            "is_paid": preview_prediction["is_paid"],
+            "coefficient": preview_prediction["coefficient"],
+            "prediction_text": preview_prediction["prediction_text"],
+            "headline": coupon.headline,
+            "description": coupon.description,
+            "cover_image": coupon.cover_image_id,
+            "tags": ", ".join(coupon.tags or []),
+        }
+
     return {
         "coupon": coupon,
         "can_use_rich_fields": can_use_rich_fields,
         "vip_upgrade_url": reverse("cabinet:profile"),
         "vip_locked_label": "Доступно VIP-капперам",
         "available_covers": available_covers,
-        "preview_prediction": _build_preview_prediction(coupon),
+        "preview_prediction": preview_prediction,
+        "form_initial": form_initial,
         "submit_label": "Сохранить изменения" if coupon else "Создать прогноз",
         "is_editing": coupon is not None,
     }
