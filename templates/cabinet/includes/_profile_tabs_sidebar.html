@@ -18,6 +18,17 @@
         </div>
         <nav class="matches-table-scope-list" aria-label="Разделы профиля">
             {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="matches-table-scope-link" %}
+            {% if request.user.is_analyst %}
+            <a class="matches-table-scope-link{% if active_tab == 'articles' %} is-active{% endif %}" href="{% url 'cabinet:capper_articles' %}">
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 4h10l4 4v12H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M15 4v5h5M8 13h8M8 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span class="matches-table-scope-copy">Мои статьи</span>
+            </a>
+            {% endif %}
         </nav>
     </section>
 
