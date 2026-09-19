@@ -153,6 +153,8 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     prediction.save()
 
     coupon.sync_coupon_type()
+    if not coupon.custom_cover_image and not coupon.cover_image_id:
+        coupon.assign_cover_image()
     return coupon
 
 
@@ -326,11 +328,8 @@ def _build_preview_prediction(coupon: PredictionCoupon | None) -> dict:
         "match__away_team",
     ).order_by("id").first()
 
-    cover_url = ""
-    if coupon.custom_cover_image:
-        cover_url = coupon.custom_cover_image.url
-    elif coupon.cover_image_id and coupon.cover_image and coupon.cover_image.image:
-        cover_url = coupon.cover_image.image.url
+    cover = coupon.get_display_cover_image()
+    cover_url = cover.url if cover else ""
 
     return {
         "coupon": coupon,
