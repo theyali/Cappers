@@ -46,6 +46,7 @@ from .services.bonus_center import build_profile_bonus_summary
 from .services.capper_articles import (
     build_capper_articles_context,
     can_create_capper_article,
+    can_edit_capper_article,
     save_capper_article,
     submit_capper_article_for_moderation,
 )
@@ -123,6 +124,10 @@ def capper_article_edit(request, article_id):
         pk=article_id,
         author=request.user,
     )
+    if not can_edit_capper_article(request.user, article):
+        messages.info(request, "Редактировать можно только черновик или отклонённую статью.")
+        return redirect("cabinet:capper_articles")
+
     form = CapperArticleForm(
         request.POST or None,
         request.FILES or None,
@@ -152,10 +157,7 @@ def capper_article_edit(request, article_id):
             "page_title": "Редактирование статьи",
             "submit_label": "Сохранить изменения",
             "active_tab": "articles",
-            "can_submit_article": article.status in {
-                CapperArticle.Status.DRAFT,
-                CapperArticle.Status.REJECTED,
-            },
+            "can_submit_article": can_edit_capper_article(request.user, article),
         },
     )
 
