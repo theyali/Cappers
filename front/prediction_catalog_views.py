@@ -203,12 +203,23 @@ def _filter_options(
     return sports, leagues, cappers
 
 
-def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
+def _sport_tabs(
+    request,
+    published_items,
+    active_sport,
+    *,
+    express_only: bool,
+    prediction_format: str,
+):
     params = _clean_prediction_params(request.GET)
     params.pop("league", None)
     params.pop("express", None)
 
-    cache_key = "front:predictions:sport-tabs:v3"
+    cache_key = _catalog_cache_key(
+        "sport-tabs",
+        express_only,
+        prediction_format,
+    )
     cached = cache.get(cache_key)
     if cached is None:
         single_items = _single_published_items(published_items)
@@ -228,6 +239,7 @@ def _sport_tabs(request, published_items, active_sport, *, express_only: bool):
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             coupon_type=PredictionCoupon.CouponType.EXPRESS,
             audience=PredictionCoupon.Audience.FREE,
+            prediction_format=prediction_format,
         ).count()
         cached = {
             "rows": rows,
@@ -617,6 +629,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
                 published_items,
                 active_sport,
                 express_only=express_only,
+                prediction_format=prediction_format,
             ),
             "top_experts_tab": _top_experts_tab(
                 request,
@@ -645,10 +658,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
             "active_filter_count": active_filter_count,
             "filter_action_url": filter_action_url,
             "all_predictions_url": (
-                _url_with_query(
-                    _prediction_sport_path(),
-                    {"prediction_type": PREDICTION_TYPE_RICH},
-                )
+                f"{_prediction_sport_path()}?prediction_type={PREDICTION_TYPE_RICH}"
                 if prediction_type_context["is_rich_predictions"]
                 else _prediction_sport_path()
             ),
