@@ -249,3 +249,63 @@ class CouponEventState(models.Model):
 
     def __str__(self) -> str:
         return f"События прогноза #{self.coupon_id}"
+
+
+class AdminNotificationCampaign(models.Model):
+    class Audience(models.TextChoices):
+        ALL_USERS = "all_users", "Все пользователи"
+        VIP_USERS = "vip_users", "VIP-пользователи"
+        READERS = "readers", "Обычные пользователи"
+        CAPPERS = "cappers", "Капперы"
+        READERS_AND_CAPPERS = "readers_and_cappers", "Пользователи и капперы"
+        TOURNAMENT_WINNERS = "tournament_winners", "Победители турниров"
+        TOURNAMENT_PARTICIPANTS = (
+            "tournament_participants",
+            "Участники выбранного турнира",
+        )
+        INACTIVE_USERS = "inactive_users", "Неактивные пользователи"
+
+    audience = models.CharField(
+        "Аудитория",
+        max_length=32,
+        choices=Audience.choices,
+        db_index=True,
+    )
+    title = models.CharField("Заголовок", max_length=180)
+    message = models.TextField("Текст")
+    url = models.CharField("Ссылка", max_length=500, blank=True)
+    image = models.ImageField(
+        "Изображение",
+        upload_to="notifications/campaigns/%Y/%m/",
+        blank=True,
+    )
+    inactive_days = models.PositiveIntegerField(
+        "Неактивен, дней",
+        null=True,
+        blank=True,
+    )
+    tournament = models.ForeignKey(
+        "tournaments.Tournament",
+        on_delete=models.SET_NULL,
+        related_name="notification_campaigns",
+        verbose_name="Турнир",
+        null=True,
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="created_notification_campaigns",
+        verbose_name="Создал",
+    )
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    sent_at = models.DateTimeField("Отправлено", null=True, blank=True)
+    recipients_count = models.PositiveIntegerField("Получателей", default=0)
+
+    class Meta:
+        verbose_name = "Массовая рассылка уведомлений"
+        verbose_name_plural = "Массовые рассылки уведомлений"
+        ordering = ("-created_at", "-id")
+
+    def __str__(self) -> str:
+        return self.title

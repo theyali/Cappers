@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
+from django.contrib.auth import get_user_model
+from django.db.models import Exists, OuterRef
 from django.urls import reverse
+from django.utils import timezone
 
-from .models import Notification, NotificationPreference
+from .models import (
+    AdminNotificationCampaign,
+    Notification,
+    NotificationPreference,
+)
 
 
 CATEGORY_FIELD_BY_KIND = {
@@ -93,3 +101,62 @@ def create_daily_task_completed_notification(
             "progress_date": str(progress_date),
         },
     )
+
+
+
+def campaign_recipients_queryset(campaign):
+    User = get_user_model()
+    recipients = User.objects.filter(is_active=True)
+
+    if campaign.audience == AdminNotificationCampaign.Audience.ALL_USERS:
+        return recipients
+
+    if campaign.audience == AdminNotificationCampaign.Audience.VIP_USERS:
+        from cabinet.vip import active_vip_subscriptions
+
+        active_vip = active_vip_subscriptions().filter(
+            user_id=OuterRef("pk")
+        )
+        return recipients.annotate(
+            _campaign_has_active_vip=Exists(active_vip)
+        ).filter(_campaign_has_active_vip=True)
+
+    if campaign.audience == AdminNotificationCampaign.Audience.READERS:
+        return recipients.filter(role=User.Role.READER)
+
+    if campaign.audience == AdminNotificationCampaign.Audience.CAPPERS:
+        return recipients.filter(role=User.Role.ANALYST)
+
+    if (
+        campaign.audience
+        == AdminNotificationCampaign.Audience.READERS_AND_CAPPERS
+    ):
+        return recipients.filter(
+            role__in=(User.Role.READER, User.Role.ANALYST)
+        )
+
+    if (
+        campaign.audience
+        == AdminNotificationCampaign.Audience.TOURNAMENT_WINNERS
+    ):
+        return recipients.filter(
+            tournament_participations__result__rank=1
+        ).distinct()
+
+    if (
+        campaign.audience
+        == AdminNotificationCampaign.Audience.TOURNAMENT_PARTICIPANTS
+    ):
+        if not campaign.tournament_id:
+            return recipients.none()
+        return recipients.filter(
+            tournament_participations__tournament_id=campaign.tournament_id
+        ).distinct()
+
+    if campaign.audience == AdminNotificationCampaign.Audience.INACTIVE_USERS:
+        if not campaign.inactive_days:
+            return recipients.none()
+        cutoff = timezone.now() - timedelta(days=campaign.inactive_days)
+        return recipients.filter(last_login__lt=cutoff)
+
+    return recipients.none()

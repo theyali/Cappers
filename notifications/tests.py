@@ -1,11 +1,26 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from cabinet.models import User
+from cabinet.models import User, UserVipSubscription
 from game.models import Match
 
-from .models import MatchWatch, Notification, TelegramAccount
-from .services import create_notification, get_preferences
+from tournaments.models import Tournament, TournamentParticipant, TournamentResult
+
+from .forms import AdminNotificationCampaignForm
+from .models import (
+    AdminNotificationCampaign,
+    MatchWatch,
+    Notification,
+    TelegramAccount,
+)
+from .services import (
+    campaign_recipients_queryset,
+    create_notification,
+    get_preferences,
+)
 from .telegram_bot import (
     TelegramAlreadyLinkedError,
     consume_link_payload,
@@ -254,3 +269,188 @@ class NotificationViewsTests(TestCase):
         self.assertFalse(TelegramAccount.objects.filter(user=self.user).exists())
         self.assertEqual(preferences.telegram_chat_id, "")
         self.assertFalse(preferences.telegram_enabled)
+
+
+
+class AdminNotificationCampaignRecipientTests(TestCase):
+    def setUp(self):
+        self.now = timezone.now()
+        self.creator = User.objects.create_user(
+            username="campaign-admin",
+            password="test-password",
+            is_staff=True,
+            is_active=False,
+        )
+        self.reader = User.objects.create_user(
+            username="campaign-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        self.capper = User.objects.create_user(
+            username="campaign-capper",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        self.vip_reader = User.objects.create_user(
+            username="campaign-vip-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        self.inactive_reader = User.objects.create_user(
+            username="campaign-inactive-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        User.objects.filter(pk=self.inactive_reader.pk).update(
+            last_login=self.now - timedelta(days=40)
+        )
+        self.inactive_reader.refresh_from_db()
+
+        UserVipSubscription.objects.create(
+            user=self.vip_reader,
+            starts_at=self.now - timedelta(days=1),
+            ends_at=self.now + timedelta(days=30),
+            duration_days=31,
+            source=UserVipSubscription.Source.ADMIN,
+            is_active=True,
+        )
+
+        self.tournament = Tournament.objects.create(
+            title="Campaign tournament",
+            starts_at=self.now - timedelta(days=3),
+            ends_at=self.now - timedelta(days=1),
+            status=Tournament.Status.PUBLISHED,
+        )
+        self.other_tournament = Tournament.objects.create(
+            title="Other campaign tournament",
+            starts_at=self.now - timedelta(days=6),
+            ends_at=self.now - timedelta(days=4),
+            status=Tournament.Status.PUBLISHED,
+        )
+        self.winner_participation = TournamentParticipant.objects.create(
+            tournament=self.tournament,
+            user=self.capper,
+        )
+        self.other_participation = TournamentParticipant.objects.create(
+            tournament=self.other_tournament,
+            user=self.capper,
+        )
+        TournamentResult.objects.create(
+            tournament=self.other_tournament,
+            participant=self.other_participation,
+            rank=1,
+        )
+
+    def campaign(self, audience, **kwargs):
+        return AdminNotificationCampaign.objects.create(
+            audience=audience,
+            title="Тестовая рассылка",
+            message="Текст рассылки",
+            created_by=self.creator,
+            **kwargs,
+        )
+
+    def recipient_ids(self, campaign):
+        return set(
+            campaign_recipients_queryset(campaign).values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+    def test_campaign_recipients_for_basic_audiences(self):
+        all_active = {
+            self.reader.pk,
+            self.capper.pk,
+            self.vip_reader.pk,
+            self.inactive_reader.pk,
+        }
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(AdminNotificationCampaign.Audience.ALL_USERS)
+            ),
+            all_active,
+        )
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(AdminNotificationCampaign.Audience.READERS)
+            ),
+            {
+                self.reader.pk,
+                self.vip_reader.pk,
+                self.inactive_reader.pk,
+            },
+        )
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(AdminNotificationCampaign.Audience.CAPPERS)
+            ),
+            {self.capper.pk},
+        )
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(
+                    AdminNotificationCampaign.Audience.READERS_AND_CAPPERS
+                )
+            ),
+            all_active,
+        )
+
+    def test_campaign_recipients_for_vip_and_inactive_users(self):
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(AdminNotificationCampaign.Audience.VIP_USERS)
+            ),
+            {self.vip_reader.pk},
+        )
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(
+                    AdminNotificationCampaign.Audience.INACTIVE_USERS,
+                    inactive_days=30,
+                )
+            ),
+            {self.inactive_reader.pk},
+        )
+
+    def test_campaign_recipients_for_tournament_audiences(self):
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(
+                    AdminNotificationCampaign.Audience.TOURNAMENT_WINNERS
+                )
+            ),
+            {self.capper.pk},
+        )
+        self.assertEqual(
+            self.recipient_ids(
+                self.campaign(
+                    AdminNotificationCampaign.Audience.TOURNAMENT_PARTICIPANTS,
+                    tournament=self.tournament,
+                )
+            ),
+            {self.capper.pk},
+        )
+
+    def test_campaign_form_requires_dependent_filters(self):
+        inactive_form = AdminNotificationCampaignForm(
+            data={
+                "audience": AdminNotificationCampaign.Audience.INACTIVE_USERS,
+                "title": "Inactive",
+                "message": "Message",
+            }
+        )
+        self.assertFalse(inactive_form.is_valid())
+        self.assertIn("inactive_days", inactive_form.errors)
+
+        tournament_form = AdminNotificationCampaignForm(
+            data={
+                "audience": (
+                    AdminNotificationCampaign.Audience.TOURNAMENT_PARTICIPANTS
+                ),
+                "title": "Tournament",
+                "message": "Message",
+            }
+        )
+        self.assertFalse(tournament_form.is_valid())
+        self.assertIn("tournament", tournament_form.errors)

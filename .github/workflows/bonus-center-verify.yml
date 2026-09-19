@@ -80,6 +80,9 @@ jobs:
           assert DailyTask.Audience.CAPPER in capper_audiences
           assert DailyTask.Audience.READER not in capper_audiences
           '
+      - name: Run notification campaign recipient checks
+        run: |
+          python manage.py test notifications.tests.AdminNotificationCampaignRecipientTests
       - name: Run referral and bonus notification checks
         run: |
           python manage.py test \
