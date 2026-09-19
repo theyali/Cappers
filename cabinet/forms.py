@@ -3,7 +3,13 @@ from decimal import Decimal
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import AnalystPaidPlan, AnalystProfile, DEFAULT_PAID_PLAN_PRESETS, User
+from .models import (
+    AnalystPaidPlan,
+    AnalystProfile,
+    CapperArticle,
+    DEFAULT_PAID_PLAN_PRESETS,
+    User,
+)
 
 
 class RegistrationForm(UserCreationForm):
@@ -231,6 +237,36 @@ class AnalystPaidPlanSettingsForm(forms.Form):
         if profile is not None:
             profile.paid_predictions_price = active_plan.price if active_plan else Decimal("0")
             profile.save(update_fields=["paid_predictions_price", "updated_at"])
+
+
+class CapperArticleForm(forms.ModelForm):
+    class Meta:
+        model = CapperArticle
+        fields = ("title", "cover_image", "excerpt", "content")
+        widgets = {
+            "title": forms.TextInput(attrs={"placeholder": "Заголовок статьи"}),
+            "excerpt": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Коротко опишите, о чём статья",
+                }
+            ),
+        }
+
+    def clean_cover_image(self):
+        image = self.cleaned_data.get("cover_image")
+        if not image:
+            return image
+
+        if image.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Максимальный размер файла — 5 МБ.")
+
+        content_type = getattr(image, "content_type", "")
+        allowed_types = {"image/jpeg", "image/png", "image/webp"}
+        if content_type and content_type not in allowed_types:
+            raise forms.ValidationError("Разрешены JPG, PNG и WebP.")
+
+        return image
 
 
 class AnalystAvatarForm(forms.ModelForm):
