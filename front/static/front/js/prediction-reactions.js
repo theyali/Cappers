@@ -153,6 +153,123 @@
         await incrementShareCount(button);
     };
 
+    const showFormError = (form, message) => {
+        const status = form.querySelector("[data-form-client-error]");
+        if (!status) return;
+
+        status.hidden = !message;
+        status.textContent = message || "";
+        if (message) status.focus?.();
+    };
+
+    const lockFormSubmit = (form, submitter) => {
+        if (submitter?.name && submitter.value) {
+            const hidden = document.createElement("input");
+            hidden.type = "hidden";
+            hidden.name = submitter.name;
+            hidden.value = submitter.value;
+            form.appendChild(hidden);
+        }
+
+        form.setAttribute("aria-busy", "true");
+        form
+            .querySelectorAll('button[type="submit"], input[type="submit"]')
+            .forEach((button) => {
+                button.disabled = true;
+                button.setAttribute("aria-disabled", "true");
+            });
+    };
+
+    const initSubmitLocks = () => {
+        document.querySelectorAll("form[data-disable-on-submit]").forEach((form) => {
+            form.addEventListener("submit", (event) => {
+                showFormError(form, "");
+                lockFormSubmit(form, event.submitter);
+            });
+        });
+    };
+
+    const initRichCoverPreview = () => {
+        const form = document.querySelector(".rich-prediction-form");
+        if (!form) return;
+
+        const customInput = form.querySelector("#id_custom_cover_image");
+        const systemSelect = form.querySelector("#id_cover_image");
+        const preview = document.querySelector("[data-rich-cover-preview]");
+        if (!preview || (!customInput && !systemSelect)) return;
+
+        const systemCovers = new Map(
+            Array.from(document.querySelectorAll("[data-rich-cover-option]"))
+                .map((node) => [node.dataset.coverId, node.dataset.coverUrl])
+                .filter(([, url]) => Boolean(url))
+        );
+        let objectUrl = "";
+
+        const setPreview = (url) => {
+            let image = preview.querySelector("[data-rich-cover-preview-image]");
+            const empty = preview.querySelector("[data-rich-cover-preview-empty]");
+
+            if (!url) {
+                image?.remove();
+                if (empty) empty.hidden = false;
+                return;
+            }
+
+            if (!image) {
+                image = document.createElement("img");
+                image.width = 640;
+                image.height = 400;
+                image.alt = "";
+                image.dataset.richCoverPreviewImage = "";
+                preview.prepend(image);
+            }
+
+            image.src = url;
+            if (empty) empty.hidden = true;
+        };
+
+        const showSystemCover = () => {
+            if (customInput?.files?.length) return;
+            setPreview(systemCovers.get(systemSelect?.value || "") || "");
+        };
+
+        systemSelect?.addEventListener("change", showSystemCover);
+        customInput?.addEventListener("change", () => {
+            showFormError(form, "");
+
+            const file = customInput.files?.[0];
+            if (!file) {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                objectUrl = "";
+                showSystemCover();
+                return;
+            }
+
+            const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+            if (!allowedTypes.has(file.type)) {
+                customInput.value = "";
+                showFormError(form, "Разрешены только JPG, PNG и WebP.");
+                showSystemCover();
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                customInput.value = "";
+                showFormError(form, "Обложка не должна быть больше 5 МБ.");
+                showSystemCover();
+                return;
+            }
+
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            objectUrl = URL.createObjectURL(file);
+            setPreview(objectUrl);
+        });
+
+        window.addEventListener("pagehide", () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        }, { once: true });
+    };
+
     document.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-prediction-reaction]");
         if (!button) return;
@@ -218,9 +335,16 @@
         try {
             await sharePrediction(button);
         } catch (error) {
-            if (error?.name !== "AbortError") console.error(error);
+            if (error?.name !== "AbortError") {
+                console.error(error);
+                button.title = error?.message || "Не удалось поделиться прогнозом.";
+                button.setAttribute("aria-label", button.title);
+            }
         } finally {
             if (button.isConnected) button.disabled = false;
         }
     });
+
+    initSubmitLocks();
+    initRichCoverPreview();
 })();
