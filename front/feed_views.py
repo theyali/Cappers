@@ -12,6 +12,7 @@ from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon, Sport
 
+from .prediction_catalog_views import build_prediction_type_context
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     _decorate_predictions,
@@ -152,12 +153,14 @@ def _feed_author_counts(
     *,
     following_ids: set[int],
     paid_upgrade_ids: list[int],
+    prediction_format: str,
 ) -> tuple[dict[int, int], dict[int, int]]:
     cache_key = _feed_cache_key(
         user_id,
         "author-counts",
         tuple(sorted(following_ids)),
         tuple(sorted(paid_upgrade_ids)),
+        prediction_format,
     )
     cached = cache.get(cache_key)
     if cached is not None:
@@ -169,6 +172,7 @@ def _feed_author_counts(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_upgrade_ids,
+            prediction_format=prediction_format,
         )
         .values("author_id")
         .annotate(total=Count("id"))
@@ -179,6 +183,7 @@ def _feed_author_counts(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             audience=PredictionCoupon.Audience.FREE,
             author_id__in=following_ids,
+            prediction_format=prediction_format,
         )
         .values("author_id")
         .annotate(total=Count("id"))
@@ -198,6 +203,9 @@ def _feed_author_counts(
 @ensure_csrf_cookie
 def following_feed(request):
     record_daily_task_action(request.user, DailyTask.TaskType.OPEN_FEED)
+    prediction_type_context = build_prediction_type_context(request)
+    prediction_format = prediction_type_context["prediction_format"]
+
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
@@ -257,7 +265,7 @@ def following_feed(request):
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.FREE,
             author_ids=following_ids,
-        ),
+        ).filter(prediction_format=prediction_format),
         selected_capper=selected_capper,
         selected_sport=None,
         only_live=only_live,
@@ -267,7 +275,7 @@ def following_feed(request):
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.PAID,
             author_ids=paid_analyst_ids,
-        ),
+        ).filter(prediction_format=prediction_format),
         selected_capper=selected_capper,
         selected_sport=None,
         only_live=only_live,
@@ -285,7 +293,11 @@ def following_feed(request):
             predictions__match__sport=selected_sport
         ).distinct()
 
-    count_signature = (*feed_source_signature, selected_sport.pk if selected_sport else None)
+    count_signature = (
+        *feed_source_signature,
+        selected_sport.pk if selected_sport else None,
+        prediction_type_context["active_prediction_type"],
+    )
     count_keys = ("total", "pending", "win", "lose", "refund")
     free_counts = _feed_counts(
         free_count_queryset,
@@ -302,7 +314,10 @@ def following_feed(request):
 
     # Full querysets are evaluated only for the cards that will actually render.
     queryset = _apply_feed_filters(
-        _published_queryset().filter(author_id__in=following_ids),
+        _published_queryset().filter(
+            author_id__in=following_ids,
+            prediction_format=prediction_format,
+        ),
         selected_capper=selected_capper,
         selected_sport=selected_sport,
         only_live=only_live,
@@ -312,6 +327,7 @@ def following_feed(request):
         _published_queryset(include_paid=True).filter(
             audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_analyst_ids,
+            prediction_format=prediction_format,
         ),
         selected_capper=selected_capper,
         selected_sport=selected_sport,
@@ -385,7 +401,13 @@ def following_feed(request):
         request.user.pk,
         following_ids=following_ids,
         paid_upgrade_ids=paid_upgrade_ids,
+        prediction_format=prediction_format,
     )
+    paid_upgrade_follows = [
+        follow
+        for follow in paid_upgrade_follows
+        if locked_paid_counts.get(follow.analyst_id, 0)
+    ]
 
     capper_params = request.GET.copy()
     capper_params.pop("page", None)
@@ -458,9 +480,10 @@ def following_feed(request):
             "active_filter_count": active_filter_count,
             "feed_all_cappers_url": feed_all_cappers_url,
             "feed_all_cappers_count": feed_all_cappers_count,
-            "filter_action_url": request.path,
+            "filter_action_url": prediction_type_context["prediction_type_reset_url"],
             "adv_placement": "sidebar",
             "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
+            **prediction_type_context,
         },
     )
