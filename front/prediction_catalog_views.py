@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from cabinet.paid_predictions import active_paid_subscription_analyst_ids
 from game.models import Prediction, PredictionCoupon
 
 from .expert_ranking import ranked_expert_profiles
@@ -65,6 +66,25 @@ def _catalog_meta_queryset():
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         audience=PredictionCoupon.Audience.FREE,
     ).annotate(combined_coefficient=_combined_coefficient_expression())
+
+
+def get_rich_predictions_queryset(user=None):
+    queryset = _published_queryset(include_paid=True).filter(
+        prediction_format=PredictionCoupon.PredictionFormat.RICH,
+    )
+
+    if not getattr(user, "is_authenticated", False):
+        return queryset.filter(audience=PredictionCoupon.Audience.FREE)
+
+    paid_analyst_ids = active_paid_subscription_analyst_ids(user)
+    return queryset.filter(
+        Q(audience=PredictionCoupon.Audience.FREE)
+        | Q(author_id=user.pk)
+        | Q(
+            audience=PredictionCoupon.Audience.PAID,
+            author_id__in=paid_analyst_ids,
+        )
+    )
 
 
 def _filter_options(published_items, selected_sport: str, *, express_only: bool):
