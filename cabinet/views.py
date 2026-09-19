@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
@@ -30,10 +31,11 @@ from .forms import (
     AnalystAvatarForm,
     AnalystPaidPlanSettingsForm,
     AnalystProfileForm,
+    CapperArticleForm,
     RegistrationForm,
     UserProfileForm,
 )
-from .models import AnalystFollow, AnalystProfile, DailyTask, User
+from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
 from .paid_predictions import (
     get_active_paid_plans,
     profile_paid_predictions_enabled,
@@ -41,8 +43,143 @@ from .paid_predictions import (
 )
 from .referrals import mark_referral_registration
 from .services.bonus_center import build_profile_bonus_summary
+from .services.capper_articles import (
+    build_capper_articles_context,
+    can_create_capper_article,
+    save_capper_article,
+    submit_capper_article_for_moderation,
+)
 from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
+
+
+def _ensure_capper_articles_user(request):
+    if not request.user.is_analyst:
+        messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
+        return redirect("cabinet:become_capper")
+    return None
+
+
+@login_required
+def capper_articles(request):
+    access_redirect = _ensure_capper_articles_user(request)
+    if access_redirect:
+        return access_redirect
+
+    context = build_capper_articles_context(request.user)
+    context["page"] = {
+        "title": "Мои статьи — КапперХаб",
+        "heading": "Мои статьи",
+        "description": "Черновики, статьи на модерации и опубликованные материалы.",
+        "mobile_nav_label": "Навигация кабинета",
+        "profile_nav_label": "Разделы профиля",
+    }
+    return render(request, "cabinet/capper_articles.html", context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def capper_article_create(request):
+    access_redirect = _ensure_capper_articles_user(request)
+    if access_redirect:
+        return access_redirect
+    if not can_create_capper_article(request.user):
+        messages.info(request, "Стать VIP, чтобы публиковать статьи.")
+        return redirect("cabinet:capper_articles")
+
+    form = CapperArticleForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            article = save_capper_article(
+                request.user,
+                form.cleaned_data,
+                request.FILES,
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, "Черновик статьи сохранён.")
+            return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+    return render(
+        request,
+        "cabinet/capper_article_form.html",
+        {
+            "form": form,
+            "article": None,
+            "page_title": "Новая статья",
+            "submit_label": "Сохранить черновик",
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def capper_article_edit(request, article_id):
+    access_redirect = _ensure_capper_articles_user(request)
+    if access_redirect:
+        return access_redirect
+    if not can_create_capper_article(request.user):
+        messages.info(request, "Стать VIP, чтобы публиковать статьи.")
+        return redirect("cabinet:capper_articles")
+
+    article = get_object_or_404(
+        CapperArticle,
+        pk=article_id,
+        author=request.user,
+    )
+    form = CapperArticleForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=article,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        try:
+            article = save_capper_article(
+                request.user,
+                form.cleaned_data,
+                request.FILES,
+                article=article,
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, "Черновик статьи сохранён.")
+            return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+    return render(
+        request,
+        "cabinet/capper_article_form.html",
+        {
+            "form": form,
+            "article": article,
+            "page_title": "Редактирование статьи",
+            "submit_label": "Сохранить изменения",
+        },
+    )
+
+
+@login_required
+@require_POST
+def capper_article_submit(request, article_id):
+    access_redirect = _ensure_capper_articles_user(request)
+    if access_redirect:
+        return access_redirect
+
+    article = get_object_or_404(
+        CapperArticle,
+        pk=article_id,
+        author=request.user,
+    )
+    try:
+        submit_capper_article_for_moderation(request.user, article)
+    except ValidationError as exc:
+        messages.error(request, "; ".join(exc.messages))
+        return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+    messages.success(request, "Статья отправлена на модерацию.")
+    return redirect("cabinet:capper_articles")
 
 
 @require_http_methods(["GET", "POST"])
