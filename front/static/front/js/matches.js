@@ -85,7 +85,6 @@
     const confidenceInput = root.querySelector("[data-coupon-confidence]");
     const confidenceValue = root.querySelector("[data-coupon-confidence-value]");
     const confidenceFill = root.querySelector("[data-coupon-confidence-fill]");
-    const audienceInputs = [...root.querySelectorAll("[data-coupon-audience-input]")];
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
     const totalNode = root.querySelector("[data-coupon-total]");
     const noteNode = root.querySelector("[data-coupon-note]");
@@ -118,18 +117,6 @@
         const parsed = Number.parseInt(String(value ?? "50"), 10);
         if (!Number.isFinite(parsed)) return Math.max(50, minConfidence);
         return Math.max(minConfidence, Math.min(100, parsed));
-    };
-
-    const currentAudience = () => {
-        const selected = audienceInputs.find((input) => input.checked && !input.disabled);
-        return selected?.value === "paid" ? "paid" : "free";
-    };
-
-    const setAudience = (value) => {
-        const audience = value === "paid" ? "paid" : "free";
-        const target = audienceInputs.find((input) => input.value === audience && !input.disabled)
-            || audienceInputs.find((input) => input.value === "free");
-        if (target) target.checked = true;
     };
 
     const currentConfidence = () => normalizeConfidence(confidenceInput?.value);
@@ -270,7 +257,6 @@
             id: draftId,
             stake: stakeInput?.value || "",
             confidence: currentConfidence(),
-            audience: currentAudience(),
             items: [...items.values()],
             dirty,
             savedAt: Date.now(),
@@ -363,7 +349,7 @@
         autosave,
         stake: stakeInput?.value || "",
         confidence: currentConfidence(),
-        audience: currentAudience(),
+        audience: "free",
         items: [...items.values()].map((item) => ({
             match_id: item.matchId,
             market: item.market,
@@ -381,7 +367,6 @@
 
         draftId = draft.id || draftId;
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
-        setAudience(draft.audience);
         const serverItems = new Map((draft.items || []).map((rawItem) => {
             const item = normalizeDraftItem(rawItem);
             return [String(item.matchId), item];
@@ -584,8 +569,6 @@
         draftId = draft.id || null;
         if (stakeInput) stakeInput.value = draft.stake || "";
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
-        setAudience(draft.audience);
-
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
             items.set(item.matchId, item);
@@ -616,13 +599,6 @@
         updateConfidenceVisual();
         updateState();
         scheduleDraftSync();
-    });
-
-    audienceInputs.forEach((input) => {
-        input.addEventListener("change", () => {
-            updateState();
-            scheduleDraftSync();
-        });
     });
 
     root.addEventListener("click", (event) => {
