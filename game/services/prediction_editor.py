@@ -46,6 +46,7 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
             "description": coupon.description,
             "cover_image": coupon.cover_image_id,
             "tags": ", ".join(coupon.tags or []),
+            "published_status": coupon.published_status,
         }
 
     return {
