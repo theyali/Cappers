@@ -88,7 +88,7 @@
                 </div>
             </form>
 
-            {% if article and article.status == "draft" or article and article.status == "rejected" %}
+            {% if can_submit_article %}
             <form method="post" action="{% url 'cabinet:capper_article_submit' article.id %}">
                 {% csrf_token %}
                 <button class="profile-save-button" type="submit">Отправить на модерацию</button>
