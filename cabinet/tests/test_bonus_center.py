@@ -2,8 +2,9 @@ import uuid
 from datetime import timedelta
 from decimal import Decimal
 
+from django.contrib import admin
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -24,6 +25,7 @@ from cabinet.paid_predictions import subscribe_to_paid_predictions
 from cabinet.roulette.models import RoulettePrize, RouletteSettings
 from cabinet.roulette.spin_service import spin_roulette
 from cabinet.roulette.state import UserRouletteState
+from cabinet.services.bonus_center import build_bonus_levels_page_context
 from cabinet.services.bonus_rewards import grant_bonus_reward
 from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.services.referral_bonuses import (
@@ -995,6 +997,69 @@ class BonusCenterServiceTests(TestCase):
         self.assertContains(claimable_response, "data-bonus-task-claim")
         self.assertContains(claimable_response, "bonus-task-check")
 
+    def test_novice_level_does_not_fill_future_levels(self):
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            order=1,
+        )
+        XpLevel.objects.create(
+            level=2,
+            title="Участник",
+            required_xp=100,
+            order=2,
+        )
+        XpLevel.objects.create(
+            level=3,
+            title="Опытный",
+            required_xp=200,
+            order=3,
+        )
+        UserXpState.objects.create(
+            user=self.user,
+            level=1,
+            xp=50,
+        )
+
+        context = build_bonus_levels_page_context(self.user)
+        levels = {item["level"]: item for item in context["levels"]}
+
+        self.assertEqual(levels[1]["progress_percent"], 50)
+        self.assertEqual(levels[2]["progress_percent"], 0)
+        self.assertEqual(levels[3]["progress_percent"], 0)
+        self.assertTrue(levels[2]["is_locked"])
+        self.assertTrue(levels[3]["is_locked"])
+
+    def test_xp_level_media_description_available_in_context_and_admin(self):
+        XpLevel.objects.create(
+            level=1,
+            title="Новичок",
+            required_xp=0,
+            description="<p>Описание уровня</p>",
+            icon="xp_levels/icons/test-icon.png",
+            image="xp_levels/images/test-image.png",
+            order=1,
+        )
+
+        context = build_bonus_levels_page_context(self.user)
+        level = context["levels"][0]
+
+        self.assertEqual(level["description"], "<p>Описание уровня</p>")
+        self.assertTrue(
+            level["icon_url"].endswith("xp_levels/icons/test-icon.png")
+        )
+        self.assertTrue(
+            level["image_url"].endswith("xp_levels/images/test-image.png")
+        )
+
+        xp_level_admin = admin.site._registry[XpLevel]
+        self.assertIn("description", xp_level_admin.fields)
+        self.assertIn("icon", xp_level_admin.fields)
+        self.assertIn("image", xp_level_admin.fields)
+        self.assertIn("icon_preview", xp_level_admin.readonly_fields)
+        self.assertIn("image_preview", xp_level_admin.readonly_fields)
+
     def test_bonus_levels_page_shows_current_level(self):
         XpLevel.objects.create(
             level=1,
@@ -1052,6 +1117,35 @@ class BonusCenterServiceTests(TestCase):
         self.assertFalse(levels[3]["is_current"])
         self.assertTrue(levels[3]["is_locked"])
         self.assertContains(response, "Участник")
+
+    @override_settings(
+        STORAGES={
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": (
+                    "django.contrib.staticfiles.storage.StaticFilesStorage"
+                ),
+            },
+        }
+    )
+    def test_step17_bonus_notification_routes_render(self):
+        self.client.force_login(self.user)
+
+        responses = (
+            self.client.get(reverse("cabinet:bonus_levels")),
+            self.client.get(reverse("cabinet:bonus_tasks")),
+            self.client.get(
+                reverse("cabinet:profile"),
+                {"tab": "profile"},
+            ),
+            self.client.get(reverse("cabinet:referrals")),
+            self.client.get(reverse("notifications:center")),
+        )
+
+        for response in responses:
+            self.assertEqual(response.status_code, 200)
 
     def test_referrals_page_returns_url_and_stats(self):
         visitor = User.objects.create_user(

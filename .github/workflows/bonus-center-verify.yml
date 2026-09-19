@@ -93,6 +93,19 @@ jobs:
             cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_disabled_daily_task_notifications_skip_completion_notification \
             notifications.tests.NotificationServiceTests.test_disabled_bonus_referral_category_does_not_create_notification \
             notifications.tests.NotificationServiceTests.test_disabled_bonus_daily_task_category_does_not_create_notification
+      - name: Run step 17 checklist
+        run: |
+          python manage.py test \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_novice_level_does_not_fill_future_levels \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_xp_level_media_description_available_in_context_and_admin \
+            pages.test_context_processors.PromoBannerAudienceTests.test_promo_banner_matches_user_for_all_audiences \
+            cabinet.tests.test_vip_status.ProfileCoverTests.test_cover_upload_requires_active_vip_for_capper \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_daily_task_completion_creates_notification_once \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_disabled_referral_notification_keeps_bonus_event \
+            notifications.tests.AdminNotificationCampaignRecipientTests.test_admin_campaign_registered_with_send_action \
+            notifications.tests.AdminNotificationCampaignRecipientTests.test_admin_campaign_bulk_send_is_idempotent \
+            notifications.tests.AdminNotificationCampaignRecipientTests.test_campaign_recipients_for_vip_and_inactive_users \
+            cabinet.tests.test_bonus_center.BonusCenterServiceTests.test_step17_bonus_notification_routes_render
       - name: Run bonus center checks
         run: |
           python manage.py check
