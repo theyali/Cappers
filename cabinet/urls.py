@@ -26,6 +26,18 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("articles/", views.capper_articles, name="capper_articles"),
+    path("articles/new/", views.capper_article_create, name="capper_article_create"),
+    path(
+        "articles/<int:article_id>/edit/",
+        views.capper_article_edit,
+        name="capper_article_edit",
+    ),
+    path(
+        "articles/<int:article_id>/submit/",
+        views.capper_article_submit,
+        name="capper_article_submit",
+    ),
     path(
         "profile/promo-banner/",
         profile_promo_views.profile_promo_banner,
