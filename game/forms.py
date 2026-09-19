@@ -61,6 +61,13 @@ class RichPredictionCouponForm(forms.Form):
         required=False,
         help_text="До 7 тегов через запятую.",
     )
+    published_status = forms.ChoiceField(
+        required=False,
+        choices=(
+            (PredictionCoupon.PublishedStatus.DRAFT, "Черновик"),
+            (PredictionCoupon.PublishedStatus.PUBLISHED, "Опубликован"),
+        ),
+    )
 
     def __init__(self, *args, user=None, match=None, sport=None, **kwargs):
         super().__init__(*args, **kwargs)
