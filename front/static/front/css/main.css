@@ -38952,3 +38952,343 @@ padding:40px 0px;
 .profile-daily-tasks-link:hover {
     color: #fff;
 }
+
+
+/* Rich prediction editor */
+.rich-prediction-editor {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.rich-prediction-editor-head,
+.rich-prediction-section,
+.rich-prediction-preview-card {
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.rich-prediction-editor-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px;
+}
+
+.rich-prediction-editor-head h1 {
+    margin: 4px 0 8px;
+    font-size: clamp(24px, 2.4vw, 34px);
+    font-weight: 600;
+}
+
+.rich-prediction-editor-head p {
+    max-width: 720px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.rich-prediction-editor-status {
+    flex: 0 0 auto;
+    padding: 8px 11px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rich-prediction-form {
+    display: grid;
+    gap: 14px;
+}
+
+.rich-prediction-form-errors {
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: #fff;
+    background: #3a2020;
+    font-size: 12px;
+}
+
+.rich-prediction-form-errors ul,
+.capper-field-errors ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rich-prediction-section {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+}
+
+.rich-prediction-section.is-locked {
+    background: #19191b;
+}
+
+.rich-prediction-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.rich-prediction-section-head > div {
+    min-width: 0;
+}
+
+.rich-prediction-section-head span,
+.rich-prediction-section-head small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.rich-prediction-section-head h2 {
+    margin: 3px 0 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rich-prediction-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.rich-prediction-field-wide {
+    grid-column: 1 / -1;
+}
+
+.rich-prediction-section.is-locked .capper-field {
+    opacity: .58;
+}
+
+.rich-prediction-vip-cta,
+.coupon-rich-link {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 13px;
+    border-radius: 11px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rich-prediction-vip-cta:hover,
+.coupon-rich-link:hover {
+    color: var(--ink);
+    transform: translateY(-1px);
+}
+
+.rich-prediction-access-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.rich-prediction-access-option {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 13px;
+    background: #2a2a2d;
+    cursor: pointer;
+}
+
+.rich-prediction-access-option.is-locked {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.rich-prediction-access-option input {
+    margin-top: 3px;
+    accent-color: var(--blue);
+}
+
+.rich-prediction-access-option span {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.rich-prediction-access-option strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rich-prediction-access-option small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.rich-prediction-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rich-prediction-submit {
+    min-height: 48px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: #303033;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rich-prediction-submit.is-primary {
+    background: var(--blue);
+}
+
+.rich-prediction-submit:hover {
+    transform: translateY(-1px);
+}
+
+.rich-prediction-preview {
+    display: block;
+}
+
+.rich-prediction-preview-card {
+    overflow: hidden;
+}
+
+.rich-prediction-preview-cover {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--ink);
+}
+
+.rich-prediction-preview-cover img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.rich-prediction-preview-cover-empty {
+    height: 100%;
+    display: grid;
+    place-content: center;
+    gap: 5px;
+    padding: 20px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.rich-prediction-preview-cover-empty span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.rich-prediction-preview-cover-empty strong {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rich-prediction-preview-body {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.rich-prediction-preview-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rich-prediction-preview-meta span {
+    padding: 5px 8px;
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.rich-prediction-preview-meta strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rich-prediction-preview-body h2 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 600;
+}
+
+.rich-prediction-preview-match,
+.rich-prediction-preview-pick,
+.rich-prediction-preview-description {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.rich-prediction-preview-match {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.rich-prediction-preview-pick {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rich-prediction-preview-description {
+    color: rgba(255, 255, 255, .72);
+    font-size: 12px;
+}
+
+.rich-prediction-preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rich-prediction-preview-tags span {
+    padding: 5px 8px;
+    border-radius: 8px;
+    color: #fff;
+    background: #303033;
+    font-size: 10px;
+}
+
+.coupon-rich-link {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.coupon-panel .coupon-rich-link {
+    margin: 2px 0 0;
+    background: #303033;
+    color: #fff;
+}
+
+.coupon-panel .coupon-rich-link:hover {
+    color: #fff;
+}
+
+.matches-table-create-prediction {
+    margin-top: 2px;
+}
