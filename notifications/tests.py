@@ -19,6 +19,7 @@ from .models import (
 from .services import (
     campaign_recipients_queryset,
     create_notification,
+    send_admin_notification_campaign,
     get_preferences,
 )
 from .telegram_bot import (
@@ -430,6 +431,80 @@ class AdminNotificationCampaignRecipientTests(TestCase):
                 )
             ),
             {self.capper.pk},
+        )
+
+    def test_admin_campaign_bulk_send_is_idempotent(self):
+        campaign = self.campaign(
+            AdminNotificationCampaign.Audience.READERS,
+            image="notifications/campaigns/2026/09/campaign.jpg",
+            url="/cabinet/bonuses/",
+        )
+
+        count, was_sent = send_admin_notification_campaign(campaign)
+
+        self.assertTrue(was_sent)
+        self.assertEqual(count, 3)
+        campaign.refresh_from_db()
+        self.assertIsNotNone(campaign.sent_at)
+        self.assertEqual(campaign.recipients_count, 3)
+
+        notifications = Notification.objects.filter(
+            kind=Notification.Kind.ADMIN_CAMPAIGN,
+        ).order_by("recipient_id")
+        self.assertEqual(notifications.count(), 3)
+        for notification in notifications:
+            self.assertEqual(
+                notification.event_key,
+                f"admin-campaign:{campaign.pk}:{notification.recipient_id}",
+            )
+            self.assertEqual(notification.title, campaign.title)
+            self.assertEqual(notification.message, campaign.message)
+            self.assertEqual(notification.url, campaign.url)
+            self.assertEqual(
+                notification.meta["image_url"],
+                campaign.image.url,
+            )
+
+        second_count, second_was_sent = send_admin_notification_campaign(
+            campaign
+        )
+        self.assertFalse(second_was_sent)
+        self.assertEqual(second_count, 3)
+        self.assertEqual(
+            Notification.objects.filter(
+                kind=Notification.Kind.ADMIN_CAMPAIGN,
+            ).count(),
+            3,
+        )
+
+    def test_admin_campaign_image_is_exposed_in_center_and_realtime_summary(self):
+        campaign = self.campaign(
+            AdminNotificationCampaign.Audience.READERS,
+            image="notifications/campaigns/2026/09/campaign.jpg",
+        )
+        send_admin_notification_campaign(campaign)
+        self.client.force_login(self.reader)
+
+        center_response = self.client.get(reverse("notifications:center"))
+        self.assertEqual(center_response.status_code, 200)
+        self.assertContains(center_response, 'class="notification-image"')
+        self.assertContains(center_response, campaign.image.url)
+
+        latest_id = (
+            Notification.objects.filter(recipient=self.reader)
+            .order_by("-id")
+            .values_list("id", flat=True)
+            .first()
+        )
+        summary_response = self.client.get(
+            reverse("notifications:summary"),
+            {"after_id": latest_id - 1},
+        )
+        self.assertEqual(summary_response.status_code, 200)
+        payload = summary_response.json()
+        self.assertEqual(
+            payload["notifications"][0]["image_url"],
+            campaign.image.url,
         )
 
     def test_campaign_form_requires_dependent_filters(self):
