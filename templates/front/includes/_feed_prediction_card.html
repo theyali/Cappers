@@ -5,11 +5,13 @@
     data-analyst-id="{{ prediction.coupon.author_id }}"
 >
     <a class="feed-prediction-cover" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Открыть прогноз {{ prediction.match.home_team_name|default:'Хозяева' }} — {{ prediction.match.away_team_name|default:'Гости' }}">
-        {% if prediction.coupon.cover_image and prediction.coupon.cover_image.image %}
+        {% with display_cover=prediction.coupon.get_display_cover_image %}
+            {% if display_cover %}
             <span class="feed-prediction-cover-image" data-skeleton-image>
-                <img src="{{ prediction.coupon.cover_image.image.url }}" width="640" height="400" alt="" loading="lazy">
+                <img src="{{ display_cover.url }}" width="640" height="400" alt="" loading="lazy">
             </span>
-        {% endif %}
+            {% endif %}
+        {% endwith %}
 
         <span class="feed-prediction-cover-fallback">
             <span class="feed-prediction-cover-center">
