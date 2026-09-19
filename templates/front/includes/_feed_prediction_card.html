@@ -158,17 +158,19 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
         </button>
 
-        <a
-            class="feed-prediction-action feed-prediction-menu"
-            href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
-            aria-label="Открыть дополнительные действия прогноза"
-            title="Открыть прогноз"
+        <button
+            class="feed-prediction-action feed-prediction-share prediction-share"
+            type="button"
+            data-prediction-id="{{ prediction.coupon.id }}"
+            data-share-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            aria-label="Поделиться прогнозом"
+            title="Поделиться прогнозом"
         >
             <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="5" r="1.7" fill="currentColor" stroke="none"></circle>
-                <circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"></circle>
-                <circle cx="12" cy="19" r="1.7" fill="currentColor" stroke="none"></circle>
+                <path d="M12 16V4"></path>
+                <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
+                <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
             </svg>
-        </a>
+        </button>
     </div>
 </article>
