@@ -8,19 +8,25 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cabinet.models import DailyTask, User
 from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.paid_predictions import profile_paid_predictions_enabled
+from game.forms import RichPredictionCouponForm
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
 from game.services.coupon_validation import (
     CouponMatchVerificationError,
     verify_matches_for_coupon,
 )
 from game.services.match_sync import MatchSyncService
+from game.services.prediction_editor import (
+    build_prediction_editor_context,
+    create_rich_prediction,
+    update_rich_prediction,
+)
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
 from wallets.services import InsufficientCoins, charge_prediction_stake, copy_published_coupon, format_coins
@@ -148,6 +154,68 @@ def match_detail(request, slug: str):
         "is_watched": match.is_watched,
     }
     return render(request, "game/match_detail.html", context)
+
+
+@login_required
+def rich_prediction_create(request):
+    if not request.user.is_analyst:
+        raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
+
+    context = build_prediction_editor_context(request)
+    form = RichPredictionCouponForm(
+        request.POST or None,
+        request.FILES or None,
+        user=request.user,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        try:
+            coupon = create_rich_prediction(
+                request.user,
+                form.cleaned_data,
+                request.FILES,
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
+
+    context["form"] = form
+    return render(request, "game/rich_prediction_form.html", context)
+
+
+@login_required
+def rich_prediction_edit(request, coupon_id):
+    if not request.user.is_analyst:
+        raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
+
+    coupon = get_object_or_404(
+        PredictionCoupon.objects.select_related("cover_image"),
+        pk=coupon_id,
+    )
+    context = build_prediction_editor_context(request, coupon=coupon)
+    form = RichPredictionCouponForm(
+        request.POST or None,
+        request.FILES or None,
+        user=request.user,
+        initial=context["form_initial"],
+    )
+
+    if request.method == "POST" and form.is_valid():
+        try:
+            coupon = update_rich_prediction(
+                request.user,
+                coupon,
+                form.cleaned_data,
+                request.FILES,
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
+
+    context["form"] = form
+    return render(request, "game/rich_prediction_form.html", context)
 
 
 @login_required
