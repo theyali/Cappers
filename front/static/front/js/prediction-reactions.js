@@ -92,6 +92,67 @@
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
+    const copyShareUrl = async (shareUrl) => {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        textarea.remove();
+        if (!copied) throw new Error("Не удалось скопировать ссылку.");
+    };
+
+    const incrementShareCount = async (button) => {
+        const endpoint = button.dataset.shareEndpoint;
+        if (!endpoint) return;
+
+        const csrftoken = decodeURIComponent(getCookie("csrftoken"));
+        if (!csrftoken) return;
+
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+            },
+            credentials: "same-origin",
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            throw new Error(result.error || "Не удалось обновить счетчик репостов.");
+        }
+
+        const predictionId = button.dataset.predictionId;
+        if (!predictionId) return;
+        document
+            .querySelectorAll(`.prediction-share[data-prediction-id="${CSS.escape(predictionId)}"] [data-share-count]`)
+            .forEach((count) => {
+                count.textContent = String(result.shares_count);
+            });
+    };
+
+    const sharePrediction = async (button) => {
+        const rawShareUrl = button.dataset.shareUrl;
+        if (!rawShareUrl) return;
+
+        const shareUrl = new URL(rawShareUrl, window.location.origin).href;
+        if (navigator.share) {
+            await navigator.share({ url: shareUrl });
+        } else {
+            await copyShareUrl(shareUrl);
+        }
+        await incrementShareCount(button);
+    };
+
     document.addEventListener("click", async (event) => {
         const button = event.target.closest("[data-prediction-reaction]");
         if (!button) return;
@@ -147,5 +208,19 @@
                 button.disabled = false;
             }
         }
+
+    document.addEventListener("click", async (event) => {
+        const button = event.target.closest(".prediction-share");
+        if (!button || button.disabled) return;
+
+        button.disabled = true;
+        try {
+            await sharePrediction(button);
+        } catch (error) {
+            if (error?.name !== "AbortError") console.error(error);
+        } finally {
+            if (button.isConnected) button.disabled = false;
+        }
+    });
     });
 })();
