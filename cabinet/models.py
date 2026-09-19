@@ -2,6 +2,7 @@ import re
 import secrets
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -224,6 +225,59 @@ class AnalystProfile(models.Model):
             for key, label, value, network in values
             if (value or "").strip()
         ]
+
+
+class CapperArticle(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Черновик"
+        PENDING = "pending", "На модерации"
+        APPROVED = "approved", "Опубликована"
+        REJECTED = "rejected", "Отклонена"
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="capper_articles",
+        verbose_name="Автор",
+    )
+    title = models.CharField("Заголовок", max_length=180)
+    slug = models.SlugField("Slug", max_length=220, blank=True)
+    cover_image = models.ImageField(
+        "Обложка",
+        upload_to="capper_articles/%Y/%m/",
+        blank=True,
+    )
+    excerpt = models.TextField("Краткое описание", blank=True)
+    content = HTMLField("Контент")
+    status = models.CharField(
+        "Статус",
+        max_length=16,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        db_index=True,
+    )
+    moderation_note = models.TextField("Комментарий модератора", blank=True)
+    submitted_at = models.DateTimeField("Отправлена на модерацию", null=True, blank=True)
+    published_at = models.DateTimeField("Опубликована", null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Проверил",
+    )
+    reviewed_at = models.DateTimeField("Проверена", null=True, blank=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Статья каппера"
+        verbose_name_plural = "Статьи капперов"
+        ordering = ("-created_at", "-id")
+
+    def __str__(self) -> str:
+        return self.title
 
 
 def _social_url(value: str, network: str) -> str:
