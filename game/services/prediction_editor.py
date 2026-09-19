@@ -265,7 +265,7 @@ def _resolve_cover_image(value) -> PredictionCoverImage | None:
 
 
 def _resolve_published_status(data, coupon: PredictionCoupon, *, is_new: bool) -> str:
-    if "published_status" in data:
+    if data.get("published_status") not in (None, ""):
         status = _text_value(data.get("published_status")).lower()
     elif "publish" in data:
         status = (
