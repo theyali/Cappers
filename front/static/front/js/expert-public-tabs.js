@@ -10,6 +10,7 @@
         bank: ['[data-expert-public-panel="bank"]'],
         achievements: ['[data-expert-public-panel="achievements"]'],
         tournaments: ['[data-expert-public-panel="tournaments"]'],
+        articles: ['[data-expert-public-panel="articles"]'],
     };
     const TAB_NAMES = Object.keys(TAB_PANELS);
     const MANAGED_PANEL_SELECTOR = Array.from(
