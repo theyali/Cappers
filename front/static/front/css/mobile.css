@@ -5067,3 +5067,52 @@ body.expert-public-details-open {
         gap: 8px;
     }
 }
+
+
+@media (max-width: 760px) {
+    .rich-prediction-cover-picker .rich-prediction-fields-grid {
+        align-items: stretch;
+    }
+
+    .capper-articles-page .bonus-page-head,
+    .capper-article-form-page .bonus-page-head,
+    .capper-article-form .profile-section-heading {
+        display: grid;
+        gap: 12px;
+    }
+
+    .capper-articles-page .bonus-page-head .profile-save-button,
+    .capper-article-form-page .bonus-page-head .profile-save-button,
+    .capper-article-form .profile-section-heading .profile-save-button,
+    .capper-article-form-page form[action*="/submit/"] .profile-save-button {
+        width: 100%;
+    }
+
+    .capper-articles-page .profile-list-card,
+    .capper-article-form-page .profile-list-card,
+    .capper-article-form {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .capper-articles-page .profile-empty-state {
+        padding: 14px;
+    }
+
+    .capper-articles-page .capper-article-row {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .capper-articles-page .capper-article-row .profile-coupon-status {
+        justify-self: start;
+    }
+
+    .capper-article-form .tox-tinymce {
+        min-height: 340px;
+    }
+
+    .capper-article-form-page form[action*="/submit/"] {
+        display: block;
+    }
+}
