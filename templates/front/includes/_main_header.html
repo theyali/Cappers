@@ -120,6 +120,12 @@
                             </span>
                             <span>Мои прогнозы</span>
                         </a>
+                        <a href="{% url 'cabinet:capper_articles' %}">
+                            <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5V4Z"></path><path d="M15 4v5h5M8 13h8M8 17h6"></path></svg>
+                            </span>
+                            <span>Мои статьи</span>
+                        </a>
                         {% else %}
                         <a href="{% url 'cabinet:become_capper' %}">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
