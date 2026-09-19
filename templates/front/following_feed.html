@@ -48,6 +48,14 @@
             </section>
 
             {% if page_obj.object_list or paid_predictions or paid_upgrade_offers %}
+                {% if is_rich_predictions %}
+                    {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
+                    <div class="content-view-container">
+                        {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
+                        {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
+                        {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
+                    </div>
+                {% else %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
                     {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=True %}
 
@@ -64,6 +72,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 {% if page_obj.object_list %}
                 <div
