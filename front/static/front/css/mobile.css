@@ -4980,3 +4980,90 @@ body.expert-public-details-open {
         margin-top: 4px;
     }
 }
+
+
+@media (max-width: 900px) {
+    .prediction-results-head,
+    .prediction-results-filters {
+        align-items: flex-start;
+    }
+
+    .prediction-results-filters {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .prediction-type-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .predictions-grid.is-rich > .prediction-card-rich {
+        grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+    }
+
+    .prediction-card-rich-stats {
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .prediction-results-filters,
+    .prediction-type-tabs,
+    .feed-sport-tabs {
+        width: 100%;
+    }
+
+    .prediction-type-tab {
+        flex: 1 0 auto;
+    }
+
+    .predictions-grid.is-rich > .prediction-card-rich {
+        grid-template-columns: minmax(0, 1fr);
+        border-radius: 14px;
+    }
+
+    .prediction-card-rich-cover {
+        min-height: 240px;
+    }
+
+    .prediction-card-rich-body {
+        padding: 15px;
+    }
+
+    .prediction-card-rich-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .prediction-card-rich-meta-copy {
+        justify-content: flex-start;
+    }
+
+    .prediction-card-rich-title {
+        font-size: 19px;
+    }
+
+    .prediction-card-rich-stats {
+        grid-column: auto;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 12px;
+    }
+
+    .prediction-card-rich-stats > span {
+        padding: 9px;
+    }
+
+    .prediction-card-rich-stats strong {
+        font-size: 11px;
+    }
+
+    .prediction-card-rich-coefficient strong {
+        font-size: 18px;
+    }
+
+    .prediction-card-rich-actions {
+        gap: 8px;
+    }
+}
