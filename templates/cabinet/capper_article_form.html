@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} — КапперХаб{% endblock %}
+
+{% block extra_css %}{{ form.media }}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container capper-article-form-page">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page bonus-detail-main">
+            <div class="matches-mobile-scope-panel" aria-label="Навигация кабинета">
+                <nav class="matches-tabs" aria-label="Разделы профиля">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <header class="bonus-page-head">
+                <div>
+                    <h1>{{ page_title }}</h1>
+                    <p>Сохраните материал как черновик, затем отправьте его на модерацию.</p>
+                </div>
+                <a class="profile-save-button" href="{% url 'cabinet:capper_articles' %}">К списку</a>
+            </header>
+
+            {% if article %}
+            <section class="profile-list-card">
+                <div class="profile-list-head">
+                    <div>
+                        <h2>Статус статьи</h2>
+                        <p>Текущий этап публикации материала.</p>
+                    </div>
+                    <span class="profile-coupon-status is-{{ article.status }}">{{ article.get_status_display }}</span>
+                </div>
+                {% if article.status == "rejected" and article.moderation_note %}
+                    <div class="profile-empty-state">
+                        <p>{{ article.moderation_note }}</p>
+                    </div>
+                {% endif %}
+            </section>
+            {% endif %}
+
+            <form class="profile-form-card capper-article-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="profile-section-heading">
+                    <div>
+                        <h2>Материал</h2>
+                        <p>Заголовок, обложка, краткое описание и основной текст.</p>
+                    </div>
+                    <button class="profile-save-button" type="submit">{{ submit_label }}</button>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="profile-empty-state" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="profile-fields-grid">
+                    <label class="capper-field">
+                        <span class="capper-field-label">{{ form.title.label }}</span>
+                        {{ form.title }}
+                        {% if form.title.errors %}<span class="capper-field-errors">{{ form.title.errors }}</span>{% endif %}
+                    </label>
+
+                    <label class="capper-field">
+                        <span class="capper-field-label">{{ form.cover_image.label }}</span>
+                        {{ form.cover_image }}
+                        <span class="capper-field-help">JPG, PNG или WebP, до 5 МБ.</span>
+                        {% if form.cover_image.errors %}<span class="capper-field-errors">{{ form.cover_image.errors }}</span>{% endif %}
+                    </label>
+
+                    <label class="capper-field">
+                        <span class="capper-field-label">{{ form.excerpt.label }}</span>
+                        {{ form.excerpt }}
+                        {% if form.excerpt.errors %}<span class="capper-field-errors">{{ form.excerpt.errors }}</span>{% endif %}
+                    </label>
+
+                    <div class="capper-field">
+                        <span class="capper-field-label">{{ form.content.label }}</span>
+                        {{ form.content }}
+                        {% if form.content.errors %}<span class="capper-field-errors">{{ form.content.errors }}</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="profile-mobile-save">
+                    <button class="profile-save-button" type="submit">{{ submit_label }}</button>
+                </div>
+            </form>
+
+            {% if article and article.status == "draft" or article and article.status == "rejected" %}
+            <form method="post" action="{% url 'cabinet:capper_article_submit' article.id %}">
+                {% csrf_token %}
+                <button class="profile-save-button" type="submit">Отправить на модерацию</button>
+            </form>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}
