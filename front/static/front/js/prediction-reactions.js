@@ -208,6 +208,7 @@
                 button.disabled = false;
             }
         }
+    });
 
     document.addEventListener("click", async (event) => {
         const button = event.target.closest(".prediction-share");
@@ -221,6 +222,5 @@
         } finally {
             if (button.isConnected) button.disabled = false;
         }
-    });
     });
 })();
