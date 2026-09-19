@@ -346,6 +346,9 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
             {
                 "level": level.level,
                 "title": level.title,
+                "description": level.description,
+                "icon_url": level.icon.url if level.icon else "",
+                "image_url": level.image.url if level.image else "",
                 "required_xp": required_xp,
                 "required_xp_label": f"{required_xp} XP",
                 "reward_label": " · ".join(rewards) or "Без награды",

@@ -106,7 +106,7 @@ class ProfileCoverTests(TestCase):
             password="test-password",
             role=User.Role.ANALYST,
         )
-        self.profile = AnalystProfile.objects.create(user=self.user)
+        self.profile = AnalystProfile.objects.get(user=self.user)
         self.plan = VipPlan.objects.create(
             title="VIP cover",
             duration_days=30,
@@ -132,6 +132,22 @@ class ProfileCoverTests(TestCase):
             ends_at=now + timedelta(days=30),
             duration_days=30,
         )
+
+    def test_cover_upload_requires_active_vip_for_capper(self):
+        non_vip_response = self.client.post(
+            reverse("cabinet:cover_upload"),
+            {"cover_image": self._image_upload("non-vip-cover.jpg")},
+        )
+        self.assertEqual(non_vip_response.status_code, 403)
+
+        self._activate_vip()
+        vip_response = self.client.post(
+            reverse("cabinet:cover_upload"),
+            {"cover_image": self._image_upload("vip-cover.jpg")},
+        )
+        self.assertEqual(vip_response.status_code, 200)
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.cover_image)
 
     def test_non_vip_capper_cannot_upload_cover_and_sees_locked_state(self):
         response = self.client.post(

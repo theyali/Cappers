@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.contrib import admin
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -432,6 +433,10 @@ class AdminNotificationCampaignRecipientTests(TestCase):
             ),
             {self.capper.pk},
         )
+
+    def test_admin_campaign_registered_with_send_action(self):
+        campaign_admin = admin.site._registry[AdminNotificationCampaign]
+        self.assertIn("send_campaigns", campaign_admin.actions)
 
     def test_admin_campaign_bulk_send_is_idempotent(self):
         campaign = self.campaign(
