@@ -1,10 +1,7 @@
-from decimal import Decimal
-
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
 from django.shortcuts import render
-from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from game.models import Prediction, PredictionCoupon
