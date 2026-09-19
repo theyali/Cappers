@@ -53,18 +53,11 @@ from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
-def _ensure_capper_articles_user(request):
+@login_required
+def capper_articles(request):
     if not request.user.is_analyst:
         messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
         return redirect("cabinet:become_capper")
-    return None
-
-
-@login_required
-def capper_articles(request):
-    access_redirect = _ensure_capper_articles_user(request)
-    if access_redirect:
-        return access_redirect
 
     context = build_capper_articles_context(request.user)
     context["page"] = {
@@ -80,9 +73,9 @@ def capper_articles(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def capper_article_create(request):
-    access_redirect = _ensure_capper_articles_user(request)
-    if access_redirect:
-        return access_redirect
+    if not request.user.is_analyst:
+        messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
+        return redirect("cabinet:become_capper")
     if not can_create_capper_article(request.user):
         messages.info(request, "Стать VIP, чтобы публиковать статьи.")
         return redirect("cabinet:capper_articles")
@@ -109,6 +102,8 @@ def capper_article_create(request):
             "article": None,
             "page_title": "Новая статья",
             "submit_label": "Сохранить черновик",
+            "active_tab": "articles",
+            "can_submit_article": False,
         },
     )
 
@@ -116,9 +111,9 @@ def capper_article_create(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def capper_article_edit(request, article_id):
-    access_redirect = _ensure_capper_articles_user(request)
-    if access_redirect:
-        return access_redirect
+    if not request.user.is_analyst:
+        messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
+        return redirect("cabinet:become_capper")
     if not can_create_capper_article(request.user):
         messages.info(request, "Стать VIP, чтобы публиковать статьи.")
         return redirect("cabinet:capper_articles")
@@ -156,6 +151,11 @@ def capper_article_edit(request, article_id):
             "article": article,
             "page_title": "Редактирование статьи",
             "submit_label": "Сохранить изменения",
+            "active_tab": "articles",
+            "can_submit_article": article.status in {
+                CapperArticle.Status.DRAFT,
+                CapperArticle.Status.REJECTED,
+            },
         },
     )
 
@@ -163,9 +163,9 @@ def capper_article_edit(request, article_id):
 @login_required
 @require_POST
 def capper_article_submit(request, article_id):
-    access_redirect = _ensure_capper_articles_user(request)
-    if access_redirect:
-        return access_redirect
+    if not request.user.is_analyst:
+        messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
+        return redirect("cabinet:become_capper")
 
     article = get_object_or_404(
         CapperArticle,
