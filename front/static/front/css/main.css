@@ -39683,3 +39683,164 @@ padding:40px 0px;
     padding-right: 0;
     padding-left: 0;
 }
+
+
+/* VIP article pages and rich editor finishing */
+.rich-prediction-cover-picker .rich-prediction-fields-grid {
+    align-items: end;
+}
+
+.rich-prediction-cover-picker .capper-field input[type="file"],
+.capper-article-form .capper-field input[type="file"] {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 11px;
+    color: rgba(255, 255, 255, .78);
+    background: #2a2a2d;
+}
+
+.rich-prediction-cover-picker.is-locked .rich-prediction-fields-grid {
+    pointer-events: none;
+}
+
+.rich-prediction-section.is-locked .rich-prediction-vip-cta {
+    flex: 0 0 auto;
+}
+
+.capper-articles-page .bonus-detail-main,
+.capper-article-form-page .bonus-detail-main {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+
+.capper-articles-page .profile-list-card,
+.capper-article-form-page .profile-list-card,
+.capper-article-form {
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.capper-articles-page .profile-list-card,
+.capper-article-form-page .profile-list-card {
+    padding: 18px;
+}
+
+.capper-articles-page .profile-empty-state {
+    min-height: 0;
+    padding: 18px;
+    border-radius: 14px;
+    background: #19191b;
+}
+
+.capper-articles-page .profile-empty-state > div {
+    display: grid;
+    gap: 4px;
+}
+
+.capper-articles-page .profile-empty-state h2,
+.capper-articles-page .profile-empty-state p {
+    margin: 0;
+}
+
+.capper-articles-page .profile-empty-state h2 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.capper-articles-page .profile-empty-state p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.capper-articles-page .profile-empty-state .profile-save-button {
+    width: fit-content;
+    min-height: 40px;
+    margin-top: 6px;
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.capper-articles-page .profile-user-list {
+    display: grid;
+    gap: 8px;
+}
+
+.capper-articles-page .capper-article-row {
+    min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: #19191b;
+}
+
+.capper-articles-page .capper-article-row .profile-user-copy {
+    min-width: 0;
+}
+
+.capper-articles-page .capper-article-row .profile-user-copy strong,
+.capper-articles-page .capper-article-row .profile-user-copy span,
+.capper-articles-page .capper-article-row .profile-user-copy small {
+    overflow-wrap: anywhere;
+}
+
+.capper-articles-page .profile-coupon-status.is-draft {
+    color: rgba(255, 255, 255, .72);
+    background: #303033;
+}
+
+.capper-articles-page .profile-coupon-status.is-pending {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.capper-articles-page .profile-coupon-status.is-approved {
+    color: #fff;
+    background: #17643b;
+}
+
+.capper-articles-page .profile-coupon-status.is-rejected {
+    color: #fff;
+    background: #6c2525;
+}
+
+.capper-article-form {
+    display: grid;
+    gap: 18px;
+    padding: 18px;
+}
+
+.capper-article-form .profile-fields-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.capper-article-form .capper-field textarea {
+    resize: vertical;
+}
+
+.capper-article-form .tox-tinymce {
+    width: 100%;
+    min-height: 420px;
+    border: 0 !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.capper-article-form-page > .matches-shell,
+.capper-articles-page > .matches-shell {
+    align-items: start;
+}
+
+.capper-article-form-page form[action*="/submit/"] {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.capper-article-form-page form[action*="/submit/"] .profile-save-button {
+    min-width: 210px;
+    background: var(--blue);
+}
