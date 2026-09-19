@@ -39292,3 +39292,394 @@ padding:40px 0px;
 .matches-table-create-prediction {
     margin-top: 2px;
 }
+
+
+/* Prediction type tabs and rich prediction cards */
+.prediction-results-filters {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.prediction-type-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 11px;
+    background: var(--panel);
+}
+
+.prediction-type-tab {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    background: #2a2a2d;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.prediction-type-tab:hover {
+    color: #fff;
+    background: #343437;
+}
+
+.prediction-type-tab.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+}
+
+.predictions-grid.is-rich {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px;
+}
+
+.predictions-grid.is-rich > .prediction-card-rich {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(260px, 34%) minmax(0, 1fr) minmax(118px, 138px);
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    background: var(--panel);
+}
+
+.prediction-card-rich-cover {
+    position: relative;
+    min-height: 286px;
+    overflow: hidden;
+    color: #fff;
+    background: var(--ink);
+}
+
+.prediction-card-rich-cover-image,
+.prediction-card-rich-cover-image img,
+.prediction-card-rich-cover-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.prediction-card-rich-cover-image img {
+    display: block;
+    object-fit: cover;
+}
+
+.prediction-card-rich-cover-fallback {
+    background: #202023;
+}
+
+.prediction-card-rich-cover-meta,
+.prediction-card-rich-cover-league,
+.prediction-card-rich-cover-teams {
+    position: absolute;
+    z-index: 2;
+}
+
+.prediction-card-rich-cover-meta {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.prediction-card-rich-cover-meta span,
+.prediction-card-rich-cover-meta time,
+.prediction-card-rich-cover-league {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 8px;
+    color: #fff;
+    background: rgba(19, 19, 19, .86);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-cover-league {
+    top: 50px;
+    left: 14px;
+    max-width: calc(100% - 28px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prediction-card-rich-cover-teams {
+    left: 14px;
+    right: 14px;
+    bottom: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+    align-items: end;
+    gap: 8px;
+}
+
+.prediction-card-rich-cover-teams > b {
+    align-self: center;
+    color: rgba(255, 255, 255, .64);
+    font-size: 10px;
+    text-align: center;
+}
+
+.prediction-card-rich-team {
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+}
+
+.prediction-card-rich-team:last-child {
+    justify-items: end;
+    text-align: right;
+}
+
+.prediction-card-rich-team > span {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 14px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-team > span img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.prediction-card-rich-team strong {
+    max-width: 100%;
+    overflow: hidden;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prediction-card-rich-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+}
+
+.prediction-card-rich-meta {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.prediction-card-rich-author {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+}
+
+.prediction-card-rich-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    overflow: visible;
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.prediction-card-rich-author > span:nth-child(2) {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.prediction-card-rich-author strong,
+.prediction-card-rich-author small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.prediction-card-rich-author strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-author small {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.prediction-card-rich-author em {
+    padding: 5px 7px;
+    border-radius: 7px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 9px;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.prediction-card-rich-verified,
+.prediction-card-rich-verified svg {
+    width: 16px;
+    height: 16px;
+}
+
+.prediction-card-rich-meta-copy {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.prediction-card-rich-meta-copy span,
+.prediction-card-rich-meta-copy time {
+    padding: 5px 7px;
+    border-radius: 7px;
+    color: var(--muted);
+    background: #2a2a2d;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-title {
+    display: block;
+    color: #fff;
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.prediction-card-rich-title:hover {
+    color: var(--yellow);
+}
+
+.prediction-card-rich-description {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .7);
+    font-size: 12px;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.prediction-card-rich-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.prediction-card-rich-tags span {
+    padding: 5px 8px;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, .82);
+    background: #2a2a2d;
+    font-size: 10px;
+}
+
+.prediction-card-rich-actions {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.prediction-card-rich-actions .feed-prediction-save {
+    margin-left: auto;
+}
+
+.prediction-card-rich-actions .feed-prediction-action b {
+    color: var(--soft);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-stats {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 16px 14px;
+    background: #171718;
+}
+
+.prediction-card-rich-stats > span {
+    display: grid;
+    gap: 4px;
+    padding: 11px;
+    border-radius: 10px;
+    background: #242426;
+}
+
+.prediction-card-rich-stats small {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.prediction-card-rich-stats strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.prediction-card-rich-coefficient strong {
+    color: var(--yellow);
+    font-size: 23px;
+}
+
+.prediction-card-rich-status.is-win strong {
+    color: #42d782;
+}
+
+.prediction-card-rich-status.is-lose strong {
+    color: #ff5252;
+}
+
+.prediction-card-rich-status.is-refund strong {
+    color: var(--yellow);
+}
+
+.feed-prediction-share {
+    padding-right: 0;
+    padding-left: 0;
+}
