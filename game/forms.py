@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django import forms
+from django.db.models import Q
 
 from game.models import Match, PredictionCoupon, PredictionCoverImage
 from game.services.prediction_editor import can_use_rich_prediction_fields
@@ -91,11 +92,19 @@ class RichPredictionCouponForm(forms.Form):
             if sport is not None:
                 sport_id = getattr(sport, "pk", sport)
                 covers = covers.filter(
-                    models_q_for_cover_sport(sport_id)
+                    Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
+                    | Q(
+                        cover_type=PredictionCoverImage.CoverType.SPORT,
+                        sport_id=sport_id,
+                    )
                 )
             elif match is not None and getattr(match, "sport_id", None):
                 covers = covers.filter(
-                    models_q_for_cover_sport(match.sport_id)
+                    Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
+                    | Q(
+                        cover_type=PredictionCoverImage.CoverType.SPORT,
+                        sport_id=match.sport_id,
+                    )
                 )
             covers = covers.select_related("sport").order_by(
                 "cover_type",
@@ -168,11 +177,3 @@ class RichPredictionCouponForm(forms.Form):
 
         return cleaned_data
 
-
-def models_q_for_cover_sport(sport_id):
-    from django.db.models import Q
-
-    return Q(cover_type=PredictionCoverImage.CoverType.EXPRESS) | Q(
-        cover_type=PredictionCoverImage.CoverType.SPORT,
-        sport_id=sport_id,
-    )
