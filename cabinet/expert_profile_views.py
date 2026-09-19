@@ -23,7 +23,7 @@ from .achievements import (
     _user_activity_metrics,
     build_achievement_badges,
 )
-from .models import AnalystFollow, AnalystProfile, CapperMonthlyStat, User
+from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
     get_active_paid_plans,
@@ -347,6 +347,13 @@ def expert_profile(request, username: str):
         row for row in finished_tournaments if row["achievement"] is not None
     ]
     context["expert_tournaments_count"] = len(current_tournaments) + len(finished_tournaments)
+    context["expert_articles"] = list(
+        CapperArticle.objects.filter(
+            author=profile.user,
+            status=CapperArticle.Status.APPROVED,
+        )
+        .order_by("-published_at", "-id")
+    )
 
     paid_subscription = active_paid_subscriptions_by_analyst(
         request.user,
