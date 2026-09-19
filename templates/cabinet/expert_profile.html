@@ -418,6 +418,46 @@
         </article>
     </section>
 
+    <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" hidden>
+        <div class="expert-public-section-head">
+            <div>
+                <p class="expert-public-kicker">Публикации эксперта</p>
+                <h2>Статьи</h2>
+            </div>
+            {% if expert_articles %}
+                <span>{{ expert_articles|length }} опубликовано</span>
+            {% endif %}
+        </div>
+
+        {% if expert_articles %}
+        <div class="profile-user-list">
+            {% for article in expert_articles %}
+            <article class="profile-user-row">
+                <div class="profile-user-avatar"{% if article.cover_image %} data-skeleton-image{% endif %}>
+                    {% if article.cover_image %}
+                        <img src="{{ article.cover_image.url }}" width="46" height="46" alt="" loading="lazy">
+                    {% else %}
+                        A
+                    {% endif %}
+                </div>
+                <div class="profile-user-copy">
+                    <strong>{{ article.title }}</strong>
+                    {% if article.excerpt %}
+                        <span>{{ article.excerpt|truncatechars:180 }}</span>
+                    {% endif %}
+                    <small>{{ article.published_at|date:"d.m.Y" }}</small>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="expert-public-empty">
+            <strong>Статей пока нет</strong>
+            <span>Когда эксперт опубликует статью, она появится здесь.</span>
+        </div>
+        {% endif %}
+    </section>
+
     <section class="expert-public-predictions">
         <div class="expert-public-section-head">
             <div>
