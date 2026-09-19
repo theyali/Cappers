@@ -9,6 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from game.models import Prediction, PredictionCoupon
 
+from .prediction_catalog_views import build_prediction_type_context
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     SORT_OPTIONS,
@@ -87,6 +88,9 @@ def _favorites_status_count(counts, active_status):
 @login_required
 @ensure_csrf_cookie
 def favorites(request):
+    prediction_type_context = build_prediction_type_context(request)
+    prediction_format = prediction_type_context["prediction_format"]
+
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
@@ -109,15 +113,21 @@ def favorites(request):
     favorite_positions = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         coupon__audience=PredictionCoupon.Audience.FREE,
+        coupon__prediction_format=prediction_format,
         coupon__favorites__user=request.user,
     ).distinct()
 
     base_queryset = (
         _published_queryset()
-        .filter(favorites__user=request.user)
+        .filter(
+            favorites__user=request.user,
+            prediction_format=prediction_format,
+        )
         .distinct()
     )
-    meta_base_queryset = _favorites_meta_queryset(request.user)
+    meta_base_queryset = _favorites_meta_queryset(request.user).filter(
+        prediction_format=prediction_format
+    )
     total_predictions = meta_base_queryset.count()
 
     filtered = _apply_position_filters(
@@ -223,7 +233,7 @@ def favorites(request):
 
     pagination_params = _query_without_page(request)
     pagination_query = pagination_params.urlencode()
-    favorites_url = reverse("front:favorites")
+    favorites_url = prediction_type_context["prediction_type_reset_url"]
 
     return render(
         request,
@@ -257,5 +267,6 @@ def favorites(request):
             "pagination_query": pagination_query,
             "adv_placement": "sidebar",
             "hide_footer": True,
+            **prediction_type_context,
         },
     )
