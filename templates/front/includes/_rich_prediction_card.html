@@ -90,7 +90,7 @@
 
             <div class="prediction-card-rich-meta-copy">
                 <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y · H:i" }}</time>
-                <span>Текстовый прогноз</span>
+                <span>{{ prediction.coupon.get_coupon_type_display }}</span>
                 <span>{% if prediction.coupon.audience == 'paid' %}Платный{% else %}Бесплатный{% endif %}</span>
             </div>
         </div>
