@@ -60,7 +60,7 @@
                 {% if total_predictions %}
                     <h2>По этим фильтрам ничего нет</h2>
                     <p class="favorites-empty-copy">Измените параметры фильтра или сбросьте их, чтобы снова увидеть сохранённые прогнозы.</p>
-                    <a class="favorites-empty-action" href="{% url 'front:favorites' %}" data-prediction-ajax-link>Сбросить фильтры <span aria-hidden="true">→</span></a>
+                    <a class="favorites-empty-action" href="{{ reset_url }}" data-prediction-ajax-link>Сбросить фильтры <span aria-hidden="true">→</span></a>
                 {% else %}
                     <h2>Избранных прогнозов пока нет</h2>
                     <p class="favorites-empty-copy">Нажмите на сердечко в любой карточке прогноза — сохранённый купон появится здесь.</p>
