@@ -25,6 +25,10 @@
             </div>
 
             {% if page_obj.object_list %}
+                {% if is_rich_predictions %}
+                    {% include "front/includes/_prediction_results_head.html" with show_sort=False show_content_view_switcher=False %}
+                    {% include "front/includes/_prediction_grid_view.html" with favorites_view=True feed_card_view=True %}
+                {% else %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
                     {% include "front/includes/_prediction_results_head.html" with show_sort=False show_content_view_switcher=True %}
 
@@ -37,6 +41,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 {% if page_obj.paginator.num_pages > 1 %}
                 <nav class="predictions-pagination" aria-label="Страницы избранного">
