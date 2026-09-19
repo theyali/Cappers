@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container capper-articles-page">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page bonus-detail-main">
+            <div class="matches-mobile-scope-panel" aria-label="{{ page.mobile_nav_label }}">
+                <nav class="matches-tabs" aria-label="{{ page.profile_nav_label }}">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <header class="bonus-page-head">
+                <div>
+                    <h1>{{ page.heading }}</h1>
+                    <p>{{ page.description }}</p>
+                </div>
+                {% if can_create_article %}
+                    <a class="profile-save-button" href="{{ article_create_url }}">Новая статья</a>
+                {% endif %}
+            </header>
+
+            {% if not can_create_article %}
+            <section class="profile-list-card" aria-labelledby="capper-articles-vip-title">
+                <div class="profile-empty-state">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"></path>
+                    </svg>
+                    <div>
+                        <h2 id="capper-articles-vip-title">Статьи доступны VIP-капперам</h2>
+                        <p>Получите VIP-статус, чтобы создавать статьи и отправлять их на модерацию.</p>
+                    </div>
+                    <a class="profile-save-button" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="profile-list-card" aria-labelledby="capper-articles-list-title">
+                <div class="profile-list-head">
+                    <div>
+                        <h2 id="capper-articles-list-title">Ваши статьи</h2>
+                        <p>Черновики, материалы на модерации и история публикаций.</p>
+                    </div>
+                </div>
+
+                <div class="profile-user-list capper-articles-list">
+                    {% for article in articles %}
+                    <article class="profile-user-row capper-article-row">
+                        <div class="profile-user-avatar" {% if article.cover_image %}data-skeleton-image{% endif %}>
+                            {% if article.cover_image %}
+                                <img src="{{ article.cover_image.url }}" width="46" height="46" alt="" loading="lazy">
+                            {% else %}
+                                A
+                            {% endif %}
+                        </div>
+
+                        <div class="profile-user-copy">
+                            <strong>{{ article.title }}</strong>
+                            <span>
+                                Обновлена {{ article.updated_at|date:"d.m.Y H:i" }}
+                                {% if article.published_at %} · опубликована {{ article.published_at|date:"d.m.Y" }}{% endif %}
+                            </span>
+                            {% if article.status == "rejected" and article.moderation_note %}
+                                <small>{{ article.moderation_note }}</small>
+                            {% endif %}
+                        </div>
+
+                        <span class="profile-coupon-status is-{{ article.status }}">{{ article.get_status_display }}</span>
+
+                        {% if can_create_article and article.status == "draft" or can_create_article and article.status == "rejected" %}
+                            <a class="profile-row-action" href="{% url 'cabinet:capper_article_edit' article.id %}">Редактировать</a>
+                        {% endif %}
+                    </article>
+                    {% empty %}
+                    <div class="profile-empty-state">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 4h10l4 4v12H5V4Z"></path>
+                            <path d="M15 4v5h5M8 13h8M8 17h6"></path>
+                        </svg>
+                        <p>У вас пока нет статей.</p>
+                        {% if can_create_article %}
+                            <a class="profile-save-button" href="{{ article_create_url }}">Создать первую статью</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+    </div>
+</section>
+{% endblock %}
