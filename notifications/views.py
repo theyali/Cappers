@@ -110,6 +110,7 @@ def summary(request):
                     "title": notification.title,
                     "message": notification.message,
                     "url": notification.url,
+                    "image_url": notification.meta.get("image_url", ""),
                     "created_at": notification.created_at.isoformat(),
                 }
                 for notification in new_notifications

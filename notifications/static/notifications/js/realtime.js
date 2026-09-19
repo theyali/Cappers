@@ -103,10 +103,21 @@
         toast.setAttribute("role", "status");
         toast.dataset.notificationId = String(notification.id || "");
 
-        const icon = document.createElement("span");
-        icon.className = "notification-toast-icon";
-        icon.setAttribute("aria-hidden", "true");
-        icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>';
+        let visual;
+        if (notification.image_url) {
+            visual = document.createElement("img");
+            visual.className = "notification-toast-image";
+            visual.src = notification.image_url;
+            visual.alt = "";
+            visual.width = 46;
+            visual.height = 46;
+            visual.loading = "lazy";
+        } else {
+            visual = document.createElement("span");
+            visual.className = "notification-toast-icon";
+            visual.setAttribute("aria-hidden", "true");
+            visual.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>';
+        }
 
         const copy = document.createElement("span");
         copy.className = "notification-toast-copy";
@@ -126,7 +137,7 @@
             removeToast(toast);
         });
 
-        toast.append(icon, copy, close);
+        toast.append(visual, copy, close);
         toast.addEventListener("click", () => {
             window.location.href = notification.url || nav.getAttribute("href") || "/notifications/";
         });

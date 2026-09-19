@@ -92,7 +92,19 @@
                                 data-read-url="{% url 'notifications:mark_read' notification.id %}"
                                 data-skeleton-block
                             >
-                                {% if notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %}
+                                {% if notification.meta.image_url %}
+                                <span class="notification-image-wrap" aria-hidden="true">
+                                    <img
+                                        class="notification-image"
+                                        src="{{ notification.meta.image_url }}"
+                                        alt=""
+                                        width="48"
+                                        height="48"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </span>
+                                {% elif notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %}
                                 <span class="notification-kind is-achievement" aria-hidden="true">
                                     <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
                                 </span>
