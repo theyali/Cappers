@@ -22,6 +22,17 @@ def can_create_capper_article(user) -> bool:
     )
 
 
+def can_edit_capper_article(user, article: CapperArticle) -> bool:
+    return bool(
+        can_create_capper_article(user)
+        and article.author_id == getattr(user, "pk", None)
+        and article.status in {
+            CapperArticle.Status.DRAFT,
+            CapperArticle.Status.REJECTED,
+        }
+    )
+
+
 def build_capper_articles_context(user) -> dict:
     is_analyst = bool(
         getattr(user, "is_authenticated", False)
@@ -34,10 +45,7 @@ def build_capper_articles_context(user) -> dict:
         .order_by("-updated_at", "-id")
     ) if is_analyst else []
     for article in articles:
-        article.can_edit = can_create and article.status in {
-            CapperArticle.Status.DRAFT,
-            CapperArticle.Status.REJECTED,
-        }
+        article.can_edit = can_edit_capper_article(user, article)
 
     return {
         "articles": articles,
@@ -54,11 +62,9 @@ def save_capper_article(user, data, files, article=None) -> CapperArticle:
     _ensure_article_access(user)
 
     if article is not None:
+        article = CapperArticle.objects.select_for_update().get(pk=article.pk)
         _ensure_article_owner(user, article)
-        if article.status not in {
-            CapperArticle.Status.DRAFT,
-            CapperArticle.Status.REJECTED,
-        }:
+        if not can_edit_capper_article(user, article):
             raise ValidationError("Редактировать можно только черновик или отклонённую статью.")
     else:
         article = CapperArticle(author=user)
@@ -100,6 +106,7 @@ def save_capper_article(user, data, files, article=None) -> CapperArticle:
 @transaction.atomic
 def submit_capper_article_for_moderation(user, article) -> CapperArticle:
     _ensure_article_access(user)
+    article = CapperArticle.objects.select_for_update().get(pk=article.pk)
     _ensure_article_owner(user, article)
 
     if article.status not in {
@@ -134,6 +141,7 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
 @transaction.atomic
 def approve_capper_article(article, moderator) -> CapperArticle:
     _ensure_moderator(moderator)
+    article = CapperArticle.objects.select_for_update().select_related("author").get(pk=article.pk)
     if article.status != CapperArticle.Status.PENDING:
         raise ValidationError("Опубликовать можно только статью на модерации.")
     _validate_article_text(article, user=article.author, check_spam=False)
@@ -160,6 +168,7 @@ def approve_capper_article(article, moderator) -> CapperArticle:
 @transaction.atomic
 def reject_capper_article(article, moderator, note: str) -> CapperArticle:
     _ensure_moderator(moderator)
+    article = CapperArticle.objects.select_for_update().get(pk=article.pk)
     if article.status != CapperArticle.Status.PENDING:
         raise ValidationError("Отклонить можно только статью на модерации.")
 
@@ -202,7 +211,16 @@ def _validate_article_text(
     if not plain_text:
         raise ValidationError("Статья не может быть пустой.")
 
-    if contains_forbidden_link(plain_text):
+    raw_text = " ".join(
+        part
+        for part in (
+            article.title,
+            article.excerpt,
+            article.content,
+        )
+        if part
+    )
+    if contains_forbidden_link(raw_text):
         raise ValidationError(
             "Статья содержит ссылку, e-mail или упоминание, которое не прошло модерацию."
         )
