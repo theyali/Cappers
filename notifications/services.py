@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Any
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Exists, OuterRef
 from django.urls import reverse
 from django.utils import timezone
@@ -160,3 +161,40 @@ def campaign_recipients_queryset(campaign):
         return recipients.filter(last_login__lt=cutoff)
 
     return recipients.none()
+
+
+
+@transaction.atomic
+def send_admin_notification_campaign(campaign) -> tuple[int, bool]:
+    campaign = (
+        AdminNotificationCampaign.objects.select_for_update()
+        .get(pk=campaign.pk)
+    )
+    if campaign.sent_at:
+        return campaign.recipients_count, False
+
+    recipient_ids = list(
+        campaign_recipients_queryset(campaign).values_list("id", flat=True)
+    )
+    meta = {"campaign_id": campaign.pk}
+    if campaign.image:
+        meta["image_url"] = campaign.image.url
+
+    notifications = [
+        Notification(
+            recipient_id=user_id,
+            kind=Notification.Kind.ADMIN_CAMPAIGN,
+            title=campaign.title,
+            message=campaign.message,
+            url=campaign.url,
+            event_key=f"admin-campaign:{campaign.pk}:{user_id}",
+            meta=meta,
+        )
+        for user_id in recipient_ids
+    ]
+    Notification.objects.bulk_create(notifications, batch_size=1000)
+
+    campaign.sent_at = timezone.now()
+    campaign.recipients_count = len(notifications)
+    campaign.save(update_fields=["sent_at", "recipients_count"])
+    return campaign.recipients_count, True

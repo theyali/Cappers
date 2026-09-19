@@ -124,6 +124,7 @@ class Notification(models.Model):
         BONUS_LEVEL = "bonus_level", "Новый уровень"
         BONUS_ROULETTE = "bonus_roulette", "Приз рулетки"
         BONUS_REFERRAL = "bonus_referral", "Реферальный бонус"
+        ADMIN_CAMPAIGN = "admin_campaign", "Рассылка администратора"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,

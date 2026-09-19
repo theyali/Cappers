@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .forms import AdminNotificationCampaignForm
+from .services import send_admin_notification_campaign
 from .models import (
     AchievementState,
     AdminNotificationCampaign,
@@ -81,6 +82,7 @@ class AdminNotificationCampaignAdmin(admin.ModelAdmin):
         "sent_at",
         "recipients_count",
     )
+    actions = ("send_campaigns",)
     fieldsets = (
         (
             None,
@@ -120,3 +122,28 @@ class AdminNotificationCampaignAdmin(admin.ModelAdmin):
         if not obj.created_by_id:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+    @admin.action(description="Отправить")
+    def send_campaigns(self, request, queryset):
+        sent_campaigns = 0
+        skipped_campaigns = 0
+        recipients_count = 0
+
+        for campaign in queryset.order_by("pk"):
+            count, was_sent = send_admin_notification_campaign(campaign)
+            if was_sent:
+                sent_campaigns += 1
+                recipients_count += count
+            else:
+                skipped_campaigns += 1
+
+        message = (
+            f"Отправлено кампаний: {sent_campaigns}. "
+            f"Получателей: {recipients_count}."
+        )
+        if skipped_campaigns:
+            message += (
+                f" Уже отправленных кампаний пропущено: "
+                f"{skipped_campaigns}."
+            )
+        self.message_user(request, message)
