@@ -9,6 +9,7 @@ from cabinet.services.daily_tasks import record_daily_task_action
 from game.models import PredictionCoupon
 
 from .metrics import (
+    increment_prediction_shares,
     refresh_prediction_metrics,
     toggle_prediction_favorite_metric,
     toggle_prediction_like_metric,
@@ -90,5 +91,17 @@ def toggle_prediction_favorite(request, prediction_id: int):
             "ok": True,
             "active": active,
             "count": metrics.favorites_count,
+        }
+    )
+
+
+@require_POST
+def share_prediction(request, prediction_id: int):
+    prediction = _accessible_published_prediction(request.user, prediction_id)
+    metrics = increment_prediction_shares(prediction.pk)
+    return JsonResponse(
+        {
+            "ok": True,
+            "shares_count": metrics.shares_count,
         }
     )
