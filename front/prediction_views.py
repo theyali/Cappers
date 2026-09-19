@@ -199,6 +199,7 @@ def _prediction_card(coupon: PredictionCoupon):
         comments_count=getattr(coupon, "comments_count", 0),
         views_count=getattr(coupon, "views_count", 0),
         shares_count=getattr(coupon, "shares_count", 0),
+        is_rich=coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
         followers_count=0,
         author_roi=getattr(coupon, "author_roi", Decimal("0")),
     )
