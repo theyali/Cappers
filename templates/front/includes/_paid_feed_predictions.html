@@ -27,9 +27,13 @@
         </div>
     </div>
     {% else %}
-    <div class="predictions-grid paid-feed-grid">
+    <div class="predictions-grid paid-feed-grid{% if is_rich_predictions %} is-rich{% endif %}">
         {% for prediction in paid_predictions %}
-            {% include "front/includes/_feed_prediction_card.html" %}
+            {% if prediction.is_rich %}
+                {% include "front/includes/_rich_prediction_card.html" %}
+            {% else %}
+                {% include "front/includes/_feed_prediction_card.html" %}
+            {% endif %}
         {% endfor %}
     </div>
     {% endif %}
