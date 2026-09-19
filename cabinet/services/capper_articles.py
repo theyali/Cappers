@@ -28,16 +28,21 @@ def build_capper_articles_context(user) -> dict:
         and getattr(user, "is_analyst", False)
     )
     can_create = can_create_capper_article(user)
-    articles = (
+    articles = list(
         CapperArticle.objects.filter(author=user)
         .select_related("reviewed_by")
         .order_by("-updated_at", "-id")
-        if is_analyst
-        else CapperArticle.objects.none()
-    )
+    ) if is_analyst else []
+    for article in articles:
+        article.can_edit = can_create and article.status in {
+            CapperArticle.Status.DRAFT,
+            CapperArticle.Status.REJECTED,
+        }
+
     return {
         "articles": articles,
         "can_create_article": can_create,
+        "active_tab": "articles",
         "vip_locked_label": "Стать VIP, чтобы публиковать статьи",
         "vip_upgrade_url": reverse("cabinet:profile"),
         "article_create_url": reverse("cabinet:capper_article_create"),
@@ -129,6 +134,8 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
 @transaction.atomic
 def approve_capper_article(article, moderator) -> CapperArticle:
     _ensure_moderator(moderator)
+    if article.status != CapperArticle.Status.PENDING:
+        raise ValidationError("Опубликовать можно только статью на модерации.")
     _validate_article_text(article, user=article.author, check_spam=False)
 
     now = timezone.now()
@@ -153,6 +160,8 @@ def approve_capper_article(article, moderator) -> CapperArticle:
 @transaction.atomic
 def reject_capper_article(article, moderator, note: str) -> CapperArticle:
     _ensure_moderator(moderator)
+    if article.status != CapperArticle.Status.PENDING:
+        raise ValidationError("Отклонить можно только статью на модерации.")
 
     now = timezone.now()
     article.status = CapperArticle.Status.REJECTED
