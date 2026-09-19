@@ -61,6 +61,11 @@ urlpatterns = [
         name="prediction_favorite",
     ),
     path(
+        "predictions/<int:prediction_id>/share/",
+        reaction_views.share_prediction,
+        name="prediction_share",
+    ),
+    path(
         "comments/<int:comment_id>/delete/",
         comment_views.delete_comment,
         name="comment_delete",
