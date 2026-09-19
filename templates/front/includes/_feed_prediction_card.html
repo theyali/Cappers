@@ -163,6 +163,7 @@
             type="button"
             data-prediction-id="{{ prediction.coupon.id }}"
             data-share-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            data-share-endpoint="{% url 'front:prediction_share' prediction_id=prediction.coupon.id %}"
             aria-label="Поделиться прогнозом"
             title="Поделиться прогнозом"
         >
