@@ -4938,3 +4938,45 @@ body.expert-public-details-open {
         width: fit-content;
     }
 }
+
+
+@media (max-width: 760px) {
+    .rich-prediction-editor-head {
+        display: grid;
+        padding: 16px;
+    }
+
+    .rich-prediction-editor-status {
+        justify-self: start;
+    }
+
+    .rich-prediction-section {
+        padding: 15px;
+    }
+
+    .rich-prediction-section-head {
+        display: grid;
+    }
+
+    .rich-prediction-fields-grid,
+    .rich-prediction-access-options {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rich-prediction-field-wide {
+        grid-column: auto;
+    }
+
+    .rich-prediction-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rich-prediction-submit {
+        width: 100%;
+    }
+
+    .rich-prediction-preview {
+        margin-top: 4px;
+    }
+}
