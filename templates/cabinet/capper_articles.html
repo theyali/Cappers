@@ -71,7 +71,7 @@
 
                         <span class="profile-coupon-status is-{{ article.status }}">{{ article.get_status_display }}</span>
 
-                        {% if can_create_article and article.status == "draft" or can_create_article and article.status == "rejected" %}
+                        {% if article.can_edit %}
                             <a class="profile-row-action" href="{% url 'cabinet:capper_article_edit' article.id %}">Редактировать</a>
                         {% endif %}
                     </article>
