@@ -108,11 +108,24 @@
                             <span>Копибеттинг</span>
                         </a>
                         {% if request.user.is_analyst %}
+                        <a href="{% url 'game:rich_prediction_create' %}">
+                            <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="M8 9h8M8 13h5"></path><path d="m16 15 3 3M19 15l-3 3"></path></svg>
+                            </span>
+                            <span>Расширенный прогноз</span>
+                        </a>
                         <a href="{% url 'cabinet:profile' %}?tab=predictions">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
                             </span>
                             <span>Мои прогнозы</span>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'cabinet:become_capper' %}">
+                            <span class="nav-profile-dropdown-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path><path d="M18 4v6M15 7h6"></path></svg>
+                            </span>
+                            <span>Стать каппером</span>
                         </a>
                         {% endif %}
                         <a href="{% url 'front:favorites' %}">
