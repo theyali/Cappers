@@ -92,7 +92,7 @@
             <div class="predictions-empty following-feed-empty">
                 <h2>По этим условиям прогнозов нет</h2>
                 <p>Попробуйте сбросить фильтры или дождитесь новых прогнозов от ваших капперов.</p>
-                <a class="prediction-filter-reset is-empty" href="{% url 'front:following_feed' %}">Сбросить фильтры</a>
+                <a class="prediction-filter-reset is-empty" href="{{ filter_action_url }}" data-prediction-ajax-link>Сбросить фильтры</a>
                 <a class="following-feed-empty-action" href="{% url 'front:predictions' %}">Посмотреть все прогнозы →</a>
             </div>
             {% endif %}
