@@ -1,7 +1,9 @@
 {% if page_obj.object_list %}
-<div class="predictions-grid" data-predictions-grid{% if favorites_view %} data-favorites-grid{% endif %}>
+<div class="predictions-grid{% if is_rich_predictions %} is-rich{% endif %}" data-predictions-grid{% if favorites_view %} data-favorites-grid{% endif %}>
     {% for prediction in page_obj.object_list %}
-        {% if feed_card_view %}
+        {% if prediction.is_rich %}
+            {% include "front/includes/_rich_prediction_card.html" %}
+        {% elif feed_card_view %}
             {% include "front/includes/_feed_prediction_card.html" %}
         {% else %}
             {% include "front/_prediction_card.html" %}
