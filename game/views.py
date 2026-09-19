@@ -14,7 +14,6 @@ from django.views.decorators.http import require_POST
 
 from cabinet.models import DailyTask, User
 from cabinet.services.daily_tasks import record_daily_task_action
-from cabinet.paid_predictions import profile_paid_predictions_enabled
 from game.forms import RichPredictionCouponForm
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
 from game.services.coupon_validation import (
@@ -106,9 +105,6 @@ def match_list(request):
         "matches": matches,
         "total_count": total_count,
         "can_write_coupon": can_write_coupon,
-        "can_create_paid_coupon": (
-            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
-        ),
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
@@ -143,9 +139,6 @@ def match_detail(request, slug: str):
     context = {
         "match": match,
         "can_write_coupon": can_write_coupon,
-        "can_create_paid_coupon": (
-            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
-        ),
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
@@ -230,10 +223,7 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
-    try:
-        audience = _parse_coupon_audience(payload.get("audience"), request.user)
-    except ValidationError as exc:
-        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
+    audience = PredictionCoupon.Audience.FREE
 
     items = payload.get("items")
     if not isinstance(items, list):
@@ -251,6 +241,7 @@ def create_coupon(request):
                 pk=coupon_id,
                 author=request.user,
                 published_status=PredictionCoupon.PublishedStatus.DRAFT,
+                prediction_format=PredictionCoupon.PredictionFormat.QUICK,
             ).delete()
         return JsonResponse(
             {
@@ -325,9 +316,13 @@ def create_coupon(request):
     with transaction.atomic():
         coupon = _draft_for_update(request.user, coupon_id)
         if coupon is None:
-            coupon = PredictionCoupon(author=request.user)
+            coupon = PredictionCoupon(
+                author=request.user,
+                prediction_format=PredictionCoupon.PredictionFormat.QUICK,
+            )
             coupon_created = True
 
+        coupon.prediction_format = PredictionCoupon.PredictionFormat.QUICK
         coupon.total_stake = stake
         coupon.possible_payout = possible_payout
         coupon.confidence = confidence
@@ -449,20 +444,11 @@ def _parse_confidence(value) -> int:
     return confidence
 
 
-def _parse_coupon_audience(value, user: User) -> str:
-    audience = str(value or PredictionCoupon.Audience.FREE).strip().lower()
-    valid_audiences = {choice for choice, _ in PredictionCoupon.Audience.choices}
-    if audience not in valid_audiences:
-        raise ValidationError("Выберите аудиторию прогноза.")
-    if audience == PredictionCoupon.Audience.PAID and not profile_paid_predictions_enabled(user):
-        raise ValidationError("Сначала включите платные прогнозы и настройте тарифы в кабинете.")
-    return audience
-
-
 def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
     queryset = PredictionCoupon.objects.select_for_update().filter(
         author=user,
         published_status=PredictionCoupon.PublishedStatus.DRAFT,
+        prediction_format=PredictionCoupon.PredictionFormat.QUICK,
     )
     if coupon_id is not None:
         return queryset.filter(pk=coupon_id).first()
@@ -474,6 +460,7 @@ def _active_draft_coupon(user: User) -> PredictionCoupon | None:
         PredictionCoupon.objects.filter(
             author=user,
             published_status=PredictionCoupon.PublishedStatus.DRAFT,
+            prediction_format=PredictionCoupon.PredictionFormat.QUICK,
         )
         .prefetch_related("predictions__match__league__country", "predictions__match__home_team", "predictions__match__away_team")
         .order_by("-updated_at", "-id")
