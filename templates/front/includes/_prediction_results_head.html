@@ -1,5 +1,17 @@
 <div class="prediction-results-head">
-    <nav class="feed-sport-tabs" aria-label="Фильтр по спорту">
+    <div class="prediction-results-filters">
+        <nav class="prediction-type-tabs" aria-label="Тип прогнозов">
+            {% for tab in prediction_type_tabs %}
+            <a
+                class="prediction-type-tab{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >{{ tab.label }}</a>
+            {% endfor %}
+        </nav>
+
+        <nav class="feed-sport-tabs" aria-label="Фильтр по спорту">
         {% for tab in sport_filter_tabs %}
         <a
             class="feed-sport-tab{% if tab.active %} is-active{% endif %}"
@@ -25,7 +37,8 @@
             <span>{{ tab.label }}</span>
         </a>
         {% endfor %}
-    </nav>
+        </nav>
+    </div>
 
     <div class="prediction-results-actions">
         {% if show_sort %}
