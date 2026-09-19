@@ -58,7 +58,7 @@
                 {% endif %}
             </header>
 
-            <form class="rich-prediction-form" method="post" enctype="multipart/form-data">
+            <form class="rich-prediction-form" method="post" enctype="multipart/form-data" aria-label="{{ submit_label }}">
                 {% csrf_token %}
 
                 {% if form.non_field_errors %}
