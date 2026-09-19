@@ -139,6 +139,7 @@
                 type="button"
                 data-prediction-id="{{ prediction.coupon.id }}"
                 data-share-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+                data-share-endpoint="{% url 'front:prediction_share' prediction_id=prediction.coupon.id %}"
                 aria-label="Поделиться прогнозом"
                 title="Поделиться прогнозом"
             >
@@ -147,7 +148,7 @@
                     <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
                     <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
                 </svg>
-                <b>{{ prediction.shares_count }}</b>
+                <b data-share-count>{{ prediction.shares_count }}</b>
             </button>
 
             <button
@@ -177,7 +178,7 @@
         </span>
         <span class="prediction-card-rich-views">
             <small>Просмотры</small>
-            <strong>{{ prediction.views_count }}</strong>
+            <strong>{{ prediction.views_count }} просмотров</strong>
         </span>
     </aside>
 </article>
