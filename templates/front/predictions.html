@@ -29,23 +29,12 @@
             </div>
 
             {% if page_obj.object_list %}
+                {% if is_rich_predictions %}
+                    {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=False %}
+                    {% include "front/includes/_prediction_grid_view.html" with feed_card_view=True %}
+                {% else %}
                 <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
-                    <div class="prediction-results-head">
-                        {% include "front/includes/_prediction_sport_tabs.html" with sport_tabs=sport_tabs sport_tabs_aria_label="Фильтр прогнозов по спорту" only %}
-                        <div class="prediction-results-actions">
-                            <label class="prediction-results-sort">
-                                <span>Сортировка</span>
-                                <select name="sort" data-prediction-sort aria-label="Сортировка прогнозов">
-                                    {% for value, label in sort_options %}
-                                    <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </label>
-                            <div class="content-view-toolbar">
-                                {% include "front/includes/_content_view_switcher.html" %}
-                            </div>
-                        </div>
-                    </div>
+                    {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=True %}
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                             {% include "front/includes/_prediction_grid_view.html" with feed_card_view=True %}
@@ -55,6 +44,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 <div
                     class="predictions-lazy"
@@ -68,17 +58,7 @@
                     <span data-predictions-lazy-status></span>
                 </div>
             {% else %}
-            <div class="prediction-results-head">
-                {% include "front/includes/_prediction_sport_tabs.html" with sport_tabs=sport_tabs sport_tabs_aria_label="Фильтр прогнозов по спорту" only %}
-                <label class="prediction-results-sort">
-                    <span>Сортировка</span>
-                    <select name="sort" data-prediction-sort aria-label="Сортировка прогнозов">
-                        {% for value, label in sort_options %}
-                        <option value="{{ value }}"{% if active_sort == value %} selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-            </div>
+            {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=False %}
             <div class="predictions-empty">
                 <h2>Ничего не нашли</h2>
                 <p>Попробуйте убрать часть фильтров или расширить диапазон коэффициентов.</p>
