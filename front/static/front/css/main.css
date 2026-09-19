@@ -1922,10 +1922,10 @@ h2 {
     object-fit: cover;
 }
 
-/* .adv-banner--full_240 picture,
+.adv-banner--full_240 picture,
 .adv-banner--half_240 picture {
     height: 240px;
-} */
+}
 
 .adv-banner--full_450 picture,
 .adv-banner--half_450 picture {
