@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -477,6 +477,18 @@ class AdminNotificationCampaignRecipientTests(TestCase):
             3,
         )
 
+    @override_settings(
+        STORAGES={
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": (
+                    "django.contrib.staticfiles.storage.StaticFilesStorage"
+                ),
+            },
+        }
+    )
     def test_admin_campaign_image_is_exposed_in_center_and_realtime_summary(self):
         campaign = self.campaign(
             AdminNotificationCampaign.Audience.READERS,
