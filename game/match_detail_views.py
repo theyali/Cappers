@@ -9,7 +9,6 @@ from django.templatetags.static import static
 from django.utils import timezone
 
 from cabinet.models import MatchPredictionRequest, User
-from cabinet.paid_predictions import profile_paid_predictions_enabled
 from front.metrics import increment_match_views
 from game.models import Match
 from game.tasks import refresh_match_provider_predictions
@@ -121,9 +120,6 @@ def match_detail(request, slug: str):
         "match_metrics": match_metrics,
         "hide_footer": True,
         "can_write_coupon": can_write_coupon,
-        "can_create_paid_coupon": (
-            profile_paid_predictions_enabled(request.user) if can_write_coupon else False
-        ),
         "latest_predictions": legacy_views._latest_predictions(),
         "draft_coupon": (
             legacy_views._serialize_draft_coupon(draft_coupon)
