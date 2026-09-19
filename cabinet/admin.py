@@ -1,5 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from .models import (
@@ -8,6 +9,7 @@ from .models import (
     AnalystPaidSubscription,
     AnalystProfile,
     BonusEvent,
+    CapperArticle,
     CapperMonthlyStat,
     DailyTask,
     MatchPredictionRequest,
@@ -22,6 +24,85 @@ from .models import (
     VipPlan,
     XpLevel,
 )
+
+from .services.capper_articles import approve_capper_article, reject_capper_article
+
+
+@admin.register(CapperArticle)
+class CapperArticleAdmin(admin.ModelAdmin):
+    list_display = (
+        "author",
+        "title",
+        "status",
+        "submitted_at",
+        "published_at",
+    )
+    list_filter = ("status", "created_at", "published_at")
+    search_fields = ("title", "author__username")
+    list_select_related = ("author", "reviewed_by")
+    readonly_fields = (
+        "submitted_at",
+        "published_at",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+        "updated_at",
+    )
+    actions = ("approve_selected", "reject_selected")
+
+    @admin.action(description="Одобрить выбранные статьи")
+    def approve_selected(self, request, queryset):
+        approved = 0
+        skipped = 0
+        for article in queryset.select_related("author"):
+            try:
+                approve_capper_article(article, request.user)
+            except ValidationError:
+                skipped += 1
+            else:
+                approved += 1
+
+        if approved:
+            self.message_user(
+                request,
+                f"Одобрено статей: {approved}.",
+                level=messages.SUCCESS,
+            )
+        if skipped:
+            self.message_user(
+                request,
+                f"Пропущено статей: {skipped}. Одобрять можно только материалы на модерации, прошедшие проверку.",
+                level=messages.WARNING,
+            )
+
+    @admin.action(description="Отклонить выбранные статьи")
+    def reject_selected(self, request, queryset):
+        rejected = 0
+        skipped = 0
+        for article in queryset:
+            try:
+                reject_capper_article(
+                    article,
+                    request.user,
+                    "Отклонено модератором через админку.",
+                )
+            except ValidationError:
+                skipped += 1
+            else:
+                rejected += 1
+
+        if rejected:
+            self.message_user(
+                request,
+                f"Отклонено статей: {rejected}.",
+                level=messages.SUCCESS,
+            )
+        if skipped:
+            self.message_user(
+                request,
+                f"Пропущено статей: {skipped}. Отклонять можно только материалы на модерации.",
+                level=messages.WARNING,
+            )
 
 
 @admin.register(User)
