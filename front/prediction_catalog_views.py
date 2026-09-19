@@ -37,11 +37,58 @@ from .views import PREDICTION_STATUS_FILTERS
 
 MAX_CONSECUTIVE_AUTHOR_CARDS = 3
 PREDICTIONS_META_CACHE_TTL = 60
+PREDICTION_TYPE_CLASSIC = "classic"
+PREDICTION_TYPE_RICH = "rich"
 
 
 def _catalog_cache_key(namespace: str, *parts) -> str:
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
     return f"front:predictions:{namespace}:v3:{signature}"
+
+
+def build_prediction_type_context(request) -> dict:
+    active_prediction_type = request.GET.get("prediction_type", PREDICTION_TYPE_CLASSIC)
+    if active_prediction_type not in {PREDICTION_TYPE_CLASSIC, PREDICTION_TYPE_RICH}:
+        active_prediction_type = PREDICTION_TYPE_CLASSIC
+
+    params = request.GET.copy()
+    params.pop("page", None)
+    params.pop("prediction_type", None)
+
+    classic_url = _url_with_query(request.path, params)
+    rich_params = params.copy()
+    rich_params["prediction_type"] = PREDICTION_TYPE_RICH
+    rich_url = _url_with_query(request.path, rich_params)
+
+    reset_params = request.GET.copy()
+    reset_params.clear()
+    if active_prediction_type == PREDICTION_TYPE_RICH:
+        reset_params["prediction_type"] = PREDICTION_TYPE_RICH
+
+    return {
+        "active_prediction_type": active_prediction_type,
+        "prediction_format": (
+            PredictionCoupon.PredictionFormat.RICH
+            if active_prediction_type == PREDICTION_TYPE_RICH
+            else PredictionCoupon.PredictionFormat.QUICK
+        ),
+        "prediction_type_tabs": [
+            {
+                "key": PREDICTION_TYPE_CLASSIC,
+                "label": "Прогнозы",
+                "href": classic_url,
+                "active": active_prediction_type == PREDICTION_TYPE_CLASSIC,
+            },
+            {
+                "key": PREDICTION_TYPE_RICH,
+                "label": "Текстовые",
+                "href": rich_url,
+                "active": active_prediction_type == PREDICTION_TYPE_RICH,
+            },
+        ],
+        "prediction_type_reset_url": _url_with_query(request.path, reset_params),
+        "is_rich_predictions": active_prediction_type == PREDICTION_TYPE_RICH,
+    }
 
 
 def _express_path() -> str:
@@ -87,8 +134,19 @@ def get_rich_predictions_queryset(user=None):
     )
 
 
-def _filter_options(published_items, selected_sport: str, *, express_only: bool):
-    cache_key = _catalog_cache_key("filters", selected_sport, express_only)
+def _filter_options(
+    published_items,
+    selected_sport: str,
+    *,
+    express_only: bool,
+    prediction_type: str,
+):
+    cache_key = _catalog_cache_key(
+        "filters",
+        selected_sport,
+        express_only,
+        prediction_type,
+    )
     cached = cache.get(cache_key)
     if cached is not None:
         return cached["sports"], cached["leagues"], cached["cappers"]
@@ -369,6 +427,9 @@ def _diversify_author_streaks(coupons, *, max_streak: int = MAX_CONSECUTIVE_AUTH
 
 @ensure_csrf_cookie
 def predictions(request, sport_code: str | None = None, express_only: bool = False):
+    prediction_type_context = build_prediction_type_context(request)
+    prediction_format = prediction_type_context["prediction_format"]
+
     if express_only:
         active_sport = None
     else:
@@ -411,9 +472,10 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
     published_items = Prediction.objects.filter(
         coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         coupon__audience=PredictionCoupon.Audience.FREE,
+        coupon__prediction_format=prediction_format,
     )
 
-    filtered = _published_queryset()
+    filtered = _published_queryset().filter(prediction_format=prediction_format)
     filtered = _apply_position_filters(
         filtered,
         selected_sport=selected_sport,
@@ -423,7 +485,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         express_only=express_only,
     )
     meta_filtered = _apply_position_filters(
-        _catalog_meta_queryset(),
+        _catalog_meta_queryset().filter(prediction_format=prediction_format),
         selected_sport=selected_sport,
         selected_league=selected_league,
         only_live=only_live,
@@ -456,6 +518,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
             only_live,
             only_today,
             express_only,
+            prediction_type_context["active_prediction_type"],
             top_experts_only,
             tuple(top_expert_ids),
         ),
@@ -511,6 +574,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         published_items,
         selected_sport,
         express_only=express_only,
+        prediction_type=prediction_type_context["active_prediction_type"],
     )
 
     params_without_page = _clean_prediction_params(request.GET)
@@ -580,10 +644,18 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "filter_action_url": filter_action_url,
-            "all_predictions_url": _prediction_sport_path(),
+            "all_predictions_url": (
+                _url_with_query(
+                    _prediction_sport_path(),
+                    {"prediction_type": PREDICTION_TYPE_RICH},
+                )
+                if prediction_type_context["is_rich_predictions"]
+                else _prediction_sport_path()
+            ),
             "adv_placement": "sidebar",
             "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
+            **prediction_type_context,
             **seo_context,
         },
     )
