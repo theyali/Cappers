@@ -120,4 +120,26 @@
         {% endif %}
     </section>
     {% endif %}
+    <section class="matches-table-filter-group matches-table-create-prediction" aria-labelledby="table-create-prediction-title">
+        <div class="matches-table-filter-title" id="table-create-prediction-title">
+            <span>Прогноз</span>
+        </div>
+        <nav class="matches-table-scope-list" aria-label="Создание прогноза">
+            {% if request.user.is_authenticated and request.user.is_analyst %}
+            <a class="matches-table-scope-link" href="{% url 'game:rich_prediction_create' %}">
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </span>
+                <span class="matches-table-scope-copy">Создать прогноз</span>
+            </a>
+            {% else %}
+            <a class="matches-table-scope-link" href="{% url 'cabinet:become_capper' %}">
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.8"/><path d="M18 4v6M15 7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </span>
+                <span class="matches-table-scope-copy">Стать каппером</span>
+            </a>
+            {% endif %}
+        </nav>
+    </section>
 </aside>
