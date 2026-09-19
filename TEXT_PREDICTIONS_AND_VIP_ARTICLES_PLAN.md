@@ -26,6 +26,22 @@
 
 Ничего из быстрого купона не удалять.
 
+### Результат шага 1
+
+Текущие точки входа зафиксированы без функциональных изменений:
+
+- `game/views.py::create_coupon` — текущий AJAX endpoint быстрого купона. Доступен только аналитику, принимает JSON, поддерживает autosave черновика и публикацию, валидирует матчи, ставку и уверенность, пересоздаёт `Prediction`, синхронизирует тип купона и при публикации назначает системную обложку.
+- Быстрый купон сейчас уже принимает `audience` через `_parse_coupon_audience()` и может сохранять `PredictionCoupon.Audience.PAID`, если у пользователя включены платные прогнозы. Это текущее поведение нужно отдельно убрать на одном из следующих шагов, не ломая autosave и бесплатный quick-flow.
+- `templates/game/_coupon_panel.html` сейчас содержит переключатель “Бесплатный / Платный”. `templates/game/_coupon_sidebar.html` подключает этот panel и передаёт сохранённый draft через `json_script`.
+- `templates/game/_match_table_filter_sidebar.html` — отдельный sidebar фильтров матчей; логики создания прогноза в нём нет.
+- `PredictionCoupon` уже имеет `audience` и FK `cover_image -> PredictionCoverImage`. Полей `prediction_format`, `headline`, `description`, `custom_cover_image` и `tags` пока нет.
+- `PredictionCoverImage` уже разделяет системные обложки по типу/размещению и спорту; существующий `PredictionCoupon.assign_cover_image()` используется quick-flow при публикации.
+- Метрики прогноза уже вынесены в `front.metric_models.PredictionMetrics`: `views_count` и `shares_count` менять/дублировать в `PredictionCoupon` не нужно. Инкременты идут через `front.metrics.increment_prediction_views()` и `increment_prediction_shares()`.
+- `templates/front/includes/_feed_prediction_card.html` уже выводит системную `cover_image`. Кнопка с тремя точками сейчас является обычной ссылкой на detail, а не отдельным dropdown-меню.
+- `templates/front/predictions.html` и `templates/front/favorites.html` выводят grid через существующие prediction include; `following_feed.html` собирает платные и обычные прогнозы отдельными include-блоками. Rich-карточку нужно расширять через общий существующий card/include, а не дублировать разметку по страницам.
+
+На шаге 1 код быстрого купона, модели и шаблоны не изменялись.
+
 ## Шаг 2. Добавить формат прогноза в `PredictionCoupon`
 
 Файл:
