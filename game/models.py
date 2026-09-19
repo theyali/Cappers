@@ -624,6 +624,15 @@ class PredictionCoupon(models.Model):
             self.coupon_type = coupon_type
         return coupon_type
 
+    def get_display_cover_image(self):
+        if self.custom_cover_image:
+            return self.custom_cover_image
+
+        cover = self.cover_image if self.cover_image_id else self.assign_cover_image()
+        if cover and cover.image:
+            return cover.image
+        return None
+
     def assign_cover_image(self, *, save: bool = True) -> PredictionCoverImage | None:
         if self.cover_image_id:
             return self.cover_image
