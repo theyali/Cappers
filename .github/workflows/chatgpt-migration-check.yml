@@ -1,0 +1,58 @@
+name: Temporary migration verification
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [reopened, synchronize]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cappers_test
+          POSTGRES_USER: cappers
+          POSTGRES_PASSWORD: cappers_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cappers -d cappers_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: test-secret-key
+      DEBUG: "0"
+      POSTGRES_DB: cappers_test
+      POSTGRES_USER: cappers
+      POSTGRES_PASSWORD: cappers_test_password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      CACHE_URL: redis://127.0.0.1:6379/2
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Check migrations
+        run: python manage.py makemigrations cabinet --check --dry-run
+      - name: Apply migrations
+        run: python manage.py migrate --noinput
+      - name: Django system check
+        run: python manage.py check
