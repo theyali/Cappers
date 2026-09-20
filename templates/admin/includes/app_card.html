@@ -1,0 +1,41 @@
+<article
+    class="cappers-admin-app-card"
+    data-admin-app-card
+    data-admin-search-text="{{ app.name }} {{ app.app_label }} {% for model in app.models %}{{ model.name }} {{ model.object_name }} {% endfor %}"
+>
+    <div class="cappers-admin-app-card-head">
+        <span class="cappers-admin-app-card-icon" data-admin-app="{{ app.app_label }}">
+            {% include "admin/includes/_app_icon.html" with app_label=app.app_label only %}
+        </span>
+        <span class="cappers-admin-app-card-count">{{ app.models|length }}</span>
+    </div>
+
+    <div class="cappers-admin-app-card-copy">
+        <h3>{{ app.name }}</h3>
+        <p>{{ app.app_label }}</p>
+    </div>
+
+    <div class="cappers-admin-app-models">
+        {% for model in app.models|slice:":5" %}
+            {% if model.admin_url %}
+            <div class="cappers-admin-app-model">
+                <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                {% if model.add_url %}
+                <a
+                    class="cappers-admin-app-model-add"
+                    href="{{ model.add_url }}"
+                    aria-label="Добавить {{ model.name }}"
+                >+</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <a class="cappers-admin-app-open" href="{{ app.app_url }}">
+        <span>Открыть приложение</span>
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M2 8h11M9 4l4 4-4 4"></path>
+        </svg>
+    </a>
+</article>

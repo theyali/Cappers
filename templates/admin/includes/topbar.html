@@ -1,0 +1,35 @@
+{% load static %}
+<div class="cappers-admin-toolbar">
+    <button
+        class="cappers-admin-menu-button"
+        type="button"
+        aria-label="Открыть меню"
+        aria-expanded="false"
+        data-admin-sidebar-toggle
+    >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+    </button>
+
+    <label class="cappers-admin-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6"></circle>
+            <path d="m16 16 4 4"></path>
+        </svg>
+        <input
+            type="search"
+            placeholder="Поиск по приложениям и моделям"
+            autocomplete="off"
+            data-admin-global-search
+        >
+        <span class="cappers-admin-search-shortcut">⌘K</span>
+    </label>
+</div>
+
+<button
+    class="cappers-admin-sidebar-backdrop"
+    type="button"
+    aria-label="Закрыть меню"
+    data-admin-sidebar-toggle
+></button>

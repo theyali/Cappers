@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block bodyclass %}{{ block.super }} app-{{ app_label }} cappers-admin-app-index-page{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; {{ app_list.0.name }}
+</div>
+{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div id="content-main" class="cappers-admin-dashboard-shell">
+    <section class="cappers-admin-section" aria-labelledby="admin-app-title">
+        <div class="cappers-admin-section-head">
+            <div>
+                <span class="cappers-admin-eyebrow">Приложение</span>
+                <h1 id="admin-app-title">{{ app_list.0.name }}</h1>
+            </div>
+            <span class="cappers-admin-section-count">{{ app_list.0.models|length }}</span>
+        </div>
+
+        <div class="cappers-admin-app-grid">
+            {% for app in app_list %}
+                {% include "admin/includes/app_card.html" with app=app only %}
+            {% empty %}
+                <div class="cappers-admin-empty-state">Нет доступных моделей.</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

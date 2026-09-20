@@ -1,0 +1,31 @@
+{% load log %}
+<section class="cappers-admin-panel" aria-labelledby="admin-recent-title">
+    <div class="cappers-admin-panel-head">
+        <div>
+            <span class="cappers-admin-eyebrow">История</span>
+            <h2 id="admin-recent-title">Последние действия</h2>
+        </div>
+    </div>
+
+    {% get_admin_log 8 as admin_log for_user user %}
+    <div class="cappers-admin-recent-list">
+        {% for entry in admin_log %}
+        <div class="cappers-admin-recent-item">
+            <span class="cappers-admin-recent-dot"></span>
+            <div>
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    <strong>{{ entry.object_repr }}</strong>
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <span>
+                    {% if entry.content_type %}{{ entry.content_type.name|capfirst }} · {% endif %}
+                    {{ entry.action_time|date:"d.m.Y H:i" }}
+                </span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="cappers-admin-empty-state">Последних действий пока нет.</div>
+        {% endfor %}
+    </div>
+</section>
