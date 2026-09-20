@@ -1,12 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n static admin_dashboard %}
-{% admin_grouped_apps app_list as dashboard_apps %}
-
 {% block bodyclass %}{{ block.super }} dashboard cappers-admin-dashboard-page{% endblock %}
 {% block breadcrumbs %}{% endblock %}
 {% block content_title %}{% endblock %}
 
 {% block content %}
+{% admin_grouped_apps app_list as dashboard_apps %}
 <div id="content-main" class="cappers-admin-dashboard-shell">
     <section class="cappers-admin-hero">
         <div class="cappers-admin-hero-copy">

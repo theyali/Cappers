@@ -1,11 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_dashboard %}
-{% admin_app_meta app_label as app_meta %}
-{% admin_grouped_apps app_list as dashboard_apps %}
-
 {% block bodyclass %}{{ block.super }} app-{{ app_label }} cappers-admin-app-index-page{% endblock %}
 
 {% block breadcrumbs %}
+{% admin_app_meta app_label as app_meta %}
 <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
     &rsaquo; {{ app_meta.title }}
@@ -15,6 +13,8 @@
 {% block content_title %}{% endblock %}
 
 {% block content %}
+{% admin_app_meta app_label as app_meta %}
+{% admin_grouped_apps app_list as dashboard_apps %}
 <div id="content-main" class="cappers-admin-dashboard-shell">
     <section class="cappers-admin-section" aria-labelledby="admin-app-title">
         <div class="cappers-admin-section-head">
