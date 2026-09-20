@@ -2,7 +2,7 @@
     const body = document.body;
     if (!body?.classList.contains("cappers-admin")) return;
 
-    const search = document.querySelector("[data-admin-global-search]");
+    const search = document.querySelector("[data-admin-search]");
     const appCards = Array.from(document.querySelectorAll("[data-admin-app-card]"));
     const appGroups = Array.from(document.querySelectorAll("[data-admin-app-group]"));
     const emptyState = document.querySelector("[data-admin-search-empty]");
@@ -16,7 +16,7 @@
         let visibleCards = 0;
 
         appCards.forEach((card) => {
-            const matches = !query || normalize(card.dataset.adminSearchText).includes(query);
+            const matches = !query || normalize(card.dataset.search).includes(query);
             card.hidden = !matches;
             if (matches) visibleCards += 1;
         });
@@ -24,15 +24,11 @@
         appGroups.forEach((group) => {
             const appMatches = !query || normalize(group.dataset.adminAppSearch).includes(query);
             const modelItems = Array.from(group.querySelectorAll("[data-admin-model-item]"));
-            let visibleModels = 0;
+            const hasModelMatch = modelItems.some((item) => (
+                !query || normalize(item.dataset.adminModelSearch).includes(query)
+            ));
 
-            modelItems.forEach((item) => {
-                const matches = appMatches || !query || normalize(item.dataset.adminModelSearch).includes(query);
-                item.hidden = !matches;
-                if (matches) visibleModels += 1;
-            });
-
-            group.hidden = Boolean(query) && !appMatches && visibleModels === 0;
+            group.hidden = Boolean(query) && !appMatches && !hasModelMatch;
         });
 
         if (emptyState) {
@@ -47,6 +43,7 @@
             event.preventDefault();
             search?.focus();
         }
+
         if (event.key === "Escape" && body.classList.contains("cappers-admin-sidebar-open")) {
             body.classList.remove("cappers-admin-sidebar-open");
             toggles.forEach((toggle) => toggle.setAttribute("aria-expanded", "false"));

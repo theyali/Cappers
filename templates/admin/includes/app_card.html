@@ -3,7 +3,7 @@
     class="cappers-admin-app-card{% if app.key == 'seo' %} is-wide{% endif %}"
     href="{{ app.app_url }}"
     data-admin-app-card
-    data-admin-search-text="{{ app.title }} {{ app.subtitle }} {{ app.key }} {% for model in app.models %}{{ model.name }} {{ model.object_name }} {% endfor %}"
+    data-search="{{ app.title }} {{ app.subtitle }} {{ app.key }} {% for model in app.models %}{{ model.name }} {{ model.object_name }} {% endfor %}"
 >
     <span class="cappers-admin-app-card-icon is-{{ app.color }}" data-admin-app="{{ app.key }}">
         {% admin_icon_svg app.icon %}
