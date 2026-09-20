@@ -365,6 +365,9 @@ def resettle_coupon(
                     review_reason,
                     {"score": prediction.match.score},
                 )
+                if prediction.state_status:
+                    prediction.state_status = ""
+                    prediction.save(update_fields=["state_status", "updated_at"])
                 continue
 
             result = resolve_match_bets(prediction.match)
@@ -381,6 +384,9 @@ def resettle_coupon(
                         "selection": prediction.selection,
                     },
                 )
+                if prediction.state_status:
+                    prediction.state_status = ""
+                    prediction.save(update_fields=["state_status", "updated_at"])
                 continue
             if prediction.state_status != state:
                 prediction.state_status = state
