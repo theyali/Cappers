@@ -103,6 +103,7 @@ def register(request):
         form = RegistrationForm(
             request.POST or None,
             initial={"role": selected_role},
+            require_sports=selected_type == ACCOUNT_CAPPER,
         )
 
     if request.method == "POST":
