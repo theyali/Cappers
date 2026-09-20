@@ -153,7 +153,7 @@ def register(request):
             ),
             "league_picker_sports": Sport.objects.all().order_by("name_ru", "name"),
             "league_picker_countries": Country.objects.filter(
-                leagues__isnull=False
+                leagues__matches__isnull=False
             ).distinct().order_by("name_ru", "name"),
             "league_search_url": reverse("cabinet:league_search"),
         },
@@ -387,6 +387,7 @@ def league_search(request):
     if selected_ids:
         leagues = leagues.filter(id__in=selected_ids)
     else:
+        leagues = leagues.filter(matches__isnull=False).distinct()
         query = (request.GET.get("q") or "").strip()
         sport_id = (request.GET.get("sport") or "").strip()
         country_id = (request.GET.get("country") or "").strip()
@@ -405,12 +406,19 @@ def league_search(request):
 
         if is_top:
             leagues = (
-                leagues.annotate(match_count=Count("matches"))
-                .filter(match_count__gt=0)
+                leagues.annotate(match_count=Count("matches", distinct=True))
                 .order_by("-match_count", "name_ru", "name", "id")
             )
         else:
-            leagues = leagues.order_by("name_ru", "name", "id")
+            leagues = leagues.order_by(
+                "sport__name_ru",
+                "sport__name",
+                "country__name_ru",
+                "country__name",
+                "name_ru",
+                "name",
+                "id",
+            )
 
     if selected_ids:
         rows = list(leagues[:200])
@@ -420,7 +428,7 @@ def league_search(request):
             page = max(1, int(request.GET.get("page") or 1))
         except (TypeError, ValueError):
             page = 1
-        page_size = 40
+        page_size = 12 if is_top else 40
         offset = (page - 1) * page_size
         rows = list(leagues[offset : offset + page_size + 1])
         has_more = len(rows) > page_size
