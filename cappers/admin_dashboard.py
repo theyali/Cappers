@@ -46,7 +46,7 @@ def _copy_models(app):
     ]
 
 
-def _build_dashboard_apps(app_list):
+def group_admin_apps(app_list):
     apps_by_label = {
         app["app_label"]: {
             **app,
@@ -215,7 +215,7 @@ def _build_recent_actions(request):
 
 def build_admin_dashboard_context(request, app_list):
     return {
-        "dashboard_apps": _build_dashboard_apps(app_list),
+        "dashboard_apps": group_admin_apps(app_list),
         "quick_actions": _build_quick_actions(request),
         "recent_actions": _build_recent_actions(request),
     }
