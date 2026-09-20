@@ -132,7 +132,7 @@ class MatchAdmin(admin.ModelAdmin):
             return 0
         url = reverse("admin:game_matchmanualreview_changelist")
         return format_html(
-            '<a href="{}?match__id__exact={}&status__exact={}">{}</a>',
+            '<a href="{}?q={}&status__exact={}">{}</a>',
             url,
             obj.pk,
             MatchManualReview.Status.OPEN,
@@ -158,6 +158,7 @@ class MatchManualReviewAdmin(admin.ModelAdmin):
         "match__sync_scope",
     )
     search_fields = (
+        "=match__id",
         "=match__external_id",
         "match__home_team__name",
         "match__home_team__name_ru",
