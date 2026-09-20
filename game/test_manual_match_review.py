@@ -94,6 +94,24 @@ class ManualMatchReviewSettlementTests(TestCase):
             ).exists()
         )
 
+    def test_repeated_missing_score_settlement_keeps_single_open_review(self):
+        match, _, _ = self.create_prediction(
+            external_id=990007,
+            score="",
+        )
+
+        self.settle()
+        self.settle()
+
+        self.assertEqual(
+            MatchManualReview.objects.filter(
+                match=match,
+                reason=MatchManualReview.Reason.MISSING_SCORE,
+                status=MatchManualReview.Status.OPEN,
+            ).count(),
+            1,
+        )
+
     def test_finished_match_with_invalid_score_stays_pending_and_opens_review(self):
         match, coupon, prediction = self.create_prediction(
             external_id=990002,
@@ -178,6 +196,19 @@ class ManualMatchReviewSettlementTests(TestCase):
         self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.WIN)
         self.assertEqual(review.status, MatchManualReview.Status.RESOLVED)
         self.assertIsNotNone(review.resolved_at)
+
+    def test_supported_losing_market_is_still_settled_as_loss(self):
+        _, coupon, prediction = self.create_prediction(
+            external_id=990008,
+            score="0-1",
+        )
+
+        self.settle()
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        self.assertEqual(prediction.state_status, Prediction.StateStatus.LOSE)
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.LOSE)
 
     def test_supported_market_is_still_settled_normally(self):
         match, coupon, prediction = self.create_prediction(
