@@ -42015,3 +42015,45 @@ padding:40px 0px;
     font-size: 20px;
     text-decoration: none;
 }
+
+.cappers-admin-app-icon.is-green,
+.cappers-admin-app-card-icon.is-green {
+    background: #e7f5ed;
+    color: #17643b;
+}
+
+.cappers-admin-app-icon.is-red,
+.cappers-admin-app-card-icon.is-red {
+    background: #fdeaea;
+    color: #b42318;
+}
+
+.cappers-admin-app-icon.is-purple,
+.cappers-admin-app-card-icon.is-purple {
+    background: #f1eafe;
+    color: #7a35c2;
+}
+
+.cappers-admin-app-icon.is-violet,
+.cappers-admin-app-card-icon.is-violet {
+    background: #eeeaff;
+    color: #6246c9;
+}
+
+.cappers-admin-app-icon.is-orange,
+.cappers-admin-app-card-icon.is-orange {
+    background: #fff0df;
+    color: #b35b00;
+}
+
+.cappers-admin-app-icon.is-yellow,
+.cappers-admin-app-card-icon.is-yellow {
+    background: #fffbd0;
+    color: #6f6600;
+}
+
+.cappers-admin-app-icon.is-cyan,
+.cappers-admin-app-card-icon.is-cyan {
+    background: #e4f8fb;
+    color: #08788a;
+}
