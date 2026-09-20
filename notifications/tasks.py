@@ -8,12 +8,12 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.achievements import build_achievement_overview
+from achievements.services import sync_user_achievements
 from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
 from front.models import PredictionFavorite
 from game.models import Match, PredictionCoupon
 
-from .models import AchievementState, CouponEventState, MatchWatch, Notification, TelegramAccount
+from .models import CouponEventState, MatchWatch, Notification, TelegramAccount
 from .services import create_notification, get_preferences
 from .telegram_delivery import send_notification_to_telegram
 
@@ -400,61 +400,22 @@ def notify_watched_match_updates() -> dict:
 
 @shared_task
 def sync_achievement_notifications() -> int:
-    analysts = (
-        User.objects.filter(
-            role=User.Role.ANALYST,
-            analyst_followers__isnull=False,
-        )
-        .distinct()
+    users = (
+        User.objects.filter(is_active=True)
         .select_related("analyst_profile")
+        .order_by("id")
     )
-    created = 0
+    awarded = 0
 
-    for analyst in analysts:
-        try:
-            profile = analyst.analyst_profile
-        except AnalystProfile.DoesNotExist:
-            profile = None
-        followers_count = analyst.analyst_followers.count()
-        overview = build_achievement_overview(
-            analyst,
-            followers_count=followers_count,
-            is_verified=bool(profile and profile.is_verified),
+    for user in users.iterator():
+        awarded += len(
+            sync_user_achievements(
+                user,
+                notify=True,
+            )
         )
-        unlocked_items = [item for item in overview["items"] if item["unlocked"]]
-        unlocked_keys = [item["key"] for item in unlocked_items]
-        state, state_created = AchievementState.objects.get_or_create(
-            user=analyst,
-            defaults={"unlocked_keys": unlocked_keys},
-        )
-        if state_created:
-            continue
 
-        previous = set(state.unlocked_keys or [])
-        new_items = [item for item in unlocked_items if item["key"] not in previous]
-        if new_items:
-            followers = AnalystFollow.objects.filter(analyst=analyst).select_related("follower")
-            expert_name = _expert_name(analyst)
-            expert_url = reverse("front:expert_profile", kwargs={"username": analyst.username})
-            for item in new_items:
-                for follow in followers:
-                    notification = create_notification(
-                        recipient=follow.follower,
-                        actor=analyst,
-                        kind=Notification.Kind.ACHIEVEMENT,
-                        title=f"Новое достижение у {expert_name}",
-                        message=f"{item['label']} — {item['description']}",
-                        url=expert_url,
-                        event_key=f"achievement:{follow.follower_id}:{analyst.id}:{item['key']}",
-                        meta={"expert_id": analyst.id, "achievement": item["key"]},
-                    )
-                    created += int(notification is not None)
-
-        if set(unlocked_keys) != previous:
-            state.unlocked_keys = unlocked_keys
-            state.save(update_fields=["unlocked_keys", "updated_at"])
-
-    return created
+    return awarded
 
 
 def _absolute_url(path: str) -> str:
