@@ -113,7 +113,7 @@ class FooterLinkGroupAdmin(admin.ModelAdmin):
 
 @admin.register(FooterButton)
 class FooterButtonAdmin(admin.ModelAdmin):
-    list_display = ("title", "kind", "subtitle", "order", "is_active")
+    list_display = ("title", "kind", "subtitle", "url", "order", "is_active")
     list_editable = ("order", "is_active")
     list_filter = ("kind", "is_active")
     search_fields = ("title", "subtitle", "url")
