@@ -8,18 +8,32 @@
     </div>
 
     <div class="cappers-admin-quick-grid">
-        {% for action in quick_actions %}
-        <a href="{{ action.url }}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">
-                {% admin_icon_svg action.icon %}
-            </span>
-            <span>
-                <strong>{{ action.title }}</strong>
-                <small>{{ action.subtitle }}</small>
-            </span>
+        {% if perms.cabinet.add_user %}
+        <a href="{% url 'admin:cabinet_user_add' %}" class="cappers-admin-quick-action">
+            <span class="cappers-admin-quick-icon">{% admin_icon_svg "user" %}</span>
+            <span><strong>Добавить пользователя</strong><small>Новая учетная запись</small></span>
         </a>
-        {% empty %}
-        <div class="cappers-admin-empty-state">Нет доступных быстрых действий.</div>
-        {% endfor %}
+        {% endif %}
+
+        {% if perms.achievements.add_achievement %}
+        <a href="{% url 'admin:achievements_achievement_add' %}" class="cappers-admin-quick-action">
+            <span class="cappers-admin-quick-icon">{% admin_icon_svg "award" %}</span>
+            <span><strong>Новое достижение</strong><small>Настроить награду</small></span>
+        </a>
+        {% endif %}
+
+        {% if perms.pages.view_promobanner %}
+        <a href="{% url 'admin:pages_promobanner_changelist' %}" class="cappers-admin-quick-action">
+            <span class="cappers-admin-quick-icon">{% admin_icon_svg "file" %}</span>
+            <span><strong>Промо-баннеры</strong><small>Управление рекламой</small></span>
+        </a>
+        {% endif %}
+
+        {% if perms.game.view_predictioncoupon %}
+        <a href="{% url 'admin:game_predictioncoupon_changelist' %}" class="cappers-admin-quick-action">
+            <span class="cappers-admin-quick-icon">{% admin_icon_svg "gamepad" %}</span>
+            <span><strong>Прогнозы</strong><small>Открыть купоны</small></span>
+        </a>
+        {% endif %}
     </div>
 </section>
