@@ -89,12 +89,11 @@ def settle_finished_matches(limit: int = 500) -> dict:
             )
             review_reason = _score_review_reason(match)
             if review_reason is not None:
-                if predictions:
-                    flag_match_for_manual_review(
-                        match,
-                        review_reason,
-                        {"score": match.score},
-                    )
+                flag_match_for_manual_review(
+                    match,
+                    review_reason,
+                    {"score": match.score},
+                )
                 continue
 
             resolve_match_manual_reviews(
