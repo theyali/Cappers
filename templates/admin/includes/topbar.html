@@ -1,14 +1,25 @@
 {% load admin_dashboard %}
 <div class="admin-topbar cappers-admin-toolbar">
-    <button
-        class="cappers-admin-menu-button"
-        type="button"
-        aria-label="Открыть меню"
-        aria-expanded="false"
-        data-admin-menu-toggle
-    >
-        {% admin_icon_svg "menu" %}
-    </button>
+    <div class="cappers-admin-mobile-head">
+        <button
+            class="cappers-admin-menu-button"
+            type="button"
+            aria-label="Открыть меню"
+            aria-expanded="false"
+            data-admin-menu-toggle
+        >
+            {% admin_icon_svg "menu" %}
+        </button>
+
+        <a class="cappers-admin-mobile-brand" href="{% url 'admin:index' %}">
+            <span class="cappers-admin-mobile-brand-mark">D</span>
+            <strong>Django Admin</strong>
+        </a>
+
+        <span class="cappers-admin-mobile-avatar" aria-label="{{ user.get_username }}">
+            {{ user.get_username|slice:":1"|upper }}
+        </span>
+    </div>
 
     <label class="cappers-admin-search">
         {% admin_icon_svg "search" %}

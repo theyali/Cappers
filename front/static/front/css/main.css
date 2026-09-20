@@ -41059,10 +41059,16 @@ padding:40px 0px;
 /* Django Admin redesign */
 .cappers-admin {
     --admin-sidebar-width: 280px;
-    --admin-bg: #f3f6fb;
+    --admin-bg: #eef4fb;
+    --admin-panel: rgba(255, 255, 255, .78);
     --admin-surface: #fff;
-    --admin-text: #111827;
-    --admin-muted: #7b8495;
+    --admin-sidebar: #122033;
+    --admin-sidebar-2: #0d1a2b;
+    --admin-text: #0d1430;
+    --admin-muted: #60708f;
+    --admin-border: rgba(136, 158, 191, .22);
+    --admin-shadow: 0 24px 70px rgba(39, 70, 115, .16);
+    --admin-radius: 18px;
     --admin-blue: #1478ff;
     --admin-green: #12b981;
     --admin-red: #ff4f66;
@@ -41098,9 +41104,11 @@ padding:40px 0px;
     display: flex;
     align-items: center;
     gap: 18px;
-    background: var(--admin-surface);
+    background: var(--admin-panel);
     color: var(--admin-text);
-    box-shadow: 0 6px 22px rgba(32, 45, 72, .06);
+    border-bottom: 1px solid var(--admin-border);
+    box-shadow: 0 12px 36px rgba(39, 70, 115, .08);
+    backdrop-filter: blur(18px);
 }
 
 .cappers-admin #branding {
@@ -41138,6 +41146,12 @@ padding:40px 0px;
     align-items: center;
     gap: 12px;
     order: -1;
+}
+
+.cappers-admin-mobile-head,
+.cappers-admin-mobile-brand,
+.cappers-admin-mobile-avatar {
+    display: none;
 }
 
 .cappers-admin-menu-button {
@@ -41210,7 +41224,7 @@ padding:40px 0px;
     place-items: center;
     padding: 0 6px;
     border-radius: 7px;
-    background: #fff;
+    background: var(--admin-panel);
     color: var(--admin-muted);
     font-size: 11px;
     font-weight: 700;
@@ -41255,9 +41269,9 @@ padding:40px 0px;
     height: 100vh;
     padding: 0;
     overflow-y: auto;
-    background: #172234;
+    background: var(--admin-sidebar);
     color: #fff;
-    box-shadow: none;
+    box-shadow: 14px 0 40px rgba(13, 26, 43, .16);
 }
 
 .cappers-admin-sidebar-brand {
@@ -41340,6 +41354,7 @@ padding:40px 0px;
 .cappers-admin-sidebar-home a.is-current {
     background: var(--admin-blue);
     color: #fff !important;
+    box-shadow: 0 10px 26px rgba(20, 120, 255, .28);
 }
 
 .cappers-admin-sidebar-home a.is-current .cappers-admin-app-icon {
@@ -41476,7 +41491,7 @@ padding:40px 0px;
     display: grid;
     gap: 6px;
     padding: 12px 14px 16px;
-    background: #172234;
+    background: var(--admin-sidebar-2);
 }
 
 .cappers-admin-sidebar-footer a {
@@ -41559,16 +41574,18 @@ padding:40px 0px;
 
 .cappers-admin-hero {
     position: relative;
-    min-height: 160px;
+    min-height: 182px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 330px;
     align-items: center;
     gap: 24px;
-    padding: 28px 30px;
+    padding: 30px 32px;
     overflow: hidden;
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 12px 28px rgba(32, 45, 72, .05);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    background: var(--admin-panel);
+    box-shadow: var(--admin-shadow);
+    backdrop-filter: blur(18px);
 }
 
 .cappers-admin-hero-copy {
@@ -41590,7 +41607,7 @@ padding:40px 0px;
 .cappers-admin-hero h1 {
     margin: 0;
     color: var(--admin-text);
-    font-size: clamp(30px, 3vw, 42px);
+    font-size: clamp(34px, 3.2vw, 48px);
     line-height: 1.04;
     font-weight: 780;
 }
@@ -41605,7 +41622,7 @@ padding:40px 0px;
 
 .cappers-admin-hero-art {
     position: relative;
-    min-height: 110px;
+    min-height: 132px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -41613,52 +41630,20 @@ padding:40px 0px;
 
 .cappers-admin-hero-art-note {
     position: absolute;
-    top: 3px;
-    left: 2px;
-    color: #7b879a;
+    z-index: 2;
+    top: 2px;
+    left: 4px;
+    color: #697996;
     font-size: 11px;
     font-style: italic;
     line-height: 1.25;
     transform: rotate(-7deg);
 }
 
-.cappers-admin-hero-art-cube {
-    position: relative;
-    z-index: 2;
-    width: 78px;
-    height: 78px;
-    display: grid;
-    place-items: center;
-    border-radius: 18px;
-    background: #eaf3ff;
-    color: var(--admin-blue);
-    box-shadow: 0 16px 30px rgba(20, 120, 255, .16);
-}
-
-.cappers-admin-hero-art-cube svg {
-    width: 42px;
-    height: 42px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-}
-
-.cappers-admin-hero-art-block {
-    position: absolute;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: #edf3fb;
-}
-
-.cappers-admin-hero-art-block.is-left {
-    right: 188px;
-    bottom: 7px;
-}
-
-.cappers-admin-hero-art-block.is-right {
-    right: 55px;
-    top: 9px;
+.cappers-admin-hero-art img {
+    width: 220px;
+    height: 140px;
+    object-fit: contain;
 }
 
 .cappers-admin-app-grid {
@@ -41676,11 +41661,13 @@ padding:40px 0px;
     align-items: center;
     gap: 13px;
     padding: 14px 15px;
+    border: 1px solid var(--admin-border);
     border-radius: 15px;
-    background: #fff;
+    background: var(--admin-panel);
     color: var(--admin-text) !important;
     text-decoration: none !important;
-    box-shadow: 0 9px 24px rgba(32, 45, 72, .045);
+    box-shadow: 0 12px 32px rgba(39, 70, 115, .08);
+    backdrop-filter: blur(14px);
 }
 
 .cappers-admin-app-card:hover {
@@ -41760,9 +41747,11 @@ padding:40px 0px;
 
 .cappers-admin-panel {
     padding: 20px;
+    border: 1px solid var(--admin-border);
     border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 9px 24px rgba(32, 45, 72, .045);
+    background: var(--admin-panel);
+    box-shadow: 0 12px 34px rgba(39, 70, 115, .08);
+    backdrop-filter: blur(14px);
 }
 
 .cappers-admin-panel-head {

@@ -5161,7 +5161,7 @@ body.expert-public-details-open {
     .cappers-admin {
         --admin-sidebar-width: 0px;
         min-width: 0;
-        background: #f3f6fb;
+        background: var(--admin-bg);
     }
 
     .cappers-admin #header,
@@ -5217,25 +5217,70 @@ body.expert-public-details-open {
     }
 
     .cappers-admin #header {
-        min-height: 62px;
-        padding: 9px 12px;
+        min-height: 104px;
+        padding: 9px 12px 11px;
         gap: 8px;
+        align-items: flex-start;
     }
 
     .cappers-admin #user-tools {
-        max-width: 90px;
-        overflow: hidden;
-        font-size: 0;
-        white-space: nowrap;
-    }
-
-    .cappers-admin #user-tools a {
-        font-size: 10px;
+        display: none;
     }
 
     .admin-topbar,
     .cappers-admin-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 9px;
+        width: 100%;
+    }
+
+    .cappers-admin-mobile-head {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr) 34px;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .cappers-admin-mobile-brand {
+        min-width: 0;
+        display: flex;
+        align-items: center;
         gap: 8px;
+        color: var(--admin-text) !important;
+        text-decoration: none !important;
+    }
+
+    .cappers-admin-mobile-brand-mark {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--admin-blue);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .cappers-admin-mobile-brand strong {
+        overflow: hidden;
+        font-size: 13px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cappers-admin-mobile-avatar {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #dce9fb;
+        color: var(--admin-blue);
+        font-size: 12px;
+        font-weight: 800;
     }
 
     .cappers-admin-menu-button {
@@ -5245,8 +5290,9 @@ body.expert-public-details-open {
     }
 
     .cappers-admin-search {
-        min-height: 40px;
-        padding: 0 10px;
+        width: 100%;
+        min-height: 42px;
+        padding: 0 11px;
     }
 
     .cappers-admin-search input {
@@ -5277,10 +5323,11 @@ body.expert-public-details-open {
 
     .cappers-admin-hero {
         min-height: 0;
-        grid-template-columns: minmax(0, 1fr) 88px;
+        grid-template-columns: minmax(0, 1fr) 84px;
         gap: 10px;
-        padding: 17px 14px;
+        padding: 16px 14px;
         border-radius: 15px;
+        box-shadow: 0 12px 34px rgba(39, 70, 115, .10);
     }
 
     .cappers-admin-eyebrow {
@@ -5298,23 +5345,16 @@ body.expert-public-details-open {
     }
 
     .cappers-admin-hero-art {
-        min-height: 82px;
+        min-height: 76px;
     }
 
-    .cappers-admin-hero-art-note,
-    .cappers-admin-hero-art-block {
+    .cappers-admin-hero-art-note {
         display: none;
     }
 
-    .cappers-admin-hero-art-cube {
-        width: 62px;
-        height: 62px;
-        border-radius: 14px;
-    }
-
-    .cappers-admin-hero-art-cube svg {
-        width: 34px;
-        height: 34px;
+    .cappers-admin-hero-art img {
+        width: 92px;
+        height: 76px;
     }
 
     .cappers-admin-app-grid {
@@ -5359,7 +5399,7 @@ body.expert-public-details-open {
     }
 
     .cappers-admin-panel {
-        padding: 15px;
+        padding: 14px;
         border-radius: 14px;
     }
 
@@ -5399,10 +5439,6 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 420px) {
-    .cappers-admin #user-tools {
-        display: none;
-    }
-
     .cappers-admin-hero {
         grid-template-columns: 1fr;
     }
