@@ -20,7 +20,7 @@ class SportPreferenceField(forms.ModelMultipleChoiceField):
         if sport.image:
             return format_html(
                 '<span class="sport-preference-option">'
-                '<span class="sport-preference-image" data-skeleton-image>'
+                '<span class="sport-preference-image">'
                 '<img src="{}" alt="" width="20" height="20" loading="lazy">'
                 '</span><span>{}</span></span>',
                 sport.image,
