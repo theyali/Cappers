@@ -3,6 +3,8 @@ from decimal import Decimal
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
+from game.models import League, Sport
+
 from .models import (
     AnalystPaidPlan,
     AnalystProfile,
@@ -19,6 +21,21 @@ class RegistrationForm(UserCreationForm):
         choices=User.Role.choices,
         widget=forms.HiddenInput(),
         initial=User.Role.READER,
+    )
+    sports = forms.ModelMultipleChoiceField(
+        label="Любимые виды спорта",
+        queryset=Sport.objects.all().order_by("name_ru", "name"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(
+            attrs={"class": "sport-preference-checkboxes"}
+        ),
+        help_text="Для профиля каппера выберите хотя бы один вид спорта.",
+    )
+    leagues = forms.ModelMultipleChoiceField(
+        label="Любимые лиги",
+        queryset=League.objects.select_related("sport", "country").all(),
+        required=False,
+        widget=forms.MultipleHiddenInput(),
     )
     accept_terms = forms.BooleanField(
         label="Согласие с правилами",
@@ -37,6 +54,8 @@ class RegistrationForm(UserCreationForm):
             "first_name",
             "last_name",
             "role",
+            "sports",
+            "leagues",
             "accept_terms",
         )
 
@@ -45,6 +64,18 @@ class RegistrationForm(UserCreationForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Пользователь с таким email уже существует.")
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            cleaned_data.get("role") == User.Role.ANALYST
+            and not cleaned_data.get("sports")
+        ):
+            self.add_error(
+                "sports",
+                "Для профиля каппера выберите хотя бы один вид спорта.",
+            )
+        return cleaned_data
 
 
 class UserProfileForm(forms.ModelForm):
