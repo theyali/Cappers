@@ -56,6 +56,24 @@ class ManualMatchReviewSettlementTests(TestCase):
         ):
             return settle_finished_matches()
 
+    def test_finished_match_without_predictions_still_opens_score_review(self):
+        match = Match.objects.create(
+            external_id=990000,
+            sync_scope=Match.SyncScope.FINISHED,
+            starts_at=timezone.now(),
+            score="",
+        )
+
+        self.settle()
+
+        self.assertTrue(
+            MatchManualReview.objects.filter(
+                match=match,
+                reason=MatchManualReview.Reason.MISSING_SCORE,
+                status=MatchManualReview.Status.OPEN,
+            ).exists()
+        )
+
     def test_finished_match_without_score_stays_pending_and_opens_review(self):
         match, coupon, prediction = self.create_prediction(
             external_id=990001,
