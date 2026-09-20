@@ -16,6 +16,10 @@ from .models import (
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
+
+    def __init__(self, *args, require_sports: bool = false, **kwargs):
+        self.require_sports = require_sports
+        super().__init__(*args, **kwargs)
     role = forms.ChoiceField(
         label="Тип аккаунта",
         choices=User.Role.choices,
@@ -68,9 +72,9 @@ class RegistrationForm(UserCreationForm):
     def clean(self):
         cleaned_data = super().clean()
         if (
-            cleaned_data.get("role") == User.Role.ANALYST
-            and not cleaned_data.get("sports")
-        ):
+            self.require_sports
+            or cleaned_data.get("role") == User.Role.ANALYST
+        ) and not cleaned_data.get("sports"):
             self.add_error(
                 "sports",
                 "Для профиля каппера выберите хотя бы один вид спорта.",
