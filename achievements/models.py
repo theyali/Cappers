@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class AchievementCategory(models.Model):
@@ -122,3 +124,105 @@ class Achievement(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class UserAchievement(models.Model):
+    class Source(models.TextChoices):
+        AUTO = "auto", "Автоматически"
+        MANUAL = "manual", "Вручную"
+        MIGRATION = "migration", "Миграция"
+        ADMIN = "admin", "Администратор"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="achievements",
+        verbose_name="Пользователь",
+    )
+    achievement = models.ForeignKey(
+        Achievement,
+        on_delete=models.CASCADE,
+        related_name="user_achievements",
+        verbose_name="Достижение",
+    )
+    unlocked_at = models.DateTimeField("Получено", default=timezone.now)
+    progress_value = models.DecimalField(
+        "Значение прогресса",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+    )
+    progress_percent = models.PositiveSmallIntegerField(
+        "Прогресс, %",
+        default=100,
+    )
+    source = models.CharField(
+        "Источник",
+        max_length=16,
+        choices=Source.choices,
+        default=Source.AUTO,
+    )
+    metadata = models.JSONField("Метаданные", default=dict, blank=True)
+
+    class Meta:
+        verbose_name = "Достижение пользователя"
+        verbose_name_plural = "Достижения пользователей"
+        ordering = ("-unlocked_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "achievement"),
+                name="unique_user_achievement",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "-unlocked_at"),
+                name="userach_user_unlock_idx",
+            ),
+            models.Index(
+                fields=("achievement", "-unlocked_at"),
+                name="userach_ach_unlock_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.achievement}"
+
+
+class AchievementProgressSnapshot(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="achievement_progress_snapshots",
+        verbose_name="Пользователь",
+    )
+    achievement = models.ForeignKey(
+        Achievement,
+        on_delete=models.CASCADE,
+        related_name="progress_snapshots",
+        verbose_name="Достижение",
+    )
+    current_value = models.DecimalField(
+        "Текущее значение",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+    )
+    progress_percent = models.PositiveSmallIntegerField(
+        "Прогресс, %",
+        default=0,
+    )
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Прогресс достижения"
+        verbose_name_plural = "Прогресс достижений"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "achievement"),
+                name="unique_achievement_progress_snapshot",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.achievement} — {self.progress_percent}%"
