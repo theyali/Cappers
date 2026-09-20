@@ -217,6 +217,7 @@ def _expert_achievement_badges(profile: AnalystProfile, context: dict) -> list[d
         likes_given=metrics["likes_given"],
         favorites_saved=metrics["favorites_saved"],
         referrals=metrics["referrals"],
+        user=profile.user,
     )
     return list(reversed(badges))
 

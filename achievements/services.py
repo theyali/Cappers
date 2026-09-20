@@ -198,30 +198,8 @@ def build_achievement_overview(
     }
 
 
-def build_achievement_badges(
-    *,
-    predictions_count: int,
-    wins_count: int,
-    overall_roi,
-    followers_count: int,
-    best_win_streak: int,
-    is_verified: bool,
-    likes_given: int = 0,
-    favorites_saved: int = 0,
-    referrals: int = 0,
-) -> list[dict]:
-    metrics = {
-        "predictions": int(predictions_count or 0),
-        "wins": int(wins_count or 0),
-        "roi": _to_decimal(overall_roi),
-        "followers": int(followers_count or 0),
-        "streak": int(best_win_streak or 0),
-        "verified": 1 if is_verified else 0,
-        "likes_given": int(likes_given or 0),
-        "favorites_saved": int(favorites_saved or 0),
-        "referrals": int(referrals or 0),
-    }
-    achievements = (
+def get_analyst_achievement_definitions():
+    return (
         Achievement.objects.filter(
             is_active=True,
             category__is_active=True,
@@ -234,10 +212,57 @@ def build_achievement_badges(
         .order_by("category__sort_order", "sort_order", "id")
     )
 
+
+def build_achievement_badges(
+    *,
+    predictions_count: int,
+    wins_count: int,
+    overall_roi,
+    followers_count: int,
+    best_win_streak: int,
+    is_verified: bool,
+    likes_given: int = 0,
+    favorites_saved: int = 0,
+    referrals: int = 0,
+    user=None,
+    achievements=None,
+    awarded_ids=None,
+) -> list[dict]:
+    metrics = {
+        "predictions": int(predictions_count or 0),
+        "wins": int(wins_count or 0),
+        "roi": _to_decimal(overall_roi),
+        "followers": int(followers_count or 0),
+        "streak": int(best_win_streak or 0),
+        "verified": 1 if is_verified else 0,
+        "likes_given": int(likes_given or 0),
+        "favorites_saved": int(favorites_saved or 0),
+        "referrals": int(referrals or 0),
+    }
+    achievements = list(
+        achievements
+        if achievements is not None
+        else get_analyst_achievement_definitions()
+    )
+    if awarded_ids is None:
+        awarded_ids = set()
+        if user is not None and achievements:
+            awarded_ids = set(
+                UserAchievement.objects.filter(
+                    user=user,
+                    achievement_id__in=[item.id for item in achievements],
+                ).values_list("achievement_id", flat=True)
+            )
+    else:
+        awarded_ids = set(awarded_ids)
+
     badges = []
     for achievement in achievements:
         current_value = metrics.get(achievement.metric, 0)
-        if not _condition_matches(achievement, current_value):
+        if (
+            achievement.id not in awarded_ids
+            and not _condition_matches(achievement, current_value)
+        ):
             continue
         badges.append(
             _serialize_achievement(

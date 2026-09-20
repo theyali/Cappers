@@ -31,6 +31,7 @@ def expert_achievement_badges(
         likes_given=metrics["likes_given"],
         favorites_saved=metrics["favorites_saved"],
         referrals=metrics["referrals"],
+        user=expert,
     )
     badges = list(reversed(all_badges))[:RECENT_ACHIEVEMENTS_LIMIT]
     return {

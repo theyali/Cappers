@@ -16,9 +16,12 @@ from achievements.management.commands.seed_achievements import (
 from achievements.models import Achievement, AchievementCategory, UserAchievement
 from achievements.services import (
     award_achievement,
+    build_achievement_badges,
     build_achievement_overview,
+    get_analyst_achievement_definitions,
     sync_user_achievements,
 )
+from notifications.models import Notification, NotificationPreference
 
 
 ALL_SEEDED_DEFINITIONS = (
@@ -264,3 +267,72 @@ class AchievementServiceTests(TestCase):
             1,
         )
         self.assertEqual(first.source, UserAchievement.Source.MANUAL)
+
+    def test_manual_award_is_visible_in_badges(self):
+        achievement = self.create_achievement(target_value=Decimal("10"))
+        award_achievement(
+            self.analyst,
+            achievement,
+            source=UserAchievement.Source.MANUAL,
+        )
+
+        badges = build_achievement_badges(
+            predictions_count=0,
+            wins_count=0,
+            overall_roi=0,
+            followers_count=0,
+            best_win_streak=0,
+            is_verified=False,
+            user=self.analyst,
+        )
+
+        self.assertEqual(
+            [item["key"] for item in badges],
+            ["test-achievement"],
+        )
+
+    def test_preloaded_badge_definitions_do_not_query_database(self):
+        self.create_achievement(target_value=Decimal("1"))
+        definitions = list(get_analyst_achievement_definitions())
+
+        with self.assertNumQueries(0):
+            badges = build_achievement_badges(
+                predictions_count=0,
+                wins_count=0,
+                overall_roi=0,
+                followers_count=1,
+                best_win_streak=0,
+                is_verified=False,
+                achievements=definitions,
+                awarded_ids=(),
+            )
+
+        self.assertEqual(len(badges), 1)
+
+    def test_achievement_sync_does_not_duplicate_notification(self):
+        achievement = self.create_achievement(
+            audience=Achievement.Audience.ALL,
+            metric=Achievement.Metric.LIKES_GIVEN,
+            target_value=Decimal("0"),
+        )
+        preferences, _ = NotificationPreference.objects.get_or_create(
+            user=self.reader
+        )
+        preferences.achievement = True
+        preferences.save(update_fields=["achievement", "updated_at"])
+
+        with self.captureOnCommitCallbacks(execute=True):
+            first = sync_user_achievements(self.reader, notify=True)
+        with self.captureOnCommitCallbacks(execute=True):
+            second = sync_user_achievements(self.reader, notify=True)
+
+        self.assertEqual(len(first), 1)
+        self.assertEqual(second, [])
+        self.assertEqual(
+            Notification.objects.filter(
+                event_key=(
+                    f"achievement:{self.reader.pk}:{achievement.key}"
+                )
+            ).count(),
+            1,
+        )

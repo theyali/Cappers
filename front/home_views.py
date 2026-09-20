@@ -18,6 +18,8 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from achievements.models import UserAchievement
+from achievements.services import get_analyst_achievement_definitions
 from cabinet.achievements import build_achievement_badges
 from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
@@ -333,13 +335,25 @@ def _best_home_experts(
     all_time_leader_id=None,
 ) -> list[dict]:
     profiles = list(profiles[:HOME_EXPERTS_LIMIT])
+    profile_user_ids = [profile.user_id for profile in profiles]
 
-    best_streaks = _best_streaks_for_authors([profile.user_id for profile in profiles])
+    best_streaks = _best_streaks_for_authors(profile_user_ids)
+    achievement_definitions = list(get_analyst_achievement_definitions())
+    achievement_ids = [item.id for item in achievement_definitions]
+    awarded_by_user = {}
+    if profile_user_ids and achievement_ids:
+        awarded_rows = UserAchievement.objects.filter(
+            user_id__in=profile_user_ids,
+            achievement_id__in=achievement_ids,
+        ).values_list("user_id", "achievement_id")
+        for user_id, achievement_id in awarded_rows:
+            awarded_by_user.setdefault(user_id, set()).add(achievement_id)
+
     following_ids = set()
     if request.user.is_authenticated:
         following_ids = set(
             request.user.analyst_follows.filter(
-                analyst_id__in=[profile.user_id for profile in profiles]
+                analyst_id__in=profile_user_ids
             ).values_list("analyst_id", flat=True)
         )
 
@@ -355,6 +369,8 @@ def _best_home_experts(
             followers_count=profile.followers_count,
             best_win_streak=best_streaks.get(profile.user_id, 0),
             is_verified=profile.is_verified,
+            achievements=achievement_definitions,
+            awarded_ids=awarded_by_user.get(profile.user_id, ()),
         )
         experts.append(
             {
