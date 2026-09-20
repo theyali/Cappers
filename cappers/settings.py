@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "account_email.apps.AccountEmailConfig",
     "cabinet.apps.CabinetConfig",
+    "achievements.apps.AchievementsConfig",
     "wallets.apps.WalletsConfig",
     "game.apps.GameConfig",
     "tournaments.apps.TournamentsConfig",
