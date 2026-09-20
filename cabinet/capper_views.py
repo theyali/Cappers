@@ -373,8 +373,6 @@ def capper_onboarding(request, step: int):
     )
 
 
-
-
 @require_GET
 def league_search(request):
     leagues = League.objects.select_related("sport", "country")
@@ -413,15 +411,19 @@ def league_search(request):
         else:
             leagues = leagues.order_by("name_ru", "name", "id")
 
-    try:
-        page = max(1, int(request.GET.get("page") or 1))
-    except (TypeError, ValueError):
-        page = 1
-    page_size = 40
-    offset = (page - 1) * page_size
-    rows = list(leagues[offset : offset + page_size + 1])
-    has_more = len(rows) > page_size
-    rows = rows[:page_size]
+    if selected_ids:
+        rows = list(leagues[:200])
+        has_more = False
+    else:
+        try:
+            page = max(1, int(request.GET.get("page") or 1))
+        except (TypeError, ValueError):
+            page = 1
+        page_size = 40
+        offset = (page - 1) * page_size
+        rows = list(leagues[offset : offset + page_size + 1])
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
 
     return JsonResponse(
         {
