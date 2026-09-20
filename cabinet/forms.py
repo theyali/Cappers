@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.html import format_html
 
 from game.models import League, Sport
 
@@ -12,6 +13,23 @@ from .models import (
     DEFAULT_PAID_PLAN_PRESETS,
     User,
 )
+
+
+class SportPreferenceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, sport):
+        if sport.image:
+            return format_html(
+                '<span class="sport-preference-option">'
+                '<span class="sport-preference-image" data-skeleton-image>'
+                '<img src="{}" alt="" width="20" height="20" loading="lazy">'
+                '</span><span>{}</span></span>',
+                sport.image,
+                str(sport),
+            )
+        return format_html(
+            '<span class="sport-preference-option"><span>{}</span></span>',
+            str(sport),
+        )
 
 
 class RegistrationForm(UserCreationForm):
@@ -26,7 +44,7 @@ class RegistrationForm(UserCreationForm):
         widget=forms.HiddenInput(),
         initial=User.Role.READER,
     )
-    sports = forms.ModelMultipleChoiceField(
+    sports = SportPreferenceField(
         label="Любимые виды спорта",
         queryset=Sport.objects.all().order_by("name_ru", "name"),
         required=False,
