@@ -117,6 +117,50 @@ class ManualMatchReviewSettlementTests(TestCase):
         )
         self.assertEqual(review.details["prediction_id"], prediction.id)
 
+    def test_unrecognized_selection_in_supported_market_stays_pending(self):
+        match, coupon, prediction = self.create_prediction(
+            external_id=990005,
+            score="2-1",
+            market="winner",
+            selection="Unsupported selection",
+        )
+
+        self.settle()
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        self.assertEqual(prediction.state_status, "")
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.PENDING)
+        self.assertTrue(
+            MatchManualReview.objects.filter(
+                match=match,
+                reason=MatchManualReview.Reason.UNKNOWN_MARKET,
+                status=MatchManualReview.Status.OPEN,
+            ).exists()
+        )
+
+    def test_score_review_is_resolved_after_score_becomes_valid(self):
+        match, coupon, prediction = self.create_prediction(
+            external_id=990006,
+            score="",
+        )
+        self.settle()
+        match.score = "2-1"
+        match.save(update_fields=["score", "updated_at"])
+
+        self.settle()
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        review = MatchManualReview.objects.get(
+            match=match,
+            reason=MatchManualReview.Reason.MISSING_SCORE,
+        )
+        self.assertEqual(prediction.state_status, Prediction.StateStatus.WIN)
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.WIN)
+        self.assertEqual(review.status, MatchManualReview.Status.RESOLVED)
+        self.assertIsNotNone(review.resolved_at)
+
     def test_supported_market_is_still_settled_normally(self):
         match, coupon, prediction = self.create_prediction(
             external_id=990004,
