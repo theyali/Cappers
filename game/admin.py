@@ -1,10 +1,13 @@
 from django.contrib import admin
+from django.db.models import Count, Q
+from django.utils import timezone
 
 from game.models import (
     Country,
     League,
     LeagueSeason,
     Match,
+    MatchManualReview,
     MatchOdds,
     Prediction,
     PredictionCoupon,
@@ -93,6 +96,7 @@ class MatchAdmin(admin.ModelAdmin):
         "home_team_name",
         "away_team_name",
         "score",
+        "open_reviews_count",
         "live_minute_label",
         "updated_at",
     )
@@ -109,6 +113,59 @@ class MatchAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("created_at", "updated_at", "last_seen_at", "raw_data")
     autocomplete_fields = ("sport", "league", "league_season", "home_team", "away_team", "venue")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            _open_reviews_count=Count(
+                "manual_reviews",
+                filter=Q(manual_reviews__status=MatchManualReview.Status.OPEN),
+                distinct=True,
+            )
+        )
+
+    @admin.display(description="На проверке", ordering="_open_reviews_count")
+    def open_reviews_count(self, obj):
+        return obj._open_reviews_count
+
+
+@admin.register(MatchManualReview)
+class MatchManualReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "match",
+        "reason",
+        "status",
+        "created_at",
+        "updated_at",
+        "resolved_at",
+    )
+    list_filter = ("status", "reason", "match__sport", "created_at")
+    search_fields = (
+        "=match__external_id",
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+    )
+    autocomplete_fields = ("match",)
+    list_select_related = ("match", "match__sport")
+    readonly_fields = ("created_at", "updated_at", "resolved_at")
+    actions = ("mark_resolved", "mark_ignored")
+
+    @admin.action(description="Отметить выбранные как решённые")
+    def mark_resolved(self, request, queryset):
+        queryset.filter(status=MatchManualReview.Status.OPEN).update(
+            status=MatchManualReview.Status.RESOLVED,
+            resolved_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
+
+    @admin.action(description="Игнорировать выбранные")
+    def mark_ignored(self, request, queryset):
+        queryset.filter(status=MatchManualReview.Status.OPEN).update(
+            status=MatchManualReview.Status.IGNORED,
+            resolved_at=timezone.now(),
+            updated_at=timezone.now(),
+        )
 
 
 @admin.register(MatchOdds)
