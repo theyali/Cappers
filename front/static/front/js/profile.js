@@ -535,6 +535,12 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 
+    const achievementIconUrl = (item) => {
+        if (item?.icon_url) return String(item.icon_url);
+        if (item?.icon) return `/static/${String(item.icon).replace(/^\/+/, "")}`;
+        return "";
+    };
+
     const currentTab = () => new URL(window.location.href).searchParams.get("tab") || "profile";
 
     const activate = (panel, tab) => {
@@ -567,7 +573,7 @@
             const cards = (payload.items || []).map((item) => `
                 <article class="profile-achievement-card${item.unlocked ? " is-unlocked" : " is-locked"}" data-achievement="${escapeHtml(item.key)}">
                     <div class="profile-achievement-topline">
-                        <span class="profile-achievement-icon"><img src="/static/${escapeHtml(item.icon)}" alt=""></span>
+                        <span class="profile-achievement-icon"><img src="${escapeHtml(achievementIconUrl(item))}" alt=""></span>
                         <span class="profile-achievement-state${item.unlocked ? " is-unlocked" : ""}">${item.unlocked ? "Получено" : `${escapeHtml(item.progress)}%`}</span>
                     </div>
                     <span class="profile-achievement-category">${escapeHtml(item.category)}</span>
@@ -579,7 +585,7 @@
 
             const next = payload.next_achievement
                 ? `<article class="profile-next-achievement">
-                    <span class="profile-next-achievement-icon"><img src="/static/${escapeHtml(payload.next_achievement.icon)}" alt=""></span>
+                    <span class="profile-next-achievement-icon"><img src="${escapeHtml(achievementIconUrl(payload.next_achievement))}" alt=""></span>
                     <div><span>Ближайшая ачивка</span><strong>${escapeHtml(payload.next_achievement.label)}</strong><small>${escapeHtml(payload.next_achievement.description)}</small></div>
                     <div class="profile-next-achievement-progress"><strong>${escapeHtml(payload.next_achievement.progress)}%</strong><span>${escapeHtml(payload.next_achievement.current_label)} / ${escapeHtml(payload.next_achievement.target_label)}</span></div>
                 </article>`

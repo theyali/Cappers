@@ -63,13 +63,21 @@
                         {% if forloop.counter == 1 %}
                             {% for achievement in expert.latest_achievements|slice:":5" %}
                             <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
+                                {% if achievement.icon_url %}
+                                <img src="{{ achievement.icon_url }}" width="28" height="28" alt="" loading="lazy">
+                                {% else %}
                                 <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
+                                {% endif %}
                             </span>
                             {% endfor %}
                         {% else %}
                             {% for achievement in expert.latest_achievements|slice:":4" %}
                             <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
+                                {% if achievement.icon_url %}
+                                <img src="{{ achievement.icon_url }}" width="28" height="28" alt="" loading="lazy">
+                                {% else %}
                                 <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
+                                {% endif %}
                             </span>
                             {% endfor %}
                         {% endif %}
@@ -129,7 +137,11 @@
                     <div class="home-best-expert-row-achievements" aria-label="Достижения {{ expert.name }}">
                         {% for achievement in expert.latest_achievements|slice:":4" %}
                         <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
-                            <img src="{% static achievement.icon %}" width="26" height="26" alt="" loading="lazy">
+                            {% if achievement.icon_url %}
+                                <img src="{{ achievement.icon_url }}" width="26" height="26" alt="" loading="lazy">
+                                {% else %}
+                                <img src="{% static achievement.icon %}" width="26" height="26" alt="" loading="lazy">
+                                {% endif %}
                         </span>
                         {% endfor %}
                     </div>

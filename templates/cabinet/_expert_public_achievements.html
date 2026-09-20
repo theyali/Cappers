@@ -18,7 +18,11 @@
         <article class="profile-achievement-card is-unlocked" data-achievement="{{ achievement.key }}">
             <div class="profile-achievement-topline">
                 <span class="profile-achievement-icon" data-skeleton-image>
+                    {% if achievement.icon_url %}
+                    <img src="{{ achievement.icon_url }}" width="64" height="64" alt="" loading="lazy">
+                    {% else %}
                     <img src="{% static achievement.icon %}" width="64" height="64" alt="" loading="lazy">
+                    {% endif %}
                 </span>
                 <span class="profile-achievement-state is-unlocked">Получено</span>
             </div>
