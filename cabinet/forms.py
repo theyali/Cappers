@@ -38,6 +38,15 @@ class RegistrationForm(UserCreationForm):
     def __init__(self, *args, require_sports: bool = False, **kwargs):
         self.require_sports = require_sports
         super().__init__(*args, **kwargs)
+        if require_sports:
+            self.fields["sports"].help_text = (
+                "Для профиля каппера выберите хотя бы один вид спорта."
+            )
+        else:
+            self.fields["sports"].label = "Что вам интересно"
+            self.fields["sports"].help_text = (
+                "Выберите виды спорта, которые вам интересны. Это необязательно."
+            )
     role = forms.ChoiceField(
         label="Тип аккаунта",
         choices=User.Role.choices,
