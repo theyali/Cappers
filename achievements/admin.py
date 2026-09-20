@@ -1,7 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.utils.html import format_html
 
-from .models import Achievement, AchievementCategory
+from .models import Achievement, AchievementCategory, UserAchievement
+from .services import sync_user_achievements
 
 
 @admin.register(AchievementCategory)
@@ -106,3 +108,55 @@ class AchievementAdmin(admin.ModelAdmin):
         if obj.fallback_static_icon:
             return obj.fallback_static_icon
         return "—"
+
+
+@admin.register(UserAchievement)
+class UserAchievementAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "achievement",
+        "source",
+        "progress_percent",
+        "unlocked_at",
+    )
+    list_filter = ("source", "achievement__category", "achievement")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "achievement__title",
+        "achievement__key",
+    )
+    autocomplete_fields = ("user", "achievement")
+    readonly_fields = ("unlocked_at",)
+    list_select_related = ("user", "achievement", "achievement__category")
+    actions = ("resync_selected_users",)
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        initial.setdefault("source", UserAchievement.Source.MANUAL)
+        return initial
+
+    @admin.action(description="Пересчитать достижения выбранных пользователей")
+    def resync_selected_users(self, request, queryset):
+        user_ids = queryset.values_list("user_id", flat=True).distinct()
+        User = get_user_model()
+        users_count = 0
+        awarded_count = 0
+
+        for user in User.objects.filter(pk__in=user_ids).iterator():
+            awarded_count += len(
+                sync_user_achievements(
+                    user,
+                    notify=False,
+                )
+            )
+            users_count += 1
+
+        self.message_user(
+            request,
+            (
+                f"Пересчитано пользователей: {users_count}. "
+                f"Новых достижений выдано: {awarded_count}."
+            ),
+            level=messages.SUCCESS,
+        )
