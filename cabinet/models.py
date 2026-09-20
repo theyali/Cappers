@@ -248,8 +248,8 @@ class UserSportPreference(models.Model):
             ),
         ]
         indexes = [
-            models.Index(fields=["user", "sport"]),
-            models.Index(fields=["sport"]),
+            models.Index(fields=["user", "sport"], name="cab_user_sport_idx"),
+            models.Index(fields=["sport"], name="cab_sport_pref_idx"),
         ]
 
 
@@ -274,8 +274,8 @@ class UserLeaguePreference(models.Model):
             ),
         ]
         indexes = [
-            models.Index(fields=["user", "league"]),
-            models.Index(fields=["league"]),
+            models.Index(fields=["user", "league"], name="cab_user_league_idx"),
+            models.Index(fields=["league"], name="cab_league_pref_idx"),
         ]
 
 
