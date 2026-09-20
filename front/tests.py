@@ -5,9 +5,20 @@ from types import SimpleNamespace
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
-from cabinet.models import AnalystProfile, CapperMonthlyStat, User
+from cabinet.models import (
+    AnalystProfile,
+    CapperMonthlyStat,
+    User,
+    UserLeaguePreference,
+    UserSportPreference,
+)
+from game.models import League, Match, Prediction, PredictionCoupon, Sport
 
-from .expert_ranking import expert_ranking_score, rank_experts
+from .expert_ranking import (
+    expert_ranking_score,
+    rank_experts,
+    recommended_experts_for_user,
+)
 
 
 class ExpertRankingScoreTests(SimpleTestCase):
@@ -345,3 +356,153 @@ class CapperTrustRankingIntegrationTests(TestCase):
             response,
             "Индекс доверия учитывает ROI, просадку, стабильность, объем истории, средний коэффициент, активность и точность уверенности",
         )
+
+
+class PersonalizedExpertRecommendationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.reader = User.objects.create_user(
+            username="recommendation-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        cls.football = Sport.objects.create(
+            code="recommendation-football",
+            name="Football",
+            name_ru="Футбол",
+        )
+        cls.tennis = Sport.objects.create(
+            code="recommendation-tennis",
+            name="Tennis",
+            name_ru="Теннис",
+        )
+        cls.preferred_league = League.objects.create(
+            external_id=991001,
+            sport=cls.football,
+            name="Preferred League",
+            name_ru="Любимая лига",
+        )
+        cls.other_football_league = League.objects.create(
+            external_id=991002,
+            sport=cls.football,
+            name="Other Football League",
+            name_ru="Другая футбольная лига",
+        )
+        cls.tennis_league = League.objects.create(
+            external_id=991003,
+            sport=cls.tennis,
+            name="Tennis League",
+            name_ru="Теннисная лига",
+        )
+
+        UserSportPreference.objects.create(
+            user=cls.reader,
+            sport=cls.football,
+        )
+        UserLeaguePreference.objects.create(
+            user=cls.reader,
+            league=cls.preferred_league,
+        )
+
+        cls.league_capper = cls._create_capper(
+            "league-match-capper",
+            trust_index="6.0",
+        )
+        cls.sport_capper = cls._create_capper(
+            "sport-match-capper",
+            trust_index="9.0",
+        )
+        cls.unrelated_capper = cls._create_capper(
+            "unrelated-capper",
+            trust_index="10.0",
+        )
+
+        cls._create_published_prediction(
+            cls.league_capper,
+            cls.preferred_league,
+            cls.football,
+            external_id=991101,
+        )
+        cls._create_published_prediction(
+            cls.sport_capper,
+            cls.other_football_league,
+            cls.football,
+            external_id=991102,
+        )
+        cls._create_published_prediction(
+            cls.unrelated_capper,
+            cls.tennis_league,
+            cls.tennis,
+            external_id=991103,
+        )
+
+    @classmethod
+    def _create_capper(cls, username: str, *, trust_index: str):
+        user = User.objects.create_user(
+            username=username,
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        profile, _ = AnalystProfile.objects.get_or_create(user=user)
+        AnalystProfile.objects.filter(pk=profile.pk).update(
+            is_public=True,
+            trust_index=Decimal(trust_index),
+        )
+        return user
+
+    @classmethod
+    def _create_published_prediction(
+        cls,
+        author,
+        league,
+        sport,
+        *,
+        external_id: int,
+    ):
+        match = Match.objects.create(
+            external_id=external_id,
+            sport=sport,
+            league=league,
+            sync_scope=Match.SyncScope.PREMATCH,
+        )
+        coupon = PredictionCoupon.objects.create(
+            author=author,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status=PredictionCoupon.StateStatus.WIN,
+            total_stake=Decimal("100"),
+            possible_payout=Decimal("120"),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=match,
+            market="winner",
+            selection="home",
+            coefficient=Decimal("1.80"),
+            stake=Decimal("100"),
+        )
+
+    def test_recommendations_prioritize_league_then_sport_and_ignore_unrelated(self):
+        with self.assertNumQueries(3):
+            profiles = recommended_experts_for_user(self.reader, limit=3)
+
+        self.assertEqual(
+            [profile.user.username for profile in profiles],
+            [
+                self.league_capper.username,
+                self.sport_capper.username,
+            ],
+        )
+        self.assertGreater(
+            profiles[0].preference_match_score,
+            profiles[1].preference_match_score,
+        )
+
+    def test_recommendations_return_empty_without_preferences(self):
+        user = User.objects.create_user(
+            username="reader-without-preferences",
+            password="test-password",
+            role=User.Role.READER,
+        )
+
+        with self.assertNumQueries(2):
+            self.assertEqual(recommended_experts_for_user(user), [])
