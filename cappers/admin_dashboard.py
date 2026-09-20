@@ -17,7 +17,7 @@ ADMIN_APP_GROUPS = {
         "color": "orange",
     },
     "pages": {"title": "Страницы", "subtitle": "Контент сайта", "icon": "file", "color": "yellow"},
-    "seo": {"title": "SEO", "subtitle": "Метатеги и аналитика", "icon": "search", "color": "yellow"},
+    "seo": {"title": "SEO", "subtitle": "Метатеги и аналитика", "icon": "chart", "color": "yellow"},
     "achievements": {
         "title": "Достижения",
         "subtitle": "Бейджи и условия",

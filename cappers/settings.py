@@ -82,6 +82,9 @@ TEMPLATES = [
                 "wallets.context_processors.coin_wallet",
             ],
             "builtins": ["wallets.templatetags.money"],
+            "libraries": {
+                "admin_dashboard": "cappers.templatetags.admin_dashboard",
+            },
         },
     },
 ]
