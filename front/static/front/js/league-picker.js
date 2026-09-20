@@ -101,9 +101,7 @@
                 image.width = 32;
                 image.height = 32;
                 image.loading = "lazy";
-                logo.dataset.skeletonImage = "";
                 logo.append(image);
-                window.CappersSkeleton?.watchImage(logo);
             }
 
             title.textContent = league.text;
@@ -161,7 +159,7 @@
             topResults.replaceChildren();
             try {
                 const payload = await fetchLeagues({ top: 1 });
-                payload.results.slice(0, 12).forEach((league) => {
+                payload.results.forEach((league) => {
                     topResults.append(optionNode(league));
                 });
                 if (topSection) topSection.hidden = payload.results.length === 0;
