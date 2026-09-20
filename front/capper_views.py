@@ -45,7 +45,7 @@ def _ranking_cards(
     period_days,
     period_label: str,
     paid_only: bool = False,
-) -> list[dict]:
+) -> tuple[list[dict], list]:
     ranking_group = "paid" if paid_only else "all"
     canonical_entries = rank_experts(period="all-time", group=ranking_group)
 
@@ -93,7 +93,7 @@ def _ranking_cards(
         card["roi_period_days"] = period_days
         card["roi_period_label"] = period_label
         cards.append(card)
-    return cards
+    return cards, profiles
 
 
 def cappers_stats(request):
@@ -102,7 +102,7 @@ def cappers_stats(request):
     stats_group = _stats_group(request)
     paid_only = stats_group == "paid"
 
-    experts = _ranking_cards(
+    experts, ranking_profiles = _ranking_cards(
         service,
         period_days=period["days"],
         period_label=period["label"],
@@ -126,7 +126,11 @@ def cappers_stats(request):
             }
         )
 
-    context = service.build_catalog_context(paid_only=paid_only)
+    context = service.build_catalog_context(
+        paid_only=False,
+        profiles=ranking_profiles,
+        cards_by_id={expert["id"]: expert for expert in experts},
+    )
     context["experts"] = experts
     context["experts_count"] = len(experts)
     context.update(

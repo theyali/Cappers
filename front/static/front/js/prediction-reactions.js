@@ -195,8 +195,11 @@
 
         const customInput = form.querySelector("#id_custom_cover_image");
         const systemSelect = form.querySelector("#id_cover_image");
+        const coverRadios = form.querySelectorAll("[data-rich-cover-radio]");
+        const coverInputs = form.querySelectorAll(".rich-cover-option input[name='cover_image']");
+        const coverMore = form.querySelector("[data-rich-cover-more]");
         const preview = document.querySelector("[data-rich-cover-preview]");
-        if (!preview || (!customInput && !systemSelect)) return;
+        if (!preview || (!customInput && !systemSelect && !coverRadios.length)) return;
 
         const systemCovers = new Map(
             Array.from(document.querySelectorAll("[data-rich-cover-option]"))
@@ -230,10 +233,29 @@
 
         const showSystemCover = () => {
             if (customInput?.files?.length) return;
-            setPreview(systemCovers.get(systemSelect?.value || "") || "");
+            const checkedRadio = form.querySelector("[data-rich-cover-radio]:checked");
+            setPreview(checkedRadio?.dataset.coverUrl || systemCovers.get(systemSelect?.value || "") || "");
         };
 
         systemSelect?.addEventListener("change", showSystemCover);
+        coverInputs.forEach((input) => {
+            input.closest(".rich-cover-option")?.addEventListener("click", (event) => {
+                event.preventDefault();
+                const scrollY = window.scrollY;
+                input.checked = true;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                requestAnimationFrame(() => window.scrollTo({ top: scrollY, left: window.scrollX }));
+            });
+        });
+        coverRadios.forEach((radio) => {
+            radio.addEventListener("change", showSystemCover);
+        });
+        coverMore?.addEventListener("click", () => {
+            form.querySelectorAll(".rich-cover-option.is-extra[hidden]").forEach((node) => {
+                node.hidden = false;
+            });
+            coverMore.hidden = true;
+        });
         customInput?.addEventListener("change", () => {
             showFormError(form, "");
 
@@ -268,6 +290,92 @@
         window.addEventListener("pagehide", () => {
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         }, { once: true });
+    };
+
+    const initRichPredictionCouponEditor = () => {
+        const form = document.querySelector(".rich-prediction-form");
+        if (!form) return;
+
+        const hiddenInput = form.querySelector("#id_remove_prediction_ids");
+        const stakeInput = form.querySelector("#id_total_stake");
+        const confidenceInput = form.querySelector("[data-rich-confidence]");
+        const confidenceValue = form.querySelector("[data-rich-confidence-value]");
+        const totalCoefficientNode = form.querySelector("[data-rich-total-coefficient]");
+        const positionsCountNode = form.querySelector("[data-rich-positions-count]");
+        const payoutNode = form.querySelector("[data-rich-payout]");
+
+        const parseNumber = (value) => {
+            const number = Number.parseFloat(String(value ?? "").replace(",", ".").replace(/\s+/g, ""));
+            return Number.isFinite(number) ? number : 0;
+        };
+
+        const formatNumber = (value, digits = 0) => new Intl.NumberFormat("ru-RU", {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits,
+        }).format(value);
+
+        const visibleCouponItems = () => Array.from(
+            form.querySelectorAll("[data-rich-coupon-item]")
+        ).filter((item) => !item.hidden);
+
+        const recalcCouponSummary = () => {
+            const visibleItems = visibleCouponItems();
+            const totalCoefficient = visibleItems.reduce(
+                (product, item) => product * Math.max(parseNumber(item.dataset.coefficient), 0),
+                visibleItems.length ? 1 : 0
+            );
+            const stake = parseNumber(stakeInput?.value);
+            if (totalCoefficientNode) totalCoefficientNode.textContent = formatNumber(totalCoefficient, 2);
+            if (positionsCountNode) positionsCountNode.textContent = String(visibleItems.length);
+            if (payoutNode) payoutNode.textContent = formatNumber(stake * totalCoefficient, 0);
+        };
+
+        if (confidenceInput && confidenceValue) {
+            const syncConfidence = () => {
+                confidenceValue.textContent = `${confidenceInput.value || 0}%`;
+            };
+            confidenceInput.addEventListener("input", syncConfidence);
+            syncConfidence();
+        }
+
+        stakeInput?.addEventListener("input", recalcCouponSummary);
+        recalcCouponSummary();
+
+        if (!hiddenInput) return;
+
+        const removed = new Set(
+            String(hiddenInput.value || "")
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean)
+        );
+
+        const syncRemoved = () => {
+            hiddenInput.value = Array.from(removed).join(",");
+        };
+
+        form.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-rich-remove-prediction]");
+            if (!button) return;
+
+            event.preventDefault();
+            const predictionId = button.dataset.richRemovePrediction;
+            if (!predictionId) return;
+
+            const item = button.closest("[data-rich-coupon-item]");
+            const visibleItems = visibleCouponItems();
+            if (visibleItems.length <= 1) {
+                showFormError(form, "В купоне должна остаться минимум одна позиция.");
+                return;
+            }
+
+            removed.add(predictionId);
+            syncRemoved();
+
+            if (item) item.hidden = true;
+            showFormError(form, "");
+            recalcCouponSummary();
+        });
     };
 
     document.addEventListener("click", async (event) => {
@@ -347,4 +455,5 @@
 
     initSubmitLocks();
     initRichCoverPreview();
+    initRichPredictionCouponEditor();
 })();

@@ -3,12 +3,14 @@ from django.db.models import Prefetch
 from django.db.utils import OperationalError, ProgrammingError
 from django.urls import NoReverseMatch, reverse
 
-from back.models import FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
+from back.models import Bookmaker, FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
 from front.models import WikiVideo
 
 
 GLOBAL_CONTEXT_CACHE_KEY = "website-context:v1"
 GLOBAL_CONTEXT_CACHE_SECONDS = 120
+BOOKMAKERS_CONTEXT_CACHE_KEY = "bookmakers-context:v1"
+BOOKMAKERS_CONTEXT_CACHE_SECONDS = 120
 HOME_WIKI_CACHE_KEY = "home-wiki-videos:v1"
 HOME_WIKI_CACHE_SECONDS = 120
 ROULETTE_SETTINGS_CACHE_KEY = "roulette-settings:v1"
@@ -78,6 +80,31 @@ def _load_global_context() -> dict:
         GLOBAL_CONTEXT_CACHE_KEY,
         payload,
         GLOBAL_CONTEXT_CACHE_SECONDS,
+    )
+    return payload
+
+
+def _load_bookmakers_context() -> dict:
+    cached = _cache_get(BOOKMAKERS_CONTEXT_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    bookmakers = list(Bookmaker.objects.all())
+    home_bookmakers = [
+        bookmaker for bookmaker in sorted(
+            bookmakers,
+            key=lambda item: (item.home_order, item.id),
+        )
+        if bookmaker.show_on_home
+    ][:3]
+    payload = {
+        "bookmakers": bookmakers,
+        "home_bookmakers": home_bookmakers,
+    }
+    _cache_set(
+        BOOKMAKERS_CONTEXT_CACHE_KEY,
+        payload,
+        BOOKMAKERS_CONTEXT_CACHE_SECONDS,
     )
     return payload
 
@@ -212,6 +239,7 @@ def website_settings(request):
         settings = global_context["settings"]
         footer_groups = global_context["footer_groups"]
         footer_buttons_by_kind = global_context["footer_buttons"]
+        bookmakers_context = _load_bookmakers_context()
     except (OperationalError, ProgrammingError):
         settings = None
         footer_groups = []
@@ -219,6 +247,10 @@ def website_settings(request):
             "app": [],
             "social": [],
             "partner": [],
+        }
+        bookmakers_context = {
+            "bookmakers": [],
+            "home_bookmakers": [],
         }
 
     request.website_settings = settings
@@ -235,6 +267,8 @@ def website_settings(request):
         "website_settings": settings,
         "footer_link_groups": footer_groups,
         "footer_buttons": footer_buttons_by_kind,
+        "bookmakers": bookmakers_context["bookmakers"],
+        "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
         "hide_footer": view_name == "front:prediction_detail",
         "home_wiki_videos": home_wiki_videos,

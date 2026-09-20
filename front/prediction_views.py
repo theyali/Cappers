@@ -35,7 +35,8 @@ from cabinet.models import AnalystFollow, DailyTask
 from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.paid_predictions import user_can_view_paid_predictions
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
-from game.models import Prediction, PredictionCoupon, Sport
+from game.cover_images import active_cover_ids
+from game.models import Prediction, PredictionCoupon, PredictionCoverImage, Sport
 
 from .expert_ranking import ranked_expert_profiles
 from .metrics import (
@@ -200,13 +201,79 @@ def _prediction_card(coupon: PredictionCoupon):
         views_count=getattr(coupon, "views_count", 0),
         shares_count=getattr(coupon, "shares_count", 0),
         is_rich=coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
+        display_cover_url=getattr(coupon, "display_cover_url", ""),
         followers_count=0,
         author_roi=getattr(coupon, "author_roi", Decimal("0")),
     )
 
 
+def _cover_url_from_field(field) -> str:
+    if not field:
+        return ""
+    try:
+        return field.url
+    except ValueError:
+        return ""
+
+
+def _attach_display_cover_urls(coupons: list[PredictionCoupon]) -> None:
+    missing: list[tuple[PredictionCoupon, str, int | None]] = []
+    cover_ids_by_key: dict[tuple[str, int | None], list[int]] = {}
+    selected_cover_ids: set[int] = set()
+
+    for coupon in coupons:
+        coupon.display_cover_url = _cover_url_from_field(coupon.custom_cover_image)
+        if coupon.display_cover_url:
+            continue
+
+        cover = getattr(coupon, "cover_image", None)
+        if cover and cover.image:
+            coupon.display_cover_url = cover.image.url
+            continue
+
+        positions = list(getattr(coupon, "card_positions", []) or [])
+        if not positions:
+            coupon.display_cover_url = ""
+            continue
+
+        if len(positions) > 1 or coupon.coupon_type == PredictionCoupon.CouponType.EXPRESS:
+            key = (PredictionCoverImage.CoverType.EXPRESS, None)
+        else:
+            sport_id = positions[0].match.sport_id
+            if not sport_id:
+                coupon.display_cover_url = ""
+                continue
+            key = (PredictionCoverImage.CoverType.SPORT, sport_id)
+        missing.append((coupon, *key))
+
+    for _, cover_type, sport_id in missing:
+        key = (cover_type, sport_id)
+        if key in cover_ids_by_key:
+            continue
+        cover_ids = active_cover_ids(
+            cover_type=cover_type,
+            placement=PredictionCoverImage.Placement.GRID,
+            sport_id=sport_id,
+        )
+        cover_ids_by_key[key] = cover_ids
+        selected_cover_ids.update(cover_ids)
+
+    covers_by_id = {
+        cover.id: cover
+        for cover in PredictionCoverImage.objects.filter(id__in=selected_cover_ids).only("id", "image")
+    }
+    for coupon, cover_type, sport_id in missing:
+        cover_ids = cover_ids_by_key.get((cover_type, sport_id), [])
+        if not cover_ids:
+            coupon.display_cover_url = ""
+            continue
+        cover = covers_by_id.get(cover_ids[coupon.id % len(cover_ids)])
+        coupon.display_cover_url = cover.image.url if cover and cover.image else ""
+
+
 def _decorate_predictions(request, predictions, following_ids: set[int] | None = None):
     coupons = list(predictions)
+    _attach_display_cover_urls(coupons)
     prediction_ids = [coupon.pk for coupon in coupons]
     liked_ids = set()
     favorite_ids = set()

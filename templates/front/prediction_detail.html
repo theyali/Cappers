@@ -18,60 +18,122 @@
                     <span>Вернуться к прогнозам</span>
                 </a>
 
-                <a class="coupon-author-link" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
-                    <span class="coupon-author-avatar{% if coupon.author.is_vip %} is-vip{% endif %}"{% if expert_avatar_url %} data-skeleton-image{% endif %}>
-                        {% capper_trust_badge expert_trust_index %}
-                        {% if expert_avatar_url %}
-                            <img src="{{ expert_avatar_url }}" width="72" height="72" alt="" loading="lazy">
-                        {% else %}
-                            {{ expert_initials }}
-                        {% endif %}
-                    </span>
-                    <span class="coupon-author-copy">
-                        <span class="coupon-author-name">
-                            <strong>{{ expert_name }}</strong>
-                            {% if expert_verified %}
-                            <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                                <svg viewBox="0 0 16 16" aria-hidden="true">
-                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
-                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
-                                </svg>
+                {% with display_cover=coupon.get_display_cover_image %}
+                <section
+                    class="coupon-detail-showcase{% if not display_cover %} has-no-cover{% endif %}"
+                    {% if display_cover %}style="background-image:url('{{ display_cover.url }}');"{% endif %}
+                    aria-label="{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}"
+                >
+                    <div class="coupon-detail-showcase-content">
+                        <div class="coupon-detail-type-pill">
+                            <span aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M7 4h10l3 5-8 11L4 9l3-5Z"></path><path d="m9 9 2 2 4-5"></path></svg>
                             </span>
-                            {% endif %}
-                        </span>
-                        <span>Эксперт КапперХаб</span>
-                    </span>
-                </a>
+                            <strong>{% if coupon.coupon_type == 'express' %}Экспресс-купон{% else %}Купон{% endif %}</strong>
+                        </div>
 
-                <header class="coupon-detail-heading">
-                    <div>
-                        <p>
-                            {% if coupon.audience == "paid" %}
-                                {% if coupon.coupon_type == 'express' %}Платный экспресс{% else %}Платный купон{% endif %}
+                        <h1>{% if coupon.coupon_type == 'express' %}Купон{% else %}Купон{% endif %} #{{ coupon.id }}</h1>
+                        <p>{{ coupon.headline|default:"Топовые матчи. Выверенная аналитика. Уверенная игра." }}</p>
+
+                        <div class="coupon-detail-showcase-bottom">
+                            <a class="coupon-detail-hero-author" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
+                                <span class="coupon-detail-hero-avatar{% if coupon.author.is_vip %} is-vip{% endif %}"{% if expert_avatar_url %} data-skeleton-image{% endif %}>
+                                    {% capper_trust_badge expert_trust_index %}
+                                    {% if expert_avatar_url %}
+                                        <img src="{{ expert_avatar_url }}" width="72" height="72" alt="" loading="lazy">
+                                    {% else %}
+                                        {{ expert_initials }}
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    <small>Опубликован</small>
+                                    <strong>{{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</strong>
+                                </span>
+                            </a>
+
+                            {% if coupon.state_status == "win" %}
+                                <span class="coupon-detail-status is-published">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 12.2 10.7 15.4 16.8 8.8"></path></svg>
+                                    Выигрыш
+                                </span>
+                            {% elif coupon.state_status == "lose" %}
+                                <span class="coupon-detail-status is-canceled">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8 8 8M16 8l-8 8"></path></svg>
+                                    Проигрыш
+                                </span>
+                            {% elif coupon.state_status == "refund" %}
+                                <span class="coupon-detail-status">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 8.2A7 7 0 1 1 5 13"></path><path d="M7.2 4.8v3.4H3.8"></path></svg>
+                                    Возврат
+                                </span>
                             {% else %}
-                                {% if coupon.coupon_type == 'express' %}Бесплатный экспресс{% else %}Бесплатный купон{% endif %}
+                                <span class="coupon-detail-status is-published">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 7v5l3 2"></path></svg>
+                                    Опубликован
+                                </span>
                             {% endif %}
-                        </p>
-                        <h1>{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}</h1>
-                        <span>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</span>
+
+                            {% if coupon.description %}
+                                <blockquote>{{ coupon.description|truncatechars:92 }}</blockquote>
+                            {% endif %}
+                        </div>
                     </div>
+                </section>
+                {% endwith %}
 
-                    {% if coupon.state_status == "win" %}
-                        <span class="coupon-detail-status is-published">Выигрыш</span>
-                    {% elif coupon.state_status == "lose" %}
-                        <span class="coupon-detail-status is-canceled">Проигрыш</span>
-                    {% elif coupon.state_status == "refund" %}
-                        <span class="coupon-detail-status">Возврат</span>
-                    {% else %}
-                        <span class="coupon-detail-status is-published">Опубликован</span>
-                    {% endif %}
-                </header>
+                <section class="coupon-detail-stats" aria-label="Показатели купона">
+                    <div class="coupon-detail-stat is-odds">
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20V8"></path></svg></span>
+                        <small>Коэффициент</small>
+                        <strong>{{ total_coefficient }}</strong>
+                    </div>
+                    <div class="coupon-detail-stat is-stake">
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"></path><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"></path></svg></span>
+                        <small>Ставка</small>
+                        <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ coupon.total_stake|floatformat:"0" }}</span></strong>
+                    </div>
+                    <div class="coupon-detail-stat is-confidence">
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6l8-3Z"></path><path d="m8.5 12 2.3 2.3 4.8-5"></path></svg></span>
+                        <small>Уверенность</small>
+                        <strong>{{ coupon.confidence }}%</strong>
+                    </div>
+                    <div class="coupon-detail-stat is-payout">
+                        <span aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"></ellipse><path d="M5 6v5c0 1.7 3.1 3 7 3s7-1.3 7-3V6"></path><path d="M8 14v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4"></path></svg></span>
+                        <small>Возможная выплата</small>
+                        <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ coupon.possible_payout|floatformat:"0" }}</span></strong>
+                    </div>
+                </section>
 
-                {% coupon_reactions coupon %}
+                {% coupon_reactions coupon show_comments=False %}
 
                 <section class="coupon-detail-panel" aria-label="{% if coupon.coupon_type == 'express' %}Состав экспресса{% else %}Состав купона{% endif %}">
                     {% include "cabinet/_coupon_slip.html" with predictions=positions coupon_total_coefficient=total_coefficient show_sport_badge=True compact=True %}
                 </section>
+
+                {% if coupon.description %}
+                <section class="coupon-detail-analysis" aria-label="Анализ матча">
+                    <div class="coupon-detail-analysis-copy">
+                        <h2>
+                            <span aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M14 3v5h5"></path><path d="M8 13h8M8 17h6"></path></svg>
+                            </span>
+                            Анализ матча
+                        </h2>
+                        <p>{{ coupon.description|linebreaksbr }}</p>
+                    </div>
+                    <aside class="coupon-detail-facts" aria-label="Ключевые факты">
+                        <h3>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20V8"></path></svg>
+                            Ключевые факты
+                        </h3>
+                        <ul>
+                            <li>Коэффициент прогноза — {{ total_coefficient }}</li>
+                            <li>Уверенность эксперта — {{ coupon.confidence }}%</li>
+                            <li>Позиций в купоне — {{ positions|length }}</li>
+                        </ul>
+                    </aside>
+                </section>
+                {% endif %}
 
                 <section
                     class="prediction-comments"

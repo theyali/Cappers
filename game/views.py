@@ -154,19 +154,23 @@ def rich_prediction_create(request):
     if not request.user.is_analyst:
         raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
 
-    context = build_prediction_editor_context(request)
+    source_coupon = _active_draft_coupon(request.user)
+    context = build_prediction_editor_context(request, coupon=source_coupon)
     form = RichPredictionCouponForm(
         request.POST or None,
         request.FILES or None,
         user=request.user,
+        coupon=source_coupon,
+        initial=context["form_initial"],
     )
 
-    if request.method == "POST" and form.is_valid():
+    if request.method == "POST" and context["has_coupon_positions"] and form.is_valid():
         try:
             coupon = create_rich_prediction(
                 request.user,
                 form.cleaned_data,
                 request.FILES,
+                source_coupon=source_coupon,
             )
         except ValidationError as exc:
             form.add_error(None, exc)
@@ -191,6 +195,7 @@ def rich_prediction_edit(request, coupon_id):
         request.POST or None,
         request.FILES or None,
         user=request.user,
+        coupon=coupon,
         initial=context["form_initial"],
     )
 

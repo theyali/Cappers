@@ -9,25 +9,19 @@
         href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
         aria-label="Открыть текстовый прогноз {{ prediction.match.home_team_name|default:'Хозяева' }} — {{ prediction.match.away_team_name|default:'Гости' }}"
     >
-        {% with display_cover=prediction.coupon.get_display_cover_image %}
-            {% if display_cover %}
-            <span class="prediction-card-rich-cover-image" data-skeleton-image>
-                <img src="{{ display_cover.url }}" width="640" height="400" alt="" loading="lazy">
-            </span>
-            {% else %}
-            <span class="prediction-card-rich-cover-fallback" aria-hidden="true"></span>
-            {% endif %}
-        {% endwith %}
+        {% if prediction.display_cover_url %}
+        <span class="prediction-card-rich-cover-image" data-skeleton-image>
+            <img src="{{ prediction.display_cover_url }}" width="640" height="400" alt="" loading="lazy">
+        </span>
+        {% else %}
+        <span class="prediction-card-rich-cover-fallback" aria-hidden="true"></span>
+        {% endif %}
 
         <span class="prediction-card-rich-cover-meta">
             <span>{{ prediction.match.sport.name_ru|default:prediction.match.sport.name|default:"Спорт" }}</span>
             {% if prediction.match.starts_at %}
-                <time datetime="{{ prediction.match.starts_at|date:'c' }}">{{ prediction.match.starts_at|date:"d.m · H:i" }}</time>
+                <time datetime="{{ prediction.match.starts_at|date:'c' }}">{{ prediction.match.starts_at|date:"d.m · H:i" }}<small>{{ prediction.match.league_name|default:"Лига" }}</small></time>
             {% endif %}
-        </span>
-
-        <span class="prediction-card-rich-cover-league">
-            {{ prediction.match.league_name|default:"Матч" }}
         </span>
 
         <span class="prediction-card-rich-cover-teams">
@@ -56,65 +50,83 @@
     </a>
 
     <div class="prediction-card-rich-body">
-        <div class="prediction-card-rich-meta">
-            <a
-                class="prediction-card-rich-author"
-                href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}"
-            >
-                <span class="prediction-card-rich-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
-                    {% capper_trust_badge prediction.expert_trust_index %}
-                    {% if prediction.expert_avatar_url %}
-                        <img src="{{ prediction.expert_avatar_url }}" width="40" height="40" alt="" loading="lazy">
-                    {% elif prediction.coupon.author.avatar %}
-                        <img src="{{ prediction.coupon.author.avatar.url }}" width="40" height="40" alt="" loading="lazy">
-                    {% else %}
-                        {{ prediction.expert_initials }}
-                    {% endif %}
-                </span>
-                <span>
-                    <strong>{{ prediction.expert_name }}</strong>
-                    <small>@{{ prediction.coupon.author.username }}</small>
-                </span>
-                {% if prediction.coupon.author.is_vip %}
-                    <em>VIP</em>
-                {% endif %}
-                {% if prediction.expert_verified %}
-                    <span class="capper-verified-badge prediction-card-rich-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                        <svg viewBox="0 0 16 16" aria-hidden="true">
-                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
-                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
-                        </svg>
-                    </span>
-                {% endif %}
-            </a>
+        <div class="prediction-card-rich-main">
+            <div class="prediction-card-rich-content">
+                <div class="prediction-card-rich-meta">
+                    <a
+                        class="prediction-card-rich-author"
+                        href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}"
+                    >
+                        <span class="prediction-card-rich-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+                            {% capper_trust_badge prediction.expert_trust_index %}
+                            {% if prediction.expert_avatar_url %}
+                                <img src="{{ prediction.expert_avatar_url }}" width="40" height="40" alt="" loading="lazy">
+                            {% elif prediction.coupon.author.avatar %}
+                                <img src="{{ prediction.coupon.author.avatar.url }}" width="40" height="40" alt="" loading="lazy">
+                            {% else %}
+                                {{ prediction.expert_initials }}
+                            {% endif %}
+                        </span>
+                        <span>
+                            <strong>{{ prediction.expert_name }}</strong>
+                            <small>{{ prediction.created_at|timesince }} назад</small>
+                        </span>
+                        {% if prediction.expert_verified %}
+                            <span class="capper-verified-badge prediction-card-rich-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                <svg viewBox="0 0 16 16" aria-hidden="true">
+                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                                </svg>
+                            </span>
+                        {% endif %}
+                    </a>
 
-            <div class="prediction-card-rich-meta-copy">
-                <time datetime="{{ prediction.created_at|date:'c' }}">{{ prediction.created_at|date:"d.m.Y · H:i" }}</time>
-                <span>{{ prediction.coupon.get_coupon_type_display }}</span>
-                <span>{% if prediction.coupon.audience == 'paid' %}Платный{% else %}Бесплатный{% endif %}</span>
+                    <div class="prediction-card-rich-meta-copy">
+                        <span>{{ prediction.coupon.get_coupon_type_display }}</span>
+                    </div>
+                </div>
+
+                <a
+                    class="prediction-card-rich-title"
+                    href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+                >
+                    {{ prediction.coupon.headline|default:prediction.selection }}
+                </a>
+
+                {% if prediction.coupon.description %}
+                <p class="prediction-card-rich-description">
+                    {{ prediction.coupon.description|truncatechars:220 }}
+                </p>
+                {% endif %}
+
+                {% if prediction.coupon.tags %}
+                <div class="prediction-card-rich-tags" aria-label="Теги прогноза">
+                    {% for tag in prediction.coupon.tags %}
+                        <span>#{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
+
+            <aside class="prediction-card-rich-stats" aria-label="Показатели прогноза">
+                <span class="prediction-card-rich-coefficient">
+                    <small>Коэффициент</small>
+                    <strong>{{ prediction.coefficient|floatformat:2 }}</strong>
+                </span>
+                <span class="prediction-card-rich-status is-{{ prediction.state_status }}">
+                    <small aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8"></circle>
+                            <path d="M12 7v5l3 2"></path>
+                        </svg>
+                    </small>
+                    <strong>{{ prediction.coupon.get_state_status_display }}</strong>
+                </span>
+                <span class="prediction-card-rich-views">
+                    <strong>{{ prediction.views_count }} просмотров</strong>
+                </span>
+            </aside>
         </div>
-
-        <a
-            class="prediction-card-rich-title"
-            href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
-        >
-            {{ prediction.coupon.headline|default:prediction.selection }}
-        </a>
-
-        {% if prediction.coupon.description %}
-        <p class="prediction-card-rich-description">
-            {{ prediction.coupon.description|truncatechars:280 }}
-        </p>
-        {% endif %}
-
-        {% if prediction.coupon.tags %}
-        <div class="prediction-card-rich-tags" aria-label="Теги прогноза">
-            {% for tag in prediction.coupon.tags %}
-                <span>#{{ tag }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
 
         <div class="prediction-card-rich-actions" aria-label="Действия с прогнозом">
             <button
@@ -163,22 +175,8 @@
                 title="{% if prediction.is_own %}Нельзя сохранять свой прогноз{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
             >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
+                <span>Сохранить</span>
             </button>
         </div>
     </div>
-
-    <aside class="prediction-card-rich-stats" aria-label="Показатели прогноза">
-        <span class="prediction-card-rich-coefficient">
-            <small>Коэффициент</small>
-            <strong>{{ prediction.coefficient|floatformat:2 }}</strong>
-        </span>
-        <span class="prediction-card-rich-status is-{{ prediction.state_status }}">
-            <small>Статус</small>
-            <strong>{{ prediction.coupon.get_state_status_display }}</strong>
-        </span>
-        <span class="prediction-card-rich-views">
-            <small>Просмотры</small>
-            <strong>{{ prediction.views_count }} просмотров</strong>
-        </span>
-    </aside>
 </article>

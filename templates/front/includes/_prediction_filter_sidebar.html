@@ -115,7 +115,7 @@
             <form class="prediction-filters" method="get" action="{{ filter_action_url }}" data-prediction-filters>
                 <input type="hidden" name="sort" value="{{ active_sort }}">
                 <input type="hidden" name="status" value="{{ active_status }}">
-                {% if is_rich_predictions %}<input type="hidden" name="prediction_type" value="rich">{% endif %}
+                {% if is_rich_predictions and uses_prediction_type_query %}<input type="hidden" name="prediction_type" value="rich">{% endif %}
                 {% if top_experts_only %}<input type="hidden" name="top" value="1">{% endif %}
                 {% if selected_capper and following %}<input type="hidden" name="capper" value="{{ selected_capper }}">{% endif %}
 

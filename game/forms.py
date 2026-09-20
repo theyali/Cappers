@@ -3,7 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.db.models import Q
 
-from game.models import Match, PredictionCoupon, PredictionCoverImage
+from game.models import PredictionCoupon, PredictionCoverImage
 from game.services.prediction_editor import can_use_rich_prediction_fields
 
 
@@ -13,29 +13,38 @@ ALLOWED_CUSTOM_COVER_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 class RichPredictionCouponForm(forms.Form):
-    match = forms.ModelChoiceField(
-        label="Матч",
-        queryset=Match.objects.none(),
+    total_stake = forms.DecimalField(
+        label="Сумма",
+        required=False,
+        min_value=Decimal("100"),
+        max_value=Decimal("1000000"),
+        max_digits=10,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"min": "100", "max": "1000000", "step": "1"}),
     )
-    coupon_type = forms.ChoiceField(
-        label="Тип прогноза",
-        choices=PredictionCoupon.CouponType.choices,
-        initial=PredictionCoupon.CouponType.SINGLE,
+    confidence = forms.IntegerField(
+        label="Уверенность",
+        required=False,
+        min_value=0,
+        max_value=100,
+        widget=forms.TextInput(
+            attrs={
+                "type": "range",
+                "min": "0",
+                "max": "100",
+                "step": "1",
+                "class": "coupon-confidence-range",
+                "data-rich-confidence": "",
+            }
+        ),
+    )
+    remove_prediction_ids = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
     )
     is_paid = forms.BooleanField(
         label="Платный прогноз",
         required=False,
-    )
-    coefficient = forms.DecimalField(
-        label="Коэффициент",
-        min_value=Decimal("0.01"),
-        max_digits=8,
-        decimal_places=2,
-        widget=forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
-    )
-    prediction_text = forms.CharField(
-        label="Прогноз",
-        max_length=120,
     )
     headline = forms.CharField(
         label="Заголовок",
@@ -69,26 +78,12 @@ class RichPredictionCouponForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, user=None, match=None, sport=None, **kwargs):
+    def __init__(self, *args, user=None, coupon=None, sport=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.match = match
+        self.coupon = coupon
         self.sport = sport
         self.can_use_rich_fields = can_use_rich_prediction_fields(user)
-
-        matches = Match.objects.filter(sync_scope=Match.SyncScope.PREMATCH).select_related(
-            "sport",
-            "league",
-            "home_team",
-            "away_team",
-        )
-        if match is not None:
-            match_id = getattr(match, "pk", match)
-            matches = matches.filter(pk=match_id)
-        elif sport is not None:
-            sport_id = getattr(sport, "pk", sport)
-            matches = matches.filter(sport_id=sport_id)
-        self.fields["match"].queryset = matches.order_by("starts_at", "id")
 
         covers = PredictionCoverImage.objects.none()
         if self.can_use_rich_fields:
@@ -105,14 +100,20 @@ class RichPredictionCouponForm(forms.Form):
                         sport_id=sport_id,
                     )
                 )
-            elif match is not None and getattr(match, "sport_id", None):
-                covers = covers.filter(
-                    Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
-                    | Q(
-                        cover_type=PredictionCoverImage.CoverType.SPORT,
-                        sport_id=match.sport_id,
-                    )
+            elif coupon is not None:
+                sport_ids = set(
+                    coupon.predictions.filter(match__sport_id__isnull=False)
+                    .values_list("match__sport_id", flat=True)
                 )
+                if len(sport_ids) == 1:
+                    sport_id = next(iter(sport_ids))
+                    covers = covers.filter(
+                        Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
+                        | Q(
+                            cover_type=PredictionCoverImage.CoverType.SPORT,
+                            sport_id=sport_id,
+                        )
+                    )
             covers = covers.select_related("sport").order_by(
                 "cover_type",
                 "sport__name_ru",
@@ -166,6 +167,23 @@ class RichPredictionCouponForm(forms.Form):
                 break
         return tags
 
+    def clean_remove_prediction_ids(self):
+        value = self.cleaned_data.get("remove_prediction_ids", "")
+        ids = []
+        seen = set()
+        for raw_id in str(value or "").replace(" ", "").split(","):
+            if not raw_id:
+                continue
+            try:
+                prediction_id = int(raw_id)
+            except (TypeError, ValueError):
+                raise forms.ValidationError("Некорректная позиция купона.")
+            if prediction_id <= 0 or prediction_id in seen:
+                continue
+            seen.add(prediction_id)
+            ids.append(prediction_id)
+        return ids
+
     def clean(self):
         cleaned_data = super().clean()
         is_paid = bool(cleaned_data.get("is_paid"))
@@ -183,4 +201,3 @@ class RichPredictionCouponForm(forms.Form):
             )
 
         return cleaned_data
-

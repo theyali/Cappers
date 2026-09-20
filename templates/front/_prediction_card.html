@@ -144,6 +144,24 @@
         </div>
     </a>
 
+    {% if prediction.coupon.headline or prediction.coupon.description or prediction.display_cover_url %}
+    <a class="prediction-card-text-preview" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        {% if prediction.display_cover_url %}
+        <span class="prediction-card-text-cover" data-skeleton-image>
+            <img src="{{ prediction.display_cover_url }}" width="160" height="100" alt="" loading="lazy">
+        </span>
+        {% endif %}
+        <span class="prediction-card-text-copy">
+            {% if prediction.coupon.headline %}
+                <strong>{{ prediction.coupon.headline }}</strong>
+            {% endif %}
+            {% if prediction.coupon.description %}
+                <span>{{ prediction.coupon.description|truncatechars:180 }}</span>
+            {% endif %}
+        </span>
+    </a>
+    {% endif %}
+
     <div class="prediction-pick prediction-pick-rich">
         <div>
             <small>{{ prediction.market }}</small>
@@ -192,7 +210,7 @@
             title="{% if prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
         >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>
             <span class="prediction-reaction-label">Нравится</span>
             <b data-like-count>{{ prediction.likes_count }}</b>
@@ -208,11 +226,35 @@
             title="{% if prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
         >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>
-            <span class="prediction-reaction-label">В избранное</span>
+            <span class="prediction-reaction-label">Сохранить</span>
         </button>
         {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="prediction-reaction" only %}
+        <button
+            class="prediction-reaction prediction-share"
+            type="button"
+            data-prediction-id="{{ prediction.coupon.id }}"
+            data-share-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            data-share-endpoint="{% url 'front:prediction_share' prediction_id=prediction.coupon.id %}"
+            aria-label="Поделиться прогнозом"
+            title="Поделиться прогнозом"
+        >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 16V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="m7.5 8.5 4.5-4.5 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="prediction-reaction-label">Поделиться</span>
+            <b data-share-count>{{ prediction.shares_count }}</b>
+        </button>
+        <span class="prediction-reaction prediction-views" title="Просмотры" aria-label="Просмотров: {{ prediction.views_count }}">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+                <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.8"></circle>
+            </svg>
+            <b>{{ prediction.views_count }}</b>
+        </span>
     </div>
 
     <div class="prediction-published-at">

@@ -90,6 +90,7 @@
     const noteNode = root.querySelector("[data-coupon-note]");
     const submitButton = root.querySelector("[data-coupon-submit]");
     const submitStatus = root.querySelector("[data-coupon-submit-status]");
+    const richAction = root.querySelector("[data-coupon-rich-action]");
     const csrfInput = form.querySelector("[name=csrfmiddlewaretoken]");
     const canWrite = root.dataset.canWrite === "true";
     const createUrl = root.dataset.createUrl;
@@ -214,6 +215,9 @@
         if (countNode) countNode.textContent = `${items.size}/20`;
         if (submitButton) {
             submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
+        }
+        if (richAction) {
+            richAction.hidden = items.size < 1 || !draftId;
         }
         updateConfidenceVisual();
         formatTotal();

@@ -46,8 +46,31 @@ def _catalog_cache_key(namespace: str, *parts) -> str:
     return f"front:predictions:{namespace}:v3:{signature}"
 
 
-def build_prediction_type_context(request) -> dict:
-    active_prediction_type = request.GET.get("prediction_type", PREDICTION_TYPE_CLASSIC)
+def _rich_path(sport_code: str | None = None, *, express_only: bool = False) -> str:
+    if express_only:
+        return reverse("front:prediction_expresses_rich")
+    if sport_code:
+        return reverse("front:predictions_rich_by_sport", kwargs={"sport_code": sport_code})
+    return reverse("front:predictions_rich")
+
+
+def _classic_path(sport_code: str | None = None, *, express_only: bool = False) -> str:
+    if express_only:
+        return reverse("front:prediction_expresses")
+    return _prediction_sport_path(sport_code)
+
+
+def build_prediction_type_context(
+    request,
+    *,
+    forced_prediction_type: str | None = None,
+    sport_code: str | None = None,
+    express_only: bool = False,
+) -> dict:
+    active_prediction_type = forced_prediction_type or request.GET.get(
+        "prediction_type",
+        PREDICTION_TYPE_CLASSIC,
+    )
     if active_prediction_type not in {PREDICTION_TYPE_CLASSIC, PREDICTION_TYPE_RICH}:
         active_prediction_type = PREDICTION_TYPE_CLASSIC
 
@@ -55,14 +78,25 @@ def build_prediction_type_context(request) -> dict:
     params.pop("page", None)
     params.pop("prediction_type", None)
 
-    classic_url = _url_with_query(request.path, params)
-    rich_params = params.copy()
-    rich_params["prediction_type"] = PREDICTION_TYPE_RICH
-    rich_url = _url_with_query(request.path, rich_params)
+    use_catalog_pretty_urls = request.path.startswith("/predictions/")
+    if use_catalog_pretty_urls:
+        classic_url = _url_with_query(
+            _classic_path(sport_code, express_only=express_only),
+            params,
+        )
+        rich_url = _url_with_query(
+            _rich_path(sport_code, express_only=express_only),
+            params,
+        )
+    else:
+        classic_url = _url_with_query(request.path, params)
+        rich_params = params.copy()
+        rich_params["prediction_type"] = PREDICTION_TYPE_RICH
+        rich_url = _url_with_query(request.path, rich_params)
 
     reset_params = request.GET.copy()
     reset_params.clear()
-    if active_prediction_type == PREDICTION_TYPE_RICH:
+    if active_prediction_type == PREDICTION_TYPE_RICH and not use_catalog_pretty_urls:
         reset_params["prediction_type"] = PREDICTION_TYPE_RICH
 
     return {
@@ -86,8 +120,18 @@ def build_prediction_type_context(request) -> dict:
                 "active": active_prediction_type == PREDICTION_TYPE_RICH,
             },
         ],
-        "prediction_type_reset_url": _url_with_query(request.path, reset_params),
+        "prediction_type_reset_url": _url_with_query(
+            (
+                _rich_path(sport_code, express_only=express_only)
+                if active_prediction_type == PREDICTION_TYPE_RICH
+                else _classic_path(sport_code, express_only=express_only)
+            )
+            if use_catalog_pretty_urls
+            else request.path,
+            reset_params,
+        ),
         "is_rich_predictions": active_prediction_type == PREDICTION_TYPE_RICH,
+        "uses_prediction_type_query": not use_catalog_pretty_urls,
     }
 
 
@@ -214,6 +258,8 @@ def _sport_tabs(
     params = _clean_prediction_params(request.GET)
     params.pop("league", None)
     params.pop("express", None)
+    params.pop("prediction_type", None)
+    is_rich = prediction_format == PredictionCoupon.PredictionFormat.RICH
 
     cache_key = _catalog_cache_key(
         "sport-tabs",
@@ -253,14 +299,17 @@ def _sport_tabs(
             "code": "",
             "label": "Все",
             "count": cached["all_count"],
-            "href": _url_with_query(_prediction_sport_path(), params),
+            "href": _url_with_query(_rich_path() if is_rich else _prediction_sport_path(), params),
             "active": active_sport is None and not express_only,
         },
         {
             "code": "express",
             "label": "Экспрессы",
             "count": cached["express_count"],
-            "href": _url_with_query(_express_path(), params),
+            "href": _url_with_query(
+                _rich_path(express_only=True) if is_rich else _express_path(),
+                params,
+            ),
             "active": express_only,
         },
     ]
@@ -272,7 +321,10 @@ def _sport_tabs(
                 "code": code,
                 "label": row["match__sport__name_ru"] or row["match__sport__name"] or code,
                 "count": row["count"],
-                "href": _url_with_query(_prediction_sport_path(code), params),
+                "href": _url_with_query(
+                    _rich_path(code) if is_rich else _prediction_sport_path(code),
+                    params,
+                ),
                 "active": bool(active_sport and active_sport.pk == row["match__sport_id"]),
             }
         )
@@ -407,6 +459,16 @@ def _redirect_legacy_express_query(request):
     return HttpResponseRedirect(_url_with_query(_express_path(), params))
 
 
+def _redirect_legacy_rich_query(request, *, sport_code: str | None, express_only: bool):
+    if request.GET.get("prediction_type") != PREDICTION_TYPE_RICH:
+        return None
+    params = request.GET.copy()
+    params.pop("prediction_type", None)
+    return HttpResponseRedirect(
+        _url_with_query(_rich_path(sport_code, express_only=express_only), params)
+    )
+
+
 def _diversify_author_streaks(coupons, *, max_streak: int = MAX_CONSECUTIVE_AUTHOR_CARDS):
     queue = list(coupons)
     diversified = []
@@ -438,8 +500,27 @@ def _diversify_author_streaks(coupons, *, max_streak: int = MAX_CONSECUTIVE_AUTH
 
 
 @ensure_csrf_cookie
-def predictions(request, sport_code: str | None = None, express_only: bool = False):
-    prediction_type_context = build_prediction_type_context(request)
+def predictions(
+    request,
+    sport_code: str | None = None,
+    express_only: bool = False,
+    prediction_type: str | None = None,
+):
+    if prediction_type != PREDICTION_TYPE_RICH:
+        rich_redirect = _redirect_legacy_rich_query(
+            request,
+            sport_code=sport_code,
+            express_only=express_only,
+        )
+        if rich_redirect:
+            return rich_redirect
+
+    prediction_type_context = build_prediction_type_context(
+        request,
+        forced_prediction_type=prediction_type,
+        sport_code=sport_code,
+        express_only=express_only,
+    )
     prediction_format = prediction_type_context["prediction_format"]
 
     if express_only:
@@ -617,6 +698,11 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
         filter_action_url = _express_path()
     else:
         filter_action_url = _prediction_sport_path(active_sport.code if active_sport else None)
+    if prediction_type_context["is_rich_predictions"]:
+        filter_action_url = _rich_path(
+            active_sport.code if active_sport else None,
+            express_only=express_only,
+        )
 
     return render(
         request,
@@ -658,7 +744,7 @@ def predictions(request, sport_code: str | None = None, express_only: bool = Fal
             "active_filter_count": active_filter_count,
             "filter_action_url": filter_action_url,
             "all_predictions_url": (
-                f"{_prediction_sport_path()}?prediction_type={PREDICTION_TYPE_RICH}"
+                _rich_path()
                 if prediction_type_context["is_rich_predictions"]
                 else _prediction_sport_path()
             ),

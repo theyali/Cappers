@@ -1,11 +1,14 @@
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
+from game.models import PredictionCoupon, PredictionCoverImage
+
+
+MAX_RICH_PREDICTION_ITEMS = 15
 
 
 def can_use_rich_prediction_fields(user) -> bool:
@@ -19,9 +22,11 @@ def can_use_rich_prediction_fields(user) -> bool:
 def build_prediction_editor_context(request, coupon=None) -> dict:
     _ensure_editor_access(request.user)
     if coupon is not None:
-        _ensure_coupon_edit_access(request.user, coupon)
+        _ensure_coupon_access(request.user, coupon)
 
     can_use_rich_fields = can_use_rich_prediction_fields(request.user)
+    predictions = _coupon_predictions(coupon) if coupon is not None else []
+    has_coupon_positions = 1 <= len(predictions) <= MAX_RICH_PREDICTION_ITEMS
     available_covers = []
     if can_use_rich_fields:
         available_covers = list(
@@ -37,11 +42,9 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
     form_initial = {}
     if coupon is not None:
         form_initial = {
-            "match": preview_prediction["match"],
-            "coupon_type": coupon.coupon_type,
+            "total_stake": coupon.total_stake,
+            "confidence": coupon.confidence,
             "is_paid": preview_prediction["is_paid"],
-            "coefficient": preview_prediction["coefficient"],
-            "prediction_text": preview_prediction["prediction_text"],
             "headline": coupon.headline,
             "description": coupon.description,
             "cover_image": coupon.cover_image_id,
@@ -58,18 +61,28 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
         "preview_prediction": preview_prediction,
         "form_initial": form_initial,
         "submit_label": "Сохранить изменения" if coupon else "Создать прогноз",
-        "is_editing": coupon is not None,
+        "is_editing": coupon is not None and coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
+        "has_coupon_positions": has_coupon_positions,
+        "predictions": predictions,
+        "coupon_total_coefficient": _coupon_total_coefficient(predictions),
+        "rich_prediction_max_items": MAX_RICH_PREDICTION_ITEMS,
+        "selected_cover_id": str(coupon.cover_image_id) if coupon and coupon.cover_image_id else "",
     }
 
 
 @transaction.atomic
-def create_rich_prediction(user, data, files) -> PredictionCoupon:
+def create_rich_prediction(user, data, files, *, source_coupon=None) -> PredictionCoupon:
     _ensure_editor_access(user)
-    coupon = PredictionCoupon(
+    if source_coupon is None or not getattr(source_coupon, "pk", None):
+        raise ValidationError(
+            "Сначала добавьте матчи в купон, затем откройте расширенный прогноз."
+        )
+
+    coupon = PredictionCoupon.objects.select_for_update().get(
+        pk=source_coupon.pk,
         author=user,
-        prediction_format=PredictionCoupon.PredictionFormat.RICH,
-        total_stake=Decimal("0"),
-        possible_payout=Decimal("0"),
+        published_status=PredictionCoupon.PublishedStatus.DRAFT,
+        prediction_format=PredictionCoupon.PredictionFormat.QUICK,
     )
     return _save_rich_prediction(user, coupon, data, files, is_new=True)
 
@@ -87,6 +100,25 @@ def update_rich_prediction(user, coupon, data, files) -> PredictionCoupon:
 def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> PredictionCoupon:
     can_use_rich_fields = can_use_rich_prediction_fields(user)
     files = files or {}
+    _delete_removed_predictions(coupon, data.get("remove_prediction_ids"))
+    predictions = _coupon_predictions(coupon)
+    if not predictions:
+        raise ValidationError(
+            "Сначала добавьте матчи в купон, затем откройте расширенный прогноз."
+        )
+    if len(predictions) > MAX_RICH_PREDICTION_ITEMS:
+        raise ValidationError(
+            f"В расширенном прогнозе может быть максимум {MAX_RICH_PREDICTION_ITEMS} игр."
+        )
+    stale_matches = [
+        prediction.match for prediction in predictions
+        if prediction.match.sync_scope != prediction.match.SyncScope.PREMATCH
+    ]
+    if stale_matches:
+        match = stale_matches[0]
+        raise ValidationError(
+            f"Матч «{match.home_team_name} — {match.away_team_name}» уже начался или завершен."
+        )
 
     headline = _text_value(
         data.get("headline", "") if is_new else data.get("headline", coupon.headline)
@@ -109,20 +141,21 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
             {"description": "Для платного прогноза обязательно добавьте описание."}
         )
 
-    match = _resolve_match(data, coupon, is_new=is_new)
-    coefficient = _resolve_coefficient(data, coupon, is_new=is_new)
-    prediction_text = _resolve_prediction_text(data, coupon, is_new=is_new)
     tags = _normalize_tags(data.get("tags", [] if is_new else coupon.tags))
     status = _resolve_published_status(data, coupon, is_new=is_new)
+    total_stake = _resolve_total_stake(data, coupon)
+    confidence = _resolve_confidence(data, coupon)
+    total_coefficient = _coupon_total_coefficient(predictions)
 
     coupon.prediction_format = PredictionCoupon.PredictionFormat.RICH
     coupon.headline = headline
     coupon.description = description
     coupon.tags = tags
     coupon.audience = audience
+    coupon.total_stake = total_stake
+    coupon.confidence = confidence
+    coupon.possible_payout = total_stake * total_coefficient
     coupon.published_status = status
-    coupon.total_stake = Decimal("0")
-    coupon.possible_payout = Decimal("0")
     coupon.published_at = (
         coupon.published_at or timezone.now()
         if status == PredictionCoupon.PublishedStatus.PUBLISHED
@@ -139,18 +172,6 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
             coupon.custom_cover_image = ""
 
     coupon.save()
-
-    prediction = coupon.predictions.order_by("id").first()
-    if prediction is None:
-        prediction = Prediction(coupon=coupon)
-
-    prediction.match = match
-    prediction.market = _text_value(data.get("market") or "Прогноз")[:80]
-    prediction.selection = prediction_text
-    prediction.coefficient = coefficient
-    # Rich predictions do not use the quick-coupon virtual stake flow.
-    prediction.stake = Decimal("0")
-    prediction.save()
 
     coupon.sync_coupon_type()
     if not coupon.custom_cover_image and not coupon.cover_image_id:
@@ -174,6 +195,13 @@ def _ensure_coupon_edit_access(user, coupon: PredictionCoupon) -> None:
         raise ValidationError("Быстрый купон нельзя редактировать в rich-редакторе.")
 
 
+def _ensure_coupon_access(user, coupon: PredictionCoupon) -> None:
+    if coupon is None or not getattr(coupon, "pk", None):
+        raise ValidationError("Прогноз не найден.")
+    if coupon.author_id != getattr(user, "pk", None):
+        raise PermissionDenied("Нельзя редактировать чужой прогноз.")
+
+
 def _resolve_audience(data, coupon: PredictionCoupon, *, is_new: bool) -> str:
     if "is_paid" in data:
         return (
@@ -190,60 +218,6 @@ def _resolve_audience(data, coupon: PredictionCoupon, *, is_new: bool) -> str:
         return audience
 
     return PredictionCoupon.Audience.FREE if is_new else coupon.audience
-
-
-def _resolve_match(data, coupon: PredictionCoupon, *, is_new: bool) -> Match:
-    value = data.get("match")
-    if value in (None, "") and not is_new:
-        prediction = coupon.predictions.select_related("match").order_by("id").first()
-        value = prediction.match if prediction is not None else None
-
-    if isinstance(value, Match):
-        match = value
-    else:
-        try:
-            match_id = int(value)
-        except (TypeError, ValueError):
-            raise ValidationError({"match": "Выберите матч."})
-        match = Match.objects.filter(pk=match_id).first()
-
-    if match is None:
-        raise ValidationError({"match": "Матч не найден."})
-    if match.sync_scope != Match.SyncScope.PREMATCH:
-        raise ValidationError({"match": "Прогноз можно создать только на предстоящий матч."})
-    return match
-
-
-def _resolve_coefficient(data, coupon: PredictionCoupon, *, is_new: bool) -> Decimal:
-    value = data.get("coefficient")
-    if value in (None, "") and not is_new:
-        prediction = coupon.predictions.order_by("id").first()
-        value = prediction.coefficient if prediction is not None else None
-
-    try:
-        coefficient = Decimal(str(value))
-    except (InvalidOperation, TypeError, ValueError):
-        raise ValidationError({"coefficient": "Укажите корректный коэффициент."})
-
-    if coefficient <= 0:
-        raise ValidationError({"coefficient": "Коэффициент должен быть больше нуля."})
-    return coefficient
-
-
-def _resolve_prediction_text(data, coupon: PredictionCoupon, *, is_new: bool) -> str:
-    value = data.get("prediction_text")
-    if value in (None, "") and "selection" in data:
-        value = data.get("selection")
-    if value in (None, "") and not is_new:
-        prediction = coupon.predictions.order_by("id").first()
-        value = prediction.selection if prediction is not None else ""
-
-    prediction_text = _text_value(value)
-    if not prediction_text:
-        raise ValidationError({"prediction_text": "Укажите прогноз."})
-    if len(prediction_text) > 120:
-        raise ValidationError({"prediction_text": "Прогноз должен быть не длиннее 120 символов."})
-    return prediction_text
 
 
 def _resolve_cover_image(value) -> PredictionCoverImage | None:
@@ -264,6 +238,41 @@ def _resolve_cover_image(value) -> PredictionCoverImage | None:
     if cover is None:
         raise ValidationError({"cover_image": "Эта обложка недоступна."})
     return cover
+
+
+def _delete_removed_predictions(coupon: PredictionCoupon, raw_ids) -> None:
+    if not raw_ids:
+        return
+    ids = raw_ids
+    if isinstance(raw_ids, str):
+        ids = [item for item in raw_ids.replace(" ", "").split(",") if item]
+    ids = [int(prediction_id) for prediction_id in ids if str(prediction_id).isdigit()]
+    if ids:
+        coupon.predictions.filter(id__in=ids).delete()
+
+
+def _resolve_total_stake(data, coupon: PredictionCoupon) -> Decimal:
+    value = data.get("total_stake", coupon.total_stake)
+    try:
+        stake = Decimal(str(value))
+    except Exception as exc:
+        raise ValidationError({"total_stake": "Укажите корректную сумму."}) from exc
+    if stake < Decimal("100"):
+        raise ValidationError({"total_stake": "Минимальная сумма — 100 коинов."})
+    if stake > Decimal("1000000"):
+        raise ValidationError({"total_stake": "Максимальная сумма — 1 000 000 коинов."})
+    return stake
+
+
+def _resolve_confidence(data, coupon: PredictionCoupon) -> int:
+    value = data.get("confidence", coupon.confidence)
+    try:
+        confidence = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValidationError({"confidence": "Укажите уверенность от 0 до 100%."}) from exc
+    if confidence < 0 or confidence > 100:
+        raise ValidationError({"confidence": "Укажите уверенность от 0 до 100%."})
+    return confidence
 
 
 def _resolve_published_status(data, coupon: PredictionCoupon, *, is_new: bool) -> str:
@@ -342,6 +351,30 @@ def _build_preview_prediction(coupon: PredictionCoupon | None) -> dict:
         "cover_url": cover_url,
         "is_paid": coupon.audience == PredictionCoupon.Audience.PAID,
     }
+
+
+def _coupon_predictions(coupon: PredictionCoupon | None) -> list:
+    if coupon is None:
+        return []
+    return list(
+        coupon.predictions.select_related(
+            "match",
+            "match__sport",
+            "match__league",
+            "match__league__country",
+            "match__home_team",
+            "match__away_team",
+        ).order_by("id")
+    )
+
+
+def _coupon_total_coefficient(predictions: list) -> Decimal:
+    total = Decimal("1")
+    if not predictions:
+        return Decimal("0")
+    for prediction in predictions:
+        total *= prediction.coefficient
+    return total
 
 
 def _as_bool(value) -> bool:

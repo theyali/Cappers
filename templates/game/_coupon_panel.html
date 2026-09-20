@@ -60,7 +60,7 @@
             <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span data-coupon-total>0</span></strong>
         </div>
 
-        <a class="coupon-rich-link" href="{% url 'game:rich_prediction_create' %}">Создать платный прогноз</a>
+        <a class="coupon-extended-action" href="{% url 'game:rich_prediction_create' %}" data-coupon-rich-action hidden>Расширенный прогноз</a>
 
         <button class="coupon-submit" type="submit" data-coupon-submit>
             <span class="coupon-submit-label">Сделать прогноз</span>

@@ -210,8 +210,8 @@ def bookmakers_sidebar(context, force_sidebar_ads=False, show_profit_dynamics=Fa
     adv_banners = context.get("adv_banners", [])
     adv_placement = context.get("adv_placement", "content")
     return {
-        "bookmakers": Bookmaker.objects.all(),
-        "website_settings": WebsiteSettings.load(),
+        "bookmakers": context.get("bookmakers") or Bookmaker.objects.all(),
+        "website_settings": context.get("website_settings") or WebsiteSettings.load(),
         "promo_banners": context.get("right_promo_banners", []),
         "adv_banners": adv_banners,
         "adv_placement": adv_placement,
@@ -323,12 +323,14 @@ def vip_cappers_banner(context, limit=6):
     return data
 
 
-@register.inclusion_tag("front/includes/_home_bookmakers.html")
-def home_bookmakers():
-    bookmakers = list(
-        Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")
-    )
-    return {"bookmakers": bookmakers[:3], "is_home_bookmakers": True}
+@register.inclusion_tag("front/includes/_home_bookmakers.html", takes_context=True)
+def home_bookmakers(context):
+    bookmakers = context.get("home_bookmakers")
+    if bookmakers is None:
+        bookmakers = list(
+            Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")[:3]
+        )
+    return {"bookmakers": bookmakers, "is_home_bookmakers": True}
 
 
 @register.inclusion_tag("front/includes/_hot_matches_sidebar.html")

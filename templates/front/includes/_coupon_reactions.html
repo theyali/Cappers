@@ -16,7 +16,7 @@
         {% if is_own %}disabled aria-disabled="true"{% endif %}
     >
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
         <b data-reaction-count>{{ likes_count }}</b>
     </button>
@@ -34,10 +34,37 @@
         {% if is_own %}disabled aria-disabled="true"{% endif %}
     >
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
         <b data-reaction-count>{{ favorites_count }}</b>
     </button>
 
-    {% include "front/includes/_comment_metric.html" with prediction_id=coupon.id comments_count=coupon.comments_count metric_class="prediction-reaction" only %}
+    {% if show_comments %}
+        {% include "front/includes/_comment_metric.html" with prediction_id=coupon.id comments_count=coupon.comments_count metric_class="prediction-reaction" only %}
+    {% endif %}
+
+    <button
+        class="prediction-reaction prediction-share"
+        type="button"
+        data-prediction-id="{{ coupon.id }}"
+        data-share-url="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
+        data-share-endpoint="{% url 'front:prediction_share' prediction_id=coupon.id %}"
+        aria-label="Поделиться прогнозом. Всего репостов: {{ shares_count }}"
+        title="Поделиться прогнозом"
+    >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            <path d="m7.5 8.5 4.5-4.5 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <b data-share-count>{{ shares_count }}</b>
+    </button>
+
+    <span class="prediction-reaction prediction-views" title="Просмотры" aria-label="Просмотров: {{ views_count }}">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+            <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.8"></circle>
+        </svg>
+        <b>{{ views_count }}</b>
+    </span>
 </div>

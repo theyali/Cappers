@@ -10,15 +10,32 @@ register = template.Library()
 PROFILE_REACTION_CACHE_ATTR = "_profile_coupon_reaction_metrics"
 
 
-def _reaction_metric_counts(coupon: PredictionCoupon) -> tuple[int, int]:
+def _reaction_metric_counts(coupon: PredictionCoupon) -> tuple[int, int, int, int]:
     likes_count = getattr(coupon, "likes_count", None)
     favorites_count = getattr(coupon, "favorites_count", None)
-    if likes_count is not None and favorites_count is not None:
-        return int(likes_count or 0), int(favorites_count or 0)
+    views_count = getattr(coupon, "views_count", None)
+    shares_count = getattr(coupon, "shares_count", None)
+    if (
+        likes_count is not None
+        and favorites_count is not None
+        and views_count is not None
+        and shares_count is not None
+    ):
+        return (
+            int(likes_count or 0),
+            int(favorites_count or 0),
+            int(views_count or 0),
+            int(shares_count or 0),
+        )
 
     metrics = getattr(coupon, "metrics", None)
     if metrics is not None:
-        return int(metrics.likes_count or 0), int(metrics.favorites_count or 0)
+        return (
+            int(metrics.likes_count or 0),
+            int(metrics.favorites_count or 0),
+            int(metrics.views_count or 0),
+            int(metrics.shares_count or 0),
+        )
 
     row = (
         PredictionCoupon.objects.filter(pk=coupon.pk)
@@ -33,13 +50,33 @@ def _reaction_metric_counts(coupon: PredictionCoupon) -> tuple[int, int]:
                 Value(0),
                 output_field=IntegerField(),
             ),
+            metric_views_count=Coalesce(
+                F("metrics__views_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            metric_shares_count=Coalesce(
+                F("metrics__shares_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
         )
-        .values("metric_likes_count", "metric_favorites_count")
+        .values(
+            "metric_likes_count",
+            "metric_favorites_count",
+            "metric_views_count",
+            "metric_shares_count",
+        )
         .first()
     )
     if not row:
-        return 0, 0
-    return int(row["metric_likes_count"] or 0), int(row["metric_favorites_count"] or 0)
+        return 0, 0, 0, 0
+    return (
+        int(row["metric_likes_count"] or 0),
+        int(row["metric_favorites_count"] or 0),
+        int(row["metric_views_count"] or 0),
+        int(row["metric_shares_count"] or 0),
+    )
 
 
 def _profile_reaction_metrics(request) -> dict[int, dict[str, int]]:
@@ -80,7 +117,7 @@ def _profile_reaction_metrics(request) -> dict[int, dict[str, int]]:
 
 
 @register.inclusion_tag("front/includes/_coupon_reactions.html", takes_context=True)
-def coupon_reactions(context, coupon: PredictionCoupon):
+def coupon_reactions(context, coupon: PredictionCoupon, show_comments: bool = True):
     request = context.get("request")
     user = getattr(request, "user", None)
     is_authenticated = bool(user and user.is_authenticated)
@@ -100,7 +137,7 @@ def coupon_reactions(context, coupon: PredictionCoupon):
                 user_id=user.id,
             ).exists()
 
-    likes_count, favorites_count = _reaction_metric_counts(coupon)
+    likes_count, favorites_count, views_count, shares_count = _reaction_metric_counts(coupon)
     return {
         "request": request,
         "coupon": coupon,
@@ -110,6 +147,9 @@ def coupon_reactions(context, coupon: PredictionCoupon):
         "is_favorite": is_favorite,
         "likes_count": likes_count,
         "favorites_count": favorites_count,
+        "views_count": views_count,
+        "shares_count": shares_count,
+        "show_comments": show_comments,
     }
 
 

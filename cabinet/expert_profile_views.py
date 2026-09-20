@@ -31,6 +31,7 @@ from .paid_predictions import (
 )
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
+from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 RECENT_PERFORMANCE_LIMITS = (10, 100)
@@ -129,8 +130,13 @@ def _recommended_experts(
     if request.user.is_authenticated:
         profiles = profiles.exclude(user_id=request.user.pk)
 
+    profiles = annotate_vip_status(
+        profiles.select_related("user"),
+        user_outer_ref="user_id",
+        activated_annotation_name="active_vip_activated_at",
+    )
     profiles = list(
-        profiles.select_related("user")
+        profiles
         .annotate(followers_count=Count("user__analyst_followers", distinct=True))
         .order_by("-followers_count", "-is_verified", "display_name", "user__username")[
             :RECOMMENDED_EXPERTS_LIMIT
@@ -164,6 +170,7 @@ def _recommended_experts(
     result = []
     for profile in profiles:
         user = profile.user
+        attach_vip_status_to_user(user, profile)
         name = profile.display_name or user.get_full_name() or user.username
         avatar_url = ""
         if profile.avatar:

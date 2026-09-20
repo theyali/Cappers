@@ -81,8 +81,14 @@ class CapperStatsService:
     def __init__(self, user=None):
         self.user = user
 
-    def build_catalog_context(self, *, paid_only: bool = False) -> dict:
-        profiles = ranked_expert_profiles()
+    def build_catalog_context(
+        self,
+        *,
+        paid_only: bool = False,
+        profiles: list | None = None,
+        cards_by_id: dict[int, dict] | None = None,
+    ) -> dict:
+        profiles = profiles if profiles is not None else ranked_expert_profiles()
         if paid_only:
             profiles = [
                 profile
@@ -90,29 +96,30 @@ class CapperStatsService:
                 if profile.paid_predictions_enabled and profile.paid_predictions_price > 0
             ]
         profile_ids = [profile.user_id for profile in profiles]
-        best_streaks = _best_streaks_for_authors(profile_ids)
-        confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
-        following_ids = self._following_ids(profile_ids)
-        paid_subscription_ids = self._paid_subscription_ids(profile_ids)
-        monthly_top_ids = current_month_top_expert_ids()
-        monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
-        all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)
-        all_time_leader_id = (
-            all_time_profiles[0].user_id if all_time_profiles else None
-        )
-
-        cards_by_id = {
-            profile.user_id: self._serialize_profile(
-                profile,
-                following_ids=following_ids,
-                paid_subscription_ids=paid_subscription_ids,
-                best_streak=best_streaks.get(profile.user_id, 0),
-                confidence_calibration=confidence_calibrations.get(profile.user_id),
-                monthly_leader_id=monthly_leader_id,
-                all_time_leader_id=all_time_leader_id,
+        if cards_by_id is None:
+            best_streaks = _best_streaks_for_authors(profile_ids)
+            confidence_calibrations = build_confidence_calibration_by_author(profile_ids)
+            following_ids = self._following_ids(profile_ids)
+            paid_subscription_ids = self._paid_subscription_ids(profile_ids)
+            monthly_top_ids = current_month_top_expert_ids()
+            monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
+            all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)
+            all_time_leader_id = (
+                all_time_profiles[0].user_id if all_time_profiles else None
             )
-            for profile in profiles
-        }
+
+            cards_by_id = {
+                profile.user_id: self._serialize_profile(
+                    profile,
+                    following_ids=following_ids,
+                    paid_subscription_ids=paid_subscription_ids,
+                    best_streak=best_streaks.get(profile.user_id, 0),
+                    confidence_calibration=confidence_calibrations.get(profile.user_id),
+                    monthly_leader_id=monthly_leader_id,
+                    all_time_leader_id=all_time_leader_id,
+                )
+                for profile in profiles
+            }
         experts = [cards_by_id[profile.user_id] for profile in profiles]
 
         new_profiles = self._new_profiles(profiles)

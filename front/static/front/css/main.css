@@ -2161,6 +2161,7 @@ h2 {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius:inherit;
 }
 
 .nav-profile-dropdown {
@@ -4270,7 +4271,7 @@ h2 {
     border: 0;
     border-radius: 11px;
     color: var(--muted);
-    background: #2a2a2d;
+    background: transparent;
     cursor: pointer;
     font-size: 11px;
     transition: color .18s ease, background .18s ease, transform .18s ease, opacity .18s ease;
@@ -4296,29 +4297,51 @@ h2 {
 
 .prediction-reaction b {
     min-width: 18px;
-    color: inherit;
+    color: white;
     font-size: 11px;
     font-variant-numeric: tabular-nums;
 }
 
-.prediction-like.is-active {
+.prediction-reaction span[data-comment-count],
+.prediction-reaction [data-share-count] {
+    min-width: 18px;
+    color: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* .prediction-like.is-active {
     color: var(--ink);
     background: var(--yellow);
-}
+} */
 
 .prediction-favorite.is-active {
     color: #fff;
     background: var(--blue);
 }
 
+.prediction-reaction.prediction-like.is-active svg path{
+    fill: red;
+}
 .prediction-favorite.is-active svg {
     fill: currentColor;
+}
+
+.prediction-views {
+    cursor: default;
+}
+
+.prediction-views:hover {
+    color: var(--muted);
+    background: #2a2a2d;
+    transform: none;
 }
 
 @media (max-width: 520px) {
     .prediction-reactions {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .prediction-reaction {
@@ -4327,7 +4350,7 @@ h2 {
     }
 
     .prediction-reaction-label {
-        max-width: 84px;
+        max-width: 76px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -4341,6 +4364,64 @@ h2 {
     flex-direction: column;
     gap: 14px;
     border-radius: 18px;
+}
+
+.prediction-card-text-preview {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    border-radius: 14px;
+    background: #262629;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.prediction-card-text-preview:hover {
+    background: #2d2d30;
+    transform: translateY(-1px);
+}
+
+.prediction-card-text-cover {
+    width: 112px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #1f1f21;
+}
+
+.prediction-card-text-cover img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.prediction-card-text-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.prediction-card-text-copy strong {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.22;
+}
+
+.prediction-card-text-copy span {
+    display: -webkit-box;
+    overflow: hidden;
+    color: rgba(255, 255, 255, .68);
+    font-size: 12px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.prediction-card-text-preview:not(:has(.prediction-card-text-cover)) {
+    grid-template-columns: minmax(0, 1fr);
 }
 
 
@@ -15446,6 +15527,53 @@ font-size: 14px;
     font-size: 11px;
 }
 
+.coupon-detail-rich-intro {
+    display: grid;
+    gap: 14px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #1f1f21;
+}
+
+.coupon-detail-cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #262629;
+}
+
+.coupon-detail-cover img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.coupon-detail-rich-copy {
+    display: grid;
+    gap: 10px;
+    padding: 0 18px 18px;
+}
+
+.coupon-detail-rich-intro:not(:has(.coupon-detail-cover)) .coupon-detail-rich-copy {
+    padding-top: 18px;
+}
+
+.coupon-detail-rich-copy h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1.15;
+}
+
+.coupon-detail-rich-copy p {
+    margin: 0;
+    color: rgba(255, 255, 255, .72);
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-line;
+}
+
 .coupon-slip {
     display: grid;
     gap: 18px;
@@ -15877,6 +16005,15 @@ font-size: 14px;
 }
 
 @media (max-width: 760px) {
+    .prediction-card-text-preview {
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .prediction-card-text-cover {
+        width: 92px;
+    }
+
     .profile-coupon-row {
         grid-template-columns: minmax(0, 1fr) auto 26px;
         gap: 10px;
@@ -15890,6 +16027,18 @@ font-size: 14px;
         align-items: flex-start;
         flex-direction: column;
         gap: 14px;
+    }
+
+    .coupon-detail-rich-copy {
+        padding: 0 14px 14px;
+    }
+
+    .coupon-detail-rich-intro:not(:has(.coupon-detail-cover)) .coupon-detail-rich-copy {
+        padding-top: 14px;
+    }
+
+    .coupon-detail-rich-copy h2 {
+        font-size: 19px;
     }
 
     .coupon-slip-match {
@@ -15938,6 +16087,14 @@ font-size: 14px;
 @media (max-width: 520px) {
     .coupon-detail-page {
         gap: 16px;
+    }
+
+    .prediction-card-text-preview {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .prediction-card-text-cover {
+        width: 100%;
     }
 
     .coupon-detail-heading h1 {
@@ -16059,10 +16216,11 @@ font-size: 14px;
 }
 
 .coupon-author-avatar img {
-    width: 100%;
-    height: 100%;
+    width: inherit;
+    height: inherit;
     display: block;
     object-fit: cover;
+    border-radius: inherit;
 }
 
 .coupon-author-copy {
@@ -31539,10 +31697,6 @@ top: -8px;
     font-size: 9px;
 }
 
-body:has([data-current-user-vip]) .nav-profile-avatar-image {
-    box-shadow: 0 0 0 2px var(--yellow);
-}
-
 body:has([data-current-user-vip]) .nav-profile-icon,
 body:has([data-current-user-vip]) .nav-profile-dropdown-avatar {
     position: relative;
@@ -35015,6 +35169,694 @@ body.wiki-video-player-open {
 
 .coupon-slip-status-row .is-draft {
     color: var(--yellow);
+}
+
+/* Coupon detail visual refresh */
+.coupon-detail-layout-page .coupon-detail-page {
+    width: min(1180px, 100%);
+    gap: 16px;
+    padding: 0 0 28px;
+}
+
+.coupon-detail-layout-page .coupon-detail-back {
+    margin: 0 0 2px;
+}
+
+.coupon-detail-showcase {
+    position: relative;
+    min-height: clamp(310px, 30vw, 440px);
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    background-color: #0b1016;
+    background-position: center;
+    background-size: cover;
+    isolation: isolate;
+}
+
+.coupon-detail-showcase::before,
+.coupon-detail-showcase::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+}
+
+.coupon-detail-showcase::before {
+    background:
+        radial-gradient(circle at 14% 48%, rgba(0, 255, 183, .30), transparent 34%),
+        radial-gradient(circle at 86% 45%, rgba(255, 0, 110, .36), transparent 36%),
+        linear-gradient(180deg, rgba(6, 10, 16, .06), rgba(6, 10, 16, .68) 70%, rgba(6, 10, 16, .92));
+}
+
+.coupon-detail-showcase::after {
+    background: linear-gradient(90deg, rgba(4, 8, 12, .58), rgba(4, 8, 12, .22) 48%, rgba(4, 8, 12, .62));
+}
+
+.coupon-detail-showcase.has-no-cover {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(11, 86, 250, .36), transparent 34%),
+        radial-gradient(circle at 76% 26%, rgba(251, 241, 16, .24), transparent 32%),
+        #0b1016;
+}
+
+.coupon-detail-showcase-content {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    width: min(940px, 100%);
+    margin: 0 auto;
+    padding: clamp(34px, 5vw, 64px) 22px 34px;
+    text-align: center;
+}
+
+.coupon-detail-type-pill {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    border-radius: 10px;
+    color: var(--yellow);
+    background: rgba(5, 10, 16, .84);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, .34);
+    text-transform: uppercase;
+}
+
+.coupon-detail-type-pill > span {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: #101010;
+    background: var(--yellow);
+}
+
+.coupon-detail-type-pill svg,
+.coupon-detail-stat svg,
+.coupon-detail-analysis svg,
+.coupon-detail-status svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.coupon-detail-type-pill strong {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: .16em;
+}
+
+.coupon-detail-showcase h1 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.1;
+    text-transform: uppercase;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, .62);
+}
+
+.coupon-detail-showcase h1::first-letter {
+    color: #fff;
+}
+
+.coupon-detail-showcase p {
+    max-width: 860px;
+    margin: 0;
+    color: rgba(255, 255, 255, .84);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .7);
+}
+
+.coupon-detail-showcase-bottom {
+    display: grid;
+    grid-template-columns: minmax(210px, auto) auto minmax(220px, 1fr);
+    align-items: center;
+    gap: clamp(18px, 4vw, 42px);
+    width: min(800px, 100%);
+    margin-top: 6px;
+}
+
+.coupon-detail-hero-author {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255, 255, 255, .8);
+    text-align: left;
+}
+
+.coupon-detail-hero-avatar {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: visible;
+    border: 4px solid rgba(255, 255, 255, .88);
+    border-radius: 50%;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 17px;
+    font-weight: 600;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, .44);
+}
+
+.coupon-detail-hero-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.coupon-detail-hero-author small,
+.coupon-detail-hero-author strong {
+    display: block;
+}
+
+.coupon-detail-hero-author small {
+    color: rgba(255, 255, 255, .66);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.coupon-detail-hero-author strong {
+    margin-top: 5px;
+    color: rgba(255, 255, 255, .86);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.coupon-detail-showcase .coupon-detail-status {
+    min-height: 58px;
+    gap: 12px;
+    padding: 0 26px;
+    border-radius: 9px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.coupon-detail-showcase .coupon-detail-status svg {
+    width: 26px;
+    height: 26px;
+    padding: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+}
+
+.coupon-detail-showcase blockquote {
+    margin: 0;
+    color: rgba(255, 255, 255, .66);
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: left;
+}
+
+.coupon-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.coupon-detail-stat {
+    min-height: 96px;
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-areas:
+        "icon label"
+        "icon value";
+    align-content: center;
+    column-gap: 16px;
+    padding: 16px 22px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 16px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .025)),
+        #1d2229;
+    box-shadow: inset 0 0 28px rgba(255, 255, 255, .035), 0 18px 36px rgba(0, 0, 0, .20);
+}
+
+.coupon-detail-stat > span {
+    grid-area: icon;
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    align-self: center;
+    border-radius: 15px;
+}
+
+.coupon-detail-stat small {
+    grid-area: label;
+    align-self: end;
+    color: rgba(255, 255, 255, .54);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.coupon-detail-stat strong {
+    grid-area: value;
+    align-self: start;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.coupon-detail-stat.is-odds {
+    border-color: rgba(11, 86, 250, .55);
+    background: linear-gradient(135deg, rgba(11, 86, 250, .34), rgba(24, 31, 42, .94));
+}
+
+.coupon-detail-stat.is-odds > span,
+.coupon-detail-stat.is-odds strong {
+    color: #1684ff;
+}
+
+.coupon-detail-stat.is-stake > span,
+.coupon-detail-stat.is-stake strong .coin-icon {
+    color: var(--yellow);
+}
+
+.coupon-detail-stat.is-confidence {
+    border-color: rgba(103, 255, 101, .24);
+    background: linear-gradient(135deg, rgba(54, 205, 73, .28), rgba(24, 31, 42, .94));
+}
+
+.coupon-detail-stat.is-confidence > span,
+.coupon-detail-stat.is-confidence strong {
+    color: #68ff62;
+}
+
+.coupon-detail-stat.is-payout {
+    background: linear-gradient(135deg, rgba(151, 61, 255, .30), rgba(24, 31, 42, .94));
+}
+
+.coupon-detail-stat.is-payout > span {
+    color: #c052ff;
+}
+
+.coupon-detail-page > .prediction-reactions {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.coupon-detail-page > .prediction-reactions .prediction-reaction svg {
+    width: 24px;
+    height: 24px;
+}
+
+
+
+.coupon-detail-page > .prediction-reactions .prediction-like.is-active {
+    color: #0f0f0f;
+}
+
+.coupon-detail-page > .prediction-reactions .prediction-views {
+    margin-left: auto;
+    color: rgba(255, 255, 255, .62);
+}
+
+.coupon-detail-page > .prediction-reactions .prediction-views:hover {
+    color: rgba(255, 255, 255, .62);
+    background: linear-gradient(180deg, #2a2e35, #1d2025);
+}
+
+.coupon-detail-page > .prediction-reactions b,
+.coupon-detail-page > .prediction-reactions [data-share-count] {
+    min-width: 18px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.coupon-detail-page .coupon-detail-panel {
+    padding: 0;
+}
+
+.coupon-detail-page .coupon-slip {
+    width: 100%;
+    max-width: none;
+    gap: 0;
+}
+
+.coupon-detail-page .coupon-slip-overview {
+    display: none;
+}
+
+.coupon-detail-page .coupon-slip-list {
+    gap: 14px;
+}
+
+.coupon-detail-page .coupon-slip-item {
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 18% 16%, rgba(11, 86, 250, .18), transparent 38%),
+        linear-gradient(180deg, #202832, #161b21);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 20px 44px rgba(0, 0, 0, .22);
+}
+
+.coupon-detail-page .coupon-slip-match {
+    padding: 18px 22px 10px;
+}
+
+.coupon-detail-page .coupon-slip-league strong {
+    color: rgba(255, 255, 255, .84);
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.coupon-detail-page .coupon-slip-sport-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    color: var(--yellow);
+    background: linear-gradient(135deg, #075f5d, #129c86);
+}
+
+.coupon-detail-page .coupon-slip-match-meta {
+    align-items: center;
+}
+
+.coupon-detail-page .coupon-slip-sport-badge,
+.coupon-detail-page .coupon-slip-match-state {
+    min-height: 38px;
+    border-radius: 10px;
+    background: rgba(11, 14, 19, .72);
+    font-size: 13px;
+}
+
+.coupon-detail-page .coupon-slip-teams {
+    gap: 22px;
+    padding: 14px 0 18px;
+}
+
+.coupon-detail-page .coupon-slip-team {
+    gap: 16px;
+}
+
+.coupon-detail-page .coupon-slip-team strong {
+    max-width: 340px;
+    color: #f8f9ff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.02;
+    white-space: normal;
+}
+
+.coupon-detail-page .coupon-slip-team-logo {
+    width: 78px;
+    height: 78px;
+    border: 5px solid rgba(255, 255, 255, .88);
+    border-radius: 50%;
+    background: #eef1f4;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .32);
+}
+
+.coupon-detail-page .coupon-slip-team-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.coupon-detail-page .coupon-slip-score {
+    min-width: 130px;
+}
+
+.coupon-detail-page .coupon-slip-score strong {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.coupon-detail-page .coupon-slip-score span {
+    color: rgba(255, 255, 255, .56);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.coupon-detail-page .coupon-slip-result {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, .75fr);
+    gap: 0;
+    margin: 0 22px 18px;
+    padding: 14px 24px;
+    border-radius: 14px;
+    background: rgba(10, 14, 19, .74);
+}
+
+.coupon-detail-page .coupon-slip-pick-row,
+.coupon-detail-page .coupon-slip-status-row {
+    justify-content: flex-start;
+    gap: 26px;
+    padding: 0 24px;
+}
+
+.coupon-detail-page .coupon-slip-pick-row {
+    padding-left: 0;
+}
+
+.coupon-detail-page .coupon-slip-status-row {
+    border-left: 1px solid rgba(255, 255, 255, .14);
+}
+
+.coupon-detail-page .coupon-slip-pick-row span,
+.coupon-detail-page .coupon-slip-status-row > span {
+    color: rgba(255, 255, 255, .48);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.coupon-detail-page .coupon-slip-pick-row strong,
+.coupon-detail-page .coupon-slip-pick-row b,
+.coupon-detail-page .coupon-slip-status-row > strong {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.coupon-detail-analysis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 440px);
+    gap: 34px;
+    align-items: start;
+    padding: 6px 10px 0;
+}
+
+.coupon-detail-analysis-copy {
+    min-width: 0;
+}
+
+.coupon-detail-analysis h2,
+.coupon-detail-facts h3 {
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.coupon-detail-analysis h2 > span {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    color: var(--yellow);
+}
+
+.coupon-detail-analysis-copy p {
+    margin: 0;
+    color: rgba(255, 255, 255, .68);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.58;
+}
+
+.coupon-detail-facts {
+    padding: 24px 26px;
+    border: 1px solid rgba(11, 86, 250, .70);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(11, 86, 250, .30), rgba(18, 29, 38, .92));
+    box-shadow: inset 0 0 30px rgba(11, 86, 250, .20);
+}
+
+.coupon-detail-facts h3 {
+    margin-bottom: 20px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.coupon-detail-facts h3 svg {
+    color: #1684ff;
+}
+
+.coupon-detail-facts ul {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.coupon-detail-facts li {
+    position: relative;
+    padding-left: 36px;
+    color: rgba(255, 255, 255, .72);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.coupon-detail-facts li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: -2px;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #09220c;
+    background: #78ff67;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+@media (max-width: 980px) {
+    .coupon-detail-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .coupon-detail-showcase-bottom,
+    .coupon-detail-analysis {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .coupon-detail-showcase blockquote {
+        text-align: center;
+    }
+
+    .coupon-detail-page .coupon-slip-result {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .coupon-detail-page .coupon-slip-status-row {
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, .14);
+        padding-top: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .coupon-detail-layout-page .coupon-detail-page {
+        padding-inline: 0;
+    }
+
+    .coupon-detail-showcase {
+        min-height: 360px;
+        border-radius: 0;
+    }
+
+    .coupon-detail-showcase-content {
+        padding-inline: 16px;
+    }
+
+    .coupon-detail-type-pill {
+        min-height: 36px;
+        padding-inline: 12px;
+    }
+
+    .coupon-detail-type-pill strong {
+        font-size: 13px;
+    }
+
+    .coupon-detail-showcase-bottom {
+        justify-items: center;
+    }
+
+    .coupon-detail-hero-author {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .coupon-detail-stats {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .coupon-detail-stat {
+        min-height: 82px;
+    }
+
+    .coupon-detail-page > .prediction-reactions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding-inline: 10px;
+    }
+
+    .coupon-detail-page > .prediction-reactions .prediction-reaction {
+        min-width: 0;
+        padding-inline: 12px;
+    }
+
+    .coupon-detail-page > .prediction-reactions .prediction-views {
+        margin-left: 0;
+    }
+
+    .coupon-detail-page .coupon-slip-match {
+        padding: 16px 14px 8px;
+    }
+
+    .coupon-detail-page .coupon-slip-teams {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .coupon-detail-page .coupon-slip-team,
+    .coupon-detail-page .coupon-slip-team.is-home,
+    .coupon-detail-page .coupon-slip-team.is-away {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .coupon-detail-page .coupon-slip-team strong {
+        font-size: 17px;
+    }
+
+    .coupon-detail-page .coupon-slip-score {
+        order: -1;
+        min-width: 0;
+    }
+
+    .coupon-detail-page .coupon-slip-result {
+        margin: 0 14px 14px;
+        padding: 14px;
+    }
+
+    .coupon-detail-analysis {
+        padding-inline: 10px;
+    }
 }
 
 
@@ -39068,7 +39910,7 @@ padding:40px 0px;
 }
 
 .rich-prediction-vip-cta,
-.coupon-rich-link {
+.coupon-extended-action {
     min-height: 38px;
     display: inline-flex;
     align-items: center;
@@ -39083,7 +39925,7 @@ padding:40px 0px;
 }
 
 .rich-prediction-vip-cta:hover,
-.coupon-rich-link:hover {
+.coupon-extended-action:hover {
     color: var(--ink);
     transform: translateY(-1px);
 }
@@ -39178,6 +40020,11 @@ padding:40px 0px;
     height: 100%;
     display: block;
     object-fit: cover;
+    transition: transform .18s ease;
+}
+
+.rich-prediction-preview-cover:hover img {
+    transform: scale(1.04);
 }
 
 .rich-prediction-preview-cover-empty {
@@ -39274,19 +40121,317 @@ padding:40px 0px;
     font-size: 10px;
 }
 
-.coupon-rich-link {
+.coupon-extended-action {
     width: 100%;
     margin-bottom: 10px;
 }
 
-.coupon-panel .coupon-rich-link {
+.coupon-panel .coupon-extended-action {
     margin: 2px 0 0;
     background: #303033;
     color: #fff;
 }
 
-.coupon-panel .coupon-rich-link:hover {
+.coupon-panel .coupon-extended-action:hover {
     color: #fff;
+}
+
+.rich-prediction-coupon {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.rich-prediction-coupon-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.rich-prediction-coupon-summary > div {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #242426;
+}
+
+.rich-prediction-coupon-summary span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rich-prediction-coupon-summary strong {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rich-prediction-coupon-list {
+    display: grid;
+    gap: 9px;
+}
+
+.rich-prediction-coupon-item {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(150px, .8fr) auto 40px;
+    align-items: center;
+    gap: 12px;
+    padding: 11px;
+    border-radius: 13px;
+    background: #202022;
+}
+
+.rich-prediction-coupon-match {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+}
+
+.rich-prediction-coupon-logo {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 11px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rich-prediction-coupon-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.rich-prediction-coupon-match span:last-child,
+.rich-prediction-coupon-pick {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.rich-prediction-coupon-match strong,
+.rich-prediction-coupon-match small,
+.rich-prediction-coupon-pick strong,
+.rich-prediction-coupon-pick span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rich-prediction-coupon-match strong,
+.rich-prediction-coupon-pick strong {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rich-prediction-coupon-match small,
+.rich-prediction-coupon-pick span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.rich-prediction-coupon-odd {
+    color: var(--yellow);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rich-prediction-coupon-remove {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    background: #e12929;
+    cursor: pointer;
+}
+
+.rich-prediction-coupon-remove:hover {
+    color: #fff;
+    background: #ff3434;
+    transform: translateY(-1px);
+}
+
+.rich-prediction-coupon-remove svg {
+    width: 18px;
+    height: 18px;
+}
+
+.rich-prediction-page .capper-field {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+}
+
+.rich-prediction-page .capper-field input,
+.rich-prediction-page .capper-field textarea,
+.rich-prediction-page .capper-field select {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 11px;
+    color: #fff;
+    background: #171718;
+}
+
+.rich-prediction-page .capper-field input[type="range"] {
+    min-height: 8px;
+    padding: 0;
+    border-radius: 999px;
+    background: #3a3a3d;
+}
+
+.rich-prediction-page .capper-field textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.rich-prediction-page .capper-field-label {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.rich-prediction-page .capper-field-help {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.rich-prediction-empty {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    border-radius: 13px;
+    background: #242426;
+}
+
+.rich-prediction-empty strong {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.rich-prediction-empty span {
+    max-width: 620px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.rich-prediction-empty a {
+    min-height: 42px;
+    width: max-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.rich-cover-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    overflow-anchor: none;
+    contain: layout paint;
+}
+
+.rich-cover-option {
+    position: relative;
+    min-width: 0;
+    display: grid;
+    gap: 7px;
+    padding: 8px;
+    border-radius: 12px;
+    background: #171718;
+    cursor: pointer;
+    overflow-anchor: none;
+}
+
+.rich-cover-option input {
+    position: absolute;
+    inset: 8px auto auto 8px;
+    width: 18px !important;
+    height: 18px;
+    min-height: 18px !important;
+    accent-color: var(--yellow);
+    z-index: 2;
+}
+
+.rich-cover-option-image,
+.rich-cover-option-empty {
+    aspect-ratio: 16 / 10;
+    min-height: 92px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rich-cover-option-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 92px;
+    display: block;
+    object-fit: cover;
+    transition: transform .18s ease;
+}
+
+.rich-cover-option:hover .rich-cover-option-image img {
+    transform: scale(1.08);
+}
+
+.rich-cover-option:has(input:checked) {
+    background: #303033;
+}
+
+.rich-cover-option strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rich-cover-more {
+    min-height: 40px;
+    width: max-content;
+    border: 0;
+    border-radius: 11px;
+    padding: 0 14px;
+    color: var(--ink);
+    background: var(--yellow);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .matches-table-create-prediction {
@@ -39308,7 +40453,6 @@ padding:40px 0px;
     gap: 6px;
     padding: 4px;
     border-radius: 11px;
-    background: var(--panel);
 }
 
 .prediction-type-tab {
@@ -39337,24 +40481,24 @@ padding:40px 0px;
 
 .predictions-grid.is-rich {
     grid-template-columns: minmax(0, 1fr) !important;
-    gap: 16px;
+    gap: 10px;
 }
 
 .predictions-grid.is-rich > .prediction-card-rich {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(260px, 34%) minmax(0, 1fr) minmax(118px, 138px);
+    grid-template-columns: minmax(320px, 41.5%) minmax(0, 1fr);
     align-items: stretch;
     gap: 0;
     padding: 0;
     overflow: hidden;
-    border-radius: 18px;
+    border-radius: 8px;
     background: var(--panel);
 }
 
 .prediction-card-rich-cover {
     position: relative;
-    min-height: 286px;
+    min-height: 244px;
     overflow: hidden;
     color: #fff;
     background: var(--ink);
@@ -39386,9 +40530,9 @@ padding:40px 0px;
 }
 
 .prediction-card-rich-cover-meta {
-    top: 14px;
-    left: 14px;
-    right: 14px;
+    top: 12px;
+    left: 12px;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -39396,8 +40540,7 @@ padding:40px 0px;
 }
 
 .prediction-card-rich-cover-meta span,
-.prediction-card-rich-cover-meta time,
-.prediction-card-rich-cover-league {
+.prediction-card-rich-cover-meta time {
     min-height: 28px;
     display: inline-flex;
     align-items: center;
@@ -39405,23 +40548,28 @@ padding:40px 0px;
     border-radius: 8px;
     color: #fff;
     background: rgba(19, 19, 19, .86);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
 }
 
-.prediction-card-rich-cover-league {
-    top: 50px;
-    left: 14px;
-    max-width: calc(100% - 28px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.prediction-card-rich-cover-meta time {
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1px;
+    min-height: 44px;
+}
+
+.prediction-card-rich-cover-meta time small {
+    color: rgba(255, 255, 255, .76);
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .prediction-card-rich-cover-teams {
     left: 14px;
     right: 14px;
-    bottom: 16px;
+    bottom: 14px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
     align-items: end;
@@ -39431,14 +40579,15 @@ padding:40px 0px;
 .prediction-card-rich-cover-teams > b {
     align-self: center;
     color: rgba(255, 255, 255, .64);
-    font-size: 10px;
+    font-size: 15px;
     text-align: center;
 }
 
 .prediction-card-rich-team {
     min-width: 0;
     display: grid;
-    gap: 7px;
+    gap: 6px;
+    justify-content:center;
 }
 
 .prediction-card-rich-team:last-child {
@@ -39447,16 +40596,16 @@ padding:40px 0px;
 }
 
 .prediction-card-rich-team > span {
-    width: 54px;
-    height: 54px;
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
     overflow: hidden;
     border-radius: 14px;
     color: var(--ink);
-    background: var(--yellow);
     font-size: 17px;
     font-weight: 600;
+    margin:auto;
 }
 
 .prediction-card-rich-team > span img {
@@ -39469,7 +40618,7 @@ padding:40px 0px;
     max-width: 100%;
     overflow: hidden;
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -39479,22 +40628,37 @@ padding:40px 0px;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 18px;
+    padding: 0;
+    background: #19191b;
+}
+
+.prediction-card-rich-main {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 156px;
+    gap: 16px;
+    padding: 14px 13px 0 15px;
+}
+
+.prediction-card-rich-content {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 9px;
 }
 
 .prediction-card-rich-meta {
     min-width: 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 14px;
+    gap: 10px;
 }
 
 .prediction-card-rich-author {
     min-width: 0;
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) auto auto;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
     color: #fff;
@@ -39502,12 +40666,12 @@ padding:40px 0px;
 
 .prediction-card-rich-avatar {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: grid;
     place-items: center;
     overflow: visible;
-    border-radius: 12px;
+    border-radius: 50%;
     color: var(--ink);
     background: var(--yellow);
     font-size: 12px;
@@ -39518,7 +40682,7 @@ padding:40px 0px;
     width: 100%;
     height: 100%;
     display: block;
-    border-radius: 12px;
+    border-radius: 50%;
     object-fit: cover;
 }
 
@@ -39543,23 +40707,23 @@ padding:40px 0px;
 
 .prediction-card-rich-author small {
     color: var(--muted);
-    font-size: 10px;
+    font-size: 11px;
 }
 
 .prediction-card-rich-author em {
-    padding: 5px 7px;
-    border-radius: 7px;
+    padding: 5px 8px;
+    border-radius: 8px;
     color: var(--ink);
     background: var(--yellow);
-    font-size: 9px;
+    font-size: 10px;
     font-style: normal;
     font-weight: 600;
 }
 
 .prediction-card-rich-verified,
 .prediction-card-rich-verified svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
 }
 
 .prediction-card-rich-meta-copy {
@@ -39567,25 +40731,28 @@ padding:40px 0px;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 5px;
+    gap: 6px;
 }
 
 .prediction-card-rich-meta-copy span,
 .prediction-card-rich-meta-copy time {
-    padding: 5px 7px;
-    border-radius: 7px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 8px;
     color: var(--muted);
-    background: #2a2a2d;
-    font-size: 9px;
+    background: #262629;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .prediction-card-rich-title {
     display: block;
     color: #fff;
-    font-size: clamp(18px, 2vw, 24px);
+    font-size: 17px;
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 1.22;
 }
 
 .prediction-card-rich-title:hover {
@@ -39596,9 +40763,9 @@ padding:40px 0px;
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    color: rgba(255, 255, 255, .7);
-    font-size: 12px;
-    line-height: 1.55;
+    color: rgba(255, 255, 255, .68);
+    font-size: 13px;
+    line-height: 1.38;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
 }
@@ -39606,84 +40773,127 @@ padding:40px 0px;
 .prediction-card-rich-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 7px;
 }
 
 .prediction-card-rich-tags span {
-    padding: 5px 8px;
-    border-radius: 7px;
+    padding: 5px 9px;
+    border-radius: 9px;
     color: rgba(255, 255, 255, .82);
     background: #2a2a2d;
-    font-size: 10px;
+    font-size: 11px;
 }
 
 .prediction-card-rich-actions {
-    min-height: 36px;
+    min-height: 42px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: auto;
+    gap: 22px;
+    margin: auto 13px 0 15px;
+    padding: 9px 0 10px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
 }
 
 .prediction-card-rich-actions .feed-prediction-save {
     margin-left: auto;
+    gap: 8px;
+}
+
+.prediction-card-rich-actions .feed-prediction-save span {
+    color: rgba(255, 255, 255, .76);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .prediction-card-rich-actions .feed-prediction-action b {
     color: var(--soft);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 }
 
 .prediction-card-rich-stats {
     display: grid;
     align-content: start;
-    gap: 8px;
-    padding: 16px 14px;
-    background: #171718;
+    gap: 10px;
 }
 
 .prediction-card-rich-stats > span {
     display: grid;
-    gap: 4px;
-    padding: 11px;
-    border-radius: 10px;
-    background: #242426;
+    gap: 5px;
+    align-content: center;
+    padding: 10px 11px;
+    border-radius: 8px;
+    background: #262629;
 }
-
+.prediction-card-rich-status.is-lose{
+    background: var(--danger);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 .prediction-card-rich-stats small {
     color: var(--muted);
-    font-size: 9px;
+    font-size: 11px;
 }
 
 .prediction-card-rich-stats strong {
     color: #fff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
 }
 
 .prediction-card-rich-coefficient strong {
     color: var(--yellow);
-    font-size: 23px;
+    font-size: 17px;
 }
 
 .prediction-card-rich-status.is-win strong {
     color: #42d782;
 }
 
-.prediction-card-rich-status.is-lose strong {
-    color: #ff5252;
+.prediction-card-rich-status.is-pending {
+    background: #2d8b3a;
 }
 
-.prediction-card-rich-status.is-refund strong {
-    color: var(--yellow);
+.prediction-card-rich-status small {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prediction-card-rich-status svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: white;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.prediction-card-rich-status.is-pending small,
+.prediction-card-rich-status.is-pending strong {
+    color: #fff;
+}
+
+.prediction-card-rich-views {
+    min-height: 32px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    background: transparent !important;
 }
 
 .feed-prediction-share {
     padding-right: 0;
     padding-left: 0;
 }
-
+.prediction-card-rich-views strong{
+    color: #7c7c7c;
+    font-weight: 500;
+    font-size: 12px;
+    text-align: end;
+}
 
 /* VIP article pages and rich editor finishing */
 .rich-prediction-cover-picker .rich-prediction-fields-grid {

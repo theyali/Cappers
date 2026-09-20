@@ -5,7 +5,6 @@
     aria-label="{% if can_write_coupon %}Прогноз{% else %}Реклама{% endif %}"
 >
     {% if can_write_coupon %}
-        <a class="coupon-rich-link" href="{% url 'game:rich_prediction_create' %}">Написать расширенный прогноз</a>
         {% include "game/_coupon_panel.html" %}
         {{ draft_coupon|json_script:"coupon-draft-data" }}
     {% endif %}

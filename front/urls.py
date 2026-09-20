@@ -36,6 +36,12 @@ urlpatterns = [
     path("r/<str:username>/", cabinet_referral_views.referral_redirect, name="capper_referral"),
     path("predictions/", prediction_catalog_views.predictions, name="predictions"),
     path(
+        "predictions/text/",
+        prediction_catalog_views.predictions,
+        {"prediction_type": "rich"},
+        name="predictions_rich",
+    ),
+    path(
         "predictions/filter-state/",
         prediction_views.prediction_filter_state,
         name="prediction_filter_state",
@@ -85,6 +91,18 @@ urlpatterns = [
         prediction_catalog_views.predictions,
         {"express_only": True},
         name="prediction_expresses",
+    ),
+    path(
+        "predictions/express/text/",
+        prediction_catalog_views.predictions,
+        {"express_only": True, "prediction_type": "rich"},
+        name="prediction_expresses_rich",
+    ),
+    path(
+        "predictions/text/<slug:sport_code>/",
+        prediction_catalog_views.predictions,
+        {"prediction_type": "rich"},
+        name="predictions_rich_by_sport",
     ),
     path(
         "predictions/<slug:sport_code>/",
