@@ -41983,3 +41983,35 @@ padding:40px 0px;
     font-size: 11px;
     font-weight: 650;
 }
+
+
+.cappers-admin-sidebar-backdrop {
+    display: none;
+}
+
+.cappers-admin.login #nav-sidebar,
+.cappers-admin.login .cappers-admin-toolbar,
+.cappers-admin.login .cappers-admin-sidebar-backdrop {
+    display: none !important;
+}
+
+.cappers-admin.login #header,
+.cappers-admin.login .main,
+.cappers-admin.login .main.shifted {
+    margin-left: 0 !important;
+}
+
+.cappers-admin.login #header {
+    justify-content: center;
+}
+
+.cappers-admin.login #branding {
+    display: block;
+}
+
+.cappers-admin.login #site-name a {
+    color: var(--admin-text);
+    font-family: var(--font-heading);
+    font-size: 20px;
+    text-decoration: none;
+}
