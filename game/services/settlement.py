@@ -5,7 +5,13 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.utils import timezone
 
-from game.models import Match, MatchOdds, Prediction, PredictionCoupon
+from game.models import (
+    Match,
+    MatchManualReview,
+    MatchOdds,
+    Prediction,
+    PredictionCoupon,
+)
 from wallets.services import settle_orphaned_copied_bets, settle_prediction_coupon
 
 
@@ -22,11 +28,36 @@ VOID_MATCH_SCOPES = {
 MONEY_STEP = Decimal("0.01")
 
 
+def flag_match_for_manual_review(
+    match: Match,
+    reason: str,
+    details: dict | None = None,
+) -> MatchManualReview:
+    review, created = MatchManualReview.objects.get_or_create(
+        match=match,
+        reason=reason,
+        status=MatchManualReview.Status.OPEN,
+        defaults={"details": details or {}},
+    )
+    if not created and details is not None and review.details != details:
+        review.details = details
+        review.save(update_fields=["details", "updated_at"])
+    return review
+
+
+def _score_review_reason(match: Match) -> str | None:
+    score = (match.score or "").strip()
+    if not score:
+        return MatchManualReview.Reason.MISSING_SCORE
+    if _parse_score(score) is None:
+        return MatchManualReview.Reason.INVALID_SCORE
+    return None
+
+
 def settle_finished_matches(limit: int = 500) -> dict:
     void_result = settle_void_matches(limit=limit)
     matches = (
         Match.objects.filter(sync_scope=Match.SyncScope.FINISHED)
-        .exclude(score="")
         .order_by("-starts_at", "-id")[:limit]
     )
     resolved_matches = 0
@@ -36,6 +67,15 @@ def settle_finished_matches(limit: int = 500) -> dict:
     settlement_errors = 0
     for match in matches:
         try:
+            review_reason = _score_review_reason(match)
+            if review_reason is not None:
+                flag_match_for_manual_review(
+                    match,
+                    review_reason,
+                    {"score": match.score},
+                )
+                continue
+
             result = resolve_match_bets(match)
             if result is None:
                 continue
@@ -48,12 +88,38 @@ def settle_finished_matches(limit: int = 500) -> dict:
 
             for prediction in predictions.select_related("coupon"):
                 state = prediction_state(prediction, result)
+                if state is None:
+                    flag_match_for_manual_review(
+                        match,
+                        MatchManualReview.Reason.UNKNOWN_MARKET,
+                        {
+                            "prediction_id": prediction.id,
+                            "market": prediction.market,
+                            "selection": prediction.selection,
+                        },
+                    )
+                    continue
+
                 prediction.state_status = state
                 prediction.save(update_fields=["state_status", "updated_at"])
                 updated_predictions += 1
                 updated_coupons.add(prediction.coupon_id)
-        except Exception:
+        except Exception as exc:
             settlement_errors += 1
+            try:
+                flag_match_for_manual_review(
+                    match,
+                    MatchManualReview.Reason.SETTLEMENT_ERROR,
+                    {
+                        "error_type": type(exc).__name__,
+                        "error": str(exc)[:1000],
+                    },
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to create manual review for match #%s.",
+                    match.pk,
+                )
             logger.exception("Failed to resolve finished match #%s.", match.pk)
 
     for coupon_id in updated_coupons:
@@ -226,7 +292,7 @@ def resolve_match_bets(match: Match) -> dict | None:
     return result
 
 
-def prediction_state(prediction: Prediction, result: dict) -> str:
+def prediction_state(prediction: Prediction, result: dict) -> str | None:
     evaluated = _evaluate_prediction(prediction, result)
     if evaluated is not None:
         return evaluated
@@ -237,7 +303,7 @@ def prediction_state(prediction: Prediction, result: dict) -> str:
     if key in set(result.get("winning") or []):
         return Prediction.StateStatus.WIN
 
-    return Prediction.StateStatus.LOSE
+    return None
 
 
 @transaction.atomic
@@ -292,10 +358,30 @@ def resettle_coupon(
                     prediction.save(update_fields=["state_status", "updated_at"])
                 continue
 
+            review_reason = _score_review_reason(prediction.match)
+            if review_reason is not None:
+                flag_match_for_manual_review(
+                    prediction.match,
+                    review_reason,
+                    {"score": prediction.match.score},
+                )
+                continue
+
             result = resolve_match_bets(prediction.match)
             if result is None:
                 continue
             state = prediction_state(prediction, result)
+            if state is None:
+                flag_match_for_manual_review(
+                    prediction.match,
+                    MatchManualReview.Reason.UNKNOWN_MARKET,
+                    {
+                        "prediction_id": prediction.id,
+                        "market": prediction.market,
+                        "selection": prediction.selection,
+                    },
+                )
+                continue
             if prediction.state_status != state:
                 prediction.state_status = state
                 prediction.save(update_fields=["state_status", "updated_at"])
