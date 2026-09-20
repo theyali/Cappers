@@ -24,8 +24,10 @@
         </div>
 
         <div class="cappers-admin-app-grid">
-            {% for app in app_list %}
-                {% include "admin/includes/app_card.html" with app=app only %}
+            {% for app in dashboard_apps %}
+                {% if app.source_app_label == app_label %}
+                    {% include "admin/includes/app_card.html" with app=app only %}
+                {% endif %}
             {% empty %}
                 <div class="cappers-admin-empty-state">Нет доступных моделей.</div>
             {% endfor %}

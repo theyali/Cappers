@@ -7,40 +7,18 @@
     </div>
 
     <div class="cappers-admin-quick-grid">
-        {% if perms.cabinet.add_user %}
-        <a href="{% url 'admin:cabinet_user_add' %}" class="cappers-admin-quick-action">
+        {% for action in quick_actions %}
+        <a href="{{ action.url }}" class="cappers-admin-quick-action">
             <span class="cappers-admin-quick-icon">
-                {% include "admin/includes/_app_icon.html" with app_label="cabinet" only %}
+                {% include "admin/includes/_app_icon.html" with app_label=action.icon only %}
             </span>
-            <span><strong>Добавить пользователя</strong><small>Новая учетная запись</small></span>
-        </a>
-        {% endif %}
-
-        {% if perms.achievements.add_achievement %}
-        <a href="{% url 'admin:achievements_achievement_add' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">
-                {% include "admin/includes/_app_icon.html" with app_label="achievements" only %}
+            <span>
+                <strong>{{ action.title }}</strong>
+                <small>{{ action.subtitle }}</small>
             </span>
-            <span><strong>Новое достижение</strong><small>Настроить награду</small></span>
         </a>
-        {% endif %}
-
-        {% if perms.pages.view_promobanner %}
-        <a href="{% url 'admin:pages_promobanner_changelist' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">
-                {% include "admin/includes/_app_icon.html" with app_label="pages" only %}
-            </span>
-            <span><strong>Промо-баннеры</strong><small>Управление рекламой</small></span>
-        </a>
-        {% endif %}
-
-        {% if perms.game.view_predictioncoupon %}
-        <a href="{% url 'admin:game_predictioncoupon_changelist' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">
-                {% include "admin/includes/_app_icon.html" with app_label="game" only %}
-            </span>
-            <span><strong>Прогнозы</strong><small>Открыть купоны</small></span>
-        </a>
-        {% endif %}
+        {% empty %}
+        <div class="cappers-admin-empty-state">Нет доступных быстрых действий.</div>
+        {% endfor %}
     </div>
 </section>

@@ -21,7 +21,7 @@
         </div>
         <div class="cappers-admin-hero-stat">
             <span>Доступно приложений</span>
-            <strong>{{ app_list|length }}</strong>
+            <strong>{{ dashboard_apps|length }}</strong>
             <small>Все разделы собраны ниже</small>
         </div>
     </section>
@@ -32,11 +32,11 @@
                 <span class="cappers-admin-eyebrow">Структура проекта</span>
                 <h2 id="admin-apps-title">Приложения</h2>
             </div>
-            <span class="cappers-admin-section-count">{{ app_list|length }}</span>
+            <span class="cappers-admin-section-count">{{ dashboard_apps|length }}</span>
         </div>
 
         <div class="cappers-admin-app-grid" data-admin-app-grid>
-            {% for app in app_list %}
+            {% for app in dashboard_apps %}
                 {% include "admin/includes/app_card.html" with app=app only %}
             {% empty %}
                 <div class="cappers-admin-empty-state">Нет доступных приложений.</div>

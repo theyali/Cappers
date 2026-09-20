@@ -1,18 +1,18 @@
 <article
-    class="cappers-admin-app-card"
+    class="cappers-admin-app-card is-{{ app.color }}"
     data-admin-app-card
-    data-admin-search-text="{{ app.name }} {{ app.app_label }} {% for model in app.models %}{{ model.name }} {{ model.object_name }} {% endfor %}"
+    data-admin-search-text="{{ app.title }} {{ app.subtitle }} {{ app.key }} {% for model in app.models %}{{ model.name }} {{ model.object_name }} {% endfor %}"
 >
     <div class="cappers-admin-app-card-head">
-        <span class="cappers-admin-app-card-icon" data-admin-app="{{ app.app_label }}">
-            {% include "admin/includes/_app_icon.html" with app_label=app.app_label only %}
+        <span class="cappers-admin-app-card-icon is-{{ app.color }}" data-admin-app="{{ app.key }}">
+            {% include "admin/includes/_app_icon.html" with app_label=app.icon only %}
         </span>
-        <span class="cappers-admin-app-card-count">{{ app.models|length }}</span>
+        <span class="cappers-admin-app-card-count">{{ app.model_count }}</span>
     </div>
 
     <div class="cappers-admin-app-card-copy">
-        <h3>{{ app.name }}</h3>
-        <p>{{ app.app_label }}</p>
+        <h3>{{ app.title }}</h3>
+        <p>{{ app.subtitle }}</p>
     </div>
 
     <div class="cappers-admin-app-models">
@@ -33,7 +33,7 @@
     </div>
 
     <a class="cappers-admin-app-open" href="{{ app.app_url }}">
-        <span>Открыть приложение</span>
+        <span>Открыть раздел</span>
         <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M2 8h11M9 4l4 4-4 4"></path>
         </svg>

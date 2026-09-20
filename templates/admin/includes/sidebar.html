@@ -27,19 +27,19 @@
     <div class="cappers-admin-sidebar-label">Приложения</div>
 
     <div class="cappers-admin-sidebar-apps">
-        {% for app in available_apps %}
+        {% for app in dashboard_apps %}
         <section
-            class="cappers-admin-sidebar-app{% if app.app_label == opts.app_label %} is-current{% endif %}"
+            class="cappers-admin-sidebar-app{% if app.source_app_label == opts.app_label %} is-current{% endif %}"
             data-admin-app-group
-            data-admin-app-search="{{ app.name }} {{ app.app_label }}"
+            data-admin-app-search="{{ app.title }} {{ app.subtitle }} {{ app.key }}"
         >
             <a class="cappers-admin-sidebar-app-link" href="{{ app.app_url }}">
-                <span class="cappers-admin-app-icon" data-admin-app="{{ app.app_label }}">
-                    {% include "admin/includes/_app_icon.html" with app_label=app.app_label only %}
+                <span class="cappers-admin-app-icon is-{{ app.color }}" data-admin-app="{{ app.key }}">
+                    {% include "admin/includes/_app_icon.html" with app_label=app.icon only %}
                 </span>
                 <span class="cappers-admin-sidebar-app-copy">
-                    <strong>{{ app.name }}</strong>
-                    <small>{{ app.models|length }} моделей</small>
+                    <strong>{{ app.title }}</strong>
+                    <small>{{ app.subtitle }}</small>
                 </span>
                 <svg class="cappers-admin-sidebar-chevron" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="m6 3 5 5-5 5"></path>
