@@ -26,14 +26,18 @@
             {% if form.non_field_errors %}
                 <div class="capper-field-errors">{{ form.non_field_errors }}</div>
             {% endif %}
-            {% for field in form %}
-                <label class="capper-field">
-                    <span class="capper-field-label">{{ field.label }}</span>
-                    {{ field }}
-                    {% if field.help_text %}<span class="capper-field-help">{{ field.help_text }}</span>{% endif %}
-                    {% if field.errors %}<span class="capper-field-errors">{{ field.errors|striptags }}</span>{% endif %}
-                </label>
-            {% endfor %}
+            {% if step == 3 %}
+                {% include "cabinet/includes/_sport_league_preferences.html" %}
+            {% else %}
+                {% for field in form %}
+                    <label class="capper-field">
+                        <span class="capper-field-label">{{ field.label }}</span>
+                        {{ field }}
+                        {% if field.help_text %}<span class="capper-field-help">{{ field.help_text }}</span>{% endif %}
+                        {% if field.errors %}<span class="capper-field-errors">{{ field.errors|striptags }}</span>{% endif %}
+                    </label>
+                {% endfor %}
+            {% endif %}
 
             <div class="capper-onboarding-actions">
                 {% if previous_step %}
@@ -86,4 +90,10 @@
         {% endif %}
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+    {% if step == 3 %}
+        <script src="{% static 'front/js/league-picker.js' %}" defer></script>
+    {% endif %}
 {% endblock %}
