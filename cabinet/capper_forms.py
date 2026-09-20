@@ -2,6 +2,8 @@ from django import forms
 
 from game.models import League, Sport
 
+from .forms import SportPreferenceField
+
 
 class CapperIdentityForm(forms.Form):
     first_name = forms.CharField(label="Имя", max_length=150, required=False)
@@ -50,7 +52,7 @@ class CapperAboutForm(forms.Form):
 
 
 class CapperFocusForm(forms.Form):
-    sports = forms.ModelMultipleChoiceField(
+    sports = SportPreferenceField(
         label="Любимые виды спорта",
         queryset=Sport.objects.all().order_by("name_ru", "name"),
         widget=forms.CheckboxSelectMultiple(
