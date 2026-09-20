@@ -45,7 +45,7 @@ def flag_match_for_manual_review(
     return review
 
 
-def _score_review_reason(match: Match) -> str | None:
+def get_match_score_review_reason(match: Match) -> str | None:
     score = (match.score or "").strip()
     if not score:
         return MatchManualReview.Reason.MISSING_SCORE
@@ -87,7 +87,7 @@ def settle_finished_matches(limit: int = 500) -> dict:
                     state_status="",
                 ).select_related("coupon")
             )
-            review_reason = _score_review_reason(match)
+            review_reason = get_match_score_review_reason(match)
             if review_reason is not None:
                 flag_match_for_manual_review(
                     match,
@@ -393,7 +393,7 @@ def resettle_coupon(
                     prediction.save(update_fields=["state_status", "updated_at"])
                 continue
 
-            review_reason = _score_review_reason(prediction.match)
+            review_reason = get_match_score_review_reason(prediction.match)
             if review_reason is not None:
                 flag_match_for_manual_review(
                     prediction.match,
