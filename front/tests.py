@@ -2,9 +2,11 @@ from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
 
+from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
+from back.models import WebsiteSettings
 from cabinet.models import (
     AnalystProfile,
     CapperMonthlyStat,
@@ -506,3 +508,36 @@ class PersonalizedExpertRecommendationTests(TestCase):
 
         with self.assertNumQueries(2):
             self.assertEqual(recommended_experts_for_user(user), [])
+
+
+class FooterRenderingTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.settings = WebsiteSettings.load()
+        self.settings.footer_description = "Тестовое описание футера из админки"
+        self.settings.save(update_fields=["footer_description", "updated_at"])
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+        super().tearDown()
+
+    def test_home_renders_footer_description_from_website_settings(self):
+        response = self.client.get(reverse("front:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Тестовое описание футера из админки")
+        self.assertContains(response, 'class="site-footer site-footer-v2"')
+
+    def test_footer_is_hidden_when_view_sets_hide_footer(self):
+        user = User.objects.create_user(
+            username="footer-hidden-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("front:favorites"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'class="site-footer site-footer-v2"')
