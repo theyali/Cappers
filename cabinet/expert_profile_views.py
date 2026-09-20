@@ -17,12 +17,9 @@ from game.models import PredictionCoupon
 from tournaments.models import Tournament, TournamentParticipant, TournamentResult
 from tournaments.services.leaderboard import tournament_leaderboard
 
-from .achievements import (
-    _best_win_streak,
-    _published_predictions_count,
-    _user_activity_metrics,
-    build_achievement_badges,
-)
+from achievements.evaluators import user_achievement_metrics
+
+from .achievements import build_achievement_badges
 from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
@@ -205,17 +202,21 @@ def _recommended_experts(
 
 
 def _expert_achievement_badges(profile: AnalystProfile, context: dict) -> list[dict]:
-    activity = _user_activity_metrics(profile.user)
+    metrics = user_achievement_metrics(
+        profile.user,
+        followers_count=context.get("followers_count", 0),
+        is_verified=profile.is_verified,
+    )
     badges = build_achievement_badges(
-        predictions_count=_published_predictions_count(profile.user),
+        predictions_count=metrics["predictions"],
         wins_count=context.get("wins_count", 0),
         overall_roi=context.get("overall_roi", 0),
-        followers_count=context.get("followers_count", 0),
-        best_win_streak=_best_win_streak(profile.user),
-        is_verified=profile.is_verified,
-        likes_given=activity["likes_given"],
-        favorites_saved=activity["favorites_saved"],
-        referrals=activity["referrals"],
+        followers_count=metrics["followers"],
+        best_win_streak=metrics["streak"],
+        is_verified=bool(metrics["verified"]),
+        likes_given=metrics["likes_given"],
+        favorites_saved=metrics["favorites_saved"],
+        referrals=metrics["referrals"],
     )
     return list(reversed(badges))
 
