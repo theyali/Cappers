@@ -74,7 +74,7 @@
             picker.querySelectorAll("[data-league-id]").forEach((button) => {
                 const id = Number.parseInt(button.dataset.leagueId, 10);
                 const active = draft.has(id);
-                button.setAttribute("aria-pressed", active ? "true" : "false");
+                button.setAttribute("aria-checked", active ? "true" : "false");
                 const mark = button.querySelector("i");
                 if (mark) mark.textContent = active ? "✓" : "+";
             });
@@ -85,7 +85,8 @@
             button.type = "button";
             button.className = "league-picker-option";
             button.dataset.leagueId = String(league.id);
-            button.setAttribute("aria-pressed", draft.has(league.id) ? "true" : "false");
+            button.setAttribute("role", "checkbox");
+            button.setAttribute("aria-checked", draft.has(league.id) ? "true" : "false");
 
             const logo = document.createElement("span");
             const copy = document.createElement("span");
