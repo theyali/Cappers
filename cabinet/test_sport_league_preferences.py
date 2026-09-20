@@ -32,6 +32,20 @@ class SportLeaguePreferenceTests(TestCase):
             name_ru="Премьер-лига",
         )
 
+    def test_reader_registration_allows_empty_sports(self):
+        form = RegistrationForm(
+            data={
+                "username": "preference-reader",
+                "email": "preference-reader@example.com",
+                "password1": "safe-test-password-123",
+                "password2": "safe-test-password-123",
+                "role": User.Role.READER,
+                "accept_terms": "on",
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
     def test_capper_registration_requires_sport_even_if_role_is_tampered(self):
         form = RegistrationForm(
             data={
@@ -48,6 +62,44 @@ class SportLeaguePreferenceTests(TestCase):
         form.is_valid()
 
         self.assertIn("sports", form.errors)
+
+    def test_capper_registration_saves_preferences_and_legacy_fields(self):
+        response = self.client.post(
+            reverse("cabinet:register"),
+            {
+                "account_type": "capper",
+                "username": "registered-capper",
+                "email": "registered-capper@example.com",
+                "password1": "safe-test-password-123",
+                "password2": "safe-test-password-123",
+                "role": User.Role.ANALYST,
+                "sports": [self.football.id],
+                "leagues": [self.premier_league.id],
+                "accept_terms": "on",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("cabinet:capper_onboarding", kwargs={"step": 1}),
+        )
+        user = User.objects.get(username="registered-capper")
+        profile = AnalystProfile.objects.get(user=user)
+
+        self.assertTrue(
+            UserSportPreference.objects.filter(
+                user=user,
+                sport=self.football,
+            ).exists()
+        )
+        self.assertTrue(
+            UserLeaguePreference.objects.filter(
+                user=user,
+                league=self.premier_league,
+            ).exists()
+        )
+        self.assertEqual(profile.favorite_sports, "Футбол")
+        self.assertEqual(profile.favorite_leagues, "Премьер-лига")
 
     def test_sync_preferences_updates_relations_and_legacy_display_fields(self):
         user = User.objects.create_user(
