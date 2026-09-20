@@ -190,6 +190,29 @@ class SportLeaguePreferenceTests(TestCase):
         self.assertEqual(profile.favorite_sports, "Футбол")
         self.assertEqual(profile.favorite_leagues, "Премьер-лига")
 
+    def test_league_search_is_paginated(self):
+        for index in range(40):
+            league = League.objects.create(
+                external_id=992000 + index,
+                sport=self.football,
+                name=f"League {index:02d}",
+                name_ru=f"Лига {index:02d}",
+            )
+            Match.objects.create(
+                external_id=993000 + index,
+                sport=self.football,
+                league=league,
+                sync_scope=Match.SyncScope.PREMATCH,
+            )
+
+        response = self.client.get(reverse("cabinet:league_search"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(len(payload["results"]), 40)
+        self.assertTrue(payload["has_more"])
+        self.assertIn("is_top", payload["results"][0])
+
     def test_league_search_filters_by_sport_query_and_available_matches(self):
         League.objects.create(
             external_id=990102,
