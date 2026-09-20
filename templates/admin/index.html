@@ -1,54 +1,43 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static admin_dashboard %}
+{% load static admin_dashboard %}
+
 {% block bodyclass %}{{ block.super }} dashboard cappers-admin-dashboard-page{% endblock %}
 {% block breadcrumbs %}{% endblock %}
 {% block content_title %}{% endblock %}
 
 {% block content %}
 {% admin_grouped_apps app_list as dashboard_apps %}
-<div id="content-main" class="cappers-admin-dashboard-shell">
+<div id="content-main" class="admin-main cappers-admin-dashboard-shell">
     <section class="cappers-admin-hero">
         <div class="cappers-admin-hero-copy">
             <span class="cappers-admin-eyebrow">Панель управления</span>
-            <h1>Добро пожаловать, {{ user.get_short_name|default:user.get_username }}</h1>
+            <h1>Добро пожаловать!</h1>
             <p>Управляйте приложениями, контентом и данными в одном месте.</p>
-            <div class="cappers-admin-hero-actions">
-                <a class="cappers-admin-primary-action" href="/">Открыть сайт</a>
-                {% if perms.cabinet.view_user %}
-                <a class="cappers-admin-secondary-action" href="{% url 'admin:cabinet_user_changelist' %}">Пользователи</a>
-                {% endif %}
-            </div>
         </div>
-        <div class="cappers-admin-hero-stat">
-            <span>Доступно разделов</span>
-            <strong>{{ dashboard_apps|length }}</strong>
-            <small>Все инструменты собраны ниже</small>
+
+        <div class="cappers-admin-hero-art" aria-hidden="true">
+            <span class="cappers-admin-hero-art-note">Весь проект<br>под контролем</span>
+            <span class="cappers-admin-hero-art-cube">
+                {% admin_icon_svg "database" %}
+            </span>
+            <span class="cappers-admin-hero-art-block is-left"></span>
+            <span class="cappers-admin-hero-art-block is-right"></span>
         </div>
     </section>
 
-    <section class="cappers-admin-section" aria-labelledby="admin-apps-title">
-        <div class="cappers-admin-section-head">
-            <div>
-                <span class="cappers-admin-eyebrow">Структура проекта</span>
-                <h2 id="admin-apps-title">Приложения</h2>
-            </div>
-            <span class="cappers-admin-section-count">{{ dashboard_apps|length }}</span>
-        </div>
-
-        <div class="cappers-admin-app-grid" data-admin-app-grid>
-            {% for app in dashboard_apps %}
-                {% include "admin/includes/app_card.html" with app=app only %}
-            {% empty %}
-                <div class="cappers-admin-empty-state">Нет доступных приложений.</div>
-            {% endfor %}
-        </div>
-
-        <div class="cappers-admin-empty-state" data-admin-search-empty hidden>
-            По вашему запросу ничего не найдено.
-        </div>
+    <section class="cappers-admin-app-grid" data-admin-app-grid aria-label="Приложения">
+        {% for app in dashboard_apps %}
+            {% include "admin/includes/app_card.html" with app=app only %}
+        {% empty %}
+            <div class="cappers-admin-empty-state">Нет доступных приложений.</div>
+        {% endfor %}
     </section>
 
-    <div class="cappers-admin-dashboard-lower">
+    <div class="cappers-admin-empty-state" data-admin-search-empty hidden>
+        По вашему запросу ничего не найдено.
+    </div>
+
+    <div class="admin-bottom-grid cappers-admin-dashboard-lower">
         {% include "admin/includes/quick_actions.html" %}
         {% include "admin/includes/recent_actions.html" %}
     </div>

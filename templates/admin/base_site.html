@@ -1,5 +1,5 @@
 {% extends "admin/base.html" %}
-{% load i18n static %}
+{% load static %}
 
 {% block title %}{{ title }} | Django Admin{% endblock %}
 
@@ -14,7 +14,7 @@
 <script src="{% static 'admin_custom/js/admin-dashboard.js' %}" defer></script>
 {% endblock %}
 
-{% block bodyclass %}{{ block.super }} cappers-admin{% endblock %}
+{% block bodyclass %}{{ block.super }} cappers-admin admin-shell{% endblock %}
 
 {% block branding %}
 <div id="site-name"><a href="{% url 'admin:index' %}">Django Admin</a></div>
