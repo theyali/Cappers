@@ -17,7 +17,7 @@ from .models import (
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
 
-    def __init__(self, *args, require_sports: bool = false, **kwargs):
+    def __init__(self, *args, require_sports: bool = False, **kwargs):
         self.require_sports = require_sports
         super().__init__(*args, **kwargs)
     role = forms.ChoiceField(
