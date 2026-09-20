@@ -23,7 +23,8 @@ def sync_user_sport_league_preferences(
         [
             UserSportPreference(user=user, sport=sport)
             for sport in sports
-        ]
+        ],
+        ignore_conflicts=True,
     )
 
     UserLeaguePreference.objects.filter(user=user).delete()
@@ -31,7 +32,8 @@ def sync_user_sport_league_preferences(
         [
             UserLeaguePreference(user=user, league=league)
             for league in leagues
-        ]
+        ],
+        ignore_conflicts=True,
     )
 
     if profile is None:
