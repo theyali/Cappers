@@ -1,12 +1,14 @@
 {% extends "admin/base_site.html" %}
-{% load i18n %}
+{% load i18n admin_dashboard %}
+{% admin_app_meta app_label as app_meta %}
+{% admin_grouped_apps app_list as dashboard_apps %}
 
 {% block bodyclass %}{{ block.super }} app-{{ app_label }} cappers-admin-app-index-page{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-    &rsaquo; {{ app_list.0.name }}
+    &rsaquo; {{ app_meta.title }}
 </div>
 {% endblock %}
 
@@ -17,17 +19,15 @@
     <section class="cappers-admin-section" aria-labelledby="admin-app-title">
         <div class="cappers-admin-section-head">
             <div>
-                <span class="cappers-admin-eyebrow">Приложение</span>
-                <h1 id="admin-app-title">{{ app_list.0.name }}</h1>
+                <span class="cappers-admin-eyebrow">{{ app_meta.subtitle }}</span>
+                <h1 id="admin-app-title">{{ app_meta.title }}</h1>
             </div>
             <span class="cappers-admin-section-count">{{ app_list.0.models|length }}</span>
         </div>
 
         <div class="cappers-admin-app-grid">
             {% for app in dashboard_apps %}
-                {% if app.source_app_label == app_label %}
-                    {% include "admin/includes/app_card.html" with app=app only %}
-                {% endif %}
+                {% include "admin/includes/app_card.html" with app=app only %}
             {% empty %}
                 <div class="cappers-admin-empty-state">Нет доступных моделей.</div>
             {% endfor %}

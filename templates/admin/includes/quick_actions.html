@@ -1,3 +1,4 @@
+{% load admin_dashboard %}
 <section class="cappers-admin-panel" aria-labelledby="admin-quick-title">
     <div class="cappers-admin-panel-head">
         <div>
@@ -10,7 +11,7 @@
         {% for action in quick_actions %}
         <a href="{{ action.url }}" class="cappers-admin-quick-action">
             <span class="cappers-admin-quick-icon">
-                {% include "admin/includes/_app_icon.html" with app_label=action.icon only %}
+                {% admin_icon_svg action.icon %}
             </span>
             <span>
                 <strong>{{ action.title }}</strong>

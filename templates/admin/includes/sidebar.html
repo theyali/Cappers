@@ -1,4 +1,9 @@
-{% load i18n %}
+{% load i18n admin_dashboard %}
+{% admin_grouped_apps available_apps as dashboard_apps %}
+{% if opts %}
+    {% admin_app_meta opts.app_label as current_app_meta %}
+{% endif %}
+
 <nav class="sticky cappers-admin-sidebar" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
     <input
         class="cappers-admin-native-filter"
@@ -24,26 +29,33 @@
         >×</button>
     </div>
 
+    <div class="cappers-admin-sidebar-home">
+        <a href="{% url 'admin:index' %}" class="{% if not opts %}is-current{% endif %}">
+            <span class="cappers-admin-app-icon is-blue">{% admin_icon_svg "home" %}</span>
+            <span>Главная</span>
+        </a>
+    </div>
+
     <div class="cappers-admin-sidebar-label">Приложения</div>
 
     <div class="cappers-admin-sidebar-apps">
         {% for app in dashboard_apps %}
         <section
-            class="cappers-admin-sidebar-app{% if app.source_app_label == opts.app_label %} is-current{% endif %}"
+            class="cappers-admin-sidebar-app{% if app.key == current_app_meta.key %} is-current{% endif %}"
             data-admin-app-group
             data-admin-app-search="{{ app.title }} {{ app.subtitle }} {{ app.key }}"
         >
             <a class="cappers-admin-sidebar-app-link" href="{{ app.app_url }}">
                 <span class="cappers-admin-app-icon is-{{ app.color }}" data-admin-app="{{ app.key }}">
-                    {% include "admin/includes/_app_icon.html" with app_label=app.icon only %}
+                    {% admin_icon_svg app.icon %}
                 </span>
                 <span class="cappers-admin-sidebar-app-copy">
                     <strong>{{ app.title }}</strong>
                     <small>{{ app.subtitle }}</small>
                 </span>
-                <svg class="cappers-admin-sidebar-chevron" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="m6 3 5 5-5 5"></path>
-                </svg>
+                <span class="cappers-admin-sidebar-chevron">
+                    {% admin_icon_svg "chevron-right" %}
+                </span>
             </a>
 
             <div class="cappers-admin-sidebar-models">
@@ -70,11 +82,15 @@
     </div>
 
     <div class="cappers-admin-sidebar-footer">
+        {% url 'admin:back_websitesettings_changelist' as admin_settings_url %}
+        {% if admin_settings_url %}
+        <a href="{{ admin_settings_url }}">
+            {% admin_icon_svg "settings" %}
+            <span>Настройки</span>
+        </a>
+        {% endif %}
         <a href="/">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M14 5h5v5M19 5l-8 8"></path>
-                <path d="M19 13v6H5V5h6"></path>
-            </svg>
+            {% admin_icon_svg "monitor" %}
             <span>Открыть сайт</span>
         </a>
     </div>

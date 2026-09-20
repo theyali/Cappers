@@ -1,3 +1,4 @@
+{% load admin_dashboard %}
 <article
     class="cappers-admin-app-card is-{{ app.color }}"
     data-admin-app-card
@@ -5,9 +6,9 @@
 >
     <div class="cappers-admin-app-card-head">
         <span class="cappers-admin-app-card-icon is-{{ app.color }}" data-admin-app="{{ app.key }}">
-            {% include "admin/includes/_app_icon.html" with app_label=app.icon only %}
+            {% admin_icon_svg app.icon %}
         </span>
-        <span class="cappers-admin-app-card-count">{{ app.model_count }}</span>
+        <span class="cappers-admin-app-card-count">{{ app.model_count }} моделей</span>
     </div>
 
     <div class="cappers-admin-app-card-copy">
@@ -34,8 +35,6 @@
 
     <a class="cappers-admin-app-open" href="{{ app.app_url }}">
         <span>Открыть раздел</span>
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M2 8h11M9 4l4 4-4 4"></path>
-        </svg>
+        {% admin_icon_svg "chevron-right" %}
     </a>
 </article>

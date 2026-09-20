@@ -1,5 +1,6 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n static admin_dashboard %}
+{% admin_grouped_apps app_list as dashboard_apps %}
 
 {% block bodyclass %}{{ block.super }} dashboard cappers-admin-dashboard-page{% endblock %}
 {% block breadcrumbs %}{% endblock %}
@@ -11,7 +12,7 @@
         <div class="cappers-admin-hero-copy">
             <span class="cappers-admin-eyebrow">Панель управления</span>
             <h1>Добро пожаловать, {{ user.get_short_name|default:user.get_username }}</h1>
-            <p>Управляйте контентом, пользователями и настройками проекта из одного места.</p>
+            <p>Управляйте приложениями, контентом и данными в одном месте.</p>
             <div class="cappers-admin-hero-actions">
                 <a class="cappers-admin-primary-action" href="/">Открыть сайт</a>
                 {% if perms.cabinet.view_user %}
@@ -20,9 +21,9 @@
             </div>
         </div>
         <div class="cappers-admin-hero-stat">
-            <span>Доступно приложений</span>
+            <span>Доступно разделов</span>
             <strong>{{ dashboard_apps|length }}</strong>
-            <small>Все разделы собраны ниже</small>
+            <small>Все инструменты собраны ниже</small>
         </div>
     </section>
 

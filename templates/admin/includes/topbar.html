@@ -1,4 +1,4 @@
-{% load static %}
+{% load admin_dashboard %}
 <div class="cappers-admin-toolbar">
     <button
         class="cappers-admin-menu-button"
@@ -7,24 +7,28 @@
         aria-expanded="false"
         data-admin-sidebar-toggle
     >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h16"></path>
-        </svg>
+        {% admin_icon_svg "grid" %}
     </button>
 
     <label class="cappers-admin-search">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="6"></circle>
-            <path d="m16 16 4 4"></path>
-        </svg>
+        {% admin_icon_svg "search" %}
         <input
             type="search"
-            placeholder="Поиск по приложениям и моделям"
+            placeholder="Поиск по приложениям, моделям, пользователям..."
             autocomplete="off"
             data-admin-global-search
         >
         <span class="cappers-admin-search-shortcut">⌘K</span>
     </label>
+
+    <button
+        class="cappers-admin-theme-button"
+        type="button"
+        aria-label="Переключить тему"
+        data-admin-theme-toggle
+    >
+        {% admin_icon_svg "sun" %}
+    </button>
 </div>
 
 <button
