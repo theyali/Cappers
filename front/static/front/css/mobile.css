@@ -5451,3 +5451,60 @@ body.expert-public-details-open {
         grid-template-columns: 1fr;
     }
 }
+
+
+@media (max-width: 700px) {
+    .sport-league-preferences {
+        grid-template-columns: 1fr;
+    }
+
+    .preference-picker-block {
+        padding: 14px;
+    }
+
+    .league-picker-modal {
+        align-items: end;
+        padding: 0;
+    }
+
+    .league-picker-card {
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .league-picker-head,
+    .league-picker-actions {
+        padding: 16px;
+    }
+
+    .league-picker-controls {
+        grid-template-columns: 1fr 1fr;
+        padding: 14px 16px;
+    }
+
+    .league-picker-search {
+        grid-column: 1 / -1;
+    }
+
+    .league-picker-body {
+        padding: 2px 16px 16px;
+    }
+
+    .league-picker-results {
+        grid-template-columns: 1fr;
+    }
+
+    .league-picker-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .league-picker-actions > div {
+        justify-content: space-between;
+    }
+
+    .league-picker-actions > div:last-child button {
+        flex: 1;
+    }
+}
