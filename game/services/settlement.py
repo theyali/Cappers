@@ -577,13 +577,13 @@ def _settle_total(selection: str, total_goals: int) -> str | None:
         return None
     is_over = _is_over_selection(selection)
     is_under = _is_under_selection(selection)
+    if not is_over and not is_under:
+        return None
     if Decimal(total_goals) == line:
         return Prediction.StateStatus.REFUND
     if is_over:
         return Prediction.StateStatus.WIN if Decimal(total_goals) > line else Prediction.StateStatus.LOSE
-    if is_under:
-        return Prediction.StateStatus.WIN if Decimal(total_goals) < line else Prediction.StateStatus.LOSE
-    return None
+    return Prediction.StateStatus.WIN if Decimal(total_goals) < line else Prediction.StateStatus.LOSE
 
 
 def _settle_both_score(selection: str, score: tuple[int, int]) -> str | None:
