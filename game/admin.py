@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.db.models import Count, Q
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html
 
 from game.models import (
     Country,
@@ -125,7 +127,17 @@ class MatchAdmin(admin.ModelAdmin):
 
     @admin.display(description="На проверке", ordering="_open_reviews_count")
     def open_reviews_count(self, obj):
-        return obj._open_reviews_count
+        count = int(obj._open_reviews_count or 0)
+        if not count:
+            return 0
+        url = reverse("admin:game_matchmanualreview_changelist")
+        return format_html(
+            '<a href="{}?match__id__exact={}&status__exact={}">{}</a>',
+            url,
+            obj.pk,
+            MatchManualReview.Status.OPEN,
+            count,
+        )
 
 
 @admin.register(MatchManualReview)
@@ -134,22 +146,44 @@ class MatchManualReviewAdmin(admin.ModelAdmin):
         "match",
         "reason",
         "status",
+        "match_score",
+        "match_scope",
         "created_at",
         "updated_at",
-        "resolved_at",
     )
-    list_filter = ("status", "reason", "match__sport", "created_at")
+    list_filter = (
+        "status",
+        "reason",
+        "match__sport",
+        "match__sync_scope",
+    )
     search_fields = (
         "=match__external_id",
         "match__home_team__name",
         "match__home_team__name_ru",
         "match__away_team__name",
         "match__away_team__name_ru",
+        "match__league__name",
+        "match__league__name_ru",
     )
     autocomplete_fields = ("match",)
-    list_select_related = ("match", "match__sport")
-    readonly_fields = ("created_at", "updated_at", "resolved_at")
+    list_select_related = (
+        "match",
+        "match__sport",
+        "match__league",
+        "match__home_team",
+        "match__away_team",
+    )
+    readonly_fields = ("created_at", "updated_at", "resolved_at", "details")
     actions = ("mark_resolved", "mark_ignored")
+
+    @admin.display(description="Счёт", ordering="match__score")
+    def match_score(self, obj):
+        return obj.match.score or "—"
+
+    @admin.display(description="Статус матча", ordering="match__sync_scope")
+    def match_scope(self, obj):
+        return obj.match.get_sync_scope_display()
 
     @admin.action(description="Отметить выбранные как решённые")
     def mark_resolved(self, request, queryset):
