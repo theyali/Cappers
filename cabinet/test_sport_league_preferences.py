@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from game.models import League, Sport
+from game.models import League, Match, Sport
 
 from cabinet.forms import RegistrationForm
 from cabinet.models import (
@@ -30,6 +30,12 @@ class SportLeaguePreferenceTests(TestCase):
             sport=self.football,
             name="Premier League",
             name_ru="Премьер-лига",
+        )
+        Match.objects.create(
+            external_id=990201,
+            sport=self.football,
+            league=self.premier_league,
+            sync_scope=Match.SyncScope.PREMATCH,
         )
 
     def test_reader_registration_allows_empty_sports(self):
@@ -101,6 +107,58 @@ class SportLeaguePreferenceTests(TestCase):
         self.assertEqual(profile.favorite_sports, "Футбол")
         self.assertEqual(profile.favorite_leagues, "Премьер-лига")
 
+    def test_capper_onboarding_step_three_replaces_preferences(self):
+        tennis_league = League.objects.create(
+            external_id=990103,
+            sport=self.tennis,
+            name="ATP Test League",
+            name_ru="ATP тест",
+        )
+        Match.objects.create(
+            external_id=990202,
+            sport=self.tennis,
+            league=tennis_league,
+            sync_scope=Match.SyncScope.PREMATCH,
+        )
+        user = User.objects.create_user(
+            username="onboarding-capper",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        profile = AnalystProfile.objects.create(
+            user=user,
+            display_name="Тестовый каппер",
+            specialization="Теннис",
+            bio="Описание профиля для теста.",
+        )
+        UserSportPreference.objects.create(user=user, sport=self.football)
+        UserLeaguePreference.objects.create(user=user, league=self.premier_league)
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("cabinet:capper_onboarding", kwargs={"step": 3}),
+            {
+                "sports": [self.tennis.id],
+                "leagues": [tennis_league.id],
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("cabinet:capper_onboarding", kwargs={"step": 4}),
+        )
+        self.assertEqual(
+            list(user.sport_preferences.values_list("sport_id", flat=True)),
+            [self.tennis.id],
+        )
+        self.assertEqual(
+            list(user.league_preferences.values_list("league_id", flat=True)),
+            [tennis_league.id],
+        )
+        profile.refresh_from_db()
+        self.assertEqual(profile.favorite_sports, "Теннис")
+        self.assertEqual(profile.favorite_leagues, "ATP тест")
+
     def test_sync_preferences_updates_relations_and_legacy_display_fields(self):
         user = User.objects.create_user(
             username="preference-user",
@@ -132,12 +190,12 @@ class SportLeaguePreferenceTests(TestCase):
         self.assertEqual(profile.favorite_sports, "Футбол")
         self.assertEqual(profile.favorite_leagues, "Премьер-лига")
 
-    def test_league_search_filters_by_sport_and_query(self):
+    def test_league_search_filters_by_sport_query_and_available_matches(self):
         League.objects.create(
             external_id=990102,
-            sport=self.tennis,
-            name="ATP Tour",
-            name_ru="ATP Тур",
+            sport=self.football,
+            name="Premier League Archive",
+            name_ru="Премьер-лига архив",
         )
 
         response = self.client.get(
