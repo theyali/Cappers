@@ -1,11 +1,13 @@
+from io import StringIO
 from unittest.mock import patch
 
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 
 from cabinet.models import User
 from game.models import Match, MatchManualReview, Prediction, PredictionCoupon
-from game.services.settlement import settle_finished_matches
+from game.services.settlement import resettle_coupon, settle_finished_matches
 
 
 class ManualMatchReviewSettlementTests(TestCase):
@@ -196,6 +198,102 @@ class ManualMatchReviewSettlementTests(TestCase):
         self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.WIN)
         self.assertEqual(review.status, MatchManualReview.Status.RESOLVED)
         self.assertIsNotNone(review.resolved_at)
+
+    def test_resettle_unknown_market_restores_pending_and_opens_review(self):
+        match, coupon, prediction = self.create_prediction(
+            external_id=990009,
+            score="2:1",
+            market="unsupported_market",
+            selection="Unsupported selection",
+        )
+        prediction.state_status = Prediction.StateStatus.LOSE
+        prediction.save(update_fields=["state_status", "updated_at"])
+        coupon.state_status = PredictionCoupon.StateStatus.LOSE
+        coupon.save(update_fields=["state_status", "updated_at"])
+
+        with patch("game.services.settlement.settle_prediction_coupon"):
+            resettle_coupon(coupon.id)
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        self.assertEqual(prediction.state_status, "")
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.PENDING)
+        self.assertTrue(
+            MatchManualReview.objects.filter(
+                match=match,
+                reason=MatchManualReview.Reason.UNKNOWN_MARKET,
+                status=MatchManualReview.Status.OPEN,
+            ).exists()
+        )
+
+    def test_total_market_is_still_settled_normally(self):
+        _, coupon, prediction = self.create_prediction(
+            external_id=990010,
+            score="2-1",
+            market="total",
+            selection="Over 2.5",
+        )
+
+        self.settle()
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        self.assertEqual(prediction.state_status, Prediction.StateStatus.WIN)
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.WIN)
+
+    def test_both_score_market_is_still_settled_normally(self):
+        _, coupon, prediction = self.create_prediction(
+            external_id=990011,
+            score="2-1",
+            market="both_score",
+            selection="yes",
+        )
+
+        self.settle()
+
+        prediction.refresh_from_db()
+        coupon.refresh_from_db()
+        self.assertEqual(prediction.state_status, Prediction.StateStatus.WIN)
+        self.assertEqual(coupon.state_status, PredictionCoupon.StateStatus.WIN)
+
+    def test_review_stuck_matches_command_flags_invalid_scores(self):
+        missing = Match.objects.create(
+            external_id=990012,
+            sync_scope=Match.SyncScope.FINISHED,
+            starts_at=timezone.now(),
+            score="",
+        )
+        invalid = Match.objects.create(
+            external_id=990013,
+            sync_scope=Match.SyncScope.FINISHED,
+            starts_at=timezone.now(),
+            score="FT",
+        )
+        Match.objects.create(
+            external_id=990014,
+            sync_scope=Match.SyncScope.FINISHED,
+            starts_at=timezone.now(),
+            score="1-0",
+        )
+        stdout = StringIO()
+
+        call_command("review_stuck_matches", stdout=stdout)
+
+        self.assertTrue(
+            MatchManualReview.objects.filter(
+                match=missing,
+                reason=MatchManualReview.Reason.MISSING_SCORE,
+                status=MatchManualReview.Status.OPEN,
+            ).exists()
+        )
+        self.assertTrue(
+            MatchManualReview.objects.filter(
+                match=invalid,
+                reason=MatchManualReview.Reason.INVALID_SCORE,
+                status=MatchManualReview.Status.OPEN,
+            ).exists()
+        )
+        self.assertIn("найдено 2", stdout.getvalue())
 
     def test_supported_losing_market_is_still_settled_as_loss(self):
         _, coupon, prediction = self.create_prediction(
