@@ -87,17 +87,31 @@
             button.dataset.leagueId = String(league.id);
             button.setAttribute("aria-pressed", draft.has(league.id) ? "true" : "false");
 
+            const logo = document.createElement("span");
             const copy = document.createElement("span");
             const title = document.createElement("strong");
             const meta = document.createElement("small");
             const mark = document.createElement("i");
+
+            logo.className = "league-picker-option-logo";
+            if (league.logo) {
+                const image = document.createElement("img");
+                image.src = league.logo;
+                image.alt = "";
+                image.width = 32;
+                image.height = 32;
+                image.loading = "lazy";
+                logo.dataset.skeletonImage = "";
+                logo.append(image);
+                window.CappersSkeleton?.watchImage(logo);
+            }
 
             title.textContent = league.text;
             meta.textContent = [league.sport, league.country].filter(Boolean).join(" · ");
             mark.textContent = draft.has(league.id) ? "✓" : "+";
 
             copy.append(title, meta);
-            button.append(copy, mark);
+            button.append(logo, copy, mark);
 
             button.addEventListener("click", () => {
                 if (draft.has(league.id)) {
