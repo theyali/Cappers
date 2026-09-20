@@ -42164,6 +42164,39 @@ padding:40px 0px;
     accent-color: var(--yellow);
 }
 
+.sport-preference-option {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sport-preference-image,
+.league-picker-option-logo {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #242426;
+}
+
+.sport-preference-image {
+    width: 24px;
+    height: 24px;
+}
+
+.sport-preference-image img,
+.league-picker-option-logo img {
+    display: block;
+    object-fit: contain;
+}
+
+.league-picker-option-logo {
+    width: 36px;
+    height: 36px;
+}
+
 .league-picker-trigger,
 .league-picker-more,
 .league-picker-close,
