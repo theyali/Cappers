@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - chatgpt/sport-league-footer-settlement
+  pull_request:
+    branches:
+      - main
 
 jobs:
   verify:
