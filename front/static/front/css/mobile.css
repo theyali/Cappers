@@ -5119,9 +5119,49 @@ body.expert-public-details-open {
 
 
 /* Django Admin responsive layout */
-@media (max-width: 1040px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+    .cappers-admin {
+        --admin-sidebar-width: 220px;
+    }
+
+    .cappers-admin-sidebar-brand {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .cappers-admin-sidebar-apps {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .cappers-admin-sidebar-app-link {
+        gap: 8px;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .cappers-admin-sidebar-footer {
+        width: 220px;
+    }
+
+    .cappers-admin .main > #content-start {
+        padding: 22px 24px 36px;
+    }
+
+    .cappers-admin-app-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cappers-admin-dashboard-lower {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767px) {
     .cappers-admin {
         --admin-sidebar-width: 0px;
+        min-width: 0;
+        background: #f3f6fb;
     }
 
     .cappers-admin #header,
@@ -5132,11 +5172,15 @@ body.expert-public-details-open {
     }
 
     .cappers-admin #nav-sidebar {
-        width: 286px;
-        min-width: 286px;
+        width: min(280px, 88vw);
+        min-width: min(280px, 88vw);
         transform: translateX(-100%);
         transition: transform .2s ease;
         box-shadow: 18px 0 44px rgba(0, 0, 0, .18);
+    }
+
+    .cappers-admin.cappers-admin-sidebar-open {
+        overflow: hidden;
     }
 
     .cappers-admin.cappers-admin-sidebar-open #nav-sidebar {
@@ -5169,22 +5213,7 @@ body.expert-public-details-open {
     }
 
     .cappers-admin-sidebar-footer {
-        width: 286px;
-    }
-
-    .cappers-admin-dashboard-lower {
-        grid-template-columns: 1fr;
-    }
-
-    .cappers-admin-app-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 760px) {
-    .cappers-admin {
-        min-width: 0;
-        background: #f3f6fb;
+        width: min(280px, 88vw);
     }
 
     .cappers-admin #header {

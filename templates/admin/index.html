@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load static admin_dashboard %}
+{% load static admin_dashboard log %}
 
 {% block bodyclass %}{{ block.super }} dashboard cappers-admin-dashboard-page{% endblock %}
 {% block breadcrumbs %}{% endblock %}
@@ -7,6 +7,7 @@
 
 {% block content %}
 {% admin_grouped_apps app_list as dashboard_apps %}
+{% get_admin_log 8 as admin_log for_user user %}
 <div id="content-main" class="admin-main cappers-admin-dashboard-shell">
     <section class="cappers-admin-hero">
         <div class="cappers-admin-hero-copy">

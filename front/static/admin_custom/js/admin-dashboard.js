@@ -6,7 +6,8 @@
     const appCards = Array.from(document.querySelectorAll("[data-admin-app-card]"));
     const appGroups = Array.from(document.querySelectorAll("[data-admin-app-group]"));
     const emptyState = document.querySelector("[data-admin-search-empty]");
-    const toggles = Array.from(document.querySelectorAll("[data-admin-sidebar-toggle]"));
+    const menuToggles = Array.from(document.querySelectorAll("[data-admin-menu-toggle]"));
+    const backdrop = document.querySelector("[data-admin-menu-backdrop]");
     const themeToggle = document.querySelector("[data-admin-theme-toggle]");
 
     const normalize = (value) => String(value || "").trim().toLowerCase();
@@ -36,6 +37,21 @@
         }
     };
 
+    const setSidebarOpen = (isOpen) => {
+        body.classList.toggle("cappers-admin-sidebar-open", isOpen);
+        menuToggles.forEach((toggle) => {
+            toggle.setAttribute("aria-expanded", String(isOpen));
+        });
+    };
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!body.classList.contains("cappers-admin-sidebar-open"));
+    };
+
+    const closeSidebar = () => {
+        setSidebarOpen(false);
+    };
+
     search?.addEventListener("input", applySearch);
 
     document.addEventListener("keydown", (event) => {
@@ -44,28 +60,22 @@
             search?.focus();
         }
 
-        if (event.key === "Escape" && body.classList.contains("cappers-admin-sidebar-open")) {
-            body.classList.remove("cappers-admin-sidebar-open");
-            toggles.forEach((toggle) => toggle.setAttribute("aria-expanded", "false"));
+        if (event.key === "Escape") {
+            closeSidebar();
         }
     });
 
-    const toggleSidebar = () => {
-        const isOpen = body.classList.toggle("cappers-admin-sidebar-open");
-        toggles.forEach((toggle) => toggle.setAttribute("aria-expanded", String(isOpen)));
-    };
-
-    toggles.forEach((toggle) => {
+    menuToggles.forEach((toggle) => {
         toggle.addEventListener("click", toggleSidebar);
     });
+
+    backdrop?.addEventListener("click", closeSidebar);
 
     themeToggle?.addEventListener("click", () => {
         document.querySelector(".theme-toggle")?.click();
     });
 
     document.querySelectorAll("#nav-sidebar a").forEach((link) => {
-        link.addEventListener("click", () => {
-            body.classList.remove("cappers-admin-sidebar-open");
-        });
+        link.addEventListener("click", closeSidebar);
     });
 })();

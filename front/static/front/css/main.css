@@ -41058,7 +41058,7 @@ padding:40px 0px;
 
 /* Django Admin redesign */
 .cappers-admin {
-    --admin-sidebar-width: 272px;
+    --admin-sidebar-width: 280px;
     --admin-bg: #f3f6fb;
     --admin-surface: #fff;
     --admin-text: #111827;
@@ -41855,7 +41855,19 @@ padding:40px 0px;
     height: 7px;
     flex: 0 0 auto;
     border-radius: 50%;
+    background: var(--admin-blue);
+}
+
+.cappers-admin-recent-dot.is-add {
     background: var(--admin-green);
+}
+
+.cappers-admin-recent-dot.is-change {
+    background: var(--admin-blue);
+}
+
+.cappers-admin-recent-dot.is-delete {
+    background: var(--admin-red);
 }
 
 .cappers-admin-recent-item > div {
