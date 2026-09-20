@@ -42096,3 +42096,667 @@ padding:40px 0px;
     font-size: 20px;
     text-decoration: none;
 }
+
+
+/* Sport and league preference picker */
+.sport-league-preferences {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.preference-picker-block {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 14px;
+    background: #171718;
+}
+
+.preference-picker-label {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.preference-picker-help {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.sport-preference-list > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sport-preference-list > div > div {
+    min-width: 0;
+}
+
+.sport-preference-list label {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 11px;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, .78);
+    background: #303033;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.sport-preference-list label:has(input:checked) {
+    color: #fff;
+    background: var(--blue);
+}
+
+.sport-preference-list input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--yellow);
+}
+
+.sport-preference-option {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sport-preference-image,
+.league-picker-option-logo {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #242426;
+}
+
+.sport-preference-image {
+    width: 24px;
+    height: 24px;
+}
+
+.sport-preference-image img,
+.league-picker-option-logo img {
+    display: block;
+    object-fit: contain;
+}
+
+.league-picker-option-logo {
+    width: 36px;
+    height: 36px;
+}
+
+.league-picker-trigger,
+.league-picker-more,
+.league-picker-close,
+.league-picker-actions button,
+.league-picker-option,
+.league-picker-backdrop {
+    border: 0;
+    font: inherit;
+}
+
+.league-picker-trigger {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 13px;
+    border-radius: 12px;
+    color: #fff;
+    background: #303033;
+    cursor: pointer;
+    text-align: left;
+}
+
+.league-picker-trigger small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.league-picker-selected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.league-picker-selected[hidden] {
+    display: none;
+}
+
+.league-picker-chip {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 7px 9px;
+    border-radius: 9px;
+    color: #fff;
+    background: rgba(11, 86, 250, .24);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.league-picker-open {
+    overflow: hidden;
+}
+
+.league-picker-modal[hidden] {
+    display: none;
+}
+
+.league-picker-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.league-picker-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(19, 19, 19, .82);
+    cursor: default;
+}
+
+.league-picker-card {
+    position: relative;
+    z-index: 1;
+    width: min(900px, 100%);
+    max-height: min(780px, calc(100vh - 48px));
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, .38);
+}
+
+.league-picker-head,
+.league-picker-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px;
+    background: #19191b;
+}
+
+.league-picker-head h2 {
+    margin: 4px 0 0;
+    color: #fff;
+    font-size: 24px;
+}
+
+.league-picker-close {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #fff;
+    background: #303033;
+    cursor: pointer;
+    font-size: 24px;
+}
+
+.league-picker-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(150px, .75fr));
+    gap: 10px;
+    padding: 16px 22px;
+}
+
+.league-picker-controls label {
+    display: grid;
+    gap: 6px;
+}
+
+.league-picker-controls label > span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.league-picker-controls input,
+.league-picker-controls select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 0;
+    outline: 0;
+    border-radius: 11px;
+    color: #fff;
+    background: #303033;
+    font: inherit;
+    font-size: 12px;
+}
+
+.league-picker-controls input:focus,
+.league-picker-controls select:focus {
+    outline: 2px solid var(--blue);
+}
+
+.league-picker-body {
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    align-content: start;
+    gap: 20px;
+    padding: 4px 22px 20px;
+}
+
+.league-picker-section {
+    display: grid;
+    gap: 10px;
+}
+
+.league-picker-section[hidden] {
+    display: none;
+}
+
+.league-picker-section-head {
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.league-picker-section-head strong {
+    color: #fff;
+    font-size: 13px;
+}
+
+.league-picker-section-head span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.league-picker-results {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.league-picker-option {
+    min-width: 0;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #fff;
+    background: #303033;
+    cursor: pointer;
+    text-align: left;
+}
+
+.league-picker-option[aria-checked="true"] {
+    background: var(--blue);
+}
+
+.league-picker-option > span {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.league-picker-option strong,
+.league-picker-option small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.league-picker-option strong {
+    color: inherit;
+    font-size: 12px;
+}
+
+.league-picker-option small {
+    color: rgba(255, 255, 255, .55);
+    font-size: 10px;
+}
+
+.league-picker-option[aria-checked="true"] small {
+    color: rgba(255, 255, 255, .78);
+}
+
+.league-picker-option i {
+    flex: 0 0 auto;
+    color: var(--yellow);
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.league-picker-more {
+    min-height: 40px;
+    border-radius: 10px;
+    color: #fff;
+    background: #303033;
+    cursor: pointer;
+}
+
+.league-picker-actions > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.league-picker-actions strong {
+    color: #fff;
+    font-size: 12px;
+}
+
+.league-picker-actions button {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    color: #fff;
+    background: #303033;
+    cursor: pointer;
+}
+
+.league-picker-actions .capper-growth-link.is-blue {
+    background: var(--blue);
+}
+
+
+/* Site footer */
+.site-footer,
+.site-footer-v2 {
+    margin-top: 40px;
+    padding: 40px 0 28px;
+    color: #fff;
+    background: var(--ink);
+}
+
+.site-footer-top,
+.site-footer-actions,
+.site-footer-partners,
+.site-footer-legal {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+}
+
+.site-footer-top {
+    display: grid;
+    grid-template-columns: minmax(240px, .8fr) minmax(0, 1.7fr);
+    gap: 56px;
+}
+
+.site-footer-intro {
+    min-width: 0;
+}
+
+.site-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.site-footer-brand-logo {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--panel);
+}
+
+.site-footer-brand-logo img {
+    display: block;
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+
+.site-footer-brand-name {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.03em;
+}
+
+.site-footer-brand-name mark {
+    padding: 0;
+    color: var(--yellow);
+    background: transparent;
+}
+
+.site-footer-copy {
+    max-width: 360px;
+    margin: 16px 0 0;
+    color: #a6a6a8;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.site-footer-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+}
+
+.site-footer-group {
+    min-width: 0;
+}
+
+.site-footer-title,
+.site-footer-section-label {
+    display: block;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.site-footer-links {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.site-footer-links a,
+.site-footer-support a {
+    color: #9a9a9d;
+    font-size: 13px;
+    line-height: 1.4;
+    text-decoration: none;
+}
+
+.site-footer-links a:hover,
+.site-footer-support a:hover,
+.site-footer-social:hover .site-footer-social-label {
+    color: #fff;
+}
+
+.site-footer-actions {
+    display: grid;
+    grid-template-columns: minmax(220px, .75fr) minmax(0, 1.25fr) auto;
+    align-items: end;
+    gap: 28px;
+    margin-top: 34px;
+    padding-top: 28px;
+}
+
+.site-footer-support {
+    display: grid;
+    gap: 7px;
+}
+
+.site-footer-support > strong {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.site-footer-support-contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 14px;
+}
+
+.site-footer-apps,
+.site-footer-socials,
+.site-footer-partner-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.site-footer-app,
+.site-footer-social {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    color: #fff;
+    background: var(--panel);
+    text-decoration: none;
+}
+
+.site-footer-app-icon,
+.site-footer-social-icon {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+}
+
+.site-footer-app-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.site-footer-social-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.site-footer-app-icon img,
+.site-footer-social-icon img,
+.site-footer-social-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.site-footer-social-icon svg {
+    fill: currentColor;
+}
+
+.site-footer-app-copy {
+    display: grid;
+    gap: 1px;
+}
+
+.site-footer-app-copy small {
+    color: #8d8d90;
+    font-size: 9px;
+}
+
+.site-footer-app-copy strong,
+.site-footer-social-label {
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.site-footer-partners {
+    margin-top: 28px;
+    padding-top: 24px;
+}
+
+.site-footer-partner-list {
+    margin-top: 12px;
+}
+
+.site-footer-partner-logo {
+    min-width: 120px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--panel);
+}
+
+.site-footer-partner-logo img {
+    display: block;
+    max-width: 132px;
+    max-height: 44px;
+    object-fit: contain;
+}
+
+.site-footer-legal {
+    display: grid;
+    grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr);
+    gap: 32px;
+    margin-top: 28px;
+    padding-top: 24px;
+}
+
+.site-footer-responsible,
+.site-footer-legal-copy {
+    min-width: 0;
+}
+
+.site-footer-responsible {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.site-footer-age {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0 8px;
+    border-radius: 10px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.site-footer-responsible p,
+.site-footer-legal-copy p {
+    margin: 0;
+    color: #858588;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.site-footer-legal-copy {
+    display: grid;
+    gap: 6px;
+}
+
+.site-footer-copyright {
+    margin-top: 5px !important;
+    color: #b6b6b8 !important;
+}

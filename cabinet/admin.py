@@ -18,6 +18,8 @@ from .models import (
     StreakReward,
     User,
     UserDailyStreak,
+    UserLeaguePreference,
+    UserSportPreference,
     UserDailyTaskProgress,
     UserVipSubscription,
     UserXpState,
@@ -105,8 +107,44 @@ class CapperArticleAdmin(admin.ModelAdmin):
             )
 
 
+class UserSportPreferenceInline(admin.TabularInline):
+    model = UserSportPreference
+    extra = 0
+    autocomplete_fields = ("sport",)
+
+
+class UserLeaguePreferenceInline(admin.TabularInline):
+    model = UserLeaguePreference
+    extra = 0
+    autocomplete_fields = ("league",)
+
+
+@admin.register(UserSportPreference)
+class UserSportPreferenceAdmin(admin.ModelAdmin):
+    list_display = ("user", "sport", "created_at")
+    list_filter = ("sport",)
+    search_fields = ("user__username", "user__email", "sport__name", "sport__name_ru")
+    autocomplete_fields = ("user", "sport")
+    list_select_related = ("user", "sport")
+
+
+@admin.register(UserLeaguePreference)
+class UserLeaguePreferenceAdmin(admin.ModelAdmin):
+    list_display = ("user", "league", "created_at")
+    list_filter = ("league__sport", "league__country")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "league__name",
+        "league__name_ru",
+    )
+    autocomplete_fields = ("user", "league")
+    list_select_related = ("user", "league", "league__sport", "league__country")
+
+
 @admin.register(User)
 class CabinetUserAdmin(UserAdmin):
+    inlines = (UserSportPreferenceInline, UserLeaguePreferenceInline)
     fieldsets = UserAdmin.fieldsets + (
         ("Профиль", {"fields": ("role", "referral_code")}),
     )

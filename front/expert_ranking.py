@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
 from django.core.cache import cache
-from django.db.models import Count, Max, Q
+from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, Q, Value
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
@@ -682,6 +682,92 @@ def ranked_expert_profiles(
     result = profiles if safe_limit is None else profiles[:safe_limit]
     _cache_set(cache_key, result)
     return result
+
+
+def recommended_experts_for_user(
+    user,
+    limit: int | None = 6,
+) -> list[AnalystProfile]:
+    """Return public cappers whose published predictions match user preferences."""
+    if not getattr(user, "is_authenticated", False):
+        return []
+
+    safe_limit = _normalize_limit(limit)
+    if safe_limit == 0:
+        return []
+
+    sport_ids = list(
+        user.sport_preferences.values_list("sport_id", flat=True)
+    )
+    league_ids = list(
+        user.league_preferences.values_list("league_id", flat=True)
+    )
+    if not sport_ids and not league_ids:
+        return []
+
+    published_filter = Q(
+        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
+    )
+    annotations = {
+        "preference_sport_matches": (
+            Count(
+                "user__prediction_coupons__predictions",
+                filter=published_filter
+                & Q(
+                    user__prediction_coupons__predictions__match__sport_id__in=sport_ids
+                ),
+                distinct=True,
+            )
+            if sport_ids
+            else Value(0, output_field=IntegerField())
+        ),
+        "preference_league_matches": (
+            Count(
+                "user__prediction_coupons__predictions",
+                filter=published_filter
+                & Q(
+                    user__prediction_coupons__predictions__match__league_id__in=league_ids
+                ),
+                distinct=True,
+            )
+            if league_ids
+            else Value(0, output_field=IntegerField())
+        ),
+    }
+
+    queryset = (
+        AnalystProfile.objects.filter(
+            is_public=True,
+            user__role=User.Role.ANALYST,
+        )
+        .exclude(user_id=user.pk)
+        .select_related("user")
+        .annotate(**annotations)
+        .annotate(
+            preference_match_score=ExpressionWrapper(
+                F("preference_league_matches") * Value(2)
+                + F("preference_sport_matches"),
+                output_field=IntegerField(),
+            )
+        )
+        .filter(preference_match_score__gt=0)
+    )
+    queryset = annotate_author_roi(
+        queryset,
+        author_outer_ref="user_id",
+        annotation_name="author_roi",
+        period_days=None,
+    ).order_by(
+        "-preference_match_score",
+        "-trust_index",
+        "-is_verified",
+        "-author_roi",
+        "user_id",
+    )
+
+    if safe_limit is None:
+        return list(queryset)
+    return list(queryset[:safe_limit])
 
 
 def current_month_top_expert_ids(limit: int = 1) -> list[int]:

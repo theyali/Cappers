@@ -80,6 +80,7 @@ urlpatterns = [
     path("users/<str:username>/", user_public_views.user_profile, name="user_profile"),
     path("experts/<int:user_id>/follow/", referral_views.toggle_follow, name="toggle_follow"),
     path("register/", capper_views.register, name="register"),
+    path("league-search/", capper_views.league_search, name="league_search"),
     path("become-capper/", capper_views.become_capper, name="become_capper"),
     path("become-capper/start/", capper_views.become_capper_start, name="become_capper_start"),
     path(

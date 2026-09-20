@@ -227,6 +227,58 @@ class AnalystProfile(models.Model):
         ]
 
 
+class UserSportPreference(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sport_preferences",
+    )
+    sport = models.ForeignKey(
+        "game.Sport",
+        on_delete=models.CASCADE,
+        related_name="user_preferences",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "sport"],
+                name="unique_user_sport_preference",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "sport"], name="cab_user_sport_idx"),
+            models.Index(fields=["sport"], name="cab_sport_pref_idx"),
+        ]
+
+
+class UserLeaguePreference(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="league_preferences",
+    )
+    league = models.ForeignKey(
+        "game.League",
+        on_delete=models.CASCADE,
+        related_name="user_preferences",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "league"],
+                name="unique_user_league_preference",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "league"], name="cab_user_league_idx"),
+            models.Index(fields=["league"], name="cab_league_pref_idx"),
+        ]
+
+
 class CapperArticle(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Черновик"

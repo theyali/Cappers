@@ -2,12 +2,14 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 
-from game.models import PredictionCoupon
+from game.models import Country, League, PredictionCoupon, Sport
 from wallets.services import ensure_coin_wallet
 
 from .capper_forms import (
@@ -19,6 +21,7 @@ from .capper_forms import (
 from .forms import RegistrationForm
 from .models import AnalystProfile, User
 from .referrals import mark_referral_registration
+from .services.preferences import sync_user_sport_league_preferences
 
 
 ACCOUNT_READER = "user"
@@ -78,7 +81,10 @@ def _first_incomplete_step(profile: AnalystProfile) -> int | None:
         return 1
     if not (profile.specialization or "").strip() or not (profile.bio or "").strip():
         return 2
-    if not (profile.favorite_sports or "").strip():
+    if (
+        not profile.user.sport_preferences.exists()
+        and not (profile.favorite_sports or "").strip()
+    ):
         return 3
     return None
 
@@ -97,6 +103,7 @@ def register(request):
         form = RegistrationForm(
             request.POST or None,
             initial={"role": selected_role},
+            require_sports=selected_type == ACCOUNT_CAPPER,
         )
 
     if request.method == "POST":
@@ -111,12 +118,19 @@ def register(request):
                 # аккаунты не попадали в рейтинг и не публиковались случайно.
                 user.role = User.Role.READER
                 user.save()
+                profile = None
                 if wants_capper:
-                    AnalystProfile.objects.create(
+                    profile = AnalystProfile.objects.create(
                         user=user,
                         display_name=_display_name_for(user),
                         is_public=False,
                     )
+                sync_user_sport_league_preferences(
+                    user,
+                    form.cleaned_data["sports"],
+                    form.cleaned_data["leagues"],
+                    profile=profile,
+                )
                 mark_referral_registration(request, user)
             login(request, user)
             if wants_capper:
@@ -137,6 +151,11 @@ def register(request):
                 if selected_type == ACCOUNT_CAPPER
                 else User.Role.READER
             ),
+            "league_picker_sports": Sport.objects.all().order_by("name_ru", "name"),
+            "league_picker_countries": Country.objects.filter(
+                leagues__matches__isnull=False
+            ).distinct().order_by("name_ru", "name"),
+            "league_search_url": reverse("cabinet:league_search"),
         },
     )
 
@@ -233,14 +252,21 @@ def capper_onboarding(request, step: int):
         form = CapperFocusForm(
             request.POST or None,
             initial={
-                "favorite_sports": profile.favorite_sports,
-                "favorite_leagues": profile.favorite_leagues,
+                "sports": list(
+                    request.user.sport_preferences.values_list("sport_id", flat=True)
+                ),
+                "leagues": list(
+                    request.user.league_preferences.values_list("league_id", flat=True)
+                ),
             },
         )
         if request.method == "POST" and form.is_valid():
-            profile.favorite_sports = form.cleaned_data["favorite_sports"].strip()
-            profile.favorite_leagues = form.cleaned_data["favorite_leagues"].strip()
-            profile.save(update_fields=["favorite_sports", "favorite_leagues", "updated_at"])
+            sync_user_sport_league_preferences(
+                request.user,
+                form.cleaned_data["sports"],
+                form.cleaned_data["leagues"],
+                profile=profile,
+            )
             return redirect("cabinet:capper_onboarding", step=4)
 
     elif step == 4:
@@ -318,19 +344,111 @@ def capper_onboarding(request, step: int):
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
     ).exists()
 
+    context = {
+        "form": form,
+        "profile": profile,
+        "step": step,
+        "total_steps": TOTAL_ONBOARDING_STEPS,
+        "step_title": step_title,
+        "step_copy": step_copy,
+        "previous_step": step - 1 if step > 1 else None,
+        "next_step": step + 1 if step < TOTAL_ONBOARDING_STEPS else None,
+        "progress_percent": round(step / TOTAL_ONBOARDING_STEPS * 100),
+        "first_prediction_exists": first_prediction_exists,
+    }
+    if step == 3:
+        context.update(
+            {
+                "league_picker_sports": Sport.objects.all().order_by("name_ru", "name"),
+                "league_picker_countries": Country.objects.filter(
+                    leagues__isnull=False
+                ).distinct().order_by("name_ru", "name"),
+                "league_search_url": reverse("cabinet:league_search"),
+            }
+        )
+
     return render(
         request,
         "cabinet/capper/onboarding.html",
+        context,
+    )
+
+
+@require_GET
+def league_search(request):
+    leagues = League.objects.select_related("sport", "country")
+    selected_ids = []
+    for value in (request.GET.get("ids") or "").split(","):
+        value = value.strip()
+        if value.isdigit():
+            selected_ids.append(int(value))
+
+    is_top = request.GET.get("top") == "1"
+    if selected_ids:
+        leagues = leagues.filter(id__in=selected_ids)
+    else:
+        leagues = leagues.filter(matches__isnull=False).distinct()
+        query = (request.GET.get("q") or "").strip()
+        sport_id = (request.GET.get("sport") or "").strip()
+        country_id = (request.GET.get("country") or "").strip()
+
+        if query:
+            leagues = leagues.filter(
+                Q(name__icontains=query)
+                | Q(name_ru__icontains=query)
+                | Q(country__name__icontains=query)
+                | Q(country__name_ru__icontains=query)
+            )
+        if sport_id.isdigit():
+            leagues = leagues.filter(sport_id=int(sport_id))
+        if country_id.isdigit():
+            leagues = leagues.filter(country_id=int(country_id))
+
+        if is_top:
+            leagues = (
+                leagues.annotate(match_count=Count("matches", distinct=True))
+                .order_by("-match_count", "name_ru", "name", "id")
+            )
+        else:
+            leagues = leagues.order_by(
+                "sport__name_ru",
+                "sport__name",
+                "country__name_ru",
+                "country__name",
+                "name_ru",
+                "name",
+                "id",
+            )
+
+    if selected_ids:
+        rows = list(leagues[:200])
+        has_more = False
+    else:
+        try:
+            page = max(1, int(request.GET.get("page") or 1))
+        except (TypeError, ValueError):
+            page = 1
+        page_size = 12 if is_top else 40
+        offset = (page - 1) * page_size
+        rows = list(leagues[offset : offset + page_size + 1])
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
+
+    return JsonResponse(
         {
-            "form": form,
-            "profile": profile,
-            "step": step,
-            "total_steps": TOTAL_ONBOARDING_STEPS,
-            "step_title": step_title,
-            "step_copy": step_copy,
-            "previous_step": step - 1 if step > 1 else None,
-            "next_step": step + 1 if step < TOTAL_ONBOARDING_STEPS else None,
-            "progress_percent": round(step / TOTAL_ONBOARDING_STEPS * 100),
-            "first_prediction_exists": first_prediction_exists,
-        },
+            "results": [
+                {
+                    "id": league.id,
+                    "text": str(league),
+                    "sport_id": league.sport_id,
+                    "sport": str(league.sport),
+                    "country_id": league.country_id,
+                    "country": str(league.country) if league.country_id else "",
+                    "logo": league.logo,
+                    "is_top": is_top,
+                }
+                for league in rows
+            ],
+            "has_more": has_more,
+        }
     )

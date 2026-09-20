@@ -1,0 +1,34 @@
+<div class="sport-league-preferences" data-league-picker>
+    <div class="preference-picker-block">
+        <span class="preference-picker-label">{{ form.sports.label }}</span>
+        <div class="sport-preference-list">
+            {{ form.sports }}
+        </div>
+        {% if form.sports.help_text %}
+            <span class="preference-picker-help">{{ form.sports.help_text }}</span>
+        {% endif %}
+        {% if form.sports.errors %}
+            <span class="capper-field-errors">{{ form.sports.errors|striptags }}</span>
+        {% endif %}
+    </div>
+
+    <div class="preference-picker-block">
+        <span class="preference-picker-label">{{ form.leagues.label }}</span>
+        <div data-league-hidden-inputs>{{ form.leagues }}</div>
+        <button
+            class="league-picker-trigger"
+            type="button"
+            data-league-picker-open
+            aria-haspopup="dialog"
+        >
+            <span>Выбрать лиги</span>
+            <small data-league-picker-count>0 выбрано</small>
+        </button>
+        <div class="league-picker-selected" data-league-picker-selected aria-live="polite"></div>
+        {% if form.leagues.errors %}
+            <span class="capper-field-errors">{{ form.leagues.errors|striptags }}</span>
+        {% endif %}
+    </div>
+
+    {% include "cabinet/includes/_league_picker_modal.html" %}
+</div>

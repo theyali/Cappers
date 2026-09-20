@@ -1,0 +1,100 @@
+<div
+    class="league-picker-modal"
+    data-league-picker-modal
+    data-search-url="{{ league_search_url }}"
+    hidden
+>
+    <button
+        class="league-picker-backdrop"
+        type="button"
+        data-league-picker-close
+        aria-label="Закрыть выбор лиг"
+    ></button>
+    <section
+        class="league-picker-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="league-picker-title"
+    >
+        <header class="league-picker-head">
+            <div>
+                <span class="capper-kicker">Специализация</span>
+                <h2 id="league-picker-title">Выберите лиги</h2>
+            </div>
+            <button
+                class="league-picker-close"
+                type="button"
+                data-league-picker-close
+                aria-label="Закрыть"
+            >×</button>
+        </header>
+
+        <div class="league-picker-controls">
+            <label class="league-picker-search">
+                <span>Поиск</span>
+                <input
+                    type="search"
+                    placeholder="Название лиги или страны"
+                    autocomplete="off"
+                    data-league-picker-search
+                >
+            </label>
+            <label>
+                <span>Спорт</span>
+                <select data-league-picker-sport>
+                    <option value="">Все виды спорта</option>
+                    {% for sport in league_picker_sports %}
+                        <option value="{{ sport.id }}">{{ sport }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span>Страна</span>
+                <select data-league-picker-country>
+                    <option value="">Все страны</option>
+                    {% for country in league_picker_countries %}
+                        <option value="{{ country.id }}">{{ country }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <div class="league-picker-body">
+            <section class="league-picker-section" data-league-picker-top-section>
+                <div class="league-picker-section-head">
+                    <strong>Популярные лиги</strong>
+                </div>
+                <div class="league-picker-results" data-league-picker-top></div>
+            </section>
+
+            <section class="league-picker-section">
+                <div class="league-picker-section-head">
+                    <strong>Все лиги</strong>
+                    <span data-league-picker-status></span>
+                </div>
+                <div class="league-picker-results" data-league-picker-results></div>
+                <button
+                    class="league-picker-more"
+                    type="button"
+                    data-league-picker-more
+                    hidden
+                >Показать ещё</button>
+            </section>
+        </div>
+
+        <footer class="league-picker-actions">
+            <div>
+                <strong data-league-picker-modal-count>0 выбрано</strong>
+                <button type="button" data-league-picker-clear>Очистить</button>
+            </div>
+            <div>
+                <button type="button" data-league-picker-close>Отмена</button>
+                <button
+                    class="capper-growth-link is-blue"
+                    type="button"
+                    data-league-picker-apply
+                >Применить</button>
+            </div>
+        </footer>
+    </section>
+</div>
