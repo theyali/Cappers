@@ -41063,8 +41063,14 @@ padding:40px 0px;
     --admin-surface: #fff;
     --admin-text: #131313;
     --admin-muted: #707072;
-    --admin-blue: #0b56fa;
-    --admin-yellow: #fbf110;
+    --admin-blue: #1478ff;
+    --admin-green: #12b981;
+    --admin-red: #ff4f66;
+    --admin-purple: #5b4bff;
+    --admin-violet: #7c4dff;
+    --admin-orange: #ff8a1f;
+    --admin-yellow: #f5a300;
+    --admin-cyan: #0bbf9a;
     min-width: 0;
     margin: 0;
     color: var(--admin-text);
@@ -41205,6 +41211,35 @@ padding:40px 0px;
     font-weight: 700;
 }
 
+.cappers-admin-theme-button {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: #7e8797;
+    cursor: pointer;
+}
+
+.cappers-admin-theme-button:hover {
+    background: #f0f1f3;
+    color: var(--admin-text);
+}
+
+.cappers-admin-theme-button svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .cappers-admin .cappers-admin-native-toggle,
 .cappers-admin .cappers-admin-native-filter {
     display: none !important;
@@ -41292,10 +41327,38 @@ padding:40px 0px;
     text-transform: uppercase;
 }
 
+.cappers-admin-sidebar-home {
+    padding: 0 14px 10px;
+}
+
+.cappers-admin-sidebar-home a {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 11px;
+    color: #d7d7da !important;
+    font-size: 12px;
+    font-weight: 650;
+    text-decoration: none;
+}
+
+.cappers-admin-sidebar-home a:hover,
+.cappers-admin-sidebar-home a.is-current {
+    background: var(--admin-blue);
+    color: #fff !important;
+}
+
+.cappers-admin-sidebar-home a.is-current .cappers-admin-app-icon {
+    background: rgba(255, 255, 255, .16);
+    color: #fff;
+}
+
 .cappers-admin-sidebar-apps {
     display: grid;
     gap: 4px;
-    padding: 0 10px 92px;
+    padding: 0 10px 150px;
 }
 
 .cappers-admin-sidebar-app[hidden],
@@ -41390,9 +41453,19 @@ padding:40px 0px;
 .cappers-admin-sidebar-chevron {
     width: 15px;
     height: 15px;
+    display: grid;
+    place-items: center;
+    color: #65656a;
+}
+
+.cappers-admin-sidebar-chevron svg {
+    width: 15px;
+    height: 15px;
     fill: none;
-    stroke: #65656a;
+    stroke: currentColor;
     stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .cappers-admin-sidebar-models {
@@ -41434,6 +41507,8 @@ padding:40px 0px;
     left: 0;
     bottom: 0;
     width: var(--admin-sidebar-width);
+    display: grid;
+    gap: 6px;
     padding: 14px 14px 18px;
     background: #151517;
 }
@@ -42016,44 +42091,50 @@ padding:40px 0px;
     text-decoration: none;
 }
 
+.cappers-admin-app-icon.is-blue,
+.cappers-admin-app-card-icon.is-blue {
+    background: #e8f2ff;
+    color: var(--admin-blue);
+}
+
 .cappers-admin-app-icon.is-green,
 .cappers-admin-app-card-icon.is-green {
-    background: #e7f5ed;
-    color: #17643b;
+    background: #e6f8f2;
+    color: var(--admin-green);
 }
 
 .cappers-admin-app-icon.is-red,
 .cappers-admin-app-card-icon.is-red {
-    background: #fdeaea;
-    color: #b42318;
+    background: #ffeaee;
+    color: var(--admin-red);
 }
 
 .cappers-admin-app-icon.is-purple,
 .cappers-admin-app-card-icon.is-purple {
-    background: #f1eafe;
-    color: #7a35c2;
+    background: #eeecff;
+    color: var(--admin-purple);
 }
 
 .cappers-admin-app-icon.is-violet,
 .cappers-admin-app-card-icon.is-violet {
-    background: #eeeaff;
-    color: #6246c9;
+    background: #f0eaff;
+    color: var(--admin-violet);
 }
 
 .cappers-admin-app-icon.is-orange,
 .cappers-admin-app-card-icon.is-orange {
-    background: #fff0df;
-    color: #b35b00;
+    background: #fff0e1;
+    color: var(--admin-orange);
 }
 
 .cappers-admin-app-icon.is-yellow,
 .cappers-admin-app-card-icon.is-yellow {
-    background: #fffbd0;
-    color: #6f6600;
+    background: #fff4d8;
+    color: var(--admin-yellow);
 }
 
 .cappers-admin-app-icon.is-cyan,
 .cappers-admin-app-card-icon.is-cyan {
-    background: #e4f8fb;
-    color: #08788a;
+    background: #e3f8f3;
+    color: var(--admin-cyan);
 }

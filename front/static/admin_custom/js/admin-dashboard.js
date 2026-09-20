@@ -7,6 +7,7 @@
     const appGroups = Array.from(document.querySelectorAll("[data-admin-app-group]"));
     const emptyState = document.querySelector("[data-admin-search-empty]");
     const toggles = Array.from(document.querySelectorAll("[data-admin-sidebar-toggle]"));
+    const themeToggle = document.querySelector("[data-admin-theme-toggle]");
 
     const normalize = (value) => String(value || "").trim().toLowerCase();
 
@@ -59,6 +60,10 @@
 
     toggles.forEach((toggle) => {
         toggle.addEventListener("click", toggleSidebar);
+    });
+
+    themeToggle?.addEventListener("click", () => {
+        document.querySelector(".theme-toggle")?.click();
     });
 
     document.querySelectorAll("#nav-sidebar a").forEach((link) => {

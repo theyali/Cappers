@@ -5225,6 +5225,10 @@ body.expert-public-details-open {
         display: none;
     }
 
+    .cappers-admin-theme-button {
+        display: none;
+    }
+
     .cappers-admin .main > #content-start {
         padding: 16px 12px 28px;
     }
