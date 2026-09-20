@@ -54,6 +54,19 @@ def _score_review_reason(match: Match) -> str | None:
     return None
 
 
+def resolve_match_manual_reviews(match: Match, reasons: tuple[str, ...]) -> None:
+    now = timezone.now()
+    MatchManualReview.objects.filter(
+        match=match,
+        status=MatchManualReview.Status.OPEN,
+        reason__in=reasons,
+    ).update(
+        status=MatchManualReview.Status.RESOLVED,
+        resolved_at=now,
+        updated_at=now,
+    )
+
+
 def settle_finished_matches(limit: int = 500) -> dict:
     void_result = settle_void_matches(limit=limit)
     matches = (
@@ -67,28 +80,41 @@ def settle_finished_matches(limit: int = 500) -> dict:
     settlement_errors = 0
     for match in matches:
         try:
+            predictions = list(
+                Prediction.objects.filter(
+                    match=match,
+                    coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                    state_status="",
+                ).select_related("coupon")
+            )
             review_reason = _score_review_reason(match)
             if review_reason is not None:
-                flag_match_for_manual_review(
-                    match,
-                    review_reason,
-                    {"score": match.score},
-                )
+                if predictions:
+                    flag_match_for_manual_review(
+                        match,
+                        review_reason,
+                        {"score": match.score},
+                    )
                 continue
+
+            resolve_match_manual_reviews(
+                match,
+                (
+                    MatchManualReview.Reason.MISSING_SCORE,
+                    MatchManualReview.Reason.INVALID_SCORE,
+                ),
+            )
 
             result = resolve_match_bets(match)
             if result is None:
                 continue
 
             resolved_matches += 1
-            predictions = Prediction.objects.filter(
-                match=match,
-                coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            ).filter(state_status="")
-
-            for prediction in predictions.select_related("coupon"):
+            has_unknown_prediction = False
+            for prediction in predictions:
                 state = prediction_state(prediction, result)
                 if state is None:
+                    has_unknown_prediction = True
                     flag_match_for_manual_review(
                         match,
                         MatchManualReview.Reason.UNKNOWN_MARKET,
@@ -104,6 +130,16 @@ def settle_finished_matches(limit: int = 500) -> dict:
                 prediction.save(update_fields=["state_status", "updated_at"])
                 updated_predictions += 1
                 updated_coupons.add(prediction.coupon_id)
+
+            if not has_unknown_prediction:
+                resolve_match_manual_reviews(
+                    match,
+                    (MatchManualReview.Reason.UNKNOWN_MARKET,),
+                )
+            resolve_match_manual_reviews(
+                match,
+                (MatchManualReview.Reason.SETTLEMENT_ERROR,),
+            )
         except Exception as exc:
             settlement_errors += 1
             try:
