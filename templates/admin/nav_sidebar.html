@@ -1,0 +1,86 @@
+{% load i18n %}
+
+<button
+    class="sticky toggle-nav-sidebar cappers-admin-native-toggle"
+    id="toggle-nav-sidebar"
+    type="button"
+    aria-label="{% translate 'Toggle navigation' %}"
+></button>
+
+<nav class="sticky cappers-admin-sidebar" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
+    <input
+        class="cappers-admin-native-filter"
+        type="search"
+        id="nav-filter"
+        placeholder="{% translate 'Start typing to filter…' %}"
+        aria-label="{% translate 'Filter navigation items' %}"
+    >
+
+    <div class="cappers-admin-sidebar-brand">
+        <a href="{% url 'admin:index' %}" aria-label="Django Admin">
+            <span class="cappers-admin-brand-mark">D</span>
+            <span>
+                <strong>Django Admin</strong>
+                <small>Панель управления</small>
+            </span>
+        </a>
+        <button
+            class="cappers-admin-sidebar-close"
+            type="button"
+            aria-label="Закрыть меню"
+            data-admin-sidebar-toggle
+        >×</button>
+    </div>
+
+    <div class="cappers-admin-sidebar-label">Приложения</div>
+
+    <div class="cappers-admin-sidebar-apps">
+        {% for app in available_apps %}
+        <section
+            class="cappers-admin-sidebar-app{% if app.app_label == opts.app_label %} is-current{% endif %}"
+            data-admin-app-group
+            data-admin-app-search="{{ app.name }} {{ app.app_label }}"
+        >
+            <a class="cappers-admin-sidebar-app-link" href="{{ app.app_url }}">
+                <span class="cappers-admin-app-icon" data-admin-app="{{ app.app_label }}">
+                    {% include "admin/includes/_app_icon.html" with app_label=app.app_label only %}
+                </span>
+                <span class="cappers-admin-sidebar-app-copy">
+                    <strong>{{ app.name }}</strong>
+                    <small>{{ app.models|length }} моделей</small>
+                </span>
+                <svg class="cappers-admin-sidebar-chevron" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="m6 3 5 5-5 5"></path>
+                </svg>
+            </a>
+
+            <div class="cappers-admin-sidebar-models">
+                {% for model in app.models %}
+                    {% if model.admin_url %}
+                    <a
+                        href="{{ model.admin_url }}"
+                        class="{% if model.object_name == opts.object_name %}is-current{% endif %}"
+                        data-admin-model-item
+                        data-admin-model-search="{{ model.name }} {{ model.object_name }}"
+                    >
+                        <span>{{ model.name }}</span>
+                        {% if model.add_url %}
+                        <span class="cappers-admin-sidebar-model-add" title="Добавить">+</span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% empty %}
+        <p class="cappers-admin-sidebar-empty">Нет доступных приложений.</p>
+        {% endfor %}
+    </div>
+
+    <div class="cappers-admin-sidebar-footer">
+        <a href="/">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8"></path><path d="M19 13v6H5V5h6"></path></svg>
+            <span>Открыть сайт</span>
+        </a>
+    </div>
+</nav>

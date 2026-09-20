@@ -41054,3 +41054,932 @@ padding:40px 0px;
     min-width: 210px;
     background: var(--blue);
 }
+
+
+/* Django Admin redesign */
+.cappers-admin {
+    --admin-sidebar-width: 272px;
+    --admin-bg: #f3f4f6;
+    --admin-surface: #fff;
+    --admin-text: #131313;
+    --admin-muted: #707072;
+    --admin-blue: #0b56fa;
+    --admin-yellow: #fbf110;
+    min-width: 0;
+    margin: 0;
+    color: var(--admin-text);
+    background: var(--admin-bg);
+    font-family: var(--font-body);
+}
+
+.cappers-admin *,
+.cappers-admin *::before,
+.cappers-admin *::after {
+    box-sizing: border-box;
+}
+
+.cappers-admin #container {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--admin-bg);
+}
+
+.cappers-admin #header {
+    min-height: 72px;
+    height: auto;
+    margin-left: var(--admin-sidebar-width);
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    box-shadow: 0 8px 24px rgba(19, 19, 19, .06);
+}
+
+.cappers-admin #branding {
+    display: none;
+}
+
+.cappers-admin #header a,
+.cappers-admin #header a:link,
+.cappers-admin #header a:visited {
+    color: var(--admin-text);
+}
+
+.cappers-admin #user-tools {
+    margin: 0 0 0 auto;
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.cappers-admin #user-tools a {
+    color: var(--admin-text);
+}
+
+.cappers-admin .theme-toggle {
+    display: none;
+}
+
+.cappers-admin-toolbar {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    order: -1;
+}
+
+.cappers-admin-menu-button {
+    width: 42px;
+    height: 42px;
+    display: none;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: #f0f1f3;
+    color: var(--admin-text);
+    cursor: pointer;
+}
+
+.cappers-admin-menu-button svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.cappers-admin-search {
+    width: min(520px, 100%);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 13px;
+    border-radius: 13px;
+    background: #f0f1f3;
+}
+
+.cappers-admin-search svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: var(--admin-muted);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+
+.cappers-admin-search input {
+    min-width: 0;
+    flex: 1;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--admin-text);
+    font: inherit;
+}
+
+.cappers-admin-search input::placeholder {
+    color: #929296;
+}
+
+.cappers-admin-search-shortcut {
+    min-width: 34px;
+    min-height: 26px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: #fff;
+    color: var(--admin-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cappers-admin .cappers-admin-native-toggle,
+.cappers-admin .cappers-admin-native-filter {
+    display: none !important;
+}
+
+.cappers-admin #nav-sidebar {
+    position: fixed;
+    z-index: 1000;
+    inset: 0 auto 0 0;
+    width: var(--admin-sidebar-width);
+    min-width: var(--admin-sidebar-width);
+    height: 100vh;
+    padding: 0;
+    overflow-y: auto;
+    background: #151517;
+    color: #fff;
+    box-shadow: none;
+}
+
+.cappers-admin-sidebar-brand {
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px 16px;
+}
+
+.cappers-admin-sidebar-brand > a {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.cappers-admin-brand-mark {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--admin-blue);
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 19px;
+}
+
+.cappers-admin-sidebar-brand strong,
+.cappers-admin-sidebar-brand small {
+    display: block;
+}
+
+.cappers-admin-sidebar-brand strong {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.cappers-admin-sidebar-brand small {
+    margin-top: 2px;
+    color: #8b8b8f;
+    font-size: 10px;
+}
+
+.cappers-admin-sidebar-close {
+    display: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #aaa;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.cappers-admin-sidebar-label {
+    padding: 8px 18px 10px;
+    color: #68686c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.cappers-admin-sidebar-apps {
+    display: grid;
+    gap: 4px;
+    padding: 0 10px 92px;
+}
+
+.cappers-admin-sidebar-app[hidden],
+.cappers-admin-sidebar-models a[hidden],
+.cappers-admin-app-card[hidden] {
+    display: none !important;
+}
+
+.cappers-admin-sidebar-app {
+    padding: 4px;
+    border-radius: 14px;
+}
+
+.cappers-admin-sidebar-app.is-current {
+    background: #202023;
+}
+
+.cappers-admin-sidebar-app-link {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 11px;
+    color: #d7d7da !important;
+    text-decoration: none;
+}
+
+.cappers-admin-sidebar-app-link:hover {
+    background: #222225;
+    color: #fff !important;
+}
+
+.cappers-admin-app-icon,
+.cappers-admin-app-card-icon,
+.cappers-admin-quick-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.cappers-admin-app-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #29292d;
+    color: #d7d7da;
+}
+
+.cappers-admin-app-icon svg,
+.cappers-admin-app-card-icon svg,
+.cappers-admin-quick-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cappers-admin-sidebar-app.is-current .cappers-admin-app-icon {
+    background: var(--admin-blue);
+    color: #fff;
+}
+
+.cappers-admin-sidebar-app-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.cappers-admin-sidebar-app-copy strong,
+.cappers-admin-sidebar-app-copy small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cappers-admin-sidebar-app-copy strong {
+    color: inherit;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.cappers-admin-sidebar-app-copy small {
+    margin-top: 2px;
+    color: #75757a;
+    font-size: 9px;
+}
+
+.cappers-admin-sidebar-chevron {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: #65656a;
+    stroke-width: 1.6;
+}
+
+.cappers-admin-sidebar-models {
+    display: grid;
+    gap: 1px;
+    padding: 2px 8px 7px 52px;
+}
+
+.cappers-admin-sidebar-models a {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #85858a !important;
+    font-size: 10px;
+    text-decoration: none;
+}
+
+.cappers-admin-sidebar-models a:hover,
+.cappers-admin-sidebar-models a.is-current {
+    color: #fff !important;
+}
+
+.cappers-admin-sidebar-models a span:first-child {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cappers-admin-sidebar-model-add {
+    color: #606065;
+    font-size: 14px;
+}
+
+.cappers-admin-sidebar-footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: var(--admin-sidebar-width);
+    padding: 14px 14px 18px;
+    background: #151517;
+}
+
+.cappers-admin-sidebar-footer a {
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: #212124;
+    color: #d7d7da !important;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.cappers-admin-sidebar-footer svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cappers-admin .main,
+.cappers-admin .main.shifted {
+    min-height: calc(100vh - 72px);
+    margin-left: var(--admin-sidebar-width) !important;
+    display: block;
+    background: var(--admin-bg);
+}
+
+.cappers-admin .main > #content-start {
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    padding: 28px 32px 48px;
+}
+
+.cappers-admin #content {
+    padding: 0;
+}
+
+.cappers-admin div.breadcrumbs {
+    margin-left: var(--admin-sidebar-width);
+    padding: 11px 32px;
+    background: #fff;
+    color: var(--admin-muted);
+    box-shadow: 0 6px 16px rgba(19, 19, 19, .035);
+}
+
+.cappers-admin div.breadcrumbs a {
+    color: var(--admin-blue);
+}
+
+.cappers-admin h1,
+.cappers-admin h2,
+.cappers-admin h3,
+.cappers-admin h4,
+.cappers-admin .module caption,
+.cappers-admin .inline-group h2 {
+    color: var(--admin-text);
+    font-family: var(--font-body);
+    letter-spacing: -.02em;
+}
+
+.cappers-admin-dashboard-shell {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    display: grid;
+    gap: 26px;
+}
+
+.cappers-admin-hero {
+    min-height: 238px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    align-items: center;
+    gap: 28px;
+    padding: 34px 38px;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(19, 19, 19, .055);
+}
+
+.cappers-admin-hero-copy {
+    max-width: 720px;
+}
+
+.cappers-admin-eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--admin-blue);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.cappers-admin-hero h1 {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: clamp(30px, 3vw, 44px);
+    line-height: 1.04;
+    font-weight: 750;
+}
+
+.cappers-admin-hero p {
+    max-width: 620px;
+    margin: 14px 0 0;
+    color: var(--admin-muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.cappers-admin-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.cappers-admin-primary-action,
+.cappers-admin-secondary-action {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 17px;
+    border-radius: 11px;
+    text-decoration: none !important;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cappers-admin-primary-action {
+    background: var(--admin-blue);
+    color: #fff !important;
+}
+
+.cappers-admin-secondary-action {
+    background: #eff1f4;
+    color: var(--admin-text) !important;
+}
+
+.cappers-admin-hero-stat {
+    min-height: 156px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 22px;
+    border-radius: 20px;
+    background: #151517;
+    color: #fff;
+}
+
+.cappers-admin-hero-stat span,
+.cappers-admin-hero-stat small {
+    color: #8d8d92;
+    font-size: 10px;
+}
+
+.cappers-admin-hero-stat strong {
+    margin: 8px 0 4px;
+    color: var(--admin-yellow);
+    font-size: 44px;
+    line-height: 1;
+}
+
+.cappers-admin-section,
+.cappers-admin-panel {
+    padding: 26px;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(19, 19, 19, .045);
+}
+
+.cappers-admin-section-head,
+.cappers-admin-panel-head,
+.cappers-admin-app-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.cappers-admin-section-head h2,
+.cappers-admin-panel-head h2 {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: 20px;
+    font-weight: 750;
+}
+
+.cappers-admin-section-count,
+.cappers-admin-app-card-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 34px;
+    min-height: 28px;
+    padding: 0 9px;
+    border-radius: 9px;
+    background: #f0f1f3;
+    color: var(--admin-muted);
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.cappers-admin-app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.cappers-admin-app-card {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    border-radius: 18px;
+    background: #f6f7f8;
+}
+
+.cappers-admin-app-card-icon,
+.cappers-admin-quick-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    background: #e9efff;
+    color: var(--admin-blue);
+}
+
+.cappers-admin-app-card-copy {
+    margin-top: 16px;
+}
+
+.cappers-admin-app-card-copy h3 {
+    margin: 0;
+    color: var(--admin-text);
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.cappers-admin-app-card-copy p {
+    margin: 4px 0 0;
+    color: #96969a;
+    font-size: 10px;
+}
+
+.cappers-admin-app-models {
+    display: grid;
+    gap: 4px;
+    margin-top: 15px;
+}
+
+.cappers-admin-app-model {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cappers-admin-app-model > a:first-child {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: #505055;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.cappers-admin-app-model > a:first-child:hover {
+    color: var(--admin-blue);
+}
+
+.cappers-admin-app-model-add {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #fff;
+    color: #8b8b90 !important;
+    text-decoration: none !important;
+    font-size: 15px;
+}
+
+.cappers-admin-app-open {
+    min-height: 32px;
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--admin-blue) !important;
+    font-size: 10px;
+    font-weight: 750;
+    text-decoration: none !important;
+}
+
+.cappers-admin-app-open svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.cappers-admin-dashboard-lower {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    gap: 16px;
+}
+
+.cappers-admin-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.cappers-admin-quick-action {
+    min-height: 88px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 13px;
+    border-radius: 15px;
+    background: #f5f6f8;
+    color: var(--admin-text) !important;
+    text-decoration: none !important;
+}
+
+.cappers-admin-quick-action:hover {
+    background: #eef1f7;
+}
+
+.cappers-admin-quick-action > span:last-child {
+    min-width: 0;
+}
+
+.cappers-admin-quick-action strong,
+.cappers-admin-quick-action small {
+    display: block;
+}
+
+.cappers-admin-quick-action strong {
+    color: var(--admin-text);
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.cappers-admin-quick-action small {
+    margin-top: 3px;
+    color: var(--admin-muted);
+    font-size: 9px;
+}
+
+.cappers-admin-recent-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.cappers-admin-recent-item {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 11px;
+    border-radius: 12px;
+    background: #f6f7f8;
+}
+
+.cappers-admin-recent-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--admin-blue);
+}
+
+.cappers-admin-recent-item > div {
+    min-width: 0;
+}
+
+.cappers-admin-recent-item strong,
+.cappers-admin-recent-item a,
+.cappers-admin-recent-item span {
+    display: block;
+}
+
+.cappers-admin-recent-item strong,
+.cappers-admin-recent-item a {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--admin-text) !important;
+    font-size: 10px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-decoration: none !important;
+}
+
+.cappers-admin-recent-item > div > span {
+    margin-top: 3px;
+    color: var(--admin-muted);
+    font-size: 9px;
+}
+
+.cappers-admin-empty-state {
+    padding: 18px;
+    border-radius: 14px;
+    background: #f5f6f8;
+    color: var(--admin-muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+/* Default admin pages inside the custom shell. */
+.cappers-admin #content-main,
+.cappers-admin #content-related {
+    min-width: 0;
+}
+
+.cappers-admin .module,
+.cappers-admin .inline-group,
+.cappers-admin .submit-row,
+.cappers-admin #changelist-filter,
+.cappers-admin .selector {
+    border: 0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(19, 19, 19, .04);
+}
+
+.cappers-admin .module h2,
+.cappers-admin .module caption,
+.cappers-admin .inline-group h2,
+.cappers-admin #changelist-filter h2 {
+    padding: 12px 14px;
+    border-radius: 14px 14px 0 0;
+    background: #f1f2f4;
+    color: var(--admin-text);
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.cappers-admin table {
+    color: var(--admin-text);
+    background: #fff;
+}
+
+.cappers-admin thead th {
+    border: 0;
+    background: #f3f4f6;
+    color: #66666b;
+    font-size: 10px;
+}
+
+.cappers-admin tbody td,
+.cappers-admin tbody th {
+    border-color: #ececef;
+    color: var(--admin-text);
+}
+
+.cappers-admin tbody a {
+    color: var(--admin-blue);
+}
+
+.cappers-admin input[type="text"],
+.cappers-admin input[type="password"],
+.cappers-admin input[type="email"],
+.cappers-admin input[type="url"],
+.cappers-admin input[type="number"],
+.cappers-admin input[type="search"],
+.cappers-admin textarea,
+.cappers-admin select {
+    border: 0;
+    border-radius: 10px;
+    background: #f0f1f3;
+    color: var(--admin-text);
+    box-shadow: inset 0 0 0 1px rgba(19, 19, 19, .04);
+}
+
+.cappers-admin input:focus,
+.cappers-admin textarea:focus,
+.cappers-admin select:focus {
+    outline: 2px solid rgba(11, 86, 250, .18);
+    outline-offset: 1px;
+}
+
+.cappers-admin .button,
+.cappers-admin input[type="submit"],
+.cappers-admin input[type="button"],
+.cappers-admin .submit-row input,
+.cappers-admin a.button {
+    border: 0;
+    border-radius: 10px;
+    background: var(--admin-blue);
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 700;
+}
+
+.cappers-admin .button.default,
+.cappers-admin input[type="submit"].default,
+.cappers-admin .submit-row input.default {
+    background: var(--admin-blue);
+}
+
+.cappers-admin .object-tools a {
+    border-radius: 10px;
+    background: #151517;
+    color: #fff !important;
+}
+
+.cappers-admin #changelist .actions {
+    border-radius: 12px;
+    background: #fff;
+}
+
+.cappers-admin .paginator {
+    color: var(--admin-muted);
+}
+
+.cappers-admin .messagelist li {
+    border: 0;
+    border-radius: 12px;
+}
+
+.cappers-admin .form-row {
+    border-color: #ededf0;
+}
+
+.cappers-admin .aligned label {
+    color: #55555a;
+    font-size: 11px;
+    font-weight: 650;
+}
