@@ -498,7 +498,7 @@ def _settle_winner(
     score: tuple[int, int],
     home_name: str,
     away_name: str,
-) -> str:
+) -> str | None:
     home_goals, away_goals = score
     if selection in {"1", "home", "хозяева"} or selection == home_name or home_name in selection:
         return Prediction.StateStatus.WIN if home_goals > away_goals else Prediction.StateStatus.LOSE
@@ -506,7 +506,7 @@ def _settle_winner(
         return Prediction.StateStatus.WIN if away_goals > home_goals else Prediction.StateStatus.LOSE
     if selection in {"x", "draw", "ничья"}:
         return Prediction.StateStatus.WIN if home_goals == away_goals else Prediction.StateStatus.LOSE
-    return Prediction.StateStatus.LOSE
+    return None
 
 
 def _settle_double_chance(
@@ -514,7 +514,7 @@ def _settle_double_chance(
     score: tuple[int, int],
     home_name: str,
     away_name: str,
-) -> str:
+) -> str | None:
     home_goals, away_goals = score
     home_or_draw = home_goals >= away_goals
     away_or_draw = away_goals >= home_goals
@@ -532,13 +532,13 @@ def _settle_double_chance(
         home_name in selection and away_name in selection
     ):
         return Prediction.StateStatus.WIN if home_or_away else Prediction.StateStatus.LOSE
-    return Prediction.StateStatus.LOSE
+    return None
 
 
-def _settle_total(selection: str, total_goals: int) -> str:
+def _settle_total(selection: str, total_goals: int) -> str | None:
     line = _selection_line(selection)
     if line is None:
-        return Prediction.StateStatus.LOSE
+        return None
     is_over = _is_over_selection(selection)
     is_under = _is_under_selection(selection)
     if Decimal(total_goals) == line:
@@ -547,10 +547,10 @@ def _settle_total(selection: str, total_goals: int) -> str:
         return Prediction.StateStatus.WIN if Decimal(total_goals) > line else Prediction.StateStatus.LOSE
     if is_under:
         return Prediction.StateStatus.WIN if Decimal(total_goals) < line else Prediction.StateStatus.LOSE
-    return Prediction.StateStatus.LOSE
+    return None
 
 
-def _settle_both_score(selection: str, score: tuple[int, int]) -> str:
+def _settle_both_score(selection: str, score: tuple[int, int]) -> str | None:
     both_scored = score[0] > 0 and score[1] > 0
     wants_yes = any(marker in selection for marker in ("да", "yes"))
     wants_no = any(marker in selection for marker in ("нет", "no"))
@@ -558,7 +558,7 @@ def _settle_both_score(selection: str, score: tuple[int, int]) -> str:
         return Prediction.StateStatus.WIN if both_scored else Prediction.StateStatus.LOSE
     if wants_no:
         return Prediction.StateStatus.WIN if not both_scored else Prediction.StateStatus.LOSE
-    return Prediction.StateStatus.LOSE
+    return None
 
 
 def _settle_handicap(
@@ -566,10 +566,10 @@ def _settle_handicap(
     score: tuple[int, int],
     home_name: str,
     away_name: str,
-) -> str:
+) -> str | None:
     line = _selection_line(selection)
     if line is None:
-        line = Decimal("0")
+        return None
 
     side = None
     if home_name in selection or "ф1" in selection or "home" in selection or "хозяева" in selection:
@@ -578,7 +578,7 @@ def _settle_handicap(
         side = "away"
 
     if side is None:
-        return Prediction.StateStatus.LOSE
+        return None
 
     adjusted = Decimal(score[0] if side == "home" else score[1]) + line
     opponent = Decimal(score[1] if side == "home" else score[0])
@@ -587,10 +587,10 @@ def _settle_handicap(
     return Prediction.StateStatus.WIN if adjusted > opponent else Prediction.StateStatus.LOSE
 
 
-def _settle_exact_score(selection: str, score: tuple[int, int]) -> str:
+def _settle_exact_score(selection: str, score: tuple[int, int]) -> str | None:
     numbers = re.findall(r"\d+", selection)
     if len(numbers) < 2:
-        return Prediction.StateStatus.LOSE
+        return None
     selected_score = (int(numbers[0]), int(numbers[1]))
     return Prediction.StateStatus.WIN if selected_score == score else Prediction.StateStatus.LOSE
 
