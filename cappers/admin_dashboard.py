@@ -28,6 +28,12 @@ ADMIN_APP_GROUPS = {
 
 SEO_MODEL_OBJECT_NAMES = {"PageSEO"}
 
+ADMIN_APP_GROUP_SOURCES = {
+    "cabinet": ("cabinet", "auth"),
+    "notifications": ("notifications", "account_email"),
+    "game": ("game", "tournaments"),
+}
+
 
 def _copy_models(app):
     app_label = app["app_label"]
@@ -70,19 +76,30 @@ def _build_dashboard_apps(app_list):
         if key == "seo":
             if not seo_models:
                 continue
-            source_app = page_app or {}
             models = seo_models
             app_url = models[0].get("admin_url", "")
             source_app_label = "pages"
         else:
-            source_app = apps_by_label.get(key)
-            if not source_app:
+            source_labels = ADMIN_APP_GROUP_SOURCES.get(key, (key,))
+            source_apps = [
+                apps_by_label[label]
+                for label in source_labels
+                if label in apps_by_label
+            ]
+            if not source_apps:
                 continue
-            used_labels.add(key)
-            models = source_app["models"]
+
+            used_labels.update(source_labels)
+            models = [
+                model
+                for source_app in source_apps
+                for model in source_app["models"]
+            ]
             if not models:
                 continue
-            app_url = source_app.get("app_url", "")
+
+            primary_app = apps_by_label.get(key) or source_apps[0]
+            app_url = primary_app.get("app_url", "")
             source_app_label = key
 
         dashboard_apps.append(
