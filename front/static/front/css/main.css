@@ -42407,7 +42407,7 @@ body.league-picker-open {
     text-align: left;
 }
 
-.league-picker-option[aria-pressed="true"] {
+.league-picker-option[aria-checked="true"] {
     background: var(--blue);
 }
 
@@ -42434,7 +42434,7 @@ body.league-picker-open {
     font-size: 10px;
 }
 
-.league-picker-option[aria-pressed="true"] small {
+.league-picker-option[aria-checked="true"] small {
     color: rgba(255, 255, 255, .78);
 }
 
