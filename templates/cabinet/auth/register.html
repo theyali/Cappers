@@ -187,6 +187,10 @@
                     {{ form.password2.errors }}
                 </label>
 
+                <div class="auth-grid-full">
+                    {% include "cabinet/includes/_sport_league_preferences.html" %}
+                </div>
+
                 <div class="auth-agreement auth-grid-full">
                     <label class="auth-agreement-label" for="id_accept_terms">
                         <input
@@ -257,4 +261,8 @@
     })();
 </script>
 <script src="{% static 'front/js/auth-required-submit.js' %}" defer></script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/league-picker.js' %}" defer></script>
 {% endblock %}

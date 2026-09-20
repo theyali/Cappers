@@ -468,6 +468,59 @@ class Match(models.Model):
         return str(value or "")
 
 
+class MatchManualReview(models.Model):
+    class Reason(models.TextChoices):
+        MISSING_SCORE = "missing_score", "Нет итогового счёта"
+        INVALID_SCORE = "invalid_score", "Некорректный счёт"
+        UNKNOWN_MARKET = "unknown_market", "Неизвестный рынок"
+        SETTLEMENT_ERROR = "settlement_error", "Ошибка расчёта"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Открыта"
+        RESOLVED = "resolved", "Решена"
+        IGNORED = "ignored", "Игнорировать"
+
+    match = models.ForeignKey(
+        Match,
+        on_delete=models.CASCADE,
+        related_name="manual_reviews",
+    )
+    reason = models.CharField(max_length=32, choices=Reason.choices, db_index=True)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.OPEN,
+        db_index=True,
+    )
+    details = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["match", "reason"],
+                condition=models.Q(status="open"),
+                name="unique_open_match_review_reason",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["status", "reason", "created_at"],
+                name="match_review_status_idx",
+            ),
+            models.Index(
+                fields=["match", "status"],
+                name="match_review_match_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.match} — {self.get_reason_display()}"
+
+
 class MatchOdds(models.Model):
     match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="odds")
     home_win_bet = models.FloatField(null=True, blank=True)

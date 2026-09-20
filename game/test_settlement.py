@@ -43,6 +43,21 @@ class SettlementStateTests(SimpleTestCase):
 
         self.assertEqual(state, Prediction.StateStatus.WIN)
 
+    def test_unknown_market_returns_none_instead_of_loss(self):
+        result = {
+            "home_goals": 2,
+            "away_goals": 1,
+            "winning": [],
+            "refunds": [],
+        }
+
+        state = prediction_state(
+            self.prediction("unknown_market", "unknown_selection"),
+            result,
+        )
+
+        self.assertIsNone(state)
+
     def test_total_can_use_period_scores_for_non_football_sports(self):
         prediction = self.prediction("total", "ТБ 22.5")
         prediction.match.raw_data = {

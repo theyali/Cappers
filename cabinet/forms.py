@@ -2,6 +2,9 @@ from decimal import Decimal
 
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.html import format_html
+
+from game.models import League, Sport
 
 from .models import (
     AnalystPaidPlan,
@@ -12,13 +15,58 @@ from .models import (
 )
 
 
+class SportPreferenceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, sport):
+        if sport.image:
+            return format_html(
+                '<span class="sport-preference-option">'
+                '<span class="sport-preference-image">'
+                '<img src="{}" alt="" width="20" height="20" loading="lazy">'
+                '</span><span>{}</span></span>',
+                sport.image,
+                str(sport),
+            )
+        return format_html(
+            '<span class="sport-preference-option"><span>{}</span></span>',
+            str(sport),
+        )
+
+
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
+
+    def __init__(self, *args, require_sports: bool = False, **kwargs):
+        self.require_sports = require_sports
+        super().__init__(*args, **kwargs)
+        if require_sports:
+            self.fields["sports"].help_text = (
+                "Для профиля каппера выберите хотя бы один вид спорта."
+            )
+        else:
+            self.fields["sports"].label = "Что вам интересно"
+            self.fields["sports"].help_text = (
+                "Выберите виды спорта, которые вам интересны. Это необязательно."
+            )
     role = forms.ChoiceField(
         label="Тип аккаунта",
         choices=User.Role.choices,
         widget=forms.HiddenInput(),
         initial=User.Role.READER,
+    )
+    sports = SportPreferenceField(
+        label="Любимые виды спорта",
+        queryset=Sport.objects.all().order_by("name_ru", "name"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(
+            attrs={"class": "sport-preference-checkboxes"}
+        ),
+        help_text="Для профиля каппера выберите хотя бы один вид спорта.",
+    )
+    leagues = forms.ModelMultipleChoiceField(
+        label="Любимые лиги",
+        queryset=League.objects.select_related("sport", "country").all(),
+        required=False,
+        widget=forms.MultipleHiddenInput(),
     )
     accept_terms = forms.BooleanField(
         label="Согласие с правилами",
@@ -37,6 +85,8 @@ class RegistrationForm(UserCreationForm):
             "first_name",
             "last_name",
             "role",
+            "sports",
+            "leagues",
             "accept_terms",
         )
 
@@ -45,6 +95,18 @@ class RegistrationForm(UserCreationForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Пользователь с таким email уже существует.")
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            self.require_sports
+            or cleaned_data.get("role") == User.Role.ANALYST
+        ) and not cleaned_data.get("sports"):
+            self.add_error(
+                "sports",
+                "Для профиля каппера выберите хотя бы один вид спорта.",
+            )
+        return cleaned_data
 
 
 class UserProfileForm(forms.ModelForm):
