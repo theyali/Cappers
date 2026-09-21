@@ -37,7 +37,7 @@
         <div class="home-match-league">
             <span class="home-match-league-logo">
                 {% if match.league and match.league.logo_url %}
-                    <img src="{{ match.league.logo_url }}" alt="" loading="lazy" decoding="async">
+                    <img src="{{ match.league.logo_url }}" width="48" height="48" alt="" loading="lazy" decoding="async">
                 {% else %}
                     {{ match.league_name|default:"Л"|slice:":1" }}
                 {% endif %}
@@ -52,7 +52,7 @@
             <span class="home-match-team">
                 <span class="home-match-team-logo">
                     {% if match.home_team_logo %}
-                        <img src="{{ match.home_team_logo }}" alt="{{ match.home_team_name }}" loading="lazy" decoding="async" class='home-about-team-logo-img'>
+                        <img src="{{ match.home_team_logo }}" width="92" height="92" alt="{{ match.home_team_name }}" loading="lazy" decoding="async" class='home-about-team-logo-img'>
                     {% else %}
                         {{ match.home_team_name|default:"Х"|slice:":1" }}
                     {% endif %}
@@ -73,7 +73,7 @@
             <span class="home-match-team">
                 <span class="home-match-team-logo">
                     {% if match.away_team_logo %}
-                        <img src="{{ match.away_team_logo }}" alt="" loading="lazy" decoding="async" class='home-about-team-logo-img'>
+                        <img src="{{ match.away_team_logo }}" width="92" height="92" alt="" loading="lazy" decoding="async" class='home-about-team-logo-img'>
                     {% else %}
                         {{ match.away_team_name|default:"Г"|slice:":1" }}
                     {% endif %}
