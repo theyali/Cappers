@@ -5,13 +5,16 @@ from pathlib import Path
 from urllib.error import URLError
 from unittest.mock import patch
 
+from django.db.models.signals import post_save
 from django.test import TestCase, override_settings
 from PIL import Image
 
 from game.models import (
+    Country,
     League,
     Sport,
     Team,
+    Venue,
     league_logo_upload_path,
     team_logo_upload_path,
 )
@@ -377,6 +380,87 @@ class LocalLogoServiceTests(TestCase):
 
         self.assertNotEqual(first_bytes, second_bytes)
         self.assertEqual(mocked_open.call_count, 2)
+
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_sync_entity_logo_does_not_emit_post_save(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(png_bytes())
+        team = Team.objects.create(
+            external_id=1012,
+            sport=self.football,
+            name="Signal Team",
+            remote_logo_url="https://cdn.example/signal.png",
+        )
+        calls = []
+
+        def receiver(**kwargs):
+            calls.append(kwargs["instance"].pk)
+
+        post_save.connect(receiver, sender=Team, weak=False)
+        self.addCleanup(post_save.disconnect, receiver, sender=Team)
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertTrue(downloaded)
+        self.assertEqual(calls, [])
+
+    def test_country_and_venue_keep_remote_logo_url_without_local_download(self):
+        service = MatchSyncService()
+        country_url = "https://cdn.example/country.png"
+        venue_url = "https://cdn.example/venue.png"
+
+        country = service._sync_country(
+            {
+                "id": 4001,
+                "code": "AZ",
+                "name": {"en": "Azerbaijan", "ru": "Азербайджан"},
+                "logo": country_url,
+            }
+        )
+        venue = service._sync_venue(
+            {
+                "id": 5001,
+                "name": {"en": "Arena", "ru": "Арена"},
+                "logo": venue_url,
+            }
+        )
+
+        self.assertIsInstance(country, Country)
+        self.assertIsInstance(venue, Venue)
+        self.assertEqual(country.remote_logo_url, country_url)
+        self.assertEqual(venue.remote_logo_url, venue_url)
+        self.assertFalse(hasattr(country, "logo"))
+        self.assertFalse(hasattr(venue, "logo"))
+
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_logo_download_error_keeps_team_and_remote_url(self, mocked_open):
+        mocked_open.side_effect = URLError("offline")
+        team = Team.objects.create(
+            external_id=1013,
+            sport=self.football,
+            name="Existing Team",
+            remote_logo_url="https://cdn.example/old.png",
+        )
+        team.logo = team_logo_upload_path(team, "")
+        team.save(update_fields=["logo"])
+        existing_name = team.logo.name
+
+        payload = {
+            "id": 1013,
+            "name": {"en": "Existing Team", "ru": "Существующая команда"},
+            "logo": "https://cdn.example/new.png",
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            synced = MatchSyncService()._sync_team(payload, self.football, None)
+
+        synced.refresh_from_db()
+        self.assertEqual(synced.remote_logo_url, payload["logo"])
+        self.assertEqual(synced.logo.name, existing_name)
 
     @patch("game.services.match_sync.sync_entity_logo")
     def test_match_sync_saves_remote_url_and_calls_local_logo_service(self, mocked_sync):
