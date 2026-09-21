@@ -807,7 +807,7 @@ def _prediction_card(coupon: PredictionCoupon):
         views_count=getattr(coupon, "views_count", 0),
         expert_name=expert_name,
         expert_initials=_initials(expert_name),
-        expert_avatar_url=profile.avatar.url if profile and profile.avatar else "",
+        expert_avatar_url=coupon.author.avatar.url if coupon.author.avatar else "",
         expert_verified=bool(profile and profile.is_verified),
     )
 

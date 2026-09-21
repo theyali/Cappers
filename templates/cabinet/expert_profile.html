@@ -12,8 +12,8 @@
             <div class="expert-public-main">
                 <span class="expert-public-avatar">
                     {% capper_trust_badge analyst_profile.trust_index %}
-                    {% if analyst_profile.avatar %}
-                        <img src="{{ analyst_profile.avatar.url }}" alt="{{ expert_name }}">
+                    {% if profile_user.avatar %}
+                        <img src="{{ profile_user.avatar.url }}" alt="{{ expert_name }}">
                     {% else %}
                         {{ expert_initials }}
                     {% endif %}

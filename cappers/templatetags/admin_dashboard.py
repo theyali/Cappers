@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from cappers.admin_dashboard import (
     ADMIN_APP_GROUPS,
     ADMIN_APP_GROUP_SOURCES,
+    build_admin_dashboard_context,
     group_admin_apps,
 )
 
@@ -59,6 +60,18 @@ def admin_app_meta(app_label):
 @register.simple_tag
 def admin_grouped_apps(app_list):
     return group_admin_apps(app_list or [])
+
+
+@register.simple_tag(takes_context=True)
+def admin_dashboard_context(context, app_list):
+    request = context.get("request")
+    if request is None:
+        return {
+            "dashboard_apps": group_admin_apps(app_list or []),
+            "quick_actions": [],
+            "recent_actions": [],
+        }
+    return build_admin_dashboard_context(request, app_list or [])
 
 
 @register.simple_tag

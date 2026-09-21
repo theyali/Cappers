@@ -8,42 +8,16 @@
     </div>
 
     <div class="cappers-admin-quick-grid">
-        {% if perms.cabinet.add_user %}
-        <a href="{% url 'admin:cabinet_user_add' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">{% admin_icon_svg "user" %}</span>
+        {% for action in quick_actions %}
+        <a href="{{ action.url }}" class="cappers-admin-quick-action">
+            <span class="cappers-admin-quick-icon">{% admin_icon_svg action.icon %}</span>
             <span>
-                <strong>Добавить пользователя</strong>
-                <small>Новая учетная запись</small>
+                <strong>{{ action.title }}</strong>
+                <small>{{ action.subtitle }}</small>
             </span>
         </a>
-        {% endif %}
-
-        {% if perms.front.add_staticpage %}
-        <a href="{% url 'admin:front_staticpage_add' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">{% admin_icon_svg "file" %}</span>
-            <span>
-                <strong>Добавить страницу</strong>
-                <small>Новая статическая страница</small>
-            </span>
-        </a>
-        {% endif %}
-
-        <a href="/" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">{% admin_icon_svg "monitor" %}</span>
-            <span>
-                <strong>Открыть сайт</strong>
-                <small>Перейти на публичную часть</small>
-            </span>
-        </a>
-
-        {% if perms.achievements.add_achievement %}
-        <a href="{% url 'admin:achievements_achievement_add' %}" class="cappers-admin-quick-action">
-            <span class="cappers-admin-quick-icon">{% admin_icon_svg "award" %}</span>
-            <span>
-                <strong>Добавить достижение</strong>
-                <small>Новый бейдж и условие</small>
-            </span>
-        </a>
-        {% endif %}
+        {% empty %}
+        <div class="cappers-admin-empty-state">Нет доступных быстрых действий.</div>
+        {% endfor %}
     </div>
 </section>

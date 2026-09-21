@@ -333,7 +333,7 @@ class CapperArticleForm(forms.ModelForm):
 
 class AnalystAvatarForm(forms.ModelForm):
     class Meta:
-        model = AnalystProfile
+        model = User
         fields = ("avatar",)
 
     def clean_avatar(self):

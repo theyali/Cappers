@@ -11,13 +11,6 @@ MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024
 
 
 def _current_avatar(user: User):
-    if user.is_analyst:
-        try:
-            profile = user.analyst_profile
-        except AnalystProfile.DoesNotExist:
-            profile = None
-        if profile and profile.avatar:
-            return profile.avatar
     return user.avatar if user.avatar else None
 
 
@@ -58,19 +51,11 @@ def avatar(request):
     if error:
         return JsonResponse({"ok": False, "error": error}, status=400)
 
-    if request.user.is_analyst:
-        profile, _ = AnalystProfile.objects.get_or_create(user=request.user)
-        previous_name = profile.avatar.name if profile.avatar else ""
-        storage = profile.avatar.storage if profile.avatar else None
-        profile.avatar = upload
-        profile.save(update_fields=["avatar", "updated_at"])
-        avatar = profile.avatar
-    else:
-        previous_name = request.user.avatar.name if request.user.avatar else ""
-        storage = request.user.avatar.storage if request.user.avatar else None
-        request.user.avatar = upload
-        request.user.save(update_fields=["avatar"])
-        avatar = request.user.avatar
+    previous_name = request.user.avatar.name if request.user.avatar else ""
+    storage = request.user.avatar.storage if request.user.avatar else None
+    request.user.avatar = upload
+    request.user.save(update_fields=["avatar"])
+    avatar = request.user.avatar
 
     if previous_name and storage and previous_name != avatar.name and storage.exists(previous_name):
         storage.delete(previous_name)

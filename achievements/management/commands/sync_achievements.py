@@ -30,6 +30,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Отправлять уведомления о новых достижениях.",
         )
+        parser.add_argument(
+            "--chunk-size",
+            type=int,
+            default=500,
+            help="Размер пачки пользователей при обходе --all.",
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -41,11 +47,12 @@ class Command(BaseCommand):
 
         dry_run = options["dry_run"]
         notify = options["notify"] and not dry_run
+        chunk_size = max(1, int(options["chunk_size"] or 500))
         users_count = 0
         awarded_count = 0
         errors_count = 0
 
-        for user in users.iterator(chunk_size=500):
+        for user in users.iterator(chunk_size=chunk_size):
             try:
                 with transaction.atomic():
                     awarded = sync_user_achievements(

@@ -4941,17 +4941,34 @@ body.expert-public-details-open {
 
 
 @media (max-width: 760px) {
+    .rich-prediction-page {
+        padding: 18px 12px 28px;
+    }
+
+    .rich-prediction-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .rich-prediction-editor-head {
         display: grid;
-        padding: 16px;
+        padding: 0 0 8px;
     }
 
     .rich-prediction-editor-status {
+        position: static;
         justify-self: start;
     }
 
     .rich-prediction-section {
-        padding: 15px;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .rich-prediction-step {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 
     .rich-prediction-section-head {
@@ -4967,6 +4984,29 @@ body.expert-public-details-open {
         grid-column: auto;
     }
 
+    .rich-prediction-coupon-item {
+        grid-template-columns: minmax(0, 1fr) 44px;
+        gap: 10px;
+    }
+
+    .rich-prediction-coupon-versus,
+    .rich-prediction-coupon-away {
+        display: none;
+    }
+
+    .rich-prediction-coupon-odd {
+        text-align: right;
+    }
+
+    .rich-prediction-coupon-remove {
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .rich-cover-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .rich-prediction-actions {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -4977,6 +5017,7 @@ body.expert-public-details-open {
     }
 
     .rich-prediction-preview {
+        position: static;
         margin-top: 4px;
     }
 }

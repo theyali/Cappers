@@ -1,5 +1,8 @@
 from decimal import Decimal
+from time import perf_counter
 
+from django.conf import settings
+from django.db import connection
 from django.db.models import (
     Case,
     Count,
@@ -30,6 +33,7 @@ from front.expert_ranking import (
 )
 from front.models import Article
 from front.prediction_views import _decorate_predictions, _published_queryset
+from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.views import _match_winner_odds
@@ -43,6 +47,165 @@ HOME_MATCHES_LIMIT = 9
 HOME_EXPERTS_LIMIT = 10
 HOME_TOP_EXPERTS_LIMIT = 4
 HOME_MATCH_CANDIDATE_LIMIT = 120
+HOME_MATCH_DEFER_FIELDS = (
+    "raw_data",
+    "winning_bet_keys",
+    "refund_bet_keys",
+    "odds_result_data",
+    "provider_predictions",
+    "odds__raw_data",
+    "odds__extra_markets",
+)
+HOME_PREDICTION_MATCH_DEFER_FIELDS = (
+    "match__raw_data",
+    "match__winning_bet_keys",
+    "match__refund_bet_keys",
+    "match__odds_result_data",
+    "match__provider_predictions",
+)
+HOME_SQL_DEBUG_PARAM = "sql_debug"
+HOME_SQL_DEBUG_SLOW_MS = 20
+HOME_SQL_DEBUG_TOP_LIMIT = 25
+
+
+def _sql_fingerprint(sql: str) -> str:
+    return " ".join((sql or "").split())
+
+
+def _print_home_sql_debug(*, queries: list[dict], total_seconds: float) -> None:
+    total_ms = total_seconds * 1000
+    sql_ms = sum(item["duration_ms"] for item in queries)
+    print(
+        "\n[home-sql-debug] "
+        f"total={total_ms:.1f}ms sql={sql_ms:.1f}ms queries={len(queries)}"
+    )
+
+    if not queries:
+        print("[home-sql-debug] no sql queries\n")
+        return
+
+    fingerprints: dict[str, dict] = {}
+    for item in queries:
+        key = _sql_fingerprint(item["sql"])
+        bucket = fingerprints.setdefault(
+            key,
+            {
+                "count": 0,
+                "duration_ms": 0.0,
+                "sql": key,
+            },
+        )
+        bucket["count"] += 1
+        bucket["duration_ms"] += item["duration_ms"]
+
+    repeated = [
+        item for item in fingerprints.values()
+        if item["count"] > 1
+    ]
+    repeated.sort(key=lambda item: item["duration_ms"], reverse=True)
+    if repeated:
+        print("[home-sql-debug] repeated query fingerprints:")
+        for index, item in enumerate(repeated[:10], start=1):
+            print(
+                f"  R{index:02d}. {item['duration_ms']:.1f}ms "
+                f"x{item['count']} {item['sql'][:420]}"
+            )
+
+    slow_queries = sorted(
+        queries,
+        key=lambda item: item["duration_ms"],
+        reverse=True,
+    )
+    print(f"[home-sql-debug] top {min(HOME_SQL_DEBUG_TOP_LIMIT, len(slow_queries))} queries:")
+    for index, item in enumerate(slow_queries[:HOME_SQL_DEBUG_TOP_LIMIT], start=1):
+        marker = " SLOW" if item["duration_ms"] >= HOME_SQL_DEBUG_SLOW_MS else ""
+        print(
+            f"  Q{index:02d}. {item['duration_ms']:.1f}ms{marker} "
+            f"many={item['many']} sql={_sql_fingerprint(item['sql'])[:700]}"
+        )
+        if item["params"]:
+            print(f"       params={str(item['params'])[:300]}")
+    print("[home-sql-debug] end\n")
+
+
+def _render_home_index(request):
+    can_write_coupon = (
+        request.user.is_authenticated and request.user.role == User.Role.ANALYST
+    )
+    ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
+    all_time_profiles = ranked_expert_profiles(period_days=None)
+    monthly_top_ids = current_month_top_expert_ids(HOME_TOP_EXPERTS_LIMIT)
+    monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
+    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
+    top_profiles, top_experts_scope = _top_home_profiles(
+        all_time_profiles,
+        monthly_top_ids,
+    )
+    main_article, latest_articles = _home_articles()
+    recommended_experts = (
+        personalized_recommended_experts(request)
+        if request.user.is_authenticated
+        else []
+    )
+    if not recommended_experts:
+        recommended_experts = _recommended_experts(request)
+
+    return render(
+        request,
+        "front/index.html",
+        {
+            "latest_predictions": _latest_home_predictions(),
+            "best_predictions": _best_home_predictions(request),
+            "top_experts": _top_home_experts(
+                top_profiles,
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
+            ),
+            "top_experts_scope": top_experts_scope,
+            "top_experts_scope_label": (
+                "МЕСЯЦ" if top_experts_scope == "month" else "ВСЁ ВРЕМЯ"
+            ),
+            "best_experts": _best_home_experts(
+                request,
+                ranked_profiles,
+                monthly_leader_id=monthly_leader_id,
+                all_time_leader_id=all_time_leader_id,
+            ),
+            "main_article": main_article,
+            "latest_articles": latest_articles,
+            "recommended_experts": recommended_experts,
+            "important_matches": _important_home_matches(request, can_write_coupon),
+            "can_write_coupon": can_write_coupon,
+            "hide_footer": False,
+        },
+    )
+
+
+def _render_home_index_with_sql_debug(request):
+    queries = []
+
+    def wrapper(execute, sql, params, many, context):
+        started_at = perf_counter()
+        try:
+            return execute(sql, params, many, context)
+        finally:
+            queries.append(
+                {
+                    "duration_ms": (perf_counter() - started_at) * 1000,
+                    "sql": sql,
+                    "params": params,
+                    "many": many,
+                }
+            )
+
+    started_at = perf_counter()
+    with connection.execute_wrapper(wrapper):
+        response = _render_home_index(request)
+    _print_home_sql_debug(
+        queries=queries,
+        total_seconds=perf_counter() - started_at,
+    )
+    return response
 
 
 def _logo_url(primary: str, related) -> str:
@@ -115,7 +278,7 @@ def _latest_home_predictions() -> list[dict]:
         "match__league",
         "match__home_team",
         "match__away_team",
-    ).order_by("id")
+    ).defer(*HOME_PREDICTION_MATCH_DEFER_FIELDS).order_by("id")
     queryset = list(
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -202,7 +365,7 @@ def _latest_home_predictions() -> list[dict]:
                 "expert_username": author.username,
                 "expert_initials": _initials(expert_name),
                 "expert_avatar_url": (
-                    profile.avatar.url if profile and profile.avatar else ""
+                    author.avatar.url if author.avatar else ""
                 ),
                 "expert_verified": bool(profile and profile.is_verified),
                 "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
@@ -315,7 +478,7 @@ def _top_home_experts(
                 "followers": profile.followers_count,
                 "initials": _initials(name),
                 "verified": profile.is_verified,
-                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "avatar_url": profile.user.avatar.url if profile.user.avatar else "",
                 "trust_index": profile.trust_index,
                 "leader_badges": expert_leader_badges(
                     profile.user_id,
@@ -378,7 +541,7 @@ def _best_home_experts(
                 "name": name,
                 "username": profile.user.username,
                 "initials": _initials(name),
-                "avatar_url": profile.avatar.url if profile and profile.avatar else "",
+                "avatar_url": profile.user.avatar.url if profile.user.avatar else "",
                 "verified": profile.is_verified,
                 "trust_index": profile.trust_index,
                 "roi": profile.author_roi,
@@ -408,7 +571,7 @@ def _best_home_experts(
     return experts
 
 
-def _league_rating(match: Match) -> int:
+def _league_rating(match: Match, *, include_match_raw: bool = True) -> int:
     """Return league importance from normalized data or provider payload."""
     league = match.league
     if league is None:
@@ -421,18 +584,27 @@ def _league_rating(match: Match) -> int:
         for key in ("rating", "league_rating", "league_rank", "rank")
     )
 
+    for value in values:
+        if value in (None, ""):
+            continue
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            continue
+
+    if not include_match_raw:
+        return 0
+
     match_raw = match.raw_data if isinstance(match.raw_data, dict) else {}
     raw_league = (
         match_raw.get("league")
         if isinstance(match_raw.get("league"), dict)
         else {}
     )
-    values.extend(
+    for value in (
         raw_league.get(key)
         for key in ("rating", "league_rating", "league_rank", "rank")
-    )
-
-    for value in values:
+    ):
         if value in (None, ""):
             continue
         try:
@@ -442,14 +614,21 @@ def _league_rating(match: Match) -> int:
     return 0
 
 
-def _home_match_has_quick_odds_q() -> Q:
-    return (
-        Q(odds__home_win_bet__isnull=False)
-        | Q(odds__x_bet__isnull=False)
-        | Q(odds__away_win_bet__isnull=False)
-        | Q(odds__goals_over_2_5__isnull=False)
-        | Q(odds__goals_under_2_5__isnull=False)
-        | Q(odds__btts_yes__isnull=False)
+def _match_has_quick_odds(match: Match) -> bool:
+    try:
+        odds = match.odds
+    except Match.odds.RelatedObjectDoesNotExist:
+        return False
+    return any(
+        getattr(odds, field, None) is not None
+        for field in (
+            "home_win_bet",
+            "x_bet",
+            "away_win_bet",
+            "goals_over_2_5",
+            "goals_under_2_5",
+            "btts_yes",
+        )
     )
 
 
@@ -465,6 +644,7 @@ def _home_match_queryset(now):
             "odds",
             "metrics",
         )
+        .defer(*HOME_MATCH_DEFER_FIELDS)
         .annotate(
             predictions_count=Coalesce(
                 F("metrics__predictions_count"),
@@ -484,10 +664,14 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
         ]
     )
 
-    important = [match for match in candidates if _league_rating(match) > 0]
+    league_ratings = {
+        match.id: _league_rating(match, include_match_raw=False)
+        for match in candidates
+    }
+    important = [match for match in candidates if league_ratings.get(match.id, 0) > 0]
     important.sort(
         key=lambda match: (
-            -_league_rating(match),
+            -league_ratings.get(match.id, 0),
             match.starts_at.timestamp() if match.starts_at else float("inf"),
             match.id,
         )
@@ -496,10 +680,11 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
     if important:
         selected = important[:HOME_MATCHES_LIMIT]
     else:
-        selected = list(
-            base_queryset.filter(_home_match_has_quick_odds_q())
-            .order_by("-last_seen_at", "-created_at", "-id")[:HOME_MATCHES_LIMIT]
-        )
+        selected = [
+            match
+            for match in candidates
+            if _match_has_quick_odds(match)
+        ][:HOME_MATCHES_LIMIT]
 
     for match in selected:
         match.coupon_odds = _match_winner_odds(match)
@@ -521,45 +706,6 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
 
 @ensure_csrf_cookie
 def index(request):
-    can_write_coupon = (
-        request.user.is_authenticated and request.user.role == User.Role.ANALYST
-    )
-    ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
-    all_time_profiles = ranked_expert_profiles(period_days=None)
-    monthly_top_ids = current_month_top_expert_ids(HOME_TOP_EXPERTS_LIMIT)
-    monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
-    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
-    top_profiles, top_experts_scope = _top_home_profiles(
-        all_time_profiles,
-        monthly_top_ids,
-    )
-    main_article, latest_articles = _home_articles()
-
-    return render(
-        request,
-        "front/index.html",
-        {
-            "latest_predictions": _latest_home_predictions(),
-            "best_predictions": _best_home_predictions(request),
-            "top_experts": _top_home_experts(
-                top_profiles,
-                monthly_leader_id=monthly_leader_id,
-                all_time_leader_id=all_time_leader_id,
-            ),
-            "top_experts_scope": top_experts_scope,
-            "top_experts_scope_label": (
-                "МЕСЯЦ" if top_experts_scope == "month" else "ВСЁ ВРЕМЯ"
-            ),
-            "best_experts": _best_home_experts(
-                request,
-                ranked_profiles,
-                monthly_leader_id=monthly_leader_id,
-                all_time_leader_id=all_time_leader_id,
-            ),
-            "main_article": main_article,
-            "latest_articles": latest_articles,
-            "recommended_experts": _recommended_experts(request),
-            "important_matches": _important_home_matches(request, can_write_coupon),
-            "can_write_coupon": can_write_coupon,
-        },
-    )
+    if settings.DEBUG and request.GET.get(HOME_SQL_DEBUG_PARAM) == "1":
+        return _render_home_index_with_sql_debug(request)
+    return _render_home_index(request)

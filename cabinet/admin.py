@@ -222,7 +222,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                 "fields": (
                     "user",
                     "display_name",
-                    "avatar",
                     "specialization",
                     "bio",
                     "favorite_sports",

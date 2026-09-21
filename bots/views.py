@@ -18,11 +18,6 @@ def _ensure_bot_admin(user) -> None:
 
 def _avatar_url(bot_account: BotAccount) -> str:
     user = bot_account.user
-    if user.role == User.Role.ANALYST:
-        analyst_profile = getattr(user, "analyst_profile", None)
-        if analyst_profile is not None and analyst_profile.avatar:
-            return analyst_profile.avatar.url
-
     if user.avatar:
         return user.avatar.url
     return ""

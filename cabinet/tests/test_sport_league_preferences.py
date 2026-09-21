@@ -235,3 +235,38 @@ class SportLeaguePreferenceTests(TestCase):
             [item["id"] for item in payload["results"]],
             [self.premier_league.id],
         )
+
+    def test_league_search_top_uses_admin_order(self):
+        first = League.objects.create(
+            external_id=990104,
+            sport=self.football,
+            name="First Top League",
+            name_ru="Первая топ-лига",
+            is_top=True,
+            top_order=20,
+        )
+        second = League.objects.create(
+            external_id=990105,
+            sport=self.tennis,
+            name="Second Top League",
+            name_ru="Вторая топ-лига",
+            is_top=True,
+            top_order=10,
+        )
+        for index, league in enumerate((first, second), start=1):
+            Match.objects.create(
+                external_id=990300 + index,
+                sport=league.sport,
+                league=league,
+                sync_scope=Match.SyncScope.PREMATCH,
+            )
+
+        response = self.client.get(reverse("cabinet:league_search"), {"top": "1"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(
+            [item["id"] for item in payload["results"]],
+            [second.id, first.id],
+        )
+        self.assertTrue(all(item["is_top"] for item in payload["results"]))

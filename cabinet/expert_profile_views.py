@@ -170,9 +170,7 @@ def _recommended_experts(
         attach_vip_status_to_user(user, profile)
         name = profile.display_name or user.get_full_name() or user.username
         avatar_url = ""
-        if profile.avatar:
-            avatar_url = profile.avatar.url
-        elif user.avatar:
+        if user.avatar:
             avatar_url = user.avatar.url
         stats = stats_by_analyst.get(profile.user_id, {})
         predictions_count = int(stats.get("predictions_count") or 0)

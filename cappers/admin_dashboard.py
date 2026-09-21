@@ -142,6 +142,13 @@ def group_admin_apps(app_list):
 def _build_quick_actions(request):
     actions = (
         {
+            "permission": None,
+            "title": "Открыть сайт",
+            "subtitle": "Перейти на публичную часть",
+            "icon": "monitor",
+            "url": "/",
+        },
+        {
             "permission": "cabinet.add_user",
             "title": "Добавить пользователя",
             "subtitle": "Новая учетная запись",
@@ -173,12 +180,15 @@ def _build_quick_actions(request):
 
     result = []
     for action in actions:
-        if not request.user.has_perm(action["permission"]):
+        permission = action.get("permission")
+        if permission and not request.user.has_perm(permission):
             continue
-        try:
-            url = reverse(action["url_name"])
-        except NoReverseMatch:
-            continue
+        url = action.get("url", "")
+        if not url:
+            try:
+                url = reverse(action["url_name"])
+            except NoReverseMatch:
+                continue
         result.append(
             {
                 "title": action["title"],
@@ -208,6 +218,8 @@ def _build_recent_actions(request):
                 "url": None if entry.is_deletion() else entry.get_admin_url(),
                 "content_type": entry.content_type.name if entry.content_type_id else "",
                 "action_time": entry.action_time,
+                "is_addition": entry.is_addition(),
+                "is_deletion": entry.is_deletion(),
             }
         )
     return result

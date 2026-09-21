@@ -43,9 +43,7 @@
                     {% if subscription.subscriber.is_analyst %}
                         {% capper_trust_badge subscription.subscriber.analyst_profile.trust_index %}
                     {% endif %}
-                    {% if subscription.subscriber.is_analyst and subscription.subscriber.analyst_profile.avatar %}
-                        <img src="{{ subscription.subscriber.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ subscription.subscriber.username }}">
-                    {% elif subscription.subscriber.avatar %}
+                    {% if subscription.subscriber.avatar %}
                         <img src="{{ subscription.subscriber.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ subscription.subscriber.username }}">
                     {% else %}
                         {{ subscription.subscriber.username|first|upper }}

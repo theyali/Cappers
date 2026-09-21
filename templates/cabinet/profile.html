@@ -32,9 +32,7 @@
                     <div class="profile-identity">
                         <div class="profile-avatar-wrap">
                             <div class="profile-avatar" id="profileAvatar" data-skeleton-image>
-                                {% if analyst_profile and analyst_profile.avatar %}
-                                    <img src="{{ analyst_profile.avatar.url }}" alt="Аватар {{ request.user.username }}" id="profileAvatarImage" width="128" height="128" decoding="async">
-                                {% elif request.user.avatar %}
+                                {% if request.user.avatar %}
                                     <img src="{{ request.user.avatar.url }}" alt="Аватар {{ request.user.username }}" id="profileAvatarImage" width="128" height="128" decoding="async">
                                 {% else %}
                                     <span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>
@@ -180,7 +178,7 @@
                         </div>
 
                         <ul class="profile-status-checklist">
-                            <li{% if analyst_profile.avatar or request.user.avatar %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>Фото профиля</li>
+                            <li{% if request.user.avatar %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>Фото профиля</li>
                             <li{% if analyst_profile.bio %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>Описание</li>
                             <li{% if analyst_profile.social_links %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>Соцсети</li>
                             <li{% if predictions_count %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>Статистика</li>
@@ -523,9 +521,7 @@
                                         {% if subscription.user.is_analyst %}
                                             {% capper_trust_badge subscription.user.analyst_profile.trust_index %}
                                         {% endif %}
-                                        {% if subscription.user.is_analyst and subscription.user.analyst_profile.avatar %}
-                                            <img class="nav-profile-avatar-image" src="{{ subscription.user.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.user.username }}">
-                                        {% elif subscription.user.avatar %}
+                                        {% if subscription.user.avatar %}
                                             <img class="nav-profile-avatar-image" src="{{ subscription.user.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.user.username }}">
                                         {% else %}
                                             <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
@@ -588,9 +584,7 @@
                                 <div class="profile-coupon-main">
                                     <span class="nav-profile-dropdown-avatar" data-skeleton-image>
                                         {% capper_trust_badge subscription.analyst.analyst_profile.trust_index %}
-                                        {% if subscription.analyst.analyst_profile.avatar %}
-                                            <img class="nav-profile-avatar-image" src="{{ subscription.analyst.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.analyst.username }}">
-                                        {% elif subscription.analyst.avatar %}
+                                        {% if subscription.analyst.avatar %}
                                             <img class="nav-profile-avatar-image" src="{{ subscription.analyst.avatar.url }}" width="42" height="42" alt="Аватар {{ subscription.analyst.username }}">
                                         {% else %}
                                             <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">
@@ -803,9 +797,7 @@
                                     {% if follow.follower.is_analyst %}
                                         {% capper_trust_badge follow.follower.analyst_profile.trust_index %}
                                     {% endif %}
-                                    {% if follow.follower.is_analyst and follow.follower.analyst_profile.avatar %}
-                                        <img src="{{ follow.follower.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
-                                    {% elif follow.follower.avatar %}
+                                    {% if follow.follower.avatar %}
                                         <img src="{{ follow.follower.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.follower.username }}">
                                     {% else %}
                                         {{ follow.follower.username|first|upper }}
@@ -862,9 +854,7 @@
                             <article class="profile-user-row" data-profile-username="{{ follow.analyst.username|lower }}">
                                 <div class="profile-user-avatar prediction-table-avatar{% if follow.analyst.is_vip %} is-vip{% endif %}" data-skeleton-image>
                                     {% capper_trust_badge follow.analyst.analyst_profile.trust_index %}
-                                    {% if follow.analyst.analyst_profile.avatar %}
-                                        <img src="{{ follow.analyst.analyst_profile.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.analyst.username }}">
-                                    {% elif follow.analyst.avatar %}
+                                    {% if follow.analyst.avatar %}
                                         <img src="{{ follow.analyst.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ follow.analyst.username }}">
                                     {% else %}
                                         {{ follow.analyst.username|first|upper }}

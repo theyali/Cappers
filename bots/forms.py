@@ -94,12 +94,6 @@ class BotAccountProfileForm(forms.ModelForm):
         if user.role == User.Role.ANALYST:
             analyst_profile, _ = AnalystProfile.objects.get_or_create(user=user)
             analyst_profile.display_name = user.get_full_name() or user.username
-
-            if avatar is not None:
-                analyst_profile.avatar.name = user.avatar.name
-            elif remove_avatar:
-                analyst_profile.avatar = None
-
-            analyst_profile.save(update_fields=("display_name", "avatar", "updated_at"))
+            analyst_profile.save(update_fields=("display_name", "updated_at"))
 
         return user

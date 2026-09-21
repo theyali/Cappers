@@ -21,10 +21,6 @@ def _profile_has_paid_predictions(profile: AnalystProfile) -> bool:
     return bool(profile.paid_predictions_enabled and profile.paid_predictions_price > 0)
 
 
-def _field_name(field) -> str:
-    return field.name if field else ""
-
-
 def _invalidate_ranking_cache() -> None:
     from front.expert_ranking import invalidate_expert_ranking_cache
 
@@ -38,33 +34,13 @@ def _invalidate_ranking_cache() -> None:
 
 @receiver(post_save, sender=User)
 def ensure_analyst_profile(sender, instance: User, **kwargs) -> None:
-    """Create analyst profile when needed and keep one shared avatar for the account."""
-    profile = AnalystProfile.objects.filter(user=instance).first()
-    if instance.role == User.Role.ANALYST and profile is None:
-        profile, _ = AnalystProfile.objects.get_or_create(user=instance)
-
-    if profile is None:
-        return
-
-    user_avatar = _field_name(instance.avatar)
-    profile_avatar = _field_name(profile.avatar)
-    if user_avatar and profile_avatar != user_avatar:
-        AnalystProfile.objects.filter(pk=profile.pk).update(avatar=user_avatar)
-    elif profile_avatar and not user_avatar:
-        User.objects.filter(pk=instance.pk).update(avatar=profile_avatar)
+    """Create analyst profile when needed."""
+    if instance.role == User.Role.ANALYST:
+        AnalystProfile.objects.get_or_create(user=instance)
 
 
 @receiver(post_save, sender=AnalystProfile)
-def sync_capper_avatar_to_user(sender, instance: AnalystProfile, **kwargs) -> None:
-    """Treat User.avatar as the account photo while keeping the legacy profile field mirrored."""
-    user_avatar = _field_name(instance.user.avatar)
-    profile_avatar = _field_name(instance.avatar)
-
-    if profile_avatar and user_avatar != profile_avatar:
-        User.objects.filter(pk=instance.user_id).update(avatar=profile_avatar)
-    elif user_avatar and not profile_avatar:
-        AnalystProfile.objects.filter(pk=instance.pk).update(avatar=user_avatar)
-
+def invalidate_capper_profile_cache(sender, instance: AnalystProfile, **kwargs) -> None:
     # Publicity, VIP/paid flags, trust index and profile card fields all feed rankings.
     _invalidate_ranking_cache()
 

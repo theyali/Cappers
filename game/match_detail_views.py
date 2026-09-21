@@ -118,7 +118,6 @@ def match_detail(request, slug: str):
     context = {
         "match": match,
         "match_metrics": match_metrics,
-        "hide_footer": True,
         "can_write_coupon": can_write_coupon,
         "latest_predictions": legacy_views._latest_predictions(),
         "draft_coupon": (

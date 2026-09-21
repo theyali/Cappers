@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from cabinet.models import AnalystProfile
 from game.models import Match
 
 from .models import MatchWatch, Notification, TelegramAccount
@@ -19,13 +18,6 @@ SUMMARY_BATCH_SIZE = 12
 
 
 def _avatar_url(user) -> str:
-    if user.is_analyst:
-        try:
-            profile = user.analyst_profile
-        except AnalystProfile.DoesNotExist:
-            profile = None
-        if profile and profile.avatar:
-            return profile.avatar.url
     return user.avatar.url if getattr(user, "avatar", None) else ""
 
 

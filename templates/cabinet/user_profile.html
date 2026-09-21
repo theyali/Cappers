@@ -171,7 +171,11 @@
                                 {% for achievement in unlocked_achievements %}
                                 <article class="user-public-badge" data-achievement="{{ achievement.key }}">
                                     <span data-skeleton-image>
-                                        <img src="{% static achievement.icon %}" width="40" height="40" alt="">
+                                        {% if achievement.icon_url %}
+                                            <img src="{{ achievement.icon_url }}" width="40" height="40" alt="">
+                                        {% else %}
+                                            <img src="{% static achievement.icon %}" width="40" height="40" alt="">
+                                        {% endif %}
                                     </span>
                                     <div>
                                         <strong>{{ achievement.label }}</strong>

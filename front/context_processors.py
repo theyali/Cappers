@@ -270,7 +270,7 @@ def website_settings(request):
         "bookmakers": bookmakers_context["bookmakers"],
         "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
-        "hide_footer": view_name == "front:prediction_detail",
+        "hide_footer": True,
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
     }
