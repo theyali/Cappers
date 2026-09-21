@@ -1,3 +1,4 @@
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 
 from game.models import (
@@ -25,11 +26,12 @@ class Command(BaseCommand):
     help = "Скачать локальные WebP-изображения спортивных сущностей из сохранённых remote URL."
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        target_group = parser.add_mutually_exclusive_group(required=True)
+        target_group.add_argument(
             "--model",
-            choices=(*MODEL_CONFIG.keys(), "all"),
-            default="all",
+            choices=MODEL_CONFIG.keys(),
         )
+        target_group.add_argument("--all", action="store_true")
         parser.add_argument("--limit", type=int)
         parser.add_argument("--force", action="store_true")
         parser.add_argument("--dry-run", action="store_true")
@@ -39,13 +41,9 @@ class Command(BaseCommand):
         if limit is not None and limit <= 0:
             raise CommandError("--limit должен быть больше 0.")
 
-        model_names = (
-            MODEL_CONFIG.keys()
-            if options["model"] == "all"
-            else (options["model"],)
-        )
+        model_names = MODEL_CONFIG.keys() if options["all"] else (options["model"],)
 
-        totals = {"scanned": 0, "downloaded": 0, "skipped": 0}
+        totals = {"scanned": 0, "downloaded": 0, "skipped": 0, "failed": 0}
         for model_name in model_names:
             model, field_name, remote_field, target_builder, needs_sport = MODEL_CONFIG[model_name]
             queryset = model.objects.exclude(**{remote_field: ""}).order_by("pk")
@@ -65,6 +63,13 @@ class Command(BaseCommand):
                     totals["skipped"] += 1
                     continue
 
+                field_file = getattr(instance, field_name)
+                current_name = getattr(field_file, "name", "") or ""
+                had_local_file = (
+                    bool(current_name and default_storage.exists(current_name))
+                    or default_storage.exists(target_name)
+                )
+
                 downloaded = sync_entity_logo(
                     instance,
                     field_name=field_name,
@@ -74,14 +79,17 @@ class Command(BaseCommand):
                 )
                 if downloaded:
                     totals["downloaded"] += 1
-                else:
+                elif had_local_file and not options["force"]:
                     totals["skipped"] += 1
+                else:
+                    totals["failed"] += 1
 
         self.stdout.write(
             self.style.SUCCESS(
                 "Готово: "
                 f"проверено {totals['scanned']}, "
                 f"скачано {totals['downloaded']}, "
-                f"пропущено {totals['skipped']}."
+                f"пропущено {totals['skipped']}, "
+                f"ошибок {totals['failed']}."
             )
         )
