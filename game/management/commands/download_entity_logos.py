@@ -22,7 +22,7 @@ MODEL_CONFIG = {
 
 
 class Command(BaseCommand):
-    help = "Скачать локальные WebP-логотипы команд и лиг из сохранённых remote URL."
+    help = "Скачать локальные WebP-изображения спортивных сущностей из сохранённых remote URL."
 
     def add_arguments(self, parser):
         parser.add_argument(
