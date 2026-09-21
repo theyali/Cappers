@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from datetime import timedelta
 from typing import Any
 
@@ -494,11 +495,14 @@ class MatchSyncService:
                 "raw_data": payload,
             },
         )
-        sync_entity_logo(
-            league,
-            field_name="logo",
-            remote_url=remote_logo_url,
-            kind="league",
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                league,
+                field_name="logo",
+                remote_url=remote_logo_url,
+                kind="league",
+            )
         )
         return league
 
@@ -557,11 +561,14 @@ class MatchSyncService:
                 "raw_data": payload,
             },
         )
-        sync_entity_logo(
-            team,
-            field_name="logo",
-            remote_url=remote_logo_url,
-            kind="team",
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                team,
+                field_name="logo",
+                remote_url=remote_logo_url,
+                kind="team",
+            )
         )
         return team
 
