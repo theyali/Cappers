@@ -8,6 +8,33 @@ from django.utils.text import slugify
 
 from cabinet.models import User
 
+SPORT_MEDIA_CODE_ALIASES = {
+    "basketball": "basket",
+}
+
+
+def sport_media_code(sport) -> str:
+    code = (getattr(sport, "code", "") or "common").strip().lower()
+    return SPORT_MEDIA_CODE_ALIASES.get(code, code)
+
+
+def team_logo_upload_path(instance, filename):
+    return f"{sport_media_code(instance.sport)}/team/{instance.pk or 'new'}.webp"
+
+
+def league_logo_upload_path(instance, filename):
+    return f"{sport_media_code(instance.sport)}/league/{instance.pk or 'new'}.webp"
+
+
+def image_field_url(field) -> str:
+    if not field:
+        return ""
+    try:
+        return field.url
+    except ValueError:
+        return ""
+
+
 
 def _unique_slug(model: type[models.Model], value: str, lookup_pk: int | None = None) -> str:
     base_slug = slugify(value, allow_unicode=False)[:255] or "item"
@@ -176,7 +203,8 @@ class League(models.Model):
     )
     name = models.CharField(max_length=255)
     name_ru = models.CharField(max_length=255, blank=True)
-    logo = models.URLField(max_length=500, blank=True)
+    remote_logo_url = models.URLField(max_length=500, blank=True)
+    logo = models.ImageField(upload_to=league_logo_upload_path, blank=True)
     gender = models.CharField(max_length=32, blank=True)
     age_group = models.CharField(max_length=32, blank=True)
     is_top = models.BooleanField("Топ лига", default=False, db_index=True)
@@ -199,6 +227,10 @@ class League(models.Model):
         if not self.slug:
             self.slug = _unique_slug(self.__class__, f"{self.name}-{self.external_id}", self.pk)
         super().save(*args, **kwargs)
+
+    @property
+    def logo_url(self) -> str:
+        return image_field_url(self.logo)
 
     def __str__(self) -> str:
         return self.name_ru or self.name
@@ -251,7 +283,8 @@ class Team(models.Model):
     )
     name = models.CharField(max_length=255)
     name_ru = models.CharField(max_length=255, blank=True)
-    logo = models.URLField(max_length=500, blank=True)
+    remote_logo_url = models.URLField(max_length=500, blank=True)
+    logo = models.ImageField(upload_to=team_logo_upload_path, blank=True)
     gender = models.CharField(max_length=32, blank=True)
     age_group = models.CharField(max_length=32, blank=True)
     founded = models.PositiveIntegerField(null=True, blank=True)
@@ -275,6 +308,10 @@ class Team(models.Model):
         if not self.slug:
             self.slug = _unique_slug(self.__class__, f"{self.name}-{self.external_id}", self.pk)
         super().save(*args, **kwargs)
+
+    @property
+    def logo_url(self) -> str:
+        return image_field_url(self.logo)
 
     def __str__(self) -> str:
         return self.name_ru or self.name
@@ -435,7 +472,7 @@ class Match(models.Model):
 
     @property
     def home_team_logo(self) -> str:
-        return self.home_team.logo if self.home_team_id and self.home_team else self._raw_value("teams", "home", "logo")
+        return self.home_team.logo_url if self.home_team_id and self.home_team else ""
 
     @property
     def away_team_name(self) -> str:
@@ -447,7 +484,7 @@ class Match(models.Model):
 
     @property
     def away_team_logo(self) -> str:
-        return self.away_team.logo if self.away_team_id and self.away_team else self._raw_value("teams", "away", "logo")
+        return self.away_team.logo_url if self.away_team_id and self.away_team else ""
 
     def _raw_value(self, *path: str) -> str:
         value = self.raw_data if isinstance(self.raw_data, dict) else {}
