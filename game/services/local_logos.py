@@ -5,7 +5,7 @@ import socket
 from io import BytesIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -15,6 +15,14 @@ from PIL import UnidentifiedImageError
 from cappers.media_webp import convert_image_content_to_webp
 
 logger = logging.getLogger(__name__)
+
+
+class _LocalLogoRedirectHandler(HTTPRedirectHandler):
+    max_redirections = 5
+    max_repeats = 2
+
+
+_logo_opener = build_opener(_LocalLogoRedirectHandler())
 
 _ALLOWED_GENERIC_CONTENT_TYPES = {
     "application/octet-stream",
@@ -34,7 +42,7 @@ def _remote_image_bytes(remote_url: str) -> bytes:
     )
     request = Request(remote_url, headers={"User-Agent": "Cappers/1.0"})
 
-    with urlopen(request, timeout=timeout) as response:
+    with _logo_opener.open(request, timeout=timeout) as response:
         content_type = str(response.headers.get("Content-Type") or "")
         content_type = content_type.split(";", 1)[0].strip().lower()
         if (
