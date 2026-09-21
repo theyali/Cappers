@@ -19,6 +19,7 @@ from game.models import (
     Sport,
     Team,
     Venue,
+    country_logo_upload_path,
     league_logo_upload_path,
     team_logo_upload_path,
 )
@@ -456,6 +457,15 @@ class MatchSyncService:
                 "remote_logo_url": remote_logo_url,
                 "raw_data": payload,
             },
+        )
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                country,
+                field_name="logo",
+                remote_url=remote_logo_url,
+                target_name=country_logo_upload_path(country, ""),
+            )
         )
         return country
 
