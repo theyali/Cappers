@@ -96,6 +96,25 @@ def _resize_image(image: Image.Image) -> Image.Image:
     return image
 
 
+def convert_image_content_to_webp(source, *, quality: int | None = None) -> ContentFile:
+    if quality is None:
+        quality = int(getattr(settings, "MEDIA_WEBP_QUALITY", 82) or 82)
+    quality = min(100, max(1, int(quality)))
+
+    with Image.open(source) as opened:
+        image = _resize_image(_normalized_image(opened))
+        output = ContentFile(b"")
+        image.save(
+            output,
+            format="WEBP",
+            quality=quality,
+            method=6,
+        )
+
+    output.seek(0)
+    return output
+
+
 def convert_field_file_to_webp(field_file) -> WebPConversionResult:
     if not media_webp_enabled():
         return WebPConversionResult(
@@ -117,21 +136,11 @@ def convert_field_file_to_webp(field_file) -> WebPConversionResult:
     if not storage.exists(original_name):
         return WebPConversionResult(original_name, original_name, False, "missing")
 
-    quality = int(getattr(settings, "MEDIA_WEBP_QUALITY", 82) or 82)
-    quality = min(100, max(1, quality))
     target_name = _target_name(original_name)
 
     try:
         with storage.open(original_name, "rb") as source:
-            with Image.open(source) as opened:
-                image = _resize_image(_normalized_image(opened))
-                output = ContentFile(b"")
-                image.save(
-                    output,
-                    format="WEBP",
-                    quality=quality,
-                    method=6,
-                )
+            output = convert_image_content_to_webp(source)
     except (OSError, UnidentifiedImageError, ValueError) as exc:
         return WebPConversionResult(
             original_name,
