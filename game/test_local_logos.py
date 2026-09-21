@@ -124,7 +124,8 @@ class LocalLogoServiceTests(TestCase):
             "logo": "https://cdn.example/synced-team.png",
         }
 
-        team = MatchSyncService()._sync_team(payload, self.football, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            team = MatchSyncService()._sync_team(payload, self.football, None)
 
         self.assertEqual(team.remote_logo_url, payload["logo"])
         mocked_sync.assert_called_once_with(
