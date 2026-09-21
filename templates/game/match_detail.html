@@ -27,7 +27,7 @@
                     <div class="match-league">
                         <span class="league-mark">
                             {% if match.league and match.league.logo_url %}
-                                <img src="{{ match.league.logo_url }}" alt="" loading="lazy">
+                                <img src="{{ match.league.logo_url }}" width="34" height="34" alt="" loading="lazy">
                             {% else %}
                                 {{ match.league_name|default:"Лига"|slice:":1" }}
                             {% endif %}
@@ -92,7 +92,7 @@
                     <div class="match-detail-team">
                         <span class="match-detail-logo">
                             {% if match.home_team_logo %}
-                                <img src="{{ match.home_team_logo }}" alt="" loading="lazy">
+                                <img src="{{ match.home_team_logo }}" width="132" height="132" alt="" loading="lazy">
                             {% else %}
                                 <span>{{ match.home_team_name|default:"Х"|slice:":1" }}</span>
                             {% endif %}
@@ -119,7 +119,7 @@
                     <div class="match-detail-team">
                         <span class="match-detail-logo">
                             {% if match.away_team_logo %}
-                                <img src="{{ match.away_team_logo }}" alt="" loading="lazy">
+                                <img src="{{ match.away_team_logo }}" width="132" height="132" alt="" loading="lazy">
                             {% else %}
                                 <span>{{ match.away_team_name|default:"Г"|slice:":1" }}</span>
                             {% endif %}
