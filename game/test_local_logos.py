@@ -1,11 +1,11 @@
 import shutil
 import tempfile
-from io import BytesIO
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from urllib.error import URLError
 from unittest.mock import patch
 
+from django.conf import settings
 from django.core.management import call_command
 from django.db.models.signals import post_save
 from django.test import TestCase, override_settings
@@ -566,8 +566,14 @@ class LocalLogoServiceTests(TestCase):
             away_team=away,
         )
 
-        self.assertEqual(match.home_team_logo, "/media/football/team/home.webp")
-        self.assertEqual(match.away_team_logo, "/media/football/team/away.webp")
+        self.assertEqual(
+            match.home_team_logo,
+            f"{settings.MEDIA_URL}football/team/home.webp",
+        )
+        self.assertEqual(
+            match.away_team_logo,
+            f"{settings.MEDIA_URL}football/team/away.webp",
+        )
 
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_skips_existing_by_default(self, mocked_sync):
