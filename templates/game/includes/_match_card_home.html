@@ -36,8 +36,8 @@
     <a class="home-match-main" href="{{ match.get_absolute_url }}">
         <div class="home-match-league">
             <span class="home-match-league-logo">
-                {% if match.league and match.league.logo %}
-                    <img src="{{ match.league.logo }}" alt="" loading="lazy" decoding="async">
+                {% if match.league and match.league.logo_url %}
+                    <img src="{{ match.league.logo_url }}" alt="" loading="lazy" decoding="async">
                 {% else %}
                     {{ match.league_name|default:"Л"|slice:":1" }}
                 {% endif %}
