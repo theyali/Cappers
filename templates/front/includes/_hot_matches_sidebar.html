@@ -21,7 +21,7 @@
                 <div class="hot-match-team">
                     <span class="hot-match-team-logo">
                         {% if match.home_team_logo %}
-                            <img src="{{ match.home_team_logo }}" alt="">
+                            <img src="{{ match.home_team_logo }}" width="32" height="32" alt="" loading="lazy">
                         {% else %}
                             {{ match.home_team_name|slice:":1" }}
                         {% endif %}
@@ -31,7 +31,7 @@
                 <div class="hot-match-team">
                     <span class="hot-match-team-logo">
                         {% if match.away_team_logo %}
-                            <img src="{{ match.away_team_logo }}" alt="">
+                            <img src="{{ match.away_team_logo }}" width="32" height="32" alt="" loading="lazy">
                         {% else %}
                             {{ match.away_team_name|slice:":1" }}
                         {% endif %}
