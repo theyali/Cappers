@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from io import BytesIO
 from pathlib import Path
+from urllib.error import URLError
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -19,12 +20,19 @@ from game.services.match_sync import MatchSyncService
 
 
 class FakeImageResponse:
-    def __init__(self, payload: bytes, content_type: str = "image/png"):
+    def __init__(
+        self,
+        payload: bytes,
+        content_type: str = "image/png",
+        *,
+        content_length: int | str | None = None,
+    ):
         self._buffer = BytesIO(payload)
-        self.headers = {
-            "Content-Type": content_type,
-            "Content-Length": str(len(payload)),
-        }
+        self.headers = {"Content-Type": content_type}
+        if content_length is not None:
+            self.headers["Content-Length"] = str(content_length)
+        else:
+            self.headers["Content-Length"] = str(len(payload))
 
     def read(self, size: int = -1) -> bytes:
         return self._buffer.read(size)
@@ -121,6 +129,230 @@ class LocalLogoServiceTests(TestCase):
 
         league.refresh_from_db()
         self.assertEqual(league.logo.name, f"basket/league/{league.pk}.webp")
+
+    @patch("game.services.local_logos.urlopen")
+    def test_rejects_non_http_url_without_network_request(self, mocked_urlopen):
+        team = Team.objects.create(
+            external_id=1002,
+            sport=self.football,
+            name="Bad URL Team",
+            remote_logo_url="file:///tmp/team.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        mocked_urlopen.assert_not_called()
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_passes_configured_timeout_to_urlopen(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+        team = Team.objects.create(
+            external_id=1003,
+            sport=self.football,
+            name="Timeout Team",
+            remote_logo_url="https://cdn.example/timeout.png",
+        )
+
+        sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        _, kwargs = mocked_urlopen.call_args
+        self.assertEqual(kwargs["timeout"], 2)
+
+    @override_settings(LOCAL_LOGO_MAX_BYTES=16)
+    @patch("game.services.local_logos.urlopen")
+    def test_rejects_content_length_over_limit(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(
+            png_bytes(),
+            content_length=1024,
+        )
+        team = Team.objects.create(
+            external_id=1004,
+            sport=self.football,
+            name="Large Header Team",
+            remote_logo_url="https://cdn.example/large-header.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @override_settings(LOCAL_LOGO_MAX_BYTES=16)
+    @patch("game.services.local_logos.urlopen")
+    def test_rejects_actual_payload_over_limit_without_content_length(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(
+            b"x" * 32,
+            content_type="application/octet-stream",
+            content_length="invalid",
+        )
+        team = Team.objects.create(
+            external_id=1005,
+            sport=self.football,
+            name="Large Body Team",
+            remote_logo_url="https://cdn.example/large-body.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_rejects_empty_response(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(
+            b"",
+            content_type="application/octet-stream",
+        )
+        team = Team.objects.create(
+            external_id=1006,
+            sport=self.football,
+            name="Empty Team",
+            remote_logo_url="https://cdn.example/empty.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_generic_content_type_is_allowed_when_bytes_are_valid_image(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(
+            png_bytes(),
+            content_type="application/octet-stream",
+        )
+        team = Team.objects.create(
+            external_id=1007,
+            sport=self.football,
+            name="Generic Content Team",
+            remote_logo_url="https://cdn.example/generic",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertTrue(downloaded)
+        team.refresh_from_db()
+        self.assertTrue(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_rejects_invalid_image_bytes(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(
+            b"not-an-image",
+            content_type="image/png",
+        )
+        team = Team.objects.create(
+            external_id=1008,
+            sport=self.football,
+            name="Broken Image Team",
+            remote_logo_url="https://cdn.example/broken.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_network_error_is_swallowed(self, mocked_urlopen):
+        mocked_urlopen.side_effect = URLError("offline")
+        team = Team.objects.create(
+            external_id=1009,
+            sport=self.football,
+            name="Offline Team",
+            remote_logo_url="https://cdn.example/offline.png",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos.urlopen")
+    def test_force_replaces_existing_target(self, mocked_urlopen):
+        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+        team = Team.objects.create(
+            external_id=1010,
+            sport=self.football,
+            name="Force Team",
+            remote_logo_url="https://cdn.example/force.png",
+        )
+        target_name = team_logo_upload_path(team, "")
+
+        self.assertTrue(
+            sync_entity_logo(
+                team,
+                field_name="logo",
+                remote_url=team.remote_logo_url,
+                target_name=target_name,
+            )
+        )
+        first_bytes = (Path(self.media_root) / target_name).read_bytes()
+
+        replacement = BytesIO()
+        Image.new("RGB", (8, 8), (0, 255, 0)).save(replacement, format="PNG")
+        mocked_urlopen.return_value = FakeImageResponse(replacement.getvalue())
+
+        self.assertTrue(
+            sync_entity_logo(
+                team,
+                field_name="logo",
+                remote_url=team.remote_logo_url,
+                target_name=target_name,
+                force=True,
+            )
+        )
+        second_bytes = (Path(self.media_root) / target_name).read_bytes()
+
+        self.assertNotEqual(first_bytes, second_bytes)
+        self.assertEqual(mocked_urlopen.call_count, 2)
 
     @patch("game.services.match_sync.sync_entity_logo")
     def test_match_sync_saves_remote_url_and_calls_local_logo_service(self, mocked_sync):
