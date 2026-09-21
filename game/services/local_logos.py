@@ -67,23 +67,23 @@ def sync_entity_logo(
     *,
     field_name: str,
     remote_url: str,
-    kind: str,
+    target_name: str,
     force: bool = False,
 ) -> bool:
     if not bool(getattr(settings, "LOCAL_LOGO_DOWNLOAD_ENABLED", True)):
         return False
 
     remote_url = str(remote_url or "").strip()
-    if not remote_url or not instance.pk:
+    target_name = str(target_name or "").strip().lstrip("/")
+    if not remote_url or not target_name or not instance.pk:
         return False
 
     field = instance._meta.get_field(field_name)
     if not isinstance(field, models.ImageField):
         logger.warning(
-            "Local logo field is not ImageField model=%s field=%s kind=%s",
+            "Local logo field is not ImageField model=%s field=%s",
             instance._meta.label_lower,
             field_name,
-            kind,
         )
         return False
 
@@ -91,8 +91,6 @@ def sync_entity_logo(
     current_name = getattr(field_file, "name", "") or ""
     if not force and current_name and default_storage.exists(current_name):
         return False
-
-    target_name = field.generate_filename(instance, f"{instance.pk}.webp")
     if not force and default_storage.exists(target_name):
         instance.__class__._default_manager.filter(pk=instance.pk).update(
             **{field_name: target_name}
@@ -124,10 +122,9 @@ def sync_entity_logo(
         ValueError,
     ) as exc:
         logger.warning(
-            "Logo download failed model=%s pk=%s kind=%s url=%s error=%s",
+            "Logo download failed model=%s pk=%s url=%s error=%s",
             instance._meta.label_lower,
             instance.pk,
-            kind,
             remote_url,
             exc,
         )
