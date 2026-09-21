@@ -21,7 +21,7 @@
                 <div class="popular_match-team">
                     <span class="popular_match-team-logo">
                         {% if item.home_logo %}
-                            <img src="{{ item.home_logo }}" alt="">
+                            <img src="{{ item.home_logo }}" width="27" height="27" alt="" loading="lazy">
                         {% else %}
                             {{ item.home_name|slice:":1" }}
                         {% endif %}
@@ -31,7 +31,7 @@
                 <div class="popular_match-team">
                     <span class="popular_match-team-logo">
                         {% if item.away_logo %}
-                            <img src="{{ item.away_logo }}" alt="">
+                            <img src="{{ item.away_logo }}" width="27" height="27" alt="" loading="lazy">
                         {% else %}
                             {{ item.away_name|slice:":1" }}
                         {% endif %}
