@@ -7,7 +7,13 @@ from unittest.mock import patch
 from django.test import TestCase, override_settings
 from PIL import Image
 
-from game.models import League, Sport, Team
+from game.models import (
+    League,
+    Sport,
+    Team,
+    league_logo_upload_path,
+    team_logo_upload_path,
+)
 from game.services.local_logos import sync_entity_logo
 from game.services.match_sync import MatchSyncService
 
@@ -70,7 +76,7 @@ class LocalLogoServiceTests(TestCase):
             team,
             field_name="logo",
             remote_url=team.remote_logo_url,
-            kind="team",
+            target_name=team_logo_upload_path(team, ""),
         )
 
         team.refresh_from_db()
@@ -86,7 +92,7 @@ class LocalLogoServiceTests(TestCase):
             team,
             field_name="logo",
             remote_url=team.remote_logo_url,
-            kind="team",
+            target_name=team_logo_upload_path(team, ""),
         )
         self.assertFalse(downloaded_again)
         mocked_urlopen.assert_not_called()
@@ -110,7 +116,7 @@ class LocalLogoServiceTests(TestCase):
             league,
             field_name="logo",
             remote_url=league.remote_logo_url,
-            kind="league",
+            target_name=league_logo_upload_path(league, ""),
         )
 
         league.refresh_from_db()
@@ -132,5 +138,5 @@ class LocalLogoServiceTests(TestCase):
             team,
             field_name="logo",
             remote_url=payload["logo"],
-            kind="team",
+            target_name=team_logo_upload_path(team, ""),
         )
