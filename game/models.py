@@ -26,6 +26,14 @@ def league_logo_upload_path(instance, filename):
     return f"{sport_media_code(instance.sport)}/league/{instance.pk or 'new'}.webp"
 
 
+def country_logo_upload_path(instance, filename):
+    return f"common/country/{instance.pk or 'new'}.webp"
+
+
+def sport_image_upload_path(instance, filename):
+    return f"common/sport/{instance.pk or 'new'}.webp"
+
+
 def image_field_url(field) -> str:
     if not field:
         return ""
@@ -61,6 +69,7 @@ class Country(models.Model):
     name = models.CharField(max_length=120, blank=True)
     name_ru = models.CharField(max_length=120, blank=True)
     remote_logo_url = models.URLField(max_length=500, blank=True)
+    logo = models.ImageField(upload_to=country_logo_upload_path, blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -74,6 +83,10 @@ class Country(models.Model):
         ]
         ordering = ["name_ru", "name", "id"]
 
+    @property
+    def logo_url(self) -> str:
+        return image_field_url(self.logo)
+
     def __str__(self) -> str:
         return self.name_ru or self.name or self.code
 
@@ -84,7 +97,8 @@ class Sport(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
     name = models.CharField(max_length=100)
     name_ru = models.CharField(max_length=100, blank=True)
-    image = models.URLField(max_length=500, blank=True)
+    remote_image_url = models.URLField(max_length=500, blank=True)
+    image = models.ImageField(upload_to=sport_image_upload_path, blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -97,6 +111,10 @@ class Sport(models.Model):
             )
         ]
         ordering = ["name_ru", "name"]
+
+    @property
+    def image_url(self) -> str:
+        return image_field_url(self.image)
 
     def __str__(self) -> str:
         return self.name_ru or self.name
