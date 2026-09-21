@@ -92,8 +92,8 @@
         <div class="prediction-league-row">
             <div class="prediction-league-info">
                 <span class="prediction-league-logo">
-                    {% if prediction.match.league and prediction.match.league.logo %}
-                        <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                    {% if prediction.match.league and prediction.match.league.logo_url %}
+                        <img src="{{ prediction.match.league.logo_url }}" alt="" loading="lazy">
                     {% else %}
                         {{ prediction.match.league_name|default:"Лига"|slice:":1" }}
                     {% endif %}
