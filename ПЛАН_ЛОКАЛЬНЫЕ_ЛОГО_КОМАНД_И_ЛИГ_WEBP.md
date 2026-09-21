@@ -322,13 +322,10 @@ def sync_entity_logo(
 LOCAL_LOGO_DOWNLOAD_ENABLED = env_bool("LOCAL_LOGO_DOWNLOAD_ENABLED", True)
 LOCAL_LOGO_TIMEOUT = env_int("LOCAL_LOGO_TIMEOUT", 8)
 LOCAL_LOGO_MAX_BYTES = env_int("LOCAL_LOGO_MAX_BYTES", 2 * 1024 * 1024)
+LOCAL_LOGO_WEBP_QUALITY = env_int("LOCAL_LOGO_WEBP_QUALITY", 82)
 ~~~
 
-Отдельный LOCAL_LOGO_WEBP_QUALITY не добавлять.
-
-Использовать уже существующий:
-
-- MEDIA_WEBP_QUALITY.
+Для локальных спортивных логотипов использовать отдельный LOCAL_LOGO_WEBP_QUALITY, чтобы их качество можно было менять независимо от остальных ImageField проекта.
 
 Проверки downloader:
 
