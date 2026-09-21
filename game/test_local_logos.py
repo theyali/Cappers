@@ -58,6 +58,12 @@ def png_bytes() -> bytes:
     return output.getvalue()
 
 
+def jpeg_bytes() -> bytes:
+    output = BytesIO()
+    Image.new("RGB", (8, 8), (0, 0, 255)).save(output, format="JPEG")
+    return output.getvalue()
+
+
 class LocalLogoServiceTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.mkdtemp(prefix="cappers-local-logos-")
@@ -112,6 +118,32 @@ class LocalLogoServiceTests(TestCase):
         )
         self.assertFalse(downloaded_again)
         mocked_open.assert_not_called()
+
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_jpeg_remote_bytes_are_saved_as_real_webp(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
+            jpeg_bytes(),
+            content_type="image/jpeg",
+        )
+        team = Team.objects.create(
+            external_id=1018,
+            sport=self.football,
+            name="JPEG Team",
+            remote_logo_url="https://cdn.example/team.jpg",
+        )
+
+        self.assertTrue(
+            sync_entity_logo(
+                team,
+                field_name="logo",
+                remote_url=team.remote_logo_url,
+                target_name=team_logo_upload_path(team, ""),
+            )
+        )
+
+        team.refresh_from_db()
+        with Image.open(Path(self.media_root) / team.logo.name) as image:
+            self.assertEqual(image.format, "WEBP")
 
     @patch("game.services.local_logos._logo_opener.open")
     def test_basketball_league_uses_basket_media_path(self, mocked_open):
@@ -513,6 +545,30 @@ class LocalLogoServiceTests(TestCase):
         self.assertEqual(match.home_team_logo, "")
         self.assertEqual(match.away_team_logo, "")
 
+    def test_match_team_logo_properties_return_local_media_urls(self):
+        home = Team.objects.create(
+            external_id=1019,
+            sport=self.football,
+            name="Local Home",
+            logo="football/team/home.webp",
+        )
+        away = Team.objects.create(
+            external_id=1020,
+            sport=self.football,
+            name="Local Away",
+            logo="football/team/away.webp",
+        )
+        match = Match.objects.create(
+            external_id=6020,
+            sport=self.football,
+            sync_scope=Match.SyncScope.PREMATCH,
+            home_team=home,
+            away_team=away,
+        )
+
+        self.assertEqual(match.home_team_logo, "/media/football/team/home.webp")
+        self.assertEqual(match.away_team_logo, "/media/football/team/away.webp")
+
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_skips_existing_by_default(self, mocked_sync):
         team = Team.objects.create(
@@ -522,6 +578,9 @@ class LocalLogoServiceTests(TestCase):
             remote_logo_url="https://cdn.example/command-team.png",
             logo="football/team/existing.webp",
         )
+        existing_path = Path(self.media_root) / team.logo.name
+        existing_path.parent.mkdir(parents=True, exist_ok=True)
+        existing_path.write_bytes(b"existing")
         mocked_sync.return_value = False
         stdout = StringIO()
 
@@ -534,7 +593,7 @@ class LocalLogoServiceTests(TestCase):
             target_name=team_logo_upload_path(team, ""),
             force=False,
         )
-        self.assertIn("пропущено 1", stdout.getvalue())
+        self.assertIn("skipped=1", stdout.getvalue())
 
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_passes_force(self, mocked_sync):
@@ -564,12 +623,13 @@ class LocalLogoServiceTests(TestCase):
 
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_dry_run_does_not_download(self, mocked_sync):
-        Team.objects.create(
+        team = Team.objects.create(
             external_id=1017,
             sport=self.football,
             name="Dry Run Team",
             remote_logo_url="https://cdn.example/dry-run.png",
         )
+        target_path = Path(self.media_root) / team_logo_upload_path(team, "")
 
         call_command(
             "download_entity_logos",
@@ -580,6 +640,37 @@ class LocalLogoServiceTests(TestCase):
         )
 
         mocked_sync.assert_not_called()
+        self.assertFalse(target_path.exists())
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_reports_failed_downloads(self, mocked_sync):
+        Team.objects.create(
+            external_id=1021,
+            sport=self.football,
+            name="Failed Command Team",
+            remote_logo_url="https://cdn.example/failed-team.png",
+        )
+        mocked_sync.return_value = False
+        stdout = StringIO()
+
+        call_command("download_entity_logos", "--model", "team", stdout=stdout)
+
+        self.assertIn("failed=1", stdout.getvalue())
+        self.assertIn("skipped=0", stdout.getvalue())
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_supports_all_flag(self, mocked_sync):
+        Team.objects.create(
+            external_id=1022,
+            sport=self.football,
+            name="All Team",
+            remote_logo_url="https://cdn.example/all-team.png",
+        )
+        mocked_sync.return_value = True
+
+        call_command("download_entity_logos", "--all", "--limit", "1", stdout=StringIO())
+
+        self.assertTrue(mocked_sync.called)
 
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_supports_sport_images(self, mocked_sync):
@@ -622,6 +713,29 @@ class LocalLogoServiceTests(TestCase):
             field_name="logo",
             remote_url=payload["logo"],
             target_name=country_logo_upload_path(country, ""),
+        )
+
+    @patch("game.services.match_sync.sync_entity_logo")
+    def test_league_sync_saves_remote_logo_url(self, mocked_sync):
+        payload = {
+            "id": 3002,
+            "name": {"en": "Synced League", "ru": "Лига"},
+            "logo": "https://cdn.example/synced-league.png",
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            league = MatchSyncService()._sync_league(
+                payload,
+                self.football,
+                None,
+            )
+
+        self.assertEqual(league.remote_logo_url, payload["logo"])
+        mocked_sync.assert_called_once_with(
+            league,
+            field_name="logo",
+            remote_url=payload["logo"],
+            target_name=league_logo_upload_path(league, ""),
         )
 
     @patch("game.services.match_sync.sync_entity_logo")
