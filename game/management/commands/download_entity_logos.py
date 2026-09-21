@@ -1,12 +1,23 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from game.models import League, Team, league_logo_upload_path, team_logo_upload_path
+from game.models import (
+    Country,
+    League,
+    Sport,
+    Team,
+    country_logo_upload_path,
+    league_logo_upload_path,
+    sport_image_upload_path,
+    team_logo_upload_path,
+)
 from game.services.local_logos import sync_entity_logo
 
 
 MODEL_CONFIG = {
-    "team": (Team, team_logo_upload_path),
-    "league": (League, league_logo_upload_path),
+    "team": (Team, "logo", "remote_logo_url", team_logo_upload_path, True),
+    "league": (League, "logo", "remote_logo_url", league_logo_upload_path, True),
+    "country": (Country, "logo", "remote_logo_url", country_logo_upload_path, False),
+    "sport": (Sport, "image", "remote_image_url", sport_image_upload_path, False),
 }
 
 
@@ -36,12 +47,10 @@ class Command(BaseCommand):
 
         totals = {"scanned": 0, "downloaded": 0, "skipped": 0}
         for model_name in model_names:
-            model, target_builder = MODEL_CONFIG[model_name]
-            queryset = (
-                model.objects.exclude(remote_logo_url="")
-                .select_related("sport")
-                .order_by("pk")
-            )
+            model, field_name, remote_field, target_builder, needs_sport = MODEL_CONFIG[model_name]
+            queryset = model.objects.exclude(**{remote_field: ""}).order_by("pk")
+            if needs_sport:
+                queryset = queryset.select_related("sport")
             if limit is not None:
                 queryset = queryset[:limit]
 
@@ -58,8 +67,8 @@ class Command(BaseCommand):
 
                 downloaded = sync_entity_logo(
                     instance,
-                    field_name="logo",
-                    remote_url=instance.remote_logo_url,
+                    field_name=field_name,
+                    remote_url=getattr(instance, remote_field),
                     target_name=target_name,
                     force=options["force"],
                 )
