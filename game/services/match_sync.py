@@ -445,6 +445,7 @@ class MatchSyncService:
         if external_id is None:
             return None
 
+        remote_logo_url = str(payload.get("logo") or "")
         country, _ = Country.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=external_id,
@@ -452,7 +453,7 @@ class MatchSyncService:
                 "code": str(payload.get("code") or ""),
                 "name": self._localized(payload.get("name"), "en"),
                 "name_ru": self._localized(payload.get("name"), "ru"),
-                "logo": str(payload.get("logo") or ""),
+                "remote_logo_url": remote_logo_url,
                 "raw_data": payload,
             },
         )
@@ -463,6 +464,7 @@ class MatchSyncService:
         if external_id is None:
             return None
 
+        remote_logo_url = str(payload.get("logo") or "")
         venue, _ = Venue.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=external_id,
@@ -472,7 +474,7 @@ class MatchSyncService:
                 "city": self._localized(payload.get("city"), "en"),
                 "city_ru": self._localized(payload.get("city"), "ru"),
                 "capacity": self._to_int(payload.get("capacity")),
-                "logo": str(payload.get("logo") or ""),
+                "remote_logo_url": remote_logo_url,
                 "address": str(payload.get("address") or ""),
                 "address_ru": str(payload.get("address_ru") or ""),
                 "surface": str(payload.get("surface") or ""),
