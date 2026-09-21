@@ -26,8 +26,8 @@
                 <div class="match-detail-head">
                     <div class="match-league">
                         <span class="league-mark">
-                            {% if match.league and match.league.logo %}
-                                <img src="{{ match.league.logo }}" alt="" loading="lazy">
+                            {% if match.league and match.league.logo_url %}
+                                <img src="{{ match.league.logo_url }}" alt="" loading="lazy">
                             {% else %}
                                 {{ match.league_name|default:"Лига"|slice:":1" }}
                             {% endif %}
