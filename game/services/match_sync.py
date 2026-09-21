@@ -9,7 +9,19 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from game.models import Country, League, LeagueSeason, Match, MatchOdds, Provider, Sport, Team, Venue
+from game.models import (
+    Country,
+    League,
+    LeagueSeason,
+    Match,
+    MatchOdds,
+    Provider,
+    Sport,
+    Team,
+    Venue,
+    league_logo_upload_path,
+    team_logo_upload_path,
+)
 from game.services.local_logos import sync_entity_logo
 from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
@@ -501,7 +513,7 @@ class MatchSyncService:
                 league,
                 field_name="logo",
                 remote_url=remote_logo_url,
-                kind="league",
+                target_name=league_logo_upload_path(league, ""),
             )
         )
         return league
@@ -567,7 +579,7 @@ class MatchSyncService:
                 team,
                 field_name="logo",
                 remote_url=remote_logo_url,
-                kind="team",
+                target_name=team_logo_upload_path(team, ""),
             )
         )
         return team
