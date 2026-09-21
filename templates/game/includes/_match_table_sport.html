@@ -33,9 +33,9 @@
             open
         >
             <summary class="content-league-summary">
-                <span class="content-league-logo"{% if league.logo %} data-skeleton-image{% endif %}>
-                    {% if league.logo %}
-                        <img src="{{ league.logo }}" width="24" height="24" loading="lazy" alt="">
+                <span class="content-league-logo"{% if league.logo_url %} data-skeleton-image{% endif %}>
+                    {% if league.logo_url %}
+                        <img src="{{ league.logo_url }}" width="24" height="24" loading="lazy" alt="">
                     {% else %}
                         {{ league.name|slice:":1" }}
                     {% endif %}
