@@ -60,7 +60,7 @@ class Country(models.Model):
     code = models.CharField(max_length=10, blank=True, db_index=True)
     name = models.CharField(max_length=120, blank=True)
     name_ru = models.CharField(max_length=120, blank=True)
-    logo = models.URLField(max_length=500, blank=True)
+    remote_logo_url = models.URLField(max_length=500, blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
@@ -168,7 +168,7 @@ class Venue(models.Model):
     city = models.CharField(max_length=150, blank=True)
     city_ru = models.CharField(max_length=150, blank=True)
     capacity = models.PositiveIntegerField(null=True, blank=True)
-    logo = models.URLField(max_length=500, blank=True)
+    remote_logo_url = models.URLField(max_length=500, blank=True)
     address = models.CharField(max_length=255, blank=True)
     address_ru = models.CharField(max_length=255, blank=True)
     surface = models.CharField(max_length=100, blank=True)
