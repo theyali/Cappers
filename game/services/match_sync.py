@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 from datetime import timedelta
 from typing import Any
 
@@ -9,6 +10,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
 from game.models import Country, League, LeagueSeason, Match, MatchOdds, Provider, Sport, Team, Venue
+from game.services.local_logos import sync_entity_logo
 from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 
@@ -478,6 +480,7 @@ class MatchSyncService:
         if external_id is None:
             return None
 
+        remote_logo_url = str(payload.get("logo") or "")
         league, _ = League.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=external_id,
@@ -486,11 +489,20 @@ class MatchSyncService:
                 "country": country,
                 "name": self._localized(payload.get("name"), "en"),
                 "name_ru": self._localized(payload.get("name"), "ru"),
-                "logo": str(payload.get("logo") or ""),
+                "remote_logo_url": remote_logo_url,
                 "gender": str(payload.get("gender") or ""),
                 "age_group": str(payload.get("age_group") or ""),
                 "raw_data": payload,
             },
+        )
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                league,
+                field_name="logo",
+                remote_url=remote_logo_url,
+                kind="league",
+            )
         )
         return league
 
@@ -534,6 +546,7 @@ class MatchSyncService:
         if external_id is None:
             return None
 
+        remote_logo_url = str(payload.get("logo") or "")
         team, _ = Team.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=external_id,
@@ -542,11 +555,20 @@ class MatchSyncService:
                 "country": country,
                 "name": self._localized(payload.get("name"), "en"),
                 "name_ru": self._localized(payload.get("name"), "ru"),
-                "logo": str(payload.get("logo") or ""),
+                "remote_logo_url": remote_logo_url,
                 "gender": str(payload.get("gender") or ""),
                 "age_group": str(payload.get("age_group") or ""),
                 "raw_data": payload,
             },
+        )
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                team,
+                field_name="logo",
+                remote_url=remote_logo_url,
+                kind="team",
+            )
         )
         return team
 

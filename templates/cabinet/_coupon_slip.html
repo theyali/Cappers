@@ -27,12 +27,12 @@
                 <div class="coupon-slip-match-head">
                     <div class="coupon-slip-league">
                         <span class="coupon-slip-sport-icon" aria-hidden="true">
-                            {% if show_sport_badge and prediction.match.league and prediction.match.league.logo %}
-                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                            {% if show_sport_badge and prediction.match.league and prediction.match.league.logo_url %}
+                                <img src="{{ prediction.match.league.logo_url }}" alt="" loading="lazy">
                             {% elif prediction.match.sport and prediction.match.sport.image %}
                                 <img src="{{ prediction.match.sport.image }}" alt="" loading="lazy">
-                            {% elif prediction.match.league and prediction.match.league.logo %}
-                                <img src="{{ prediction.match.league.logo }}" alt="" loading="lazy">
+                            {% elif prediction.match.league and prediction.match.league.logo_url %}
+                                <img src="{{ prediction.match.league.logo_url }}" alt="" loading="lazy">
                             {% else %}
                                 {% include "front/svgs/soccer.svg" %}
                             {% endif %}
