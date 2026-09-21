@@ -87,9 +87,9 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 "Готово: "
-                f"проверено {totals['scanned']}, "
-                f"скачано {totals['downloaded']}, "
-                f"пропущено {totals['skipped']}, "
-                f"ошибок {totals['failed']}."
+                f"scanned={totals['scanned']} "
+                f"downloaded={totals['downloaded']} "
+                f"skipped={totals['skipped']} "
+                f"failed={totals['failed']}"
             )
         )
