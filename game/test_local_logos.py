@@ -152,7 +152,7 @@ class LocalLogoServiceTests(TestCase):
         self.assertFalse(team.logo)
 
     @patch("game.services.local_logos._logo_opener.open")
-    def test_passes_configured_timeout_to_urlopen(self, mocked_open):
+    def test_passes_configured_timeout_to_remote_opener(self, mocked_open):
         mocked_open.return_value = FakeImageResponse(png_bytes())
         team = Team.objects.create(
             external_id=1003,
