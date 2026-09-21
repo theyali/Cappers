@@ -1,10 +1,12 @@
 import shutil
 import tempfile
 from io import BytesIO
+from io import StringIO
 from pathlib import Path
 from urllib.error import URLError
 from unittest.mock import patch
 
+from django.core.management import call_command
 from django.db.models.signals import post_save
 from django.test import TestCase, override_settings
 from PIL import Image
@@ -461,6 +463,89 @@ class LocalLogoServiceTests(TestCase):
         synced.refresh_from_db()
         self.assertEqual(synced.remote_logo_url, payload["logo"])
         self.assertEqual(synced.logo.name, existing_name)
+
+    def test_logo_url_properties_are_safe_for_empty_fields(self):
+        team = Team.objects.create(
+            external_id=1014,
+            sport=self.football,
+            name="No Logo Team",
+        )
+        league = League.objects.create(
+            external_id=2014,
+            sport=self.football,
+            name="No Logo League",
+        )
+
+        self.assertEqual(team.logo_url, "")
+        self.assertEqual(league.logo_url, "")
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_skips_existing_by_default(self, mocked_sync):
+        team = Team.objects.create(
+            external_id=1015,
+            sport=self.football,
+            name="Command Team",
+            remote_logo_url="https://cdn.example/command-team.png",
+            logo="football/team/existing.webp",
+        )
+        mocked_sync.return_value = False
+        stdout = StringIO()
+
+        call_command("download_entity_logos", "--model", "team", stdout=stdout)
+
+        mocked_sync.assert_called_once_with(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+            force=False,
+        )
+        self.assertIn("пропущено 1", stdout.getvalue())
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_passes_force(self, mocked_sync):
+        team = Team.objects.create(
+            external_id=1016,
+            sport=self.football,
+            name="Forced Command Team",
+            remote_logo_url="https://cdn.example/forced-team.png",
+        )
+        mocked_sync.return_value = True
+
+        call_command(
+            "download_entity_logos",
+            "--model",
+            "team",
+            "--force",
+            stdout=StringIO(),
+        )
+
+        mocked_sync.assert_called_once_with(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+            force=True,
+        )
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_dry_run_does_not_download(self, mocked_sync):
+        Team.objects.create(
+            external_id=1017,
+            sport=self.football,
+            name="Dry Run Team",
+            remote_logo_url="https://cdn.example/dry-run.png",
+        )
+
+        call_command(
+            "download_entity_logos",
+            "--model",
+            "team",
+            "--dry-run",
+            stdout=StringIO(),
+        )
+
+        mocked_sync.assert_not_called()
 
     @patch("game.services.match_sync.sync_entity_logo")
     def test_match_sync_saves_remote_url_and_calls_local_logo_service(self, mocked_sync):
