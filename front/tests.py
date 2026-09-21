@@ -529,7 +529,7 @@ class FooterRenderingTests(TestCase):
         self.assertContains(response, "Тестовое описание футера из админки")
         self.assertContains(response, 'class="site-footer site-footer-v2"')
 
-    def test_footer_is_hidden_when_view_sets_hide_footer(self):
+    def test_footer_is_hidden_by_default(self):
         user = User.objects.create_user(
             username="footer-hidden-reader",
             password="test-password",

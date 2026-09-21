@@ -58,7 +58,7 @@ def _top_experts():
                 "followers": profile.followers_count,
                 "initials": _initials(name),
                 "verified": profile.is_verified,
-                "avatar_url": profile.avatar.url if profile.avatar else "",
+                "avatar_url": profile.user.avatar.url if profile.user.avatar else "",
             }
         )
     return experts

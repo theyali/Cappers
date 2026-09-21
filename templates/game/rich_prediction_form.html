@@ -4,55 +4,14 @@
 {% block title %}{% if is_editing %}Редактирование прогноза{% else %}Новый расширенный прогноз{% endif %} — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="matches-page rich-prediction-page container" aria-label="Редактор расширенного прогноза">
-    <div class="matches-shell rich-prediction-shell">
-        <aside class="matches-table-filter-sidebar rich-prediction-nav" aria-label="Навигация редактора">
-            <div class="matches-table-filter-head">
-                <span class="matches-table-filter-head-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 19h16M6 15l3-3 3 2 6-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </span>
-                <div>
-                    <strong>Прогноз</strong>
-                    <small>Расширенный формат</small>
-                </div>
-            </div>
+<section class="rich-prediction-page" aria-label="Редактор расширенного прогноза">
+    <div class="rich-prediction-shell">
+        <main class="rich-prediction-editor">
+            <a class="rich-prediction-back" href="{% url 'front:predictions' %}">Назад к прогнозам</a>
 
-            <section class="matches-table-filter-group" aria-labelledby="rich-editor-nav-title">
-                <div class="matches-table-filter-title" id="rich-editor-nav-title">
-                    <span>Разделы</span>
-                </div>
-                <nav class="matches-table-scope-list" aria-label="Разделы редактора">
-                    <a class="matches-table-scope-link is-active" href="{% url 'game:rich_prediction_create' %}" aria-current="page">
-                        <span class="matches-table-scope-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="matches-table-scope-copy">Новый прогноз</span>
-                    </a>
-                    <a class="matches-table-scope-link" href="{% url 'cabinet:profile' %}?tab=predictions">
-                        <span class="matches-table-scope-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5h16v14H4Z" stroke="currentColor" stroke-width="1.8"/><path d="m7 15 3-3 2 2 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </span>
-                        <span class="matches-table-scope-copy">Мои прогнозы</span>
-                    </a>
-                    <a class="matches-table-scope-link" href="{% url 'game:match_list' %}">
-                        <span class="matches-table-scope-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h8M8 16h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                        </span>
-                        <span class="matches-table-scope-copy">Матчи</span>
-                    </a>
-                </nav>
-            </section>
-        </aside>
-
-        <main class="matches-list-panel rich-prediction-editor">
             <header class="rich-prediction-editor-head">
-                <div>
-                    <span class="eyebrow">Расширенный прогноз</span>
-                    <h1>{% if is_editing %}Редактировать прогноз{% else %}Создать прогноз{% endif %}</h1>
-                    <p>Доработайте уже собранный купон: добавьте заголовок, доступ, описание и обложку. Матчи и коэффициенты берутся из купона.</p>
-                </div>
+                <h1>{% if is_editing %}Редактировать прогноз{% else %}Создать прогноз{% endif %}</h1>
+                <p>Поделитесь своим анализом и помогите подписчикам зарабатывать вместе.</p>
                 {% if coupon %}
                     <span class="rich-prediction-editor-status">{{ coupon.get_published_status_display }}</span>
                 {% endif %}
@@ -70,29 +29,14 @@
                 <div class="rich-prediction-form-errors" role="alert" data-form-client-error hidden tabindex="-1"></div>
 
                 <section class="rich-prediction-section">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>Купон</span>
-                            <h2>{% if has_coupon_positions %}Ваш купон{% else %}Добавьте матчи в купон{% endif %}</h2>
+                    <div class="rich-prediction-step">1</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
+                            <h2>Купон и матч</h2>
+                            <p>{% if has_coupon_positions %}Выберите матч из купона и добавьте прогноз.{% else %}Добавьте матч из купона и вернитесь к прогнозу.{% endif %}</p>
                         </div>
-                    </div>
 
-                    {% if has_coupon_positions %}
-                        <div class="rich-prediction-coupon">
-                            <div class="rich-prediction-coupon-summary">
-                                <div>
-                                    <span>Коэффициент</span>
-                                    <strong data-rich-total-coefficient>{{ coupon_total_coefficient|floatformat:2 }}</strong>
-                                </div>
-                                <div>
-                                    <span>Позиций</span>
-                                    <strong data-rich-positions-count>{{ predictions|length }}</strong>
-                                </div>
-                                <div>
-                                    <span>Выплата</span>
-                                    <strong data-rich-payout>{{ coupon.possible_payout|floatformat:"0" }}</strong>
-                                </div>
-                            </div>
+                        {% if has_coupon_positions %}
                             <div class="rich-prediction-coupon-list">
                                 {% for prediction in predictions %}
                                     <article class="rich-prediction-coupon-item" data-rich-coupon-item data-prediction-id="{{ prediction.id }}" data-coefficient="{{ prediction.coefficient }}">
@@ -106,14 +50,14 @@
                                                     {{ prediction.match.home_team_name|default:"М"|slice:":1" }}
                                                 {% endif %}
                                             </span>
-                                            <span>
-                                                <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
+                                            <span class="rich-prediction-coupon-copy">
+                                                <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
                                                 <small>{{ prediction.match.league_name|default:"Лига" }} · {% if prediction.match.starts_at %}{{ prediction.match.starts_at|date:"d.m.Y H:i" }}{% else %}Время не указано{% endif %}</small>
                                             </span>
                                         </a>
-                                        <div class="rich-prediction-coupon-pick">
-                                            <span>{{ prediction.market|default:"Позиция" }}</span>
-                                            <strong>{{ prediction.selection }}</strong>
+                                        <span class="rich-prediction-coupon-versus">VS</span>
+                                        <div class="rich-prediction-coupon-away">
+                                            <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
                                         </div>
                                         <strong class="rich-prediction-coupon-odd">{{ prediction.coefficient }}</strong>
                                         <button class="rich-prediction-coupon-remove" type="button" data-rich-remove-prediction="{{ prediction.id }}" aria-label="Убрать из купона">
@@ -124,184 +68,181 @@
                                     </article>
                                 {% endfor %}
                             </div>
-                        </div>
-                    {% else %}
-                        <div class="rich-prediction-empty">
-                            <strong>Сначала выберите матчи</strong>
-                            <span>Добавьте от 1 до {{ rich_prediction_max_items }} игр в купон на странице матчей, затем вернитесь сюда и оформите расширенный прогноз.</span>
-                            <a href="{% url 'game:match_list' %}">Перейти к матчам</a>
-                        </div>
-                    {% endif %}
+                        {% else %}
+                            <div class="rich-prediction-empty">
+                                <strong>Сначала выберите матчи</strong>
+                                <span>Добавьте от 1 до {{ rich_prediction_max_items }} игр в купон на странице матчей, затем вернитесь сюда.</span>
+                                <a href="{% url 'game:match_list' %}">Перейти к матчам</a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </section>
 
                 {% if has_coupon_positions %}
                 <section class="rich-prediction-section">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>Ставка</span>
+                    <div class="rich-prediction-step">2</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
                             <h2>Сумма и уверенность</h2>
+                            <p>Укажите сумму ставки и вашу уверенность в прогнозе.</p>
                         </div>
-                    </div>
 
-                    <div class="rich-prediction-fields-grid">
-                        <label class="capper-field">
-                            <span class="capper-field-label">{{ form.total_stake.label }}</span>
-                            {{ form.total_stake }}
-                            <span class="capper-field-help">От 100 до 1 000 000 коинов.</span>
-                            {% if form.total_stake.errors %}<span class="capper-field-errors">{{ form.total_stake.errors }}</span>{% endif %}
-                        </label>
+                        <div class="rich-prediction-fields-grid">
+                            <label class="capper-field">
+                                <span class="capper-field-label">{{ form.total_stake.label }}</span>
+                                {{ form.total_stake }}
+                                <span class="capper-field-help">От 100 до 1 000 000 коинов.</span>
+                                {% if form.total_stake.errors %}<span class="capper-field-errors">{{ form.total_stake.errors }}</span>{% endif %}
+                            </label>
 
-                        <div class="capper-field">
-                            <div class="coupon-confidence coupon-confidence-global rich-prediction-confidence">
-                                <div class="coupon-confidence-head">
-                                    <span>{{ form.confidence.label }}</span>
-                                    <strong data-rich-confidence-value>{{ form.confidence.value|default:50 }}%</strong>
+                            <div class="capper-field">
+                                <div class="coupon-confidence coupon-confidence-global rich-prediction-confidence">
+                                    <div class="coupon-confidence-head">
+                                        <span>{{ form.confidence.label }}</span>
+                                        <strong data-rich-confidence-value>{{ form.confidence.value|default:50 }}%</strong>
+                                    </div>
+                                    {{ form.confidence }}
+                                    <small class="coupon-confidence-hint">Оценка уверенности от 0 до 100%.</small>
                                 </div>
-                                {{ form.confidence }}
-                                <small class="coupon-confidence-hint">Оценка уверенности от 0 до 100%.</small>
+                                {% if form.confidence.errors %}<span class="capper-field-errors">{{ form.confidence.errors }}</span>{% endif %}
                             </div>
-                            {% if form.confidence.errors %}<span class="capper-field-errors">{{ form.confidence.errors }}</span>{% endif %}
                         </div>
                     </div>
                 </section>
 
                 <section class="rich-prediction-section">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>Доступ</span>
-                            <h2>Кому показывать прогноз</h2>
+                    <div class="rich-prediction-step">3</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
+                            <h2>Доступ к прогнозу</h2>
+                            <p>Кто сможет видеть этот прогноз?</p>
                         </div>
-                    </div>
 
-                    <div class="rich-prediction-access-options">
-                        <label class="rich-prediction-access-option">
-                            <input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %}>
-                            <span>
-                                <strong>Бесплатный</strong>
-                                <small>Доступен всем пользователям.</small>
-                            </span>
-                        </label>
-                        <label class="rich-prediction-access-option{% if not can_use_rich_fields %} is-locked{% endif %}">
-                            <input type="radio" name="is_paid" value="on" {% if form.is_paid.value %}checked{% endif %} {% if not can_use_rich_fields %}disabled{% endif %}>
-                            <span>
-                                <strong>Платный</strong>
-                                <small>{% if can_use_rich_fields %}Только для подписчиков ваших платных прогнозов.{% else %}{{ vip_locked_label }}{% endif %}</small>
-                            </span>
-                        </label>
+                        <div class="rich-prediction-access-options">
+                            <label class="rich-prediction-access-option">
+                                <input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %}>
+                                <span>
+                                    <strong>Бесплатный</strong>
+                                    <small>Доступен всем пользователям.</small>
+                                </span>
+                            </label>
+                            <label class="rich-prediction-access-option{% if not can_use_rich_fields %} is-locked{% endif %}">
+                                <input type="radio" name="is_paid" value="on" {% if form.is_paid.value %}checked{% endif %} {% if not can_use_rich_fields %}disabled{% endif %}>
+                                <span>
+                                    <strong>Платный</strong>
+                                    <small>{% if can_use_rich_fields %}Только для подписчиков ваших платных прогнозов.{% else %}{{ vip_locked_label }}{% endif %}</small>
+                                </span>
+                            </label>
+                        </div>
+                        {% if form.is_paid.errors %}<span class="capper-field-errors">{{ form.is_paid.errors }}</span>{% endif %}
                     </div>
-                    {% if form.is_paid.errors %}<span class="capper-field-errors">{{ form.is_paid.errors }}</span>{% endif %}
                 </section>
 
                 <section class="rich-prediction-section">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>Текст</span>
+                    <div class="rich-prediction-step">4</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
                             <h2>Заголовок и теги</h2>
+                            <p>Придумайте цепляющий заголовок и добавьте теги.</p>
                         </div>
-                    </div>
 
-                    <div class="rich-prediction-fields-grid">
-                        <label class="capper-field rich-prediction-field-wide">
-                            <span class="capper-field-label">{{ form.headline.label }}</span>
-                            {{ form.headline }}
-                            {% if form.headline.errors %}<span class="capper-field-errors">{{ form.headline.errors }}</span>{% endif %}
-                        </label>
+                        <div class="rich-prediction-fields-grid">
+                            <label class="capper-field rich-prediction-field-wide">
+                                <span class="capper-field-label">{{ form.headline.label }}</span>
+                                {{ form.headline }}
+                                <span class="rich-prediction-counter">0/70</span>
+                                {% if form.headline.errors %}<span class="capper-field-errors">{{ form.headline.errors }}</span>{% endif %}
+                            </label>
 
-                        <label class="capper-field rich-prediction-field-wide">
-                            <span class="capper-field-label">{{ form.tags.label }}</span>
-                            {{ form.tags }}
-                            <span class="capper-field-help">{{ form.tags.help_text }}</span>
-                            {% if form.tags.errors %}<span class="capper-field-errors">{{ form.tags.errors }}</span>{% endif %}
-                        </label>
+                            <label class="capper-field rich-prediction-field-wide">
+                                <span class="capper-field-label">{{ form.tags.label }}</span>
+                                {{ form.tags }}
+                                <span class="capper-field-help">{{ form.tags.help_text }}</span>
+                                {% if form.tags.errors %}<span class="capper-field-errors">{{ form.tags.errors }}</span>{% endif %}
+                            </label>
+                        </div>
                     </div>
                 </section>
 
                 <section class="rich-prediction-section{% if not can_use_rich_fields %} is-locked{% endif %}">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>VIP</span>
+                    <div class="rich-prediction-step">5</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
                             <h2>Описание прогноза</h2>
-                        </div>
-                        {% if not can_use_rich_fields %}
-                            <a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>
-                        {% endif %}
-                    </div>
-                    <label class="capper-field">
-                        <span class="capper-field-label">{{ form.description.label }}</span>
-                        {{ form.description }}
-                        {% if form.description.errors %}<span class="capper-field-errors">{{ form.description.errors }}</span>{% endif %}
-                    </label>
-                </section>
-
-                <section class="rich-prediction-section rich-prediction-cover-picker{% if not can_use_rich_fields %} is-locked{% endif %}">
-                    <div class="rich-prediction-section-head">
-                        <div>
-                            <span>VIP</span>
-                            <h2>Обложка</h2>
-                        </div>
-                        {% if can_use_rich_fields %}
-                            <small>Доступно системных обложек: {{ available_covers|length }}</small>
-                        {% else %}
-                            <a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>
-                        {% endif %}
-                    </div>
-
-                    <div class="rich-prediction-fields-grid">
-                        <div class="capper-field rich-prediction-field-wide">
-                            <span class="capper-field-label">{{ form.cover_image.label }}</span>
-                            <div class="rich-cover-grid" data-rich-cover-grid>
-                                <label class="rich-cover-option">
-                                    <input type="radio" name="cover_image" value="" {% if not form.cover_image.value %}checked{% endif %}>
-                                    <span class="rich-cover-option-empty">Авто</span>
-                                    <strong>Автоматически</strong>
-                                </label>
-                                {% for cover in available_covers %}
-                                    {% if cover.image %}
-                                        <label class="rich-cover-option{% if forloop.counter > 6 %} is-extra{% endif %}" {% if forloop.counter > 6 %}hidden{% endif %}>
-                                            <input type="radio" name="cover_image" value="{{ cover.id }}" {% if selected_cover_id == cover.id|stringformat:"s" %}checked{% endif %} data-rich-cover-radio data-cover-url="{{ cover.image.url }}">
-                                            <span class="rich-cover-option-image">
-                                                <img src="{{ cover.image.url }}" width="180" height="112" alt="" loading="lazy">
-                                            </span>
-                                            <strong>{{ cover.title|default:"Обложка" }}</strong>
-                                        </label>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            {% if available_covers|length > 6 %}
-                                <button class="rich-cover-more" type="button" data-rich-cover-more>Показать еще</button>
+                            <p>Подробно опишите ваш анализ, мысли и аргументы.</p>
+                            {% if not can_use_rich_fields %}
+                                <a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>
                             {% endif %}
-                            {% if form.cover_image.errors %}<span class="capper-field-errors">{{ form.cover_image.errors }}</span>{% endif %}
-                            <span hidden data-rich-cover-options>
-                                {% for cover in available_covers %}
-                                    {% if cover.image %}
-                                        <i data-rich-cover-option data-cover-id="{{ cover.id }}" data-cover-url="{{ cover.image.url }}"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </span>
                         </div>
-
-                        <label class="capper-field">
-                            <span class="capper-field-label">{{ form.custom_cover_image.label }}</span>
-                            {{ form.custom_cover_image }}
-                            <span class="capper-field-help">JPG, PNG или WebP, до 5 МБ.</span>
-                            {% if form.custom_cover_image.errors %}<span class="capper-field-errors">{{ form.custom_cover_image.errors }}</span>{% endif %}
+                        <label class="capper-field rich-prediction-field-wide">
+                            {{ form.description }}
+                            <span class="rich-prediction-counter">0/2000</span>
+                            {% if form.description.errors %}<span class="capper-field-errors">{{ form.description.errors }}</span>{% endif %}
                         </label>
                     </div>
                 </section>
 
+                <section class="rich-prediction-section rich-prediction-cover-picker{% if not can_use_rich_fields %} is-locked{% endif %}">
+                    <div class="rich-prediction-step">6</div>
+                    <div class="rich-prediction-section-body">
+                        <div class="rich-prediction-section-head">
+                            <h2>Обложка</h2>
+                            <p>Выберите обложку для прогноза.</p>
+                            {% if not can_use_rich_fields %}
+                                <a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>
+                            {% endif %}
+                        </div>
+
+                        <div class="rich-cover-grid" data-rich-cover-grid>
+                            <label class="rich-cover-option rich-cover-upload">
+                                {{ form.custom_cover_image }}
+                                <span class="rich-cover-upload-icon" aria-hidden="true">▧</span>
+                                <strong>Загрузить свою обложку</strong>
+                            </label>
+                            {% for cover in available_covers %}
+                                {% if cover.image %}
+                                    <label class="rich-cover-option{% if forloop.counter > 5 %} is-extra{% endif %}" {% if forloop.counter > 5 %}hidden{% endif %}>
+                                        <input type="radio" name="cover_image" value="{{ cover.id }}" {% if selected_cover_id == cover.id|stringformat:"s" %}checked{% endif %} data-rich-cover-radio data-cover-url="{{ cover.image.url }}">
+                                        <span class="rich-cover-option-image">
+                                            <img src="{{ cover.image.url }}" width="148" height="92" alt="" loading="lazy">
+                                        </span>
+                                    </label>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% if available_covers|length > 5 %}
+                            <button class="rich-cover-more" type="button" data-rich-cover-more>Показать еще</button>
+                        {% endif %}
+                        {% if form.cover_image.errors %}<span class="capper-field-errors">{{ form.cover_image.errors }}</span>{% endif %}
+                        {% if form.custom_cover_image.errors %}<span class="capper-field-errors">{{ form.custom_cover_image.errors }}</span>{% endif %}
+                        <span hidden data-rich-cover-options>
+                            {% for cover in available_covers %}
+                                {% if cover.image %}
+                                    <i data-rich-cover-option data-cover-id="{{ cover.id }}" data-cover-url="{{ cover.image.url }}"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                </section>
+
                 <div class="rich-prediction-actions">
-                    <button class="rich-prediction-submit is-primary" type="submit" name="published_status" value="published">Опубликовать</button>
+                    <button class="rich-prediction-submit is-primary" type="submit" name="published_status" value="published">Опубликовать прогноз</button>
                     <button class="rich-prediction-submit is-secondary" type="submit" name="published_status" value="draft">Сохранить черновик</button>
                 </div>
                 {% endif %}
             </form>
         </main>
 
-        <aside class="coupon-sidebar rich-prediction-preview" aria-label="Предпросмотр прогноза">
-            <article class="prediction-card prediction-card-rich rich-prediction-preview-card">
+        <aside class="rich-prediction-preview" aria-label="Предпросмотр прогноза">
+            <article class="rich-prediction-preview-card">
+                <div class="rich-prediction-preview-title">
+                    <span class="rich-prediction-preview-eye" aria-hidden="true">◉</span>
+                    <strong>Предпросмотр</strong>
+                </div>
+
                 <div class="rich-prediction-preview-cover" data-rich-cover-preview>
                     {% if preview_prediction.cover_url %}
-                        <img src="{{ preview_prediction.cover_url }}" width="640" height="400" alt="" data-rich-cover-preview-image>
+                        <img src="{{ preview_prediction.cover_url }}" width="336" height="260" alt="" data-rich-cover-preview-image>
                     {% else %}
                         <div class="rich-prediction-preview-cover-empty" data-rich-cover-preview-empty>
                             <span>Предпросмотр</span>
@@ -313,7 +254,7 @@
                 <div class="rich-prediction-preview-body">
                     <div class="rich-prediction-preview-meta">
                         <span>{% if preview_prediction.is_paid %}Платный{% else %}Бесплатный{% endif %}</span>
-                        {% if preview_prediction.coefficient %}<strong>КФ {{ preview_prediction.coefficient }}</strong>{% endif %}
+                        {% if preview_prediction.coefficient %}<strong>Коэф. {{ preview_prediction.coefficient }}</strong>{% endif %}
                     </div>
 
                     <h2>{{ preview_prediction.headline|default:"Заголовок вашего прогноза" }}</h2>
@@ -326,19 +267,15 @@
                         <p class="rich-prediction-preview-match">Выберите матч, чтобы увидеть его здесь.</p>
                     {% endif %}
 
-                    <p class="rich-prediction-preview-pick">{{ preview_prediction.prediction_text|default:"Ваш прогноз появится здесь." }}</p>
-
-                    {% if preview_prediction.description %}
-                        <p class="rich-prediction-preview-description">{{ preview_prediction.description|truncatechars:180 }}</p>
-                    {% endif %}
-
                     {% if preview_prediction.tags %}
                         <div class="rich-prediction-preview-tags">
                             {% for tag in preview_prediction.tags %}
-                                <span>#{{ tag }}</span>
+                                <span>{{ tag }}</span>
                             {% endfor %}
                         </div>
                     {% endif %}
+
+                    <p class="rich-prediction-preview-pick">{{ preview_prediction.prediction_text|default:"Ваш прогноз появится здесь. Опубликуйте, чтобы он стал доступен." }}</p>
                 </div>
             </article>
         </aside>

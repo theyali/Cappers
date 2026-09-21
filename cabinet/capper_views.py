@@ -226,7 +226,8 @@ def capper_onboarding(request, step: int):
             profile.display_name = form.cleaned_data["display_name"].strip()
             avatar = form.cleaned_data.get("avatar")
             if avatar:
-                profile.avatar = avatar
+                request.user.avatar = avatar
+                request.user.save(update_fields=["avatar"])
             profile.save()
             return redirect("cabinet:capper_onboarding", step=2)
 
@@ -405,10 +406,14 @@ def league_search(request):
             leagues = leagues.filter(country_id=int(country_id))
 
         if is_top:
-            leagues = (
-                leagues.annotate(match_count=Count("matches", distinct=True))
-                .order_by("-match_count", "name_ru", "name", "id")
-            )
+            top_leagues = leagues.filter(is_top=True)
+            if top_leagues.exists():
+                leagues = top_leagues.order_by("top_order", "name_ru", "name", "id")
+            else:
+                leagues = (
+                    leagues.annotate(match_count=Count("matches", distinct=True))
+                    .order_by("-match_count", "name_ru", "name", "id")
+                )
         else:
             leagues = leagues.order_by(
                 "sport__name_ru",
@@ -445,7 +450,7 @@ def league_search(request):
                     "country_id": league.country_id,
                     "country": str(league.country) if league.country_id else "",
                     "logo": league.logo,
-                    "is_top": is_top,
+                    "is_top": league.is_top,
                 }
                 for league in rows
             ],

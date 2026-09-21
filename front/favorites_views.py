@@ -263,7 +263,6 @@ def favorites(request):
             "reset_url": favorites_url,
             "pagination_query": pagination_query,
             "adv_placement": "sidebar",
-            "hide_footer": True,
             **prediction_type_context,
         },
     )

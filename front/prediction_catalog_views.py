@@ -749,7 +749,6 @@ def predictions(
                 else _prediction_sport_path()
             ),
             "adv_placement": "sidebar",
-            "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **prediction_type_context,
             **seo_context,

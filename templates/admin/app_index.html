@@ -14,7 +14,6 @@
 
 {% block content %}
 {% admin_app_meta app_label as app_meta %}
-{% admin_grouped_apps app_list as dashboard_apps %}
 <div id="content-main" class="cappers-admin-dashboard-shell">
     <section class="cappers-admin-section" aria-labelledby="admin-app-title">
         <div class="cappers-admin-section-head">
@@ -26,8 +25,25 @@
         </div>
 
         <div class="cappers-admin-app-grid">
-            {% for app in dashboard_apps %}
-                {% include "admin/includes/app_card.html" with app=app only %}
+            {% for model in app_list.0.models %}
+            <a
+                class="cappers-admin-app-card"
+                href="{{ model.admin_url }}"
+                data-admin-app-card
+                data-search="{{ model.name }} {{ model.object_name }}"
+            >
+                <span class="cappers-admin-app-card-icon is-{{ app_meta.color }}" data-admin-app="{{ app_meta.key }}">
+                    {% admin_icon_svg app_meta.icon %}
+                </span>
+                <span class="cappers-admin-app-card-copy">
+                    <strong>{{ model.name }}</strong>
+                    <small>{{ app_meta.title }}</small>
+                    <span>{{ model.object_name }}</span>
+                </span>
+                <span class="cappers-admin-app-card-chevron">
+                    {% admin_icon_svg "chevron-right" %}
+                </span>
+            </a>
             {% empty %}
                 <div class="cappers-admin-empty-state">Нет доступных моделей.</div>
             {% endfor %}

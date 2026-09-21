@@ -179,6 +179,8 @@ class League(models.Model):
     logo = models.URLField(max_length=500, blank=True)
     gender = models.CharField(max_length=32, blank=True)
     age_group = models.CharField(max_length=32, blank=True)
+    is_top = models.BooleanField("Топ лига", default=False, db_index=True)
+    top_order = models.PositiveIntegerField("Порядок в топе", default=100, db_index=True)
     slug = models.SlugField(max_length=255, unique=True, db_index=True, blank=True)
     raw_data = models.JSONField(default=dict, blank=True)
 

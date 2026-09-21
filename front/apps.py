@@ -6,5 +6,8 @@ class FrontConfig(AppConfig):
     name = "front"
 
     def ready(self) -> None:
+        from cappers.media_webp_signals import register_media_webp_signals
+
+        register_media_webp_signals()
         from . import metric_models  # noqa: F401
         from . import metric_signals  # noqa: F401

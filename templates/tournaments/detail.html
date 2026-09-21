@@ -129,11 +129,9 @@
                                 {% for row in leaderboard %}
                                 <div class="content-table-row prediction-table-row">
                                     <a class="prediction-table-expert" href="{% url 'front:expert_profile' username=row.user.username %}">
-                                        <span class="prediction-table-avatar"{% if row.user.analyst_profile.avatar or row.user.avatar %} data-skeleton-image{% endif %}>
+                                        <span class="prediction-table-avatar"{% if row.user.avatar %} data-skeleton-image{% endif %}>
                                             {% capper_trust_badge row.user.analyst_profile.trust_index %}
-                                            {% if row.user.analyst_profile.avatar %}
-                                                <img src="{{ row.user.analyst_profile.avatar.url }}" width="30" height="30" alt="" loading="lazy">
-                                            {% elif row.user.avatar %}
+                                            {% if row.user.avatar %}
                                                 <img src="{{ row.user.avatar.url }}" width="30" height="30" alt="" loading="lazy">
                                             {% else %}
                                                 {{ row.user.username|slice:":1"|upper }}

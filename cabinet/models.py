@@ -91,12 +91,6 @@ class AnalystProfile(models.Model):
         verbose_name="Пользователь",
     )
     display_name = models.CharField("Отображаемое имя", max_length=120, blank=True)
-    avatar = models.ImageField(
-        "Аватар",
-        upload_to="analysts/avatars/%Y/%m/",
-        blank=True,
-        null=True,
-    )
     cover_image = models.ImageField(
         "Обложка профиля",
         upload_to="profile_covers/%Y/%m/",

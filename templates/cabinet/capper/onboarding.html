@@ -51,8 +51,8 @@
         {% else %}
         <div class="capper-preview">
             <div class="capper-preview-avatar">
-                {% if profile.avatar %}
-                    <img src="{{ profile.avatar.url }}" alt="">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="">
                 {% else %}
                     {{ profile.display_name|default:request.user.username|slice:":1"|upper }}
                 {% endif %}

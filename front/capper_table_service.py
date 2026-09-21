@@ -122,9 +122,7 @@ def _table_url(*, group: str, period: str, sport_code: str) -> str:
 def _profile_payload(profile: AnalystProfile) -> dict:
     name = profile.display_name or profile.user.get_full_name() or profile.user.username
     avatar_url = ""
-    if profile.avatar:
-        avatar_url = profile.avatar.url
-    elif profile.user.avatar:
+    if profile.user.avatar:
         avatar_url = profile.user.avatar.url
     return {
         "id": profile.user_id,

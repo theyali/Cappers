@@ -19,9 +19,7 @@
     {% if request.user.is_authenticated %}
         <div class="mobile-offcanvas-user">
             <span class="mobile-offcanvas-avatar">
-                {% if request.user.is_analyst and request.user.analyst_profile.avatar %}
-                    <img src="{{ request.user.analyst_profile.avatar.url }}" alt="">
-                {% elif request.user.avatar %}
+                {% if request.user.avatar %}
                     <img src="{{ request.user.avatar.url }}" alt="">
                 {% else %}
                     <img src="{% static 'front/svgs/profile.svg' %}" alt="">

@@ -60,9 +60,7 @@ def _vip_story_payloads(limit: int = VIP_STORIES_LIMIT) -> list[dict]:
         user = profile.user
         name = profile.display_name or user.get_full_name() or user.username
         avatar_url = ""
-        if profile.avatar:
-            avatar_url = profile.avatar.url
-        elif user.avatar:
+        if user.avatar:
             avatar_url = user.avatar.url
         stories.append(
             {
@@ -421,7 +419,7 @@ def following_feed(request):
             if profile and profile.display_name
             else follow.analyst.get_full_name() or follow.analyst.username
         )
-        follow.feed_avatar_url = profile.avatar.url if profile and profile.avatar else ""
+        follow.feed_avatar_url = follow.analyst.avatar.url if follow.analyst.avatar else ""
         follow.feed_trust_index = profile.trust_index if profile else 0
         follow.feed_initial = (follow.feed_name or follow.analyst.username or "К")[0].upper()
         follow.feed_predictions_count = author_counts.get(follow.analyst_id, 0)
@@ -482,7 +480,6 @@ def following_feed(request):
             "feed_all_cappers_count": feed_all_cappers_count,
             "filter_action_url": prediction_type_context["prediction_type_reset_url"],
             "adv_placement": "sidebar",
-            "hide_footer": True,
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **prediction_type_context,
         },

@@ -28,11 +28,11 @@ from .achievements import build_achievement_overview
 from .dashboard_views import build_dashboard_context
 from .earnings_views import build_earnings_context
 from .forms import (
-    AnalystAvatarForm,
     AnalystPaidPlanSettingsForm,
     AnalystProfileForm,
     CapperArticleForm,
     RegistrationForm,
+    AnalystAvatarForm,
     UserProfileForm,
 )
 from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
@@ -230,7 +230,7 @@ def _profile_completion(user, analyst_profile) -> int:
             [
                 bool(analyst_profile.display_name),
                 bool(analyst_profile.bio),
-                bool(analyst_profile.avatar),
+                bool(user.avatar),
             ]
         )
     if not checks:
@@ -619,7 +619,7 @@ def following_summary(request):
                 "username": analyst.username,
                 "display_name": display_name,
                 "specialization": profile.specialization if profile else "",
-                "avatar_url": profile.avatar.url if profile and profile.avatar else "",
+                "avatar_url": analyst.avatar.url if analyst.avatar else "",
                 "is_verified": bool(profile and profile.is_verified),
                 "predictions_count": follow.predictions_count,
                 "followers_count": follow.followers_count,
@@ -670,26 +670,26 @@ def upload_avatar(request):
             status=400,
         )
 
-    form = AnalystAvatarForm(request.POST, request.FILES, instance=analyst_profile)
+    form = AnalystAvatarForm(request.POST, request.FILES, instance=request.user)
     if not form.is_valid():
         errors = form.errors.get("avatar") or form.non_field_errors()
         message = errors[0] if errors else "Не удалось загрузить изображение."
         return JsonResponse({"ok": False, "error": str(message)}, status=400)
 
-    previous_avatar = analyst_profile.avatar.name if analyst_profile.avatar else None
-    profile = form.save()
+    previous_avatar = request.user.avatar.name if request.user.avatar else None
+    user = form.save()
 
-    if previous_avatar and previous_avatar != profile.avatar.name:
-        storage = profile.avatar.storage
+    if previous_avatar and previous_avatar != user.avatar.name:
+        storage = user.avatar.storage
         if storage.exists(previous_avatar):
             storage.delete(previous_avatar)
 
     record_daily_task_action(
         request.user,
         DailyTask.TaskType.UPDATE_PROFILE,
-        related_obj=profile,
+        related_obj=analyst_profile,
     )
-    return JsonResponse({"ok": True, "avatar_url": profile.avatar.url, "message": "Аватар обновлён."})
+    return JsonResponse({"ok": True, "avatar_url": user.avatar.url, "message": "Аватар обновлён."})
 
 
 @login_required

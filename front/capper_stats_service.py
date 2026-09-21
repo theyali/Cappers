@@ -334,7 +334,7 @@ class CapperStatsService:
             "name": name,
             "username": profile.user.username,
             "initials": _initials(name),
-            "avatar_url": profile.avatar.url if profile.avatar else "",
+            "avatar_url": profile.user.avatar.url if profile.user.avatar else "",
             "verified": profile.is_verified,
             "trust_index": profile.trust_index,
             "roi": profile.author_roi,

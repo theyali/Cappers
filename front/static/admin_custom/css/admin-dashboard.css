@@ -1,0 +1,62 @@
+@import url("../../front/css/main.css");
+@import url("../../front/css/mobile.css");
+
+.dashboard.cappers-admin #content {
+    width: auto;
+}
+.main.shifted > #nav-sidebar + .content{
+    max-width: 100%;
+}
+.cappers-admin-app-card-copy strong {
+    color: var(--admin-text);
+    font-size: 16px;
+    font-weight: 750;
+}
+
+
+.cappers-admin-app-card-copy small {
+    color: var(--admin-muted);
+    font-size: 13px;
+}
+
+
+.cappers-admin-quick-action strong {
+    font-size: 14px;
+}
+
+
+.cappers-admin-quick-action small {
+    font-size: 12px;
+}
+.cappers-admin-recent-item > div > span {
+    font-size: 13px;
+}
+
+
+.cappers-admin-recent-item strong, .cappers-admin-recent-item a {
+    font-size: 15px;
+}
+
+.cappers-admin-app-icon svg, .cappers-admin-app-card-icon svg, .cappers-admin-quick-icon svg {
+    width: 30px;
+    height: 30px;
+}
+#changelist-filter {
+    margin: 0!important;
+}
+
+.submit-row a.deletelink {
+    height:auto!;
+}
+.cappers-admin-sidebar-app-copy strong {
+    color: inherit;
+    font-size: 14px;
+    font-weight: 650;
+}
+.cappers-admin-sidebar-app-copy small {
+    margin-top: 2px;
+    color: #8190a4;
+    font-size: 11px;
+}
+
+

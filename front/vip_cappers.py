@@ -42,7 +42,7 @@ def _card_payload(profile: AnalystProfile) -> dict:
     return {
         "profile": profile,
         "user": user,
-        "avatar": profile.avatar or user.avatar,
+        "avatar": user.avatar,
         "display_name": profile.display_name or user.get_full_name() or user.username,
         "verified": bool(profile.is_verified),
         "followers_count": int(getattr(profile, "followers_count", 0) or 0),

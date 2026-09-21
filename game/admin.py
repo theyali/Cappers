@@ -65,10 +65,21 @@ class VenueAdmin(admin.ModelAdmin):
 
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
-    list_display = ("name_ru", "name", "sport", "country", "external_id", "provider")
+    list_display = (
+        "name_ru",
+        "name",
+        "sport",
+        "country",
+        "is_top",
+        "top_order",
+        "external_id",
+        "provider",
+    )
+    list_editable = ("is_top", "top_order")
     search_fields = ("name", "name_ru", "slug", "=external_id")
-    list_filter = ("provider", "sport", "country")
+    list_filter = ("is_top", "provider", "sport", "country")
     autocomplete_fields = ("sport", "country")
+    ordering = ("-is_top", "top_order", "name_ru", "name", "id")
 
 
 @admin.register(LeagueSeason)

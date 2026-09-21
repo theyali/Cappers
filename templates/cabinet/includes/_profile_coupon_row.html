@@ -7,9 +7,7 @@
                 {% if row_user.is_analyst %}
                     {% capper_trust_badge row_user.analyst_profile.trust_index %}
                 {% endif %}
-                {% if row_user.analyst_profile.avatar %}
-                    <img class="nav-profile-avatar-image" src="{{ row_user.analyst_profile.avatar.url }}" width="42" height="42" alt="Аватар {{ row_user.username }}">
-                {% elif row_user.avatar %}
+                {% if row_user.avatar %}
                     <img class="nav-profile-avatar-image" src="{{ row_user.avatar.url }}" width="42" height="42" alt="Аватар {{ row_user.username }}">
                 {% else %}
                     <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="">

@@ -83,7 +83,7 @@ def _actor_data(user) -> dict:
         if profile and profile.display_name
         else user.get_full_name() or user.username
     )
-    avatar = user.avatar or (profile.avatar if profile and profile.avatar else None)
+    avatar = user.avatar
     return {
         "name": display_name,
         "username": user.username,

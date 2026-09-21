@@ -36,7 +36,7 @@
         <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
             {% if prediction.cover_url %}
             <span class="forecast-cover-background" data-skeleton-image aria-hidden="true">
-                <img src="{{ prediction.cover_url }}" alt="" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" width="1280" height="720">
+                <img src="{{ prediction.cover_url }}" alt="" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async" width="1280" height="720">
             </span>
             {% endif %}
 
@@ -45,7 +45,7 @@
                     <span class="forecast-avatar" data-skeleton-image>
                         {% capper_trust_badge prediction.expert_trust_index %}
                         {% if prediction.expert_avatar_url %}
-                            <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" width="58" height="58">
+                            <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" decoding="async" width="58" height="58">
                         {% else %}
                             <span class="forecast-avatar-initials">{{ prediction.expert_initials }}</span>
                         {% endif %}
@@ -70,7 +70,7 @@
                     <span class="forecast-league-meta">
                         {% if prediction.league_logo %}
                         <span class="forecast-league-logo" data-skeleton-image>
-                            <img src="{{ prediction.league_logo }}" alt="" loading="lazy" width="20" height="20">
+                            <img src="{{ prediction.league_logo }}" alt="" loading="lazy" decoding="async" width="20" height="20">
                         </span>
                         {% else %}
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -87,7 +87,7 @@
                 <div class="forecast-team forecast-team-home">
                     <span class="forecast-team-logo" data-skeleton-image>
                         {% if prediction.home_logo %}
-                            <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" width="112" height="112">
+                            <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" decoding="async" width="112" height="112">
                         {% else %}
                             {{ prediction.home_name|slice:":1" }}
                         {% endif %}
@@ -121,7 +121,7 @@
                 <div class="forecast-team forecast-team-away">
                     <span class="forecast-team-logo" data-skeleton-image>
                         {% if prediction.away_logo %}
-                            <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" width="112" height="112">
+                            <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" decoding="async" width="112" height="112">
                         {% else %}
                             {{ prediction.away_name|slice:":1" }}
                         {% endif %}
@@ -237,7 +237,7 @@
                         <div class="expert-avatar">
                             {% capper_trust_badge expert.trust_index %}
                             {% if expert.avatar_url %}
-                                <img src="{{ expert.avatar_url }}" alt="">
+                                <img src="{{ expert.avatar_url }}" alt="" loading="lazy" decoding="async">
                             {% else %}
                                 <span>{{ expert.initials }}</span>
                             {% endif %}
@@ -298,7 +298,7 @@
                         <span class="home-best-featured-team">
                             <span class="home-best-featured-logo">
                                 {% if prediction.match.home_team_logo %}
-                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy">
+                                    <img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy" decoding="async">
                                 {% else %}
                                     {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
                                 {% endif %}
@@ -309,7 +309,7 @@
                         <span class="home-best-featured-team">
                             <span class="home-best-featured-logo">
                                 {% if prediction.match.away_team_logo %}
-                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy">
+                                    <img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy" decoding="async">
                                 {% else %}
                                     {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
                                 {% endif %}
@@ -326,9 +326,9 @@
                     <span class="home-best-featured-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
                         {% capper_trust_badge prediction.expert_trust_index %}
                         {% if prediction.expert_avatar_url %}
-                            <img src="{{ prediction.expert_avatar_url }}" width="64" height="64" loading="lazy" alt="">
+                            <img src="{{ prediction.expert_avatar_url }}" width="64" height="64" loading="lazy" decoding="async" alt="">
                         {% elif prediction.coupon.author.avatar %}
-                            <img src="{{ prediction.coupon.author.avatar.url }}" width="64" height="64" loading="lazy" alt="">
+                            <img src="{{ prediction.coupon.author.avatar.url }}" width="64" height="64" loading="lazy" decoding="async" alt="">
                         {% else %}
                             {{ prediction.expert_initials }}
                         {% endif %}
@@ -469,7 +469,7 @@
         <article class="home-article-featured">
             <a class="home-article-featured-image" href="{{ main_article.get_absolute_url }}">
                 {% if main_article.image %}
-                    <img src="{{ main_article.image.url }}" alt="{{ main_article.title }}" loading="lazy">
+                    <img src="{{ main_article.image.url }}" alt="{{ main_article.title }}" loading="lazy" decoding="async">
                 {% else %}
                     <span>01</span>
                 {% endif %}
@@ -503,7 +503,7 @@
                 <article class="home-article-card" data-article-card>
                     <a class="home-article-image" href="{{ article.get_absolute_url }}">
                         {% if article.image %}
-                            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy" decoding="async">
                         {% else %}
                             <span>{{ forloop.counter|stringformat:"02d" }}</span>
                         {% endif %}

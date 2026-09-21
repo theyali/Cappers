@@ -1,13 +1,12 @@
 {% extends "admin/base_site.html" %}
-{% load static admin_dashboard log %}
+{% load static admin_dashboard %}
 
 {% block bodyclass %}{{ block.super }} dashboard cappers-admin-dashboard-page{% endblock %}
 {% block breadcrumbs %}{% endblock %}
 {% block content_title %}{% endblock %}
 
 {% block content %}
-{% admin_grouped_apps app_list as dashboard_apps %}
-{% get_admin_log 8 as admin_log for_user user %}
+{% admin_dashboard_context app_list as dashboard %}
 <div id="content-main" class="admin-main cappers-admin-dashboard-shell">
     <section class="cappers-admin-hero">
         <div class="cappers-admin-hero-copy">
@@ -19,7 +18,7 @@
         <div class="cappers-admin-hero-art" aria-hidden="true">
             <span class="cappers-admin-hero-art-note">Весь проект<br>под контролем</span>
             <img
-                src="{% static 'admin_custom/img/admin-hero-cube.svg' %}"
+                src="{% static 'admin_custom/img/logo.png' %}"
                 width="220"
                 height="140"
                 alt=""
@@ -28,7 +27,7 @@
     </section>
 
     <section class="cappers-admin-app-grid" data-admin-app-grid aria-label="Приложения">
-        {% for app in dashboard_apps %}
+        {% for app in dashboard.dashboard_apps %}
             {% include "admin/includes/app_card.html" with app=app only %}
         {% empty %}
             <div class="cappers-admin-empty-state">Нет доступных приложений.</div>
@@ -40,8 +39,8 @@
     </div>
 
     <div class="admin-bottom-grid cappers-admin-dashboard-lower">
-        {% include "admin/includes/quick_actions.html" %}
-        {% include "admin/includes/recent_actions.html" %}
+        {% include "admin/includes/quick_actions.html" with quick_actions=dashboard.quick_actions only %}
+        {% include "admin/includes/recent_actions.html" with recent_actions=dashboard.recent_actions only %}
     </div>
 </div>
 {% endblock %}
