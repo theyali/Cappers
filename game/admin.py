@@ -17,7 +17,55 @@ from game.models import (
     Sport,
     Team,
     Venue,
+    country_logo_upload_path,
+    league_logo_upload_path,
+    sport_image_upload_path,
+    team_logo_upload_path,
 )
+from game.services.local_logos import sync_entity_logo
+
+
+
+
+
+def _local_media_preview(url: str, *, size: int = 40):
+    if not url:
+        return "—"
+    return format_html(
+        '<img src="{}" width="{}" height="{}" alt="">',
+        url,
+        size,
+        size,
+    )
+
+
+def _refresh_selected_local_media(
+    queryset,
+    *,
+    field_name: str,
+    remote_field: str,
+    target_builder,
+):
+    downloaded = 0
+    skipped = 0
+    failed = 0
+    for instance in queryset.iterator(chunk_size=100):
+        remote_url = str(getattr(instance, remote_field, "") or "").strip()
+        if not remote_url:
+            skipped += 1
+            continue
+
+        if sync_entity_logo(
+            instance,
+            field_name=field_name,
+            remote_url=remote_url,
+            target_name=target_builder(instance, ""),
+            force=True,
+        ):
+            downloaded += 1
+        else:
+            failed += 1
+    return downloaded, skipped, failed
 
 
 class PredictionCoverImageInline(admin.TabularInline):
@@ -33,10 +81,29 @@ class PredictionCoverImageInline(admin.TabularInline):
 
 @admin.register(Sport)
 class SportAdmin(admin.ModelAdmin):
-    list_display = ("name_ru", "name", "code", "external_id", "provider")
+    list_display = ("image_preview", "name_ru", "name", "code", "external_id", "provider")
     search_fields = ("name", "name_ru", "code", "=external_id")
     list_filter = ("provider",)
+    readonly_fields = ("remote_image_url", "image_preview")
+    actions = ("refresh_local_images",)
     inlines = (PredictionCoverImageInline,)
+
+    @admin.display(description="Изображение")
+    def image_preview(self, obj):
+        return _local_media_preview(obj.image_url)
+
+    @admin.action(description="Обновить локальные изображения")
+    def refresh_local_images(self, request, queryset):
+        downloaded, skipped, failed = _refresh_selected_local_media(
+            queryset,
+            field_name="image",
+            remote_field="remote_image_url",
+            target_builder=sport_image_upload_path,
+        )
+        self.message_user(
+            request,
+            f"Обновлено: {downloaded}; без remote URL: {skipped}; ошибок: {failed}.",
+        )
 
 
 @admin.register(PredictionCoverImage)
@@ -51,9 +118,28 @@ class PredictionCoverImageAdmin(admin.ModelAdmin):
 
 @admin.register(Country)
 class CountryAdmin(admin.ModelAdmin):
-    list_display = ("name_ru", "name", "code", "external_id", "provider")
+    list_display = ("logo_preview", "name_ru", "name", "code", "external_id", "provider")
     search_fields = ("name", "name_ru", "code", "=external_id")
     list_filter = ("provider",)
+    readonly_fields = ("remote_logo_url", "logo_preview")
+    actions = ("refresh_local_logos",)
+
+    @admin.display(description="Лого")
+    def logo_preview(self, obj):
+        return _local_media_preview(obj.logo_url)
+
+    @admin.action(description="Обновить локальные логотипы")
+    def refresh_local_logos(self, request, queryset):
+        downloaded, skipped, failed = _refresh_selected_local_media(
+            queryset,
+            field_name="logo",
+            remote_field="remote_logo_url",
+            target_builder=country_logo_upload_path,
+        )
+        self.message_user(
+            request,
+            f"Обновлено: {downloaded}; без remote URL: {skipped}; ошибок: {failed}.",
+        )
 
 
 @admin.register(Venue)
@@ -66,6 +152,7 @@ class VenueAdmin(admin.ModelAdmin):
 @admin.register(League)
 class LeagueAdmin(admin.ModelAdmin):
     list_display = (
+        "logo_preview",
         "name_ru",
         "name",
         "sport",
@@ -79,7 +166,26 @@ class LeagueAdmin(admin.ModelAdmin):
     search_fields = ("name", "name_ru", "slug", "=external_id")
     list_filter = ("is_top", "provider", "sport", "country")
     autocomplete_fields = ("sport", "country")
+    readonly_fields = ("remote_logo_url", "logo_preview")
+    actions = ("refresh_local_logos",)
     ordering = ("-is_top", "top_order", "name_ru", "name", "id")
+
+    @admin.display(description="Лого")
+    def logo_preview(self, obj):
+        return _local_media_preview(obj.logo_url)
+
+    @admin.action(description="Обновить локальные логотипы")
+    def refresh_local_logos(self, request, queryset):
+        downloaded, skipped, failed = _refresh_selected_local_media(
+            queryset.select_related("sport"),
+            field_name="logo",
+            remote_field="remote_logo_url",
+            target_builder=league_logo_upload_path,
+        )
+        self.message_user(
+            request,
+            f"Обновлено: {downloaded}; без remote URL: {skipped}; ошибок: {failed}.",
+        )
 
 
 @admin.register(LeagueSeason)
@@ -92,10 +198,29 @@ class LeagueSeasonAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ("name_ru", "name", "sport", "country", "external_id", "provider")
+    list_display = ("logo_preview", "name_ru", "name", "sport", "country", "external_id", "provider")
     search_fields = ("name", "name_ru", "slug", "=external_id")
     list_filter = ("provider", "sport", "country")
     autocomplete_fields = ("sport", "country", "venue")
+    readonly_fields = ("remote_logo_url", "logo_preview")
+    actions = ("refresh_local_logos",)
+
+    @admin.display(description="Лого")
+    def logo_preview(self, obj):
+        return _local_media_preview(obj.logo_url)
+
+    @admin.action(description="Обновить локальные логотипы")
+    def refresh_local_logos(self, request, queryset):
+        downloaded, skipped, failed = _refresh_selected_local_media(
+            queryset.select_related("sport"),
+            field_name="logo",
+            remote_field="remote_logo_url",
+            target_builder=team_logo_upload_path,
+        )
+        self.message_user(
+            request,
+            f"Обновлено: {downloaded}; без remote URL: {skipped}; ошибок: {failed}.",
+        )
 
 
 @admin.register(Match)
