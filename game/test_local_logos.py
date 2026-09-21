@@ -14,10 +14,13 @@ from PIL import Image
 from game.models import (
     Country,
     League,
+    Match,
     Sport,
     Team,
     Venue,
+    country_logo_upload_path,
     league_logo_upload_path,
+    sport_image_upload_path,
     team_logo_upload_path,
 )
 from game.services.local_logos import sync_entity_logo
@@ -410,7 +413,7 @@ class LocalLogoServiceTests(TestCase):
         self.assertTrue(downloaded)
         self.assertEqual(calls, [])
 
-    def test_country_and_venue_keep_remote_logo_url_without_local_download(self):
+    def test_country_and_venue_keep_remote_logo_urls(self):
         service = MatchSyncService()
         country_url = "https://cdn.example/country.png"
         venue_url = "https://cdn.example/venue.png"
@@ -435,7 +438,7 @@ class LocalLogoServiceTests(TestCase):
         self.assertIsInstance(venue, Venue)
         self.assertEqual(country.remote_logo_url, country_url)
         self.assertEqual(venue.remote_logo_url, venue_url)
-        self.assertFalse(hasattr(country, "logo"))
+        self.assertFalse(country.logo)
         self.assertFalse(hasattr(venue, "logo"))
 
     @patch("game.services.local_logos._logo_opener.open")
@@ -476,8 +479,39 @@ class LocalLogoServiceTests(TestCase):
             name="No Logo League",
         )
 
+        country = Country.objects.create(
+            external_id=4014,
+            code="XX",
+            name="No Logo Country",
+        )
+
         self.assertEqual(team.logo_url, "")
         self.assertEqual(league.logo_url, "")
+        self.assertEqual(country.logo_url, "")
+        self.assertEqual(self.football.image_url, "")
+
+    def test_match_logo_properties_never_fallback_to_raw_provider_urls(self):
+        match = Match.objects.create(
+            external_id=6014,
+            sport=self.football,
+            sync_scope=Match.SyncScope.PREMATCH,
+            raw_data={
+                "teams": {
+                    "home": {
+                        "name": {"en": "Raw Home"},
+                        "logo": "https://cdn.example/raw-home.png",
+                    },
+                    "away": {
+                        "name": {"en": "Raw Away"},
+                        "logo": "https://cdn.example/raw-away.png",
+                    },
+                },
+                "league": {"name": {"en": "Raw League"}},
+            },
+        )
+
+        self.assertEqual(match.home_team_logo, "")
+        self.assertEqual(match.away_team_logo, "")
 
     @patch("game.management.commands.download_entity_logos.sync_entity_logo")
     def test_download_entity_logos_skips_existing_by_default(self, mocked_sync):
@@ -546,6 +580,49 @@ class LocalLogoServiceTests(TestCase):
         )
 
         mocked_sync.assert_not_called()
+
+    @patch("game.management.commands.download_entity_logos.sync_entity_logo")
+    def test_download_entity_logos_supports_sport_images(self, mocked_sync):
+        sport = Sport.objects.create(
+            code="volleyball",
+            name="Volleyball",
+            remote_image_url="https://cdn.example/volleyball.png",
+        )
+        mocked_sync.return_value = True
+
+        call_command(
+            "download_entity_logos",
+            "--model",
+            "sport",
+            stdout=StringIO(),
+        )
+
+        mocked_sync.assert_called_once_with(
+            sport,
+            field_name="image",
+            remote_url=sport.remote_image_url,
+            target_name=sport_image_upload_path(sport, ""),
+            force=False,
+        )
+
+    @patch("game.services.match_sync.sync_entity_logo")
+    def test_country_sync_schedules_local_logo_download(self, mocked_sync):
+        payload = {
+            "id": 4015,
+            "code": "GB",
+            "name": {"en": "United Kingdom"},
+            "logo": "https://cdn.example/gb.png",
+        }
+
+        with self.captureOnCommitCallbacks(execute=True):
+            country = MatchSyncService()._sync_country(payload)
+
+        mocked_sync.assert_called_once_with(
+            country,
+            field_name="logo",
+            remote_url=payload["logo"],
+            target_name=country_logo_upload_path(country, ""),
+        )
 
     @patch("game.services.match_sync.sync_entity_logo")
     def test_match_sync_saves_remote_url_and_calls_local_logo_service(self, mocked_sync):
