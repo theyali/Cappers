@@ -70,9 +70,9 @@ class LocalLogoServiceTests(TestCase):
             name_ru="Футбол",
         )
 
-    @patch("game.services.local_logos.urlopen")
-    def test_team_logo_is_saved_as_webp_and_not_downloaded_twice(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_team_logo_is_saved_as_webp_and_not_downloaded_twice(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(png_bytes())
         team = Team.objects.create(
             external_id=1001,
             sport=self.football,
@@ -95,7 +95,7 @@ class LocalLogoServiceTests(TestCase):
         with Image.open(saved_path) as image:
             self.assertEqual(image.format, "WEBP")
 
-        mocked_urlopen.reset_mock()
+        mocked_open.reset_mock()
         downloaded_again = sync_entity_logo(
             team,
             field_name="logo",
@@ -103,11 +103,11 @@ class LocalLogoServiceTests(TestCase):
             target_name=team_logo_upload_path(team, ""),
         )
         self.assertFalse(downloaded_again)
-        mocked_urlopen.assert_not_called()
+        mocked_open.assert_not_called()
 
-    @patch("game.services.local_logos.urlopen")
-    def test_basketball_league_uses_basket_media_path(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_basketball_league_uses_basket_media_path(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(png_bytes())
         basketball = Sport.objects.create(
             code="basketball",
             name="Basketball",
@@ -130,8 +130,8 @@ class LocalLogoServiceTests(TestCase):
         league.refresh_from_db()
         self.assertEqual(league.logo.name, f"basket/league/{league.pk}.webp")
 
-    @patch("game.services.local_logos.urlopen")
-    def test_rejects_non_http_url_without_network_request(self, mocked_urlopen):
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_non_http_url_without_network_request(self, mocked_open):
         team = Team.objects.create(
             external_id=1002,
             sport=self.football,
@@ -147,13 +147,13 @@ class LocalLogoServiceTests(TestCase):
         )
 
         self.assertFalse(downloaded)
-        mocked_urlopen.assert_not_called()
+        mocked_open.assert_not_called()
         team.refresh_from_db()
         self.assertFalse(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_passes_configured_timeout_to_urlopen(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_passes_configured_timeout_to_urlopen(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(png_bytes())
         team = Team.objects.create(
             external_id=1003,
             sport=self.football,
@@ -168,13 +168,13 @@ class LocalLogoServiceTests(TestCase):
             target_name=team_logo_upload_path(team, ""),
         )
 
-        _, kwargs = mocked_urlopen.call_args
+        _, kwargs = mocked_open.call_args
         self.assertEqual(kwargs["timeout"], 2)
 
     @override_settings(LOCAL_LOGO_MAX_BYTES=16)
-    @patch("game.services.local_logos.urlopen")
-    def test_rejects_content_length_over_limit(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_content_length_over_limit(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
             png_bytes(),
             content_length=1024,
         )
@@ -197,9 +197,9 @@ class LocalLogoServiceTests(TestCase):
         self.assertFalse(team.logo)
 
     @override_settings(LOCAL_LOGO_MAX_BYTES=16)
-    @patch("game.services.local_logos.urlopen")
-    def test_rejects_actual_payload_over_limit_without_content_length(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_actual_payload_over_limit_without_content_length(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
             b"x" * 32,
             content_type="application/octet-stream",
             content_length="invalid",
@@ -222,9 +222,9 @@ class LocalLogoServiceTests(TestCase):
         team.refresh_from_db()
         self.assertFalse(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_rejects_empty_response(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_empty_response(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
             b"",
             content_type="application/octet-stream",
         )
@@ -246,9 +246,33 @@ class LocalLogoServiceTests(TestCase):
         team.refresh_from_db()
         self.assertFalse(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_generic_content_type_is_allowed_when_bytes_are_valid_image(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_unsupported_content_type(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
+            b"<html>not an image</html>",
+            content_type="text/html",
+        )
+        team = Team.objects.create(
+            external_id=1011,
+            sport=self.football,
+            name="HTML Team",
+            remote_logo_url="https://cdn.example/logo",
+        )
+
+        downloaded = sync_entity_logo(
+            team,
+            field_name="logo",
+            remote_url=team.remote_logo_url,
+            target_name=team_logo_upload_path(team, ""),
+        )
+
+        self.assertFalse(downloaded)
+        team.refresh_from_db()
+        self.assertFalse(team.logo)
+
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_generic_content_type_is_allowed_when_bytes_are_valid_image(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
             png_bytes(),
             content_type="application/octet-stream",
         )
@@ -270,9 +294,9 @@ class LocalLogoServiceTests(TestCase):
         team.refresh_from_db()
         self.assertTrue(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_rejects_invalid_image_bytes(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_rejects_invalid_image_bytes(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(
             b"not-an-image",
             content_type="image/png",
         )
@@ -294,9 +318,9 @@ class LocalLogoServiceTests(TestCase):
         team.refresh_from_db()
         self.assertFalse(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_network_error_is_swallowed(self, mocked_urlopen):
-        mocked_urlopen.side_effect = URLError("offline")
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_network_error_is_swallowed(self, mocked_open):
+        mocked_open.side_effect = URLError("offline")
         team = Team.objects.create(
             external_id=1009,
             sport=self.football,
@@ -315,9 +339,9 @@ class LocalLogoServiceTests(TestCase):
         team.refresh_from_db()
         self.assertFalse(team.logo)
 
-    @patch("game.services.local_logos.urlopen")
-    def test_force_replaces_existing_target(self, mocked_urlopen):
-        mocked_urlopen.return_value = FakeImageResponse(png_bytes())
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_force_replaces_existing_target(self, mocked_open):
+        mocked_open.return_value = FakeImageResponse(png_bytes())
         team = Team.objects.create(
             external_id=1010,
             sport=self.football,
@@ -338,7 +362,7 @@ class LocalLogoServiceTests(TestCase):
 
         replacement = BytesIO()
         Image.new("RGB", (8, 8), (0, 255, 0)).save(replacement, format="PNG")
-        mocked_urlopen.return_value = FakeImageResponse(replacement.getvalue())
+        mocked_open.return_value = FakeImageResponse(replacement.getvalue())
 
         self.assertTrue(
             sync_entity_logo(
@@ -352,7 +376,7 @@ class LocalLogoServiceTests(TestCase):
         second_bytes = (Path(self.media_root) / target_name).read_bytes()
 
         self.assertNotEqual(first_bytes, second_bytes)
-        self.assertEqual(mocked_urlopen.call_count, 2)
+        self.assertEqual(mocked_open.call_count, 2)
 
     @patch("game.services.match_sync.sync_entity_logo")
     def test_match_sync_saves_remote_url_and_calls_local_logo_service(self, mocked_sync):
