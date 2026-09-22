@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.urls import reverse
 from tinymce.models import HTMLField
 
@@ -59,6 +59,19 @@ class Article(models.Model):
         verbose_name = "Статья"
         verbose_name_plural = "Статьи"
         ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("is_main",),
+                condition=models.Q(is_main=True),
+                name="unique_main_article",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.is_main:
+                type(self).objects.filter(is_main=True).exclude(pk=self.pk).update(is_main=False)
+            return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.title
