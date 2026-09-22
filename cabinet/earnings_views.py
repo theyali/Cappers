@@ -187,7 +187,7 @@ def _monthly_earnings(queryset, *, months: int = 6) -> list[dict]:
     now = timezone.now()
     start = _month_start(now, months - 1)
     rows = {
-        item["month"]: item
+        (item["month"].year, item["month"].month): item
         for item in (
             queryset.filter(created_at__gte=start)
             .annotate(month=TruncMonth("created_at"))
@@ -210,7 +210,7 @@ def _monthly_earnings(queryset, *, months: int = 6) -> list[dict]:
     result = []
     for months_back in range(months):
         month = _month_start(now, months_back)
-        row = rows.get(month, {})
+        row = rows.get((month.year, month.month), {})
         total = Decimal(row.get("total") or 0)
         subscription_income = Decimal(row.get("subscription_income") or 0)
         tournament_income = Decimal(row.get("tournament_income") or 0)
@@ -617,10 +617,15 @@ def build_earnings_context(user) -> dict:
         label="Месяц",
         days=30,
     )
-    previous_month_total = _previous_period_total(earning_transactions, days=30)
+    previous_month_subscription_income = _previous_period_total(
+        earning_transactions.filter(
+            kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+        ),
+        days=30,
+    )
     average_change = _change_summary(
         current_month_subscriptions["subscription_income"],
-        previous_month_total,
+        previous_month_subscription_income,
         caption="к прошлому месяцу",
     )
 
