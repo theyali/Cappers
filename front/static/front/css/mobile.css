@@ -5689,3 +5689,98 @@ body.expert-public-details-open {
         align-items: flex-start;
     }
 }
+
+
+/* Profile wallet dashboard */
+@media (max-width: 980px) {
+    .wallet-dashboard-head {
+        align-items: flex-start;
+    }
+
+    .wallet-dashboard-head-actions p {
+        display: none;
+    }
+
+    .wallet-balance-grid,
+    .wallet-operations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-balance-copy {
+        width: 58%;
+    }
+}
+
+@media (max-width: 620px) {
+    #profile-tab-wallet .wallet-dashboard {
+        gap: 12px;
+    }
+
+    .wallet-dashboard-head {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .wallet-dashboard-head-actions,
+    .wallet-dashboard-head-actions .wallet-dashboard-primary {
+        width: 100%;
+    }
+
+    .wallet-balance-hero {
+        min-height: 250px;
+    }
+
+    .wallet-balance-copy {
+        width: 68%;
+        min-height: 250px;
+        padding: 16px;
+    }
+
+    .wallet-balance-title-row {
+        grid-template-columns: 42px minmax(0, 1fr);
+    }
+
+    .wallet-balance-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .wallet-balance-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wallet-balance-actions .wallet-dashboard-primary,
+    .wallet-balance-actions .wallet-dashboard-secondary {
+        width: 100%;
+    }
+
+    .wallet-balance-art,
+    .wallet-balance-art.is-real {
+        width: 44%;
+    }
+
+    .wallet-operations-card {
+        padding: 14px;
+    }
+
+    .wallet-operations-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .wallet-all-operations {
+        width: 100%;
+    }
+
+    .wallet-operation-row {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .wallet-operation-amount,
+    .wallet-operation-real-value {
+        grid-column: 2;
+        justify-self: start;
+        text-align: left;
+    }
+}
