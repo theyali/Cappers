@@ -17482,6 +17482,147 @@ body.register footer {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
+.expert-public-bank {
+    gap: 0;
+    padding: 16px;
+    border-radius: 20px;
+    background: #151516;
+}
+.expert-public-bank-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
+}
+.expert-public-bank-hero {
+    min-height: 560px;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #161719 url("../img/profile_bank.png") center bottom / cover no-repeat;
+}
+.expert-public-bank-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 620px;
+    display: grid;
+    justify-items: start;
+    gap: 14px;
+    padding: 36px;
+}
+.expert-public-bank .expert-public-kicker {
+    margin: 0;
+    color: var(--yellow);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.expert-public-bank .expert-public-bank-copy h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(32px, 3.5vw, 52px);
+    font-weight: 700;
+    line-height: 1;
+}
+.expert-public-bank .expert-public-section-note {
+    max-width: 560px;
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.expert-public-bank-count {
+    min-height: 54px;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 4px;
+    padding: 0 22px;
+    border-radius: 14px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.expert-public-bank-stats {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.expert-public-bank-stat {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+    padding: 26px 24px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+.expert-public-bank-stat-icon {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--yellow);
+    background: #303033;
+}
+.expert-public-bank-stat-icon svg {
+    width: 34px;
+    height: 34px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.expert-public-bank-stat.is-lost .expert-public-bank-stat-icon {
+    color: #ff5263;
+    background: #33272b;
+}
+.expert-public-bank-stat.is-earned .expert-public-bank-stat-icon {
+    color: #62d34f;
+}
+.expert-public-bank-stat.is-net .expert-public-bank-stat-icon,
+.expert-public-bank-stat.is-pending .expert-public-bank-stat-icon {
+    color: #1f6fff;
+}
+.expert-public-bank-stat.is-average .expert-public-bank-stat-icon {
+    color: var(--yellow);
+}
+.expert-public-bank-stat-copy {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+}
+.expert-public-bank-stat-copy > span {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+.expert-public-bank-stat-copy strong {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+}
+.expert-public-bank-stat-copy strong.is-positive {
+    color: #62d34f;
+}
+.expert-public-bank-stat-copy strong.is-negative {
+    color: #ff5263;
+}
+.expert-public-bank-stat-copy small {
+    max-width: 220px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    line-height: 1.45;
+}
 .expert-profit-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 250px;

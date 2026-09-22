@@ -1,43 +1,101 @@
 <section class="expert-public-predictions expert-public-bank" data-expert-public-panel="bank" hidden aria-label="Банк каппера">
-    <div class="expert-public-section-head">
-        <div>
-            <p class="expert-public-kicker">Банк каппера</p>
-            <h2>Коины в прогнозах</h2>
-            <p class="expert-public-section-note">Публичная статистика считается только по опубликованным купонам. Баланс кошелька пользователя здесь не раскрывается.</p>
+    <div class="expert-public-bank-layout">
+        <div class="expert-public-bank-hero">
+            <div class="expert-public-bank-copy">
+                <p class="expert-public-kicker">Банк каппера</p>
+                <h2>Коины в прогнозах</h2>
+                <p class="expert-public-section-note">Публичная статистика считается только по опубликованным купонам. Баланс кошелька пользователя здесь не раскрывается.</p>
+                <span class="expert-public-bank-count">{{ bank_coupons_count }} купонов</span>
+            </div>
         </div>
-        <span>{{ bank_coupons_count }} купонов</span>
-    </div>
 
-    <div class="expert-public-kpi-grid">
-        <article>
-            <span>Сыграно за всё время</span>
-            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ bank_total_stake|floatformat:"0" }}</span></strong>
-            <small>общая сумма опубликованных ставок</small>
-        </article>
-        <article>
-            <span>Проиграно</span>
-            <strong class="coin-amount{% if bank_lost_amount > 0 %} is-negative{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{{ bank_lost_amount|floatformat:"0" }}</span></strong>
-            <small>сумма ставок проигранных купонов</small>
-        </article>
-        <article>
-            <span>Заработано</span>
-            <strong class="coin-amount{% if bank_earned_amount > 0 %} is-positive{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{{ bank_earned_amount|floatformat:"0" }}</span></strong>
-            <small>прибыль только с выигранных купонов</small>
-        </article>
-        <article>
-            <span>Чистый результат</span>
-            <strong class="coin-amount{% if bank_net_result > 0 %} is-positive{% elif bank_net_result < 0 %} is-negative{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{% if bank_net_result > 0 %}+{% endif %}{{ bank_net_result|floatformat:"0" }}</span></strong>
-            <small>заработано минус проиграно</small>
-        </article>
-        <article>
-            <span>Средняя ставка</span>
-            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ bank_average_stake|floatformat:"0" }}</span></strong>
-            <small>на один опубликованный купон</small>
-        </article>
-        <article>
-            <span>Сейчас в игре</span>
-            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ bank_pending_stake|floatformat:"0" }}</span></strong>
-            <small>{{ bank_settled_count }} купонов уже рассчитано</small>
-        </article>
+        <div class="expert-public-bank-stats">
+            <article class="expert-public-bank-stat is-total">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <ellipse cx="12" cy="5" rx="6" ry="3"></ellipse>
+                        <path d="M6 5v5c0 1.7 2.7 3 6 3s6-1.3 6-3V5"></path>
+                        <path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path>
+                        <path d="M6 15v4c0 1.7 2.7 3 6 3s6-1.3 6-3v-4"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Сыграно за всё время</span>
+                    <strong>{{ bank_total_stake|floatformat:"0" }}</strong>
+                    <small>общая сумма опубликованных ставок</small>
+                </div>
+            </article>
+
+            <article class="expert-public-bank-stat is-lost">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 7l10 10M17 7L7 17"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Проиграно</span>
+                    <strong>{{ bank_lost_amount|floatformat:"0" }}</strong>
+                    <small>сумма ставок проигранных купонов</small>
+                </div>
+            </article>
+
+            <article class="expert-public-bank-stat is-earned">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M4 17l5-5 4 3 7-8"></path>
+                        <path d="M15 7h5v5"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Заработано</span>
+                    <strong>{{ bank_earned_amount|floatformat:"0" }}</strong>
+                    <small>прибыль только с выигранных купонов</small>
+                </div>
+            </article>
+
+            <article class="expert-public-bank-stat is-net">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M5 19V9"></path>
+                        <path d="M12 19V5"></path>
+                        <path d="M19 19v-7"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Чистый результат</span>
+                    <strong class="{% if bank_net_result > 0 %}is-positive{% elif bank_net_result < 0 %}is-negative{% endif %}">{% if bank_net_result > 0 %}+{% endif %}{{ bank_net_result|floatformat:"0" }}</strong>
+                    <small>заработано минус проиграно</small>
+                </div>
+            </article>
+
+            <article class="expert-public-bank-stat is-average">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M6 18V12"></path>
+                        <path d="M12 18V6"></path>
+                        <path d="M18 18V9"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Средняя ставка</span>
+                    <strong>{{ bank_average_stake|floatformat:"0" }}</strong>
+                    <small>на один опубликованный купон</small>
+                </div>
+            </article>
+
+            <article class="expert-public-bank-stat is-pending">
+                <span class="expert-public-bank-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8"></circle>
+                        <path d="M12 8v5l3 2"></path>
+                    </svg>
+                </span>
+                <div class="expert-public-bank-stat-copy">
+                    <span>Сейчас в игре</span>
+                    <strong>{{ bank_pending_stake|floatformat:"0" }}</strong>
+                    <small>{{ bank_settled_count }} купонов уже рассчитано</small>
+                </div>
+            </article>
+        </div>
     </div>
 </section>
