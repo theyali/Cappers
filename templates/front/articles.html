@@ -43,7 +43,7 @@
     {% if page_obj.object_list %}
     <div class="articles-grid">
         {% for article in page_obj.object_list %}
-        <article class="article-list-card">
+        <article class="article-list-card{% if article.is_main %} is-main{% endif %}">
             <a class="article-list-image" href="{{ article.get_absolute_url }}">
                 {% if article.image %}
                     <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">

@@ -17,7 +17,7 @@ def articles(request):
         selected_category = get_object_or_404(categories, slug=category_slug)
         queryset = queryset.filter(category=selected_category)
 
-    queryset = queryset.order_by("-created_at", "-id")
+    queryset = queryset.order_by("-is_main", "-created_at", "-id")
     paginator = Paginator(queryset, ARTICLES_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
     return render(
