@@ -90,25 +90,17 @@ def _recent_bonus_content(user) -> tuple[list[dict], list[dict]]:
 
 
 def _prepare_daily_tasks_card(card: dict) -> dict:
-    claimable_task = next(
-        (task for task in card["tasks"] if task["can_claim"]),
-        None,
-    )
     return {
         **card,
         "summary_label": f"Сегодня выполнено {card['completed']} из {card['total']}",
         "progress_aria_label": "Прогресс ежедневных заданий",
         "arrow_label": "›",
         "claim_url": (
-            reverse("cabinet:daily_task_claim", args=(claimable_task["id"],))
-            if claimable_task is not None
+            reverse("cabinet:daily_tasks_claim_all")
+            if card["claimable_count"] > 0
             else ""
         ),
-        "claim_button_label": (
-            "Получить"
-            if card["claimable_count"] <= 1
-            else f"Получить · {card['claimable_count']}"
-        ),
+        "claim_button_label": "Получить все",
         "claim_pending_label": "Получаем…",
         "claim_error_label": "Не удалось получить награду.",
     }
@@ -252,6 +244,10 @@ def build_profile_bonus_summary(user) -> dict:
         "tasks_summary_label": daily_tasks_card["summary_label"],
         "tasks_url": reverse("cabinet:bonus_tasks"),
         "tasks_link_label": "Все задания",
+        "tasks_claim_url": daily_tasks_card["claim_url"],
+        "tasks_claim_label": daily_tasks_card["claim_button_label"],
+        "tasks_claim_pending_label": daily_tasks_card["claim_pending_label"],
+        "tasks_claim_error_label": daily_tasks_card["claim_error_label"],
         "level_progress": {
             **level_progress,
             "title": "Прогресс уровня",

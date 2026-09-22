@@ -135,6 +135,43 @@ def claim_daily_task_reward(user, task_id):
     return progress
 
 
+@transaction.atomic
+def claim_all_daily_task_rewards(user):
+    now = timezone.now()
+    progress_date = timezone.localdate(now)
+    locked_user = user.__class__.objects.select_for_update().get(pk=user.pk)
+
+    progress_items = list(
+        UserDailyTaskProgress.objects.select_for_update()
+        .select_related("task")
+        .filter(
+            user=locked_user,
+            task__in=daily_tasks_for_user(locked_user),
+            progress_date=progress_date,
+            is_completed=True,
+            reward_claimed_at__isnull=True,
+        )
+        .order_by("task__order", "task_id")
+    )
+
+    for progress in progress_items:
+        task = progress.task
+        grant_bonus_reward(
+            locked_user,
+            xp=task.reward_xp,
+            coins=task.reward_coins,
+            spins=task.reward_spins,
+            event_type=BonusEvent.EventType.DAILY_TASK,
+            title=task.title,
+            description=task.description or "Награда за ежедневное задание",
+            related_obj=progress,
+        )
+        progress.reward_claimed_at = now
+        progress.save(update_fields=("reward_claimed_at",))
+
+    return progress_items
+
+
 def _task_reward_label(task) -> str:
     rewards = []
     if task.reward_xp:

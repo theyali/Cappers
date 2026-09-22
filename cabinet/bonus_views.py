@@ -11,7 +11,11 @@ from .services.bonus_center import (
     build_bonus_reward_update_context,
     build_bonus_tasks_page_context,
 )
-from .services.daily_tasks import claim_daily_task_reward, record_daily_task_action
+from .services.daily_tasks import (
+    claim_all_daily_task_rewards,
+    claim_daily_task_reward,
+    record_daily_task_action,
+)
 
 
 @login_required
@@ -67,6 +71,18 @@ def daily_task_claim(request, task_id):
             status=400,
         )
 
+    return JsonResponse(
+        {
+            "ok": True,
+            **build_bonus_reward_update_context(request.user),
+        }
+    )
+
+
+@login_required
+@require_POST
+def daily_tasks_claim_all(request):
+    claim_all_daily_task_rewards(request.user)
     return JsonResponse(
         {
             "ok": True,

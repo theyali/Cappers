@@ -53,6 +53,11 @@ urlpatterns = [
         bonus_views.daily_task_claim,
         name="daily_task_claim",
     ),
+    path(
+        "bonuses/daily-tasks/claim-all/",
+        bonus_views.daily_tasks_claim_all,
+        name="daily_tasks_claim_all",
+    ),
     path("bonuses/roulette/state/", roulette_api.roulette_state, name="roulette_state"),
     path("bonuses/roulette/spin/", roulette_api.roulette_spin, name="roulette_spin"),
     path("profile/request-verification/", views.request_verification, name="request_verification"),

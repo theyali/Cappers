@@ -319,14 +319,6 @@
                                                 {% if task.reward_label %} · {{ task.reward_label }}{% endif %}
                                             </small>
                                         </span>
-                                        {% if task.can_claim %}
-                                            <button
-                                                class="profile-daily-task-claim"
-                                                type="button"
-                                                data-profile-daily-task-claim
-                                                data-url="{{ task.claim_url }}"
-                                            >Получить</button>
-                                        {% endif %}
                                         <small class="profile-daily-task-status" data-profile-daily-task-status aria-live="polite"></small>
                                     </div>
                                 {% empty %}
@@ -337,6 +329,16 @@
                                 {% endfor %}
                             </div>
 
+                            {% if profile_bonus_summary.tasks_claim_url %}
+                                <button
+                                    class="profile-daily-task-claim"
+                                    type="button"
+                                    data-profile-daily-task-claim
+                                    data-url="{{ profile_bonus_summary.tasks_claim_url }}"
+                                    data-pending-label="{{ profile_bonus_summary.tasks_claim_pending_label }}"
+                                    data-error-label="{{ profile_bonus_summary.tasks_claim_error_label }}"
+                                >{{ profile_bonus_summary.tasks_claim_label }}</button>
+                            {% endif %}
                             <a class="profile-daily-tasks-link" href="{{ profile_bonus_summary.tasks_url }}">
                                 <span>{{ profile_bonus_summary.tasks_link_label }}</span>
                                 <span aria-hidden="true">→</span>
