@@ -31031,18 +31031,14 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 14px;
     padding: 18px;
 }
-.referrals-share-icon {
+.referrals-qr-image {
     width: 70px;
     height: 70px;
-    display: grid;
-    place-items: center;
-    border-radius: 12px;
-    color: var(--blue);
-    background: #f5f6f8;
-}
-.referrals-share-icon svg {
-    width: 34px;
-    height: 34px;
+    display: block;
+    padding: 5px;
+    border-radius: 8px;
+    background: #fff;
+    object-fit: contain;
 }
 .referrals-share-card strong,
 .referrals-share-card span {
@@ -31057,6 +31053,25 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     color: #96989f;
     font-size: 10px;
     line-height: 1.45;
+}
+.referrals-qr-download {
+    width: max-content;
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 9px;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: #d7d8dc;
+    background: #0f1115;
+    font-size: 9px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.referrals-qr-download svg {
+    width: 13px;
+    height: 13px;
 }
 .referrals-how,
 .referrals-list-card {
