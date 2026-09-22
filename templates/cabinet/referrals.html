@@ -108,17 +108,28 @@
                     </section>
 
                     <aside class="referrals-share-card">
-                        <span class="referrals-share-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <circle cx="18" cy="5" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                                <circle cx="6" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                                <circle cx="18" cy="19" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                                <path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            </svg>
-                        </span>
+                        <img
+                            class="referrals-qr-image"
+                            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={{ referral_url|urlencode }}"
+                            width="96"
+                            height="96"
+                            alt="QR-код реферальной ссылки"
+                            referrerpolicy="no-referrer"
+                        >
                         <div>
-                            <strong>Приглашайте друзей</strong>
-                            <span>Одна ссылка для всех переходов и регистраций.</span>
+                            <strong>QR-код</strong>
+                            <span>Покажите друзьям для быстрого перехода по вашей ссылке.</span>
+                            <a
+                                class="referrals-qr-download"
+                                href="https://api.qrserver.com/v1/create-qr-code/?size=640x640&data={{ referral_url|urlencode }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M12 4v11M8 11l4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Скачать QR
+                            </a>
                         </div>
                     </aside>
                 </div>
