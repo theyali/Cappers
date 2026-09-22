@@ -54,6 +54,19 @@ from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
+def _capper_article_action(request) -> str:
+    return "draft" if request.POST.get("article_action") == "draft" else "submit"
+
+
+def _add_form_validation_error(form, exc: ValidationError) -> None:
+    if hasattr(exc, "message_dict"):
+        for field, errors in exc.message_dict.items():
+            form.add_error(field if field in form.fields else None, errors)
+        return
+
+    form.add_error(None, exc)
+
+
 @login_required
 def capper_articles(request):
     if not request.user.is_analyst:
@@ -82,7 +95,9 @@ def capper_article_create(request):
         return redirect("cabinet:capper_articles")
 
     form = CapperArticleForm(request.POST or None, request.FILES or None)
+    article = None
     if request.method == "POST" and form.is_valid():
+        action = _capper_article_action(request)
         try:
             article = save_capper_article(
                 request.user,
@@ -90,21 +105,31 @@ def capper_article_create(request):
                 request.FILES,
             )
         except ValidationError as exc:
-            form.add_error(None, exc)
+            _add_form_validation_error(form, exc)
         else:
-            messages.success(request, "Черновик статьи сохранён.")
-            return redirect("cabinet:capper_article_edit", article_id=article.pk)
+            if action == "draft":
+                messages.success(request, "Черновик статьи сохранён.")
+                return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+            try:
+                submit_capper_article_for_moderation(request.user, article)
+            except ValidationError as exc:
+                messages.error(request, "; ".join(exc.messages))
+                return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+            messages.success(request, "Статья отправлена на модерацию.")
+            return redirect("cabinet:capper_articles")
 
     return render(
         request,
         "cabinet/capper_article_form.html",
         {
             "form": form,
-            "article": None,
+            "article": article,
             "page_title": "Новая статья",
-            "submit_label": "Сохранить черновик",
+            "submit_label": "Отправить на модерацию",
             "active_tab": "articles",
-            "can_submit_article": False,
+            "can_submit_article": bool(article and can_edit_capper_article(request.user, article)),
         },
     )
 
@@ -135,6 +160,7 @@ def capper_article_edit(request, article_id):
     )
 
     if request.method == "POST" and form.is_valid():
+        action = _capper_article_action(request)
         try:
             article = save_capper_article(
                 request.user,
@@ -142,11 +168,17 @@ def capper_article_edit(request, article_id):
                 request.FILES,
                 article=article,
             )
+            if action == "submit":
+                submit_capper_article_for_moderation(request.user, article)
         except ValidationError as exc:
-            form.add_error(None, exc)
+            _add_form_validation_error(form, exc)
         else:
-            messages.success(request, "Черновик статьи сохранён.")
-            return redirect("cabinet:capper_article_edit", article_id=article.pk)
+            if action == "draft":
+                messages.success(request, "Черновик статьи сохранён.")
+                return redirect("cabinet:capper_article_edit", article_id=article.pk)
+
+            messages.success(request, "Статья отправлена на модерацию.")
+            return redirect("cabinet:capper_articles")
 
     return render(
         request,
@@ -155,7 +187,7 @@ def capper_article_edit(request, article_id):
             "form": form,
             "article": article,
             "page_title": "Редактирование статьи",
-            "submit_label": "Сохранить изменения",
+            "submit_label": "Отправить на модерацию",
             "active_tab": "articles",
             "can_submit_article": can_edit_capper_article(request.user, article),
         },

@@ -14195,6 +14195,64 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .coupon-detail-layout {
     grid-template-columns: 350px minmax(0, 1fr) minmax(300px, 340px);
 }
+.favorites-layout {
+    align-items: stretch;
+}
+.favorites-layout > .favorites-right-sidebar {
+    grid-column: 3;
+}
+.favorites-layout > .favorites-filter-sidebar,
+.favorites-layout > .favorites-right-sidebar,
+.favorites-layout > .favorites-content {
+    max-height: calc(100dvh - 132px);
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3d transparent;
+}
+.favorites-layout > .favorites-filter-sidebar,
+.favorites-layout > .favorites-right-sidebar {
+    position: sticky;
+    top: 116px;
+    align-self: start;
+    display: grid !important;
+    align-content: start;
+    gap: 12px;
+    border-radius: 18px;
+}
+.favorites-layout > .favorites-content {
+    padding-right: 4px;
+    padding-bottom: 28px;
+}
+.favorites-layout > .favorites-filter-sidebar::-webkit-scrollbar,
+.favorites-layout > .favorites-right-sidebar::-webkit-scrollbar,
+.favorites-layout > .favorites-content::-webkit-scrollbar {
+    width: 6px;
+}
+.favorites-layout > .favorites-filter-sidebar::-webkit-scrollbar-thumb,
+.favorites-layout > .favorites-right-sidebar::-webkit-scrollbar-thumb,
+.favorites-layout > .favorites-content::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: #3a3a3d;
+}
+.favorites-layout > .favorites-filter-sidebar::-webkit-scrollbar-track,
+.favorites-layout > .favorites-right-sidebar::-webkit-scrollbar-track,
+.favorites-layout > .favorites-content::-webkit-scrollbar-track {
+    background: 0 0;
+}
+.prediction-sidebar-block {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+}
+.favorites-filter-block {
+    padding: 10px;
+    border-radius: 18px;
+    background: var(--panel);
+}
 .favorites-empty {
     min-height: 360px;
     gap: 0;
@@ -17951,9 +18009,12 @@ body.register footer {
         display: grid !important;
     }
     .predictions-layout > .bookmakers-sidebar,
-    .predictions-layout > .predictions-ad-sidebar {
+    .predictions-layout > .predictions-ad-sidebar,
+    .favorites-layout > .favorites-right-sidebar {
         position: static;
         grid-column: 1/-1;
+        max-height: none;
+        overflow: visible;
     }
     .expert-public-grid,
     .predictions-layout > .bookmakers-sidebar .bookmakers-list {
@@ -18901,7 +18962,6 @@ body.register footer {
 .profile-edit-tabs a.is-active {
     color: #fff;
     background: var(--blue);
-    box-shadow: 0 12px 30px rgba(11, 86, 250, 0.32);
 }
 .profile-edit-tabs svg,
 .profile-edit-section-icon svg {
@@ -20073,7 +20133,7 @@ body.register footer {
     min-height: 230px;
     overflow: hidden;
     border-radius: 18px;
-    background-color: #17191d;
+    background-color: var(--panel);
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
@@ -20161,7 +20221,7 @@ body.register footer {
     min-width: 0;
     padding: 18px;
     border-radius: 18px;
-    background: #17191d;
+    background: var(--panel);
 }
 .wallet-operations-head {
     min-width: 0;
@@ -20300,7 +20360,7 @@ body.register footer {
     min-height: 130px;
     margin-top: 6px;
     border-radius: 12px;
-    background: #121418;
+    background: var(--ink);
 }
 
 
@@ -20330,7 +20390,7 @@ body.register footer {
 .earnings-table-card {
     min-width: 0;
     border-radius: 16px;
-    background: #17191d;
+    background: var(--panel);
 }
 .earnings-hero {
     min-height: 278px;
@@ -20432,7 +20492,7 @@ body.register footer {
     margin-top: 17px;
     padding: 13px;
     border-radius: 11px;
-    background: #202329;
+    background: var(--ink);
 }
 .earnings-payout-summary > div {
     min-width: 0;
@@ -20472,7 +20532,7 @@ body.register footer {
     min-height: 64px;
     padding: 9px 10px;
     border-radius: 11px;
-    background: #202329;
+    background: #1313138c;
 }
 .earnings-kpi-row + .earnings-kpi-row {
     margin-top: 8px;
@@ -20498,6 +20558,9 @@ body.register footer {
     display: block;
     color: #909299;
     font-size: 10px;
+}
+.profile-tab-panel.is-active{
+    margin-top:20px;
 }
 .earnings-kpi-row > div strong {
     display: block;
@@ -20567,7 +20630,7 @@ body.register footer {
     gap: 8px;
     padding: 7px 9px;
     border-radius: 9px;
-    background: #202329;
+    background: #1313138c;
 }
 .earnings-subscriber-avatar {
     width: 34px;
@@ -20639,7 +20702,7 @@ body.register footer {
     min-height: 164px;
     padding: 11px;
     border-radius: 10px;
-    background: #202329;
+    background: #1313138c;
 }
 .earnings-period-icon {
     width: 34px;
@@ -20801,7 +20864,7 @@ body.register footer {
     gap: 8px;
     padding: 11px;
     border-radius: 10px;
-    background: #202329;
+    background: #1313138c;
 }
 .earnings-source-icon {
     width: 34px;
@@ -20886,7 +20949,7 @@ body.register footer {
     margin-top: 9px;
     overflow-x: auto;
     border-radius: 10px;
-    background: #121418;
+    background: var(--ink);
 }
 .earnings-table {
     width: 100%;
@@ -20935,6 +20998,7 @@ body.register footer {
     grid-column: 1 / 3;
     display: grid;
     grid-template-columns: minmax(260px, 0.35fr) minmax(0, 0.65fr);
+    align-items: start;
     gap: 18px;
     padding: 24px;
 }
@@ -20959,7 +21023,7 @@ body.register footer {
     max-width: 260px;
     margin: 0;
     color: #f7f8ff;
-    font-size: clamp(34px, 4vw, 48px);
+    font-size: clamp(28px, 3vw, 38px);
     font-weight: 500;
     line-height: 1.02;
 }
@@ -20969,20 +21033,21 @@ body.register footer {
     gap: 9px;
 }
 .profile-income-period {
-    min-height: 46px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 12px;
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
     color: #9a9a9d;
-    background: #29292c;
+    background: rgba(255, 255, 255, 0.06);
     cursor: pointer;
     font: inherit;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
 }
 .profile-income-period.is-active {
     color: #fff;
     background: var(--blue);
+    border-color: transparent;
 }
 .profile-income-total {
     display: grid;
@@ -21004,12 +21069,12 @@ body.register footer {
 }
 .profile-income-chart-panel {
     position: relative;
-    min-height: 430px;
-    padding: 18px;
+    min-height: 360px;
+    padding: 14px 18px;
 }
 .profile-income-canvas {
     width: 100%;
-    height: 430px;
+    height: 360px;
     display: block;
 }
 .profile-wallet-history h3 {
@@ -21309,14 +21374,17 @@ body.register footer {
     .profile-list-head {
         flex-direction: column;
     }
-    .profile-section-heading > .profile-save-button {
+    .profile-section-heading > .profile-save-button,
+    .profile-section-heading > .capper-article-actions {
         display: none;
     }
     .profile-mobile-save {
-        display: block;
+        display: grid;
+        gap: 10px;
         margin-top: 20px;
     }
-    .profile-mobile-save .profile-save-button {
+    .profile-mobile-save .profile-save-button,
+    .profile-mobile-save .profile-row-action {
         width: 100%;
         min-height: 52px;
     }
@@ -24238,6 +24306,15 @@ body.register {
         position: static;
         grid-column: 1;
         max-height: none;
+    }
+    .favorites-layout > .favorites-filter-sidebar,
+    .favorites-layout > .favorites-right-sidebar,
+    .favorites-layout > .favorites-content {
+        position: static;
+        grid-column: 1;
+        max-height: none;
+        overflow: visible;
+        scrollbar-gutter: auto;
     }
     .predictions-content {
         grid-column: 1;
@@ -30560,7 +30637,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .capper-profile-demo {
     min-width: 0;
     border-radius: 18px;
-    background: #17191d;
+    background: var(--panel);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 .capper-journey-icon,
@@ -30741,7 +30818,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 10px;
     padding: 12px;
     border-radius: 13px;
-    background: #202329;
+    background: var(--ink);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
 }
 .capper-profile-demo-stat-icon {
@@ -31831,7 +31908,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .cabinet-referrals-page .referrals-simple h2 {
     font-weight: 600;
 }
-.referrals-hero,
 .referrals-stats,
 .referrals-link-card,
 .referrals-share-card,
@@ -31839,14 +31915,13 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .referrals-list-card {
     min-width: 0;
     border-radius: 16px;
-    background: #17191d;
+    background: var(--panel);
 }
 .referrals-hero {
     position: relative;
     min-height: 220px;
     padding: 28px;
     overflow: hidden;
-    background: #11151b;
 }
 .referrals-hero-copy {
     position: relative;
@@ -31902,7 +31977,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 12px;
     padding: 12px 14px;
     border-radius: 12px;
-    background: #121418;
+    background: #1313138c;
 }
 .referrals-stat-icon {
     width: 34px;
@@ -31932,7 +32007,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .referrals-stat div > span {
     margin-top: 5px;
     color: #93959c;
-    font-size: 10px;
+    font-size: 14px;
 }
 .referrals-share-grid {
     min-width: 0;
@@ -31947,7 +32022,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     display: block;
     margin-bottom: 10px;
     color: #f5f5f6;
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 600;
 }
 .cabinet-referrals-page .profile-referral-link-wrap {
@@ -31964,7 +32039,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     outline: 0;
     border-radius: 10px;
     color: #f5f5f6;
-    background: #0f1115;
+    background: #1313138c;
     font-size: 12px;
 }
 .cabinet-referrals-page .profile-referral-copy {
@@ -31991,7 +32066,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     display: block;
     margin-top: 10px;
     color: #85878e;
-    font-size: 9px;
+    font-size: 12px;
     line-height: 1.45;
 }
 .referrals-share-card {
@@ -32075,7 +32150,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     min-height: 128px;
     padding: 14px;
     border-radius: 12px;
-    background: #121418;
+    background: #1313138c;
 }
 .referrals-step-number {
     position: absolute;
@@ -32134,7 +32209,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 10px;
     padding: 8px 10px;
     border-radius: 10px;
-    background: #121418;
+    background: var(--ink);
 }
 .referrals-activity-row {
     grid-template-columns: 34px minmax(0, 1fr) auto;
@@ -33263,6 +33338,21 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 18px;
     padding: 18px;
 }
+.capper-article-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.capper-article-actions .profile-save-button,
+.capper-article-actions .profile-row-action {
+    min-width: 180px;
+}
+.capper-article-actions .profile-row-action,
+.profile-mobile-save .profile-row-action {
+    background: #303033;
+}
 .capper-article-form .profile-fields-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -33281,14 +33371,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .capper-article-form-page > .matches-shell,
 .capper-articles-page > .matches-shell {
     align-items: start;
-}
-.capper-article-form-page form[action*="/submit/"] {
-    display: flex;
-    justify-content: flex-end;
-}
-.capper-article-form-page form[action*="/submit/"] .profile-save-button {
-    min-width: 210px;
-    background: var(--blue);
 }
 .cappers-admin {
     --admin-sidebar-width: 280px;

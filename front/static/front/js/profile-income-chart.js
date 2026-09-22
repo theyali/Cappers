@@ -23,15 +23,17 @@
     const logical = {
         width: 1120,
         height: 560,
-        left: 86,
-        right: 1064,
-        top: 70,
-        bottom: 430,
-        legendY: 505,
+        left: 78,
+        right: 1042,
+        top: 74,
+        bottom: 392,
+        labelY: 436,
+        legendY: 496,
     };
     const state = {
         period: "30",
         hoverIndex: null,
+        pendingRender: false,
     };
 
     const toNumber = (value, fallback = 0) => {
@@ -44,6 +46,11 @@
 
     const resize = () => {
         const rect = canvas.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) {
+            state.pendingRender = true;
+            return false;
+        }
+
         const dpr = Math.max(window.devicePixelRatio || 1, 1);
         const width = Math.max(Math.round(rect.width * dpr), 1);
         const height = Math.max(Math.round(rect.height * dpr), 1);
@@ -51,6 +58,8 @@
             canvas.width = width;
             canvas.height = height;
         }
+        state.pendingRender = false;
+        return true;
     };
 
     const text = (value, x, y, options = {}) => {
@@ -79,20 +88,48 @@
         ctx.clearRect(0, 0, logical.width, logical.height);
     };
 
+    const chartSourceBounds = (chart) => {
+        const ticks = chart.ticks || [];
+        const tickPositions = ticks
+            .map((tick) => toNumber(tick.y, Number.NaN))
+            .filter(Number.isFinite);
+        const sourceTop = Math.min(...tickPositions, 50);
+        const sourceBottom = Math.max(...tickPositions, 200);
+        return {
+            left: toNumber(chart.plot_left, 42),
+            right: toNumber(chart.plot_right, 530),
+            top: sourceTop,
+            bottom: sourceBottom,
+        };
+    };
+
+    const mapX = (chart, x) => {
+        const bounds = chartSourceBounds(chart);
+        const span = Math.max(bounds.right - bounds.left, 1);
+        return logical.left + ((toNumber(x) - bounds.left) / span) * (logical.right - logical.left);
+    };
+
+    const mapY = (chart, y) => {
+        const bounds = chartSourceBounds(chart);
+        const span = Math.max(bounds.bottom - bounds.top, 1);
+        return logical.top + ((toNumber(y) - bounds.top) / span) * (logical.bottom - logical.top);
+    };
+
     const drawGrid = (chart) => {
         ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,.12)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([7, 9]);
         (chart.ticks || []).forEach((tick) => {
-            const y = toNumber(tick.y);
+            const y = mapY(chart, tick.y);
+            const isZero = tick.label === "0";
+            ctx.strokeStyle = isZero ? "rgba(255,255,255,.28)" : "rgba(255,255,255,.08)";
+            ctx.lineWidth = isZero ? 1.8 : 1;
+            ctx.setLineDash(isZero ? [] : [4, 12]);
             ctx.beginPath();
             ctx.moveTo(logical.left, y);
             ctx.lineTo(logical.right, y);
             ctx.stroke();
-            text(tick.label || "", 0, toNumber(tick.label_y), {
-                color: "#858589",
-                size: 19,
+            text(tick.label || "", 0, y, {
+                color: isZero ? "#c6c7cc" : "#777980",
+                size: 16,
                 weight: 600,
             });
         });
@@ -100,15 +137,19 @@
     };
 
     const drawBars = (chart) => {
-        const barWidth = Math.max(toNumber(chart.bar_width) * 1.55, 5);
+        const pointCount = Math.max((chart.points || []).length, 1);
+        const barWidth = Math.max(Math.min(((logical.right - logical.left) / pointCount) * 0.34, 8), 3);
         (chart.points || []).forEach((point) => {
             if (!point.has_bar) return;
-            const centerX = toNumber(point.x);
+            const centerX = mapX(chart, point.x);
             const x = centerX - barWidth / 2;
-            const y = toNumber(point.bar_y);
-            const height = Math.max(toNumber(point.bar_height), 2.5);
-            ctx.fillStyle = point.bar_fill || "#0b56fa";
-            roundedRect(x, y, barWidth, height, 4);
+            const y1 = mapY(chart, point.bar_y);
+            const y2 = mapY(chart, toNumber(point.bar_y) + toNumber(point.bar_height));
+            const y = Math.min(y1, y2);
+            const height = Math.max(Math.abs(y2 - y1), 3);
+            const isNegative = String(point.amount_display || "").startsWith("-");
+            ctx.fillStyle = isNegative ? "#ff5c67" : "#54db87";
+            roundedRect(x, y, barWidth, height, barWidth / 2);
             ctx.fill();
         });
     };
@@ -118,32 +159,35 @@
         if (!points.length) return;
 
         ctx.save();
-        ctx.strokeStyle = "#fbf110";
-        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#f4ee47";
+        ctx.lineWidth = 3.5;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.beginPath();
         points.forEach((point, index) => {
-            const x = toNumber(point.x);
-            const y = toNumber(point.line_y);
+            const x = mapX(chart, point.x);
+            const y = mapY(chart, point.line_y);
             if (index === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
         const lastPoint = points[points.length - 1];
-        ctx.fillStyle = "#fbf110";
+        ctx.fillStyle = "#171718";
+        ctx.strokeStyle = "#f4ee47";
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(toNumber(lastPoint.x), toNumber(lastPoint.line_y), 8, 0, Math.PI * 2);
+        ctx.arc(mapX(chart, lastPoint.x), mapY(chart, lastPoint.line_y), 7, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
         ctx.restore();
     };
 
     const drawLabels = (chart) => {
         (chart.labels || []).forEach((label) => {
-            text(label.text || "", toNumber(label.x), 470, {
-                color: "#858589",
-                size: 18,
+            text(label.text || "", mapX(chart, label.x), logical.labelY, {
+                color: "#8d8f96",
+                size: 15,
                 weight: 600,
                 align: "center",
             });
@@ -151,25 +195,28 @@
     };
 
     const drawLegend = () => {
-        ctx.fillStyle = "#0b56fa";
-        roundedRect(88, logical.legendY - 11, 18, 18, 4);
+        ctx.fillStyle = "#54db87";
+        roundedRect(88, logical.legendY - 8, 16, 16, 8);
         ctx.fill();
-        text("Прибыль, коины", 120, logical.legendY, {
-            color: "#929296",
-            size: 20,
+        ctx.fillStyle = "#ff5c67";
+        roundedRect(110, logical.legendY - 8, 16, 16, 8);
+        ctx.fill();
+        text("Дневной результат", 140, logical.legendY, {
+            color: "#9b9da4",
+            size: 17,
             weight: 600,
         });
 
-        ctx.strokeStyle = "#fbf110";
-        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#f4ee47";
+        ctx.lineWidth = 3.5;
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(324, logical.legendY);
-        ctx.lineTo(370, logical.legendY);
+        ctx.moveTo(382, logical.legendY);
+        ctx.lineTo(430, logical.legendY);
         ctx.stroke();
-        text("Накопительный итог", 388, logical.legendY, {
-            color: "#929296",
-            size: 20,
+        text("Накопительный итог", 448, logical.legendY, {
+            color: "#9b9da4",
+            size: 17,
             weight: 600,
         });
     };
@@ -179,45 +226,48 @@
         const point = chart.points?.[state.hoverIndex];
         if (!point) return;
 
-        const x = toNumber(point.x);
-        const y = toNumber(point.line_y);
-        const boxWidth = 250;
-        const boxHeight = 112;
+        const x = mapX(chart, point.x);
+        const y = mapY(chart, point.line_y);
+        const boxWidth = 270;
+        const boxHeight = 106;
         const boxX = x > 770 ? x - boxWidth - 24 : x + 24;
-        const boxY = Math.max(20, Math.min(278, y - 86));
+        const boxY = Math.max(24, Math.min(300, y - 78));
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,.26)";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([6, 8]);
+        ctx.strokeStyle = "rgba(255,255,255,.18)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 8]);
         ctx.beginPath();
         ctx.moveTo(x, logical.top);
         ctx.lineTo(x, logical.bottom);
         ctx.stroke();
 
         ctx.setLineDash([]);
-        ctx.fillStyle = "#fbf110";
+        ctx.fillStyle = "#f4ee47";
         ctx.beginPath();
-        ctx.arc(x, y, 9, 0, Math.PI * 2);
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = "#131313";
-        roundedRect(boxX, boxY, boxWidth, boxHeight, 14);
+        ctx.fillStyle = "#1f1f21";
+        roundedRect(boxX, boxY, boxWidth, boxHeight, 12);
         ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.08)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
         text(point.date || "", boxX + 18, boxY + 25, {
-            color: "#929296",
-            size: 17,
+            color: "#9b9da4",
+            size: 15,
             weight: 600,
         });
         text(`Прибыль: ${point.amount_display} коинов`, boxX + 18, boxY + 58, {
             color: String(point.amount_display || "").startsWith("-") ? "#ff5c67" : "#54db87",
-            size: 18,
+            size: 16,
             weight: 700,
         });
         text(`Итог: ${point.cumulative_display} коинов`, boxX + 18, boxY + 87, {
             color: "#ffffff",
-            size: 17,
+            size: 16,
             weight: 600,
         });
         ctx.restore();
@@ -241,7 +291,7 @@
     };
 
     const render = () => {
-        resize();
+        if (!resize()) return;
         const chart = charts[state.period] || charts["30"];
         if (!chart) return;
 
@@ -267,13 +317,13 @@
         let closestIndex = 0;
         let closestDistance = Infinity;
         points.forEach((point, index) => {
-            const distance = Math.abs(toNumber(point.x) - x);
+            const distance = Math.abs(mapX(chart, point.x) - x);
             if (distance < closestDistance) {
                 closestDistance = distance;
                 closestIndex = index;
             }
         });
-        return closestDistance <= 36 ? closestIndex : null;
+        return closestDistance <= 24 ? closestIndex : null;
     };
 
     periodControls.forEach((control) => {
@@ -296,6 +346,15 @@
         render();
     });
     window.addEventListener("resize", render);
+    window.addEventListener("profile:tab-activated", (event) => {
+        if (event.detail?.tab !== "profile" && !state.pendingRender) return;
+        requestAnimationFrame(render);
+    });
+
+    if ("ResizeObserver" in window) {
+        const observer = new ResizeObserver(() => render());
+        observer.observe(canvas);
+    }
 
     render();
 })();

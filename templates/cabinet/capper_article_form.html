@@ -20,7 +20,7 @@
             <header class="bonus-page-head">
                 <div>
                     <h1>{{ page_title }}</h1>
-                    <p>Сохраните материал как черновик, затем отправьте его на модерацию.</p>
+                    <p>Отправьте материал на модерацию сразу или сохраните его как черновик.</p>
                 </div>
                 <a class="profile-save-button" href="{% url 'cabinet:capper_articles' %}">К списку</a>
             </header>
@@ -50,7 +50,10 @@
                         <h2>Материал</h2>
                         <p>Заголовок, обложка, краткое описание и основной текст.</p>
                     </div>
-                    <button class="profile-save-button" type="submit">{{ submit_label }}</button>
+                    <div class="capper-article-actions">
+                        <button class="profile-save-button" type="submit" name="article_action" value="submit">{{ submit_label }}</button>
+                        <button class="profile-row-action" type="submit" name="article_action" value="draft">Сохранить черновик</button>
+                    </div>
                 </div>
 
                 {% if form.non_field_errors %}
@@ -86,16 +89,10 @@
                 </div>
 
                 <div class="profile-mobile-save">
-                    <button class="profile-save-button" type="submit">{{ submit_label }}</button>
+                    <button class="profile-save-button" type="submit" name="article_action" value="submit">{{ submit_label }}</button>
+                    <button class="profile-row-action" type="submit" name="article_action" value="draft">Сохранить черновик</button>
                 </div>
             </form>
-
-            {% if can_submit_article %}
-            <form method="post" action="{% url 'cabinet:capper_article_submit' article.id %}" data-disable-on-submit>
-                {% csrf_token %}
-                <button class="profile-save-button" type="submit">Отправить на модерацию</button>
-            </form>
-            {% endif %}
         </section>
     </div>
 </section>
