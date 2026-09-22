@@ -121,6 +121,7 @@
             return;
         }
 
+        const preservedScrollY = window.scrollY;
         const wasCollapsed = $layout.hasClass("is-filter-collapsed");
         const $content = $layout.find("[data-predictions-content]").first();
         const $sort = $layout.find("[data-prediction-sort]").first();
@@ -167,6 +168,12 @@
 
                 document.dispatchEvent(new CustomEvent("predictions:updated"));
                 initPredictionsLazy($nextLayout.get(0));
+
+                if (options.preserveScroll) {
+                    window.requestAnimationFrame(() => {
+                        window.scrollTo({ top: preservedScrollY, left: window.scrollX, behavior: "auto" });
+                    });
+                }
             })
             .fail((xhr, status) => {
                 if (status !== "abort") window.location.assign(url);
@@ -400,7 +407,9 @@
             if (target.origin !== window.location.origin) return;
 
             event.preventDefault();
-            loadPredictions(target.href);
+            loadPredictions(target.href, {
+                preserveScroll: Boolean(this.closest(".prediction-type-tabs")),
+            });
         }
     );
 
