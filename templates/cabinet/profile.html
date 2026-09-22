@@ -414,59 +414,189 @@
             </section>
 
             <section class="profile-tab-panel {% if active_tab == 'wallet' %}is-active{% endif %}" id="profile-tab-wallet" data-profile-tab-panel="wallet">
-                <div class="profile-list-card">
-                    <div class="profile-section-heading">
-                        <div>
-                            <p class="eyebrow">Финансы</p>
+                <div class="profile-list-card wallet-dashboard">
+                    <header class="wallet-dashboard-head">
+                        <div class="wallet-dashboard-title">
+                            <span class="wallet-dashboard-kicker">Финансы</span>
                             <h2>Балансы и операции</h2>
+                            <p>Управляйте своими балансами и отслеживайте все операции в одном месте.</p>
                         </div>
-                        <a class="profile-save-button" href="{% url 'wallets:top_up' %}">Пополнить</a>
-                    </div>
+                        <div class="wallet-dashboard-head-actions">
+                            <p>Больше, чем прогнозы.<br>Реальные возможности.</p>
+                            <a class="wallet-dashboard-primary" href="{% url 'wallets:top_up' %}">
+                                <span>Пополнить</span>
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </header>
 
-                    <div class="profile-wallet-grid">
-                        <article class="profile-wallet-card">
-                            <span>Коины</span>
-                            <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ coin_balance_display }}</span></strong>
-                            <small>Используются для прогнозов и копибеттинга.</small>
+                    <div class="wallet-balance-grid">
+                        <article class="wallet-balance-hero is-coins">
+                            <div class="wallet-balance-copy">
+                                <div class="wallet-balance-title-row">
+                                    <span class="wallet-balance-icon is-coins" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <ellipse cx="12" cy="6" rx="6.5" ry="2.8" stroke="currentColor" stroke-width="1.8"/>
+                                            <path d="M5.5 6v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8V6M5.5 10v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4M5.5 14v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4" stroke="currentColor" stroke-width="1.8"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3>Коины</h3>
+                                        <p>Используются для прогнозов и участия в турнирах.</p>
+                                    </div>
+                                </div>
+                                <strong class="wallet-balance-value is-coins">{{ coin_balance_display }}</strong>
+                                <div class="wallet-balance-actions">
+                                    <a class="wallet-dashboard-primary" href="{% url 'wallets:top_up' %}">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M4 7h16v11H4zM7 10h10M7 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Купить коины</span>
+                                    </a>
+                                    <a class="wallet-dashboard-secondary" href="#wallet-coin-history">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
+                                            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>История операций</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <img class="wallet-balance-art is-coins" src="{% static 'front/img/coins_balance.png' %}" width="420" height="260" alt="" aria-hidden="true">
                         </article>
+
                         {% if request.user.is_analyst and real_balance %}
-                        <article class="profile-wallet-card">
-                            <span>Реальный баланс</span>
-                            <strong>{{ real_balance_display }} ₽</strong>
-                            <small>Ожидает вывода: {{ real_pending_withdrawal_display }} ₽.</small>
+                        <article class="wallet-balance-hero is-real">
+                            <div class="wallet-balance-copy">
+                                <div class="wallet-balance-title-row">
+                                    <span class="wallet-balance-icon is-real" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M4 7h16v11H4zM7 7V5h10v2M16 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="16.5" cy="12" r=".8" fill="currentColor"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3>Реальный баланс</h3>
+                                        <p>Ваши реальные средства.</p>
+                                    </div>
+                                </div>
+                                <strong class="wallet-balance-value is-real">{{ real_balance_display }} ₽</strong>
+                                <div class="wallet-balance-actions">
+                                    <a class="wallet-dashboard-primary" href="{% url 'wallets:top_up' %}">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
+                                            <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                        </svg>
+                                        <span>Пополнить баланс</span>
+                                    </a>
+                                    <a class="wallet-dashboard-secondary" href="{% url 'wallets:top_up' %}">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M12 4v11M8 11l4 4 4-4M5 19h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <span>Вывести</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <img class="wallet-balance-art is-real" src="{% static 'front/img/real_balance.png' %}" width="420" height="260" alt="" aria-hidden="true">
                         </article>
                         {% endif %}
                     </div>
 
-                    <div class="profile-wallet-history">
-                        <div>
-                            <h3>Операции с коинами</h3>
-                            <div class="profile-transaction-list">
-                                {% for transaction in coin_transactions %}
-                                    <div class="profile-transaction-row">
-                                        <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span></div>
-                                        <div><strong class="coin-amount {% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{{ transaction.amount }}</span></strong><span>после: <span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ transaction.balance_after }}</span></span></span></div>
+                    <div class="wallet-operations-grid">
+                        <section class="wallet-operations-card" id="wallet-coin-history">
+                            <div class="wallet-operations-head">
+                                <div class="wallet-operations-title">
+                                    <span class="wallet-operation-section-icon is-coins" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <ellipse cx="12" cy="6" rx="6.5" ry="2.8" stroke="currentColor" stroke-width="1.8"/>
+                                            <path d="M5.5 6v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8V6M5.5 10v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4" stroke="currentColor" stroke-width="1.8"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3>Операции с коинами</h3>
+                                        <p>История начислений и списаний коинов.</p>
                                     </div>
+                                </div>
+                                <a class="wallet-all-operations" href="#wallet-coin-history">
+                                    <span>Все операции</span>
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+
+                            <div class="wallet-operation-list">
+                                {% for transaction in coin_transactions|slice:":5" %}
+                                    <article class="wallet-operation-row">
+                                        <span class="wallet-operation-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.8"/>
+                                                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                            </svg>
+                                        </span>
+                                        <div class="wallet-operation-copy">
+                                            <strong>{{ transaction.get_kind_display }}</strong>
+                                            <span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span>
+                                        </div>
+                                        <strong class="wallet-operation-amount {% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">
+                                            {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount }}
+                                            {% include "front/includes/_coin_icon.html" %}
+                                        </strong>
+                                    </article>
                                 {% empty %}
                                     <div class="profile-empty-state"><p>Операций пока нет.</p></div>
                                 {% endfor %}
                             </div>
-                        </div>
+                        </section>
 
                         {% if request.user.is_analyst %}
-                        <div>
-                            <h3>Реальные операции</h3>
-                            <div class="profile-transaction-list">
-                                {% for transaction in real_transactions %}
-                                    <div class="profile-transaction-row">
-                                        <div><strong>{{ transaction.get_kind_display }}</strong><span>{{ transaction.created_at|date:"d.m.Y · H:i" }} · {{ transaction.get_status_display }}</span></div>
-                                        <div><strong class="{% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">{{ transaction.amount|money }} ₽</strong><span>после: {{ transaction.balance_after|money }} ₽</span></div>
+                        <section class="wallet-operations-card" id="wallet-real-history">
+                            <div class="wallet-operations-head">
+                                <div class="wallet-operations-title">
+                                    <span class="wallet-operation-section-icon is-real" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M4 7h16v11H4zM7 7V5h10v2M16 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="16.5" cy="12" r=".8" fill="currentColor"/>
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3>Реальные операции</h3>
+                                        <p>История пополнений, выводов и других операций.</p>
                                     </div>
+                                </div>
+                                <a class="wallet-all-operations" href="#wallet-real-history">
+                                    <span>Все операции</span>
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+
+                            <div class="wallet-operation-list">
+                                {% for transaction in real_transactions|slice:":5" %}
+                                    <article class="wallet-operation-row">
+                                        <span class="wallet-operation-icon is-real" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none">
+                                                <path d="M12 19V5M7 10l5-5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </span>
+                                        <div class="wallet-operation-copy">
+                                            <strong>{{ transaction.get_kind_display }}</strong>
+                                            <span>{{ transaction.created_at|date:"d.m.Y · H:i" }}</span>
+                                        </div>
+                                        <div class="wallet-operation-real-value">
+                                            <strong class="wallet-operation-amount is-{{ transaction.status }} {% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">
+                                                {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount|money }} ₽
+                                            </strong>
+                                            {% if transaction.status == 'pending' %}
+                                                <span>{{ transaction.get_status_display }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </article>
                                 {% empty %}
                                     <div class="profile-empty-state"><p>Операций пока нет.</p></div>
                                 {% endfor %}
                             </div>
-                        </div>
+                        </section>
                         {% endif %}
                     </div>
                 </div>
