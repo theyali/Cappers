@@ -134,33 +134,37 @@
                         href="{{ profile_bonus_summary.levels_url }}"
                         aria-label="Открыть уровни: {{ profile_bonus_summary.hero.current_level_title }}"
                     >
-                        <span class="profile-xp-ring" aria-hidden="true">
-                            <svg viewBox="0 0 72 72">
-                                <circle cx="36" cy="36" r="28" pathLength="100"></circle>
-                                <circle class="is-progress {{ profile_bonus_summary.hero.progress_class }}" cx="36" cy="36" r="28" pathLength="100"></circle>
-                            </svg>
-                            <span class="profile-xp-ring-center">
-                                {% if profile_bonus_summary.hero.icon_url %}
-                                    <img src="{{ profile_bonus_summary.hero.icon_url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
-                                {% else %}
-                                    <strong>{{ profile_bonus_summary.hero.current_level_number }}</strong>
-                                    <small>ур.</small>
-                                {% endif %}
-                            </span>
+                        <span class="profile-xp-badge" aria-hidden="true">
+                            {% if profile_bonus_summary.hero.image_url %}
+                                <img src="{{ profile_bonus_summary.hero.image_url }}" alt="" width="150" height="150" loading="lazy" decoding="async">
+                            {% elif profile_bonus_summary.hero.icon_url %}
+                                <img src="{{ profile_bonus_summary.hero.icon_url }}" alt="" width="150" height="150" loading="lazy" decoding="async">
+                            {% else %}
+                                <strong>{{ profile_bonus_summary.hero.current_level_number }}</strong>
+                            {% endif %}
                         </span>
 
-                        <span class="profile-xp-copy">
+                        <span class="profile-xp-divider" aria-hidden="true"></span>
+
+                        <span class="profile-xp-content">
                             <small>Уровень {{ profile_bonus_summary.hero.current_level_number }}</small>
                             <strong>{{ profile_bonus_summary.hero.current_level_title }}</strong>
-                            <span>{{ profile_bonus_summary.hero.xp }} XP {{ profile_bonus_summary.hero.target_label }}</span>
-                            <b>{{ profile_bonus_summary.hero.status_label }}</b>
-                        </span>
 
-                        {% if profile_bonus_summary.hero.image_url %}
-                            <span class="profile-xp-art" aria-hidden="true">
-                                <img src="{{ profile_bonus_summary.hero.image_url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+                            <span class="profile-xp-progress-row">
+                                <span class="profile-xp-progress-track" aria-hidden="true">
+                                    <span class="profile-xp-progress-fill {{ profile_bonus_summary.hero.progress_class }}"></span>
+                                </span>
+                                <span class="profile-xp-progress-value">
+                                    {% if profile_bonus_summary.hero.next_level_xp %}
+                                        {{ profile_bonus_summary.hero.xp }} / {{ profile_bonus_summary.hero.next_level_xp }} XP
+                                    {% else %}
+                                        {{ profile_bonus_summary.hero.xp }} XP
+                                    {% endif %}
+                                </span>
                             </span>
-                        {% endif %}
+
+                            <span class="profile-xp-status">{{ profile_bonus_summary.hero.status_label }}</span>
+                        </span>
                     </a>
                     {% endif %}
 
