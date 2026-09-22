@@ -10,51 +10,55 @@
 <section class="predictions-page predictions-scroll-page container" aria-labelledby="cappers-table-title">
     <div class="predictions-layout">
         <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Фильтры рейтинга капперов">
-            <div class="matches-table-filter-head">
-                <span class="matches-table-filter-head-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                        <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                        <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                    </svg>
-                </span>
-                <div>
-                    <strong>Фильтры</strong>
-                    <small>{{ experts_count }} капперов</small>
+            <div class="prediction-sidebar-block cappers-table-filter-block">
+                <div class="matches-table-filter-head">
+                    <span class="matches-table-filter-head-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <strong>Фильтры</strong>
+                        <small>{{ experts_count }} капперов</small>
+                    </div>
                 </div>
-            </div>
 
-            <section class="matches-table-filter-group" aria-labelledby="cappers-ranking-filter-title">
-                <div class="matches-table-filter-title" id="cappers-ranking-filter-title">
-                    <span>Рейтинг</span>
-                    <small>{{ group_tabs|length }}</small>
-                </div>
-                <nav class="matches-table-scope-list" aria-label="Тип рейтинга">
-                    {% for tab in group_tabs %}
-                    <a
-                        class="matches-table-scope-link{% if selected_group == tab.key %} is-active{% endif %}"
-                        href="{{ tab.url }}"
-                        {% if selected_group == tab.key %}aria-current="page"{% endif %}
-                    >
-                        <span class="matches-table-scope-icon" aria-hidden="true">
-                            {% if tab.key == 'vip' %}
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5 8 12l4-7 4 7 4-3.5-1.7 9H5.7L4 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 20h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                            {% elif tab.key == 'popular' %}
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 3.5c.5 3-1.2 4.4-2.5 5.8-1.1 1.2-1.8 2.4-1.2 4.1.6-1.1 1.6-1.8 2.8-2.4-.2 2.2 1.5 3.1 2.4 4.5.8 1.2.6 3-.4 4-1.2 1.2-3 1.5-4.7.8-2.3-.9-3.8-3.1-3.4-5.7.4-2.7 2.5-4.1 4.1-6 1.2-1.4 2.1-2.8 2.9-5.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-                            {% elif tab.key == 'paid' %}
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M7 5h7.5a4 4 0 0 1 0 8H7V5Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 13h8M7 17h7M10 3v18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                            {% else %}
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-                            {% endif %}
-                        </span>
-                        <span class="matches-table-scope-copy">{{ tab.label }}</span>
-                        {% if tab.key == 'vip' %}<b>VIP</b>{% elif tab.key == 'paid' %}<b>₽</b>{% endif %}
-                    </a>
-                    {% endfor %}
-                </nav>
-            </section>
-            {% vip_cappers_banner 6 %}
+                <section class="matches-table-filter-group" aria-labelledby="cappers-ranking-filter-title">
+                    <div class="matches-table-filter-title" id="cappers-ranking-filter-title">
+                        <span>Рейтинг</span>
+                        <small>{{ group_tabs|length }}</small>
+                    </div>
+                    <nav class="matches-table-scope-list" aria-label="Тип рейтинга">
+                        {% for tab in group_tabs %}
+                        <a
+                            class="matches-table-scope-link{% if selected_group == tab.key %} is-active{% endif %}"
+                            href="{{ tab.url }}"
+                            {% if selected_group == tab.key %}aria-current="page"{% endif %}
+                        >
+                            <span class="matches-table-scope-icon" aria-hidden="true">
+                                {% if tab.key == 'vip' %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5 8 12l4-7 4 7 4-3.5-1.7 9H5.7L4 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 20h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                {% elif tab.key == 'popular' %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M13.5 3.5c.5 3-1.2 4.4-2.5 5.8-1.1 1.2-1.8 2.4-1.2 4.1.6-1.1 1.6-1.8 2.8-2.4-.2 2.2 1.5 3.1 2.4 4.5.8 1.2.6 3-.4 4-1.2 1.2-3 1.5-4.7.8-2.3-.9-3.8-3.1-3.4-5.7.4-2.7 2.5-4.1 4.1-6 1.2-1.4 2.1-2.8 2.9-5.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                                {% elif tab.key == 'paid' %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M7 5h7.5a4 4 0 0 1 0 8H7V5Z" stroke="currentColor" stroke-width="1.8"/><path d="M7 13h8M7 17h7M10 3v18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                {% else %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                {% endif %}
+                            </span>
+                            <span class="matches-table-scope-copy">{{ tab.label }}</span>
+                            {% if tab.key == 'vip' %}<b>VIP</b>{% elif tab.key == 'paid' %}<b>₽</b>{% endif %}
+                        </a>
+                        {% endfor %}
+                    </nav>
+                </section>
+            </div>
+            <div class="prediction-sidebar-block cappers-table-vip-block">
+                {% vip_cappers_banner 6 %}
+            </div>
         </aside>
 
         <div class="predictions-content cappers-table-page">

@@ -14253,6 +14253,11 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     border-radius: 18px;
     background: var(--panel);
 }
+.cappers-table-filter-block {
+    padding: 10px;
+    border-radius: 18px;
+    background: var(--panel);
+}
 .favorites-empty {
     min-height: 360px;
     gap: 0;
