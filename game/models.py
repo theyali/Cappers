@@ -31,7 +31,7 @@ def country_logo_upload_path(instance, filename):
 
 
 def sport_image_upload_path(instance, filename):
-    return f"common/sport/{instance.pk or 'new'}.webp"
+    return f"{sport_media_code(instance)}/sport/{instance.pk or 'new'}.webp"
 
 
 def image_field_url(field) -> str:

@@ -3,7 +3,7 @@
     <div class="paid-feed-head">
         <div>
             <span>Подписки</span>
-            <h2 id="following-feed-predictions-title-{{ feed_view_mode }}">{% if is_rich_predictions %}Текстовые прогнозы{% else %}Обычные прогнозы{% endif %}</h2>
+            <h2 id="following-feed-predictions-title-{{ feed_view_mode }}">{% if is_paid_predictions %}Платные прогнозы{% elif is_vip_predictions %}VIP прогнозы{% elif is_rich_predictions %}Текстовые прогнозы{% else %}Обычные прогнозы{% endif %}</h2>
         </div>
         <strong>{{ feed_predictions_count }}</strong>
     </div>

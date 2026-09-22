@@ -12,7 +12,11 @@ from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon, Sport
 
-from .prediction_catalog_views import build_prediction_type_context
+from .prediction_catalog_views import (
+    PREDICTION_TYPE_PAID,
+    PREDICTION_TYPE_VIP,
+    build_prediction_type_context,
+)
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     _decorate_predictions,
@@ -203,6 +207,9 @@ def following_feed(request):
     record_daily_task_action(request.user, DailyTask.TaskType.OPEN_FEED)
     prediction_type_context = build_prediction_type_context(request)
     prediction_format = prediction_type_context["prediction_format"]
+    active_prediction_type = prediction_type_context["active_prediction_type"]
+    is_paid_predictions_tab = active_prediction_type == PREDICTION_TYPE_PAID
+    is_vip_predictions_tab = active_prediction_type == PREDICTION_TYPE_VIP
 
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
@@ -254,6 +261,7 @@ def following_feed(request):
         selected_capper,
         only_live,
         only_today,
+        active_prediction_type,
     )
 
     # Metadata (tabs/counts) intentionally uses lightweight querysets. The full
@@ -269,6 +277,9 @@ def following_feed(request):
         only_live=only_live,
         only_today=only_today,
     )
+    if is_vip_predictions_tab:
+        free_meta_queryset = annotate_vip_status(free_meta_queryset, user_outer_ref="author_id")
+        free_meta_queryset = free_meta_queryset.filter(is_vip_active=True)
     paid_meta_queryset = _apply_feed_filters(
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.PAID,
@@ -305,14 +316,19 @@ def following_feed(request):
         paid_count_queryset,
         cache_key=_feed_cache_key(request.user.pk, "paid-counts", *count_signature),
     )
-    counts = {
-        key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
-        for key in count_keys
-    }
+    if is_paid_predictions_tab:
+        counts = paid_counts
+    elif is_vip_predictions_tab:
+        counts = free_counts
+    else:
+        counts = {
+            key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
+            for key in count_keys
+        }
 
     # Full querysets are evaluated only for the cards that will actually render.
     queryset = _apply_feed_filters(
-        _published_queryset().filter(
+        _published_queryset(include_paid=is_paid_predictions_tab).filter(
             author_id__in=following_ids,
             prediction_format=prediction_format,
         ),
@@ -321,6 +337,21 @@ def following_feed(request):
         only_live=only_live,
         only_today=only_today,
     )
+    if is_paid_predictions_tab:
+        queryset = _apply_feed_filters(
+            _published_queryset(include_paid=True).filter(
+                audience=PredictionCoupon.Audience.PAID,
+                author_id__in=paid_analyst_ids,
+                prediction_format=prediction_format,
+            ),
+            selected_capper=selected_capper,
+            selected_sport=selected_sport,
+            only_live=only_live,
+            only_today=only_today,
+        )
+    elif is_vip_predictions_tab:
+        queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
+        queryset = queryset.filter(is_vip_active=True)
     paid_queryset = _apply_feed_filters(
         _published_queryset(include_paid=True).filter(
             audience=PredictionCoupon.Audience.PAID,
@@ -332,6 +363,8 @@ def following_feed(request):
         only_live=only_live,
         only_today=only_today,
     )
+    if is_paid_predictions_tab or is_vip_predictions_tab:
+        paid_queryset = paid_queryset.none()
 
     if active_status == "pending":
         queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
@@ -359,7 +392,10 @@ def following_feed(request):
         queryset = queryset.order_by("-published_at", "-created_at")
         paid_queryset = paid_queryset.order_by("-published_at", "-created_at")
 
-    free_predictions_count = _feed_status_count(free_counts, active_status)
+    free_predictions_count = _feed_status_count(
+        paid_counts if is_paid_predictions_tab else free_counts,
+        active_status,
+    )
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     # Paginator otherwise calls COUNT() on the fully annotated card queryset.
     # We already have the exact count from the lightweight cached aggregate.
@@ -383,17 +419,25 @@ def following_feed(request):
         for coupon in paid_coupons
         if coupon.pk in decorated_by_id
     ]
-    paid_predictions_count = _feed_status_count(paid_counts, active_status)
+    paid_predictions_count = (
+        0
+        if is_paid_predictions_tab or is_vip_predictions_tab
+        else _feed_status_count(paid_counts, active_status)
+    )
 
-    paid_upgrade_follows = [
-        follow
-        for follow in following
-        if follow.analyst_id not in paid_analyst_ids
-        and getattr(follow.analyst, "analyst_profile", None) is not None
-        and follow.analyst.analyst_profile.paid_predictions_enabled
-        and follow.analyst.analyst_profile.paid_predictions_price > 0
-        and (not selected_capper or follow.analyst.username == selected_capper)
-    ]
+    paid_upgrade_follows = (
+        []
+        if is_paid_predictions_tab or is_vip_predictions_tab
+        else [
+            follow
+            for follow in following
+            if follow.analyst_id not in paid_analyst_ids
+            and getattr(follow.analyst, "analyst_profile", None) is not None
+            and follow.analyst.analyst_profile.paid_predictions_enabled
+            and follow.analyst.analyst_profile.paid_predictions_price > 0
+            and (not selected_capper or follow.analyst.username == selected_capper)
+        ]
+    )
     paid_upgrade_ids = [follow.analyst_id for follow in paid_upgrade_follows]
     author_counts, locked_paid_counts = _feed_author_counts(
         request.user.pk,

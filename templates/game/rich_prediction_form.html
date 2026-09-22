@@ -44,8 +44,8 @@
                                             <span class="rich-prediction-coupon-logo" aria-hidden="true">
                                                 {% if prediction.match.home_team_logo %}
                                                     <img src="{{ prediction.match.home_team_logo }}" width="44" height="44" alt="" loading="lazy">
-                                                {% elif prediction.match.sport and prediction.match.sport.image %}
-                                                    <img src="{{ prediction.match.sport.image }}" width="44" height="44" alt="" loading="lazy">
+                                                {% elif prediction.match.sport and prediction.match.sport.image_url %}
+                                                    <img src="{{ prediction.match.sport.image_url }}" width="44" height="44" alt="" loading="lazy">
                                                 {% else %}
                                                     {{ prediction.match.home_team_name|default:"М"|slice:":1" }}
                                                 {% endif %}

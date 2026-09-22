@@ -58,6 +58,16 @@ def _prediction_word(value: int) -> str:
     return "прогнозов"
 
 
+def _profile_tag_list(*values: str, fallback: str = "Спорт") -> list[str]:
+    tags: list[str] = []
+    for value in values:
+        for item in (value or "").replace(";", ",").split(","):
+            label = item.strip()
+            if label and label not in tags:
+                tags.append(label)
+    return tags[:5] or [fallback]
+
+
 def _recent_performance(author, limit: int) -> dict:
     states = list(
         PredictionCoupon.objects.filter(
@@ -320,6 +330,10 @@ def expert_profile(request, username: str):
     context = service.build_expert_profile_context(profile)
     context["expert_public_hero_index"] = randint(1, 5)
     context["profile_presence"] = presence_payload(profile.user)
+    context["expert_public_tags"] = _profile_tag_list(
+        profile.favorite_sports,
+        profile.favorite_leagues,
+    )
     monthly_top_ids = current_month_top_expert_ids()
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
     all_time_profiles = ranked_expert_profiles(period_days=None, limit=1)

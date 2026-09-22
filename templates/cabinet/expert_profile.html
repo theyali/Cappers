@@ -12,8 +12,8 @@
             <div class="expert-public-main">
                 <span class="expert-public-avatar">
                     {% capper_trust_badge analyst_profile.trust_index %}
-                    {% if profile_user.avatar %}
-                        <img src="{{ profile_user.avatar.url }}" alt="{{ expert_name }}">
+                    {% if expert.avatar %}
+                        <img src="{{ expert.avatar.url }}" alt="{{ expert_name }}">
                     {% else %}
                         {{ expert_initials }}
                     {% endif %}
@@ -58,11 +58,9 @@
                 </div>
             </div>
             <div class="expert-public-tags" aria-label="Темы эксперта">
-                <span>Футбол</span>
-                <span>Топ-лиги</span>
-                <span>Статистика</span>
-                <span>Live</span>
-                <span>Долгосрочная прибыль</span>
+                {% for tag in expert_public_tags %}
+                    <span>{{ tag }}</span>
+                {% endfor %}
             </div>
             {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
         </div>
@@ -143,7 +141,7 @@
             <div>
                 <span>Подписчики</span>
                 <strong data-followers-count>{{ followers_count }}</strong>
-                <small>+1 240 за месяц</small>
+                <small>всего</small>
             </div>
         </article>
         <article class="expert-public-stat-card is-predictions">
@@ -153,7 +151,7 @@
             <div>
                 <span>Прогнозы</span>
                 <strong>{{ predictions_count }}</strong>
-                <small>+48 за месяц</small>
+                <small>опубликовано</small>
             </div>
         </article>
         <article class="expert-public-stat-card is-winrate">
@@ -418,18 +416,16 @@
         </article>
     </section>
 
+    {% if expert_articles %}
     <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" hidden>
         <div class="expert-public-section-head">
             <div>
                 <p class="expert-public-kicker">Публикации эксперта</p>
                 <h2>Статьи</h2>
             </div>
-            {% if expert_articles %}
-                <span>{{ expert_articles|length }} опубликовано</span>
-            {% endif %}
+            <span>{{ expert_articles|length }} опубликовано</span>
         </div>
 
-        {% if expert_articles %}
         <div class="profile-user-list">
             {% for article in expert_articles %}
             <article class="profile-user-row">
@@ -450,10 +446,8 @@
             </article>
             {% endfor %}
         </div>
-        {% else %}
-        <p class="expert-public-muted">Статей пока нет.</p>
-        {% endif %}
     </section>
+    {% endif %}
 
     <section class="expert-public-predictions">
         <div class="expert-public-section-head">

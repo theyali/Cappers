@@ -17,13 +17,13 @@ from .models import (
 
 class SportPreferenceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, sport):
-        if sport.image:
+        if sport.image_url:
             return format_html(
                 '<span class="sport-preference-option">'
                 '<span class="sport-preference-image">'
                 '<img src="{}" alt="" width="20" height="20" loading="lazy">'
                 '</span><span>{}</span></span>',
-                sport.image,
+                sport.image_url,
                 str(sport),
             )
         return format_html(

@@ -1,12 +1,12 @@
 <div class="profile-layout">
-    <form method="post" action="{% url 'cabinet:profile' %}?tab=settings" class="profile-form-card" novalidate>
+    <form method="post" action="{% url 'cabinet:profile' %}?tab=settings" class="profile-form-card profile-edit-form" novalidate>
         {% csrf_token %}
-        <div class="profile-section-heading">
+        <div class="profile-edit-hero">
             <div>
-                <p class="eyebrow">Настройки аккаунта</p>
-                <h2>Личные данные</h2>
+                <h2>Форма редактирования профиля</h2>
+                <p>Обновите информацию о себе, чтобы другим было проще узнать вас и найти в сообществе.</p>
             </div>
-            <button type="submit" class="profile-save-button">Сохранить изменения</button>
+            <div class="profile-edit-hero-art" aria-hidden="true"></div>
         </div>
 
         {% if user_form.non_field_errors or analyst_form.non_field_errors or paid_plan_form.non_field_errors %}
@@ -17,122 +17,222 @@
             </div>
         {% endif %}
 
-        <div class="profile-fields-grid">
-            <label class="profile-field">
-                <span>Логин</span>
-                <div class="profile-readonly">@{{ request.user.username }}</div>
-            </label>
-            <div class="profile-field profile-email-field">
-                <span>Почта</span>
-                <div class="profile-email-control">
-                    <div>
-                        <strong>{{ request.user.email|default:"Почта не указана" }}</strong>
-                        <small>
-                            {% if request.user.email %}
-                                Для смены сначала подтвердите доступ к текущей почте.
-                            {% else %}
-                                Добавьте почту, чтобы получать системные уведомления и восстанавливать доступ.
-                            {% endif %}
-                        </small>
-                    </div>
-                    {% if request.user.email %}
-                        <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
-                    {% else %}
-                        <a class="profile-email-action" href="#profile-email-add-modal">Добавить почту</a>
-                    {% endif %}
-                </div>
+        <nav class="profile-edit-tabs" aria-label="Разделы формы профиля">
+            <a class="is-active" href="#profile-edit-basic" data-profile-edit-tab="basic" aria-controls="profile-edit-basic" aria-selected="true">
+                <span aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0"></path></svg>
+                </span>
+                Основное
+            </a>
+            <a href="#profile-edit-about" data-profile-edit-tab="about" aria-controls="profile-edit-about" aria-selected="false">
+                <span aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4"></path><path d="M9 12h6M9 16h6"></path></svg>
+                </span>
+                О себе
+            </a>
+            <a href="#profile-edit-social" data-profile-edit-tab="social" aria-controls="profile-edit-social" aria-selected="false">
+                <span aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.8-4"></path><path d="M6 14a3 3 0 1 0 2.8 4"></path><path d="M18 16a3 3 0 1 0-2.8 4"></path><path d="M8.7 15.4 15.3 8.6M8.9 18.5l6.2-1"></path></svg>
+                </span>
+                Соцсети
+            </a>
+            <a href="#profile-edit-interests" data-profile-edit-tab="interests" aria-controls="profile-edit-interests" aria-selected="false">
+                <span aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+                </span>
+                Интересы
+            </a>
+        </nav>
+
+        <section class="profile-completion-card profile-settings-completion profile-edit-completion profile-field-full" aria-label="Заполненность профиля">
+            <div>
+                <span>Заполненность профиля</span>
+                <strong>{{ profile_completion }}%</strong>
             </div>
-            <label class="profile-field">
-                <span>{{ user_form.first_name.label }}</span>
-                {{ user_form.first_name }}
-                {{ user_form.first_name.errors }}
-            </label>
-            <label class="profile-field">
-                <span>{{ user_form.last_name.label }}</span>
-                {{ user_form.last_name }}
-                {{ user_form.last_name.errors }}
-            </label>
+            <div class="completion-track" aria-hidden="true">
+                <i></i>
+            </div>
+            <progress class="profile-completion-progress" max="100" value="{{ profile_completion }}">{{ profile_completion }}%</progress>
+        </section>
+
+        <div class="profile-fields-grid profile-edit-grid">
+            <section class="profile-edit-section profile-field-full" id="profile-edit-basic" data-profile-edit-panel="basic">
+                <div class="profile-edit-section-head">
+                    <span class="profile-edit-section-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0"></path></svg>
+                    </span>
+                    <div>
+                        <strong>Личные данные</strong>
+                        <small>Как к вам обращаться и как отображаться в сообществе.</small>
+                    </div>
+                    <span class="profile-edit-visibility-badge">Видно всем</span>
+                </div>
+                <div class="profile-edit-section-grid">
+                    <label class="profile-field">
+                        <span>Логин</span>
+                        <div class="profile-readonly">@{{ request.user.username }}</div>
+                    </label>
+                    <div class="profile-field profile-email-field">
+                        <span>Почта</span>
+                        <div class="profile-email-control">
+                            <div>
+                                <strong>{{ request.user.email|default:"Почта не указана" }}</strong>
+                                <small>
+                                    {% if request.user.email %}
+                                        Для смены сначала подтвердите доступ к текущей почте.
+                                    {% else %}
+                                        Добавьте почту, чтобы получать системные уведомления и восстанавливать доступ.
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% if request.user.email %}
+                                <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
+                            {% else %}
+                                <a class="profile-email-action" href="#profile-email-add-modal">Добавить почту</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <label class="profile-field">
+                        <span>{{ user_form.first_name.label }}</span>
+                        {{ user_form.first_name }}
+                        {{ user_form.first_name.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ user_form.last_name.label }}</span>
+                        {{ user_form.last_name }}
+                        {{ user_form.last_name.errors }}
+                    </label>
+            {% if analyst_form %}
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.display_name.label }}</span>
+                        {{ analyst_form.display_name }}
+                        {{ analyst_form.display_name.errors }}
+                    </label>
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.specialization.label }}</span>
+                        {{ analyst_form.specialization }}
+                        {{ analyst_form.specialization.errors }}
+                        <small>Например: футбольная аналитика, live, тоталы или конкретные чемпионаты.</small>
+                    </label>
+            {% endif %}
+                </div>
+            </section>
 
             {% if analyst_form %}
-                <label class="profile-field profile-field-full">
-                    <span>{{ analyst_form.display_name.label }}</span>
-                    {{ analyst_form.display_name }}
-                    {{ analyst_form.display_name.errors }}
-                </label>
-                <label class="profile-field profile-field-full">
-                    <span>{{ analyst_form.specialization.label }}</span>
-                    {{ analyst_form.specialization }}
-                    {{ analyst_form.specialization.errors }}
-                    <small>Например: футбольная аналитика, live, тоталы или конкретные чемпионаты.</small>
-                </label>
-                <label class="profile-field profile-field-full">
-                    <span>{{ analyst_form.bio.label }}</span>
-                    {{ analyst_form.bio }}
-                    {{ analyst_form.bio.errors }}
-                    <small>До 2000 символов. Расскажите о подходе и опыте.</small>
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.favorite_sports.label }}</span>
-                    {{ analyst_form.favorite_sports }}
-                    {{ analyst_form.favorite_sports.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.favorite_leagues.label }}</span>
-                    {{ analyst_form.favorite_leagues }}
-                    {{ analyst_form.favorite_leagues.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.telegram_channel.label }}</span>
-                    {{ analyst_form.telegram_channel }}
-                    {{ analyst_form.telegram_channel.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.telegram_account.label }}</span>
-                    {{ analyst_form.telegram_account }}
-                    {{ analyst_form.telegram_account.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.instagram.label }}</span>
-                    {{ analyst_form.instagram }}
-                    {{ analyst_form.instagram.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.threads.label }}</span>
-                    {{ analyst_form.threads }}
-                    {{ analyst_form.threads.errors }}
-                </label>
-                <label class="profile-field profile-field-full">
-                    <span>{{ analyst_form.youtube.label }}</span>
-                    {{ analyst_form.youtube }}
-                    {{ analyst_form.youtube.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.tiktok.label }}</span>
-                    {{ analyst_form.tiktok }}
-                    {{ analyst_form.tiktok.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.facebook.label }}</span>
-                    {{ analyst_form.facebook }}
-                    {{ analyst_form.facebook.errors }}
-                </label>
-                <label class="profile-field">
-                    <span>{{ analyst_form.x.label }}</span>
-                    {{ analyst_form.x }}
-                    {{ analyst_form.x.errors }}
-                </label>
-                <div class="profile-visibility profile-field-full">
+            <section class="profile-edit-section profile-field-full" id="profile-edit-about" data-profile-edit-panel="about" hidden>
+                <div class="profile-edit-section-head">
+                    <span class="profile-edit-section-icon is-blue" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"></path><path d="M14 3v4h4"></path><path d="M9 12h6M9 16h6"></path></svg>
+                    </span>
                     <div>
-                        <strong>{{ analyst_form.paid_predictions_enabled.label }}</strong>
-                        <small>Включите продажу платных прогнозов и настройте доступные периоды ниже.</small>
+                        <strong>О себе</strong>
+                        <small>Расскажите немного о себе и своей спортивной специализации.</small>
                     </div>
-                    <label class="switch-control">
-                        {{ analyst_form.paid_predictions_enabled }}
-                        <span></span>
+                    <span class="profile-edit-visibility-badge">Видно всем</span>
+                </div>
+                <div class="profile-edit-section-grid">
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.bio.label }}</span>
+                        {{ analyst_form.bio }}
+                        {{ analyst_form.bio.errors }}
+                        <small>До 2000 символов. Расскажите о подходе и опыте.</small>
                     </label>
                 </div>
+            </section>
+
+            <section class="profile-edit-section profile-field-full" id="profile-edit-interests" data-profile-edit-panel="interests" hidden>
+                <div class="profile-edit-section-head">
+                    <span class="profile-edit-section-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+                    </span>
+                    <div>
+                        <strong>Интересы</strong>
+                        <small>Виды спорта и лиги, по которым вы чаще всего делаете прогнозы.</small>
+                    </div>
+                </div>
+                <div class="profile-edit-section-grid">
+                    <label class="profile-field">
+                        <span>{{ analyst_form.favorite_sports.label }}</span>
+                        {{ analyst_form.favorite_sports }}
+                        {{ analyst_form.favorite_sports.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.favorite_leagues.label }}</span>
+                        {{ analyst_form.favorite_leagues }}
+                        {{ analyst_form.favorite_leagues.errors }}
+                    </label>
+                </div>
+            </section>
+
+            <section class="profile-edit-section profile-field-full" id="profile-edit-social" data-profile-edit-panel="social" hidden>
+                <div class="profile-edit-section-head">
+                    <span class="profile-edit-section-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M18 8a3 3 0 1 0-2.8-4"></path><path d="M6 14a3 3 0 1 0 2.8 4"></path><path d="M18 16a3 3 0 1 0-2.8 4"></path><path d="M8.7 15.4 15.3 8.6M8.9 18.5l6.2-1"></path></svg>
+                    </span>
+                    <div>
+                        <strong>Соцсети</strong>
+                        <small>Ссылки на ваши каналы и аккаунты.</small>
+                    </div>
+                </div>
+                <div class="profile-edit-section-grid">
+                    <label class="profile-field">
+                        <span>{{ analyst_form.telegram_channel.label }}</span>
+                        {{ analyst_form.telegram_channel }}
+                        {{ analyst_form.telegram_channel.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.telegram_account.label }}</span>
+                        {{ analyst_form.telegram_account }}
+                        {{ analyst_form.telegram_account.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.instagram.label }}</span>
+                        {{ analyst_form.instagram }}
+                        {{ analyst_form.instagram.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.threads.label }}</span>
+                        {{ analyst_form.threads }}
+                        {{ analyst_form.threads.errors }}
+                    </label>
+                    <label class="profile-field profile-field-full">
+                        <span>{{ analyst_form.youtube.label }}</span>
+                        {{ analyst_form.youtube }}
+                        {{ analyst_form.youtube.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.tiktok.label }}</span>
+                        {{ analyst_form.tiktok }}
+                        {{ analyst_form.tiktok.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.facebook.label }}</span>
+                        {{ analyst_form.facebook }}
+                        {{ analyst_form.facebook.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ analyst_form.x.label }}</span>
+                        {{ analyst_form.x }}
+                        {{ analyst_form.x.errors }}
+                    </label>
+                </div>
+            </section>
+
+            <section class="profile-edit-section profile-field-full">
+                <div class="profile-edit-section-grid">
+                    <div class="profile-visibility profile-field-full" data-paid-predictions-toggle>
+                        <div>
+                            <strong>{{ analyst_form.paid_predictions_enabled.label }}</strong>
+                            <small>Включите продажу платных прогнозов и настройте доступные периоды ниже.</small>
+                        </div>
+                        <label class="switch-control">
+                            {{ analyst_form.paid_predictions_enabled }}
+                            <span></span>
+                        </label>
+                    </div>
+                </div>
                 {% if paid_plan_form %}
-                <section class="profile-paid-plans profile-field-full" aria-labelledby="profile-paid-plans-title">
+                <section class="profile-paid-plans profile-field-full{% if not analyst_form.paid_predictions_enabled.value %} is-collapsed{% endif %}" aria-labelledby="profile-paid-plans-title" data-paid-predictions-plans>
                     <div class="profile-paid-plans-head">
                         <div>
                             <span class="eyebrow">Тарифы</span>
@@ -159,22 +259,28 @@
                         </div>
                         {% endfor %}
                     </div>
+                    <div class="profile-paid-plans-art" aria-hidden="true">
+                    </div>
                 </section>
                 {% endif %}
-                <div class="profile-visibility profile-field-full">
-                    <div>
-                        <strong>Публичный профиль</strong>
-                        <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
+                <div class="profile-edit-section-grid">
+                    <div class="profile-visibility profile-field-full">
+                        <div>
+                            <strong>Публичный профиль</strong>
+                            <small>Разрешить другим пользователям видеть вашу публичную страницу.</small>
+                        </div>
+                        <label class="switch-control">
+                            {{ analyst_form.is_public }}
+                            <span></span>
+                        </label>
                     </div>
-                    <label class="switch-control">
-                        {{ analyst_form.is_public }}
-                        <span></span>
-                    </label>
                 </div>
+            </section>
             {% endif %}
         </div>
 
-        <div class="profile-mobile-save">
+        <div class="profile-edit-actions profile-mobile-save">
+            <a class="profile-edit-cancel" href="{% url 'cabinet:profile' %}?tab=profile">Отмена</a>
             <button type="submit" class="profile-save-button">Сохранить изменения</button>
         </div>
     </form>
@@ -248,9 +354,9 @@
         </section>
     </div>
 
-    <aside class="profile-side-column">
+    <aside class="profile-side-column profile-settings-dashboard">
         {% if not request.user.is_analyst %}
-        <section class="profile-side-card">
+        <section class="profile-side-card profile-settings-panel is-user">
             <p class="eyebrow">Для экспертов</p>
             <div class="profile-side-title heading-style-h3">Хотите стать каппером?</div>
             <p class="profile-telegram-copy">Заполните короткий профиль эксперта, получите публичную страницу, рейтинг и автоматическую статистику.</p>
@@ -258,7 +364,7 @@
         </section>
         {% endif %}
 
-        <section class="profile-side-card profile-telegram-card">
+        <section class="profile-side-card profile-telegram-card profile-settings-panel is-telegram">
             <div class="profile-telegram-head">
                 <span class="profile-telegram-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M21 4 3.6 10.8c-1 .39-.95 1.83.08 2.14l4.24 1.28 1.62 5.1c.31.98 1.63 1.16 2.19.3l2.32-3.58 4.56 3.34c.83.61 2.01.13 2.18-.89L23 5.33C23.16 4.35 21.91 3.65 21 4Zm-3.77 4.02-7.7 6.83-.29 2.11-1.02-3.21 9.01-5.73Z"></path></svg>
@@ -298,14 +404,32 @@
             {% endif %}
         </section>
 
-        <section class="profile-side-card">
+        <section class="profile-side-card profile-settings-panel is-notifications">
             <p class="eyebrow">Уведомления</p>
             <div class="profile-side-title heading-style-h3">Настройки событий</div>
             <p class="profile-telegram-copy">Выберите, какие уведомления о бонусах, прогнозах и матчах хотите получать.</p>
+            <div class="profile-settings-notification-list" aria-hidden="true">
+                <div>
+                    <span>Новые прогнозы</span>
+                    <i class="is-on"></i>
+                </div>
+                <div>
+                    <span>Бонусы и акции</span>
+                    <i class="is-on"></i>
+                </div>
+                <div>
+                    <span>Новости и обновления</span>
+                    <i></i>
+                </div>
+                <div>
+                    <span>Напоминания о матчах</span>
+                    <i class="is-on"></i>
+                </div>
+            </div>
             <a class="profile-telegram-connect" href="{% url 'notifications:center' %}">Настроить уведомления</a>
         </section>
 
-        <section class="profile-side-card">
+        <section class="profile-side-card profile-settings-panel is-account">
             <p class="eyebrow">Аккаунт</p>
             <div class="profile-side-title heading-style-h3">Информация</div>
             <dl class="profile-info-list">
@@ -316,7 +440,7 @@
             </dl>
         </section>
 
-        <section class="profile-side-card">
+        <section class="profile-side-card profile-settings-panel is-danger">
             <p class="eyebrow">Опасная зона</p>
             <div class="profile-side-title heading-style-h3">Удаление аккаунта</div>
             <p class="profile-telegram-copy">Аккаунт и связанные данные будут удалены без возможности восстановления.</p>

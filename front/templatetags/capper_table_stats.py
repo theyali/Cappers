@@ -45,41 +45,9 @@ def _shape_sparse_values(values: list[float]) -> list[float]:
     values = list(values[-8:])
     if not values:
         return [0.0, 0.0]
-    if len(values) >= 5:
-        return values
-
     if len(values) == 1:
-        final = values[0]
-        if final == 0:
-            return [0.0, 0.12, -0.06, 0.10, -0.03, 0.07, 0.02, 0.0]
-        factors = (0.0, 0.18, 0.13, 0.36, 0.31, 0.57, 0.73, 1.0)
-        return [final * factor for factor in factors]
-
-    target_count = 8
-    wiggle_pattern = (0.0, 0.34, -0.24, 0.42, -0.20, 0.30, -0.14, 0.0)
-    value_span = max(values) - min(values)
-    total_delta = values[-1] - values[0]
-    amplitude = max(
-        abs(total_delta) * 0.10,
-        value_span * 0.08,
-        max(abs(value) for value in values) * 0.02,
-        0.15,
-    )
-
-    shaped = []
-    last_segment = len(values) - 2
-    for index in range(target_count):
-        position = index * (len(values) - 1) / (target_count - 1)
-        left = min(int(position), last_segment)
-        fraction = position - left
-        base = values[left] + (values[left + 1] - values[left]) * fraction
-        if 0 < index < target_count - 1:
-            base += wiggle_pattern[index] * amplitude
-        shaped.append(base)
-
-    shaped[0] = values[0]
-    shaped[-1] = values[-1]
-    return shaped
+        return [0.0, values[0]]
+    return values
 
 
 def _sparkline(values: list[float]) -> dict:
@@ -102,13 +70,13 @@ def _sparkline(values: list[float]) -> dict:
         y = padding + ((high - value) / (high - low)) * usable_height
         points.append(f"{x:.1f},{y:.1f}")
 
-    delta = values[-1] - values[0]
-    if delta > 0:
+    current = values[-1]
+    if current > 0:
         tone = "positive"
-    elif delta < 0:
+    elif current < 0:
         tone = "negative"
     else:
-        tone = "positive" if values[-1] > 0 else "negative" if values[-1] < 0 else "neutral"
+        tone = "neutral"
 
     return {"points": " ".join(points), "tone": tone}
 

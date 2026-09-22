@@ -7,7 +7,6 @@
 
 {% block content %}
 {% capper_table_hero_stats as hero_stats %}
-{% capper_table_trends ranking_rows selected_sport_code as capper_trends %}
 <section class="predictions-page predictions-scroll-page container" aria-labelledby="cappers-table-title">
     <div class="predictions-layout">
         <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Фильтры рейтинга капперов">
@@ -62,7 +61,7 @@
             <header class="cappers-table-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/cappers_hero.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
                 <div>
                     <p class="cappers-table-eyebrow">Рейтинг прогнозистов</p>
-                    <h1 id="cappers-table-title">Таблица капперов</h1>
+                    <h1 id="cappers-table-title" data-cappers-table-title>Таблица капперов{% if not period_is_all %} — {{ selected_month_label }}{% endif %}</h1>
                     <p>Лучшие прогнозисты на одном экране. Реальная статистика, прибыль, ROI и результаты за каждый месяц.</p>
                     <div class="profile-hero-stats" aria-label="Статистика рейтинга">
                         <div class="cappers-ranking-expert">
@@ -96,177 +95,7 @@
                 </div>
             </header>
 
-            <div class="cappers-ranking-toolbar">
-                <div>
-                    <h2>Прогнозисты</h2>
-                    <span>{{ selected_month_label }} · {{ selected_sport_name }}</span>
-                    {% if period_is_all %}
-                    <span title="Общий рейтинг строится по индексу доверия.">Общий рейтинг по индексу доверия.</span>
-                    {% else %}
-                    <span title="Рейтинг строится по результатам выбранного месяца, индекс доверия используется как дополнительный фактор.">Рейтинг за {{ selected_month_label }} по месячным результатам.</span>
-                    {% endif %}
-                </div>
-
-                <details class="cappers-period-filter">
-                    <summary>
-                        <span>{{ selected_month_label }}</span>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
-                    </summary>
-                    <div class="cappers-period-menu">
-                        {% for option in month_options %}
-                        <a class="{% if option.value == selected_month_value %}is-active{% endif %}" href="{{ option.url }}">
-                            <span>{{ option.label }}</span>
-                            {% if option.value == selected_month_value %}
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
-                            {% endif %}
-                        </a>
-                        {% endfor %}
-                    </div>
-                </details>
-            </div>
-
-            <form class="cappers-ranking-search" method="get" action="{{ current_table_url }}" role="search">
-                <label>
-                    <span class="cappers-ranking-search-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path></svg>
-                    </span>
-                    <input type="search" name="q" value="{{ search_query }}" placeholder="Найти прогнозиста" autocomplete="off">
-                </label>
-                <button type="submit">Найти</button>
-            </form>
-
-            {% if ranking_rows %}
-            <div>
-                <table class="cappers-ranking-table">
-                    <thead>
-                        <tr>
-                            <th class="is-rank">#</th>
-                            <th>Прогнозист</th>
-                            <th title="Общий индекс">Индекс</th>
-                            <th aria-label="Динамика"></th>
-                            <th class="is-profit">Прибыль</th>
-                            <th class="is-result is-win" title="Выигрыши">W</th>
-                            <th class="is-result is-loss" title="Проигрыши">L</th>
-                            <th class="is-result" title="Возвраты">=</th>
-                            <th title="Средний коэффициент">Кф</th>
-                            <th title="Проходимость">Прох.</th>
-                            <th>ROI</th>
-                            <th class="is-followers">Подписчики</th>
-                            <th aria-label="Профиль"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for expert in ranking_rows %}
-                        <tr>
-                            <td class="is-rank">
-                                <span class="cappers-ranking-position">
-                                    {% if expert.rank == 1 %}
-                                    <svg viewBox="0 0 26 26" width="26" height="26" role="img" aria-label="1 место">
-                                        <defs>
-                                            <linearGradient id="capper-rank-gold" x1="0" y1="0" x2="1" y2="1">
-                                                <stop offset="0%" stop-color="#BF953F"/>
-                                                <stop offset="25%" stop-color="#FCF6BA"/>
-                                                <stop offset="50%" stop-color="#B38728"/>
-                                                <stop offset="75%" stop-color="#FBF5B7"/>
-                                                <stop offset="100%" stop-color="#AA771C"/>
-                                            </linearGradient>
-                                        </defs>
-                                        <rect width="26" height="26" rx="8" fill="url(#capper-rank-gold)"/>
-                                        <text x="13" y="13" text-anchor="middle" dominant-baseline="central" fill="#131313" font-size="12" font-weight="800">1</text>
-                                    </svg>
-                                    {% elif expert.rank == 2 %}
-                                    <svg viewBox="0 0 26 26" width="26" height="26" role="img" aria-label="2 место">
-                                        <defs>
-                                            <linearGradient id="capper-rank-silver" x1="0" y1="0" x2="1" y2="1">
-                                                <stop offset="0%" stop-color="#EBEBEB"/>
-                                                <stop offset="40%" stop-color="#CFCFCF"/>
-                                                <stop offset="60%" stop-color="#FFFFFF"/>
-                                                <stop offset="100%" stop-color="#A8A8A8"/>
-                                            </linearGradient>
-                                        </defs>
-                                        <rect width="26" height="26" rx="8" fill="url(#capper-rank-silver)"/>
-                                        <text x="13" y="13" text-anchor="middle" dominant-baseline="central" fill="#131313" font-size="12" font-weight="800">2</text>
-                                    </svg>
-                                    {% elif expert.rank == 3 %}
-                                    <svg viewBox="0 0 26 26" width="26" height="26" role="img" aria-label="3 место">
-                                        <defs>
-                                            <linearGradient id="capper-rank-bronze" x1="0" y1="0" x2="1" y2="1">
-                                                <stop offset="0%" stop-color="#B87333"/>
-                                                <stop offset="35%" stop-color="#E69A64"/>
-                                                <stop offset="70%" stop-color="#8D4E1B"/>
-                                                <stop offset="100%" stop-color="#D17A3D"/>
-                                            </linearGradient>
-                                        </defs>
-                                        <rect width="26" height="26" rx="8" fill="url(#capper-rank-bronze)"/>
-                                        <text x="13" y="13" text-anchor="middle" dominant-baseline="central" fill="#131313" font-size="12" font-weight="800">3</text>
-                                    </svg>
-                                    {% else %}
-                                    {{ expert.rank }}
-                                    {% endif %}
-                                </span>
-                            </td>
-                            <td>
-                                <a class="cappers-ranking-expert" href="{% url 'front:expert_profile' expert.username %}">
-                                    <span class="cappers-ranking-avatar{% if expert.is_vip %} is-vip{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
-                                        {% if expert.avatar_url %}
-                                            <img src="{{ expert.avatar_url }}" width="34" height="34" loading="lazy" alt="">
-                                        {% else %}
-                                            <strong>{{ expert.initials }}</strong>
-                                        {% endif %}
-                                    </span>
-                                    <span class="cappers-ranking-name">
-                                        <strong>
-                                            {{ expert.name }}
-                                            {% if expert.is_verified %}
-                                            <span class="capper-verified-badge prediction-table-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                                                <svg viewBox="0 0 16 16" aria-hidden="true">
-                                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
-                                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
-                                                </svg>
-                                            </span>
-                                            {% endif %}
-                                            {% if expert.is_vip %}<span class="cappers-ranking-vip">VIP</span>{% endif %}
-                                        </strong>
-                                        <small class="cappers-ranking-presence">@{{ expert.username }}</small>
-                                    </span>
-                                </a>
-                            </td>
-                            <td>{% capper_trust_badge expert.trust_index %}</td>
-                            {% with trend=capper_trends|dict_get:expert.id %}
-                            <td>
-                                <div class="prediction-table-bank-chart cappers-ranking-profit{% if trend.tone == 'positive' %} is-positive{% elif trend.tone == 'negative' %} is-negative{% endif %}" aria-label="Динамика ROI">
-                                    <svg viewBox="0 0 88 34" width="88" height="34" role="img" aria-label="Динамика ROI">
-                                        <polyline points="{{ trend.points|default:'3,17 85,17' }}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                                    </svg>
-                                </div>
-                            </td>
-                            {% endwith %}
-                            <td class="is-profit">
-                                <strong class="cappers-ranking-profit{% if expert.flat_profit_percent > 0 %} is-positive{% elif expert.flat_profit_percent < 0 %} is-negative{% endif %}">{% if expert.flat_profit_percent > 0 %}+{% endif %}{{ expert.flat_profit_percent|floatformat:1 }}%</strong>
-                            </td>
-                            <td class="is-result is-win">{{ expert.wins }}</td>
-                            <td class="is-result is-loss">{{ expert.losses }}</td>
-                            <td class="is-result">{{ expert.refunds }}</td>
-                            <td>{{ expert.avg_coefficient|floatformat:2 }}</td>
-                            <td>{{ expert.hit_rate|floatformat:1 }}%</td>
-                            <td><strong class="cappers-ranking-roi{% if expert.roi > 0 %} is-positive{% elif expert.roi < 0 %} is-negative{% endif %}">{% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%</strong></td>
-                            <td class="is-followers">{{ expert.followers|compact_count }}</td>
-                            <td>
-                                <a class="prediction-table-action prediction-table-status is-refund" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
-                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="cappers-table-empty">
-                <h2>Нет прогнозистов для этого фильтра</h2>
-                <p>Выбери другой месяц, вид спорта, тип рейтинга или очисти поиск.</p>
-            </div>
-            {% endif %}
+            {% include "front/includes/_cappers_ranking_region.html" %}
         </div>
 
         <div class="predictions-ad-sidebar cappers-side-column">
@@ -349,4 +178,5 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
+<script src="{% static 'front/js/cappers-table.js' %}" defer></script>
 {% endblock %}

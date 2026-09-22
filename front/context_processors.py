@@ -196,7 +196,6 @@ def _breadcrumbs_for_request(request):
         "front:bonuses": [{"title": "Бонусы"}],
         "front:sports_news": [{"title": "Новости спорта"}],
         "front:articles": [{"title": "Статьи"}],
-        "front:cappers_stats": [{"title": "Капперы"}],
         "front:cappers_table": [{"title": "Капперы"}],
         "front:how_it_works": [{"title": "Как пользоваться"}],
         "front:wiki": [{"title": "Wiki"}],
@@ -213,7 +212,7 @@ def _breadcrumbs_for_request(request):
             {"title": "Прогноз"},
         ],
         "front:expert_profile": [
-            {"title": "Капперы", "url": _route_url("front:cappers_stats")},
+            {"title": "Капперы", "url": _route_url("front:cappers_table")},
             {"title": match.kwargs.get("username", "Профиль")},
         ],
         "tournaments:detail": [

@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.paid_predictions import active_paid_subscription_analyst_ids
+from cabinet.vip import annotate_vip_status
 from game.models import Prediction, PredictionCoupon
 
 from .expert_ranking import ranked_expert_profiles
@@ -39,6 +40,14 @@ MAX_CONSECUTIVE_AUTHOR_CARDS = 3
 PREDICTIONS_META_CACHE_TTL = 60
 PREDICTION_TYPE_CLASSIC = "classic"
 PREDICTION_TYPE_RICH = "rich"
+PREDICTION_TYPE_VIP = "vip"
+PREDICTION_TYPE_PAID = "paid"
+PREDICTION_TYPE_CHOICES = {
+    PREDICTION_TYPE_CLASSIC,
+    PREDICTION_TYPE_RICH,
+    PREDICTION_TYPE_VIP,
+    PREDICTION_TYPE_PAID,
+}
 
 
 def _catalog_cache_key(namespace: str, *parts) -> str:
@@ -71,7 +80,7 @@ def build_prediction_type_context(
         "prediction_type",
         PREDICTION_TYPE_CLASSIC,
     )
-    if active_prediction_type not in {PREDICTION_TYPE_CLASSIC, PREDICTION_TYPE_RICH}:
+    if active_prediction_type not in PREDICTION_TYPE_CHOICES:
         active_prediction_type = PREDICTION_TYPE_CLASSIC
 
     params = request.GET.copy()
@@ -94,18 +103,39 @@ def build_prediction_type_context(
         rich_params["prediction_type"] = PREDICTION_TYPE_RICH
         rich_url = _url_with_query(request.path, rich_params)
 
+    vip_params = params.copy()
+    vip_params["prediction_type"] = PREDICTION_TYPE_VIP
+    paid_params = params.copy()
+    paid_params["prediction_type"] = PREDICTION_TYPE_PAID
+    vip_url = _url_with_query(
+        _classic_path(sport_code, express_only=express_only)
+        if use_catalog_pretty_urls
+        else request.path,
+        vip_params,
+    )
+    paid_url = _url_with_query(
+        _classic_path(sport_code, express_only=express_only)
+        if use_catalog_pretty_urls
+        else request.path,
+        paid_params,
+    )
+
     reset_params = request.GET.copy()
     reset_params.clear()
     if active_prediction_type == PREDICTION_TYPE_RICH and not use_catalog_pretty_urls:
         reset_params["prediction_type"] = PREDICTION_TYPE_RICH
+    elif active_prediction_type in {PREDICTION_TYPE_VIP, PREDICTION_TYPE_PAID}:
+        reset_params["prediction_type"] = active_prediction_type
+
+    prediction_format = (
+        PredictionCoupon.PredictionFormat.RICH
+        if active_prediction_type in {PREDICTION_TYPE_RICH, PREDICTION_TYPE_PAID}
+        else PredictionCoupon.PredictionFormat.QUICK
+    )
 
     return {
         "active_prediction_type": active_prediction_type,
-        "prediction_format": (
-            PredictionCoupon.PredictionFormat.RICH
-            if active_prediction_type == PREDICTION_TYPE_RICH
-            else PredictionCoupon.PredictionFormat.QUICK
-        ),
+        "prediction_format": prediction_format,
         "prediction_type_tabs": [
             {
                 "key": PREDICTION_TYPE_CLASSIC,
@@ -119,6 +149,18 @@ def build_prediction_type_context(
                 "href": rich_url,
                 "active": active_prediction_type == PREDICTION_TYPE_RICH,
             },
+            {
+                "key": PREDICTION_TYPE_VIP,
+                "label": "VIP прогнозы",
+                "href": vip_url,
+                "active": active_prediction_type == PREDICTION_TYPE_VIP,
+            },
+            {
+                "key": PREDICTION_TYPE_PAID,
+                "label": "Платные",
+                "href": paid_url,
+                "active": active_prediction_type == PREDICTION_TYPE_PAID,
+            },
         ],
         "prediction_type_reset_url": _url_with_query(
             (
@@ -130,8 +172,16 @@ def build_prediction_type_context(
             else request.path,
             reset_params,
         ),
-        "is_rich_predictions": active_prediction_type == PREDICTION_TYPE_RICH,
-        "uses_prediction_type_query": not use_catalog_pretty_urls,
+        "is_rich_predictions": active_prediction_type in {
+            PREDICTION_TYPE_RICH,
+            PREDICTION_TYPE_PAID,
+        },
+        "is_vip_predictions": active_prediction_type == PREDICTION_TYPE_VIP,
+        "is_paid_predictions": active_prediction_type == PREDICTION_TYPE_PAID,
+        "uses_prediction_type_query": (
+            not use_catalog_pretty_urls
+            or active_prediction_type in {PREDICTION_TYPE_VIP, PREDICTION_TYPE_PAID}
+        ),
     }
 
 
@@ -151,12 +201,35 @@ def _express_published_items(published_items):
     )
 
 
-def _catalog_meta_queryset():
+def _paid_access_q(user) -> Q:
+    if not getattr(user, "is_authenticated", False):
+        return Q(pk__isnull=True)
+    paid_analyst_ids = active_paid_subscription_analyst_ids(user)
+    return Q(author_id=user.pk) | Q(author_id__in=paid_analyst_ids)
+
+
+def apply_prediction_type_scope(queryset, active_prediction_type: str, user):
+    if active_prediction_type == PREDICTION_TYPE_PAID:
+        return queryset.filter(
+            _paid_access_q(user),
+            audience=PredictionCoupon.Audience.PAID,
+        )
+    queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
+    if active_prediction_type == PREDICTION_TYPE_VIP:
+        queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
+        queryset = queryset.filter(is_vip_active=True)
+    return queryset
+
+
+def _catalog_meta_queryset(*, include_paid: bool = False):
     """Cheap coupon queryset for status/count metadata without card hydration/ROI."""
-    return PredictionCoupon.objects.filter(
+    queryset = PredictionCoupon.objects.filter(
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        audience=PredictionCoupon.Audience.FREE,
-    ).annotate(combined_coefficient=_combined_coefficient_expression())
+    )
+    if not include_paid:
+        queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
+    queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
+    return queryset.annotate(combined_coefficient=_combined_coefficient_expression())
 
 
 def get_rich_predictions_queryset(user=None):
@@ -184,12 +257,14 @@ def _filter_options(
     *,
     express_only: bool,
     prediction_type: str,
+    cache_scope: str | int = "",
 ):
     cache_key = _catalog_cache_key(
         "filters",
         selected_sport,
         express_only,
         prediction_type,
+        cache_scope,
     )
     cached = cache.get(cache_key)
     if cached is not None:
@@ -254,17 +329,23 @@ def _sport_tabs(
     *,
     express_only: bool,
     prediction_format: str,
+    prediction_type: str,
+    cache_scope: str | int = "",
 ):
     params = _clean_prediction_params(request.GET)
     params.pop("league", None)
     params.pop("express", None)
     params.pop("prediction_type", None)
-    is_rich = prediction_format == PredictionCoupon.PredictionFormat.RICH
+    if prediction_type in {PREDICTION_TYPE_VIP, PREDICTION_TYPE_PAID}:
+        params["prediction_type"] = prediction_type
+    uses_rich_path = prediction_type == PREDICTION_TYPE_RICH
 
     cache_key = _catalog_cache_key(
         "sport-tabs",
         express_only,
         prediction_format,
+        prediction_type,
+        cache_scope,
     )
     cached = cache.get(cache_key)
     if cached is None:
@@ -281,12 +362,9 @@ def _sport_tabs(
             .order_by("match__sport__name_ru", "match__sport__name")
         )
         all_count = published_items.values("coupon_id").distinct().count()
-        express_count = PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon_type=PredictionCoupon.CouponType.EXPRESS,
-            audience=PredictionCoupon.Audience.FREE,
-            prediction_format=prediction_format,
-        ).count()
+        express_count = _express_published_items(published_items).values(
+            "coupon_id"
+        ).distinct().count()
         cached = {
             "rows": rows,
             "all_count": all_count,
@@ -299,7 +377,10 @@ def _sport_tabs(
             "code": "",
             "label": "Все",
             "count": cached["all_count"],
-            "href": _url_with_query(_rich_path() if is_rich else _prediction_sport_path(), params),
+            "href": _url_with_query(
+                _rich_path() if uses_rich_path else _prediction_sport_path(),
+                params,
+            ),
             "active": active_sport is None and not express_only,
         },
         {
@@ -307,7 +388,7 @@ def _sport_tabs(
             "label": "Экспрессы",
             "count": cached["express_count"],
             "href": _url_with_query(
-                _rich_path(express_only=True) if is_rich else _express_path(),
+                _rich_path(express_only=True) if uses_rich_path else _express_path(),
                 params,
             ),
             "active": express_only,
@@ -322,7 +403,7 @@ def _sport_tabs(
                 "label": row["match__sport__name_ru"] or row["match__sport__name"] or code,
                 "count": row["count"],
                 "href": _url_with_query(
-                    _rich_path(code) if is_rich else _prediction_sport_path(code),
+                    _rich_path(code) if uses_rich_path else _prediction_sport_path(code),
                     params,
                 ),
                 "active": bool(active_sport and active_sport.pk == row["match__sport_id"]),
@@ -522,6 +603,8 @@ def predictions(
         express_only=express_only,
     )
     prediction_format = prediction_type_context["prediction_format"]
+    active_prediction_type = prediction_type_context["active_prediction_type"]
+    is_paid_predictions = prediction_type_context["is_paid_predictions"]
 
     if express_only:
         active_sport = None
@@ -562,13 +645,26 @@ def predictions(
     top_profiles = ranked_expert_profiles(limit=TOP_EXPERTS_LIMIT)
     top_expert_ids = [profile.user_id for profile in top_profiles]
 
+    base_meta_queryset = apply_prediction_type_scope(
+        _catalog_meta_queryset(include_paid=is_paid_predictions).filter(
+            prediction_format=prediction_format
+        ),
+        active_prediction_type,
+        request.user,
+    )
+
     published_items = Prediction.objects.filter(
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        coupon__audience=PredictionCoupon.Audience.FREE,
+        coupon__in=base_meta_queryset.values("pk"),
         coupon__prediction_format=prediction_format,
     )
 
-    filtered = _published_queryset().filter(prediction_format=prediction_format)
+    filtered = apply_prediction_type_scope(
+        _published_queryset(include_paid=is_paid_predictions).filter(
+            prediction_format=prediction_format
+        ),
+        active_prediction_type,
+        request.user,
+    )
     filtered = _apply_position_filters(
         filtered,
         selected_sport=selected_sport,
@@ -578,7 +674,7 @@ def predictions(
         express_only=express_only,
     )
     meta_filtered = _apply_position_filters(
-        _catalog_meta_queryset().filter(prediction_format=prediction_format),
+        base_meta_queryset,
         selected_sport=selected_sport,
         selected_league=selected_league,
         only_live=only_live,
@@ -611,7 +707,7 @@ def predictions(
             only_live,
             only_today,
             express_only,
-            prediction_type_context["active_prediction_type"],
+            active_prediction_type,
             top_experts_only,
             tuple(top_expert_ids),
         ),
@@ -667,7 +763,8 @@ def predictions(
         published_items,
         selected_sport,
         express_only=express_only,
-        prediction_type=prediction_type_context["active_prediction_type"],
+        prediction_type=active_prediction_type,
+        cache_scope=request.user.pk if is_paid_predictions else "",
     )
 
     params_without_page = _clean_prediction_params(request.GET)
@@ -703,6 +800,8 @@ def predictions(
             active_sport.code if active_sport else None,
             express_only=express_only,
         )
+    if prediction_type_context["uses_prediction_type_query"]:
+        filter_action_url = prediction_type_context["prediction_type_reset_url"]
 
     return render(
         request,
@@ -716,6 +815,8 @@ def predictions(
                 active_sport,
                 express_only=express_only,
                 prediction_format=prediction_format,
+                prediction_type=active_prediction_type,
+                cache_scope=request.user.pk if is_paid_predictions else "",
             ),
             "top_experts_tab": _top_experts_tab(
                 request,
@@ -746,6 +847,9 @@ def predictions(
             "all_predictions_url": (
                 _rich_path()
                 if prediction_type_context["is_rich_predictions"]
+                and not prediction_type_context["uses_prediction_type_query"]
+                else prediction_type_context["prediction_type_reset_url"]
+                if prediction_type_context["uses_prediction_type_query"]
                 else _prediction_sport_path()
             ),
             "adv_placement": "sidebar",
