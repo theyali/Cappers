@@ -20303,6 +20303,630 @@ body.register footer {
     background: #121418;
 }
 
+
+#profile-tab-earnings .earnings-dashboard {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+}
+#profile-tab-earnings .earnings-dashboard strong,
+#profile-tab-earnings .earnings-dashboard b,
+#profile-tab-earnings .earnings-dashboard h2,
+#profile-tab-earnings .earnings-dashboard h3,
+#profile-tab-earnings .earnings-dashboard a {
+    font-weight: 600;
+}
+.earnings-top-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.68fr);
+    gap: 12px;
+}
+.earnings-hero,
+.earnings-kpis,
+.earnings-subscribers-card,
+.earnings-period-card,
+.earnings-sources-card,
+.earnings-table-card {
+    min-width: 0;
+    border-radius: 16px;
+    background: #17191d;
+}
+.earnings-hero {
+    min-height: 278px;
+    display: grid;
+    grid-template-columns: minmax(210px, 0.72fr) minmax(260px, 0.78fr);
+    align-items: stretch;
+    gap: 16px;
+    padding: 22px;
+    background-color: #11151b;
+    background-image: url("../img/money.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+.earnings-kicker {
+    display: block;
+    color: var(--yellow);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+.earnings-hero-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.earnings-hero-copy h2 {
+    max-width: 300px;
+    margin: 10px 0 0;
+    color: #f6f6f7;
+    font-size: 17px;
+    line-height: 1.18;
+}
+.earnings-hero-copy > p {
+    max-width: 330px;
+    margin: 11px 0 0;
+    color: #9698a0;
+    font-size: 10px;
+    line-height: 1.5;
+}
+.earnings-primary-action {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: auto;
+    padding: 0 17px;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--blue);
+    font-size: 10px;
+    text-decoration: none;
+}
+.earnings-primary-action > span:last-child {
+    font-size: 17px;
+    line-height: 1;
+}
+.earnings-hero-summary {
+    min-width: 0;
+    align-self: end;
+    padding: 0 0 0 10px;
+}
+.earnings-hero-summary > span {
+    color: #9a9ca3;
+    font-size: 10px;
+}
+.earnings-hero-summary > strong {
+    display: block;
+    margin-top: 5px;
+    color: var(--yellow);
+    font-size: 17px;
+    line-height: 1;
+}
+.earnings-hero-summary > small {
+    display: block;
+    margin-top: 9px;
+    font-size: 9px;
+}
+.earnings-hero-summary > small > span {
+    margin-left: 5px;
+    color: #85878e;
+}
+.earnings-dashboard .is-positive {
+    color: #62dc58;
+}
+.earnings-dashboard .is-negative {
+    color: #ff696f;
+}
+.earnings-dashboard .is-neutral {
+    color: #8d8f96;
+}
+.earnings-payout-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 17px;
+    padding: 13px;
+    border-radius: 11px;
+    background: #202329;
+}
+.earnings-payout-summary > div {
+    min-width: 0;
+    padding: 0 12px;
+}
+.earnings-payout-summary > div:first-child {
+    padding-left: 0;
+    box-shadow: inset -1px 0 rgba(255, 255, 255, 0.08);
+}
+.earnings-payout-summary span,
+.earnings-payout-summary small {
+    display: block;
+    color: #8c8e95;
+    font-size: 8px;
+}
+.earnings-payout-summary strong {
+    display: block;
+    margin-top: 6px;
+    color: #f4f4f5;
+    font-size: 13px;
+}
+.earnings-payout-summary small {
+    margin-top: 5px;
+}
+.earnings-kpis {
+    padding: 14px;
+}
+.earnings-kpis > .earnings-kicker {
+    margin: 0 0 9px 2px;
+}
+.earnings-kpi-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 64px;
+    padding: 9px 10px;
+    border-radius: 11px;
+    background: #202329;
+}
+.earnings-kpi-row + .earnings-kpi-row {
+    margin-top: 8px;
+}
+.earnings-kpi-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #e7e8eb;
+    background: #2b2e34;
+}
+.earnings-kpi-icon svg {
+    width: 23px;
+    height: 23px;
+}
+.earnings-kpi-row > div {
+    min-width: 0;
+}
+.earnings-kpi-row > div span,
+.earnings-kpi-row > small span {
+    display: block;
+    color: #909299;
+    font-size: 8px;
+}
+.earnings-kpi-row > div strong {
+    display: block;
+    margin-top: 4px;
+    overflow: hidden;
+    color: #f3f4f5;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.earnings-kpi-row > small {
+    min-width: 72px;
+    padding-left: 10px;
+    box-shadow: inset 1px 0 rgba(255, 255, 255, 0.08);
+    font-size: 10px;
+    font-weight: 600;
+}
+.earnings-kpi-row > small span {
+    margin-top: 5px;
+    white-space: nowrap;
+}
+.earnings-middle-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(330px, 0.86fr);
+    gap: 12px;
+}
+.earnings-subscribers-card,
+.earnings-period-card,
+.earnings-sources-card,
+.earnings-table-card {
+    padding: 15px;
+}
+.earnings-section-head {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.earnings-section-head > a,
+.earnings-table-period {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: #d9dade;
+    background: #22252a;
+    font-size: 8px;
+    text-decoration: none;
+}
+.earnings-subscribers-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 12px;
+}
+.earnings-subscriber {
+    min-width: 0;
+    min-height: 50px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 9px;
+    background: #202329;
+}
+.earnings-subscriber-avatar {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    color: #fff;
+    background: #315ec4;
+    font-size: 9px;
+    font-weight: 600;
+}
+.earnings-subscriber-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+.earnings-subscriber-copy {
+    min-width: 0;
+}
+.earnings-subscriber-copy strong,
+.earnings-subscriber-copy span,
+.earnings-subscriber-expiry span,
+.earnings-subscriber-expiry small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.earnings-subscriber-copy strong {
+    color: #f2f2f3;
+    font-size: 9px;
+}
+.earnings-subscriber-copy span,
+.earnings-subscriber-expiry span,
+.earnings-subscriber-expiry small {
+    margin-top: 3px;
+    color: #83858c;
+    font-size: 7px;
+}
+.earnings-plan-badge {
+    min-height: 23px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    color: #151515;
+    background: var(--yellow);
+    font-size: 7px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.earnings-subscriber-expiry {
+    min-width: 68px;
+    text-align: right;
+}
+.earnings-period-card > .earnings-kicker {
+    margin-bottom: 12px;
+}
+.earnings-period-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+.earnings-period-grid article {
+    min-width: 0;
+    min-height: 164px;
+    padding: 11px;
+    border-radius: 10px;
+    background: #202329;
+}
+.earnings-period-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 9px;
+    border-radius: 8px;
+    color: #d8d9dc;
+    background: #2b2e34;
+}
+.earnings-period-icon svg {
+    width: 18px;
+    height: 18px;
+}
+.earnings-period-grid article > span:not(.earnings-period-icon) {
+    display: block;
+    color: #9b9da4;
+    font-size: 8px;
+}
+.earnings-period-grid article > strong {
+    display: block;
+    margin-top: 8px;
+    color: #f5f5f6;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.earnings-period-grid article > small {
+    display: block;
+    margin-top: 12px;
+    font-size: 9px;
+    font-weight: 600;
+}
+.earnings-period-grid article > em {
+    display: block;
+    margin-top: 4px;
+    color: #7f8188;
+    font-size: 7px;
+    font-style: normal;
+}
+.earnings-sources-card > .earnings-kicker {
+    margin-bottom: 10px;
+}
+.earnings-sources-layout {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 160px minmax(250px, 0.75fr) minmax(0, 1.8fr);
+    align-items: center;
+    gap: 16px;
+}
+.earnings-donut-wrap {
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+.earnings-donut {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transform: rotate(-90deg);
+}
+.earnings-donut circle {
+    fill: none;
+    stroke-width: 14;
+}
+.earnings-donut-track {
+    stroke: #2a2d32;
+}
+.earnings-donut-segment.is-subscriptions {
+    stroke: var(--blue);
+}
+.earnings-donut-segment.is-tournaments {
+    stroke: var(--yellow);
+}
+.earnings-donut-segment.is-referrals {
+    stroke: #6864cf;
+}
+.earnings-donut-segment.is-other {
+    stroke: #e8e9ec;
+}
+.earnings-donut-center {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    pointer-events: none;
+}
+.earnings-donut-center strong {
+    color: #f5f5f6;
+    font-size: 12px;
+}
+.earnings-donut-center span {
+    margin-top: 4px;
+    color: #8b8d94;
+    font-size: 8px;
+}
+.earnings-source-legend {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+}
+.earnings-source-legend > div {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 9px minmax(0, 1fr) 34px 70px;
+    align-items: center;
+    gap: 8px;
+}
+.earnings-source-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+.earnings-source-dot.is-subscriptions {
+    background: var(--blue);
+}
+.earnings-source-dot.is-tournaments {
+    background: var(--yellow);
+}
+.earnings-source-dot.is-referrals {
+    background: #6864cf;
+}
+.earnings-source-dot.is-other {
+    background: #e8e9ec;
+}
+.earnings-source-legend span:not(.earnings-source-dot),
+.earnings-source-legend strong,
+.earnings-source-legend em {
+    overflow: hidden;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.earnings-source-legend span:not(.earnings-source-dot) {
+    color: #a0a2a9;
+}
+.earnings-source-legend strong {
+    color: #ececef;
+    text-align: right;
+}
+.earnings-source-legend em {
+    color: #b8bac0;
+    font-style: normal;
+    text-align: right;
+}
+.earnings-source-cards {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.earnings-source-cards article {
+    min-width: 0;
+    min-height: 126px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-content: start;
+    gap: 8px;
+    padding: 11px;
+    border-radius: 10px;
+    background: #202329;
+}
+.earnings-source-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: #dfe0e4;
+    background: #2b2e34;
+}
+.earnings-source-icon svg {
+    width: 18px;
+    height: 18px;
+}
+.earnings-source-cards article > div {
+    min-width: 0;
+}
+.earnings-source-cards article span,
+.earnings-source-cards article strong,
+.earnings-source-cards article small {
+    display: block;
+}
+.earnings-source-cards article div > span {
+    color: #a1a3aa;
+    font-size: 8px;
+}
+.earnings-source-cards article div > strong {
+    margin-top: 5px;
+    overflow: hidden;
+    color: #f3f3f5;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.earnings-source-cards article div > small {
+    margin-top: 4px;
+    color: #797b82;
+    font-size: 7px;
+}
+.earnings-source-progress {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 7px;
+    margin-top: 8px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+    background: #30333a;
+    appearance: none;
+}
+.earnings-source-progress::-webkit-progress-bar {
+    background: #30333a;
+}
+.earnings-source-progress::-webkit-progress-value {
+    background: var(--blue);
+    border-radius: 999px;
+}
+.earnings-source-progress.is-tournaments::-webkit-progress-value {
+    background: var(--yellow);
+}
+.earnings-source-progress.is-referrals::-webkit-progress-value {
+    background: #6864cf;
+}
+.earnings-source-progress.is-other::-webkit-progress-value {
+    background: #e8e9ec;
+}
+.earnings-source-progress::-moz-progress-bar {
+    background: var(--blue);
+}
+.earnings-source-progress.is-tournaments::-moz-progress-bar {
+    background: var(--yellow);
+}
+.earnings-source-progress.is-referrals::-moz-progress-bar {
+    background: #6864cf;
+}
+.earnings-source-progress.is-other::-moz-progress-bar {
+    background: #e8e9ec;
+}
+.earnings-table-card {
+    padding-bottom: 12px;
+}
+.earnings-table-wrap {
+    margin-top: 9px;
+    overflow-x: auto;
+    border-radius: 10px;
+    background: #121418;
+}
+.earnings-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    color: #bfc1c6;
+    font-size: 8px;
+}
+.earnings-table th,
+.earnings-table td {
+    padding: 9px 11px;
+    text-align: left;
+    white-space: nowrap;
+}
+.earnings-table th {
+    color: #85878e;
+    background: #25282e;
+    font-weight: 600;
+}
+.earnings-table td {
+    box-shadow: inset 0 -1px rgba(255, 255, 255, 0.06);
+}
+.earnings-table tr:last-child td {
+    box-shadow: none;
+}
+.earnings-table td:first-child,
+.earnings-table td:last-child {
+    color: #f0f1f3;
+}
+.earnings-empty {
+    grid-column: 1 / -1;
+    min-height: 130px;
+    display: grid;
+    place-items: center;
+    color: #85878e;
+    font-size: 9px;
+    text-align: center;
+}
+
 .profile-wallet-history {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
