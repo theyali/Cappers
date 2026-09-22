@@ -3,8 +3,9 @@
     if (!page) return;
 
     const copyButton = page.querySelector('[data-referral-copy]');
+    const copyLabel = page.querySelector('[data-referral-copy-label]');
     const referralLink = page.querySelector('[data-referral-link]');
-    if (!copyButton || !referralLink) return;
+    if (!copyButton || !copyLabel || !referralLink) return;
 
     const copyReferralLink = async () => {
         const value = referralLink.value;
@@ -24,20 +25,20 @@
     };
 
     copyButton.addEventListener('click', async () => {
-        const defaultLabel = copyButton.textContent;
+        const defaultLabel = copyLabel.textContent;
         copyButton.disabled = true;
 
         try {
             await copyReferralLink();
-            copyButton.textContent = 'Скопировано';
+            copyLabel.textContent = 'Скопировано';
             copyButton.classList.add('is-copied');
         } catch (_) {
-            copyButton.textContent = 'Не удалось';
+            copyLabel.textContent = 'Не удалось';
             copyButton.classList.remove('is-copied');
         }
 
         window.setTimeout(() => {
-            copyButton.textContent = defaultLabel;
+            copyLabel.textContent = defaultLabel;
             copyButton.disabled = false;
             copyButton.classList.remove('is-copied');
         }, 1600);
