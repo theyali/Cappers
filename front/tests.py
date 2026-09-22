@@ -16,6 +16,8 @@ from cabinet.models import (
 )
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
 
+from .models import Article
+
 from .expert_ranking import (
     expert_ranking_score,
     rank_experts,
@@ -530,3 +532,49 @@ class FooterRenderingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'class="site-footer site-footer-v2"')
+
+
+class ArticleMainTests(TestCase):
+    def test_only_one_article_can_be_main(self):
+        first = Article.objects.create(
+            title="Первая главная статья",
+            slug="first-main-article",
+            description="Описание первой статьи",
+            content="<p>Первая статья</p>",
+            is_main=True,
+        )
+        second = Article.objects.create(
+            title="Вторая главная статья",
+            slug="second-main-article",
+            description="Описание второй статьи",
+            content="<p>Вторая статья</p>",
+            is_main=True,
+        )
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+
+        self.assertFalse(first.is_main)
+        self.assertTrue(second.is_main)
+        self.assertEqual(Article.objects.filter(is_main=True).count(), 1)
+
+    def test_main_article_is_first_and_uses_featured_card(self):
+        main_article = Article.objects.create(
+            title="Главная статья",
+            slug="main-article",
+            description="Описание главной статьи",
+            content="<p>Главная статья</p>",
+            is_main=True,
+        )
+        Article.objects.create(
+            title="Новая обычная статья",
+            slug="new-regular-article",
+            description="Описание обычной статьи",
+            content="<p>Обычная статья</p>",
+        )
+
+        response = self.client.get(reverse("front:articles"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].object_list[0].pk, main_article.pk)
+        self.assertContains(response, 'class="article-list-card is-main"')
