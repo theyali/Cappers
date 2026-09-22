@@ -4,9 +4,13 @@ from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from cabinet.vip import annotate_vip_status
 from game.models import Prediction, PredictionCoupon
 
-from .prediction_catalog_views import build_prediction_type_context
+from .prediction_catalog_views import (
+    apply_prediction_type_scope,
+    build_prediction_type_context,
+)
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     SORT_OPTIONS,
@@ -65,16 +69,17 @@ def _favorites_status_tabs(request, counts, active_status):
     return tabs
 
 
-def _favorites_meta_queryset(user):
-    return (
-        PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            audience=PredictionCoupon.Audience.FREE,
-            favorites__user=user,
-        )
-        .annotate(combined_coefficient=_combined_coefficient_expression())
-        .distinct()
+def _favorites_meta_queryset(user, *, include_paid: bool = False):
+    queryset = PredictionCoupon.objects.filter(
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        favorites__user=user,
     )
+    if not include_paid:
+        queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
+    queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
+    return queryset.annotate(
+        combined_coefficient=_combined_coefficient_expression()
+    ).distinct()
 
 
 def _favorites_status_count(counts, active_status):
@@ -87,6 +92,8 @@ def _favorites_status_count(counts, active_status):
 def favorites(request):
     prediction_type_context = build_prediction_type_context(request)
     prediction_format = prediction_type_context["prediction_format"]
+    active_prediction_type = prediction_type_context["active_prediction_type"]
+    is_paid_predictions = prediction_type_context["is_paid_predictions"]
 
     active_status = request.GET.get("status", "all")
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
@@ -107,24 +114,31 @@ def favorites(request):
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
 
+    base_meta_queryset = apply_prediction_type_scope(
+        _favorites_meta_queryset(request.user, include_paid=is_paid_predictions).filter(
+            prediction_format=prediction_format
+        ),
+        active_prediction_type,
+        request.user,
+    )
+
     favorite_positions = Prediction.objects.filter(
-        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        coupon__audience=PredictionCoupon.Audience.FREE,
+        coupon__in=base_meta_queryset.values("pk"),
         coupon__prediction_format=prediction_format,
         coupon__favorites__user=request.user,
     ).distinct()
 
-    base_queryset = (
-        _published_queryset()
+    base_queryset = apply_prediction_type_scope(
+        _published_queryset(include_paid=is_paid_predictions)
         .filter(
             favorites__user=request.user,
             prediction_format=prediction_format,
         )
-        .distinct()
+        .distinct(),
+        active_prediction_type,
+        request.user,
     )
-    meta_base_queryset = _favorites_meta_queryset(request.user).filter(
-        prediction_format=prediction_format
-    )
+    meta_base_queryset = base_meta_queryset
     total_predictions = meta_base_queryset.count()
 
     filtered = _apply_position_filters(

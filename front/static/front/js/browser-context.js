@@ -179,7 +179,7 @@
             if (path === "/feed/") return "Вернуться в мою ленту";
             if (path === "/tournaments/") return "Вернуться к турнирам";
             if (path.startsWith("/tournaments/")) return "Вернуться к турниру";
-            if (path === "/cappers/" || path.startsWith("/cappers-statistics/") || path.startsWith("/cappers-table/")) {
+            if (path === "/cappers/" || path.startsWith("/cappers-table/")) {
                 return "Вернуться к капперам";
             }
             if (path === "/") return "Вернуться на главную";

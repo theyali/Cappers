@@ -21,6 +21,7 @@ from game.models import (
     Venue,
     country_logo_upload_path,
     league_logo_upload_path,
+    sport_image_upload_path,
     team_logo_upload_path,
 )
 from game.services.local_logos import sync_entity_logo
@@ -316,6 +317,7 @@ class MatchSyncService:
             sport_id = self._configured_sport_id(code) or 2
         name = str(meta.get("name") or getattr(fallback, "name", "") or code.title())
         name_ru = str(meta.get("name_ru") or getattr(fallback, "name_ru", "") or name)
+        remote_image_url = str(meta.get("image_url") or "")
         raw_data = {"sport_id": sport_id, **meta}
         cache_key: tuple[str, int | str] = ("id", sport_id) if sport_id is not None else ("code", code)
         cached = self._sport_cache.get(cache_key)
@@ -335,8 +337,12 @@ class MatchSyncService:
                     if getattr(sport, field) != value:
                         setattr(sport, field, value)
                         update_fields.append(field)
+                if remote_image_url and sport.remote_image_url != remote_image_url:
+                    sport.remote_image_url = remote_image_url
+                    update_fields.append("remote_image_url")
                 if update_fields:
                     sport.save(update_fields=update_fields)
+                self._schedule_sport_image_download(sport, remote_image_url)
                 self._sport_cache[cache_key] = sport
                 return sport
 
@@ -357,8 +363,12 @@ class MatchSyncService:
                 if getattr(sport, field) != value:
                     setattr(sport, field, value)
                     update_fields.append(field)
+            if remote_image_url and sport.remote_image_url != remote_image_url:
+                sport.remote_image_url = remote_image_url
+                update_fields.append("remote_image_url")
             if update_fields:
                 sport.save(update_fields=update_fields)
+            self._schedule_sport_image_download(sport, remote_image_url)
             self._sport_cache[cache_key] = sport
             return sport
 
@@ -369,23 +379,43 @@ class MatchSyncService:
                 code=code,
                 name=name,
                 name_ru=name_ru,
+                remote_image_url=remote_image_url,
                 raw_data=raw_data,
             )
+            self._schedule_sport_image_download(sport, remote_image_url)
             self._sport_cache[cache_key] = sport
             return sport
 
+        sport_defaults = {
+            "code": code,
+            "name": name,
+            "name_ru": name_ru,
+            "raw_data": raw_data,
+        }
+        if remote_image_url:
+            sport_defaults["remote_image_url"] = remote_image_url
         sport, _ = Sport.objects.update_or_create(
             provider=Provider.NEUROKEFF,
             external_id=sport_id,
-            defaults={
-                "code": code,
-                "name": name,
-                "name_ru": name_ru,
-                "raw_data": raw_data,
-            },
+            defaults=sport_defaults,
         )
+        self._schedule_sport_image_download(sport, remote_image_url)
         self._sport_cache[cache_key] = sport
         return sport
+
+    @staticmethod
+    def _schedule_sport_image_download(sport: Sport, remote_image_url: str) -> None:
+        if not remote_image_url:
+            return
+        transaction.on_commit(
+            partial(
+                sync_entity_logo,
+                sport,
+                field_name="image",
+                remote_url=remote_image_url,
+                target_name=sport_image_upload_path(sport, ""),
+            )
+        )
 
     def _sport_meta(self, payload: dict[str, Any]) -> dict[str, Any]:
         meta = payload.get("_sport_meta")
@@ -395,6 +425,13 @@ class MatchSyncService:
                 "code": str(meta.get("code") or ""),
                 "name": str(meta.get("name") or ""),
                 "name_ru": str(meta.get("name_ru") or meta.get("name") or ""),
+                "image_url": str(
+                    meta.get("image")
+                    or meta.get("logo")
+                    or meta.get("icon")
+                    or meta.get("image_url")
+                    or ""
+                ),
             }
 
         sport_payload = payload.get("sport") or {}
@@ -411,11 +448,21 @@ class MatchSyncService:
         )
         name = configured.get("name") or self._localized(sport_payload.get("name"), "en")
         name_ru = configured.get("name_ru") or self._localized(sport_payload.get("name"), "ru")
+        image_url = (
+            configured.get("image")
+            or configured.get("logo")
+            or configured.get("icon")
+            or sport_payload.get("image")
+            or sport_payload.get("logo")
+            or sport_payload.get("icon")
+            or ""
+        )
         return {
             "id": sport_id,
             "code": str(code or ""),
             "name": str(name or ""),
             "name_ru": str(name_ru or name or ""),
+            "image_url": str(image_url or ""),
         }
 
     @staticmethod

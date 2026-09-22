@@ -44,7 +44,7 @@
         if (link.target && link.target !== "_self") return;
         if (link.hasAttribute("download")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
-        if (link.closest(".matches-table-filter-sidebar, .matches-sport-tabs, .feed-sport-tabs, .matches-tabs, .matches-date-filter")) return;
+        if (link.closest(".matches-table-filter-sidebar, .matches-sport-tabs, .feed-sport-tabs, .matches-tabs, .matches-date-filter, .cappers-period-filter")) return;
         if (link.hasAttribute("data-mobile-coupon-toggle")) {
             event.preventDefault();
             return;
@@ -251,7 +251,7 @@
         if (path.startsWith("/tournaments/")) {
             return "Вернуться к турниру";
         }
-        if (path.startsWith("/cappers-statistics/") || path.startsWith("/cappers-table/")) {
+        if (path.startsWith("/cappers-table/")) {
             return "Вернуться к капперам";
         }
         return "Вернуться назад";

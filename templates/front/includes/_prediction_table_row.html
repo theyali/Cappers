@@ -1,6 +1,6 @@
 {% load capper_trust %}
 <article
-    class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}{% if request.resolver_match.url_name == 'expert_profile' %} has-bank-chart{% endif %}"
+    class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}"
     data-prediction-card="{{ prediction.coupon.id }}"
     data-analyst-id="{{ prediction.coupon.author_id }}"
     data-coupon-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
@@ -57,20 +57,6 @@
     <span class="prediction-table-status{% if prediction.state_status == 'win' %} is-win{% elif prediction.state_status == 'lose' %} is-lose{% elif prediction.state_status == 'refund' %} is-refund{% endif %}">
         {% if prediction.state_status == 'win' %}Выигрыш{% elif prediction.state_status == 'lose' %}Проигрыш{% elif prediction.state_status == 'refund' %}Возврат{% else %}Ожидает{% endif %}
     </span>
-
-    {% if request.resolver_match.url_name == 'expert_profile' %}
-    <div
-        class="prediction-table-bank-chart"
-        data-prediction-bank-chart
-        data-skeleton-block
-        data-bank-state="{{ prediction.state_status }}"
-        data-bank-stake="{{ prediction.coupon.total_stake|default:0|floatformat:'2u' }}"
-        data-bank-payout="{{ prediction.coupon.possible_payout|default:0|floatformat:'2u' }}"
-        aria-label="График банка"
-    >
-        <canvas width="156" height="40" role="img" aria-label="Динамика банка"></canvas>
-    </div>
-    {% endif %}
 
     <div class="prediction-table-actions">
         {% if website_settings.prediction_bookmaker %}

@@ -279,24 +279,17 @@ class CapperTrustRankingIntegrationTests(TestCase):
         self.assertEqual(table_top, service_top)
         self.assertEqual(home_top, service_top)
 
-    def test_all_time_statistics_and_table_share_canonical_trust_order(self):
-        stats_response = self.client.get(
-            reverse("front:cappers_stats"),
-            {"roi_period": "all"},
-        )
+    def test_all_time_table_uses_canonical_trust_order(self):
         table_response = self.client.get(reverse("front:cappers_table"))
 
-        self.assertEqual(stats_response.status_code, 200)
         self.assertEqual(table_response.status_code, 200)
 
         service_order = [
             entry["profile"].user.username
             for entry in rank_experts(period="all-time")
         ]
-        stats_order = [expert["username"] for expert in stats_response.context["experts"]]
         table_order = [row["username"] for row in table_response.context["ranking_rows"]]
 
-        self.assertEqual(stats_order, service_order)
         self.assertEqual(table_order, service_order)
         self.assertEqual(service_order[0], self.inactive_month_user.username)
 
@@ -349,15 +342,11 @@ class CapperTrustRankingIntegrationTests(TestCase):
         )
         self.assertNotContains(month_response, "Общий рейтинг по индексу доверия.")
 
-    def test_statistics_explains_trust_index_ranking(self):
-        response = self.client.get(reverse("front:cappers_stats"))
+    def test_table_explains_trust_index_ranking(self):
+        response = self.client.get(reverse("front:cappers_table"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Рейтинг по индексу доверия")
-        self.assertContains(
-            response,
-            "Индекс доверия учитывает ROI, просадку, стабильность, объем истории, средний коэффициент, активность и точность уверенности",
-        )
+        self.assertContains(response, "Общий рейтинг по индексу доверия.")
 
 
 class PersonalizedExpertRecommendationTests(TestCase):

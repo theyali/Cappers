@@ -13,9 +13,9 @@
 
         <span class="feed-prediction-cover-fallback">
             <span class="feed-prediction-cover-center">
-                <span class="feed-prediction-cover-league"{% if prediction.match.league and prediction.match.league.logo %} data-skeleton-image{% endif %}>
-                    {% if prediction.match.league and prediction.match.league.logo %}
-                        <img src="{{ prediction.match.league.logo }}" width="72" height="72" alt="" loading="lazy">
+                <span class="feed-prediction-cover-league"{% if prediction.match.league and prediction.match.league.logo_url %} data-skeleton-image{% endif %}>
+                    {% if prediction.match.league and prediction.match.league.logo_url %}
+                        <img src="{{ prediction.match.league.logo_url }}" width="72" height="72" alt="" loading="lazy">
                     {% else %}
                         {{ prediction.match.league_name|default:prediction.match.sport.name_ru|default:prediction.match.sport.name|default:"Л"|slice:":1" }}
                     {% endif %}

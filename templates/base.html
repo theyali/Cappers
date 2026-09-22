@@ -143,7 +143,7 @@
             <span class="mobile-app-nav-label">Купоны</span>
         </a>
         {% endif %}
-        <a class="mobile-app-nav-item mobile-nav-stats {% if request.resolver_match.url_name == 'cappers_stats' %}is-active{% endif %}" href="{% url 'front:cappers_stats' %}">
+        <a class="mobile-app-nav-item mobile-nav-stats {% if request.resolver_match.url_name == 'cappers_table' or request.resolver_match.url_name == 'cappers_table_group' or request.resolver_match.url_name == 'cappers_table_period' or request.resolver_match.url_name == 'cappers_table_sport' %}is-active{% endif %}" href="{% url 'front:cappers_table' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Статистика</span>
         </a>

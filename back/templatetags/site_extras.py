@@ -290,13 +290,13 @@ def latest_match_predictions(limit=5):
                 "home_name": match.home_team_name or "",
                 "away_name": match.away_team_name or "",
                 "home_logo": (
-                    match.home_team.logo
-                    if match.home_team and match.home_team.logo
+                    match.home_team.logo_url
+                    if match.home_team and match.home_team.logo_url
                     else ""
                 ),
                 "away_logo": (
-                    match.away_team.logo
-                    if match.away_team and match.away_team.logo
+                    match.away_team.logo_url
+                    if match.away_team and match.away_team.logo_url
                     else ""
                 ),
                 "league_name": match.league_name or "",

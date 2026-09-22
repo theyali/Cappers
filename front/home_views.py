@@ -211,8 +211,8 @@ def _render_home_index_with_sql_debug(request):
 def _logo_url(primary: str, related) -> str:
     if primary:
         return primary
-    if related is not None and getattr(related, "logo", ""):
-        return related.logo
+    if related is not None and getattr(related, "logo_url", ""):
+        return related.logo_url
     return ""
 
 
@@ -345,7 +345,7 @@ def _latest_home_predictions() -> list[dict]:
                 ),
                 "league": match.league_name or "Лига",
                 "league_logo": (
-                    match.league.logo if match.league and match.league.logo else ""
+                    match.league.logo_url if match.league and match.league.logo_url else ""
                 ),
                 "home_name": match.home_team_name or "Хозяева",
                 "away_name": match.away_team_name or "Гости",

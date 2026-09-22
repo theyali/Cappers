@@ -1,5 +1,5 @@
 {% load static %}
-<footer class="site-footer site-footer-v2" aria-label="Подвал сайта">
+<footer class="site-footer site-footer-v2 container" aria-label="Подвал сайта">
     <div class="site-footer-top">
         <section class="site-footer-intro" aria-label="О КапперХаб">
             <a class="site-footer-brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
@@ -88,24 +88,24 @@
     </div>
 
     {% if footer_buttons.partner %}
-    <div class="site-footer-partners" aria-label="Партнёры">
-        <span class="site-footer-section-label">Партнёры</span>
-        <div class="site-footer-partner-list">
-            {% for item in footer_buttons.partner %}
-                {% if item.icon %}
-                    {% if item.url %}
-                    <a class="site-footer-partner-logo" href="{{ item.url }}" title="{{ item.title }}" target="_blank" rel="noopener noreferrer">
-                        <span data-skeleton-image><img src="{{ item.icon.url }}" width="132" height="44" alt="{{ item.title }}" loading="lazy" decoding="async"></span>
-                    </a>
-                    {% else %}
-                    <span class="site-footer-partner-logo" title="{{ item.title }}">
-                        <span data-skeleton-image><img src="{{ item.icon.url }}" width="132" height="44" alt="{{ item.title }}" loading="lazy" decoding="async"></span>
-                    </span>
+        <div class="site-footer-partners" aria-label="Партнёры">
+            <span class="site-footer-section-label">Партнёры</span>
+            <div class="site-footer-partner-list">
+                {% for item in footer_buttons.partner %}
+                    {% if item.icon %}
+                        {% if item.url %}
+                        <a class="site-footer-partner-logo" href="{{ item.url }}" title="{{ item.title }}" target="_blank" rel="noopener noreferrer">
+                            <span data-skeleton-image><img src="{{ item.icon.url }}" width="132" height="44" alt="{{ item.title }}" loading="lazy" decoding="async"></span>
+                        </a>
+                        {% else %}
+                        <span class="site-footer-partner-logo" title="{{ item.title }}">
+                            <span data-skeleton-image><img src="{{ item.icon.url }}" width="132" height="44" alt="{{ item.title }}" loading="lazy" decoding="async"></span>
+                        </span>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
-    </div>
     {% endif %}
 
     <div class="site-footer-legal">

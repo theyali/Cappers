@@ -80,7 +80,7 @@ def group_by_sport_and_league(items):
             or getattr(getattr(league, "country", None), "name", "")
             or ""
         )
-        league_logo = getattr(league, "logo", "") or ""
+        league_logo = getattr(league, "logo_url", "") or ""
         league_key = (league_id, league_name)
 
         if league_key not in sport_group["leagues"]:

@@ -5,7 +5,6 @@ from django.shortcuts import render
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon
 
-from .capper_stats_service import CapperStatsService
 from .expert_ranking import rank_experts
 
 
@@ -160,10 +159,3 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
             current[author_id] = 0
     return best
 
-
-def cappers_stats(request):
-    return render(
-        request,
-        "front/cappers_stats.html",
-        CapperStatsService(request.user).build_catalog_context(),
-    )

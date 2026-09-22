@@ -363,14 +363,23 @@ def profile(request):
     if request.method == "POST":
         user_is_valid = user_form.is_valid()
         analyst_is_valid = analyst_form.is_valid() if analyst_form is not None else True
-        paid_plans_are_valid = paid_plan_form.is_valid() if paid_plan_form is not None else True
+        paid_predictions_enabled = (
+            bool(analyst_form.cleaned_data.get("paid_predictions_enabled"))
+            if analyst_is_valid and analyst_form is not None
+            else False
+        )
+        paid_plans_are_valid = (
+            paid_plan_form.is_valid()
+            if paid_plan_form is not None and paid_predictions_enabled
+            else True
+        )
 
         if user_is_valid and analyst_is_valid and paid_plans_are_valid:
             with transaction.atomic():
                 user_form.save()
                 if analyst_form is not None:
                     analyst_form.save()
-                if paid_plan_form is not None:
+                if paid_plan_form is not None and paid_predictions_enabled:
                     paid_plan_form.save(request.user)
             record_daily_task_action(
                 request.user,

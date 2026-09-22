@@ -449,7 +449,7 @@ def league_search(request):
                     "sport": str(league.sport),
                     "country_id": league.country_id,
                     "country": str(league.country) if league.country_id else "",
-                    "logo": league.logo,
+                    "logo": league.logo_url,
                     "is_top": league.is_top,
                 }
                 for league in rows

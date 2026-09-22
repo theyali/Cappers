@@ -5,6 +5,60 @@
 
     if (!page) return;
 
+    const initPaidPlansVisibility = () => {
+        const toggle = page.querySelector("[data-paid-predictions-toggle] input[type='checkbox']");
+        const plans = page.querySelector("[data-paid-predictions-plans]");
+        if (!toggle || !plans) return;
+
+        const sync = () => {
+            plans.classList.toggle("is-collapsed", !toggle.checked);
+            plans.setAttribute("aria-hidden", toggle.checked ? "false" : "true");
+        };
+
+        sync();
+        toggle.addEventListener("change", sync);
+    };
+
+    initPaidPlansVisibility();
+
+    const initProfileEditTabs = () => {
+        const tabs = Array.from(page.querySelectorAll("[data-profile-edit-tab]"));
+        const panels = Array.from(page.querySelectorAll("[data-profile-edit-panel]"));
+        if (!tabs.length || !panels.length) return;
+
+        const activate = (target) => {
+            const hasTarget = panels.some((panel) => panel.dataset.profileEditPanel === target);
+            const nextTarget = hasTarget ? target : panels[0].dataset.profileEditPanel;
+
+            tabs.forEach((tab) => {
+                const isActive = tab.dataset.profileEditTab === nextTarget;
+                tab.classList.toggle("is-active", isActive);
+                tab.setAttribute("aria-selected", isActive ? "true" : "false");
+            });
+
+            panels.forEach((panel) => {
+                const isActive = panel.dataset.profileEditPanel === nextTarget;
+                panel.hidden = !isActive;
+                panel.classList.toggle("is-entering", isActive);
+                if (isActive) {
+                    window.setTimeout(() => panel.classList.remove("is-entering"), 220);
+                }
+            });
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener("click", (event) => {
+                event.preventDefault();
+                activate(tab.dataset.profileEditTab);
+            });
+        });
+
+        const initial = tabs.find((tab) => tab.classList.contains("is-active"))?.dataset.profileEditTab;
+        activate(initial || tabs[0].dataset.profileEditTab);
+    };
+
+    initProfileEditTabs();
+
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
 

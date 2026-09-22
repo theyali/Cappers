@@ -117,7 +117,6 @@ urlpatterns = [
     path("articles/", article_views.articles, name="articles"),
     path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     path("experts/<str:username>/", cabinet_expert_profile_views.expert_profile, name="expert_profile"),
-    path("cappers-statistics/", capper_views.cappers_stats, name="cappers_stats"),
     path("cappers-table/", capper_views.cappers_table, name="cappers_table"),
     path(
         "cappers-table/<slug:group>/",

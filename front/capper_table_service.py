@@ -170,7 +170,7 @@ def _sport_catalog(stats_queryset) -> list[dict]:
         sport = models_by_code.get(code)
         if sport:
             row["name"] = sport.name_ru or sport.name or row["name"] or code.capitalize()
-            row["image"] = sport.image or ""
+            row["image"] = sport.image_url
         elif not row["name"]:
             row["name"] = code.replace("_", " ").replace("-", " ").title()
         row["icon_key"] = code.lower().replace("-", "_")

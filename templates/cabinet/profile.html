@@ -37,11 +37,13 @@
                                 {% else %}
                                     <span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>
                                 {% endif %}
-                            </div>
-                            {% if analyst_profile %}
+                                {% if analyst_profile %}
                                 <label class="avatar-upload-button" for="avatarUploadInput" title="Изменить аватар" aria-label="Изменить аватар">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3.2"></circle></svg>
                                 </label>
+                                {% endif %}
+                            </div>
+                            {% if analyst_profile %}
                                 <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
                             {% endif %}
                             <a class="profile-hero-edit" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Редактировать</a>
