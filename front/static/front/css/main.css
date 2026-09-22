@@ -20060,7 +20060,16 @@ body.register footer {
     min-height: 230px;
     overflow: hidden;
     border-radius: 18px;
-    background: #17191d;
+    background-color: #17191d;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+.wallet-balance-hero.is-coins {
+    background-image: url("../img/coins_balance.png");
+}
+.wallet-balance-hero.is-real {
+    background-image: url("../img/real_balance.png");
 }
 .wallet-balance-copy {
     position: relative;
@@ -20128,21 +20137,6 @@ body.register footer {
     gap: 9px;
     margin-top: auto;
     padding-top: 18px;
-}
-.wallet-balance-art {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    width: 48%;
-    height: 100%;
-    display: block;
-    object-fit: contain;
-    object-position: right bottom;
-    pointer-events: none;
-}
-.wallet-balance-art.is-real {
-    width: 52%;
 }
 .wallet-operations-grid {
     min-width: 0;
