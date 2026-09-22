@@ -16,15 +16,77 @@
             </div>
 
             <div class="referrals-simple">
-                <header class="referrals-simple-head">
-                    <div>
-                        <p class="eyebrow">Реферальная программа</p>
-                        <h1>{{ page.heading }}</h1>
-                        <p>{{ page.description }}</p>
+                <section class="referrals-hero">
+                    <div class="referrals-hero-copy">
+                        <span class="referrals-hero-kicker">Личный кабинет · Рефералы</span>
+                        <h1>Приглашай друзей <span>и получай бонусы</span></h1>
+                        <p>Делись своей ссылкой и получай вознаграждения за активность друзей на платформе.</p>
                     </div>
+                    <img
+                        class="referrals-hero-image"
+                        src="{% static 'front/img/refs.png' %}"
+                        width="520"
+                        height="300"
+                        alt=""
+                        aria-hidden="true"
+                    >
+                </section>
 
-                    <div class="referrals-link-block">
-                        <span>Ваша реферальная ссылка</span>
+                <section class="referrals-stats" aria-label="Реферальная статистика">
+                    <article class="referrals-stat">
+                        <span class="referrals-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>{{ clicks_count }}</strong>
+                            <span>Переходов</span>
+                        </div>
+                    </article>
+                    <article class="referrals-stat">
+                        <span class="referrals-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M5.5 19c.7-4 2.8-6 6.5-6s5.8 2 6.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>{{ registrations_count }}</strong>
+                            <span>Регистраций</span>
+                        </div>
+                    </article>
+                    <article class="referrals-stat">
+                        <span class="referrals-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M4 18 9 12l4 3 7-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15 6h5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>{{ subscriptions_count }}</strong>
+                            <span>Подписок</span>
+                        </div>
+                    </article>
+                    <article class="referrals-stat">
+                        <span class="referrals-stat-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <ellipse cx="12" cy="6" rx="6.5" ry="2.8" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M5.5 6v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8V6M5.5 10v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4M5.5 14v4c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-4" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>{{ referral_income_display|default:"0" }} ₽</strong>
+                            <span>Заработано</span>
+                        </div>
+                    </article>
+                </section>
+
+                <div class="referrals-share-grid">
+                    <section class="referrals-link-card">
+                        <span class="referrals-card-label">Ваша реферальная ссылка</span>
                         <div class="profile-referral-link-wrap">
                             <input
                                 class="profile-referral-link"
@@ -34,92 +96,130 @@
                                 aria-label="Реферальная ссылка"
                                 data-referral-link
                             >
-                            <button
-                                class="profile-referral-copy"
-                                type="button"
-                                data-referral-copy
-                            >
-                                Скопировать
+                            <button class="profile-referral-copy" type="button" data-referral-copy>
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <rect x="8" y="8" width="10" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+                                <span>Скопировать</span>
                             </button>
                         </div>
-                        <small>Отправьте ссылку другу. Переходы, регистрации и начисления появятся на этой странице автоматически.</small>
-                    </div>
-                </header>
+                        <small>Делитесь ссылкой в социальных сетях, мессенджерах или на своём сайте.</small>
+                    </section>
 
-                <section class="referrals-metrics" aria-label="Реферальная статистика">
-                    {% for metric in metrics %}
-                        <div class="referrals-metric">
-                            <span>{{ metric.label }}</span>
-                            <strong>{{ metric.value }}</strong>
+                    <aside class="referrals-share-card">
+                        <span class="referrals-share-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="18" cy="5" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="6" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="18" cy="19" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="m8.3 10.8 7.4-4.4M8.3 13.2l7.4 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>Приглашайте друзей</strong>
+                            <span>Одна ссылка для всех переходов и регистраций.</span>
                         </div>
-                    {% endfor %}
-                </section>
+                    </aside>
+                </div>
 
-                <section class="referrals-simple-section" aria-labelledby="referral-how-title">
-                    <div class="referrals-section-head">
-                        <h2 id="referral-how-title">Как начисляются бонусы</h2>
+                <section class="referrals-how" aria-labelledby="referrals-how-title">
+                    <div class="referrals-section-title">
+                        <h2 id="referrals-how-title">Как это работает?</h2>
                         <span>{{ bonus_settings.status_label }}</span>
                     </div>
 
-                    <div class="referrals-steps">
-                        {% for step in bonus_steps %}
-                            <article class="referrals-step">
-                                <span>{{ forloop.counter }}</span>
-                                <div>
-                                    <strong>{{ step.title }}</strong>
-                                    <p>{{ step.description }}</p>
-                                </div>
-                                <b>{{ step.reward_label }}</b>
-                            </article>
-                        {% endfor %}
+                    <div class="referrals-how-grid">
+                        <article class="referrals-how-step">
+                            <span class="referrals-step-number">1</span>
+                            <span class="referrals-step-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M10 14 8.5 15.5a4 4 0 0 1-5.7-5.7L6 6.6a4 4 0 0 1 5.7 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="m14 10 1.5-1.5a4 4 0 0 1 5.7 5.7L18 17.4a4 4 0 0 1-5.7 0M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <strong>Делитесь ссылкой</strong>
+                            <p>Отправьте свою реферальную ссылку друзьям.</p>
+                        </article>
+                        <article class="referrals-how-step">
+                            <span class="referrals-step-number">2</span>
+                            <span class="referrals-step-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M17 7v6M14 10h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            <strong>Друг регистрируется</strong>
+                            <p>Он создаёт аккаунт на нашей платформе.</p>
+                        </article>
+                        <article class="referrals-how-step">
+                            <span class="referrals-step-number">3</span>
+                            <span class="referrals-step-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 19V12M9 19V8M14 19v-5M19 19V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="m4 9 5-4 5 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <strong>Друг проявляет активность</strong>
+                            <p>Пополняет баланс и оформляет платные подписки.</p>
+                        </article>
+                        <article class="referrals-how-step">
+                            <span class="referrals-step-number">4</span>
+                            <span class="referrals-step-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                    <path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            <strong>Вы получаете бонусы</strong>
+                            <p>Начисления появляются автоматически по условиям программы.</p>
+                        </article>
                     </div>
                 </section>
 
                 <div class="referrals-lists-grid">
-                    <section class="referrals-simple-section" aria-labelledby="referral-latest-title">
-                        <div class="referrals-section-head">
-                            <h2 id="referral-latest-title">Последние рефералы</h2>
+                    <section class="referrals-list-card" aria-labelledby="referrals-registrations-title">
+                        <div class="referrals-section-title">
+                            <h2 id="referrals-registrations-title">Последние регистрации</h2>
                         </div>
-
-                        <div class="referrals-simple-list">
-                            {% for visit in recent_referrals %}
-                                <article class="referrals-simple-row">
+                        <div class="referrals-activity-list">
+                            {% for referral in recent_registrations %}
+                                <article class="referrals-activity-row">
+                                    {% if referral.avatar_url %}
+                                        <img src="{{ referral.avatar_url }}" width="34" height="34" alt="">
+                                    {% else %}
+                                        <span class="referrals-avatar-fallback" aria-hidden="true">{{ referral.avatar_initial }}</span>
+                                    {% endif %}
                                     <div>
-                                        <strong>
-                                            {% if visit.username %}
-                                                @{{ visit.username }}
-                                            {% else %}
-                                                {{ visit.name }}
-                                            {% endif %}
-                                        </strong>
-                                        <span>{{ visit.status_label }}</span>
+                                        <strong>{{ referral.name }}</strong>
+                                        <span>{{ referral.registered_label }}</span>
                                     </div>
-                                    <small>{{ visit.last_seen_label }}</small>
+                                    <span class="referral-activity-status is-{{ referral.status }}">{{ referral.status_label }}</span>
                                 </article>
                             {% empty %}
-                                <div class="referrals-simple-empty">Рефералов пока нет.</div>
+                                <div class="referrals-simple-empty">Регистраций пока нет.</div>
                             {% endfor %}
                         </div>
                     </section>
 
-                    <section class="referrals-simple-section" aria-labelledby="referral-bonus-title">
-                        <div class="referrals-section-head">
-                            <h2 id="referral-bonus-title">Последние бонусы</h2>
+                    <section class="referrals-list-card" aria-labelledby="referrals-rewards-title">
+                        <div class="referrals-section-title">
+                            <h2 id="referrals-rewards-title">Ваши награды</h2>
                         </div>
-
-                        <div class="referrals-simple-list">
+                        <div class="referrals-reward-list">
                             {% for event in recent_bonuses %}
-                                <article class="referrals-simple-row">
+                                <article class="referrals-reward-row">
+                                    <span class="referrals-reward-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                            <path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
                                     <div>
-                                        <strong>{{ event.title }}</strong>
-                                        {% if event.description %}
-                                            <span>{{ event.description }}</span>
-                                        {% endif %}
+                                        <strong>{% if event.reward_label %}{{ event.reward_label }}{% else %}{{ event.title }}{% endif %}</strong>
+                                        <span>{{ event.description|default:event.title }}</span>
                                     </div>
-                                    <small>
-                                        {{ event.created_at_label }}
-                                        {% if event.reward_label %} · {{ event.reward_label }}{% endif %}
-                                    </small>
+                                    <time>{{ event.created_at_label }}</time>
                                 </article>
                             {% empty %}
                                 <div class="referrals-simple-empty">Начислений пока нет.</div>
