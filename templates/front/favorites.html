@@ -71,9 +71,13 @@
         </div>
 
         <aside class="favorites-right-sidebar" aria-label="VIP прогнозисты и реклама">
-            {% vip_cappers_banner 6 %}
+            <div class="prediction-sidebar-block favorites-vip-block">
+                {% vip_cappers_banner 6 %}
+            </div>
             {% if adv_banners %}
-                {% include "pages/_adv_banners.html" with placement="sidebar" %}
+                <div class="prediction-sidebar-block favorites-adv-block">
+                    {% include "pages/_adv_banners.html" with placement="sidebar" %}
+                </div>
             {% endif %}
         </aside>
     </div>

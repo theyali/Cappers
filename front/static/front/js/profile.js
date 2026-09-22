@@ -242,6 +242,8 @@
             const target = new URL(link.href, window.location.href).searchParams.get("tab") || "profile";
             link.classList.toggle("is-active", target === tab);
         });
+
+        window.dispatchEvent(new CustomEvent("profile:tab-activated", { detail: { tab } }));
     };
 
     tabLinks.forEach((link) => {

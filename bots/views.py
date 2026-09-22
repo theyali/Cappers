@@ -86,6 +86,7 @@ def manage_accounts(request):
         request,
         "bots/manage_accounts.html",
         {
+            "page_class":"profile",
             "bot_rows": bot_rows,
             "bots_count": len(bot_rows),
             "bots_admin_active": True,

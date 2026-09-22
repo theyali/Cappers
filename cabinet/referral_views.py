@@ -141,7 +141,7 @@ def referrals(request):
     context.update(
         {
             "active_tab": "referrals",
-            "page_class": "cabinet-referrals-page",
+            "page_class": "cabinet-referrals-page profile",
         }
     )
     return render(request, "cabinet/referrals.html", context)

@@ -1,20 +1,21 @@
 <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar favorites-filter-sidebar" data-prediction-filter-sidebar aria-label="Фильтры избранных прогнозов">
-    <div class="matches-table-filter-head">
-        <span class="matches-table-filter-head-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-            </svg>
-        </span>
-        <div>
-            <strong>Фильтры</strong>
-            <small>{{ filtered_predictions }} прогнозов</small>
+    <div class="prediction-sidebar-block favorites-filter-block">
+        <div class="matches-table-filter-head">
+            <span class="matches-table-filter-head-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+            </span>
+            <div>
+                <strong>Фильтры</strong>
+                <small>{{ filtered_predictions }} прогнозов</small>
+            </div>
         </div>
-    </div>
 
-    <section class="matches-table-filter-group" aria-labelledby="favorites-filter-status-title">
+        <section class="matches-table-filter-group" aria-labelledby="favorites-filter-status-title">
         <div class="matches-table-filter-title" id="favorites-filter-status-title">
             <span>Статусы прогнозов</span>
             <small>{{ status_tabs|length }}</small>
@@ -40,7 +41,7 @@
             </a>
             {% endfor %}
         </nav>
-    </section>
+        </section>
 
     {% if sport_tabs %}
     <section class="matches-table-filter-group" aria-labelledby="favorites-filter-sports-title">
@@ -80,7 +81,7 @@
     </section>
     {% endif %}
 
-    <section class="matches-table-filter-group predictions-sidebar-form-group" aria-labelledby="favorites-filter-details-title">
+        <section class="matches-table-filter-group predictions-sidebar-form-group" aria-labelledby="favorites-filter-details-title">
         <div class="matches-table-filter-title" id="favorites-filter-details-title">
             <span>Параметры</span>
             {% if active_filter_count %}<small>{{ active_filter_count }}</small>{% endif %}
@@ -137,8 +138,11 @@
                 </div>
             </div>
         </form>
-    </section>
+        </section>
+    </div>
     {% for promo_banner in left_promo_banners %}
-        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+        <div class="prediction-sidebar-block favorites-promo-block">
+            {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+        </div>
     {% endfor %}
 </aside>
