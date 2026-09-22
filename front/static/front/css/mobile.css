@@ -5780,3 +5780,140 @@ body.expert-public-details-open {
         text-align: left;
     }
 }
+
+
+/* Profile earnings dashboard */
+@media (max-width: 1180px) {
+    .earnings-top-grid,
+    .earnings-middle-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .earnings-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .earnings-kpis > .earnings-kicker {
+        grid-column: 1 / -1;
+    }
+
+    .earnings-kpi-row + .earnings-kpi-row {
+        margin-top: 0;
+    }
+
+    .earnings-sources-layout {
+        grid-template-columns: 150px minmax(0, 1fr);
+    }
+
+    .earnings-source-cards {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 760px) {
+    .earnings-hero {
+        min-height: 0;
+        grid-template-columns: 1fr;
+        padding: 18px;
+        background-position: center;
+    }
+
+    .earnings-hero-copy {
+        min-height: 220px;
+    }
+
+    .earnings-hero-summary {
+        padding: 14px;
+        border-radius: 12px;
+        background: #15181d;
+    }
+
+    .earnings-kpis,
+    .earnings-subscribers-grid,
+    .earnings-period-grid,
+    .earnings-source-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .earnings-subscriber {
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+    }
+
+    .earnings-subscriber-expiry {
+        grid-column: 2 / -1;
+        min-width: 0;
+        display: flex;
+        gap: 8px;
+        text-align: left;
+    }
+
+    .earnings-subscriber-expiry small {
+        margin-top: 3px;
+    }
+
+    .earnings-period-grid article {
+        min-height: 0;
+    }
+
+    .earnings-sources-layout {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .earnings-source-legend {
+        width: 100%;
+    }
+
+    .earnings-source-cards {
+        width: 100%;
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 440px) {
+    .earnings-payout-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .earnings-payout-summary > div {
+        padding: 0;
+    }
+
+    .earnings-payout-summary > div:first-child {
+        padding-bottom: 12px;
+        box-shadow: inset 0 -1px rgba(255, 255, 255, 0.08);
+    }
+
+    .earnings-section-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .earnings-section-head > a,
+    .earnings-table-period {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .earnings-subscriber {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .earnings-plan-badge,
+    .earnings-subscriber-expiry {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .earnings-source-legend > div {
+        grid-template-columns: 9px minmax(0, 1fr) 34px;
+    }
+
+    .earnings-source-legend em {
+        grid-column: 2 / -1;
+        text-align: left;
+    }
+}

@@ -1,162 +1,226 @@
-{% load capper_trust %}
-<div class="profile-list-card">
-    <div class="profile-section-heading">
-        <div>
-            <p class="eyebrow">Финансы аналитика</p>
-            <h2>Доходы</h2>
-        </div>
-        <a class="profile-save-button" href="{% url 'cabinet:profile' %}?tab=wallet" data-profile-tab-link>Операции</a>
-    </div>
+{% load capper_trust static %}
 
-    <div class="profile-wallet-grid">
-        <article class="profile-wallet-card">
-            <span>Реальный баланс</span>
-            <strong>{{ real_balance_display }} ₽</strong>
-            <small>Ожидает вывода: {{ real_pending_withdrawal_display }} ₽</small>
-        </article>
-        <article class="profile-wallet-card">
-            <span>Заработано за всё время</span>
-            <strong>{{ earnings_all_time.total_display }} ₽</strong>
-            <small>Подписки и призовые турниров.</small>
-        </article>
-        <article class="profile-wallet-card">
-            <span>Активные платные подписчики</span>
-            <strong>{{ active_paid_subscribers }}</strong>
-            <small>Всего покупателей: {{ paid_subscribers_total }}</small>
-        </article>
-    </div>
-</div>
+<div class="earnings-dashboard">
+    <div class="earnings-top-grid">
+        <section class="earnings-hero" aria-labelledby="earnings-title">
+            <div class="earnings-hero-copy">
+                <span class="earnings-kicker">Доходы</span>
+                <h2 id="earnings-title">Ваш доход<br>на платформе</h2>
+                <p>Анализируйте результаты, отслеживайте динамику и развивайте свой капперский проект.</p>
+                <a class="earnings-primary-action" href="{% url 'wallets:top_up' %}">
+                    <span>Вывести средства</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
 
-<div class="profile-list-card">
-    <div class="profile-list-head">
-        <div>
-            <p class="eyebrow">Платный доступ</p>
-            <h2>Активные платные подписчики</h2>
-        </div>
-        <span class="profile-coupon-count">{{ active_paid_subscribers }}</span>
-    </div>
+            <div class="earnings-hero-summary">
+                <span>Общий доход (всё время)</span>
+                <strong>{{ earnings_all_time.total_display }} ₽</strong>
+                <small class="is-{{ earnings_hero_change.tone }}">
+                    {{ earnings_hero_change.label }} <span>по сравнению с прошлым кварталом</span>
+                </small>
 
-    <div class="profile-user-list">
-        {% for subscription in active_paid_subscriptions %}
-            <article class="profile-user-row">
-                <div class="profile-user-avatar prediction-table-avatar{% if subscription.subscriber.is_analyst and subscription.subscriber.is_vip %} is-vip{% endif %}" data-skeleton-image>
-                    {% if subscription.subscriber.is_analyst %}
-                        {% capper_trust_badge subscription.subscriber.analyst_profile.trust_index %}
-                    {% endif %}
-                    {% if subscription.subscriber.avatar %}
-                        <img src="{{ subscription.subscriber.avatar.url }}" width="46" height="46" loading="lazy" decoding="async" alt="Аватар {{ subscription.subscriber.username }}">
-                    {% else %}
-                        {{ subscription.subscriber.username|first|upper }}
-                    {% endif %}
+                <div class="earnings-payout-summary">
+                    <div>
+                        <span>Всего выплат</span>
+                        <strong>{{ earnings_payouts.count }}</strong>
+                        <small>на сумму {{ earnings_payouts.total_display }} ₽</small>
+                    </div>
+                    <div>
+                        <span>Ожидает вывода</span>
+                        <strong>{{ real_pending_withdrawal_display }} ₽</strong>
+                        <small>{{ earnings_payouts.pending_label }}</small>
+                    </div>
                 </div>
-                <div class="profile-user-copy">
-                    <strong>{{ subscription.subscriber.get_full_name|default:subscription.subscriber.username }}</strong>
-                    <span>@{{ subscription.subscriber.username }} · {% if subscription.plan %}{{ subscription.plan.title }}{% else %}{{ subscription.duration_days }} дн.{% endif %} · до {{ subscription.expires_at|date:"d.m.Y" }}</span>
+            </div>
+        </section>
+
+        <aside class="earnings-kpis" aria-label="Ключевые показатели">
+            <span class="earnings-kicker">Ключевые показатели</span>
+            {% for metric in earnings_kpis %}
+                <article class="earnings-kpi-row">
+                    <span class="earnings-kpi-icon is-{{ metric.icon }}" aria-hidden="true">
+                        {% if metric.icon == "users" %}
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/>
+                                <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        {% elif metric.icon == "bars" %}
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M5 19V12M11 19V6M17 19V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        {% else %}
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M4 18 9 12l4 3 7-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15 6h5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        {% endif %}
+                    </span>
+                    <div>
+                        <span>{{ metric.label }}</span>
+                        <strong>{{ metric.value }}</strong>
+                    </div>
+                    <small class="is-{{ metric.tone }}">
+                        {{ metric.change_label }}
+                        <span>{{ metric.change_caption }}</span>
+                    </small>
+                </article>
+            {% endfor %}
+        </aside>
+    </div>
+
+    <div class="earnings-middle-grid">
+        <section class="earnings-subscribers-card" id="earnings-subscribers">
+            <div class="earnings-section-head">
+                <span class="earnings-kicker">Активные платные подписчики</span>
+                <a href="#earnings-subscribers">Все подписчики ({{ active_paid_subscribers }}) <span aria-hidden="true">→</span></a>
+            </div>
+
+            <div class="earnings-subscribers-grid">
+                {% for subscription in active_paid_subscriptions|slice:":6" %}
+                    <article class="earnings-subscriber">
+                        <div class="earnings-subscriber-avatar{% if subscription.subscriber.is_analyst and subscription.subscriber.is_vip %} is-vip{% endif %}">
+                            {% if subscription.subscriber.avatar %}
+                                <img src="{{ subscription.subscriber.avatar.url }}" width="34" height="34" loading="lazy" decoding="async" alt="">
+                            {% else %}
+                                <span>{{ subscription.subscriber.username|first|upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="earnings-subscriber-copy">
+                            <strong>{{ subscription.subscriber.get_full_name|default:subscription.subscriber.username }}</strong>
+                            <span>@{{ subscription.subscriber.username }}</span>
+                        </div>
+                        <span class="earnings-plan-badge">{% if subscription.plan %}{{ subscription.plan.title }}{% else %}{{ subscription.duration_days }} дней{% endif %}</span>
+                        <div class="earnings-subscriber-expiry">
+                            <span>до {{ subscription.expires_at|date:"d.m.Y" }}</span>
+                            <small>{{ subscription.remaining_days }} дн.</small>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="earnings-empty">Активных платных подписчиков пока нет.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="earnings-period-card">
+            <span class="earnings-kicker">Неделя, месяц и квартал</span>
+            <div class="earnings-period-grid">
+                {% for period in earnings_periods %}
+                    <article>
+                        <span class="earnings-period-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <rect x="4" y="6" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M8 3v5M16 3v5M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span>{{ period.label }}</span>
+                        <strong>{{ period.total_display }} ₽</strong>
+                        <small class="is-{{ period.change_tone }}">{{ period.change_label }}</small>
+                        <em>{{ period.change_caption }}</em>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <section class="earnings-sources-card">
+        <span class="earnings-kicker">Откуда пришёл доход</span>
+        <div class="earnings-sources-layout">
+            <div class="earnings-donut-wrap">
+                <svg class="earnings-donut" viewBox="0 0 120 120" aria-label="Распределение дохода по источникам">
+                    <circle class="earnings-donut-track" cx="60" cy="60" r="46" pathLength="100"></circle>
+                    {% for source in earnings_sources %}
+                        {% if source.percent %}
+                        <circle
+                            class="earnings-donut-segment is-{{ source.key }}"
+                            cx="60"
+                            cy="60"
+                            r="46"
+                            pathLength="100"
+                            stroke-dasharray="{{ source.percent }} 100"
+                            stroke-dashoffset="-{{ source.offset }}"
+                        ></circle>
+                        {% endif %}
+                    {% endfor %}
+                </svg>
+                <div class="earnings-donut-center">
+                    <strong>{{ earnings_all_time.total_display }} ₽</strong>
+                    <span>всё время</span>
                 </div>
-                <a class="profile-user-open" href="{% url 'cabinet:user_profile' subscription.subscriber.username %}">Открыть профиль</a>
-            </article>
-        {% empty %}
-            <div class="profile-empty-state">
-                <p>Активных платных подписчиков пока нет.</p>
             </div>
-        {% endfor %}
-    </div>
-</div>
 
-<div class="profile-list-card">
-    <div class="profile-section-heading">
-        <div>
-            <p class="eyebrow">Динамика дохода</p>
-            <h2>Неделя, месяц и квартал</h2>
-        </div>
-    </div>
-
-    <div class="profile-wallet-grid">
-        {% for period in earnings_periods %}
-        <article class="profile-wallet-card">
-            <span>{{ period.label }}</span>
-            <strong>{{ period.total_display }} ₽</strong>
-            <small>{{ period.subscription_purchases }} покупок платной подписки</small>
-        </article>
-        {% endfor %}
-    </div>
-</div>
-
-<div class="profile-list-card">
-    <div class="profile-section-heading">
-        <div>
-            <p class="eyebrow">Источники</p>
-            <h2>Откуда пришёл доход</h2>
-        </div>
-    </div>
-
-    <div class="profile-wallet-grid">
-        <article class="profile-wallet-card">
-            <span>Платные подписки</span>
-            <strong>{{ earnings_all_time.subscription_income_display }} ₽</strong>
-            <small>{{ earnings_all_time.subscription_purchases }} покупок и продлений за всё время.</small>
-        </article>
-        <article class="profile-wallet-card">
-            <span>Турниры</span>
-            <strong>{{ earnings_all_time.tournament_income_display }} ₽</strong>
-            <small>Призовые, зачисленные на реальный баланс.</small>
-        </article>
-        <article class="profile-wallet-card">
-            <span>Рефералы</span>
-            <strong>{{ earnings_all_time.referral_income_display }} ₽</strong>
-            <small>Будет учитываться после запуска реферальных выплат.</small>
-        </article>
-    </div>
-</div>
-
-<div class="profile-list-card">
-    <div class="profile-section-heading">
-        <div>
-            <p class="eyebrow">Разбивка</p>
-            <h2>Доход по периодам</h2>
-        </div>
-    </div>
-
-    <div class="profile-wallet-history">
-        {% for period in earnings_periods %}
-        <div>
-            <h3>{{ period.label }}</h3>
-            <dl class="profile-info-list">
-                <div><dt>Платные подписки</dt><dd>{{ period.subscription_income_display }} ₽</dd></div>
-                <div><dt>Покупок подписки</dt><dd>{{ period.subscription_purchases }}</dd></div>
-                <div><dt>Турниры</dt><dd>{{ period.tournament_income_display }} ₽</dd></div>
-                <div><dt>Рефералы</dt><dd>{{ period.referral_income_display }} ₽</dd></div>
-                <div><dt>Всего</dt><dd>{{ period.total_display }} ₽</dd></div>
-            </dl>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<div class="profile-list-card">
-    <div class="profile-section-heading">
-        <div>
-            <p class="eyebrow">Последние начисления</p>
-            <h2>История заработка</h2>
-        </div>
-    </div>
-
-    <div class="profile-transaction-list">
-        {% for transaction in recent_earning_transactions %}
-        <div class="profile-transaction-row">
-            <div>
-                <strong>{{ transaction.get_kind_display }}</strong>
-                <span>{{ transaction.created_at|date:"d.m.Y · H:i" }}{% if transaction.note %} · {{ transaction.note }}{% endif %}</span>
+            <div class="earnings-source-legend">
+                {% for source in earnings_sources %}
+                    <div>
+                        <span class="earnings-source-dot is-{{ source.key }}"></span>
+                        <span>{{ source.label }}</span>
+                        <strong>{{ source.percent }}%</strong>
+                        <em>{{ source.amount_display }} ₽</em>
+                    </div>
+                {% endfor %}
             </div>
-            <div>
-                <strong class="is-positive">+{{ transaction.amount|money }} ₽</strong>
-                <span>после: {{ transaction.balance_after|money }} ₽</span>
+
+            <div class="earnings-source-cards">
+                {% for source in earnings_sources %}
+                    <article>
+                        <span class="earnings-source-icon is-{{ source.key }}" aria-hidden="true">
+                            {% if source.key == "subscriptions" %}
+                                <svg viewBox="0 0 24 24" fill="none"><circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M4 19c.6-3.4 2.6-5.2 6-5.2s5.4 1.8 6 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            {% elif source.key == "tournaments" %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M8 4h8v4a4 4 0 0 1-8 0V4ZM8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {% elif source.key == "referrals" %}
+                                <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                            {% else %}
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4zM7 4h10v3M8 11h8M8 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            {% endif %}
+                        </span>
+                        <div>
+                            <span>{{ source.label }}</span>
+                            <strong>{{ source.amount_display }} ₽</strong>
+                            <small>{{ source.percent }}% от дохода</small>
+                        </div>
+                        <progress class="earnings-source-progress is-{{ source.key }}" max="100" value="{{ source.percent }}">{{ source.percent }}%</progress>
+                    </article>
+                {% endfor %}
             </div>
         </div>
-        {% empty %}
-        <div class="profile-empty-state">
-            <p>Начислений на реальный баланс пока нет.</p>
+    </section>
+
+    <section class="earnings-table-card">
+        <div class="earnings-section-head">
+            <span class="earnings-kicker">Доход по периодам</span>
+            <span class="earnings-table-period">Последние 6 месяцев</span>
         </div>
-        {% endfor %}
-    </div>
+        <div class="earnings-table-wrap">
+            <table class="earnings-table">
+                <thead>
+                    <tr>
+                        <th>Период</th>
+                        <th>Платные подписки</th>
+                        <th>Турниры</th>
+                        <th>Рефералы</th>
+                        <th>Разовые покупки</th>
+                        <th>Всего</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in earnings_months %}
+                        <tr>
+                            <td>{{ row.label }}</td>
+                            <td>{{ row.subscription_income_display }} ₽</td>
+                            <td>{{ row.tournament_income_display }} ₽</td>
+                            <td>{{ row.referral_income_display }} ₽</td>
+                            <td>{{ row.other_income_display }} ₽</td>
+                            <td><strong>{{ row.total_display }} ₽</strong></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6">Доходов за последние месяцы пока нет.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>

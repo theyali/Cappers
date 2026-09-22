@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Sum
+from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -28,6 +29,22 @@ REFERRAL_EARNING_KINDS = (
     RealBalanceTransaction.Kind.REFERRAL_TOURNAMENT,
     RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
 )
+
+_MONTH_NAMES = {
+    1: "Январь",
+    2: "Февраль",
+    3: "Март",
+    4: "Апрель",
+    5: "Май",
+    6: "Июнь",
+    7: "Июль",
+    8: "Август",
+    9: "Сентябрь",
+    10: "Октябрь",
+    11: "Ноябрь",
+    12: "Декабрь",
+}
+
 
 _CHART_MONTHS = {
     1: "янв",
@@ -87,6 +104,132 @@ def _period_summary(queryset, *, label: str, days: int | None = None) -> dict:
         "referral_income_display": format_money(referral_income),
         "subscription_purchases": values["subscription_purchases"],
     }
+
+
+def _change_summary(current: Decimal, previous: Decimal, *, caption: str) -> dict:
+    current = Decimal(current or 0)
+    previous = Decimal(previous or 0)
+    if previous == 0:
+        percent = 0 if current == 0 else 100
+    else:
+        percent = int(round(((current - previous) / abs(previous)) * 100))
+
+    prefix = "+" if percent > 0 else ""
+    return {
+        "percent": percent,
+        "label": f"{prefix}{percent}%",
+        "tone": "positive" if percent > 0 else "negative" if percent < 0 else "neutral",
+        "caption": caption,
+    }
+
+
+def _previous_period_total(queryset, *, days: int) -> Decimal:
+    end = timezone.now() - timedelta(days=days)
+    start = end - timedelta(days=days)
+    return (
+        queryset.filter(created_at__gte=start, created_at__lt=end)
+        .aggregate(total=Sum("amount"))["total"]
+        or Decimal("0.00")
+    )
+
+
+def _source_percent(value: Decimal, total: Decimal) -> int:
+    if total <= 0:
+        return 0
+    return max(0, min(100, int(round((value / total) * 100))))
+
+
+def _build_earnings_sources(summary: dict) -> list[dict]:
+    total = Decimal(summary["total"] or 0)
+    source_values = [
+        ("subscriptions", "Платные подписки", Decimal(summary["subscription_income"] or 0)),
+        ("tournaments", "Турниры", Decimal(summary["tournament_income"] or 0)),
+        ("referrals", "Рефералы", Decimal(summary["referral_income"] or 0)),
+    ]
+    known_total = sum((value for _, _, value in source_values), Decimal("0.00"))
+    source_values.append(
+        ("other", "Разовые покупки", max(total - known_total, Decimal("0.00")))
+    )
+
+    offset = 0
+    items = []
+    for key, label, amount in source_values:
+        percent = _source_percent(amount, total)
+        items.append(
+            {
+                "key": key,
+                "label": label,
+                "amount": amount,
+                "amount_display": format_money(amount),
+                "percent": percent,
+                "offset": offset,
+            }
+        )
+        offset += percent
+    return items
+
+
+def _month_start(value, months_back: int = 0):
+    month_index = (value.year * 12 + value.month - 1) - months_back
+    year, month_zero = divmod(month_index, 12)
+    return value.replace(
+        year=year,
+        month=month_zero + 1,
+        day=1,
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+
+def _monthly_earnings(queryset, *, months: int = 6) -> list[dict]:
+    now = timezone.now()
+    start = _month_start(now, months - 1)
+    rows = {
+        item["month"]: item
+        for item in (
+            queryset.filter(created_at__gte=start)
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(
+                total=Sum("amount"),
+                subscription_income=Sum(
+                    "amount",
+                    filter=Q(kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME),
+                ),
+                tournament_income=Sum(
+                    "amount",
+                    filter=Q(kind=RealBalanceTransaction.Kind.TOURNAMENT_PRIZE),
+                ),
+                referral_income=Sum("amount", filter=Q(kind__in=REFERRAL_EARNING_KINDS)),
+            )
+        )
+    }
+
+    result = []
+    for months_back in range(months):
+        month = _month_start(now, months_back)
+        row = rows.get(month, {})
+        total = Decimal(row.get("total") or 0)
+        subscription_income = Decimal(row.get("subscription_income") or 0)
+        tournament_income = Decimal(row.get("tournament_income") or 0)
+        referral_income = Decimal(row.get("referral_income") or 0)
+        other_income = max(
+            total - subscription_income - tournament_income - referral_income,
+            Decimal("0.00"),
+        )
+        result.append(
+            {
+                "label": f"{_MONTH_NAMES[month.month]} {month.year}",
+                "subscription_income_display": format_money(subscription_income),
+                "tournament_income_display": format_money(tournament_income),
+                "referral_income_display": format_money(referral_income),
+                "other_income_display": format_money(other_income),
+                "total_display": format_money(total),
+            }
+        )
+    return result
 
 
 def _compact_chart_value(value: Decimal) -> str:
@@ -364,6 +507,15 @@ def build_earnings_context(user) -> dict:
             "paid_subscribers_total": 0,
             "active_paid_subscriptions": [],
             "recent_earning_transactions": [],
+            "earnings_hero_change": {"label": "0%", "tone": "neutral"},
+            "earnings_kpis": [],
+            "earnings_sources": [],
+            "earnings_months": [],
+            "earnings_payouts": {
+                "count": 0,
+                "total_display": "0",
+                "pending_label": "Нет активных заявок",
+            },
         }
 
     now = timezone.now()
@@ -397,23 +549,131 @@ def build_earnings_context(user) -> dict:
     )
     for subscription in active_paid_subscriptions:
         attach_vip_status_to_user(subscription.subscriber, subscription)
+        subscription.remaining_days = max((subscription.expires_at - now).days, 0)
+
+    paid_subscribers_total = AnalystPaidSubscription.objects.filter(analyst=user).count()
+    earnings_all_time = _period_summary(earning_transactions, label="За всё время")
+
+    periods = []
+    for label, days, caption in (
+        ("Неделя", 7, "к прошлой неделе"),
+        ("Месяц", 30, "к прошлому месяцу"),
+        ("Квартал", 90, "к прошлому кварталу"),
+    ):
+        period = _period_summary(earning_transactions, label=label, days=days)
+        change = _change_summary(
+            period["total"],
+            _previous_period_total(earning_transactions, days=days),
+            caption=caption,
+        )
+        periods.append(
+            {
+                **period,
+                "change_label": change["label"],
+                "change_tone": change["tone"],
+                "change_caption": change["caption"],
+            }
+        )
+
+    previous_quarter_total = _previous_period_total(earning_transactions, days=90)
+    hero_change = _change_summary(
+        periods[2]["total"],
+        previous_quarter_total,
+        caption="по сравнению с прошлым кварталом",
+    )
+
+    completed_payouts = RealBalanceTransaction.objects.filter(
+        user=user,
+        kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+        status=RealBalanceTransaction.Status.COMPLETED,
+    )
+    payout_values = completed_payouts.aggregate(count=Count("id"), total=Sum("amount"))
+    payout_total = abs(Decimal(payout_values["total"] or 0))
+
+    published_predictions = PredictionCoupon.objects.filter(
+        author=user,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    )
+    predictions_total = published_predictions.count()
+    predictions_last_month = published_predictions.filter(
+        created_at__gte=now - timedelta(days=30)
+    ).count()
+
+    week_ago = now - timedelta(days=7)
+    active_week_ago = AnalystPaidSubscription.objects.filter(
+        analyst=user,
+        starts_at__lte=week_ago,
+        expires_at__gt=week_ago,
+    ).count()
+    active_delta = len(active_paid_subscriptions) - active_week_ago
+
+    average_subscriber_income = (
+        earnings_all_time["subscription_income"] / paid_subscribers_total
+        if paid_subscribers_total
+        else Decimal("0.00")
+    )
+    current_month_subscriptions = _period_summary(
+        earning_transactions,
+        label="Месяц",
+        days=30,
+    )
+    previous_month_total = _previous_period_total(earning_transactions, days=30)
+    average_change = _change_summary(
+        current_month_subscriptions["subscription_income"],
+        previous_month_total,
+        caption="к прошлому месяцу",
+    )
+
+    earnings_kpis = [
+        {
+            "icon": "users",
+            "label": "Активные платные подписчики",
+            "value": str(len(active_paid_subscriptions)),
+            "change_label": f"{'+' if active_delta > 0 else ''}{active_delta}",
+            "change_caption": "к прошлой неделе",
+            "tone": "positive" if active_delta > 0 else "negative" if active_delta < 0 else "neutral",
+        },
+        {
+            "icon": "bars",
+            "label": "Всего прогнозов",
+            "value": str(predictions_total),
+            "change_label": f"+{predictions_last_month}",
+            "change_caption": "за последний месяц",
+            "tone": "positive" if predictions_last_month > 0 else "neutral",
+        },
+        {
+            "icon": "trend",
+            "label": "Средний доход с подписчика",
+            "value": f"{format_money(average_subscriber_income)} ₽",
+            "change_label": average_change["label"],
+            "change_caption": average_change["caption"],
+            "tone": average_change["tone"],
+        },
+    ]
 
     return {
         "real_balance": real_balance,
         "real_balance_display": format_money(real_balance.balance),
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal),
-        "earnings_all_time": _period_summary(earning_transactions, label="За всё время"),
-        "earnings_periods": [
-            _period_summary(earning_transactions, label="Неделя", days=7),
-            _period_summary(earning_transactions, label="Месяц", days=30),
-            _period_summary(earning_transactions, label="Квартал", days=90),
-        ],
+        "earnings_all_time": earnings_all_time,
+        "earnings_periods": periods,
+        "earnings_hero_change": hero_change,
+        "earnings_kpis": earnings_kpis,
+        "earnings_sources": _build_earnings_sources(earnings_all_time),
+        "earnings_months": _monthly_earnings(earning_transactions),
+        "earnings_payouts": {
+            "count": payout_values["count"] or 0,
+            "total_display": format_money(payout_total),
+            "pending_label": (
+                "Есть активная заявка"
+                if real_balance.pending_withdrawal
+                else "Нет активных заявок"
+            ),
+        },
         "earnings_chart": earnings_charts["30"],
         "earnings_charts": earnings_charts,
         "active_paid_subscribers": len(active_paid_subscriptions),
-        "paid_subscribers_total": AnalystPaidSubscription.objects.filter(
-            analyst=user,
-        ).count(),
+        "paid_subscribers_total": paid_subscribers_total,
         "active_paid_subscriptions": active_paid_subscriptions,
         "recent_earning_transactions": earning_transactions.order_by(
             "-created_at",
