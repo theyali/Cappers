@@ -5755,11 +5755,6 @@ body.expert-public-details-open {
         width: 100%;
     }
 
-    .wallet-balance-art,
-    .wallet-balance-art.is-real {
-        width: 44%;
-    }
-
     .wallet-operations-card {
         padding: 14px;
     }
