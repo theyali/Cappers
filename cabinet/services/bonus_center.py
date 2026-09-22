@@ -220,6 +220,7 @@ def build_profile_bonus_summary(user) -> dict:
         "current_level_title": level_progress["level_title"],
         "current_level_number": level_progress["level"],
         "xp": level_progress["xp"],
+        "next_level_xp": level_progress["next_level_xp"],
         "target_label": level_progress["target_label"],
         "status_label": level_progress["status_label"],
         "progress_class": level_progress["progress_class"],
