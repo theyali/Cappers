@@ -69,7 +69,8 @@
                                 <span{% if slot.is_completed %} class="is-done"{% endif %}></span>
                             {% endfor %}
                         </div>
-                        <div class="bonus-task-actions" data-daily-task-actions{% if not daily_tasks_card.claim_url %} hidden{% endif %}>
+                        {% if daily_tasks_card.claim_url %}
+                        <div class="bonus-task-actions" data-daily-task-actions>
                             <button
                                 type="button"
                                 class="bonus-task-claim"
@@ -82,6 +83,7 @@
                             </button>
                             <small data-daily-task-claim-status aria-live="polite"></small>
                         </div>
+                        {% endif %}
                         <strong
                             class="bonus-task-card-status is-{{ daily_tasks_card.status }}"
                             data-daily-task-card-status

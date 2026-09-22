@@ -709,15 +709,13 @@
         if (button.disabled) return;
 
         const url = String(button.dataset.url || "");
-        const row = button.closest("[data-profile-daily-task-id]");
-        const status = row?.querySelector(
-            "[data-profile-daily-task-status]"
-        );
-        if (!url || !row) return;
+        const card = button.closest(".profile-daily-tasks-card");
+        const status = card?.querySelector("[data-profile-daily-task-status]");
+        if (!url) return;
 
         const defaultLabel = button.textContent;
         button.disabled = true;
-        button.textContent = "Получаем…";
+        button.textContent = button.dataset.pendingLabel || "Получаем…";
         if (status) status.textContent = "";
 
         try {
@@ -741,6 +739,12 @@
                     payload.daily_tasks_card?.summary_label || ""
                 );
             }
+            card?.querySelectorAll("[data-profile-daily-task-id]").forEach((row) => {
+                row.classList.remove("is-in-progress");
+                row.classList.add("is-completed");
+                const check = row.querySelector(".profile-daily-task-check");
+                if (check) check.textContent = "✓";
+            });
             button.remove();
         } catch (error) {
             button.disabled = false;
@@ -748,7 +752,7 @@
             if (status) {
                 status.textContent = error instanceof Error
                     ? error.message
-                    : "Не удалось получить награду.";
+                    : button.dataset.errorLabel || "Не удалось получить награду.";
             }
         }
     };

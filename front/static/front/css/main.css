@@ -30890,7 +30890,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     font-size: 11px;
 }
 .referrals-hero h1 {
-    max-width: 430px;
     margin: 0;
     color: #f7f7f8;
     font-size: 17px;

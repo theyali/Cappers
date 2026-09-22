@@ -588,6 +588,54 @@ class BonusCenterServiceTests(TestCase):
             event_key=f"bonus:{reward_event.pk}",
         )
         self.assertEqual(reward_notification.title, "Награда получена")
+
+    def test_daily_tasks_claim_all_endpoint_claims_all_available_rewards(self):
+        tasks = [
+            DailyTask.objects.create(
+                title="Награда 1",
+                task_type=DailyTask.TaskType.DAILY_LOGIN,
+                target_value=1,
+                reward_coins=10,
+            ),
+            DailyTask.objects.create(
+                title="Награда 2",
+                task_type=DailyTask.TaskType.OPEN_FEED,
+                target_value=1,
+                reward_coins=15,
+            ),
+        ]
+        for task in tasks:
+            UserDailyTaskProgress.objects.create(
+                user=self.user,
+                task=task,
+                progress_date=timezone.localdate(),
+                current_value=1,
+                is_completed=True,
+                completed_at=timezone.now(),
+            )
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("cabinet:daily_tasks_claim_all"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["daily_tasks_card"]["claimable_count"], 0)
+        self.assertEqual(
+            UserDailyTaskProgress.objects.filter(
+                user=self.user,
+                task__in=tasks,
+                reward_claimed_at__isnull=False,
+            ).count(),
+            2,
+        )
+        self.assertEqual(
+            BonusEvent.objects.filter(
+                user=self.user,
+                event_type=BonusEvent.EventType.DAILY_TASK,
+            ).count(),
+            2,
+        )
         self.assertEqual(
             Notification.objects.filter(
                 event_key=f"bonus:{reward_event.pk}",
@@ -896,9 +944,9 @@ class BonusCenterServiceTests(TestCase):
         self.assertContains(response, "data-daily-task-claim")
         self.assertContains(
             response,
-            reverse("cabinet:daily_task_claim", args=(task.pk,)),
+            reverse("cabinet:daily_tasks_claim_all"),
         )
-        self.assertContains(response, ">Получить</span>")
+        self.assertContains(response, ">Получить все</span>")
 
     def test_daily_tasks_page_requires_login(self):
         response = self.client.get(reverse("cabinet:bonus_tasks"))
