@@ -13496,6 +13496,30 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     gap: 18px;
     grid-column: 2;
 }
+.following-feed-content {
+    align-content: start;
+    grid-auto-rows: max-content;
+}
+.following-feed-content > *,
+.following-feed-content .content-view-container,
+.following-feed-content [data-content-view-root],
+.following-feed-content [data-content-view-panel] {
+    min-height: 0;
+}
+.following-feed-content .content-view-container,
+.following-feed-content [data-content-view-root],
+.following-feed-content [data-content-view-panel]:not([hidden]) {
+    display: grid;
+    align-content: start;
+    grid-auto-rows: max-content;
+    gap: 18px;
+}
+.following-feed-content [data-content-view-panel][hidden] {
+    display: none;
+}
+.following-feed-page .predictions-empty.following-feed-empty {
+    min-height: 300px;
+}
 .predictions-layout.is-filter-collapsed .predictions-grid,
 .tournament-detail-summary .profile-hero-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
