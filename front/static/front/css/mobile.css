@@ -4719,39 +4719,74 @@ body.expert-public-details-open {
         height: 96px;
     }
 
-    .referrals-simple-head {
-        grid-template-columns: 1fr;
-        align-items: start;
-        gap: 14px;
-        padding: 16px;
+    .referrals-hero {
+        min-height: 0;
+        padding: 18px;
     }
 
-    .cabinet-referrals-page .profile-referral-link-wrap {
-        width: 100%;
+    .referrals-hero-copy {
+        width: 64%;
     }
 
-    .referrals-metrics {
+    .referrals-hero-kicker {
+        margin-bottom: 14px;
+    }
+
+    .referrals-hero-image {
+        right: 6px;
+        width: 42%;
+    }
+
+    .referrals-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .referrals-share-grid,
     .referrals-lists-grid {
         grid-template-columns: 1fr;
     }
 
-    .referrals-simple-section {
-        padding: 14px;
+    .referrals-how-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 420px) {
-    .cabinet-bonuses-page .bonus-page-head h1,
-    .referrals-simple-head h1 {
+    .cabinet-bonuses-page .bonus-page-head h1 {
         font-size: 25px;
     }
 
     .cabinet-bonuses-page .bonus-levels-hero .bonus-progress-body {
         grid-template-columns: 1fr;
         justify-items: start;
+    }
+
+    .referrals-hero {
+        padding: 16px;
+    }
+
+    .referrals-hero-copy {
+        width: 100%;
+    }
+
+    .referrals-hero-image {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        height: 150px;
+        margin-top: 8px;
+        object-position: center;
+    }
+
+    .referrals-stats {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .referrals-stat {
+        min-height: 68px;
+        padding: 10px;
     }
 
     .cabinet-referrals-page .profile-referral-link-wrap {
@@ -4762,27 +4797,34 @@ body.expert-public-details-open {
         width: 100%;
     }
 
-    .referrals-metrics {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .referrals-step {
-        grid-template-columns: 28px minmax(0, 1fr);
-    }
-
-    .referrals-step > b {
-        grid-column: 2;
-        white-space: normal;
-    }
-
-    .referrals-simple-row {
+    .referrals-how-grid {
         grid-template-columns: 1fr;
-        gap: 3px;
     }
 
-    .referrals-simple-row > small {
-        max-width: none;
-        text-align: left;
+    .referrals-share-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+    }
+
+    .referrals-share-icon {
+        width: 58px;
+        height: 58px;
+    }
+
+    .referrals-activity-row {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .referral-activity-status {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .referrals-reward-row {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .referrals-reward-row time {
+        grid-column: 2;
     }
 }
 

@@ -353,6 +353,16 @@ def build_referrals_page_context(user, request=None) -> dict:
                 ),
                 "status": status,
                 "status_label": status_label,
+                "avatar_url": (
+                    visitor.avatar.url
+                    if visitor is not None and visitor.avatar
+                    else ""
+                ),
+                "avatar_initial": (
+                    (visitor.get_full_name().strip() or visitor.username)[:1].upper()
+                    if visitor
+                    else "?"
+                ),
                 "first_seen_at": visit.first_seen_at.isoformat(),
                 "last_seen_at": visit.last_seen_at.isoformat(),
                 "registered_at": (
@@ -554,7 +564,10 @@ def build_referrals_page_context(user, request=None) -> dict:
         "bonus_cards": bonus_cards,
         "bonus_steps": bonus_cards,
         "recent_referrals": recent_visits[:8],
-        "recent_bonuses": recent_bonus_events[:8],
+        "recent_registrations": [
+            visit for visit in recent_visits if visit["registered"]
+        ][:4],
+        "recent_bonuses": recent_bonus_events[:4],
         "recent_visits": recent_visits,
         "recent_bonus_events": recent_bonus_events,
     }
