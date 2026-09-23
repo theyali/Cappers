@@ -184,6 +184,35 @@
                 <small>с начала года</small>
             </div>
         </article>
+
+        {% if expert_latest_articles %}
+        <div class="expert-public-latest-articles" aria-labelledby="expert-public-latest-articles-title">
+            <div class="expert-public-latest-articles-head">
+                <div>
+                    <p class="expert-public-kicker">Последние статьи</p>
+                    <h2 id="expert-public-latest-articles-title">Статьи эксперта</h2>
+                </div>
+                <span>{{ expert_latest_articles|length }} из {{ expert_articles|length }}</span>
+            </div>
+            <div class="expert-public-latest-articles-grid">
+                {% for article in expert_latest_articles %}
+                <a class="expert-public-latest-article{% if article.cover_image %} has-cover{% endif %}" href="{{ article.get_absolute_url }}">
+                    {% if article.cover_image %}
+                        <img src="{{ article.cover_image.url }}" alt="" loading="lazy">
+                    {% endif %}
+                    <div class="expert-public-latest-article-copy">
+                        <span>Статья</span>
+                        <strong>{{ article.title }}</strong>
+                        {% if article.excerpt %}
+                            <p>{{ article.excerpt|truncatechars:92 }}</p>
+                        {% endif %}
+                        <small>{{ article.published_at|date:"d.m.Y" }}</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </section>
 
     <section class="expert-public-analytics" aria-label="Подробная статистика эксперта">
@@ -428,7 +457,7 @@
 
         <div class="profile-user-list">
             {% for article in expert_articles %}
-            <article class="profile-user-row">
+            <a class="profile-user-row" href="{{ article.get_absolute_url }}">
                 <div class="profile-user-avatar"{% if article.cover_image %} data-skeleton-image{% endif %}>
                     {% if article.cover_image %}
                         <img src="{{ article.cover_image.url }}" width="46" height="46" alt="" loading="lazy">
@@ -443,7 +472,7 @@
                     {% endif %}
                     <small>{{ article.published_at|date:"d.m.Y" }}</small>
                 </div>
-            </article>
+            </a>
             {% endfor %}
         </div>
     </section>

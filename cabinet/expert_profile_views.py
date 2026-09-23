@@ -2,7 +2,7 @@ from random import randint
 
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -368,13 +368,14 @@ def expert_profile(request, username: str):
         row for row in finished_tournaments if row["achievement"] is not None
     ]
     context["expert_tournaments_count"] = len(current_tournaments) + len(finished_tournaments)
-    context["expert_articles"] = list(
+    expert_articles = list(
         CapperArticle.objects.filter(
             author=profile.user,
             status=CapperArticle.Status.APPROVED,
-        )
-        .order_by("-published_at", "-id")
+        ).order_by("-published_at", "-id")
     )
+    context["expert_articles"] = expert_articles
+    context["expert_latest_articles"] = expert_articles[:3]
 
     paid_subscription = active_paid_subscriptions_by_analyst(
         request.user,
@@ -402,4 +403,40 @@ def expert_profile(request, username: str):
         request,
         "cabinet/expert_profile_performance.html",
         context,
+    )
+
+
+def capper_article_detail(request, username: str, article_id: int, slug: str):
+    article = get_object_or_404(
+        CapperArticle.objects.select_related("author", "author__analyst_profile"),
+        pk=article_id,
+        author__username=username,
+        author__role=User.Role.ANALYST,
+        author__analyst_profile__is_public=True,
+        status=CapperArticle.Status.APPROVED,
+    )
+    if article.slug != slug:
+        return redirect(article.get_absolute_url(), permanent=True)
+
+    related_articles = list(
+        CapperArticle.objects.filter(
+            author=article.author,
+            status=CapperArticle.Status.APPROVED,
+        )
+        .exclude(pk=article.pk)
+        .order_by("-published_at", "-id")[:3]
+    )
+    profile = article.author.analyst_profile
+    expert_name = profile.display_name or article.author.get_full_name() or article.author.username
+
+    return render(
+        request,
+        "cabinet/capper_article_detail.html",
+        {
+            "article": article,
+            "profile": profile,
+            "expert": article.author,
+            "expert_name": expert_name,
+            "related_articles": related_articles,
+        },
     )

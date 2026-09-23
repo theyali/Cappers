@@ -44,22 +44,21 @@
         <span class="feed-prediction-cover-status is-{{ prediction.state_status }}" aria-label="{{ prediction.coupon.get_state_status_display }}">
             {% if prediction.state_status == 'pending' %}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="8.5"></circle>
                     <path d="M12 7.5v5l3.2 1.8"></path>
+                    <circle cx="12" cy="12" r="8.5"></circle>
                 </svg>
             {% elif prediction.state_status == 'win' %}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="feed-prediction-status-icon-bg" cx="12" cy="12" r="9"></circle>
-                    <path class="feed-prediction-status-icon-mark" d="M7.8 12.2 10.6 15l5.8-6.1"></path>
+                    <path d="M7.5 12.2 10.5 15.2 16.8 8.8"></path>
                 </svg>
             {% elif prediction.state_status == 'lose' %}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8 8l8 8M16 8l-8 8"></path>
+                    <path d="M7.8 7.8 16.2 16.2M16.2 7.8 7.8 16.2"></path>
                 </svg>
             {% else %}
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M7.2 8.2A7 7 0 1 1 5 13"></path>
-                    <path d="M7.2 4.8v3.4H3.8"></path>
+                    <path d="M8.2 8.4A6.5 6.5 0 1 1 6 13"></path>
+                    <path d="M8.2 5v3.4H4.8"></path>
                 </svg>
             {% endif %}
         </span>
