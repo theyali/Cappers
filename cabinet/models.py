@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from tinymce.models import HTMLField
 
@@ -324,6 +325,16 @@ class CapperArticle(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    def get_absolute_url(self) -> str:
+        return reverse(
+            "front:capper_article_detail",
+            kwargs={
+                "username": self.author.username,
+                "article_id": self.pk,
+                "slug": self.slug,
+            },
+        )
 
 
 def _social_url(value: str, network: str) -> str:

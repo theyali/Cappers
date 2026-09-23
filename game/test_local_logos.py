@@ -145,6 +145,62 @@ class LocalLogoServiceTests(TestCase):
         with Image.open(Path(self.media_root) / team.logo.name) as image:
             self.assertEqual(image.format, "WEBP")
 
+    @patch("cappers.media_webp.cairosvg")
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_svg_remote_bytes_are_saved_as_real_webp(self, mocked_open, mocked_cairosvg):
+        mocked_open.return_value = FakeImageResponse(
+            b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>',
+            content_type="image/svg+xml",
+        )
+        mocked_cairosvg.svg2png.return_value = png_bytes()
+        country = Country.objects.create(
+            external_id=4017,
+            code="MX",
+            name="Mexico",
+            remote_logo_url="https://cdn.example/flag-mx.svg",
+        )
+
+        self.assertTrue(
+            sync_entity_logo(
+                country,
+                field_name="logo",
+                remote_url=country.remote_logo_url,
+                target_name=country_logo_upload_path(country, ""),
+            )
+        )
+
+        country.refresh_from_db()
+        self.assertEqual(country.logo.name, "country/flags/mx.webp")
+        with Image.open(Path(self.media_root) / country.logo.name) as image:
+            self.assertEqual(image.format, "WEBP")
+
+    @patch("cappers.media_webp.cairosvg")
+    @patch("game.services.local_logos._logo_opener.open")
+    def test_svg_conversion_error_is_handled(self, mocked_open, mocked_cairosvg):
+        mocked_open.return_value = FakeImageResponse(
+            b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>',
+            content_type="image/svg+xml",
+        )
+        mocked_cairosvg.svg2png.side_effect = RuntimeError("invalid matrix")
+        country = Country.objects.create(
+            external_id=4018,
+            code="PE",
+            name="Peru",
+            remote_logo_url="https://cdn.example/flag-pe.svg",
+        )
+
+        self.assertFalse(
+            sync_entity_logo(
+                country,
+                field_name="logo",
+                remote_url=country.remote_logo_url,
+                target_name=country_logo_upload_path(country, ""),
+            )
+        )
+
+        country.refresh_from_db()
+        self.assertFalse(country.logo)
+
     @patch("game.services.local_logos._logo_opener.open")
     def test_basketball_league_uses_basket_media_path(self, mocked_open):
         mocked_open.return_value = FakeImageResponse(png_bytes())
@@ -521,6 +577,25 @@ class LocalLogoServiceTests(TestCase):
         self.assertEqual(league.logo_url, "")
         self.assertEqual(country.logo_url, "")
         self.assertEqual(self.football.image_url, "")
+
+    def test_country_logo_upload_path_uses_country_code(self):
+        country = Country.objects.create(
+            external_id=4015,
+            code="AZ",
+            name="Azerbaijan",
+        )
+
+        self.assertEqual(country_logo_upload_path(country, ""), "country/flags/az.webp")
+
+    def test_logo_url_properties_reject_remote_names_in_image_fields(self):
+        country = Country.objects.create(
+            external_id=4016,
+            code="RU",
+            name="Russia",
+            logo="https://sports.api-neurokeff.ru/media/flags/flag_RU_5a8e625724.svg",
+        )
+
+        self.assertEqual(country.logo_url, "")
 
     def test_match_logo_properties_never_fallback_to_raw_provider_urls(self):
         match = Match.objects.create(

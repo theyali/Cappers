@@ -1,3 +1,4 @@
+{% load static %}
 <section class="expert-public-predictions expert-public-bank" data-expert-public-panel="bank" hidden aria-label="Банк каппера">
     <div class="expert-public-bank-layout">
         <div class="expert-public-bank-hero">
@@ -7,6 +8,7 @@
                 <p class="expert-public-section-note">Публичная статистика считается только по опубликованным купонам. Баланс кошелька пользователя здесь не раскрывается.</p>
                 <span class="expert-public-bank-count">{{ bank_coupons_count }} купонов</span>
             </div>
+            <img class="expert-public-bank-image" src="{% static 'front/img/profile_bank.png' %}" alt="" loading="lazy">
         </div>
 
         <div class="expert-public-bank-stats">

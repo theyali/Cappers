@@ -5926,7 +5926,10 @@ body.expert-public-details-open {
 
     .expert-public-bank-hero {
         min-height: 520px;
-        background-position: center bottom;
+    }
+
+    .expert-public-bank-image {
+        max-height: 300px;
     }
 
     .expert-public-bank-stats {
@@ -5948,7 +5951,6 @@ body.expert-public-details-open {
     .expert-public-bank-hero {
         min-height: 460px;
         border-radius: 14px;
-        background-position: 48% bottom;
     }
 
     .expert-public-bank-copy {
@@ -5965,6 +5967,10 @@ body.expert-public-details-open {
 
     .expert-public-bank .expert-public-bank-copy h2 {
         font-size: 32px;
+    }
+
+    .expert-public-bank-image {
+        max-height: 240px;
     }
 
     .expert-public-bank-count {

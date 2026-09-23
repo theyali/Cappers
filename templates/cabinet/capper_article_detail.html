@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} — {{ expert_name }} — КапперХаб{% endblock %}
+
+{% block content %}
+<article class="article-detail-page capper-article-detail-page">
+    <header class="article-detail-head">
+        <a class="article-back" href="{% url 'front:expert_profile' username=expert.username %}">← Профиль каппера</a>
+        <div class="article-detail-meta">
+            <span>{{ article.published_at|default:article.created_at|date:"d.m.Y" }}</span>
+            <span>{{ expert_name }}</span>
+        </div>
+        <h1>{{ article.title }}</h1>
+        {% if article.excerpt %}
+            <p>{{ article.excerpt }}</p>
+        {% endif %}
+    </header>
+
+    <div class="article-detail-image">
+        {% if article.cover_image %}
+            <img src="{{ article.cover_image.url }}" alt="{{ article.title }}">
+        {% else %}
+            <span>КапперХаб</span>
+        {% endif %}
+    </div>
+
+    <section class="article-content">
+        {{ article.content|safe }}
+    </section>
+
+    {% if related_articles %}
+    <section class="related-articles" aria-labelledby="related-capper-articles-title">
+        <div class="related-articles-head">
+            <div>
+                <p class="articles-eyebrow">Ещё от каппера</p>
+                <h2 id="related-capper-articles-title">Другие статьи</h2>
+            </div>
+            <a href="{% url 'front:expert_profile' username=expert.username %}#articles">Все статьи →</a>
+        </div>
+        <div class="related-articles-grid">
+            {% for related in related_articles %}
+            <article class="related-article-card">
+                <a class="related-article-image" href="{{ related.get_absolute_url }}">
+                    {% if related.cover_image %}
+                        <img src="{{ related.cover_image.url }}" alt="{{ related.title }}" loading="lazy">
+                    {% else %}
+                        <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                    {% endif %}
+                </a>
+                <div>
+                    <span>{{ related.published_at|default:related.created_at|date:"d.m.Y" }}</span>
+                    <div class="related-article-title heading-style-h3"><a href="{{ related.get_absolute_url }}">{{ related.title }}</a></div>
+                    <a href="{{ related.get_absolute_url }}">Читать →</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}

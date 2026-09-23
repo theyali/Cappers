@@ -10,6 +10,11 @@ from django.core.files.base import ContentFile
 from django.db import models
 from PIL import Image, ImageOps, UnidentifiedImageError
 
+try:
+    import cairosvg
+except ImportError:  # pragma: no cover - exercised when optional dependency is absent.
+    cairosvg = None
+
 
 SKIPPED_EXTENSIONS = {".webp", ".svg", ".gif", ".avif"}
 
@@ -96,12 +101,48 @@ def _resize_image(image: Image.Image) -> Image.Image:
     return image
 
 
+def _source_bytes(source) -> bytes:
+    position = None
+    if hasattr(source, "tell"):
+        try:
+            position = source.tell()
+        except OSError:
+            position = None
+
+    payload = source.read()
+
+    if position is not None and hasattr(source, "seek"):
+        try:
+            source.seek(position)
+        except OSError:
+            pass
+    return payload
+
+
+def _looks_like_svg(payload: bytes) -> bool:
+    prefix = payload[:512].lstrip().lower()
+    return prefix.startswith(b"<svg") or b"<svg" in prefix
+
+
+def _svg_to_png_bytes(payload: bytes) -> bytes:
+    if cairosvg is None:
+        raise ValueError("SVG conversion requires CairoSVG")
+    try:
+        return cairosvg.svg2png(bytestring=payload, output_width=256, output_height=256)
+    except Exception as exc:
+        raise ValueError(f"SVG conversion failed: {exc}") from exc
+
+
 def convert_image_content_to_webp(source, *, quality: int | None = None) -> ContentFile:
     if quality is None:
         quality = int(getattr(settings, "MEDIA_WEBP_QUALITY", 82) or 82)
     quality = min(100, max(1, int(quality)))
 
-    with Image.open(source) as opened:
+    payload = _source_bytes(source)
+    if _looks_like_svg(payload):
+        payload = _svg_to_png_bytes(payload)
+
+    with Image.open(ContentFile(payload)) as opened:
         image = _resize_image(_normalized_image(opened))
         output = ContentFile(b"")
         image.save(

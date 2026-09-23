@@ -27,6 +27,9 @@ def league_logo_upload_path(instance, filename):
 
 
 def country_logo_upload_path(instance, filename):
+    code = str(getattr(instance, "code", "") or "").strip().lower()
+    if len(code) == 2 and code.isalpha():
+        return f"country/flags/{code}.webp"
     return f"common/country/{instance.pk or 'new'}.webp"
 
 
@@ -36,6 +39,9 @@ def sport_image_upload_path(instance, filename):
 
 def image_field_url(field) -> str:
     if not field:
+        return ""
+    name = str(getattr(field, "name", "") or "").strip()
+    if "://" in name:
         return ""
     try:
         return field.url
