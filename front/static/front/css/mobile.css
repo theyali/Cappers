@@ -9655,29 +9655,39 @@ body.expert-public-details-open {
     }
 
 
+
+    /* Home best experts: mobile leaderboard */
     .home-best-experts {
-        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        gap: 12px;
         margin-top: 16px;
-        padding: 22px 14px 18px;
+        padding: 18px 10px 14px;
         overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 26px;
-        background:
-            radial-gradient(circle at 62% 10%, rgba(255, 242, 0, 0.1), transparent 24%),
-            linear-gradient(180deg, #11161c 0, #06080a 100%);
+        border-radius: 18px;
+        background: #101011;
     }
+
     .home-best-experts,
     .home-best-experts * {
+        box-sizing: border-box;
         font-weight: 600;
     }
-    .home-best-experts-head {
+
+    .home-best-experts .home-best-experts-head {
+        width: 100%;
+        min-width: 0;
         display: grid;
-        gap: 8px;
+        grid-template-columns: 1fr;
+        gap: 7px;
         margin: 0;
     }
-    .home-best-experts-head > div {
+
+    .home-best-experts .home-best-experts-head > div {
         min-width: 0;
     }
+
     .home-best-experts .home-eyebrow {
         display: flex;
         align-items: center;
@@ -9686,132 +9696,194 @@ body.expert-public-details-open {
         color: var(--yellow);
         font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.16em;
+        line-height: 1.2;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
     }
+
     .home-best-experts .home-eyebrow::before {
         content: "";
-        width: 17px;
-        height: 15px;
+        width: 16px;
+        height: 14px;
+        flex: 0 0 16px;
         background: url("../img/gold_crown.png") center / contain no-repeat;
     }
-    .home-best-experts-head h2 {
-        margin: 5px 0 0;
+
+    .home-best-experts .home-best-experts-head h2 {
+        margin: 0;
         color: #fff;
         font-size: 16px;
         font-weight: 700;
-        line-height: 1.1;
+        line-height: 1.15;
         letter-spacing: 0;
     }
-    .home-best-experts-head p:last-child {
-        max-width: 310px;
-        margin: 7px 0 0;
-        color: rgba(255, 255, 255, 0.66);
-        font-size: 13px;
-        line-height: 1.35;
+
+    .home-best-experts .home-best-experts-head p:last-child {
+        max-width: 100%;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 12px;
+        line-height: 1.4;
     }
-    .home-best-experts-head .home-all-link {
+
+    .home-best-experts .home-best-experts-head .home-all-link {
         display: none;
     }
-    .home-best-experts-stage,
-    .home-best-experts-podium,
-    .home-best-experts-runners {
+
+    .home-best-experts .home-best-experts-stage {
+        width: 100%;
+        min-width: 0;
         display: grid;
         grid-template-columns: 1fr;
-        gap: 9px;
+        gap: 8px;
+        align-items: stretch;
     }
-    .home-best-experts-podium {
+
+    .home-best-experts .home-best-experts-podium {
+        width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
         align-items: stretch;
         margin: 0;
-        padding: 4px 0 0;
+        padding: 0;
     }
-    .home-best-experts .home-best-expert-podium-card,
-    .home-best-experts .home-best-expert-row {
-        position: relative;
+
+    .home-best-experts .home-best-experts-runners {
+        width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        align-self: stretch;
+        margin: 0;
+    }
+
+    .home-best-experts .home-best-expert-podium-card {
+        width: 100%;
         min-width: 0;
         min-height: 0;
+        order: 0;
+        position: relative;
         display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
         align-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 13px;
+        padding: 9px 10px;
+        border-radius: 12px;
         color: #fff;
-        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        background: var(--panel);
+        box-shadow: none;
     }
+
     .home-best-experts .home-best-expert-podium-card.is-rank-1 {
         order: 0;
-        border-color: rgba(255, 242, 0, 0.78);
-        box-shadow: 0 0 18px rgba(255, 242, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        min-height: 0;
+        border: 1px solid var(--yellow);
+        background: #171719;
+        box-shadow: 0 0 14px rgba(251, 241, 16, 0.12);
     }
+
     .home-best-experts .home-best-expert-podium-card.is-rank-2,
     .home-best-experts .home-best-expert-podium-card.is-rank-3 {
         order: 0;
+        min-height: 0;
     }
+
     .home-best-experts .home-best-expert-podium-link {
         min-width: 0;
         min-height: 0;
         display: grid;
+        grid-template-columns: 28px 44px minmax(0, 1fr);
+        grid-template-areas:
+            "rank avatar name"
+            "rank avatar username"
+            "rank avatar roi"
+            "stats stats stats";
+        gap: 3px 8px;
+        align-items: center;
+        padding: 0;
+        border-radius: 0;
         color: inherit;
+        background: transparent;
+        box-shadow: none;
+        text-align: left;
         text-decoration: none;
     }
-    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-podium-link {
-        grid-template-columns: 38px 72px minmax(0, 1fr) 68px;
-        grid-template-rows: auto auto auto auto;
-        gap: 6px 9px;
-        align-items: center;
-        padding: 14px 94px 14px 13px;
+
+    .home-best-experts .home-best-expert-podium-link::before {
+        display: none;
     }
-    .home-best-experts .home-best-expert-podium-card:not(.is-rank-1) .home-best-expert-podium-link {
-        grid-template-columns: 34px 50px minmax(0, 1fr) 66px;
-        grid-template-rows: auto auto auto;
-        gap: 4px 8px;
-        align-items: center;
-        padding: 10px 90px 10px 11px;
-    }
-    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-rank-badge {
-        grid-column: 1;
-        grid-row: 1;
+
+    .home-best-experts .home-best-expert-rank-badge {
+        grid-area: rank;
+        align-self: center;
         justify-self: start;
-        align-self: start;
-        min-width: 38px;
-        min-height: 30px;
-        display: grid;
-        place-items: center;
-        border-radius: 8px;
-        color: #101010;
-        background: var(--yellow);
-        font-size: 13px;
-        font-weight: 700;
-    }
-    .home-best-experts .home-best-expert-podium-card:not(.is-rank-1) .home-best-expert-rank-badge,
-    .home-best-experts .home-best-expert-row-rank {
-        color: rgba(255, 255, 255, 0.88);
-        font-size: 16px;
+        min-width: 0;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+        color: rgba(255, 255, 255, 0.82);
+        background: transparent;
+        font-size: 14px;
         font-weight: 700;
         line-height: 1;
+        box-shadow: none;
     }
-    .home-best-experts .home-best-expert-podium-card:not(.is-rank-1) .home-best-expert-rank-badge {
-        grid-column: 1;
-        grid-row: 1 / 4;
-    }
-    .home-best-experts .home-best-expert-portrait {
-        grid-column: 2;
-        grid-row: 1 / 5;
-        position: relative;
+
+    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-rank-badge {
+        min-width: 28px;
+        min-height: 26px;
         display: grid;
         place-items: center;
-        min-width: 0;
+        border-radius: 7px;
+        color: #111;
+        background: var(--yellow);
+        font-size: 12px;
     }
+
+    .home-best-experts .home-best-expert-portrait {
+        grid-area: avatar;
+        position: relative;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 0;
+        display: grid;
+        place-items: center;
+    }
+
+    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-portrait {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+    }
+
     .home-best-experts .home-best-expert-avatar,
     .home-best-experts .home-best-expert-row-avatar {
         display: grid;
         place-items: center;
         overflow: hidden;
         border-radius: 50%;
-        color: #101010;
+        color: #111;
         background: var(--yellow);
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
     }
+
+    .home-best-experts .home-best-expert-avatar {
+        width: 44px;
+        height: 44px;
+    }
+
+    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-avatar {
+        width: 48px;
+        height: 48px;
+        box-shadow: 0 0 0 2px var(--yellow);
+    }
+
     .home-best-experts .home-best-expert-avatar img,
     .home-best-experts .home-best-expert-row-avatar img,
     .home-best-experts .home-best-expert-achievement img {
@@ -9820,216 +9892,221 @@ body.expert-public-details-open {
         display: block;
         object-fit: cover;
     }
-    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-avatar {
-        width: 72px;
-        height: 72px;
-        box-shadow: 0 0 0 3px var(--yellow);
-    }
-    .home-best-experts .home-best-expert-podium-card:not(.is-rank-1) .home-best-expert-avatar {
-        width: 50px;
-        height: 50px;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.72);
-    }
-    .home-best-experts .home-best-expert-crown {
-        position: absolute;
-        top: -16px;
-        right: -18px;
-        width: 34px;
-        height: 28px;
-        display: none;
-        filter: drop-shadow(0 0 10px rgba(255, 242, 0, .45));
-    }
-    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-crown {
-        display: block;
-    }
-    .home-best-experts .home-best-expert-crown img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    .home-best-experts .home-best-expert-laurel {
+
+    .home-best-experts .home-best-expert-crown,
+    .home-best-experts .home-best-expert-laurel,
+    .home-best-experts .home-best-expert-pedestal {
         display: none;
     }
+
     .home-best-experts .home-best-expert-verified {
         position: absolute;
-        right: -8px;
-        bottom: 4px;
-        width: 22px;
-        height: 22px;
+        right: -5px;
+        bottom: -3px;
+        width: 18px;
+        height: 18px;
+        filter: none;
     }
+
     .home-best-experts .home-best-expert-verified svg,
     .home-best-experts .home-best-expert-row-name .capper-verified-badge svg {
-        width: 22px;
-        height: 22px;
+        width: 18px;
+        height: 18px;
     }
+
+    .home-best-experts .home-best-expert-name,
+    .home-best-experts .home-best-expert-username {
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .home-best-experts .home-best-expert-name {
+        grid-area: name;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.12;
+    }
+
+    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-name {
+        font-size: 15px;
+    }
+
+    .home-best-experts .home-best-expert-username {
+        grid-area: username;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 11px;
+        line-height: 1.15;
+    }
+
     .home-best-experts .home-best-expert-roi {
-        grid-column: 3;
-        grid-row: 3;
-        min-height: 26px;
+        grid-area: roi;
+        min-width: 0;
+        min-height: 24px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: fit-content;
+        justify-self: start;
         max-width: 100%;
-        padding: 0 9px;
-        border-radius: 8px;
+        margin: 0;
+        padding: 0 7px;
+        overflow: hidden;
+        border-radius: 7px;
         color: #fff;
         background: #47a83b;
         font-size: 11px;
         font-weight: 700;
         line-height: 1;
         white-space: nowrap;
-        overflow: hidden;
         text-overflow: ellipsis;
+        box-shadow: none;
     }
-    .home-best-experts .home-best-expert-name,
-    .home-best-experts .home-best-expert-username {
-        overflow: hidden;
-        max-width: 100%;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-    .home-best-experts .home-best-expert-name {
-        grid-column: 3;
-        grid-row: 1;
+
+    .home-best-experts .home-best-expert-roi.is-negative {
         color: #fff;
-        font-size: 15px;
-        font-weight: 700;
-        line-height: 1.12;
+        background: var(--danger);
     }
-    .home-best-experts .home-best-expert-username {
-        grid-column: 3;
-        grid-row: 2;
-        color: rgba(255, 255, 255, 0.58);
-        font-size: 11px;
-        line-height: 1.15;
+
+    .home-best-experts .home-best-expert-achievements {
+        display: none;
     }
-    .home-best-experts .home-best-expert-achievements,
-    .home-best-experts .home-best-expert-row-achievements {
-        grid-column: 3;
-        grid-row: 4;
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 5px;
-        min-width: 0;
-        overflow: hidden;
-    }
-    .home-best-experts .home-best-expert-achievement {
-        width: 24px;
-        height: 24px;
-        flex: 0 0 24px;
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-        border-radius: 7px;
-        background: rgba(255, 255, 255, 0.08);
-    }
+
     .home-best-experts .home-best-expert-stats {
-        grid-column: 4;
-        grid-row: 1 / 5;
+        grid-area: stats;
+        width: 100%;
+        min-width: 0;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0;
-        align-self: stretch;
-        align-items: center;
-        min-width: 0;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        gap: 6px;
+        margin: 4px 0 0;
+        padding: 6px 0 0;
     }
+
     .home-best-experts .home-best-expert-stats > span {
         min-width: 0;
-        display: grid;
+        min-height: 0;
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
         gap: 4px;
-        justify-items: center;
-        padding: 0 7px;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
     }
-    .home-best-experts .home-best-expert-stats > span + span {
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .home-best-experts .home-best-expert-row-stat small,
-    .home-best-experts .home-best-expert-stats small {
-        color: rgba(255, 255, 255, 0.48);
+
+    .home-best-experts .home-best-expert-stats small,
+    .home-best-experts .home-best-expert-row-stat small {
+        min-width: 0;
+        color: rgba(255, 255, 255, 0.46);
         font-size: 11px;
-        line-height: 1;
-        text-transform: uppercase;
+        font-weight: 600;
+        line-height: 1.1;
+        text-transform: none;
     }
+
     .home-best-experts .home-best-expert-stats strong,
     .home-best-experts .home-best-expert-row-stat strong {
         color: #fff;
-        font-size: 15px;
-        font-weight: 700;
-        line-height: 1;
-    }
-    .home-best-experts .home-best-expert-follow,
-    .home-best-experts .home-best-expert-row-follow {
-        min-height: 42px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 0;
-        border-radius: 9px;
-        color: #fff;
-        background: var(--blue);
         font-size: 12px;
         font-weight: 700;
         line-height: 1;
-        white-space: nowrap;
     }
-    .home-best-experts .home-best-expert-follow {
-        position: absolute;
-        right: 13px;
-        bottom: 14px;
-        width: 82px;
-    }
-    .home-best-experts .home-best-expert-podium-card:not(.is-rank-1) .home-best-expert-follow {
-        right: 11px;
-        bottom: 12px;
-        width: 78px;
-        min-height: 36px;
-        font-size: 11px;
-    }
-    .home-best-experts .home-best-expert-pedestal {
-        display: none;
-    }
-    .home-best-experts-runners {
-        margin-top: 0;
-    }
-    .home-best-experts .home-best-expert-row {
-        grid-template-columns: 35px 54px minmax(0, 1fr) minmax(78px, auto) 86px;
-        grid-template-areas:
-            "rank avatar profile roi follow"
-            "rank avatar badges stats follow";
-        gap: 5px 9px;
-        padding: 10px 12px;
-    }
-    .home-best-experts .home-best-expert-row-rank {
-        grid-area: rank;
-    }
-    .home-best-experts .home-best-expert-row-profile {
-        grid-area: profile;
+
+    .home-best-experts .home-best-expert-follow,
+    .home-best-experts .home-best-expert-row-follow {
+        position: static;
         min-width: 0;
-        display: contents;
+        width: clamp(78px, 23vw, 92px);
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+        margin: 0;
+        padding: 6px 7px;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        background: var(--blue);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.1;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
+        text-decoration: none;
+        box-shadow: none;
+    }
+
+    .home-best-experts .home-best-expert-podium-card.is-rank-1 .home-best-expert-follow {
+        color: #111;
+        background: var(--yellow);
+    }
+
+    .home-best-experts .home-best-expert-row {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        grid-template-rows: auto auto auto;
+        gap: 4px 8px;
+        align-items: center;
+        padding: 8px 10px;
+        overflow: hidden;
+        border-radius: 11px;
+        background: var(--panel);
+    }
+
+    .home-best-experts .home-best-expert-row-rank {
+        grid-column: 1;
+        grid-row: 1 / 4;
+        align-self: center;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .home-best-experts .home-best-expert-row-profile {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
         color: inherit;
         text-decoration: none;
     }
+
     .home-best-experts .home-best-expert-row-avatar {
-        grid-area: avatar;
-        width: 54px;
-        height: 54px;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.72);
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.64);
     }
+
     .home-best-experts .home-best-expert-row-copy {
-        grid-area: profile;
         min-width: 0;
         display: grid;
-        gap: 4px;
+        gap: 3px;
     }
+
     .home-best-experts .home-best-expert-row-name {
         min-width: 0;
         display: flex;
         align-items: center;
         gap: 4px;
     }
+
     .home-best-experts .home-best-expert-row-name strong {
+        min-width: 0;
         overflow: hidden;
         color: #fff;
         font-size: 13px;
@@ -10038,91 +10115,153 @@ body.expert-public-details-open {
         white-space: nowrap;
         text-overflow: ellipsis;
     }
+
+    .home-best-experts .home-best-expert-row-name .capper-verified-badge {
+        flex: 0 0 16px;
+    }
+
     .home-best-experts .home-best-expert-row-copy > span:last-child {
+        min-width: 0;
         overflow: hidden;
-        color: rgba(255, 255, 255, 0.55);
+        color: rgba(255, 255, 255, 0.5);
         font-size: 11px;
-        line-height: 1;
+        line-height: 1.1;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
+
     .home-best-experts .home-best-expert-row-performance {
-        display: contents;
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        overflow: hidden;
     }
+
     .home-best-experts .home-best-expert-row .home-best-expert-roi {
-        grid-area: roi;
-        align-self: start;
-        justify-self: start;
-        min-height: 26px;
+        flex: 0 1 auto;
+        min-width: 0;
+        min-height: 23px;
         max-width: 100%;
     }
+
     .home-best-experts .home-best-expert-row-achievements {
-        grid-area: badges;
+        min-width: 0;
+        display: flex;
+        flex: 1 1 auto;
+        gap: 3px;
+        overflow: hidden;
     }
+
+    .home-best-experts .home-best-expert-achievement {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.07);
+    }
+
     .home-best-experts .home-best-expert-row-stat {
+        min-width: 0;
         display: grid;
         gap: 2px;
-        min-width: 0;
-        font-size: 11px;
+        align-content: center;
+        padding-top: 2px;
     }
+
     .home-best-experts .home-best-expert-row-stat:nth-of-type(2) {
-        grid-area: stats;
+        grid-column: 2;
+        grid-row: 3;
         justify-self: start;
-        padding-right: 34px;
     }
+
     .home-best-experts .home-best-expert-row-stat:nth-of-type(3) {
-        grid-area: stats;
-        justify-self: end;
-        padding-left: 34px;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        grid-column: 3;
+        grid-row: 3;
+        justify-self: center;
     }
+
     .home-best-experts .home-best-expert-row-follow {
-        grid-area: follow;
-        align-self: center;
-        min-width: 86px;
-        min-height: 38px;
-        padding: 0 10px;
-        font-size: 11px;
+        grid-column: 3;
+        grid-row: 1 / 3;
+        justify-self: end;
     }
-    .home-best-experts-proof {
+
+    .home-best-experts .home-best-experts-proof {
+        width: 100%;
+        min-width: 0;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0;
-        margin-top: 6px;
-        padding-top: 13px;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: 2px;
+        padding-top: 11px;
+        box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
     }
-    .home-best-experts-proof-lead {
+
+    .home-best-experts .home-best-experts-proof-lead {
         display: none;
     }
-    .home-best-experts-proof-item {
+
+    .home-best-experts .home-best-experts-proof-item {
         min-width: 0;
+        min-height: 44px;
         display: grid;
-        grid-template-columns: 22px minmax(0, 1fr);
-        gap: 8px;
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 5px;
         align-items: center;
-        padding: 0 8px;
+        padding: 0 5px;
     }
-    .home-best-experts-proof-item + .home-best-experts-proof-item {
-        border-left: 1px solid rgba(255, 255, 255, 0.08);
+
+    .home-best-experts .home-best-experts-proof-item + .home-best-experts-proof-item {
+        box-shadow: inset 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .home-best-experts-proof-item svg {
-        width: 22px;
-        height: 22px;
-        fill: rgba(255, 255, 255, 0.72);
+
+    .home-best-experts .home-best-experts-proof-item svg {
+        width: 18px;
+        height: 18px;
+        fill: rgba(255, 255, 255, 0.65);
     }
-    .home-best-experts-proof strong {
+
+    .home-best-experts .home-best-experts-proof strong {
+        display: block;
         color: #fff;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         line-height: 1;
     }
-    .home-best-experts-proof small {
+
+    .home-best-experts .home-best-experts-proof small {
         display: block;
         margin-top: 3px;
-        color: rgba(255, 255, 255, 0.52);
+        overflow-wrap: anywhere;
+        color: rgba(255, 255, 255, 0.48);
         font-size: 11px;
         line-height: 1.15;
+    }
+
+    .home-best-experts .home-best-experts-empty {
+        min-height: 120px;
+        gap: 6px;
+        padding: 18px 12px;
+        border-radius: 12px;
+        background: var(--panel);
+    }
+
+    .home-best-experts .home-best-experts-empty strong {
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .home-best-experts .home-best-experts-empty p {
+        max-width: 100%;
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.4;
     }
 }
 
