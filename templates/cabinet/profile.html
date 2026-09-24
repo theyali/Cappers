@@ -129,45 +129,7 @@
                         </div>
                     </div>
 
-                    {% if profile_bonus_summary.hero %}
-                    <a
-                        class="profile-xp-card bonus-side-card bonus-progress-card"
-                        href="{{ profile_bonus_summary.levels_url }}"
-                        aria-label="Открыть уровни: {{ profile_bonus_summary.hero.current_level_title }}"
-                    >
-                        <span class="profile-xp-badge" aria-hidden="true">
-                            {% if profile_bonus_summary.hero.image_url %}
-                                <img src="{{ profile_bonus_summary.hero.image_url }}" alt="" width="150" height="150" loading="lazy" decoding="async">
-                            {% elif profile_bonus_summary.hero.icon_url %}
-                                <img src="{{ profile_bonus_summary.hero.icon_url }}" alt="" width="150" height="150" loading="lazy" decoding="async">
-                            {% else %}
-                                <strong>{{ profile_bonus_summary.hero.current_level_number }}</strong>
-                            {% endif %}
-                        </span>
-
-                        <span class="profile-xp-divider" aria-hidden="true"></span>
-
-                        <span class="profile-xp-content">
-                            <small>Уровень {{ profile_bonus_summary.hero.current_level_number }}</small>
-                            <strong>{{ profile_bonus_summary.hero.current_level_title }}</strong>
-
-                            <span class="profile-xp-progress-row">
-                                <span class="profile-xp-progress-track" aria-hidden="true">
-                                    <span class="profile-xp-progress-fill {{ profile_bonus_summary.hero.progress_class }}"></span>
-                                </span>
-                                <span class="profile-xp-progress-value">
-                                    {% if profile_bonus_summary.hero.next_level_xp %}
-                                        {{ profile_bonus_summary.hero.xp }} / {{ profile_bonus_summary.hero.next_level_xp }} XP
-                                    {% else %}
-                                        {{ profile_bonus_summary.hero.xp }} XP
-                                    {% endif %}
-                                </span>
-                            </span>
-
-                            <span class="profile-xp-status">{{ profile_bonus_summary.hero.status_label }}</span>
-                        </span>
-                    </a>
-                    {% endif %}
+                    {% include "cabinet/includes/_profile_xp_card.html" with profile_xp_card_class="profile-xp-card--hero" %}
 
                     {% comment %} {% if request.user.is_analyst %}
                     <section class="profile-hero-status" aria-label="Статус и заполнение профиля">
@@ -208,6 +170,8 @@
                     </section>
                     {% endif %} {% endcomment %}
                 </div>
+
+                {% include "cabinet/includes/_profile_xp_card.html" with profile_xp_card_class="profile-xp-card--mobile" %}
 
                 {% for promo_banner in right_promo_banners %}
                     {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
