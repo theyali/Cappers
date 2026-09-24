@@ -90,6 +90,10 @@ summary:focus-visible,
     display: none;
 }
 
+.profile-xp-card--mobile {
+    display: none;
+}
+
 
 
 
@@ -10422,6 +10426,15 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 767px) {
+    .profile-page .profile-hero > .profile-xp-card--hero {
+        display: none;
+    }
+
+    .profile-page .profile-dashboard-head > .profile-xp-card--mobile {
+        width: 100%;
+        display: grid;
+    }
+
     .cappers-admin {
         --admin-sidebar-width: 0px;
         min-width: 0;
