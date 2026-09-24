@@ -8234,14 +8234,12 @@ body.expert-public-details-open {
         width: 100%;
         min-width: 0;
         padding: 0;
-        overflow: visible;
         background: transparent;
     }
 
     #profile-tab-predictions .profile-section-heading {
         min-height: 86px;
         align-items: flex-end;
-        gap: 14px;
         margin-bottom: 14px;
         padding: 0 2px;
     }
@@ -8250,14 +8248,10 @@ body.expert-public-details-open {
         margin: 0 0 7px;
         color: var(--yellow);
         font-size: 10px;
-        line-height: 1;
         letter-spacing: .14em;
-        text-transform: uppercase;
     }
 
     #profile-tab-predictions .profile-section-heading h2 {
-        margin: 0;
-        color: #fff;
         font-size: 36px;
         font-weight: 600;
         line-height: .96;
@@ -8267,7 +8261,6 @@ body.expert-public-details-open {
         width: 46px;
         height: 46px;
         flex: 0 0 46px;
-        display: block;
     }
 
     #profile-tab-predictions .profile-demand-sort button,
@@ -8282,11 +8275,7 @@ body.expert-public-details-open {
         display: block;
         padding: 0;
         border-radius: 12px;
-        background-color: var(--yellow);
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131313' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3Ccircle cx='9' cy='7' r='2' fill='%23fbf110'/%3E%3Ccircle cx='15' cy='12' r='2' fill='%23fbf110'/%3E%3Ccircle cx='11' cy='17' r='2' fill='%23fbf110'/%3E%3C/svg%3E");
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: 24px 24px;
+        background: var(--yellow) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23131313' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3Ccircle cx='9' cy='7' r='2' fill='%23fbf110'/%3E%3Ccircle cx='15' cy='12' r='2' fill='%23fbf110'/%3E%3Ccircle cx='11' cy='17' r='2' fill='%23fbf110'/%3E%3C/svg%3E") center/24px no-repeat;
         font-size: 0;
     }
 
@@ -8303,7 +8292,6 @@ body.expert-public-details-open {
         border-radius: 16px;
     }
 
-    #profile-tab-predictions .profile-coupon-row,
     #profile-tab-predictions .profile-coupon-card .profile-coupon-row {
         min-height: 72px;
         grid-template-columns: minmax(112px, 1.35fr) 72px 34px minmax(52px, .58fr) 20px;
@@ -8325,31 +8313,18 @@ body.expert-public-details-open {
         font-size: 11px;
     }
 
-    #profile-tab-predictions .profile-coupon-copy {
-        min-width: 0;
-    }
-
     #profile-tab-predictions .profile-coupon-copy strong {
-        display: block;
-        overflow: hidden;
-        color: #f5f5f6;
         font-size: 13px;
         font-weight: 600;
-        line-height: 1.15;
-        white-space: nowrap;
-        text-overflow: ellipsis;
     }
 
     #profile-tab-predictions .profile-coupon-copy > span {
-        min-width: 0;
         display: flex;
         align-items: center;
         gap: 3px;
         margin-top: 5px;
         overflow: hidden;
-        color: #77777b;
         font-size: 9px;
-        line-height: 1;
         white-space: nowrap;
     }
 
@@ -8360,23 +8335,11 @@ body.expert-public-details-open {
     }
 
     #profile-tab-predictions .profile-coupon-status {
-        min-width: 0;
         min-height: 40px;
         padding: 0 7px;
         border-radius: 10px;
         font-size: 10px;
         font-weight: 600;
-    }
-
-    #profile-tab-predictions .profile-coupon-status.is-win,
-    #profile-tab-predictions .profile-coupon-status.is-won {
-        background: #3b9f22;
-    }
-
-    #profile-tab-predictions .profile-coupon-status.is-lose,
-    #profile-tab-predictions .profile-coupon-status.is-lost,
-    #profile-tab-predictions .profile-coupon-status.is-canceled {
-        background: #e52a18;
     }
 
     #profile-tab-predictions .profile-coupon-row > .profile-coupon-metric:nth-child(3),
@@ -8393,24 +8356,14 @@ body.expert-public-details-open {
 
     #profile-tab-predictions .profile-coupon-metric > span {
         overflow: hidden;
-        color: #83838a;
         font-size: 8px;
-        line-height: 1;
-        letter-spacing: .05em;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
 
     #profile-tab-predictions .profile-coupon-metric strong {
-        min-width: 0;
-        color: #f2f2f3;
         font-size: 13px;
         font-weight: 600;
-        line-height: 1;
-    }
-
-    #profile-tab-predictions .profile-coupon-metric .coin-amount {
-        gap: 4px;
     }
 
     #profile-tab-predictions .profile-coupon-metric .coin-icon {
@@ -8421,7 +8374,6 @@ body.expert-public-details-open {
     #profile-tab-predictions .profile-coupon-actions {
         width: 20px;
         min-width: 20px;
-        display: block;
     }
 
     #profile-tab-predictions .profile-coupon-view {
@@ -8433,8 +8385,6 @@ body.expert-public-details-open {
         min-width: 20px;
         height: 42px;
         min-height: 42px;
-        display: grid;
-        place-items: center;
         padding: 0;
         border-radius: 0;
         color: #9a9aa0;
@@ -8446,7 +8396,6 @@ body.expert-public-details-open {
         content: "›";
         font-size: 27px;
         font-weight: 400;
-        line-height: 1;
     }
 
     #profile-tab-predictions .profile-coupon-expand[aria-expanded="true"] {
@@ -8457,7 +8406,6 @@ body.expert-public-details-open {
     #profile-tab-predictions .profile-coupon-expand[aria-expanded="true"]::before {
         content: "⌄";
         font-size: 22px;
-        transform: translateY(-2px);
     }
 
     #profile-tab-predictions .profile-coupon-card:has(.profile-coupon-expand[aria-expanded="true"]) {
@@ -8509,10 +8457,6 @@ body.expert-public-details-open {
         padding: 12px 10px 0;
     }
 
-    #profile-tab-predictions .profile-coupon-inline .coupon-slip {
-        gap: 10px;
-    }
-
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-overview {
         display: none;
     }
@@ -8523,7 +8467,6 @@ body.expert-public-details-open {
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-list::before {
         content: "События купона";
-        display: block;
         padding: 2px 2px 4px;
         color: #a6a6ad;
         font-size: 10px;
@@ -8536,13 +8479,11 @@ body.expert-public-details-open {
         min-height: 78px;
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        align-items: stretch;
         border-radius: 13px;
         background: #202022;
     }
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-match {
-        min-width: 0;
         gap: 5px;
         padding: 10px 8px 10px 10px;
     }
@@ -8551,37 +8492,11 @@ body.expert-public-details-open {
         display: block;
     }
 
-    #profile-tab-predictions .profile-coupon-inline .coupon-slip-league {
-        gap: 8px;
-    }
-
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-sport-icon {
         width: 30px;
         height: 30px;
         flex: 0 0 30px;
         border-radius: 50%;
-        color: #fff;
-        background: #313134;
-    }
-
-    #profile-tab-predictions .profile-coupon-inline .coupon-slip-sport-icon img {
-        width: 100%;
-        height: 100%;
-    }
-
-    #profile-tab-predictions .profile-coupon-inline .coupon-slip-league strong {
-        display: block;
-        overflow: hidden;
-        color: #85858b;
-        font-size: 9px;
-        font-weight: 500;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
-    #profile-tab-predictions .profile-coupon-inline .coupon-slip-league span {
-        margin-top: 3px;
-        font-size: 9px;
     }
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-match-meta,
@@ -8592,7 +8507,7 @@ body.expert-public-details-open {
     }
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-teams {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: 1fr;
         gap: 2px;
         padding: 2px 0 0 38px;
     }
@@ -8606,11 +8521,8 @@ body.expert-public-details-open {
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-team strong {
         width: 100%;
-        display: block;
-        color: #f2f2f3;
         font-size: 12px;
         font-weight: 600;
-        line-height: 1.2;
         text-align: left;
     }
 
@@ -8633,7 +8545,6 @@ body.expert-public-details-open {
     }
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-pick-row > div {
-        min-width: 0;
         display: flex;
         align-items: center;
     }
@@ -8644,7 +8555,6 @@ body.expert-public-details-open {
 
     #profile-tab-predictions .profile-coupon-inline .coupon-slip-pick-row strong {
         margin: 0;
-        color: #f2f2f3;
         font-size: 10px;
         font-weight: 600;
     }
@@ -8654,6 +8564,7 @@ body.expert-public-details-open {
         font-size: 13px;
         font-weight: 600;
     }
+
     .coupon-detail-heading {
         align-items: flex-start;
         flex-direction: column;
