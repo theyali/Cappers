@@ -8246,7 +8246,7 @@ body.expert-public-details-open {
 
     #profile-tab-predictions .profile-coupons-list { gap: 8px; }
     #profile-tab-predictions .profile-coupon-card { gap: 0; border-radius: 16px; }
-    #profile-tab-predictions .profile-coupon-card .profile-coupon-row {
+    #profile-tab-predictions .profile-coupon-row {
         min-height: 72px; grid-template-columns: minmax(112px, 1.35fr) 72px 34px minmax(52px, .58fr) 20px;
         gap: 5px; padding: 9px 10px; border-radius: 15px; background: #1d1d1f; transform: none;
     }
@@ -8265,6 +8265,7 @@ body.expert-public-details-open {
     #profile-tab-predictions .profile-coupon-metric .coin-icon { width: 18px; height: 18px; }
 
     #profile-tab-predictions .profile-coupon-actions { width: 20px; min-width: 20px; }
+    #profile-tab-predictions .profile-coupon-open { width: 20px; font-size: 25px; }
     #profile-tab-predictions .profile-coupon-view { display: none; }
     #profile-tab-predictions .profile-coupon-expand { width: 20px; min-width: 20px; height: 42px; min-height: 42px; padding: 0; border-radius: 0; color: #9a9aa0; background: transparent; font-size: 0; }
     #profile-tab-predictions .profile-coupon-expand::before { content: "›"; font-size: 27px; font-weight: 400; }
