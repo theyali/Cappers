@@ -179,8 +179,8 @@
         const dotsNode = slider.querySelector("[data-home-card-dots]");
         if (!windowNode || !track) return;
 
-        const cards = Array.from(track.children);
-        if (cards.length < 2) return;
+        const allCards = Array.from(track.children);
+        let cards = [];
 
         let pages = [];
         const scrollNode = track;
@@ -193,6 +193,14 @@
         };
 
         const buildPages = () => {
+            cards = allCards.filter((card) => window.getComputedStyle(card).display !== "none");
+            if (cards.length < 2) {
+                pages = [];
+                dotsNode?.replaceChildren();
+                previousButton?.setAttribute("disabled", "");
+                nextButton?.setAttribute("disabled", "");
+                return;
+            }
             const cardWidth = cards[0]?.getBoundingClientRect().width || 1;
             const perPage = Math.max(1, Math.floor((scrollNode.clientWidth + getGap()) / (cardWidth + getGap())));
             pages = [];
@@ -200,7 +208,7 @@
 
             if (dotsNode) {
                 dotsNode.innerHTML = pages.map((_, index) => (
-                    `<button type="button" data-home-card-dot="${index}" aria-label="Страница матчей ${index + 1}"></button>`
+                    `<button type="button" data-home-card-dot="${index}" aria-label="Страница ${index + 1}"></button>`
                 )).join("");
             }
         };
@@ -215,6 +223,7 @@
         };
 
         const render = () => {
+            if (!pages.length) return;
             const active = activePage();
             previousButton?.toggleAttribute("disabled", active <= 0);
             nextButton?.toggleAttribute("disabled", active >= pages.length - 1);
@@ -224,6 +233,7 @@
         };
 
         const scrollToPage = (pageIndex) => {
+            if (!pages.length) return;
             const card = cards[pages[Math.max(0, Math.min(pageIndex, pages.length - 1))]];
             if (!card) return;
             scrollNode.scrollTo({ left: cardLeft(card), behavior: "smooth" });

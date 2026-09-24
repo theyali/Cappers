@@ -7986,6 +7986,9 @@ body.expert-public-details-open {
         height: 48px;
         font-size: 28px;
     }
+    .home-card-slider-track > * {
+        flex-basis: 100%;
+    }
     .home-match-card {
         flex-basis: 100%;
         padding: 20px;
@@ -8026,6 +8029,12 @@ body.expert-public-details-open {
     .home-card-slider-dots {
         justify-content: center;
         padding-right: 0;
+    }
+    .home-editorial-articles .home-article-featured {
+        display: none;
+    }
+    .home-editorial-articles .home-article-mobile-main {
+        display: flex;
     }
     .content-view-toolbar {
         justify-content: flex-start;
