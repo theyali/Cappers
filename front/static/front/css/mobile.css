@@ -7367,6 +7367,65 @@ body.expert-public-details-open {
         background: var(--blue);
     }
 
+    /* Cabinet profile: compact app-like horizontal section tabs. */
+    .profile-page .matches-mobile-scope-panel {
+        width: 100%;
+        margin-right: 0;
+        margin-left: 0;
+        padding: 10px;
+        overflow: hidden;
+        box-sizing: border-box;
+        background: var(--ink);
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-tabs {
+        width: 100%;
+        min-height: 42px;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-tabs a {
+        min-height: 42px;
+        gap: 8px;
+        padding: 0 13px;
+        border-radius: 11px;
+        color: rgba(255, 255, 255, 0.72) !important;
+        background: var(--panel) !important;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-tabs a.is-active {
+        color: #fff !important;
+        background: var(--blue) !important;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-tabs a.is-active::after {
+        display: none;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-table-scope-icon {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        color: currentColor;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-table-scope-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .profile-page .matches-mobile-scope-panel .matches-table-scope-copy {
+        overflow: visible;
+        font-size: 12px;
+        font-weight: 600;
+        text-overflow: clip;
+    }
+
     .matches-mobile-sports-panel {
         position: sticky;
         top: 0;
