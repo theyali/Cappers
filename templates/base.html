@@ -124,10 +124,6 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
-        <a class="mobile-app-nav-item mobile-nav-tournaments {% if request.resolver_match.app_name == 'tournaments' %}is-active{% endif %}" href="{% url 'tournaments:index' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Турниры</span>
-        </a>
         {% if request.user.is_authenticated and request.user.is_analyst %}
         <a
             class="mobile-app-nav-item mobile-nav-coupon"

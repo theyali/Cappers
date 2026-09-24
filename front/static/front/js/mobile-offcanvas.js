@@ -1,8 +1,7 @@
 (() => {
     const toggle = document.querySelector("[data-mobile-offcanvas-toggle]");
     const panel = document.querySelector("[data-mobile-offcanvas]");
-    const closeButton = panel?.querySelector("[data-mobile-offcanvas-close]");
-    if (!toggle || !panel || !closeButton) return;
+    if (!toggle || !panel) return;
 
     const mobileQuery = window.matchMedia("(max-width: 1120px)");
     let previousFocus = null;
@@ -27,7 +26,9 @@
 
         if (isOpen) {
             previousFocus = document.activeElement;
-            window.requestAnimationFrame(() => closeButton.focus({ preventScroll: true }));
+            window.requestAnimationFrame(() => {
+                getFocusable()[0]?.focus({ preventScroll: true });
+            });
             return;
         }
 
@@ -42,8 +43,6 @@
     toggle.addEventListener("click", () => {
         setOpen(!panel.classList.contains("is-open"));
     });
-
-    closeButton.addEventListener("click", () => close());
 
     panel.addEventListener("click", (event) => {
         const link = event.target.closest("a[href]");
