@@ -5494,7 +5494,7 @@ body.expert-public-details-open {
 
 @media (max-width: 1380px) {
     .profile-dashboard-head {
-        grid-template-columns: minmax(0, 1fr) 270px;
+        grid-template-columns: 1fr;
     }
     .profile-page .profile-hero {
         grid-template-columns: minmax(0, 1fr) 280px;
@@ -7372,7 +7372,7 @@ body.expert-public-details-open {
         width: 100%;
         margin-right: 0;
         margin-left: 0;
-        padding: 10px;
+        padding: 0;
         overflow: hidden;
         box-sizing: border-box;
         background: var(--ink);
