@@ -7987,13 +7987,13 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .predictions-scroll-page .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
 .predictions-scroll-page .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar-track,
 .predictions-scroll-page .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-track { background: 0 0; }
-.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) {
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page, [data-expert-public-tabs]) {
     --predictions-column-top-offset: 132px;
 }
-.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-content,
-.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .predictions-filter-sidebar,
-.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .bookmakers-sidebar,
-.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .predictions-ad-sidebar {
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page, [data-expert-public-tabs]) .predictions-content,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page, [data-expert-public-tabs]) .predictions-layout > .predictions-filter-sidebar,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page, [data-expert-public-tabs]) .predictions-layout > .bookmakers-sidebar,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page, [data-expert-public-tabs]) .predictions-layout > .predictions-ad-sidebar {
     max-height: var(--predictions-column-scroll-height);
 }
 .predictions-scroll-page .prediction-table-body,

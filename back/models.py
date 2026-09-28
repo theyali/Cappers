@@ -142,6 +142,8 @@ class FooterButton(models.Model):
 
 
 class WebsiteSettings(models.Model):
+    DEFAULT_ROBOTS_TXT = "User-agent: *\nAllow: /\n\nSitemap: {sitemap_url}\n"
+
     site_name = models.CharField("Название сайта", max_length=120, default="КапперХаб")
     fixed_tg_enable = models.BooleanField("Показывать Telegram-баннер", default=False)
     fixed_tg_link = models.URLField("Ссылка Telegram", max_length=500, blank=True)
@@ -169,6 +171,12 @@ class WebsiteSettings(models.Model):
     footer_copyright_text = models.CharField("Футер — копирайт", max_length=220, default="© КапперХаб. Все права защищены.", blank=True)
     footer_disclaimer_text = models.CharField("Футер — дисклеймер", max_length=260, default="Сервис не гарантирует результат спортивных прогнозов.", blank=True)
     footer_address_text = models.TextField("Футер — адрес/реквизиты", blank=True)
+    robots_txt = models.TextField(
+        "robots.txt",
+        default=DEFAULT_ROBOTS_TXT,
+        blank=True,
+        help_text="Можно использовать {sitemap_url}; при отдаче robots.txt он заменится на абсолютную ссылку sitemap.",
+    )
 
     match_bookmaker = models.ForeignKey(
         Bookmaker,
