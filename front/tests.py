@@ -16,7 +16,7 @@ from cabinet.models import (
 )
 from game.models import League, Match, Prediction, PredictionCoupon, Sport
 
-from .models import Article
+from .models import Article, News, StaticPage
 
 from .expert_ranking import (
     expert_ranking_score,
@@ -533,6 +533,54 @@ class FooterRenderingTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'class="site-footer site-footer-v2"')
 
+    def test_public_content_pages_render_footer(self):
+        Article.objects.create(
+            title="Test article layout 2",
+            slug="test-article-layout-2",
+            description="Описание статьи",
+            content="<p>Статья</p>",
+        )
+        News.objects.create(
+            title="Тестовая новость",
+            slug="testovaya-novost",
+            description="Описание новости",
+            content="<p>Новость</p>",
+        )
+        for slug, title in (
+            ("privacy-policy", "Политика конфиденциальности"),
+            ("user-agreement", "Пользовательское соглашение"),
+            ("cookie-policy", "Cookie policy"),
+        ):
+            StaticPage.objects.update_or_create(
+                slug=slug,
+                defaults={
+                    "title": title,
+                    "content": f"<p>{title}</p>",
+                    "is_published": True,
+                },
+            )
+        cache.clear()
+
+        urls = [
+            reverse("front:wiki"),
+            reverse("front:sports_news"),
+            reverse("front:how_it_works"),
+            reverse("front:bonuses"),
+            reverse("front:bookmakers"),
+            reverse("front:article_detail", kwargs={"slug": "test-article-layout-2"}),
+            reverse("front:news_detail", kwargs={"slug": "testovaya-novost"}),
+            reverse("front:static_page", kwargs={"slug": "privacy-policy"}),
+            reverse("front:static_page", kwargs={"slug": "user-agreement"}),
+            reverse("front:static_page", kwargs={"slug": "cookie-policy"}),
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'class="site-footer site-footer-v2"')
+
 
 class ArticleMainTests(TestCase):
     def test_only_one_article_can_be_main(self):
@@ -578,3 +626,49 @@ class ArticleMainTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["page_obj"].object_list[0].pk, main_article.pk)
         self.assertContains(response, 'class="article-list-card is-main"')
+
+
+class SportsNewsTests(TestCase):
+    def test_sports_news_uses_news_model(self):
+        Article.objects.create(
+            title="Статья не должна попасть в новости",
+            slug="article-not-news",
+            description="Описание статьи",
+            content="<p>Статья</p>",
+        )
+        news = News.objects.create(
+            title="Отдельная спортивная новость",
+            slug="separate-sports-news",
+            description="Описание новости",
+            content="<p>Новость</p>",
+        )
+
+        response = self.client.get(reverse("front:sports_news"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].object_list[0].pk, news.pk)
+        self.assertContains(response, "Отдельная спортивная новость")
+        self.assertNotContains(response, "Статья не должна попасть в новости")
+
+    def test_only_one_news_can_be_main(self):
+        first = News.objects.create(
+            title="Первая главная новость",
+            slug="first-main-news",
+            description="Описание первой новости",
+            content="<p>Первая новость</p>",
+            is_main=True,
+        )
+        second = News.objects.create(
+            title="Вторая главная новость",
+            slug="second-main-news",
+            description="Описание второй новости",
+            content="<p>Вторая новость</p>",
+            is_main=True,
+        )
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+
+        self.assertFalse(first.is_main)
+        self.assertTrue(second.is_main)
+        self.assertEqual(News.objects.filter(is_main=True).count(), 1)

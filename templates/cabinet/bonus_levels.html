@@ -3,7 +3,7 @@
 {% block title %}{{ page.title }}{% endblock %}
 
 {% block content %}
-<section class="profile-page matches-page container">
+<section class="profile-page matches-page container {{ page_class|default:'' }}">
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 

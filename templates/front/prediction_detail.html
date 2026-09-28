@@ -5,9 +5,9 @@
 
 
 {% block content %}
-<section class="predictions-page coupon-detail-layout-page" aria-label="{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}">
+<section class="predictions-page coupon-detail-layout-page predictions-scroll-page container" aria-label="{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}">
     <div class="predictions-layout coupon-detail-layout">
-        <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" style="display:grid;gap:14px;" aria-label="Популярные матчи">
+        <aside class="predictions-filter-sidebar coupon-detail-left-sidebar" aria-label="Популярные матчи">
             {% popular_matches 5 %}
         </aside>
 

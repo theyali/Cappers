@@ -61,7 +61,6 @@ NOINDEX_PAGES = (
     ("Установка нового пароля", "cabinet:password_reset_confirm"),
     ("Пароль восстановлен", "cabinet:password_reset_complete"),
     ("Личный кабинет", "cabinet:profile"),
-    ("Купон в личном кабинете", "cabinet:coupon_detail"),
 )
 
 

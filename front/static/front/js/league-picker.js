@@ -59,6 +59,12 @@
             updateCounts();
         };
 
+        const commitDraft = () => {
+            selected = new Map(draft);
+            syncHiddenInputs();
+            renderSelected();
+        };
+
         const syncHiddenInputs = () => {
             hiddenInputs.replaceChildren();
             selected.forEach((league) => {
@@ -78,6 +84,11 @@
                 const mark = button.querySelector("i");
                 if (mark) mark.textContent = active ? "✓" : "+";
             });
+        };
+
+        const setLoading = (isLoading) => {
+            results?.classList.toggle("is-loading", isLoading);
+            topResults?.classList.toggle("is-loading", isLoading);
         };
 
         const optionNode = (league) => {
@@ -118,6 +129,7 @@
                 } else {
                     draft.set(league.id, league);
                 }
+                commitDraft();
                 updateCounts();
                 refreshOptionStates();
             });
@@ -173,11 +185,12 @@
         const loadResults = async ({ append = false } = {}) => {
             searchController?.abort();
             searchController = new AbortController();
+            const controller = searchController;
 
             if (!append) {
                 currentPage = 1;
-                results?.replaceChildren();
             }
+            setLoading(true);
             if (status) status.textContent = "Загрузка…";
             if (moreButton) moreButton.hidden = true;
 
@@ -189,11 +202,14 @@
                         country: countrySelect?.value || "",
                         page: currentPage,
                     },
-                    searchController.signal
+                    controller.signal
                 );
-                payload.results.forEach((league) => {
-                    results?.append(optionNode(league));
-                });
+                const nodes = payload.results.map((league) => optionNode(league));
+                if (append) {
+                    nodes.forEach((node) => results?.append(node));
+                } else {
+                    results?.replaceChildren(...nodes);
+                }
                 hasMore = Boolean(payload.has_more);
                 if (status) {
                     status.textContent =
@@ -206,6 +222,10 @@
                 if (error.name === "AbortError") return;
                 if (status) status.textContent = "Не удалось загрузить лиги";
                 console.error(error);
+            } finally {
+                if (searchController === controller && !controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
 
@@ -245,14 +265,13 @@
 
         clearButton?.addEventListener("click", () => {
             draft.clear();
+            commitDraft();
             updateCounts();
             refreshOptionStates();
         });
 
         applyButton?.addEventListener("click", () => {
-            selected = new Map(draft);
-            syncHiddenInputs();
-            renderSelected();
+            commitDraft();
             closeModal();
         });
 

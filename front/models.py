@@ -34,6 +34,118 @@ class ArticleCategory(models.Model):
         return self.name
 
 
+class NewsCategory(models.Model):
+    name = models.CharField("Название", max_length=120, unique=True)
+    slug = models.SlugField("Slug", max_length=140, unique=True)
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Категория новости"
+        verbose_name_plural = "Категории новостей"
+        ordering = ("sort_order", "name", "id")
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ExpertRankingSnapshot(models.Model):
+    """Materialized capper ranking variant used by public pages."""
+
+    period = models.CharField("Период", max_length=16, db_index=True)
+    sport_code = models.CharField("Вид спорта", max_length=50, default="all", db_index=True)
+    group = models.CharField("Группа", max_length=16, default="all", db_index=True)
+    roi_period_days = models.PositiveIntegerField(
+        "Период ROI, дней",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    entries_count = models.PositiveIntegerField("Записей", default=0)
+    built_at = models.DateTimeField("Собран", auto_now=True)
+
+    class Meta:
+        verbose_name = "Снимок рейтинга экспертов"
+        verbose_name_plural = "Снимки рейтинга экспертов"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("period", "sport_code", "group", "roi_period_days"),
+                name="uniq_exp_rank_snapshot",
+                nulls_distinct=False,
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=("period", "sport_code", "group", "roi_period_days"),
+                name="exp_rank_snap_lookup_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        roi = self.roi_period_days if self.roi_period_days is not None else "all"
+        return f"{self.period} · {self.sport_code} · {self.group} · roi={roi}"
+
+
+class ExpertRankingEntry(models.Model):
+    snapshot = models.ForeignKey(
+        ExpertRankingSnapshot,
+        on_delete=models.CASCADE,
+        related_name="entries",
+        verbose_name="Снимок",
+    )
+    analyst = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="expert_ranking_entries",
+        verbose_name="Аналитик",
+    )
+    rank = models.PositiveIntegerField("Место", db_index=True)
+    metrics = models.JSONField("Метрики", default=dict, blank=True)
+    ranking_reason = models.CharField("Причина рейтинга", max_length=255, blank=True)
+    trust_index = models.DecimalField("Индекс доверия", max_digits=6, decimal_places=2, default=0)
+    ranking_score = models.DecimalField("Рейтинговый балл", max_digits=14, decimal_places=4, default=0)
+    author_roi = models.DecimalField("ROI отображения", max_digits=9, decimal_places=2, default=0)
+    author_roi_all_time = models.DecimalField("ROI за всё время", max_digits=9, decimal_places=2, default=0)
+    settled_count = models.PositiveIntegerField("Рассчитанных прогнозов", default=0)
+    roi_settled_count = models.PositiveIntegerField("Рассчитанных прогнозов ROI", default=0)
+    followers_count = models.PositiveIntegerField("Подписчиков", default=0)
+    publications_count = models.PositiveIntegerField("Публикаций", default=0)
+    wins_count = models.PositiveIntegerField("Выигрышей", default=0)
+    losses_count = models.PositiveIntegerField("Проигрышей", default=0)
+    sports_count = models.PositiveIntegerField("Видов спорта", default=0)
+    recent_publications_count = models.PositiveIntegerField("Публикаций за 30 дней", default=0)
+    last_publication_at = models.DateTimeField("Последняя публикация", null=True, blank=True)
+    is_vip_active = models.BooleanField("VIP активен", default=False)
+    vip_ends_at = models.DateTimeField("VIP до", null=True, blank=True)
+    vip_subscription_activated_at = models.DateTimeField("VIP активирован", null=True, blank=True)
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлён", auto_now=True)
+
+    class Meta:
+        verbose_name = "Запись рейтинга экспертов"
+        verbose_name_plural = "Записи рейтинга экспертов"
+        ordering = ("snapshot", "rank")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("snapshot", "analyst"),
+                name="uniq_exp_rank_entry_analyst",
+            ),
+            models.UniqueConstraint(
+                fields=("snapshot", "rank"),
+                name="uniq_exp_rank_entry_rank",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("snapshot", "rank"), name="expert_rank_entry_rank_idx"),
+            models.Index(fields=("analyst",), name="expert_rank_entry_analyst_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"#{self.rank} · {self.analyst_id} · {self.snapshot}"
+
+
 class Article(models.Model):
     title = models.CharField("Заголовок", max_length=220)
     slug = models.SlugField("Slug", max_length=240, unique=True)
@@ -82,6 +194,56 @@ class Article(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("front:article_detail", kwargs={"slug": self.slug})
+
+
+class News(models.Model):
+    title = models.CharField("Заголовок", max_length=220)
+    slug = models.SlugField("Slug", max_length=240, unique=True)
+    category = models.ForeignKey(
+        NewsCategory,
+        on_delete=models.SET_NULL,
+        related_name="news",
+        verbose_name="Категория",
+        blank=True,
+        null=True,
+    )
+    description = models.TextField("Краткое описание", max_length=700)
+    image = models.ImageField("Изображение", upload_to="news/%Y/%m/", blank=True, null=True)
+    reading_time_minutes = models.PositiveSmallIntegerField("Время чтения, мин", default=3)
+    tags = models.CharField("Теги", max_length=300, blank=True, help_text="Через запятую")
+    is_main = models.BooleanField("Главная новость", default=False, db_index=True)
+    content = HTMLField("Контент")
+    is_published = models.BooleanField("Опубликована", default=True, db_index=True)
+    created_at = models.DateTimeField("Создана", auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Новость"
+        verbose_name_plural = "Новости"
+        ordering = ("-created_at", "-id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("is_main",),
+                condition=models.Q(is_main=True),
+                name="unique_main_news",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            if self.is_main:
+                type(self).objects.filter(is_main=True).exclude(pk=self.pk).update(is_main=False)
+            return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def tag_list(self) -> list[str]:
+        return [tag.strip() for tag in self.tags.split(",") if tag.strip()]
+
+    def get_absolute_url(self) -> str:
+        return reverse("front:news_detail", kwargs={"slug": self.slug})
 
 
 class StaticPage(models.Model):

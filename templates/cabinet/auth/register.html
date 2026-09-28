@@ -28,13 +28,6 @@
             <p class="capper-kicker">Новый аккаунт</p>
             <div class="auth-heading">
                 <h2>Регистрация</h2>
-                <p data-register-role-description>
-                    {% if selected_type == 'capper' %}
-                        Создайте аккаунт, затем пройдите 5 коротких шагов и увидите готовый публичный профиль.
-                    {% else %}
-                        Заполните данные и получите доступ к прогнозам, подпискам и уведомлениям.
-                    {% endif %}
-                </p>
             </div>
 
             <form method="post" action="{% url 'cabinet:register' %}" class="auth-form auth-form-modern auth-register-grid" data-required-submit-form novalidate>
@@ -214,11 +207,6 @@
                     <span class="auth-submit-arrow">→</span>
                 </button>
             </form>
-
-            <div class="auth-bottom-line">
-                <span>Уже есть аккаунт?</span>
-                <a href="{% url 'cabinet:login' %}">Войти</a>
-            </div>
         </div>
     </div>
 </section>
@@ -228,14 +216,7 @@
         const switcher = document.querySelector("[data-register-role-switch]");
         const roleInput = document.getElementById("id_role");
         const accountTypeInput = document.getElementById("id_account_type");
-        const description = document.querySelector("[data-register-role-description]");
-
         if (!switcher || !roleInput) return;
-
-        const descriptions = {
-            reader: "Заполните данные и получите доступ к прогнозам, подпискам и уведомлениям.",
-            analyst: "Создайте аккаунт, затем пройдите 5 коротких шагов и увидите готовый публичный профиль.",
-        };
 
         switcher.addEventListener("click", (event) => {
             const option = event.target.closest("[data-register-role]");
@@ -253,10 +234,6 @@
                 button.classList.toggle("is-blue", isActive);
                 button.setAttribute("aria-pressed", isActive ? "true" : "false");
             });
-
-            if (description) {
-                description.textContent = descriptions[role] || descriptions.reader;
-            }
         });
     })();
 </script>
