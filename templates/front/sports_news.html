@@ -6,38 +6,71 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="articles-page" aria-label="Новости спорта">
-    <header class="articles-hero">
-        <div>
-            <p class="articles-eyebrow">Спортивная лента</p>
-            <h1>Новости спорта</h1>
-            <p>Свежие материалы о матчах, командах, турнирах и главных событиях спортивного дня.</p>
-        </div>
-        <div class="articles-total">
-            <strong>{{ total_articles }}</strong>
-            <span>материалов</span>
-        </div>
-    </header>
+<section class="predictions-page articles-page container" aria-label="Новости спорта">
+    <div class="predictions-layout articles-layout">
+        <aside class="matches-table-filter-sidebar prediction-filter-sidebar predictions-filter-sidebar" aria-label="Промо слева">
+            {% for promo_banner in left_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+        </aside>
+
+        <div class="predictions-content articles-content">
+            {% for promo_banner in center_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
+            {% endfor %}
+
+            <header class="articles-hero">
+                <div>
+                    <p class="articles-eyebrow">Спортивная лента</p>
+                    <h1>Новости спорта</h1>
+                    <p>Свежие материалы о матчах, командах, турнирах и главных событиях спортивного дня.</p>
+                </div>
+                <div class="articles-total">
+                    <strong>{{ total_news }}</strong>
+                    <span>материалов</span>
+                </div>
+            </header>
+
+    {% if news_categories %}
+    <nav class="articles-categories" aria-label="Категории новостей">
+        <a class="{% if not selected_category %}is-active{% endif %}" href="{% url 'front:sports_news' %}">Все</a>
+        {% for category in news_categories %}
+            <a class="{% if selected_category == category %}is-active{% endif %}" href="{% url 'front:sports_news' %}?category={{ category.slug }}">{{ category.name }}</a>
+        {% endfor %}
+    </nav>
+    {% endif %}
 
     {% if page_obj.object_list %}
     <div class="articles-grid">
         {% for article in page_obj.object_list %}
-        <article class="article-list-card">
-            <a class="article-list-image{% if article.image %} is-skeleton-loading{% endif %}" href="{{ article.get_absolute_url }}"{% if article.image %} data-skeleton-image aria-busy="true"{% endif %}>
+        <article class="article-list-card{% if article.is_main %} is-main{% endif %}">
+            <a class="article-list-image" href="{{ article.get_absolute_url }}">
                 {% if article.image %}
-                    <img src="{{ article.image.url }}" width="640" height="360" alt="{{ article.title }}" loading="lazy">
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
                 {% else %}
                     <span>{{ forloop.counter|stringformat:"02d" }}</span>
                 {% endif %}
             </a>
             <div class="article-list-copy">
                 <div class="article-list-meta">
+                    {% if article.category %}
+                        <span class="article-list-category">{{ article.category.name }}</span>
+                    {% endif %}
                     <span>{{ article.created_at|date:"d.m.Y" }}</span>
-                    <span>Новости спорта</span>
+                    <span>{{ article.reading_time_minutes }} мин чтения</span>
                 </div>
                 <h2><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h2>
                 <p>{{ article.description|truncatechars:190 }}</p>
-                <a class="article-list-read" href="{{ article.get_absolute_url }}">Читать <span aria-hidden="true">→</span></a>
+                <div class="article-list-bottom">
+                    <a class="article-list-read" href="{{ article.get_absolute_url }}">Читать новость <span aria-hidden="true">→</span></a>
+                    {% if article.tag_list %}
+                    <div class="article-list-tags" aria-label="Теги новости">
+                        {% for tag in article.tag_list|slice:":3" %}
+                            <span>{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </article>
         {% endfor %}
@@ -45,9 +78,9 @@
 
     {% if page_obj.paginator.num_pages > 1 %}
     <nav class="articles-pagination" aria-label="Страницы новостей">
-        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">← Назад</a>{% endif %}
+        {% if page_obj.has_previous %}<a href="?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>{% endif %}
         <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Вперёд →</a>{% endif %}
+        {% if page_obj.has_next %}<a href="?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>{% endif %}
     </nav>
     {% endif %}
     {% else %}
@@ -56,5 +89,16 @@
         <p>Новые спортивные материалы появятся здесь после публикации.</p>
     </div>
     {% endif %}
+        </div>
+
+        <aside class="bookmakers-sidebar" aria-label="Промо и реклама справа">
+            {% for promo_banner in right_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+            {% if adv_placement == 'sidebar' %}
+                {% include "pages/_adv_banners.html" with placement="sidebar" %}
+            {% endif %}
+        </aside>
+    </div>
 </section>
 {% endblock %}

@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
@@ -32,6 +33,10 @@ from wallets.services import InsufficientCoins, charge_prediction_stake, copy_pu
 
 
 logger = logging.getLogger(__name__)
+DRAFT_SESSION_MAX_AGE_SECONDS = max(
+    int(getattr(settings, "SESSION_COOKIE_AGE", 1209600)),
+    1,
+)
 
 SCOPE_FILTERS = (
     ("all", "Все"),
@@ -450,10 +455,13 @@ def _parse_confidence(value) -> int:
 
 
 def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
+    _delete_expired_draft_coupons(user)
+    cutoff = _draft_session_cutoff()
     queryset = PredictionCoupon.objects.select_for_update().filter(
         author=user,
         published_status=PredictionCoupon.PublishedStatus.DRAFT,
         prediction_format=PredictionCoupon.PredictionFormat.QUICK,
+        updated_at__gte=cutoff,
     )
     if coupon_id is not None:
         return queryset.filter(pk=coupon_id).first()
@@ -461,16 +469,31 @@ def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | N
 
 
 def _active_draft_coupon(user: User) -> PredictionCoupon | None:
+    _delete_expired_draft_coupons(user)
     return (
         PredictionCoupon.objects.filter(
             author=user,
             published_status=PredictionCoupon.PublishedStatus.DRAFT,
             prediction_format=PredictionCoupon.PredictionFormat.QUICK,
+            updated_at__gte=_draft_session_cutoff(),
         )
         .prefetch_related("predictions__match__league__country", "predictions__match__home_team", "predictions__match__away_team")
         .order_by("-updated_at", "-id")
         .first()
     )
+
+
+def _draft_session_cutoff():
+    return timezone.now() - timedelta(seconds=DRAFT_SESSION_MAX_AGE_SECONDS)
+
+
+def _delete_expired_draft_coupons(user: User) -> int:
+    deleted, _ = PredictionCoupon.objects.filter(
+        author=user,
+        published_status=PredictionCoupon.PublishedStatus.DRAFT,
+        updated_at__lt=_draft_session_cutoff(),
+    ).delete()
+    return deleted
 
 
 def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:

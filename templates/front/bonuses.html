@@ -1,88 +1,109 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static site_extras %}
 
 {% block title %}Бонусы букмекеров — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="home-trusted-bookmakers bonuses-page" aria-labelledby="bonuses-page-title">
-    <header class="home-trusted-bookmakers-head">
-        <div>
-            <p class="home-trusted-bookmakers-eyebrow">Акции и промокоды</p>
-            <h1 id="bonuses-page-title">Бонусы</h1>
-            <p class="home-trusted-bookmakers-copy">Актуальные бонусы и промокоды букмекерских контор. Выбирайте предложение и переходите на сайт БК.</p>
-        </div>
-        <span class="home-trusted-bookmakers-count" aria-label="Бонусов: {{ bonuses|length }}">{{ bonuses|length }}</span>
-    </header>
+<section class="predictions-page bonuses-page bonuses-catalog-page container" aria-labelledby="bonuses-page-title">
+    <div class="predictions-layout bonuses-layout">
+        {% vip_cappers_banner 6 %}
 
-    {% if bonuses %}
-    <div class="bonus-cards-grid">
-        {% for bonus in bonuses %}
-        <article class="bonus-offer-card">
-            <a
-                class="bonus-offer-media"
-                href="{{ bonus.link }}"
-                target="_blank"
-                rel="noopener noreferrer nofollow sponsored"
-                aria-label="Получить бонус {{ bonus.bookmaker.name }}"
-            >
-                {% if bonus.image %}
-                <span class="bonus-offer-image is-skeleton-loading" data-skeleton-image aria-busy="true">
-                    <img
-                        src="{{ bonus.image.url }}"
-                        width="720"
-                        height="720"
-                        alt="{{ bonus.short_description }} — {{ bonus.bookmaker.name }}"
-                        loading="lazy"
-                    >
-                </span>
-                {% else %}
-                <span class="bonus-offer-placeholder" aria-hidden="true">
-                    <strong>{{ bonus.bookmaker.name }}</strong>
-                </span>
-                {% endif %}
-
-                <span class="bonus-offer-bookmaker-logo{% if bonus.bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bonus.bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
-                    {% if bonus.bookmaker.icon %}
-                    <img src="{{ bonus.bookmaker.icon.url }}" width="88" height="40" alt="{{ bonus.bookmaker.name }}" loading="lazy">
-                    {% else %}
-                    <strong>{{ bonus.bookmaker.name|slice:":2"|upper }}</strong>
-                    {% endif %}
-                </span>
-            </a>
-
-            <div class="bonus-offer-body">
-                <h2 class="bonus-offer-title">{{ bonus.short_description }}</h2>
-
-                {% if bonus.description %}
-                <p class="bonus-offer-description">{{ bonus.description|truncatechars:170 }}</p>
-                {% else %}
-                <p class="bonus-offer-description">Специальное предложение букмекерской конторы {{ bonus.bookmaker.name }}.</p>
-                {% endif %}
-
-                {% if bonus.promocode %}
-                <div class="bonus-offer-code">
-                    <span>Промокод</span>
-                    <strong>{{ bonus.promocode }}</strong>
+        <div class="predictions-content bonuses-content">
+            <header class="bookmakers-hero bonuses-hero" style="background-image: linear-gradient(90deg, rgba(17,17,19,.96) 0%, rgba(17,17,19,.82) 42%, rgba(17,17,19,.36) 68%, rgba(17,17,19,.9) 100%), url('{% static 'front/img/bks_bg.png' %}');">
+                <div class="bookmakers-hero-copy">
+                    <p>Акции и промокоды</p>
+                    <h1 id="bonuses-page-title">Бонусы букмекеров</h1>
+                    <span>Актуальные бонусы и промокоды букмекерских контор. Выбирайте предложение, проверяйте условия и переходите на сайт БК.</span>
                 </div>
-                {% endif %}
+                <div class="bookmakers-hero-features">
+                    <div>
+                        <strong>{{ bonuses|length }}</strong>
+                        <span>активных предложений</span>
+                    </div>
+                    <div>
+                        <strong>Промокоды</strong>
+                        <span>Коды и спецпредложения</span>
+                    </div>
+                    <div>
+                        <strong>Быстрый переход</strong>
+                        <span>Сразу на сайт букмекера</span>
+                    </div>
+                </div>
+            </header>
 
-                <a
-                    class="bonus-offer-action"
-                    href="{{ bonus.link }}"
-                    target="_blank"
-                    rel="noopener noreferrer nofollow sponsored"
-                >
-                    Получить бонус
-                    <span aria-hidden="true">→</span>
-                </a>
+            {% if bonuses %}
+            <div class="bonus-cards-grid">
+                {% for bonus in bonuses %}
+                <article class="bonus-offer-card">
+                    <a
+                        class="bonus-offer-media"
+                        href="{{ bonus.link }}"
+                        target="_blank"
+                        rel="noopener noreferrer nofollow sponsored"
+                        aria-label="Получить бонус {{ bonus.bookmaker.name }}"
+                    >
+                        {% if bonus.image %}
+                        <span class="bonus-offer-image is-skeleton-loading" data-skeleton-image aria-busy="true">
+                            <img
+                                src="{{ bonus.image.url }}"
+                                width="720"
+                                height="720"
+                                alt="{{ bonus.short_description }} — {{ bonus.bookmaker.name }}"
+                                loading="lazy"
+                            >
+                        </span>
+                        {% else %}
+                        <span class="bonus-offer-placeholder" aria-hidden="true">
+                            <strong>{{ bonus.bookmaker.name }}</strong>
+                        </span>
+                        {% endif %}
+
+                        <span class="bonus-offer-bookmaker-logo{% if bonus.bookmaker.icon %} is-skeleton-loading{% endif %}"{% if bonus.bookmaker.icon %} data-skeleton-image aria-busy="true"{% endif %}>
+                            {% if bonus.bookmaker.icon %}
+                            <img src="{{ bonus.bookmaker.icon.url }}" width="88" height="40" alt="{{ bonus.bookmaker.name }}" loading="lazy">
+                            {% else %}
+                            <strong>{{ bonus.bookmaker.name|slice:":2"|upper }}</strong>
+                            {% endif %}
+                        </span>
+                    </a>
+
+                    <div class="bonus-offer-body">
+                        <h2 class="bonus-offer-title">{{ bonus.short_description }}</h2>
+
+                        {% if bonus.description %}
+                        <p class="bonus-offer-description">{{ bonus.description|truncatechars:170 }}</p>
+                        {% else %}
+                        <p class="bonus-offer-description">Специальное предложение букмекерской конторы {{ bonus.bookmaker.name }}.</p>
+                        {% endif %}
+
+                        {% if bonus.promocode %}
+                        <div class="bonus-offer-code">
+                            <span>Промокод</span>
+                            <strong>{{ bonus.promocode }}</strong>
+                        </div>
+                        {% endif %}
+
+                        <a
+                            class="bonus-offer-action"
+                            href="{{ bonus.link }}"
+                            target="_blank"
+                            rel="noopener noreferrer nofollow sponsored"
+                        >
+                            Получить бонус
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
             </div>
-        </article>
-        {% endfor %}
+            {% else %}
+            <div class="articles-empty">
+                <strong>Бонусов пока нет</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        {% include "front/includes/_prediction_ad_sidebar.html" %}
     </div>
-    {% else %}
-    <div class="articles-empty">
-        <strong>Бонусов пока нет</strong>
-    </div>
-    {% endif %}
 </section>
 {% endblock %}

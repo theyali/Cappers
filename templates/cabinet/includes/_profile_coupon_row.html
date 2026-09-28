@@ -1,6 +1,11 @@
 {% load capper_trust static prediction_reactions %}
 {% if row_id %}{% profile_coupon_reaction_counts row_id as row_reactions %}{% endif %}
+{% if inline_actions %}
+<article class="profile-coupon-card">
+<div class="profile-coupon-row" data-coupon-href="{{ row_href }}">
+{% else %}
 <a class="profile-coupon-row" href="{{ row_href }}">
+{% endif %}
     <div class="profile-coupon-main">
         {% if row_user %}
             <span class="nav-profile-dropdown-avatar" data-skeleton-image>
@@ -56,9 +61,56 @@
         </div>
     </div>
 
-    <span class="profile-coupon-status is-{{ row_status_key }}">{{ row_status_label }}</span>
+    <span
+        class="profile-coupon-status{% if coupon_status_icon %} is-icon{% endif %} is-{{ row_status_key }}"
+        aria-label="{{ row_status_label }}"
+        title="{{ row_status_label }}"
+    >
+        {% if coupon_status_icon %}
+            {% if row_status_key == 'won' or row_status_key == 'win' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7.5 12.2 10.5 15.2 16.8 8.8"></path>
+                </svg>
+            {% elif row_status_key == 'lost' or row_status_key == 'lose' or row_status_key == 'canceled' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7.8 7.8 16.2 16.2M16.2 7.8 7.8 16.2"></path>
+                </svg>
+            {% elif row_status_key == 'refund' %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8.2 8.4A6.5 6.5 0 1 1 6 13"></path>
+                    <path d="M8.2 5v3.4H4.8"></path>
+                </svg>
+            {% else %}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 7.5v5l3.2 1.8"></path>
+                    <circle cx="12" cy="12" r="8.5"></circle>
+                </svg>
+            {% endif %}
+        {% else %}
+            {{ row_status_label }}
+        {% endif %}
+    </span>
     <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{% if metric_1_suffix == '₽' %}{{ metric_1_value|money }} ₽{% elif metric_1_suffix == 'коинов' or metric_1_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_1_value|floatformat:"0" }}</span></span>{% else %}{{ metric_1_value }}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}{% endif %}</strong></div>
     <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{% if metric_2_suffix == '₽' %}{{ metric_2_value|money }} ₽{% elif metric_2_suffix == 'коинов' or metric_2_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_2_value|floatformat:"0" }}</span></span>{% else %}{{ metric_2_value }}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}{% endif %}</strong></div>
     <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{% if metric_3_suffix == '₽' %}{{ metric_3_value|money }} ₽{% elif metric_3_suffix == 'коинов' or metric_3_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_3_value|floatformat:"0" }}</span></span>{% else %}{{ metric_3_value }}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}{% endif %}</strong></div>
+    {% if inline_actions %}
+    <div class="profile-coupon-actions">
+        <a class="profile-coupon-view" href="{{ row_href }}">Посмотреть</a>
+        <button
+            class="profile-coupon-expand"
+            type="button"
+            aria-expanded="false"
+            aria-controls="profile-coupon-inline-{{ row_id }}"
+            data-coupon-url="{{ row_href }}"
+        >Раскрыть</button>
+    </div>
+    {% else %}
     <span class="profile-coupon-open" aria-hidden="true">→</span>
+    {% endif %}
+{% if inline_actions %}
+</div>
+<div id="profile-coupon-inline-{{ row_id }}" class="profile-coupon-inline" aria-hidden="true"></div>
+</article>
+{% else %}
 </a>
+{% endif %}

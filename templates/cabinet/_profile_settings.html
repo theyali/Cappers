@@ -9,10 +9,11 @@
             <div class="profile-edit-hero-art" aria-hidden="true"></div>
         </div>
 
-        {% if user_form.non_field_errors or analyst_form.non_field_errors or paid_plan_form.non_field_errors %}
+        {% if user_form.non_field_errors or analyst_form.non_field_errors or focus_form.non_field_errors or paid_plan_form.non_field_errors %}
             <div class="profile-form-alert">
                 {{ user_form.non_field_errors }}
                 {% if analyst_form %}{{ analyst_form.non_field_errors }}{% endif %}
+                {% if focus_form %}{{ focus_form.non_field_errors }}{% endif %}
                 {% if paid_plan_form %}{{ paid_plan_form.non_field_errors }}{% endif %}
             </div>
         {% endif %}
@@ -150,18 +151,13 @@
                         <small>Виды спорта и лиги, по которым вы чаще всего делаете прогнозы.</small>
                     </div>
                 </div>
-                <div class="profile-edit-section-grid">
-                    <label class="profile-field">
-                        <span>{{ analyst_form.favorite_sports.label }}</span>
-                        {{ analyst_form.favorite_sports }}
-                        {{ analyst_form.favorite_sports.errors }}
-                    </label>
-                    <label class="profile-field">
-                        <span>{{ analyst_form.favorite_leagues.label }}</span>
-                        {{ analyst_form.favorite_leagues }}
-                        {{ analyst_form.favorite_leagues.errors }}
-                    </label>
-                </div>
+                {% if focus_form %}
+                    <div class="profile-edit-section-grid profile-edit-interests-grid">
+                        <div class="profile-field profile-field-full profile-interest-picker">
+                            {% include "cabinet/includes/_sport_league_preferences.html" with form=focus_form %}
+                        </div>
+                    </div>
+                {% endif %}
             </section>
 
             <section class="profile-edit-section profile-field-full" id="profile-edit-social" data-profile-edit-panel="social" hidden>

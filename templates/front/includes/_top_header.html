@@ -22,7 +22,7 @@
             </span>
             <span>Избранные прогнозы</span>
         </a>
-        <a class="site-topbar-link{% if request.resolver_match.url_name == 'sports_news' %} is-active{% endif %}" href="{% url 'front:sports_news' %}">
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'sports_news' or request.resolver_match.url_name == 'news_detail' %} is-active{% endif %}" href="{% url 'front:sports_news' %}">
             <span class="site-topbar-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
             </span>

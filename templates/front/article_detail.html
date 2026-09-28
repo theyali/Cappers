@@ -7,11 +7,12 @@
 
 {% block content %}
 <article class="article-detail-page">
+    {% url article_back_url_name|default:"front:articles" as article_back_url %}
     <header class="article-detail-head">
-        <a class="article-back" href="{% url 'front:articles' %}">← Все статьи</a>
+        <a class="article-back" href="{{ article_back_url }}">← {{ article_back_label|default:"Все статьи" }}</a>
         <div class="article-detail-meta">
             <span>{{ article.created_at|date:"d.m.Y" }}</span>
-            <span>КапперХаб</span>
+            <span>{{ article_detail_source|default:"КапперХаб" }}</span>
         </div>
         <h1>{{ article.title }}</h1>
         <p>{{ article.description }}</p>
@@ -33,10 +34,10 @@
     <section class="related-articles" aria-labelledby="related-articles-title">
         <div class="related-articles-head">
             <div>
-                <p class="articles-eyebrow">Дальше</p>
-                <h2 id="related-articles-title">Ещё статьи</h2>
+                <p class="articles-eyebrow">{{ related_eyebrow|default:"Дальше" }}</p>
+                <h2 id="related-articles-title">{{ related_title|default:"Ещё статьи" }}</h2>
             </div>
-            <a href="{% url 'front:articles' %}">Все статьи →</a>
+            <a href="{{ article_back_url }}">{{ related_all_label|default:"Все статьи" }} →</a>
         </div>
         <div class="related-articles-grid">
             {% for related in related_articles %}

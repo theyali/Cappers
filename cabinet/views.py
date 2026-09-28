@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,7 +15,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from front.models import PredictionFavorite, PredictionLike
-from game.models import PredictionCoupon
+from game.models import Country, PredictionCoupon, Sport
 from notifications.models import TelegramAccount
 from notifications.services import get_preferences
 from notifications.telegram_bot import get_bot_token
@@ -35,6 +38,8 @@ from .forms import (
     AnalystAvatarForm,
     UserProfileForm,
 )
+from .capper_forms import CapperFocusForm
+from .services.preferences import sync_user_sport_league_preferences
 from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
 from .paid_predictions import (
     get_active_paid_plans,
@@ -318,14 +323,15 @@ def _coupon_result(coupon) -> tuple[str, str]:
     return "pending", "Ожидает"
 
 
-def _coupon_total_coefficient(predictions) -> str:
-    if not predictions:
-        return "—"
-
-    total = 1
-    for prediction in predictions:
-        total *= prediction.coefficient
-    return format(total, ".3f")
+def _delete_expired_draft_coupons(user: User) -> int:
+    max_age = max(int(getattr(settings, "SESSION_COOKIE_AGE", 1209600)), 1)
+    cutoff = timezone.now() - timedelta(seconds=max_age)
+    deleted, _ = PredictionCoupon.objects.filter(
+        author=user,
+        published_status=PredictionCoupon.PublishedStatus.DRAFT,
+        updated_at__lt=cutoff,
+    ).delete()
+    return deleted
 
 
 def _copybetting_audience_context(user) -> dict:
@@ -374,6 +380,7 @@ def profile(request):
     analyst_profile = _get_analyst_profile(request.user)
     user_form = UserProfileForm(request.POST or None, instance=request.user)
     analyst_form = None
+    focus_form = None
     paid_plan_form = None
 
     allowed_tabs = {"profile", "following", "settings", "achievements", "wallet", "copybetting"}
@@ -386,6 +393,17 @@ def profile(request):
 
     if analyst_profile is not None:
         analyst_form = AnalystProfileForm(request.POST or None, instance=analyst_profile)
+        focus_form = CapperFocusForm(
+            request.POST or None,
+            initial={
+                "sports": list(
+                    request.user.sport_preferences.values_list("sport_id", flat=True)
+                ),
+                "leagues": list(
+                    request.user.league_preferences.values_list("league_id", flat=True)
+                ),
+            },
+        )
         paid_plan_form = AnalystPaidPlanSettingsForm(
             request.POST or None,
             analyst=request.user,
@@ -395,6 +413,7 @@ def profile(request):
     if request.method == "POST":
         user_is_valid = user_form.is_valid()
         analyst_is_valid = analyst_form.is_valid() if analyst_form is not None else True
+        focus_is_valid = focus_form.is_valid() if focus_form is not None else True
         paid_predictions_enabled = (
             bool(analyst_form.cleaned_data.get("paid_predictions_enabled"))
             if analyst_is_valid and analyst_form is not None
@@ -406,11 +425,18 @@ def profile(request):
             else True
         )
 
-        if user_is_valid and analyst_is_valid and paid_plans_are_valid:
+        if user_is_valid and analyst_is_valid and focus_is_valid and paid_plans_are_valid:
             with transaction.atomic():
                 user_form.save()
                 if analyst_form is not None:
-                    analyst_form.save()
+                    analyst_profile = analyst_form.save()
+                if focus_form is not None:
+                    sync_user_sport_league_preferences(
+                        request.user,
+                        focus_form.cleaned_data["sports"],
+                        focus_form.cleaned_data["leagues"],
+                        profile=analyst_profile,
+                    )
                 if paid_plan_form is not None and paid_predictions_enabled:
                     paid_plan_form.save(request.user)
             record_daily_task_action(
@@ -484,8 +510,10 @@ def profile(request):
     coupons_count = 0
     predictions_count = 0
     if request.user.role == User.Role.ANALYST:
+        _delete_expired_draft_coupons(request.user)
         my_coupons = list(
             PredictionCoupon.objects.filter(author=request.user)
+            .exclude(published_status=PredictionCoupon.PublishedStatus.DRAFT)
             .annotate(predictions_count=Count("predictions", distinct=True))
             .order_by("-created_at", "-id")
         )
@@ -521,6 +549,7 @@ def profile(request):
         "analyst_profile": analyst_profile,
         "user_form": user_form,
         "analyst_form": analyst_form,
+        "focus_form": focus_form,
         "paid_plan_form": paid_plan_form,
         "active_tab": active_tab,
         "followers_count": followers_count,
@@ -551,6 +580,16 @@ def profile(request):
         "copied_bets": copied_bets,
         "page_class": "profile",
     }
+    if focus_form is not None:
+        context.update(
+            {
+                "league_picker_sports": Sport.objects.all().order_by("name_ru", "name"),
+                "league_picker_countries": Country.objects.filter(
+                    leagues__isnull=False
+                ).distinct().order_by("name_ru", "name"),
+                "league_search_url": reverse("cabinet:league_search"),
+            }
+        )
     context.update(_copybetting_audience_context(request.user))
     if request.user.role == User.Role.ANALYST:
         context.update(build_dashboard_context(request.user))
@@ -670,30 +709,6 @@ def following_summary(request):
         )
 
     return JsonResponse({"ok": True, "items": items})
-
-
-@login_required
-def coupon_detail(request, coupon_id: int):
-    coupon = get_object_or_404(
-        PredictionCoupon.objects.filter(author=request.user).prefetch_related(
-            "predictions__match__sport",
-            "predictions__match__league",
-            "predictions__match__home_team",
-            "predictions__match__away_team",
-        ),
-        pk=coupon_id,
-    )
-    predictions = list(coupon.predictions.all())
-
-    return render(
-        request,
-        "cabinet/coupon_detail.html",
-        {
-            "coupon": coupon,
-            "predictions": predictions,
-            "coupon_total_coefficient": _coupon_total_coefficient(predictions),
-        },
-    )
 
 
 @login_required

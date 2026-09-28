@@ -15,7 +15,7 @@
     const handle = form.querySelector("[data-mobile-coupon-close]");
     const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
     const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
-    let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not(.mobile-nav-coupon)");
+    let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not([data-mobile-coupon-toggle])");
     let previousCount = itemsRoot?.children.length || 0;
     let tooltipTimer = null;
     let pendingBetScrollY = null;
@@ -59,7 +59,7 @@
     const openSheet = () => {
         if (!mobileQuery.matches) return;
         hideTooltip();
-        const currentActive = nav.querySelector(".mobile-app-nav-item.is-active:not(.mobile-nav-coupon)");
+        const currentActive = nav.querySelector(".mobile-app-nav-item.is-active:not([data-mobile-coupon-toggle])");
         if (currentActive) previousActive = currentActive;
         previousActive?.classList.remove("is-active");
         couponButton.classList.add("is-active");

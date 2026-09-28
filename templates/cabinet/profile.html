@@ -633,19 +633,19 @@
                                     </div>
                                 </div>
                                 <span class="profile-coupon-status is-{{ subscription.status }}">{{ subscription.get_status_display }}</span>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-bank">
                                     <span>Банк</span>
                                     <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ subscription.bank_amount|floatformat:"0" }}</span></strong>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-stake">
                                     <span>Ставка</span>
                                     <strong>{{ subscription.stake_percent }}%</strong>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-copied">
                                     <span>Скопировано</span>
                                     <strong>{{ subscription.copied_bets_count }}</strong>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-profit">
                                     <span>Прибыль</span>
                                     <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ subscription.total_profit|floatformat:"0" }}</span></strong>
                                 </div>
@@ -737,15 +737,15 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-bank">
                                     <span>Банк</span>
                                     <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ subscription.bank_amount|floatformat:"0" }}</span></strong>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-stake">
                                     <span>Ставка</span>
                                     <strong>{{ subscription.stake_percent }}%</strong>
                                 </div>
-                                <div class="profile-copy-table-cell">
+                                <div class="profile-copy-table-cell is-profit">
                                     <span>Прибыль</span>
                                     <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ subscription.total_profit|floatformat:"0" }}</span></strong>
                                 </div>
@@ -800,8 +800,8 @@
                     {% if my_coupons %}
                     <div class="profile-coupons-list" data-profile-coupon-sort-list>
                         {% for coupon in my_coupons %}
-                            {% url 'cabinet:coupon_detail' coupon.id as coupon_href %}
-                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix=" коинов" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix=" коинов" only %}
+                            {% url 'front:prediction_detail' coupon.id as coupon_href %}
+                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix=" коинов" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix=" коинов" inline_actions=True coupon_status_icon=True only %}
                         {% endfor %}
                     </div>
                     {% else %}
@@ -983,5 +983,6 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/profile.js' %}" defer></script>
+<script src="{% static 'front/js/league-picker.js' %}" defer></script>
 <script src="{% static 'front/js/profile-coupon-sort.js' %}" defer></script>
 {% endblock %}

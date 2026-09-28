@@ -94,6 +94,109 @@
     const initCouponInline = ($) => {
         const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
 
+        const bindCouponInline = ($card, $row, $inline, $expand, detailUrl) => {
+            if (!$card.length || !$row.length || !$inline.length || !$expand.length || !detailUrl) return;
+            if ($card.data("coupon-inline-ready")) return;
+
+            $card.data("coupon-inline-ready", true);
+            $row.data("coupon-inline-ready", true);
+
+            let loaded = false;
+            let loading = false;
+
+            const closeInline = () => {
+                $inline.stop(true, true).slideUp(duration, () => {
+                    $inline.attr("aria-hidden", "true");
+                });
+                $expand.attr("aria-expanded", "false").text("Раскрыть");
+            };
+
+            const openInline = () => {
+                $inline.attr("aria-hidden", "false").stop(true, true).slideDown(duration);
+                $expand.attr("aria-expanded", "true").text("Скрыть");
+            };
+
+            const loadCoupon = () => {
+                if (loading) return;
+                loading = true;
+                $expand.prop("disabled", true).text("Загрузка…");
+                $inline.removeClass("is-error");
+
+                $.ajax({
+                    url: detailUrl,
+                    method: "GET",
+                    dataType: "html",
+                    cache: false,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                })
+                    .done((html) => {
+                        const parsed = $.parseHTML(html, document, false) || [];
+                        const $response = $("<div>").append(parsed);
+                        const $panel = $response.find(".coupon-detail-panel").first();
+
+                        if (!$panel.length) {
+                            throw new Error("Сервер не вернул матчи купона.");
+                        }
+
+                        const $mobileView = $("<a>", {
+                            class: "profile-coupon-inline-view",
+                            href: detailUrl,
+                            text: "Посмотреть",
+                        });
+                        $inline.empty().append($panel, $mobileView);
+                        loaded = true;
+                        openInline();
+                    })
+                    .fail(() => {
+                        $inline
+                            .addClass("is-error")
+                            .html('<div class="profile-coupon-inline-error">Не удалось загрузить матчи купона. Нажмите «Раскрыть» ещё раз.</div>')
+                            .attr("aria-hidden", "false")
+                            .stop(true, true)
+                            .slideDown(duration);
+                        $expand.attr("aria-expanded", "true").text("Повторить");
+                    })
+                    .always(() => {
+                        loading = false;
+                        $expand.prop("disabled", false);
+                        if (loaded && $inline.is(":visible")) {
+                            $expand.text("Скрыть");
+                        } else if (!loaded && !$inline.is(":visible")) {
+                            $expand.text("Раскрыть");
+                        }
+                    });
+            };
+
+            $expand.on("click", () => {
+                if (loading) return;
+
+                if (loaded) {
+                    if ($inline.is(":visible")) {
+                        closeInline();
+                    } else {
+                        openInline();
+                    }
+                    return;
+                }
+
+                if ($inline.is(":visible") && $inline.hasClass("is-error")) {
+                    $inline.stop(true, true).hide().attr("aria-hidden", "true");
+                }
+                loadCoupon();
+            });
+        };
+
+        $(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-card").each(function () {
+            const $card = $(this);
+            const $row = $card.children(".profile-coupon-row").first();
+            const $inline = $card.children(".profile-coupon-inline").first();
+            const $expand = $row.find(".profile-coupon-expand").first();
+            const detailUrl = $expand.data("coupon-url") || $row.data("coupon-href");
+            bindCouponInline($card, $row, $inline, $expand, detailUrl);
+        });
+
         $(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href]").each(function (index) {
             const $source = $(this);
             if ($source.data("coupon-inline-ready")) return;
@@ -140,91 +243,11 @@
 
             $source.replaceWith($card);
             $card.append($row, $inline);
-
-            let loaded = false;
-            let loading = false;
-
-            const closeInline = () => {
-                $inline.stop(true, true).slideUp(duration, () => {
-                    $inline.attr("aria-hidden", "true");
-                });
-                $expand.attr("aria-expanded", "false").text("Раскрыть");
-            };
-
-            const openInline = () => {
-                $inline.attr("aria-hidden", "false").stop(true, true).slideDown(duration);
-                $expand.attr("aria-expanded", "true").text("Скрыть");
-            };
-
-            const loadCoupon = () => {
-                if (loading) return;
-                loading = true;
-                $expand.prop("disabled", true).text("Загрузка…");
-                $inline.removeClass("is-error");
-
-                $.ajax({
-                    url: detailUrl,
-                    method: "GET",
-                    dataType: "html",
-                    cache: false,
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                })
-                    .done((html) => {
-                        const parsed = $.parseHTML(html, document, false) || [];
-                        const $response = $("<div>").append(parsed);
-                        const $panel = $response.find(".coupon-detail-panel").first();
-
-                        if (!$panel.length) {
-                            throw new Error("Сервер не вернул матчи купона.");
-                        }
-
-                        $inline.empty().append($panel);
-                        loaded = true;
-                        openInline();
-                    })
-                    .fail(() => {
-                        $inline
-                            .addClass("is-error")
-                            .html('<div class="profile-coupon-inline-error">Не удалось загрузить матчи купона. Нажмите «Раскрыть» ещё раз.</div>')
-                            .attr("aria-hidden", "false")
-                            .stop(true, true)
-                            .slideDown(duration);
-                        $expand.attr("aria-expanded", "true").text("Повторить");
-                    })
-                    .always(() => {
-                        loading = false;
-                        $expand.prop("disabled", false);
-                        if (loaded && $inline.is(":visible")) {
-                            $expand.text("Скрыть");
-                        } else if (!loaded && !$inline.is(":visible")) {
-                            $expand.text("Раскрыть");
-                        }
-                    });
-            };
-
-            $expand.on("click", () => {
-                if (loading) return;
-
-                if (loaded) {
-                    if ($inline.is(":visible")) {
-                        closeInline();
-                    } else {
-                        openInline();
-                    }
-                    return;
-                }
-
-                if ($inline.is(":visible") && $inline.hasClass("is-error")) {
-                    $inline.stop(true, true).hide().attr("aria-hidden", "true");
-                }
-                loadCoupon();
-            });
+            bindCouponInline($card, $row, $inline, $expand, detailUrl);
         });
     };
 
-    if (document.querySelector(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href]")) {
+    if (document.querySelector(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href], .profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-card")) {
         loadJQuery()
             .then(initCouponInline)
             .catch((error) => console.error(error));

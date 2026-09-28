@@ -3,12 +3,14 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import re
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, Q, Value
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from cabinet.vip import annotate_vip_status
 from game.models import PredictionCoupon
+from .models import ExpertRankingEntry, ExpertRankingSnapshot
 
 from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period_q
 
@@ -18,7 +20,6 @@ RANKING_TRUST_WEIGHT = Decimal("1000")
 RANKING_STABILIZED_ROI_CAP = Decimal("25")
 RANKING_ACTIVITY_MAX_BONUS = Decimal("5")
 RANKING_ACTIVITY_FULL_COUNT = 50
-RANKING_CACHE_TIMEOUT = 300
 RANKING_CACHE_VERSION_KEY = "expert-ranking:version"
 ALL_TIME = "all-time"
 ALL_SPORTS = "all"
@@ -65,20 +66,6 @@ def invalidate_expert_ranking_cache() -> None:
             )
         except Exception:
             pass
-
-
-def _cache_get(key: str):
-    try:
-        return cache.get(key)
-    except Exception:
-        return None
-
-
-def _cache_set(key: str, value) -> None:
-    try:
-        cache.set(key, value, timeout=RANKING_CACHE_TIMEOUT)
-    except Exception:
-        pass
 
 
 def _normalize_limit(limit: int | None) -> int | None:
@@ -578,6 +565,209 @@ def _month_entries(
     ]
 
 
+def _json_ready(value):
+    if isinstance(value, Decimal):
+        return {"__decimal__": str(value)}
+    if isinstance(value, dict):
+        return {key: _json_ready(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_ready(item) for item in value]
+    return value
+
+
+def _json_restore(value):
+    if isinstance(value, dict):
+        if set(value.keys()) == {"__decimal__"}:
+            return _decimal(value["__decimal__"])
+        return {key: _json_restore(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_restore(item) for item in value]
+    return value
+
+
+def _snapshot_entries(
+    *,
+    period: str,
+    sport_code: str,
+    group: str,
+    roi_period_days: int | None,
+) -> list[dict]:
+    queryset = (
+        ExpertRankingEntry.objects.filter(
+            snapshot__period=period,
+            snapshot__sport_code=sport_code,
+            snapshot__group=group,
+            snapshot__roi_period_days=roi_period_days,
+        )
+        .select_related("analyst", "analyst__analyst_profile")
+        .order_by("rank")
+    )
+    result = []
+    for entry in queryset:
+        try:
+            profile = entry.analyst.analyst_profile
+        except AnalystProfile.DoesNotExist:
+            continue
+
+        profile.rank = entry.rank
+        profile.ranking_metrics = _json_restore(entry.metrics or {})
+        profile.ranking_reason = entry.ranking_reason
+        profile.author_roi = entry.author_roi
+        profile.author_roi_all_time = entry.author_roi_all_time
+        profile.ranking_score = entry.ranking_score
+        profile.settled_count = entry.settled_count
+        profile.roi_settled_count = entry.roi_settled_count
+        profile.followers_count = entry.followers_count
+        profile.publications_count = entry.publications_count
+        profile.wins_count = entry.wins_count
+        profile.losses_count = entry.losses_count
+        profile.sports_count = entry.sports_count
+        profile.recent_publications_count = entry.recent_publications_count
+        profile.last_publication_at = entry.last_publication_at
+        profile.is_vip_active = entry.is_vip_active
+        profile.vip_ends_at = entry.vip_ends_at
+        profile.vip_subscription_activated_at = entry.vip_subscription_activated_at
+        profile.user.is_vip_active = entry.is_vip_active
+        profile.user.vip_ends_at = entry.vip_ends_at
+        profile.user.vip_activated_at = entry.vip_subscription_activated_at
+
+        result.append(
+            {
+                "profile": profile,
+                "metrics": profile.ranking_metrics,
+                "trust_index": entry.trust_index,
+                "ranking_reason": entry.ranking_reason,
+                "rank": entry.rank,
+                "period": period,
+                "sport_code": sport_code,
+                "group": group,
+            }
+        )
+    return result
+
+
+def _entries_for_build(
+    *,
+    selected_month: date | None,
+    selected_period: str,
+    selected_sport: str,
+    selected_group: str,
+    roi_period_days: int | None,
+) -> list[dict]:
+    if selected_month is None:
+        return _all_time_entries(
+            sport_code=selected_sport,
+            group=selected_group,
+            roi_period_days=roi_period_days,
+        )
+    return _month_entries(
+        month=selected_month,
+        sport_code=selected_sport,
+        group=selected_group,
+    )
+
+
+def rebuild_expert_ranking_snapshot(
+    *,
+    period=None,
+    sport_code: str = ALL_SPORTS,
+    group: str = "all",
+    roi_period_days: int | None = None,
+) -> ExpertRankingSnapshot:
+    selected_month, selected_period = _resolve_period(period)
+    selected_group = _resolve_group(group)
+    selected_sport = (sport_code or ALL_SPORTS).strip().lower()
+    entries = _entries_for_build(
+        selected_month=selected_month,
+        selected_period=selected_period,
+        selected_sport=selected_sport,
+        selected_group=selected_group,
+        roi_period_days=roi_period_days,
+    )
+
+    with transaction.atomic():
+        snapshot, _ = ExpertRankingSnapshot.objects.select_for_update().get_or_create(
+            period=selected_period,
+            sport_code=selected_sport,
+            group=selected_group,
+            roi_period_days=roi_period_days,
+        )
+        snapshot.entries.all().delete()
+        rows = []
+        for rank, entry in enumerate(entries, start=1):
+            profile = entry["profile"]
+            profile.rank = rank
+            profile.ranking_metrics = entry["metrics"]
+            profile.ranking_reason = entry["ranking_reason"]
+            rows.append(
+                ExpertRankingEntry(
+                    snapshot=snapshot,
+                    analyst_id=profile.user_id,
+                    rank=rank,
+                    metrics=_json_ready(entry["metrics"]),
+                    ranking_reason=entry["ranking_reason"],
+                    trust_index=_decimal(profile.trust_index),
+                    ranking_score=_decimal(getattr(profile, "ranking_score", 0)),
+                    author_roi=_decimal(getattr(profile, "author_roi", 0)),
+                    author_roi_all_time=_decimal(
+                        getattr(profile, "author_roi_all_time", 0)
+                    ),
+                    settled_count=int(getattr(profile, "settled_count", 0) or 0),
+                    roi_settled_count=int(
+                        getattr(profile, "roi_settled_count", 0) or 0
+                    ),
+                    followers_count=int(getattr(profile, "followers_count", 0) or 0),
+                    publications_count=int(
+                        getattr(profile, "publications_count", 0) or 0
+                    ),
+                    wins_count=int(getattr(profile, "wins_count", 0) or 0),
+                    losses_count=int(getattr(profile, "losses_count", 0) or 0),
+                    sports_count=int(getattr(profile, "sports_count", 0) or 0),
+                    recent_publications_count=int(
+                        getattr(profile, "recent_publications_count", 0) or 0
+                    ),
+                    last_publication_at=getattr(profile, "last_publication_at", None),
+                    is_vip_active=bool(getattr(profile, "is_vip_active", False)),
+                    vip_ends_at=getattr(profile, "vip_ends_at", None),
+                    vip_subscription_activated_at=getattr(
+                        profile,
+                        "vip_subscription_activated_at",
+                        None,
+                    ),
+                )
+            )
+        ExpertRankingEntry.objects.bulk_create(rows, batch_size=500)
+        snapshot.entries_count = len(rows)
+        snapshot.save(update_fields=("entries_count", "built_at"))
+    return snapshot
+
+
+def refresh_core_expert_rankings(*, periods: list[str] | None = None) -> None:
+    target_periods = [ALL_TIME, current_month_start().strftime("%Y-%m")]
+    if periods:
+        target_periods.extend(periods)
+
+    seen = set()
+    for period in target_periods:
+        if period in seen:
+            continue
+        seen.add(period)
+        rebuild_expert_ranking_snapshot(
+            period=period,
+            sport_code=ALL_SPORTS,
+            group="all",
+            roi_period_days=None,
+        )
+
+    rebuild_expert_ranking_snapshot(
+        period=ALL_TIME,
+        sport_code=ALL_SPORTS,
+        group="all",
+        roi_period_days=ROI_PERIOD_DAYS,
+    )
+    invalidate_expert_ranking_cache()
+
+
 def rank_experts(
     *,
     period=None,
@@ -591,46 +781,17 @@ def rank_experts(
     ``period=YYYY-MM`` uses only activity and results from that calendar month.
     Sport and group narrow the same canonical order; callers must not re-sort it.
     """
-    selected_month, selected_period = _resolve_period(period)
+    _selected_month, selected_period = _resolve_period(period)
     selected_group = _resolve_group(group)
     selected_sport = (sport_code or ALL_SPORTS).strip().lower()
     safe_limit = _normalize_limit(limit)
-    limit_key = "all" if safe_limit is None else str(safe_limit)
-    cache_key = (
-        f"expert-ranking:v{ranking_cache_version()}:"
-        f"period={selected_period}:sport={selected_sport}:"
-        f"group={selected_group}:limit={limit_key}"
+    entries = _snapshot_entries(
+        period=selected_period,
+        sport_code=selected_sport,
+        group=selected_group,
+        roi_period_days=None,
     )
-    cached_entries = _cache_get(cache_key)
-    if cached_entries is not None:
-        return cached_entries
-
-    if selected_month is None:
-        entries = _all_time_entries(
-            sport_code=selected_sport,
-            group=selected_group,
-            roi_period_days=None,
-        )
-    else:
-        entries = _month_entries(
-            month=selected_month,
-            sport_code=selected_sport,
-            group=selected_group,
-        )
-
-    for rank, entry in enumerate(entries, start=1):
-        entry["rank"] = rank
-        entry["period"] = selected_period
-        entry["sport_code"] = selected_sport
-        entry["group"] = selected_group
-        profile = entry["profile"]
-        profile.rank = rank
-        profile.ranking_metrics = entry["metrics"]
-        profile.ranking_reason = entry["ranking_reason"]
-
-    result = entries if safe_limit is None else entries[:safe_limit]
-    _cache_set(cache_key, result)
-    return result
+    return entries if safe_limit is None else entries[:safe_limit]
 
 
 def ranked_expert_profiles(
@@ -656,32 +817,14 @@ def ranked_expert_profiles(
             )
         ]
 
-    days_key = str(period_days)
-    limit_key = "all" if safe_limit is None else str(safe_limit)
-    cache_key = (
-        f"expert-ranking-profiles:v{ranking_cache_version()}:"
-        f"days={days_key}:limit={limit_key}"
-    )
-    cached_profiles = _cache_get(cache_key)
-    if cached_profiles is not None:
-        return cached_profiles
-
-    entries = _all_time_entries(
+    entries = _snapshot_entries(
+        period=ALL_TIME,
         sport_code=ALL_SPORTS,
         group="all",
         roi_period_days=period_days,
     )
-    for rank, entry in enumerate(entries, start=1):
-        entry["rank"] = rank
-        profile = entry["profile"]
-        profile.rank = rank
-        profile.ranking_metrics = entry["metrics"]
-        profile.ranking_reason = entry["ranking_reason"]
-
     profiles = [entry["profile"] for entry in entries]
-    result = profiles if safe_limit is None else profiles[:safe_limit]
-    _cache_set(cache_key, result)
-    return result
+    return profiles if safe_limit is None else profiles[:safe_limit]
 
 
 def recommended_experts_for_user(

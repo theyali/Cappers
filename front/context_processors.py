@@ -15,6 +15,15 @@ HOME_WIKI_CACHE_KEY = "home-wiki-videos:v1"
 HOME_WIKI_CACHE_SECONDS = 120
 ROULETTE_SETTINGS_CACHE_KEY = "roulette-settings:v1"
 ROULETTE_SETTINGS_CACHE_SECONDS = 60
+FOOTER_VISIBLE_ROUTES = {
+    "front:index",
+    "front:wiki",
+    "front:news_detail",
+    "front:how_it_works",
+    "front:bookmakers",
+    "front:article_detail",
+    "front:static_page",
+}
 
 
 def _route_url(name: str):
@@ -207,6 +216,10 @@ def _breadcrumbs_for_request(request):
             {"title": "Статьи", "url": _route_url("front:articles")},
             {"title": "Материал"},
         ],
+        "front:news_detail": [
+            {"title": "Новости спорта", "url": _route_url("front:sports_news")},
+            {"title": "Новость"},
+        ],
         "front:prediction_detail": [
             {"title": "Все прогнозы", "url": _route_url("front:predictions")},
             {"title": "Прогноз"},
@@ -230,6 +243,11 @@ def _breadcrumbs_for_request(request):
     if trail is None:
         return []
     return [home, *trail]
+
+
+def _hide_footer_for_request(request) -> bool:
+    view_name = request.resolver_match.view_name if request.resolver_match else ""
+    return view_name not in FOOTER_VISIBLE_ROUTES
 
 
 def website_settings(request):
@@ -269,7 +287,7 @@ def website_settings(request):
         "bookmakers": bookmakers_context["bookmakers"],
         "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
-        "hide_footer": True,
+        "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
     }

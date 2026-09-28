@@ -1554,7 +1554,6 @@ body.wiki-video-player-open {
 .expert-public-hero-followers strong,
 .expert-score span,
 .expert-score strong,
-.forecast-expert span,
 .forecast-expert strong,
 .how-role-tab small,
 .how-role-tab strong,
@@ -2152,16 +2151,22 @@ body.wiki-video-player-open {
     gap: 10px;
 }
 .capper-preview-avatar img,
-.coupon-detail-page .coupon-slip-team-logo img,
 .home-layout .forecast-avatar > img,
 .home-match-country img,
 .paid-upgrade-avatar img,
 .prediction-expert-avatar img,
 .profile-user-row.is-profile-link .profile-user-avatar img,
 .team-logo .home-match-country img{
-    width: 100%;
-    height: 100%;
+    width: inherit;
+    height: inherit;
     object-fit: cover;
+    border-radius: inherit;
+}
+.coupon-detail-page .coupon-slip-team-logo img{
+    width: 90%;
+    height: 90%;
+    object-fit: cover;
+    border-radius: inherit;
 }
 .coupon-item-title span { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .prediction-pick-rich strong{
@@ -2972,7 +2977,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     background: var(--yellow);
     font-weight: 700;
 }
-.forecast-expert span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.forecast-expert span { margin-top: 3px; color: var(--muted); font-size: 10px;display:flex; }
 .forecast-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
 .forecast-meta span {
     min-height: 30px;
@@ -7003,6 +7008,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     background: var(--yellow);
     font-size: 10px;
     font-weight: 800;
+    text-align: center;
 }
 .coupon-slip-league span,
 .profile-coupon-copy span,
@@ -7742,9 +7748,7 @@ body.layout-columns-center_right .predictions-content {
 .profile-user-verified,
 .wiki-video-player[hidden],
 body.layout-columns-center_only .predictions-layout > .bookmakers-sidebar,
-body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar,
-body.layout-columns-center_only .predictions-layout > .predictions-filter-sidebar,
-body.layout-columns-center_right .predictions-layout > .predictions-filter-sidebar {
+body.layout-columns-center_only .predictions-layout > .predictions-ad-sidebar{
     display: none !important;
 }
 body.layout-columns-center_right .predictions-layout > .bookmakers-sidebar,
@@ -7752,6 +7756,13 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     grid-column: 2;
 }
 .predictions-content { min-width: 0; display: grid; gap: 18px; grid-column: 2; }
+.articles-content {
+    align-items: start;
+    align-content: start;
+}
+.articles-content > * {
+    min-width: 0;
+}
 .following-feed-content { align-content: start; grid-auto-rows: max-content; }
 .following-feed-content > *,
 .following-feed-content .content-view-container,
@@ -7789,7 +7800,18 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     opacity: 0;
     transform: translateY(6px);
 }
-.prediction-filter-sidebar { position: sticky; top: 116px; min-width: 0; overflow: hidden; border-radius: 16px; }
+.prediction-filter-sidebar {
+    position: sticky;
+    top: 116px;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    border-radius: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3d transparent;
+}
 .filter_matches { padding: 10px; background: var(--panel); }
 .prediction-filter-sidebar .prediction-filters,
 .predictions-filter-sidebar .prediction-filters {
@@ -7859,26 +7881,17 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 }
 .prediction-results-sort select.is-changing { opacity: 0.55; transform: translateY(2px); }
 .predictions-layout > .predictions-filter-sidebar {
-    position: sticky;
-    top: 116px;
     grid-column: 1;
     align-self: start;
-    max-height: calc(100dvh - 132px);
-    display: grid !important;
+    display: grid;
     align-content: start;
     gap: 12px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
     border-radius: 18px;
-    scrollbar-width: thin;
-    scrollbar-color: #3a3a3d transparent;
     animation: 0.22s both matchesTableSidebarIn;
 }
-.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar { width: 6px; }
-.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
-.predictions-layout > .predictions-filter-sidebar::-webkit-scrollbar-track { background: 0 0; }
+.prediction-filter-sidebar::-webkit-scrollbar { width: 6px; }
+.prediction-filter-sidebar::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
+.prediction-filter-sidebar::-webkit-scrollbar-track { background: 0 0; }
 .predictions-layout > .bookmakers-sidebar,
 .predictions-layout > .predictions-ad-sidebar {
     position: sticky;
@@ -7935,7 +7948,54 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .predictions-table-view-flat .content-table-scroll {
     padding: 0;
 }
-.predictions-scroll-page .predictions-content { scroll-behavior: smooth; overflow-anchor: none; }
+.predictions-scroll-page {
+    --predictions-column-top-offset: 216px;
+    --predictions-column-scroll-height: calc(100dvh - var(--predictions-column-top-offset));
+}
+.predictions-scroll-page .predictions-content {
+    max-height: max(520px, var(--predictions-column-scroll-height));
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    overflow-anchor: none;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3d transparent;
+}
+.predictions-scroll-page .coupon-detail-content {
+    padding-bottom: 28px;
+}
+.predictions-scroll-page .predictions-content::-webkit-scrollbar { width: 6px; }
+.predictions-scroll-page .predictions-content::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
+.predictions-scroll-page .predictions-content::-webkit-scrollbar-track { background: 0 0; }
+.predictions-scroll-page .predictions-layout > .predictions-filter-sidebar,
+.predictions-scroll-page .predictions-layout > .bookmakers-sidebar,
+.predictions-scroll-page .predictions-layout > .predictions-ad-sidebar {
+    max-height: max(520px, var(--predictions-column-scroll-height));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3d transparent;
+}
+.predictions-scroll-page .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar,
+.predictions-scroll-page .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar { width: 6px; }
+.predictions-scroll-page .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar-thumb,
+.predictions-scroll-page .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
+.predictions-scroll-page .predictions-layout > .bookmakers-sidebar::-webkit-scrollbar-track,
+.predictions-scroll-page .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-track { background: 0 0; }
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) {
+    --predictions-column-top-offset: 132px;
+}
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-content,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .predictions-filter-sidebar,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .bookmakers-sidebar,
+.predictions-scroll-page:is(.predictions-index-page, .following-feed-page, .tournaments-page) .predictions-layout > .predictions-ad-sidebar {
+    max-height: var(--predictions-column-scroll-height);
+}
 .predictions-scroll-page .prediction-table-body,
 .predictions-scroll-page .predictions-grid,
 .predictions-scroll-page .predictions-lazy {
@@ -8012,20 +8072,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .prediction-sidebar-block { min-width: 0; display: grid; gap: 12px; }
 .favorites-filter-block { padding: 10px; border-radius: 18px; background: var(--panel); }
 .cappers-table-filter-block { padding: 10px; border-radius: 18px; background: var(--panel); }
-.cappers-table-shell .matches-table-filter-sidebar {
-    position: sticky;
-    top: 116px;
-    max-height: calc(100dvh - 132px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: #3a3a3d transparent;
-}
-.cappers-table-shell .matches-table-filter-sidebar::-webkit-scrollbar { width: 6px; }
-.cappers-table-shell .matches-table-filter-sidebar::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
-.cappers-table-shell .matches-table-filter-sidebar::-webkit-scrollbar-track { background: 0 0; }
 .favorites-empty { min-height: 360px; gap: 0; padding: clamp(34px, 6vw, 64px) 24px; background: var(--panel); }
 .favorites-empty-logo {
     width: 92px;
@@ -8704,7 +8750,14 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     flex-wrap: wrap;
     gap: 8px;
 }
+.articles-categories {
+    align-items: flex-start;
+}
 .articles-categories a {
+    flex: 0 0 auto;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
     padding: 10px 14px;
     border-radius: 12px;
     color: rgba(255, 255, 255, 0.72);
@@ -9143,6 +9196,23 @@ body.register footer {
     background: var(--yellow);
     font-size: 10px;
     font-weight: 700;
+}
+.profile-coupon-status.is-icon {
+    width: 30px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 50%;
+}
+.profile-coupon-status.is-icon svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 .user-public-badge { display: grid; border-radius: 16px; background: var(--ink); }
 .user-public-activity-row strong {
@@ -10296,6 +10366,13 @@ body.register footer {
     background: #1f1f21;
     outline: rgba(255, 255, 255, 0.07) solid 1px;
 }
+#earnings-title{
+    font-size: 25px;
+}
+.profile-section-heading h1,
+.referrals-hero-copy h1{
+    font-size: 37px!important;
+}
 .profile-form-card { padding: 15px 10px; }
 .profile-edit-form {
     padding: 0px 22px;
@@ -11281,6 +11358,7 @@ body.register footer {
     background: var(--panel);
 }
 .earnings-hero {
+    position: relative;
     min-height: 278px;
     display: grid;
     grid-template-columns: minmax(210px, 0.72fr) minmax(260px, 0.78fr);
@@ -11292,6 +11370,21 @@ body.register footer {
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
+    overflow: hidden;
+}
+.earnings-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        linear-gradient(90deg, rgba(3, 5, 9, 0.86) 0%, rgba(3, 5, 9, 0.7) 38%, rgba(3, 5, 9, 0.5) 100%),
+        linear-gradient(0deg, rgba(3, 5, 9, 0.48), rgba(3, 5, 9, 0.26));
+    pointer-events: none;
+}
+.earnings-hero > * {
+    position: relative;
+    z-index: 1;
 }
 .earnings-kicker {
     display: block;
@@ -12317,6 +12410,11 @@ body.register {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
+#register-form{
+    background: var(--panel);
+    padding: 18px;
+    border-radius: 20px;
+}
 .auth-stage-register .capper-landing { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; }
 .auth-stage-register .capper-landing h1 { margin: 0; line-height: 1.08; letter-spacing: 0; }
 .auth-stage-register .capper-kicker { font-weight: 700; letter-spacing: 0.24em; }
@@ -12376,6 +12474,9 @@ body.register {
         border-color 0.2s,
         background 0.2s,
         box-shadow 0.2s;
+}
+.adv-banner--half_240{
+    height: 240px;
 }
 .auth-input-wrap:focus-within { border-color: rgba(11, 86, 250, 0.9); background: #151516; box-shadow: 0 0 0 4px rgba(11, 86, 250, 0.1); }
 .auth-input-wrap svg {
@@ -12898,6 +12999,7 @@ body.register {
 }
 .profile-coupon-expand:disabled { cursor: wait; opacity: 0.72; transform: none; }
 .profile-coupon-inline { display: none; min-width: 0; overflow: hidden; padding: 10px 0 4px; background: 0 0; }
+.profile-coupon-inline-view { display: none; }
 .profile-coupon-inline .coupon-slip,
 .tournament-predict-page {
     margin: 0 auto;
@@ -13502,7 +13604,6 @@ body.register {
 .capper-trust-badge.is-high { color: #fff; background: linear-gradient(180deg, #39e75f 0, #20b15a 54%, #0f8f43 100%); }
 .capper-trust-badge.is-good { color: #151719; background: linear-gradient(180deg, #ffd44d 0, #ffad14 54%, #ff9500 100%); }
 .capper-trust-badge.is-medium { color: #151719; background: linear-gradient(180deg, #ff3 0, #fff000 56%, #ffd100 100%); }
-.forecast-avatar .capper-trust-badge.is-medium { display: flex; font-size: 7px !important; }
 .forecast-avatar-initials { color: var(--panel) !important; }
 .forecast-avatar { display: flex !important; align-items: center; justify-content: center; }
 .capper-trust-badge.is-low { color: #fff; background: linear-gradient(180deg, #e84e4e 0, #ff0303 54%, #8f1010 100%); }
@@ -14117,6 +14218,18 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
         color 0.18s;
 }
 .bonus-cards-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.bonuses-catalog-page .bonuses-content {
+    align-content: start;
+    grid-auto-rows: max-content;
+}
+.bonuses-catalog-page .bonuses-hero {
+    min-height: 250px;
+    margin: 0;
+}
+.bonuses-catalog-page .bonus-cards-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
 .bonus-offer-card {
     min-width: 0;
     display: flex;
@@ -18676,18 +18789,41 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .league-picker-section-head { min-height: 28px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .league-picker-section-head strong { color: #fff; font-size: 13px; }
+.league-picker-section {
+    min-height: 92px;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+}
+.league-picker-results {
+    min-height: 63px;
+    display: flex;
+    grid-template-columns: none;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 1px 0 7px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    transition: opacity 0.14s ease;
+}
+.league-picker-results.is-loading { opacity: 0.58; }
+.league-picker-results::-webkit-scrollbar { height: 6px; }
+.league-picker-results::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
 .league-picker-option {
-    min-width: 0;
-    min-height: 58px;
+    min-width: 220px;
+    flex: 0 0 220px;
+    min-height: 50px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 12px;
     color: #fff;
     background: #303033;
     cursor: pointer;
+    scroll-snap-align: start;
     text-align: left;
 }
 .league-picker-actions button,
@@ -18697,10 +18833,17 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     background: #303033;
     cursor: pointer;
 }
-.league-picker-option strong { color: inherit; font-size: 12px; }
+.league-picker-option strong { color: inherit; font-size: 11px; }
 .league-picker-option i { flex: 0 0 auto; color: var(--yellow); font-size: 18px; font-style: normal; font-weight: 700; }
 .league-picker-more { color: #fff; }
 .league-picker-actions button { padding: 0 14px; color: #fff; }
+.profile-edit-interests-grid { grid-template-columns: minmax(0, 1fr); }
+.profile-interest-picker .sport-league-preferences {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 14px;
+}
+.profile-interest-picker .preference-picker-block { min-width: 0; }
 .site-footer,
 .site-footer-v2 {
     margin-top: 40px;
@@ -18860,3 +19003,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .cappers-ranking-region { transition: opacity 0.16s ease; }
 .cappers-ranking-region.is-loading { opacity: 0.58; pointer-events: none; }
+.profile-coupon-row .coin-icon {
+    width: 18px;
+    height: 18px;
+}

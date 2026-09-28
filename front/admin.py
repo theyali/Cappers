@@ -3,6 +3,8 @@ from django.contrib import admin
 from .models import (
     Article,
     ArticleCategory,
+    News,
+    NewsCategory,
     StaticPage,
     WikiTerm,
     WikiTermSection,
@@ -28,6 +30,44 @@ class ArticleCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "category",
+        "reading_time_minutes",
+        "is_main",
+        "is_published",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("is_main", "is_published", "category", "created_at")
+    search_fields = ("title", "description", "content", "tags", "category__name")
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Основное", {"fields": ("title", "slug", "category", "description", "image")}),
+        ("Метаданные", {"fields": ("reading_time_minutes", "tags", "is_main", "is_published")}),
+        ("Содержание", {"fields": ("content",)}),
+        ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
+@admin.register(NewsCategory)
+class NewsCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "is_active", "sort_order", "updated_at")
+    list_display_links = ("name",)
+    list_editable = ("is_active", "sort_order")
+    list_filter = ("is_active",)
+    search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Основное", {"fields": ("name", "slug", "is_active", "sort_order")}),
+        ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
+@admin.register(News)
+class NewsAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "category",
