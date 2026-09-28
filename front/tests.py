@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from back.models import WebsiteSettings
 from cabinet.models import (
@@ -580,6 +581,59 @@ class FooterRenderingTests(TestCase):
 
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, 'class="site-footer site-footer-v2"')
+
+
+class SeoInfrastructureTests(TestCase):
+    def test_robots_txt_uses_admin_content_and_sitemap_placeholder(self):
+        settings = WebsiteSettings.load()
+        settings.robots_txt = "User-agent: *\nDisallow: /cabinet/\nSitemap: {sitemap_url}"
+        settings.save(update_fields=["robots_txt", "updated_at"])
+
+        response = self.client.get(reverse("robots_txt"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain; charset=utf-8")
+        content = response.content.decode()
+        self.assertIn("Disallow: /cabinet/", content)
+        self.assertIn("Sitemap: http://testserver/sitemap.xml", content)
+
+    def test_sitemap_contains_published_articles_news_and_matches(self):
+        article = Article.objects.create(
+            title="Sitemap article",
+            slug="sitemap-article",
+            description="Описание статьи",
+            content="<p>Статья</p>",
+        )
+        hidden_article = Article.objects.create(
+            title="Hidden sitemap article",
+            slug="hidden-sitemap-article",
+            description="Описание скрытой статьи",
+            content="<p>Скрытая статья</p>",
+            is_published=False,
+        )
+        news = News.objects.create(
+            title="Sitemap news",
+            slug="sitemap-news",
+            description="Описание новости",
+            content="<p>Новость</p>",
+        )
+        match = Match.objects.create(
+            external_id=991001,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=timezone.now(),
+        )
+
+        response = self.client.get(reverse("sitemap"))
+
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f"http://testserver{reverse('front:articles')}", content)
+        self.assertIn(f"http://testserver{reverse('front:sports_news')}", content)
+        self.assertIn(f"http://testserver{reverse('game:match_list')}", content)
+        self.assertIn(f"http://testserver{article.get_absolute_url()}", content)
+        self.assertIn(f"http://testserver{news.get_absolute_url()}", content)
+        self.assertIn(f"http://testserver{match.get_absolute_url()}", content)
+        self.assertNotIn(hidden_article.get_absolute_url(), content)
 
 
 class ArticleMainTests(TestCase):

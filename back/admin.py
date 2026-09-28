@@ -160,6 +160,13 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "SEO",
+            {
+                "fields": ("robots_txt",),
+                "description": "Содержимое /robots.txt. Плейсхолдер {sitemap_url} заменяется на абсолютную ссылку sitemap.xml.",
+            },
+        ),
+        (
             "Букмекеры",
             {
                 "fields": (
