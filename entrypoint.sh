@@ -72,7 +72,7 @@ PORT="${PORT:-8000}"
 if [ "${DEBUG:-0}" = "1" ] || [ "${DEBUG:-0}" = "true" ] || [ "${DEBUG:-0}" = "True" ]; then
   set -- python manage.py runserver 0.0.0.0:${PORT}
 else
-  set -- uvicorn analitika_aleksey.asgi:application --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-2}
+  set -- uvicorn cappers.asgi:application --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-2}
 fi
 
 run_with_optional_file_logs "$@"

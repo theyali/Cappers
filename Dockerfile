@@ -15,8 +15,9 @@ RUN pip install --upgrade pip && pip install -r /app/requirements.txt
 
 COPY . /app
 
-RUN chmod +x /app/deploy/*.sh
+RUN chmod +x /app/entrypoint.sh /app/deploy/*.sh
 
 EXPOSE 8000
 
-CMD ["/app/deploy/start-web.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["uvicorn", "cappers.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
