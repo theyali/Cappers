@@ -9,12 +9,13 @@ from .models import (
     AnalystFollow,
     AnalystPaidPlan,
     AnalystPaidSubscription,
+    AnalystPaidSubscriptionPayment,
     AnalystProfile,
     User,
     paid_subscription_expires_at,
 )
 from wallets.models import RealBalanceTransaction
-from wallets.services import credit_real_balance
+from wallets.services import credit_real_balance, debit_real_balance
 
 from .referrals import REFERRAL_ACTION_SUBSCRIPTION, credit_referral_income
 
@@ -173,6 +174,30 @@ def subscribe_to_paid_predictions(
                 ),
             },
         )
+        base_time = now if created else (subscription.expires_at if subscription.expires_at > now else now)
+        expires_at = paid_subscription_expires_at(
+            base_time,
+            duration_days=duration_days,
+        )
+        payment = AnalystPaidSubscriptionPayment.objects.create(
+            subscription=subscription,
+            subscriber=subscriber,
+            analyst=analyst,
+            plan=selected_plan,
+            price=price,
+            capper_income=capper_income,
+            duration_days=duration_days,
+            starts_at=base_time,
+            expires_at=expires_at,
+        )
+        payment_note_prefix = "Покупка" if created else "Продление"
+        debit_real_balance(
+            subscriber,
+            price,
+            RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
+            related_obj=payment,
+            note=f"{payment_note_prefix} подписки @{analyst.username}: {plan_title}",
+        )
         if created:
             AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
             if capper_income > 0:
@@ -180,24 +205,21 @@ def subscribe_to_paid_predictions(
                     analyst,
                     capper_income,
                     RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                    related_obj=payment,
                     note=f"Подписка @{subscriber.username}: {plan_title}",
                 )
             credit_referral_income(
                 subscriber,
                 price,
                 REFERRAL_ACTION_SUBSCRIPTION,
-                related_obj=subscription,
+                related_obj=payment,
                 note=f"Реферал @{subscriber.username}: покупка подписки «{plan_title}»",
             )
             return subscription
-        base_time = subscription.expires_at if subscription.expires_at > now else now
         subscription.plan = selected_plan
         subscription.price = price
         subscription.duration_days = duration_days
-        subscription.expires_at = paid_subscription_expires_at(
-            base_time,
-            duration_days=duration_days,
-        )
+        subscription.expires_at = expires_at
         if subscription.starts_at > now:
             subscription.starts_at = now
         subscription.save(
@@ -216,12 +238,14 @@ def subscribe_to_paid_predictions(
                 analyst,
                 capper_income,
                 RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                related_obj=payment,
                 note=f"Продление подписки @{subscriber.username}: {plan_title}",
             )
         credit_referral_income(
             subscriber,
             price,
             REFERRAL_ACTION_SUBSCRIPTION,
+            related_obj=payment,
             note=f"Реферал @{subscriber.username}: продление подписки «{plan_title}»",
         )
     return subscription

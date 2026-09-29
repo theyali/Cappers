@@ -12,11 +12,17 @@
             <p>После оплаты закрытые прогнозы каппера появятся отдельным блоком в вашей ленте.</p>
         </div>
 
+        <div class="paid-checkout-balance">
+            <span>Реальный баланс</span>
+            <strong>{{ real_balance_display }} ₽</strong>
+            <a href="{% url 'wallets:top_up' %}">Пополнить</a>
+        </div>
+
         <form method="post" action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}" class="paid-checkout-actions">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next_url }}">
             {% include "cabinet/includes/_paid_plan_picker.html" %}
-            <button type="submit">Оплатить подписку</button>
+            <button type="submit"{% if not paid_checkout_can_pay %} disabled{% endif %}>Оплатить подписку</button>
             <a href="{{ next_url }}">Назад</a>
         </form>
     </article>

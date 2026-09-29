@@ -516,6 +516,54 @@ class AnalystPaidSubscription(models.Model):
         return f"{self.subscriber} → {self.analyst} до {self.expires_at:%Y-%m-%d}"
 
 
+class AnalystPaidSubscriptionPayment(models.Model):
+    subscription = models.ForeignKey(
+        AnalystPaidSubscription,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        verbose_name="Подписка",
+    )
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="paid_prediction_payments",
+        verbose_name="Подписчик",
+    )
+    analyst = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="paid_prediction_sales",
+        verbose_name="Аналитик",
+    )
+    plan = models.ForeignKey(
+        AnalystPaidPlan,
+        on_delete=models.SET_NULL,
+        related_name="payments",
+        verbose_name="Тариф",
+        null=True,
+        blank=True,
+    )
+    price = models.DecimalField("Стоимость", max_digits=10, decimal_places=2)
+    capper_income = models.DecimalField("Доход каппера", max_digits=10, decimal_places=2)
+    duration_days = models.PositiveIntegerField("Срок, дней")
+    starts_at = models.DateTimeField("Начало периода")
+    expires_at = models.DateTimeField("Окончание периода")
+    created_at = models.DateTimeField("Создан", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Платёж за платные прогнозы"
+        verbose_name_plural = "Платежи за платные прогнозы"
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(fields=("subscriber", "created_at"), name="paid_pay_subscriber_idx"),
+            models.Index(fields=("analyst", "created_at"), name="paid_pay_analyst_idx"),
+            models.Index(fields=("subscription", "created_at"), name="paid_pay_subscription_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.subscriber} → {self.analyst}: {self.price} ₽"
+
+
 def paid_subscription_expires_at(from_time=None, *, duration_days: int = 30):
     return (from_time or timezone.now()) + timedelta(days=duration_days)
 
@@ -666,6 +714,12 @@ class VipPlan(models.Model):
     title = models.CharField("Название", max_length=120)
     duration_days = models.PositiveIntegerField("Срок, дней")
     price_coins = models.PositiveIntegerField("Стоимость, коинов", default=0)
+    price_rub = models.DecimalField(
+        "Стоимость, ₽",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
     is_active = models.BooleanField("Активен", default=True)
     order = models.PositiveIntegerField("Порядок", default=0)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
@@ -677,7 +731,7 @@ class VipPlan(models.Model):
         ordering = ("order", "duration_days", "id")
 
     def __str__(self) -> str:
-        return f"{self.title} · {self.duration_days} дн. · {self.price_coins} коинов"
+        return f"{self.title} · {self.duration_days} дн. · {self.price_rub} ₽"
 
 
 class UserVipSubscription(models.Model):

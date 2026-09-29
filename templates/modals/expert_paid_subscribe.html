@@ -43,8 +43,13 @@
         >
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="paid-checkout-balance">
+                <span>Реальный баланс</span>
+                <strong>{{ real_balance_display|default:"0" }} ₽</strong>
+                <a href="{% url 'wallets:top_up' %}">Пополнить</a>
+            </div>
             {% include "cabinet/includes/_paid_plan_picker.html" %}
-            <button type="submit">Оплатить подписку</button>
+            <button type="submit"{% if not paid_checkout_can_pay %} disabled{% endif %}>Оплатить подписку</button>
         </form>
     </section>
 </div>

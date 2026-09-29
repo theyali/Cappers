@@ -212,6 +212,8 @@ class RealBalanceTransaction(models.Model):
     class Kind(models.TextChoices):
         SUBSCRIPTION_INCOME = "subscription_income", "Доход с подписки"
         TOURNAMENT_PRIZE = "tournament_prize", "Приз турнира"
+        VIP_PURCHASE = "vip_purchase", "Покупка VIP"
+        PAID_PREDICTION_PURCHASE = "paid_prediction_purchase", "Покупка платной подписки"
         REFERRAL_SUBSCRIPTION = "referral_subscription", "Реферал: покупка подписки"
         REFERRAL_TOURNAMENT = "referral_tournament", "Реферал: приз турнира"
         REFERRAL_BALANCE_TOP_UP = "referral_balance_top_up", "Реферал: пополнение баланса"

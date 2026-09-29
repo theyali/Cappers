@@ -124,7 +124,7 @@ def build_capper_articles_context(user) -> dict:
         "can_create_article": can_create,
         "active_tab": "articles",
         "vip_locked_label": "Стать VIP, чтобы публиковать статьи",
-        "vip_upgrade_url": reverse("cabinet:profile"),
+        "vip_upgrade_url": reverse("cabinet:vip_plans"),
         "article_create_url": reverse("cabinet:capper_article_create"),
     }
 

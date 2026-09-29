@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container cabinet-vip-page">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page bonus-detail-main">
+            <div class="matches-mobile-scope-panel" aria-label="{{ page.mobile_nav_label }}">
+                <nav class="matches-tabs" aria-label="{{ page.profile_nav_label }}">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <header class="bonus-page-head vip-page-head">
+                <div>
+                    <h1>{{ page.heading }}</h1>
+                    <p>{{ page.description }}</p>
+                </div>
+                <strong>{{ real_balance_display }} ₽</strong>
+            </header>
+
+            <section class="vip-status-grid" aria-label="Текущий VIP и баланс">
+                <article class="vip-status-card{% if active_vip %} is-active{% endif %}">
+                    <span class="vip-card-kicker">Текущий статус</span>
+                    {% if active_vip %}
+                        <h2>VIP активен</h2>
+                        <p>Доступ действует до {{ active_vip.ends_at|date:"d.m.Y H:i" }}.</p>
+                        <div class="vip-status-meta">
+                            <span>Осталось</span>
+                            <strong>{{ vip_time_left }}</strong>
+                        </div>
+                        {% if active_vip.plan %}
+                            <small>Текущий тариф: {{ active_vip.plan.title }}</small>
+                        {% endif %}
+                    {% else %}
+                        <h2>VIP не активен</h2>
+                        <p>Подключите тариф, чтобы открыть VIP-возможности каппера.</p>
+                        <div class="vip-status-meta">
+                            <span>Статус</span>
+                            <strong>Не подключён</strong>
+                        </div>
+                    {% endif %}
+                </article>
+
+                <article class="vip-balance-panel">
+                    <span class="vip-card-kicker">Реальный баланс</span>
+                    <h2>{{ real_balance_display }} ₽</h2>
+                    <p>VIP оплачивается рублями с реального баланса. Коины остаются для игровых механик.</p>
+                    <a class="profile-row-action" href="{% url 'wallets:top_up' %}">Пополнить баланс</a>
+                </article>
+            </section>
+
+            <section class="vip-plans-section" aria-labelledby="vip-plans-title">
+                <div class="profile-list-head">
+                    <div>
+                        <h2 id="vip-plans-title">Выберите тариф</h2>
+                        <p>При покупке новый период продлится от конца текущего VIP, если он уже активен.</p>
+                    </div>
+                </div>
+
+                <div class="vip-plan-grid">
+                    {% for plan in plans %}
+                        <article class="vip-plan-card">
+                            <div class="vip-plan-card-head">
+                                <span class="vip-card-kicker">{{ plan.duration_days }} дн.</span>
+                                <h3>{{ plan.title }}</h3>
+                            </div>
+                            <strong class="vip-plan-price">{{ plan.price_display }} ₽</strong>
+                            <p>
+                                {% if plan.can_afford %}
+                                    После оплаты останется {{ plan.balance_after_display }} ₽.
+                                {% else %}
+                                    На балансе недостаточно средств для этого тарифа.
+                                {% endif %}
+                            </p>
+                            <form method="post" action="{% url 'cabinet:vip_purchase' %}" class="vip-plan-action" data-no-transition>
+                                {% csrf_token %}
+                                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                                <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>
+                                    {% if active_vip %}Продлить VIP{% else %}Купить VIP{% endif %}
+                                </button>
+                            </form>
+                        </article>
+                    {% empty %}
+                        <article class="vip-plan-card is-empty">
+                            <h3>Тарифы пока не настроены</h3>
+                            <p>Активные VIP-тарифы появятся здесь после настройки администратором.</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+    </div>
+</section>
+{% endblock %}
