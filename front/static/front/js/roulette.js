@@ -13,6 +13,8 @@
     const dailyTaskClaimLabel = dailyTaskClaimButton?.querySelector('[data-daily-task-claim-label]');
     const dailyTaskClaimStatus = document.querySelector('[data-daily-task-claim-status]');
     const dailyTaskCardStatus = document.querySelector('[data-daily-task-card-status]');
+    const dailyTaskSideSummary = document.querySelector('[data-daily-tasks-side-summary]');
+    const dailyTaskSideList = document.querySelector('[data-daily-tasks-side-list]');
     const streakSubtitle = document.querySelector('[data-streak-subtitle]');
     const streakDaysLabel = document.querySelector('[data-streak-days-label]');
     const streakDays = document.querySelector('[data-streak-days]');
@@ -383,12 +385,15 @@
         }
 
         const claimUrl = String(card.claim_url || '');
-        if (dailyTaskActions) dailyTaskActions.hidden = !claimUrl;
+        if (dailyTaskActions) {
+            dailyTaskActions.hidden = !claimUrl;
+            dailyTaskActions.style.display = claimUrl ? '' : 'none';
+        }
         if (dailyTaskClaimButton) {
             dailyTaskClaimButton.dataset.claimUrl = claimUrl;
             dailyTaskClaimButton.dataset.pendingLabel = String(card.claim_pending_label || '');
             dailyTaskClaimButton.dataset.errorLabel = String(card.claim_error_label || '');
-            dailyTaskClaimButton.disabled = false;
+            dailyTaskClaimButton.disabled = !claimUrl;
         }
         if (dailyTaskClaimLabel) {
             dailyTaskClaimLabel.textContent = String(card.claim_button_label || '');
@@ -401,6 +406,77 @@
             dailyTaskCardStatus.className = `bonus-task-card-status is-${String(card.status || 'in_progress')}`;
             dailyTaskCardStatus.textContent = statusLabel;
         }
+    };
+
+    const renderDailyTasksSideCard = (card) => {
+        if (!card) return;
+
+        if (dailyTaskSideSummary) {
+            dailyTaskSideSummary.textContent = String(card.summary_label || '');
+        }
+
+        if (!dailyTaskSideList || !Array.isArray(card.tasks)) return;
+
+        dailyTaskSideList.replaceChildren();
+        if (!card.tasks.length) {
+            const row = document.createElement('article');
+            row.className = 'bonus-gift-row';
+
+            const icon = document.createElement('span');
+            icon.className = 'bonus-gift-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            icon.textContent = '✓';
+
+            const copy = document.createElement('span');
+            copy.className = 'bonus-gift-copy';
+
+            const title = document.createElement('strong');
+            title.textContent = 'Заданий пока нет';
+
+            const description = document.createElement('span');
+            description.textContent = 'Новые задания появятся здесь.';
+
+            copy.append(title, description);
+            row.append(icon, copy);
+            dailyTaskSideList.append(row);
+            return;
+        }
+
+        card.tasks.forEach((task, index) => {
+            const row = document.createElement('article');
+            row.className = `bonus-gift-row is-${String(task?.status || 'in_progress')}`;
+
+            const icon = document.createElement('span');
+            icon.className = 'bonus-gift-icon';
+            icon.setAttribute('aria-hidden', 'true');
+            if (task?.is_claimed) {
+                icon.textContent = '✓';
+            } else if (task?.is_completed) {
+                icon.textContent = '!';
+            } else {
+                icon.textContent = String(index + 1);
+            }
+
+            const copy = document.createElement('span');
+            copy.className = 'bonus-gift-copy';
+
+            const title = document.createElement('strong');
+            title.textContent = String(task?.title || '').trim();
+
+            const progress = document.createElement('span');
+            progress.textContent = `${task?.current_value ?? 0} из ${task?.target_value ?? 0} · ${String(task?.status_label || '')}`;
+
+            copy.append(title, progress);
+            const rewardLabel = String(task?.reward_label || '').trim();
+            if (rewardLabel) {
+                const reward = document.createElement('small');
+                reward.textContent = rewardLabel;
+                copy.append(reward);
+            }
+
+            row.append(icon, copy);
+            dailyTaskSideList.append(row);
+        });
     };
 
     const renderLevelProgress = (progress) => {
@@ -460,7 +536,9 @@
 
     const renderBonusDashboardState = (payload) => {
         if (!payload) return;
-        renderDailyTasksCard(payload.daily_tasks_summary || payload.daily_tasks_card);
+        const dailyTasksCard = payload.daily_tasks_summary || payload.daily_tasks_card;
+        renderDailyTasksCard(dailyTasksCard);
+        renderDailyTasksSideCard(dailyTasksCard);
         renderStreakCard(payload.streak);
         renderLevelProgress(payload.level_progress);
         renderBonusEvents(payload.recent_gifts);
@@ -1530,4 +1608,3 @@
         button.addEventListener('click', () => claimTask(button));
     });
 })();
-
