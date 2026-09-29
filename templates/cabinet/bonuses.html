@@ -189,9 +189,9 @@
                 <section class="bonus-side-card bonus-gifts-card">
                     <div class="bonus-side-head">
                         <h2>{{ bonus_page.side_tasks.title }}</h2>
-                        <span>{{ daily_tasks_card.summary_label }}</span>
+                        <span data-daily-tasks-side-summary>{{ daily_tasks_card.summary_label }}</span>
                     </div>
-                    <div class="bonus-gifts-list">
+                    <div class="bonus-gifts-list" data-daily-tasks-side-list>
                         {% for task in daily_tasks_card.tasks %}
                             <article class="bonus-gift-row is-{{ task.status }}">
                                 <span class="bonus-gift-icon" aria-hidden="true">
