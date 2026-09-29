@@ -12,6 +12,8 @@ from .models import (
     UserAchievement,
 )
 
+DEFAULT_ACHIEVEMENT_ICON = "front/svgs/trophy.svg"
+
 
 def _to_decimal(value) -> Decimal:
     try:
@@ -111,7 +113,7 @@ def _serialize_achievement(
         "label": achievement.title,
         "title": achievement.title,
         "description": achievement.description,
-        "icon": achievement.fallback_static_icon,
+        "icon": achievement.fallback_static_icon or DEFAULT_ACHIEVEMENT_ICON,
         "icon_url": _icon_url(achievement),
         "category": achievement.category.title,
         "metric": achievement.metric,

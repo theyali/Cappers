@@ -15,6 +15,7 @@ from achievements.management.commands.seed_achievements import (
 )
 from achievements.models import Achievement, AchievementCategory, UserAchievement
 from achievements.services import (
+    DEFAULT_ACHIEVEMENT_ICON,
     award_achievement,
     build_achievement_badges,
     build_achievement_overview,
@@ -240,6 +241,20 @@ class AchievementServiceTests(TestCase):
             item["icon"],
             "front/img/badges/fallback.svg",
         )
+
+    def test_missing_static_icon_uses_default_fallback(self):
+        self.create_achievement(
+            audience=Achievement.Audience.ALL,
+            metric=Achievement.Metric.LIKES_GIVEN,
+            target_value=Decimal("1"),
+            fallback_static_icon="",
+        )
+
+        overview = build_achievement_overview(self.reader)
+        item = overview["items"][0]
+
+        self.assertEqual(item["icon"], DEFAULT_ACHIEVEMENT_ICON)
+        self.assertEqual(item["icon_url"], "")
 
     def test_manual_award_is_idempotent(self):
         achievement = self.create_achievement(
