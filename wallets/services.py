@@ -205,9 +205,41 @@ def adjust_coin_balance(user, amount: int, *, note: str = "") -> CoinWallet:
 
 
 def ensure_real_balance(user) -> CapperRealBalance:
-    _validate_analyst(user)
+    _validate_real_balance_user(user)
     with transaction.atomic():
         return _real_balance_for_update(user)
+
+
+def debit_real_balance(
+    user,
+    amount,
+    kind: str,
+    *,
+    related_obj: Any | None = None,
+    note: str = "",
+) -> CapperRealBalance:
+    _validate_real_balance_user(user)
+    amount = _money(amount)
+    if amount <= 0:
+        raise ValidationError("Сумма списания должна быть больше нуля.")
+    related_model, related_id = _related_subject(related_obj) if related_obj is not None else ("", None)
+
+    with transaction.atomic():
+        balance = _real_balance_for_update(user)
+        if _has_real_transaction(user, kind, related_model, related_id):
+            return balance
+        if balance.balance < amount:
+            raise InsufficientBalance(
+                f"Недостаточно средств на реальном балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
+            )
+        return _apply_real_locked(
+            balance,
+            -amount,
+            kind,
+            related_model=related_model,
+            related_id=related_id,
+            note=note,
+        )
 
 
 def credit_real_balance(
@@ -1127,3 +1159,10 @@ def _charge_copied_bet_stake(copied_bet: CopiedBet) -> CoinWallet:
 def _validate_analyst(user) -> None:
     if getattr(user, "role", None) != User.Role.ANALYST:
         raise PermissionDenied("Реальный баланс доступен только капперам.")
+
+
+def _validate_real_balance_user(user) -> None:
+    if not user or not getattr(user, "pk", None):
+        raise ValidationError("Пользователь не найден.")
+    if not getattr(user, "is_active", False):
+        raise ValidationError("Пользователь не активен.")

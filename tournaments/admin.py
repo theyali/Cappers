@@ -26,9 +26,9 @@ class TournamentAdmin(admin.ModelAdmin):
         "coupon_type_rule",
         "min_coefficient",
         "min_confidence",
-        "prize_first",
-        "prize_second",
-        "prize_third",
+        "prize_first_display",
+        "prize_second_display",
+        "prize_third_display",
         "is_featured",
     )
     list_filter = ("status", "coupon_type_rule", "is_featured", "starts_at", "ends_at", "allowed_sports")
@@ -40,7 +40,7 @@ class TournamentAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "slug", "description", "rules_text", "status", "is_featured")}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
         ("Изображения", {"fields": ("card_image", "hero_image")}),
-        ("Призы", {"fields": ("prize_first", "prize_second", "prize_third")}),
+        ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",
             {"fields": ("min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
@@ -48,6 +48,18 @@ class TournamentAdmin(admin.ModelAdmin):
         ("Системные поля", {"fields": ("created_at", "updated_at")}),
     )
     inlines = (TournamentAchievementInline,)
+
+    @admin.display(description="1 место, ₽", ordering="prize_first")
+    def prize_first_display(self, obj):
+        return f"{obj.prize_first} ₽"
+
+    @admin.display(description="2 место, ₽", ordering="prize_second")
+    def prize_second_display(self, obj):
+        return f"{obj.prize_second} ₽"
+
+    @admin.display(description="3 место, ₽", ordering="prize_third")
+    def prize_third_display(self, obj):
+        return f"{obj.prize_third} ₽"
 
 
 @admin.register(TournamentAchievement)
@@ -114,7 +126,7 @@ class TournamentResultAdmin(admin.ModelAdmin):
         "participant",
         "profit",
         "roi_percent",
-        "prize_amount",
+        "prize_amount_display",
         "coupons_count",
         "finalized_at",
     )
@@ -122,3 +134,7 @@ class TournamentResultAdmin(admin.ModelAdmin):
     search_fields = ("tournament__title", "participant__user__username", "participant__user__email")
     autocomplete_fields = ("tournament", "participant", "achievement")
     readonly_fields = ("finalized_at",)
+
+    @admin.display(description="Приз, ₽", ordering="prize_amount")
+    def prize_amount_display(self, obj):
+        return f"{obj.prize_amount} ₽"

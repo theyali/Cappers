@@ -6,18 +6,21 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import AnalystProfile, User
+from cabinet.models import AnalystPaidSubscriptionPayment, AnalystProfile, User
 from game.models import Match, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
 from wallets.models import CoinPackage, CoinTransaction, CopiedBet, CopyBettingSubscription, RealBalanceTransaction
 from wallets.services import (
+    InsufficientBalance,
     activate_copybetting,
     approve_real_withdrawal,
     cancel_real_withdrawal,
     charge_prediction_stake,
     copy_published_coupon,
+    debit_real_balance,
+    ensure_real_balance,
     pause_copybetting,
     request_real_withdrawal,
     resume_copybetting,
@@ -769,17 +772,186 @@ class CoinWalletIntegrationTests(TestCase):
             password="safe-test-password",
             role=User.Role.READER,
         )
+        reader_balance = ensure_real_balance(reader)
+        reader_balance.balance = Decimal("1000.00")
+        reader_balance.save(update_fields=["balance", "updated_at"])
 
         subscribe_to_paid_predictions(reader, self.analyst)
 
+        payment = AnalystPaidSubscriptionPayment.objects.get(
+            subscriber=reader,
+            analyst=self.analyst,
+        )
+        reader.real_balance.refresh_from_db()
+        self.assertEqual(reader.real_balance.balance, Decimal("10.00"))
         self.analyst.real_balance.refresh_from_db()
         self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertTrue(
+            RealBalanceTransaction.objects.filter(
+                user=reader,
+                kind=RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
+                amount=Decimal("-990.00"),
+                related_model=payment._meta.label_lower,
+                related_id=payment.pk,
+            ).exists()
+        )
         self.assertTrue(
             RealBalanceTransaction.objects.filter(
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
                 amount=Decimal("990.00"),
+                related_model=payment._meta.label_lower,
+                related_id=payment.pk,
             ).exists()
+        )
+
+    def test_paid_subscription_requires_reader_real_balance(self):
+        profile = AnalystProfile.objects.get(user=self.analyst)
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("990.00")
+        profile.save(update_fields=["paid_predictions_enabled", "paid_predictions_price", "updated_at"])
+        reader = User.objects.create_user(
+            username="paid-income-low-balance-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        reader_balance = ensure_real_balance(reader)
+        reader_balance.balance = Decimal("10.00")
+        reader_balance.save(update_fields=["balance", "updated_at"])
+
+        with self.assertRaises(InsufficientBalance):
+            subscribe_to_paid_predictions(reader, self.analyst)
+
+        self.assertFalse(
+            AnalystPaidSubscriptionPayment.objects.filter(
+                subscriber=reader,
+                analyst=self.analyst,
+            ).exists()
+        )
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("0.00"))
+
+    def test_paid_subscription_renewal_creates_new_payment_and_debits_again(self):
+        profile = AnalystProfile.objects.get(user=self.analyst)
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("300.00")
+        profile.save(update_fields=["paid_predictions_enabled", "paid_predictions_price", "updated_at"])
+        reader = User.objects.create_user(
+            username="paid-income-renew-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+        reader_balance = ensure_real_balance(reader)
+        reader_balance.balance = Decimal("1000.00")
+        reader_balance.save(update_fields=["balance", "updated_at"])
+
+        first = subscribe_to_paid_predictions(reader, self.analyst)
+        second = subscribe_to_paid_predictions(reader, self.analyst)
+
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(
+            AnalystPaidSubscriptionPayment.objects.filter(
+                subscriber=reader,
+                analyst=self.analyst,
+            ).count(),
+            2,
+        )
+        reader.real_balance.refresh_from_db()
+        self.assertEqual(reader.real_balance.balance, Decimal("400.00"))
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+
+    def test_reader_can_have_real_balance(self):
+        reader = User.objects.create_user(
+            username="real-balance-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+        )
+
+        balance = ensure_real_balance(reader)
+
+        self.assertEqual(balance.user, reader)
+        self.assertEqual(balance.balance, Decimal("0.00"))
+
+    def test_debit_real_balance_charges_money(self):
+        package = CoinPackage.objects.create(
+            title="Related payment",
+            coins=100,
+            price_rub=Decimal("100.00"),
+        )
+        self.analyst.real_balance.balance = Decimal("1000.00")
+        self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
+
+        balance = debit_real_balance(
+            self.analyst,
+            Decimal("250.00"),
+            RealBalanceTransaction.Kind.VIP_PURCHASE,
+            related_obj=package,
+            note="Покупка VIP",
+        )
+
+        self.assertEqual(balance.balance, Decimal("750.00"))
+        self.assertTrue(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.VIP_PURCHASE,
+                amount=Decimal("-250.00"),
+                balance_after=Decimal("750.00"),
+                related_id=package.id,
+            ).exists()
+        )
+
+    def test_debit_real_balance_rejects_insufficient_balance(self):
+        self.analyst.real_balance.balance = Decimal("100.00")
+        self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
+
+        with self.assertRaises(InsufficientBalance):
+            debit_real_balance(
+                self.analyst,
+                Decimal("250.00"),
+                RealBalanceTransaction.Kind.VIP_PURCHASE,
+            )
+
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("100.00"))
+        self.assertFalse(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.VIP_PURCHASE,
+            ).exists()
+        )
+
+    def test_debit_real_balance_is_idempotent_for_related_object(self):
+        package = CoinPackage.objects.create(
+            title="Idempotent payment",
+            coins=100,
+            price_rub=Decimal("100.00"),
+        )
+        self.analyst.real_balance.balance = Decimal("1000.00")
+        self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
+
+        first = debit_real_balance(
+            self.analyst,
+            Decimal("250.00"),
+            RealBalanceTransaction.Kind.VIP_PURCHASE,
+            related_obj=package,
+        )
+        second = debit_real_balance(
+            self.analyst,
+            Decimal("250.00"),
+            RealBalanceTransaction.Kind.VIP_PURCHASE,
+            related_obj=package,
+        )
+
+        self.assertEqual(first.balance, Decimal("750.00"))
+        self.assertEqual(second.balance, Decimal("750.00"))
+        self.assertEqual(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.VIP_PURCHASE,
+                related_id=package.id,
+            ).count(),
+            1,
         )
 
     def test_admin_can_approve_real_withdrawal(self):

@@ -22,6 +22,7 @@ from .models import (
     TournamentParticipant,
     TournamentPredictionEntry,
 )
+from wallets.models import CoinTransaction, RealBalanceTransaction
 
 
 TEST_STORAGES = {
@@ -290,12 +291,34 @@ class TournamentServiceTests(TestCase):
 
         self.tournament.ends_at = timezone.now() - timedelta(minutes=1)
         self.tournament.save(update_fields=("ends_at", "updated_at"))
+        coin_transactions_before = CoinTransaction.objects.count()
         results = finalize_tournament_results(self.tournament)
 
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0].participant, self.participant)
         self.assertEqual(results[0].rank, 1)
         self.assertEqual(results[0].prize_amount, Decimal("1000.00"))
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("1000.00"))
+        self.assertTrue(
+            RealBalanceTransaction.objects.filter(
+                user=self.analyst,
+                kind=RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
+                amount=Decimal("1000.00"),
+                related_model=self.tournament._meta.label_lower,
+                related_id=self.tournament.pk,
+            ).exists()
+        )
+        self.assertEqual(CoinTransaction.objects.count(), coin_transactions_before)
+
+        finalize_tournament_results(self.tournament)
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("1000.00"))
+
+        self.client.force_login(self.analyst)
+        earnings_page = self.client.get(reverse("cabinet:profile"), {"tab": "earnings"})
+        self.assertContains(earnings_page, "Турниры")
+        self.assertContains(earnings_page, "1 000 ₽")
 
 
 class TournamentCouponEndpointTests(TestCase):

@@ -7,6 +7,7 @@ from .models import (
     AnalystFollow,
     AnalystPaidPlan,
     AnalystPaidSubscription,
+    AnalystPaidSubscriptionPayment,
     AnalystProfile,
     BonusEvent,
     CapperArticle,
@@ -276,16 +277,16 @@ class VipPlanAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "duration_days",
-        "price_coins",
+        "price_rub",
         "is_active",
         "order",
         "updated_at",
     )
-    list_editable = ("price_coins", "is_active", "order")
+    list_editable = ("price_rub", "is_active", "order")
     list_filter = ("is_active", "duration_days")
     search_fields = ("title",)
     ordering = ("order", "duration_days", "id")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("price_coins", "created_at", "updated_at")
 
 
 @admin.register(UserVipSubscription)
@@ -543,6 +544,23 @@ class AnalystPaidSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ("subscriber__username", "analyst__username")
     autocomplete_fields = ("subscriber", "analyst", "plan")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(AnalystPaidSubscriptionPayment)
+class AnalystPaidSubscriptionPaymentAdmin(admin.ModelAdmin):
+    list_display = (
+        "subscriber",
+        "analyst",
+        "plan",
+        "price",
+        "capper_income",
+        "duration_days",
+        "created_at",
+    )
+    list_filter = ("created_at", "duration_days")
+    search_fields = ("subscriber__username", "analyst__username", "plan__title")
+    autocomplete_fields = ("subscription", "subscriber", "analyst", "plan")
+    readonly_fields = ("created_at",)
 
 
 @admin.register(ReferralVisit)

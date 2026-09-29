@@ -43,6 +43,7 @@ urlpatterns = [
         profile_promo_views.profile_promo_banner,
         name="profile_promo_banner",
     ),
+    path("vip/", vip_views.vip_plans, name="vip_plans"),
     path("vip/purchase/", vip_views.vip_purchase, name="vip_purchase"),
     path("bonuses/", bonus_views.bonuses, name="bonuses"),
     path("bonuses/tasks/", bonus_views.daily_tasks, name="bonus_tasks"),

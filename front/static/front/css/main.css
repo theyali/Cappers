@@ -566,6 +566,11 @@ mark { color: var(--blue); background: 0 0; }
     background: var(--blue);
     cursor: pointer;
 }
+.paid-checkout-actions button:disabled {
+    cursor: not-allowed;
+    opacity: .62;
+    background: #303033;
+}
 .paid-checkout-actions a,
 .wallet-form-actions a {
     color: var(--text);
@@ -865,6 +870,35 @@ mark { color: var(--blue); background: 0 0; }
 .paid-checkout-plan-list { width: 100%; display: grid; gap: 10px; }
 .paid-checkout-plan input { width: 18px; height: 18px; accent-color: var(--blue); }
 .paid-checkout-plan span { display: grid; gap: 3px; color: var(--muted); }
+.paid-checkout-plan.is-disabled { opacity: .62; }
+.paid-checkout-plan.is-disabled,
+.paid-checkout-plan.is-disabled input { cursor: not-allowed; }
+.paid-checkout-plan em {
+    color: #ff8e8e;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+}
+.paid-checkout-balance {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+}
+.paid-checkout-balance span { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.paid-checkout-balance strong { color: var(--yellow); font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.paid-checkout-balance a {
+    grid-column: 1/-1;
+    width: fit-content;
+    color: #9ab8ff;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
 .coupon-slip-status-row > span,
 .expert-sport-profit-metrics dd,
 .match-predictions-loader,
@@ -1137,7 +1171,8 @@ body.wiki-video-player-open {
 .predictions-filter-sidebar {
     height: fit-content;
 }
-.adv-banners { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+.adv-banners,
+.yjs-additional-b { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
 .adv-banner,
 .yjs-additional-block { min-width: 0; display: grid; gap: 8px; color: inherit; text-decoration: none; }
 .adv-banner picture,
@@ -1163,10 +1198,15 @@ body.wiki-video-player-open {
 .yjs-additional-block--full_240 picture { height: 240px; }
 .adv-banner--full_450 picture,
 .yjs-additional-block--full_450 picture { height: 450px; }
-.adv-banners--sidebar { grid-template-columns: 1fr; gap: 18px; }
+.adv-banners--sidebar,
+.yjs-additional-b--sidebar { grid-template-columns: 1fr; gap: 18px; }
 .adv-banners--sidebar .adv-banner,
+.yjs-additional-b--sidebar .adv-banner,
+.yjs-additional-b--sidebar .yjs-additional-block,
 .adv-banners--sidebar .yjs-additional-block { grid-column: 1/-1; }
 .adv-banners--sidebar .adv-banner picture,
+.yjs-additional-b--sidebar .adv-banner picture,
+.yjs-additional-b--sidebar .yjs-additional-block picture,
 .adv-banners--sidebar .yjs-additional-block picture,
 .cabinet-referrals-page .profile-referral-link-wrap {
     width: 100%;
@@ -8370,7 +8410,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .following-feed-page .predictions-grid,
 .following-feed-page .predictions-layout .predictions-grid,
 .following-feed-page .predictions-layout.is-filter-collapsed .predictions-grid {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 18px 16px;
 }
 .following-feed-page .prediction-card.feed-prediction-card,
@@ -8543,7 +8583,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     font-size: 12px;
     font-weight: 600;
 }
-.feed-prediction-avatar img { width: inherit; height: inherit; object-fit: cover; border-radius: 50%; }
+.feed-prediction-avatar img { width: inherit; height: 36px; object-fit: cover; border-radius: 50%; }
 .feed-prediction-author-name strong { color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.2; }
 .feed-prediction-author-copy > span:last-child { color: var(--muted); font-size: 12px; line-height: 1.2; }
 .feed-prediction-verified,
@@ -12484,7 +12524,7 @@ body.register {
 }
 .adv-banner--half_240,
 .yjs-additional-block--half_240{
-    height: 240px;
+    height: 100px;
 }
 .auth-input-wrap:focus-within { border-color: rgba(11, 86, 250, 0.9); background: #151516; box-shadow: 0 0 0 4px rgba(11, 86, 250, 0.1); }
 .auth-input-wrap svg {
@@ -12819,6 +12859,9 @@ body.register {
     font-weight: 800;
     letter-spacing: 0.13em;
     text-transform: uppercase;
+}
+.bookmakers-sidebar{
+    padding-bottom:60px;
 }
 .bookmakers-head h2 { margin: 0; color: var(--text); font-size: 24px; line-height: 1; }
 .bookmakers-head > span {
@@ -17161,6 +17204,118 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     font-weight: 700;
 }
 .cabinet-bonuses-page .bonus-level-row-status.is-next { color: #fff; background: #2d4b90; }
+.cabinet-vip-page .bonus-detail-main {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+.cabinet-vip-page .vip-page-head > strong { color: var(--ink); background: var(--yellow); }
+.vip-status-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr);
+    gap: 14px;
+}
+.vip-status-card,
+.vip-balance-panel,
+.vip-plans-section,
+.vip-plan-card {
+    min-width: 0;
+    border-radius: 18px;
+    background: var(--panel);
+    outline: rgba(255, 255, 255, 0.07) solid 1px;
+}
+.vip-status-card,
+.vip-balance-panel {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    padding: 20px;
+}
+.vip-status-card.is-active {
+    background:
+        radial-gradient(circle at 88% 0%, rgba(255, 190, 36, .18), transparent 30%),
+        var(--panel);
+}
+.vip-card-kicker {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.vip-status-card h2,
+.vip-balance-panel h2,
+.vip-plan-card h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+.vip-status-card p,
+.vip-balance-panel p,
+.vip-plan-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.vip-status-card small { color: #8f929b; font-size: 11px; }
+.vip-status-meta {
+    width: fit-content;
+    min-height: 54px;
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    padding: 10px 13px;
+    border-radius: 12px;
+    background: #19191b;
+}
+.vip-status-meta span { color: var(--muted); font-size: 10px; font-weight: 700; }
+.vip-status-meta strong { color: var(--yellow); font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.vip-balance-panel .profile-row-action {
+    width: fit-content;
+    min-height: 38px;
+    margin-top: 2px;
+    padding: 0 14px;
+    color: #fff;
+    background: var(--blue);
+}
+.vip-plans-section { display: grid; gap: 16px; padding: 20px; }
+.vip-plan-grid {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+.vip-plan-card {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    padding: 18px;
+}
+.vip-plan-card-head { display: grid; gap: 7px; }
+.vip-plan-price {
+    color: var(--yellow);
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.vip-plan-action { margin-top: auto; }
+.vip-plan-action .profile-save-button {
+    width: 100%;
+    min-height: 42px;
+}
+.vip-plan-action .profile-save-button:disabled {
+    cursor: not-allowed;
+    opacity: .62;
+    color: rgba(255, 255, 255, .66);
+    background: #303033;
+    transform: none;
+}
+.vip-plan-card.is-empty { grid-column: 1/-1; }
 .cabinet-referrals-page .bonus-detail-main { min-width: 0; grid-column: 2/4; display: grid; align-content: start; }
 .cabinet-referrals-page .referrals-simple { min-width: 0; display: grid; gap: 14px; font-size: 13px; }
 .cabinet-referrals-page .referrals-simple strong,

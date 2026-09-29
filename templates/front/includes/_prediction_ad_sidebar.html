@@ -1,2 +1,9 @@
-{% load site_extras %}
-{% bookmakers_sidebar True %}
+<aside class="bookmakers-sidebar" aria-label="Реклама">
+    {% for promo_banner in right_promo_banners %}
+        {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+    {% endfor %}
+
+    {% if adv_banners %}
+        {% include "pages/_adv_banners.html" with placement="sidebar" %}
+    {% endif %}
+</aside>

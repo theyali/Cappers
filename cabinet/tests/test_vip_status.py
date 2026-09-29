@@ -162,7 +162,7 @@ class ProfileCoverTests(TestCase):
         page = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
         self.assertContains(page, "Обложка профиля")
         self.assertContains(page, "Добавьте персональную обложку после подключения VIP.")
-        self.assertContains(page, reverse("cabinet:vip_purchase"))
+        self.assertContains(page, reverse("cabinet:vip_plans"))
         self.assertNotContains(page, 'id="profileCoverInput"')
 
     def test_reader_cannot_upload_cover(self):

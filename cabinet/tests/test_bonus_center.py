@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from cabinet.models import (
     AnalystPaidPlan,
+    AnalystPaidSubscriptionPayment,
     AnalystProfile,
     BonusEvent,
     DailyTask,
@@ -39,7 +40,7 @@ from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
 from game.models import PredictionCoupon
 from notifications.models import Notification, NotificationPreference
 from wallets.models import CoinPackage, CoinSettings, CoinWallet
-from wallets.services import purchase_coin_package
+from wallets.services import ensure_real_balance, purchase_coin_package
 
 
 class BonusCenterServiceTests(TestCase):
@@ -397,19 +398,27 @@ class BonusCenterServiceTests(TestCase):
             duration_days=30,
             price=Decimal("300.00"),
         )
+        real_balance = ensure_real_balance(self.user)
+        real_balance.balance = Decimal("1000.00")
+        real_balance.save(update_fields=["balance", "updated_at"])
 
         subscription = subscribe_to_paid_predictions(
             self.user,
             analyst,
             plan,
         )
+        payment = AnalystPaidSubscriptionPayment.objects.get(
+            subscription=subscription,
+            subscriber=self.user,
+            analyst=analyst,
+        )
 
         event = BonusEvent.objects.get(
             user=referrer,
             event_type=BonusEvent.EventType.REFERRAL,
             title=FIRST_SUBSCRIPTION_BONUS_TITLE,
-            related_model=subscription._meta.label_lower,
-            related_id=subscription.pk,
+            related_model=payment._meta.label_lower,
+            related_id=payment.pk,
         )
         notification = Notification.objects.get(
             event_key=f"bonus:{event.pk}",
