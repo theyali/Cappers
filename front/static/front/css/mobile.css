@@ -3837,10 +3837,15 @@ body.expert-public-details-open {
     margin-top: 18px;
   }
   .adv-banner,
+  .yjs-additional-block,
   .adv-banner--full_240,
+  .yjs-additional-block--full_240,
   .adv-banner--full_450,
+  .yjs-additional-block--full_450,
   .adv-banner--half_240,
-  .adv-banner--half_450 {
+  .yjs-additional-block--half_240,
+  .adv-banner--half_450,
+  .yjs-additional-block--half_450 {
     grid-column: 1/-1;
   }
   .forecast-body,
@@ -4502,14 +4507,17 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 520px) {
-  .adv-banner picture {
+  .adv-banner picture,
+  .yjs-additional-block picture {
     border-radius: 14px;
   }
   .adv-banner--full_240 picture,
+  .yjs-additional-block--full_240 picture,
   .adv-banner--half_240 picture {
     height: 240px;
   }
   .adv-banner--full_450 picture,
+  .yjs-additional-block--full_450 picture,
   .adv-banner--half_450 picture {
     height: 450px;
   }

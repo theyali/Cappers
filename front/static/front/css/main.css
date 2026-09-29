@@ -1138,9 +1138,12 @@ body.wiki-video-player-open {
     height: fit-content;
 }
 .adv-banners { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
-.adv-banner { min-width: 0; display: grid; gap: 8px; color: inherit; text-decoration: none; }
-.adv-banner picture { width: 100%; display: block; overflow: hidden; border-radius: 18px; background: var(--panel); }
+.adv-banner,
+.yjs-additional-block { min-width: 0; display: grid; gap: 8px; color: inherit; text-decoration: none; }
+.adv-banner picture,
+.yjs-additional-block picture { width: 100%; display: block; overflow: hidden; border-radius: 18px; background: var(--panel); }
 .adv-banner img,
+.yjs-additional-block img,
 .bonus-offer-image img,
 .bonuses-page .bonus-offer-image img,
 .home-best-expert-avatar img,
@@ -1156,11 +1159,15 @@ body.wiki-video-player-open {
     display: block;
     object-fit: cover;
 }
-.adv-banner--full_240 picture { height: 240px; }
-.adv-banner--full_450 picture { height: 450px; }
+.adv-banner--full_240 picture,
+.yjs-additional-block--full_240 picture { height: 240px; }
+.adv-banner--full_450 picture,
+.yjs-additional-block--full_450 picture { height: 450px; }
 .adv-banners--sidebar { grid-template-columns: 1fr; gap: 18px; }
-.adv-banners--sidebar .adv-banner { grid-column: 1/-1; }
+.adv-banners--sidebar .adv-banner,
+.adv-banners--sidebar .yjs-additional-block { grid-column: 1/-1; }
 .adv-banners--sidebar .adv-banner picture,
+.adv-banners--sidebar .yjs-additional-block picture,
 .cabinet-referrals-page .profile-referral-link-wrap {
     width: 100%;
 }
@@ -12475,7 +12482,8 @@ body.register {
         background 0.2s,
         box-shadow 0.2s;
 }
-.adv-banner--half_240{
+.adv-banner--half_240,
+.yjs-additional-block--half_240{
     height: 240px;
 }
 .auth-input-wrap:focus-within { border-color: rgba(11, 86, 250, 0.9); background: #151516; box-shadow: 0 0 0 4px rgba(11, 86, 250, 0.1); }
