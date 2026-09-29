@@ -16,3 +16,5 @@ staticfiles/
 media/
 data/postgres/
 celerybeat-schedule
+logs/*
+!logs/.gitkeep
