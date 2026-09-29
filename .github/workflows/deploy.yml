@@ -102,18 +102,18 @@ jobs:
                   build=1
                   restart_app=1
                   ;;
-                docker-compose.server.yml|deploy/postgres/*|deploy/pgbouncer/*)
+                docker-compose.yml|deploy/postgres/*|deploy/pgbouncer/*)
                   full_recreate=1
                   restart_app=1
                   restart_nginx=1
                   ;;
-                deploy/deploy.sh|deploy/issue-certs.sh|deploy/renew-certs.sh)
+                deploy/deploy.sh)
                   restart_nginx=1
                   ;;
                 deploy/nginx/*)
                   restart_nginx=1
                   ;;
-                manage.py|analitika_aleksey/*|front/*|back/*|blocks/*|pages/*|services/*|system_settings/*)
+                manage.py|cappers/*|front/*|back/*|pages/*|game/*|cabinet/*|tournaments/*|notifications/*|wallets/*|bots/*|account_email/*|achievements/*|templates/*)
                   restart_app=1
                   ;;
               esac
