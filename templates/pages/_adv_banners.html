@@ -2,7 +2,7 @@
 <div class="adv-banners adv-banners--{{ placement|default:'content' }}" aria-label="Реклама">
     {% for banner in adv_banners %}
     <a
-        class="adv-banner adv-banner--{{ banner.size }}"
+        class="yjs-additional-block yjs-additional-block--{{ banner.size }}"
         href="{{ banner.url }}"
         target="_blank"
         rel="nofollow noopener noreferrer"

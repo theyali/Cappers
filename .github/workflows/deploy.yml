@@ -61,6 +61,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           set -euo pipefail
+          DEPLOY_PATH="$(printf '%s' "${DEPLOY_PATH}" | tr -d '\r\n')"
           if [ -z "${DEPLOY_PATH:-}" ]; then
             echo "::error::Missing GitHub secret: DEPLOY_PATH"
             exit 1
@@ -80,6 +81,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           set -euo pipefail
+          DEPLOY_PATH="$(printf '%s' "${DEPLOY_PATH}" | tr -d '\r\n')"
           DEPLOYED_REV="$(ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -p "${DEPLOY_PORT_RESOLVED}" "${DEPLOY_USER}@${DEPLOY_HOST}" "git -C '${DEPLOY_PATH}' rev-parse HEAD" 2>/dev/null || true)"
           echo "rev=${DEPLOYED_REV}" >> "$GITHUB_OUTPUT"
 
@@ -177,6 +179,7 @@ jobs:
           DEPLOY_RESTART_NGINX: ${{ steps.scope.outputs.restart_nginx }}
         run: |
           set -euo pipefail
+          DEPLOY_PATH="$(printf '%s' "${DEPLOY_PATH}" | tr -d '\r\n')"
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -p "${DEPLOY_PORT_RESOLVED}" "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
             set -euo pipefail
             cd "${DEPLOY_PATH}"
