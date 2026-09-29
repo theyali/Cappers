@@ -70,7 +70,7 @@ jobs:
             -o IdentitiesOnly=yes \
             -p "${DEPLOY_PORT_RESOLVED}" \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "whoami && test -d '${DEPLOY_PATH}' && git -C '${DEPLOY_PATH}' rev-parse --is-inside-work-tree"
+            "set -e; echo 'ssh connected'; test -d '${DEPLOY_PATH}' || { echo 'DEPLOY_PATH does not exist: ${DEPLOY_PATH}'; exit 10; }; echo 'deploy path ok'; git -C '${DEPLOY_PATH}' rev-parse --is-inside-work-tree; echo 'git repo ok'"
 
       - name: Resolve Deployed Revision
         id: deployed
