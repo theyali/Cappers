@@ -72,69 +72,63 @@
                         {% endif %}
                     </button>
                     <div class="nav-profile-dropdown" data-profile-menu-dropdown>
-                        <div class="nav-profile-dropdown-head">
-                            <span class="nav-profile-dropdown-avatar" data-skeleton-image>
-                                {% if request.user.avatar %}
-                                    <img class="nav-profile-avatar-image" src="{{ request.user.avatar.url }}" width="42" height="42" alt="" loading="lazy" decoding="async">
-                                {% else %}
-                                    <img src="{% static 'front/svgs/profile.svg' %}" width="27" height="27" alt="" loading="lazy" decoding="async">
-                                {% endif %}
-                            </span>
-                            <div>
-                                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                                <span>@{{ request.user.username }}</span>
-                            </div>
-                        </div>
                         <a href="{% url 'notifications:center' %}">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
                             </span>
                             <span>Уведомления</span>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-badge is-empty" data-notification-badge></span>
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                            </span>
                         </a>
                         <a href="{% url 'cabinet:profile' %}">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
                             </span>
                             <span>Профиль</span>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                            </span>
                         </a>
                         <a href="{% url 'cabinet:profile' %}?tab=copybetting">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M5 7h10a4 4 0 0 1 4 4v1"></path><path d="m16 9 3 3 3-3"></path><path d="M19 17H9a4 4 0 0 1-4-4v-1"></path><path d="m8 15-3-3-3 3"></path></svg>
+                                <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 20a5.5 5.5 0 0 1 11 0"></path><path d="M16 11a3 3 0 1 0-1.2-5.75"></path><path d="M17 14a5.4 5.4 0 0 1 3.5 5"></path></svg>
                             </span>
                             <span>Копибеттинг</span>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-dot" aria-hidden="true"></span>
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                            </span>
                         </a>
                         {% if request.user.is_analyst %}
-                        <a href="{% url 'game:rich_prediction_create' %}">
+                        <a href="{% url 'cabinet:capper_articles' %}">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="M8 9h8M8 13h5"></path><path d="m16 15 3 3M19 15l-3 3"></path></svg>
+                                <svg viewBox="0 0 24 24"><path d="M6 3.5h12v17H6z"></path><path d="M9 7.5h6M9 11.5h6M9 15.5h4"></path></svg>
                             </span>
-                            <span>Расширенный прогноз</span>
+                            <span>Мои статьи</span>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                            </span>
                         </a>
                         <a href="{% url 'cabinet:profile' %}?tab=predictions">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
+                                <svg viewBox="0 0 24 24"><path d="M5 20V11"></path><path d="M10 20V5"></path><path d="M15 20v-8"></path><path d="M20 20V8"></path><path d="M4 20h17"></path></svg>
                             </span>
                             <span>Мои прогнозы</span>
-                        </a>
-                        <a href="{% url 'cabinet:capper_articles' %}">
-                            <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5V4Z"></path><path d="M15 4v5h5M8 13h8M8 17h6"></path></svg>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
                             </span>
-                            <span>Мои статьи</span>
-                        </a>
-                        {% else %}
-                        <a href="{% url 'cabinet:become_capper' %}">
-                            <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path><path d="M18 4v6M15 7h6"></path></svg>
-                            </span>
-                            <span>Стать каппером</span>
                         </a>
                         {% endif %}
-                        <a href="{% url 'front:favorites' %}">
+                        <a href="{% url 'cabinet:profile' %}?tab=settings">
                             <span class="nav-profile-dropdown-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                                <svg viewBox="0 0 24 24"><path d="M12 3.5 14 5l2.5-.7 1.2 2.2 2.3.9-.3 2.6 1.6 2-1.6 2 .3 2.6-2.3.9-1.2 2.2L14 19l-2 1.5L10 19l-2.5.7-1.2-2.2-2.3-.9.3-2.6-1.6-2 1.6-2L4 7.4l2.3-.9 1.2-2.2L10 5z"></path><circle cx="12" cy="12" r="3.2"></circle></svg>
                             </span>
-                            <span>Избранное</span>
+                            <span>Настройки</span>
+                            <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                            </span>
                         </a>
                         <form method="post" action="{% url 'cabinet:logout' %}" class="nav-profile-dropdown-logout-form">
                             {% csrf_token %}
@@ -143,6 +137,9 @@
                                     <svg viewBox="0 0 24 24"><path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M18 12H9"></path></svg>
                                 </span>
                                 <span>Выйти</span>
+                                <span class="nav-profile-dropdown-meta">
+                                    <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
+                                </span>
                             </button>
                         </form>
                     </div>

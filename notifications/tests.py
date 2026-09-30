@@ -213,6 +213,24 @@ class NotificationViewsTests(TestCase):
         self.assertTrue(self.notification.is_read)
         self.assertIsNotNone(self.notification.read_at)
 
+    def test_summary_respects_disabled_in_app_channel(self):
+        preferences = get_preferences(self.user)
+        preferences.in_app_enabled = False
+        preferences.save(update_fields=["in_app_enabled", "updated_at"])
+
+        summary = self.client.get(reverse("notifications:summary"))
+
+        self.assertEqual(summary.status_code, 200)
+        payload = summary.json()
+        self.assertEqual(payload["unread_count"], 0)
+        self.assertEqual(payload["latest_id"], self.notification.id)
+        self.assertEqual(payload["cursor_id"], self.notification.id)
+        self.assertEqual(payload["notifications"], [])
+
+        center_response = self.client.get(reverse("notifications:center"))
+        self.assertEqual(center_response.status_code, 200)
+        self.assertNotContains(center_response, "Новый прогноз")
+
     def test_match_watch_toggle(self):
         match = Match.objects.create(
             external_id=991001,
@@ -481,6 +499,20 @@ class AdminNotificationCampaignRecipientTests(TestCase):
             ).count(),
             3,
         )
+
+    def test_admin_campaign_respects_in_app_channel_preference(self):
+        preferences = get_preferences(self.reader)
+        preferences.in_app_enabled = False
+        preferences.save(update_fields=["in_app_enabled", "updated_at"])
+        campaign = self.campaign(AdminNotificationCampaign.Audience.READERS)
+
+        send_admin_notification_campaign(campaign)
+
+        notification = Notification.objects.get(
+            kind=Notification.Kind.ADMIN_CAMPAIGN,
+            recipient=self.reader,
+        )
+        self.assertFalse(notification.show_in_app)
 
     @override_settings(
         STORAGES={

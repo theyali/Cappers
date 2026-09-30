@@ -78,6 +78,11 @@
                         <div class="profile-email-control">
                             <div>
                                 <strong>{{ request.user.email|default:"Почта не указана" }}</strong>
+                                {% if request.user.email %}
+                                    <span class="profile-email-status{% if request.user.email_verified %} is-verified{% else %} is-unverified{% endif %}">
+                                        {% if request.user.email_verified %}Почта подтверждена{% else %}Почта не подтверждена{% endif %}
+                                    </span>
+                                {% endif %}
                                 <small>
                                     {% if request.user.email %}
                                         Для смены сначала подтвердите доступ к текущей почте.

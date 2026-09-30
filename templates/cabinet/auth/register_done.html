@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Подтвердите почту — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="auth-stage auth-stage-register">
+    <div class="container auth-register-grid">
+        <div class="capper-landing ca">
+            <p class="capper-kicker">Почти готово</p>
+            <h1>
+                Остался<br>
+                один<br>
+                шаг<br>
+                в почте
+            </h1>
+            <p class="capper-landing-lead">
+                Мы отправили ссылку подтверждения.<br>
+                Она активна 2 часа.
+            </p>
+        </div>
+
+        <div class="capper-onboarding-shell mail-confirm-shell">
+            <a class="auth-back" href="{% url 'front:index' %}"><span>←</span> На главную</a>
+
+            <p class="capper-kicker">Регистрация успешна</p>
+            <div class="auth-heading">
+                <h2>Подтвердите почту</h2>
+                {% if registration_email %}
+                    <p>Мы отправили письмо на {{ registration_email }}. Перейдите по ссылке из письма, затем выполните вход.</p>
+                {% else %}
+                    <p>Мы отправили письмо со ссылкой подтверждения. Перейдите по ссылке из письма, затем выполните вход.</p>
+                {% endif %}
+            </div>
+
+            <div class="auth-form auth-form-modern">
+                <div class="auth-form-alert success" role="status">
+                    <span aria-hidden="true"></span>
+                    <div>Если письма нет во входящих, проверьте папку «Спам».</div>
+                </div>
+
+                <a class="auth-submit" href="{% url 'cabinet:login' %}">
+                    <span>Перейти ко входу</span>
+                    <span class="auth-submit-arrow">→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

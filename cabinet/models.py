@@ -55,6 +55,7 @@ class User(AbstractUser):
         max_length=150,
         blank=True,
     )
+    email_verified = models.BooleanField("Почта подтверждена", default=False, db_index=True)
     referral_code = models.CharField(
         "Реферальный код",
         max_length=8,

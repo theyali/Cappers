@@ -134,11 +134,12 @@
     };
 
     const setBadge = (bell, unreadCount) => {
-        const badge = bell?.querySelector("[data-notification-badge]");
-        if (!badge) return;
+        const badges = document.querySelectorAll("[data-notification-badge]");
         const count = Number(unreadCount) || 0;
-        badge.textContent = count > 99 ? "99+" : String(count);
-        badge.classList.toggle("is-empty", count <= 0);
+        badges.forEach((badge) => {
+            badge.textContent = count > 99 ? "99+" : String(count);
+            badge.classList.toggle("is-empty", count <= 0);
+        });
     };
 
     const loadRealtimeNotifications = (bell) => {

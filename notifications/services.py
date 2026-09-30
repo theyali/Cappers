@@ -176,6 +176,10 @@ def send_admin_notification_campaign(campaign) -> tuple[int, bool]:
     recipient_ids = list(
         campaign_recipients_queryset(campaign).values_list("id", flat=True)
     )
+    in_app_preferences = {
+        preference.user_id: preference.in_app_enabled
+        for preference in NotificationPreference.objects.filter(user_id__in=recipient_ids)
+    }
     meta = {"campaign_id": campaign.pk}
     if campaign.image:
         meta["image_url"] = campaign.image.url
@@ -189,6 +193,7 @@ def send_admin_notification_campaign(campaign) -> tuple[int, bool]:
             url=campaign.url,
             event_key=f"admin-campaign:{campaign.pk}:{user_id}",
             meta=meta,
+            show_in_app=in_app_preferences.get(user_id, True),
         )
         for user_id in recipient_ids
     ]

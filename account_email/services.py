@@ -17,11 +17,12 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from cabinet.models import User
 
-from .models import EmailChangeRequest, PasswordResetRequest
+from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetRequest
 
 
 EMAIL_REQUEST_TTL_MINUTES = 30
 PASSWORD_RESET_TTL_MINUTES = 30
+EMAIL_VERIFICATION_TTL_MINUTES = 120
 
 
 class EmailChangeError(ValueError):
@@ -29,6 +30,10 @@ class EmailChangeError(ValueError):
 
 
 class PasswordResetError(ValueError):
+    pass
+
+
+class EmailVerificationError(ValueError):
     pass
 
 
@@ -46,6 +51,74 @@ def send_account_email(*, subject: str, template_name: str, to_email: str, conte
         [to_email],
         fail_silently=False,
     )
+
+
+def start_email_verification(user: User, *, request) -> EmailVerificationRequest:
+    if not user.email:
+        raise EmailVerificationError("У аккаунта не указана почта.")
+    if user.email_verified:
+        raise EmailVerificationError("Почта уже подтверждена.")
+
+    now = timezone.now()
+    secret = secrets.token_urlsafe(32)
+    with transaction.atomic():
+        EmailVerificationRequest.objects.filter(
+            user=user,
+            completed_at__isnull=True,
+            revoked_at__isnull=True,
+        ).update(revoked_at=now, updated_at=now)
+        flow = EmailVerificationRequest.objects.create(
+            user=user,
+            email=user.email,
+            token_hash=make_password(secret),
+            expires_at=now + timedelta(minutes=EMAIL_VERIFICATION_TTL_MINUTES),
+        )
+
+    verification_url = request.build_absolute_uri(
+        reverse(
+            "account_email:verify_registration_email",
+            kwargs={"token": f"{flow.pk}-{secret}"},
+        )
+    )
+    send_account_email(
+        subject="Подтвердите почту на КапперХаб",
+        template_name="account_email/registration_verification_email.txt",
+        to_email=user.email,
+        context={
+            "user": user,
+            "verification_url": verification_url,
+            "expires_minutes": EMAIL_VERIFICATION_TTL_MINUTES,
+        },
+    )
+    return flow
+
+
+def complete_email_verification(token: str) -> EmailVerificationRequest:
+    flow_id_raw, separator, secret = token.partition("-")
+    if not separator or not flow_id_raw.isdigit() or not secret or len(secret) > 128:
+        raise EmailVerificationError("Ссылка подтверждения недействительна или устарела.")
+
+    with transaction.atomic():
+        flow = (
+            EmailVerificationRequest.objects.select_for_update()
+            .select_related("user")
+            .filter(pk=int(flow_id_raw))
+            .first()
+        )
+        if flow is None or not flow.link_is_active:
+            raise EmailVerificationError("Ссылка подтверждения недействительна или устарела.")
+        if not check_password(secret, flow.token_hash):
+            raise EmailVerificationError("Ссылка подтверждения недействительна или устарела.")
+        if (flow.user.email or "").lower() != (flow.email or "").lower():
+            flow.revoked_at = timezone.now()
+            flow.save(update_fields=["revoked_at", "updated_at"])
+            raise EmailVerificationError("Почта аккаунта изменилась. Запросите новое подтверждение.")
+
+        flow.user.email_verified = True
+        flow.user.save(update_fields=["email_verified"])
+        flow.completed_at = timezone.now()
+        flow.save(update_fields=["completed_at", "updated_at"])
+        return flow
 
 
 def start_add_email(user: User, new_email: str) -> EmailChangeRequest:
@@ -146,7 +219,8 @@ def complete_email_change(user: User, flow_id: int, code: str) -> EmailChangeReq
         _ensure_email_available(flow.new_email, user=user)
 
         user.email = flow.new_email
-        user.save(update_fields=["email"])
+        user.email_verified = True
+        user.save(update_fields=["email", "email_verified"])
         flow.completed_at = timezone.now()
         flow.save(update_fields=["completed_at", "updated_at"])
         return flow

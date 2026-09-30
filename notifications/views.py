@@ -21,16 +21,22 @@ def _avatar_url(user) -> str:
     return user.avatar.url if getattr(user, "avatar", None) else ""
 
 
+def _in_app_notifications_queryset(user):
+    if not get_preferences(user).in_app_enabled:
+        return Notification.objects.none()
+    return Notification.objects.filter(
+        recipient=user,
+        show_in_app=True,
+    )
+
+
 @login_required
 def center(request):
     active_filter = request.GET.get("filter", "all")
     if active_filter not in {"all", "unread"}:
         active_filter = "all"
 
-    queryset = Notification.objects.filter(
-        recipient=request.user,
-        show_in_app=True,
-    ).select_related("actor")
+    queryset = _in_app_notifications_queryset(request.user).select_related("actor")
     if active_filter == "unread":
         queryset = queryset.filter(is_read=False)
 
@@ -38,11 +44,7 @@ def center(request):
     page_obj = paginator.get_page(request.GET.get("page"))
     preferences = get_preferences(request.user)
     telegram_account = TelegramAccount.objects.filter(user=request.user).first()
-    unread_count = Notification.objects.filter(
-        recipient=request.user,
-        show_in_app=True,
-        is_read=False,
-    ).count()
+    unread_count = _in_app_notifications_queryset(request.user).filter(is_read=False).count()
     watched_matches = (
         MatchWatch.objects.filter(
             user=request.user,
@@ -70,12 +72,15 @@ def center(request):
 @login_required
 @require_GET
 def summary(request):
-    queryset = Notification.objects.filter(
-        recipient=request.user,
-        show_in_app=True,
-    )
+    queryset = _in_app_notifications_queryset(request.user)
     unread_count = queryset.filter(is_read=False).count()
-    latest_id = queryset.order_by("-id").values_list("id", flat=True).first() or 0
+    latest_id = (
+        Notification.objects.filter(recipient=request.user)
+        .order_by("-id")
+        .values_list("id", flat=True)
+        .first()
+        or 0
+    )
 
     raw_after_id = request.GET.get("after_id")
     after_id = None
@@ -91,9 +96,20 @@ def summary(request):
         if after_id > latest_id:
             cursor_id = latest_id
         else:
+            pending_queryset = queryset.filter(id__gt=after_id)
+            if pending_queryset.count() > SUMMARY_BATCH_SIZE:
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "unread_count": unread_count,
+                        "avatar_url": _avatar_url(request.user),
+                        "latest_id": latest_id,
+                        "cursor_id": latest_id,
+                        "notifications": [],
+                    }
+                )
             new_notifications = list(
-                queryset.filter(id__gt=after_id)
-                .order_by("id")[:SUMMARY_BATCH_SIZE]
+                pending_queryset.order_by("id")[:SUMMARY_BATCH_SIZE]
             )
             items = [
                 {
@@ -188,10 +204,8 @@ def telegram_disconnect(request):
 @require_POST
 def mark_read(request, notification_id: int):
     notification = get_object_or_404(
-        Notification,
+        _in_app_notifications_queryset(request.user),
         pk=notification_id,
-        recipient=request.user,
-        show_in_app=True,
     )
     notification.mark_read()
     return JsonResponse({"ok": True})
@@ -201,9 +215,7 @@ def mark_read(request, notification_id: int):
 @require_POST
 def mark_all_read(request):
     now = timezone.now()
-    updated = Notification.objects.filter(
-        recipient=request.user,
-        show_in_app=True,
+    updated = _in_app_notifications_queryset(request.user).filter(
         is_read=False,
     ).update(is_read=True, read_at=now)
     if request.headers.get("x-requested-with") == "XMLHttpRequest":

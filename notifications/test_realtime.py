@@ -61,6 +61,33 @@ class RealtimeNotificationSummaryTests(TestCase):
         self.assertEqual(payload["notifications"][0]["title"], "Новое достижение")
         self.assertEqual(payload["notifications"][0]["url"], "/notifications/")
 
+    def test_summary_skips_large_backlog_without_replaying_toasts(self):
+        first = Notification.objects.create(
+            recipient=self.user,
+            kind=Notification.Kind.MATCH_REMINDER,
+            title="Первое",
+            event_key="realtime:backlog:first",
+        )
+        latest = first
+        for index in range(13):
+            latest = Notification.objects.create(
+                recipient=self.user,
+                kind=Notification.Kind.MATCH_REMINDER,
+                title=f"Старое уведомление {index}",
+                event_key=f"realtime:backlog:{index}",
+            )
+
+        response = self.client.get(
+            reverse("notifications:summary"),
+            {"after_id": first.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["latest_id"], latest.id)
+        self.assertEqual(payload["cursor_id"], latest.id)
+        self.assertEqual(payload["notifications"], [])
+
     def test_summary_resets_cursor_if_client_cursor_is_ahead(self):
         notification = Notification.objects.create(
             recipient=self.user,
