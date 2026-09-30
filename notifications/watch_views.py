@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_http_methods
@@ -29,6 +30,10 @@ MATCH_EVENT_KINDS = (
     Notification.Kind.MATCH_REMINDER,
     Notification.Kind.MATCH_PREDICTION,
 )
+FILTER_KIND_GROUPS = {
+    "predictions": PREDICTION_ALERT_KINDS,
+    "matches": MATCH_EVENT_KINDS,
+}
 
 
 def _selected_watch_date(request):
@@ -80,36 +85,52 @@ def _group_notifications(page_obj):
 @login_required
 def center(request):
     active_filter = request.GET.get("filter", "all")
-    if active_filter not in {"all", "unread"}:
+    if active_filter not in {"all", "unread", "predictions", "matches"}:
         active_filter = "all"
 
-    base_queryset = Notification.objects.filter(
-        recipient=request.user,
-        show_in_app=True,
-    )
+    preferences = get_preferences(request.user)
+    if preferences.in_app_enabled:
+        base_queryset = Notification.objects.filter(
+            recipient=request.user,
+            show_in_app=True,
+        )
+    else:
+        base_queryset = Notification.objects.none()
+
     queryset = base_queryset.select_related("actor")
     if active_filter == "unread":
         queryset = queryset.filter(is_read=False)
+    elif active_filter in FILTER_KIND_GROUPS:
+        queryset = queryset.filter(kind__in=FILTER_KIND_GROUPS[active_filter])
 
     paginator = Paginator(queryset, PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page"))
-    preferences = get_preferences(request.user)
     unread_queryset = base_queryset.filter(is_read=False)
     unread_count = unread_queryset.count()
 
-    return render(
-        request,
-        "notifications/center.html",
-        {
-            "page_obj": page_obj,
-            "notification_groups": _group_notifications(page_obj),
-            "preferences": preferences,
-            "active_filter": active_filter,
-            "unread_count": unread_count,
-            "prediction_alert_count": unread_queryset.filter(kind__in=PREDICTION_ALERT_KINDS).count(),
-            "match_event_count": unread_queryset.filter(kind__in=MATCH_EVENT_KINDS).count(),
-        },
-    )
+    context = {
+        "page_obj": page_obj,
+        "notification_groups": _group_notifications(page_obj),
+        "preferences": preferences,
+        "active_filter": active_filter,
+        "unread_count": unread_count,
+        "prediction_alert_count": unread_queryset.filter(kind__in=PREDICTION_ALERT_KINDS).count(),
+        "match_event_count": unread_queryset.filter(kind__in=MATCH_EVENT_KINDS).count(),
+    }
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "ok": True,
+                "html": render_to_string(
+                    "notifications/_notification_results.html",
+                    context,
+                    request=request,
+                ),
+                "active_filter": active_filter,
+            }
+        )
+
+    return render(request, "notifications/center.html", context)
 
 
 def _watch_response(request, match: Match):

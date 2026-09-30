@@ -231,6 +231,28 @@ class NotificationViewsTests(TestCase):
         self.assertEqual(center_response.status_code, 200)
         self.assertNotContains(center_response, "Новый прогноз")
 
+    def test_center_ajax_filters_match_notifications_with_match_icon(self):
+        Notification.objects.create(
+            recipient=self.user,
+            kind=Notification.Kind.MATCH_REMINDER,
+            title="Гол! 1:0",
+            event_key="view:test:match",
+        )
+
+        response = self.client.get(
+            reverse("notifications:center"),
+            {"filter": "matches"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["active_filter"], "matches")
+        self.assertIn("Гол! 1:0", payload["html"])
+        self.assertIn("is-match-event", payload["html"])
+        self.assertNotIn("Новый прогноз", payload["html"])
+
     def test_match_watch_toggle(self):
         match = Match.objects.create(
             external_id=991001,

@@ -286,15 +286,41 @@ class VipPlanAdmin(admin.ModelAdmin):
         "title",
         "duration_days",
         "price_rub",
+        "is_featured",
         "is_active",
         "order",
         "updated_at",
     )
-    list_editable = ("price_rub", "is_active", "order")
-    list_filter = ("is_active", "duration_days")
+    list_editable = ("price_rub", "is_featured", "is_active", "order")
+    list_filter = ("is_featured", "is_active", "duration_days")
     search_fields = ("title",)
     ordering = ("order", "duration_days", "id")
     readonly_fields = ("price_coins", "created_at", "updated_at")
+    fieldsets = (
+        (
+            "Тариф",
+            {
+                "fields": (
+                    "title",
+                    "description",
+                    "duration_days",
+                    "price_rub",
+                    "icon",
+                    "is_featured",
+                    "is_active",
+                    "order",
+                )
+            },
+        ),
+        (
+            "Legacy",
+            {"fields": ("price_coins",)},
+        ),
+        (
+            "Системная информация",
+            {"fields": ("created_at", "updated_at")},
+        ),
+    )
 
 
 @admin.register(UserVipSubscription)

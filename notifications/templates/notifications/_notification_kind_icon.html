@@ -1,0 +1,42 @@
+{% load static %}
+{% if notification.meta.image_url %}
+<span class="notification-image-wrap" aria-hidden="true">
+    <img
+        class="notification-image"
+        src="{{ notification.meta.image_url }}"
+        alt=""
+        width="48"
+        height="48"
+        loading="lazy"
+        decoding="async"
+    >
+</span>
+{% elif notification.kind == 'match_reminder' or notification.kind == 'match_prediction' %}
+<span class="notification-kind is-match-event" aria-hidden="true">
+    <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
+</span>
+{% elif notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %}
+<span class="notification-kind is-achievement" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
+</span>
+{% elif notification.kind == 'new_follower' %}
+<span class="notification-kind is-new_prediction" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
+</span>
+{% elif notification.kind == 'new_prediction' or notification.kind == 'requested_match_prediction' %}
+<span class="notification-kind is-new_prediction" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
+</span>
+{% elif notification.kind == 'own_coupon_settled' or notification.kind == 'favorite_settled' %}
+<span class="notification-kind" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M14.5 8.5c-.6-.7-1.4-1-2.5-1-1.4 0-2.5.7-2.5 1.8 0 2.8 5.4 1.3 5.4 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.2-.4-2.9-1.2M12 5.5v13"></path></svg>
+</span>
+{% elif notification.kind == 'prediction_like' or notification.kind == 'prediction_favorite' %}
+<span class="notification-kind is-new_prediction" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.4-8.8 10.4-8.8 10.4S3.2 14 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
+</span>
+{% else %}
+<span class="notification-kind" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9h8M8 13h6M8 17h4"></path></svg>
+</span>
+{% endif %}
