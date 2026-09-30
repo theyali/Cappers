@@ -84,8 +84,10 @@
             {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
             title="{% if prediction.is_own %}Нельзя лайкать свой прогноз{% elif prediction.is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
         >
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3"></path></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
+            <b data-like-count>{{ prediction.likes_count }}</b>
         </button>
+        {% include "front/includes/_comment_metric.html" with prediction_id=prediction.coupon.id comments_count=prediction.comments_count metric_class="home-best-prediction-action" only %}
         <button
             class="home-best-prediction-action prediction-favorite{% if prediction.is_favorite %} is-active{% endif %}"
             type="button"
@@ -99,13 +101,20 @@
         >
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-3.5L6 20V4Z"></path></svg>
         </button>
-        <a
-            class="home-best-prediction-action home-best-prediction-open"
-            href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
-            title="Открыть прогноз"
-            aria-label="Открыть прогноз"
+        <button
+            class="home-best-prediction-action prediction-share"
+            type="button"
+            data-prediction-id="{{ prediction.coupon.id }}"
+            data-share-url="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+            data-share-endpoint="{% url 'front:prediction_share' prediction_id=prediction.coupon.id %}"
+            aria-label="Поделиться прогнозом"
+            title="Поделиться прогнозом"
         >
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
-        </a>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 16V4"></path>
+                <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
+                <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
+            </svg>
+        </button>
     </div>
 </article>

@@ -38,6 +38,12 @@
                 {% if website_settings.footer_support_email %}
                     <a href="mailto:{{ website_settings.footer_support_email }}">{{ website_settings.footer_support_email }}</a>
                 {% endif %}
+                {% if support_email and support_email != website_settings.footer_support_email %}
+                    <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+                {% endif %}
+                {% if administrator_email %}
+                    <a href="mailto:{{ administrator_email }}">{{ administrator_email }}</a>
+                {% endif %}
             </div>
         </section>
 

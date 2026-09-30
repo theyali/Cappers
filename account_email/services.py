@@ -33,7 +33,12 @@ class PasswordResetError(ValueError):
 
 
 def send_account_email(*, subject: str, template_name: str, to_email: str, context: dict) -> None:
-    body = render_to_string(template_name, context)
+    email_context = {
+        **context,
+        "support_email": settings.SUPPORT_EMAIL,
+        "administrator_email": settings.ADMINISTRATOR_EMAIL,
+    }
+    body = render_to_string(template_name, email_context)
     send_mail(
         subject,
         body,
