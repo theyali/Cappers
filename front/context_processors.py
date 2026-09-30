@@ -1,3 +1,4 @@
+from django.conf import settings as django_settings
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.db.utils import OperationalError, ProgrammingError
@@ -290,4 +291,6 @@ def website_settings(request):
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
+        "support_email": django_settings.SUPPORT_EMAIL,
+        "administrator_email": django_settings.ADMINISTRATOR_EMAIL,
     }

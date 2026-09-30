@@ -3289,7 +3289,6 @@ body.expert-public-details-open {
   }
   .prediction-comments {
     gap: 18px;
-    padding: 18px;
     border-radius: 18px;
   }
   .prediction-comments-head {
@@ -7283,6 +7282,11 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1024px) {
+.quick-stats {
+    display: flex;
+    gap: 14px;
+    margin: 18px 0;
+}
   .home-heading .slider-actions{
     display:none;
   }
@@ -7817,6 +7821,38 @@ body.expert-public-details-open {
 .cabinet-bonuses-page .bonus-center-layout{
     padding-top:0;
 }
+  .email-flow-page {
+    width: min(100% - 24px, 620px);
+    margin: 20px auto 58px;
+  }
+
+  .email-flow-card {
+    gap: 18px;
+    padding: 22px;
+    border-radius: 18px;
+  }
+
+  .email-flow-brand span,
+  .email-flow-brand img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .email-flow-brand strong {
+    font-size: 21px;
+  }
+
+  .email-flow-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .email-flow-actions .profile-save-button,
+  .email-flow-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+
   #earnings-title {
     font-size: 34px;
   }
@@ -8056,13 +8092,13 @@ body.expert-public-details-open {
   .home-best-prediction-actions {
     grid-area: actions;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
   }
   .home-best-prediction-action {
     width: auto;
-    height: 72px;
-    border-radius: 16px;
+    height: 57px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.075);
   }
   .home-best-prediction-action svg {
@@ -11796,7 +11832,7 @@ body.expert-public-details-open {
   }
 
   .coupon-detail-layout-page .coupon-detail-page {
-    gap: 12px;
+    gap: 4px;
     padding: 0 0 22px;
   }
 

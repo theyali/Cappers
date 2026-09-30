@@ -4185,9 +4185,9 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-best-predictions-table { overflow: hidden; border-radius: 14px; background: rgba(30, 31, 34, 0.94); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04); }
 .home-best-prediction-row,
 .home-best-predictions-head-row {
-    min-width: 1420px;
+    min-width: 1450px;
     display: grid;
-    grid-template-columns: 34px minmax(390px, 1.65fr) minmax(285px, 1.05fr) minmax(270px, 1.2fr) 70px 146px 176px;
+    grid-template-columns: 34px minmax(390px, 1.65fr) minmax(285px, 1.05fr) minmax(270px, 1.2fr) 70px 146px 206px;
     align-items: center;
     gap: 20px;
 }
@@ -4348,17 +4348,18 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     border: 0;
     border-radius: 12px;
     color: rgba(255, 255, 255, 0.72);
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
     cursor: pointer;
     transition:
         color 0.18s,
         background 0.18s;
 }
-.home-best-prediction-action.is-active,
+/* .home-best-prediction-action.is-active,
 .home-best-prediction-action:hover {
     color: #fff200;
-    background: rgba(255, 255, 255, 0.13);
-}
+} */
+.home-best-prediction-action.prediction-like.is-active { color: var(--danger); }
+.home-best-prediction-action.prediction-favorite.is-active { color: var(--yellow); }
 .home-best-prediction-action svg,
 .notification-toast-icon svg {
     width: 24px;
@@ -4368,6 +4369,29 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     stroke-width: 1.9;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+.home-best-prediction-action.prediction-like svg {
+    fill: currentColor;
+    stroke: none;
+}
+.home-best-prediction-action.prediction-like,
+.home-best-prediction-action.prediction-comment-metric {
+    width: auto;
+    min-width: 44px;
+    grid-template-columns: auto auto;
+    gap: 4px;
+    padding: 0 7px;
+}
+.home-best-prediction-action.prediction-like {
+    flex-basis: auto;
+}
+.home-best-prediction-action b,
+.home-best-prediction-action span {
+    color: currentColor;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 .latest-predictions { min-width: 0; padding: clamp(22px, 2.6vw, 34px); border-radius: 24px; background: var(--panel); }
 .cabinet-bonuses-page .bonus-gifts-card .bonus-side-head,
@@ -10723,16 +10747,58 @@ body.register footer {
 .email-flow-page { width: min(620px, calc(100% - 32px)); margin: 34px auto 70px; }
 .email-flow-card {
     display: grid;
-    gap: 18px;
-    padding: 28px;
+    gap: 20px;
+    padding: 30px;
     border-radius: 22px;
-    background: #1f1f21;
+    background:
+        linear-gradient(145deg, rgba(11, 86, 250, 0.12), rgba(255, 242, 0, 0.04) 42%, transparent 70%),
+        #1f1f21;
     outline: rgba(255, 255, 255, 0.07) solid 1px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 }
+.email-flow-brand {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text);
+    text-decoration: none;
+}
+.email-flow-brand span,
+.email-flow-brand img {
+    width: 58px;
+    height: 58px;
+    display: block;
+}
+.email-flow-brand img { object-fit: contain; }
+.email-flow-brand strong {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1;
+}
+.email-flow-brand mark {
+    color: var(--blue);
+    background: transparent;
+}
+.email-flow-head { display: grid; gap: 10px; }
 .email-flow-card h1 { margin: 0; color: var(--text); font-size: clamp(28px, 4vw, 40px); line-height: 1.1; }
 .email-flow-card p:not(.eyebrow) { margin: 0; color: rgba(255, 255, 255, 0.64); line-height: 1.55; }
 .email-flow-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .email-flow-actions a { min-height: 44px; display: inline-flex; align-items: center; color: rgba(255, 255, 255, 0.72); font-size: 13px; }
+.email-flow-support {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding-top: 2px;
+}
+.email-flow-support a {
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+.email-flow-support a:hover { color: var(--yellow); }
 .profile-field small,
 .profile-visibility small {
     color: #707072;
@@ -15160,7 +15226,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .coupon-slip-status-row .is-lose {
     color: var(--danger, #ff6268);
 }
-.coupon-detail-layout-page .coupon-detail-page { width: min(1180px, 100%); gap: 16px; padding: 0 0 28px; }
+.coupon-detail-layout-page .coupon-detail-page { width: min(1180px, 100%); gap: 16px; padding: 15px; }
 .coupon-detail-layout-page .coupon-detail-back { margin: 0 0 2px; }
 .coupon-detail-showcase {
     position: relative;
@@ -15625,9 +15691,11 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .coin-icon svg { width: inherit; height: inherit; display: block; }
 .best-capper-banner .is-rank-1 .home-best-expert-verified { right: calc(50% - 45px); bottom: 0; }
 .cappers-ranking-table .capper-trust-badge { position: static; }
-.prediction-comment-metric > span { font-size: 12px; font-weight: 700; line-height: 1; }
+.prediction-comment-metric > span,
+.prediction-table-action.prediction-like b { font-size: 12px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.prediction-table-action.prediction-like,
 .prediction-table-action.prediction-comment-metric { width: auto; min-width: 44px; grid-template-columns: auto auto; gap: 4px; padding: 0 7px; }
-.prediction-comments { display: grid; gap: 26px; padding: 30px 22px 32px; border-radius: 13px; }
+.prediction-comments { display: grid; gap: 26px; padding: 0; border-radius: 13px; }
 .prediction-comments-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .prediction-comments-head h2 {
     margin: 0;
