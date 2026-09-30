@@ -713,6 +713,7 @@ class CapperMonthlyStat(models.Model):
 
 class VipPlan(models.Model):
     title = models.CharField("Название", max_length=120)
+    description = models.TextField("Описание", blank=True)
     duration_days = models.PositiveIntegerField("Срок, дней")
     price_coins = models.PositiveIntegerField("Стоимость, коинов", default=0)
     price_rub = models.DecimalField(
@@ -721,6 +722,12 @@ class VipPlan(models.Model):
         decimal_places=2,
         default=0,
     )
+    icon = models.ImageField(
+        "Иконка тарифа",
+        upload_to="vip_plans/icons/%Y/%m/",
+        blank=True,
+    )
+    is_featured = models.BooleanField("Рекомендуем", default=False, db_index=True)
     is_active = models.BooleanField("Активен", default=True)
     order = models.PositiveIntegerField("Порядок", default=0)
     created_at = models.DateTimeField("Создан", auto_now_add=True)

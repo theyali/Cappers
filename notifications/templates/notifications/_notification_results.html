@@ -1,0 +1,70 @@
+<div data-notification-results>
+    {% if page_obj.object_list %}
+        {% for group in notification_groups %}
+            {% if group.items %}
+            <section>
+                <div class="notifications-toolbar">
+                    <div class="notification-watch-head">
+                        <h2>{{ group.title }}</h2>
+                        <span>{{ group.items|length }}</span>
+                    </div>
+                    {% if group.key == 'today' and unread_count %}
+                    <form method="post" action="{% url 'notifications:mark_all_read' %}" data-mark-all-form>
+                        {% csrf_token %}
+                        <button type="submit">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>
+                            Пометить все как прочитанные
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
+                <div class="notifications-list" data-skeleton-block>
+                    {% for notification in group.items %}
+                    <a
+                        class="notification-row{% if not notification.is_read %} is-unread{% endif %}"
+                        href="{{ notification.url|default:'#' }}"
+                        data-notification-link
+                        data-read-url="{% url 'notifications:mark_read' notification.id %}"
+                        data-skeleton-block
+                    >
+                        {% include "notifications/_notification_kind_icon.html" %}
+
+                        <span class="notification-copy">
+                            <strong>{{ notification.title }}</strong>
+                            {% if notification.message %}<span>{{ notification.message }}</span>{% endif %}
+                        </span>
+
+                        <span class="notification-watch-head">
+                            <small class="notification-watch-empty">
+                                {% if group.key == 'today' %}{{ notification.created_at|date:"H:i" }}{% else %}{{ notification.created_at|date:"d.m.Y, H:i" }}{% endif %}
+                            </small>
+                            {% if not notification.is_read %}<i class="notification-unread-dot" aria-label="Непрочитано"></i>{% endif %}
+                        </span>
+                        <span class="notification-arrow" aria-hidden="true">›</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+        <nav class="notifications-pagination" aria-label="Страницы уведомлений">
+            {% if page_obj.has_previous %}
+            <a href="?filter={{ active_filter }}&page={{ page_obj.previous_page_number }}" data-notification-page-link>← Назад</a>
+            {% endif %}
+            <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+            <a href="?filter={{ active_filter }}&page={{ page_obj.next_page_number }}" data-notification-page-link>Вперёд →</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    {% else %}
+    <div class="notifications-empty">
+        <span>✓</span>
+        <strong>{% if active_filter == 'unread' %}Всё прочитано{% else %}Уведомлений пока нет{% endif %}</strong>
+        <p>Здесь появятся важные события по вашим прогнозам, подпискам, матчам и турнирам.</p>
+    </div>
+    {% endif %}
+</div>

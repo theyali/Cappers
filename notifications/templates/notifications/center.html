@@ -18,7 +18,7 @@
 
                 <div class="notifications-filters" aria-label="Сводка уведомлений">
                     <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}?filter=unread">
+                        <a href="{% url 'notifications:center' %}?filter=unread" data-notification-filter="unread"{% if active_filter == 'unread' %} class="is-active"{% endif %}>
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
                                     <svg width="42" height="42" viewBox="0 0 24 24" fill="#fbf110" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v3.1c0 1.3-.4 2.5-1.2 3.5l-1.5 1.9A1 1 0 0 0 4.1 18h15.8a1 1 0 0 0 .8-1.5l-1.5-1.9a5.7 5.7 0 0 1-1.2-3.5V8a6 6 0 0 0-6-6Zm-2.3 18a2.5 2.5 0 0 0 4.6 0H9.7Z"></path></svg>
@@ -31,7 +31,7 @@
                         </a>
                     </div>
                     <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}">
+                        <a href="{% url 'notifications:center' %}?filter=predictions" data-notification-filter="predictions"{% if active_filter == 'predictions' %} class="is-active"{% endif %}>
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
                                     <div class="notification-kind is-new_prediction" aria-hidden="true">
@@ -46,7 +46,7 @@
                         </a>
                     </div>
                     <div class="notification-watch-list">
-                        <a href="{% url 'notifications:center' %}">
+                        <a href="{% url 'notifications:center' %}?filter=matches" data-notification-filter="matches"{% if active_filter == 'matches' %} class="is-active"{% endif %}>
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
                                     <div class="notification-kind" aria-hidden="true">
@@ -63,114 +63,7 @@
                 </div>
             </header>
 
-            {% if page_obj.object_list %}
-                {% for group in notification_groups %}
-                    {% if group.items %}
-                    <section>
-                        <div class="notifications-toolbar">
-                            <div class="notification-watch-head">
-                                <h2>{{ group.title }}</h2>
-                                <span>{{ group.items|length }}</span>
-                            </div>
-                            {% if group.key == 'today' and unread_count %}
-                            <form method="post" action="{% url 'notifications:mark_all_read' %}" data-mark-all-form>
-                                {% csrf_token %}
-                                <button type="submit">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>
-                                    Пометить все как прочитанные
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-
-                        <div class="notifications-list" data-skeleton-block>
-                            {% for notification in group.items %}
-                            <a
-                                class="notification-row{% if not notification.is_read %} is-unread{% endif %}"
-                                href="{{ notification.url|default:'#' }}"
-                                data-notification-link
-                                data-read-url="{% url 'notifications:mark_read' notification.id %}"
-                                data-skeleton-block
-                            >
-                                {% if notification.meta.image_url %}
-                                <span class="notification-image-wrap" aria-hidden="true">
-                                    <img
-                                        class="notification-image"
-                                        src="{{ notification.meta.image_url }}"
-                                        alt=""
-                                        width="48"
-                                        height="48"
-                                        loading="lazy"
-                                        decoding="async"
-                                    >
-                                </span>
-                                {% elif notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %}
-                                <span class="notification-kind is-achievement" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
-                                </span>
-                                {% elif notification.kind == 'new_follower' %}
-                                <span class="notification-kind is-new_prediction" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
-                                </span>
-                                {% elif notification.kind == 'new_prediction' or notification.kind == 'requested_match_prediction' or notification.kind == 'match_prediction' %}
-                                <span class="notification-kind is-new_prediction" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
-                                </span>
-                                {% elif notification.kind == 'match_reminder' %}
-                                <span class="notification-kind" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="m12 7 3 2-.8 3.5H9.8L9 9l3-2ZM9.8 12.5 7 15m7.2-2.5L17 15M12 17v3"></path></svg>
-                                </span>
-                                {% elif notification.kind == 'own_coupon_settled' or notification.kind == 'favorite_settled' %}
-                                <span class="notification-kind" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M14.5 8.5c-.6-.7-1.4-1-2.5-1-1.4 0-2.5.7-2.5 1.8 0 2.8 5.4 1.3 5.4 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.2-.4-2.9-1.2M12 5.5v13"></path></svg>
-                                </span>
-                                {% elif notification.kind == 'prediction_like' or notification.kind == 'prediction_favorite' %}
-                                <span class="notification-kind is-new_prediction" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M20.8 8.6c0 5.4-8.8 10.4-8.8 10.4S3.2 14 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
-                                </span>
-                                {% else %}
-                                <span class="notification-kind" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9h8M8 13h6M8 17h4"></path></svg>
-                                </span>
-                                {% endif %}
-
-                                <span class="notification-copy">
-                                    <strong>{{ notification.title }}</strong>
-                                    {% if notification.message %}<span>{{ notification.message }}</span>{% endif %}
-                                </span>
-
-                                <span class="notification-watch-head">
-                                    <small class="notification-watch-empty">
-                                        {% if group.key == 'today' %}{{ notification.created_at|date:"H:i" }}{% else %}{{ notification.created_at|date:"d.m.Y, H:i" }}{% endif %}
-                                    </small>
-                                    {% if not notification.is_read %}<i class="notification-unread-dot" aria-label="Непрочитано"></i>{% endif %}
-                                </span>
-                                <span class="notification-arrow" aria-hidden="true">›</span>
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% endif %}
-                {% endfor %}
-
-                {% if page_obj.has_other_pages %}
-                <nav class="notifications-pagination" aria-label="Страницы уведомлений">
-                    {% if page_obj.has_previous %}
-                    <a href="?filter={{ active_filter }}&page={{ page_obj.previous_page_number }}">← Назад</a>
-                    {% endif %}
-                    <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}
-                    <a href="?filter={{ active_filter }}&page={{ page_obj.next_page_number }}">Вперёд →</a>
-                    {% endif %}
-                </nav>
-                {% endif %}
-            {% else %}
-            <div class="notifications-empty">
-                <span>✓</span>
-                <strong>{% if active_filter == 'unread' %}Всё прочитано{% else %}Уведомлений пока нет{% endif %}</strong>
-                <p>Здесь появятся важные события по вашим прогнозам, подпискам, матчам и турнирам.</p>
-            </div>
-            {% endif %}
+            {% include "notifications/_notification_results.html" %}
         </main>
 
         <aside class="notifications-side">
@@ -340,5 +233,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
 <script src="{% static 'notifications/js/center.js' %}" defer></script>
 {% endblock %}

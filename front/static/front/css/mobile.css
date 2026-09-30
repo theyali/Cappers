@@ -10336,26 +10336,55 @@ body.expert-public-details-open {
     grid-column: 1;
   }
 
-  .vip-status-grid,
+  .cabinet-vip-page .matches-mobile-scope-panel {
+    display: block;
+  }
+
+  .vip-hero,
   .vip-plan-grid {
     grid-template-columns: 1fr;
   }
 
-  .vip-status-card,
-  .vip-balance-panel,
-  .vip-plans-section,
+  .vip-current-card,
+  .vip-compare-section,
   .vip-plan-card {
     border-radius: 14px;
   }
 
-  .vip-status-card,
-  .vip-balance-panel,
-  .vip-plans-section {
+  .vip-current-card,
+  .vip-compare-section {
     padding: 16px;
   }
 
-  .vip-balance-panel .profile-row-action {
+  .vip-current-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .vip-current-days {
+    grid-column: 1/-1;
     width: 100%;
+  }
+
+  .vip-icon-card {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+  }
+
+  .vip-plan-card {
+    padding: 18px;
+  }
+
+  .vip-plan-card-head {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .vip-compare-table {
+    overflow-x: auto;
+  }
+
+  .vip-compare-row {
+    min-width: 760px;
   }
 
   .cabinet-bonus-tasks-page .bonus-tasks-main {

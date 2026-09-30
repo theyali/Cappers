@@ -8,90 +8,163 @@
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 
-        <section class="matches-list-panel profile-page bonus-detail-main">
+        <section class="matches-list-panel profile-page vip-layout">
             <div class="matches-mobile-scope-panel" aria-label="{{ page.mobile_nav_label }}">
                 <nav class="matches-tabs" aria-label="{{ page.profile_nav_label }}">
                     {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
                 </nav>
             </div>
 
-            <header class="bonus-page-head vip-page-head">
-                <div>
+            <header class="vip-hero">
+                <div class="vip-hero-copy">
                     <h1>{{ page.heading }}</h1>
-                    <p>{{ page.description }}</p>
+                    <p>Получите доступ к эксклюзивным прогнозам, расширенной аналитике и дополнительным возможностям. Выберите тариф и начните зарабатывать больше.</p>
                 </div>
-                <strong>{{ real_balance_display }} ₽</strong>
+
+                <article class="vip-current-card{% if active_vip %} is-active{% endif %}">
+                    <span class="vip-icon-card vip-icon-card--gold" aria-hidden="true">
+                        {% if active_vip and active_vip.plan and active_vip.plan.icon %}
+                        <img src="{{ active_vip.plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+                        {% else %}
+                        <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
+                        {% endif %}
+                    </span>
+                    <div>
+                        <span>Ваш текущий статус</span>
+                        {% if active_vip %}
+                            <strong>VIP активен</strong>
+                            <small>Доступ действует до {{ active_vip.ends_at|date:"d.m.Y H:i" }}.</small>
+                        {% else %}
+                            <strong>VIP не активен</strong>
+                            <small>Подключите тариф, чтобы открыть VIP-возможности.</small>
+                        {% endif %}
+                    </div>
+                    <div class="vip-current-days">
+                        <span>{% if active_vip %}Осталось{% else %}Статус{% endif %}</span>
+                        <strong>{% if active_vip %}{{ vip_time_left }}{% else %}Нет VIP{% endif %}</strong>
+                        {% if active_vip.plan %}<small>Текущий тариф: {{ active_vip.plan.title }}</small>{% endif %}
+                    </div>
+                </article>
             </header>
 
-            <section class="vip-status-grid" aria-label="Текущий VIP и баланс">
-                <article class="vip-status-card{% if active_vip %} is-active{% endif %}">
-                    <span class="vip-card-kicker">Текущий статус</span>
-                    {% if active_vip %}
-                        <h2>VIP активен</h2>
-                        <p>Доступ действует до {{ active_vip.ends_at|date:"d.m.Y H:i" }}.</p>
-                        <div class="vip-status-meta">
-                            <span>Осталось</span>
-                            <strong>{{ vip_time_left }}</strong>
+            <section class="vip-plan-grid" aria-label="VIP-тарифы">
+                {% for plan in plans %}
+                <article class="vip-plan-card is-tier-{{ forloop.counter }}{% if plan.is_featured %} is-featured{% endif %}">
+                    {% if plan.is_featured %}<span class="vip-plan-badge">Рекомендуем</span>{% endif %}
+                    <div class="vip-plan-card-head">
+                        <span class="vip-icon-card" aria-hidden="true">
+                            {% if plan.icon %}
+                            <img src="{{ plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+                            {% else %}
+                            <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
+                            {% endif %}
+                        </span>
+                        <div>
+                            <h2>{{ plan.title }}</h2>
+                            <span>{% if forloop.counter == 1 %}Для уверенного начала{% elif forloop.counter == 2 %}Больше возможностей{% else %}Максимальная выгода{% endif %}</span>
                         </div>
-                        {% if active_vip.plan %}
-                            <small>Текущий тариф: {{ active_vip.plan.title }}</small>
+                    </div>
+                    <p>
+                        {% if plan.description %}
+                            {{ plan.description }}
+                        {% elif forloop.counter == 1 %}
+                            Базовый доступ к VIP-прогнозам и ключевым возможностям.
+                        {% elif forloop.counter == 2 %}
+                            Расширенный доступ, приоритетные прогнозы и максимальная аналитика.
+                        {% else %}
+                            Полный доступ ко всем функциям и персональные условия.
                         {% endif %}
-                    {% else %}
-                        <h2>VIP не активен</h2>
-                        <p>Подключите тариф, чтобы открыть VIP-возможности каппера.</p>
-                        <div class="vip-status-meta">
-                            <span>Статус</span>
-                            <strong>Не подключён</strong>
-                        </div>
-                    {% endif %}
+                    </p>
+                    <strong class="vip-plan-price">{{ plan.price_display }} ₽</strong>
+                    <small>на {{ plan.duration_days }} дней</small>
+                    <form method="post" action="{% url 'cabinet:vip_purchase' %}" class="vip-plan-action" data-no-transition>
+                        {% csrf_token %}
+                        <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                        <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>Выбрать тариф</button>
+                    </form>
                 </article>
-
-                <article class="vip-balance-panel">
-                    <span class="vip-card-kicker">Реальный баланс</span>
-                    <h2>{{ real_balance_display }} ₽</h2>
-                    <p>VIP оплачивается рублями с реального баланса. Коины остаются для игровых механик.</p>
-                    <a class="profile-row-action" href="{% url 'wallets:top_up' %}">Пополнить баланс</a>
+                {% empty %}
+                <article class="vip-plan-card is-empty">
+                    <h2>Тарифы пока не настроены</h2>
+                    <p>Активные VIP-тарифы появятся здесь после настройки администратором.</p>
                 </article>
+                {% endfor %}
             </section>
 
-            <section class="vip-plans-section" aria-labelledby="vip-plans-title">
-                <div class="profile-list-head">
-                    <div>
-                        <h2 id="vip-plans-title">Выберите тариф</h2>
-                        <p>При покупке новый период продлится от конца текущего VIP, если он уже активен.</p>
+            <section class="vip-compare-section" aria-labelledby="vip-compare-title">
+            <div class="profile-list-head">
+                <div>
+                    <h2 id="vip-compare-title">Сравнение тарифов</h2>
+                    <p>Все преимущества VIP-доступа в одной таблице.</p>
+                </div>
+            </div>
+
+            <div class="vip-compare-table" role="table" aria-label="Сравнение VIP-тарифов">
+                <div class="vip-compare-row vip-compare-row--head" role="row">
+                    <div role="columnheader">Возможности</div>
+                    <div role="columnheader">
+                        <span class="vip-mini-crown vip-mini-crown--silver" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
+                        VIP Старт
+                    </div>
+                    <div role="columnheader" class="is-pro">
+                        <span class="vip-mini-crown vip-mini-crown--blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
+                        VIP PRO
+                    </div>
+                    <div role="columnheader">
+                        <span class="vip-mini-crown vip-mini-crown--gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
+                        VIP ULTIMATE
                     </div>
                 </div>
 
-                <div class="vip-plan-grid">
-                    {% for plan in plans %}
-                        <article class="vip-plan-card">
-                            <div class="vip-plan-card-head">
-                                <span class="vip-card-kicker">{{ plan.duration_days }} дн.</span>
-                                <h3>{{ plan.title }}</h3>
-                            </div>
-                            <strong class="vip-plan-price">{{ plan.price_display }} ₽</strong>
-                            <p>
-                                {% if plan.can_afford %}
-                                    После оплаты останется {{ plan.balance_after_display }} ₽.
-                                {% else %}
-                                    На балансе недостаточно средств для этого тарифа.
-                                {% endif %}
-                            </p>
-                            <form method="post" action="{% url 'cabinet:vip_purchase' %}" class="vip-plan-action" data-no-transition>
-                                {% csrf_token %}
-                                <input type="hidden" name="plan_id" value="{{ plan.id }}">
-                                <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>
-                                    {% if active_vip %}Продлить VIP{% else %}Купить VIP{% endif %}
-                                </button>
-                            </form>
-                        </article>
-                    {% empty %}
-                        <article class="vip-plan-card is-empty">
-                            <h3>Тарифы пока не настроены</h3>
-                            <p>Активные VIP-тарифы появятся здесь после настройки администратором.</p>
-                        </article>
-                    {% endfor %}
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"></path></svg></span>Доступ к VIP прогнозам</div>
+                    <div role="cell">Базовый доступ</div>
+                    <div role="cell" class="is-pro">Полный доступ</div>
+                    <div role="cell">Полный доступ</div>
                 </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7V3Z"></path><path d="M15 3v5h5M10 13h6M10 17h4"></path></svg></span>Расширенная статистика</div>
+                    <div role="cell">Ограниченная</div>
+                    <div role="cell" class="is-pro">Полная</div>
+                    <div role="cell">Полная + эксклюзивная</div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 8-12h-6l1-8Z"></path></svg></span>Ранний доступ к прогнозам</div>
+                    <div role="cell">-</div>
+                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
+                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7c0-2 14-2 14 0s-14 2-14 0Zm0 0v5c0 2 14 2 14 0V7M5 12v5c0 2 14 2 14 0v-5"></path></svg></span>Повышенные лимиты</div>
+                    <div role="cell">До 10 прогнозов в день</div>
+                    <div role="cell" class="is-pro">До 30 прогнозов в день</div>
+                    <div role="cell">Без ограничений</div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></span>Приоритетная поддержка</div>
+                    <div role="cell">-</div>
+                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
+                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"></path></svg></span>Эксклюзивные материалы</div>
+                    <div role="cell">-</div>
+                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
+                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 5 5 19"></path><circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg></span>Персональные акции</div>
+                    <div role="cell">-</div>
+                    <div role="cell" class="is-pro">-</div>
+                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
+                </div>
+                <div class="vip-compare-row" role="row">
+                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"></path><path d="M8 7V5h8v2"></path><path d="M4 12h16"></path></svg></span>Личный менеджер</div>
+                    <div role="cell">-</div>
+                    <div role="cell" class="is-pro">-</div>
+                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
+                </div>
+            </div>
             </section>
         </section>
     </div>
