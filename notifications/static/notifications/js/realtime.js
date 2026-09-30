@@ -2,7 +2,7 @@
     const nav = document.querySelector("[data-notification-nav]");
     if (!nav) return;
 
-    const badge = nav.querySelector("[data-notification-badge]");
+    const badges = document.querySelectorAll("[data-notification-badge]");
     const summaryUrl = nav.dataset.summaryUrl;
     const soundUrl = nav.dataset.soundUrl;
     const userId = nav.dataset.userId || "user";
@@ -64,10 +64,11 @@
     };
 
     const setBadge = (count) => {
-        if (!badge) return;
         const safeCount = Math.max(0, Number.parseInt(count, 10) || 0);
-        badge.textContent = safeCount > 99 ? "99+" : String(safeCount);
-        badge.classList.toggle("is-empty", safeCount === 0);
+        badges.forEach((badge) => {
+            badge.textContent = safeCount > 99 ? "99+" : String(safeCount);
+            badge.classList.toggle("is-empty", safeCount === 0);
+        });
         nav.setAttribute(
             "aria-label",
             safeCount ? `Уведомления, непрочитанных: ${safeCount}` : "Уведомления"
@@ -141,7 +142,7 @@
         toast.addEventListener("click", () => {
             window.location.href = notification.url || nav.getAttribute("href") || "/notifications/";
         });
-        stack.appendChild(toast);
+        stack.prepend(toast);
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => toast.classList.add("is-visible"));

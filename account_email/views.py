@@ -8,7 +8,9 @@ from .forms import EmailAddressForm, EmailCodeForm
 from .models import EmailChangeRequest
 from .services import (
     EmailChangeError,
+    EmailVerificationError,
     complete_email_change,
+    complete_email_verification,
     confirm_current_email_token,
     send_change_new_email_code,
     start_add_email,
@@ -117,6 +119,16 @@ def verify_new_email(request, request_id: int):
             "flow": flow,
         },
     )
+
+
+def verify_registration_email(request, token: str):
+    try:
+        complete_email_verification(token)
+    except EmailVerificationError as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, "Почта подтверждена. Теперь вы можете войти в аккаунт.")
+    return redirect("cabinet:login")
 
 
 def _first_form_error(form) -> str:

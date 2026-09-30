@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import EmailChangeRequest, PasswordResetRequest
+from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetRequest
 
 
 @admin.register(EmailChangeRequest)
@@ -46,6 +46,28 @@ class PasswordResetRequestAdmin(admin.ModelAdmin):
         "opened_at",
         "revoked_at",
         "completed_at",
+        "expires_at",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(EmailVerificationRequest)
+class EmailVerificationRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "user",
+        "email",
+        "completed_at",
+        "revoked_at",
+        "expires_at",
+        "created_at",
+    )
+    list_filter = ("completed_at", "revoked_at", "expires_at")
+    search_fields = ("user__username", "user__email", "email")
+    readonly_fields = (
+        "token_hash",
+        "completed_at",
+        "revoked_at",
         "expires_at",
         "created_at",
         "updated_at",

@@ -92,3 +92,46 @@ class PasswordResetRequest(models.Model):
 
     def __str__(self) -> str:
         return f"Сброс пароля #{self.pk} для {self.user_id}"
+
+
+class EmailVerificationRequest(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="email_verification_requests",
+        verbose_name="Пользователь",
+    )
+    email = models.EmailField("Почта")
+    token_hash = models.CharField("Хеш токена", max_length=128)
+    completed_at = models.DateTimeField("Подтверждено", null=True, blank=True)
+    revoked_at = models.DateTimeField("Отозвано", null=True, blank=True)
+    expires_at = models.DateTimeField("Истекает")
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Подтверждение почты"
+        verbose_name_plural = "Подтверждения почты"
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(
+                fields=("user", "completed_at", "revoked_at", "expires_at"),
+                name="email_verify_user_state_idx",
+            ),
+            models.Index(fields=("email",), name="email_verify_email_idx"),
+        ]
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    @property
+    def link_is_active(self) -> bool:
+        return (
+            self.completed_at is None
+            and self.revoked_at is None
+            and not self.is_expired
+        )
+
+    def __str__(self) -> str:
+        return f"Подтверждение почты #{self.pk} для {self.user_id}"

@@ -1,5 +1,4 @@
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count, Q
@@ -11,6 +10,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from game.models import Country, League, PredictionCoupon, Sport
 from wallets.services import ensure_coin_wallet
+from account_email.services import start_email_verification
 
 from .capper_forms import (
     CapperAboutForm,
@@ -117,6 +117,7 @@ def register(request):
                 # Каппер активируется только после onboarding, чтобы незаполненные
                 # аккаунты не попадали в рейтинг и не публиковались случайно.
                 user.role = User.Role.READER
+                user.email_verified = False
                 user.save()
                 profile = None
                 if wants_capper:
@@ -132,12 +133,9 @@ def register(request):
                     profile=profile,
                 )
                 mark_referral_registration(request, user)
-            login(request, user)
-            if wants_capper:
-                messages.success(request, "Аккаунт создан. Соберём ваш профиль каппера.")
-                return redirect("cabinet:capper_onboarding", step=1)
-            messages.success(request, "Регистрация завершена.")
-            return redirect("cabinet:profile")
+            start_email_verification(user, request=request)
+            request.session["registration_email"] = user.email
+            return redirect("cabinet:register_done")
 
     return render(
         request,
@@ -156,6 +154,18 @@ def register(request):
                 leagues__matches__isnull=False
             ).distinct().order_by("name_ru", "name"),
             "league_search_url": reverse("cabinet:league_search"),
+        },
+    )
+
+
+def register_done(request):
+    email = request.session.get("registration_email", "")
+    return render(
+        request,
+        "cabinet/auth/register_done.html",
+        {
+            "registration_email": email,
+            "page_class": "register",
         },
     )
 

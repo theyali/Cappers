@@ -10,4 +10,9 @@ urlpatterns = [
     path("change/request/", views.request_email_change, name="request_change"),
     path("change/<str:token>/", views.confirm_change, name="confirm_change"),
     path("verify/<int:request_id>/", views.verify_new_email, name="verify"),
+    path(
+        "registration/verify/<str:token>/",
+        views.verify_registration_email,
+        name="verify_registration_email",
+    ),
 ]
