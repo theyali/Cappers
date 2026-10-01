@@ -715,7 +715,6 @@ class VipPlan(models.Model):
     title = models.CharField("Название", max_length=120)
     description = models.TextField("Описание", blank=True)
     duration_days = models.PositiveIntegerField("Срок, дней")
-    price_coins = models.PositiveIntegerField("Стоимость, коинов", default=0)
     price_rub = models.DecimalField(
         "Стоимость, ₽",
         max_digits=12,
@@ -740,6 +739,60 @@ class VipPlan(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} · {self.duration_days} дн. · {self.price_rub} ₽"
+
+
+class VipPlanComparisonFeature(models.Model):
+    title = models.CharField("Название", max_length=160)
+    icon = models.ImageField(
+        "Иконка",
+        upload_to="vip_plans/comparison/icons/%Y/%m/",
+        blank=True,
+    )
+    is_active = models.BooleanField("Активна", default=True, db_index=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Строка сравнения VIP"
+        verbose_name_plural = "Строки сравнения VIP"
+        ordering = ("order", "id")
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class VipPlanComparisonValue(models.Model):
+    feature = models.ForeignKey(
+        VipPlanComparisonFeature,
+        on_delete=models.CASCADE,
+        related_name="values",
+        verbose_name="Строка сравнения",
+    )
+    plan = models.ForeignKey(
+        VipPlan,
+        on_delete=models.CASCADE,
+        related_name="comparison_values",
+        verbose_name="VIP-тариф",
+    )
+    value_text = models.CharField("Текст", max_length=160, blank=True)
+    is_checked = models.BooleanField("Показать галочку", default=False)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Значение сравнения VIP"
+        verbose_name_plural = "Значения сравнения VIP"
+        ordering = ("feature__order", "feature_id", "plan__order", "plan_id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("feature", "plan"),
+                name="unique_vip_plan_comparison_value",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.feature} · {self.plan}"
 
 
 class UserVipSubscription(models.Model):

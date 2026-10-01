@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,7 +12,7 @@ from django.views.decorators.http import require_POST
 
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
-from .models import VipPlan
+from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
 from .vip import get_active_vip, purchase_vip
 
 
@@ -65,6 +66,32 @@ def _error_message(exc) -> str:
     return str(exc)
 
 
+def _vip_comparison_rows(plans):
+    values_queryset = VipPlanComparisonValue.objects.filter(plan__in=plans).select_related("plan")
+    features = (
+        VipPlanComparisonFeature.objects.filter(is_active=True)
+        .prefetch_related(Prefetch("values", queryset=values_queryset))
+        .order_by("order", "id")
+    )
+
+    rows = []
+    for feature in features:
+        values_by_plan = {value.plan_id: value for value in feature.values.all()}
+        rows.append(
+            {
+                "feature": feature,
+                "cells": [
+                    {
+                        "plan": plan,
+                        "value": values_by_plan.get(plan.id),
+                    }
+                    for plan in plans
+                ],
+            }
+        )
+    return rows
+
+
 @login_required
 def vip_plans(request):
     if not getattr(request.user, "is_analyst", False):
@@ -79,6 +106,7 @@ def vip_plans(request):
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)
         plan.balance_after_display = format_money(plan.balance_after) if plan.can_afford else ""
+    comparison_rows = _vip_comparison_rows(plans)
 
     return render(
         request,
@@ -91,6 +119,7 @@ def vip_plans(request):
             "vip_time_left": _vip_time_left(active_vip),
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance),
+            "comparison_rows": comparison_rows,
             "page": {
                 "title": "VIP-тарифы — КапперХаб",
                 "heading": "VIP-тарифы",

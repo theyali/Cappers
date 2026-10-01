@@ -92,79 +92,62 @@
             </section>
 
             <section class="vip-compare-section" aria-labelledby="vip-compare-title">
-            <div class="profile-list-head">
-                <div>
-                    <h2 id="vip-compare-title">Сравнение тарифов</h2>
-                    <p>Все преимущества VIP-доступа в одной таблице.</p>
-                </div>
-            </div>
-
-            <div class="vip-compare-table" role="table" aria-label="Сравнение VIP-тарифов">
-                <div class="vip-compare-row vip-compare-row--head" role="row">
-                    <div role="columnheader">Возможности</div>
-                    <div role="columnheader">
-                        <span class="vip-mini-crown vip-mini-crown--silver" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
-                        VIP Старт
-                    </div>
-                    <div role="columnheader" class="is-pro">
-                        <span class="vip-mini-crown vip-mini-crown--blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
-                        VIP PRO
-                    </div>
-                    <div role="columnheader">
-                        <span class="vip-mini-crown vip-mini-crown--gold" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg></span>
-                        VIP ULTIMATE
+                <div class="profile-list-head">
+                    <div>
+                        <h2 id="vip-compare-title">Сравнение тарифов</h2>
+                        <p>Все преимущества VIP-доступа в одной таблице.</p>
                     </div>
                 </div>
 
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"></path></svg></span>Доступ к VIP прогнозам</div>
-                    <div role="cell">Базовый доступ</div>
-                    <div role="cell" class="is-pro">Полный доступ</div>
-                    <div role="cell">Полный доступ</div>
+                {% if comparison_rows and plans %}
+                <div class="vip-compare-table" role="table" aria-label="Сравнение VIP-тарифов" style="--vip-plan-count: {{ plans|length }};">
+                    <div class="vip-compare-row vip-compare-row--head" role="row">
+                        <div role="columnheader">Возможности</div>
+                        {% for plan in plans %}
+                        <div role="columnheader"{% if plan.is_featured %} class="is-pro"{% endif %}>
+                            <span class="vip-mini-crown" aria-hidden="true">
+                                {% if plan.icon %}
+                                <img src="{{ plan.icon.url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
+                                {% else %}
+                                <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg>
+                                {% endif %}
+                            </span>
+                            {{ plan.title }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% for row in comparison_rows %}
+                    <div class="vip-compare-row" role="row">
+                        <div role="cell">
+                            {% if row.feature.icon %}
+                            <span class="vip-feature-icon" aria-hidden="true">
+                                <img src="{{ row.feature.icon.url }}" alt="" width="24" height="24" loading="lazy" decoding="async">
+                            </span>
+                            {% endif %}
+                            {{ row.feature.title }}
+                        </div>
+                        {% for cell in row.cells %}
+                        <div role="cell"{% if cell.plan.is_featured %} class="is-pro"{% endif %}>
+                            {% if cell.value %}
+                                {% if cell.value.value_text %}
+                                    {{ cell.value.value_text }}
+                                {% elif cell.value.is_checked %}
+                                    <span class="vip-check" aria-hidden="true">✓</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
                 </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7V3Z"></path><path d="M15 3v5h5M10 13h6M10 17h4"></path></svg></span>Расширенная статистика</div>
-                    <div role="cell">Ограниченная</div>
-                    <div role="cell" class="is-pro">Полная</div>
-                    <div role="cell">Полная + эксклюзивная</div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 8-12h-6l1-8Z"></path></svg></span>Ранний доступ к прогнозам</div>
-                    <div role="cell">-</div>
-                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
-                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 7c0-2 14-2 14 0s-14 2-14 0Zm0 0v5c0 2 14 2 14 0V7M5 12v5c0 2 14 2 14 0v-5"></path></svg></span>Повышенные лимиты</div>
-                    <div role="cell">До 10 прогнозов в день</div>
-                    <div role="cell" class="is-pro">До 30 прогнозов в день</div>
-                    <div role="cell">Без ограничений</div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"></path><path d="M10 21h4"></path></svg></span>Приоритетная поддержка</div>
-                    <div role="cell">-</div>
-                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
-                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"></path></svg></span>Эксклюзивные материалы</div>
-                    <div role="cell">-</div>
-                    <div role="cell" class="is-pro"><span class="vip-check" aria-hidden="true">✓</span></div>
-                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 5 5 19"></path><circle cx="7" cy="7" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg></span>Персональные акции</div>
-                    <div role="cell">-</div>
-                    <div role="cell" class="is-pro">-</div>
-                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
-                </div>
-                <div class="vip-compare-row" role="row">
-                    <div role="cell"><span class="vip-feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v13H4z"></path><path d="M8 7V5h8v2"></path><path d="M4 12h16"></path></svg></span>Личный менеджер</div>
-                    <div role="cell">-</div>
-                    <div role="cell" class="is-pro">-</div>
-                    <div role="cell"><span class="vip-check" aria-hidden="true">✓</span></div>
-                </div>
-            </div>
+                {% else %}
+                <div class="vip-compare-empty">Данные сравнения появятся после заполнения в админке.</div>
+                {% endif %}
             </section>
         </section>
     </div>
