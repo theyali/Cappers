@@ -87,9 +87,22 @@ class HelpAccordionItemInline(admin.StackedInline):
 class PagePromoBannerInline(admin.TabularInline):
     model = PagePromoBanner
     extra = 1
-    fields = ("sort_order", "placement", "banner")
+    fields = ("sort_order", "placement", "banner", "banner_audience", "banner_is_active")
+    readonly_fields = ("banner_audience", "banner_is_active")
     ordering = ("placement", "sort_order", "id")
     autocomplete_fields = ("banner",)
+
+    @admin.display(description="Аудитория баннера")
+    def banner_audience(self, obj):
+        if not obj.pk or not obj.banner_id:
+            return "—"
+        return obj.banner.get_audience_display()
+
+    @admin.display(description="Активен")
+    def banner_is_active(self, obj):
+        if not obj.pk or not obj.banner_id:
+            return "—"
+        return "Да" if obj.banner.is_active else "Нет"
 
 
 @admin.register(HelpBlock)

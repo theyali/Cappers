@@ -87,6 +87,13 @@
                     {% endfor %}
                 </div>
             </section>
+
+            <aside class="coupon-sidebar bonus-center-aside bonus-banners-aside" aria-label="Баннеры">
+                {% for promo_banner in right_promo_banners %}
+                    {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+                {% endfor %}
+                {% include "pages/_adv_banners.html" with adv_banners=adv_banners placement="sidebar" only %}
+            </aside>
         </div>
     </div>
 </section>

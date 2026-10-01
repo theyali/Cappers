@@ -424,7 +424,7 @@
                                         </svg>
                                         <span>Купить коины</span>
                                     </a>
-                                    <a class="wallet-dashboard-secondary" href="#wallet-coin-history">
+                                    <a class="wallet-dashboard-secondary" href="{% url 'cabinet:coin_operations' %}">
                                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                             <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
                                             <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -486,7 +486,7 @@
                                         <p>История начислений и списаний коинов.</p>
                                     </div>
                                 </div>
-                                <a class="wallet-all-operations" href="#wallet-coin-history">
+                                <a class="wallet-all-operations" href="{% url 'cabinet:coin_operations' %}">
                                     <span>Все операции</span>
                                     <span aria-hidden="true">→</span>
                                 </a>
@@ -531,7 +531,7 @@
                                         <p>История пополнений, выводов и других операций.</p>
                                     </div>
                                 </div>
-                                <a class="wallet-all-operations" href="#wallet-real-history">
+                                <a class="wallet-all-operations" href="{% url 'cabinet:real_operations' %}">
                                     <span>Все операции</span>
                                     <span aria-hidden="true">→</span>
                                 </a>

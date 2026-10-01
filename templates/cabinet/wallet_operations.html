@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ wallet_history_page.title }}{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container wallet-history-page">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page wallet-history-layout">
+            <div class="matches-mobile-scope-panel" aria-label="{{ wallet_history_page.mobile_nav_label }}">
+                <nav class="matches-tabs" aria-label="{{ wallet_history_page.profile_nav_label }}">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <header class="wallet-history-head">
+                <div>
+                    <span class="wallet-dashboard-kicker">{{ wallet_history_page.kicker }}</span>
+                    <h1>{{ wallet_history_page.heading }}</h1>
+                    <p>{{ wallet_history_page.description }}</p>
+                </div>
+                <div class="wallet-history-summary">
+                    <span>{{ wallet_history_page.balance_label }}</span>
+                    <strong>{{ wallet_history_page.balance_value }}</strong>
+                    <a href="{{ wallet_history_page.back_url }}">К балансу</a>
+                </div>
+            </header>
+
+            <section
+                class="wallet-history-panel"
+                data-wallet-history
+                data-history-url="{{ request.path }}"
+                data-next-cursor="{{ next_cursor }}"
+                aria-live="polite"
+            >
+                <div class="wallet-history-list" data-wallet-history-list>
+                    {% include "cabinet/includes/_wallet_operation_rows.html" %}
+                </div>
+
+                <div class="wallet-history-loader" data-wallet-history-loader hidden>
+                    <span></span>
+                    <strong>Загрузка операций</strong>
+                </div>
+
+                <div class="wallet-history-end" data-wallet-history-end{% if next_cursor or not operation_items %} hidden{% endif %}>
+                    Все операции загружены.
+                </div>
+
+                <div class="wallet-history-sentinel" data-wallet-history-sentinel aria-hidden="true"></div>
+            </section>
+        </section>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+<script src="{% static 'front/js/wallet-operations.js' %}" defer></script>
+{% endblock %}

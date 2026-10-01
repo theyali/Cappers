@@ -7,123 +7,124 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-<section class="predictions-page following-feed-page predictions-scroll-page container" aria-label="Моя лента">
-    {% if has_feed_sources %}
-    <div
-        class="predictions-layout following-feed-layout"
-        data-predictions-layout
-        data-filter-state-url="{% url 'front:prediction_filter_state' %}"
-    >
-        {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
+    <section class="predictions-page following-feed-page predictions-scroll-page container" aria-label="Моя лента">
+        {% if has_feed_sources %}
+        <div
+            class="predictions-layout following-feed-layout"
+            data-predictions-layout
+            data-filter-state-url="{% url 'front:prediction_filter_state' %}"
+        >
+            {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
 
-        <div class="predictions-content following-feed-content" data-predictions-content>
-            <section class="following-stories" aria-labelledby="following-stories-title">
-                <div class="following-stories-head">
-                    <div>VIP Капперы</div>
-                    <a href="{{ vip_ranking_url }}">
-                        <span>Смотреть все</span>
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
-                    </a>
-                </div>
-
-                <div class="following-stories-row" aria-label="Истории капперов">
-                    {% for story in vip_stories %}
-                    <a class="following-story-card" href="{{ story.profile_url }}">
-                        <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
-                            {% if story.avatar_url %}
-                                <img src="{{ story.avatar_url }}" width="72" height="72" loading="lazy" alt="">
-                            {% else %}
-                                {{ story.initial }}
-                            {% endif %}
-                            {% if forloop.first %}
-                            <b>1</b>
-                            {% else %}
-                            <small class="capper-verified-badge prediction-verified" aria-hidden="true"></small>
-                            {% endif %}
-                        </span>
-                        <span>{{ story.name }}</span>
-                    </a>
-                    {% endfor %}
-                </div>
-            </section>
-
-            {% if page_obj.object_list or paid_predictions or paid_upgrade_offers %}
-                {% if is_rich_predictions %}
-                    {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
-                    <div class="content-view-container">
-                        {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
-                        {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
-                        {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
+            <div class="predictions-content following-feed-content" data-predictions-content>
+                <section class="following-stories" aria-labelledby="following-stories-title">
+                    <div class="following-stories-head">
+                        <div>VIP Капперы</div>
+                        <a href="{{ vip_ranking_url }}">
+                            <span>Смотреть все</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
+                        </a>
                     </div>
-                {% else %}
-                <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
-                    {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=True %}
 
-                    <div class="content-view-container" data-content-view-container>
-                        <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                    <div class="following-stories-row" aria-label="Истории капперов">
+                        {% for story in vip_stories %}
+                        <a class="following-story-card" href="{{ story.profile_url }}">
+                            <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
+                                {% if story.avatar_url %}
+                                    <img src="{{ story.avatar_url }}" width="72" height="72" loading="lazy" alt="">
+                                {% else %}
+                                    {{ story.initial }}
+                                {% endif %}
+                                {% if forloop.first %}
+                                <b>1</b>
+                                {% else %}
+                                <small class="capper-verified-badge prediction-verified" aria-hidden="true"></small>
+                                {% endif %}
+                            </span>
+                            <span>{{ story.name }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                {% if page_obj.object_list or paid_predictions or paid_upgrade_offers %}
+                    {% if is_rich_predictions %}
+                        {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
+                        <div class="content-view-container">
                             {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
                             {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
                             {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
                         </div>
-                        <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
-                            {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="table" %}
-                            {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="table" %}
-                            {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="table" %}
+                    {% else %}
+                    <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
+                        {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=True %}
+
+                        <div class="content-view-container" data-content-view-container>
+                            <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
+                                {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
+                                {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
+                                {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
+                            </div>
+                            <div data-content-view-panel="table"{% if content_view_mode != 'table' %} hidden{% endif %}>
+                                {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="table" %}
+                                {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="table" %}
+                                {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="table" %}
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-                {% if page_obj.object_list %}
-                <div
-                    class="predictions-lazy"
-                    data-predictions-lazy
-                    data-current-page="{{ page_obj.number }}"
-                    data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
-                >
-                    <button type="button" data-predictions-lazy-button{% if not page_obj.has_next %} disabled{% endif %}>
-                        {% if page_obj.has_next %}Показать еще{% else %}Все прогнозы загружены{% endif %}
-                    </button>
-                    <span data-predictions-lazy-status></span>
+                    {% if page_obj.object_list %}
+                    <div
+                        class="predictions-lazy"
+                        data-predictions-lazy
+                        data-current-page="{{ page_obj.number }}"
+                        data-next-page="{% if page_obj.has_next %}{{ page_obj.next_page_number }}{% endif %}"
+                    >
+                        <button type="button" data-predictions-lazy-button{% if not page_obj.has_next %} disabled{% endif %}>
+                            {% if page_obj.has_next %}Показать еще{% else %}Все прогнозы загружены{% endif %}
+                        </button>
+                        <span data-predictions-lazy-status></span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
+                <div class="predictions-empty following-feed-empty">
+                    <h2>По этим условиям прогнозов нет</h2>
+                    <p>Попробуйте сбросить фильтры или дождитесь новых прогнозов от ваших капперов.</p>
+                    <a class="prediction-filter-reset is-empty" href="{{ filter_action_url }}" data-prediction-ajax-link>Сбросить фильтры</a>
+                    <a class="following-feed-empty-action" href="{% url 'front:predictions' %}">Посмотреть все прогнозы →</a>
                 </div>
                 {% endif %}
-            {% else %}
-            {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
-            <div class="predictions-empty following-feed-empty">
-                <h2>По этим условиям прогнозов нет</h2>
-                <p>Попробуйте сбросить фильтры или дождитесь новых прогнозов от ваших капперов.</p>
-                <a class="prediction-filter-reset is-empty" href="{{ filter_action_url }}" data-prediction-ajax-link>Сбросить фильтры</a>
-                <a class="following-feed-empty-action" href="{% url 'front:predictions' %}">Посмотреть все прогнозы →</a>
             </div>
-            {% endif %}
+            
+            {% include "front/includes/_prediction_ad_sidebar.html" %}
         </div>
 
-        {% include "front/includes/_prediction_ad_sidebar.html" %}
-    </div>
-
-    {% else %}
-    <div class="following-feed-onboarding">
-        <span class="following-feed-onboarding-icon" aria-hidden="true">+</span>
-        <div>
-            <p class="predictions-eyebrow">Соберите свою ленту</p>
-            <h2>Вы пока ни на кого не подписаны</h2>
-            <p>Откройте рейтинг капперов или общую ленту, выберите интересных экспертов и нажмите «Подписаться». После этого их новые прогнозы будут появляться здесь автоматически.</p>
+        {% else %}
+        <div class="following-feed-onboarding">
+            <span class="following-feed-onboarding-icon" aria-hidden="true">+</span>
+            <div>
+                <p class="predictions-eyebrow">Соберите свою ленту</p>
+                <h2>Вы пока ни на кого не подписаны</h2>
+                <p>Откройте рейтинг капперов или общую ленту, выберите интересных экспертов и нажмите «Подписаться». После этого их новые прогнозы будут появляться здесь автоматически.</p>
+            </div>
+            <div class="following-feed-onboarding-actions">
+                <a class="is-primary" href="{% url 'front:cappers_table' %}">Найти капперов</a>
+                <a href="{% url 'front:predictions' %}">Все прогнозы</a>
+            </div>
         </div>
-        <div class="following-feed-onboarding-actions">
-            <a class="is-primary" href="{% url 'front:cappers_table' %}">Найти капперов</a>
-            <a href="{% url 'front:predictions' %}">Все прогнозы</a>
-        </div>
-    </div>
-    {% endif %}
-</section>
+        {% endif %}
+    </section>
 {% endblock %}
 
 {% block extra_js %}
 {% if has_feed_sources %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
-<script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
-<script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+    <script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
+    <script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 {% endif %}
+
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
 {% endblock %}

@@ -45,6 +45,11 @@
     });
 
     panel.addEventListener("click", (event) => {
+        if (event.target.closest("[data-mobile-offcanvas-close]")) {
+            close();
+            return;
+        }
+
         const link = event.target.closest("a[href]");
         if (link) close({ restoreFocus: false });
     });
@@ -90,6 +95,95 @@
     } else {
         mobileQuery.addListener(handleBreakpoint);
     }
+
+    const getCookie = (name) => {
+        const cookies = document.cookie ? document.cookie.split(";") : [];
+        for (const cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith(`${name}=`)) {
+                return decodeURIComponent(trimmed.slice(name.length + 1));
+            }
+        }
+        return "";
+    };
+
+    const syncBalanceVisibility = (hidden, visibleValue, maskedValue = "***") => {
+        const displayValue = hidden ? maskedValue : visibleValue;
+        document.querySelectorAll("[data-wallet-balance]").forEach((node) => {
+            if (!node.dataset.walletBalanceVisible && visibleValue) {
+                node.dataset.walletBalanceVisible = visibleValue;
+            }
+            node.textContent = displayValue;
+        });
+
+        panel.querySelectorAll("[data-balance-visibility-toggle]").forEach((button) => {
+            button.classList.toggle("is-hidden", hidden);
+            button.setAttribute("aria-pressed", String(hidden));
+            button.setAttribute(
+                "aria-label",
+                hidden ? button.dataset.hiddenLabel : button.dataset.visibleLabel,
+            );
+        });
+    };
+
+    panel.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-balance-visibility-toggle]");
+        if (!button || !panel.contains(button)) return;
+        event.preventDefault();
+
+        const url = button.dataset.url;
+        const balanceNode = panel.querySelector("[data-wallet-balance]");
+        const visibleValue = balanceNode?.dataset.walletBalanceVisible || balanceNode?.textContent || "";
+        const maskedValue = balanceNode?.dataset.walletBalanceMasked || "***";
+        const nextHidden = !button.classList.contains("is-hidden");
+
+        if (!url) {
+            syncBalanceVisibility(nextHidden, visibleValue, maskedValue);
+            return;
+        }
+
+        button.disabled = true;
+        const applyPayload = (payload) => {
+            if (!payload || payload.ok === false) return;
+            syncBalanceVisibility(
+                Boolean(payload.hidden),
+                payload.balance_display || visibleValue,
+                payload.masked_display || maskedValue,
+            );
+        };
+        const finish = () => {
+            button.disabled = false;
+        };
+
+        if (window.jQuery) {
+            window.jQuery.ajax({
+                url,
+                method: "POST",
+                dataType: "json",
+                data: { hidden: nextHidden ? "true" : "false" },
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            })
+                .done(applyPayload)
+                .always(finish);
+            return;
+        }
+
+        fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            body: new URLSearchParams({ hidden: nextHidden ? "true" : "false" }),
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        })
+            .then((response) => response.json())
+            .then(applyPayload)
+            .finally(finish);
+    });
 })();
 
 (() => {

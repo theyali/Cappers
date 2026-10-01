@@ -148,12 +148,10 @@
     if (settingsForm) {
         settingsForm.addEventListener("submit", async (event) => {
             event.preventDefault();
-            const block = settingsForm.closest("[data-notification-settings-block]");
             const button = settingsForm.querySelector("[data-settings-save]");
             const originalText = button?.textContent || "Сохранить настройки";
 
             if (button) button.disabled = true;
-            window.CappersSkeleton?.loading(block);
             try {
                 const response = await fetch(settingsForm.action, {
                     method: "POST",
@@ -178,7 +176,6 @@
                         button.textContent = originalText;
                     }, 1600);
                 }
-                window.CappersSkeleton?.ready(block);
             }
         });
     }

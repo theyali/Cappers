@@ -4,12 +4,16 @@ from .models import CoinWallet
 from .services import ensure_coin_wallet, format_coins
 
 
+BALANCE_HIDDEN_SESSION_KEY = "mobile_coin_balance_hidden"
+
+
 def coin_wallet(request) -> dict:
     user = getattr(request, "user", None)
     if not user or not user.is_authenticated:
         return {
             "nav_coin_balance": None,
             "nav_coin_balance_display": "",
+            "mobile_coin_balance_hidden": False,
         }
 
     try:
@@ -28,4 +32,7 @@ def coin_wallet(request) -> dict:
     return {
         "nav_coin_balance": balance,
         "nav_coin_balance_display": format_coins(balance),
+        "mobile_coin_balance_hidden": bool(
+            request.session.get(BALANCE_HIDDEN_SESSION_KEY, False)
+        ),
     }

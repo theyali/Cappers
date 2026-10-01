@@ -75,6 +75,13 @@
         );
     };
 
+    const setSectionBadges = (sectionBadges = {}) => {
+        document.querySelectorAll("[data-notification-section-badge]").forEach((dot) => {
+            const section = dot.dataset.notificationSectionBadge || "";
+            dot.classList.toggle("is-empty", !sectionBadges[section]);
+        });
+    };
+
     const getToastStack = () => {
         let stack = document.querySelector("[data-notification-toast-stack]");
         if (stack) return stack;
@@ -189,6 +196,7 @@
             if (!data || !data.ok) return;
 
             setBadge(data.unread_count);
+            setSectionBadges(data.section_badges || {});
 
             const serverLatestId = Number.parseInt(data.latest_id, 10) || 0;
             if (cursorId !== null && serverLatestId < cursorId) {

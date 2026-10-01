@@ -1517,6 +1517,13 @@ body.wiki-video-player-open {
     background: var(--yellow);
     box-shadow: 0 0 0 2px rgba(255, 242, 0, 0.14);
 }
+.nav-profile-dropdown-dot.is-empty { display: none; }
+.site-nav-section-dot {
+    width: 9px;
+    height: 9px;
+    margin-left: -4px;
+    flex: 0 0 auto;
+}
 .nav-profile-dropdown-chevron {
     width: 12px;
     height: 12px;
@@ -2622,7 +2629,6 @@ body.wiki-video-player-open {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
 }
-.cabinet-bonus-tasks-page .bonus-tasks-layout,
 .match-card-odds-row.without-bookmaker,
 .matches-shell:not(:has(.coupon-sidebar)),
 .prediction-card-text-preview:not(:has(.prediction-card-text-cover)),
@@ -6881,6 +6887,12 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     font-size: 10px;
     font-weight: 700;
     text-align: right;
+}
+.matches-table-scope-link > .nav-profile-dropdown-dot {
+    width: 9px;
+    height: 9px;
+    margin-left: auto;
+    flex: 0 0 auto;
 }
 .matches-table-filter-chevron { width: 14px; height: 14px; color: #4c4c4f; }
 .matches-table-date-current {
@@ -11561,6 +11573,171 @@ body.register footer {
 .wallet-operation-real-value { min-width: 0; text-align: right; }
 .wallet-operation-real-value > span { display: block; margin-top: 4px; color: #777981; font-size: 8px; }
 #profile-tab-wallet .profile-empty-state { min-height: 130px; margin-top: 6px; border-radius: 12px; background: var(--ink); }
+.wallet-history-layout {
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+}
+.wallet-history-page .matches-shell {
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+}
+.wallet-history-head {
+    min-width: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 2px 6px;
+}
+.wallet-history-head h1 {
+    margin: 0;
+    color: #f6f6f7;
+    font-size: 24px;
+    line-height: 1.12;
+}
+.wallet-history-head p {
+    max-width: 620px;
+    margin: 9px 0 0;
+    color: #85878e;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.wallet-history-summary {
+    min-width: 210px;
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+}
+.wallet-history-summary span {
+    color: #85878e;
+    font-size: 10px;
+    line-height: 1.2;
+}
+.wallet-history-summary strong {
+    max-width: 260px;
+    overflow: hidden;
+    color: var(--yellow);
+    font-size: 18px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.wallet-history-summary a {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border-radius: 9px;
+    color: #e4e5e8;
+    background: #24262b;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.wallet-history-panel {
+    min-width: 0;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+.wallet-history-list {
+    min-width: 0;
+    display: grid;
+}
+.wallet-history-row {
+    min-height: 64px;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 11px 0;
+}
+.wallet-history-row .wallet-operation-icon {
+    width: 40px;
+    height: 40px;
+}
+.wallet-history-row .wallet-operation-copy strong {
+    font-size: 12px;
+}
+.wallet-history-row .wallet-operation-copy span {
+    font-size: 10px;
+}
+.wallet-history-row .wallet-operation-amount {
+    font-size: 13px;
+}
+.wallet-history-row .wallet-operation-real-value > span {
+    font-size: 10px;
+}
+.wallet-history-loader,
+.wallet-history-end {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #85878e;
+    font-size: 11px;
+}
+.wallet-history-loader[hidden],
+.wallet-history-end[hidden] {
+    display: none;
+}
+.wallet-history-loader span {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-top-color: var(--yellow);
+    border-radius: 50%;
+    animation: walletHistoryLoaderSpin .8s linear infinite;
+}
+.wallet-history-loader strong {
+    color: #cfd0d4;
+    font-size: 11px;
+    font-weight: 600;
+}
+.wallet-history-sentinel {
+    width: 100%;
+    height: 1px;
+}
+.wallet-history-empty {
+    min-height: 170px;
+    margin: 0;
+    border-radius: 13px;
+    background: var(--ink);
+}
+@keyframes walletHistoryLoaderSpin {
+    to { transform: rotate(360deg); }
+}
+@media (max-width: 900px) {
+    .wallet-history-head {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .wallet-history-summary {
+        min-width: 0;
+        justify-items: start;
+    }
+    .wallet-history-summary strong {
+        max-width: 100%;
+    }
+}
+@media (max-width: 560px) {
+    .wallet-history-panel {
+        padding: 14px;
+        border-radius: 14px;
+    }
+    .wallet-history-head h1 {
+        font-size: 20px;
+    }
+    .wallet-history-row {
+        grid-template-columns: 38px minmax(0, 1fr);
+    }
+    .wallet-history-row .wallet-operation-amount,
+    .wallet-history-row .wallet-operation-real-value {
+        grid-column: 2;
+        justify-content: flex-start;
+        text-align: left;
+    }
+}
 #profile-tab-earnings .earnings-dashboard { min-width: 0; display: grid; gap: 12px; }
 #profile-tab-earnings .earnings-dashboard strong,
 #profile-tab-earnings .earnings-dashboard b,
@@ -16900,6 +17077,17 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     align-items: start;
     padding-top: 20px;
 }
+.cabinet-bonuses-page .bonus-banners-aside {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+}
+.cabinet-bonuses-page .bonus-banners-aside .page-promo-banner,
+.cabinet-bonuses-page .bonus-banners-aside .adv-banner,
+.cabinet-bonuses-page .bonus-banners-aside .adv-banners {
+    width: 100%;
+    min-width: 0;
+}
 .cabinet-bonuses-page .bonus-hero {
     position: relative;
     min-width: 0;
@@ -17274,7 +17462,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     font-weight: 700;
     white-space: nowrap;
 }
-.cabinet-bonus-tasks-page .bonus-tasks-main { width: 100%; max-width: 980px; }
+.cabinet-bonus-tasks-page .bonus-tasks-main { width: 100%;}
 .cabinet-bonus-tasks-page .bonus-tasks-head { min-height: 0; align-items: center; padding: 20px; }
 .cabinet-bonuses-page .bonus-task-row {
     min-width: 0;

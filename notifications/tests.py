@@ -15,6 +15,7 @@ from .models import (
     AdminNotificationCampaign,
     MatchWatch,
     Notification,
+    NotificationSectionState,
     TelegramAccount,
 )
 from .services import (
@@ -59,6 +60,10 @@ class NotificationServiceTests(TestCase):
 
         self.assertEqual(first.pk, second.pk)
         self.assertEqual(Notification.objects.count(), 1)
+        self.assertEqual(
+            NotificationSectionState.objects.filter(user=self.user).count(),
+            1,
+        )
 
     def test_disabled_category_does_not_create_notification(self):
         preferences = get_preferences(self.user)
@@ -74,6 +79,21 @@ class NotificationServiceTests(TestCase):
 
         self.assertIsNone(notification)
         self.assertFalse(Notification.objects.exists())
+
+    def test_create_notification_updates_section_state(self):
+        notification = create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.COPYBETTING,
+            title="Новая ставка скопирована",
+            event_key="test:copybetting:1",
+        )
+
+        state = NotificationSectionState.objects.get(
+            user=self.user,
+            section=NotificationSectionState.Section.COPYBETTING,
+        )
+        self.assertEqual(state.unread_count, 1)
+        self.assertEqual(state.latest_notification, notification)
 
 
     def test_disabled_bonus_referral_category_does_not_create_notification(self):
@@ -212,6 +232,24 @@ class NotificationViewsTests(TestCase):
         self.notification.refresh_from_db()
         self.assertTrue(self.notification.is_read)
         self.assertIsNotNone(self.notification.read_at)
+
+    def test_summary_and_mark_read_return_section_badges(self):
+        notification = create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.COPYBETTING,
+            title="Копибеттинг",
+            event_key="view:test:copybetting",
+        )
+
+        summary = self.client.get(reverse("notifications:summary"))
+        self.assertEqual(summary.status_code, 200)
+        self.assertTrue(summary.json()["section_badges"]["copybetting"])
+
+        response = self.client.post(
+            reverse("notifications:mark_read", args=[notification.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("copybetting", response.json()["section_badges"])
 
     def test_summary_respects_disabled_in_app_channel(self):
         preferences = get_preferences(self.user)

@@ -11,6 +11,7 @@
             <a class="{% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
                 <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
                 <span>Матчи</span>
+                {% if request.user.is_authenticated %}<span class="nav-profile-dropdown-dot site-nav-section-dot{% if not notification_section_badges.matches %} is-empty{% endif %}" data-notification-section-badge="matches" aria-hidden="true"></span>{% endif %}
             </a>
             <a class="{% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
                 <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v15l-4-2-3 2-3-2-4 2V4Zm4 5h6M9 13h4"/></svg></span>
@@ -19,11 +20,13 @@
             <a class="{% if request.resolver_match.app_name == 'tournaments' %}is-active{% endif %}" href="{% url 'tournaments:index' %}">
                 <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
                 <span>Турниры</span>
+                {% if request.user.is_authenticated %}<span class="nav-profile-dropdown-dot site-nav-section-dot{% if not notification_section_badges.tournaments %} is-empty{% endif %}" data-notification-section-badge="tournaments" aria-hidden="true"></span>{% endif %}
             </a>
             {% if request.user.is_authenticated %}
             <a class="{% if request.resolver_match.url_name == 'following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
                 <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"></path><path d="m17 15 3 3 3-3"></path></svg></span>
                 <span>Моя лента</span>
+                <span class="nav-profile-dropdown-dot site-nav-section-dot{% if not notification_section_badges.following %} is-empty{% endif %}" data-notification-section-badge="following" aria-hidden="true"></span>
             </a>
             {% endif %}
             {% include "front/includes/_cappers_nav_menu.html" %}
@@ -97,7 +100,7 @@
                             </span>
                             <span>Копибеттинг</span>
                             <span class="nav-profile-dropdown-meta">
-                                <span class="nav-profile-dropdown-dot" aria-hidden="true"></span>
+                                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.copybetting %} is-empty{% endif %}" data-notification-section-badge="copybetting" aria-hidden="true"></span>
                                 <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
                             </span>
                         </a>
@@ -117,6 +120,7 @@
                             </span>
                             <span>Мои прогнозы</span>
                             <span class="nav-profile-dropdown-meta">
+                                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.predictions %} is-empty{% endif %}" data-notification-section-badge="predictions" aria-hidden="true"></span>
                                 <span class="nav-profile-dropdown-chevron" aria-hidden="true"></span>
                             </span>
                         </a>
