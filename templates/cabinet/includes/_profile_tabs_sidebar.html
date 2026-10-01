@@ -1,13 +1,28 @@
 <aside class="matches-table-filter-sidebar" aria-label="Разделы профиля">
-    <div class="matches-table-filter-head">
-        <span class="matches-table-filter-head-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M4.5 20c.8-4 3.3-6 7.5-6s6.7 2 7.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
+    <div class="matches-table-filter-head matches-table-filter-head-user">
+        <span class="matches-table-filter-head-avatar"{% if request.user.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
+            {% if request.user.avatar %}
+                <img src="{{ request.user.avatar.url }}" width="34" height="34" alt="">
+            {% else %}
+                {% if analyst_profile and analyst_profile.display_name %}
+                    {{ analyst_profile.display_name|first|upper }}
+                {% elif request.user.get_full_name %}
+                    {{ request.user.get_full_name|first|upper }}
+                {% else %}
+                    {{ request.user.username|first|upper }}
+                {% endif %}
+            {% endif %}
         </span>
         <div>
-            <strong>Личный кабинет</strong>
+            <strong>
+                {% if analyst_profile and analyst_profile.display_name %}
+                    {{ analyst_profile.display_name }}
+                {% elif request.user.get_full_name %}
+                    {{ request.user.get_full_name }}
+                {% else %}
+                    {{ request.user.username }}
+                {% endif %}
+            </strong>
             <small>@{{ request.user.username }}</small>
         </div>
     </div>

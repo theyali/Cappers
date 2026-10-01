@@ -1,6 +1,7 @@
 import sys
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.db import connection, transaction
 from django.dispatch import receiver
@@ -20,8 +21,16 @@ from .monthly_stats import monthly_stat_key, rebuild_capper_month
 from .trust_index import refresh_capper_trust_index
 
 
+EXPERT_RANKING_REFRESH_DEBOUNCE_SECONDS = 60
+
+
 def _profile_has_paid_predictions(profile: AnalystProfile) -> bool:
     return bool(profile.paid_predictions_enabled and profile.paid_predictions_price > 0)
+
+
+def _ranking_refresh_enqueue_key(periods: list[str]) -> str:
+    value = ",".join(periods) if periods else "core"
+    return f"expert-ranking:refresh:queued:{value}"
 
 
 def _refresh_expert_rankings(*, periods: set[str] | None = None) -> None:
@@ -34,6 +43,20 @@ def _refresh_expert_rankings(*, periods: set[str] | None = None) -> None:
     def refresh() -> None:
         if run_inline:
             refresh_core_expert_rankings(periods=period_list)
+            return
+        try:
+            queued = cache.add(
+                _ranking_refresh_enqueue_key(period_list),
+                True,
+                timeout=getattr(
+                    settings,
+                    "EXPERT_RANKING_REFRESH_DEBOUNCE_SECONDS",
+                    EXPERT_RANKING_REFRESH_DEBOUNCE_SECONDS,
+                ),
+            )
+        except Exception:
+            queued = True
+        if not queued:
             return
         refresh_expert_rankings_task.delay(period_list)
 

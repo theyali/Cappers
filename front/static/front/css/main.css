@@ -6773,6 +6773,32 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     background: #242426;
 }
 .matches-table-filter-head-icon svg { width: 19px; height: 19px; }
+.matches-table-filter-head-avatar {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #242426;
+    color: var(--yellow);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1;
+}
+.matches-table-filter-head-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+.matches-table-filter-head-user strong,
+.matches-table-filter-head-user small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 .feed-prediction-author-copy,
 .matches-table-filter-head > div,
 .profile-cover-lock-copy {
@@ -7925,6 +7951,11 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     scrollbar-color: #3a3a3d transparent;
 }
 .filter_matches { padding: 10px; background: var(--panel); }
+.prediction-filter-promos {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+}
 .prediction-filter-sidebar .prediction-filters,
 .predictions-filter-sidebar .prediction-filters {
     display: grid;
@@ -10735,7 +10766,7 @@ body.register footer {
     place-items: center;
     padding: 18px;
 }
-.profile-email-modal-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.68); }
+.profile-email-modal-backdrop { position: absolute; inset: 0; border: 0; background: rgba(0, 0, 0, 0.68); cursor: pointer; }
 .profile-email-modal-card {
     position: relative;
     z-index: 1;
@@ -10799,6 +10830,25 @@ body.register footer {
     border-radius: 13px;
     color: #fff;
     background: #0b56fa;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+}
+.vip-switch-modal-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+.vip-switch-modal-cancel {
+    min-height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 13px;
+    color: #fff;
+    background: #303033;
     cursor: pointer;
     font: inherit;
     font-size: 13px;
@@ -18010,7 +18060,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .rich-prediction-shell { display: grid; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; gap: 16px; }
 .rich-prediction-editor { display: grid; align-content: start; gap: 12px; }
 .rich-prediction-back { width: max-content; color: #a5a8b1; font-size: 13px; font-weight: 600; }
-.rich-prediction-back::before { content: "←"; margin-right: 8px; }
+.rich-prediction-back::before { content: "\2190"; margin-right: 8px; }
 .rich-prediction-editor-head,
 .rich-prediction-preview-card,
 .rich-prediction-section {

@@ -50,7 +50,7 @@ def _validate_source(source: str) -> str:
     return source
 
 
-def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None):
+def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None, append_existing=True):
     from .models import UserVipSubscription
 
     if user is None or not getattr(user, "pk", None):
@@ -65,16 +65,18 @@ def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None
 
         # Include already scheduled continuation periods so concurrent grants are
         # always appended to the furthest active VIP tail instead of overlapping.
-        vip_tail = (
-            UserVipSubscription.objects.select_for_update()
-            .filter(
-                user_id=locked_user.pk,
-                is_active=True,
-                ends_at__gt=now,
+        vip_tail = None
+        if append_existing:
+            vip_tail = (
+                UserVipSubscription.objects.select_for_update()
+                .filter(
+                    user_id=locked_user.pk,
+                    is_active=True,
+                    ends_at__gt=now,
+                )
+                .order_by("-ends_at", "-id")
+                .first()
             )
-            .order_by("-ends_at", "-id")
-            .first()
-        )
 
         actual_starts_at = vip_tail.ends_at if vip_tail is not None else (starts_at or now)
         actual_ends_at = actual_starts_at + timedelta(days=duration_days)
@@ -107,6 +109,30 @@ def activate_vip(user, plan, source, starts_at=None):
     )
 
 
+def switch_vip(user, plan, source):
+    """Replace current and scheduled VIP periods with a new tariff from now."""
+    from .models import UserVipSubscription, VipPlan
+
+    if plan is None or not getattr(plan, "pk", None):
+        raise ValidationError("VIP-тариф не найден.")
+
+    current_plan = VipPlan.objects.get(pk=plan.pk)
+    now = timezone.now()
+    UserVipSubscription.objects.select_for_update().filter(
+        user_id=user.pk,
+        is_active=True,
+        ends_at__gt=now,
+    ).update(is_active=False, updated_at=now)
+    return _create_vip_period(
+        user=user,
+        duration_days=current_plan.duration_days,
+        source=source,
+        plan=current_plan,
+        starts_at=now,
+        append_existing=False,
+    )
+
+
 def extend_vip(user, days, source, starts_at=None):
     """Grant arbitrary VIP days through the same period-extension rules."""
     return _create_vip_period(
@@ -117,7 +143,7 @@ def extend_vip(user, days, source, starts_at=None):
     )
 
 
-def purchase_vip(user, plan):
+def purchase_vip(user, plan, *, switch=False):
     """Purchase an active VIP tariff with real balance in a single transaction."""
     from wallets.models import RealBalanceTransaction
     from wallets.services import debit_real_balance, ensure_real_balance
@@ -134,11 +160,22 @@ def purchase_vip(user, plan):
         if not current_plan.is_active:
             raise ValidationError("Этот VIP-тариф больше недоступен.")
 
-        subscription = activate_vip(
-            user,
-            current_plan,
-            UserVipSubscription.Source.PURCHASE,
-        )
+        active_subscription = get_active_vip(user)
+        if active_subscription and active_subscription.plan_id != current_plan.pk and not switch:
+            raise ValidationError("Подтвердите переход на другой VIP-тариф.")
+
+        if switch and active_subscription and active_subscription.plan_id != current_plan.pk:
+            subscription = switch_vip(
+                user,
+                current_plan,
+                UserVipSubscription.Source.PURCHASE,
+            )
+        else:
+            subscription = activate_vip(
+                user,
+                current_plan,
+                UserVipSubscription.Source.PURCHASE,
+            )
         if current_plan.price_rub > 0:
             real_balance = debit_real_balance(
                 user,

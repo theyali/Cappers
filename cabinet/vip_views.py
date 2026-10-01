@@ -60,6 +60,20 @@ def _request_plan_id(request):
     return None
 
 
+def _request_purchase_mode(request):
+    mode = request.POST.get("purchase_mode")
+    if mode:
+        return mode
+
+    if request.content_type == "application/json":
+        try:
+            payload = json.loads(request.body or b"{}")
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return ""
+        return payload.get("purchase_mode", "")
+    return ""
+
+
 def _error_message(exc) -> str:
     if isinstance(exc, ValidationError):
         return exc.messages[0] if exc.messages else str(exc)
@@ -135,6 +149,7 @@ def vip_plans(request):
 @require_POST
 def vip_purchase(request):
     plan_id = _request_plan_id(request)
+    purchase_mode = _request_purchase_mode(request)
     if not plan_id:
         if not _wants_json(request):
             messages.error(request, "Не выбран VIP-тариф.")
@@ -146,7 +161,11 @@ def vip_purchase(request):
 
     plan = get_object_or_404(VipPlan, pk=plan_id, is_active=True)
     try:
-        subscription, real_balance = purchase_vip(request.user, plan)
+        subscription, real_balance = purchase_vip(
+            request.user,
+            plan,
+            switch=purchase_mode == "switch",
+        )
     except (ValidationError, InsufficientBalance) as exc:
         if not _wants_json(request):
             messages.error(request, _error_message(exc))

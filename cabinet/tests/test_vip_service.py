@@ -170,6 +170,77 @@ class VipPurchaseTests(TestCase):
         self.assertEqual(latest.starts_at, current_end)
         self.assertEqual(latest.ends_at, current_end + timedelta(days=7))
 
+    def test_purchase_requires_switch_confirmation_for_different_active_plan(self):
+        other_plan = VipPlan.objects.create(
+            title="VIP 30",
+            duration_days=30,
+            price_rub=200,
+            is_active=True,
+        )
+        UserVipSubscription.objects.create(
+            user=self.user,
+            plan=self.plan,
+            starts_at=timezone.now() - timedelta(days=1),
+            ends_at=timezone.now() + timedelta(days=6),
+            duration_days=7,
+            source=UserVipSubscription.Source.PURCHASE,
+        )
+
+        response = self.client.post(
+            reverse("cabinet:vip_purchase"),
+            {"plan_id": other_plan.pk},
+            HTTP_ACCEPT="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.user.real_balance.refresh_from_db()
+        self.assertEqual(self.user.real_balance.balance, 500)
+        self.assertFalse(
+            UserVipSubscription.objects.filter(
+                user=self.user,
+                plan=other_plan,
+                is_active=True,
+            ).exists()
+        )
+
+    def test_purchase_switch_deactivates_old_plan_and_starts_new_plan_now(self):
+        other_plan = VipPlan.objects.create(
+            title="VIP 30",
+            duration_days=30,
+            price_rub=200,
+            is_active=True,
+        )
+        old_subscription = UserVipSubscription.objects.create(
+            user=self.user,
+            plan=self.plan,
+            starts_at=timezone.now() - timedelta(days=1),
+            ends_at=timezone.now() + timedelta(days=6),
+            duration_days=7,
+            source=UserVipSubscription.Source.PURCHASE,
+        )
+
+        before = timezone.now()
+        response = self.client.post(
+            reverse("cabinet:vip_purchase"),
+            {"plan_id": other_plan.pk, "purchase_mode": "switch"},
+            HTTP_ACCEPT="application/json",
+        )
+        after = timezone.now()
+
+        self.assertEqual(response.status_code, 200)
+        old_subscription.refresh_from_db()
+        self.assertFalse(old_subscription.is_active)
+        new_subscription = UserVipSubscription.objects.get(
+            user=self.user,
+            plan=other_plan,
+            is_active=True,
+        )
+        self.assertGreaterEqual(new_subscription.starts_at, before)
+        self.assertLessEqual(new_subscription.starts_at, after)
+        self.assertEqual(new_subscription.duration_days, 30)
+        self.user.real_balance.refresh_from_db()
+        self.assertEqual(self.user.real_balance.balance, 300)
+
     def test_failed_payment_rolls_back_new_vip_period(self):
         self.user.real_balance.balance = 10
         self.user.real_balance.save(update_fields=["balance", "updated_at"])
