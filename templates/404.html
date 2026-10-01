@@ -1,0 +1,177 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Страница не найдена — КапперХаб</title>
+    <link rel="icon" type="image/png" href="{% static 'front/img/favicon.png' %}">
+    <style>
+        :root {
+            color-scheme: dark;
+            --blue: #065fff;
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, 0.62);
+            --stroke: rgba(255, 255, 255, 0.22);
+        }
+        @font-face {
+            font-family: Manrope;
+            src: url("{% static 'front/fonts/manrope-cyrillic-wght-normal.woff2' %}") format("woff2");
+            font-weight: 400 900;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: "Russo One";
+            src: url("{% static 'front/fonts/russo-one-cyrillic-400-normal.woff2' %}") format("woff2");
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        * { box-sizing: border-box; }
+        html,
+        body { min-height: 100%; }
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            background: #05070a;
+            color: var(--text);
+            font-family: Manrope, Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        .error-page {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            position: relative;
+            isolation: isolate;
+            padding: 56px 20px;
+            background:
+                linear-gradient(180deg, rgba(3, 5, 8, 0.1) 0%, rgba(3, 5, 8, 0.2) 46%, rgba(3, 5, 8, 0.7) 100%),
+                url("{% static 'front/img/505_bg.png' %}") center / cover no-repeat;
+        }
+        .error-page::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 50% 43%, rgba(6, 95, 255, 0.12), transparent 28%),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.26), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.26));
+            pointer-events: none;
+        }
+        .error-content {
+            width: min(860px, 100%);
+            display: grid;
+            justify-items: center;
+            text-align: center;
+            transform: translateY(-5vh);
+        }
+        .error-code-art {
+            width: min(650px, 88vw);
+            aspect-ratio: 1672 / 941;
+            margin-bottom: -46px;
+            object-fit: contain;
+            filter: drop-shadow(0 22px 42px rgba(0, 0, 0, 0.48));
+            pointer-events: none;
+            user-select: none;
+        }
+        .error-title {
+            margin: 0;
+            font-size: clamp(36px, 5.2vw, 64px);
+            line-height: 0.95;
+            font-family: "Russo One", Manrope, system-ui, sans-serif;
+            font-weight: 400;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            text-shadow: 0 4px 22px rgba(255, 255, 255, 0.2);
+        }
+        .error-copy {
+            max-width: 720px;
+            margin: 20px 0 0;
+            color: var(--muted);
+            font-size: clamp(17px, 2vw, 23px);
+            line-height: 1.45;
+            font-weight: 600;
+        }
+        .error-actions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: min(610px, 100%);
+            margin-top: 34px;
+        }
+        .error-action {
+            min-height: 66px;
+            flex: 1 1 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 18px 24px;
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(9, 12, 18, 0.58);
+            text-decoration: none;
+            font: inherit;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+        }
+        .error-action.is-primary {
+            border-color: transparent;
+            background: var(--blue);
+            color: #fff;
+            box-shadow: 0 0 34px rgba(6, 95, 255, 0.42);
+        }
+        .error-action svg {
+            width: 28px;
+            height: 28px;
+            flex: 0 0 28px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.9;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        @media (max-width: 720px) {
+            .error-page { padding: 34px 16px; }
+            .error-content { transform: translateY(-3vh); }
+            .error-code-art {
+                width: min(520px, 108vw);
+                margin-bottom: -28px;
+            }
+            .error-actions {
+                display: grid;
+                gap: 12px;
+                margin-top: 26px;
+            }
+            .error-action {
+                min-height: 58px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="error-page" aria-labelledby="error-title">
+        <section class="error-content">
+            <img class="error-code-art" src="{% static 'front/img/404.png' %}" width="1672" height="941" alt="404">
+            <h1 class="error-title" id="error-title">Страница не найдена</h1>
+            <p class="error-copy">Похоже, этот адрес вне игры. Проверьте ссылку или вернитесь на главную страницу.</p>
+            <div class="error-actions" aria-label="Действия">
+                <a class="error-action is-primary" href="/">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5.5 9.5V21h13V9.5"></path><path d="M9 21v-6h6v6"></path></svg>
+                    <span>На главную</span>
+                </a>
+                <button class="error-action" type="button" onclick="if (history.length > 1) { history.back(); } else { window.location.href = '/'; }">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path></svg>
+                    <span>Вернуться назад</span>
+                </button>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -230,22 +230,22 @@ CELERY_BEAT_SCHEDULE = {
     "fetch-live-tennis-matches": {
         "task": "game.tasks.fetch_live_tennis_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "options": {"expire_seconds": 14},
     },
     "fetch-live-football-matches": {
         "task": "game.tasks.fetch_live_football_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "options": {"expire_seconds": 14},
     },
     "fetch-live-hockey-matches": {
         "task": "game.tasks.fetch_live_hockey_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "options": {"expire_seconds": 14},
     },
     "fetch-live-basketball-matches": {
         "task": "game.tasks.fetch_live_basketball_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "options": {"expire_seconds": 14},
     },
     "sync-stuck-live-matches": {
         "task": "game.tasks.sync_stuck_live_matches",

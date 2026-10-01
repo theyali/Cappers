@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load money %}
+{% load money static %}
 
 {% block title %}{{ page.title }}{% endblock %}
 
@@ -77,10 +77,29 @@
                     </p>
                     <strong class="vip-plan-price">{{ plan.price_display }} ₽</strong>
                     <small>на {{ plan.duration_days }} дней</small>
-                    <form method="post" action="{% url 'cabinet:vip_purchase' %}" class="vip-plan-action" data-no-transition>
+                    <form
+                        method="post"
+                        action="{% url 'cabinet:vip_purchase' %}"
+                        class="vip-plan-action"
+                        data-no-transition
+                        data-vip-plan-form
+                    >
                         {% csrf_token %}
                         <input type="hidden" name="plan_id" value="{{ plan.id }}">
-                        <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>Выбрать тариф</button>
+                        <input type="hidden" name="purchase_mode" value="extend" data-vip-purchase-mode>
+                        {% if active_vip and active_vip.plan_id != plan.id %}
+                        <button
+                            class="profile-save-button"
+                            type="button"
+                            data-vip-switch-open
+                            data-vip-plan-title="{{ plan.title }}"
+                            {% if not plan.can_afford %}disabled{% endif %}
+                        >Перейти на тариф</button>
+                        {% else %}
+                        <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>
+                            {% if active_vip and active_vip.plan_id == plan.id %}Продлить тариф{% else %}Выбрать тариф{% endif %}
+                        </button>
+                        {% endif %}
                     </form>
                 </article>
                 {% empty %}
@@ -152,4 +171,31 @@
         </section>
     </div>
 </section>
+
+<div class="profile-email-modal vip-switch-modal" data-vip-switch-modal aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="vip-switch-modal-title">
+    <button class="profile-email-modal-backdrop" type="button" data-vip-switch-close aria-label="Закрыть"></button>
+    <section class="profile-email-modal-card">
+        <button class="profile-email-modal-close" type="button" data-vip-switch-close aria-label="Закрыть">×</button>
+        <div class="profile-email-modal-head">
+            <span class="profile-email-modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3 3 20h18L12 3Z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+            </span>
+            <div>
+                <p class="eyebrow">Смена VIP-тарифа</p>
+                <h2 id="vip-switch-modal-title">Перейти на другой тариф?</h2>
+            </div>
+        </div>
+        <p class="profile-email-modal-copy">
+            При переходе текущий VIP-тариф будет аннулирован, а новый тариф начнёт действовать сразу после оплаты.
+        </p>
+        <div class="vip-switch-modal-actions">
+            <button class="profile-email-modal-submit" type="button" data-vip-switch-confirm>Перейти</button>
+            <button class="vip-switch-modal-cancel" type="button" data-vip-switch-close>Отмена</button>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/vip-plans.js' %}" defer></script>
 {% endblock %}
