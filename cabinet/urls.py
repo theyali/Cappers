@@ -26,6 +26,8 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("profile/wallet/coins/", views.coin_operations, name="coin_operations"),
+    path("profile/wallet/real/", views.real_operations, name="real_operations"),
     path("articles/", views.capper_articles, name="capper_articles"),
     path("articles/new/", views.capper_article_create, name="capper_article_create"),
     path(

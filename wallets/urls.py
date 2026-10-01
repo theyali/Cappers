@@ -7,6 +7,7 @@ app_name = "wallets"
 
 urlpatterns = [
     path("top-up/", views.top_up_balance, name="top_up"),
+    path("balance-visibility/", views.balance_visibility, name="balance_visibility"),
     path("real/action/", views.real_balance_action, name="real_action"),
     path("copybetting/<int:analyst_id>/", views.copybetting_setup, name="copybetting_setup"),
     path("copybetting/<int:subscription_id>/pause/", views.copybetting_pause, name="copybetting_pause"),

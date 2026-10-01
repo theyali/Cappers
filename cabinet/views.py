@@ -9,8 +9,10 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
@@ -58,6 +60,9 @@ from .services.capper_articles import (
 )
 from .services.daily_tasks import record_daily_task_action
 from .vip import annotate_vip_status, attach_vip_status_to_user
+
+
+WALLET_OPERATION_PAGE_SIZE = 20
 
 
 def _error_message(exc) -> str:
@@ -379,6 +384,150 @@ def _copybetting_audience_context(user) -> dict:
             .order_by("-created_at", "-id")[:20]
         ),
     }
+
+
+def _wallet_operation_cursor(operation) -> str:
+    return f"{operation.created_at.isoformat()}|{operation.pk}"
+
+
+def _parse_wallet_operation_cursor(raw_cursor: str):
+    if not raw_cursor or "|" not in raw_cursor:
+        return None
+
+    raw_created_at, raw_pk = raw_cursor.rsplit("|", 1)
+    created_at = parse_datetime(raw_created_at)
+    if created_at is None:
+        return None
+    if timezone.is_naive(created_at):
+        created_at = timezone.make_aware(created_at, timezone.get_current_timezone())
+
+    try:
+        pk = int(raw_pk)
+    except (TypeError, ValueError):
+        return None
+
+    return created_at, pk
+
+
+def _slice_wallet_operations(queryset, raw_cursor: str):
+    cursor = _parse_wallet_operation_cursor(raw_cursor)
+    if cursor is not None:
+        created_at, pk = cursor
+        queryset = queryset.filter(
+            Q(created_at__lt=created_at)
+            | Q(created_at=created_at, pk__lt=pk)
+        )
+
+    operations = list(queryset[: WALLET_OPERATION_PAGE_SIZE + 1])
+    visible_operations = operations[:WALLET_OPERATION_PAGE_SIZE]
+    has_next = len(operations) > WALLET_OPERATION_PAGE_SIZE
+    next_cursor = _wallet_operation_cursor(visible_operations[-1]) if has_next and visible_operations else ""
+    return visible_operations, next_cursor
+
+
+def _wallet_history_response(
+    request,
+    *,
+    operation_type: str,
+    queryset,
+    title: str,
+    heading: str,
+    description: str,
+    kicker: str,
+    empty_message: str,
+    balance_label: str,
+    balance_value: str,
+):
+    operations, next_cursor = _slice_wallet_operations(
+        queryset.order_by("-created_at", "-id"),
+        request.GET.get("cursor", ""),
+    )
+    operation_context = {
+        "operation_items": operations,
+        "operation_type": operation_type,
+        "empty_message": empty_message,
+    }
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "ok": True,
+                "html": render_to_string(
+                    "cabinet/includes/_wallet_operation_rows.html",
+                    operation_context,
+                    request=request,
+                ),
+                "next_cursor": next_cursor,
+                "has_next": bool(next_cursor),
+            }
+        )
+
+    analyst_profile = _get_analyst_profile(request.user)
+    return render(
+        request,
+        "cabinet/wallet_operations.html",
+        {
+            "active_tab": "wallet",
+            "analyst_profile": analyst_profile,
+            "wallet_history_page": {
+                "title": title,
+                "heading": heading,
+                "description": description,
+                "kicker": kicker,
+                "empty_message": empty_message,
+                "balance_label": balance_label,
+                "balance_value": balance_value,
+                "back_url": f"{reverse('cabinet:profile')}?tab=wallet",
+                "mobile_nav_label": "Навигация кабинета",
+                "profile_nav_label": "Разделы профиля",
+            },
+            "operation_type": operation_type,
+            "operation_items": operations,
+            "empty_message": empty_message,
+            "next_cursor": next_cursor,
+            "page_class": "profile wallet-history-body",
+        },
+    )
+
+
+@login_required
+@require_GET
+def coin_operations(request):
+    coin_wallet = ensure_coin_wallet(request.user)
+    return _wallet_history_response(
+        request,
+        operation_type="coins",
+        queryset=CoinTransaction.objects.filter(user=request.user),
+        title="Операции с коинами — КапперХаб",
+        heading="Операции с коинами",
+        description="История начислений и списаний коинов.",
+        kicker="Коины",
+        empty_message="Операций с коинами пока нет.",
+        balance_label="Текущий баланс",
+        balance_value=f"{format_coins(coin_wallet.balance)} коинов",
+    )
+
+
+@login_required
+@require_GET
+def real_operations(request):
+    if request.user.role != User.Role.ANALYST:
+        messages.info(request, "Реальные операции доступны только капперам.")
+        return redirect(f"{reverse('cabinet:profile')}?tab=wallet")
+
+    real_balance = ensure_real_balance(request.user)
+    return _wallet_history_response(
+        request,
+        operation_type="real",
+        queryset=RealBalanceTransaction.objects.filter(user=request.user),
+        title="Реальные операции — КапперХаб",
+        heading="Реальные операции",
+        description="История пополнений, выводов и других операций.",
+        kicker="Реальный баланс",
+        empty_message="Реальных операций пока нет.",
+        balance_label="Доступно",
+        balance_value=f"{format_money(real_balance.balance)} ₽",
+    )
 
 
 @login_required

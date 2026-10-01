@@ -83,6 +83,7 @@ TEMPLATES = [
                 "front.context_processors.website_settings",
                 "pages.context_processors.page_seo",
                 "wallets.context_processors.coin_wallet",
+                "notifications.context_processors.section_badges",
             ],
             "builtins": ["wallets.templatetags.money"],
             "libraries": {

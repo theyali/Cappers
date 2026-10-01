@@ -1,0 +1,41 @@
+{% for transaction in operation_items %}
+    <article class="wallet-operation-row wallet-history-row">
+        <span class="wallet-operation-icon{% if operation_type == 'real' %} is-real{% endif %}" aria-hidden="true">
+            {% if operation_type == "real" %}
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 7h16v11H4zM7 7V5h10v2M16 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="16.5" cy="12" r=".8" fill="currentColor"/>
+                </svg>
+            {% else %}
+                <svg viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            {% endif %}
+        </span>
+
+        <div class="wallet-operation-copy">
+            <strong>{{ transaction.get_kind_display }}</strong>
+            <span>
+                {{ transaction.created_at|date:"d.m.Y · H:i" }}
+                {% if transaction.note %} · {{ transaction.note }}{% endif %}
+            </span>
+        </div>
+
+        {% if operation_type == "real" %}
+            <div class="wallet-operation-real-value">
+                <strong class="wallet-operation-amount is-{{ transaction.status }} {% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">
+                    {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount|money }} ₽
+                </strong>
+                <span>{{ transaction.get_status_display }}</span>
+            </div>
+        {% else %}
+            <strong class="wallet-operation-amount {% if transaction.amount > 0 %}is-positive{% elif transaction.amount < 0 %}is-negative{% endif %}">
+                {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount }}
+                {% include "front/includes/_coin_icon.html" %}
+            </strong>
+        {% endif %}
+    </article>
+{% empty %}
+    <div class="profile-empty-state wallet-history-empty"><p>{{ empty_message }}</p></div>
+{% endfor %}

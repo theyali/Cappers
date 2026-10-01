@@ -7,135 +7,181 @@
     data-mobile-offcanvas
 >
     <div class="mobile-offcanvas-head">
-        <a class="mobile-offcanvas-brand" href="{% url 'front:index' %}" aria-label="КапперХаб — главная">
-            <img src="{% static 'front/img/logo.png' %}" alt="">
-            <span>КапперХаб</span>
-        </a>
+        <button class="mobile-offcanvas-close" type="button" aria-label="Закрыть меню" data-mobile-offcanvas-close>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+        </button>
+        <h2>Меню</h2>
     </div>
 
     {% if request.user.is_authenticated %}
-        <div class="mobile-offcanvas-user">
+        <a class="mobile-offcanvas-user" href="{% url 'cabinet:profile' %}" aria-label="Открыть профиль">
             <span class="mobile-offcanvas-avatar">
                 {% if request.user.avatar %}
                     <img src="{{ request.user.avatar.url }}" alt="">
                 {% else %}
                     <img src="{% static 'front/svgs/profile.svg' %}" alt="">
                 {% endif %}
+                <span class="mobile-offcanvas-edit" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"></path><path d="m13 7 4 4"></path></svg>
+                </span>
             </span>
             <span class="mobile-offcanvas-user-copy">
+                <small>ID: {{ request.user.id }}</small>
                 <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-                <small>@{{ request.user.username }}</small>
-            </span>
-        </div>
-        {% if nav_coin_balance is not None %}
-            <div class="mobile-offcanvas-wallet">
-                <span class="coin-amount">
-                    {% include "front/includes/_coin_icon.html" %}
-                    <strong data-wallet-balance>{{ nav_coin_balance_display }}</strong>
+                <span class="mobile-offcanvas-user-badges">
+                    <b>Новичок</b>
+                    <em>Ур. 1</em>
                 </span>
-                <a href="{% url 'wallets:top_up' %}">Пополнить</a>
-            </div>
+            </span>
+            <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+        </a>
+
+        {% if nav_coin_balance is not None %}
+            <section class="mobile-offcanvas-wallet" aria-label="Баланс коинов">
+                <div>
+                    <span class="mobile-offcanvas-wallet-label">
+                        <span>Баланс</span>
+                        <button
+                            type="button"
+                            class="mobile-offcanvas-balance-toggle{% if mobile_coin_balance_hidden %} is-hidden{% endif %}"
+                            aria-label="{% if mobile_coin_balance_hidden %}Показать баланс{% else %}Скрыть баланс{% endif %}"
+                            aria-pressed="{% if mobile_coin_balance_hidden %}true{% else %}false{% endif %}"
+                            data-balance-visibility-toggle
+                            data-url="{% url 'wallets:balance_visibility' %}"
+                            data-visible-label="Скрыть баланс"
+                            data-hidden-label="Показать баланс"
+                        >
+                            <svg class="mobile-balance-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="mobile-balance-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M9.9 5.2A9.8 9.8 0 0 1 12 5c5 0 8.8 4.3 10 7a13.5 13.5 0 0 1-3.2 4.6M6.2 6.3A13.2 13.2 0 0 0 2 12c1.2 2.7 5 7 10 7 1.6 0 3.1-.4 4.4-1.1M10.5 10.7a2 2 0 0 0 2.8 2.8"></path></svg>
+                        </button>
+                    </span>
+                    <strong>
+                        {% include "front/includes/_coin_icon.html" %}
+                        <span
+                            data-wallet-balance
+                            data-wallet-balance-visible="{{ nav_coin_balance_display }}"
+                            data-wallet-balance-masked="***"
+                        >{% if mobile_coin_balance_hidden %}***{% else %}{{ nav_coin_balance_display }}{% endif %}</span>
+                    </strong>
+                    <small>Доступно для ставок</small>
+                </div>
+                <a href="{% url 'wallets:top_up' %}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"></path><path d="M7 7V5h10v2M17 12h4M18.5 10.5v3"></path></svg>
+                    <span>Пополнить</span>
+                </a>
+            </section>
         {% endif %}
 
+        <section class="mobile-offcanvas-quick" aria-labelledby="mobile-offcanvas-quick-title">
+            <div class="mobile-offcanvas-section-head">
+                <h3 id="mobile-offcanvas-quick-title">Быстрый доступ</h3>
+                <a href="{% url 'cabinet:profile' %}?tab=settings">Настроить <span aria-hidden="true"></span></a>
+            </div>
+            <div class="mobile-offcanvas-quick-grid">
+                <a href="{% url 'cabinet:profile' %}">
+                    <span class="mobile-offcanvas-quick-icon is-profile" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg>
+                    </span>
+                    <span>Профиль</span>
+                </a>
+                <a href="{% url 'notifications:center' %}">
+                    <span class="mobile-offcanvas-quick-icon is-bell" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                        <b class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
+                    </span>
+                    <span>Уведомления</span>
+                </a>
+                {% if request.user.is_analyst %}
+                <a href="{% url 'cabinet:profile' %}?tab=predictions">
+                    <span class="mobile-offcanvas-quick-icon is-chart" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M8 19v-6"></path><path d="M13 19V9"></path><path d="M18 19V4"></path><path d="m7 11 5-5 3 3 5-5"></path></svg>
+                    </span>
+                    <span>Мои прогнозы</span>
+                </a>
+                {% endif %}
+                <a href="{% url 'front:favorites' %}">
+                    <span class="mobile-offcanvas-quick-icon is-star" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>
+                    </span>
+                    <span>Избранное</span>
+                </a>
+            </div>
+        </section>
+
         <nav class="mobile-offcanvas-links" aria-label="Меню аккаунта">
-            <a href="{% url 'cabinet:profile' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg>
-                </span>
-                <span>Профиль</span>
-            </a>
-            {% if not request.user.is_analyst %}
-            <a href="{% url 'cabinet:become_capper' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
-                </span>
-                <span>Стать каппером</span>
-            </a>
-            {% endif %}
-            {% if request.user.is_analyst %}
-            <a href="{% url 'cabinet:profile' %}?tab=predictions">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Z"></path><path d="m7 15 3-3 2 2 5-5"></path></svg>
-                </span>
-                <span>Мои прогнозы</span>
-            </a>
-            {% endif %}
-            <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
-                </span>
-                <span>Турниры</span>
-            </a>
-            <a href="{% url 'notifications:center' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
-                </span>
-                <span>Уведомления</span>
-            </a>
-            <a href="{% url 'front:favorites' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
-                </span>
-                <span>Избранное</span>
-            </a>
             <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path d="M8 8h7M8 12h7M8 16h5"></path><path d="M19 6h1v14"></path></svg></span>
                 <span>Статьи</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            <a href="{% url 'tournaments:index' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
+                <span>Турниры</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.15c-.86.46-1.3.9-1.3 1.85"></path><path d="M12 17h.01"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5C6 4.5 8 4 10 4c1.2 0 2 .3 2 .3S12.8 4 14 4c2 0 4 .5 6 1.5v14c-2-1-4-1.5-6-1.5-1.2 0-2 .3-2 .3s-.8-.3-2-.3c-2 0-4 .5-6 1.5v-14Z"></path><path d="M12 4.3v14"></path></svg></span>
                 <span>Как пользоваться</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            <a href="{% url 'cabinet:profile' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 14 5l2.5-.7 1.2 2.2 2.3.9-.3 2.6 1.6 2-1.6 2 .3 2.6-2.3.9-1.2 2.2L14 19l-2 1.5L10 19l-2.5.7-1.2-2.2-2.3-.9.3-2.6-1.6-2 1.6-2L4 7.4l2.3-.9 1.2-2.2L10 5z"></path><circle cx="12" cy="12" r="3.2"></circle></svg></span>
+                <span>Профиль</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            <a href="{% url 'notifications:center' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span>
+                <span>Уведомления</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            {% if request.user.is_analyst %}
+            <a href="{% url 'cabinet:profile' %}?tab=predictions">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V9"></path><path d="M12 20V4"></path><path d="M19 20v-8"></path></svg></span>
+                <span>Мои прогнозы</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            {% endif %}
+            <a href="{% url 'front:favorites' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg></span>
+                <span>Избранное</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
         </nav>
 
         <form method="post" action="{% url 'cabinet:logout' %}" class="mobile-offcanvas-logout">
             {% csrf_token %}
             <button type="submit">
-                <span>Выйти из аккаунта</span>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg>
+                <span>Выйти</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </button>
         </form>
     {% else %}
         <nav class="mobile-offcanvas-links mobile-offcanvas-links-guest" aria-label="Меню">
             <a href="{% url 'cabinet:login' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg></span>
                 <span>Войти</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'cabinet:register' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg></span>
                 <span>Регистрация</span>
-            </a>
-            <a href="{% url 'cabinet:become_capper' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
-                </span>
-                <span>Стать каппером</span>
-            </a>
-            <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg>
-                </span>
-                <span>Турниры</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path d="M8 8h7M8 12h7M8 16h5"></path></svg></span>
                 <span>Статьи</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+            </a>
+            <a href="{% url 'tournaments:index' %}">
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
+                <span>Турниры</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 1 1 3.5 2.15c-.86.46-1.3.9-1.3 1.85"></path><path d="M12 17h.01"></path></svg>
-                </span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5C6 4.5 8 4 10 4c1.2 0 2 .3 2 .3S12.8 4 14 4c2 0 4 .5 6 1.5v14c-2-1-4-1.5-6-1.5-1.2 0-2 .3-2 .3s-.8-.3-2-.3c-2 0-4 .5-6 1.5v-14Z"></path><path d="M12 4.3v14"></path></svg></span>
                 <span>Как пользоваться</span>
+                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
         </nav>
     {% endif %}

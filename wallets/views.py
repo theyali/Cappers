@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -9,6 +10,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 from cabinet.models import User
 
 from .forms import CopyBettingForm
+from .context_processors import BALANCE_HIDDEN_SESSION_KEY
 from .models import CoinPackage, CopyBettingSubscription
 from .services import (
     InsufficientBalance,
@@ -27,6 +29,25 @@ from .services import (
 def _ensure_copybetting_reader(user) -> None:
     if user.role == User.Role.ANALYST:
         raise PermissionDenied("Капперы не могут использовать копибеттинг.")
+
+
+@login_required
+@require_POST
+def balance_visibility(request):
+    raw_hidden = str(request.POST.get("hidden", "")).lower()
+    hidden = raw_hidden in {"1", "true", "yes", "on"}
+    request.session[BALANCE_HIDDEN_SESSION_KEY] = hidden
+    request.session.modified = True
+
+    balance = ensure_coin_wallet(request.user).balance
+    return JsonResponse(
+        {
+            "ok": True,
+            "hidden": hidden,
+            "balance_display": format_coins(balance),
+            "masked_display": "***",
+        }
+    )
 
 
 @login_required

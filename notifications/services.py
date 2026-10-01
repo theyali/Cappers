@@ -4,8 +4,8 @@ from datetime import timedelta
 from typing import Any
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db import IntegrityError, transaction
+from django.db.models import Exists, F, OuterRef
 from django.urls import reverse
 from django.utils import timezone
 
@@ -13,6 +13,7 @@ from .models import (
     AdminNotificationCampaign,
     Notification,
     NotificationPreference,
+    NotificationSectionState,
 )
 
 
@@ -39,6 +40,29 @@ CATEGORY_FIELD_BY_KIND = {
 }
 
 
+SECTION_BY_KIND = {
+    Notification.Kind.PREDICTION_LIKE: NotificationSectionState.Section.PREDICTIONS,
+    Notification.Kind.PREDICTION_FAVORITE: NotificationSectionState.Section.PREDICTIONS,
+    Notification.Kind.OWN_COUPON_SETTLED: NotificationSectionState.Section.PREDICTIONS,
+    Notification.Kind.COPYBETTING: NotificationSectionState.Section.COPYBETTING,
+    Notification.Kind.NEW_FOLLOWER: NotificationSectionState.Section.FOLLOWERS,
+    Notification.Kind.PAID_SUBSCRIPTION: NotificationSectionState.Section.EARNINGS,
+    Notification.Kind.ACHIEVEMENT: NotificationSectionState.Section.ACHIEVEMENTS,
+    Notification.Kind.BONUS_DAILY_TASK: NotificationSectionState.Section.BONUS_TASKS,
+    Notification.Kind.BONUS_STREAK: NotificationSectionState.Section.BONUS_LEVELS,
+    Notification.Kind.BONUS_LEVEL: NotificationSectionState.Section.BONUS_LEVELS,
+    Notification.Kind.BONUS_ROULETTE: NotificationSectionState.Section.BONUSES,
+    Notification.Kind.BONUS_REFERRAL: NotificationSectionState.Section.REFERRALS,
+    Notification.Kind.NEW_PREDICTION: NotificationSectionState.Section.FOLLOWING,
+    Notification.Kind.REQUESTED_MATCH_PREDICTION: NotificationSectionState.Section.FOLLOWING,
+    Notification.Kind.FAVORITE_SETTLED: NotificationSectionState.Section.FOLLOWING,
+    Notification.Kind.MATCH_PREDICTION: NotificationSectionState.Section.MATCHES,
+    Notification.Kind.MATCH_REMINDER: NotificationSectionState.Section.MATCHES,
+    Notification.Kind.TOURNAMENT_STARTED: NotificationSectionState.Section.TOURNAMENTS,
+    Notification.Kind.TOURNAMENT_FINISHED: NotificationSectionState.Section.TOURNAMENTS,
+}
+
+
 def get_preferences(user) -> NotificationPreference:
     preferences, _ = NotificationPreference.objects.get_or_create(user=user)
     return preferences
@@ -49,6 +73,81 @@ def category_enabled(preferences: NotificationPreference, kind: str) -> bool:
     if not field:
         return False
     return bool(getattr(preferences, field, False))
+
+
+def notification_section_for_kind(kind: str) -> str:
+    return SECTION_BY_KIND.get(kind, "")
+
+
+def increment_section_state(notification: Notification) -> None:
+    if notification.is_read or not notification.show_in_app:
+        return
+    section = notification_section_for_kind(notification.kind)
+    if not section:
+        return
+
+    updated = NotificationSectionState.objects.filter(
+        user=notification.recipient,
+        section=section,
+    ).update(
+        unread_count=F("unread_count") + 1,
+        latest_notification=notification,
+    )
+    if updated:
+        return
+
+    try:
+        NotificationSectionState.objects.create(
+            user=notification.recipient,
+            section=section,
+            unread_count=1,
+            latest_notification=notification,
+        )
+    except IntegrityError:
+        NotificationSectionState.objects.filter(
+            user=notification.recipient,
+            section=section,
+        ).update(
+            unread_count=F("unread_count") + 1,
+            latest_notification=notification,
+        )
+
+
+def decrement_section_state(notification: Notification) -> None:
+    section = notification_section_for_kind(notification.kind)
+    if not section:
+        return
+
+    NotificationSectionState.objects.filter(
+        user=notification.recipient,
+        section=section,
+        unread_count__gt=0,
+    ).update(unread_count=F("unread_count") - 1)
+
+
+def clear_section_states(user) -> None:
+    NotificationSectionState.objects.filter(user=user, unread_count__gt=0).update(
+        unread_count=0,
+        latest_notification=None,
+    )
+
+
+def section_badge_payload(user) -> dict[str, dict]:
+    if not getattr(user, "is_authenticated", False):
+        return {
+            "badges": {},
+            "counts": {},
+        }
+
+    rows = NotificationSectionState.objects.filter(
+        user=user,
+        unread_count__gt=0,
+    ).values_list("section", "unread_count")
+    counts = {section: count for section, count in rows}
+    return {
+        "badges": {section: True for section in counts},
+        "counts": counts,
+    }
 
 
 def create_notification(
@@ -66,7 +165,7 @@ def create_notification(
     if not category_enabled(preferences, kind):
         return None
 
-    notification, _ = Notification.objects.get_or_create(
+    notification, created = Notification.objects.get_or_create(
         event_key=event_key,
         defaults={
             "recipient": recipient,
@@ -79,6 +178,8 @@ def create_notification(
             "show_in_app": preferences.in_app_enabled,
         },
     )
+    if created:
+        increment_section_state(notification)
     return notification
 
 

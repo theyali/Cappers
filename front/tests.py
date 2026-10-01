@@ -1,9 +1,11 @@
 from datetime import date
 from decimal import Decimal
+from html.parser import HTMLParser
 from types import SimpleNamespace
 
 from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
@@ -24,6 +26,94 @@ from .expert_ranking import (
     rank_experts,
     recommended_experts_for_user,
 )
+
+
+class _PromoBannerNestingParser(HTMLParser):
+    VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
+    def __init__(self):
+        super().__init__()
+        self.stack = []
+        self.banner_inside_filter_matches = None
+        self.banner_inside_prediction_sidebar = None
+
+    def handle_starttag(self, tag, attrs):
+        attr_map = dict(attrs)
+        classes = set(attr_map.get("class", "").split())
+        if "page-promo-banner" in classes:
+            ancestors = self.stack
+            self.banner_inside_filter_matches = any(
+                "filter_matches" in ancestor for ancestor in ancestors
+            )
+            self.banner_inside_prediction_sidebar = any(
+                {
+                    "matches-table-filter-sidebar",
+                    "prediction-filter-sidebar",
+                    "predictions-filter-sidebar",
+                    "following-feed-filter-sidebar",
+                }.issubset(ancestor)
+                for ancestor in ancestors
+            )
+        if tag not in self.VOID_TAGS:
+            self.stack.append(classes)
+
+    def handle_endtag(self, tag):
+        if tag not in self.VOID_TAGS and self.stack:
+            self.stack.pop()
+
+
+class PredictionFilterSidebarTemplateTests(SimpleTestCase):
+    def test_left_promo_banner_is_sidebar_child_not_filter_matches_child(self):
+        promo_banner = SimpleNamespace(
+            name="Left promo",
+            eyebrow="Promo",
+            title="Promo title",
+            text="Promo text",
+            button_label="Open",
+            button_url="/bonuses/",
+            image=SimpleNamespace(url="/media/promo_banners/test.png"),
+            mobile_image=None,
+            variant="center_wide",
+            title_color="#050505",
+            text_color="rgba(0, 0, 0, .76)",
+            button_color="#151719",
+            button_text_color="#fff200",
+        )
+        html = render_to_string(
+            "front/includes/_prediction_filter_sidebar.html",
+            {
+                "filter_id_prefix": "following-feed-filter",
+                "filter_variant": "following-feed-filter-sidebar",
+                "filter_label": "Фильтры моей ленты",
+                "filter_total": 0,
+                "status_tabs": [],
+                "active_sort": "new",
+                "active_status": "all",
+                "filter_action_url": "/feed/",
+                "left_promo_banners": [promo_banner],
+            },
+        )
+
+        parser = _PromoBannerNestingParser()
+        parser.feed(html)
+
+        self.assertTrue(parser.banner_inside_prediction_sidebar)
+        self.assertFalse(parser.banner_inside_filter_matches)
 
 
 class ExpertRankingScoreTests(SimpleTestCase):

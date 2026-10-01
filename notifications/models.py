@@ -178,6 +178,59 @@ class Notification(models.Model):
         self.save(update_fields=["is_read", "read_at"])
 
 
+class NotificationSectionState(models.Model):
+    class Section(models.TextChoices):
+        PREDICTIONS = "predictions", "Мои прогнозы"
+        COPYBETTING = "copybetting", "Копибеттинг"
+        FOLLOWERS = "followers", "Подписчики"
+        EARNINGS = "earnings", "Доходы"
+        ACHIEVEMENTS = "achievements", "Достижения"
+        BONUS_TASKS = "bonus_tasks", "Ежедневные задания"
+        BONUS_LEVELS = "bonus_levels", "Уровни"
+        BONUSES = "bonuses", "Бонусы"
+        REFERRALS = "referrals", "Рефералы"
+        FOLLOWING = "following", "Подписки"
+        MATCHES = "matches", "Матчи"
+        TOURNAMENTS = "tournaments", "Турниры"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notification_section_states",
+        verbose_name="Пользователь",
+    )
+    section = models.CharField("Раздел", max_length=32, choices=Section.choices)
+    unread_count = models.PositiveIntegerField("Непрочитано", default=0)
+    latest_notification = models.ForeignKey(
+        Notification,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Последнее уведомление",
+        null=True,
+        blank=True,
+    )
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Состояние уведомлений раздела"
+        verbose_name_plural = "Состояния уведомлений разделов"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("user", "section"),
+                name="notif_section_state_unique",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("user", "unread_count"),
+                name="notif_section_unread_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.section} ({self.unread_count})"
+
+
 class MatchWatch(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

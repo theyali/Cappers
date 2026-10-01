@@ -9,7 +9,12 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 from game.models import Match
 
 from .models import MatchWatch, Notification, TelegramAccount
-from .services import get_preferences
+from .services import (
+    clear_section_states,
+    decrement_section_state,
+    get_preferences,
+    section_badge_payload,
+)
 from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
 
 
@@ -74,6 +79,7 @@ def center(request):
 def summary(request):
     queryset = _in_app_notifications_queryset(request.user)
     unread_count = queryset.filter(is_read=False).count()
+    section_payload = section_badge_payload(request.user)
     latest_id = (
         Notification.objects.filter(recipient=request.user)
         .order_by("-id")
@@ -102,6 +108,8 @@ def summary(request):
                     {
                         "ok": True,
                         "unread_count": unread_count,
+                        "section_badges": section_payload["badges"],
+                        "section_counts": section_payload["counts"],
                         "avatar_url": _avatar_url(request.user),
                         "latest_id": latest_id,
                         "cursor_id": latest_id,
@@ -129,6 +137,8 @@ def summary(request):
         {
             "ok": True,
             "unread_count": unread_count,
+            "section_badges": section_payload["badges"],
+            "section_counts": section_payload["counts"],
             "avatar_url": _avatar_url(request.user),
             "latest_id": latest_id,
             "cursor_id": cursor_id,
@@ -171,6 +181,8 @@ def update_preferences(request):
         preferences.telegram_chat_id and "telegram_enabled" in request.POST
     )
     preferences.save()
+    if not preferences.in_app_enabled:
+        clear_section_states(request.user)
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({"ok": True, "message": "Настройки уведомлений сохранены."})
     return redirect("notifications:center")
@@ -207,8 +219,18 @@ def mark_read(request, notification_id: int):
         _in_app_notifications_queryset(request.user),
         pk=notification_id,
     )
+    was_unread = not notification.is_read
     notification.mark_read()
-    return JsonResponse({"ok": True})
+    if was_unread:
+        decrement_section_state(notification)
+    section_payload = section_badge_payload(request.user)
+    return JsonResponse(
+        {
+            "ok": True,
+            "section_badges": section_payload["badges"],
+            "section_counts": section_payload["counts"],
+        }
+    )
 
 
 @login_required
@@ -218,8 +240,18 @@ def mark_all_read(request):
     updated = _in_app_notifications_queryset(request.user).filter(
         is_read=False,
     ).update(is_read=True, read_at=now)
+    if updated:
+        clear_section_states(request.user)
+    section_payload = section_badge_payload(request.user)
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return JsonResponse({"ok": True, "updated": updated})
+        return JsonResponse(
+            {
+                "ok": True,
+                "updated": updated,
+                "section_badges": section_payload["badges"],
+                "section_counts": section_payload["counts"],
+            }
+        )
     return redirect("notifications:center")
 
 
