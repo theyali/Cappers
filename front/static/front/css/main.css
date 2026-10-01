@@ -17583,7 +17583,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .vip-compare-row {
     display: grid;
-    grid-template-columns: 1.35fr repeat(3, 1fr);
+    grid-template-columns: 1.35fr repeat(var(--vip-plan-count, 3), minmax(0, 1fr));
     min-height: 44px;
 }
 .vip-compare-row > div {
@@ -17637,6 +17637,12 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     background: rgba(255, 255, 255, .055);
 }
 .vip-mini-crown svg { width: 20px; height: 20px; }
+.vip-mini-crown img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    object-fit: contain;
+}
 .vip-mini-crown--silver { color: #d8d9de; }
 .vip-mini-crown--blue { color: #2e83ff; }
 .vip-mini-crown--gold { color: var(--yellow); }
@@ -17651,6 +17657,12 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     fill: none;
     stroke-width: 1.9;
 }
+.vip-feature-icon img {
+    width: 20px;
+    height: 20px;
+    display: block;
+    object-fit: contain;
+}
 .vip-check {
     width: 22px;
     height: 22px;
@@ -17659,6 +17671,17 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     background: var(--blue);
     font-size: 13px;
     font-weight: 600;
+}
+.vip-compare-empty {
+    min-height: 120px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: #9d9fa7;
+    background: rgba(20, 20, 22, .52);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .065);
+    font-size: 13px;
+    font-weight: 500;
 }
 .cabinet-referrals-page .bonus-detail-main { min-width: 0; grid-column: 2/4; display: grid; align-content: start; }
 .cabinet-referrals-page .referrals-simple { min-width: 0; display: grid; gap: 14px; font-size: 13px; }

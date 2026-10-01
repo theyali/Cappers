@@ -25,6 +25,8 @@ from .models import (
     UserVipSubscription,
     UserXpState,
     VipPlan,
+    VipPlanComparisonFeature,
+    VipPlanComparisonValue,
     XpLevel,
 )
 
@@ -280,6 +282,13 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     )
 
 
+class VipPlanComparisonValueInline(admin.TabularInline):
+    model = VipPlanComparisonValue
+    extra = 0
+    autocomplete_fields = ("feature",)
+    fields = ("feature", "value_text", "is_checked")
+
+
 @admin.register(VipPlan)
 class VipPlanAdmin(admin.ModelAdmin):
     list_display = (
@@ -295,7 +304,8 @@ class VipPlanAdmin(admin.ModelAdmin):
     list_filter = ("is_featured", "is_active", "duration_days")
     search_fields = ("title",)
     ordering = ("order", "duration_days", "id")
-    readonly_fields = ("price_coins", "created_at", "updated_at")
+    readonly_fields = ("created_at", "updated_at")
+    inlines = (VipPlanComparisonValueInline,)
     fieldsets = (
         (
             "Тариф",
@@ -313,14 +323,39 @@ class VipPlanAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Legacy",
-            {"fields": ("price_coins",)},
-        ),
-        (
             "Системная информация",
             {"fields": ("created_at", "updated_at")},
         ),
     )
+
+
+class VipPlanComparisonValueByFeatureInline(admin.TabularInline):
+    model = VipPlanComparisonValue
+    extra = 0
+    autocomplete_fields = ("plan",)
+    fields = ("plan", "value_text", "is_checked")
+
+
+@admin.register(VipPlanComparisonFeature)
+class VipPlanComparisonFeatureAdmin(admin.ModelAdmin):
+    list_display = ("title", "is_active", "order", "updated_at")
+    list_editable = ("is_active", "order")
+    list_filter = ("is_active",)
+    search_fields = ("title",)
+    ordering = ("order", "id")
+    readonly_fields = ("created_at", "updated_at")
+    inlines = (VipPlanComparisonValueByFeatureInline,)
+
+
+@admin.register(VipPlanComparisonValue)
+class VipPlanComparisonValueAdmin(admin.ModelAdmin):
+    list_display = ("feature", "plan", "value_text", "is_checked", "updated_at")
+    list_filter = ("is_checked", "feature", "plan")
+    search_fields = ("feature__title", "plan__title", "value_text")
+    autocomplete_fields = ("feature", "plan")
+    list_select_related = ("feature", "plan")
+    ordering = ("feature__order", "feature_id", "plan__order", "plan_id")
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(UserVipSubscription)

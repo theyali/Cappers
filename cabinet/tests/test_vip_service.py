@@ -19,7 +19,6 @@ class VipServiceTests(TestCase):
         self.plan = VipPlan.objects.create(
             title="VIP 30",
             duration_days=30,
-            price_coins=100,
             price_rub=100,
             is_active=True,
         )
@@ -110,7 +109,6 @@ class VipPurchaseTests(TestCase):
         self.plan = VipPlan.objects.create(
             title="VIP 7",
             duration_days=7,
-            price_coins=100,
             price_rub=100,
             is_active=True,
         )

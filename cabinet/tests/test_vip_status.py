@@ -21,7 +21,6 @@ class VipStatusTests(TestCase):
         self.plan = VipPlan.objects.create(
             title="VIP 30",
             duration_days=30,
-            price_coins=100,
         )
 
     def create_subscription(self, *, starts_at, ends_at, is_active=True):
@@ -110,7 +109,6 @@ class ProfileCoverTests(TestCase):
         self.plan = VipPlan.objects.create(
             title="VIP cover",
             duration_days=30,
-            price_coins=100,
         )
         self.client.force_login(self.user)
 
