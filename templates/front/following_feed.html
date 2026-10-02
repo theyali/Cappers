@@ -8,7 +8,7 @@
 {% block content %}
 {% content_view_mode as content_view_mode %}
     {% if has_feed_sources %}
-    {% include "front/includes/_mobile_prediction_filters.html" with sport_tabs=sport_filter_tabs status_tabs=status_tabs mobile_filter_tabs=mobile_filter_tabs %}
+    {% include "front/includes/_mobile_prediction_filters.html" with sport_tabs=sport_filter_tabs status_tabs=status_tabs mobile_filter_tabs=mobile_filter_tabs mobile_status_tabs=prediction_type_tabs %}
     {% endif %}
     <section class="predictions-page following-feed-page predictions-scroll-page container" aria-label="Моя лента">
         {% if has_feed_sources %}

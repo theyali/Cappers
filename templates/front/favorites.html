@@ -7,7 +7,7 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
-{% include "front/includes/_mobile_prediction_filters.html" with sport_tabs=sport_filter_tabs status_tabs=status_tabs mobile_filter_tabs=mobile_filter_tabs %}
+{% include "front/includes/_mobile_prediction_filters.html" with sport_tabs=sport_filter_tabs status_tabs=status_tabs mobile_filter_tabs=mobile_filter_tabs mobile_status_tabs=prediction_type_tabs %}
 <section class="predictions-page favorites-page predictions-scroll-page" data-favorites-page aria-label="Избранные прогнозы">
     <div class="predictions-layout favorites-layout" data-predictions-layout data-filter-state-url="{% url 'front:prediction_filter_state' %}">
         {% include "front/includes/_favorites_filter_sidebar.html" %}

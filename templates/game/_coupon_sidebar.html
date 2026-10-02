@@ -1,15 +1,35 @@
-{% if can_write_coupon or adv_banners and adv_placement == 'sidebar' %}
+{% if can_write_coupon or not request.user.is_authenticated or adv_banners and adv_placement == 'sidebar' %}
 <aside
-    class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write coupon-sidebar-editor{% else %} coupon-sidebar-ads{% endif %}"
-    {% if can_write_coupon %}id="mobile-coupon-sheet"{% endif %}
-    aria-label="{% if can_write_coupon %}Прогноз{% else %}Реклама{% endif %}"
+    class="coupon-sidebar{% if can_write_coupon %} coupon-sidebar-write coupon-sidebar-editor{% elif not request.user.is_authenticated %} coupon-sidebar-auth coupon-sidebar-editor{% else %} coupon-sidebar-ads{% endif %}"
+    {% if can_write_coupon or not request.user.is_authenticated %}id="mobile-coupon-sheet"{% endif %}
+    aria-label="{% if can_write_coupon %}Прогноз{% elif not request.user.is_authenticated %}Регистрация для купона{% else %}Реклама{% endif %}"
 >
     {% if can_write_coupon %}
         {% include "game/_coupon_panel.html" %}
         {{ draft_coupon|json_script:"coupon-draft-data" }}
+    {% elif not request.user.is_authenticated %}
+        <section class="coupon-auth-panel" data-no-transition>
+            <button
+                class="mobile-coupon-sheet-handle"
+                type="button"
+                data-mobile-coupon-close
+                aria-label="Закрыть купон"
+            ></button>
+            <div class="coupon-auth-card">
+                <span class="coupon-auth-icon" aria-hidden="true">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <path d="M16 23.5h32a5 5 0 0 1 5 5v7a6 6 0 0 0 0 12v3a5 5 0 0 1-5 5H16a5 5 0 0 1-5-5v-3a6 6 0 0 0 0-12v-7a5 5 0 0 1 5-5Z" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+                        <path d="M28 23.5v32M30 8.5c5.2 2.5 8.4 6.3 9.6 11.3M22 20.5c4.7-1.5 8.1-4.6 10.1-9.3" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="5 6"/>
+                    </svg>
+                </span>
+                <strong>Купон</strong>
+                <p>Зарегистрируйся, чтобы добавлять матчи в купон</p>
+                <a class="coupon-auth-action" href="{% url 'cabinet:register' %}">Зарегистрироваться</a>
+            </div>
+        </section>
     {% endif %}
 
-    {% if adv_banners and adv_placement == 'sidebar' %}
+    {% if not can_write_coupon and request.user.is_authenticated and adv_banners and adv_placement == 'sidebar' %}
         {% include "pages/_adv_banners.html" with placement="sidebar" %}
     {% endif %}
 </aside>
