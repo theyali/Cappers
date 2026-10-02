@@ -1,0 +1,26 @@
+{% if status_tabs or sport_tabs %}
+<div class="mobile-prediction-filters" data-mobile-prediction-filters aria-label="Фильтры прогнозов на мобильных устройствах">
+    <div class="mobile-prediction-filter-top" aria-label="Статусы прогнозов">
+        {% if mobile_match_scope_tabs %}
+        <nav class="mobile-prediction-status-tabs" aria-label="Статусы прогнозов">
+            {% for tab in mobile_match_scope_tabs %}
+            <a
+                class="mobile-prediction-status-tab{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >
+                {{ tab.label }}
+            </a>
+            {% endfor %}
+        </nav>
+        {% endif %}
+    </div>
+
+    {% if sport_tabs %}
+    <div class="matches-mobile-sports-panel prediction-mobile-sports-panel" aria-label="Фильтр по спорту на мобильных устройствах">
+        {% include "game/includes/_match_sport_tabs.html" with sport_tabs=sport_tabs sport_tabs_aria_label="Фильтр по спорту" %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

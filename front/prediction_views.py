@@ -46,6 +46,7 @@ from .metrics import (
 )
 from .models import PredictionFavorite, PredictionLike
 from .prediction_metrics import annotate_author_roi
+from .sport_tabs import build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
 from .views import PREDICTION_STATUS_FILTERS, _initials
 
 
@@ -530,12 +531,22 @@ def _top_experts_tab(request, *, active: bool, count: int) -> dict:
     }
 
 
-def _apply_position_filters(queryset, *, selected_sport, selected_league, only_live, only_today):
+def _apply_position_filters(
+    queryset,
+    *,
+    selected_sport,
+    selected_league,
+    only_live,
+    only_today,
+    match_scope="all",
+):
     if selected_sport.isdigit():
         queryset = queryset.filter(predictions__match__sport_id=int(selected_sport))
     if selected_league.isdigit():
         queryset = queryset.filter(predictions__match__league_id=int(selected_league))
-    if only_live:
+    if match_scope != "all":
+        queryset = queryset.filter(predictions__match__sync_scope=match_scope)
+    elif only_live:
         queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
         queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
@@ -671,6 +682,9 @@ def predictions(request, sport_code: str | None = None):
     coefficient_max = _parse_decimal(request.GET.get("coef_max"))
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
+    active_match_scope = request.GET.get("match_scope", "all")
+    if active_match_scope not in {"all", "live", "prematch", "finished"}:
+        active_match_scope = "all"
     top_experts_only = request.GET.get("top") == "1"
 
     top_profiles = ranked_expert_profiles(limit=TOP_EXPERTS_LIMIT)
@@ -688,6 +702,7 @@ def predictions(request, sport_code: str | None = None):
         selected_league=selected_league,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
     )
     if selected_capper:
         filtered = filtered.filter(author__username=selected_capper)
@@ -789,11 +804,18 @@ def predictions(request, sport_code: str | None = None):
             coefficient_max is not None,
             only_live,
             only_today,
+            active_match_scope != "all",
             active_status != "all",
         ]
     )
 
     seo_context = _prediction_seo(request, active_sport, page_obj.number)
+    top_experts_tab = _top_experts_tab(
+        request,
+        active=top_experts_only,
+        count=top_experts_count,
+    )
+    all_predictions_url = _prediction_sport_path()
 
     return render(
         request,
@@ -802,11 +824,7 @@ def predictions(request, sport_code: str | None = None):
             "page_obj": page_obj,
             "status_tabs": _status_tabs(request, counts, active_status),
             "sport_tabs": _sport_tabs(request, published_items, active_sport),
-            "top_experts_tab": _top_experts_tab(
-                request,
-                active=top_experts_only,
-                count=top_experts_count,
-            ),
+            "top_experts_tab": top_experts_tab,
             "top_experts_only": top_experts_only,
             "active_status": active_status,
             "active_sort": active_sort,
@@ -824,10 +842,17 @@ def predictions(request, sport_code: str | None = None):
             "coefficient_max": request.GET.get("coef_max", ""),
             "only_live": only_live,
             "only_today": only_today,
+            "active_match_scope": active_match_scope,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "filter_action_url": _prediction_sport_path(active_sport.code if active_sport else None),
-            "all_predictions_url": _prediction_sport_path(),
+            "all_predictions_url": all_predictions_url,
+            "mobile_filter_tabs": build_mobile_prediction_filter_tabs(
+                request,
+                reset_url=all_predictions_url,
+                top_experts_tab=top_experts_tab,
+            ),
+            "mobile_match_scope_tabs": build_mobile_prediction_match_scope_tabs(request),
             "adv_placement": "sidebar",
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **seo_context,

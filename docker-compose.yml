@@ -69,7 +69,7 @@ services:
       - .env
     environment:
       RUN_COLLECTSTATIC: "1"
-    command: uvicorn cappers.asgi:application --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-2}
+    command: []
     volumes:
       - .:/app
     ports:

@@ -11,19 +11,25 @@
         ".matches-tabs a[href]",
         ".matches-date-filter a[href]",
     ].join(",");
-    const MOBILE_FILTER_BLOCK_SELECTOR = ".matches-mobile-scope-panel, .matches-mobile-sports-panel";
+    const MOBILE_FILTER_BLOCK_SELECTOR = ".matches-mobile-sports-panel";
 
     let activeRequest = null;
     let activeSeq = 0;
 
+    const mobileFilterBlocks = ($page) => {
+        return $page
+            .find(MOBILE_FILTER_BLOCK_SELECTOR)
+            .add($(".matches-mobile-sports-panel").first());
+    };
+
     const setMobileFiltersLoading = ($page) => {
-        $page.find(MOBILE_FILTER_BLOCK_SELECTOR).each((_index, block) => {
+        mobileFilterBlocks($page).each((_index, block) => {
             window.CappersSkeleton?.loading(block);
         });
     };
 
     const setMobileFiltersReady = ($page) => {
-        $page.find(MOBILE_FILTER_BLOCK_SELECTOR).each((_index, block) => {
+        mobileFilterBlocks($page).each((_index, block) => {
             window.CappersSkeleton?.ready(block);
         });
     };
@@ -101,6 +107,25 @@
         return $next;
     };
 
+    const syncMobileDateInput = (html) => {
+        if (typeof html !== "string" || !html.trim()) return;
+        const $nextInput = $(html.trim()).find("[data-match-date-input]").first();
+        const $currentInput = $(".mobile-match-filters [data-match-date-input]").first();
+        if (!$nextInput.length || !$currentInput.length) return;
+
+        ["value", "min", "max"].forEach((name) => {
+            $currentInput.attr(name, $nextInput.attr(name) || "");
+        });
+        $currentInput.data("scope", $nextInput.data("scope") || "");
+        $currentInput.attr("data-scope", $nextInput.attr("data-scope") || "");
+        $currentInput.attr("data-url-template", $nextInput.attr("data-url-template") || "");
+    };
+
+    const syncMobileMatchQuickState = () => {
+        const watchedActive = $(".mobile-match-filters .matches-tabs .is-watch-tab").hasClass("is-active");
+        $(".mobile-match-watch-tab").toggleClass("is-active", watchedActive);
+    };
+
     const dispatchUpdated = ($page, $content) => {
         const nodes = Array.from($content.find("[data-match-shell-id]"));
         document.dispatchEvent(new CustomEvent("matches:filters-updated", {
@@ -122,8 +147,10 @@
         const $listPanel = $page.find(".matches-list-panel").first();
         replaceNode($page.children(".matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
         replaceNode($page.children(".matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
-        replaceNode($page.find(".matches-mobile-sports-panel > .matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
+        replaceNode($(".matches-mobile-sports-panel > .matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
+        replaceNode($(".mobile-match-filters .matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
         replaceNode($page.find(".matches-mobile-scope-panel > .matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
+        syncMobileMatchQuickState();
 
         const $dateFilter = $page.children(".matches-date-filter").first();
         if (payload.date_filter_html && payload.date_filter_html.trim()) {
@@ -132,6 +159,7 @@
             } else {
                 $page.children(".matches-tabs").first().after(payload.date_filter_html);
             }
+            syncMobileDateInput(payload.date_filter_html);
         } else {
             $dateFilter.remove();
         }

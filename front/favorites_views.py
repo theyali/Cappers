@@ -23,7 +23,11 @@ from .prediction_views import (
     _published_queryset,
     _sport_from_filter,
 )
-from .sport_tabs import build_sport_filter_tabs
+from .sport_tabs import (
+    build_mobile_prediction_filter_tabs,
+    build_mobile_prediction_match_scope_tabs,
+    build_sport_filter_tabs,
+)
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -113,6 +117,9 @@ def favorites(request):
     coefficient_max = _parse_decimal(request.GET.get("coef_max"))
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
+    active_match_scope = request.GET.get("match_scope", "all")
+    if active_match_scope not in {"all", "live", "prematch", "finished"}:
+        active_match_scope = "all"
 
     base_meta_queryset = apply_prediction_type_scope(
         _favorites_meta_queryset(request.user, include_paid=is_paid_predictions).filter(
@@ -147,6 +154,7 @@ def favorites(request):
         selected_league=selected_league,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
     )
     meta_filtered = _apply_position_filters(
         meta_base_queryset,
@@ -154,6 +162,7 @@ def favorites(request):
         selected_league=selected_league,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
     )
     if selected_capper:
         filtered = filtered.filter(author__username=selected_capper)
@@ -238,6 +247,7 @@ def favorites(request):
             coefficient_max is not None,
             only_live,
             only_today,
+            active_match_scope != "all",
             active_status != "all",
         ]
     )
@@ -272,9 +282,15 @@ def favorites(request):
             "coefficient_max": request.GET.get("coef_max", ""),
             "only_live": only_live,
             "only_today": only_today,
+            "active_match_scope": active_match_scope,
             "active_filter_count": active_filter_count,
             "filter_action_url": favorites_url,
             "reset_url": favorites_url,
+            "mobile_filter_tabs": build_mobile_prediction_filter_tabs(
+                request,
+                reset_url=favorites_url,
+            ),
+            "mobile_match_scope_tabs": build_mobile_prediction_match_scope_tabs(request),
             "pagination_query": pagination_query,
             "adv_placement": "sidebar",
             **prediction_type_context,

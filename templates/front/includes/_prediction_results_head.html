@@ -9,6 +9,7 @@
         {% endfor %}
     </nav>
 <div class="prediction-results-head">
+    {% if sport_filter_tabs %}
     <div class="prediction-results-filters">
         <nav class="feed-sport-tabs" aria-label="Фильтр по спорту">
         {% for tab in sport_filter_tabs %}
@@ -38,6 +39,7 @@
         {% endfor %}
         </nav>
     </div>
+    {% endif %}
 
     <div class="prediction-results-actions">
         {% if show_sort %}

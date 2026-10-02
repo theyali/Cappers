@@ -45,8 +45,15 @@
         });
     };
 
-    const setButtons = ($switcher, mode) => {
-        $switcher.find("[data-content-view-mode]").each(function () {
+    const getSwitchers = ($root) => {
+        const $switchers = $root.find("[data-content-view-switcher]");
+        const $matchesPage = $root.closest(".matches-page");
+        if (!$matchesPage.length) return $switchers;
+        return $switchers.add($(".mobile-match-filters [data-content-view-switcher]"));
+    };
+
+    const setButtons = ($switchers, mode) => {
+        $switchers.find("[data-content-view-mode]").each(function () {
             const $button = $(this);
             const active = String($button.data("contentViewMode")) === mode;
             $button.toggleClass("is-active", active);
@@ -71,9 +78,9 @@
 
         const $current = $panels.filter(":not([hidden])").first();
         const $container = $root.find("[data-content-view-container]").first();
-        const $switcher = $root.find("[data-content-view-switcher]").first();
+        const $switchers = getSwitchers($root);
 
-        setButtons($switcher, mode);
+        setButtons($switchers, mode);
         $root.attr("data-content-view-current", mode);
         selectedMode = mode;
 
@@ -131,7 +138,10 @@
         const $button = $(this);
         const mode = String($button.data("contentViewMode") || "grid");
         const $switcher = $button.closest("[data-content-view-switcher]");
-        const $root = $switcher.closest("[data-content-view-root]");
+        let $root = $switcher.closest("[data-content-view-root]");
+        if (!$root.length && $button.closest(".mobile-match-filters").length) {
+            $root = $(".matches-page [data-content-view-root]").first();
+        }
         const currentMode = String($root.attr("data-content-view-current") || "grid");
 
         if (!$root.length || mode === currentMode) return;

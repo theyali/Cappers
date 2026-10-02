@@ -61,8 +61,13 @@ if [ "$SHOULD_COLLECTSTATIC" = "1" ]; then
   python manage.py collectstatic --noinput
 fi
 
-# 2) если передали команду (worker/beat/web через compose) — запускаем её
+# 2) если передали команду (worker/beat/web через compose) — запускаем её.
+# Дефолтный CMD из Dockerfile не должен обходить DEBUG-выбор локального сервера.
 if [ "$#" -gt 0 ]; then
+  if is_true "${DEBUG:-0}" && [ "${1:-}" = "uvicorn" ]; then
+    PORT="${PORT:-8000}"
+    set -- python manage.py runserver 0.0.0.0:${PORT}
+  fi
   run_with_optional_file_logs "$@"
 fi
 

@@ -26,9 +26,8 @@ from notifications.models import MatchWatch
 WATCHED_SCOPE = "watched"
 SCOPE_FILTERS = (
     ("all", "Все"),
-    (WATCHED_SCOPE, "Отслеживаемые"),
-    (Match.SyncScope.LIVE, "Идут сейчас"),
-    (Match.SyncScope.PREMATCH, "Предстоящие"),
+    (Match.SyncScope.LIVE, "Live"),
+    (Match.SyncScope.PREMATCH, "Прематч"),
     (Match.SyncScope.FINISHED, "Завершенные"),
 )
 SPORT_FILTERS = (

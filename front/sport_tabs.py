@@ -9,6 +9,12 @@ SPORT_ORDER = {
     "basketball": 30,
     "tennis": 40,
 }
+MOBILE_MATCH_SCOPE_TABS = (
+    ("all", "Все"),
+    ("live", "Live"),
+    ("prematch", "Прематч"),
+    ("finished", "Завершенные"),
+)
 
 
 def build_sport_filter_tabs(
@@ -58,6 +64,80 @@ def build_sport_filter_tabs(
                 "label": sport.name_ru or sport.name or sport.code,
                 "href": _url_with_query(path, tab_params),
                 "active": active_code == sport.code,
+            }
+        )
+    return tabs
+
+
+def build_mobile_prediction_filter_tabs(
+    request,
+    *,
+    reset_url: str | None = None,
+    top_experts_tab: dict | None = None,
+) -> list[dict]:
+    params = request.GET.copy()
+    params.pop("page", None)
+
+    tabs = []
+    for key, label in (("today", "Дата"), ("live", "Live")):
+        tab_params = params.copy()
+        active = tab_params.get(key) == "1"
+        if active:
+            tab_params.pop(key, None)
+        else:
+            tab_params[key] = "1"
+        tabs.append(
+            {
+                "key": key,
+                "label": label,
+                "href": _url_with_query(request.path, tab_params),
+                "active": active,
+            }
+        )
+
+    if top_experts_tab:
+        tabs.append(
+            {
+                "key": "top",
+                "label": "Топовые эксперты",
+                "href": top_experts_tab["href"],
+                "active": bool(top_experts_tab.get("active")),
+            }
+        )
+
+    tabs.append(
+        {
+            "key": "filters",
+            "label": "Сбросить фильтры" if len(params) else "Фильтры",
+            "href": reset_url or request.path,
+            "active": bool(params),
+        }
+    )
+    return tabs
+
+
+def build_mobile_prediction_match_scope_tabs(request) -> list[dict]:
+    params = request.GET.copy()
+    params.pop("page", None)
+    active_scope = params.get("match_scope", "all")
+    valid_scopes = {key for key, _ in MOBILE_MATCH_SCOPE_TABS}
+    if active_scope not in valid_scopes:
+        active_scope = "all"
+
+    tabs = []
+    for key, label in MOBILE_MATCH_SCOPE_TABS:
+        tab_params = params.copy()
+        tab_params.pop("live", None)
+        if key == "all":
+            tab_params.pop("match_scope", None)
+        else:
+            tab_params["match_scope"] = key
+        tabs.append(
+            {
+                "key": key,
+                "label": label,
+                "href": _url_with_query(request.path, tab_params),
+                "active": active_scope == key,
             }
         )
     return tabs

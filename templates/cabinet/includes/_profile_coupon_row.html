@@ -43,6 +43,7 @@
             {% endif %}
             {% if row_id %}
                 <span
+                    class="profile-coupon-reactions feed-prediction-actions"
                     data-profile-coupon-sort-data
                     data-coupon-id="{{ row_id }}"
                     data-sort-date="{{ row_date|date:'U' }}"
@@ -50,12 +51,20 @@
                     data-sort-payout="{{ metric_3_value|default:'0' }}"
                     data-sort-likes="{{ row_reactions.likes }}"
                     data-sort-favorites="{{ row_reactions.favorites }}"
-                    title="Лайки: {{ row_reactions.likes }} · Сохранили: {{ row_reactions.favorites }}"
+                    title="Лайки: {{ row_reactions.likes }} · Комментарии: {{ row_reactions.comments }} · Сохранили: {{ row_reactions.favorites }}"
                 >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.5 10.5 11 4.8c.6-1 2.2-.6 2.2.6v4.1h4.3c1.7 0 2.8 1.6 2.2 3.1l-2 5.1a2.4 2.4 0 0 1-2.2 1.5H7.5m0-8.7v8.7m0-8.7H4.2v8.7h3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    {{ row_reactions.likes }} ·
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-                    {{ row_reactions.favorites }}
+                    <span class="feed-prediction-action feed-prediction-like" aria-label="Лайки: {{ row_reactions.likes }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
+                        <b>{{ row_reactions.likes }}</b>
+                    </span>
+                    <span class="feed-prediction-action feed-prediction-comments" aria-label="Комментарии: {{ row_reactions.comments }}">
+                        {% include "front/svgs/comment.svg" %}
+                        <b>{{ row_reactions.comments }}</b>
+                    </span>
+                    <span class="feed-prediction-action feed-prediction-save" aria-label="Сохранили: {{ row_reactions.favorites }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
+                        <b>{{ row_reactions.favorites }}</b>
+                    </span>
                 </span>
             {% endif %}
         </div>

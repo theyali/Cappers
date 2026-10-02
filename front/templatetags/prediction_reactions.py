@@ -96,17 +96,23 @@ def _profile_reaction_metrics(request) -> dict[int, dict[str, int]]:
                     Value(0),
                     output_field=IntegerField(),
                 ),
+                comments_count=Coalesce(
+                    F("metrics__comments_count"),
+                    Value(0),
+                    output_field=IntegerField(),
+                ),
                 favorites_count=Coalesce(
                     F("metrics__favorites_count"),
                     Value(0),
                     output_field=IntegerField(),
                 ),
             )
-            .values("id", "likes_count", "favorites_count")
+            .values("id", "likes_count", "comments_count", "favorites_count")
         )
         cached = {
             int(row["id"]): {
                 "likes": int(row["likes_count"] or 0),
+                "comments": int(row["comments_count"] or 0),
                 "favorites": int(row["favorites_count"] or 0),
             }
             for row in rows
@@ -158,7 +164,7 @@ def profile_coupon_reaction_counts(context, coupon_id):
     try:
         normalized_id = int(coupon_id)
     except (TypeError, ValueError):
-        return {"likes": 0, "favorites": 0}
+        return {"likes": 0, "comments": 0, "favorites": 0}
 
     request = context.get("request")
     if request is not None:
@@ -174,18 +180,24 @@ def profile_coupon_reaction_counts(context, coupon_id):
                 Value(0),
                 output_field=IntegerField(),
             ),
+            comments_count=Coalesce(
+                F("metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
             favorites_count=Coalesce(
                 F("metrics__favorites_count"),
                 Value(0),
                 output_field=IntegerField(),
             ),
         )
-        .values("likes_count", "favorites_count")
+        .values("likes_count", "comments_count", "favorites_count")
         .first()
     )
     if not row:
-        return {"likes": 0, "favorites": 0}
+        return {"likes": 0, "comments": 0, "favorites": 0}
     return {
         "likes": int(row["likes_count"] or 0),
+        "comments": int(row["comments_count"] or 0),
         "favorites": int(row["favorites_count"] or 0),
     }

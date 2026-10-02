@@ -7,6 +7,7 @@
 
 {% block content %}
 {% content_view_mode as content_view_mode %}
+{% include "front/includes/_mobile_prediction_filters.html" with sport_tabs=sport_tabs status_tabs=status_tabs mobile_filter_tabs=mobile_filter_tabs %}
 <section class="predictions-page predictions-index-page predictions-scroll-page" aria-label="{{ page_heading|default:'Все прогнозы' }}">
     <div
         class="predictions-layout"

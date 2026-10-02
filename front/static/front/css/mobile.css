@@ -53,7 +53,9 @@ summary:focus-visible,
 }
 
 .matches-mobile-scope-panel,
-.matches-mobile-sports-panel {
+.matches-mobile-sports-panel,
+.mobile-prediction-filters,
+.mobile-match-filters {
   display: none;
 }
 
@@ -499,6 +501,13 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1080px) {
+#register-form {
+    background: var(--panel);
+    padding: 11px;
+    border-radius: 20px;
+    width: 100%;
+}
+
   .home-about-benefits,
   .wallet-topup-page .wallet-methods {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1691,31 +1700,23 @@ body.expert-public-details-open {
     bottom: 0;
     z-index: 1200;
     width: 100%;
-    min-height: 86px;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: center;
     gap: 0;
-    padding: 9px 10px 7px;
+    padding: 0px 0px 0px;
     overflow: visible;
     transform: translateX(-50%);
     border-top: 1px solid rgba(255, 255, 255, 0.16);
-    border-right: 1px solid rgba(255, 255, 255, 0.16);
     border-bottom: 0;
     border-left: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 32px 32px 0 0;
-    background:
-      radial-gradient(circle at 50% -34px, rgba(255, 255, 255, 0.12), transparent 44%),
-      linear-gradient(180deg, #242427 0%, #171719 100%);
-    box-shadow:
-      0 18px 46px rgba(0, 0, 0, 0.46),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: var(--ink);
   }
   .mobile-app-nav-item {
     position: relative;
     z-index: 2;
     min-width: 0;
-    min-height: 62px;
+    min-height: 58px;
     display: grid;
     align-content: center;
     justify-items: center;
@@ -1739,7 +1740,7 @@ body.expert-public-details-open {
     order: 2;
   }
 
-  .mobile-nav-roulette {
+  .mobile-nav-feed {
     order: 3;
   }
 
@@ -1747,8 +1748,12 @@ body.expert-public-details-open {
     order: 4;
   }
 
-  .mobile-nav-profile {
+  .mobile-nav-predictions {
     order: 5;
+  }
+
+  .mobile-nav-profile {
+    order: 6;
   }
 
   button.mobile-app-nav-item {
@@ -1771,20 +1776,9 @@ body.expert-public-details-open {
     color: var(--blue);
   }
 
-  .mobile-app-nav-item.is-active::after {
-    content: "";
-    position: absolute;
-    right: 16px;
-    bottom: -4px;
-    left: 16px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--blue);
-  }
-
   .mobile-app-nav-icon {
-    width: 27px;
-    height: 27px;
+    width: 25px;
+    height: 25px;
     display: block;
     background: currentColor;
     font-size: 0;
@@ -1800,13 +1794,23 @@ body.expert-public-details-open {
     mask: url("../svgs/nav-home.svg") center / contain no-repeat;
   }
   .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
-    -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3v3M17 3v3M4.5 8.5h15M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z'/%3E%3Cpath d='m8.5 14 2 2 5-5'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
-    mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3v3M17 3v3M4.5 8.5h15M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z'/%3E%3Cpath d='m8.5 14 2 2 5-5'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+    -webkit-mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
+    mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
+  }
+
+  .mobile-app-nav .mobile-nav-feed .mobile-app-nav-icon {
+    -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
+    mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
   }
 
   .mobile-app-nav .mobile-nav-coupons .mobile-app-nav-icon {
     -webkit-mask: url("../svgs/coupons.svg") center / contain no-repeat;
     mask: url("../svgs/coupons.svg") center / contain no-repeat;
+  }
+
+  .mobile-app-nav .mobile-nav-predictions .mobile-app-nav-icon {
+    -webkit-mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
+    mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
   }
 
   .mobile-app-nav .mobile-nav-profile .mobile-app-nav-icon {
@@ -1819,56 +1823,11 @@ body.expert-public-details-open {
     min-width: 0;
     overflow: hidden;
     color: currentColor;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 1;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .mobile-app-nav .mobile-nav-roulette {
-    min-height: 72px;
-    gap: 5px;
-    align-content: end;
-    padding-top: 31px;
-    color: var(--yellow);
-  }
-
-  .mobile-app-nav .mobile-nav-roulette::after {
-    display: none;
-  }
-
-  .mobile-app-nav .mobile-nav-roulette .mobile-app-nav-icon {
-    position: absolute;
-    top: -29px;
-    left: 50%;
-    z-index: 3;
-    width: 68px;
-    height: 68px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: inherit;
-    background: var(--panel);
-    box-shadow:
-      0 14px 28px rgba(0, 0, 0, 0.42),
-      0 0 0 3px rgba(20, 20, 22, 0.72);
-    transform: translateX(-50%);
-  }
-
-  .mobile-app-nav .mobile-nav-roulette .mobile-app-nav-label {
-    color: var(--yellow);
-  }
-
-  .mobile-app-nav .mobile-nav-roulette .mobile-app-nav-icon svg {
-    width: 68px;
-    height: 68px;
-    display: block !important;
-  }
-
-  .mobile-app-nav .mobile-nav-roulette .nav-notification-badge {
-    top: 0;
-    right: 18px;
   }
 
   .fixed-tg-btn-wrapper {
@@ -1925,16 +1884,12 @@ body.expert-public-details-open {
     max-height: 100dvh;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: max(22px, env(safe-area-inset-top)) 18px
-      calc(18px + env(safe-area-inset-bottom));
+    gap: 10px;
+    padding: 11px;
     overflow-y: auto;
     overscroll-behavior: contain;
     border-radius: 0;
-    background:
-      radial-gradient(circle at 10% 5%, rgba(23, 91, 255, 0.16), transparent 30%),
-      radial-gradient(circle at 90% 18%, rgba(255, 255, 255, 0.08), transparent 24%),
-      #07090d;
+    background:var(--ink);
     visibility: hidden;
     pointer-events: none;
     transform: translateX(105%);
@@ -2000,8 +1955,7 @@ body.expert-public-details-open {
     border-radius: 18px;
     color: #fff;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-      #12161c;
+      var(--panel);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   }
 
@@ -2123,8 +2077,7 @@ body.expert-public-details-open {
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 18px;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-      #12161c;
+      var(--panel);
   }
 
   .mobile-offcanvas-wallet > div {
@@ -2229,12 +2182,11 @@ body.expert-public-details-open {
   .mobile-offcanvas-links {
     display: grid;
     gap: 12px;
-    padding: 16px;
+    padding: 11px;
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 18px;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
-      #12161c;
+      var(--panel);
   }
 
   .mobile-offcanvas-section-head {
@@ -2276,12 +2228,11 @@ body.expert-public-details-open {
 
   .mobile-offcanvas-quick-grid a {
     min-width: 0;
-    min-height: 92px;
     display: grid;
     justify-items: center;
     align-content: center;
-    gap: 10px;
-    padding: 10px 6px;
+    gap: 5px;
+        padding: 4px 3px;
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 14px;
     color: #fff;
@@ -2337,13 +2288,16 @@ body.expert-public-details-open {
     display: none;
   }
 
-  .mobile-offcanvas-links {
-    gap: 0;
-    padding: 14px 16px;
-  }
+    .mobile-offcanvas-links {
+        gap: 0;
+        padding: 9px 11px;
+    }
 
+.following-stories {
+  gap:0px;
+}
   .mobile-offcanvas-links a {
-    min-height: 54px;
+    min-height: 49px;
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) 13px;
     align-items: center;
@@ -3099,30 +3053,12 @@ body.expert-public-details-open {
   .auth-card {
     border-radius: 24px;
   }
-  .matches-page .matches-sport-tabs,
-  .matches-page .matches-tabs {
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-inline: contain;
-  }
   .matches-page {
     width: 100%;
     overflow: hidden;
   }
-  .matches-page .matches-tabs {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    justify-content: flex-start;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    box-sizing: border-box;
-  }
   .matches-page .matches-sport-tabs {
     justify-content: flex-start;
-  }
-  .matches-page .matches-tabs a {
-    flex: 0 0 auto;
   }
   .matches-date-filter {
     gap: 9px;
@@ -4380,6 +4316,13 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 720px) {
+.expert-public-meta {
+    gap: 10px;
+    font-size: 10px;
+}
+  .expert-public-copy h1{
+      font-size: 20px !important;
+  }
   .home-bookmakers-hero,
   .home-heading {
     display: block;
@@ -4458,20 +4401,6 @@ body.expert-public-details-open {
     min-height: auto;
     justify-content: space-between !important;
     display: flex;
-  }
-  .predictions-page .matches-sport-tabs {
-    padding: 9px;
-  }
-  .predictions-page .matches-sport-tab {
-    min-height: 46px;
-    gap: 8px;
-    padding: 0 12px 0 8px;
-    font-size: 13px;
-  }
-  .predictions-page .matches-sport-icon {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
   }
   .predictions-grid {
     grid-template-columns: 1fr;
@@ -4929,6 +4858,10 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1280px) {
+  .expert-public-kicker {
+      font-size: 9px;
+  }
+
   .bookmakers-filter-bar {
     grid-template-columns: 1fr;
   }
@@ -4947,7 +4880,7 @@ body.expert-public-details-open {
   }
 
   .expert-public-hero {
-    padding: 28px;
+    padding: 13px;
   }
   .expert-public-side {
     width: 340px;
@@ -4957,12 +4890,8 @@ body.expert-public-details-open {
     font-size: 38px;
   }
   .expert-public-avatar {
-    width: 180px;
-    height: 180px;
-  }
-  .expert-public-tags {
-    width: min(760px, calc(100% - 214px));
-    margin-left: 214px;
+    width: 130px;
+    height: 130px;
   }
   .expert-public-stats.expert-public-stats-compact {
     gap: 12px;
@@ -4986,7 +4915,7 @@ body.expert-public-details-open {
   }
   .matches-grid,
   .odds-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
   .match-detail-head,
   .match-detail-scoreboard {
@@ -6069,7 +5998,7 @@ body.expert-public-details-open {
   }
 
   .site-nav {
-    --brand-logo-size: 70px;
+    --brand-logo-size: 48px;
     padding-right: 8px;
     padding-left: 8px;
   }
@@ -7550,6 +7479,12 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1024px) {
+  .matches-page .matches-list-panel > .matches-hero {
+    margin-top:8px;
+  }
+  .matches-tabs  .is-active svg{
+    color: white;
+  }
 .quick-stats {
     display: flex;
     gap: 14px;
@@ -7567,9 +7502,9 @@ body.expert-public-details-open {
     .prediction-comments {
         padding: 0;
     }
-    .matches-sport-tabs,
-    .matches-tabs,
-    .matches-date-filter {
+    .matches-page > .matches-sport-tabs,
+    .matches-page > .matches-tabs,
+    .matches-page > .matches-date-filter {
         display: none !important;
     }
     .matches-page {
@@ -7577,12 +7512,9 @@ body.expert-public-details-open {
         overflow: visible !important;
     }
 
-    .matches-mobile-scope-panel,
-    .matches-mobile-sports-panel {
+    .matches-mobile-scope-panel {
         display: block !important;
         width: auto;
-        margin-right: -16px;
-        margin-left: -16px;
     }
 
     .matches-mobile-scope-panel {
@@ -7598,7 +7530,6 @@ body.expert-public-details-open {
         align-items: stretch;
         justify-content: flex-start;
         gap: 0;
-        margin-bottom: 20px;
         padding: 0 10px;
         overflow-x: auto;
         overflow-y: hidden;
@@ -7622,7 +7553,7 @@ body.expert-public-details-open {
         align-items: center;
         justify-content: center;
         gap: 0;
-        padding: 0 16px;
+        padding: 0 8px;
         border-radius: 0;
         color: var(--muted) !important;
         background: transparent !important;
@@ -7710,6 +7641,219 @@ body.expert-public-details-open {
         text-overflow: clip;
     }
 
+    [data-expert-public-tabs] .expert-public-mobile-tabs {
+        display: block !important;
+        grid-column: 1 / -1;
+        order: -1;
+        width: 100%;
+        margin: 0 0 14px;
+        padding: 0;
+        overflow: hidden;
+        background: var(--ink);
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs {
+        width: 100%;
+        min-height: 42px;
+        display: flex !important;
+        align-items: stretch;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-radius: 0;
+        background: transparent;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a {
+        min-width: max-content;
+        min-height: 42px;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 13px;
+        border-radius: 11px;
+        color: rgba(255, 255, 255, 0.72) !important;
+        background: var(--panel) !important;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a.is-active {
+        color: #fff !important;
+        background: var(--blue) !important;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a.is-active::after {
+        display: none;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-icon,
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-icon svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+    }
+
+    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-copy {
+        overflow: visible;
+        font-size: 12px;
+        font-weight: 600;
+        text-overflow: clip;
+    }
+
+    body:has(.predictions-page[data-expert-public-tabs]) {
+        height: auto;
+        display: block;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    body:has(.predictions-page[data-expert-public-tabs]) .site-main {
+        min-height: auto;
+        overflow: visible;
+    }
+
+    .predictions-page[data-expert-public-tabs]:has(.predictions-layout),
+    .predictions-page[data-expert-public-tabs] .predictions-layout {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .predictions-page[data-expert-public-tabs] .predictions-content {
+        height: auto;
+        max-height: none !important;
+        overflow: visible;
+        padding-right: 0;
+        scrollbar-width: auto;
+    }
+
+    .expert-public-tournaments .profile-list-card {
+        min-width: 0;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .expert-public-tournaments .profile-section-heading {
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .expert-public-tournaments .profile-section-heading .eyebrow,
+    .expert-public-tournaments .profile-list-head .eyebrow {
+        margin: 0 0 8px;
+        color: var(--yellow);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: 0.15em;
+    }
+
+    .expert-public-tournaments .profile-section-heading h2,
+    .expert-public-tournaments .profile-list-head h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.05;
+    }
+
+    .expert-public-tournaments .profile-coupon-count {
+        min-width: 54px;
+        min-height: 54px;
+        border-radius: 13px;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .expert-public-tournaments .profile-list-head {
+        display: block;
+        margin: 0 0 12px;
+    }
+
+    .expert-public-tournaments .profile-coupons-list {
+        gap: 8px;
+    }
+
+    .expert-public-tournaments .profile-coupon-row {
+        min-height: 66px;
+        grid-template-columns: 54px minmax(0, 1fr) auto 22px;
+        gap: 10px;
+        padding: 8px;
+        border-radius: 14px;
+        background: transparent;
+    }
+
+    .expert-public-tournaments .profile-coupon-main {
+        display: contents;
+    }
+
+    .expert-public-tournaments .profile-coupon-id {
+        width: 44px;
+        height: 44px;
+        align-self: center;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.05;
+    }
+
+    .expert-public-tournaments .profile-coupon-copy {
+        min-width: 0;
+        align-self: center;
+    }
+
+    .expert-public-tournaments .profile-coupon-copy strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.15;
+    }
+
+    .expert-public-tournaments .profile-coupon-copy span {
+        display: block;
+        max-width: 100%;
+        margin-top: 5px;
+        overflow: hidden;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .expert-public-tournaments .profile-coupon-status {
+        align-self: center;
+        min-height: 34px;
+        padding: 0 10px;
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .expert-public-tournaments .profile-coupon-metric {
+        display: none;
+    }
+
+    .expert-public-tournaments .profile-coupon-open {
+        align-self: center;
+        color: var(--blue);
+        font-size: 28px;
+        line-height: 1;
+    }
+
     .cabinet-bonuses-page .bonus-dashboard-grid {
         min-width: 0;
         display: grid;
@@ -7717,116 +7861,13 @@ body.expert-public-details-open {
         padding-bottom:0;
     }
 
-    .matches-mobile-sports-panel {
-        position: sticky;
-        top: 0;
-        z-index: 25;
-        align-self: start;
-        background: var(--ink);
-    }
-
-    .matches-mobile-sports-panel .matches-sport-tabs {
-        width: 100%;
-        min-height: auto;
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        gap: 4px;
-        margin: 0;
-        padding: 7px 10px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        overscroll-behavior-x: contain;
-        border-radius: 0;
-        background: var(--blue);
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-    }
-    .matches-page .matches-list-panel > .matches-hero {
-        margin-top: 20px;
-    }
-    .matches-mobile-sports-panel .matches-sport-tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-    .matches-mobile-sports-panel .matches-sport-tab {
-        position: relative;
-        width: 62px;
-        min-width: 62px;
-        height: 56px;
-        min-height: 56px;
-        flex: 0 0 62px;
-        display: grid;
-        place-items: center;
-        gap: 0;
-        padding: 0;
-        border-radius: 14px;
-        color: var(--muted) !important;
-        background: transparent !important;
-    }
-
-    .matches-mobile-sports-panel
-        .matches-sport-tab
-        > span:not(.matches-sport-icon),
-    .matches-mobile-sports-panel .matches-sport-tab > b {
-        display: none;
-    }
-
-    .matches-mobile-sports-panel .matches-sport-icon {
-        width: 29px;
-        height: 29px;
-        display: grid;
-        place-items: center;
-        margin: 0;
-        color: currentColor;
-    }
-    .matches-sport-tab .matches-sport-label {
-        color: white;
-    }
-    .matches-mobile-sports-panel .matches-sport-icon svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .matches-mobile-sports-panel .matches-sport-tab.is-active {
-        color: white !important;
-    }
-
     .matches-page .matches-list-panel {
         padding: 0 10px;
     }
 
-    .matches-mobile-scope-panel,
-    .matches-mobile-sports-panel {
+    .matches-mobile-scope-panel {
         margin-right: 0;
         margin-left: 0;
-    }
-
-    .matches-mobile-sports-panel .matches-sport-tab {
-        width: max-content;
-        min-width: max-content;
-        height: auto;
-        min-height: 58px;
-        flex: 0 0 auto;
-        grid-template-rows: 28px auto;
-        gap: 4px;
-        padding: 4px 8px 5px;
-    }
-
-    .matches-mobile-sports-panel .matches-sport-label {
-        display: block;
-        max-width: none;
-        color: #fff;
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 1;
-        white-space: nowrap;
-    }
-
-    .matches-mobile-sports-panel
-        .matches-sport-tab.is-active
-        .matches-sport-label {
-        color: var(--yellow);
     }
 
     .matches-table-view .content-sport-summary {
@@ -8086,6 +8127,13 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 760px) {
+  .expert-public-shell .expert-recommendations{
+    padding:0;
+  }
+.expert-public-shell {
+    display: grid;
+    padding: 0;
+}
 .cabinet-bonuses-page .bonus-center-layout{
     padding-top:0;
 }
@@ -9597,7 +9645,6 @@ body.expert-public-details-open {
   .expert-public-hero,
   .expert-public-main,
   .expert-public-section-head {
-    align-items: flex-start;
     flex-direction: column;
   }
   .expert-public-name-row h1 {
@@ -9859,7 +9906,6 @@ body.expert-public-details-open {
     width: 100%;
     margin: 0;
     padding: 0;
-    padding-top: 20px;
   }
 
   /* Keep the Telegram shortcut above the app navigation instead of mid-screen. */
@@ -9975,7 +10021,7 @@ body.expert-public-details-open {
   .auth-heading::after {
     content: "";
     width: 100px;
-    height: 82px;
+    height: 48px;
     display: block;
     margin: 22px auto 30px;
     background: url("../img/logo.png") center / contain no-repeat;
@@ -10078,11 +10124,6 @@ body.expert-public-details-open {
     background: #19191b;
   }
 
-  .matches-mobile-scope-panel,
-  .matches-mobile-sports-panel {
-    margin-right: -12px;
-    margin-left: -12px;
-  }
   .matches-sport-tab.is-active svg {
     color: var(--yellow) !important;
   }
@@ -10090,30 +10131,7 @@ body.expert-public-details-open {
     color: var(--yellow) !important;
   }
   .matches-mobile-scope-panel .matches-tabs a {
-    min-height: 54px;
-    padding-right: 14px;
-    padding-left: 14px;
     font-size: 14px;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tabs {
-    min-height: 66px;
-    padding-right: 8px;
-    padding-left: 8px;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tab {
-    width: max-content;
-    height: 44px;
-    min-height: 44px;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-icon {
-    width: 21px;
-    height: 21px;
-  }
-  .matches-mobile-sports-panel .matches-sport-icon svg {
-    color: white;
   }
 
   .wiki-video-player {
@@ -12557,5 +12575,344 @@ body.expert-public-details-open {
   .earnings-source-legend em {
     grid-column: 2 / -1;
     text-align: left;
+  }
+}
+
+@media (max-width: 1024px) {
+  body:has(.matches-page) .breadcrumbs-container {
+    display: none !important;
+  }
+
+  .matches-page .prediction-results-head,
+  .matches-page .prediction-results-actions,
+  .matches-page .content-view-toolbar,
+  .matches-page .matches-hero.long-bg.long-bg-2 {
+    display: none !important;
+  }
+
+  .prediction-results-filters {
+    display: none !important;
+  }
+
+  .mobile-prediction-filters {
+    display: contents;
+  }
+
+  .mobile-match-filters {
+    display: block;
+    width: 100%;
+  }
+
+  .mobile-prediction-filter-top {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--ink);
+  }
+
+  .mobile-match-filter-top {
+    padding-right: 10px;
+  }
+
+  .mobile-prediction-status-tabs {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-match-filter-top > .matches-tabs {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex !important;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 0;
+    background: transparent;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-match-filter-top > .matches-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-match-filter-top > .matches-tabs a {
+    position: relative;
+    min-width: max-content;
+    min-height: 64px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 0;
+    color: rgba(255, 255, 255, 0.62) !important;
+    background: transparent !important;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .mobile-match-filter-top > .matches-tabs a.is-active {
+    color: #fff !important;
+  }
+
+  .mobile-match-filter-top > .matches-tabs a.is-active::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 999px 999px 0 0;
+    background: var(--yellow);
+  }
+
+  .mobile-match-filter-top > .matches-tabs a b {
+    display: none;
+  }
+
+  .mobile-prediction-status-tabs::-webkit-scrollbar,
+  .mobile-prediction-quick-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-prediction-status-tab {
+    position: relative;
+    min-height: 54px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .mobile-prediction-status-tab.is-active {
+    color: #fff;
+  }
+
+  .mobile-prediction-status-tab.is-active::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 999px 999px 0 0;
+    background: var(--yellow);
+  }
+
+  .mobile-prediction-quick-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-prediction-quick-tab {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    color: white;
+    background: var(--blue);
+  }
+
+  .mobile-prediction-quick-tab svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobile-match-date-tab {
+    position: relative;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+
+  .mobile-match-date-tab input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .mobile-match-view-switcher {
+    flex: 0 0 auto;
+    margin-left: 8px;
+  }
+
+  .mobile-match-view-switcher .content-view-switcher {
+    gap: 2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .mobile-match-view-switcher .content-view-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+  }
+
+  .mobile-match-view-switcher .content-view-button svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .mobile-prediction-quick-tab.is-active {
+    color: var(--yellow);
+    background: #2a3340;
+  }
+
+  body:has(.predictions-index-page),
+  body:has(.following-feed-page),
+  body:has(.favorites-page) {
+    height: auto !important;
+    min-height: 100dvh;
+    display: block !important;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+  }
+
+  body:has(.predictions-index-page) .site-main,
+  body:has(.following-feed-page) .site-main,
+  body:has(.favorites-page) .site-main {
+    min-height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 92px;
+  }
+
+  .predictions-index-page,
+  .following-feed-page,
+  .favorites-page,
+  .predictions-index-page .predictions-layout,
+  .following-feed-page .predictions-layout,
+  .favorites-page .predictions-layout {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .predictions-index-page .predictions-content,
+  .following-feed-page .predictions-content,
+  .favorites-page .predictions-content,
+  .predictions-index-page .predictions-layout > .predictions-filter-sidebar,
+  .following-feed-page .predictions-layout > .predictions-filter-sidebar,
+  .favorites-page .predictions-layout > .favorites-filter-sidebar,
+  .predictions-index-page .predictions-layout > .bookmakers-sidebar,
+  .following-feed-page .predictions-layout > .bookmakers-sidebar,
+  .favorites-page .predictions-layout > .favorites-right-sidebar,
+  .predictions-index-page .predictions-layout > .predictions-ad-sidebar,
+  .following-feed-page .predictions-layout > .predictions-ad-sidebar {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+  }
+
+  .matches-mobile-sports-panel {
+    display: block !important;
+    position: sticky;
+    top: 0;
+    z-index: 45;
+    width: 100%;
+    margin-right: 0;
+    margin-left: 0;
+    background: #08111c;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-tabs {
+      width: 100%;
+      min-height: auto;
+      display: flex !important;
+      align-items: center;
+      justify-content: space-around;
+      gap: 3px;
+      margin: 0;
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      border-radius: 0;
+      background: var(--ink);
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-tab {
+    position: relative;
+    width: 48px;
+    min-width: 48px;
+    height: 50px;
+    min-height: 50px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.58) !important;
+    background: transparent !important;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-tab.is-active::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    left: 10px;
+    height: 3px;
+    border-radius: 999px 999px 0 0;
+    background: var(--yellow);
+  }
+
+  .matches-mobile-sports-panel .matches-sport-icon {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    color: currentColor;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-icon svg {
+    width: 100%;
+    height: 100%;
+    color: currentColor !important;
+  }
+
+  .matches-mobile-sports-panel .matches-sport-label,
+  .matches-mobile-sports-panel .matches-sport-tab > b {
+    display: none !important;
   }
 }

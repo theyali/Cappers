@@ -115,45 +115,27 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
-        <a
-            class="mobile-app-nav-item mobile-nav-roulette {% if request.resolver_match.app_name == 'cabinet' and request.resolver_match.url_name == 'bonuses' or request.resolver_match.url_name == 'bonus_tasks' or request.resolver_match.url_name == 'bonus_levels' %}is-active{% endif %}"
-            href="{% url 'cabinet:bonuses' %}"
-            aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
-            data-fixed-roulette
-            data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
-        >
-            <span class="mobile-app-nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 72 72" pointer-events="none" focusable="false">
-                    <g transform="translate(0 0) scale(.06)">
-                        {% include "front/svgs/roulette.svg" %}
-                    </g>
-                </svg>
-            </span>
-            {% if roulette_available_spins %}
-                <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
-            {% endif %}
-            {% comment %} <span class="mobile-app-nav-label">Рулетка</span> {% endcomment %}
+        <a class="mobile-app-nav-item mobile-nav-feed {% if request.resolver_match.view_name == 'front:following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
+            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-label">Лента</span>
         </a>
-        {% if request.user.is_authenticated and request.user.is_analyst %}
         <a
             class="mobile-app-nav-item mobile-nav-coupons"
             href="{% url 'game:match_list' %}"
             data-mobile-coupon-toggle
             aria-controls="mobile-coupon-sheet"
             aria-expanded="false"
-            aria-label="Купоны"
+            aria-label="Купон"
         >
             <span class="mobile-coupon-nav-tooltip" data-mobile-coupon-tooltip hidden></span>
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge hidden>0</span>
-            <span class="mobile-app-nav-label">Купоны</span>
+            <span class="mobile-app-nav-label">Купон</span>
         </a>
-        {% else %}
-        <a class="mobile-app-nav-item mobile-nav-coupons {% if request.resolver_match.url_name == 'predictions' %}is-active{% endif %}" href="{% url 'front:predictions' %}" aria-label="Купоны">
+        <a class="mobile-app-nav-item mobile-nav-predictions {% if request.resolver_match.url_name == 'predictions' or request.resolver_match.url_name == 'predictions_rich' or request.resolver_match.url_name == 'predictions_by_sport' or request.resolver_match.url_name == 'predictions_rich_by_sport' or request.resolver_match.url_name == 'prediction_expresses' or request.resolver_match.url_name == 'prediction_expresses_rich' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Купоны</span>
+            <span class="mobile-app-nav-label">Прогнозы</span>
         </a>
-        {% endif %}
         {% if request.user.is_authenticated %}
         <a class="mobile-app-nav-item mobile-nav-profile {% if request.resolver_match.view_name == 'cabinet:profile' %}is-active{% endif %}" href="{% url 'cabinet:profile' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>

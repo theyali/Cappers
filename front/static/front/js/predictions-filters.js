@@ -75,6 +75,25 @@
         }
     };
 
+    const syncMobileFilterPanel = ($response, $nextLayout) => {
+        const $current = $("[data-mobile-prediction-filters]").first();
+        const $next = $response.find("[data-mobile-prediction-filters]").first();
+
+        if ($current.length && $next.length) {
+            $current.replaceWith($next);
+            return;
+        }
+
+        if ($current.length) {
+            $current.remove();
+            return;
+        }
+
+        if ($next.length && $nextLayout?.length) {
+            $nextLayout.before($next);
+        }
+    };
+
     const syncDocumentHead = (html) => {
         const parsed = new DOMParser().parseFromString(html, "text/html");
         if (parsed.title) document.title = parsed.title;
@@ -157,6 +176,7 @@
 
                 $nextLayout.find("[data-predictions-content]").first().addClass("is-results-entering");
                 $layout.replaceWith($nextLayout);
+                syncMobileFilterPanel($response, $nextLayout);
                 syncHero($response);
                 syncDocumentHead(html);
                 setSidebarCollapsed(wasCollapsed, { persist: false });

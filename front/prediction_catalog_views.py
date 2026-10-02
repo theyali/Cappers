@@ -33,6 +33,7 @@ from .prediction_views import (
     _url_with_query,
     prediction_filter_collapsed,
 )
+from .sport_tabs import build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -461,6 +462,7 @@ def _apply_position_filters(
     selected_league,
     only_live,
     only_today,
+    match_scope,
     express_only,
 ):
     if express_only:
@@ -473,7 +475,9 @@ def _apply_position_filters(
 
     if selected_league.isdigit():
         queryset = queryset.filter(predictions__match__league_id=int(selected_league))
-    if only_live:
+    if match_scope != "all":
+        queryset = queryset.filter(predictions__match__sync_scope=match_scope)
+    elif only_live:
         queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
         queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
@@ -640,6 +644,9 @@ def predictions(
     coefficient_max = _parse_decimal(request.GET.get("coef_max"))
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
+    active_match_scope = request.GET.get("match_scope", "all")
+    if active_match_scope not in {"all", "live", "prematch", "finished"}:
+        active_match_scope = "all"
     top_experts_only = request.GET.get("top") == "1"
 
     top_profiles = ranked_expert_profiles(limit=TOP_EXPERTS_LIMIT)
@@ -671,6 +678,7 @@ def predictions(
         selected_league=selected_league,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
         express_only=express_only,
     )
     meta_filtered = _apply_position_filters(
@@ -679,6 +687,7 @@ def predictions(
         selected_league=selected_league,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
         express_only=express_only,
     )
     if selected_capper:
@@ -780,6 +789,7 @@ def predictions(
             coefficient_max is not None,
             only_live,
             only_today,
+            active_match_scope != "all",
             active_status != "all",
         ]
     )
@@ -803,6 +813,20 @@ def predictions(
     if prediction_type_context["uses_prediction_type_query"]:
         filter_action_url = prediction_type_context["prediction_type_reset_url"]
 
+    top_experts_tab = _top_experts_tab(
+        request,
+        active=top_experts_only,
+        count=top_experts_count,
+    )
+    all_predictions_url = (
+        _rich_path()
+        if prediction_type_context["is_rich_predictions"]
+        and not prediction_type_context["uses_prediction_type_query"]
+        else prediction_type_context["prediction_type_reset_url"]
+        if prediction_type_context["uses_prediction_type_query"]
+        else _prediction_sport_path()
+    )
+
     return render(
         request,
         "front/predictions.html",
@@ -818,11 +842,7 @@ def predictions(
                 prediction_type=active_prediction_type,
                 cache_scope=request.user.pk if is_paid_predictions else "",
             ),
-            "top_experts_tab": _top_experts_tab(
-                request,
-                active=top_experts_only,
-                count=top_experts_count,
-            ),
+            "top_experts_tab": top_experts_tab,
             "top_experts_only": top_experts_only,
             "active_status": active_status,
             "active_sort": active_sort,
@@ -841,17 +861,17 @@ def predictions(
             "coefficient_max": request.GET.get("coef_max", ""),
             "only_live": only_live,
             "only_today": only_today,
+            "active_match_scope": active_match_scope,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "filter_action_url": filter_action_url,
-            "all_predictions_url": (
-                _rich_path()
-                if prediction_type_context["is_rich_predictions"]
-                and not prediction_type_context["uses_prediction_type_query"]
-                else prediction_type_context["prediction_type_reset_url"]
-                if prediction_type_context["uses_prediction_type_query"]
-                else _prediction_sport_path()
+            "all_predictions_url": all_predictions_url,
+            "mobile_filter_tabs": build_mobile_prediction_filter_tabs(
+                request,
+                reset_url=all_predictions_url,
+                top_experts_tab=top_experts_tab,
             ),
+            "mobile_match_scope_tabs": build_mobile_prediction_match_scope_tabs(request),
             "adv_placement": "sidebar",
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **prediction_type_context,
