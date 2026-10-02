@@ -1,0 +1,80 @@
+<a
+    class="{{ public_tab_link_class }} is-active"
+    href="#predictions"
+    role="tab"
+    aria-selected="true"
+    tabindex="0"
+    data-expert-public-tab="predictions"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Прогнозы</span>
+</a>
+<a
+    class="{{ public_tab_link_class }}"
+    href="#stats"
+    role="tab"
+    aria-selected="false"
+    tabindex="-1"
+    data-expert-public-tab="stats"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 19V11M12 19V5M19 19v-7M3 19h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Статистика</span>
+</a>
+<a
+    class="{{ public_tab_link_class }}"
+    href="#bank"
+    role="tab"
+    aria-selected="false"
+    tabindex="-1"
+    data-expert-public-tab="bank"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v12H4zM4 10h16M8 15h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Банк</span>
+</a>
+<a
+    class="{{ public_tab_link_class }}"
+    href="#achievements"
+    role="tab"
+    aria-selected="false"
+    tabindex="-1"
+    data-expert-public-tab="achievements"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M8 4h8v4a4 4 0 0 1-8 0V4ZM8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Достижения</span>
+</a>
+<a
+    class="{{ public_tab_link_class }}"
+    href="#tournaments"
+    role="tab"
+    aria-selected="false"
+    tabindex="-1"
+    data-expert-public-tab="tournaments"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v3a5 5 0 0 1-10 0V4ZM7 6H4v1a4 4 0 0 0 4 4M17 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6v4H9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Турниры</span>
+</a>
+{% if expert_articles %}
+<a
+    class="{{ public_tab_link_class }}"
+    href="#articles"
+    role="tab"
+    aria-selected="false"
+    tabindex="-1"
+    data-expert-public-tab="articles"
+>
+    <span class="matches-table-scope-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M15 4v5h5M8 13h8M8 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </span>
+    <span class="matches-table-scope-copy">Статьи</span>
+</a>
+{% endif %}

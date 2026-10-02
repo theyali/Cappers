@@ -1323,7 +1323,10 @@ body.wiki-video-player-open {
 .matches-table-date-link:hover,
 .site-nav-actions .nav-profile {
     color: var(--text);
-    background: #2a2a2d;
+    background: var(--yellow);
+}
+.content-view-button.is-active svg{
+    color:black;
 }
 .site-nav-actions .nav-profile.nav-profile-icon {
     width: 42px;
@@ -1451,6 +1454,43 @@ body.wiki-video-player-open {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+.profile-coupon-copy .profile-coupon-reactions {
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 3px;
+    color: var(--muted);
+    overflow: visible;
+    white-space: normal;
+}
+.profile-coupon-copy .profile-coupon-reactions .feed-prediction-action {
+    min-height: 18px;
+    display: inline-flex;
+    gap: 4px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: default;
+    pointer-events: none;
+}
+.profile-coupon-copy .profile-coupon-reactions .feed-prediction-action:hover {
+    color: var(--muted);
+    transform: none;
+}
+.profile-coupon-copy .profile-coupon-reactions .feed-prediction-action svg {
+    inline-size: 16px;
+    block-size: 16px;
+}
+.profile-coupon-copy .profile-coupon-reactions .feed-prediction-action b {
+    color: var(--soft);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.profile-coupon-copy .profile-coupon-reactions .feed-prediction-save {
+    margin-left: 0;
 }
 .expert-monthly-empty strong,
 .home-best-experts-proof strong,
@@ -7400,6 +7440,24 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     height: 24px;
 }
 .coupon-detail-page .coupon-slip-match-meta { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.coupon-slip-sport-badge-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yellow);
+}
+.coupon-slip-sport-badge-icon img,
+.coupon-slip-sport-badge-icon svg {
+    width: 16px;
+    height: 16px;
+    max-width: 16px;
+    max-height: 16px;
+    display: block;
+    object-fit: contain;
+}
 .coupon-detail-page .coupon-slip-sport-badge {
     display: inline-flex;
     align-items: center;
@@ -7408,15 +7466,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     color: rgba(255, 255, 255, 0.76);
     font-weight: 800;
     white-space: nowrap;
-}
-.coupon-detail-page .coupon-slip-sport-badge-icon {
-    width: 16px;
-    height: 16px;
-    flex: 0 0 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--yellow);
 }
 .cappers-table-hero {
     min-height: 400px;
@@ -13708,6 +13757,7 @@ body.register {
     height: 200px;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     gap: 10px;
     overflow: hidden;
     pointer-events: none;

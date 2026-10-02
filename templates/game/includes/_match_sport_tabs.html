@@ -1,23 +1,31 @@
-<nav class="matches-sport-tabs" aria-label="Выбор спорта">
+<nav class="matches-sport-tabs" aria-label="{{ sport_tabs_aria_label|default:'Выбор спорта' }}">
     {% for tab in sport_tabs %}
-    <a class="matches-sport-tab matches-sport-tab-{{ tab.code }}{% if active_sport == tab.code %} is-active{% endif %}" href="{{ tab.url }}">
+    <a
+        class="matches-sport-tab{% if tab.code %} matches-sport-tab-{{ tab.code }}{% endif %}{% if active_sport == tab.code or tab.active %} is-active{% endif %}"
+        href="{% if tab.href %}{{ tab.href }}{% else %}{{ tab.url }}{% endif %}"
+        {% if tab.href %}data-prediction-ajax-link{% endif %}
+        {% if active_sport == tab.code or tab.active %}aria-current="page"{% endif %}
+        title="{{ tab.label }}"
+    >
         <span class="matches-sport-icon" aria-hidden="true">
-            {% if tab.code == 'all' %}
+            {% if not tab.code or tab.code == 'all' %}
                 {% include "front/svgs/nav-matches.svg" %}
             {% elif tab.code == 'football' %}
                 {% include "front/svgs/soccer.svg" %}
-            {% elif tab.code == 'hockey' %}
+            {% elif tab.code == 'hockey' or tab.code == 'ice-hockey' %}
                 {% include "front/svgs/hockey.svg" %}
             {% elif tab.code == 'basketball' %}
                 {% include "front/svgs/basketball.svg" %}
             {% elif tab.code == 'tennis' %}
                 {% include "front/svgs/tennis.svg" %}
+            {% elif tab.code == 'express' %}
+                {% include "front/svgs/coupon.svg" %}
             {% else %}
                 {% include "front/svgs/nav-matches.svg" %}
             {% endif %}
         </span>
-        <div class="matches-sport-label">{{ tab.label }}</div>
-        <b>{{ tab.count }}</b>
+        <span class="matches-sport-label">{{ tab.label }}</span>
+        {% if tab.count %}<b>{{ tab.count }}</b>{% endif %}
     </a>
     {% endfor %}
 </nav>

@@ -24,7 +24,11 @@ from .prediction_views import (
     _status_tabs,
     prediction_filter_collapsed,
 )
-from .sport_tabs import build_sport_filter_tabs
+from .sport_tabs import (
+    build_mobile_prediction_filter_tabs,
+    build_mobile_prediction_match_scope_tabs,
+    build_sport_filter_tabs,
+)
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -101,12 +105,22 @@ def _feed_meta_queryset(*, audience: str, author_ids) -> object:
         author_id__in=author_ids,
     )
 
-def _apply_feed_filters(queryset, *, selected_capper, selected_sport, only_live, only_today):
+def _apply_feed_filters(
+    queryset,
+    *,
+    selected_capper,
+    selected_sport,
+    only_live,
+    only_today,
+    match_scope="all",
+):
     if selected_capper:
         queryset = queryset.filter(author__username=selected_capper)
     if selected_sport:
         queryset = queryset.filter(predictions__match__sport=selected_sport)
-    if only_live:
+    if match_scope != "all":
+        queryset = queryset.filter(predictions__match__sync_scope=match_scope)
+    elif only_live:
         queryset = queryset.filter(predictions__match__sync_scope="live")
     if only_today:
         queryset = queryset.filter(predictions__match__starts_at__date=timezone.localdate())
@@ -254,6 +268,9 @@ def following_feed(request):
     selected_sport = _sport_from_filter(request.GET.get("sport", "").strip())
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
+    active_match_scope = request.GET.get("match_scope", "all")
+    if active_match_scope not in {"all", "live", "prematch", "finished"}:
+        active_match_scope = "all"
 
     feed_source_signature = (
         tuple(sorted(following_ids)),
@@ -261,6 +278,7 @@ def following_feed(request):
         selected_capper,
         only_live,
         only_today,
+        active_match_scope,
         active_prediction_type,
     )
 
@@ -276,6 +294,7 @@ def following_feed(request):
         selected_sport=None,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
     )
     if is_vip_predictions_tab:
         free_meta_queryset = annotate_vip_status(free_meta_queryset, user_outer_ref="author_id")
@@ -488,6 +507,7 @@ def following_feed(request):
             bool(selected_sport),
             only_live,
             only_today,
+            active_match_scope != "all",
             active_status != "all",
         ]
     )
@@ -518,11 +538,17 @@ def following_feed(request):
             "selected_capper": selected_capper,
             "only_live": only_live,
             "only_today": only_today,
+            "active_match_scope": active_match_scope,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
             "feed_all_cappers_url": feed_all_cappers_url,
             "feed_all_cappers_count": feed_all_cappers_count,
             "filter_action_url": prediction_type_context["prediction_type_reset_url"],
+            "mobile_filter_tabs": build_mobile_prediction_filter_tabs(
+                request,
+                reset_url=prediction_type_context["prediction_type_reset_url"],
+            ),
+            "mobile_match_scope_tabs": build_mobile_prediction_match_scope_tabs(request),
             "adv_placement": "sidebar",
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
             **prediction_type_context,

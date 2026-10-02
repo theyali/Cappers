@@ -1,0 +1,25 @@
+<div class="mobile-match-filters" data-mobile-match-filters aria-label="Фильтры матчей на мобильных устройствах">
+    <div class="mobile-prediction-filter-top mobile-match-filter-top" aria-label="Статусы матчей">
+        {% include "game/includes/_match_scope_tabs.html" %}
+        {% if show_date_filter %}
+        <label class="mobile-prediction-quick-tab mobile-match-date-tab" title="Выбрать дату" aria-label="Выбрать дату матчей">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input
+                type="date"
+                value="{{ selected_date_iso }}"
+                min="{{ min_match_date_iso }}"
+                max="{{ max_match_date_iso }}"
+                data-match-date-input
+                data-scope="{{ active_scope }}"
+                data-url-template="{{ date_picker_url_template }}"
+                aria-label="Выбрать дату матчей"
+            >
+        </label>
+        {% endif %}
+        <div class="mobile-match-view-switcher">
+            {% include "front/includes/_content_view_switcher.html" %}
+        </div>
+    </div>
+</div>

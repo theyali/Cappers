@@ -42,7 +42,7 @@
         if (count === 0) hideTooltip();
         couponButton.setAttribute(
             "aria-label",
-            count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купоны"
+            count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купон"
         );
     };
 

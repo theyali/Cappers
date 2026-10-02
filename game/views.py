@@ -40,8 +40,8 @@ DRAFT_SESSION_MAX_AGE_SECONDS = max(
 
 SCOPE_FILTERS = (
     ("all", "Все"),
-    (Match.SyncScope.LIVE, "Идут сейчас"),
-    (Match.SyncScope.PREMATCH, "Предстоящие"),
+    (Match.SyncScope.LIVE, "Live"),
+    (Match.SyncScope.PREMATCH, "Прематч"),
     (Match.SyncScope.FINISHED, "Завершенные"),
 )
 
