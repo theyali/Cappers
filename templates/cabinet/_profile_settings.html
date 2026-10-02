@@ -1,4 +1,8 @@
 <div class="profile-layout">
+    <form id="mobileQuickAccessForm" method="post" action="{% url 'cabinet:profile' %}?tab=settings#profile-edit-quick-access">
+        {% csrf_token %}
+        <input type="hidden" name="profile_settings_action" value="mobile_quick_access">
+    </form>
     <form method="post" action="{% url 'cabinet:profile' %}?tab=settings" class="profile-form-card profile-edit-form" novalidate>
         {% csrf_token %}
         <div class="profile-edit-hero">
@@ -42,6 +46,12 @@
                     <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
                 </span>
                 Интересы
+            </a>
+            <a href="#profile-edit-quick-access" data-profile-edit-tab="quick-access" aria-controls="profile-edit-quick-access" aria-selected="false">
+                <span aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z"></path></svg>
+                </span>
+                Быстрый доступ
             </a>
         </nav>
 
@@ -121,6 +131,35 @@
                         <small>Например: футбольная аналитика, live, тоталы или конкретные чемпионаты.</small>
                     </label>
             {% endif %}
+                </div>
+            </section>
+
+            <section class="profile-edit-section profile-field-full" id="profile-edit-quick-access" data-profile-edit-panel="quick-access" hidden>
+                <div class="profile-edit-section-head">
+                    <span class="profile-edit-section-icon is-blue" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 5h7v7H4zM13 5h7v7h-7zM4 14h7v5H4zM13 14h7v5h-7z"></path></svg>
+                    </span>
+                    <div>
+                        <strong>Быстрый доступ в мобильном меню</strong>
+                        <small>Выберите до 4 страниц, которые будут показываться в верхнем блоке mobile off canvas.</small>
+                    </div>
+                    <span class="profile-edit-visibility-badge">Мобайл</span>
+                </div>
+                <div class="profile-edit-section-grid">
+                    <div class="profile-quick-access-field profile-field-full">
+                        {{ mobile_quick_access_form.items.errors }}
+                        <div class="profile-quick-access-options" data-mobile-quick-access-options data-max="4">
+                            {{ mobile_quick_access_form.items }}
+                        </div>
+                        <small>По умолчанию: профиль, уведомления, мои прогнозы и избранное.</small>
+                    </div>
+                </div>
+                <div class="profile-edit-actions profile-quick-access-actions">
+                    <button
+                        type="submit"
+                        class="profile-save-button"
+                        form="mobileQuickAccessForm"
+                    >Сохранить быстрый доступ</button>
                 </div>
             </section>
 

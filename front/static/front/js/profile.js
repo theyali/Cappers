@@ -53,11 +53,43 @@
             });
         });
 
-        const initial = tabs.find((tab) => tab.classList.contains("is-active"))?.dataset.profileEditTab;
+        const panelFromHash = window.location.hash
+            ? panels.find((panel) => `#${panel.id}` === window.location.hash)
+            : null;
+        const panelWithErrors = panels.find((panel) => panel.querySelector(".errorlist"));
+        const initial = panelFromHash?.dataset.profileEditPanel
+            || panelWithErrors?.dataset.profileEditPanel
+            || tabs.find((tab) => tab.classList.contains("is-active"))?.dataset.profileEditTab;
         activate(initial || tabs[0].dataset.profileEditTab);
     };
 
     initProfileEditTabs();
+
+    const initMobileQuickAccessLimit = () => {
+        const wrapper = page.querySelector("[data-mobile-quick-access-options]");
+        if (!wrapper) return;
+
+        const limit = Number.parseInt(wrapper.dataset.max || "4", 10);
+        const checkboxes = Array.from(wrapper.querySelectorAll("input[type='checkbox']"));
+        if (!Number.isFinite(limit) || limit <= 0 || !checkboxes.length) return;
+
+        const sync = () => {
+            const selectedCount = checkboxes.filter((checkbox) => checkbox.checked).length;
+            const limitReached = selectedCount >= limit;
+            checkboxes.forEach((checkbox) => {
+                const isLocked = limitReached && !checkbox.checked;
+                checkbox.disabled = isLocked;
+                checkbox.closest("li")?.classList.toggle("is-disabled", isLocked);
+            });
+        };
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener("change", sync);
+        });
+        sync();
+    };
+
+    initMobileQuickAccessLimit();
 
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);

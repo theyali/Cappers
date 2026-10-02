@@ -4561,6 +4561,15 @@ body.expert-public-details-open {
     grid-template-columns: 1fr;
     padding: 8px;
   }
+  .profile-quick-access-options ul {
+    grid-template-columns: 1fr;
+  }
+  .profile-quick-access-actions {
+    justify-content: stretch;
+  }
+  .profile-quick-access-actions .profile-save-button {
+    width: 100%;
+  }
   .profile-edit-section {
     padding: 0;
   }

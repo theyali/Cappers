@@ -281,6 +281,16 @@ def website_settings(request):
         except (OperationalError, ProgrammingError):
             home_wiki_videos = []
 
+    mobile_quick_access = []
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated:
+        try:
+            from cabinet.mobile_quick_access import mobile_quick_access_items
+
+            mobile_quick_access = mobile_quick_access_items(user)
+        except (OperationalError, ProgrammingError):
+            mobile_quick_access = []
+
     return {
         "website_settings": settings,
         "footer_link_groups": footer_groups,
@@ -291,6 +301,7 @@ def website_settings(request):
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
+        "mobile_quick_access_items": mobile_quick_access,
         "support_email": django_settings.SUPPORT_EMAIL,
         "administrator_email": django_settings.ADMINISTRATOR_EMAIL,
     }
