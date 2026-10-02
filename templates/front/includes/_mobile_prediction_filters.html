@@ -1,7 +1,20 @@
-{% if status_tabs or sport_tabs %}
+{% if status_tabs or sport_tabs or mobile_status_tabs %}
 <div class="mobile-prediction-filters" data-mobile-prediction-filters aria-label="Фильтры прогнозов на мобильных устройствах">
     <div class="mobile-prediction-filter-top" aria-label="Статусы прогнозов">
-        {% if mobile_match_scope_tabs %}
+        {% if mobile_status_tabs %}
+        <nav class="mobile-prediction-status-tabs" aria-label="Статусы прогнозов">
+            {% for tab in mobile_status_tabs %}
+            <a
+                class="mobile-prediction-status-tab{% if tab.active %} is-active{% endif %}"
+                href="{{ tab.href }}"
+                data-prediction-ajax-link
+                {% if tab.active %}aria-current="page"{% endif %}
+            >
+                {{ tab.label }}
+            </a>
+            {% endfor %}
+        </nav>
+        {% elif mobile_match_scope_tabs %}
         <nav class="mobile-prediction-status-tabs" aria-label="Статусы прогнозов">
             {% for tab in mobile_match_scope_tabs %}
             <a

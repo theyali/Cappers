@@ -3,24 +3,29 @@
     const nav = document.querySelector(".mobile-app-nav");
     if (!root || !nav) return;
 
-    const form = root.querySelector("[data-coupon-form]");
-    const sidebar = root.querySelector(".coupon-sidebar");
+    const sidebar = root.querySelector("#mobile-coupon-sheet");
     const couponButton = nav.querySelector("[data-mobile-coupon-toggle]");
-    if (!form || !sidebar || !couponButton) return;
+    if (!sidebar || !couponButton) return;
 
+    const form = root.querySelector("[data-coupon-form]");
     const mobileQuery = window.matchMedia("(max-width: 1120px)");
     const itemsRoot = root.querySelector("[data-coupon-items]");
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
 
-    const handle = form.querySelector("[data-mobile-coupon-close]");
+    const handle = sidebar.querySelector("[data-mobile-coupon-close]");
     const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
     const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
     let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not([data-mobile-coupon-toggle])");
     let previousCount = itemsRoot?.children.length || 0;
     let tooltipTimer = null;
     let pendingBetScrollY = null;
+    let suppressNextOutsideClick = false;
 
     const itemCount = () => itemsRoot?.children.length || 0;
+    const isSheetOpen = () => mobileQuery.matches && sidebar.classList.contains("is-mobile-coupon-open");
+    const isOutsideSheet = (target) => {
+        return target instanceof Node && !sidebar.contains(target) && !couponButton.contains(target);
+    };
 
     const hideTooltip = () => {
         if (tooltipTimer) {
@@ -97,16 +102,35 @@
     });
 
     document.addEventListener("pointerdown", (event) => {
-        if (!mobileQuery.matches || !sidebar.classList.contains("is-mobile-coupon-open")) return;
-        const target = event.target;
-        if (!(target instanceof Node)) return;
-        if (sidebar.contains(target) || couponButton.contains(target)) return;
+        if (!isSheetOpen() || !isOutsideSheet(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        suppressNextOutsideClick = true;
         closeSheet();
-    });
+    }, true);
+
+    document.addEventListener("click", (event) => {
+        if (!suppressNextOutsideClick) return;
+        suppressNextOutsideClick = false;
+        if (!isOutsideSheet(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }, true);
+
+    document.addEventListener("click", (event) => {
+        if (!isSheetOpen() || !isOutsideSheet(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeSheet();
+    }, true);
 
     document.addEventListener("click", (event) => {
         const betButton = event.target.closest("[data-bet-option]");
         if (!betButton || betButton.disabled || !mobileQuery.matches) return;
+        if (!form) {
+            openSheet();
+            return;
+        }
         pendingBetScrollY = window.scrollY;
     }, true);
 

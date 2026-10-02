@@ -564,6 +564,19 @@ body.expert-public-details-open {
 }
 
 @media (min-width: 1121px) {
+  .matches-page .matches-shell:has(> .coupon-sidebar-auth) {
+    grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
+  }
+
+  .match-detail-shell:has(> .coupon-sidebar-auth) {
+    grid-template-columns: minmax(220px, 252px) minmax(0, 1fr);
+  }
+
+  .matches-page .matches-shell > .coupon-sidebar-auth,
+  .match-detail-shell > .coupon-sidebar-auth {
+    display: none !important;
+  }
+
   .coupon-sidebar,
   .matches-list-panel {
     overflow-x: hidden;
@@ -1128,6 +1141,9 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1120px) {
+  .content-view-container{
+    padding:0;
+  }
     .profile-income-summary, .profile-income-chart-panel {
         min-width: 0;
         border-radius: 18px;
@@ -2381,6 +2397,15 @@ body.expert-public-details-open {
     overflow: hidden;
   }
 
+  body.mobile-coupon-sheet-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1490;
+    background: rgba(0, 0, 0, 0.74);
+    pointer-events: auto;
+  }
+
   .coupon-sidebar-feed,
   .latest-predictions-panel.sidebar-predictions {
     display: none !important;
@@ -2482,6 +2507,87 @@ body.expert-public-details-open {
     border-radius: 28px 28px 0 0;
     outline: 0;
     background: var(--panel);
+  }
+
+  .coupon-sidebar-auth {
+    width: min(720px, 100%) !important;
+    padding: 0 !important;
+    border-radius: 28px 28px 0 0 !important;
+    background: #f7f7f7 !important;
+    box-shadow: 0 -18px 46px rgba(0, 0, 0, 0.38) !important;
+  }
+
+  .coupon-sidebar-auth .mobile-coupon-sheet-handle {
+    height: 42px;
+    background: #f7f7f7;
+  }
+
+  .coupon-sidebar-auth .mobile-coupon-sheet-handle::before {
+    width: 72px;
+    height: 5px;
+    background: #9ca3af;
+    opacity: 0.82;
+  }
+
+  .coupon-auth-panel {
+    display: grid;
+    min-height: min(48dvh, 430px);
+    background: #f7f7f7;
+    color: #171923;
+  }
+
+  .coupon-auth-card {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 14px;
+    padding: 28px 32px 32px;
+    text-align: center;
+  }
+
+  .coupon-auth-icon {
+    width: 86px;
+    height: 86px;
+    display: grid;
+    place-items: center;
+    color: #059c8d;
+  }
+
+  .coupon-auth-icon svg {
+    width: 78px;
+    height: 78px;
+  }
+
+  .coupon-auth-card strong {
+    margin-top: 4px;
+    color: #171923;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+
+  .coupon-auth-card p {
+    max-width: 460px;
+    margin: 0;
+    color: #171923;
+    font-size: 22px;
+    line-height: 1.24;
+  }
+
+  .coupon-auth-action {
+    width: 100%;
+    min-height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 44px;
+    border-radius: 12px;
+    color: #061316;
+    background: #10c7b2;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
   }
 
   .mobile-coupon-sheet-handle {
@@ -5726,14 +5832,6 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1000px) {
-#profile-tab-earnings,
-#profile-tab-achievements,
-#profile-tab-followers,
-#profile-tab-following,
-#profile-tab-copybetting,
-#profile-tab-wallet{
-    margin-top:20px;
-}
   .profile-layout {
     grid-template-columns: 1fr;
   }
@@ -7591,6 +7689,7 @@ body.expert-public-details-open {
         overflow: hidden;
         box-sizing: border-box;
         background: var(--ink);
+        padding:10px 0;
     }
 
     .profile-page .matches-mobile-scope-panel .matches-tabs {
@@ -12579,7 +12678,10 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1024px) {
-  body:has(.matches-page) .breadcrumbs-container {
+  body:has(.matches-page) .breadcrumbs-container,
+  body:has(.following-feed-page) .breadcrumbs-container,
+  body:has(.predictions-index-page) .breadcrumbs-container,
+  body:has(.favorites-page) .breadcrumbs-container {
     display: none !important;
   }
 
@@ -12587,6 +12689,17 @@ body.expert-public-details-open {
   .matches-page .prediction-results-actions,
   .matches-page .content-view-toolbar,
   .matches-page .matches-hero.long-bg.long-bg-2 {
+    display: none !important;
+  }
+
+  .following-feed-page .prediction-type-tabs,
+  .predictions-index-page .prediction-type-tabs,
+  .favorites-page .prediction-type-tabs {
+    display: none !important;
+  }
+
+  .favorites-page .predictions-layout > .favorites-filter-sidebar,
+  .favorites-page .predictions-layout > .matches-table-filter-sidebar.prediction-filter-sidebar.predictions-filter-sidebar.favorites-filter-sidebar {
     display: none !important;
   }
 
