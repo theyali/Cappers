@@ -6,7 +6,6 @@ from cabinet.models import BonusEvent, DailyTask, UserDailyTaskProgress
 from notifications.services import create_daily_task_completed_notification
 
 from .bonus_rewards import grant_bonus_reward
-from .streaks import touch_daily_streak
 
 
 def daily_tasks_for_user(user):
@@ -49,7 +48,6 @@ def record_daily_task_action(user, task_type, amount=1, related_obj=None):
 
     now = timezone.now()
     progress_date = timezone.localdate(now)
-    touch_daily_streak(user, now=now)
     locked_user = user.__class__.objects.select_for_update().get(pk=user.pk)
     tasks = list(
         daily_tasks_for_user(locked_user).filter(task_type=task_type)
