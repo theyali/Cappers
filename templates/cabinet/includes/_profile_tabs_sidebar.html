@@ -1,66 +1,131 @@
-<aside class="matches-table-filter-sidebar" aria-label="Разделы профиля">
-    <div class="matches-table-filter-head matches-table-filter-head-user">
-        <span class="matches-table-filter-head-avatar"{% if request.user.avatar %} data-skeleton-image{% endif %} aria-hidden="true">
-            {% if request.user.avatar %}
-                <img src="{{ request.user.avatar.url }}" width="34" height="34" alt="">
-            {% else %}
-                {% if analyst_profile and analyst_profile.display_name %}
-                    {{ analyst_profile.display_name|first|upper }}
-                {% elif request.user.get_full_name %}
-                    {{ request.user.get_full_name|first|upper }}
-                {% else %}
-                    {{ request.user.username|first|upper }}
-                {% endif %}
-            {% endif %}
-        </span>
-        <div>
-            <strong>
-                {% if analyst_profile and analyst_profile.display_name %}
-                    {{ analyst_profile.display_name }}
-                {% elif request.user.get_full_name %}
-                    {{ request.user.get_full_name }}
-                {% else %}
-                    {{ request.user.username }}
-                {% endif %}
-            </strong>
-            <small>@{{ request.user.username }}</small>
-        </div>
-    </div>
-
-    <section class="matches-table-filter-group" aria-labelledby="profile-sidebar-title">
-        <div class="matches-table-filter-title" id="profile-sidebar-title">
-            <span>Разделы профиля</span>
-        </div>
-        <nav class="matches-table-scope-list" aria-label="Разделы профиля">
-            {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="matches-table-scope-link" %}
+<aside class="matches-table-filter-sidebar profile-sidebar-modern" aria-label="Разделы профиля">
+    <section class="profile-sidebar-card profile-sidebar-nav-group" aria-labelledby="profile-sidebar-main-title">
+        <div id="profile-sidebar-main-title">Основное</div>
+        <nav class="profile-sidebar-nav" aria-label="Основные разделы профиля">
+            <a class="profile-sidebar-link{% if active_tab == 'profile' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=profile" data-profile-tab-link{% if active_tab == 'profile' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5.5 20c.7-4 2.8-6 6.5-6s5.8 2 6.5 6"></path></svg></span>
+                <span>Профиль</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
             {% if request.user.is_analyst %}
-            <a class="matches-table-scope-link{% if active_tab == 'articles' %} is-active{% endif %}" href="{% url 'cabinet:capper_articles' %}">
-                <span class="matches-table-scope-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M5 4h10l4 4v12H5V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M15 4v5h5M8 13h8M8 17h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="matches-table-scope-copy">Мои статьи</span>
+            <a class="profile-sidebar-link{% if active_tab == 'predictions' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=predictions" data-profile-tab-link{% if active_tab == 'predictions' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h11v16H5z"></path><path d="M8 8h5M8 12h5M8 16h4M17 7h2v12"></path></svg></span>
+                <span>Мои прогнозы</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.predictions %} is-empty{% endif %}" data-notification-section-badge="predictions" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'achievements' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=achievements" data-profile-tab-link{% if active_tab == 'achievements' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
+                <span>Достижения</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.achievements %} is-empty{% endif %}" data-notification-section-badge="achievements" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link profile-sidebar-link-vip{% if active_tab == 'vip' %} is-active{% endif %}" href="{% url 'cabinet:vip_plans' %}"{% if active_tab == 'vip' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20h14M7 17l-1.5-8 5 3 1.5-6 1.5 6 5-3L17 17H7z"></path></svg></span>
+                <span>VIP</span>
+                <b>VIP</b>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'followers' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=followers" data-profile-tab-link{% if active_tab == 'followers' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M16 8h5M18.5 5.5v5"></path></svg></span>
+                <span>Подписчики</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.followers %} is-empty{% endif %}" data-notification-section-badge="followers" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
             </a>
             {% endif %}
         </nav>
     </section>
 
+    <section class="profile-sidebar-card profile-sidebar-nav-group" aria-labelledby="profile-sidebar-finance-title">
+        <div id="profile-sidebar-finance-title">Финансы</div>
+        <nav class="profile-sidebar-nav" aria-label="Финансы">
+            <a class="profile-sidebar-link{% if active_tab == 'wallet' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=wallet" data-profile-tab-link{% if active_tab == 'wallet' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5h14a2 2 0 0 1 2 2v8.5H6a2 2 0 0 1-2-2V7.5Zm0 0V6a2 2 0 0 1 2-2h10M15 12h5"></path></svg></span>
+                <span>Баланс</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            {% if request.user.is_analyst %}
+            <a class="profile-sidebar-link{% if active_tab == 'earnings' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=earnings" data-profile-tab-link{% if active_tab == 'earnings' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V9"></path><path d="M12 20V4"></path><path d="M19 20v-8"></path></svg></span>
+                <span>Доходы</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.earnings %} is-empty{% endif %}" data-notification-section-badge="earnings" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            {% endif %}
+            <a class="profile-sidebar-link{% if active_tab == 'following' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link{% if active_tab == 'following' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"></path><path d="M8 7V5h8v2M8 12h8"></path></svg></span>
+                <span>Подписки</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.following %} is-empty{% endif %}" data-notification-section-badge="following" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'copybetting' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=copybetting" data-profile-tab-link{% if active_tab == 'copybetting' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5"></path></svg></span>
+                <span>Копибеттинг</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.copybetting %} is-empty{% endif %}" data-notification-section-badge="copybetting" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+        </nav>
+    </section>
+
+    <section class="profile-sidebar-card profile-sidebar-nav-group" aria-labelledby="profile-sidebar-bonus-title">
+        <div id="profile-sidebar-bonus-title">Бонусы</div>
+        <nav class="profile-sidebar-nav" aria-label="Бонусы">
+            <a class="profile-sidebar-link{% if active_tab == 'bonuses' %} is-active{% endif %}" href="{% url 'cabinet:bonuses' %}"{% if active_tab == 'bonuses' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13"></path><path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z"></path></svg></span>
+                <span>Мои бонусы</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.bonuses %} is-empty{% endif %}" data-notification-section-badge="bonuses" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'bonus_tasks' %} is-active{% endif %}" href="{% url 'cabinet:bonus_tasks' %}"{% if active_tab == 'bonus_tasks' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10M8 2h8v4H8zM5 5h14v16H5z"></path><path d="m8 11 2 2 4-4M8 17h8"></path></svg></span>
+                <span>Ежедневные задания</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.bonus_tasks %} is-empty{% endif %}" data-notification-section-badge="bonus_tasks" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'bonus_levels' %} is-active{% endif %}" href="{% url 'cabinet:bonus_levels' %}"{% if active_tab == 'bonus_levels' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg></span>
+                <span>Уровни</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.bonus_levels %} is-empty{% endif %}" data-notification-section-badge="bonus_levels" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            <a class="profile-sidebar-link{% if active_tab == 'referrals' %} is-active{% endif %}" href="{% url 'cabinet:referrals' %}"{% if active_tab == 'referrals' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"></circle><path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M16 8h5M18.5 5.5v5"></path></svg></span>
+                <span>Рефералы</span>
+                <span class="nav-profile-dropdown-dot{% if not notification_section_badges.referrals %} is-empty{% endif %}" data-notification-section-badge="referrals" aria-hidden="true"></span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+        </nav>
+    </section>
+
+    <section class="profile-sidebar-card profile-sidebar-nav-group" aria-labelledby="profile-sidebar-tools-title">
+        <div id="profile-sidebar-tools-title">Инструменты</div>
+        <nav class="profile-sidebar-nav" aria-label="Инструменты">
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <a class="profile-sidebar-link{% if bots_admin_active %} is-active{% endif %}" href="{% url 'bots:manage_accounts' %}"{% if bots_admin_active %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="3"></rect><path d="M12 7V4M9 12h.01M15 12h.01M8 18l-2 3M16 18l2 3"></path></svg></span>
+                <span>Боты</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+            {% endif %}
+            <a class="profile-sidebar-link{% if active_tab == 'settings' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link{% if active_tab == 'settings' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7.2 7.2 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-1.8-1L14.4 3h-4.8l-.3 3a7.5 7.5 0 0 0-1.8 1L5 6 3 9.5 5.1 11a7.2 7.2 0 0 0 0 2L3 14.5 5 18l2.5-1a7.5 7.5 0 0 0 1.8 1l.3 3h4.8l.3-3a7.5 7.5 0 0 0 1.8-1l2.5 1 2-3.5-2.1-1.5c.1-.3.1-.7.1-1Z"></path></svg></span>
+                <span>Настройки</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
+        </nav>
+    </section>
+
     {% if request.user.is_analyst %}
-    <section class="matches-table-filter-group" aria-labelledby="profile-public-title">
-        <div class="matches-table-filter-title" id="profile-public-title">
-            <span>Публичная страница</span>
-        </div>
-        <nav class="matches-table-scope-list" aria-label="Публичная страница каппера">
-            <a class="matches-table-scope-link" href="{% url 'front:expert_profile' username=request.user.username %}">
-                <span class="matches-table-scope-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
-                        <path d="M5.5 19.5c.8-3.6 3-5.4 6.5-5.4s5.7 1.8 6.5 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="matches-table-scope-copy">Публичный профиль</span>
+    <section class="profile-sidebar-card profile-sidebar-nav-group profile-sidebar-public-group" aria-labelledby="profile-sidebar-public-title">
+        <div id="profile-sidebar-public-title">Публичная страница</div>
+        <nav class="profile-sidebar-nav profile-sidebar-public-nav" aria-label="Публичная страница каппера">
+            <a class="profile-sidebar-link{% if active_tab == 'articles' %} is-active{% endif %}" href="{% url 'cabinet:capper_articles' %}"{% if active_tab == 'articles' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5V4Z"></path><path d="M15 4v5h5M8 13h8M8 17h6"></path></svg></span>
+                <span>Мои статьи</span>
+            </a>
+            <a class="profile-sidebar-link" href="{% url 'front:expert_profile' username=request.user.username %}">
+                <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg></span>
+                <span>Публичный профиль</span>
             </a>
         </nav>
     </section>

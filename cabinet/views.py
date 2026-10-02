@@ -37,6 +37,7 @@ from .forms import (
     AnalystPaidPlanSettingsForm,
     AnalystProfileForm,
     CapperArticleForm,
+    MobileQuickAccessForm,
     RegistrationForm,
     AnalystAvatarForm,
     UserProfileForm,
@@ -533,11 +534,18 @@ def real_operations(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def profile(request):
+    profile_settings_action = request.POST.get("profile_settings_action") if request.method == "POST" else ""
+    is_mobile_quick_access_post = profile_settings_action == "mobile_quick_access"
     analyst_profile = _get_analyst_profile(request.user)
-    user_form = UserProfileForm(request.POST or None, instance=request.user)
+    profile_form_data = request.POST if request.method == "POST" and not is_mobile_quick_access_post else None
+    user_form = UserProfileForm(profile_form_data, instance=request.user)
     analyst_form = None
     focus_form = None
     paid_plan_form = None
+    mobile_quick_access_form = MobileQuickAccessForm(
+        request.POST if is_mobile_quick_access_post else None,
+        user=request.user,
+    )
 
     allowed_tabs = {"profile", "following", "settings", "achievements", "wallet", "copybetting"}
     if request.user.role == User.Role.ANALYST:
@@ -548,9 +556,9 @@ def profile(request):
         active_tab = "profile"
 
     if analyst_profile is not None:
-        analyst_form = AnalystProfileForm(request.POST or None, instance=analyst_profile)
+        analyst_form = AnalystProfileForm(profile_form_data, instance=analyst_profile)
         focus_form = CapperFocusForm(
-            request.POST or None,
+            profile_form_data,
             initial={
                 "sports": list(
                     request.user.sport_preferences.values_list("sport_id", flat=True)
@@ -561,12 +569,18 @@ def profile(request):
             },
         )
         paid_plan_form = AnalystPaidPlanSettingsForm(
-            request.POST or None,
+            profile_form_data,
             analyst=request.user,
             prefix="paid_plans",
         )
 
-    if request.method == "POST":
+    if request.method == "POST" and is_mobile_quick_access_post:
+        if mobile_quick_access_form.is_valid():
+            mobile_quick_access_form.save()
+            messages.success(request, "Быстрый доступ обновлён.")
+            return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+        active_tab = "settings"
+    elif request.method == "POST":
         user_is_valid = user_form.is_valid()
         analyst_is_valid = analyst_form.is_valid() if analyst_form is not None else True
         focus_is_valid = focus_form.is_valid() if focus_form is not None else True
@@ -707,6 +721,7 @@ def profile(request):
         "analyst_form": analyst_form,
         "focus_form": focus_form,
         "paid_plan_form": paid_plan_form,
+        "mobile_quick_access_form": mobile_quick_access_form,
         "active_tab": active_tab,
         "followers_count": followers_count,
         "following_count": following_count,

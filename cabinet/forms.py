@@ -13,6 +13,11 @@ from .models import (
     DEFAULT_PAID_PLAN_PRESETS,
     User,
 )
+from .mobile_quick_access import (
+    MAX_MOBILE_QUICK_ACCESS_ITEMS,
+    available_mobile_quick_access_options,
+    normalized_mobile_quick_access_keys,
+)
 
 
 class SportPreferenceField(forms.ModelMultipleChoiceField):
@@ -117,6 +122,42 @@ class UserProfileForm(forms.ModelForm):
             "first_name": forms.TextInput(attrs={"placeholder": "Имя"}),
             "last_name": forms.TextInput(attrs={"placeholder": "Фамилия"}),
         }
+
+
+class MobileQuickAccessForm(forms.Form):
+    items = forms.MultipleChoiceField(
+        label="Страницы быстрого доступа",
+        required=True,
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "profile-quick-access-checkbox",
+                "form": "mobileQuickAccessForm",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user: User, **kwargs):
+        self.user = user
+        self.available_options = available_mobile_quick_access_options(user)
+        kwargs.setdefault("initial", {"items": normalized_mobile_quick_access_keys(user)})
+        super().__init__(*args, **kwargs)
+        self.fields["items"].choices = [
+            (option.key, option.label)
+            for option in self.available_options
+        ]
+
+    def clean_items(self):
+        items = self.cleaned_data["items"]
+        if len(items) > MAX_MOBILE_QUICK_ACCESS_ITEMS:
+            raise forms.ValidationError(
+                f"Выберите не больше {MAX_MOBILE_QUICK_ACCESS_ITEMS} страниц."
+            )
+        return items
+
+    def save(self) -> User:
+        self.user.mobile_quick_access = self.cleaned_data["items"]
+        self.user.save(update_fields=["mobile_quick_access"])
+        return self.user
 
 
 class AnalystProfileForm(forms.ModelForm):

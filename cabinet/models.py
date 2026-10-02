@@ -63,6 +63,12 @@ class User(AbstractUser):
         default=generate_referral_code,
         editable=False,
     )
+    mobile_quick_access = models.JSONField(
+        "Быстрый доступ в мобильном меню",
+        default=list,
+        blank=True,
+        help_text="Список ключей страниц, которые показываются в быстром доступе мобильного меню.",
+    )
 
     @property
     def is_analyst(self) -> bool:

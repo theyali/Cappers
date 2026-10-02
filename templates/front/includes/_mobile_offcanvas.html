@@ -75,36 +75,20 @@
         <section class="mobile-offcanvas-quick" aria-labelledby="mobile-offcanvas-quick-title">
             <div class="mobile-offcanvas-section-head">
                 <h3 id="mobile-offcanvas-quick-title">Быстрый доступ</h3>
-                <a href="{% url 'cabinet:profile' %}?tab=settings">Настроить <span aria-hidden="true"></span></a>
+                <a href="{% url 'cabinet:profile' %}?tab=settings#profile-edit-quick-access">Настроить <span aria-hidden="true"></span></a>
             </div>
             <div class="mobile-offcanvas-quick-grid">
-                <a href="{% url 'cabinet:profile' %}">
-                    <span class="mobile-offcanvas-quick-icon is-profile" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg>
-                    </span>
-                    <span>Профиль</span>
-                </a>
-                <a href="{% url 'notifications:center' %}">
-                    <span class="mobile-offcanvas-quick-icon is-bell" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                {% for item in mobile_quick_access_items %}
+                <a href="{{ item.url }}">
+                    <span class="mobile-offcanvas-quick-icon is-{{ item.icon_key }}" aria-hidden="true">
+                        {{ item.icon_svg }}
+                        {% if item.key == "notifications" %}
                         <b class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
+                        {% endif %}
                     </span>
-                    <span>Уведомления</span>
+                    <span>{{ item.label }}</span>
                 </a>
-                {% if request.user.is_analyst %}
-                <a href="{% url 'cabinet:profile' %}?tab=predictions">
-                    <span class="mobile-offcanvas-quick-icon is-chart" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M4 19V5"></path><path d="M8 19v-6"></path><path d="M13 19V9"></path><path d="M18 19V4"></path><path d="m7 11 5-5 3 3 5-5"></path></svg>
-                    </span>
-                    <span>Мои прогнозы</span>
-                </a>
-                {% endif %}
-                <a href="{% url 'front:favorites' %}">
-                    <span class="mobile-offcanvas-quick-icon is-star" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>
-                    </span>
-                    <span>Избранное</span>
-                </a>
+                {% endfor %}
             </div>
         </section>
 
