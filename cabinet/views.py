@@ -6,7 +6,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Max, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,8 +18,8 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from front.models import PredictionFavorite, PredictionLike
 from game.models import Country, PredictionCoupon, Sport
-from notifications.models import TelegramAccount
-from notifications.services import get_preferences
+from notifications.models import Notification, NotificationSectionState, TelegramAccount
+from notifications.services import get_preferences, refresh_section_state
 from notifications.telegram_bot import get_bot_token
 from wallets.models import (
     CoinTransaction,
@@ -64,12 +64,58 @@ from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 WALLET_OPERATION_PAGE_SIZE = 20
+FOLLOWING_NEW_PREDICTION_KINDS = (
+    Notification.Kind.NEW_PREDICTION,
+    Notification.Kind.REQUESTED_MATCH_PREDICTION,
+)
 
 
 def _error_message(exc) -> str:
     if isinstance(exc, ValidationError):
         return exc.messages[0] if exc.messages else str(exc)
     return str(exc)
+
+
+def _ru_plural(value: int, one: str, few: str, many: str) -> str:
+    value = abs(value)
+    if value % 10 == 1 and value % 100 != 11:
+        return one
+    if 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
+        return few
+    return many
+
+
+def _relative_time_ru(value) -> str:
+    if not value:
+        return ""
+
+    delta = timezone.now() - value
+    seconds = max(0, int(delta.total_seconds()))
+    minutes = seconds // 60
+    hours = minutes // 60
+    days = hours // 24
+
+    if days > 0:
+        unit = _ru_plural(days, "день", "дня", "дней")
+        return f"{days} {unit} назад"
+    if hours > 0:
+        unit = _ru_plural(hours, "час", "часа", "часов")
+        return f"{hours} {unit} назад"
+    if minutes > 0:
+        unit = _ru_plural(minutes, "минуту", "минуты", "минут")
+        return f"{minutes} {unit} назад"
+    return "только что"
+
+
+def _mark_notification_section_read(user, section: str, kinds: tuple[str, ...]) -> int:
+    updated = Notification.objects.filter(
+        recipient=user,
+        kind__in=kinds,
+        show_in_app=True,
+        is_read=False,
+    ).update(is_read=True, read_at=timezone.now())
+    refresh_section_state(user, section)
+    return updated
 
 
 def _capper_article_action(request) -> str:
@@ -636,7 +682,27 @@ def profile(request):
         AnalystFollow.objects.filter(follower=request.user).select_related(
             "analyst",
             "analyst__analyst_profile",
-        ),
+        ).annotate(
+            new_predictions_count=Count(
+                "analyst__notification_actions",
+                filter=Q(
+                    analyst__notification_actions__recipient=request.user,
+                    analyst__notification_actions__show_in_app=True,
+                    analyst__notification_actions__is_read=False,
+                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+                ),
+                distinct=True,
+            ),
+            latest_new_prediction_at=Max(
+                "analyst__notification_actions__created_at",
+                filter=Q(
+                    analyst__notification_actions__recipient=request.user,
+                    analyst__notification_actions__show_in_app=True,
+                    analyst__notification_actions__is_read=False,
+                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+                ),
+            ),
+        ).order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at"),
         user_outer_ref="analyst_id",
     )
     notification_preferences = get_preferences(request.user)
@@ -671,10 +737,36 @@ def profile(request):
         }
     active_paid_subscribers = len(active_paid_subscriber_ids)
 
+    unread_follower_ids = (
+        set(
+            Notification.objects.filter(
+                recipient=request.user,
+                kind=Notification.Kind.NEW_FOLLOWER,
+                show_in_app=True,
+                is_read=False,
+                actor_id__isnull=False,
+            ).values_list("actor_id", flat=True)
+        )
+        if request.user.role == User.Role.ANALYST
+        else set()
+    )
     for follow in followers:
         attach_vip_status_to_user(follow.follower, follow)
+        follow.has_new_follower_notification = follow.follower_id in unread_follower_ids
     for follow in following:
         attach_vip_status_to_user(follow.analyst, follow)
+        follow.latest_new_prediction_label = _relative_time_ru(
+            follow.latest_new_prediction_at
+        )
+    following_new_analysts_count = sum(
+        1 for follow in following if follow.new_predictions_count
+    )
+    if request.user.role == User.Role.ANALYST and active_tab == "followers":
+        _mark_notification_section_read(
+            request.user,
+            NotificationSectionState.Section.FOLLOWERS,
+            (Notification.Kind.NEW_FOLLOWER,),
+        )
 
     my_coupons = []
     coupons_count = 0
@@ -727,6 +819,7 @@ def profile(request):
         "following_count": following_count,
         "followers": followers,
         "following": following,
+        "following_new_analysts_count": following_new_analysts_count,
         "following_ids": following_ids,
         "active_paid_subscribers": active_paid_subscribers,
         "active_paid_subscriber_ids": active_paid_subscriber_ids,
@@ -852,8 +945,27 @@ def following_summary(request):
                 distinct=True,
             ),
             followers_count=Count("analyst__analyst_followers", distinct=True),
+            new_predictions_count=Count(
+                "analyst__notification_actions",
+                filter=Q(
+                    analyst__notification_actions__recipient=request.user,
+                    analyst__notification_actions__show_in_app=True,
+                    analyst__notification_actions__is_read=False,
+                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+                ),
+                distinct=True,
+            ),
+            latest_new_prediction_at=Max(
+                "analyst__notification_actions__created_at",
+                filter=Q(
+                    analyst__notification_actions__recipient=request.user,
+                    analyst__notification_actions__show_in_app=True,
+                    analyst__notification_actions__is_read=False,
+                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+                ),
+            ),
         )
-        .order_by("-created_at")
+        .order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at")
     )
 
     items = []
@@ -874,6 +986,15 @@ def following_summary(request):
                 "is_verified": bool(profile and profile.is_verified),
                 "predictions_count": follow.predictions_count,
                 "followers_count": follow.followers_count,
+                "new_predictions_count": follow.new_predictions_count,
+                "latest_new_prediction_at": (
+                    follow.latest_new_prediction_at.isoformat()
+                    if follow.latest_new_prediction_at
+                    else ""
+                ),
+                "latest_new_prediction_label": _relative_time_ru(
+                    follow.latest_new_prediction_at
+                ),
                 "joined_at": analyst.date_joined.isoformat(),
                 "url": reverse("front:expert_profile", kwargs={"username": analyst.username}),
             }

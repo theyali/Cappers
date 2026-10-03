@@ -1,0 +1,83 @@
+{% url list_url_name as articles_list_url %}
+<div class="articles-controls" data-articles-controls>
+    <nav class="articles-categories" aria-label="Категории">
+        <a
+            class="{% if not selected_category %}is-active{% endif %}"
+            href="{{ articles_list_url }}{% if current_query or current_sort != 'new' %}?{% if current_query %}q={{ current_query|urlencode }}{% endif %}{% if current_query and current_sort != 'new' %}&{% endif %}{% if current_sort != 'new' %}sort={{ current_sort }}{% endif %}{% endif %}"
+            data-articles-category-link
+            data-category=""
+        >{{ all_category_label }}</a>
+        {% for category in categories %}
+            <a
+                class="{% if selected_category == category %}is-active{% endif %}"
+                href="{{ articles_list_url }}?category={{ category.slug }}{% if current_query %}&q={{ current_query|urlencode }}{% endif %}{% if current_sort != 'new' %}&sort={{ current_sort }}{% endif %}"
+                data-articles-category-link
+                data-category="{{ category.slug }}"
+            >{{ category.name }}</a>
+        {% endfor %}
+    </nav>
+
+    <label class="articles-sort">
+        <span class="sr-only">Сортировка</span>
+        <select name="sort" data-articles-sort>
+            <option value="new"{% if current_sort == 'new' %} selected{% endif %}>Сначала новые</option>
+            <option value="old"{% if current_sort == 'old' %} selected{% endif %}>Сначала старые</option>
+            <option value="read_time"{% if current_sort == 'read_time' %} selected{% endif %}>Короткие сначала</option>
+        </select>
+    </label>
+</div>
+
+{% if page_obj.object_list %}
+<div class="articles-grid" aria-live="polite">
+    {% for article in page_obj.object_list %}
+    <article class="article-list-card{% if forloop.first %} is-main{% endif %}">
+        <a class="article-list-image" href="{{ article.get_absolute_url }}">
+            {% if article.image %}
+                <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy" decoding="async">
+            {% else %}
+                <span>{{ forloop.counter|stringformat:"02d" }}</span>
+            {% endif %}
+        </a>
+        <div class="article-list-copy">
+            <div class="article-list-meta">
+                {% if article.category %}
+                    <span class="article-list-category">{{ article.category.name }}</span>
+                {% endif %}
+                <span>{{ article.created_at|date:"j M Y" }}</span>
+                <span>{{ article.reading_time_minutes }} мин</span>
+            </div>
+            <div class="article-list-title"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></div>
+            <p>{{ article.description|truncatechars:190 }}</p>
+            <div class="article-list-bottom">
+                <a class="article-list-read" href="{{ article.get_absolute_url }}">{{ read_label }} <span aria-hidden="true">→</span></a>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="articles-pagination" aria-label="Страницы">
+    {% if page_obj.has_previous %}
+        <a class="articles-pagination-side" href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}" data-articles-page-link>← Назад</a>
+    {% endif %}
+    {% for page_number in page_obj.paginator.page_range %}
+        {% if page_number == page_obj.number %}
+            <span class="is-active">{{ page_number }}</span>
+        {% elif page_number <= 5 or page_number == page_obj.paginator.num_pages or page_number >= page_obj.number|add:"-1" and page_number <= page_obj.number|add:"1" %}
+            <a href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ page_number }}" data-articles-page-link>{{ page_number }}</a>
+        {% elif page_number == 6 or page_number == page_obj.number|add:"2" %}
+            <span class="is-gap">...</span>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+        <a class="articles-pagination-side" href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ page_obj.next_page_number }}" data-articles-page-link>Вперёд →</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="articles-empty">
+    <strong>{{ empty_title }}</strong>
+    <p>{{ empty_text }}</p>
+</div>
+{% endif %}

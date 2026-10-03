@@ -8,11 +8,13 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from game.models import Match
 
-from .models import MatchWatch, Notification, TelegramAccount
+from .models import MatchWatch, Notification, NotificationSectionState, TelegramAccount
 from .services import (
     clear_section_states,
     decrement_section_state,
     get_preferences,
+    notification_kinds_for_section,
+    refresh_section_state,
     section_badge_payload,
 )
 from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
@@ -253,6 +255,39 @@ def mark_all_read(request):
             }
         )
     return redirect("notifications:center")
+
+
+@login_required
+@require_POST
+def mark_section_read(request, section: str):
+    valid_sections = {
+        choice for choice, _label in NotificationSectionState.Section.choices
+    }
+    if section not in valid_sections:
+        return JsonResponse({"ok": False, "error": "Неизвестный раздел."}, status=404)
+
+    kinds = notification_kinds_for_section(section)
+    now = timezone.now()
+    updated = 0
+    if kinds:
+        updated = _in_app_notifications_queryset(request.user).filter(
+            is_read=False,
+            kind__in=kinds,
+        ).update(is_read=True, read_at=now)
+    refresh_section_state(request.user, section)
+    section_payload = section_badge_payload(request.user)
+    unread_count = (
+        _in_app_notifications_queryset(request.user).filter(is_read=False).count()
+    )
+    return JsonResponse(
+        {
+            "ok": True,
+            "updated": updated,
+            "unread_count": unread_count,
+            "section_badges": section_payload["badges"],
+            "section_counts": section_payload["counts"],
+        }
+    )
 
 
 @login_required

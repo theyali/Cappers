@@ -14,81 +14,38 @@
             {% endfor %}
         </aside>
 
-        <div class="predictions-content articles-content">
+        <div class="predictions-content articles-content" data-articles-page>
             {% for promo_banner in center_promo_banners %}
                 {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
             {% endfor %}
 
-            <header class="articles-hero">
-                <div>
-                    <p class="articles-eyebrow">Спортивная лента</p>
-                    <h1>Новости спорта</h1>
-                    <p>Свежие материалы о матчах, командах, турнирах и главных событиях спортивного дня.</p>
-                </div>
-                <div class="articles-total">
-                    <strong>{{ total_news }}</strong>
-                    <span>материалов</span>
-                </div>
-            </header>
-
-    {% if news_categories %}
-    <nav class="articles-categories" aria-label="Категории новостей">
-        <a class="{% if not selected_category %}is-active{% endif %}" href="{% url 'front:sports_news' %}">Все</a>
-        {% for category in news_categories %}
-            <a class="{% if selected_category == category %}is-active{% endif %}" href="{% url 'front:sports_news' %}?category={{ category.slug }}">{{ category.name }}</a>
-        {% endfor %}
-    </nav>
-    {% endif %}
-
-    {% if page_obj.object_list %}
-    <div class="articles-grid">
-        {% for article in page_obj.object_list %}
-        <article class="article-list-card{% if article.is_main %} is-main{% endif %}">
-            <a class="article-list-image" href="{{ article.get_absolute_url }}">
-                {% if article.image %}
-                    <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-                {% else %}
-                    <span>{{ forloop.counter|stringformat:"02d" }}</span>
-                {% endif %}
-            </a>
-            <div class="article-list-copy">
-                <div class="article-list-meta">
-                    {% if article.category %}
-                        <span class="article-list-category">{{ article.category.name }}</span>
-                    {% endif %}
-                    <span>{{ article.created_at|date:"d.m.Y" }}</span>
-                    <span>{{ article.reading_time_minutes }} мин чтения</span>
-                </div>
-                <h2><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h2>
-                <p>{{ article.description|truncatechars:190 }}</p>
-                <div class="article-list-bottom">
-                    <a class="article-list-read" href="{{ article.get_absolute_url }}">Читать новость <span aria-hidden="true">→</span></a>
-                    {% if article.tag_list %}
-                    <div class="article-list-tags" aria-label="Теги новости">
-                        {% for tag in article.tag_list|slice:":3" %}
-                            <span>{{ tag }}</span>
-                        {% endfor %}
+            <div class="articles-shell-head">
+                <nav class="articles-breadcrumbs" aria-label="Навигационная цепочка">
+                    <a href="{% url 'front:index' %}">Главная</a>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">Новости спорта</span>
+                </nav>
+                <div class="articles-title-row">
+                    <div>
+                        <h1>{{ page_title }}</h1>
+                        <p>{{ page_intro }}</p>
                     </div>
-                    {% endif %}
+                    <form class="articles-search" action="{% url list_url_name %}" method="get" data-articles-filter-form>
+                        <label class="articles-search-field">
+                            <span aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="m21 21-4.4-4.4"></path><circle cx="11" cy="11" r="7"></circle></svg>
+                            </span>
+                            <input type="search" name="q" value="{{ current_query }}" placeholder="{{ search_placeholder }}" autocomplete="off" data-articles-search>
+                        </label>
+                        <input type="hidden" name="category" value="{{ selected_category_slug }}" data-articles-category-input>
+                        <input type="hidden" name="sort" value="{{ current_sort }}" data-articles-sort-input>
+                    </form>
                 </div>
             </div>
-        </article>
-        {% endfor %}
-    </div>
 
-    {% if page_obj.paginator.num_pages > 1 %}
-    <nav class="articles-pagination" aria-label="Страницы новостей">
-        {% if page_obj.has_previous %}<a href="?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>{% endif %}
-        <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?{% if selected_category %}category={{ selected_category.slug }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>{% endif %}
-    </nav>
-    {% endif %}
-    {% else %}
-    <div class="articles-empty">
-        <strong>Новостей пока нет</strong>
-        <p>Новые спортивные материалы появятся здесь после публикации.</p>
-    </div>
-    {% endif %}
+            <div data-articles-results>
+                {% include "front/includes/_articles_results.html" %}
+            </div>
         </div>
 
         <aside class="bookmakers-sidebar" aria-label="Промо и реклама справа">
@@ -101,4 +58,9 @@
         </aside>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+<script src="{% static 'front/js/articles-filter.js' %}" defer></script>
 {% endblock %}

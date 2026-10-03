@@ -251,6 +251,36 @@ class NotificationViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("copybetting", response.json()["section_badges"])
 
+    def test_mark_section_read_only_clears_requested_section(self):
+        create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.NEW_PREDICTION,
+            title="Новый прогноз",
+            event_key="view:test:following",
+        )
+        create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.COPYBETTING,
+            title="Копибеттинг",
+            event_key="view:test:copybetting-section",
+        )
+
+        response = self.client.post(
+            reverse("notifications:mark_section_read", args=["following"])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertNotIn("following", payload["section_badges"])
+        self.assertTrue(payload["section_badges"]["copybetting"])
+        self.assertTrue(
+            Notification.objects.get(event_key="view:test:following").is_read
+        )
+        self.assertFalse(
+            Notification.objects.get(event_key="view:test:copybetting-section").is_read
+        )
+
     def test_summary_respects_disabled_in_app_channel(self):
         preferences = get_preferences(self.user)
         preferences.in_app_enabled = False

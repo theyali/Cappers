@@ -38,7 +38,12 @@ from cabinet.services.referral_bonuses import (
 from cabinet.services.streaks import touch_daily_streak
 from cabinet.services.xp import build_level_progress, grant_xp, sync_user_level
 from game.models import PredictionCoupon
-from notifications.models import Notification, NotificationPreference
+from notifications.models import (
+    Notification,
+    NotificationPreference,
+    NotificationSectionState,
+)
+from notifications.services import create_notification
 from wallets.models import CoinPackage, CoinSettings, CoinWallet
 from wallets.services import ensure_real_balance, purchase_coin_package
 
@@ -1022,7 +1027,34 @@ class BonusCenterServiceTests(TestCase):
         self.assertEqual(reader_common_task["progress_label"], "0 / 1")
         self.assertEqual(reader_common_task["row_class"], "is-in-progress")
         self.assertEqual(reader_common_task["display_status_label"], "В процессе")
-        self.assertNotContains(reader_response, "bonus-center-aside")
+        self.assertContains(reader_response, "bonus-center-aside")
+        self.assertNotContains(reader_response, "bonus-task-notifications")
+
+    def test_bonus_tasks_page_shows_notifications_and_clears_badge(self):
+        notification = create_notification(
+            recipient=self.user,
+            kind=Notification.Kind.BONUS_DAILY_TASK,
+            title="Задание выполнено",
+            message="Зайти на КапперХаб",
+            event_key="bonus-task-page:test",
+        )
+        self.assertIsNotNone(notification)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("cabinet:bonus_tasks"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Задание выполнено")
+        self.assertContains(response, "Зайти на КапперХаб")
+        notification.refresh_from_db()
+        self.assertTrue(notification.is_read)
+        self.assertFalse(
+            NotificationSectionState.objects.filter(
+                user=self.user,
+                section=NotificationSectionState.Section.BONUS_TASKS,
+                unread_count__gt=0,
+            ).exists()
+        )
 
     def test_bonus_tasks_page_only_renders_claim_button_when_claimable(self):
         task = DailyTask.objects.create(
