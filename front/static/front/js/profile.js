@@ -288,9 +288,32 @@
     const tabLinks = Array.from(document.querySelectorAll("[data-profile-tab-link]"));
     const tabPanels = Array.from(document.querySelectorAll("[data-profile-tab-panel]"));
 
+    const markProfileSectionRead = async (panel) => {
+        if (!panel?.dataset.profileSectionReadUrl || panel.dataset.readSynced === "true") return;
+        panel.dataset.readSynced = "true";
+        try {
+            const response = await fetch(panel.dataset.profileSectionReadUrl, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (response.ok && payload?.ok) {
+                syncNotificationBadges(payload);
+                window.dispatchEvent(new Event("cappers:notifications-changed"));
+            }
+        } catch (error) {}
+    };
+
     const activateTab = (tab) => {
+        let activePanel = null;
         tabPanels.forEach((panel) => {
-            panel.classList.toggle("is-active", panel.dataset.profileTabPanel === tab);
+            const isActive = panel.dataset.profileTabPanel === tab;
+            panel.classList.toggle("is-active", isActive);
+            if (isActive) activePanel = panel;
         });
 
         tabLinks.forEach((link) => {
@@ -298,6 +321,7 @@
             link.classList.toggle("is-active", target === tab);
         });
 
+        markProfileSectionRead(activePanel);
         window.dispatchEvent(new CustomEvent("profile:tab-activated", { detail: { tab } }));
     };
 
@@ -318,19 +342,74 @@
         activateTab(tab);
     });
 
+    const applyProfileListFilters = (listName) => {
+        const list = document.querySelector(`[data-profile-list="${listName}"]`);
+        if (!list) return;
+
+        const searchInput = document.querySelector(`[data-profile-list-search="${listName}"]`);
+        const newFilter = document.querySelector(`[data-profile-new-filter="${listName}"]`);
+        const query = (searchInput?.value || "").trim().toLowerCase();
+        const onlyNew = Boolean(newFilter?.classList.contains("is-active"));
+
+        list.querySelectorAll("[data-profile-username]").forEach((row) => {
+            const matchesQuery = query === "" || (row.dataset.profileUsername || "").includes(query);
+            const matchesNew = !onlyNew || row.dataset.profileHasNew === "true";
+            row.classList.toggle("is-hidden", !matchesQuery || !matchesNew);
+        });
+    };
+    window.CappersProfileApplyListFilters = applyProfileListFilters;
+
+    const syncNotificationBadges = (payload = {}) => {
+        if (payload.section_badges) {
+            document.querySelectorAll("[data-notification-section-badge]").forEach((dot) => {
+                const section = dot.dataset.notificationSectionBadge || "";
+                dot.classList.toggle("is-empty", !payload.section_badges[section]);
+            });
+        }
+        if (Object.prototype.hasOwnProperty.call(payload, "unread_count")) {
+            const count = Math.max(0, Number.parseInt(payload.unread_count, 10) || 0);
+            document.querySelectorAll("[data-notification-badge]").forEach((badge) => {
+                badge.textContent = count > 99 ? "99+" : String(count);
+                badge.classList.toggle("is-empty", count === 0);
+            });
+        }
+    };
+
     document.querySelectorAll("[data-profile-list-search]").forEach((searchInput) => {
         searchInput.addEventListener("input", () => {
-            const listName = searchInput.dataset.profileListSearch;
-            const list = document.querySelector(`[data-profile-list="${listName}"]`);
-            if (!list) return;
+            applyProfileListFilters(searchInput.dataset.profileListSearch);
+        });
+    });
 
-            const query = searchInput.value.trim().toLowerCase();
-            list.querySelectorAll("[data-profile-username]").forEach((row) => {
-                row.classList.toggle(
-                    "is-hidden",
-                    query !== "" && !row.dataset.profileUsername.includes(query),
-                );
-            });
+    document.querySelectorAll("[data-profile-new-filter]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            if (button.disabled && !button.classList.contains("is-active")) return;
+
+            const listName = button.dataset.profileNewFilter;
+            const nextActive = !button.classList.contains("is-active");
+            button.classList.toggle("is-active", nextActive);
+            button.setAttribute("aria-pressed", nextActive ? "true" : "false");
+            button.querySelector("span").textContent = nextActive ? "Все подписки" : "Показать новые";
+            applyProfileListFilters(listName);
+
+            if (!nextActive || button.dataset.readSynced === "true" || !button.dataset.markReadUrl) return;
+
+            button.dataset.readSynced = "true";
+            try {
+                const response = await fetch(button.dataset.markReadUrl, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (response.ok && payload?.ok) {
+                    syncNotificationBadges(payload);
+                    window.dispatchEvent(new Event("cappers:notifications-changed"));
+                }
+            } catch (error) {}
         });
     });
 
@@ -616,6 +695,15 @@
                     ? `<div class="profile-user-avatar"><img src="${escapeHtml(item.avatar_url)}" alt=""></div>`
                     : `<div class="profile-user-avatar">${escapeHtml(item.display_name || item.username).slice(0, 1).toUpperCase()}</div>`;
                 const verified = item.is_verified ? '<span class="profile-user-verified">Проверен</span>' : "";
+                const hasNewPredictions = Number.parseInt(item.new_predictions_count, 10) > 0;
+                const newPredictionMeta = hasNewPredictions
+                    ? `<div class="profile-user-meta">
+                        <span class="profile-new-prediction-badge">Новый прогноз</span>
+                        ${item.latest_new_prediction_label ? `<span>${escapeHtml(item.latest_new_prediction_label)}</span>` : ""}
+                    </div>`
+                    : "";
+                row.dataset.profileHasNew = hasNewPredictions ? "true" : "false";
+                row.classList.toggle("has-new-prediction", hasNewPredictions);
                 row.innerHTML = `
                     ${avatar}
                     <div class="profile-user-copy">
@@ -626,10 +714,19 @@
                             <span>${escapeHtml(item.followers_count)} подписчиков</span>
                             ${verified}
                         </div>
+                        ${newPredictionMeta}
                     </div>
                     <a class="profile-user-open" href="${escapeHtml(item.url)}">Открыть профиль</a>`;
                 wireRow(row, item.url);
             });
+            const newCount = followingList.querySelectorAll('[data-profile-has-new="true"]').length;
+            const filterButton = page.querySelector('[data-profile-new-filter="following"]');
+            if (filterButton) {
+                filterButton.disabled = newCount === 0 && !filterButton.classList.contains("is-active");
+                const count = filterButton.querySelector("[data-profile-new-filter-count]");
+                if (count) count.textContent = String(newCount);
+            }
+            window.CappersProfileApplyListFilters?.("following");
         })
         .catch(() => {});
 })();

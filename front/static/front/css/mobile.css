@@ -4953,6 +4953,18 @@ body.expert-public-details-open {
   .profile-user-row {
     grid-template-columns: 42px minmax(0, 1fr);
   }
+  .profile-list-head,
+  .profile-list-tools {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .profile-list-tools {
+    min-width: 0;
+  }
+  .profile-new-filter,
+  .profile-search {
+    width: 100%;
+  }
   .profile-row-action {
     grid-column: 1/-1;
     width: 100%;

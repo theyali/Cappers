@@ -125,6 +125,39 @@ def decrement_section_state(notification: Notification) -> None:
     ).update(unread_count=F("unread_count") - 1)
 
 
+def notification_kinds_for_section(section: str) -> list[str]:
+    return [
+        kind
+        for kind, target_section in SECTION_BY_KIND.items()
+        if target_section == section
+    ]
+
+
+def refresh_section_state(user, section: str) -> int:
+    kinds = notification_kinds_for_section(section)
+    if not kinds:
+        return 0
+
+    unread_queryset = Notification.objects.filter(
+        recipient=user,
+        show_in_app=True,
+        is_read=False,
+        kind__in=kinds,
+    )
+    unread_count = unread_queryset.count()
+    latest_notification = unread_queryset.order_by("-created_at", "-id").first()
+
+    NotificationSectionState.objects.update_or_create(
+        user=user,
+        section=section,
+        defaults={
+            "unread_count": unread_count,
+            "latest_notification": latest_notification,
+        },
+    )
+    return unread_count
+
+
 def clear_section_states(user) -> None:
     NotificationSectionState.objects.filter(user=user, unread_count__gt=0).update(
         unread_count=0,

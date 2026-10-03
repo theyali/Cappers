@@ -89,6 +89,38 @@
             </section>
 
             <aside class="coupon-sidebar bonus-center-aside bonus-banners-aside" aria-label="Баннеры">
+                {% if bonus_task_notifications %}
+                <section class="bonus-task-notifications" aria-labelledby="bonus-task-notifications-title">
+                    <div class="bonus-task-notifications-head">
+                        <span class="bonus-task-notifications-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 9h6M9 13h6M9 17h3"></path></svg>
+                        </span>
+                        <div>
+                            <p class="eyebrow">Уведомления</p>
+                            <h2 id="bonus-task-notifications-title">Ежедневные задания</h2>
+                        </div>
+                    </div>
+                    <div class="bonus-task-notifications-list">
+                        {% for notification in bonus_task_notifications %}
+                            {% if notification.url %}
+                            <a class="bonus-task-notification-row" href="{{ notification.url }}">
+                            {% else %}
+                            <div class="bonus-task-notification-row">
+                            {% endif %}
+                                <span>
+                                    <strong>{{ notification.title }}</strong>
+                                    <small>{{ notification.message }}</small>
+                                </span>
+                                <time>{{ notification.time_label }}</time>
+                            {% if notification.url %}
+                            </a>
+                            {% else %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
                 {% for promo_banner in right_promo_banners %}
                     {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
                 {% endfor %}

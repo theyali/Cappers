@@ -4,6 +4,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from front.capper_stats_service import CapperStatsService
@@ -14,6 +15,8 @@ from front.expert_ranking import (
 )
 from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
+from notifications.models import Notification, NotificationSectionState
+from notifications.services import refresh_section_state
 from tournaments.models import Tournament, TournamentParticipant, TournamentResult
 from tournaments.services.leaderboard import tournament_leaderboard
 
@@ -39,6 +42,10 @@ RECENT_PERFORMANCE_STATES = (
     PredictionCoupon.StateStatus.REFUND,
 )
 RECOMMENDED_EXPERTS_LIMIT = 8
+FOLLOWING_NEW_PREDICTION_KINDS = (
+    Notification.Kind.NEW_PREDICTION,
+    Notification.Kind.REQUESTED_MATCH_PREDICTION,
+)
 
 
 def _initials(value: str) -> str:
@@ -327,6 +334,20 @@ def expert_profile(request, username: str):
         user__role=User.Role.ANALYST,
         is_public=True,
     )
+    if request.user.is_authenticated and request.user.pk != profile.user_id:
+        updated = Notification.objects.filter(
+            recipient=request.user,
+            actor=profile.user,
+            kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+            show_in_app=True,
+            is_read=False,
+        ).update(is_read=True, read_at=timezone.now())
+        if updated:
+            refresh_section_state(
+                request.user,
+                NotificationSectionState.Section.FOLLOWING,
+            )
+
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
     context["expert_public_hero_index"] = randint(1, 5)

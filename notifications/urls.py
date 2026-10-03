@@ -11,6 +11,7 @@ urlpatterns = [
     path("telegram/connect/", views.telegram_connect, name="telegram_connect"),
     path("telegram/disconnect/", views.telegram_disconnect, name="telegram_disconnect"),
     path("read-all/", views.mark_all_read, name="mark_all_read"),
+    path("sections/<str:section>/read/", views.mark_section_read, name="mark_section_read"),
     path("<int:notification_id>/read/", views.mark_read, name="mark_read"),
     path("matches/<int:match_id>/watch/", watch_views.match_watch, name="match_watch"),
     path("matches/slug/<slug:match_slug>/watch/", watch_views.match_watch_by_slug, name="match_watch_by_slug"),
