@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from cabinet.models import AnalystPaidSubscriptionPayment, AnalystProfile, User
 from cabinet.roulette.rewards import UserRouletteRewardState
-from game.models import Match, Prediction, PredictionCoupon, Sport
+from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
@@ -56,6 +56,7 @@ class CoinWalletIntegrationTests(TestCase):
                 "league": {"name": {"ru": "Лига"}},
             },
         )
+        MatchOdds.objects.create(match=self.match, home_win_bet=1.70)
 
     def _payload(self, stake="500"):
         return {

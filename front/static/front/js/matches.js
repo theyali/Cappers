@@ -278,6 +278,35 @@
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
     };
 
+    const sameSelection = (left, right) => (
+        String(left || "").trim().toLowerCase() === String(right || "").trim().toLowerCase()
+    );
+
+    const refreshMatchButtonOdd = (matchId, market, selection, coefficient) => {
+        const value = toNumber(coefficient, 0).toFixed(2);
+        document.querySelectorAll(`[data-match-bets][data-match-id="${matchId}"] [data-bet-option]`).forEach((button) => {
+            if (button.dataset.market !== market || !sameSelection(button.dataset.selection, selection)) return;
+            const previous = button.dataset.coefficient;
+            const oddNode = [...button.querySelectorAll("strong, small, b")]
+                .find((node) => node.textContent.trim() === previous);
+            if (oddNode) oddNode.textContent = value;
+            button.dataset.coefficient = value;
+        });
+    };
+
+    // The server always takes the coefficient from the current line; keep the coupon in sync with it.
+    const applyItemOdds = (matchId, market, selection, coefficient) => {
+        const item = items.get(String(matchId));
+        const odd = readOdd(coefficient);
+        if (!item || !odd || item.market !== market || !sameSelection(item.selection, selection)) return false;
+        refreshMatchButtonOdd(item.matchId, item.market, item.selection, odd);
+        if (item.coefficient === odd) return false;
+        item.coefficient = odd;
+        const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
+        if (node) updateCouponItem(node, item);
+        return true;
+    };
+
     const saveLocalSnapshot = (dirty = true) => {
         if (!canWrite) return;
         const snapshot = {
@@ -400,12 +429,17 @@
             const item = normalizeDraftItem(rawItem);
             return [String(item.matchId), item];
         }));
+        let oddsUpdated = false;
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
             if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
+            if (fresh && applyItemOdds(matchId, fresh.market, fresh.selection, fresh.coefficient)) {
+                oddsUpdated = true;
+            }
         });
         updateConfidenceVisual();
         saveLocalSnapshot(false);
+        return oddsUpdated;
     };
 
     const clearCoupon = () => {
@@ -493,8 +527,10 @@
                 setNote(result.message || "Прогноз опубликован.", "success");
             } else {
                 draftId = result.draft_id || null;
-                applyServerDraft(result.draft || null);
-                if (items.size) {
+                const oddsUpdated = applyServerDraft(result.draft || null);
+                if (oddsUpdated) {
+                    setNote("Коэффициенты в купоне обновлены по текущей линии.");
+                } else if (items.size) {
                     setNote("Купон сохранен автоматически.", "success");
                 }
             }
@@ -502,6 +538,13 @@
 
         request.fail((xhr, statusText) => {
             if (statusText === "abort") return;
+            const oddsChanged = xhr?.responseJSON?.odds_changed;
+            if (Array.isArray(oddsChanged) && oddsChanged.length) {
+                oddsChanged.forEach((change) => {
+                    applyItemOdds(change.match_id, change.market, change.selection, change.coefficient);
+                });
+                saveLocalSnapshot(true);
+            }
             setNote(
                 responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."),
                 "error"
