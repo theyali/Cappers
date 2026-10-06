@@ -500,10 +500,13 @@ def _draft_session_cutoff():
 
 
 def _delete_expired_draft_coupons(user: User) -> int:
+    # Drafts that still carry followers' copied stakes (coupons unpublished before
+    # that was forbidden) are kept until those stakes are refunded.
     deleted, _ = PredictionCoupon.objects.filter(
         author=user,
         published_status=PredictionCoupon.PublishedStatus.DRAFT,
         updated_at__lt=_draft_session_cutoff(),
+        copied_bets__isnull=True,
     ).delete()
     return deleted
 

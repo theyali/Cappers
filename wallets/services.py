@@ -828,9 +828,9 @@ def _apply_pending_copybetting_status_if_ready(
 def settle_orphaned_copied_bets(limit: int = 1000) -> int:
     from game.models import PredictionCoupon
 
-    coupon_ids = list(
-        CopiedBet.objects.filter(
-            state_status=CopiedBet.StateStatus.PENDING,
+    pending_bets = CopiedBet.objects.filter(state_status=CopiedBet.StateStatus.PENDING)
+    settled_coupon_ids = list(
+        pending_bets.filter(
             source_coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
         .exclude(source_coupon__state_status=PredictionCoupon.StateStatus.PENDING)
@@ -838,24 +838,52 @@ def settle_orphaned_copied_bets(limit: int = 1000) -> int:
         .distinct()
         .order_by("source_coupon_id")[:limit]
     )
-    if not coupon_ids:
+    # Copies of a coupon that is no longer published (canceled, or unpublished
+    # before that was forbidden) can never be settled by result: refund them.
+    voided_coupon_ids = list(
+        pending_bets.exclude(
+            source_coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .values_list("source_coupon_id", flat=True)
+        .distinct()
+        .order_by("source_coupon_id")[:limit]
+    )
+    if not settled_coupon_ids and not voided_coupon_ids:
         return 0
 
     settled_count = 0
-    coupons = PredictionCoupon.objects.filter(pk__in=coupon_ids).select_related("author").order_by("id")
+    coupons = (
+        PredictionCoupon.objects.filter(pk__in=[*settled_coupon_ids, *voided_coupon_ids])
+        .select_related("author")
+        .order_by("id")
+    )
     for coupon in coupons:
         try:
-            _copy_missing_bets_for_settlement(coupon)
-            settled_count += len(settle_copied_bets_for_coupon(coupon))
+            if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
+                _copy_missing_bets_for_settlement(coupon)
+                settled_count += len(settle_copied_bets_for_coupon(coupon))
+            else:
+                settled_count += len(
+                    settle_copied_bets_for_coupon(
+                        coupon,
+                        outcome=PredictionCoupon.StateStatus.REFUND,
+                    )
+                )
         except Exception:
             logger.exception("Failed to reconcile copied bets for coupon #%s.", coupon.pk)
     return settled_count
 
 
-def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
+def settle_copied_bets_for_coupon(coupon, *, outcome: str | None = None) -> list[CopiedBet]:
+    """Settle pending copies of a coupon.
+
+    By default the coupon result is used; ``outcome`` overrides it when the
+    coupon is voided without a result, e.g. canceled before the match.
+    """
     from game.models import PredictionCoupon
 
-    if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
+    outcome = outcome or coupon.state_status
+    if outcome == PredictionCoupon.StateStatus.PENDING:
         return []
 
     settled: list[CopiedBet] = []
@@ -881,7 +909,7 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                 subscription = CopyBettingSubscription.objects.select_for_update().get(
                     pk=locked_bet.subscription_id
                 )
-                if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+                if outcome == PredictionCoupon.StateStatus.WIN:
                     locked_bet.possible_payout = _copy_possible_payout(coupon, locked_bet.stake)
                     kind = CoinTransaction.Kind.COPYBET_PAYOUT
                     amount = _coin_amount_from_model(
@@ -892,7 +920,7 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                     locked_bet.profit = _coin_decimal_total(
                         locked_bet.possible_payout - locked_bet.stake
                     )
-                elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
+                elif outcome == PredictionCoupon.StateStatus.REFUND:
                     kind = CoinTransaction.Kind.COPYBET_REFUND
                     amount = _coin_amount_from_model(
                         locked_bet.stake,

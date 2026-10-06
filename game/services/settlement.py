@@ -2,9 +2,11 @@ import logging
 import re
 from decimal import Decimal, InvalidOperation
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from cabinet.roulette.rewards import UserRouletteRewardState
 from game.models import (
     Match,
     MatchManualReview,
@@ -12,7 +14,13 @@ from game.models import (
     Prediction,
     PredictionCoupon,
 )
-from wallets.services import settle_orphaned_copied_bets, settle_prediction_coupon
+from wallets.models import CoinTransaction
+from wallets.services import (
+    credit_coins,
+    settle_copied_bets_for_coupon,
+    settle_orphaned_copied_bets,
+    settle_prediction_coupon,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -372,6 +380,67 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
     coupon.save(update_fields=update_fields)
     settle_prediction_coupon(coupon)
     return coupon
+
+
+@transaction.atomic
+def cancel_published_coupon(coupon_id: int, *, reason: str = "") -> PredictionCoupon:
+    """Withdraw a published, not yet settled coupon and return every stake taken for it.
+
+    The author gets the stake back (or the free roulette prediction it was paid
+    with), and copy-betting followers get their copied stakes refunded. Authors
+    cannot unpublish coupons themselves; this service is the only way to void one.
+    """
+    coupon = (
+        PredictionCoupon.objects.select_for_update()
+        .select_related("author")
+        .filter(pk=coupon_id)
+        .first()
+    )
+    if coupon is None:
+        raise ValidationError("Прогноз не найден.")
+    if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
+        raise ValidationError("Отменить можно только опубликованный прогноз.")
+    if coupon.state_status != PredictionCoupon.StateStatus.PENDING:
+        raise ValidationError("Рассчитанный прогноз отменить нельзя.")
+
+    coupon.published_status = PredictionCoupon.PublishedStatus.CANCELED
+    coupon.save(update_fields=["published_status", "updated_at"])
+    _refund_author_stake(coupon, reason=reason)
+    settle_copied_bets_for_coupon(coupon, outcome=PredictionCoupon.StateStatus.REFUND)
+    return coupon
+
+
+def _refund_author_stake(coupon: PredictionCoupon, *, reason: str) -> None:
+    stake_transaction = (
+        CoinTransaction.objects.filter(
+            user_id=coupon.author_id,
+            kind=CoinTransaction.Kind.PREDICTION_STAKE,
+            related_model=coupon._meta.label_lower,
+            related_id=coupon.pk,
+        )
+        .order_by("id")
+        .first()
+    )
+    if stake_transaction is None:
+        return
+
+    if stake_transaction.amount < 0:
+        note = f"Возврат ставки отменённого прогноза #{coupon.pk}"
+        credit_coins(
+            coupon.author,
+            abs(stake_transaction.amount),
+            CoinTransaction.Kind.PREDICTION_REFUND,
+            related_obj=coupon,
+            note=f"{note}: {reason}" if reason else note,
+        )
+        return
+
+    # A zero stake transaction means the coupon was paid with a free roulette prediction.
+    reward_state, _ = UserRouletteRewardState.objects.select_for_update().get_or_create(
+        user_id=coupon.author_id,
+    )
+    reward_state.free_predictions += 1
+    reward_state.save(update_fields=("free_predictions", "updated_at"))
 
 
 def resettle_coupon(

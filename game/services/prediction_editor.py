@@ -237,6 +237,8 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
         description = "" if is_new else coupon.description
 
     audience = _resolve_audience(data, coupon, is_new=is_new)
+    if was_published and audience != coupon.audience:
+        raise ValidationError({"is_paid": "Тип доступа опубликованного прогноза изменить нельзя."})
     if audience == PredictionCoupon.Audience.PAID and not can_use_rich_fields:
         raise ValidationError({"is_paid": "Платные прогнозы доступны VIP-капперам."})
     if audience == PredictionCoupon.Audience.PAID and not description:
@@ -388,7 +390,8 @@ def _resolve_published_status(data, coupon: PredictionCoupon, *, is_new: bool) -
     else:
         return PredictionCoupon.PublishedStatus.DRAFT if is_new else coupon.published_status
 
-    valid = {value for value, _label in PredictionCoupon.PublishedStatus.choices}
+    # Canceling a published coupon refunds stakes and goes through cancel_published_coupon().
+    valid = {PredictionCoupon.PublishedStatus.DRAFT, PredictionCoupon.PublishedStatus.PUBLISHED}
     if status not in valid:
         raise ValidationError({"published_status": "Неизвестный статус прогноза."})
     return status

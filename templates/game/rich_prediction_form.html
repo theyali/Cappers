@@ -117,19 +117,19 @@
                     <div class="rich-prediction-section-body">
                         <div class="rich-prediction-section-head">
                             <h2>Доступ к прогнозу</h2>
-                            <p>Кто сможет видеть этот прогноз?</p>
+                            <p>{% if is_published %}Тип доступа зафиксирован после публикации.{% else %}Кто сможет видеть этот прогноз?{% endif %}</p>
                         </div>
 
                         <div class="rich-prediction-access-options">
                             <label class="rich-prediction-access-option">
-                                <input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %}>
+                                <input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %} {% if is_published %}disabled{% endif %}>
                                 <span>
                                     <strong>Бесплатный</strong>
                                     <small>Доступен всем пользователям.</small>
                                 </span>
                             </label>
                             <label class="rich-prediction-access-option{% if not can_use_rich_fields %} is-locked{% endif %}">
-                                <input type="radio" name="is_paid" value="on" {% if form.is_paid.value %}checked{% endif %} {% if not can_use_rich_fields %}disabled{% endif %}>
+                                <input type="radio" name="is_paid" value="on" {% if form.is_paid.value %}checked{% endif %} {% if not can_use_rich_fields or is_published %}disabled{% endif %}>
                                 <span>
                                     <strong>Платный</strong>
                                     <small>{% if can_use_rich_fields %}Только для подписчиков ваших платных прогнозов.{% else %}{{ vip_locked_label }}{% endif %}</small>

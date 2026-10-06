@@ -374,9 +374,11 @@ class CopiedBet(models.Model):
         related_name="source_copied_bets",
         verbose_name="Каппер",
     )
+    # Deleting a coupon must not silently wipe followers' copied stakes. RESTRICT
+    # still lets an author's account deletion cascade through CopiedBet.analyst.
     source_coupon = models.ForeignKey(
         "game.PredictionCoupon",
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
         related_name="copied_bets",
         verbose_name="Исходный прогноз",
     )

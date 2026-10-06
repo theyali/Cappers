@@ -1,6 +1,3 @@
-from datetime import timedelta
-
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -18,6 +15,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from front.models import PredictionFavorite, PredictionLike
 from game.models import Country, PredictionCoupon, Sport
+from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
 from notifications.telegram_bot import get_bot_token
@@ -380,17 +378,6 @@ def _coupon_result(coupon) -> tuple[str, str]:
     if coupon.state_status == PredictionCoupon.StateStatus.REFUND:
         return "refund", "Возврат"
     return "pending", "Ожидает"
-
-
-def _delete_expired_draft_coupons(user: User) -> int:
-    max_age = max(int(getattr(settings, "SESSION_COOKIE_AGE", 1209600)), 1)
-    cutoff = timezone.now() - timedelta(seconds=max_age)
-    deleted, _ = PredictionCoupon.objects.filter(
-        author=user,
-        published_status=PredictionCoupon.PublishedStatus.DRAFT,
-        updated_at__lt=cutoff,
-    ).delete()
-    return deleted
 
 
 def _copybetting_audience_context(user) -> dict:

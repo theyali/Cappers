@@ -210,6 +210,37 @@ class RichPredictionPublishTests(TestCase):
         self.coupon.refresh_from_db()
         self.assertEqual(self.coupon.total_stake, Decimal("500.00"))
 
+    def test_service_rejects_audience_change_after_publish(self):
+        self._publish()
+        self.coupon.refresh_from_db()
+
+        with self.assertRaises(ValidationError) as caught:
+            update_rich_prediction(
+                self.analyst,
+                self.coupon,
+                {"is_paid": True, "published_status": "published"},
+                {},
+            )
+
+        self.assertIn("is_paid", caught.exception.message_dict)
+        self.coupon.refresh_from_db()
+        self.assertEqual(self.coupon.audience, PredictionCoupon.Audience.FREE)
+
+    def test_editor_cannot_cancel_coupon(self):
+        self._publish()
+        self.coupon.refresh_from_db()
+
+        with self.assertRaises(ValidationError):
+            update_rich_prediction(
+                self.analyst,
+                self.coupon,
+                {"published_status": PredictionCoupon.PublishedStatus.CANCELED},
+                {},
+            )
+
+        self.coupon.refresh_from_db()
+        self.assertEqual(self.coupon.published_status, PredictionCoupon.PublishedStatus.PUBLISHED)
+
 
 class UnpaidCouponSettlementTests(TestCase):
     def test_missing_coins_do_not_block_settlement(self):

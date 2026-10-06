@@ -128,8 +128,9 @@ class RichPredictionCouponForm(forms.Form):
                 self.fields[field_name].required = False
 
         if coupon is not None and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
-            # The stake was charged on publish and stays fixed afterwards.
+            # The stake was charged on publish; the stake and the audience stay fixed afterwards.
             self.fields["total_stake"].disabled = True
+            self.fields["is_paid"].disabled = True
 
     def clean_custom_cover_image(self):
         image = self.cleaned_data.get("custom_cover_image")

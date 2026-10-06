@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
@@ -23,6 +24,7 @@ from game.models import (
     team_logo_upload_path,
 )
 from game.services.local_logos import sync_entity_logo
+from game.services.settlement import cancel_published_coupon
 
 
 def _local_media_preview(url: str, *, size: int = 40):
@@ -400,6 +402,30 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "settled_at",
     )
     inlines = (PredictionItemInline,)
+    actions = ("cancel_with_refund",)
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.published_status != PredictionCoupon.PublishedStatus.DRAFT:
+            # The stake is charged on publish: status and stake change only through services.
+            readonly_fields.extend(("published_status", "total_stake"))
+        return readonly_fields
+
+    @admin.action(description="Отменить с возвратом ставок автору и копировщикам")
+    def cancel_with_refund(self, request, queryset):
+        canceled = 0
+        skipped = []
+        for coupon_id in queryset.order_by("id").values_list("pk", flat=True):
+            try:
+                cancel_published_coupon(coupon_id, reason="отменён администратором")
+            except ValidationError as exc:
+                skipped.append(f"#{coupon_id}: {exc.messages[0]}")
+            else:
+                canceled += 1
+        message = f"Отменено прогнозов: {canceled}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
 
 @admin.register(Prediction)
