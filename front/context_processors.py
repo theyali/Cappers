@@ -1,6 +1,6 @@
 from django.conf import settings as django_settings
 from django.core.cache import cache
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from django.db.utils import OperationalError, ProgrammingError
 from django.urls import NoReverseMatch, reverse
 
@@ -190,6 +190,46 @@ def _roulette_available_spins(request) -> int:
         return 0
 
 
+def _mobile_coupon_nav_state(request) -> dict:
+    user = getattr(request, "user", None)
+    if not user or not user.is_authenticated or not getattr(user, "is_analyst", False):
+        return {
+            "count": 0,
+            "coefficient": "0.00",
+        }
+
+    try:
+        from game.models import PredictionCoupon
+
+        coupon = (
+            PredictionCoupon.objects.filter(
+                author=user,
+                published_status=PredictionCoupon.PublishedStatus.DRAFT,
+                prediction_format=PredictionCoupon.PredictionFormat.QUICK,
+            )
+            .annotate(items_count=Count("predictions", distinct=True))
+            .order_by("-updated_at", "-id")
+            .first()
+        )
+    except (OperationalError, ProgrammingError):
+        coupon = None
+
+    if coupon is None:
+        return {
+            "count": 0,
+            "coefficient": "0.00",
+        }
+
+    coefficient = "0.00"
+    if coupon.total_stake and coupon.total_stake > 0 and coupon.possible_payout:
+        coefficient = f"{coupon.possible_payout / coupon.total_stake:.2f}"
+
+    return {
+        "count": int(getattr(coupon, "items_count", 0) or 0),
+        "coefficient": coefficient,
+    }
+
+
 def _breadcrumbs_for_request(request):
     match = request.resolver_match
     view_name = match.view_name if match else ""
@@ -291,6 +331,8 @@ def website_settings(request):
         except (OperationalError, ProgrammingError):
             mobile_quick_access = []
 
+    mobile_coupon_nav = _mobile_coupon_nav_state(request)
+
     return {
         "website_settings": settings,
         "footer_link_groups": footer_groups,
@@ -301,6 +343,8 @@ def website_settings(request):
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
+        "mobile_coupon_nav_count": mobile_coupon_nav["count"],
+        "mobile_coupon_nav_coefficient": mobile_coupon_nav["coefficient"],
         "mobile_quick_access_items": mobile_quick_access,
         "support_email": django_settings.SUPPORT_EMAIL,
         "administrator_email": django_settings.ADMINISTRATOR_EMAIL,

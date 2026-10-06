@@ -175,7 +175,7 @@ def _task_reward_label(task) -> str:
     if task.reward_xp:
         rewards.append(f"+{task.reward_xp} XP")
     if task.reward_coins:
-        rewards.append(f"+{task.reward_coins} монет")
+        rewards.append(f"+{task.reward_coins} коинов")
     if task.reward_spins:
         rewards.append(f"+{task.reward_spins} попыток")
     return " · ".join(rewards)

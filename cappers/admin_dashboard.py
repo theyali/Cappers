@@ -9,6 +9,7 @@ ADMIN_APP_GROUPS = {
     "notifications": {"title": "Уведомления", "subtitle": "Сообщения и алерты", "icon": "bell", "color": "red"},
     "bots": {"title": "Боты", "subtitle": "Telegram и другое", "icon": "bot", "color": "purple"},
     "game": {"title": "Игры", "subtitle": "Игровые модули", "icon": "gamepad", "color": "violet"},
+    "tournaments": {"title": "Турниры", "subtitle": "Соревнования и призы", "icon": "trophy", "color": "yellow"},
     "wallets": {"title": "Кошелёк", "subtitle": "Платежи и балансы", "icon": "wallet", "color": "green"},
     "django_celery_beat": {
         "title": "Периодические задачи",
@@ -31,7 +32,7 @@ SEO_MODEL_OBJECT_NAMES = {"PageSEO"}
 ADMIN_APP_GROUP_SOURCES = {
     "cabinet": ("cabinet", "auth"),
     "notifications": ("notifications", "account_email"),
-    "game": ("game", "tournaments"),
+    "game": ("game",),
 }
 
 

@@ -27,7 +27,7 @@
 
         <div class="coupon-shared">
             <label class="coupon-field">
-                <span>Ставка, от 100 до 1 000 000 coins</span>
+                <span>Ставка, от 100 до 1 000 000 коинов</span>
                 <input type="number" name="stake" min="100" max="1000000" step="1" placeholder="100" data-coupon-stake>
                 <small class="coupon-confidence-hint"></small>
             </label>
@@ -36,6 +36,24 @@
                 <strong data-coupon-coefficient>0</strong>
             </div>
         </div>
+
+        {% if free_predictions_available %}
+        <label class="coupon-free-option">
+            <input
+                type="checkbox"
+                name="use_free_prediction"
+                value="1"
+                data-coupon-free-prediction
+                data-free-predictions-count="{{ free_predictions_available }}"
+            >
+            <span>
+                <strong>Использовать бесплатный прогноз</strong>
+                <small data-coupon-free-prediction-label>
+                    Доступно: {{ free_predictions_available }}. Коины за ставку не спишутся.
+                </small>
+            </span>
+        </label>
+        {% endif %}
 
         <div class="coupon-confidence coupon-confidence-global">
             <div class="coupon-confidence-head">

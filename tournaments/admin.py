@@ -4,9 +4,14 @@ from .models import (
     Tournament,
     TournamentAchievement,
     TournamentCoupon,
+    TournamentEligibilityRule,
+    TournamentFAQ,
     TournamentParticipant,
     TournamentPredictionEntry,
+    TournamentPrize,
+    TournamentPrizeAward,
     TournamentResult,
+    TournamentStage,
 )
 
 
@@ -16,11 +21,56 @@ class TournamentAchievementInline(admin.TabularInline):
     fields = ("title", "kind", "icon", "sort_order")
 
 
+class TournamentStageInline(admin.TabularInline):
+    model = TournamentStage
+    extra = 1
+    fields = ("title", "period", "description", "sort_order", "is_active")
+    ordering = ("sort_order", "id")
+
+
+class TournamentPrizeInline(admin.TabularInline):
+    model = TournamentPrize
+    extra = 1
+    fields = (
+        "place",
+        "money_amount",
+        "coins_amount",
+        "vip_days",
+        "achievement",
+        "title",
+        "description",
+        "sort_order",
+        "is_active",
+    )
+    autocomplete_fields = ("achievement",)
+    ordering = ("place", "sort_order", "id")
+
+
+class TournamentEligibilityRuleInline(admin.TabularInline):
+    model = TournamentEligibilityRule
+    extra = 1
+    fields = (
+        "rule_type",
+        "operator",
+        "value",
+        "sport",
+        "title",
+        "description",
+        "sort_order",
+        "is_active",
+    )
+    autocomplete_fields = ("sport",)
+    ordering = ("sort_order", "id")
+
+
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "status",
+        "access_type",
+        "entry_type",
+        "entry_fee_coins",
         "starts_at",
         "ends_at",
         "coupon_type_rule",
@@ -31,23 +81,62 @@ class TournamentAdmin(admin.ModelAdmin):
         "prize_third_display",
         "is_featured",
     )
-    list_filter = ("status", "coupon_type_rule", "is_featured", "starts_at", "ends_at", "allowed_sports")
+    list_filter = (
+        "status",
+        "access_type",
+        "entry_type",
+        "analysts_only",
+        "vip_only",
+        "new_users_only",
+        "eligibility_mode",
+        "coupon_type_rule",
+        "is_featured",
+        "starts_at",
+        "ends_at",
+        "allowed_sports",
+        "eligibility_sport",
+    )
     search_fields = ("title", "slug", "description", "rules_text")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("allowed_sports",)
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (
         (None, {"fields": ("title", "slug", "description", "rules_text", "status", "is_featured")}),
+        (
+            "Тексты наград",
+            {"fields": ("reward_payout_text", "reward_wallet_text", "reward_coins_wallet_text", "reward_rules_text")},
+        ),
+        (
+            "Тип доступа",
+            {
+                "fields": (
+                    "access_type",
+                    "analysts_only",
+                    "vip_only",
+                    "new_users_only",
+                )
+            },
+        ),
+        ("Стоимость участия", {"fields": ("entry_type", "entry_fee_coins")}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
-        ("Изображения", {"fields": ("card_image", "hero_image")}),
+        ("Изображения", {"fields": ("card_image", "hero_image", "hero_icon")}),
         ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",
             {"fields": ("min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
         ),
+        (
+            "Условия допуска",
+            {"fields": ("eligibility_mode", "min_user_predictions", "min_user_wins", "eligibility_sport")},
+        ),
         ("Системные поля", {"fields": ("created_at", "updated_at")}),
     )
-    inlines = (TournamentAchievementInline,)
+    inlines = (
+        TournamentPrizeInline,
+        TournamentEligibilityRuleInline,
+        TournamentStageInline,
+        TournamentAchievementInline,
+    )
 
     @admin.display(description="1 место, ₽", ordering="prize_first")
     def prize_first_display(self, obj):
@@ -68,6 +157,76 @@ class TournamentAchievementAdmin(admin.ModelAdmin):
     list_filter = ("kind", "tournament")
     search_fields = ("title", "description", "tournament__title")
     autocomplete_fields = ("tournament",)
+
+
+@admin.register(TournamentFAQ)
+class TournamentFAQAdmin(admin.ModelAdmin):
+    list_display = ("question", "sort_order", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("question", "answer")
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("sort_order", "id")
+    fields = ("question", "answer", "sort_order", "is_active", "created_at", "updated_at")
+
+
+@admin.register(TournamentStage)
+class TournamentStageAdmin(admin.ModelAdmin):
+    list_display = ("title", "tournament", "period", "sort_order", "is_active")
+    list_filter = ("is_active", "tournament")
+    search_fields = ("title", "period", "description", "tournament__title")
+    autocomplete_fields = ("tournament",)
+
+
+@admin.register(TournamentPrize)
+class TournamentPrizeAdmin(admin.ModelAdmin):
+    list_display = (
+        "tournament",
+        "place",
+        "money_amount",
+        "coins_amount",
+        "vip_days",
+        "achievement",
+        "sort_order",
+        "is_active",
+    )
+    list_filter = ("is_active", "tournament", "place")
+    search_fields = ("title", "description", "tournament__title", "achievement__title")
+    autocomplete_fields = ("tournament", "achievement")
+    ordering = ("tournament", "place", "sort_order", "id")
+
+
+@admin.register(TournamentEligibilityRule)
+class TournamentEligibilityRuleAdmin(admin.ModelAdmin):
+    list_display = ("tournament", "rule_type", "operator", "value", "sport", "sort_order", "is_active")
+    list_filter = ("is_active", "rule_type", "operator", "tournament", "sport")
+    search_fields = ("title", "description", "tournament__title")
+    autocomplete_fields = ("tournament", "sport")
+    ordering = ("tournament", "sort_order", "id")
+
+
+@admin.register(TournamentPrizeAward)
+class TournamentPrizeAwardAdmin(admin.ModelAdmin):
+    list_display = (
+        "tournament",
+        "participant",
+        "prize",
+        "money_awarded",
+        "coins_awarded",
+        "vip_days_awarded",
+        "achievement_awarded",
+        "created_at",
+    )
+    list_filter = ("tournament", "created_at")
+    search_fields = (
+        "tournament__title",
+        "participant__user__username",
+        "participant__user__email",
+        "prize__title",
+        "achievement_awarded__title",
+    )
+    autocomplete_fields = ("tournament", "participant", "prize", "achievement_awarded")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at", "-id")
 
 
 @admin.register(TournamentParticipant)

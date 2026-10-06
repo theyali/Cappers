@@ -356,6 +356,38 @@ def charge_prediction_stake(user, coupon, amount) -> CoinWallet:
     )
 
 
+def cover_prediction_stake_with_free_reward(user, coupon, *, note: str = "") -> CoinWallet:
+    """Mark a coupon stake as covered by a free prediction reward.
+
+    Settlement checks whether a PREDICTION_STAKE transaction already exists for
+    the coupon. A zero-amount transaction keeps that process idempotent without
+    changing the user's coin balance.
+    """
+    related_model, related_id = _coin_related_subject(coupon)
+
+    with transaction.atomic():
+        _require_coin_system_enabled()
+        wallet = _coin_wallet_for_update(user)
+        _ensure_initial_coin_grant_locked(wallet)
+        if _has_coin_transaction(
+            user,
+            CoinTransaction.Kind.PREDICTION_STAKE,
+            related_model,
+            related_id,
+        ):
+            return wallet
+        CoinTransaction.objects.create(
+            user=user,
+            kind=CoinTransaction.Kind.PREDICTION_STAKE,
+            amount=0,
+            balance_after=wallet.balance,
+            related_model=related_model,
+            related_id=related_id,
+            note=(note or f"Бесплатный прогноз #{coupon.pk}")[:255],
+        )
+        return wallet
+
+
 def settle_prediction_coupon(coupon) -> CoinWallet | None:
     from game.models import PredictionCoupon
 
@@ -366,6 +398,7 @@ def settle_prediction_coupon(coupon) -> CoinWallet | None:
 
     wallet = ensure_coin_wallet(coupon.author)
     stake_amount = _coin_amount_from_model(coupon.total_stake, field_name="Ставка")
+    stake_related_model, stake_related_id = _coin_related_subject(coupon)
     if stake_amount > 0:
         wallet = charge_coins(
             coupon.author,
@@ -374,6 +407,21 @@ def settle_prediction_coupon(coupon) -> CoinWallet | None:
             related_obj=coupon,
             note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
         )
+    stake_transaction = (
+        CoinTransaction.objects.filter(
+            user=coupon.author,
+            kind=CoinTransaction.Kind.PREDICTION_STAKE,
+            related_model=stake_related_model,
+            related_id=stake_related_id,
+        )
+        .order_by("id")
+        .first()
+    )
+    refundable_stake = (
+        abs(stake_transaction.amount)
+        if stake_transaction and stake_transaction.amount < 0
+        else 0
+    )
 
     if coupon.state_status == PredictionCoupon.StateStatus.WIN:
         payout = _rounded_coin_amount(coupon.possible_payout)
@@ -385,10 +433,10 @@ def settle_prediction_coupon(coupon) -> CoinWallet | None:
                 related_obj=coupon,
                 note=f"Выплата по прогнозу #{coupon.pk}",
             )
-    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND and stake_amount > 0:
+    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND and refundable_stake > 0:
         wallet = credit_coins(
             coupon.author,
-            stake_amount,
+            refundable_stake,
             CoinTransaction.Kind.PREDICTION_REFUND,
             related_obj=coupon,
             note=f"Возврат по прогнозу #{coupon.pk}",

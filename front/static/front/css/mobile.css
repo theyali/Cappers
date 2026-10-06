@@ -404,10 +404,6 @@ body.expert-public-details-open {
     grid-template-columns: 1fr;
     padding: 24px;
   }
-  .tournament-grid {
-    grid-template-columns: 1fr;
-  }
-
   .tournament-detail-hero {
     grid-template-columns: 1fr;
   }
@@ -417,9 +413,10 @@ body.expert-public-details-open {
   }
 
   .tournament-detail-hero-copy {
-    left: 22px;
-    right: 22px;
-    bottom: 126px;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
   }
 
   .tournament-clock {
@@ -2517,9 +2514,9 @@ body.expert-public-details-open {
   }
 
   .coupon-sidebar-auth .mobile-coupon-sheet-handle {
-    height: 42px;
-    background: #f7f7f7;
-  }
+          height: 42px;
+          background: var(--panel);
+      }
 
   .coupon-sidebar-auth .mobile-coupon-sheet-handle::before {
     width: 72px;
@@ -2542,6 +2539,7 @@ body.expert-public-details-open {
     gap: 14px;
     padding: 28px 32px 32px;
     text-align: center;
+    background: var(--panel);
   }
 
   .coupon-auth-icon {
@@ -2549,7 +2547,7 @@ body.expert-public-details-open {
     height: 86px;
     display: grid;
     place-items: center;
-    color: #059c8d;
+    color: var(--blue);
   }
 
   .coupon-auth-icon svg {
@@ -2559,35 +2557,35 @@ body.expert-public-details-open {
 
   .coupon-auth-card strong {
     margin-top: 4px;
-    color: #171923;
-    font-size: 32px;
+    color: white;
+    font-size: 26px;
     font-weight: 800;
     line-height: 1.05;
   }
 
-  .coupon-auth-card p {
-    max-width: 460px;
-    margin: 0;
-    color: #171923;
-    font-size: 22px;
-    line-height: 1.24;
-  }
+    .coupon-auth-card p {
+        max-width: 460px;
+        margin: 0;
+        color: #cdcdcd;
+        font-size: 18px;
+        line-height: 1.24;
+    }
 
   .coupon-auth-action {
-    width: 100%;
-    min-height: 64px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 44px;
-    border-radius: 12px;
-    color: #061316;
-    background: #10c7b2;
-    font-size: 22px;
-    font-weight: 800;
-    line-height: 1;
-    text-decoration: none;
-  }
+      width: 100%;
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 31px;
+      border-radius: 12px;
+      color: #061316;
+      background: var(--yellow);
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1;
+      text-decoration: none;
+    }
 
   .mobile-coupon-sheet-handle {
     position: sticky;
@@ -2788,6 +2786,19 @@ body.expert-public-details-open {
     color: var(--yellow);
     font-size: 16px;
     font-weight: 800;
+  }
+
+  .coupon-sidebar-editor .coupon-free-option {
+    padding: 9px 10px;
+    border-radius: 12px;
+  }
+
+  .coupon-sidebar-editor .coupon-free-option strong {
+    font-size: 12px;
+  }
+
+  .coupon-sidebar-editor .coupon-free-option small {
+    font-size: 10px;
   }
 
   .coupon-sidebar-editor .coupon-confidence {
@@ -6266,9 +6277,6 @@ body.expert-public-details-open {
   .profile-user-copy > span {
     white-space: normal;
   }
-  .tournaments-page .tournament-card {
-    grid-template-rows: 150px auto;
-  }
   .home-layout .forecast-avatar {
     width: 41px;
     height: 41px;
@@ -6647,8 +6655,7 @@ body.expert-public-details-open {
   .site-topbar-link,
   .slider-arrow,
   .slider-dot,
-  .tournaments-page .tournament-card,
-  .tournaments-page .tournament-card-link {
+  .tournaments-page .tournament-card {
     transition: none;
   }
   .home-articles-grid {
@@ -7209,16 +7216,13 @@ body.expert-public-details-open {
     padding: 20px;
   }
 
-  .tournaments-hero h1,
-  .tournament-detail-hero h1 {
+  .tournaments-hero h1 {
     font-size: 34px;
   }
-
-  .tournament-card {
-    grid-template-rows: 180px 1fr;
+  .tournament-detail-hero h1 {
+    font-size: 17px;
   }
 
-  .tournament-card-body,
   .tournament-panel {
     padding: 16px;
   }
@@ -7228,13 +7232,221 @@ body.expert-public-details-open {
   }
 
   .tournament-detail-hero-copy {
-    left: 18px;
-    right: 18px;
-    bottom: 118px;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
   }
 
   .tournament-detail-actions {
     align-items: stretch;
+  }
+
+  .tournament-detail-page .tournament-detail-hero {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .tournament-detail-hero-icon {
+    width: 86px;
+    height: 86px;
+    border-radius: 18px;
+  }
+
+  .tournament-detail-hero-icon svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tournament-detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tournament-detail-home-grid,
+  .tournament-detail-winner-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-detail-prize-line {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .tournament-detail-prize-line i {
+    grid-column: 1 / -1;
+  }
+
+  .tournament-detail-prize-line > strong {
+    grid-column: auto;
+    text-align: left;
+  }
+
+  .tournament-detail-achievement-callout {
+    min-height: 180px;
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-prizes-tab {
+    padding: 18px;
+  }
+
+  .tournament-prizes-head,
+  .tournament-prizes-grid,
+  .tournament-prizes-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-prizes-head h2 {
+    font-size: 30px;
+  }
+
+  .tournament-prizes-state {
+    justify-items: start;
+  }
+
+  .tournament-prizes-table {
+    overflow-x: auto;
+  }
+
+  .tournament-prizes-row {
+    min-width: 760px;
+    padding: 0 18px;
+  }
+
+  .tournament-prizes-feature {
+    padding: 18px;
+  }
+
+  .tournament-prizes-feature-main {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-prizes-award {
+    width: 130px;
+    height: 130px;
+  }
+
+  .tournament-prizes-feature-row {
+    grid-template-columns: 38px minmax(0, 1fr) 42px;
+    gap: 10px;
+  }
+
+  .tournament-prizes-notes > div {
+    padding: 18px;
+  }
+
+  .tournament-prizes-notes > div + div {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 0;
+  }
+
+  .tournament-results-podium,
+  .tournament-results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-results-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-results-table-card {
+    overflow-x: auto;
+  }
+
+  .tournament-results-pagination {
+    flex-wrap: wrap;
+  }
+
+  .tournament-results-pagination label {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  .tournament-results-update {
+    grid-template-columns: 48px 34px minmax(0, 1fr);
+  }
+
+  .tournament-results-update time {
+    grid-column: 3;
+  }
+
+  .tournament-about-hero {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .tournament-about-hero h2 {
+    font-size: 30px;
+  }
+
+  .tournament-about-hero-meta {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tournament-about-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tournament-about-stat {
+    min-height: 150px;
+    padding: 16px;
+  }
+
+  .tournament-about-card {
+    padding: 18px;
+  }
+
+  .tournament-about-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-about-info-grid > div {
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .tournament-about-timeline {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .tournament-about-timeline > div {
+    padding-top: 0;
+    padding-left: 58px;
+    min-height: 72px;
+  }
+
+  .tournament-about-timeline > div::before {
+    top: 48px;
+    left: 21px;
+    right: auto;
+    bottom: -14px;
+    width: 3px;
+    height: auto;
+  }
+
+  .tournament-detail-layout > .tournament-tabs-sidebar,
+  .tournament-detail-layout > .tournaments-content,
+  .tournament-detail-layout > .tournament-detail-right-sidebar {
+    grid-column: 1;
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .tournament-detail-layout > .tournament-tabs-sidebar {
+    grid-row: 1;
+  }
+
+  .tournament-detail-layout > .tournaments-content {
+    grid-row: 2;
+  }
+
+  .tournament-detail-layout > .tournament-detail-right-sidebar {
+    grid-row: 3;
   }
 
   .tournament-primary-action,
@@ -7269,14 +7481,12 @@ body.expert-public-details-open {
     gap: 6px;
   }
 
-  .tournament-card-meta div,
   .tournament-rules-list div {
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
   }
 
-  .tournament-card-meta dd,
   .tournament-rules-list dd {
     text-align: left;
   }

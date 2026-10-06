@@ -46,6 +46,8 @@ class CoinTransaction(models.Model):
         COPYBET_PAYOUT = "copybet_payout", "Выплата по копиставке"
         COPYBET_REFUND = "copybet_refund", "Возврат копиставки"
         DAILY_TASK_REWARD = "daily_task_reward", "Ежедневное задание"
+        TOURNAMENT_ENTRY_FEE = "tournament_entry_fee", "Вход в турнир"
+        TOURNAMENT_PRIZE_COINS = "tournament_prize_coins", "Приз турнира"
         ADJUSTMENT = "adjustment", "Корректировка"
 
     user = models.ForeignKey(

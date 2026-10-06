@@ -1,11 +1,38 @@
 (() => {
-    const root = document.querySelector("[data-coupon-page]");
+    if (window.__mobileCouponSheetInitialized) return;
+    window.__mobileCouponSheetInitialized = true;
+
     const nav = document.querySelector(".mobile-app-nav");
-    if (!root || !nav) return;
+    const couponButton = nav?.querySelector("[data-mobile-coupon-toggle]");
+    if (!nav || !couponButton) return;
+
+    const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
+    const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
+    const serverCount = Number.parseInt(couponButton.dataset.mobileCouponCount || badge?.textContent || "0", 10) || 0;
+    const serverCoefficient = couponButton.dataset.mobileCouponCoefficient || "0.00";
+
+    const setNavIndicator = (count, coefficient = serverCoefficient) => {
+        couponButton.classList.toggle("has-items", count > 0);
+        couponButton.dataset.mobileCouponCount = String(count);
+        couponButton.dataset.mobileCouponCoefficient = coefficient;
+        if (badge) {
+            badge.textContent = String(count);
+            badge.hidden = count === 0;
+        }
+        if (tooltip) tooltip.textContent = `К = ${coefficient}`;
+        couponButton.setAttribute(
+            "aria-label",
+            count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купон"
+        );
+    };
+
+    setNavIndicator(serverCount, serverCoefficient);
+
+    const root = document.querySelector("[data-coupon-page]");
+    if (!root) return;
 
     const sidebar = root.querySelector("#mobile-coupon-sheet");
-    const couponButton = nav.querySelector("[data-mobile-coupon-toggle]");
-    if (!sidebar || !couponButton) return;
+    if (!sidebar) return;
 
     const form = root.querySelector("[data-coupon-form]");
     const mobileQuery = window.matchMedia("(max-width: 1120px)");
@@ -13,10 +40,8 @@
     const coefficientNode = root.querySelector("[data-coupon-coefficient]");
 
     const handle = sidebar.querySelector("[data-mobile-coupon-close]");
-    const badge = couponButton.querySelector("[data-mobile-coupon-badge]");
-    const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
     let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not([data-mobile-coupon-toggle])");
-    let previousCount = itemsRoot?.children.length || 0;
+    let previousCount = itemsRoot?.children.length || serverCount;
     let tooltipTimer = null;
     let pendingBetScrollY = null;
     let suppressNextOutsideClick = false;
@@ -37,18 +62,9 @@
 
     const syncIndicator = () => {
         const count = itemCount();
-        const coefficient = coefficientNode?.textContent?.trim() || "0.00";
-        couponButton.classList.toggle("has-items", count > 0);
-        if (badge) {
-            badge.textContent = String(count);
-            badge.hidden = count === 0;
-        }
-        if (tooltip) tooltip.textContent = `К = ${coefficient}`;
+        const coefficient = coefficientNode?.textContent?.trim() || serverCoefficient;
+        setNavIndicator(count, coefficient);
         if (count === 0) hideTooltip();
-        couponButton.setAttribute(
-            "aria-label",
-            count ? `Купон: ${count} игр, общий коэффициент ${coefficient}` : "Купон"
-        );
     };
 
     const showTooltip = () => {
@@ -187,5 +203,5 @@
     };
     mobileQuery.addEventListener?.("change", handleViewportChange);
 
-    syncIndicator();
+    if (itemsRoot?.children.length || serverCount === 0) syncIndicator();
 })();

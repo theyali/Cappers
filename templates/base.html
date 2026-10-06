@@ -123,13 +123,15 @@
             class="mobile-app-nav-item mobile-nav-coupons"
             href="{% url 'game:match_list' %}"
             data-mobile-coupon-toggle
+            data-mobile-coupon-count="{{ mobile_coupon_nav_count|default:0 }}"
+            data-mobile-coupon-coefficient="{{ mobile_coupon_nav_coefficient|default:'0.00' }}"
             aria-controls="mobile-coupon-sheet"
             aria-expanded="false"
             aria-label="Купон"
         >
-            <span class="mobile-coupon-nav-tooltip" data-mobile-coupon-tooltip hidden></span>
+            <span class="mobile-coupon-nav-tooltip" data-mobile-coupon-tooltip hidden>К = {{ mobile_coupon_nav_coefficient|default:"0.00" }}</span>
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge hidden>0</span>
+            <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge{% if not mobile_coupon_nav_count %} hidden{% endif %}>{{ mobile_coupon_nav_count|default:0 }}</span>
             <span class="mobile-app-nav-label">Купон</span>
         </a>
         <a class="mobile-app-nav-item mobile-nav-predictions {% if request.resolver_match.url_name == 'predictions' or request.resolver_match.url_name == 'predictions_rich' or request.resolver_match.url_name == 'predictions_by_sport' or request.resolver_match.url_name == 'predictions_rich_by_sport' or request.resolver_match.url_name == 'prediction_expresses' or request.resolver_match.url_name == 'prediction_expresses_rich' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
@@ -162,5 +164,6 @@
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
+    <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
 </body>
 </html>

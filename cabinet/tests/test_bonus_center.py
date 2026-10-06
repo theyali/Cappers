@@ -217,7 +217,7 @@ class BonusCenterServiceTests(TestCase):
                 "registration_reward_xp": 10,
                 "first_topup_reward_coins": 0,
                 "first_subscription_reward_coins": 0,
-                "max_visible_reward_text": "До 25 монет",
+                "max_visible_reward_text": "До 25 коинов",
                 "is_enabled": True,
             },
         )
@@ -857,7 +857,7 @@ class BonusCenterServiceTests(TestCase):
                 else event.title
             )
             self.assertEqual(notification.title, expected_title)
-            expected_message = f"+{index} монет · {event.description}"
+            expected_message = f"+{index} коинов · {event.description}"
             if event_type == BonusEvent.EventType.DAILY_TASK:
                 expected_message = f"{event.title} · {expected_message}"
             self.assertEqual(notification.message, expected_message)

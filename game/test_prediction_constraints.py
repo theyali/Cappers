@@ -34,7 +34,7 @@ class PredictionConstraintTests(SimpleTestCase):
                 "items": [{"coefficient": "1.50"}],
             }
         )
-        self.assertEqual(error, "Минимальная сумма прогноза — 100 ₽.")
+        self.assertEqual(error, "Минимальная сумма прогноза — 100 коинов.")
 
     def test_maximum_stake_is_enforced_for_publish(self):
         error = _validate_payload_limits(
@@ -43,7 +43,7 @@ class PredictionConstraintTests(SimpleTestCase):
                 "items": [{"coefficient": "1.50"}],
             }
         )
-        self.assertEqual(error, "Максимальная сумма прогноза — 1 000 000 ₽.")
+        self.assertEqual(error, "Максимальная сумма прогноза — 1 000 000 коинов.")
 
     def test_draft_autosave_allows_partial_stake_while_user_is_typing(self):
         error = _validate_payload_limits(

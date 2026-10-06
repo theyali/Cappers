@@ -262,7 +262,7 @@ def _referral_datetime_label(value) -> str:
 def _referral_event_context(event) -> dict:
     rewards = []
     if event.coin_delta:
-        rewards.append(f"{event.coin_delta:+d} монет")
+        rewards.append(f"{event.coin_delta:+d} коинов")
     if event.xp_delta:
         rewards.append(f"{event.xp_delta:+d} XP")
     if event.spin_delta:
@@ -457,7 +457,7 @@ def build_referrals_page_context(user, request=None) -> dict:
     registration_rewards = []
     if settings_obj.registration_reward_coins:
         registration_rewards.append(
-            f"+{settings_obj.registration_reward_coins} монет"
+            f"+{settings_obj.registration_reward_coins} коинов"
         )
     if settings_obj.registration_reward_xp:
         registration_rewards.append(
@@ -476,7 +476,7 @@ def build_referrals_page_context(user, request=None) -> dict:
             "title": "За первое пополнение",
             "description": "Друг впервые пополнил баланс.",
             "reward_label": (
-                f"+{settings_obj.first_topup_reward_coins} монет"
+                f"+{settings_obj.first_topup_reward_coins} коинов"
                 if settings_obj.first_topup_reward_coins
                 else "Без награды"
             ),
@@ -486,7 +486,7 @@ def build_referrals_page_context(user, request=None) -> dict:
             "title": "За первую подписку",
             "description": "Друг впервые оформил платную подписку.",
             "reward_label": (
-                f"+{settings_obj.first_subscription_reward_coins} монет"
+                f"+{settings_obj.first_subscription_reward_coins} коинов"
                 if settings_obj.first_subscription_reward_coins
                 else "Без награды"
             ),
@@ -571,4 +571,3 @@ def build_referrals_page_context(user, request=None) -> dict:
         "recent_visits": recent_visits,
         "recent_bonus_events": recent_bonus_events,
     }
-

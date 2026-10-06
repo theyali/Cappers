@@ -162,7 +162,7 @@ REFERRAL_SETTINGS = {
     "registration_reward_xp": 25,
     "first_topup_reward_coins": 100,
     "first_subscription_reward_coins": 150,
-    "max_visible_reward_text": "До 300 монет",
+    "max_visible_reward_text": "До 300 коинов",
     "is_enabled": True,
 }
 

@@ -1,0 +1,141 @@
+{% load capper_trust site_extras %}
+
+<div class="tournament-results-shell" data-tournament-results-content>
+    {% if results_tab.top_rows %}
+    <div class="tournament-results-podium">
+        {% for row in results_tab.top_rows %}
+        <article class="tournament-podium-card is-place-{{ row.rank }}">
+            <div class="tournament-podium-place"><b>{{ row.rank }}</b><span>{{ row.rank }} место</span></div>
+            <div class="tournament-podium-person">
+                <a class="tournament-results-avatar" href="{% url 'front:expert_profile' username=row.username %}"{% if row.avatar_url %} data-skeleton-image{% endif %}>
+                    {% if row.avatar_url %}
+                        <img src="{{ row.avatar_url }}" width="58" height="58" alt="" loading="lazy">
+                    {% else %}
+                        {{ row.name|slice:":1"|upper }}
+                    {% endif %}
+                </a>
+                <div>
+                    <a href="{% url 'front:expert_profile' username=row.username %}">{{ row.name }}</a>
+                    <small>{{ row.coupons_count }} прогнозов</small>
+                </div>
+                <strong>{{ row.points|floatformat:1 }}<small>баллов</small></strong>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form class="tournament-results-toolbar" data-tournament-results-form data-results-url="{{ results_tab.results_url }}">
+        <input type="hidden" name="page" value="{{ results_tab.page_obj.number }}" data-results-page>
+        <button class="{% if results_tab.active_filter == 'all' %}is-active{% endif %}" type="button" data-results-filter="all">Все участники</button>
+        <button class="{% if results_tab.active_filter == 'vip' %}is-active{% endif %}" type="button" data-results-filter="vip">Только VIP</button>
+        <label class="tournament-results-select">
+            <span>Страна</span>
+            <select name="country" data-results-country>
+                <option value="all"{% if results_tab.country == "all" %} selected{% endif %}>Все страны</option>
+            </select>
+        </label>
+        <label class="tournament-results-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <input type="search" name="q" value="{{ results_tab.query }}" placeholder="Поиск участника..." data-results-search>
+        </label>
+    </form>
+
+    <div class="tournament-results-grid">
+        <section class="tournament-results-table-card">
+            {% if results_tab.rows %}
+            <div class="tournament-results-table">
+                <div class="tournament-results-table-head" aria-hidden="true">
+                    <span>#</span>
+                    <span>Участник</span>
+                    <span>Прогнозов</span>
+                    <span>Побед</span>
+                    <span>Проходимость</span>
+                    <span>Прибыль (ROI)</span>
+                    <span>Баллы</span>
+                </div>
+                <div class="tournament-results-table-body">
+                    {% for row in results_tab.rows %}
+                    <div class="tournament-results-row">
+                        <span class="tournament-results-rank">
+                            {{ row.rank }}
+                            {% if row.rank == 1 %}
+                                <b aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m5 13 10.2 8.7L24 7l8.8 14.7L43 13l-4 23H9L5 13Zm5.7 26h26.6v4H10.7v-4Z"></path></svg></b>
+                            {% endif %}
+                        </span>
+                        <a class="tournament-results-user" href="{% url 'front:expert_profile' username=row.username %}">
+                            <span class="tournament-results-avatar is-small"{% if row.avatar_url %} data-skeleton-image{% endif %}>
+                                {% capper_trust_badge row.user.analyst_profile.trust_index %}
+                                {% if row.avatar_url %}
+                                    <img src="{{ row.avatar_url }}" width="34" height="34" alt="" loading="lazy">
+                                {% else %}
+                                    {{ row.name|slice:":1"|upper }}
+                                {% endif %}
+                            </span>
+                            <strong>{{ row.name }}</strong>
+                        </a>
+                        <span>{{ row.coupons_count }}</span>
+                        <span>{{ row.wins_count }}</span>
+                        <span>{{ row.winrate }}%</span>
+                        <span class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:1 }}%</span>
+                        <strong>{{ row.points|floatformat:1 }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tournament-results-pagination">
+                <button type="button" {% if not results_tab.page_obj.has_previous %}disabled data-results-page-link="{{ results_tab.page_obj.number }}"{% else %}data-results-page-link="{{ results_tab.page_obj.previous_page_number }}"{% endif %}>‹</button>
+                {% for page in results_tab.pages %}
+                    {% if page == "..." %}
+                        <span>...</span>
+                    {% else %}
+                        <button class="{% if page == results_tab.page_obj.number %}is-active{% endif %}" type="button" data-results-page-link="{{ page }}">{{ page }}</button>
+                    {% endif %}
+                {% endfor %}
+                <button type="button" {% if not results_tab.page_obj.has_next %}disabled data-results-page-link="{{ results_tab.page_obj.number }}"{% else %}data-results-page-link="{{ results_tab.page_obj.next_page_number }}"{% endif %}>›</button>
+                <label>
+                    <span>Показать по:</span>
+                    <select name="per_page" data-results-per-page>
+                        <option value="10"{% if results_tab.per_page == 10 %} selected{% endif %}>10</option>
+                        <option value="20"{% if results_tab.per_page == 20 %} selected{% endif %}>20</option>
+                        <option value="50"{% if results_tab.per_page == 50 %} selected{% endif %}>50</option>
+                    </select>
+                </label>
+            </div>
+            {% else %}
+            <div class="profile-empty-state">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H5v1a4 4 0 0 0 4 4M16 6h3v1a4 4 0 0 1-4 4M12 12v4M8 20h8M10 16h4"></path></svg>
+                <p>Участники не найдены.</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <aside class="tournament-results-history">
+            <div class="tournament-results-history-title">
+                <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
+                <strong>История обновлений</strong>
+                <small>Все изменения</small>
+            </div>
+            {% if results_tab.updates %}
+            <div class="tournament-results-history-list">
+                {% for update in results_tab.updates %}
+                <div class="tournament-results-update is-{{ update.direction }}">
+                    <b>{% if update.direction == "up" %}↑ +{{ update.delta }}{% else %}↓ -{{ update.delta }}{% endif %}</b>
+                    <span class="tournament-results-avatar is-small"{% if update.row.avatar_url %} data-skeleton-image{% endif %}>
+                        {% if update.row.avatar_url %}
+                            <img src="{{ update.row.avatar_url }}" width="34" height="34" alt="" loading="lazy">
+                        {% else %}
+                            {{ update.row.name|slice:":1"|upper }}
+                        {% endif %}
+                    </span>
+                    <div><strong>{{ update.row.name }}</strong><small>{{ update.text }}</small></div>
+                    <time>{{ update.time }}</time>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="tournament-results-history-empty">Изменений пока нет.</p>
+            {% endif %}
+        </aside>
+    </div>
+</div>

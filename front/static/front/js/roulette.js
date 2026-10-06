@@ -292,7 +292,7 @@
         const coinDelta = Number(event?.coin_delta) || 0;
         const xpDelta = Number(event?.xp_delta) || 0;
         const spinDelta = Number(event?.spin_delta) || 0;
-        if (coinDelta) rewards.push(`+${coinDelta} монет`);
+        if (coinDelta) rewards.push(`+${coinDelta} коинов`);
         if (xpDelta) rewards.push(`+${xpDelta} XP`);
         if (spinDelta) rewards.push(`+${spinDelta} попыток`);
         return rewards.join(' · ') || 'Бонус получен';
@@ -610,6 +610,8 @@
         if (!Number.isFinite(balance)) return;
         const display = Math.trunc(balance).toLocaleString('ru-RU');
         document.querySelectorAll('[data-wallet-balance]').forEach((node) => {
+            node.dataset.walletBalanceVisible = display;
+            if (node.textContent.trim() === node.dataset.walletBalanceMasked) return;
             node.textContent = display;
         });
     };

@@ -5,17 +5,15 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from cabinet.referrals import REFERRAL_ACTION_TOURNAMENT, credit_referral_income
 from game.models import PredictionCoupon
 from tournaments.models import (
     Tournament,
     TournamentAchievement,
     TournamentCoupon,
     TournamentParticipant,
+    TournamentPrize,
     TournamentResult,
 )
-from wallets.models import RealBalanceTransaction
-from wallets.services import credit_real_balance
 
 
 MONEY_STEP = Decimal("0.01")
@@ -110,27 +108,16 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
         for row in rows
     ]
     created_results = list(TournamentResult.objects.bulk_create(results))
-    for result in created_results:
-        if result.prize_amount <= 0:
-            continue
-        credit_real_balance(
-            result.participant.user,
-            result.prize_amount,
-            RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
-            related_obj=tournament,
-            note=f"{result.rank} место в турнире «{tournament.title}»",
-        )
-        credit_referral_income(
-            result.participant.user,
-            result.prize_amount,
-            REFERRAL_ACTION_TOURNAMENT,
-            related_obj=result,
-            note=f"Реферал @{result.participant.user.username}: приз в турнире «{tournament.title}»",
-        )
+    from tournaments.services.rewards import award_tournament_prizes
+
+    award_tournament_prizes(tournament, results=created_results)
     return created_results
 
 
 def prize_for_rank(tournament: Tournament, rank: int) -> Decimal:
+    prize = _active_prize_for_rank(tournament, rank)
+    if prize is not None:
+        return _money(prize.money_amount)
     if rank == 1:
         return _money(tournament.prize_first)
     if rank == 2:
@@ -141,6 +128,9 @@ def prize_for_rank(tournament: Tournament, rank: int) -> Decimal:
 
 
 def achievement_for_rank(tournament: Tournament, rank: int) -> TournamentAchievement | None:
+    prize = _active_prize_for_rank(tournament, rank)
+    if prize is not None and prize.achievement_id:
+        return prize.achievement
     kind_by_rank = {
         1: TournamentAchievement.Kind.FIRST_PLACE,
         2: TournamentAchievement.Kind.SECOND_PLACE,
@@ -150,6 +140,15 @@ def achievement_for_rank(tournament: Tournament, rank: int) -> TournamentAchieve
     if not kind:
         return None
     return tournament.achievements.filter(kind=kind).order_by("sort_order", "id").first()
+
+
+def _active_prize_for_rank(tournament: Tournament, rank: int) -> TournamentPrize | None:
+    return (
+        TournamentPrize.objects.select_related("achievement")
+        .filter(tournament=tournament, place=rank, is_active=True)
+        .order_by("sort_order", "id")
+        .first()
+    )
 
 
 def _empty_rows(tournament: Tournament) -> dict[int, dict]:

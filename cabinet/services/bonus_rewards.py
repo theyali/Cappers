@@ -53,7 +53,7 @@ def _bonus_notification_message(*, xp: int, coins: int, spins: int, description:
     if xp:
         parts.append(f"+{xp} XP")
     if coins:
-        parts.append(f"+{coins} монет")
+        parts.append(f"+{coins} коинов")
     if spins:
         parts.append(f"+{spins} попыток")
     if description:

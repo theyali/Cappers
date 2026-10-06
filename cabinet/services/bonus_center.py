@@ -36,7 +36,7 @@ def _bonus_event_subtitle(event) -> str:
 
     rewards = []
     if event.coin_delta:
-        rewards.append(f"{event.coin_delta:+d} монет")
+        rewards.append(f"{event.coin_delta:+d} коинов")
     if event.xp_delta:
         rewards.append(f"{event.xp_delta:+d} XP")
     if event.spin_delta:
@@ -335,7 +335,7 @@ def build_bonus_levels_page_context(user, request=None) -> dict:
 
         rewards = []
         if level.reward_coins:
-            rewards.append(f"+{level.reward_coins} монет")
+            rewards.append(f"+{level.reward_coins} коинов")
         if level.reward_spins:
             rewards.append(f"+{level.reward_spins} попыток")
 
@@ -490,7 +490,7 @@ def build_bonus_center_context(user, request=None) -> dict:
         "balance_cta": {
             "title": "Пополните баланс\nи получайте больше",
             "description": (
-                "Чем больше монет на балансе — тем больше возможностей на платформе."
+                "Чем больше коинов на балансе — тем больше возможностей на платформе."
             ),
             "label": "Пополнить баланс",
             "url": f"{reverse('cabinet:profile')}?tab=wallet",

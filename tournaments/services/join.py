@@ -4,6 +4,9 @@ from django.utils import timezone
 
 from cabinet.models import User
 from tournaments.models import Tournament, TournamentParticipant
+from tournaments.services.eligibility import check_tournament_eligibility
+from wallets.models import CoinTransaction
+from wallets.services import InsufficientCoins, charge_coins
 
 
 class TournamentJoinError(ValidationError):
@@ -23,26 +26,69 @@ def get_active_participant(user: User, tournament: Tournament) -> TournamentPart
 def join_tournament(user: User, tournament: Tournament) -> TournamentParticipant:
     if not getattr(user, "is_authenticated", False):
         raise TournamentJoinError("Войдите, чтобы подключиться к турниру.")
-    if not user.is_analyst:
-        raise TournamentJoinError("Участвовать в турнирах могут только капперы.")
     if tournament.status != Tournament.Status.PUBLISHED:
         raise TournamentJoinError("Турнир пока недоступен для подключения.")
-    if timezone.now() > tournament.ends_at:
+    now = timezone.now()
+    if now > tournament.ends_at:
         raise TournamentJoinError("Турнир уже завершён.")
+    active_participant = get_active_participant(user, tournament)
+    if active_participant:
+        return active_participant
+    if now >= tournament.starts_at:
+        raise TournamentJoinError("Регистрация на турнир завершена.")
+    _validate_join_requirements(user, tournament)
 
     with transaction.atomic():
-        participant, created = TournamentParticipant.objects.select_for_update().get_or_create(
+        participant = TournamentParticipant.objects.select_for_update().filter(
             tournament=tournament,
             user=user,
-            defaults={"status": TournamentParticipant.Status.ACTIVE},
-        )
-        if participant.status == TournamentParticipant.Status.DISQUALIFIED:
-            raise TournamentJoinError("Участник дисквалифицирован из этого турнира.")
-        if not created and participant.status == TournamentParticipant.Status.LEFT:
+        ).first()
+        if participant:
+            if participant.status == TournamentParticipant.Status.DISQUALIFIED:
+                raise TournamentJoinError("Участник дисквалифицирован из этого турнира.")
+            if participant.status == TournamentParticipant.Status.ACTIVE:
+                return participant
+
+        _charge_entry_fee_if_needed(user, tournament)
+
+        if participant:
             participant.status = TournamentParticipant.Status.ACTIVE
             participant.left_at = None
             participant.save(update_fields=("status", "left_at"))
-        return participant
+            return participant
+
+        return TournamentParticipant.objects.create(
+            tournament=tournament,
+            user=user,
+            status=TournamentParticipant.Status.ACTIVE,
+        )
+
+
+def _validate_join_requirements(user: User, tournament: Tournament) -> None:
+    eligibility = check_tournament_eligibility(user, tournament)
+    if eligibility["allowed"]:
+        return
+    reasons = [reason for reason in eligibility["reasons"] if reason]
+    raise TournamentJoinError(reasons[0] if reasons else "Вы не проходите условия участия в турнире.")
+
+
+def _charge_entry_fee_if_needed(user: User, tournament: Tournament) -> None:
+    if tournament.entry_type != Tournament.EntryType.PAID:
+        return
+    amount = int(tournament.entry_fee_coins or 0)
+    if amount <= 0:
+        raise TournamentJoinError("Для платного турнира не указана стоимость участия.")
+    try:
+        charge_coins(
+            user,
+            amount,
+            CoinTransaction.Kind.TOURNAMENT_ENTRY_FEE,
+            related_obj=tournament,
+            note=f"Участие в турнире «{tournament.title}»",
+        )
+    except InsufficientCoins as exc:
+        message = exc.messages[0] if getattr(exc, "messages", None) else str(exc)
+        raise TournamentJoinError(message) from exc
 
 
 def leave_tournament(user: User, tournament: Tournament) -> TournamentParticipant:

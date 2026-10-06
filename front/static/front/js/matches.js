@@ -82,6 +82,8 @@
     const itemsRoot = root.querySelector("[data-coupon-items]");
     const countNode = root.querySelector("[data-coupon-count]");
     const stakeInput = root.querySelector("[data-coupon-stake]");
+    const freePredictionInput = root.querySelector("[data-coupon-free-prediction]");
+    const freePredictionLabel = root.querySelector("[data-coupon-free-prediction-label]");
     const confidenceInput = root.querySelector("[data-coupon-confidence]");
     const confidenceValue = root.querySelector("[data-coupon-confidence-value]");
     const confidenceFill = root.querySelector("[data-coupon-confidence-fill]");
@@ -125,6 +127,7 @@
         const stake = toNumber(stakeInput?.value);
         return Number.isInteger(stake) && stake > 0;
     };
+    const useFreePrediction = () => Boolean(freePredictionInput?.checked);
 
     const couponCountMatchesRule = () => {
         if (items.size < 1 || items.size > 20) return false;
@@ -173,8 +176,28 @@
         const display = result?.coin_balance_display;
         if (!display) return;
         document.querySelectorAll("[data-wallet-balance]").forEach((node) => {
+            node.dataset.walletBalanceVisible = display;
+            if (node.textContent.trim() === node.dataset.walletBalanceMasked) return;
             node.textContent = display;
         });
+    };
+
+    const updateFreePredictionBalance = (result) => {
+        if (!freePredictionInput) return;
+        const remaining = Number(result?.free_predictions_remaining);
+        if (!Number.isFinite(remaining)) return;
+
+        freePredictionInput.dataset.freePredictionsCount = String(Math.max(0, remaining));
+        if (remaining <= 0) {
+            freePredictionInput.checked = false;
+            freePredictionInput.disabled = true;
+            freePredictionInput.closest(".coupon-free-option")?.setAttribute("hidden", "");
+        }
+        if (freePredictionLabel) {
+            freePredictionLabel.textContent = remaining > 0
+                ? `Доступно: ${remaining}. Коины за ставку не спишутся.`
+                : "Бесплатные прогнозы закончились.";
+        }
     };
 
     const updateConfidenceVisual = () => {
@@ -260,6 +283,7 @@
         const snapshot = {
             id: draftId,
             stake: stakeInput?.value || "",
+            useFreePrediction: useFreePrediction(),
             confidence: currentConfidence(),
             items: [...items.values()],
             dirty,
@@ -353,6 +377,7 @@
         autosave,
         stake: stakeInput?.value || "",
         confidence: currentConfidence(),
+        use_free_prediction: useFreePrediction(),
         audience: "free",
         items: [...items.values()].map((item) => ({
             match_id: item.matchId,
@@ -388,6 +413,7 @@
         items.clear();
         itemsRoot.replaceChildren();
         if (stakeInput) stakeInput.value = "";
+        if (freePredictionInput) freePredictionInput.checked = false;
         if (confidenceInput) confidenceInput.value = "50";
         try {
             localStorage.removeItem(storageKey);
@@ -462,6 +488,7 @@
             }
             if (manual) {
                 updateWalletBalance(result);
+                updateFreePredictionBalance(result);
                 clearCoupon();
                 setNote(result.message || "Прогноз опубликован.", "success");
             } else {
@@ -572,6 +599,7 @@
 
         draftId = draft.id || null;
         if (stakeInput) stakeInput.value = draft.stake || "";
+        if (freePredictionInput) freePredictionInput.checked = Boolean(draft.useFreePrediction);
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -601,6 +629,11 @@
 
     confidenceInput?.addEventListener("input", () => {
         updateConfidenceVisual();
+        updateState();
+        scheduleDraftSync();
+    });
+
+    freePredictionInput?.addEventListener("change", () => {
         updateState();
         scheduleDraftSync();
     });

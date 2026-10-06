@@ -16,6 +16,7 @@ from cabinet.models import User
 from game.models import Match, PredictionCoupon, Sport
 from game.views import (
     _active_draft_coupon,
+    _available_free_predictions,
     _latest_predictions,
     _match_winner_odds,
     _serialize_draft_coupon,
@@ -312,6 +313,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         else ""
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
+    free_predictions_available = _available_free_predictions(request.user) if can_write_coupon else 0
     seo = _match_list_seo(
         request,
         active_scope=active_scope,
@@ -334,6 +336,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "can_write_coupon": can_write_coupon,
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
+        "free_predictions_available": free_predictions_available,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),

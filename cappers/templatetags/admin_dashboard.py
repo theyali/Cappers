@@ -20,6 +20,7 @@ ADMIN_ICONS = {
     "bell": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0v5l2 3H4l2-3V9Z"></path><path d="M9.5 20h5"></path></svg>',
     "bot": '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="3"></rect><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"></path></svg>',
     "gamepad": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4 4 0 0 1 3.8 5.2l-1.2 3.5a2 2 0 0 1-3.2.9L14 16h-4l-2.4 1.6a2 2 0 0 1-3.2-.9l-1.2-3.5A4 4 0 0 1 7 8Z"></path><path d="M7 12h4M9 10v4M16 11h.01M18 13h.01"></path></svg>',
+    "trophy": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9Z"></path></svg>',
     "wallet": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h14a2 2 0 0 1 2 2v10H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path><path d="M16 10h5v5h-5a2.5 2.5 0 0 1 0-5ZM5 6V4h11"></path></svg>',
     "clock": '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
     "file": '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6V3Z"></path><path d="M14 3v5h5M9 12h6M9 16h6"></path></svg>',

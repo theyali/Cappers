@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystPaidSubscriptionPayment, AnalystProfile, User
+from cabinet.roulette.rewards import UserRouletteRewardState
 from game.models import Match, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
@@ -19,6 +20,7 @@ from wallets.services import (
     cancel_real_withdrawal,
     charge_prediction_stake,
     copy_published_coupon,
+    cover_prediction_stake_with_free_reward,
     debit_real_balance,
     ensure_real_balance,
     pause_copybetting,
@@ -120,6 +122,78 @@ class CoinWalletIntegrationTests(TestCase):
                 kind=CoinTransaction.Kind.PREDICTION_STAKE,
                 amount=-500,
                 balance_after=500,
+            ).exists()
+        )
+
+    def test_publishing_coupon_can_use_free_prediction_without_charging_coins(self):
+        UserRouletteRewardState.objects.create(
+            user=self.analyst,
+            free_predictions=5,
+        )
+        self.client.force_login(self.analyst)
+
+        payload = self._payload("100")
+        payload["use_free_prediction"] = True
+        response = self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["used_free_prediction"])
+        self.assertEqual(data["coin_balance"], 1000)
+        self.assertEqual(data["coin_balance_display"], "1 000")
+        self.assertEqual(data["free_predictions_remaining"], 4)
+
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+        reward_state = UserRouletteRewardState.objects.get(user=self.analyst)
+        self.assertEqual(reward_state.free_predictions, 4)
+
+        coupon = PredictionCoupon.objects.get(author=self.analyst)
+        self.assertTrue(
+            CoinTransaction.objects.filter(
+                user=self.analyst,
+                kind=CoinTransaction.Kind.PREDICTION_STAKE,
+                related_id=coupon.id,
+                amount=0,
+                balance_after=1000,
+            ).exists()
+        )
+
+    def test_free_prediction_refund_does_not_credit_unpaid_stake(self):
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status=PredictionCoupon.StateStatus.REFUND,
+            total_stake=Decimal("100.00"),
+            possible_payout=Decimal("100.00"),
+            confidence=80,
+            published_at=timezone.now(),
+        )
+        Prediction.objects.create(
+            coupon=coupon,
+            match=self.match,
+            market="winner",
+            selection="Хозяева",
+            coefficient=Decimal("1.00"),
+            stake=Decimal("100.00"),
+            state_status=Prediction.StateStatus.REFUND,
+        )
+        cover_prediction_stake_with_free_reward(self.analyst, coupon)
+
+        settle_coupon(coupon.id)
+        settle_coupon(coupon.id)
+
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+        self.assertFalse(
+            CoinTransaction.objects.filter(
+                user=self.analyst,
+                kind=CoinTransaction.Kind.PREDICTION_REFUND,
+                related_id=coupon.id,
             ).exists()
         )
 

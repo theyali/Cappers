@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cabinet.models import DailyTask, User
+from cabinet.roulette.rewards import UserRouletteRewardState
 from cabinet.services.daily_tasks import record_daily_task_action
 from game.forms import RichPredictionCouponForm
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
@@ -29,7 +30,13 @@ from game.services.prediction_editor import (
 )
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
-from wallets.services import InsufficientCoins, charge_prediction_stake, copy_published_coupon, format_coins
+from wallets.services import (
+    InsufficientCoins,
+    charge_prediction_stake,
+    copy_published_coupon,
+    cover_prediction_stake_with_free_reward,
+    format_coins,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -103,6 +110,7 @@ def match_list(request):
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
+    free_predictions_available = _available_free_predictions(request.user) if can_write_coupon else 0
 
     context = {
         "active_scope": active_scope,
@@ -112,6 +120,7 @@ def match_list(request):
         "can_write_coupon": can_write_coupon,
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
+        "free_predictions_available": free_predictions_available,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
     }
     return render(request, "game/match_list.html", context)
@@ -132,6 +141,7 @@ def match_detail(request, slug: str):
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
+    free_predictions_available = _available_free_predictions(request.user) if can_write_coupon else 0
     match.coupon_odds = _match_winner_odds(match)
     match.is_watched = (
         request.user.is_authenticated
@@ -146,6 +156,7 @@ def match_detail(request, slug: str):
         "can_write_coupon": can_write_coupon,
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
+        "free_predictions_available": free_predictions_available,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": _match_odds_tabs(match),
         "provider_prediction_panel": _provider_prediction_panel(match),
@@ -233,6 +244,7 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
+    use_free_prediction = payload.get("use_free_prediction") is True and not autosave
     audience = PredictionCoupon.Audience.FREE
 
     items = payload.get("items")
@@ -347,10 +359,21 @@ def create_coupon(request):
 
         if not autosave:
             try:
-                coin_wallet = charge_prediction_stake(request.user, coupon, stake)
+                if use_free_prediction:
+                    _consume_free_prediction(request.user)
+                    coin_wallet = cover_prediction_stake_with_free_reward(
+                        request.user,
+                        coupon,
+                        note=f"Бесплатный прогноз из рулетки #{coupon.pk}",
+                    )
+                else:
+                    coin_wallet = charge_prediction_stake(request.user, coupon, stake)
             except InsufficientCoins as exc:
                 transaction.set_rollback(True)
                 return JsonResponse({"ok": False, "error": str(exc)}, status=402)
+            except ValidationError as exc:
+                transaction.set_rollback(True)
+                return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
         coupon.predictions.all().delete()
         Prediction.objects.bulk_create(
@@ -408,6 +431,10 @@ def create_coupon(request):
         coin_wallet.refresh_from_db()
         response["coin_balance"] = coin_wallet.balance
         response["coin_balance_display"] = format_coins(coin_wallet.balance)
+        response["used_free_prediction"] = use_free_prediction
+        response["free_predictions_remaining"] = _available_free_predictions(
+            request.user
+        )
     return JsonResponse(response)
 
 
@@ -494,6 +521,31 @@ def _delete_expired_draft_coupons(user: User) -> int:
         updated_at__lt=_draft_session_cutoff(),
     ).delete()
     return deleted
+
+
+def _available_free_predictions(user: User) -> int:
+    if not getattr(user, "is_authenticated", False):
+        return 0
+    return (
+        UserRouletteRewardState.objects.filter(user=user)
+        .values_list("free_predictions", flat=True)
+        .first()
+        or 0
+    )
+
+
+def _consume_free_prediction(user: User) -> UserRouletteRewardState:
+    reward_state = (
+        UserRouletteRewardState.objects.select_for_update()
+        .filter(user=user)
+        .first()
+    )
+    if reward_state is None or reward_state.free_predictions <= 0:
+        raise ValidationError("У вас нет доступных бесплатных прогнозов.")
+
+    reward_state.free_predictions -= 1
+    reward_state.save(update_fields=("free_predictions", "updated_at"))
+    return reward_state
 
 
 def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:

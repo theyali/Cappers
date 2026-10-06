@@ -806,6 +806,7 @@ class UserVipSubscription(models.Model):
         PURCHASE = "purchase", "Покупка"
         ADMIN = "admin", "Администратор"
         ROULETTE = "roulette", "Рулетка"
+        TOURNAMENT = "tournament", "Турнир"
         BONUS = "bonus", "Бонус"
         LEGACY_ADMIN = "legacy_admin", "Перенос старого VIP"
 
@@ -1133,7 +1134,7 @@ class ReferralBonusSettings(models.Model):
     max_visible_reward_text = models.CharField(
         "Текст максимальной награды",
         max_length=120,
-        default="До 1000 монет",
+        default="До 1000 коинов",
     )
     is_enabled = models.BooleanField("Реферальные бонусы включены", default=True)
 
