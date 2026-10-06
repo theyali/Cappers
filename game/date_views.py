@@ -13,6 +13,7 @@ from django.utils.dateparse import parse_date
 
 from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
+from cabinet.roulette.models import RouletteSettings
 from game.models import Match, PredictionCoupon, Sport
 from game.services.bet_options import build_match_winner_odds
 from game.views import (
@@ -337,6 +338,9 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "free_predictions_available": free_predictions_available,
+        "free_prediction_stake": (
+            RouletteSettings.load().free_prediction_stake if free_predictions_available else None
+        ),
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),

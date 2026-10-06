@@ -45,11 +45,12 @@
                 value="1"
                 data-coupon-free-prediction
                 data-free-predictions-count="{{ free_predictions_available }}"
+                data-free-prediction-stake="{{ free_prediction_stake }}"
             >
             <span>
                 <strong>Использовать бесплатный прогноз</strong>
                 <small data-coupon-free-prediction-label>
-                    Доступно: {{ free_predictions_available }}. Коины за ставку не спишутся.
+                    Доступно: {{ free_predictions_available }}. Ставка — {{ free_prediction_stake }} коинов, коины не спишутся.
                 </small>
             </span>
         </label>

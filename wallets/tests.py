@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystPaidSubscriptionPayment, AnalystProfile, User
+from cabinet.roulette.models import RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
@@ -123,6 +124,60 @@ class CoinWalletIntegrationTests(TestCase):
                 kind=CoinTransaction.Kind.PREDICTION_STAKE,
                 amount=-500,
                 balance_after=500,
+            ).exists()
+        )
+
+    def _publish_with_free_prediction(self, stake):
+        UserRouletteRewardState.objects.create(user=self.analyst, free_predictions=1)
+        self.client.force_login(self.analyst)
+        payload = self._payload(stake)
+        payload["use_free_prediction"] = True
+        return self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    def test_free_prediction_ignores_typed_stake(self):
+        response = self._publish_with_free_prediction("1000000")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        coupon = PredictionCoupon.objects.get(author=self.analyst)
+        self.assertEqual(coupon.total_stake, Decimal("100.00"))
+        self.assertEqual(coupon.possible_payout, Decimal("170.00"))
+        self.assertEqual(coupon.predictions.get().stake, Decimal("100.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+
+    def test_free_prediction_uses_stake_from_roulette_settings(self):
+        roulette_settings = RouletteSettings.load()
+        roulette_settings.free_prediction_stake = 300
+        roulette_settings.save()
+
+        response = self._publish_with_free_prediction("")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        coupon = PredictionCoupon.objects.get(author=self.analyst)
+        self.assertEqual(coupon.total_stake, Decimal("300.00"))
+        self.assertEqual(coupon.possible_payout, Decimal("510.00"))
+
+    def test_free_prediction_without_rewards_is_rejected(self):
+        self.client.force_login(self.analyst)
+        payload = self._payload("100")
+        payload["use_free_prediction"] = True
+
+        response = self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("нет доступных бесплатных прогнозов", response.json()["error"])
+        self.assertFalse(
+            PredictionCoupon.objects.filter(
+                author=self.analyst,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             ).exists()
         )
 

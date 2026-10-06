@@ -128,6 +128,22 @@
         return Number.isInteger(stake) && stake > 0;
     };
     const useFreePrediction = () => Boolean(freePredictionInput?.checked);
+    const freePredictionStake = Number.parseInt(freePredictionInput?.dataset.freePredictionStake || "", 10) || 0;
+    let manualStake = "";
+
+    // A free prediction always plays the stake from the roulette settings; the server ignores the typed one.
+    const syncFreePredictionStake = () => {
+        if (!stakeInput || !freePredictionStake) return;
+        const locked = useFreePrediction();
+        if (locked && !stakeInput.readOnly) {
+            manualStake = stakeInput.value;
+            stakeInput.value = String(freePredictionStake);
+        } else if (!locked && stakeInput.readOnly) {
+            stakeInput.value = manualStake;
+        }
+        stakeInput.readOnly = locked;
+        stakeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    };
 
     const couponCountMatchesRule = () => {
         if (items.size < 1 || items.size > 20) return false;
@@ -195,7 +211,7 @@
         }
         if (freePredictionLabel) {
             freePredictionLabel.textContent = remaining > 0
-                ? `Доступно: ${remaining}. Коины за ставку не спишутся.`
+                ? `Доступно: ${remaining}. Ставка — ${freePredictionStake} коинов, коины не спишутся.`
                 : "Бесплатные прогнозы закончились.";
         }
     };
@@ -446,7 +462,11 @@
         draftId = null;
         items.clear();
         itemsRoot.replaceChildren();
-        if (stakeInput) stakeInput.value = "";
+        if (stakeInput) {
+            stakeInput.value = "";
+            stakeInput.readOnly = false;
+        }
+        manualStake = "";
         if (freePredictionInput) freePredictionInput.checked = false;
         if (confidenceInput) confidenceInput.value = "50";
         try {
@@ -643,6 +663,7 @@
         draftId = draft.id || null;
         if (stakeInput) stakeInput.value = draft.stake || "";
         if (freePredictionInput) freePredictionInput.checked = Boolean(draft.useFreePrediction);
+        syncFreePredictionStake();
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -677,6 +698,7 @@
     });
 
     freePredictionInput?.addEventListener("change", () => {
+        syncFreePredictionStake();
         updateState();
         scheduleDraftSync();
     });

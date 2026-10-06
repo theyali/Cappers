@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cabinet.models import DailyTask, User
+from cabinet.roulette.models import RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
 from cabinet.services.daily_tasks import record_daily_task_action
 from game.forms import RichPredictionCouponForm
@@ -323,7 +324,11 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=409)
 
     try:
-        stake = parse_stake(payload.get("stake"), required=not autosave)
+        if use_free_prediction:
+            # A free roulette prediction always plays the configured stake, whatever was typed.
+            stake = Decimal(RouletteSettings.load().free_prediction_stake)
+        else:
+            stake = parse_stake(payload.get("stake"), required=not autosave)
         confidence = parse_confidence(payload.get("confidence"))
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
