@@ -60,11 +60,13 @@
                                             <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
                                         </div>
                                         <strong class="rich-prediction-coupon-odd">{{ prediction.coefficient }}</strong>
+                                        {% if not is_published %}
                                         <button class="rich-prediction-coupon-remove" type="button" data-rich-remove-prediction="{{ prediction.id }}" aria-label="Убрать из купона">
                                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                                 <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
                                             </svg>
                                         </button>
+                                        {% endif %}
                                     </article>
                                 {% endfor %}
                             </div>
@@ -91,7 +93,7 @@
                             <label class="capper-field">
                                 <span class="capper-field-label">{{ form.total_stake.label }}</span>
                                 {{ form.total_stake }}
-                                <span class="capper-field-help">От 100 до 1 000 000 коинов.</span>
+                                <span class="capper-field-help">{% if is_published %}Сумма списана при публикации и больше не меняется.{% else %}От 100 до 1 000 000 коинов. Списывается при публикации.{% endif %}</span>
                                 {% if form.total_stake.errors %}<span class="capper-field-errors">{{ form.total_stake.errors }}</span>{% endif %}
                             </label>
 
@@ -226,8 +228,12 @@
                 </section>
 
                 <div class="rich-prediction-actions">
+                    {% if is_published %}
+                    <button class="rich-prediction-submit is-primary" type="submit" name="published_status" value="published">Сохранить изменения</button>
+                    {% else %}
                     <button class="rich-prediction-submit is-primary" type="submit" name="published_status" value="published">Опубликовать прогноз</button>
                     <button class="rich-prediction-submit is-secondary" type="submit" name="published_status" value="draft">Сохранить черновик</button>
+                    {% endif %}
                 </div>
                 {% endif %}
             </form>

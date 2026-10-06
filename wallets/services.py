@@ -400,13 +400,27 @@ def settle_prediction_coupon(coupon) -> CoinWallet | None:
     stake_amount = _coin_amount_from_model(coupon.total_stake, field_name="Ставка")
     stake_related_model, stake_related_id = _coin_related_subject(coupon)
     if stake_amount > 0:
-        wallet = charge_coins(
-            coupon.author,
-            stake_amount,
-            CoinTransaction.Kind.PREDICTION_STAKE,
-            related_obj=coupon,
-            note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
-        )
+        # Coupons are charged on publish. Older coupons and bot coupons may still
+        # be unpaid: charge them now, but never let a missing balance roll back
+        # the settlement itself — such a coupon is settled without coin movements.
+        try:
+            wallet = charge_coins(
+                coupon.author,
+                stake_amount,
+                CoinTransaction.Kind.PREDICTION_STAKE,
+                related_obj=coupon,
+                note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
+            )
+        except InsufficientCoins:
+            logger.warning(
+                "Coupon #%s settled without coin movements: stake %s was not charged on publish "
+                "and the author has not enough coins.",
+                coupon.pk,
+                stake_amount,
+            )
+            _copy_missing_bets_for_settlement(coupon)
+            settle_copied_bets_for_coupon(coupon)
+            return wallet
     stake_transaction = (
         CoinTransaction.objects.filter(
             user=coupon.author,

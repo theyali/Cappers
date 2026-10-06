@@ -204,6 +204,8 @@ def rich_prediction_create(request):
             )
         except ValidationError as exc:
             form.add_error(None, exc)
+            # Publish checks may refresh coefficients in the draft: show the current ones.
+            context = build_prediction_editor_context(request, coupon=_active_draft_coupon(request.user))
         else:
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 
@@ -239,6 +241,9 @@ def rich_prediction_edit(request, coupon_id):
             )
         except ValidationError as exc:
             form.add_error(None, exc)
+            # Publish checks may refresh coefficients in the draft: show the current ones.
+            coupon.refresh_from_db()
+            context = build_prediction_editor_context(request, coupon=coupon)
         else:
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 

@@ -5,7 +5,18 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from game.models import PredictionCoupon, PredictionCoverImage
+from game.models import Prediction, PredictionCoupon, PredictionCoverImage
+from game.services.bet_options import bet_option_key
+from game.services.coupon_validation import (
+    CouponMatchVerificationError,
+    CouponOddsChangedError,
+    coupon_total_coefficient,
+    parse_stake,
+    resolve_coupon_items,
+    validate_match_timing,
+    verify_matches_for_coupon,
+)
+from wallets.services import charge_prediction_stake
 
 
 MAX_RICH_PREDICTION_ITEMS = 15
@@ -62,6 +73,7 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
         "form_initial": form_initial,
         "submit_label": "Сохранить изменения" if coupon else "Создать прогноз",
         "is_editing": coupon is not None and coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
+        "is_published": _is_published(coupon),
         "has_coupon_positions": has_coupon_positions,
         "predictions": predictions,
         "coupon_total_coefficient": _coupon_total_coefficient(predictions),
@@ -70,7 +82,6 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
     }
 
 
-@transaction.atomic
 def create_rich_prediction(user, data, files, *, source_coupon=None) -> PredictionCoupon:
     _ensure_editor_access(user)
     if source_coupon is None or not getattr(source_coupon, "pk", None):
@@ -78,29 +89,121 @@ def create_rich_prediction(user, data, files, *, source_coupon=None) -> Predicti
             "Сначала добавьте матчи в купон, затем откройте расширенный прогноз."
         )
 
-    coupon = PredictionCoupon.objects.select_for_update().get(
+    draft_coupons = PredictionCoupon.objects.filter(
         pk=source_coupon.pk,
         author=user,
         published_status=PredictionCoupon.PublishedStatus.DRAFT,
         prediction_format=PredictionCoupon.PredictionFormat.QUICK,
     )
-    return _save_rich_prediction(user, coupon, data, files, is_new=True)
+    if _resolve_published_status(data, source_coupon, is_new=True) == PredictionCoupon.PublishedStatus.PUBLISHED:
+        _confirm_coupon_for_publish(draft_coupons.get(), data)
+
+    with transaction.atomic():
+        coupon = draft_coupons.select_for_update().get()
+        return _save_rich_prediction(user, coupon, data, files, is_new=True)
 
 
-@transaction.atomic
 def update_rich_prediction(user, coupon, data, files) -> PredictionCoupon:
     _ensure_editor_access(user)
     _ensure_coupon_edit_access(user, coupon)
+    if (
+        not _is_published(coupon)
+        and _resolve_published_status(data, coupon, is_new=False) == PredictionCoupon.PublishedStatus.PUBLISHED
+    ):
+        _confirm_coupon_for_publish(coupon, data)
 
-    coupon = PredictionCoupon.objects.select_for_update().get(pk=coupon.pk)
-    _ensure_coupon_edit_access(user, coupon)
-    return _save_rich_prediction(user, coupon, data, files, is_new=False)
+    with transaction.atomic():
+        coupon = PredictionCoupon.objects.select_for_update().get(pk=coupon.pk)
+        _ensure_coupon_edit_access(user, coupon)
+        return _save_rich_prediction(user, coupon, data, files, is_new=False)
+
+
+def _confirm_coupon_for_publish(coupon: PredictionCoupon, data) -> None:
+    """Run the quick-coupon publish checks before a rich coupon is saved.
+
+    This runs outside the save transaction on purpose: when the line has moved,
+    the current coefficients are stored in the draft so the author sees them,
+    and publishing stops until the author confirms the new prices.
+    """
+    removed_ids = set(_prediction_ids(data.get("remove_prediction_ids")))
+    predictions = [
+        prediction for prediction in _coupon_predictions(coupon)
+        if prediction.pk not in removed_ids
+    ]
+    if not predictions:
+        return
+
+    matches = {prediction.match_id: prediction.match for prediction in predictions}
+    validate_match_timing(matches.values())
+    try:
+        verify_matches_for_coupon(list(matches.values()))
+    except CouponMatchVerificationError as exc:
+        raise ValidationError(str(exc)) from exc
+
+    items = [
+        {
+            "match_id": prediction.match_id,
+            "market": prediction.market,
+            "selection": prediction.selection,
+            "coefficient": prediction.coefficient,
+        }
+        for prediction in predictions
+    ]
+    try:
+        resolve_coupon_items(items, matches, accept_changed_odds=False)
+    except CouponOddsChangedError as exc:
+        _store_current_odds(coupon, predictions, exc.changes)
+        raise ValidationError(_odds_changed_message(matches, exc.changes)) from exc
+
+
+def _store_current_odds(coupon: PredictionCoupon, predictions: list, changes: list[dict]) -> None:
+    current = {
+        (change["match_id"], *bet_option_key(change["market"], change["selection"])): Decimal(change["coefficient"])
+        for change in changes
+    }
+    with transaction.atomic():
+        for prediction in predictions:
+            coefficient = current.get(
+                (prediction.match_id, *bet_option_key(prediction.market, prediction.selection))
+            )
+            if coefficient is None:
+                continue
+            prediction.coefficient = coefficient
+            Prediction.objects.filter(pk=prediction.pk).update(coefficient=coefficient)
+        PredictionCoupon.objects.filter(pk=coupon.pk).update(
+            possible_payout=coupon.total_stake * coupon_total_coefficient(
+                [{"coefficient": prediction.coefficient} for prediction in predictions]
+            )
+        )
+
+
+def _odds_changed_message(matches: dict, changes: list[dict]) -> str:
+    parts = []
+    for change in changes:
+        match = matches.get(change["match_id"])
+        title = (
+            f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
+            if match is not None
+            else "матч"
+        )
+        previous = change["previous"] or "—"
+        parts.append(f"{title}: {previous} → {change['coefficient']}")
+    return (
+        "Коэффициенты изменились: "
+        + "; ".join(parts)
+        + ". Купон обновлён, проверьте его и опубликуйте прогноз ещё раз."
+    )
 
 
 def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> PredictionCoupon:
     can_use_rich_fields = can_use_rich_prediction_fields(user)
     files = files or {}
-    _delete_removed_predictions(coupon, data.get("remove_prediction_ids"))
+    was_published = _is_published(coupon)
+    removed_ids = _prediction_ids(data.get("remove_prediction_ids"))
+    if was_published and removed_ids:
+        raise ValidationError("Позиции опубликованного прогноза изменить нельзя.")
+    if removed_ids:
+        coupon.predictions.filter(id__in=removed_ids).delete()
     predictions = _coupon_predictions(coupon)
     if not predictions:
         raise ValidationError(
@@ -143,7 +246,11 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
 
     tags = _normalize_tags(data.get("tags", [] if is_new else coupon.tags))
     status = _resolve_published_status(data, coupon, is_new=is_new)
+    if was_published and status != PredictionCoupon.PublishedStatus.PUBLISHED:
+        raise ValidationError("Опубликованный прогноз нельзя вернуть в черновик.")
     total_stake = _resolve_total_stake(data, coupon)
+    if was_published and total_stake != coupon.total_stake:
+        raise ValidationError({"total_stake": "Сумму опубликованного прогноза изменить нельзя."})
     confidence = _resolve_confidence(data, coupon)
     total_coefficient = _coupon_total_coefficient(predictions)
 
@@ -172,6 +279,8 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
             coupon.custom_cover_image = ""
 
     coupon.save()
+    if status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published:
+        charge_prediction_stake(user, coupon, total_stake)
 
     coupon.sync_coupon_type()
     if not coupon.custom_cover_image and not coupon.cover_image_id:
@@ -240,28 +349,20 @@ def _resolve_cover_image(value) -> PredictionCoverImage | None:
     return cover
 
 
-def _delete_removed_predictions(coupon: PredictionCoupon, raw_ids) -> None:
+def _prediction_ids(raw_ids) -> list[int]:
     if not raw_ids:
-        return
+        return []
     ids = raw_ids
     if isinstance(raw_ids, str):
         ids = [item for item in raw_ids.replace(" ", "").split(",") if item]
-    ids = [int(prediction_id) for prediction_id in ids if str(prediction_id).isdigit()]
-    if ids:
-        coupon.predictions.filter(id__in=ids).delete()
+    return [int(prediction_id) for prediction_id in ids if str(prediction_id).isdigit()]
 
 
 def _resolve_total_stake(data, coupon: PredictionCoupon) -> Decimal:
-    value = data.get("total_stake", coupon.total_stake)
     try:
-        stake = Decimal(str(value))
-    except Exception as exc:
-        raise ValidationError({"total_stake": "Укажите корректную сумму."}) from exc
-    if stake < Decimal("100"):
-        raise ValidationError({"total_stake": "Минимальная сумма — 100 коинов."})
-    if stake > Decimal("1000000"):
-        raise ValidationError({"total_stake": "Максимальная сумма — 1 000 000 коинов."})
-    return stake
+        return parse_stake(data.get("total_stake", coupon.total_stake), required=True)
+    except ValidationError as exc:
+        raise ValidationError({"total_stake": exc.messages}) from exc
 
 
 def _resolve_confidence(data, coupon: PredictionCoupon) -> int:
@@ -375,6 +476,10 @@ def _coupon_total_coefficient(predictions: list) -> Decimal:
     for prediction in predictions:
         total *= prediction.coefficient
     return total
+
+
+def _is_published(coupon: PredictionCoupon | None) -> bool:
+    return coupon is not None and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED
 
 
 def _as_bool(value) -> bool:
