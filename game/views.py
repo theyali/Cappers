@@ -416,6 +416,7 @@ def create_coupon(request):
                     match=item["match"],
                     market=item["market"],
                     selection=item["selection"],
+                    outcome_code=item["outcome_code"],
                     coefficient=item["coefficient"],
                     stake=stake,
                 )

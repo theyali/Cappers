@@ -109,6 +109,14 @@ class RichPredictionPublishTests(TestCase):
         self.assertEqual(self._balance(), 500)
         self.assertEqual(self._stake_transactions().count(), 1)
 
+    def test_publish_backfills_outcome_code_of_old_drafts(self):
+        self.assertEqual(self.prediction.outcome_code, "")
+
+        self._publish()
+
+        self.prediction.refresh_from_db()
+        self.assertEqual(self.prediction.outcome_code, "1")
+
     def test_publish_without_enough_coins_keeps_draft(self):
         response = self._publish(total_stake="1500")
 

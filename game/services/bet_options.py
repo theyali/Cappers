@@ -15,10 +15,13 @@ from typing import Any
 from django.core.exceptions import ObjectDoesNotExist
 
 from game.models import Prediction, PredictionCoupon
+from game.services.odds import format_outcome_line, outcome_code_from_label
 
 
 # Markets the settlement engine can resolve automatically. Other markets are
-# still shown on the match page, but cannot be added to a coupon.
+# still shown on the match page, but cannot be added to a coupon. A coupon
+# position also needs a structured outcome code (see outcome_code_from_label),
+# so settlement never has to guess the side from team names.
 SETTLEABLE_MARKETS = frozenset(
     {
         "winner",
@@ -43,6 +46,18 @@ class BetOption:
     market: str
     selection: str
     coefficient: Decimal
+    outcome_code: str
+
+
+def is_outcome_bettable(match, market: str, outcome_code: str) -> bool:
+    if market not in SETTLEABLE_MARKETS or not outcome_code:
+        return False
+    sport_code = str(getattr(match, "sport_code", "football") or "football").lower()
+    if sport_code == "basketball" and (outcome_code == "X" or market == "double_chance"):
+        # Regular-time scores are not available for basketball, so outcomes that
+        # depend on a regular-time draw cannot be settled.
+        return False
+    return True
 
 
 def optional_odd(value: Any) -> str | None:
@@ -74,20 +89,29 @@ def match_bet_options(match, odds=None) -> dict[tuple[str, str], BetOption]:
 
     options: dict[tuple[str, str], BetOption] = {}
 
-    def add(market: str, selection: str, coefficient: str | None, bettable: bool = True) -> None:
-        if not bettable or coefficient is None or market not in SETTLEABLE_MARKETS:
+    def add(market: str, selection: str, coefficient: str | None, outcome_code: str, bettable: bool = True) -> None:
+        if not bettable or coefficient is None or not is_outcome_bettable(match, market, outcome_code):
             return
         key = bet_option_key(market, selection)
-        options.setdefault(key, BetOption(key[0], selection[:SELECTION_MAX_LENGTH], Decimal(coefficient)))
+        options.setdefault(
+            key,
+            BetOption(key[0], selection[:SELECTION_MAX_LENGTH], Decimal(coefficient), outcome_code),
+        )
 
     for item in build_match_coupon_options(match, odds=odds)["items"]:
-        add(item["market"], item["selection"], item["coefficient"])
+        add(item["market"], item["selection"], item["coefficient"], item["outcome_code"])
 
     for tab in build_match_odds_tabs(match, odds=odds):
         for section in tab["sections"]:
             for row in section["rows"]:
                 for button in row["odds"]:
-                    add(button["market"], button["selection"], button["coefficient"], button["bettable"])
+                    add(
+                        button["market"],
+                        button["selection"],
+                        button["coefficient"],
+                        button["outcome_code"],
+                        button["bettable"],
+                    )
 
     return options
 
@@ -215,6 +239,7 @@ def _winner_option(match, odds, side: str, label: str) -> dict[str, Any]:
         "label": label,
         "market": "winner",
         "selection": selection,
+        "outcome_code": {"home": "1", "draw": "X", "away": "2"}[side],
         "coefficient": optional_odd(getattr(odds, field, None)) if odds else None,
     }
 
@@ -227,6 +252,7 @@ def _total_option(odds, side: str, line: str) -> dict[str, Any]:
         "label": label,
         "market": "total",
         "selection": label,
+        "outcome_code": f"{side} {format_outcome_line(line)}",
         "coefficient": _total_odd(odds, side, line),
     }
 
@@ -238,6 +264,7 @@ def _handicap_option(match, odds, side: str, line: str) -> dict[str, Any]:
         "label": label,
         "market": "handicap",
         "selection": label,
+        "outcome_code": f"{side} {format_outcome_line(line, signed=True)}",
         "coefficient": _handicap_odd(odds, side, line, match),
     }
 
@@ -248,6 +275,7 @@ def _btts_yes_option(odds) -> dict[str, Any]:
         "label": "ОЗ Да",
         "market": "both_score",
         "selection": "Обе забьют: да",
+        "outcome_code": "yes",
         "coefficient": optional_odd(getattr(odds, "btts_yes", None)) if odds else None,
     }
 
@@ -340,16 +368,16 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
                 _odds_row(
                     "Основное время",
                     [
-                        _odds_button("1", home_name, "winner", home_name, optional_odd(odds.home_win_bet)),
-                        _odds_button("X", "Ничья", "winner", "Ничья", optional_odd(odds.x_bet)),
-                        _odds_button("2", away_name, "winner", away_name, optional_odd(odds.away_win_bet)),
+                        _odds_button("1", home_name, "winner", home_name, optional_odd(odds.home_win_bet), outcome_code="1"),
+                        _odds_button("X", "Ничья", "winner", "Ничья", optional_odd(odds.x_bet), outcome_code="X"),
+                        _odds_button("2", away_name, "winner", away_name, optional_odd(odds.away_win_bet), outcome_code="2"),
                     ],
                 ),
                 _odds_row(
                     "Двойной шанс",
                     [
-                        _odds_button("1X", f"{home_name} или ничья", "double_chance", f"{home_name} или ничья", optional_odd(odds.d_1x)),
-                        _odds_button("X2", f"Ничья или {away_name}", "double_chance", f"Ничья или {away_name}", optional_odd(odds.d_2x)),
+                        _odds_button("1X", f"{home_name} или ничья", "double_chance", f"{home_name} или ничья", optional_odd(odds.d_1x), outcome_code="1X"),
+                        _odds_button("X2", f"Ничья или {away_name}", "double_chance", f"Ничья или {away_name}", optional_odd(odds.d_2x), outcome_code="X2"),
                     ],
                 ),
                 *_generic_market_rows(odds.double_chance_all, "double_chance", "Двойной шанс"),
@@ -361,8 +389,8 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
                 _odds_row(
                     "Тотал голов 2.5",
                     [
-                        _odds_button("ТБ 2.5", "Больше 2.5", "total", "ТБ 2.5", optional_odd(odds.goals_over_2_5)),
-                        _odds_button("ТМ 2.5", "Меньше 2.5", "total", "ТМ 2.5", optional_odd(odds.goals_under_2_5)),
+                        _odds_button("ТБ 2.5", "Больше 2.5", "total", "ТБ 2.5", optional_odd(odds.goals_over_2_5), outcome_code="over 2.5"),
+                        _odds_button("ТМ 2.5", "Меньше 2.5", "total", "ТМ 2.5", optional_odd(odds.goals_under_2_5), outcome_code="under 2.5"),
                     ],
                 ),
                 *_totals_rows_from_payload(odds.totals_all, skip_lines={"2.5"}),
@@ -374,8 +402,8 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
                 _odds_row(
                     "Голы обеих команд",
                     [
-                        _odds_button("ОЗ Да", "Да", "both_score", "Обе забьют: да", optional_odd(odds.btts_yes)),
-                        _odds_button("ОЗ Нет", "Нет", "both_score", "Обе забьют: нет", optional_odd(odds.btts_no)),
+                        _odds_button("ОЗ Да", "Да", "both_score", "Обе забьют: да", optional_odd(odds.btts_yes), outcome_code="yes"),
+                        _odds_button("ОЗ Нет", "Нет", "both_score", "Обе забьют: нет", optional_odd(odds.btts_no), outcome_code="no"),
                     ],
                 ),
                 *_generic_market_rows(odds.btts_all, "both_score", "Обе забьют"),
@@ -391,8 +419,8 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
                 _odds_row(
                     "Фора 0",
                     [
-                        _odds_button("Ф1 0", home_name, "handicap", f"{home_name} фора 0", optional_odd(odds.fora_1_0)),
-                        _odds_button("Ф2 0", away_name, "handicap", f"{away_name} фора 0", optional_odd(odds.fora_2_0)),
+                        _odds_button("Ф1 0", home_name, "handicap", f"{home_name} фора 0", optional_odd(odds.fora_1_0), outcome_code="home 0"),
+                        _odds_button("Ф2 0", away_name, "handicap", f"{away_name} фора 0", optional_odd(odds.fora_2_0), outcome_code="away 0"),
                     ],
                 ),
                 *_generic_market_rows(odds.handicaps_all, "handicap", "Фора"),
@@ -412,9 +440,9 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
             _odds_row(
                 "Исход 1-го тайма",
                 [
-                    _odds_button("1", home_name, "first_half_winner", f"1-й тайм: {home_name}", optional_odd(odds.first_time_home_win_bet)),
-                    _odds_button("X", "Ничья", "first_half_winner", "1-й тайм: ничья", optional_odd(odds.first_time_x_bet)),
-                    _odds_button("2", away_name, "first_half_winner", f"1-й тайм: {away_name}", optional_odd(odds.first_time_away_win_bet)),
+                    _odds_button("1", home_name, "first_half_winner", f"1-й тайм: {home_name}", optional_odd(odds.first_time_home_win_bet), outcome_code="1"),
+                    _odds_button("X", "Ничья", "first_half_winner", "1-й тайм: ничья", optional_odd(odds.first_time_x_bet), outcome_code="X"),
+                    _odds_button("2", away_name, "first_half_winner", f"1-й тайм: {away_name}", optional_odd(odds.first_time_away_win_bet), outcome_code="2"),
                 ],
             ),
             *_totals_rows_from_payload(odds.first_half_totals_all, market="first_half_total"),
@@ -434,7 +462,17 @@ def build_match_odds_tabs(match, odds=None) -> list[dict]:
         {"key": "first_half", "label": "1-й тайм", "sections": [first_half_section] if first_half_section["rows"] else []},
         {"key": "other", "label": "Другие", "sections": [section for section in other_sections if section["rows"]]},
     ]
-    return [tab for tab in tabs if tab["sections"]]
+    tabs = [tab for tab in tabs if tab["sections"]]
+    for tab in tabs:
+        for section in tab["sections"]:
+            for row in section["rows"]:
+                for button in row["odds"]:
+                    button["bettable"] = button["bettable"] and is_outcome_bettable(
+                        match,
+                        button["market"],
+                        button["outcome_code"],
+                    )
+    return tabs
 
 
 def _match_odds_has_values(odds) -> bool:
@@ -529,6 +567,7 @@ def _odds_button(
     selection: str,
     coefficient: str | None,
     *,
+    outcome_code: str = "",
     bettable: bool = True,
 ) -> dict | None:
     if coefficient is None:
@@ -540,7 +579,8 @@ def _odds_button(
         "selection": selection,
         "coefficient": coefficient,
         "key": f"{market}:{selection}",
-        "bettable": bettable and market in SETTLEABLE_MARKETS,
+        "outcome_code": outcome_code,
+        "bettable": bettable and market in SETTLEABLE_MARKETS and bool(outcome_code),
     }
 
 
@@ -579,12 +619,27 @@ def _totals_rows_from_payload(
     for line, values in sorted(rows_by_line.items(), key=lambda item: _line_sort_key(item[0])):
         if line in skip_lines:
             continue
+        code_line = format_outcome_line(line)
         rows.append(
             _odds_row(
                 f"Тотал {line}",
                 [
-                    _odds_button(f"ТБ {line}", f"Больше {line}", market, f"ТБ {line}", values.get("over")),
-                    _odds_button(f"ТМ {line}", f"Меньше {line}", market, f"ТМ {line}", values.get("under")),
+                    _odds_button(
+                        f"ТБ {line}",
+                        f"Больше {line}",
+                        market,
+                        f"ТБ {line}",
+                        values.get("over"),
+                        outcome_code=f"over {code_line}" if code_line else "",
+                    ),
+                    _odds_button(
+                        f"ТМ {line}",
+                        f"Меньше {line}",
+                        market,
+                        f"ТМ {line}",
+                        values.get("under"),
+                        outcome_code=f"under {code_line}" if code_line else "",
+                    ),
                 ],
             )
         )
@@ -627,6 +682,7 @@ def _generic_market_rows(payload: dict, market: str, title: str) -> list[dict]:
                         market,
                         f"{label}: {human_market_label(option_key)}",
                         optional_odd(option_value),
+                        outcome_code=outcome_code_from_label(market, option_key),
                     )
                     for option_key, option_value in raw_value.items()
                 ],
@@ -640,6 +696,7 @@ def _generic_market_rows(payload: dict, market: str, title: str) -> list[dict]:
                 market,
                 label,
                 optional_odd(raw_value),
+                outcome_code=outcome_code_from_label(market, raw_key),
             )
             if button:
                 flat_buttons.append(button)
@@ -676,7 +733,9 @@ def human_market_label(value) -> str:
         "under": "Меньше",
     }
     lower = text.lower().replace("_", " ")
-    return replacements.get(lower, text.replace("_", " ").replace("-", " ").strip() or "Ставка")
+    # Keep the minus of handicap lines ("Home -1.5") and score dashes ("3-2").
+    readable = re.sub(r"-(?!\d)", " ", text.replace("_", " ")).strip()
+    return replacements.get(lower, readable or "Ставка")
 
 
 def _short_odd_label(value) -> str:

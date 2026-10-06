@@ -347,6 +347,7 @@ def resolve_coupon_items(
                 "match": match,
                 "market": option.market,
                 "selection": option.selection,
+                "outcome_code": option.outcome_code,
                 "coefficient": coefficient,
             }
         )

@@ -114,6 +114,7 @@ def create_tournament_coupon(
                         match=item["match"],
                         market=item["market"],
                         selection=item["selection"],
+                        outcome_code=item["outcome_code"],
                         coefficient=item["coefficient"],
                         stake=stake,
                     )

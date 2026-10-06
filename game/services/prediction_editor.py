@@ -150,10 +150,15 @@ def _confirm_coupon_for_publish(coupon: PredictionCoupon, data) -> None:
         for prediction in predictions
     ]
     try:
-        resolve_coupon_items(items, matches, accept_changed_odds=False)
+        resolved_items = resolve_coupon_items(items, matches, accept_changed_odds=False)
     except CouponOddsChangedError as exc:
         _store_current_odds(coupon, predictions, exc.changes)
         raise ValidationError(_odds_changed_message(matches, exc.changes)) from exc
+
+    # Drafts saved before outcome codes existed get them here, so they are settled by code.
+    for prediction, item in zip(predictions, resolved_items):
+        if not prediction.outcome_code and item["outcome_code"]:
+            Prediction.objects.filter(pk=prediction.pk).update(outcome_code=item["outcome_code"])
 
 
 def _store_current_odds(coupon: PredictionCoupon, predictions: list, changes: list[dict]) -> None:

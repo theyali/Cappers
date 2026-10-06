@@ -58,8 +58,9 @@ class SettlementStateTests(SimpleTestCase):
 
         self.assertIsNone(state)
 
-    def test_total_can_use_period_scores_for_non_football_sports(self):
+    def test_tennis_total_counts_games_of_the_sets(self):
         prediction = self.prediction("total", "ТБ 22.5")
+        prediction.match.sport_code = "tennis"
         prediction.match.raw_data = {
             "sets": {
                 "set_1": "7-6",
