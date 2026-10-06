@@ -10,6 +10,7 @@
     const tooltip = couponButton.querySelector("[data-mobile-coupon-tooltip]");
     const serverCount = Number.parseInt(couponButton.dataset.mobileCouponCount || badge?.textContent || "0", 10) || 0;
     const serverCoefficient = couponButton.dataset.mobileCouponCoefficient || "0.00";
+    const mobileQuery = window.matchMedia("(max-width: 1120px)");
 
     const setNavIndicator = (count, coefficient = serverCoefficient) => {
         couponButton.classList.toggle("has-items", count > 0);
@@ -29,15 +30,20 @@
     setNavIndicator(serverCount, serverCoefficient);
 
     const root = document.querySelector("[data-coupon-page]");
-    if (!root) return;
+    const sidebar = root?.querySelector("#mobile-coupon-sheet") || document.querySelector("#mobile-coupon-sheet");
+    if (!sidebar) {
+        couponButton.addEventListener("click", (event) => {
+            if (!mobileQuery.matches) return;
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = couponButton.href;
+        });
+        return;
+    }
 
-    const sidebar = root.querySelector("#mobile-coupon-sheet");
-    if (!sidebar) return;
-
-    const form = root.querySelector("[data-coupon-form]");
-    const mobileQuery = window.matchMedia("(max-width: 1120px)");
-    const itemsRoot = root.querySelector("[data-coupon-items]");
-    const coefficientNode = root.querySelector("[data-coupon-coefficient]");
+    const form = root?.querySelector("[data-coupon-form]");
+    const itemsRoot = root?.querySelector("[data-coupon-items]");
+    const coefficientNode = root?.querySelector("[data-coupon-coefficient]");
 
     const handle = sidebar.querySelector("[data-mobile-coupon-close]");
     let previousActive = nav.querySelector(".mobile-app-nav-item.is-active:not([data-mobile-coupon-toggle])");

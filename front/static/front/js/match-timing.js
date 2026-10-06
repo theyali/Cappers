@@ -189,11 +189,9 @@
         const isSoon = isPrematch && seconds <= soonWindow;
 
         document.querySelectorAll(`[data-match-card][data-match-id="${matchId}"]`).forEach((card) => {
-            const dateNode = card.querySelector(".match-score [data-starts-at]");
-            if (dateNode) {
-                const value = formatShortDate(startDate);
-                if (dateNode.textContent !== value) dateNode.textContent = value;
-            }
+            const value = formatShortDate(startDate);
+            const scoreMeta = card.querySelector(".match-score span, .home-match-score small");
+            if (scoreMeta && isPrematch && scoreMeta.textContent !== value) scoreMeta.textContent = value;
 
             if (isPrematch) {
                 setCardPrematchStatus(

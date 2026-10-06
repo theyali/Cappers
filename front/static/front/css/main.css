@@ -15654,6 +15654,9 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     display: grid;
     align-content: start;
 }
+body:has(.tournament-detail-page) .breadcrumbs-container {
+    display: none !important;
+}
 .tournament-tabs-sidebar #tournament-tabs-title {
     margin: 0;
     padding: 0 8px;
@@ -15679,6 +15682,14 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .tournament-tabs-sidebar .profile-sidebar-link.is-active {
     background: var(--blue);
+}
+.tournament-tabs-sidebar .profile-sidebar-nav.matches-tabs {
+    display: grid;
+    gap: 2px;
+    overflow: visible;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
 }
 .tournament-detail-page .tournament-detail-layout {
     grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(300px, 340px);
