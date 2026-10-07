@@ -92,7 +92,7 @@
             class="home-match-odd match-bet-option{% if not option.coefficient or not can_write_coupon or match.sync_scope != 'prematch' %} is-locked-odd{% endif %}"
             type="button"
             {% if option.coefficient and can_write_coupon and match.sync_scope == 'prematch' %}
-                data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-coefficient="{{ option.coefficient }}"
+                data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-outcome-code="{{ option.outcome_code }}" data-coefficient="{{ option.coefficient }}"
             {% else %}
                 disabled aria-disabled="true"
             {% endif %}

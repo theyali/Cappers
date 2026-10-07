@@ -303,9 +303,10 @@ def resolve_coupon_items(
 
         market = str(item.get("market") or "").strip()
         selection = str(item.get("selection") or "").strip()
+        outcome_code = str(item.get("outcome_code") or "").strip()
         if not market:
             raise ValidationError("Выберите тип ставки.")
-        if not selection:
+        if not selection and not outcome_code:
             raise ValidationError("Выберите исход.")
 
         if match.id not in options_by_match_id:
@@ -313,10 +314,10 @@ def resolve_coupon_items(
                 match,
                 odds=odds_by_match_id.get(match.id),
             )
-        option = options_by_match_id[match.id].get(bet_option_key(market, selection))
+        option = _find_bet_option(options_by_match_id[match.id], market, outcome_code, selection)
         if option is None:
             raise ValidationError(
-                f"Исход «{selection[:60]}» на матч «{_match_title(match)}» сейчас недоступен. "
+                f"Исход «{(selection or outcome_code)[:60]}» на матч «{_match_title(match)}» сейчас недоступен. "
                 "Обновите страницу и выберите ставку заново."
             )
 
@@ -337,6 +338,7 @@ def resolve_coupon_items(
                     "match_id": match.id,
                     "market": option.market,
                     "selection": option.selection,
+                    "outcome_code": option.outcome_code,
                     "coefficient": str(coefficient),
                     "previous": str(client_coefficient) if client_coefficient is not None else "",
                 }
@@ -360,6 +362,28 @@ def resolve_coupon_items(
             f"Общий коэффициент прогноза не может быть больше {_format_int(MAX_TOTAL_COEFFICIENT)}."
         )
     return resolved
+
+
+def _find_bet_option(options: dict, market: str, outcome_code: str, selection: str):
+    """Find the offered outcome by its code; the text is only a fallback for old drafts.
+
+    Several offers can share a code (e.g. "1X" from two bookmaker groups); the
+    selection text then only picks which of them the user clicked.
+    """
+    by_text = options.get(bet_option_key(market, selection)) if selection else None
+    if not outcome_code:
+        return by_text
+    if by_text is not None and by_text.outcome_code == outcome_code:
+        return by_text
+    market_key = bet_option_key(market, "")[0]
+    return next(
+        (
+            option
+            for option in options.values()
+            if option.market == market_key and option.outcome_code == outcome_code
+        ),
+        None,
+    )
 
 
 def coupon_total_coefficient(items: list[dict[str, Any]]) -> Decimal:

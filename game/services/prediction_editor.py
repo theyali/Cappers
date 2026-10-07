@@ -145,6 +145,7 @@ def _confirm_coupon_for_publish(coupon: PredictionCoupon, data) -> None:
             "match_id": prediction.match_id,
             "market": prediction.market,
             "selection": prediction.selection,
+            "outcome_code": prediction.outcome_code,
             "coefficient": prediction.coefficient,
         }
         for prediction in predictions
@@ -162,13 +163,19 @@ def _confirm_coupon_for_publish(coupon: PredictionCoupon, data) -> None:
 
 
 def _store_current_odds(coupon: PredictionCoupon, predictions: list, changes: list[dict]) -> None:
-    current = {
+    by_code = {
+        (change["match_id"], change["market"], change["outcome_code"]): Decimal(change["coefficient"])
+        for change in changes
+    }
+    by_text = {
         (change["match_id"], *bet_option_key(change["market"], change["selection"])): Decimal(change["coefficient"])
         for change in changes
     }
     with transaction.atomic():
         for prediction in predictions:
-            coefficient = current.get(
+            coefficient = by_code.get(
+                (prediction.match_id, prediction.market, prediction.outcome_code)
+            ) or by_text.get(
                 (prediction.match_id, *bet_option_key(prediction.market, prediction.selection))
             )
             if coefficient is None:

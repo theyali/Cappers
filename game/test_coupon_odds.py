@@ -121,6 +121,7 @@ class CouponOddsValidationTests(TestCase):
                     "match_id": self.match.id,
                     "market": "winner",
                     "selection": "Арсенал",
+                    "outcome_code": "1",
                     "coefficient": "1.85",
                     "previous": "50.00",
                 }
@@ -159,6 +160,27 @@ class CouponOddsValidationTests(TestCase):
 
         self.assertEqual(response.status_code, 200, response.content)
         self.assertEqual(Prediction.objects.get(coupon__author=self.analyst).selection, "Арсенал")
+
+    def test_outcome_is_found_by_code_whatever_the_text(self):
+        item = self._item(selection="текст из старой вкладки")
+        item["outcome_code"] = "1"
+
+        response = self._post([item], autosave=True)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        draft_item = response.json()["draft"]["items"][0]
+        self.assertEqual(draft_item["outcomeCode"], "1")
+        self.assertEqual(draft_item["selection"], "Арсенал")
+        self.assertEqual(Prediction.objects.get(coupon__author=self.analyst).outcome_code, "1")
+
+    def test_unknown_outcome_code_is_rejected(self):
+        item = self._item()
+        item["outcome_code"] = "home -9.5"
+
+        response = self._post([item])
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("сейчас недоступен", response.json()["error"])
 
     def test_outcome_that_is_not_offered_is_rejected(self):
         response = self._post([self._item(selection="Барселона")])

@@ -238,9 +238,12 @@
             const item = items.get(group.dataset.matchId);
             group.closest("[data-match-card]")?.classList.toggle("is-added", Boolean(item));
             group.querySelectorAll("[data-bet-option]").forEach((button) => {
-                const isSameSelection = Boolean(item)
-                    && item.market === button.dataset.market
-                    && item.selection === button.dataset.selection;
+                const isSameSelection = Boolean(item) && sameOutcome(
+                    item,
+                    button.dataset.market,
+                    button.dataset.outcomeCode,
+                    button.dataset.selection,
+                );
                 button.classList.toggle("is-active", isSameSelection);
                 if (isSameSelection) item.betKey = button.dataset.betKey;
             });
@@ -271,6 +274,7 @@
         betKey: option.dataset.betKey,
         market: option.dataset.market,
         selection: option.dataset.selection,
+        outcomeCode: option.dataset.outcomeCode || "",
         shortLabel: option.querySelector("span")?.textContent || option.dataset.selection,
         coefficient: readOdd(option.dataset.coefficient),
         lastSeen: group.dataset.lastSeen || "",
@@ -298,10 +302,17 @@
         String(left || "").trim().toLowerCase() === String(right || "").trim().toLowerCase()
     );
 
-    const refreshMatchButtonOdd = (matchId, market, selection, coefficient) => {
+    // An outcome is identified by its code; the text is only compared for old drafts without a code.
+    const sameOutcome = (item, market, outcomeCode, selection) => {
+        if (item.market !== market) return false;
+        if (item.outcomeCode && outcomeCode) return item.outcomeCode === outcomeCode;
+        return sameSelection(item.selection, selection);
+    };
+
+    const refreshMatchButtonOdd = (item, coefficient) => {
         const value = toNumber(coefficient, 0).toFixed(2);
-        document.querySelectorAll(`[data-match-bets][data-match-id="${matchId}"] [data-bet-option]`).forEach((button) => {
-            if (button.dataset.market !== market || !sameSelection(button.dataset.selection, selection)) return;
+        document.querySelectorAll(`[data-match-bets][data-match-id="${item.matchId}"] [data-bet-option]`).forEach((button) => {
+            if (!sameOutcome(item, button.dataset.market, button.dataset.outcomeCode, button.dataset.selection)) return;
             const previous = button.dataset.coefficient;
             const oddNode = [...button.querySelectorAll("strong, small, b")]
                 .find((node) => node.textContent.trim() === previous);
@@ -311,11 +322,12 @@
     };
 
     // The server always takes the coefficient from the current line; keep the coupon in sync with it.
-    const applyItemOdds = (matchId, market, selection, coefficient) => {
+    const applyItemOdds = (matchId, market, selection, coefficient, outcomeCode = "") => {
         const item = items.get(String(matchId));
         const odd = readOdd(coefficient);
-        if (!item || !odd || item.market !== market || !sameSelection(item.selection, selection)) return false;
-        refreshMatchButtonOdd(item.matchId, item.market, item.selection, odd);
+        if (!item || !odd || !sameOutcome(item, market, outcomeCode, selection)) return false;
+        if (!item.outcomeCode && outcomeCode) item.outcomeCode = outcomeCode;
+        refreshMatchButtonOdd(item, odd);
         if (item.coefficient === odd) return false;
         item.coefficient = odd;
         const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
@@ -428,6 +440,7 @@
             match_id: item.matchId,
             market: item.market,
             selection: item.selection,
+            outcome_code: item.outcomeCode || "",
             coefficient: item.coefficient,
         })),
     });
@@ -449,7 +462,7 @@
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
             if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
-            if (fresh && applyItemOdds(matchId, fresh.market, fresh.selection, fresh.coefficient)) {
+            if (fresh && applyItemOdds(matchId, fresh.market, fresh.selection, fresh.coefficient, fresh.outcomeCode)) {
                 oddsUpdated = true;
             }
         });
@@ -561,7 +574,7 @@
             const oddsChanged = xhr?.responseJSON?.odds_changed;
             if (Array.isArray(oddsChanged) && oddsChanged.length) {
                 oddsChanged.forEach((change) => {
-                    applyItemOdds(change.match_id, change.market, change.selection, change.coefficient);
+                    applyItemOdds(change.match_id, change.market, change.selection, change.coefficient, change.outcome_code);
                 });
                 saveLocalSnapshot(true);
             }

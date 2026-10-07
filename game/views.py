@@ -571,6 +571,7 @@ def _serialize_prediction(prediction: Prediction) -> dict:
         "market": prediction.market,
         "selection": prediction.selection,
         "shortLabel": _prediction_short_label(prediction),
+        "outcomeCode": prediction.outcome_code,
         "coefficient": _decimal_string(prediction.coefficient),
         "lastSeen": match.last_seen_at.isoformat() if match.last_seen_at else "",
     }

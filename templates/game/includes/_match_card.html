@@ -157,7 +157,7 @@
             {% for option in coupon_quick.items %}
             <button class="coupon-option match-bet-option" type="button"
                 {% if option.coefficient and not card_readonly and can_write_coupon and match.sync_scope == "prematch" and not match.tournament_match_used %}
-                    data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-coefficient="{{ option.coefficient }}"
+                    data-bet-option data-bet-key="{{ option.key }}" data-market="{{ option.market }}" data-selection="{{ option.selection }}" data-outcome-code="{{ option.outcome_code }}" data-coefficient="{{ option.coefficient }}"
                 {% else %}
                     disabled aria-disabled="true"
                 {% endif %}
