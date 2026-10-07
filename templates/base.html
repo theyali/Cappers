@@ -87,7 +87,7 @@
         {% endif %}
 
         {% block content %}{% endblock %}
-        {% if adv_banners and adv_placement == 'content' %}
+        {% if adv_banners and adv_placement == 'content' and request.resolver_match.view_name != 'front:article_detail' and request.resolver_match.view_name != 'front:news_detail' %}
             <div class="container">
                 {% include "pages/_adv_banners.html" with placement="content" %}
             </div>
@@ -100,7 +100,7 @@
 
     </main>
 
-    {% if not hide_footer %}
+    {% if not hide_footer and request.resolver_match.view_name != 'front:article_detail' and request.resolver_match.view_name != 'front:news_detail' %}
         {% include "front/includes/_footer.html" %}
     {% endif %}
 

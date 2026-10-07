@@ -5,9 +5,6 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -16,12 +13,9 @@ from django.utils import timezone
 from payments.models import Payment
 
 from .base import CheckoutSession, InvalidSignature, PaymentProvider, PaymentProviderError, ProviderEvent, Rejection
+from .http import credentials_configured, parse_amount, request_json
 
 logger = logging.getLogger("payments")
-
-# Credentials from .env.example contain it; a secret everyone can read must
-# never be trusted to verify notifications.
-PLACEHOLDER_MARK = "change-me"
 
 # Answers to the Check notification; Pay, Fail and Refund expect 0.
 REJECTION_CODES = {
@@ -84,8 +78,7 @@ class CloudPaymentsProvider(PaymentProvider):
         )
 
     def is_enabled(self) -> bool:
-        credentials = (self.public_id, self.api_secret)
-        return all(credentials) and not any(PLACEHOLDER_MARK in value for value in credentials)
+        return credentials_configured(self.public_id, self.api_secret)
 
     def supports(self, amount_rub) -> bool:
         return amount_rub > 0
@@ -172,28 +165,13 @@ class CloudPaymentsProvider(PaymentProvider):
 
     def _call(self, endpoint: str, body: dict) -> dict:
         credentials = base64.b64encode(f"{self.public_id}:{self.api_secret}".encode()).decode()
-        request = Request(
+        return request_json(
+            "CloudPayments",
             f"{self.api_url}/{endpoint}",
-            data=json.dumps(body).encode(),
-            method="POST",
-            headers={
-                "Authorization": f"Basic {credentials}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
+            headers={"Authorization": f"Basic {credentials}"},
+            body=body,
+            timeout=self.timeout,
         )
-        try:
-            with urlopen(request, timeout=self.timeout) as response:
-                answer = json.loads(response.read().decode("utf-8"))
-        except HTTPError as error:
-            logger.error("CloudPayments %s answered HTTP %s", endpoint, error.code)
-            raise PaymentProviderError("Платёжный сервис временно недоступен.") from error
-        except (URLError, TimeoutError, ValueError) as error:
-            logger.error("CloudPayments %s failed: %s", endpoint, error)
-            raise PaymentProviderError("Платёжный сервис временно недоступен.") from error
-        if not isinstance(answer, dict):
-            raise PaymentProviderError("CloudPayments: неожиданный ответ.")
-        return answer
 
 
 def _notification_data(request) -> dict:
@@ -225,9 +203,9 @@ def _event(event_type: str, status: str, data: dict) -> ProviderEvent:
         payment_public_id=str(data.get("InvoiceId") or ""),
         status=status,
         external_id=transaction_id,
-        amount=_decimal(data.get("Amount")),
+        amount=parse_amount(data.get("Amount"), "CloudPayments"),
         currency=str(data.get("Currency") or ""),
-        paid_amount=_decimal(data.get("PaymentAmount")),
+        paid_amount=parse_amount(data.get("PaymentAmount"), "CloudPayments"),
         paid_currency=str(data.get("PaymentCurrency") or ""),
         is_test=str(data.get("TestMode", "")).strip().lower() in {"1", "true"},
         account_id=None if account_id is None else str(account_id),
@@ -235,15 +213,3 @@ def _event(event_type: str, status: str, data: dict) -> ProviderEvent:
         failure_reason=reason[:255],
         raw={key: value for key, value in data.items() if key not in UNSTORED_FIELDS},
     )
-
-
-def _decimal(value) -> Decimal | None:
-    if value in (None, ""):
-        return None
-    try:
-        amount = Decimal(str(value))
-    except InvalidOperation as error:
-        raise PaymentProviderError(f"CloudPayments: неверная сумма «{value}».") from error
-    if not amount.is_finite():
-        raise PaymentProviderError(f"CloudPayments: неверная сумма «{value}».")
-    return amount

@@ -34,7 +34,7 @@ class CheckoutTests(TestCase):
         self.client.force_login(self.user)
 
     def checkout(self, purpose, data, *, answer=ORDER_CREATED):
-        with patch("payments.services.providers.cloudpayments.urlopen", return_value=api_answer(answer)) as urlopen:
+        with patch("payments.services.providers.http.urlopen", return_value=api_answer(answer)) as urlopen:
             response = self.client.post(
                 reverse("payments:checkout", args=[purpose]),
                 {"provider": "cloudpayments", **data},

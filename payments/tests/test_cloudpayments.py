@@ -66,7 +66,7 @@ class CloudPaymentsApiTests(TestCase):
 
     def _checkout(self, answer):
         provider = PaymentProviderFactory.create("cloudpayments")
-        with patch("payments.services.providers.cloudpayments.urlopen", return_value=api_answer(answer)) as urlopen:
+        with patch("payments.services.providers.http.urlopen", return_value=api_answer(answer)) as urlopen:
             session = provider.create_checkout(
                 self.payment,
                 success_url="https://site.test/ok/",
@@ -122,9 +122,9 @@ class CloudPaymentsApiTests(TestCase):
             },
         }
         provider = PaymentProviderFactory.create("cloudpayments")
-        with patch("payments.services.providers.cloudpayments.urlopen", return_value=api_answer(found)) as urlopen:
+        with patch("payments.services.providers.http.urlopen", return_value=api_answer(found)) as urlopen:
             event = provider.fetch_status(self.payment)
-        with patch("payments.services.providers.cloudpayments.urlopen", return_value=api_answer({"Success": False, "Message": "Not found"})):
+        with patch("payments.services.providers.http.urlopen", return_value=api_answer({"Success": False, "Message": "Not found"})):
             missing = provider.fetch_status(self.payment)
 
         self.assertEqual(urlopen.call_args.args[0].full_url, "https://api.cloudpayments.test/v2/payments/find")

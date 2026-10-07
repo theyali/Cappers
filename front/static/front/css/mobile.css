@@ -703,6 +703,14 @@ body.expert-public-details-open {
     gap: 20px;
     padding-bottom: 40px;
   }
+  .matches-page .matches-list-panel .prediction-results-head {
+    position: sticky;
+    top: 0;
+    z-index: 58;
+    margin: -2px 0 0;
+    padding: 8px 4px 10px;
+    background: #121212;
+  }
   .matches-page .matches-shell > .coupon-sidebar {
     position: static;
     top: auto;

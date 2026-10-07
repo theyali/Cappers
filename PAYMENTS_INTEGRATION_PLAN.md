@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
 
-**Статус:** шаги 1–6 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи, кнопки оплаты и страница результата). Шаг 7 готов со стороны кода и ждёт ключей CloudPayments и проверочной оплаты: чек-лист — раздел 12.1.
+**Статус:** шаги 1–6 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи, кнопки оплаты и страница результата). Шаг 7 готов со стороны кода и ждёт ключей CloudPayments и проверочной оплаты: чек-лист — раздел 12.1. Шаг 8: провайдер NOWPayments готов, ждёт проверки в песочнице — раздел 7.5.
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -32,7 +32,7 @@
 ## 2. Бизнес-решения до начала разработки
 
 1. **Юрлицо и чеки 54-ФЗ.** Приём карт от физлиц в РФ требует онлайн-чеков. CloudPayments умеет передавать чек через CloudKassir (`CustomerReceipt` в `JsonData`) **[сверить]**. Нужны система налогообложения, ставка НДС и признаки предмета и способа расчёта.
-2. **Валюта для крипты.** Цены в БД хранятся в рублях. Для NOWPayments нужно выбрать фиатную валюту счёта (`price_currency`), обычно `usd`. RUB использовать, только если он есть в списке поддерживаемых для аккаунта. Курс RUB → USD фиксируется в момент создания платежа и сохраняется в снимке.
+2. **Валюта для крипты.** ✅ Решено (вариант А): цены остаются в рублях, счёт NOWPayments выставляется в рублях, NOWPayments сам пересчитывает в монету. Если в песочнице окажется, что RUB не принимается, — пересчёт в USD по курсу ЦБ (раздел 7).
 3. **Холд дохода каппера.** ✅ Сделано (`CODE_AUDIT.md`, п. 1.8). Доход с подписок и реферальные начисления с оплат попадают в холд (`RealBalanceTransaction.Status.HELD`, `available_at`, сумма в `CapperRealBalance.held`). Срок — настройка сайта «Холд дохода с оплат», по умолчанию 7 дней.
 4. **Политика возвратов.** Решить, можно ли вернуть деньги за потраченные коины, как прекращается подписка при возврате и что происходит с долей каппера.
 5. **Реферальный процент.** ✅ Сделано (`CODE_AUDIT.md`, п. 1.9): процент с подписки считается от комиссии площадки, продавец не получает долю со своей продажи.
@@ -467,83 +467,73 @@ Check-уведомление особенно полезно: оно позво�
 
 ## 7. NOWPayments (криптовалюта)
 
+✅ **Реализовано** (`payments/services/providers/nowpayments.py`, тесты `payments/tests/test_nowpayments.py`). Осталось проверить в песочнице (KAN-22).
+
+**Решение по валюте (вариант А, KAN-19):** все цены остаются в рублях. Счёт уходит в NOWPayments сразу в рублях (`price_currency=rub`), NOWPayments сам пересчитывает его в выбранную покупателем монету. Курс ЦБ и вторая валюта на сайте не нужны. Первым делом в песочнице проверить, что счёт в рублях создаётся; если NOWPayments не примет RUB — добавить пересчёт в USD по курсу ЦБ (вариант Б).
+
 ### 7.1 Настройки
 
 ```env
-NOWPAYMENTS_API_KEY=
-NOWPAYMENTS_IPN_SECRET=
-NOWPAYMENTS_API_URL=https://api.nowpayments.io/v1          # sandbox: https://api-sandbox.nowpayments.io/v1
-NOWPAYMENTS_PRICE_CURRENCY=usd                             # валюта счёта; RUB — только если поддерживается аккаунтом
-NOWPAYMENTS_RUB_RATE_SOURCE=cbr                            # откуда брать курс RUB → price_currency
-NOWPAYMENTS_IS_FIXED_RATE=True
-NOWPAYMENTS_IS_FEE_PAID_BY_USER=False
-NOWPAYMENTS_MIN_PRICE_RUB=500                              # ниже — кнопку крипты не показывать
-NOWPAYMENTS_INVOICE_TTL_HOURS=24
+NOWPAYMENTS_API_KEY=change-me-nowpayments-api-key       # Store Settings → API keys
+NOWPAYMENTS_IPN_SECRET=change-me-nowpayments-ipn-secret # Store Settings → Instant payment notifications
+NOWPAYMENTS_SANDBOX=False            # True — api-sandbox.nowpayments.io, отдельный аккаунт и ключи
+NOWPAYMENTS_API_TIMEOUT=15
+NOWPAYMENTS_ORDER_TTL_MINUTES=60     # поздняя оплата всё равно засчитывается
+NOWPAYMENTS_FEE_PAID_BY_USER=False   # кто платит комиссию NOWPayments
+NOWPAYMENTS_MIN_AMOUNT_RUB=0         # дешевле — кнопки «Оплатить криптой» нет
 ```
+
+- Ключи с `change-me` выключают провайдер, как у CloudPayments; предупреждение `payments.W002` при деплое.
+- Платежи песочницы помечаются тестовыми (`is_test`): для проверки нужен `PAYMENTS_ALLOW_TEST_PAYMENTS=True`, в production они не выдают товар.
 
 ### 7.2 Создание счёта
 
-`POST {API_URL}/invoice`, заголовок `x-api-key: <API_KEY>`:
+`POST {API}/v1/invoice`, заголовок `x-api-key`:
 
 ```json
 {
-  "price_amount": 5.39,
-  "price_currency": "usd",
+  "price_amount": 499.0,
+  "price_currency": "rub",
   "order_id": "<payment.public_id>",
-  "order_description": "Coins package Start",
-  "ipn_callback_url": "https://capper-hub.com/payments/webhooks/nowpayments/",
+  "order_description": "Пакет коинов «Старт»",
+  "ipn_callback_url": "https://capper-hub.com/payments/webhooks/nowpayments/ipn/",
   "success_url": "https://capper-hub.com/payments/<public_id>/return/",
   "cancel_url": "https://capper-hub.com/payments/<public_id>/return/",
-  "partially_paid_url": "https://capper-hub.com/payments/<public_id>/return/",
-  "is_fixed_rate": true,
   "is_fee_paid_by_user": false
 }
 ```
 
-В ответе приходит `id` (это `external_invoice_id`) и `invoice_url` (это `checkout_url`). Монету пользователь выбирает на странице NOWPayments.
-
-`order_description` лучше писать латиницей. Кириллица может по-разному сериализоваться при проверке подписи IPN (см. ниже).
+Ответ: `id` → `external_invoice_id`, `invoice_url` → `checkout_url`. Монету покупатель выбирает на странице NOWPayments. Адрес уведомлений передаётся с каждым счётом, в кабинете его задавать не нужно.
 
 ### 7.3 IPN (вебхук)
 
-- URL: `/payments/webhooks/nowpayments/`, тело — JSON.
-- Подпись: заголовок `x-nowpayments-sig` = `HMAC-SHA512(IPN_SECRET, JSON-строка тела с ключами, отсортированными по алфавиту)`, в hex.
-
-```python
-def verify_signature(self, request) -> None:
-    received = request.headers.get("x-nowpayments-sig", "")
-    try:
-        payload = json.loads(request.body)
-    except ValueError as exc:
-        raise InvalidSignature("NOWPayments: некорректный JSON.") from exc
-    message = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    expected = hmac.new(self.ipn_secret.encode(), message.encode(), hashlib.sha512).hexdigest()
-    if not received or not hmac.compare_digest(received, expected):
-        raise InvalidSignature("NOWPayments: неверная подпись IPN.")
-```
-
-Подводные камни, которые нужно закрыть тестами на реальных IPN из sandbox:
-- `sort_keys=True` сортирует и вложенные объекты (например `fee`). Это совпадает с рекурсивной сортировкой из документации NOWPayments.
-- Сериализация в JS (`JSON.stringify`) и Python различается для кириллицы (`ensure_ascii`) и для чисел вида `1e-7`.
-
-**Поэтому подпись — только первый фильтр. Статус и суммы для выдачи товара всегда перепроверяются запросом** `GET {API_URL}/payment/{payment_id}`. Сервер NOWPayments — единственный источник правды.
+- URL: `/payments/webhooks/nowpayments/ipn/`, тело — JSON, ответ `200 {"status": "ok"}`.
+- Подпись: `x-nowpayments-sig` = hex `HMAC-SHA512(IPN_SECRET, JSON тела с ключами, отсортированными на всех уровнях)`. Принимаются две формы сериализации: как `JSON.stringify` в JavaScript (кириллица как есть, `0.00001`) и как `json.dumps` в их Python-примере (`\u…`, `1e-05`). Обе требуют IPN secret.
+- **Статус и суммы берутся не из уведомления, а из `GET {API}/v1/payment/{payment_id}`.** Подпись отсекает посторонние запросы, а подделать оплату нельзя даже с утёкшим IPN secret.
 
 ### 7.4 Сопоставление статусов
 
 | `payment_status` NOWPayments | `Payment.Status` | Действие |
 |---|---|---|
 | `waiting` | `PENDING` | — |
-| `confirming`, `confirmed`, `sending` | `PROCESSING` | Показать «ждём подтверждений сети» |
-| `partially_paid` | `PARTIALLY_PAID` | Товар **не** выдаётся, ручная проверка или доплата |
+| `confirming`, `confirmed`, `sending` | `PROCESSING` | «Платёж подтверждается» на странице результата |
+| `partially_paid` | `PARTIALLY_PAID` | Товар **не** выдаётся, «Оплачено не полностью» — разбор вручную |
 | `finished` | `SUCCEEDED` | Выдача товара |
 | `failed` | `FAILED` | — |
-| `refunded` | `REFUNDED` | Откат выдачи |
+| `refunded` | `REFUNDED` | Откат выдачи — шаг 9 |
 | `expired` | `EXPIRED` | — |
 
-- Ключ идемпотентности: `dedup_key = f"{payment_id}:{payment_status}"`.
-- На один счёт может прийти несколько `payment_id` (пользователь сменил монету). Связь с заказом идёт через `order_id`. В `Payment.external_id` записывается тот `payment_id`, который дошёл до `finished`.
-- Переплата (`actually_paid > pay_amount`) обрабатывается как обычная оплата, разница пишется в лог.
-- Автоматического возврата нет: `refund()` выбрасывает исключение, возвраты делаются вручную в кабинете NOWPayments.
+- Ключ идемпотентности: `ipn:{payment_id}:{payment_status}`; у сверки — `reconcile:…`.
+- Сумма и валюта (`price_amount`, `price_currency`) сверяются с заказом; при расхождении статус не меняется.
+- Сверка (`reconcile_pending_payments`) спрашивает API по `payment_id` из последнего уведомления. Если ни одного уведомления не пришло, спрашивать не о чем: NOWPayments создаёт платёж только когда покупатель выбрал монету.
+- Автоматического возврата нет: возвраты делаются вручную в кабинете NOWPayments.
+
+### 7.5 Проверка в песочнице (KAN-22)
+
+1. Аккаунт https://account-sandbox.nowpayments.io/, кошелёк для выплат, API key и IPN secret.
+2. `.env`: ключи песочницы, `NOWPAYMENTS_SANDBOX=True`, `PAYMENTS_ENABLED_PROVIDERS=cloudpayments,nowpayments` (или только `nowpayments`), `PAYMENTS_STAFF_ONLY=True`, `PAYMENTS_ALLOW_TEST_PAYMENTS=True`.
+3. Уведомления приходят только на публичный https-адрес: сервер после слияния в `main` или локальный сайт через туннель (cloudflared, ngrok).
+4. Сценарии: счёт в рублях создаётся; успешная оплата выдаёт товар; частичная — нет; истёкший счёт; повторное уведомление ничего не меняет; в `logs/payments.log` нет «bad signature».
 
 ---
 
@@ -712,7 +702,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 5. ✅ **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты (`payments/tests/test_fulfillment.py`).
 6. ✅ **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки (страница и модалка) и на странице VIP; return-страница со статусом. Стили — только в `main.css`, без inline. Тесты: `payments/tests/test_checkout.py`.
 7. 🟡 **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=cloudpayments`. Код готов: флаг `PAYMENTS_STAFF_ONLY` прячет оплату от всех, кроме сотрудников, на время проверки тестового терминала; проверки `payments.W001–W003` предупреждают при деплое о незаданных ключах и о тестовых платежах, открытых для всех. Осталось пройти чек-лист 12.1.
-8. **NOWPayments:** провайдер, IPN, перепроверка через API, курс RUB → USD, минимальные суммы, тесты на sandbox → включение.
+8. 🟡 **NOWPayments:** провайдер, IPN, перепроверка через API, минимальная сумма настройкой, тесты — готово; проверка в песочнице и включение — раздел 7.5.
 9. **Возвраты и чеки 54-ФЗ:** `refunds.py`, Refund-вебхук, CloudKassir.
 10. **Мониторинг:** алерты, отчёт сверки с выписками провайдеров.
 
@@ -776,7 +766,7 @@ PAYMENTS_STAFF_ONLY=False
 ## 13. Открытые вопросы к владельцу продукта
 
 1. Кто принимает платежи (ИП, ООО, самозанятый) и нужна ли онлайн-касса (CloudKassir)? Какие СНО и НДС? Код готов к любому варианту: всё задаётся в `.env` (`PAYMENTS_MERCHANT_TYPE`, `CLOUDPAYMENTS_RECEIPTS_ENABLED`, `CLOUDPAYMENTS_TAXATION_SYSTEM`, `CLOUDPAYMENTS_VAT`). Значения нужно подтвердить с бухгалтером. Отдельно: если площадка продаёт подписку каппера как агент, в чек нужны признак агента и данные поставщика.
-2. В какой валюте выставлять крипто-счёт (USD?) и по какому курсу пересчитывать рублёвые цены?
+2. ~~В какой валюте выставлять крипто-счёт~~ — в рублях, пересчитывает NOWPayments (раздел 7).
 3. ~~Сколько дней холдить доход каппера~~ (7 дней, настройка сайта). Какая политика возвратов за коины и подписки?
 4. Выплаты капперам: оставить ручное подтверждение или автоматизировать?
 5. Сохраняем ли денежные призы в турнирах, где участвуют купленные коины (юридическая проверка)?

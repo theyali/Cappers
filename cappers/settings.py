@@ -76,6 +76,16 @@ CLOUDPAYMENTS_VAT = int(CLOUDPAYMENTS_VAT) if CLOUDPAYMENTS_VAT else None
 CLOUDPAYMENTS_RECEIPT_METHOD = env_int("CLOUDPAYMENTS_RECEIPT_METHOD", 4)
 CLOUDPAYMENTS_RECEIPT_OBJECT = env_int("CLOUDPAYMENTS_RECEIPT_OBJECT", 4)
 
+NOWPAYMENTS_API_KEY = os.getenv("NOWPAYMENTS_API_KEY", "")
+NOWPAYMENTS_IPN_SECRET = os.getenv("NOWPAYMENTS_IPN_SECRET", "")
+# The sandbox has its own account and keys; its payments count as test payments.
+NOWPAYMENTS_SANDBOX = env_bool("NOWPAYMENTS_SANDBOX", False)
+NOWPAYMENTS_API_TIMEOUT = env_int("NOWPAYMENTS_API_TIMEOUT", 15)
+NOWPAYMENTS_ORDER_TTL_MINUTES = env_int("NOWPAYMENTS_ORDER_TTL_MINUTES", 60)
+NOWPAYMENTS_FEE_PAID_BY_USER = env_bool("NOWPAYMENTS_FEE_PAID_BY_USER", False)
+# Cheaper products are not offered for crypto: coins have minimum amounts.
+NOWPAYMENTS_MIN_AMOUNT_RUB = env_int("NOWPAYMENTS_MIN_AMOUNT_RUB", 0)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

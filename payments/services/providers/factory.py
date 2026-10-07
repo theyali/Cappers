@@ -2,6 +2,7 @@ from django.conf import settings
 
 from .base import PaymentProvider, PaymentProviderDisabled, PaymentProviderError
 from .cloudpayments import CloudPaymentsProvider
+from .nowpayments import NOWPaymentsProvider
 
 
 class UnknownPaymentProvider(PaymentProviderError):
@@ -17,6 +18,7 @@ class PaymentProviderFactory:
 
     _providers: dict[str, type[PaymentProvider]] = {
         CloudPaymentsProvider.code: CloudPaymentsProvider,
+        NOWPaymentsProvider.code: NOWPaymentsProvider,
     }
 
     @classmethod
