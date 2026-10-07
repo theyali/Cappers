@@ -57,6 +57,12 @@ class User(AbstractUser):
     )
     email_verified = models.BooleanField("Почта подтверждена", default=False, db_index=True)
     registration_ip = models.GenericIPAddressField("IP регистрации", null=True, blank=True, db_index=True)
+    deleted_at = models.DateTimeField(
+        "Аккаунт удалён",
+        null=True,
+        blank=True,
+        help_text="Аккаунт обезличен: личные данные стёрты, финансовая история сохранена.",
+    )
     referral_code = models.CharField(
         "Реферальный код",
         max_length=8,
@@ -470,13 +476,13 @@ class AnalystPaidPlan(models.Model):
 class AnalystPaidSubscription(models.Model):
     subscriber = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_subscriptions",
         verbose_name="Подписчик",
     )
     analyst = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_subscribers",
         verbose_name="Аналитик",
     )
@@ -533,13 +539,13 @@ class AnalystPaidSubscriptionPayment(models.Model):
     )
     subscriber = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_payments",
         verbose_name="Подписчик",
     )
     analyst = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_sales",
         verbose_name="Аналитик",
     )

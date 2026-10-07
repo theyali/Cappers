@@ -2,7 +2,7 @@ import json
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
-from django.db.models import RestrictedError
+from django.db.models import ProtectedError, RestrictedError
 from django.db.models.deletion import Collector
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -172,16 +172,12 @@ class CopiedBetsOfVoidedCouponTests(CouponCancelTestMixin, TestCase):
         with self.assertRaises(RestrictedError):
             coupon.delete()
 
-    def test_restrict_does_not_block_author_account_cascade(self):
-        coupon = self._publish()
-        collector = Collector(using="default")
+    def test_author_account_with_copied_bets_cannot_be_hard_deleted(self):
+        self._publish()
 
-        # RESTRICT allows the coupon to go when its copies are deleted through
-        # CopiedBet.analyst in the same cascade (account deletion itself is item 1.10).
-        collector.collect([self.analyst])
-
-        self.assertIn(coupon, collector.data[PredictionCoupon])
-        self.assertTrue(any(queryset.model is CopiedBet for queryset in collector.fast_deletes))
+        # Accounts are deleted by anonymizing them; financial records keep the user.
+        with self.assertRaises(ProtectedError):
+            Collector(using="default").collect([self.analyst])
 
 
 @override_settings(STORAGES=TEST_STORAGES)

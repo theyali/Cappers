@@ -49,6 +49,7 @@ from .paid_predictions import (
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
+from .services.account_deletion import account_deletion_blockers, delete_user_account
 from .services.bonus_center import build_profile_bonus_summary
 from .services.capper_articles import (
     build_capper_articles_context,
@@ -826,6 +827,7 @@ def profile(request):
         "real_balance_display": format_money(real_balance.balance) if real_balance else "",
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
         "real_held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
+        "delete_account_blockers": account_deletion_blockers(request.user),
         "coin_transactions": coin_transactions,
         "real_transactions": real_transactions,
         "copybetting_subscriptions": copybetting_subscriptions,
@@ -857,12 +859,14 @@ def delete_account(request):
         messages.error(request, "Подтвердите удаление аккаунта.")
         return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 
-    user = request.user
-    with transaction.atomic():
-        user.delete()
+    try:
+        delete_user_account(request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 
     logout(request)
-    messages.success(request, "Аккаунт и связанные данные удалены.")
+    messages.success(request, "Аккаунт удалён, личные данные стёрты.")
     return redirect("front:index")
 
 

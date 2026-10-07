@@ -10854,6 +10854,7 @@ body.register footer {
     stroke-linejoin: round;
 }
 .profile-email-modal-copy { margin: 0; color: rgba(255, 255, 255, 0.64); font-size: 13px; line-height: 1.55; }
+ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-email-modal-submit {
     min-height: 46px;
     display: inline-flex;

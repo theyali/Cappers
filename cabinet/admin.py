@@ -29,6 +29,7 @@ from .models import (
     VipPlanComparisonValue,
     XpLevel,
 )
+from .services.account_deletion import delete_user_account
 
 from .services.capper_articles import approve_capper_article, reject_capper_article
 
@@ -149,7 +150,7 @@ class UserLeaguePreferenceAdmin(admin.ModelAdmin):
 class CabinetUserAdmin(UserAdmin):
     inlines = (UserSportPreferenceInline, UserLeaguePreferenceInline)
     fieldsets = UserAdmin.fieldsets + (
-        ("Профиль", {"fields": ("role", "email_verified", "referral_code", "registration_ip")}),
+        ("Профиль", {"fields": ("role", "email_verified", "referral_code", "registration_ip", "deleted_at")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Профиль", {"fields": ("role", "email_verified")}),
@@ -164,8 +165,30 @@ class CabinetUserAdmin(UserAdmin):
         "is_active",
     )
     list_filter = ("role", "email_verified", "is_staff", "is_active")
-    readonly_fields = (*UserAdmin.readonly_fields, "referral_code", "registration_ip")
+    readonly_fields = (*UserAdmin.readonly_fields, "referral_code", "registration_ip", "deleted_at")
     search_fields = (*UserAdmin.search_fields, "referral_code", "registration_ip")
+    actions = ("delete_accounts",)
+
+    def has_delete_permission(self, request, obj=None):
+        # Users keep financial history; accounts are deleted by anonymizing them.
+        return False
+
+    @admin.action(description="Удалить аккаунты (стереть личные данные)")
+    def delete_accounts(self, request, queryset):
+        deleted = 0
+        skipped = []
+        for user in queryset.filter(deleted_at__isnull=True).order_by("id"):
+            username = user.username
+            try:
+                delete_user_account(user)
+            except ValidationError as exc:
+                skipped.append(f"@{username}: {' '.join(exc.messages)}")
+            else:
+                deleted += 1
+        message = f"Удалено аккаунтов: {deleted}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
 
 @admin.register(AnalystProfile)

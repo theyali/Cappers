@@ -11,7 +11,7 @@ from django.utils import timezone
 class CoinWallet(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="coin_wallet",
         verbose_name="Пользователь",
     )
@@ -54,7 +54,7 @@ class CoinTransaction(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="coin_transactions",
         verbose_name="Пользователь",
     )
@@ -167,7 +167,7 @@ class CoinPackage(models.Model):
 class CapperRealBalance(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="real_balance",
         verbose_name="Каппер",
     )
@@ -241,7 +241,7 @@ class RealBalanceTransaction(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="real_balance_transactions",
         verbose_name="Каппер",
     )
@@ -391,18 +391,17 @@ class CopiedBet(models.Model):
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="copied_bets",
         verbose_name="Пользователь",
     )
     analyst = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="source_copied_bets",
         verbose_name="Каппер",
     )
-    # Deleting a coupon must not silently wipe followers' copied stakes. RESTRICT
-    # still lets an author's account deletion cascade through CopiedBet.analyst.
+    # Deleting a coupon must not silently wipe followers' copied stakes.
     source_coupon = models.ForeignKey(
         "game.PredictionCoupon",
         on_delete=models.RESTRICT,

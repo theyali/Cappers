@@ -66,6 +66,9 @@ def sync_capper_bank_after_coupon_delete(sender, instance: PredictionCoupon, **k
 
 @receiver(post_save, sender=User)
 def create_balance_for_new_user(sender, instance: User, **kwargs) -> None:
+    if not instance.is_active:
+        # Deactivated or deleted accounts get no new wallets.
+        return
     ensure_coin_wallet(instance)
     if instance.role == User.Role.ANALYST:
         ensure_real_balance(instance)
