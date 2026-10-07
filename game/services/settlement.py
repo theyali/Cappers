@@ -5,6 +5,7 @@ from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from cabinet.roulette.rewards import UserRouletteRewardState
@@ -80,13 +81,80 @@ def resolve_match_manual_reviews(match: Match, reasons: tuple[str, ...]) -> None
     )
 
 
-def settle_finished_matches(limit: int = 500) -> dict:
-    void_result = settle_void_matches(limit=limit)
+SCORE_REVIEW_REASONS = (
+    MatchManualReview.Reason.MISSING_SCORE,
+    MatchManualReview.Reason.INVALID_SCORE,
+)
+
+
+def _review_recent_match_scores(limit: int) -> None:
+    """Flag recent finished matches with a missing or broken score.
+
+    This runs even for matches nobody bet on: such reviews show gaps in the
+    provider data. Settlement itself only looks at matches with predictions.
+    """
     matches = (
         Match.objects.filter(sync_scope=Match.SyncScope.FINISHED)
-        .select_related("sport")
+        .annotate(
+            has_open_review=Exists(
+                MatchManualReview.objects.filter(
+                    match=OuterRef("pk"),
+                    status=MatchManualReview.Status.OPEN,
+                    reason__in=SCORE_REVIEW_REASONS,
+                )
+            )
+        )
+        .only("id", "score")
         .order_by("-starts_at", "-id")[:limit]
     )
+    for match in matches:
+        score = (match.score or "").strip()
+        if not score:
+            reason = MatchManualReview.Reason.MISSING_SCORE
+        elif _parse_score(score) is None:
+            reason = MatchManualReview.Reason.INVALID_SCORE
+        else:
+            reason = None
+        if reason and not match.has_open_review:
+            flag_match_for_manual_review(match, reason, {"score": match.score})
+        elif not reason and match.has_open_review:
+            resolve_match_manual_reviews(match, SCORE_REVIEW_REASONS)
+
+
+def _matches_awaiting_settlement(sync_scopes):
+    """Matches with unsettled published predictions, oldest first.
+
+    Only these need settling, so a busy day cannot push an unsettled match out
+    of the batch. Matches waiting for a manual review go last: they are retried,
+    but cannot block fresh matches.
+    """
+    return (
+        Match.objects.filter(sync_scope__in=sync_scopes)
+        .filter(
+            Exists(
+                Prediction.objects.filter(
+                    match=OuterRef("pk"),
+                    state_status="",
+                    coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                )
+            )
+        )
+        .annotate(
+            has_open_review=Exists(
+                MatchManualReview.objects.filter(
+                    match=OuterRef("pk"),
+                    status=MatchManualReview.Status.OPEN,
+                )
+            )
+        )
+        .order_by("has_open_review", "starts_at", "id")
+    )
+
+
+def settle_finished_matches(limit: int = 500) -> dict:
+    void_result = settle_void_matches(limit=limit)
+    _review_recent_match_scores(limit)
+    matches = _matches_awaiting_settlement([Match.SyncScope.FINISHED]).select_related("sport")[:limit]
     resolved_matches = 0
     updated_predictions = 0
     updated_coupons = set()
@@ -197,10 +265,7 @@ def settle_finished_matches(limit: int = 500) -> dict:
 
 
 def settle_void_matches(limit: int = 500) -> dict:
-    matches = (
-        Match.objects.filter(sync_scope__in=VOID_MATCH_SCOPES)
-        .order_by("-starts_at", "-id")[:limit]
-    )
+    matches = _matches_awaiting_settlement(VOID_MATCH_SCOPES)[:limit]
     resolved_matches = 0
     updated_predictions = 0
     updated_coupons: set[int] = set()
