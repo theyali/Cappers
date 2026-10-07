@@ -139,8 +139,10 @@ def start_checkout(user, order: dict, provider_code: str, *, site_url: str) -> P
         **order,
     )
     return_url = site_url.rstrip("/") + reverse("payments:return", args=[payment.public_id])
+    # Providers that take the notification address with each order (NOWPayments) get it here.
+    webhook_url = site_url.rstrip("/") + reverse("payments:webhook", args=[provider.code, "ipn"])
     try:
-        session = provider.create_checkout(payment, success_url=return_url, fail_url=return_url, webhook_url="")
+        session = provider.create_checkout(payment, success_url=return_url, fail_url=return_url, webhook_url=webhook_url)
     except PaymentProviderError as exc:
         payment.status = Payment.Status.FAILED
         payment.failure_reason = str(exc)[:255]

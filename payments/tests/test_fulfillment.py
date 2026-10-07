@@ -211,7 +211,7 @@ class FulfillmentTests(TestCase):
         }
 
         with (
-            patch("payments.services.providers.cloudpayments.urlopen", return_value=api_answer(found)) as urlopen,
+            patch("payments.services.providers.http.urlopen", return_value=api_answer(found)) as urlopen,
             self.captureOnCommitCallbacks(execute=True),
             self.assertLogs("payments", "ERROR"),
         ):

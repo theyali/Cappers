@@ -36,21 +36,36 @@ def build_payment_status(payment: Payment) -> dict:
         status_context.update(state="done", title="Оплата прошла", text=DONE_TEXTS[payment.purpose])
     elif status == Payment.Status.SUCCEEDED:
         status_context.update(state="pending", title="Оплата получена", text="Зачисляем покупку, это займёт несколько секунд.")
-    elif status in (Payment.Status.CREATED, Payment.Status.PENDING, Payment.Status.PROCESSING):
+    elif status in (Payment.Status.CREATED, Payment.Status.PENDING):
         status_context.update(
             state="pending",
             title="Ждём подтверждение оплаты",
             text="Обычно это занимает несколько секунд. Страница обновится сама.",
         )
+    elif status == Payment.Status.PROCESSING:
+        status_context.update(
+            state="pending",
+            title="Платёж подтверждается",
+            text="Деньги получены и проходят подтверждение. Для криптовалюты это может занять до часа.",
+        )
+    elif status == Payment.Status.PARTIALLY_PAID:
+        status_context.update(
+            title="Оплачено не полностью",
+            text="Пришла не вся сумма. Напишите в поддержку: поможем доплатить или вернуть деньги.",
+        )
     elif status == Payment.Status.FAILED:
         can_retry = bool(payment.checkout_url) and payment.expires_at and payment.expires_at > timezone.now()
         status_context.update(
             title="Оплата не прошла",
-            text="Банк отклонил платёж. Попробуйте ещё раз или оплатите другой картой.",
+            text=(
+                "Банк отклонил платёж. Попробуйте ещё раз или оплатите другой картой."
+                if payment.provider == Payment.Provider.CLOUDPAYMENTS
+                else "Платёж не прошёл. Попробуйте ещё раз."
+            ),
             retry_url=payment.checkout_url if can_retry else "",
         )
     elif status == Payment.Status.REFUNDED:
-        status_context.update(title="Платёж возвращён", text="Деньги вернутся на карту в сроки банка.")
+        status_context.update(title="Платёж возвращён", text="Деньги вернутся туда, откуда была оплата, в сроки банка или сети.")
     return status_context
 
 
