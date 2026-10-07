@@ -25,10 +25,12 @@ from game.services.bet_options import (
     human_market_label,
 )
 from game.services.coupon_validation import (
+    COUPON_PUBLISH_LIMIT_MESSAGE,
     MAX_COUPON_ITEMS,
     CouponMatchClosedError,
     CouponMatchVerificationError,
     CouponOddsChangedError,
+    coupon_publish_limited,
     coupon_total_coefficient,
     extract_match_ids,
     parse_confidence,
@@ -266,6 +268,8 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
+    if not autosave and coupon_publish_limited(request.user):
+        return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
     use_free_prediction = payload.get("use_free_prediction") is True and not autosave
     audience = PredictionCoupon.Audience.FREE
 

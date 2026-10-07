@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -28,10 +30,25 @@ def env_int(name: str, default: int) -> int:
         return default
 
 
-SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-development-key")
-DEBUG = env_bool("DEBUG", True)
+DEBUG = env_bool("DEBUG", False)
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not DEBUG and SECRET_KEY in {"", "unsafe-development-key", "change-me-in-production"}:
+    # A lost environment variable must not start production with a known key.
+    raise ImproperlyConfigured("Set SECRET_KEY: it is required when DEBUG is off.")
+SECRET_KEY = SECRET_KEY or "unsafe-development-key"
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+
+# nginx terminates TLS and always sets X-Forwarded-Proto; the app port is bound
+# to 127.0.0.1 (docker-compose.yml), so the header cannot come from a client.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
+SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 0 if DEBUG else 30 * 24 * 60 * 60)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# nginx redirects plain HTTP to HTTPS (deploy/nginx), so Django does not have to.
+SILENCED_SYSTEM_CHECKS = ["security.W008"]
+ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip("/") + "/"
 
 INSTALLED_APPS = [
     "django.contrib.admin",

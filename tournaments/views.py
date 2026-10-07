@@ -23,7 +23,12 @@ from front.models import PredictionFavorite, PredictionLike
 from front.views import _initials
 from game import date_views
 from game.models import Match, Prediction, PredictionCoupon, Sport
-from game.services.coupon_validation import CouponMatchVerificationError, CouponOddsChangedError
+from game.services.coupon_validation import (
+    COUPON_PUBLISH_LIMIT_MESSAGE,
+    CouponMatchVerificationError,
+    CouponOddsChangedError,
+    coupon_publish_limited,
+)
 from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
 from game.views import _latest_predictions
 from notifications.models import MatchWatch
@@ -447,6 +452,8 @@ def create_coupon(request, slug: str):
         payload = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
+    if coupon_publish_limited(request.user):
+        return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
 
     try:
         coupon, tournament_coupon = create_tournament_coupon(

@@ -20,6 +20,7 @@ from notifications.telegram_bot import (
     find_linked_user_by_chat_id,
 )
 
+from .forms import LoginForm
 from .models import User
 from .referrals import mark_referral_registration
 
@@ -46,6 +47,7 @@ def _telegram_bot_id() -> str:
 
 class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
+    authentication_form = LoginForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

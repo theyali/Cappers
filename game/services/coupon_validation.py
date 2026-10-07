@@ -10,6 +10,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from cappers.ratelimit import rate_limited
 from game.models import Match, MatchOdds, Provider
 from game.services.bet_options import bet_option_key, match_bet_options
 from game.services.match_sync import MatchSyncService
@@ -20,6 +21,9 @@ from game.services.providers.neurokeff import NeurokeffProviderError
 
 
 MAX_COUPON_ITEMS = 20
+# Publishing checks matches with the provider, so it is rate-limited per author.
+COUPON_PUBLISHES_PER_MINUTE = 20
+COUPON_PUBLISH_LIMIT_MESSAGE = "Слишком много попыток опубликовать прогноз. Подождите минуту."
 PREDICTION_STAKE_MIN_COINS = Decimal("100")
 PREDICTION_STAKE_MAX_COINS = Decimal("1000000")
 MIN_ALLOWED_COEFFICIENT = Decimal("1.01")
@@ -31,6 +35,10 @@ MAX_TOTAL_COEFFICIENT = Decimal("9999")
 
 class CouponMatchVerificationError(RuntimeError):
     """Raised when the current provider state cannot be confirmed safely."""
+
+
+def coupon_publish_limited(user) -> bool:
+    return rate_limited(f"coupon-publish:{user.pk}", limit=COUPON_PUBLISHES_PER_MINUTE, window=60)
 
 
 class CouponMatchClosedError(ValidationError):

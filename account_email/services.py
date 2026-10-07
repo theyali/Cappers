@@ -22,6 +22,7 @@ from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetR
 
 EMAIL_REQUEST_TTL_MINUTES = 30
 PASSWORD_RESET_TTL_MINUTES = 30
+PASSWORD_RESETS_PER_HOUR = 3
 EMAIL_VERIFICATION_TTL_MINUTES = 120
 
 
@@ -228,8 +229,15 @@ def complete_email_change(user: User, flow_id: int, code: str) -> EmailChangeReq
         return flow
 
 
-def start_password_reset(user: User, *, request) -> PasswordResetRequest:
+def start_password_reset(user: User, *, request) -> PasswordResetRequest | None:
     now = timezone.now()
+    recent_requests = PasswordResetRequest.objects.filter(
+        user=user,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_requests >= PASSWORD_RESETS_PER_HOUR:
+        # The form answers the same either way, so the limit reveals nothing.
+        return None
     secret = secrets.token_urlsafe(32)
 
     with transaction.atomic():
