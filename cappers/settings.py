@@ -50,6 +50,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SILENCED_SYSTEM_CHECKS = ["security.W008"]
 ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip("/") + "/"
 
+# Payment providers that take payments; empty keeps payments off (PAYMENTS_INTEGRATION_PLAN.md).
+PAYMENTS_ENABLED_PROVIDERS = env_list("PAYMENTS_ENABLED_PROVIDERS")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -71,6 +74,7 @@ INSTALLED_APPS = [
     "front.apps.FrontConfig",
     "pages.apps.PagesConfig",
     "notifications.apps.NotificationsConfig",
+    "payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [

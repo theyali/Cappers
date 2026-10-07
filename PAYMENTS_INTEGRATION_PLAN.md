@@ -1,6 +1,8 @@
 # План интеграции платёжных систем: CloudPayments + NOWPayments (Factory Method)
 
-Дата: 2026-10-06. Ветка: `development`.
+Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
+
+**Статус:** шаги 1–3 выполнены (подготовка по аудиту, приложение `payments`, Factory Method). Следующий шаг — 4, CloudPayments (раздел 12).
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -31,10 +33,10 @@
 
 1. **Юрлицо и чеки 54-ФЗ.** Приём карт от физлиц в РФ требует онлайн-чеков. CloudPayments умеет передавать чек через CloudKassir (`CustomerReceipt` в `JsonData`) **[сверить]**. Нужны система налогообложения, ставка НДС и признаки предмета и способа расчёта.
 2. **Валюта для крипты.** Цены в БД хранятся в рублях. Для NOWPayments нужно выбрать фиатную валюту счёта (`price_currency`), обычно `usd`. RUB использовать, только если он есть в списке поддерживаемых для аккаунта. Курс RUB → USD фиксируется в момент создания платежа и сохраняется в снимке.
-3. **Холд дохода каппера.** Доход с подписки сейчас сразу доступен для вывода. Карточные платежи могут быть оспорены (chargeback), поэтому рекомендуется холд 7–14 дней: `PENDING` → `AVAILABLE`.
+3. **Холд дохода каппера.** ✅ Сделано (`CODE_AUDIT.md`, п. 1.8). Доход с подписок и реферальные начисления с оплат попадают в холд (`RealBalanceTransaction.Status.HELD`, `available_at`, сумма в `CapperRealBalance.held`). Срок — настройка сайта «Холд дохода с оплат», по умолчанию 7 дней.
 4. **Политика возвратов.** Решить, можно ли вернуть деньги за потраченные коины, как прекращается подписка при возврате и что происходит с долей каппера.
-5. **Реферальный процент.** Считать его от комиссии площадки, а не от полной цены. Иначе платёж может стать убыточным (`CODE_AUDIT.md`, п. 1.9).
-6. **Коины и денежные турниры.** Если коины продаются за деньги, а в турнирах с денежными призами побеждает тот, у кого больше коинов, нужна юридическая проверка (признаки азартной игры). Варианты: фиксированная ставка или отдельный банк в денежных турнирах, либо турнирные призы без денежного эквивалента.
+5. **Реферальный процент.** ✅ Сделано (`CODE_AUDIT.md`, п. 1.9): процент с подписки считается от комиссии площадки, продавец не получает долю со своей продажи.
+6. **Коины и денежные турниры.** Если коины продаются за деньги, а в турнирах с денежными призами побеждает тот, у кого больше коинов, нужна юридическая проверка (признаки азартной игры). Варианты: фиксированная ставка или отдельный банк в денежных турнирах, либо турнирные призы без денежного эквивалента. Сейчас денежные призы получают только капперы (`CODE_AUDIT.md`, п. 1.8), а правило ранжирования денежных турниров ещё не выбрано (п. 1.7, пункт 5).
 7. **Минимальная сумма для крипты.** У NOWPayments есть минимальные суммы по монетам (`GET /v1/min-amount`). Дешёвые пакеты коинов криптой не оплатить, поэтому способ оплаты нужно скрывать ниже порога.
 
 ---
@@ -187,10 +189,12 @@ class PaymentEvent(models.Model):
 
 ### 4.3 Изменения в существующих моделях
 
-- `cabinet.AnalystPaidSubscriptionPayment`: добавить `payment = OneToOneField("payments.Payment", null=True, on_delete=PROTECT)` и `source` (`real_balance` / `external`).
-- `wallets.CoinTransaction.Kind`: добавить `PACKAGE_REFUND`.
-- `wallets.RealBalanceTransaction`: добавить `available_at` (для холда дохода каппера) и вид `SUBSCRIPTION_INCOME_REVERSAL`.
-- Финансовые FK на пользователя перевести на `on_delete=PROTECT` (`CODE_AUDIT.md`, п. 1.10).
+- `cabinet.AnalystPaidSubscriptionPayment`: добавить `payment = OneToOneField("payments.Payment", null=True, on_delete=PROTECT)` и `source` (`real_balance` / `external`). Шаг 5.
+- `wallets.CoinTransaction.Kind`: добавить `PACKAGE_REFUND`. Шаг 9.
+- `wallets.RealBalanceTransaction`: вид `SUBSCRIPTION_INCOME_REVERSAL`. Шаг 9. ✅ `available_at` и статус `HELD` уже есть (п. 1.8).
+- ✅ Финансовые FK на пользователя уже `on_delete=PROTECT` (`CODE_AUDIT.md`, п. 1.10).
+
+Реализация `Payment` отличается от черновика выше одним: обратные связи у `coin_package`, `paid_plan` и `vip_plan` называются `provider_payments`, потому что имя `payments` у тарифа подписки уже занято `AnalystPaidSubscriptionPayment`.
 
 ### 4.4 Машина состояний
 
@@ -353,6 +357,8 @@ session = provider.create_checkout(payment, success_url=..., fail_url=..., webho
 ```
 
 Чтобы добавить третью платёжку (ЮKassa, Stripe и т. п.), достаточно нового класса и одной строки в `_providers`. Checkout, вебхуки, сверка и выдача товара не меняются.
+
+**Реализовано в шаге 3** (`payments/services/providers/base.py`, `factory.py`). Реестр `_providers` пока пуст: `CloudPaymentsProvider` добавится в шаге 4, `NOWPaymentsProvider` — в шаге 8. Классов-заглушек нет. Фабрика проверяет `PAYMENTS_ENABLED_PROVIDERS` до создания провайдера, а `available_for()` молча пропускает неизвестные и выключенные коды. Тесты (`payments/tests/test_factory.py`) работают на тестовых провайдерах.
 
 ---
 
@@ -594,8 +600,8 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 | Сервис | Изменение |
 |---|---|
-| `wallets/services.py:purchase_coin_package` | Новая функция `fulfill_coin_package(payment)`: `credit_coins(user, coins + bonus_coins, PACKAGE_PURCHASE, related_obj=payment)` по **снимку**, без перепроверки `is_active`. Реферальные начисления считаются от `amount_rub` снимка. |
-| `cabinet/paid_predictions.py:subscribe_to_paid_predictions` | Выделить ядро `_grant_paid_subscription(subscriber, analyst, *, price, duration_days, plan, payment=None, source)`. Старая функция = ядро + `debit_real_balance`. Новая `fulfill_paid_subscription(payment)` = ядро без списания. Доход каппера уходит в холд. Реферальный процент считается от комиссии. |
+| `wallets/services.py:purchase_coin_package` | ✅ С `payment` функция уже начисляет переданный пакет как снимок, без перепроверки `is_active` (`CODE_AUDIT.md`, п. 2.4). `fulfill_coin_package(payment)` = собрать несохраняемый `CoinPackage` из снимка и вызвать `purchase_coin_package(user, package, payment=payment)`. Реферальные начисления считаются от `price_rub` снимка. |
+| `cabinet/paid_predictions.py:subscribe_to_paid_predictions` | Выделить ядро `_grant_paid_subscription(subscriber, analyst, *, price, duration_days, plan, payment=None, source)`. Старая функция = ядро + `debit_real_balance`. Новая `fulfill_paid_subscription(payment)` = ядро без списания. Холд дохода и реферальный процент от комиссии уже работают (п. 1.8, 1.9). |
 | `cabinet/vip.py:purchase_vip` | Аналогично: ядро `_grant_vip(user, plan, switch)` + две точки входа. |
 | `wallets/views.py:top_up_balance` | Вместо заглушки — кнопки провайдеров из `PaymentProviderFactory.available_for(...)` → `start_checkout`. |
 | `cabinet/views.py` (checkout подписки), `cabinet/vip_views.py` | Добавить «Оплатить картой / криптой» рядом с оплатой с баланса. |
@@ -603,7 +609,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 ### 8.4 Возвраты (`refunds.py`)
 
 - **Коины:** списать `PACKAGE_REFUND` в пределах остатка. Если коины уже потрачены, это решает политика из раздела 2 (запрет возврата или частичный возврат).
-- **Подписка:** `expires_at = now`. Доход каппера: если ещё в холде — отменить; если уже доступен — `SUBSCRIPTION_INCOME_REVERSAL` (баланс может уйти в минус, тогда нужен «долг» и блокировка вывода). Реферальное начисление откатить.
+- **Подписка:** `expires_at = now`. Доход каппера: если транзакция ещё в статусе `HELD` — отменить её и уменьшить `CapperRealBalance.held`; если уже доступен — `SUBSCRIPTION_INCOME_REVERSAL` (баланс может уйти в минус, тогда нужен «долг» и блокировка вывода). Реферальное начисление откатить так же.
 - **VIP:** деактивировать период.
 - Все откаты идемпотентны через `related_obj=payment`.
 
@@ -614,9 +620,9 @@ def fulfill_payment(payment_id: int) -> Payment:
 | `fulfill_payment_task(payment_id)` | по событию | Выдача товара; `autoretry_for`, экспоненциальный backoff |
 | `reconcile_pending_payments` | каждые 10 мин | `PENDING`/`PROCESSING` старше 10 мин → `provider.fetch_status()` → `apply_provider_event()`; также `SUCCEEDED` без `fulfilled_at` → повторная выдача |
 | `expire_stale_payments` | каждый час | `PENDING` старше TTL → `EXPIRED` |
-| `release_held_income` | раз в день | Доход каппера с истёкшим холдом → доступен к выводу |
+| `wallets.tasks.release_held_income` | раз в час | ✅ Уже работает (п. 1.8): доход с истёкшим холдом становится доступен к выводу |
 
-В `CELERY_BEAT_SCHEDULE` использовать `"options": {"expires": ...}`, а не `expire_seconds` (`CODE_AUDIT.md`, п. 2.3).
+В `CELERY_BEAT_SCHEDULE` использовать `"options": {"expires": ...}` (✅ `expire_seconds` исправлен, `CODE_AUDIT.md`, п. 2.3). Lock-и задач не должны жить дольше `CELERY_TASK_TIME_LIMIT`, как `_run_locked()` в `game/tasks.py`.
 
 ---
 
@@ -631,8 +637,8 @@ def fulfill_payment(payment_id: int) -> Payment:
 - [ ] `public_id` (UUID) используется наружу вместо последовательного id.
 - [ ] Тестовые платежи CloudPayments (`TestMode`) в production товар не выдают.
 - [ ] Секреты только в `.env`, не попадают в логи и в админку.
-- [ ] `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`, иначе `build_absolute_uri()` построит `http://` для return и callback URL (`CODE_AUDIT.md`, п. 1.12).
-- [ ] Лимит незавершённых платежей на пользователя и rate-limit на `/payments/checkout/`.
+- [x] `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`, иначе `build_absolute_uri()` построит `http://` для return и callback URL (`CODE_AUDIT.md`, п. 1.12).
+- [ ] Лимит незавершённых платежей на пользователя и rate-limit на `/payments/checkout/` (готовый помощник `cappers/ratelimit.py`).
 - [ ] Опционально: allowlist IP провайдеров по `X-Real-IP` (nginx его передаёт).
 - [ ] Отдельный logger `payments` и алерты на неверную подпись, расхождение суммы и ошибки выдачи.
 
@@ -663,9 +669,9 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 Каждый шаг — отдельный небольшой PR в `development`.
 
-1. **Подготовка (из аудита):** `SECURE_PROXY_SSL_HEADER` и secure-настройки; `PROTECT` на финансовых FK; холд дохода каппера; реферальный процент от комиссии.
-2. **Каркас `payments`:** модели `Payment` и `PaymentEvent`, миграции, админка, настройки в `settings.py` и `.env.example`, `PAYMENTS_ENABLED_PROVIDERS=[]` (всё выключено).
-3. **Factory Method:** `base.py`, `factory.py`, тесты фабрики.
+1. ✅ **Подготовка (из аудита):** `SECURE_PROXY_SSL_HEADER` и secure-настройки (п. 1.12); `PROTECT` на финансовых FK (п. 1.10); холд дохода каппера (п. 1.8); реферальный процент от комиссии (п. 1.9); начисление пакета по снимку (п. 2.4).
+2. ✅ **Каркас `payments`:** модели `Payment` и `PaymentEvent` (миграция `payments/0001`), админка только на чтение, `PAYMENTS_ENABLED_PROVIDERS` в `settings.py` и `.env.example` (по умолчанию пусто, платежи выключены). Настройки конкретных провайдеров добавляются вместе с ними в шагах 4 и 8.
+3. ✅ **Factory Method:** `base.py`, `factory.py`, тесты фабрики на тестовых провайдерах.
 4. **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты.
 5. **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты.
 6. **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки и на странице VIP; return-страница со статусом. Стили — только в `main.css`/`mobile.css`, без inline.
@@ -685,7 +691,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 1. Кто принимает платежи (ИП, ООО, самозанятый) и нужна ли онлайн-касса (CloudKassir)? Какие СНО и НДС?
 2. В какой валюте выставлять крипто-счёт (USD?) и по какому курсу пересчитывать рублёвые цены?
-3. Сколько дней холдить доход каппера и какая политика возвратов за коины и подписки?
+3. ~~Сколько дней холдить доход каппера~~ (7 дней, настройка сайта). Какая политика возвратов за коины и подписки?
 4. Выплаты капперам: оставить ручное подтверждение или автоматизировать?
 5. Сохраняем ли денежные призы в турнирах, где участвуют купленные коины (юридическая проверка)?
 6. Нужны ли автопродление подписок и оплата «одним кликом» сохранённой картой?
