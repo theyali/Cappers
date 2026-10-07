@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
@@ -166,28 +167,46 @@ def _referral_percent(action: str) -> Decimal:
     return _decimal(getattr(WebsiteSettings.load(), field, 0))
 
 
-def _referrer_for_user(user):
+def registered_referral_visit(user, *, lock=False):
+    """The visit through which ``user`` registered: the one answer to "who invited whom"."""
     if not getattr(user, "pk", None):
         return None
 
-    visit = (
-        ReferralVisit.objects.filter(visitor=user, registered_at__isnull=False)
+    visits = ReferralVisit.objects
+    if lock:
+        visits = visits.select_for_update(of=("self",))
+    return (
+        visits.filter(visitor=user, registered_at__isnull=False)
         .exclude(referrer=user)
-        .select_related("referrer")
+        .select_related("referrer", "visitor")
         .order_by("registered_at", "first_seen_at", "id")
         .first()
     )
-    if visit is None or not visit.referrer.is_analyst:
-        return None
-    return visit.referrer
+
+
+def _referral_income_is_active(visit) -> bool:
+    from back.models import WebsiteSettings
+
+    days = WebsiteSettings.load().referral_income_days
+    return not days or visit.registered_at >= timezone.now() - timedelta(days=days)
 
 
 @transaction.atomic
-def credit_referral_income(referred_user, source_amount, action: str, *, related_obj=None, note: str = ""):
-    source_amount = _decimal(source_amount)
-    if source_amount <= 0:
-        return None
+def credit_referral_income(
+    referred_user,
+    source_amount,
+    action: str,
+    *,
+    related_obj=None,
+    note: str = "",
+    seller=None,
+):
+    """Pay the referrer a percent of ``source_amount``.
 
+    For subscriptions the source amount is the platform fee, not the price: the
+    referral share comes out of what the platform earns. The seller is never paid
+    a referral share of its own sale.
+    """
     if action == REFERRAL_ACTION_SUBSCRIPTION and related_obj is not None:
         from .services.referral_bonuses import grant_referral_first_subscription_bonus
 
@@ -196,8 +215,18 @@ def credit_referral_income(referred_user, source_amount, action: str, *, related
             related_obj=related_obj,
         )
 
-    referrer = _referrer_for_user(referred_user)
-    if referrer is None:
+    source_amount = _decimal(source_amount)
+    if source_amount <= 0:
+        return None
+
+    visit = registered_referral_visit(referred_user)
+    if visit is None or not _referral_income_is_active(visit):
+        return None
+    referrer = visit.referrer
+    # Money income goes to the real balance, which only analysts have.
+    if not referrer.is_analyst:
+        return None
+    if seller is not None and referrer.pk == seller.pk:
         return None
 
     percent = _referral_percent(action)

@@ -202,6 +202,10 @@
                     {{ form.accept_terms.errors }}
                 </div>
 
+                {% if smartcaptcha_client_key %}
+                    <div class="smart-captcha auth-grid-full" data-sitekey="{{ smartcaptcha_client_key }}"></div>
+                {% endif %}
+
                 <button class="auth-submit auth-grid-full" type="submit" disabled>
                     <span>Создать аккаунт</span>
                     <span class="auth-submit-arrow">→</span>
@@ -242,4 +246,5 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/league-picker.js' %}" defer></script>
+{% if smartcaptcha_client_key %}<script src="https://smartcaptcha.yandexcloud.net/captcha.js" defer></script>{% endif %}
 {% endblock %}

@@ -185,6 +185,9 @@ TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN", ""))
 TELEGRAM_BOT_TOKEN = TG_BOT_TOKEN
 TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "").lstrip("@")
 TELEGRAM_AUTH_MAX_AGE = env_int("TELEGRAM_AUTH_MAX_AGE", 900)
+# Yandex SmartCaptcha on registration; disabled while the keys are empty.
+SMARTCAPTCHA_CLIENT_KEY = os.getenv("SMARTCAPTCHA_CLIENT_KEY", "")
+SMARTCAPTCHA_SERVER_KEY = os.getenv("SMARTCAPTCHA_SERVER_KEY", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

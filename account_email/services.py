@@ -118,6 +118,7 @@ def complete_email_verification(token: str) -> EmailVerificationRequest:
         flow.user.save(update_fields=["email_verified"])
         flow.completed_at = timezone.now()
         flow.save(update_fields=["completed_at", "updated_at"])
+        _grant_referral_registration_bonus(flow.user)
         return flow
 
 
@@ -223,6 +224,7 @@ def complete_email_change(user: User, flow_id: int, code: str) -> EmailChangeReq
         user.save(update_fields=["email", "email_verified"])
         flow.completed_at = timezone.now()
         flow.save(update_fields=["completed_at", "updated_at"])
+        _grant_referral_registration_bonus(user)
         return flow
 
 
@@ -372,6 +374,13 @@ def _send_new_email_code(flow: EmailChangeRequest) -> str:
         },
     )
     return code
+
+
+def _grant_referral_registration_bonus(user: User) -> None:
+    # The referrer's registration reward waits for a confirmed email.
+    from cabinet.services.referral_bonuses import grant_referral_registration_bonus_for_user
+
+    grant_referral_registration_bonus_for_user(user)
 
 
 def _active_flow(user: User):

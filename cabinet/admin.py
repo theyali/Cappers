@@ -149,7 +149,7 @@ class UserLeaguePreferenceAdmin(admin.ModelAdmin):
 class CabinetUserAdmin(UserAdmin):
     inlines = (UserSportPreferenceInline, UserLeaguePreferenceInline)
     fieldsets = UserAdmin.fieldsets + (
-        ("Профиль", {"fields": ("role", "email_verified", "referral_code")}),
+        ("Профиль", {"fields": ("role", "email_verified", "referral_code", "registration_ip")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Профиль", {"fields": ("role", "email_verified")}),
@@ -164,8 +164,8 @@ class CabinetUserAdmin(UserAdmin):
         "is_active",
     )
     list_filter = ("role", "email_verified", "is_staff", "is_active")
-    readonly_fields = (*UserAdmin.readonly_fields, "referral_code")
-    search_fields = (*UserAdmin.search_fields, "referral_code")
+    readonly_fields = (*UserAdmin.readonly_fields, "referral_code", "registration_ip")
+    search_fields = (*UserAdmin.search_fields, "referral_code", "registration_ip")
 
 
 @admin.register(AnalystProfile)

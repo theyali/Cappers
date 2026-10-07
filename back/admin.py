@@ -183,6 +183,7 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
                     "referral_subscription_percent",
                     "referral_tournament_percent",
                     "referral_balance_topup_percent",
+                    "referral_income_days",
                 ),
                 "description": "Процент начисляется рефереру только если реферер является каппером.",
             },

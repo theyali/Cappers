@@ -56,6 +56,7 @@ class User(AbstractUser):
         blank=True,
     )
     email_verified = models.BooleanField("Почта подтверждена", default=False, db_index=True)
+    registration_ip = models.GenericIPAddressField("IP регистрации", null=True, blank=True, db_index=True)
     referral_code = models.CharField(
         "Реферальный код",
         max_length=8,

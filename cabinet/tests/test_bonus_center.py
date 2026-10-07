@@ -1,9 +1,11 @@
+import re
 import uuid
 from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib import admin
 from django.db import IntegrityError, transaction
+from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -227,6 +229,9 @@ class BonusCenterServiceTests(TestCase):
             session_key="bonus-registration-session",
             registered_at=timezone.now(),
         )
+        # The reward waits for the invited user to confirm the email.
+        self.assertIsNone(grant_referral_registration_bonus(visit))
+        User.objects.filter(pk=self.user.pk).update(email_verified=True)
 
         first_event = grant_referral_registration_bonus(visit)
         repeated_event = grant_referral_registration_bonus(visit)
@@ -304,14 +309,20 @@ class BonusCenterServiceTests(TestCase):
             visitor=referred_user,
         )
         self.assertIsNotNone(visit.registered_at)
-
-        event = BonusEvent.objects.get(
+        registration_bonus = BonusEvent.objects.filter(
             user=referrer,
             event_type=BonusEvent.EventType.REFERRAL,
             title=REGISTRATION_BONUS_TITLE,
             related_model=visit._meta.label_lower,
             related_id=visit.pk,
         )
+        # The reward waits until the invited user confirms the email.
+        self.assertFalse(registration_bonus.exists())
+
+        verify_url = re.search(r"https?://\S+", mail.outbox[-1].body).group(0)
+        self.client.get(verify_url)
+
+        event = registration_bonus.get()
         notification = Notification.objects.get(
             event_key=f"bonus:{event.pk}",
         )
@@ -467,6 +478,7 @@ class BonusCenterServiceTests(TestCase):
                 "is_enabled": True,
             },
         )
+        User.objects.filter(pk=self.user.pk).update(email_verified=True)
         visit = ReferralVisit.objects.create(
             referrer=referrer,
             visitor=self.user,

@@ -203,6 +203,7 @@ class WebsiteSettings(models.Model):
         decimal_places=2,
         default=0,
         validators=PERCENT_VALIDATORS,
+        help_text="Процент от комиссии площадки с подписки, а не от её полной цены.",
     )
     referral_tournament_percent = models.DecimalField(
         "Реферал — приз турнира, %",
@@ -217,6 +218,11 @@ class WebsiteSettings(models.Model):
         decimal_places=2,
         default=0,
         validators=PERCENT_VALIDATORS,
+    )
+    referral_income_days = models.PositiveIntegerField(
+        "Срок реферального дохода, дней",
+        default=365,
+        help_text="Сколько дней после регистрации приглашённого реферер получает процент. 0 — без ограничения.",
     )
 
     platform_fee_1_day_percent = models.DecimalField(

@@ -211,10 +211,11 @@ def subscribe_to_paid_predictions(
                 )
             credit_referral_income(
                 subscriber,
-                price,
+                price - capper_income,
                 REFERRAL_ACTION_SUBSCRIPTION,
                 related_obj=payment,
                 note=f"Реферал @{subscriber.username}: покупка подписки «{plan_title}»",
+                seller=analyst,
             )
             return subscription
         subscription.plan = selected_plan
@@ -244,9 +245,10 @@ def subscribe_to_paid_predictions(
             )
         credit_referral_income(
             subscriber,
-            price,
+            price - capper_income,
             REFERRAL_ACTION_SUBSCRIPTION,
             related_obj=payment,
             note=f"Реферал @{subscriber.username}: продление подписки «{plan_title}»",
+            seller=analyst,
         )
     return subscription
