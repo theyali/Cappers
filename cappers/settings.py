@@ -289,6 +289,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "game.tasks.settle_predictions",
         "schedule": timedelta(minutes=15),
     },
+    "finalize-tournaments": {
+        "task": "tournaments.tasks.finalize_tournaments",
+        "schedule": timedelta(minutes=15),
+    },
     "run-bot-prediction-cycle": {
         "task": "bots.tasks.run_bot_prediction_cycle",
         "schedule": timedelta(hours=1),

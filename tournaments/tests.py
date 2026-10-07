@@ -326,7 +326,8 @@ class TournamentServiceTests(TestCase):
         )
         self.assertEqual(CoinTransaction.objects.count(), coin_transactions_before)
 
-        finalize_tournament_results(self.tournament)
+        with self.assertRaisesMessage(ValidationError, "уже зафиксированы"):
+            finalize_tournament_results(self.tournament)
         self.analyst.real_balance.refresh_from_db()
         self.assertEqual(self.analyst.real_balance.balance, Decimal("1000.00"))
 
@@ -395,7 +396,8 @@ class TournamentServiceTests(TestCase):
             ).exists()
         )
 
-        finalize_tournament_results(self.tournament)
+        with self.assertRaisesMessage(ValidationError, "уже зафиксированы"):
+            finalize_tournament_results(self.tournament)
         self.analyst.real_balance.refresh_from_db()
         self.analyst.coin_wallet.refresh_from_db()
         self.assertEqual(TournamentPrizeAward.objects.filter(tournament=self.tournament).count(), 1)
