@@ -46,7 +46,8 @@ class NeurokeffSportsProvider(BaseSportsProvider):
 
     def fetch_finished_matches(self, sport_code: str | None = None) -> list[dict[str, Any]]:
         matches: list[dict[str, Any]] = []
-        days = settings.NEUROKEFF_FINISHED_DAYS_BACK
+        # At least today and yesterday: a match started late yesterday finishes today.
+        days = max(int(settings.NEUROKEFF_FINISHED_DAYS_BACK), 2)
         first_date = timezone.localdate() - timedelta(days=max(days - 1, 0))
         for sport in self._sports_for_code(sport_code):
             for match_date in self._dates(first_date, days):

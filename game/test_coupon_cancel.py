@@ -69,11 +69,13 @@ class CouponCancelTestMixin:
         }
         payload.update(payload_overrides)
         self.client.force_login(self.analyst)
-        response = self.client.post(
-            reverse("game:create_coupon"),
-            data=json.dumps(payload),
-            content_type="application/json",
-        )
+        # Followers' copies are made after the publish commits.
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse("game:create_coupon"),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
         self.assertEqual(response.status_code, 200, response.content)
         return PredictionCoupon.objects.get(pk=response.json()["coupon_id"])
 

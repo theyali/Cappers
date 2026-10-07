@@ -50,7 +50,6 @@ from notifications.models import MatchWatch
 from wallets.services import (
     InsufficientCoins,
     charge_prediction_stake,
-    copy_published_coupon,
     cover_prediction_stake_with_free_reward,
     format_coins,
 )
@@ -430,8 +429,6 @@ def create_coupon(request):
         coupon.sync_coupon_type()
         if not autosave:
             coupon.assign_cover_image()
-        if not autosave:
-            copy_published_coupon(coupon)
 
     coupon = (
         PredictionCoupon.objects.prefetch_related("predictions__match")

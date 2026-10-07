@@ -80,8 +80,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "cabinet.middleware.DailyVisitStreakMiddleware",
+    # Activates the user's timezone; every "day" (streaks, daily tasks, roulette)
+    # must be counted after it.
     "cappers.user_context_middleware.UserContextMiddleware",
+    "cabinet.middleware.DailyVisitStreakMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -351,7 +353,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "notification-achievement-sync": {
         "task": "notifications.tasks.sync_achievement_notifications",
-        "schedule": timedelta(hours=1),
+        "schedule": timedelta(minutes=10),
     },
     "deliver-notifications": {
         "task": "notifications.tasks.deliver_pending_notifications",
@@ -408,7 +410,7 @@ NEUROKEFF_STUCK_LIVE_AFTER_MINUTES = env_int("NEUROKEFF_STUCK_LIVE_AFTER_MINUTES
 NEUROKEFF_STUCK_LIVE_LIMIT = env_int("NEUROKEFF_STUCK_LIVE_LIMIT", 500)
 NEUROKEFF_MATCH_SYNC_LOCK_SECONDS = env_int("NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600)
 NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
-NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)
+NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 2)
 COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)
 COUPON_MATCH_STATE_CACHE_SECONDS = env_int("COUPON_MATCH_STATE_CACHE_SECONDS", 10)
 MATCH_SOON_WINDOW_SECONDS = env_int("MATCH_SOON_WINDOW_SECONDS", 600)

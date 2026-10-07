@@ -1,9 +1,11 @@
 import logging
 import re
+import time
 from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Q
@@ -403,23 +405,43 @@ def notify_watched_match_updates() -> dict:
     return _watched_match_update_events()
 
 
+ACHIEVEMENT_SYNC_BATCH_SIZE = 500
+ACHIEVEMENT_SYNC_TIME_BUDGET_SECONDS = 200
+ACHIEVEMENT_SYNC_CURSOR_KEY = "notifications:achievement-sync:cursor"
+
+
 @shared_task
 def sync_achievement_notifications() -> int:
-    users = (
-        User.objects.filter(is_active=True)
+    """Check achievements for the next batch of users.
+
+    Every run continues after the last checked user and stops within the time
+    budget, so the task never runs into the Celery time limit however many users
+    there are; after the last user it starts over.
+    """
+    started = time.monotonic()
+    cursor = int(cache.get(ACHIEVEMENT_SYNC_CURSOR_KEY) or 0)
+    users = list(
+        User.objects.filter(is_active=True, pk__gt=cursor)
         .select_related("analyst_profile")
-        .order_by("id")
+        .order_by("id")[:ACHIEVEMENT_SYNC_BATCH_SIZE]
     )
     awarded = 0
+    checked = 0
 
-    for user in users.iterator():
+    for user in users:
         awarded += len(
             sync_user_achievements(
                 user,
                 notify=True,
             )
         )
+        checked += 1
+        cursor = user.pk
+        if time.monotonic() - started > ACHIEVEMENT_SYNC_TIME_BUDGET_SECONDS:
+            break
 
+    reached_end = checked == len(users) and len(users) < ACHIEVEMENT_SYNC_BATCH_SIZE
+    cache.set(ACHIEVEMENT_SYNC_CURSOR_KEY, 0 if reached_end else cursor, timeout=None)
     return awarded
 
 

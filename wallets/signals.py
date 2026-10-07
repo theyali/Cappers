@@ -1,3 +1,6 @@
+import sys
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
@@ -9,7 +12,8 @@ from game.models import PredictionCoupon
 
 from .capper_bank import ensure_empty_capper_bank_stats, refresh_capper_bank_stats
 from .models import CopyBettingSubscription
-from .services import copy_published_coupon, ensure_coin_wallet, ensure_real_balance
+from .services import ensure_coin_wallet, ensure_real_balance
+from .tasks import copy_coupon_to_followers
 
 
 @receiver(pre_save, sender=CopyBettingSubscription)
@@ -49,11 +53,16 @@ def sync_capper_bank_after_coupon_save(sender, instance: PredictionCoupon, **kwa
 
     was_published = getattr(instance, "_copybetting_was_published", False)
     if instance.published_status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published:
+        # The only place copying starts: once, after the publish commits, and in a
+        # worker, so a popular capper's publish does not lock followers' rows.
         coupon_id = instance.pk
+        run_inline = getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False) or "test" in sys.argv
 
         def copy_after_commit() -> None:
-            coupon = PredictionCoupon.objects.select_related("author").get(pk=coupon_id)
-            copy_published_coupon(coupon)
+            if run_inline:
+                copy_coupon_to_followers(coupon_id)
+            else:
+                copy_coupon_to_followers.delay(coupon_id)
 
         transaction.on_commit(copy_after_commit)
 

@@ -202,8 +202,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
         "x",
         "is_verified",
         "verification_requested_at",
-        "is_vip",
-        "vip_activated_at",
         "is_recommended",
         "trust_index",
         "trust_index_updated_at",
@@ -217,8 +215,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     list_filter = (
         "is_verified",
         "verification_requested_at",
-        "is_vip",
-        "vip_activated_at",
         "is_recommended",
         "trust_index",
         "paid_predictions_enabled",
@@ -241,8 +237,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("user",)
     readonly_fields = (
-        "is_vip",
-        "vip_activated_at",
         "trust_index",
         "trust_index_updated_at",
         "onboarding_completed_at",
@@ -293,10 +287,6 @@ class AnalystProfileAdmin(admin.ModelAdmin):
                     "onboarding_completed_at",
                 )
             },
-        ),
-        (
-            "Legacy VIP — только для проверки миграции",
-            {"fields": ("is_vip", "vip_activated_at")},
         ),
         (
             "Системная информация",
