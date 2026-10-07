@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -109,6 +110,58 @@ def activate_vip(user, plan, source, starts_at=None):
     )
 
 
+def plural_ru(value: int, one: str, few: str, many: str) -> str:
+    value = abs(int(value))
+    if value % 10 == 1 and value % 100 != 11:
+        return one
+    if 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
+        return few
+    return many
+
+
+def vip_switch_warning(user, *, at=None) -> str:
+    """What a tariff switch burns: unused VIP time and the money paid for it."""
+    from wallets.models import RealBalanceTransaction
+    from wallets.services import format_money
+
+    from .models import UserVipSubscription
+
+    now = at or timezone.now()
+    periods = list(UserVipSubscription.objects.filter(user_id=user.pk, is_active=True, ends_at__gt=now))
+    if not periods:
+        return ""
+    paid_by_period = dict(
+        RealBalanceTransaction.objects.filter(
+            user_id=user.pk,
+            kind=RealBalanceTransaction.Kind.VIP_PURCHASE,
+            related_model=UserVipSubscription._meta.label_lower,
+            related_id__in=[period.pk for period in periods],
+        ).values_list("related_id", "amount")
+    )
+    unused = timedelta()
+    lost_money = Decimal("0")
+    for period in periods:
+        period_unused = period.ends_at - max(period.starts_at, now)
+        unused += period_unused
+        paid = abs(paid_by_period.get(period.pk) or 0)
+        period_length = period.ends_at - period.starts_at
+        if paid and period_length.total_seconds() > 0:
+            lost_money += paid * Decimal(period_unused.total_seconds() / period_length.total_seconds())
+
+    if unused >= timedelta(days=1):
+        days = round(unused.total_seconds() / 86400)
+        unused_label = f"{days} {plural_ru(days, 'день', 'дня', 'дней')}"
+    else:
+        hours = max(1, int(unused.total_seconds() // 3600))
+        unused_label = f"{hours} {plural_ru(hours, 'час', 'часа', 'часов')}"
+    if lost_money >= 1:
+        return (
+            f"Неиспользованные {unused_label} текущего VIP сгорят. "
+            f"Из них оплачено примерно {format_money(lost_money.quantize(Decimal('1')))} ₽, эти деньги не возвращаются."
+        )
+    return f"Неиспользованные {unused_label} текущего VIP сгорят без возврата."
+
+
 def switch_vip(user, plan, source):
     """Replace current and scheduled VIP periods with a new tariff from now."""
     from .models import UserVipSubscription, VipPlan
@@ -162,7 +215,7 @@ def purchase_vip(user, plan, *, switch=False):
 
         active_subscription = get_active_vip(user)
         if active_subscription and active_subscription.plan_id != current_plan.pk and not switch:
-            raise ValidationError("Подтвердите переход на другой VIP-тариф.")
+            raise ValidationError(f"{vip_switch_warning(user)} Подтвердите переход на другой VIP-тариф.")
 
         if switch and active_subscription and active_subscription.plan_id != current_plan.pk:
             subscription = switch_vip(

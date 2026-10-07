@@ -212,6 +212,22 @@ class CoinWalletTests(TestCase):
         self.assertEqual(transaction.balance_after, 3250)
         self.assertIsInstance(transaction.amount, int)
 
+    def test_paid_package_is_credited_even_if_disabled_after_payment(self):
+        package = CoinPackage.objects.create(
+            title="Пакет, снятый с продажи",
+            coins=1000,
+            bonus_coins=100,
+            price_rub=Decimal("500.00"),
+        )
+        CoinPackage.objects.filter(pk=package.pk).update(is_active=False, coins=10)
+
+        wallet = purchase_coin_package(self.user, package, payment=self.user)
+
+        # The user is credited with what was paid for, not with the edited package.
+        self.assertEqual(wallet.balance, 2100)
+        with self.assertRaisesMessage(ValidationError, "больше недоступен"):
+            purchase_coin_package(self.user, package)
+
     def test_purchase_coin_package_is_idempotent_for_same_payment(self):
         package = CoinPackage.objects.create(
             title="Пакет с платежом",

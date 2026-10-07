@@ -137,13 +137,22 @@ def purchase_coin_package(
     payment=None,
     note: str = "",
 ) -> CoinWallet:
+    """Credit a coin package.
+
+    Without ``payment`` this is a purchase at checkout: only an active package can
+    be bought, on its current terms. With ``payment`` the money is already taken,
+    so ``package`` is the snapshot the user paid for and is credited as is, even
+    if the package was disabled or edited after the payment.
+    """
     if not package or not getattr(package, "pk", None):
         raise ValidationError("Пакет коинов не найден.")
 
     with transaction.atomic():
-        current_package = CoinPackage.objects.get(pk=package.pk)
-        if not current_package.is_active:
-            raise ValidationError("Этот пакет коинов больше недоступен.")
+        current_package = package
+        if payment is None:
+            current_package = CoinPackage.objects.get(pk=package.pk)
+            if not current_package.is_active:
+                raise ValidationError("Этот пакет коинов больше недоступен.")
 
         latest_purchase_id = (
             CoinTransaction.objects.filter(

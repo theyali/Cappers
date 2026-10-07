@@ -13,16 +13,7 @@ from django.views.decorators.http import require_POST
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
 from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
-from .vip import get_active_vip, purchase_vip
-
-
-def _plural_ru(value: int, one: str, few: str, many: str) -> str:
-    value = abs(int(value))
-    if value % 10 == 1 and value % 100 != 11:
-        return one
-    if 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
-        return few
-    return many
+from .vip import get_active_vip, plural_ru, purchase_vip, vip_switch_warning
 
 
 def _vip_time_left(subscription) -> str:
@@ -33,9 +24,9 @@ def _vip_time_left(subscription) -> str:
         return "истёк"
     days = remaining.days
     if days > 0:
-        return f"{days} {_plural_ru(days, 'день', 'дня', 'дней')}"
+        return f"{days} {plural_ru(days, 'день', 'дня', 'дней')}"
     hours = max(1, int(remaining.total_seconds() // 3600))
-    return f"{hours} {_plural_ru(hours, 'час', 'часа', 'часов')}"
+    return f"{hours} {plural_ru(hours, 'час', 'часа', 'часов')}"
 
 
 def _wants_json(request) -> bool:
@@ -131,6 +122,7 @@ def vip_plans(request):
             "plans": plans,
             "active_vip": active_vip,
             "vip_time_left": _vip_time_left(active_vip),
+            "vip_switch_warning": vip_switch_warning(request.user) if active_vip else "",
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance),
             "comparison_rows": comparison_rows,

@@ -188,6 +188,9 @@
         <p class="profile-email-modal-copy">
             При переходе текущий VIP-тариф будет аннулирован, а новый тариф начнёт действовать сразу после оплаты.
         </p>
+        {% if vip_switch_warning %}
+            <p class="profile-email-modal-copy"><strong>{{ vip_switch_warning }}</strong></p>
+        {% endif %}
         <div class="vip-switch-modal-actions">
             <button class="profile-email-modal-submit" type="button" data-vip-switch-confirm>Перейти</button>
             <button class="vip-switch-modal-cancel" type="button" data-vip-switch-close>Отмена</button>
