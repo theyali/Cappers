@@ -51,7 +51,7 @@ def _validate_source(source: str) -> str:
     return source
 
 
-def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None, append_existing=True):
+def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None, append_existing=True, payment=None):
     from .models import UserVipSubscription
 
     if user is None or not getattr(user, "pk", None):
@@ -90,6 +90,7 @@ def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None
             duration_days=duration_days,
             source=source,
             is_active=True,
+            payment=payment,
         )
 
 
@@ -162,27 +163,39 @@ def vip_switch_warning(user, *, at=None) -> str:
     return f"Неиспользованные {unused_label} текущего VIP сгорят без возврата."
 
 
-def switch_vip(user, plan, source):
-    """Replace current and scheduled VIP periods with a new tariff from now."""
-    from .models import UserVipSubscription, VipPlan
+def grant_paid_vip(user, plan, *, duration_days, switch, provider_payment=None):
+    """Give a bought VIP period on the terms it was paid for.
 
-    if plan is None or not getattr(plan, "pk", None):
-        raise ValidationError("VIP-тариф не найден.")
+    With a confirmed ``switch`` to another tariff the current and scheduled
+    periods end and the new one starts now; otherwise it follows the VIP tail.
+    ``plan`` may be None when the tariff was deleted after the payment.
+    """
+    from .models import UserVipSubscription
 
-    current_plan = VipPlan.objects.get(pk=plan.pk)
-    now = timezone.now()
-    UserVipSubscription.objects.select_for_update().filter(
-        user_id=user.pk,
-        is_active=True,
-        ends_at__gt=now,
-    ).update(is_active=False, updated_at=now)
+    source = UserVipSubscription.Source.PURCHASE
+    active_subscription = get_active_vip(user)
+    if switch and active_subscription and active_subscription.plan_id != getattr(plan, "pk", None):
+        now = timezone.now()
+        UserVipSubscription.objects.filter(
+            user_id=user.pk,
+            is_active=True,
+            ends_at__gt=now,
+        ).update(is_active=False, updated_at=now)
+        return _create_vip_period(
+            user=user,
+            duration_days=duration_days,
+            source=source,
+            plan=plan,
+            starts_at=now,
+            append_existing=False,
+            payment=provider_payment,
+        )
     return _create_vip_period(
         user=user,
-        duration_days=current_plan.duration_days,
+        duration_days=duration_days,
         source=source,
-        plan=current_plan,
-        starts_at=now,
-        append_existing=False,
+        plan=plan,
+        payment=provider_payment,
     )
 
 
@@ -201,7 +214,7 @@ def purchase_vip(user, plan, *, switch=False):
     from wallets.models import RealBalanceTransaction
     from wallets.services import debit_real_balance, ensure_real_balance
 
-    from .models import UserVipSubscription, VipPlan
+    from .models import VipPlan
 
     if plan is None or not getattr(plan, "pk", None):
         raise ValidationError("VIP-тариф не найден.")
@@ -217,18 +230,12 @@ def purchase_vip(user, plan, *, switch=False):
         if active_subscription and active_subscription.plan_id != current_plan.pk and not switch:
             raise ValidationError(f"{vip_switch_warning(user)} Подтвердите переход на другой VIP-тариф.")
 
-        if switch and active_subscription and active_subscription.plan_id != current_plan.pk:
-            subscription = switch_vip(
-                user,
-                current_plan,
-                UserVipSubscription.Source.PURCHASE,
-            )
-        else:
-            subscription = activate_vip(
-                user,
-                current_plan,
-                UserVipSubscription.Source.PURCHASE,
-            )
+        subscription = grant_paid_vip(
+            user,
+            current_plan,
+            duration_days=current_plan.duration_days,
+            switch=switch,
+        )
         if current_plan.price_rub > 0:
             real_balance = debit_real_balance(
                 user,

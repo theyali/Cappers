@@ -44,9 +44,12 @@ def platform_fee_percent_for_duration(duration_days: int) -> Decimal:
     return _decimal(getattr(WebsiteSettings.load(), PLATFORM_FEE_FIELDS[tier], 0))
 
 
-def paid_subscription_capper_income(price, duration_days: int) -> Decimal:
+def paid_subscription_capper_income(price, duration_days: int, fee_percent=None) -> Decimal:
+    """The capper's share; fee_percent fixed at checkout wins over the current settings."""
     price = _decimal(price)
-    fee_percent = platform_fee_percent_for_duration(duration_days)
+    if fee_percent is None:
+        fee_percent = platform_fee_percent_for_duration(duration_days)
+    fee_percent = _decimal(fee_percent)
     fee_amount = (price * fee_percent / Decimal("100")).quantize(Decimal("0.01"))
     income = price - fee_amount
     return income if income > 0 else Decimal("0.00")
@@ -158,14 +161,40 @@ def subscribe_to_paid_predictions(
     else:
         raise ValueError("У этого эксперта нет активных тарифов.")
 
+    return grant_paid_subscription(
+        subscriber,
+        analyst,
+        plan=selected_plan,
+        price=price,
+        duration_days=duration_days,
+        plan_title=plan_title,
+        capper_income=paid_subscription_capper_income(price, duration_days),
+    )
+
+
+def grant_paid_subscription(
+    subscriber: User,
+    analyst: User,
+    *,
+    plan: AnalystPaidPlan | None,
+    price: Decimal,
+    duration_days: int,
+    plan_title: str,
+    capper_income: Decimal,
+    provider_payment=None,
+) -> AnalystPaidSubscription:
+    """Start or extend a subscription on the given terms.
+
+    Without ``provider_payment`` the subscriber pays from the real balance here;
+    with it the money is already taken by the payment provider.
+    """
     now = timezone.now()
-    capper_income = paid_subscription_capper_income(price, duration_days)
     with transaction.atomic():
         subscription, created = AnalystPaidSubscription.objects.select_for_update().get_or_create(
             subscriber=subscriber,
             analyst=analyst,
             defaults={
-                "plan": selected_plan,
+                "plan": plan,
                 "price": price,
                 "duration_days": duration_days,
                 "starts_at": now,
@@ -184,21 +213,23 @@ def subscribe_to_paid_predictions(
             subscription=subscription,
             subscriber=subscriber,
             analyst=analyst,
-            plan=selected_plan,
+            plan=plan,
             price=price,
             capper_income=capper_income,
             duration_days=duration_days,
             starts_at=base_time,
             expires_at=expires_at,
+            payment=provider_payment,
         )
-        payment_note_prefix = "Покупка" if created else "Продление"
-        debit_real_balance(
-            subscriber,
-            price,
-            RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
-            related_obj=payment,
-            note=f"{payment_note_prefix} подписки @{analyst.username}: {plan_title}",
-        )
+        if provider_payment is None:
+            payment_note_prefix = "Покупка" if created else "Продление"
+            debit_real_balance(
+                subscriber,
+                price,
+                RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
+                related_obj=payment,
+                note=f"{payment_note_prefix} подписки @{analyst.username}: {plan_title}",
+            )
         if created:
             AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
             if capper_income > 0:
@@ -218,7 +249,7 @@ def subscribe_to_paid_predictions(
                 seller=analyst,
             )
             return subscription
-        subscription.plan = selected_plan
+        subscription.plan = plan
         subscription.price = price
         subscription.duration_days = duration_days
         subscription.expires_at = expires_at

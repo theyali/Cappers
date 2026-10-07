@@ -22,7 +22,7 @@ def make_payment(user, **extra):
         "purpose": Payment.Purpose.COIN_PACKAGE,
         "amount": Decimal("499.00"),
         "amount_rub": Decimal("499.00"),
-        "product_snapshot": {"package_id": 1, "coins": 1000, "bonus_coins": 100, "price_rub": "499.00"},
+        "product_snapshot": {"package_id": 1, "title": "Старт", "coins": 1000, "bonus_coins": 100, "price_rub": "499.00"},
     }
     values.update(extra)
     return Payment.objects.create(**values)

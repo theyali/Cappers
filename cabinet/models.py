@@ -533,6 +533,15 @@ class AnalystPaidSubscriptionPayment(models.Model):
     duration_days = models.PositiveIntegerField("Срок, дней")
     starts_at = models.DateTimeField("Начало периода")
     expires_at = models.DateTimeField("Окончание периода")
+    # Set when paid through a provider; empty means paid from the real balance.
+    payment = models.OneToOneField(
+        "payments.Payment",
+        on_delete=models.PROTECT,
+        related_name="paid_subscription_payment",
+        verbose_name="Оплата у провайдера",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
@@ -812,6 +821,15 @@ class UserVipSubscription(models.Model):
         default=Source.PURCHASE,
     )
     is_active = models.BooleanField("Активен", default=True)
+    # The provider payment this period was bought with; a refund ends this period.
+    payment = models.OneToOneField(
+        "payments.Payment",
+        on_delete=models.PROTECT,
+        related_name="vip_subscription",
+        verbose_name="Оплата у провайдера",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 

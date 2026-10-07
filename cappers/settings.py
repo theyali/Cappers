@@ -357,6 +357,16 @@ CELERY_BEAT_SCHEDULE = {
         "task": "wallets.tasks.release_held_income",
         "schedule": timedelta(hours=1),
     },
+    "reconcile-pending-payments": {
+        "task": "payments.tasks.reconcile_pending_payments",
+        "schedule": timedelta(minutes=10),
+        "options": {"expires": 9 * 60},
+    },
+    "expire-stale-payments": {
+        "task": "payments.tasks.expire_stale_payments",
+        "schedule": timedelta(hours=1),
+        "options": {"expires": 50 * 60},
+    },
     "run-bot-prediction-cycle": {
         "task": "bots.tasks.run_bot_prediction_cycle",
         "schedule": timedelta(hours=1),

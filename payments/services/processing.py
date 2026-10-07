@@ -1,4 +1,5 @@
 import logging
+import sys
 import uuid
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from payments.models import Payment, PaymentEvent
+from payments.services.fulfillment import delivery_blocker
 from payments.services.providers.base import ProviderEvent, Rejection
 
 logger = logging.getLogger("payments")
@@ -93,6 +95,9 @@ def _rejection(payment: Payment | None, event: ProviderEvent) -> tuple[Rejection
             return Rejection.EXPIRED, "Срок оплаты истёк."
         if payment.status not in PAYABLE_STATUSES:
             return Rejection.NOT_PAYABLE, f"Платёж в статусе «{payment.get_status_display()}» оплатить нельзя."
+        blocker = delivery_blocker(payment)
+        if blocker:
+            return Rejection.NOT_PAYABLE, blocker
     return None, ""
 
 
@@ -114,6 +119,9 @@ def _move(payment: Payment, event: ProviderEvent) -> str:
         if payment.paid_at is None:
             payment.paid_at = timezone.now()
         fields += ["external_id", "paid_amount", "paid_currency", "is_test", "failure_reason", "paid_at"]
+        if current != S.SUCCEEDED:
+            payment_id = payment.pk
+            transaction.on_commit(lambda: _fulfill(payment_id))
     elif new == S.FAILED:
         payment.failure_reason = event.failure_reason
         fields.append("failure_reason")
@@ -123,3 +131,14 @@ def _move(payment: Payment, event: ProviderEvent) -> str:
     payment.save(update_fields=fields)
     logger.info("Payment %s: %s -> %s by %s", payment.public_id, current, new, event.dedup_key)
     return ""
+
+
+def _fulfill(payment_id: int) -> None:
+    # Delivery runs in its own task: a failure there is retried by Celery and the
+    # reconciliation, not by the provider resending the notification.
+    from payments.tasks import fulfill_payment_task
+
+    if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False) or "test" in sys.argv:
+        fulfill_payment_task(payment_id)
+    else:
+        fulfill_payment_task.delay(payment_id)

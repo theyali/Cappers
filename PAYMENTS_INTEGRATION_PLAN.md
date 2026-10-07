@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
 
-**Статус:** шаги 1–4 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments). Следующий шаг — 5, выдача товара (раздел 12).
+**Статус:** шаги 1–5 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи). Следующий шаг — 6, UI: кнопки оплаты и страница возврата (раздел 12).
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -166,6 +166,8 @@ class Payment(models.Model):
 {"fx": {"from": "RUB", "to": "USD", "rate": "0.0108", "fixed_at": "2026-10-06T12:00:00Z"}}
 ```
 
+✅ Выдача в шаге 5 читает ровно эти ключи (`payments/services/fulfillment.py`). Обязательны: у пакета коинов — `package_id`, `title`, `coins`, `price_rub`; у подписки — `analyst_id`, `plan_title`, `duration_days`, `price_rub`, `platform_fee_percent`; у VIP — `duration_days`. `plan_id` может указывать на удалённый тариф: тогда период выдаётся без связи с тарифом. Снимки собирает checkout в шаге 6.
+
 ### 4.2 `PaymentEvent` — журнал вебхуков
 
 ```python
@@ -189,7 +191,7 @@ class PaymentEvent(models.Model):
 
 ### 4.3 Изменения в существующих моделях
 
-- `cabinet.AnalystPaidSubscriptionPayment`: добавить `payment = OneToOneField("payments.Payment", null=True, on_delete=PROTECT)` и `source` (`real_balance` / `external`). Шаг 5.
+- ✅ `cabinet.AnalystPaidSubscriptionPayment.payment` и `cabinet.UserVipSubscription.payment` — `OneToOneField("payments.Payment", null=True, on_delete=PROTECT)` (миграция `cabinet/0066`). Поле `source` не понадобилось: пустой `payment` и есть оплата с баланса. Связь с VIP-периодом нужна возвратам (шаг 9) и не даёт выдать один платёж дважды.
 - `wallets.CoinTransaction.Kind`: добавить `PACKAGE_REFUND`. Шаг 9.
 - `wallets.RealBalanceTransaction`: вид `SUBSCRIPTION_INCOME_REVERSAL`. Шаг 9. ✅ `available_at` и статус `HELD` уже есть (п. 1.8).
 - ✅ Финансовые FK на пользователя уже `on_delete=PROTECT` (`CODE_AUDIT.md`, п. 1.10).
@@ -622,8 +624,8 @@ def fulfill_payment(payment_id: int) -> Payment:
 | Сервис | Изменение |
 |---|---|
 | `wallets/services.py:purchase_coin_package` | ✅ С `payment` функция уже начисляет переданный пакет как снимок, без перепроверки `is_active` (`CODE_AUDIT.md`, п. 2.4). `fulfill_coin_package(payment)` = собрать несохраняемый `CoinPackage` из снимка и вызвать `purchase_coin_package(user, package, payment=payment)`. Реферальные начисления считаются от `price_rub` снимка. |
-| `cabinet/paid_predictions.py:subscribe_to_paid_predictions` | Выделить ядро `_grant_paid_subscription(subscriber, analyst, *, price, duration_days, plan, payment=None, source)`. Старая функция = ядро + `debit_real_balance`. Новая `fulfill_paid_subscription(payment)` = ядро без списания. Холд дохода и реферальный процент от комиссии уже работают (п. 1.8, 1.9). |
-| `cabinet/vip.py:purchase_vip` | Аналогично: ядро `_grant_vip(user, plan, switch)` + две точки входа. |
+| `cabinet/paid_predictions.py:subscribe_to_paid_predictions` | ✅ Ядро `grant_paid_subscription(subscriber, analyst, *, plan, price, duration_days, plan_title, capper_income, provider_payment=None)`: без `provider_payment` списывает реальный баланс, как раньше. `fulfill_paid_subscription(payment)` берёт условия и комиссию площадки из снимка (`paid_subscription_capper_income(..., fee_percent)`). Холд дохода и реферальный процент от комиссии работают (п. 1.8, 1.9). |
+| `cabinet/vip.py:purchase_vip` | ✅ Ядро `grant_paid_vip(user, plan, *, duration_days, switch, provider_payment=None)` заменило `switch_vip`. Срок берётся из снимка. Без подтверждённого перехода период встаёт в конец текущего VIP, поэтому дни не сгорают без согласия. |
 | `wallets/views.py:top_up_balance` | Вместо заглушки — кнопки провайдеров из `PaymentProviderFactory.available_for(...)` → `start_checkout`. |
 | `cabinet/views.py` (checkout подписки), `cabinet/vip_views.py` | Добавить «Оплатить картой / криптой» рядом с оплатой с баланса. |
 
@@ -638,12 +640,16 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 | Задача | Расписание | Что делает |
 |---|---|---|
-| `fulfill_payment_task(payment_id)` | по событию | Выдача товара; `autoretry_for`, экспоненциальный backoff |
-| `reconcile_pending_payments` | каждые 10 мин | `PENDING`/`PROCESSING` старше 10 мин → `provider.fetch_status()` → `apply_provider_event()`; также `SUCCEEDED` без `fulfilled_at` → повторная выдача |
-| `expire_stale_payments` | каждый час | `PENDING` старше TTL → `EXPIRED` |
+| `fulfill_payment_task(payment_id)` | по событию | ✅ Выдача товара после коммита перехода в `SUCCEEDED`; до 5 повторов с экспоненциальной паузой |
+| `reconcile_pending_payments` | каждые 10 мин | ✅ `PENDING`/`PROCESSING`/`FAILED` старше 10 мин (до 200 за запуск) → `provider.fetch_status()` → `apply_provider_event()`; `SUCCEEDED` без `fulfilled_at` старше 10 мин → повторная выдача. Ошибка выдачи одного платежа пишется в лог и не останавливает остальные |
+| `expire_stale_payments` | каждый час | ✅ `CREATED`/`PENDING`/`FAILED` через 30 мин после `expires_at` → `EXPIRED`. `PROCESSING` не трогается: крипто-платёж может подтверждаться дольше |
 | `wallets.tasks.release_held_income` | раз в час | ✅ Уже работает (п. 1.8): доход с истёкшим холдом становится доступен к выводу |
 
 В `CELERY_BEAT_SCHEDULE` использовать `"options": {"expires": ...}` (✅ `expire_seconds` исправлен, `CODE_AUDIT.md`, п. 2.3). Lock-и задач не должны жить дольше `CELERY_TASK_TIME_LIMIT`, как `_run_locked()` в `game/tasks.py`.
+
+✅ Шаг 5: отдельный lock задачам платежей не нужен. Каждый платёж обрабатывается под `select_for_update`, а выдача проверяет `fulfilled_at`, так что параллельный запуск только повторит запрос к провайдеру.
+
+✅ Check перед списанием денег проверяет, что товар ещё можно выдать (`delivery_blocker`): аккаунт покупателя не удалён, каппер по-прежнему продаёт платные прогнозы, VIP покупает каппер. Иначе ответ — код 13, и деньги не списываются.
 
 ---
 
@@ -652,7 +658,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 - [x] Подпись вебхука проверяется по **сырому** `request.body` через `hmac.compare_digest` (CloudPayments, шаг 4).
 - [ ] Статус и сумма перепроверяются через API провайдера (обязательно для NOWPayments; при сверке — для обоих).
 - [x] Сумма и валюта вебхука сверяются с платежом; при расхождении статус не меняется.
-- [ ] Идемпотентность: ✅ `PaymentEvent(provider, dedup_key)` unique и блокировка строки `Payment` (шаг 4); выдача через `related_obj=payment` — шаг 5.
+- [x] Идемпотентность: `PaymentEvent(provider, dedup_key)` unique и блокировка строки `Payment` (шаг 4); выдача один раз под блокировкой по `fulfilled_at`, плюс уникальные связи с платежом (`CoinTransaction`, `OneToOne` у подписки и VIP) (шаг 5).
 - [ ] Return URL ничего не выдаёт.
 - [x] `csrf_exempt` стоит только на вебхуках; вебхуки принимают только POST; размер тела ограничен `DATA_UPLOAD_MAX_MEMORY_SIZE` и `client_max_body_size` nginx.
 - [x] `public_id` (UUID) используется наружу вместо последовательного id.
@@ -694,7 +700,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 2. ✅ **Каркас `payments`:** модели `Payment` и `PaymentEvent` (миграция `payments/0001`), админка только на чтение, `PAYMENTS_ENABLED_PROVIDERS` в `settings.py` и `.env.example` (по умолчанию пусто, платежи выключены). Настройки конкретных провайдеров добавляются вместе с ними в шагах 4 и 8.
 3. ✅ **Factory Method:** `base.py`, `factory.py`, тесты фабрики на тестовых провайдерах.
 4. ✅ **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты (`payments/tests/test_cloudpayments.py`). Настройки, тип продавца и чеки 54-ФЗ — в `.env`.
-5. **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты.
+5. ✅ **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты (`payments/tests/test_fulfillment.py`).
 6. **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки и на странице VIP; return-страница со статусом. Стили — только в `main.css`/`mobile.css`, без inline.
 7. **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=["cloudpayments"]`, сначала на пакетах коинов.
 8. **NOWPayments:** провайдер, IPN, перепроверка через API, курс RUB → USD, минимальные суммы, тесты на sandbox → включение.

@@ -42,6 +42,21 @@ def api_answer(payload):
     return response
 
 
+def post_notification(client, event_type, fields, *, as_json=False, signature=None):
+    if as_json:
+        body, content_type = json.dumps(fields).encode(), "application/json"
+    else:
+        body, content_type = urlencode(fields).encode(), "application/x-www-form-urlencoded"
+    if signature is None:
+        signature = base64.b64encode(hmac.new(SECRET.encode(), body, hashlib.sha256).digest()).decode()
+    return client.post(
+        reverse("payments:webhook", args=["cloudpayments", event_type]),
+        data=body,
+        content_type=content_type,
+        headers={"Content-HMAC": signature},
+    )
+
+
 @override_settings(**CLOUDPAYMENTS_SETTINGS)
 class CloudPaymentsApiTests(TestCase):
     def setUp(self):
@@ -150,19 +165,8 @@ class CloudPaymentsWebhookTests(TestCase):
         values.update(extra)
         return values
 
-    def notify(self, event_type, fields, *, as_json=False, signature=None):
-        if as_json:
-            body, content_type = json.dumps(fields).encode(), "application/json"
-        else:
-            body, content_type = urlencode(fields).encode(), "application/x-www-form-urlencoded"
-        if signature is None:
-            signature = base64.b64encode(hmac.new(SECRET.encode(), body, hashlib.sha256).digest()).decode()
-        return self.client.post(
-            reverse("payments:webhook", args=["cloudpayments", event_type]),
-            data=body,
-            content_type=content_type,
-            headers={"Content-HMAC": signature},
-        )
+    def notify(self, event_type, fields, **kwargs):
+        return post_notification(self.client, event_type, fields, **kwargs)
 
     def code(self, event_type, fields, **kwargs):
         response = self.notify(event_type, fields, **kwargs)
