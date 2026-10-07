@@ -30,6 +30,7 @@
                         <span>Ожидает вывода</span>
                         <strong>{{ real_pending_withdrawal_display }} ₽</strong>
                         <small>{{ earnings_payouts.pending_label }}</small>
+                        {% if real_held_display %}<small>В холде: {{ real_held_display }} ₽</small>{% endif %}
                     </div>
                 </div>
             </div>

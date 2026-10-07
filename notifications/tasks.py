@@ -1,9 +1,13 @@
+import logging
 import re
+import time
 from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
+from django.core.cache import cache
 from django.core.mail import send_mail
+from django.db import transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
@@ -13,9 +17,12 @@ from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfil
 from front.models import PredictionFavorite
 from game.models import Match, PredictionCoupon
 
-from .models import CouponEventState, MatchWatch, Notification, TelegramAccount
+from .models import CouponEventState, MatchWatch, Notification, NotificationPreference, TelegramAccount
 from .services import create_notification, get_preferences
 from .telegram_delivery import send_notification_to_telegram
+
+
+logger = logging.getLogger(__name__)
 
 
 SETTLED_STATES = {
@@ -398,23 +405,43 @@ def notify_watched_match_updates() -> dict:
     return _watched_match_update_events()
 
 
+ACHIEVEMENT_SYNC_BATCH_SIZE = 500
+ACHIEVEMENT_SYNC_TIME_BUDGET_SECONDS = 200
+ACHIEVEMENT_SYNC_CURSOR_KEY = "notifications:achievement-sync:cursor"
+
+
 @shared_task
 def sync_achievement_notifications() -> int:
-    users = (
-        User.objects.filter(is_active=True)
+    """Check achievements for the next batch of users.
+
+    Every run continues after the last checked user and stops within the time
+    budget, so the task never runs into the Celery time limit however many users
+    there are; after the last user it starts over.
+    """
+    started = time.monotonic()
+    cursor = int(cache.get(ACHIEVEMENT_SYNC_CURSOR_KEY) or 0)
+    users = list(
+        User.objects.filter(is_active=True, pk__gt=cursor)
         .select_related("analyst_profile")
-        .order_by("id")
+        .order_by("id")[:ACHIEVEMENT_SYNC_BATCH_SIZE]
     )
     awarded = 0
+    checked = 0
 
-    for user in users.iterator():
+    for user in users:
         awarded += len(
             sync_user_achievements(
                 user,
                 notify=True,
             )
         )
+        checked += 1
+        cursor = user.pk
+        if time.monotonic() - started > ACHIEVEMENT_SYNC_TIME_BUDGET_SECONDS:
+            break
 
+    reached_end = checked == len(users) and len(users) < ACHIEVEMENT_SYNC_BATCH_SIZE
+    cache.set(ACHIEVEMENT_SYNC_CURSOR_KEY, 0 if reached_end else cursor, timeout=None)
     return awarded
 
 
@@ -427,22 +454,54 @@ def _absolute_url(path: str) -> str:
     return f"{base}{path}" if base else path
 
 
+DELIVERY_MAX_ATTEMPTS = 5
+# A batch claims its notifications for this long, so an overlapping run cannot
+# send them again; the claim is replaced by the result of the delivery.
+DELIVERY_CLAIM_SECONDS = 10 * 60
+
+
+def _claim_pending_notifications(limit: int, now) -> list[int]:
+    with transaction.atomic():
+        notification_ids = list(
+            Notification.objects.select_for_update(skip_locked=True)
+            .filter(Q(email_processed_at__isnull=True) | Q(telegram_processed_at__isnull=True))
+            .filter(Q(next_delivery_at__isnull=True) | Q(next_delivery_at__lte=now))
+            .order_by("created_at", "id")
+            .values_list("id", flat=True)[:limit]
+        )
+        Notification.objects.filter(pk__in=notification_ids).update(
+            next_delivery_at=now + timedelta(seconds=DELIVERY_CLAIM_SECONDS),
+        )
+    return notification_ids
+
+
 @shared_task
 def deliver_pending_notifications(limit: int = 300) -> dict:
-    pending = (
-        Notification.objects.filter(
-            Q(email_processed_at__isnull=True) | Q(telegram_processed_at__isnull=True)
-        )
-        .select_related("recipient")
-        .order_by("created_at", "id")[:limit]
-    )
     now = timezone.now()
+    notifications = list(
+        Notification.objects.filter(pk__in=_claim_pending_notifications(limit, now))
+        .select_related("recipient")
+        .order_by("created_at", "id")
+    )
+    recipient_ids = {notification.recipient_id for notification in notifications}
+    preferences_by_user = {
+        preferences.user_id: preferences
+        for preferences in NotificationPreference.objects.filter(user_id__in=recipient_ids)
+    }
+    chat_id_by_user = dict(
+        TelegramAccount.objects.filter(user_id__in=recipient_ids).values_list("user_id", "chat_id")
+    )
+    telegram_configured = bool(getattr(settings, "TELEGRAM_BOT_TOKEN", "").strip())
     email_sent = 0
     telegram_sent = 0
+    failed = 0
 
-    for notification in pending:
-        preferences = get_preferences(notification.recipient)
-        update_fields = []
+    for notification in notifications:
+        preferences = preferences_by_user.get(notification.recipient_id)
+        if preferences is None:
+            preferences = preferences_by_user[notification.recipient_id] = get_preferences(notification.recipient)
+        update_fields = ["next_delivery_at"]
+        delivery_failed = False
         link = _absolute_url(notification.url)
         body = notification.message
         if link:
@@ -462,7 +521,8 @@ def deliver_pending_notifications(limit: int = 300) -> dict:
                         fail_silently=False,
                     )
                 except Exception:
-                    pass
+                    delivery_failed = True
+                    logger.exception("Email notification #%s was not sent.", notification.pk)
                 else:
                     notification.email_processed_at = now
                     notification.email_sent_at = now
@@ -470,27 +530,42 @@ def deliver_pending_notifications(limit: int = 300) -> dict:
                     email_sent += 1
 
         if notification.telegram_processed_at is None:
-            account = (
-                TelegramAccount.objects.filter(user=notification.recipient)
-                .only("chat_id")
-                .first()
-            )
-            telegram_chat_id = preferences.telegram_chat_id or (account.chat_id if account else "")
-            if not preferences.telegram_enabled or not telegram_chat_id:
+            telegram_chat_id = preferences.telegram_chat_id or chat_id_by_user.get(notification.recipient_id, "")
+            # Without a bot token Telegram delivery is impossible: do not keep the notification pending.
+            if not preferences.telegram_enabled or not telegram_chat_id or not telegram_configured:
                 notification.telegram_processed_at = now
                 update_fields.append("telegram_processed_at")
-            elif getattr(settings, "TELEGRAM_BOT_TOKEN", "").strip():
+            else:
                 try:
                     send_notification_to_telegram(telegram_chat_id, notification, link)
                 except Exception:
-                    pass
+                    delivery_failed = True
+                    logger.exception("Telegram notification #%s was not sent.", notification.pk)
                 else:
                     notification.telegram_processed_at = now
                     notification.telegram_sent_at = now
                     update_fields.extend(["telegram_processed_at", "telegram_sent_at"])
                     telegram_sent += 1
 
-        if update_fields:
-            notification.save(update_fields=list(dict.fromkeys(update_fields)))
+        notification.next_delivery_at = None
+        if delivery_failed:
+            failed += 1
+            notification.delivery_attempts += 1
+            update_fields.append("delivery_attempts")
+            if notification.delivery_attempts >= DELIVERY_MAX_ATTEMPTS:
+                # Give up: a blocked bot or a dead mailbox must not be retried forever.
+                logger.error(
+                    "Notification #%s dropped after %s failed delivery attempts.",
+                    notification.pk,
+                    notification.delivery_attempts,
+                )
+                for field in ("email_processed_at", "telegram_processed_at"):
+                    if getattr(notification, field) is None:
+                        setattr(notification, field, now)
+                        update_fields.append(field)
+            else:
+                notification.next_delivery_at = now + timedelta(minutes=2 ** notification.delivery_attempts)
 
-    return {"email_sent": email_sent, "telegram_sent": telegram_sent}
+        notification.save(update_fields=list(dict.fromkeys(update_fields)))
+
+    return {"email_sent": email_sent, "telegram_sent": telegram_sent, "failed": failed}

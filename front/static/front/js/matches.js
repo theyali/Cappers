@@ -128,6 +128,22 @@
         return Number.isInteger(stake) && stake > 0;
     };
     const useFreePrediction = () => Boolean(freePredictionInput?.checked);
+    const freePredictionStake = Number.parseInt(freePredictionInput?.dataset.freePredictionStake || "", 10) || 0;
+    let manualStake = "";
+
+    // A free prediction always plays the stake from the roulette settings; the server ignores the typed one.
+    const syncFreePredictionStake = () => {
+        if (!stakeInput || !freePredictionStake) return;
+        const locked = useFreePrediction();
+        if (locked && !stakeInput.readOnly) {
+            manualStake = stakeInput.value;
+            stakeInput.value = String(freePredictionStake);
+        } else if (!locked && stakeInput.readOnly) {
+            stakeInput.value = manualStake;
+        }
+        stakeInput.readOnly = locked;
+        stakeInput.dispatchEvent(new Event("input", { bubbles: true }));
+    };
 
     const couponCountMatchesRule = () => {
         if (items.size < 1 || items.size > 20) return false;
@@ -195,7 +211,7 @@
         }
         if (freePredictionLabel) {
             freePredictionLabel.textContent = remaining > 0
-                ? `Доступно: ${remaining}. Коины за ставку не спишутся.`
+                ? `Доступно: ${remaining}. Ставка — ${freePredictionStake} коинов, коины не спишутся.`
                 : "Бесплатные прогнозы закончились.";
         }
     };
@@ -222,9 +238,12 @@
             const item = items.get(group.dataset.matchId);
             group.closest("[data-match-card]")?.classList.toggle("is-added", Boolean(item));
             group.querySelectorAll("[data-bet-option]").forEach((button) => {
-                const isSameSelection = Boolean(item)
-                    && item.market === button.dataset.market
-                    && item.selection === button.dataset.selection;
+                const isSameSelection = Boolean(item) && sameOutcome(
+                    item,
+                    button.dataset.market,
+                    button.dataset.outcomeCode,
+                    button.dataset.selection,
+                );
                 button.classList.toggle("is-active", isSameSelection);
                 if (isSameSelection) item.betKey = button.dataset.betKey;
             });
@@ -255,6 +274,7 @@
         betKey: option.dataset.betKey,
         market: option.dataset.market,
         selection: option.dataset.selection,
+        outcomeCode: option.dataset.outcomeCode || "",
         shortLabel: option.querySelector("span")?.textContent || option.dataset.selection,
         coefficient: readOdd(option.dataset.coefficient),
         lastSeen: group.dataset.lastSeen || "",
@@ -276,6 +296,43 @@
         const metaText = node.querySelector(".coupon-item-title span");
         if (titleText) titleText.textContent = item.matchTitle;
         if (metaText) metaText.textContent = `${item.league} · ${item.time}`;
+    };
+
+    const sameSelection = (left, right) => (
+        String(left || "").trim().toLowerCase() === String(right || "").trim().toLowerCase()
+    );
+
+    // An outcome is identified by its code; the text is only compared for old drafts without a code.
+    const sameOutcome = (item, market, outcomeCode, selection) => {
+        if (item.market !== market) return false;
+        if (item.outcomeCode && outcomeCode) return item.outcomeCode === outcomeCode;
+        return sameSelection(item.selection, selection);
+    };
+
+    const refreshMatchButtonOdd = (item, coefficient) => {
+        const value = toNumber(coefficient, 0).toFixed(2);
+        document.querySelectorAll(`[data-match-bets][data-match-id="${item.matchId}"] [data-bet-option]`).forEach((button) => {
+            if (!sameOutcome(item, button.dataset.market, button.dataset.outcomeCode, button.dataset.selection)) return;
+            const previous = button.dataset.coefficient;
+            const oddNode = [...button.querySelectorAll("strong, small, b")]
+                .find((node) => node.textContent.trim() === previous);
+            if (oddNode) oddNode.textContent = value;
+            button.dataset.coefficient = value;
+        });
+    };
+
+    // The server always takes the coefficient from the current line; keep the coupon in sync with it.
+    const applyItemOdds = (matchId, market, selection, coefficient, outcomeCode = "") => {
+        const item = items.get(String(matchId));
+        const odd = readOdd(coefficient);
+        if (!item || !odd || !sameOutcome(item, market, outcomeCode, selection)) return false;
+        if (!item.outcomeCode && outcomeCode) item.outcomeCode = outcomeCode;
+        refreshMatchButtonOdd(item, odd);
+        if (item.coefficient === odd) return false;
+        item.coefficient = odd;
+        const node = itemsRoot.querySelector(`[data-coupon-match-id="${item.matchId}"]`);
+        if (node) updateCouponItem(node, item);
+        return true;
     };
 
     const saveLocalSnapshot = (dirty = true) => {
@@ -383,6 +440,7 @@
             match_id: item.matchId,
             market: item.market,
             selection: item.selection,
+            outcome_code: item.outcomeCode || "",
             coefficient: item.coefficient,
         })),
     });
@@ -400,19 +458,28 @@
             const item = normalizeDraftItem(rawItem);
             return [String(item.matchId), item];
         }));
+        let oddsUpdated = false;
         items.forEach((item, matchId) => {
             const fresh = serverItems.get(String(matchId));
             if (fresh?.lastSeen) item.lastSeen = fresh.lastSeen;
+            if (fresh && applyItemOdds(matchId, fresh.market, fresh.selection, fresh.coefficient, fresh.outcomeCode)) {
+                oddsUpdated = true;
+            }
         });
         updateConfidenceVisual();
         saveLocalSnapshot(false);
+        return oddsUpdated;
     };
 
     const clearCoupon = () => {
         draftId = null;
         items.clear();
         itemsRoot.replaceChildren();
-        if (stakeInput) stakeInput.value = "";
+        if (stakeInput) {
+            stakeInput.value = "";
+            stakeInput.readOnly = false;
+        }
+        manualStake = "";
         if (freePredictionInput) freePredictionInput.checked = false;
         if (confidenceInput) confidenceInput.value = "50";
         try {
@@ -493,8 +560,10 @@
                 setNote(result.message || "Прогноз опубликован.", "success");
             } else {
                 draftId = result.draft_id || null;
-                applyServerDraft(result.draft || null);
-                if (items.size) {
+                const oddsUpdated = applyServerDraft(result.draft || null);
+                if (oddsUpdated) {
+                    setNote("Коэффициенты в купоне обновлены по текущей линии.");
+                } else if (items.size) {
                     setNote("Купон сохранен автоматически.", "success");
                 }
             }
@@ -502,6 +571,13 @@
 
         request.fail((xhr, statusText) => {
             if (statusText === "abort") return;
+            const oddsChanged = xhr?.responseJSON?.odds_changed;
+            if (Array.isArray(oddsChanged) && oddsChanged.length) {
+                oddsChanged.forEach((change) => {
+                    applyItemOdds(change.match_id, change.market, change.selection, change.coefficient, change.outcome_code);
+                });
+                saveLocalSnapshot(true);
+            }
             setNote(
                 responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."),
                 "error"
@@ -600,6 +676,7 @@
         draftId = draft.id || null;
         if (stakeInput) stakeInput.value = draft.stake || "";
         if (freePredictionInput) freePredictionInput.checked = Boolean(draft.useFreePrediction);
+        syncFreePredictionStake();
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
         draft.items.forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -634,6 +711,7 @@
     });
 
     freePredictionInput?.addEventListener("change", () => {
+        syncFreePredictionStake();
         updateState();
         scheduleDraftSync();
     });

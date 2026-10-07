@@ -1,11 +1,14 @@
 import logging
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 
+from back.models import WebsiteSettings
 from cabinet.models import User
 
 from .models import (
@@ -22,6 +25,24 @@ from .models import (
 
 MONEY_QUANT = Decimal("0.01")
 logger = logging.getLogger(__name__)
+
+# Coins credited for a settled bet: the first payout or refund and later corrections.
+PREDICTION_SETTLEMENT_KINDS = (
+    CoinTransaction.Kind.PREDICTION_PAYOUT,
+    CoinTransaction.Kind.PREDICTION_REFUND,
+    CoinTransaction.Kind.PREDICTION_PAYOUT_REVERSAL,
+)
+COPYBET_SETTLEMENT_KINDS = (
+    CoinTransaction.Kind.COPYBET_PAYOUT,
+    CoinTransaction.Kind.COPYBET_REFUND,
+    CoinTransaction.Kind.COPYBET_PAYOUT_REVERSAL,
+)
+# Income that comes from a user's payment can be disputed, so it is held before withdrawal.
+HELD_INCOME_KINDS = (
+    RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
+    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
+)
 
 
 class InsufficientBalance(Exception):
@@ -116,13 +137,22 @@ def purchase_coin_package(
     payment=None,
     note: str = "",
 ) -> CoinWallet:
+    """Credit a coin package.
+
+    Without ``payment`` this is a purchase at checkout: only an active package can
+    be bought, on its current terms. With ``payment`` the money is already taken,
+    so ``package`` is the snapshot the user paid for and is credited as is, even
+    if the package was disabled or edited after the payment.
+    """
     if not package or not getattr(package, "pk", None):
         raise ValidationError("Пакет коинов не найден.")
 
     with transaction.atomic():
-        current_package = CoinPackage.objects.get(pk=package.pk)
-        if not current_package.is_active:
-            raise ValidationError("Этот пакет коинов больше недоступен.")
+        current_package = package
+        if payment is None:
+            current_package = CoinPackage.objects.get(pk=package.pk)
+            if not current_package.is_active:
+                raise ValidationError("Этот пакет коинов больше недоступен.")
 
         latest_purchase_id = (
             CoinTransaction.objects.filter(
@@ -256,9 +286,26 @@ def credit_real_balance(
         raise ValidationError("Сумма зачисления должна быть больше нуля.")
     related_model, related_id = _related_subject(related_obj) if related_obj is not None else ("", None)
 
+    hold_days = WebsiteSettings.load().income_hold_days if kind in HELD_INCOME_KINDS else 0
+
     with transaction.atomic():
         balance = _real_balance_for_update(user)
         if _has_real_transaction(user, kind, related_model, related_id):
+            return balance
+        if hold_days:
+            balance.held = _money(balance.held + amount)
+            balance.save(update_fields=["held", "updated_at"])
+            RealBalanceTransaction.objects.create(
+                user=user,
+                kind=kind,
+                status=RealBalanceTransaction.Status.HELD,
+                amount=amount,
+                balance_after=balance.balance,
+                related_model=related_model,
+                related_id=related_id,
+                available_at=timezone.now() + timedelta(days=hold_days),
+                note=note[:255],
+            )
             return balance
         return _apply_real_locked(
             balance,
@@ -270,14 +317,59 @@ def credit_real_balance(
         )
 
 
-def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalance:
+def release_held_real_income(limit: int = 1000) -> int:
+    """Move income whose hold is over to the available balance."""
+    held_ids = list(
+        RealBalanceTransaction.objects.filter(
+            status=RealBalanceTransaction.Status.HELD,
+            available_at__lte=timezone.now(),
+        )
+        .order_by("available_at", "id")
+        .values_list("pk", flat=True)[:limit]
+    )
+    released = 0
+    for held_id in held_ids:
+        with transaction.atomic():
+            held = RealBalanceTransaction.objects.select_for_update().get(pk=held_id)
+            if held.status != RealBalanceTransaction.Status.HELD:
+                continue
+            balance = _real_balance_for_update(held.user)
+            balance.held = max(Decimal("0.00"), _money(balance.held - held.amount))
+            balance.balance = _money(balance.balance + held.amount)
+            balance.save(update_fields=["balance", "held", "updated_at"])
+            held.status = RealBalanceTransaction.Status.COMPLETED
+            held.balance_after = balance.balance
+            held.save(update_fields=["status", "balance_after"])
+        released += 1
+    return released
+
+
+def request_real_withdrawal(
+    user,
+    amount,
+    *,
+    payout_details: str = "",
+    note: str = "",
+) -> CapperRealBalance:
     _validate_analyst(user)
     amount = _money(amount)
     if amount <= 0:
         raise ValidationError("Сумма вывода должна быть больше нуля.")
+    min_amount = _money(WebsiteSettings.load().min_withdrawal_amount)
+    if amount < min_amount:
+        raise ValidationError(f"Минимальная сумма вывода — {format_money(min_amount)} ₽.")
+    payout_details = (payout_details or "").strip()
+    if not payout_details:
+        raise ValidationError("Укажите реквизиты для вывода.")
 
     with transaction.atomic():
         balance = _real_balance_for_update(user)
+        if RealBalanceTransaction.objects.filter(
+            user=user,
+            kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+            status=RealBalanceTransaction.Status.PENDING,
+        ).exists():
+            raise ValidationError("У вас уже есть заявка на вывод. Дождитесь её обработки.")
         if balance.balance < amount:
             raise InsufficientBalance(
                 f"Недостаточно средств на реальном балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
@@ -293,14 +385,23 @@ def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalanc
             RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
             status=RealBalanceTransaction.Status.PENDING,
             note=note or "Заявка на вывод средств",
+            payout_details=payout_details,
         )
         return balance
 
 
-def approve_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTransaction:
+def approve_real_withdrawal(
+    withdrawal: RealBalanceTransaction,
+    *,
+    payout_reference: str = "",
+    processed_by=None,
+) -> RealBalanceTransaction:
     with transaction.atomic():
         locked = RealBalanceTransaction.objects.select_for_update().get(pk=withdrawal.pk)
         _validate_pending_withdrawal_transaction(locked)
+        payout_reference = (payout_reference or locked.payout_reference).strip()
+        if not payout_reference:
+            raise ValidationError("Укажите номер выплаты.")
         balance = _real_balance_for_update(locked.user)
         balance.pending_withdrawal = max(
             Decimal("0.00"),
@@ -308,11 +409,14 @@ def approve_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTr
         )
         balance.save(update_fields=["pending_withdrawal", "updated_at"])
         locked.status = RealBalanceTransaction.Status.COMPLETED
-        locked.save(update_fields=["status"])
+        locked.payout_reference = payout_reference[:100]
+        locked.processed_by = processed_by
+        locked.processed_at = timezone.now()
+        locked.save(update_fields=["status", "payout_reference", "processed_by", "processed_at"])
         return locked
 
 
-def cancel_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTransaction:
+def cancel_real_withdrawal(withdrawal: RealBalanceTransaction, *, processed_by=None) -> RealBalanceTransaction:
     with transaction.atomic():
         locked = RealBalanceTransaction.objects.select_for_update().get(pk=withdrawal.pk)
         _validate_pending_withdrawal_transaction(locked)
@@ -324,7 +428,9 @@ def cancel_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTra
         )
         balance.save(update_fields=["pending_withdrawal", "updated_at"])
         locked.status = RealBalanceTransaction.Status.CANCELED
-        locked.save(update_fields=["status"])
+        locked.processed_by = processed_by
+        locked.processed_at = timezone.now()
+        locked.save(update_fields=["status", "processed_by", "processed_at"])
         related_model, related_id = _related_subject(locked)
         if not _has_real_transaction(
             locked.user,
@@ -388,25 +494,44 @@ def cover_prediction_stake_with_free_reward(user, coupon, *, note: str = "") -> 
         return wallet
 
 
-def settle_prediction_coupon(coupon) -> CoinWallet | None:
+def settle_prediction_coupon(coupon, change=None) -> CoinWallet | None:
+    """Bring the author's and followers' coins in line with the coupon result.
+
+    ``change`` is the recorded result change of a resettlement: only with it are
+    coins taken back from an earlier settlement.
+    """
     from game.models import PredictionCoupon
 
     if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
         return None
-    if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
+    if coupon.state_status == PredictionCoupon.StateStatus.PENDING and change is None:
         return None
 
     wallet = ensure_coin_wallet(coupon.author)
     stake_amount = _coin_amount_from_model(coupon.total_stake, field_name="Ставка")
     stake_related_model, stake_related_id = _coin_related_subject(coupon)
-    if stake_amount > 0:
-        wallet = charge_coins(
-            coupon.author,
-            stake_amount,
-            CoinTransaction.Kind.PREDICTION_STAKE,
-            related_obj=coupon,
-            note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
-        )
+    if stake_amount > 0 and coupon.state_status != PredictionCoupon.StateStatus.PENDING:
+        # Coupons are charged on publish. Older coupons and bot coupons may still
+        # be unpaid: charge them now, but never let a missing balance roll back
+        # the settlement itself — such a coupon is settled without coin movements.
+        try:
+            wallet = charge_coins(
+                coupon.author,
+                stake_amount,
+                CoinTransaction.Kind.PREDICTION_STAKE,
+                related_obj=coupon,
+                note=f"Списание ставки по рассчитанному прогнозу #{coupon.pk}",
+            )
+        except InsufficientCoins:
+            logger.warning(
+                "Coupon #%s settled without coin movements: stake %s was not charged on publish "
+                "and the author has not enough coins.",
+                coupon.pk,
+                stake_amount,
+            )
+            _copy_missing_bets_for_settlement(coupon)
+            settle_copied_bets_for_coupon(coupon, change=change)
+            return wallet
     stake_transaction = (
         CoinTransaction.objects.filter(
             user=coupon.author,
@@ -424,27 +549,116 @@ def settle_prediction_coupon(coupon) -> CoinWallet | None:
     )
 
     if coupon.state_status == PredictionCoupon.StateStatus.WIN:
-        payout = _rounded_coin_amount(coupon.possible_payout)
-        if payout > 0:
-            wallet = credit_coins(
-                coupon.author,
-                payout,
-                CoinTransaction.Kind.PREDICTION_PAYOUT,
-                related_obj=coupon,
-                note=f"Выплата по прогнозу #{coupon.pk}",
-            )
-    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND and refundable_stake > 0:
-        wallet = credit_coins(
-            coupon.author,
-            refundable_stake,
-            CoinTransaction.Kind.PREDICTION_REFUND,
-            related_obj=coupon,
-            note=f"Возврат по прогнозу #{coupon.pk}",
+        target = _rounded_coin_amount(coupon.possible_payout)
+        credit_kind = CoinTransaction.Kind.PREDICTION_PAYOUT
+        note = f"Выплата по прогнозу #{coupon.pk}"
+    elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
+        target = refundable_stake
+        credit_kind = CoinTransaction.Kind.PREDICTION_REFUND
+        note = f"Возврат по прогнозу #{coupon.pk}"
+    else:
+        target = 0
+        credit_kind = CoinTransaction.Kind.PREDICTION_PAYOUT
+        note = f"Выплата по прогнозу #{coupon.pk}"
+    settled_wallet, moved, uncollected = _settle_coins_to_target(
+        coupon.author,
+        target,
+        credit_kind=credit_kind,
+        reversal_kind=CoinTransaction.Kind.PREDICTION_PAYOUT_REVERSAL,
+        settlement_kinds=PREDICTION_SETTLEMENT_KINDS,
+        subject=coupon,
+        change=change,
+        change_subjects=_result_change_subjects(coupon),
+        note=note,
+        reversal_note=f"Сторно по перерасчёту прогноза #{coupon.pk}",
+    )
+    if change is not None and (moved or uncollected):
+        type(change).objects.filter(pk=change.pk).update(
+            author_coins=moved,
+            uncollected_coins=F("uncollected_coins") + uncollected,
         )
 
     _copy_missing_bets_for_settlement(coupon)
-    settle_copied_bets_for_coupon(coupon)
-    return wallet
+    settle_copied_bets_for_coupon(coupon, change=change)
+    return settled_wallet or wallet
+
+
+def _result_change_subjects(coupon) -> Q:
+    """Transactions linked to the coupon's result changes, i.e. resettlement corrections."""
+    changes = coupon.result_changes.all()
+    return Q(related_model=changes.model._meta.label_lower, related_id__in=changes.values("pk"))
+
+
+def _settle_coins_to_target(
+    user,
+    target: int,
+    *,
+    credit_kind: str,
+    reversal_kind: str,
+    settlement_kinds: tuple[str, ...],
+    subject,
+    change,
+    change_subjects: Q,
+    note: str,
+    reversal_note: str,
+) -> tuple[CoinWallet | None, int, int]:
+    """Make the coins credited for a settled bet equal ``target``.
+
+    Returns the wallet, the coins moved and the coins that could not be taken
+    back. The first payout or refund is linked to the bet itself, as before.
+    Later corrections are linked to the coupon result change, so a coupon can be
+    resettled any number of times without hitting the idempotency key. Coins
+    are taken back only as part of a recorded result change, and never below
+    a zero balance: the rest is reported as uncollected.
+    """
+    if change is None and target <= 0:
+        return None, 0, 0
+    related_model, related_id = _coin_related_subject(subject)
+
+    with transaction.atomic():
+        wallet = _coin_wallet_for_update(user)
+        credited = (
+            CoinTransaction.objects.filter(
+                Q(related_model=related_model, related_id=related_id) | change_subjects,
+                user=user,
+                kind__in=settlement_kinds,
+            ).aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
+        delta = target - credited
+        if delta == 0:
+            return wallet, 0, 0
+
+        _require_coin_system_enabled()
+        _ensure_initial_coin_grant_locked(wallet)
+        kind = credit_kind if delta > 0 else reversal_kind
+        if delta < 0 or _has_coin_transaction(user, kind, related_model, related_id):
+            if change is None:
+                return wallet, 0, 0
+            related_model, related_id = _coin_related_subject(change)
+            note = f"Перерасчёт: {note}" if delta > 0 else reversal_note
+
+        uncollected = 0
+        if delta < 0 and wallet.balance < -delta:
+            uncollected = -delta - int(wallet.balance)
+            delta = -int(wallet.balance)
+            logger.warning(
+                "Could not take back %s coins from user #%s for %s #%s: not enough balance.",
+                uncollected,
+                user.pk,
+                subject._meta.label_lower,
+                subject.pk,
+            )
+        if delta:
+            wallet = _apply_coin_delta_locked(
+                wallet,
+                delta,
+                kind,
+                related_model=related_model,
+                related_id=related_id,
+                note=note,
+            )
+        return wallet, delta, uncollected
 
 
 def activate_copybetting(
@@ -814,9 +1028,9 @@ def _apply_pending_copybetting_status_if_ready(
 def settle_orphaned_copied_bets(limit: int = 1000) -> int:
     from game.models import PredictionCoupon
 
-    coupon_ids = list(
-        CopiedBet.objects.filter(
-            state_status=CopiedBet.StateStatus.PENDING,
+    pending_bets = CopiedBet.objects.filter(state_status=CopiedBet.StateStatus.PENDING)
+    settled_coupon_ids = list(
+        pending_bets.filter(
             source_coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
         .exclude(source_coupon__state_status=PredictionCoupon.StateStatus.PENDING)
@@ -824,53 +1038,84 @@ def settle_orphaned_copied_bets(limit: int = 1000) -> int:
         .distinct()
         .order_by("source_coupon_id")[:limit]
     )
-    if not coupon_ids:
+    # Copies of a coupon that is no longer published (canceled, or unpublished
+    # before that was forbidden) can never be settled by result: refund them.
+    voided_coupon_ids = list(
+        pending_bets.exclude(
+            source_coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .values_list("source_coupon_id", flat=True)
+        .distinct()
+        .order_by("source_coupon_id")[:limit]
+    )
+    if not settled_coupon_ids and not voided_coupon_ids:
         return 0
 
     settled_count = 0
-    coupons = PredictionCoupon.objects.filter(pk__in=coupon_ids).select_related("author").order_by("id")
+    coupons = (
+        PredictionCoupon.objects.filter(pk__in=[*settled_coupon_ids, *voided_coupon_ids])
+        .select_related("author")
+        .order_by("id")
+    )
     for coupon in coupons:
         try:
-            _copy_missing_bets_for_settlement(coupon)
-            settled_count += len(settle_copied_bets_for_coupon(coupon))
+            if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
+                _copy_missing_bets_for_settlement(coupon)
+                settled_count += len(settle_copied_bets_for_coupon(coupon))
+            else:
+                settled_count += len(
+                    settle_copied_bets_for_coupon(
+                        coupon,
+                        outcome=PredictionCoupon.StateStatus.REFUND,
+                    )
+                )
         except Exception:
             logger.exception("Failed to reconcile copied bets for coupon #%s.", coupon.pk)
     return settled_count
 
 
-def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
+def settle_copied_bets_for_coupon(
+    coupon,
+    *,
+    outcome: str | None = None,
+    change=None,
+) -> list[CopiedBet]:
+    """Bring copies of a coupon in line with its result.
+
+    By default only pending copies are settled by the coupon result; ``outcome``
+    overrides it when the coupon is voided without a result, e.g. canceled
+    before the match. With a recorded result ``change`` (resettlement) already
+    settled copies move to the new result too, and their coins are corrected by
+    the difference.
+    """
     from game.models import PredictionCoupon
 
-    if coupon.state_status == PredictionCoupon.StateStatus.PENDING:
-        return []
+    outcome = outcome or coupon.state_status
+    copied_bets = CopiedBet.objects.filter(source_coupon=coupon)
+    if change is None:
+        if outcome == PredictionCoupon.StateStatus.PENDING:
+            return []
+        copied_bets = copied_bets.filter(state_status=CopiedBet.StateStatus.PENDING)
+    change_subjects = _result_change_subjects(coupon)
 
     settled: list[CopiedBet] = []
-    copied_bets = (
-        CopiedBet.objects.filter(
-            source_coupon=coupon,
-            state_status=CopiedBet.StateStatus.PENDING,
-        )
-        .select_related("subscription", "user")
-        .order_by("id")
-    )
-    for copied_bet in copied_bets:
+    for copied_bet_id in copied_bets.order_by("id").values_list("pk", flat=True):
         try:
             with transaction.atomic():
                 locked_bet = (
                     CopiedBet.objects.select_for_update()
-                    .select_related("subscription", "user")
-                    .get(pk=copied_bet.pk)
+                    .select_related("user")
+                    .get(pk=copied_bet_id)
                 )
-                if locked_bet.state_status != CopiedBet.StateStatus.PENDING:
+                if change is None and locked_bet.state_status != CopiedBet.StateStatus.PENDING:
                     continue
 
-                subscription = CopyBettingSubscription.objects.select_for_update().get(
-                    pk=locked_bet.subscription_id
-                )
-                if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+                previous = (locked_bet.state_status, locked_bet.possible_payout)
+                previous_profit = locked_bet.profit
+                credit_kind = CoinTransaction.Kind.COPYBET_PAYOUT
+                if outcome == PredictionCoupon.StateStatus.WIN:
                     locked_bet.possible_payout = _copy_possible_payout(coupon, locked_bet.stake)
-                    kind = CoinTransaction.Kind.COPYBET_PAYOUT
-                    amount = _coin_amount_from_model(
+                    target = _coin_amount_from_model(
                         locked_bet.possible_payout,
                         field_name="Выплата по копиставке",
                     )
@@ -878,21 +1123,31 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                     locked_bet.profit = _coin_decimal_total(
                         locked_bet.possible_payout - locked_bet.stake
                     )
-                elif coupon.state_status == PredictionCoupon.StateStatus.REFUND:
-                    kind = CoinTransaction.Kind.COPYBET_REFUND
-                    amount = _coin_amount_from_model(
+                elif outcome == PredictionCoupon.StateStatus.REFUND:
+                    credit_kind = CoinTransaction.Kind.COPYBET_REFUND
+                    target = _coin_amount_from_model(
                         locked_bet.stake,
                         field_name="Возврат копиставки",
                     )
                     locked_bet.state_status = CopiedBet.StateStatus.REFUND
                     locked_bet.profit = Decimal("0")
-                else:
-                    kind = ""
-                    amount = 0
+                elif outcome == PredictionCoupon.StateStatus.LOSE:
+                    target = 0
                     locked_bet.state_status = CopiedBet.StateStatus.LOSE
                     locked_bet.profit = -_coin_decimal_total(locked_bet.stake)
+                else:
+                    # The coupon result was withdrawn: the copy waits for a new one.
+                    target = 0
+                    locked_bet.state_status = CopiedBet.StateStatus.PENDING
+                    locked_bet.profit = Decimal("0")
+                if (locked_bet.state_status, locked_bet.possible_payout) == previous:
+                    continue
 
-                locked_bet.settled_at = timezone.now()
+                locked_bet.settled_at = (
+                    None
+                    if locked_bet.state_status == CopiedBet.StateStatus.PENDING
+                    else locked_bet.settled_at or timezone.now()
+                )
                 locked_bet.save(
                     update_fields=[
                         "state_status",
@@ -901,28 +1156,39 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                         "settled_at",
                     ]
                 )
-
-                if amount > 0:
-                    credit_coins(
-                        locked_bet.user,
-                        amount,
-                        kind,
-                        related_obj=locked_bet,
-                        note=f"Расчет копиставки #{locked_bet.pk}",
+                subscription = CopyBettingSubscription.objects.select_for_update().get(
+                    pk=locked_bet.subscription_id
+                )
+                _, _, uncollected = _settle_coins_to_target(
+                    locked_bet.user,
+                    target,
+                    credit_kind=credit_kind,
+                    reversal_kind=CoinTransaction.Kind.COPYBET_PAYOUT_REVERSAL,
+                    settlement_kinds=COPYBET_SETTLEMENT_KINDS,
+                    subject=locked_bet,
+                    change=change,
+                    change_subjects=change_subjects,
+                    note=f"Расчет копиставки #{locked_bet.pk}",
+                    reversal_note=f"Сторно по перерасчёту копиставки #{locked_bet.pk}",
+                )
+                if uncollected:
+                    type(change).objects.filter(pk=change.pk).update(
+                        uncollected_coins=F("uncollected_coins") + uncollected,
                     )
 
                 subscription.total_profit = _coin_decimal_total(
-                    subscription.total_profit + locked_bet.profit
+                    subscription.total_profit + locked_bet.profit - previous_profit
                 )
+                current_loss = subscription.current_loss
+                if previous_profit < 0:
+                    # Undo the earlier loss. How much an earlier win reduced the
+                    # drawdown is unknown (it never goes below zero): it stays.
+                    current_loss = max(Decimal("0"), current_loss - abs(previous_profit))
                 if locked_bet.profit < 0:
-                    subscription.current_loss = _coin_decimal_total(
-                        subscription.current_loss + abs(locked_bet.profit)
-                    )
+                    current_loss += abs(locked_bet.profit)
                 elif locked_bet.profit > 0:
-                    subscription.current_loss = max(
-                        Decimal("0"),
-                        _coin_decimal_total(subscription.current_loss - locked_bet.profit),
-                    )
+                    current_loss = max(Decimal("0"), current_loss - locked_bet.profit)
+                subscription.current_loss = _coin_decimal_total(current_loss)
                 update_fields = ["total_profit", "current_loss", "updated_at"]
                 if (
                     subscription.stop_loss_amount > 0
@@ -939,7 +1205,7 @@ def settle_copied_bets_for_coupon(coupon) -> list[CopiedBet]:
                 _apply_pending_copybetting_status_if_ready(subscription)
                 settled.append(locked_bet)
         except Exception:
-            logger.exception("Failed to settle copied bet #%s for coupon #%s.", copied_bet.pk, coupon.pk)
+            logger.exception("Failed to settle copied bet #%s for coupon #%s.", copied_bet_id, coupon.pk)
     return settled
 
 
@@ -1101,6 +1367,7 @@ def _apply_real_locked(
     related_model: str = "",
     related_id: int | None = None,
     note: str = "",
+    payout_details: str = "",
 ) -> CapperRealBalance:
     amount = _money(amount)
     balance.balance = _money(balance.balance + amount)
@@ -1114,6 +1381,7 @@ def _apply_real_locked(
         related_model=related_model,
         related_id=related_id,
         note=note[:255],
+        payout_details=payout_details[:255],
     )
     return balance
 

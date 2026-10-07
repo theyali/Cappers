@@ -22,6 +22,7 @@ from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetR
 
 EMAIL_REQUEST_TTL_MINUTES = 30
 PASSWORD_RESET_TTL_MINUTES = 30
+PASSWORD_RESETS_PER_HOUR = 3
 EMAIL_VERIFICATION_TTL_MINUTES = 120
 
 
@@ -118,6 +119,7 @@ def complete_email_verification(token: str) -> EmailVerificationRequest:
         flow.user.save(update_fields=["email_verified"])
         flow.completed_at = timezone.now()
         flow.save(update_fields=["completed_at", "updated_at"])
+        _grant_referral_registration_bonus(flow.user)
         return flow
 
 
@@ -223,11 +225,19 @@ def complete_email_change(user: User, flow_id: int, code: str) -> EmailChangeReq
         user.save(update_fields=["email", "email_verified"])
         flow.completed_at = timezone.now()
         flow.save(update_fields=["completed_at", "updated_at"])
+        _grant_referral_registration_bonus(user)
         return flow
 
 
-def start_password_reset(user: User, *, request) -> PasswordResetRequest:
+def start_password_reset(user: User, *, request) -> PasswordResetRequest | None:
     now = timezone.now()
+    recent_requests = PasswordResetRequest.objects.filter(
+        user=user,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_requests >= PASSWORD_RESETS_PER_HOUR:
+        # The form answers the same either way, so the limit reveals nothing.
+        return None
     secret = secrets.token_urlsafe(32)
 
     with transaction.atomic():
@@ -372,6 +382,13 @@ def _send_new_email_code(flow: EmailChangeRequest) -> str:
         },
     )
     return code
+
+
+def _grant_referral_registration_bonus(user: User) -> None:
+    # The referrer's registration reward waits for a confirmed email.
+    from cabinet.services.referral_bonuses import grant_referral_registration_bonus_for_user
+
+    grant_referral_registration_bonus_for_user(user)
 
 
 def _active_flow(user: User):

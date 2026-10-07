@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
@@ -13,6 +14,7 @@ from game.models import (
     MatchOdds,
     Prediction,
     PredictionCoupon,
+    PredictionCouponResultChange,
     PredictionCoverImage,
     Sport,
     Team,
@@ -23,6 +25,7 @@ from game.models import (
     team_logo_upload_path,
 )
 from game.services.local_logos import sync_entity_logo
+from game.services.settlement import cancel_published_coupon, resettle_coupon, settle_coupon
 
 
 def _local_media_preview(url: str, *, size: int = 40):
@@ -359,6 +362,40 @@ class PredictionItemInline(admin.TabularInline):
     verbose_name_plural = "Позиции прогноза"
 
 
+class PredictionCouponResultChangeInline(admin.TabularInline):
+    model = PredictionCouponResultChange
+    extra = 0
+    can_delete = False
+    fields = (
+        "created_at",
+        "previous_status",
+        "new_status",
+        "previous_payout",
+        "new_payout",
+        "author_coins",
+        "uncollected_coins",
+        "source",
+        "changed_by",
+    )
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+def _settle_published_coupon_after_admin_edit(request, coupon_id: int) -> None:
+    # Results set by hand go through settlement, so coins follow the new result.
+    if PredictionCoupon.objects.filter(
+        pk=coupon_id,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).exists():
+        settle_coupon(
+            coupon_id,
+            source=PredictionCouponResultChange.Source.ADMIN,
+            changed_by=request.user,
+        )
+
+
 @admin.register(PredictionCoupon)
 class PredictionCouponAdmin(admin.ModelAdmin):
     list_display = (
@@ -399,7 +436,50 @@ class PredictionCouponAdmin(admin.ModelAdmin):
         "published_at",
         "settled_at",
     )
-    inlines = (PredictionItemInline,)
+    inlines = (PredictionItemInline, PredictionCouponResultChangeInline)
+    actions = ("cancel_with_refund", "resettle_by_match_results")
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None and obj.published_status != PredictionCoupon.PublishedStatus.DRAFT:
+            # The stake is charged on publish: status and stake change only through services.
+            # The result is derived from the positions, so coins always follow it.
+            readonly_fields.extend(
+                ("published_status", "total_stake", "state_status", "possible_payout", "settled_at")
+            )
+        return readonly_fields
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        _settle_published_coupon_after_admin_edit(request, form.instance.pk)
+
+    @admin.action(description="Пересчитать по результатам матчей")
+    def resettle_by_match_results(self, request, queryset):
+        resettled = 0
+        for coupon_id in (
+            queryset.filter(published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
+            .order_by("id")
+            .values_list("pk", flat=True)
+        ):
+            resettle_coupon(coupon_id, changed_by=request.user)
+            resettled += 1
+        self.message_user(request, f"Пересчитано опубликованных прогнозов: {resettled}.")
+
+    @admin.action(description="Отменить с возвратом ставок автору и копировщикам")
+    def cancel_with_refund(self, request, queryset):
+        canceled = 0
+        skipped = []
+        for coupon_id in queryset.order_by("id").values_list("pk", flat=True):
+            try:
+                cancel_published_coupon(coupon_id, reason="отменён администратором")
+            except ValidationError as exc:
+                skipped.append(f"#{coupon_id}: {exc.messages[0]}")
+            else:
+                canceled += 1
+        message = f"Отменено прогнозов: {canceled}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
 
 @admin.register(Prediction)
@@ -415,3 +495,7 @@ class PredictionItemAdmin(admin.ModelAdmin):
         "selection",
     )
     autocomplete_fields = ("coupon", "match")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _settle_published_coupon_after_admin_edit(request, obj.coupon_id)

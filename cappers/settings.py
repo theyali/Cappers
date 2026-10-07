@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -28,10 +30,51 @@ def env_int(name: str, default: int) -> int:
         return default
 
 
-SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-development-key")
-DEBUG = env_bool("DEBUG", True)
+DEBUG = env_bool("DEBUG", False)
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not DEBUG and SECRET_KEY in {"", "unsafe-development-key", "change-me-in-production"}:
+    # A lost environment variable must not start production with a known key.
+    raise ImproperlyConfigured("Set SECRET_KEY: it is required when DEBUG is off.")
+SECRET_KEY = SECRET_KEY or "unsafe-development-key"
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+
+# nginx terminates TLS and always sets X-Forwarded-Proto; the app port is bound
+# to 127.0.0.1 (docker-compose.yml), so the header cannot come from a client.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
+SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 0 if DEBUG else 30 * 24 * 60 * 60)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# nginx redirects plain HTTP to HTTPS (deploy/nginx), so Django does not have to.
+SILENCED_SYSTEM_CHECKS = ["security.W008"]
+ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip("/") + "/"
+
+# Payment providers that take payments; empty keeps payments off (PAYMENTS_INTEGRATION_PLAN.md).
+PAYMENTS_ENABLED_PROVIDERS = env_list("PAYMENTS_ENABLED_PROVIDERS")
+# Who takes the payments: ip (ИП), ooo (ООО) or self_employed (самозанятый).
+PAYMENTS_MERCHANT_TYPE = os.getenv("PAYMENTS_MERCHANT_TYPE", "ip").strip().lower()
+if PAYMENTS_MERCHANT_TYPE not in {"ip", "ooo", "self_employed"}:
+    raise ImproperlyConfigured("PAYMENTS_MERCHANT_TYPE must be ip, ooo or self_employed.")
+# Test payments (a CloudPayments test terminal) are refused unless this is on.
+PAYMENTS_ALLOW_TEST_PAYMENTS = env_bool("PAYMENTS_ALLOW_TEST_PAYMENTS", DEBUG)
+# Only staff see the pay buttons, e.g. while the terminal is still in test mode.
+PAYMENTS_STAFF_ONLY = env_bool("PAYMENTS_STAFF_ONLY", False)
+
+CLOUDPAYMENTS_PUBLIC_ID = os.getenv("CLOUDPAYMENTS_PUBLIC_ID", "")
+CLOUDPAYMENTS_API_SECRET = os.getenv("CLOUDPAYMENTS_API_SECRET", "")
+CLOUDPAYMENTS_API_URL = os.getenv("CLOUDPAYMENTS_API_URL", "https://api.cloudpayments.ru").rstrip("/")
+CLOUDPAYMENTS_API_TIMEOUT = env_int("CLOUDPAYMENTS_API_TIMEOUT", 15)
+CLOUDPAYMENTS_ORDER_TTL_MINUTES = env_int("CLOUDPAYMENTS_ORDER_TTL_MINUTES", 60)
+# 54-ФЗ receipts through CloudKassir. ИП and ООО need them; a self-employed
+# seller issues the receipt in «Мой налог» instead.
+CLOUDPAYMENTS_RECEIPTS_ENABLED = env_bool("CLOUDPAYMENTS_RECEIPTS_ENABLED", PAYMENTS_MERCHANT_TYPE != "self_employed")
+CLOUDPAYMENTS_TAXATION_SYSTEM = env_int("CLOUDPAYMENTS_TAXATION_SYSTEM", 1)
+# VAT code of the receipt item; empty means "без НДС".
+CLOUDPAYMENTS_VAT = os.getenv("CLOUDPAYMENTS_VAT", "").strip()
+CLOUDPAYMENTS_VAT = int(CLOUDPAYMENTS_VAT) if CLOUDPAYMENTS_VAT else None
+CLOUDPAYMENTS_RECEIPT_METHOD = env_int("CLOUDPAYMENTS_RECEIPT_METHOD", 4)
+CLOUDPAYMENTS_RECEIPT_OBJECT = env_int("CLOUDPAYMENTS_RECEIPT_OBJECT", 4)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -54,6 +97,7 @@ INSTALLED_APPS = [
     "front.apps.FrontConfig",
     "pages.apps.PagesConfig",
     "notifications.apps.NotificationsConfig",
+    "payments.apps.PaymentsConfig",
 ]
 
 MIDDLEWARE = [
@@ -63,8 +107,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "cabinet.middleware.DailyVisitStreakMiddleware",
+    # Activates the user's timezone; every "day" (streaks, daily tasks, roulette)
+    # must be counted after it.
     "cappers.user_context_middleware.UserContextMiddleware",
+    "cabinet.middleware.DailyVisitStreakMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -185,6 +231,9 @@ TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", os.getenv("TELEGRAM_BOT_TOKEN", ""))
 TELEGRAM_BOT_TOKEN = TG_BOT_TOKEN
 TG_BOT_USERNAME = os.getenv("TG_BOT_USERNAME", "").lstrip("@")
 TELEGRAM_AUTH_MAX_AGE = env_int("TELEGRAM_AUTH_MAX_AGE", 900)
+# Yandex SmartCaptcha on registration; disabled while the keys are empty.
+SMARTCAPTCHA_CLIENT_KEY = os.getenv("SMARTCAPTCHA_CLIENT_KEY", "")
+SMARTCAPTCHA_SERVER_KEY = os.getenv("SMARTCAPTCHA_SERVER_KEY", "")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -207,6 +256,15 @@ LOGGING = {
             "formatter": "verbose",
             "encoding": "utf-8",
         },
+        "payments_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_DIR / "payments.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
     },
     "loggers": {
         "django": {
@@ -218,6 +276,10 @@ LOGGING = {
             "handlers": ["django_file"],
             "level": "ERROR",
             "propagate": False,
+        },
+        "payments": {
+            "handlers": ["payments_file"],
+            "level": "INFO",
         },
     },
 }
@@ -232,22 +294,22 @@ CELERY_BEAT_SCHEDULE = {
     "fetch-live-tennis-matches": {
         "task": "game.tasks.fetch_live_tennis_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expire_seconds": 14},
+        "options": {"expires": 14},
     },
     "fetch-live-football-matches": {
         "task": "game.tasks.fetch_live_football_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expire_seconds": 14},
+        "options": {"expires": 14},
     },
     "fetch-live-hockey-matches": {
         "task": "game.tasks.fetch_live_hockey_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expire_seconds": 14},
+        "options": {"expires": 14},
     },
     "fetch-live-basketball-matches": {
         "task": "game.tasks.fetch_live_basketball_matches",
         "schedule": timedelta(seconds=15),
-        "options": {"expire_seconds": 14},
+        "options": {"expires": 14},
     },
     "sync-stuck-live-matches": {
         "task": "game.tasks.sync_stuck_live_matches",
@@ -289,6 +351,24 @@ CELERY_BEAT_SCHEDULE = {
         "task": "game.tasks.settle_predictions",
         "schedule": timedelta(minutes=15),
     },
+    "finalize-tournaments": {
+        "task": "tournaments.tasks.finalize_tournaments",
+        "schedule": timedelta(minutes=15),
+    },
+    "release-held-income": {
+        "task": "wallets.tasks.release_held_income",
+        "schedule": timedelta(hours=1),
+    },
+    "reconcile-pending-payments": {
+        "task": "payments.tasks.reconcile_pending_payments",
+        "schedule": timedelta(minutes=10),
+        "options": {"expires": 9 * 60},
+    },
+    "expire-stale-payments": {
+        "task": "payments.tasks.expire_stale_payments",
+        "schedule": timedelta(hours=1),
+        "options": {"expires": 50 * 60},
+    },
     "run-bot-prediction-cycle": {
         "task": "bots.tasks.run_bot_prediction_cycle",
         "schedule": timedelta(hours=1),
@@ -323,7 +403,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "notification-achievement-sync": {
         "task": "notifications.tasks.sync_achievement_notifications",
-        "schedule": timedelta(hours=1),
+        "schedule": timedelta(minutes=10),
     },
     "deliver-notifications": {
         "task": "notifications.tasks.deliver_pending_notifications",
@@ -380,7 +460,7 @@ NEUROKEFF_STUCK_LIVE_AFTER_MINUTES = env_int("NEUROKEFF_STUCK_LIVE_AFTER_MINUTES
 NEUROKEFF_STUCK_LIVE_LIMIT = env_int("NEUROKEFF_STUCK_LIVE_LIMIT", 500)
 NEUROKEFF_MATCH_SYNC_LOCK_SECONDS = env_int("NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600)
 NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
-NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 1)
+NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 2)
 COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)
 COUPON_MATCH_STATE_CACHE_SECONDS = env_int("COUPON_MATCH_STATE_CACHE_SECONDS", 10)
 MATCH_SOON_WINDOW_SECONDS = env_int("MATCH_SOON_WINDOW_SECONDS", 600)

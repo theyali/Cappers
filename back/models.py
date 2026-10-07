@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -201,6 +203,7 @@ class WebsiteSettings(models.Model):
         decimal_places=2,
         default=0,
         validators=PERCENT_VALIDATORS,
+        help_text="Процент от комиссии площадки с подписки, а не от её полной цены.",
     )
     referral_tournament_percent = models.DecimalField(
         "Реферал — приз турнира, %",
@@ -215,6 +218,11 @@ class WebsiteSettings(models.Model):
         decimal_places=2,
         default=0,
         validators=PERCENT_VALIDATORS,
+    )
+    referral_income_days = models.PositiveIntegerField(
+        "Срок реферального дохода, дней",
+        default=365,
+        help_text="Сколько дней после регистрации приглашённого реферер получает процент. 0 — без ограничения.",
     )
 
     platform_fee_1_day_percent = models.DecimalField(
@@ -251,6 +259,21 @@ class WebsiteSettings(models.Model):
         decimal_places=2,
         default=0,
         validators=PERCENT_VALIDATORS,
+    )
+    income_hold_days = models.PositiveSmallIntegerField(
+        "Холд дохода с оплат, дней",
+        default=7,
+        help_text=(
+            "Доход каппера с подписок и реферальные начисления с оплат становятся доступны "
+            "к выводу через столько дней: на случай возврата платежа. 0 — сразу."
+        ),
+    )
+    min_withdrawal_amount = models.DecimalField(
+        "Минимальная сумма вывода, ₽",
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("500.00"),
+        validators=[MinValueValidator(Decimal("0"))],
     )
 
     home_about_enabled = models.BooleanField("Показывать блок «О нас» на главной", default=True)

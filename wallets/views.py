@@ -7,7 +7,9 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_http_methods
 
+from back.models import WebsiteSettings
 from cabinet.models import User
+from payments.utils import build_payment_options
 
 from .forms import CopyBettingForm
 from .context_processors import BALANCE_HIDDEN_SESSION_KEY
@@ -54,7 +56,9 @@ def balance_visibility(request):
 @require_http_methods(["GET", "POST"])
 def top_up_balance(request):
     wallet = ensure_coin_wallet(request.user)
-    packages = CoinPackage.objects.filter(is_active=True).order_by("order", "id")
+    packages = list(CoinPackage.objects.filter(is_active=True).order_by("order", "id"))
+    for package in packages:
+        package.payment_options = build_payment_options(package.price_rub, request.user)
 
     if request.method == "POST":
         package_id = request.POST.get("package_id")
@@ -86,6 +90,8 @@ def top_up_balance(request):
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance) if real_balance else "",
             "pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
+            "held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
+            "min_withdrawal_display": format_money(WebsiteSettings.load().min_withdrawal_amount),
         },
     )
 
@@ -100,7 +106,11 @@ def real_balance_action(request):
     amount = request.POST.get("amount")
     try:
         if action == "withdraw":
-            request_real_withdrawal(request.user, amount)
+            request_real_withdrawal(
+                request.user,
+                amount,
+                payout_details=request.POST.get("payout_details", ""),
+            )
             messages.success(request, "Заявка на вывод создана.")
         else:
             messages.error(request, "Неизвестное действие с реальным балансом.")

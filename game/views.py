@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import timedelta
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -14,12 +14,29 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cabinet.models import DailyTask, User
+from cabinet.roulette.models import RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
 from cabinet.services.daily_tasks import record_daily_task_action
 from game.forms import RichPredictionCouponForm
-from game.models import Match, MatchOdds, Prediction, PredictionCoupon
+from game.models import Match, Prediction, PredictionCoupon
+from game.services.bet_options import (
+    build_match_odds_tabs,
+    build_match_winner_odds,
+    human_market_label,
+)
 from game.services.coupon_validation import (
+    COUPON_PUBLISH_LIMIT_MESSAGE,
+    MAX_COUPON_ITEMS,
+    CouponMatchClosedError,
     CouponMatchVerificationError,
+    CouponOddsChangedError,
+    coupon_publish_limited,
+    coupon_total_coefficient,
+    extract_match_ids,
+    parse_confidence,
+    parse_stake,
+    resolve_coupon_items,
+    validate_match_timing,
     verify_matches_for_coupon,
 )
 from game.services.match_sync import MatchSyncService
@@ -33,7 +50,6 @@ from notifications.models import MatchWatch
 from wallets.services import (
     InsufficientCoins,
     charge_prediction_stake,
-    copy_published_coupon,
     cover_prediction_stake_with_free_reward,
     format_coins,
 )
@@ -90,7 +106,7 @@ def match_list(request):
     )
 
     for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
+        match.coupon_odds = build_match_winner_odds(match)
 
     counts = {
         row["sync_scope"]: row["total"]
@@ -142,7 +158,7 @@ def match_detail(request, slug: str):
     )
     draft_coupon = _active_draft_coupon(request.user) if can_write_coupon else None
     free_predictions_available = _available_free_predictions(request.user) if can_write_coupon else 0
-    match.coupon_odds = _match_winner_odds(match)
+    match.coupon_odds = build_match_winner_odds(match)
     match.is_watched = (
         request.user.is_authenticated
         and match.sync_scope != Match.SyncScope.FINISHED
@@ -158,7 +174,7 @@ def match_detail(request, slug: str):
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "free_predictions_available": free_predictions_available,
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
-        "odds_tabs": _match_odds_tabs(match),
+        "odds_tabs": build_match_odds_tabs(match),
         "provider_prediction_panel": _provider_prediction_panel(match),
         "is_watched": match.is_watched,
     }
@@ -190,6 +206,8 @@ def rich_prediction_create(request):
             )
         except ValidationError as exc:
             form.add_error(None, exc)
+            # Publish checks may refresh coefficients in the draft: show the current ones.
+            context = build_prediction_editor_context(request, coupon=_active_draft_coupon(request.user))
         else:
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 
@@ -225,6 +243,9 @@ def rich_prediction_edit(request, coupon_id):
             )
         except ValidationError as exc:
             form.add_error(None, exc)
+            # Publish checks may refresh coefficients in the draft: show the current ones.
+            coupon.refresh_from_db()
+            context = build_prediction_editor_context(request, coupon=coupon)
         else:
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 
@@ -241,18 +262,22 @@ def create_coupon(request):
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
+        payload = None
+    if not isinstance(payload, dict):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
+    if not autosave and coupon_publish_limited(request.user):
+        return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
     use_free_prediction = payload.get("use_free_prediction") is True and not autosave
     audience = PredictionCoupon.Audience.FREE
 
     items = payload.get("items")
     if not isinstance(items, list):
         return JsonResponse({"ok": False, "error": "Передайте список матчей."}, status=400)
-    if len(items) > 20 or (not autosave and len(items) < 1):
+    if len(items) > MAX_COUPON_ITEMS or (not autosave and len(items) < 1):
         return JsonResponse(
-            {"ok": False, "error": "В прогнозе должно быть от 1 до 20 игр."},
+            {"ok": False, "error": f"В прогнозе должно быть от 1 до {MAX_COUPON_ITEMS} игр."},
             status=400,
         )
 
@@ -275,7 +300,7 @@ def create_coupon(request):
         )
 
     try:
-        match_ids = _extract_match_ids(items)
+        match_ids = extract_match_ids(items)
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
@@ -287,23 +312,29 @@ def create_coupon(request):
 
     matches = {
         match.id: match
-        for match in Match.objects.filter(id__in=match_ids)
+        for match in Match.objects.filter(id__in=match_ids).select_related(
+            "sport",
+            "home_team",
+            "away_team",
+        )
     }
     if len(matches) != len(items):
         return JsonResponse({"ok": False, "error": "Один из матчей не найден."}, status=400)
 
-    non_prematch = [
-        match for match in matches.values() if match.sync_scope != Match.SyncScope.PREMATCH
-    ]
-    if non_prematch:
-        match = non_prematch[0]
-        return JsonResponse(
-            {
-                "ok": False,
-                "error": f"Матч «{match.home_team_name} — {match.away_team_name}» уже начался или завершен.",
-            },
-            status=409,
-        )
+    try:
+        validate_match_timing(matches.values())
+    except CouponMatchClosedError as exc:
+        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=409)
+
+    try:
+        if use_free_prediction:
+            # A free roulette prediction always plays the configured stake, whatever was typed.
+            stake = Decimal(RouletteSettings.load().free_prediction_stake)
+        else:
+            stake = parse_stake(payload.get("stake"), required=not autosave)
+        confidence = parse_confidence(payload.get("confidence"))
+    except ValidationError as exc:
+        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
     verification = None
     if not autosave:
@@ -318,19 +349,24 @@ def create_coupon(request):
             return JsonResponse({"ok": False, "error": str(exc)}, status=503)
 
     try:
-        stake = _parse_stake(payload.get("stake"), required=not autosave)
-        confidence = _parse_confidence(payload.get("confidence"))
+        normalized_items = resolve_coupon_items(
+            items,
+            matches,
+            accept_changed_odds=autosave,
+        )
+    except CouponOddsChangedError as exc:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": _validation_message(exc),
+                "odds_changed": exc.changes,
+            },
+            status=409,
+        )
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
-    try:
-        normalized_items = [_normalize_prediction_item(item, matches) for item in items]
-    except ValidationError as exc:
-        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
-
-    total_coefficient = Decimal("1")
-    for item in normalized_items:
-        total_coefficient *= item["coefficient"]
+    total_coefficient = coupon_total_coefficient(normalized_items)
     possible_payout = stake * total_coefficient if stake > 0 else Decimal("0")
     coin_wallet = None
     coupon_created = False
@@ -383,6 +419,7 @@ def create_coupon(request):
                     match=item["match"],
                     market=item["market"],
                     selection=item["selection"],
+                    outcome_code=item["outcome_code"],
                     coefficient=item["coefficient"],
                     stake=stake,
                 )
@@ -392,8 +429,6 @@ def create_coupon(request):
         coupon.sync_coupon_type()
         if not autosave:
             coupon.assign_cover_image()
-        if not autosave:
-            copy_published_coupon(coupon)
 
     coupon = (
         PredictionCoupon.objects.prefetch_related("predictions__match")
@@ -438,49 +473,6 @@ def create_coupon(request):
     return JsonResponse(response)
 
 
-def _extract_match_ids(items: list[dict]) -> list[int]:
-    match_ids: list[int] = []
-    for item in items:
-        if not isinstance(item, dict):
-            raise ValidationError("Некорректная игра в прогнозе.")
-        match_id = _to_positive_int(item.get("match_id"))
-        if match_id is None:
-            raise ValidationError("Матч не найден.")
-        match_ids.append(match_id)
-    return match_ids
-
-
-def _parse_stake(value, *, required: bool) -> Decimal:
-    raw = str(value or "").replace(",", ".").strip()
-    if not raw:
-        if required:
-            raise ValidationError("Укажите сумму ставки.")
-        return Decimal("0")
-
-    try:
-        stake = Decimal(raw)
-    except (InvalidOperation, ValueError):
-        if required:
-            raise ValidationError("Укажите корректную сумму ставки.")
-        return Decimal("0")
-
-    if stake <= 0:
-        if required:
-            raise ValidationError("Сумма ставки должна быть больше нуля.")
-        return Decimal("0")
-    return stake
-
-
-def _parse_confidence(value) -> int:
-    try:
-        confidence = int(value if value not in (None, "") else 50)
-    except (TypeError, ValueError):
-        raise ValidationError("Укажите уверенность от 0 до 100%.")
-    if not 0 <= confidence <= 100:
-        raise ValidationError("Уверенность должна быть от 0 до 100%.")
-    return confidence
-
-
 def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
     _delete_expired_draft_coupons(user)
     cutoff = _draft_session_cutoff()
@@ -515,10 +507,13 @@ def _draft_session_cutoff():
 
 
 def _delete_expired_draft_coupons(user: User) -> int:
+    # Drafts that still carry followers' copied stakes (coupons unpublished before
+    # that was forbidden) are kept until those stakes are refunded.
     deleted, _ = PredictionCoupon.objects.filter(
         author=user,
         published_status=PredictionCoupon.PublishedStatus.DRAFT,
         updated_at__lt=_draft_session_cutoff(),
+        copied_bets__isnull=True,
     ).delete()
     return deleted
 
@@ -577,6 +572,7 @@ def _serialize_prediction(prediction: Prediction) -> dict:
         "market": prediction.market,
         "selection": prediction.selection,
         "shortLabel": _prediction_short_label(prediction),
+        "outcomeCode": prediction.outcome_code,
         "coefficient": _decimal_string(prediction.coefficient),
         "lastSeen": match.last_seen_at.isoformat() if match.last_seen_at else "",
     }
@@ -599,42 +595,6 @@ def _prediction_short_label(prediction: Prediction) -> str:
     return selection[:10]
 
 
-def _normalize_prediction_item(
-    item: dict,
-    matches: dict[int, Match],
-) -> dict:
-    if not isinstance(item, dict):
-        raise ValidationError("Некорректная игра в прогнозе.")
-
-    match_id = _to_positive_int(item.get("match_id"))
-    if match_id is None or match_id not in matches:
-        raise ValidationError("Матч не найден.")
-
-    market = str(item.get("market") or "").strip()
-    selection = str(item.get("selection") or "").strip()
-    coefficient_raw = str(item.get("coefficient") or "").replace(",", ".").strip()
-
-    if not market:
-        raise ValidationError("Выберите тип ставки.")
-    if not selection:
-        raise ValidationError("Выберите исход.")
-
-    try:
-        coefficient = Decimal(coefficient_raw)
-    except (InvalidOperation, ValueError):
-        raise ValidationError("Укажите коэффициент.")
-
-    if coefficient <= 0:
-        raise ValidationError("Коэффициент должен быть больше нуля.")
-
-    return {
-        "match": matches[match_id],
-        "market": market[:80],
-        "selection": selection[:120],
-        "coefficient": coefficient,
-    }
-
-
 def _latest_predictions():
     return (
         Prediction.objects.filter(
@@ -644,33 +604,6 @@ def _latest_predictions():
         .select_related("coupon__author", "match__league__country", "match__home_team", "match__away_team")
         .order_by("-coupon__published_at", "-coupon__created_at", "-created_at")[:6]
     )
-
-
-def _match_winner_odds(match: Match) -> dict:
-    try:
-        odds = match.odds
-    except MatchOdds.DoesNotExist:
-        odds = None
-
-    totals = odds.totals_all if odds and isinstance(odds.totals_all, dict) else {}
-    values = {
-        "home": _optional_odd(odds.home_win_bet if odds else None),
-        "draw": _optional_odd(odds.x_bet if odds else None),
-        "away": _optional_odd(odds.away_win_bet if odds else None),
-        "over25": _optional_odd(
-            (odds.goals_over_2_5 or _nested_odd(totals, "Over 2.5"))
-            if odds
-            else None
-        ),
-        "under25": _optional_odd(
-            (odds.goals_under_2_5 or _nested_odd(totals, "Under 2.5"))
-            if odds
-            else None
-        ),
-        "btts_yes": _optional_odd(odds.btts_yes if odds else None),
-    }
-    values["has_any"] = any(value is not None for value in values.values())
-    return values
 
 
 def _refresh_provider_predictions(match: Match) -> None:
@@ -744,383 +677,6 @@ def _provider_prediction_panel(match: Match) -> dict | None:
     }
 
 
-def _match_odds_tabs(match: Match) -> list[dict]:
-    try:
-        odds = match.odds
-    except MatchOdds.DoesNotExist:
-        odds = None
-    if not _match_odds_has_values(odds):
-        return _prediction_odds_tabs(match)
-
-    home_name = match.home_team_name or "Хозяева"
-    away_name = match.away_team_name or "Гости"
-
-    popular_sections = [
-        _odds_section(
-            "Исход матча",
-            [
-                _odds_row(
-                    "Основное время",
-                    [
-                        _odds_button("1", home_name, "winner", home_name, _optional_odd(odds.home_win_bet)),
-                        _odds_button("X", "Ничья", "winner", "Ничья", _optional_odd(odds.x_bet)),
-                        _odds_button("2", away_name, "winner", away_name, _optional_odd(odds.away_win_bet)),
-                    ],
-                ),
-                _odds_row(
-                    "Двойной шанс",
-                    [
-                        _odds_button("1X", f"{home_name} или ничья", "double_chance", f"{home_name} или ничья", _optional_odd(odds.d_1x)),
-                        _odds_button("X2", f"Ничья или {away_name}", "double_chance", f"Ничья или {away_name}", _optional_odd(odds.d_2x)),
-                    ],
-                ),
-                *_generic_market_rows(odds.double_chance_all, "double_chance", "Двойной шанс"),
-            ],
-        ),
-        _odds_section(
-            "Тоталы",
-            [
-                _odds_row(
-                    "Тотал голов 2.5",
-                    [
-                        _odds_button("ТБ 2.5", "Больше 2.5", "total", "ТБ 2.5", _optional_odd(odds.goals_over_2_5)),
-                        _odds_button("ТМ 2.5", "Меньше 2.5", "total", "ТМ 2.5", _optional_odd(odds.goals_under_2_5)),
-                    ],
-                ),
-                *_totals_rows_from_payload(odds.totals_all, skip_lines={"2.5"}),
-            ],
-        ),
-        _odds_section(
-            "Обе забьют",
-            [
-                _odds_row(
-                    "Голы обеих команд",
-                    [
-                        _odds_button("ОЗ Да", "Да", "both_score", "Обе забьют: да", _optional_odd(odds.btts_yes)),
-                        _odds_button("ОЗ Нет", "Нет", "both_score", "Обе забьют: нет", _optional_odd(odds.btts_no)),
-                    ],
-                ),
-                *_generic_market_rows(odds.btts_all, "both_score", "Обе забьют"),
-            ],
-        ),
-    ]
-
-    match_sections = [
-        popular_sections[0],
-        _odds_section(
-            "Форы",
-            [
-                _odds_row(
-                    "Фора 0",
-                    [
-                        _odds_button("Ф1 0", home_name, "handicap", f"{home_name} фора 0", _optional_odd(odds.fora_1_0)),
-                        _odds_button("Ф2 0", away_name, "handicap", f"{away_name} фора 0", _optional_odd(odds.fora_2_0)),
-                    ],
-                ),
-                *_generic_market_rows(odds.handicaps_all, "handicap", "Фора"),
-            ],
-        ),
-    ]
-    match_sections = [section for section in match_sections if section["rows"]]
-
-    total_sections = [
-        popular_sections[1],
-        _odds_section("Индивидуальные тоталы", _generic_market_rows(odds.team_totals_all, "team_total", "Индивидуальный тотал")),
-    ]
-
-    first_half_section = _odds_section(
-        "1-й тайм",
-        [
-            _odds_row(
-                "Исход 1-го тайма",
-                [
-                    _odds_button("1", home_name, "first_half_winner", f"1-й тайм: {home_name}", _optional_odd(odds.first_time_home_win_bet)),
-                    _odds_button("X", "Ничья", "first_half_winner", "1-й тайм: ничья", _optional_odd(odds.first_time_x_bet)),
-                    _odds_button("2", away_name, "first_half_winner", f"1-й тайм: {away_name}", _optional_odd(odds.first_time_away_win_bet)),
-                ],
-            ),
-            *_totals_rows_from_payload(odds.first_half_totals_all, market="first_half_total"),
-            *_generic_market_rows(odds.first_half_handicaps_all, "first_half_handicap", "Фора 1-го тайма"),
-        ],
-    )
-    other_sections = [
-        _odds_section("Тайм / матч", _generic_market_rows(odds.half_time_full_time_all, "half_time_full_time", "Тайм / матч")),
-        _odds_section("Точный счет", _generic_market_rows(odds.exact_score_all, "exact_score", "Точный счет")),
-        *_extra_market_sections(odds.extra_markets),
-    ]
-
-    tabs = [
-        {"key": "popular", "label": "Популярное", "sections": [section for section in popular_sections if section["rows"]]},
-        {"key": "match", "label": "Матч", "sections": match_sections},
-        {"key": "totals", "label": "Тоталы", "sections": [section for section in total_sections if section["rows"]]},
-        {"key": "first_half", "label": "1-й тайм", "sections": [first_half_section] if first_half_section["rows"] else []},
-        {"key": "other", "label": "Другие", "sections": [section for section in other_sections if section["rows"]]},
-    ]
-    return [tab for tab in tabs if tab["sections"]]
-
-
-def _match_odds_has_values(odds: MatchOdds | None) -> bool:
-    if odds is None:
-        return False
-
-    direct_fields = (
-        "home_win_bet",
-        "x_bet",
-        "away_win_bet",
-        "goals_over_2_5",
-        "goals_under_2_5",
-        "fora_1_0",
-        "fora_2_0",
-        "btts_yes",
-        "btts_no",
-        "d_1x",
-        "d_2x",
-        "first_time_home_win_bet",
-        "first_time_x_bet",
-        "first_time_away_win_bet",
-    )
-    if any(_optional_odd(getattr(odds, field, None)) is not None for field in direct_fields):
-        return True
-
-    json_fields = (
-        "totals_all",
-        "double_chance_all",
-        "handicaps_all",
-        "btts_all",
-        "team_totals_all",
-        "first_half_totals_all",
-        "first_half_handicaps_all",
-        "half_time_full_time_all",
-        "exact_score_all",
-        "extra_markets",
-    )
-    return any(bool(getattr(odds, field, None)) for field in json_fields)
-
-
-def _prediction_odds_tabs(match: Match) -> list[dict]:
-    predictions = (
-        Prediction.objects.filter(
-            match=match,
-            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            coupon__audience=PredictionCoupon.Audience.FREE,
-        )
-        .values("market", "selection", "coefficient")
-        .distinct()
-        .order_by("market", "selection")
-    )
-
-    rows = [
-        _odds_row(
-            _human_market_label(prediction["market"]),
-            [
-                _odds_button(
-                    _short_odd_label(prediction["selection"]),
-                    prediction["selection"],
-                    prediction["market"],
-                    prediction["selection"],
-                    _optional_odd(prediction["coefficient"]),
-                )
-            ],
-        )
-        for prediction in predictions
-    ]
-    section = _odds_section("Сохраненные коэффициенты", rows)
-    if not section["rows"]:
-        return []
-    return [{"key": "popular", "label": "Популярное", "sections": [section]}]
-
-
-def _odds_section(title: str, rows: list[dict]) -> dict:
-    return {"title": title, "rows": [row for row in rows if row["odds"]]}
-
-
-def _odds_row(title: str, odds: list[dict | None]) -> dict:
-    return {"title": title, "odds": [odd for odd in odds if odd]}
-
-
-def _odds_button(
-    label: str,
-    description: str,
-    market: str,
-    selection: str,
-    coefficient: str | None,
-) -> dict | None:
-    if coefficient is None:
-        return None
-    return {
-        "label": label,
-        "description": description,
-        "market": market,
-        "selection": selection,
-        "coefficient": coefficient,
-        "key": f"{market}:{selection}",
-    }
-
-
-def _totals_rows_from_payload(
-    totals_all: dict,
-    *,
-    market: str = "total",
-    skip_lines: set[str] | None = None,
-) -> list[dict]:
-    if not isinstance(totals_all, dict):
-        return []
-    skip_lines = skip_lines or set()
-
-    rows_by_line: dict[str, dict[str, str | None]] = {}
-    for raw_key, raw_value in totals_all.items():
-        key = str(raw_key)
-        odd = _optional_odd(raw_value)
-        if odd is None and isinstance(raw_value, dict):
-            rows_by_line.update(_nested_total_values(raw_value))
-            continue
-        if odd is None:
-            continue
-        lower_key = key.lower()
-        if "over" in lower_key or "больше" in lower_key:
-            side = "over"
-        elif "under" in lower_key or "меньше" in lower_key:
-            side = "under"
-        else:
-            continue
-        line = key.replace("Over", "").replace("Under", "").replace("Больше", "").replace("Меньше", "").strip()
-        if not line:
-            line = "2.5"
-        rows_by_line.setdefault(line, {"over": None, "under": None})[side] = odd
-
-    rows = []
-    for line, values in sorted(rows_by_line.items(), key=lambda item: _line_sort_key(item[0])):
-        if line in skip_lines:
-            continue
-        rows.append(
-            _odds_row(
-                f"Тотал {line}",
-                [
-                    _odds_button(f"ТБ {line}", f"Больше {line}", market, f"ТБ {line}", values.get("over")),
-                    _odds_button(f"ТМ {line}", f"Меньше {line}", market, f"ТМ {line}", values.get("under")),
-                ],
-            )
-        )
-
-    return rows
-
-
-def _nested_total_values(payload: dict) -> dict[str, dict[str, str | None]]:
-    nested_totals = payload.get("total") if isinstance(payload.get("total"), dict) else payload
-    if not isinstance(nested_totals, dict):
-        return {}
-
-    rows_by_line: dict[str, dict[str, str | None]] = {}
-    for raw_line, raw_value in nested_totals.items():
-        if not isinstance(raw_value, dict):
-            continue
-        line = str(raw_value.get("line") or raw_line).replace(",", ".").strip()
-        if not line:
-            continue
-        rows_by_line.setdefault(line, {"over": None, "under": None})["over"] = _optional_odd(raw_value.get("over"))
-        rows_by_line.setdefault(line, {"over": None, "under": None})["under"] = _optional_odd(raw_value.get("under"))
-    return rows_by_line
-
-
-def _generic_market_rows(payload: dict, market: str, title: str) -> list[dict]:
-    if not isinstance(payload, dict):
-        return []
-
-    grouped_rows: list[dict] = []
-    flat_buttons: list[dict] = []
-    for raw_key, raw_value in payload.items():
-        label = _human_market_label(raw_key)
-        if isinstance(raw_value, dict):
-            row = _odds_row(
-                label,
-                [
-                    _odds_button(
-                        _short_odd_label(option_key),
-                        _human_market_label(option_key),
-                        market,
-                        f"{label}: {_human_market_label(option_key)}",
-                        _optional_odd(option_value),
-                    )
-                    for option_key, option_value in raw_value.items()
-                ],
-            )
-            if row["odds"]:
-                grouped_rows.append(row)
-        else:
-            button = _odds_button(
-                _short_odd_label(raw_key),
-                label,
-                market,
-                label,
-                _optional_odd(raw_value),
-            )
-            if button:
-                flat_buttons.append(button)
-
-    if flat_buttons:
-        grouped_rows.insert(0, _odds_row(title, flat_buttons))
-    return grouped_rows
-
-
-def _extra_market_sections(payload: dict) -> list[dict]:
-    if not isinstance(payload, dict):
-        return []
-    sections = []
-    for raw_title, raw_value in payload.items():
-        if isinstance(raw_value, dict):
-            section = _odds_section(
-                _human_market_label(raw_title),
-                _generic_market_rows(raw_value, f"extra:{raw_title}", _human_market_label(raw_title)),
-            )
-            if section["rows"]:
-                sections.append(section)
-    return sections
-
-
-def _human_market_label(value) -> str:
-    text = str(value or "").strip()
-    replacements = {
-        "home": "Хозяева",
-        "away": "Гости",
-        "draw": "Ничья",
-        "yes": "Да",
-        "no": "Нет",
-        "over": "Больше",
-        "under": "Меньше",
-    }
-    lower = text.lower().replace("_", " ")
-    return replacements.get(lower, text.replace("_", " ").replace("-", " ").strip() or "Ставка")
-
-
-def _short_odd_label(value) -> str:
-    text = _human_market_label(value)
-    shortcuts = {
-        "Хозяева": "1",
-        "Ничья": "X",
-        "Гости": "2",
-        "Да": "Да",
-        "Нет": "Нет",
-    }
-    return shortcuts.get(text, text[:18])
-
-
-def _line_sort_key(value: str) -> tuple[int, Decimal]:
-    try:
-        return (0, Decimal(value.replace(",", ".")))
-    except (InvalidOperation, ValueError):
-        return (1, Decimal("0"))
-
-
-def _optional_odd(value) -> str | None:
-    try:
-        odd = Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
-        return None
-    if odd <= 0:
-        return None
-    return f"{odd.quantize(Decimal('0.01'))}"
-
-
 def _percent_value(value) -> int | None:
     try:
         percent = int(round(float(value)))
@@ -1146,25 +702,9 @@ def _provider_metric_label(metric: dict) -> str:
     }
     code = str(metric.get("code") or "")
     subject = str(metric.get("subject") or "")
-    label = labels.get(code, _human_market_label(code))
+    label = labels.get(code, human_market_label(code))
     subject_label = subject_labels.get(subject)
     return f"{label} {subject_label}" if subject_label else label
-
-
-def _nested_odd(odds: dict, key: str):
-    if isinstance(odds, dict):
-        return odds.get(key)
-    return None
-
-
-def _format_odd(value) -> str:
-    try:
-        odd = Decimal(str(value))
-    except (InvalidOperation, ValueError, TypeError):
-        odd = Decimal("2")
-    if odd <= 0:
-        odd = Decimal("2")
-    return f"{odd.quantize(Decimal('0.01'))}"
 
 
 def _decimal_string(value: Decimal | None) -> str:

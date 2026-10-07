@@ -64,6 +64,7 @@ class RouletteSettingsAdmin(admin.ModelAdmin):
                     "is_enabled",
                     "daily_free_spins",
                     "reset_hour",
+                    "free_prediction_stake",
                 )
             },
         ),

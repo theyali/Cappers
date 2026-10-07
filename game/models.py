@@ -409,6 +409,13 @@ class Match(models.Model):
     )
 
     score = models.CharField(max_length=32, blank=True)
+    regular_time_score = models.CharField(
+        "Счёт основного времени",
+        max_length=32,
+        blank=True,
+        help_text="Хоккей рассчитывается по основному времени. Заполните, если провайдер не прислал "
+        "счёт по периодам и матч ушёл на ручную проверку, например «3-3».",
+    )
     live_minute = models.IntegerField(null=True, blank=True)
     live_minute_label = models.CharField(max_length=32, blank=True)
     winning_bet_keys = models.JSONField(default=list, blank=True)
@@ -536,6 +543,7 @@ class MatchManualReview(models.Model):
         MISSING_SCORE = "missing_score", "Нет итогового счёта"
         INVALID_SCORE = "invalid_score", "Некорректный счёт"
         UNKNOWN_MARKET = "unknown_market", "Неизвестный рынок"
+        REGULAR_TIME_UNKNOWN = "regular_time_unknown", "Нет счёта основного времени"
         SETTLEMENT_ERROR = "settlement_error", "Ошибка расчёта"
 
     class Status(models.TextChoices):
@@ -791,6 +799,58 @@ class PredictionCoupon(models.Model):
         return f"Прогноз #{self.pk or 'new'}"
 
 
+class PredictionCouponResultChange(models.Model):
+    """One change of a published coupon result and the coins it moved for the author."""
+
+    class Source(models.TextChoices):
+        AUTO = "auto", "Автоматический расчёт"
+        RESETTLE = "resettle", "Перерасчёт"
+        ADMIN = "admin", "Правка в админке"
+
+    coupon = models.ForeignKey(
+        PredictionCoupon,
+        on_delete=models.CASCADE,
+        related_name="result_changes",
+        verbose_name="Прогноз",
+    )
+    previous_status = models.CharField(
+        "Был результат",
+        max_length=16,
+        choices=PredictionCoupon.StateStatus.choices,
+    )
+    new_status = models.CharField(
+        "Стал результат",
+        max_length=16,
+        choices=PredictionCoupon.StateStatus.choices,
+    )
+    previous_payout = models.DecimalField("Была выплата", max_digits=12, decimal_places=2)
+    new_payout = models.DecimalField("Стала выплата", max_digits=12, decimal_places=2)
+    author_coins = models.BigIntegerField("Коины автору", default=0)
+    uncollected_coins = models.PositiveBigIntegerField(
+        "Не удалось списать",
+        default=0,
+        help_text="Сколько коинов не удалось забрать у автора и копировщиков из-за нехватки баланса.",
+    )
+    source = models.CharField("Источник", max_length=16, choices=Source.choices)
+    changed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="Изменил",
+    )
+    created_at = models.DateTimeField("Когда", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Смена результата прогноза"
+        verbose_name_plural = "История результатов прогноза"
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"Прогноз #{self.coupon_id}: {self.previous_status} → {self.new_status}"
+
+
 class Prediction(models.Model):
     class StateStatus(models.TextChoices):
         WIN = "win", "Выигрыш"
@@ -811,6 +871,14 @@ class Prediction(models.Model):
     )
     market = models.CharField("Рынок", max_length=80)
     selection = models.CharField("Выбор", max_length=120)
+    outcome_code = models.CharField(
+        "Код исхода",
+        max_length=32,
+        blank=True,
+        default="",
+        help_text="Исход для расчёта: 1/X/2, 1X/X2/12, over 2.5, home -1.5, yes/no, 2:1. "
+        "Пусто у старых прогнозов — они рассчитываются по тексту исхода.",
+    )
     coefficient = models.DecimalField("Коэффициент", max_digits=8, decimal_places=2, default=1)
     stake = models.DecimalField("Сумма", max_digits=10, decimal_places=2)
     state_status = models.CharField(

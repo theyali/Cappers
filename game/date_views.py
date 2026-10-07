@@ -13,12 +13,13 @@ from django.utils.dateparse import parse_date
 
 from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
+from cabinet.roulette.models import RouletteSettings
 from game.models import Match, PredictionCoupon, Sport
+from game.services.bet_options import build_match_winner_odds
 from game.views import (
     _active_draft_coupon,
     _available_free_predictions,
     _latest_predictions,
-    _match_winner_odds,
     _serialize_draft_coupon,
 )
 from notifications.models import MatchWatch
@@ -337,6 +338,9 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "latest_predictions": _latest_predictions(),
         "draft_coupon": _serialize_draft_coupon(draft_coupon) if draft_coupon else None,
         "free_predictions_available": free_predictions_available,
+        "free_prediction_stake": (
+            RouletteSettings.load().free_prediction_stake if free_predictions_available else None
+        ),
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "selected_date": selected_date,
         "selected_date_iso": selected_date.isoformat(),
@@ -516,7 +520,7 @@ def _sport_count_source(date_matches, live_matches, active_scope: str, user):
 def _decorate_matches(matches):
     card_odds = {}
     for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
+        match.coupon_odds = build_match_winner_odds(match)
         card_odds[str(match.id)] = {"scope": match.sync_scope, "odds": _stored_card_odds(match)}
     return card_odds
 

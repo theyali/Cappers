@@ -522,7 +522,8 @@ def build_earnings_context(user) -> dict:
     real_balance = ensure_real_balance(user)
     earning_transactions = RealBalanceTransaction.objects.filter(
         user=user,
-        status=RealBalanceTransaction.Status.COMPLETED,
+        # Held income is earned too: it only cannot be withdrawn yet.
+        status__in=(RealBalanceTransaction.Status.COMPLETED, RealBalanceTransaction.Status.HELD),
         amount__gt=0,
         kind__in=EARNING_KINDS,
     )
@@ -660,6 +661,7 @@ def build_earnings_context(user) -> dict:
         "real_balance": real_balance,
         "real_balance_display": format_money(real_balance.balance),
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal),
+        "real_held_display": format_money(real_balance.held) if real_balance.held else "",
         "earnings_all_time": earnings_all_time,
         "earnings_periods": periods,
         "earnings_hero_change": hero_change,

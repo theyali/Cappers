@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 
@@ -37,6 +38,62 @@ BOOKMAKER_KEYS = ("bookmakers", "bookmaker", "bookmaker_list", "bookmakers_list"
 MARKET_KEYS = ("bets", "markets", "market", "odds", "events")
 VALUE_KEYS = ("values", "outcomes", "selections", "items", "odds")
 LINE_RE = re.compile(r"[-+]?\d+(?:[.,]\d+)?")
+HANDICAP_LABEL_RE = re.compile(
+    r"^\s*(home|away|team\s*1|team\s*2|1|2|ф1|ф2|п1|п2|хозяева|гости)"
+    r"\s*\(?\s*([-+]?\d+(?:[.,]\d+)?)\s*\)?\s*$",
+    re.IGNORECASE,
+)
+EXACT_SCORE_RE = re.compile(r"(\d+)\s*[-:]\s*(\d+)")
+HOME_HANDICAP_SIDES = {"home", "team1", "1", "ф1", "п1", "хозяева"}
+
+
+def outcome_code_from_label(market: str, label: Any) -> str:
+    """Return the structured outcome code for a provider odds label.
+
+    Codes: ``1``/``X``/``2`` (winner), ``1X``/``X2``/``12`` (double chance),
+    ``over 2.5``/``under 2.5`` (totals), ``yes``/``no`` (both teams score),
+    ``home -1.5``/``away +1.5`` (handicaps) and ``2:1`` (exact score).
+    An empty string means the label cannot be classified safely.
+    """
+    text = str(label or "").strip()
+    if market in {"winner", "first_half_winner"}:
+        return {"home": "1", "draw": "X", "away": "2"}.get(_winner_side(text) or "", "")
+    if market == "double_chance":
+        key = _double_chance_key(text)
+        return key.upper() if key else ""
+    if market in {"total", "first_half_total"}:
+        side = _total_side(text)
+        line = format_outcome_line(_line_from_text(text))
+        return f"{side.lower()} {line}" if side and line else ""
+    if market == "both_score":
+        if _is_yes(text):
+            return "yes"
+        return "no" if _is_no(text) else ""
+    if market in {"handicap", "first_half_handicap"}:
+        match = HANDICAP_LABEL_RE.match(text)
+        if not match:
+            return ""
+        side = "home" if match.group(1).lower().replace(" ", "") in HOME_HANDICAP_SIDES else "away"
+        line = format_outcome_line(match.group(2), signed=True)
+        return f"{side} {line}" if line else ""
+    if market == "exact_score":
+        match = EXACT_SCORE_RE.search(text)
+        return f"{int(match.group(1))}:{int(match.group(2))}" if match else ""
+    return ""
+
+
+def format_outcome_line(value: Any, *, signed: bool = False) -> str:
+    """Normalize a total/handicap line for outcome codes: ``2.5``, ``+1.5``, ``0``."""
+    try:
+        number = Decimal(str(value).strip().replace(",", "."))
+    except (InvalidOperation, ValueError):
+        return ""
+    if not number.is_finite():
+        return ""
+    if number == 0:
+        return "0"
+    text = format(number.normalize(), "f")
+    return f"+{text}" if signed and number > 0 else text
 
 
 def match_odds_defaults(payload: dict[str, Any]) -> dict[str, Any]:

@@ -56,6 +56,13 @@ class User(AbstractUser):
         blank=True,
     )
     email_verified = models.BooleanField("Почта подтверждена", default=False, db_index=True)
+    registration_ip = models.GenericIPAddressField("IP регистрации", null=True, blank=True, db_index=True)
+    deleted_at = models.DateTimeField(
+        "Аккаунт удалён",
+        null=True,
+        blank=True,
+        help_text="Аккаунт обезличен: личные данные стёрты, финансовая история сохранена.",
+    )
     referral_code = models.CharField(
         "Реферальный код",
         max_length=8,
@@ -133,13 +140,6 @@ class AnalystProfile(models.Model):
         blank=True,
         db_index=True,
     )
-    is_vip = models.BooleanField("VIP прогнозист", default=False, db_index=True)
-    vip_activated_at = models.DateTimeField(
-        "VIP активирован",
-        null=True,
-        blank=True,
-        db_index=True,
-    )
     is_recommended = models.BooleanField(
         "Рекомендовать подписаться",
         default=False,
@@ -187,28 +187,6 @@ class AnalystProfile(models.Model):
         super().clean()
         if self.paid_predictions_price is None:
             self.paid_predictions_price = 0
-
-    def save(self, *args, **kwargs):
-        vip_timestamp_changed = False
-        if self.is_vip and not self.vip_activated_at:
-            self.vip_activated_at = timezone.now()
-            vip_timestamp_changed = True
-
-        if self.pk and self.is_vip:
-            previous = (
-                type(self).objects.filter(pk=self.pk)
-                .values("is_vip", "vip_activated_at")
-                .first()
-            )
-            if previous and not previous["is_vip"]:
-                self.vip_activated_at = timezone.now()
-                vip_timestamp_changed = True
-
-        update_fields = kwargs.get("update_fields")
-        if vip_timestamp_changed and update_fields is not None:
-            kwargs["update_fields"] = set(update_fields) | {"vip_activated_at"}
-
-        super().save(*args, **kwargs)
 
     @property
     def social_links(self) -> list[dict]:
@@ -469,13 +447,13 @@ class AnalystPaidPlan(models.Model):
 class AnalystPaidSubscription(models.Model):
     subscriber = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_subscriptions",
         verbose_name="Подписчик",
     )
     analyst = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_subscribers",
         verbose_name="Аналитик",
     )
@@ -532,13 +510,13 @@ class AnalystPaidSubscriptionPayment(models.Model):
     )
     subscriber = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_payments",
         verbose_name="Подписчик",
     )
     analyst = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="paid_prediction_sales",
         verbose_name="Аналитик",
     )
@@ -555,6 +533,15 @@ class AnalystPaidSubscriptionPayment(models.Model):
     duration_days = models.PositiveIntegerField("Срок, дней")
     starts_at = models.DateTimeField("Начало периода")
     expires_at = models.DateTimeField("Окончание периода")
+    # Set when paid through a provider; empty means paid from the real balance.
+    payment = models.OneToOneField(
+        "payments.Payment",
+        on_delete=models.PROTECT,
+        related_name="paid_subscription_payment",
+        verbose_name="Оплата у провайдера",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
 
     class Meta:
@@ -834,6 +821,15 @@ class UserVipSubscription(models.Model):
         default=Source.PURCHASE,
     )
     is_active = models.BooleanField("Активен", default=True)
+    # The provider payment this period was bought with; a refund ends this period.
+    payment = models.OneToOneField(
+        "payments.Payment",
+        on_delete=models.PROTECT,
+        related_name="vip_subscription",
+        verbose_name="Оплата у провайдера",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 

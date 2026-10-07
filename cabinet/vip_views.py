@@ -10,19 +10,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from payments.utils import build_payment_options
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
 from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
-from .vip import get_active_vip, purchase_vip
-
-
-def _plural_ru(value: int, one: str, few: str, many: str) -> str:
-    value = abs(int(value))
-    if value % 10 == 1 and value % 100 != 11:
-        return one
-    if 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
-        return few
-    return many
+from .vip import get_active_vip, plural_ru, purchase_vip, vip_switch_warning
 
 
 def _vip_time_left(subscription) -> str:
@@ -33,9 +25,9 @@ def _vip_time_left(subscription) -> str:
         return "истёк"
     days = remaining.days
     if days > 0:
-        return f"{days} {_plural_ru(days, 'день', 'дня', 'дней')}"
+        return f"{days} {plural_ru(days, 'день', 'дня', 'дней')}"
     hours = max(1, int(remaining.total_seconds() // 3600))
-    return f"{hours} {_plural_ru(hours, 'час', 'часа', 'часов')}"
+    return f"{hours} {plural_ru(hours, 'час', 'часа', 'часов')}"
 
 
 def _wants_json(request) -> bool:
@@ -120,6 +112,16 @@ def vip_plans(request):
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)
         plan.balance_after_display = format_money(plan.balance_after) if plan.can_afford else ""
+        plan.payment_options = build_payment_options(plan.price_rub, request.user)
+        plan.is_switch = bool(active_vip and active_vip.plan_id != plan.pk)
+        if plan.payment_options:
+            plan.balance_button_label = "Оплатить с баланса"
+        elif plan.is_switch:
+            plan.balance_button_label = "Перейти на тариф"
+        elif active_vip:
+            plan.balance_button_label = "Продлить тариф"
+        else:
+            plan.balance_button_label = "Выбрать тариф"
     comparison_rows = _vip_comparison_rows(plans)
 
     return render(
@@ -131,6 +133,7 @@ def vip_plans(request):
             "plans": plans,
             "active_vip": active_vip,
             "vip_time_left": _vip_time_left(active_vip),
+            "vip_switch_warning": vip_switch_warning(request.user) if active_vip else "",
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance),
             "comparison_rows": comparison_rows,

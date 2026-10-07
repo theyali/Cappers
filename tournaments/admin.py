@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 
 from .models import (
     Tournament,
@@ -13,6 +14,7 @@ from .models import (
     TournamentResult,
     TournamentStage,
 )
+from .services.leaderboard import finalize_tournament_results
 
 
 class TournamentAchievementInline(admin.TabularInline):
@@ -80,6 +82,7 @@ class TournamentAdmin(admin.ModelAdmin):
         "prize_second_display",
         "prize_third_display",
         "is_featured",
+        "finalized_at",
     )
     list_filter = (
         "status",
@@ -99,7 +102,8 @@ class TournamentAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "description", "rules_text")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("allowed_sports",)
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("finalized_at", "created_at", "updated_at")
+    actions = ("finalize_results",)
     fieldsets = (
         (None, {"fields": ("title", "slug", "description", "rules_text", "status", "is_featured")}),
         (
@@ -129,7 +133,7 @@ class TournamentAdmin(admin.ModelAdmin):
             "Условия допуска",
             {"fields": ("eligibility_mode", "min_user_predictions", "min_user_wins", "eligibility_sport")},
         ),
-        ("Системные поля", {"fields": ("created_at", "updated_at")}),
+        ("Системные поля", {"fields": ("finalized_at", "created_at", "updated_at")}),
     )
     inlines = (
         TournamentPrizeInline,
@@ -137,6 +141,22 @@ class TournamentAdmin(admin.ModelAdmin):
         TournamentStageInline,
         TournamentAchievementInline,
     )
+
+    @admin.action(description="Зафиксировать итоги и выдать призы")
+    def finalize_results(self, request, queryset):
+        finalized = 0
+        skipped = []
+        for tournament in queryset.order_by("id"):
+            try:
+                finalize_tournament_results(tournament)
+            except ValidationError as exc:
+                skipped.append(f"«{tournament.title}»: {exc.messages[0]}")
+            else:
+                finalized += 1
+        message = f"Итоги зафиксированы: {finalized}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
     @admin.display(description="1 место, ₽", ordering="prize_first")
     def prize_first_display(self, obj):

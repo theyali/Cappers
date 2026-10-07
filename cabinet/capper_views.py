@@ -21,6 +21,12 @@ from .capper_forms import (
 from .forms import RegistrationForm
 from .models import AnalystProfile, User
 from .referrals import mark_referral_registration
+from .services.registration_guard import (
+    captcha_client_key,
+    captcha_passed,
+    client_ip,
+    registration_limit_reached,
+)
 from .services.preferences import sync_user_sport_league_preferences
 
 
@@ -111,6 +117,12 @@ def register(request):
             messages.error(request, "Сначала выберите тип аккаунта.")
             return redirect("cabinet:register")
         if form is not None and form.is_valid():
+            if registration_limit_reached(request):
+                form.add_error(None, "Слишком много регистраций с вашего адреса. Попробуйте через час.")
+            elif not captcha_passed(request):
+                form.add_error(None, "Подтвердите, что вы не робот.")
+        # add_error() above makes the form invalid.
+        if form is not None and form.is_valid():
             wants_capper = selected_type == ACCOUNT_CAPPER
             with transaction.atomic():
                 user = form.save(commit=False)
@@ -118,6 +130,7 @@ def register(request):
                 # аккаунты не попадали в рейтинг и не публиковались случайно.
                 user.role = User.Role.READER
                 user.email_verified = False
+                user.registration_ip = client_ip(request)
                 user.save()
                 profile = None
                 if wants_capper:
@@ -154,6 +167,7 @@ def register(request):
                 leagues__matches__isnull=False
             ).distinct().order_by("name_ru", "name"),
             "league_search_url": reverse("cabinet:league_search"),
+            "smartcaptcha_client_key": captcha_client_key(),
         },
     )
 

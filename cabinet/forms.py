@@ -1,9 +1,11 @@
 from decimal import Decimal
 
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
+from cappers.ratelimit import count_attempt, limit_reached
 from game.models import League, Sport
 
 from .models import (
@@ -18,6 +20,29 @@ from .mobile_quick_access import (
     available_mobile_quick_access_options,
     normalized_mobile_quick_access_keys,
 )
+from .services.registration_guard import client_ip
+
+
+LOGIN_FAILURES_LIMIT = 10
+LOGIN_FAILURES_WINDOW_SECONDS = 15 * 60
+
+
+class LoginForm(AuthenticationForm):
+    """Login that stops password guessing: 10 failures per IP and username in 15 minutes."""
+
+    def clean(self):
+        username = str(self.data.get("username") or "").strip().lower()
+        key = f"login-failures:{client_ip(self.request) if self.request else ''}:{username}"
+        if limit_reached(key, limit=LOGIN_FAILURES_LIMIT):
+            raise ValidationError(
+                "Слишком много неудачных попыток входа. Попробуйте через 15 минут.",
+                code="too_many_attempts",
+            )
+        try:
+            return super().clean()
+        except ValidationError:
+            count_attempt(key, window=LOGIN_FAILURES_WINDOW_SECONDS)
+            raise
 
 
 class SportPreferenceField(forms.ModelMultipleChoiceField):

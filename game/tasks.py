@@ -26,7 +26,7 @@ def sync_stuck_live_matches():
 
 def _sync_stuck_live():
     result = MatchSyncService().sync_stuck_live_matches()
-    result["settlement"] = settle_live_matches()
+    result["settlement"] = _settle_live()
     return result
 
 
@@ -53,32 +53,55 @@ def _fetch_finished_for_sport(sport_code: str):
 
 def _sync_live_all():
     result = MatchSyncService().sync_live()
-    result["settlement"] = settle_live_matches()
+    result["settlement"] = _settle_live()
     return result
 
 
 def _sync_live_sport(sport_code: str):
     result = MatchSyncService().sync_live(sport_code=sport_code)
-    result["settlement"] = settle_live_matches()
+    result["settlement"] = _settle_live()
     return result
 
 
 def _sync_finished_all():
     result = MatchSyncService().sync_finished()
-    result["settlement"] = settle_finished_matches()
+    settle_predictions.delay()
+    result["settlement"] = "queued"
     return result
 
 
 def _sync_finished_sport(sport_code: str):
     result = MatchSyncService().sync_finished(sport_code=sport_code)
-    result["settlement"] = settle_finished_matches()
+    settle_predictions.delay()
+    result["settlement"] = "queued"
     return result
+
+
+def _lock_seconds() -> int:
+    # A task killed at the time limit never reaches `finally`, so its lock must
+    # expire no later than the task itself.
+    lock_seconds = int(getattr(settings, "NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600))
+    return max(1, min(lock_seconds, int(settings.CELERY_TASK_TIME_LIMIT)))
+
+
+def _run_locked(lock_key: str, callback):
+    """Run ``callback`` unless another worker is already running it."""
+    if not cache.add(lock_key, "1", timeout=_lock_seconds()):
+        return {"status": "skipped", "reason": "already_running"}
+    try:
+        return callback()
+    finally:
+        cache.delete(lock_key)
+
+
+def _settle_live():
+    # Live settlement covers every sport: the four live sync tasks share one run.
+    return _run_locked("settlement:live", settle_live_matches)
 
 
 def _run_sync(scope: str, sport_code: str, callback):
     lock_key = f"match-sync:{scope}:{sport_code}"
-    lock_seconds = max(int(getattr(settings, "NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600)), 1)
-    if not cache.add(lock_key, "1", timeout=lock_seconds):
+    if not cache.add(lock_key, "1", timeout=_lock_seconds()):
         return {
             "status": "skipped",
             "reason": "already_running",
@@ -173,4 +196,5 @@ def refresh_match_provider_predictions(match_id: int):
 
 @shared_task
 def settle_predictions():
-    return settle_finished_matches()
+    # One settlement at a time: every finished-match sync queues this task.
+    return _run_locked("settlement:finished", settle_finished_matches)

@@ -36,7 +36,7 @@ from front.prediction_views import _decorate_predictions, _published_queryset
 from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
-from game.views import _match_winner_odds
+from game.services.bet_options import build_match_winner_odds
 from notifications.models import MatchWatch
 
 
@@ -687,7 +687,7 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
         ][:HOME_MATCHES_LIMIT]
 
     for match in selected:
-        match.coupon_odds = _match_winner_odds(match)
+        match.coupon_odds = build_match_winner_odds(match)
 
     watched_ids = set()
     if request.user.is_authenticated and selected:

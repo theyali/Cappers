@@ -209,6 +209,12 @@ class Tournament(models.Model):
         help_text="Если выбран, прогнозы и победы для допуска считаются только по этому спорту.",
     )
     is_featured = models.BooleanField("Показывать выше остальных", default=False, db_index=True)
+    finalized_at = models.DateTimeField(
+        "Итоги зафиксированы",
+        null=True,
+        blank=True,
+        help_text="Итоги фиксируются один раз: таблица замораживается, призы выдаются.",
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлён", auto_now=True)
 
@@ -241,6 +247,11 @@ class Tournament(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("tournaments:detail", kwargs={"slug": self.slug})
+
+    def has_money_prizes(self) -> bool:
+        if any(value > 0 for value in (self.prize_first, self.prize_second, self.prize_third)):
+            return True
+        return self.prizes.filter(is_active=True, money_amount__gt=0).exists()
 
     @property
     def runtime_status(self) -> str:

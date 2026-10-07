@@ -11,6 +11,7 @@ from django.utils import timezone
 from cabinet.models import MatchPredictionRequest, User
 from front.metrics import increment_match_views
 from game.models import Match
+from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
 from game.tasks import refresh_match_provider_predictions
 from notifications.models import MatchWatch
 
@@ -104,7 +105,7 @@ def match_detail(request, slug: str):
         legacy_views._active_draft_coupon(request.user) if can_write_coupon else None
     )
 
-    match.coupon_odds = legacy_views._match_winner_odds(match)
+    match.coupon_odds = build_match_winner_odds(match)
     # Resolve the watch state before rendering HTML, so the first response
     # already contains the correct bookmark icon state.
     match.is_watched = _match_watch_state(request, match)
@@ -126,7 +127,7 @@ def match_detail(request, slug: str):
             else None
         ),
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
-        "odds_tabs": legacy_views._match_odds_tabs(match),
+        "odds_tabs": build_match_odds_tabs(match),
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
         "match_predictions_total": match_metrics.predictions_count,
         "match_demand": _match_demand_context(request, match),

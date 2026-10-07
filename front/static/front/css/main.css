@@ -557,6 +557,7 @@ mark { color: var(--blue); background: 0 0; }
     font-weight: 800;
     text-decoration: none;
 }
+.paid-checkout-actions .is-primary,
 .paid-checkout-actions button,
 .wallet-form-actions button {
     color: #fff;
@@ -800,7 +801,7 @@ mark { color: var(--blue); background: 0 0; }
     line-height: 1.45;
 }
 .wallet-topup-page .wallet-balance-card span { text-transform: none; }
-.wallet-topup-page .wallet-withdraw-form { grid-column: 1/-1; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+.wallet-topup-page .wallet-withdraw-form { grid-column: 1/-1; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: stretch; }
 .wallet-topup-page .wallet-method-input {
     width: 100%;
     padding: 14px 16px;
@@ -7952,6 +7953,7 @@ body.layout-columns-center_right .predictions-content {
 .expert-public-shell[data-active-tab="predictions"] .expert-recent-performance,
 .expert-public-shell[data-active-tab="predictions"] .expert-sport-profit,
 .expert-public-shell[data-active-tab="stats"] .expert-public-predictions,
+.paid-checkout-actions a[hidden],
 .prediction-comment-replies-more[hidden],
 .prediction-comments-more[hidden],
 .profile-user-verified,
@@ -10854,6 +10856,7 @@ body.register footer {
     stroke-linejoin: round;
 }
 .profile-email-modal-copy { margin: 0; color: rgba(255, 255, 255, 0.64); font-size: 13px; line-height: 1.55; }
+ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-email-modal-submit {
     min-height: 46px;
     display: inline-flex;
@@ -20118,7 +20121,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
-.vip-plan-action { margin-top: auto; }
+.vip-plan-action { margin-top: auto; display: grid; gap: 8px; }
 .vip-plan-action .profile-save-button {
     width: 100%;
     min-height: 44px;

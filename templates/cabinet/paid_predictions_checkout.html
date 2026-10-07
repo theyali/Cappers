@@ -22,7 +22,7 @@
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next_url }}">
             {% include "cabinet/includes/_paid_plan_picker.html" %}
-            <button type="submit"{% if not paid_checkout_can_pay %} disabled{% endif %}>Оплатить подписку</button>
+            {% include "cabinet/includes/_paid_checkout_buttons.html" %}
             <a href="{{ next_url }}">Назад</a>
         </form>
     </article>

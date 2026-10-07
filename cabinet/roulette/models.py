@@ -25,6 +25,13 @@ class RouletteSettings(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(23)],
         help_text="Час по часовому поясу проекта, когда становятся доступны ежедневные попытки.",
     )
+    # Limits match the coupon stake limits in game.services.coupon_validation.
+    free_prediction_stake = models.PositiveIntegerField(
+        "Ставка бесплатного прогноза, коинов",
+        default=100,
+        validators=[MinValueValidator(100), MaxValueValidator(1_000_000)],
+        help_text="Фиксированная сумма прогноза, оплаченного бесплатным прогнозом из рулетки. Сумма, введённая каппером, не учитывается.",
+    )
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 

@@ -8,20 +8,23 @@ from game.services.live_settlement import live_prediction_state
 
 class LiveSettlementStateTests(SimpleTestCase):
     @staticmethod
-    def prediction(market: str, selection: str):
-        return SimpleNamespace(market=market, selection=selection)
+    def prediction(market: str, selection: str, outcome_code: str = ""):
+        return SimpleNamespace(market=market, selection=selection, outcome_code=outcome_code)
 
-    def test_under_total_loses_as_soon_as_line_is_crossed(self):
+    def test_under_total_loses_once_line_is_crossed_with_margin(self):
         prediction = self.prediction("total", "ТМ 2.5")
+        self.assertIsNone(live_prediction_state(prediction, (0, 3)))
         self.assertEqual(
-            live_prediction_state(prediction, (0, 3)),
+            live_prediction_state(prediction, (1, 3)),
             Prediction.StateStatus.LOSE,
         )
 
-    def test_over_total_wins_as_soon_as_line_is_crossed(self):
+    def test_over_total_wins_once_line_is_crossed_with_margin(self):
         prediction = self.prediction("total", "ТБ 2.5")
+        # A single goal over the line could still be cancelled by VAR.
+        self.assertIsNone(live_prediction_state(prediction, (2, 1)))
         self.assertEqual(
-            live_prediction_state(prediction, (2, 1)),
+            live_prediction_state(prediction, (2, 2)),
             Prediction.StateStatus.WIN,
         )
 
@@ -33,17 +36,26 @@ class LiveSettlementStateTests(SimpleTestCase):
             live_prediction_state(self.prediction("total", "ТБ 2.5"), (1, 1))
         )
 
-    def test_both_score_yes_wins_immediately_after_both_score(self):
-        prediction = self.prediction("both_score", "Обе забьют: да")
+    def test_both_score_needs_a_spare_goal_for_each_team(self):
+        yes = self.prediction("both_score", "Обе забьют: да")
+        no = self.prediction("both_score", "Обе забьют: нет")
+        self.assertIsNone(live_prediction_state(yes, (1, 2)))
+        self.assertIsNone(live_prediction_state(no, (1, 1)))
+        self.assertEqual(live_prediction_state(yes, (2, 2)), Prediction.StateStatus.WIN)
+        self.assertEqual(live_prediction_state(no, (2, 3)), Prediction.StateStatus.LOSE)
+
+    def test_basketball_uses_wider_margin(self):
+        prediction = self.prediction("total", "ТБ 160.5", "over 160.5")
+        self.assertIsNone(live_prediction_state(prediction, (80, 82), sport_code="basketball"))
         self.assertEqual(
-            live_prediction_state(prediction, (1, 2)),
+            live_prediction_state(prediction, (82, 82), sport_code="basketball"),
             Prediction.StateStatus.WIN,
         )
 
-    def test_both_score_no_loses_immediately_after_both_score(self):
-        prediction = self.prediction("both_score", "Обе забьют: нет")
+    def test_outcome_code_is_used_when_present(self):
+        prediction = self.prediction("total", "любой текст", "under 2.5")
         self.assertEqual(
-            live_prediction_state(prediction, (1, 1)),
+            live_prediction_state(prediction, (2, 2)),
             Prediction.StateStatus.LOSE,
         )
 

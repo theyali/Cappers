@@ -385,12 +385,19 @@
                     <h2 id="profile-delete-account-title">Удалить аккаунт безвозвратно?</h2>
                 </div>
             </div>
-            <p class="profile-email-modal-copy">Будут удалены профиль, прогнозы, подписки, настройки копибеттинга, балансы, операции и другие связанные с аккаунтом данные. Отменить это действие нельзя.</p>
-            <form method="post" action="{% url 'cabinet:delete_account' %}">
-                {% csrf_token %}
-                <input type="hidden" name="confirmation" value="delete-account">
-                <button class="profile-telegram-disconnect" type="submit">Да, удалить аккаунт</button>
-            </form>
+            <p class="profile-email-modal-copy">Имя, почта, Telegram, аватар и данные профиля будут стёрты, войти в аккаунт станет нельзя. История операций с коинами и деньгами сохранится обезличенно: её требует учёт платежей. Отменить это действие нельзя.</p>
+            {% if delete_account_blockers %}
+                <p class="profile-email-modal-copy">Сейчас удалить аккаунт нельзя:</p>
+                <ul class="profile-email-modal-copy">
+                    {% for reason in delete_account_blockers %}<li>{{ reason }}</li>{% endfor %}
+                </ul>
+            {% else %}
+                <form method="post" action="{% url 'cabinet:delete_account' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirmation" value="delete-account">
+                    <button class="profile-telegram-disconnect" type="submit">Да, удалить аккаунт</button>
+                </form>
+            {% endif %}
         </section>
     </div>
 
@@ -483,7 +490,7 @@
         <section class="profile-side-card profile-settings-panel is-danger">
             <p class="eyebrow">Опасная зона</p>
             <div class="profile-side-title heading-style-h3">Удаление аккаунта</div>
-            <p class="profile-telegram-copy">Аккаунт и связанные данные будут удалены без возможности восстановления.</p>
+            <p class="profile-telegram-copy">Личные данные будут удалены без возможности восстановления.</p>
             <a class="profile-telegram-disconnect" href="#profile-delete-account-modal">Удалить аккаунт</a>
         </section>
     </aside>

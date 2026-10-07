@@ -3,11 +3,13 @@
     if (!modal) return;
 
     let pendingForm = null;
+    let pendingButton = null;
     const confirmButton = modal.querySelector("[data-vip-switch-confirm]");
     const title = modal.querySelector("#vip-switch-modal-title");
 
-    const openModal = (form, planTitle) => {
+    const openModal = (form, button, planTitle) => {
         pendingForm = form;
+        pendingButton = button;
         if (title && planTitle) title.textContent = `Перейти на ${planTitle}?`;
         modal.style.display = "grid";
         modal.setAttribute("aria-hidden", "false");
@@ -16,6 +18,7 @@
 
     const closeModal = () => {
         pendingForm = null;
+        pendingButton = null;
         modal.setAttribute("aria-hidden", "true");
         modal.style.display = "";
     };
@@ -25,7 +28,7 @@
         if (switchButton) {
             const form = switchButton.closest("[data-vip-plan-form]");
             if (!form) return;
-            openModal(form, switchButton.dataset.vipPlanTitle || "");
+            openModal(form, switchButton, switchButton.dataset.vipPlanTitle || "");
             return;
         }
 
@@ -38,6 +41,13 @@
         if (!pendingForm) return;
         const modeInput = pendingForm.querySelector("[data-vip-purchase-mode]");
         if (modeInput) modeInput.value = "switch";
+        // A card switch goes to the payment checkout instead of the balance purchase.
+        const checkoutAction = pendingButton?.dataset.vipCheckoutAction;
+        if (checkoutAction) {
+            pendingForm.action = checkoutAction;
+            const providerInput = pendingForm.querySelector("[data-vip-provider-input]");
+            if (providerInput) providerInput.value = pendingButton.dataset.vipProvider || "";
+        }
         pendingForm.submit();
     });
 

@@ -2,17 +2,28 @@ import logging
 import re
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
+from cabinet.roulette.rewards import UserRouletteRewardState
 from game.models import (
     Match,
     MatchManualReview,
     MatchOdds,
     Prediction,
     PredictionCoupon,
+    PredictionCouponResultChange,
 )
-from wallets.services import settle_orphaned_copied_bets, settle_prediction_coupon
+from wallets.models import CoinTransaction
+from wallets.services import (
+    credit_coins,
+    settle_copied_bets_for_coupon,
+    settle_orphaned_copied_bets,
+    settle_prediction_coupon,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -49,8 +60,11 @@ def get_match_score_review_reason(match: Match) -> str | None:
     score = (match.score or "").strip()
     if not score:
         return MatchManualReview.Reason.MISSING_SCORE
-    if _parse_score(score) is None:
+    parsed_score = _parse_score(score)
+    if parsed_score is None:
         return MatchManualReview.Reason.INVALID_SCORE
+    if _settlement_score(match, parsed_score) is None:
+        return MatchManualReview.Reason.REGULAR_TIME_UNKNOWN
     return None
 
 
@@ -67,12 +81,80 @@ def resolve_match_manual_reviews(match: Match, reasons: tuple[str, ...]) -> None
     )
 
 
-def settle_finished_matches(limit: int = 500) -> dict:
-    void_result = settle_void_matches(limit=limit)
+SCORE_REVIEW_REASONS = (
+    MatchManualReview.Reason.MISSING_SCORE,
+    MatchManualReview.Reason.INVALID_SCORE,
+)
+
+
+def _review_recent_match_scores(limit: int) -> None:
+    """Flag recent finished matches with a missing or broken score.
+
+    This runs even for matches nobody bet on: such reviews show gaps in the
+    provider data. Settlement itself only looks at matches with predictions.
+    """
     matches = (
         Match.objects.filter(sync_scope=Match.SyncScope.FINISHED)
+        .annotate(
+            has_open_review=Exists(
+                MatchManualReview.objects.filter(
+                    match=OuterRef("pk"),
+                    status=MatchManualReview.Status.OPEN,
+                    reason__in=SCORE_REVIEW_REASONS,
+                )
+            )
+        )
+        .only("id", "score")
         .order_by("-starts_at", "-id")[:limit]
     )
+    for match in matches:
+        score = (match.score or "").strip()
+        if not score:
+            reason = MatchManualReview.Reason.MISSING_SCORE
+        elif _parse_score(score) is None:
+            reason = MatchManualReview.Reason.INVALID_SCORE
+        else:
+            reason = None
+        if reason and not match.has_open_review:
+            flag_match_for_manual_review(match, reason, {"score": match.score})
+        elif not reason and match.has_open_review:
+            resolve_match_manual_reviews(match, SCORE_REVIEW_REASONS)
+
+
+def _matches_awaiting_settlement(sync_scopes):
+    """Matches with unsettled published predictions, oldest first.
+
+    Only these need settling, so a busy day cannot push an unsettled match out
+    of the batch. Matches waiting for a manual review go last: they are retried,
+    but cannot block fresh matches.
+    """
+    return (
+        Match.objects.filter(sync_scope__in=sync_scopes)
+        .filter(
+            Exists(
+                Prediction.objects.filter(
+                    match=OuterRef("pk"),
+                    state_status="",
+                    coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                )
+            )
+        )
+        .annotate(
+            has_open_review=Exists(
+                MatchManualReview.objects.filter(
+                    match=OuterRef("pk"),
+                    status=MatchManualReview.Status.OPEN,
+                )
+            )
+        )
+        .order_by("has_open_review", "starts_at", "id")
+    )
+
+
+def settle_finished_matches(limit: int = 500) -> dict:
+    void_result = settle_void_matches(limit=limit)
+    _review_recent_match_scores(limit)
+    matches = _matches_awaiting_settlement([Match.SyncScope.FINISHED]).select_related("sport")[:limit]
     resolved_matches = 0
     updated_predictions = 0
     updated_coupons = set()
@@ -88,6 +170,8 @@ def settle_finished_matches(limit: int = 500) -> dict:
                 ).select_related("coupon")
             )
             review_reason = get_match_score_review_reason(match)
+            if review_reason == MatchManualReview.Reason.REGULAR_TIME_UNKNOWN and not predictions:
+                continue
             if review_reason is not None:
                 flag_match_for_manual_review(
                     match,
@@ -101,6 +185,7 @@ def settle_finished_matches(limit: int = 500) -> dict:
                 (
                     MatchManualReview.Reason.MISSING_SCORE,
                     MatchManualReview.Reason.INVALID_SCORE,
+                    MatchManualReview.Reason.REGULAR_TIME_UNKNOWN,
                 ),
             )
 
@@ -180,10 +265,7 @@ def settle_finished_matches(limit: int = 500) -> dict:
 
 
 def settle_void_matches(limit: int = 500) -> dict:
-    matches = (
-        Match.objects.filter(sync_scope__in=VOID_MATCH_SCOPES)
-        .order_by("-starts_at", "-id")[:limit]
-    )
+    matches = _matches_awaiting_settlement(VOID_MATCH_SCOPES)[:limit]
     resolved_matches = 0
     updated_predictions = 0
     updated_coupons: set[int] = set()
@@ -233,6 +315,9 @@ def resolve_match_bets(match: Match) -> dict | None:
     score = _parse_score(match.score)
     if score is None:
         return None
+    score = _settlement_score(match, score)
+    if score is None:
+        return None
 
     home_goals, away_goals = score
     total_goals = _match_total_score(match, score)
@@ -270,7 +355,7 @@ def resolve_match_bets(match: Match) -> dict | None:
     winning.add(_key("exact_score", f"{home_goals}-{away_goals}"))
     winning.add(_key("exact_score", f"{home_goals}:{away_goals}"))
 
-    for line in _total_lines(match):
+    for line in _total_lines(match) if total_goals is not None else ():
         over_key = _key("total", f"ТБ {line}")
         under_key = _key("total", f"ТМ {line}")
         if Decimal(total_goals) > line:
@@ -328,6 +413,11 @@ def resolve_match_bets(match: Match) -> dict | None:
 
 
 def prediction_state(prediction: Prediction, result: dict) -> str | None:
+    outcome_code = str(getattr(prediction, "outcome_code", "") or "").strip()
+    if outcome_code:
+        return _settle_by_outcome_code(prediction, outcome_code, result)
+
+    # Predictions saved before outcome codes existed are settled by their text.
     evaluated = _evaluate_prediction(prediction, result)
     if evaluated is not None:
         return evaluated
@@ -342,11 +432,23 @@ def prediction_state(prediction: Prediction, result: dict) -> str | None:
 
 
 @transaction.atomic
-def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
-    coupon = PredictionCoupon.objects.prefetch_related("predictions").filter(pk=coupon_id).first()
+def settle_coupon(
+    coupon_id: int,
+    *,
+    source: str = PredictionCouponResultChange.Source.AUTO,
+    changed_by=None,
+) -> PredictionCoupon | None:
+    """Derive the coupon result from its predictions and settle coins.
+
+    A changed result of a published coupon is recorded in the coupon history,
+    and the coins of the author and copy-betting followers are corrected by the
+    difference between the old and the new result.
+    """
+    coupon = PredictionCoupon.objects.select_for_update().filter(pk=coupon_id).first()
     if coupon is None:
         return None
 
+    previous = (coupon.state_status, coupon.possible_payout, coupon.settled_at)
     predictions = list(coupon.predictions.all())
     states = [prediction.state_status for prediction in predictions]
     effective_payout = _effective_coupon_payout(coupon, predictions)
@@ -366,18 +468,98 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
     if effective_payout is not None:
         coupon.possible_payout = effective_payout
 
-    update_fields = ["state_status", "settled_at", "updated_at"]
-    if effective_payout is not None:
-        update_fields.append("possible_payout")
-    coupon.save(update_fields=update_fields)
-    settle_prediction_coupon(coupon)
+    if (coupon.state_status, coupon.possible_payout, coupon.settled_at) != previous:
+        coupon.save(update_fields=["state_status", "possible_payout", "settled_at", "updated_at"])
+
+    previous_status, previous_payout, _ = previous
+    change = None
+    if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED and (
+        coupon.state_status != previous_status
+        or (
+            coupon.state_status == PredictionCoupon.StateStatus.WIN
+            and coupon.possible_payout != previous_payout
+        )
+    ):
+        change = PredictionCouponResultChange.objects.create(
+            coupon=coupon,
+            previous_status=previous_status,
+            new_status=coupon.state_status,
+            previous_payout=previous_payout,
+            new_payout=coupon.possible_payout,
+            source=source,
+            changed_by=changed_by,
+        )
+    settle_prediction_coupon(coupon, change=change)
     return coupon
+
+
+@transaction.atomic
+def cancel_published_coupon(coupon_id: int, *, reason: str = "") -> PredictionCoupon:
+    """Withdraw a published, not yet settled coupon and return every stake taken for it.
+
+    The author gets the stake back (or the free roulette prediction it was paid
+    with), and copy-betting followers get their copied stakes refunded. Authors
+    cannot unpublish coupons themselves; this service is the only way to void one.
+    """
+    coupon = (
+        PredictionCoupon.objects.select_for_update()
+        .select_related("author")
+        .filter(pk=coupon_id)
+        .first()
+    )
+    if coupon is None:
+        raise ValidationError("Прогноз не найден.")
+    if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
+        raise ValidationError("Отменить можно только опубликованный прогноз.")
+    if coupon.state_status != PredictionCoupon.StateStatus.PENDING:
+        raise ValidationError("Рассчитанный прогноз отменить нельзя.")
+
+    coupon.published_status = PredictionCoupon.PublishedStatus.CANCELED
+    coupon.save(update_fields=["published_status", "updated_at"])
+    _refund_author_stake(coupon, reason=reason)
+    settle_copied_bets_for_coupon(coupon, outcome=PredictionCoupon.StateStatus.REFUND)
+    return coupon
+
+
+def _refund_author_stake(coupon: PredictionCoupon, *, reason: str) -> None:
+    stake_transaction = (
+        CoinTransaction.objects.filter(
+            user_id=coupon.author_id,
+            kind=CoinTransaction.Kind.PREDICTION_STAKE,
+            related_model=coupon._meta.label_lower,
+            related_id=coupon.pk,
+        )
+        .order_by("id")
+        .first()
+    )
+    if stake_transaction is None:
+        return
+
+    if stake_transaction.amount < 0:
+        note = f"Возврат ставки отменённого прогноза #{coupon.pk}"
+        credit_coins(
+            coupon.author,
+            abs(stake_transaction.amount),
+            CoinTransaction.Kind.PREDICTION_REFUND,
+            related_obj=coupon,
+            note=f"{note}: {reason}" if reason else note,
+        )
+        return
+
+    # A zero stake transaction means the coupon was paid with a free roulette prediction.
+    reward_state, _ = UserRouletteRewardState.objects.select_for_update().get_or_create(
+        user_id=coupon.author_id,
+    )
+    reward_state.free_predictions += 1
+    reward_state.save(update_fields=("free_predictions", "updated_at"))
 
 
 def resettle_coupon(
     coupon_id: int,
     *,
     recalculate_predictions: bool = True,
+    source: str = PredictionCouponResultChange.Source.RESETTLE,
+    changed_by=None,
 ) -> PredictionCoupon | None:
     coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
     if coupon is None:
@@ -427,7 +609,7 @@ def resettle_coupon(
                 prediction.state_status = state
                 prediction.save(update_fields=["state_status", "updated_at"])
 
-    return settle_coupon(coupon_id)
+    return settle_coupon(coupon_id, source=source, changed_by=changed_by)
 
 
 def _effective_coupon_payout(
@@ -494,6 +676,57 @@ def _parse_optional_score(value: str | None) -> tuple[int, int] | None:
     return _parse_score(value)
 
 
+def _settle_by_outcome_code(prediction: Prediction, outcome_code: str, result: dict) -> str | None:
+    market = _normalize(prediction.market)
+    match = prediction.match
+    if market.startswith("first_half_"):
+        score = _first_half_score(match)
+        if score is None:
+            return None
+        total = sum(score)
+        market = market.removeprefix("first_half_")
+    else:
+        score = (int(result["home_goals"]), int(result["away_goals"]))
+        total = result["total_goals"] if "total_goals" in result else _match_total_score(match, score)
+
+    home_goals, away_goals = score
+    winner_code = "1" if home_goals > away_goals else "2" if home_goals < away_goals else "X"
+
+    if market == "winner":
+        return _state(outcome_code == winner_code)
+    if market == "double_chance":
+        return _state(winner_code in outcome_code)
+    if market == "both_score":
+        both_scored = home_goals > 0 and away_goals > 0
+        return _state(both_scored == (outcome_code == "yes"))
+    if market == "exact_score":
+        selected = _parse_optional_score(outcome_code)
+        return _state(selected == score) if selected else None
+
+    side, _, raw_line = outcome_code.partition(" ")
+    try:
+        line = Decimal(raw_line)
+    except InvalidOperation:
+        return None
+    if market == "total":
+        if total is None:
+            return None
+        if Decimal(total) == line:
+            return Prediction.StateStatus.REFUND
+        return _state((Decimal(total) > line) == (side == "over"))
+    if market == "handicap":
+        own, opponent = (home_goals, away_goals) if side == "home" else (away_goals, home_goals)
+        adjusted = Decimal(own) + line
+        if adjusted == opponent:
+            return Prediction.StateStatus.REFUND
+        return _state(adjusted > opponent)
+    return None
+
+
+def _state(won: bool) -> str:
+    return Prediction.StateStatus.WIN if won else Prediction.StateStatus.LOSE
+
+
 def _evaluate_prediction(prediction: Prediction, result: dict) -> str | None:
     score = (
         int(result["home_goals"]),
@@ -528,6 +761,24 @@ def _evaluate_prediction(prediction: Prediction, result: dict) -> str | None:
     return None
 
 
+def _team_side(text: str, home_name: str, away_name: str) -> str | None:
+    """Which team a selection text names.
+
+    An exact name wins; otherwise the longest contained name does, so
+    "динамо москва" is the away side even when the home team is "динамо".
+    """
+    if text in {home_name, "1", "home", "хозяева", "п1"}:
+        return "home"
+    if text in {away_name, "2", "away", "гости", "п2"}:
+        return "away"
+    candidates = [
+        (len(name), side)
+        for name, side in ((home_name, "home"), (away_name, "away"))
+        if name and name in text
+    ]
+    return max(candidates)[1] if candidates else None
+
+
 def _settle_winner(
     selection: str,
     score: tuple[int, int],
@@ -535,12 +786,13 @@ def _settle_winner(
     away_name: str,
 ) -> str | None:
     home_goals, away_goals = score
-    if selection in {"1", "home", "хозяева"} or selection == home_name or home_name in selection:
-        return Prediction.StateStatus.WIN if home_goals > away_goals else Prediction.StateStatus.LOSE
-    if selection in {"2", "away", "гости"} or selection == away_name or away_name in selection:
-        return Prediction.StateStatus.WIN if away_goals > home_goals else Prediction.StateStatus.LOSE
     if selection in {"x", "draw", "ничья"}:
         return Prediction.StateStatus.WIN if home_goals == away_goals else Prediction.StateStatus.LOSE
+    side = _team_side(selection, home_name, away_name)
+    if side == "home":
+        return Prediction.StateStatus.WIN if home_goals > away_goals else Prediction.StateStatus.LOSE
+    if side == "away":
+        return Prediction.StateStatus.WIN if away_goals > home_goals else Prediction.StateStatus.LOSE
     return None
 
 
@@ -555,24 +807,29 @@ def _settle_double_chance(
     away_or_draw = away_goals >= home_goals
     home_or_away = home_goals != away_goals
 
-    if selection in {"1x", "home or draw", "хозяева или ничья"} or (
-        home_name in selection and "нич" in selection
-    ):
+    if selection in {"1x", "home or draw", "хозяева или ничья"}:
         return Prediction.StateStatus.WIN if home_or_draw else Prediction.StateStatus.LOSE
-    if selection in {"x2", "draw or away", "ничья или гости"} or (
-        away_name in selection and "нич" in selection
-    ):
+    if selection in {"x2", "draw or away", "ничья или гости"}:
         return Prediction.StateStatus.WIN if away_or_draw else Prediction.StateStatus.LOSE
-    if selection in {"12", "home or away", "хозяева или гости"} or (
-        home_name in selection and away_name in selection
-    ):
+    if selection in {"12", "home or away", "хозяева или гости"}:
+        return Prediction.StateStatus.WIN if home_or_away else Prediction.StateStatus.LOSE
+
+    parts = [part.strip() for part in selection.split(" или ")]
+    if len(parts) != 2:
+        return None
+    sides = {_team_side(part, home_name, away_name) for part in parts if not part.startswith("нич")}
+    if "нич" in selection and sides == {"home"}:
+        return Prediction.StateStatus.WIN if home_or_draw else Prediction.StateStatus.LOSE
+    if "нич" in selection and sides == {"away"}:
+        return Prediction.StateStatus.WIN if away_or_draw else Prediction.StateStatus.LOSE
+    if sides == {"home", "away"}:
         return Prediction.StateStatus.WIN if home_or_away else Prediction.StateStatus.LOSE
     return None
 
 
-def _settle_total(selection: str, total_goals: int) -> str | None:
+def _settle_total(selection: str, total_goals: int | None) -> str | None:
     line = _selection_line(selection)
-    if line is None:
+    if line is None or total_goals is None:
         return None
     is_over = _is_over_selection(selection)
     is_under = _is_under_selection(selection)
@@ -606,12 +863,12 @@ def _settle_handicap(
     if line is None:
         return None
 
-    side = None
-    if home_name in selection or "ф1" in selection or "home" in selection or "хозяева" in selection:
-        side = "home"
-    elif away_name in selection or "ф2" in selection or "away" in selection or "гости" in selection:
-        side = "away"
-
+    side = _team_side(re.sub(r"\s*фора.*$", "", selection), home_name, away_name)
+    if side is None:
+        if "ф1" in selection or "home" in selection or "хозяева" in selection:
+            side = "home"
+        elif "ф2" in selection or "away" in selection or "гости" in selection:
+            side = "away"
     if side is None:
         return None
 
@@ -652,50 +909,98 @@ def _first_half_score(match: Match) -> tuple[int, int] | None:
     return None
 
 
-def _match_total_score(match: Match, score: tuple[int, int]) -> int:
-    score_total = sum(score)
-    period_total = _period_score_total(match)
-    return max(score_total, period_total or 0)
+def _match_total_score(match: Match, score: tuple[int, int]) -> int | None:
+    """Total for totals markets: tennis counts games of the sets, other sports the score."""
+    if _sport_code(match) == "tennis":
+        return _tennis_games_total(match)
+    return sum(score)
 
 
-def _period_score_total(match: Match) -> int | None:
+def _settlement_score(match: Match, score: tuple[int, int]) -> tuple[int, int] | None:
+    """Score markets are settled by.
+
+    Hockey lines are three-way and settled by regular time: overtime goals and
+    the shootout goal are excluded. The regular-time score comes from the field
+    an admin fills during manual review, then from period scores; without them
+    it is still known unless the final margin is one goal (a possible overtime).
+    """
+    if _sport_code(match) != "hockey":
+        return score
+    regular = _parse_optional_score(getattr(match, "regular_time_score", "")) or hockey_regular_time_score(match)
+    if regular is not None:
+        return regular
+    if abs(score[0] - score[1]) != 1:
+        return score
+    return None
+
+
+def hockey_regular_time_score(match: Match, *, partial: bool = False) -> tuple[int, int] | None:
+    """Sum of the three regulation periods; ``partial`` allows periods not played yet (live)."""
     payload = match.raw_data if isinstance(match.raw_data, dict) else {}
-    totals = [
-        total
-        for key in ("periods", "scoreboard", "scores", "period_scores", "sets", "quarters")
-        if (total := _sum_score_payload(payload.get(key))) is not None
-    ]
-    return max(totals) if totals else None
-
-
-def _sum_score_payload(payload) -> int | None:
-    if payload in (None, ""):
+    periods = payload.get("periods")
+    if not isinstance(periods, dict):
         return None
 
-    if isinstance(payload, str):
-        score = _parse_optional_score(payload)
-        return sum(score) if score else None
+    if any(key in periods for key in ("first", "second", "third")):
+        period_scores = [_parse_optional_score(str(periods.get(key) or "")) for key in ("first", "second", "third")]
+    else:
+        items = periods.get("items") if isinstance(periods.get("items"), list) else []
+        by_number = {
+            int(item.get("number")): _score_from_mapping(item.get("score") or {})
+            for item in items
+            if isinstance(item, dict)
+            and str(item.get("type") or "").lower() == "period"
+            and str(item.get("number") or "").isdigit()
+        }
+        period_scores = [by_number.get(number) for number in (1, 2, 3)]
 
-    if isinstance(payload, dict):
-        direct_score = _score_from_mapping(payload)
-        if direct_score is not None:
-            return sum(direct_score)
-        totals = [
-            total
-            for value in payload.values()
-            if (total := _sum_score_payload(value)) is not None
-        ]
-        return sum(totals) if totals else None
+    known = [period_score for period_score in period_scores if period_score is not None]
+    if not known or (not partial and len(known) != 3):
+        return None
+    return sum(home for home, _ in known), sum(away for _, away in known)
 
-    if isinstance(payload, (list, tuple)):
-        totals = [
-            total
-            for value in payload
-            if (total := _sum_score_payload(value)) is not None
-        ]
-        return sum(totals) if totals else None
 
-    return None
+def _tennis_games_total(match: Match) -> int | None:
+    payload = match.raw_data if isinstance(match.raw_data, dict) else {}
+    set_scores = []
+    periods = payload.get("periods")
+    items = periods.get("items") if isinstance(periods, dict) else None
+    for item in items if isinstance(items, list) else []:
+        # Only sets count: the "POINT" item holds the current rally score (15/30/40).
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("type") or "").lower() != "set" and not re.fullmatch(r"S\d+", str(item.get("code") or "")):
+            continue
+        set_score = _score_from_mapping(item.get("score") or {})
+        if set_score is not None:
+            set_scores.append(set_score)
+
+    if not set_scores:
+        legacy_sets = payload.get("sets")
+        values = legacy_sets.values() if isinstance(legacy_sets, dict) else legacy_sets
+        for value in values if isinstance(values, (list, tuple, type({}.values()))) else []:
+            set_score = (
+                _score_from_mapping(value)
+                if isinstance(value, dict)
+                else _parse_optional_score(str(value or ""))
+            )
+            if set_score is not None:
+                set_scores.append(set_score)
+
+    if not set_scores:
+        return None
+    return sum(home + away for home, away in set_scores)
+
+
+def _sport_code(match) -> str:
+    if getattr(match, "sport_id", None):
+        return str(match.sport_code or "football").lower()
+    payload = match.raw_data if isinstance(getattr(match, "raw_data", None), dict) else {}
+    sport_codes = {sport["id"]: sport["code"] for sport in settings.NEUROKEFF_SPORTS}
+    try:
+        return sport_codes.get(int(payload.get("sport_id")), "football")
+    except (TypeError, ValueError):
+        return str(getattr(match, "sport_code", "") or "football").lower()
 
 
 def _score_from_mapping(payload: dict) -> tuple[int, int] | None:

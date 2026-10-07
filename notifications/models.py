@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from game.models import Match, PredictionCoupon
@@ -155,6 +156,8 @@ class Notification(models.Model):
     email_sent_at = models.DateTimeField(null=True, blank=True)
     telegram_processed_at = models.DateTimeField(null=True, blank=True)
     telegram_sent_at = models.DateTimeField(null=True, blank=True)
+    delivery_attempts = models.PositiveSmallIntegerField("Неудачных попыток доставки", default=0)
+    next_delivery_at = models.DateTimeField("Следующая попытка доставки", null=True, blank=True)
 
     created_at = models.DateTimeField("Создано", auto_now_add=True, db_index=True)
 
@@ -165,6 +168,11 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=("recipient", "show_in_app", "is_read", "created_at"), name="notif_recipient_state_idx"),
             models.Index(fields=("kind", "created_at"), name="notif_kind_created_idx"),
+            models.Index(
+                fields=("next_delivery_at", "created_at"),
+                condition=Q(email_processed_at__isnull=True) | Q(telegram_processed_at__isnull=True),
+                name="notif_delivery_pending_idx",
+            ),
         ]
 
     def __str__(self) -> str:

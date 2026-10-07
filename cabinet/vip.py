@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -50,7 +51,7 @@ def _validate_source(source: str) -> str:
     return source
 
 
-def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None, append_existing=True):
+def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None, append_existing=True, payment=None):
     from .models import UserVipSubscription
 
     if user is None or not getattr(user, "pk", None):
@@ -89,6 +90,7 @@ def _create_vip_period(*, user, duration_days, source, plan=None, starts_at=None
             duration_days=duration_days,
             source=source,
             is_active=True,
+            payment=payment,
         )
 
 
@@ -109,27 +111,91 @@ def activate_vip(user, plan, source, starts_at=None):
     )
 
 
-def switch_vip(user, plan, source):
-    """Replace current and scheduled VIP periods with a new tariff from now."""
-    from .models import UserVipSubscription, VipPlan
+def plural_ru(value: int, one: str, few: str, many: str) -> str:
+    value = abs(int(value))
+    if value % 10 == 1 and value % 100 != 11:
+        return one
+    if 2 <= value % 10 <= 4 and not 12 <= value % 100 <= 14:
+        return few
+    return many
 
-    if plan is None or not getattr(plan, "pk", None):
-        raise ValidationError("VIP-тариф не найден.")
 
-    current_plan = VipPlan.objects.get(pk=plan.pk)
-    now = timezone.now()
-    UserVipSubscription.objects.select_for_update().filter(
-        user_id=user.pk,
-        is_active=True,
-        ends_at__gt=now,
-    ).update(is_active=False, updated_at=now)
+def vip_switch_warning(user, *, at=None) -> str:
+    """What a tariff switch burns: unused VIP time and the money paid for it."""
+    from wallets.models import RealBalanceTransaction
+    from wallets.services import format_money
+
+    from .models import UserVipSubscription
+
+    now = at or timezone.now()
+    periods = list(UserVipSubscription.objects.filter(user_id=user.pk, is_active=True, ends_at__gt=now))
+    if not periods:
+        return ""
+    paid_by_period = dict(
+        RealBalanceTransaction.objects.filter(
+            user_id=user.pk,
+            kind=RealBalanceTransaction.Kind.VIP_PURCHASE,
+            related_model=UserVipSubscription._meta.label_lower,
+            related_id__in=[period.pk for period in periods],
+        ).values_list("related_id", "amount")
+    )
+    unused = timedelta()
+    lost_money = Decimal("0")
+    for period in periods:
+        period_unused = period.ends_at - max(period.starts_at, now)
+        unused += period_unused
+        paid = abs(paid_by_period.get(period.pk) or 0)
+        period_length = period.ends_at - period.starts_at
+        if paid and period_length.total_seconds() > 0:
+            lost_money += paid * Decimal(period_unused.total_seconds() / period_length.total_seconds())
+
+    if unused >= timedelta(days=1):
+        days = round(unused.total_seconds() / 86400)
+        unused_label = f"{days} {plural_ru(days, 'день', 'дня', 'дней')}"
+    else:
+        hours = max(1, int(unused.total_seconds() // 3600))
+        unused_label = f"{hours} {plural_ru(hours, 'час', 'часа', 'часов')}"
+    if lost_money >= 1:
+        return (
+            f"Неиспользованные {unused_label} текущего VIP сгорят. "
+            f"Из них оплачено примерно {format_money(lost_money.quantize(Decimal('1')))} ₽, эти деньги не возвращаются."
+        )
+    return f"Неиспользованные {unused_label} текущего VIP сгорят без возврата."
+
+
+def grant_paid_vip(user, plan, *, duration_days, switch, provider_payment=None):
+    """Give a bought VIP period on the terms it was paid for.
+
+    With a confirmed ``switch`` to another tariff the current and scheduled
+    periods end and the new one starts now; otherwise it follows the VIP tail.
+    ``plan`` may be None when the tariff was deleted after the payment.
+    """
+    from .models import UserVipSubscription
+
+    source = UserVipSubscription.Source.PURCHASE
+    active_subscription = get_active_vip(user)
+    if switch and active_subscription and active_subscription.plan_id != getattr(plan, "pk", None):
+        now = timezone.now()
+        UserVipSubscription.objects.filter(
+            user_id=user.pk,
+            is_active=True,
+            ends_at__gt=now,
+        ).update(is_active=False, updated_at=now)
+        return _create_vip_period(
+            user=user,
+            duration_days=duration_days,
+            source=source,
+            plan=plan,
+            starts_at=now,
+            append_existing=False,
+            payment=provider_payment,
+        )
     return _create_vip_period(
         user=user,
-        duration_days=current_plan.duration_days,
+        duration_days=duration_days,
         source=source,
-        plan=current_plan,
-        starts_at=now,
-        append_existing=False,
+        plan=plan,
+        payment=provider_payment,
     )
 
 
@@ -143,39 +209,37 @@ def extend_vip(user, days, source, starts_at=None):
     )
 
 
+def validate_vip_purchase(user, plan, *, switch: bool) -> None:
+    """Raise ValidationError unless ``user`` may buy ``plan`` now."""
+    if not getattr(user, "is_analyst", False):
+        raise ValidationError("VIP-тарифы доступны только капперам.")
+    if not plan.is_active:
+        raise ValidationError("Этот VIP-тариф больше недоступен.")
+    active_subscription = get_active_vip(user)
+    if active_subscription and active_subscription.plan_id != plan.pk and not switch:
+        raise ValidationError(f"{vip_switch_warning(user)} Подтвердите переход на другой VIP-тариф.")
+
+
 def purchase_vip(user, plan, *, switch=False):
     """Purchase an active VIP tariff with real balance in a single transaction."""
     from wallets.models import RealBalanceTransaction
     from wallets.services import debit_real_balance, ensure_real_balance
 
-    from .models import UserVipSubscription, VipPlan
+    from .models import VipPlan
 
     if plan is None or not getattr(plan, "pk", None):
         raise ValidationError("VIP-тариф не найден.")
-    if not getattr(user, "is_analyst", False):
-        raise ValidationError("VIP-тарифы доступны только капперам.")
 
     with transaction.atomic():
         current_plan = VipPlan.objects.select_for_update().get(pk=plan.pk)
-        if not current_plan.is_active:
-            raise ValidationError("Этот VIP-тариф больше недоступен.")
+        validate_vip_purchase(user, current_plan, switch=switch)
 
-        active_subscription = get_active_vip(user)
-        if active_subscription and active_subscription.plan_id != current_plan.pk and not switch:
-            raise ValidationError("Подтвердите переход на другой VIP-тариф.")
-
-        if switch and active_subscription and active_subscription.plan_id != current_plan.pk:
-            subscription = switch_vip(
-                user,
-                current_plan,
-                UserVipSubscription.Source.PURCHASE,
-            )
-        else:
-            subscription = activate_vip(
-                user,
-                current_plan,
-                UserVipSubscription.Source.PURCHASE,
-            )
+        subscription = grant_paid_vip(
+            user,
+            current_plan,
+            duration_days=current_plan.duration_days,
+            switch=switch,
+        )
         if current_plan.price_rub > 0:
             real_balance = debit_real_balance(
                 user,

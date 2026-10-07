@@ -87,18 +87,28 @@
                         {% csrf_token %}
                         <input type="hidden" name="plan_id" value="{{ plan.id }}">
                         <input type="hidden" name="purchase_mode" value="extend" data-vip-purchase-mode>
-                        {% if active_vip and active_vip.plan_id != plan.id %}
+                        {% if plan.is_switch %}
+                        <input type="hidden" name="provider" value="" data-vip-provider-input>
                         <button
                             class="profile-save-button"
                             type="button"
                             data-vip-switch-open
                             data-vip-plan-title="{{ plan.title }}"
                             {% if not plan.can_afford %}disabled{% endif %}
-                        >Перейти на тариф</button>
+                        >{{ plan.balance_button_label }}</button>
+                        {% for option in plan.payment_options %}
+                        <button
+                            class="profile-save-button"
+                            type="button"
+                            data-vip-switch-open
+                            data-vip-plan-title="{{ plan.title }}"
+                            data-vip-checkout-action="{% url 'payments:checkout' purpose='vip_plan' %}"
+                            data-vip-provider="{{ option.code }}"
+                        >{{ option.label }}</button>
+                        {% endfor %}
                         {% else %}
-                        <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>
-                            {% if active_vip and active_vip.plan_id == plan.id %}Продлить тариф{% else %}Выбрать тариф{% endif %}
-                        </button>
+                        <button class="profile-save-button" type="submit"{% if not plan.can_afford %} disabled{% endif %}>{{ plan.balance_button_label }}</button>
+                        {% include "payments/includes/_pay_buttons.html" with payment_options=plan.payment_options purpose="vip_plan" button_class="profile-save-button" %}
                         {% endif %}
                     </form>
                 </article>
@@ -188,6 +198,9 @@
         <p class="profile-email-modal-copy">
             При переходе текущий VIP-тариф будет аннулирован, а новый тариф начнёт действовать сразу после оплаты.
         </p>
+        {% if vip_switch_warning %}
+            <p class="profile-email-modal-copy"><strong>{{ vip_switch_warning }}</strong></p>
+        {% endif %}
         <div class="vip-switch-modal-actions">
             <button class="profile-email-modal-submit" type="button" data-vip-switch-confirm>Перейти</button>
             <button class="vip-switch-modal-cancel" type="button" data-vip-switch-close>Отмена</button>

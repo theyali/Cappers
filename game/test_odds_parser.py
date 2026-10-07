@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from django.test import SimpleTestCase
 
-from game.views import _match_odds_tabs
+from game.services.bet_options import build_match_odds_tabs
 from game.services.odds import has_odds_payload, match_odds_defaults
 
 
@@ -172,7 +172,7 @@ class MatchOddsTabsTests(SimpleTestCase):
             away_team_name="Away Team",
         )
 
-        tabs = _match_odds_tabs(match)
+        tabs = build_match_odds_tabs(match)
 
         self.assertTrue(tabs)
         self.assertIn("Популярное", [tab["label"] for tab in tabs])

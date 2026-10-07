@@ -7,8 +7,9 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystPaidSubscriptionPayment, AnalystProfile, User
+from cabinet.roulette.models import RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
-from game.models import Match, Prediction, PredictionCoupon, Sport
+from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
 from game.services.settlement import settle_coupon
 from cabinet.paid_predictions import subscribe_to_paid_predictions
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
@@ -24,6 +25,7 @@ from wallets.services import (
     debit_real_balance,
     ensure_real_balance,
     pause_copybetting,
+    release_held_real_income,
     request_real_withdrawal,
     resume_copybetting,
     settle_orphaned_copied_bets,
@@ -56,6 +58,7 @@ class CoinWalletIntegrationTests(TestCase):
                 "league": {"name": {"ru": "Лига"}},
             },
         )
+        MatchOdds.objects.create(match=self.match, home_win_bet=1.70)
 
     def _payload(self, stake="500"):
         return {
@@ -122,6 +125,60 @@ class CoinWalletIntegrationTests(TestCase):
                 kind=CoinTransaction.Kind.PREDICTION_STAKE,
                 amount=-500,
                 balance_after=500,
+            ).exists()
+        )
+
+    def _publish_with_free_prediction(self, stake):
+        UserRouletteRewardState.objects.create(user=self.analyst, free_predictions=1)
+        self.client.force_login(self.analyst)
+        payload = self._payload(stake)
+        payload["use_free_prediction"] = True
+        return self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    def test_free_prediction_ignores_typed_stake(self):
+        response = self._publish_with_free_prediction("1000000")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        coupon = PredictionCoupon.objects.get(author=self.analyst)
+        self.assertEqual(coupon.total_stake, Decimal("100.00"))
+        self.assertEqual(coupon.possible_payout, Decimal("170.00"))
+        self.assertEqual(coupon.predictions.get().stake, Decimal("100.00"))
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+
+    def test_free_prediction_uses_stake_from_roulette_settings(self):
+        roulette_settings = RouletteSettings.load()
+        roulette_settings.free_prediction_stake = 300
+        roulette_settings.save()
+
+        response = self._publish_with_free_prediction("")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        coupon = PredictionCoupon.objects.get(author=self.analyst)
+        self.assertEqual(coupon.total_stake, Decimal("300.00"))
+        self.assertEqual(coupon.possible_payout, Decimal("510.00"))
+
+    def test_free_prediction_without_rewards_is_rejected(self):
+        self.client.force_login(self.analyst)
+        payload = self._payload("100")
+        payload["use_free_prediction"] = True
+
+        response = self.client.post(
+            reverse("game:create_coupon"),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("нет доступных бесплатных прогнозов", response.json()["error"])
+        self.assertFalse(
+            PredictionCoupon.objects.filter(
+                author=self.analyst,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             ).exists()
         )
 
@@ -858,8 +915,10 @@ class CoinWalletIntegrationTests(TestCase):
         )
         reader.real_balance.refresh_from_db()
         self.assertEqual(reader.real_balance.balance, Decimal("10.00"))
+        # Subscription income is held before it can be withdrawn.
         self.analyst.real_balance.refresh_from_db()
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("0.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("990.00"))
         self.assertTrue(
             RealBalanceTransaction.objects.filter(
                 user=reader,
@@ -873,11 +932,22 @@ class CoinWalletIntegrationTests(TestCase):
             RealBalanceTransaction.objects.filter(
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                status=RealBalanceTransaction.Status.HELD,
                 amount=Decimal("990.00"),
                 related_model=payment._meta.label_lower,
                 related_id=payment.pk,
             ).exists()
         )
+
+        RealBalanceTransaction.objects.filter(
+            user=self.analyst,
+            status=RealBalanceTransaction.Status.HELD,
+        ).update(available_at=timezone.now())
+        self.assertEqual(release_held_real_income(), 1)
+
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("0.00"))
 
     def test_paid_subscription_requires_reader_real_balance(self):
         profile = AnalystProfile.objects.get(user=self.analyst)
@@ -933,7 +1003,7 @@ class CoinWalletIntegrationTests(TestCase):
         reader.real_balance.refresh_from_db()
         self.assertEqual(reader.real_balance.balance, Decimal("400.00"))
         self.analyst.real_balance.refresh_from_db()
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("600.00"))
 
     def test_reader_can_have_real_balance(self):
         reader = User.objects.create_user(
@@ -1031,24 +1101,25 @@ class CoinWalletIntegrationTests(TestCase):
     def test_admin_can_approve_real_withdrawal(self):
         self.analyst.real_balance.balance = Decimal("1000.00")
         self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
-        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        request_real_withdrawal(self.analyst, Decimal("600.00"), payout_details="СБП +79990000000")
         withdrawal = RealBalanceTransaction.objects.get(
             user=self.analyst,
             kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
         )
 
-        approve_real_withdrawal(withdrawal)
+        approve_real_withdrawal(withdrawal, payout_reference="PAY-1")
 
         withdrawal.refresh_from_db()
         self.analyst.real_balance.refresh_from_db()
         self.assertEqual(withdrawal.status, RealBalanceTransaction.Status.COMPLETED)
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+        self.assertEqual(withdrawal.payout_reference, "PAY-1")
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("400.00"))
         self.assertEqual(self.analyst.real_balance.pending_withdrawal, Decimal("0.00"))
 
     def test_admin_can_cancel_real_withdrawal_and_refund_balance(self):
         self.analyst.real_balance.balance = Decimal("1000.00")
         self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
-        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        request_real_withdrawal(self.analyst, Decimal("600.00"), payout_details="СБП +79990000000")
         withdrawal = RealBalanceTransaction.objects.get(
             user=self.analyst,
             kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
@@ -1065,7 +1136,7 @@ class CoinWalletIntegrationTests(TestCase):
             RealBalanceTransaction.objects.filter(
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.WITHDRAWAL_CANCEL,
-                amount=Decimal("400.00"),
+                amount=Decimal("600.00"),
                 related_id=withdrawal.id,
             ).exists()
         )

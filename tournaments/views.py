@@ -23,8 +23,14 @@ from front.models import PredictionFavorite, PredictionLike
 from front.views import _initials
 from game import date_views
 from game.models import Match, Prediction, PredictionCoupon, Sport
-from game.services.coupon_validation import CouponMatchVerificationError
-from game.views import _latest_predictions, _match_odds_tabs, _match_winner_odds
+from game.services.coupon_validation import (
+    COUPON_PUBLISH_LIMIT_MESSAGE,
+    CouponMatchVerificationError,
+    CouponOddsChangedError,
+    coupon_publish_limited,
+)
+from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
+from game.views import _latest_predictions
 from notifications.models import MatchWatch
 from tournaments.models import (
     Tournament,
@@ -394,7 +400,7 @@ def match_odds(request, slug: str, match_id: int):
     if not _match_allowed_for_tournament(tournament, participant, match):
         return JsonResponse({"ok": False, "error": "Матч недоступен для этого турнира."}, status=400)
 
-    odds_tabs = _match_odds_tabs(match)
+    odds_tabs = build_match_odds_tabs(match)
     html = render_to_string(
         "tournaments/includes/_match_odds_panel.html",
         {
@@ -446,6 +452,8 @@ def create_coupon(request, slug: str):
         payload = json.loads(request.body.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
+    if coupon_publish_limited(request.user):
+        return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
 
     try:
         coupon, tournament_coupon = create_tournament_coupon(
@@ -459,6 +467,11 @@ def create_coupon(request, slug: str):
         return JsonResponse({"ok": False, "error": str(exc)}, status=402)
     except CouponMatchVerificationError as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=503)
+    except CouponOddsChangedError as exc:
+        return JsonResponse(
+            {"ok": False, "error": _validation_message(exc), "odds_changed": exc.changes},
+            status=409,
+        )
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
@@ -679,7 +692,7 @@ def _decorate_tournament_matches(
     if used_match_ids is None:
         used_match_ids = _tournament_used_match_ids(tournament, participant)
     for match in matches:
-        match.coupon_odds = _match_winner_odds(match)
+        match.coupon_odds = build_match_winner_odds(match)
         match.tournament_match_used = match.id in used_match_ids
 
 

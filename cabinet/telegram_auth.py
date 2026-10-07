@@ -20,7 +20,9 @@ from notifications.telegram_bot import (
     find_linked_user_by_chat_id,
 )
 
+from .forms import LoginForm
 from .models import User
+from .referrals import mark_referral_registration
 
 
 TELEGRAM_FIELDS = (
@@ -45,6 +47,7 @@ def _telegram_bot_id() -> str:
 
 class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
+    authentication_form = LoginForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -115,7 +118,7 @@ def _new_telegram_username(telegram_id: int) -> str:
     return candidate
 
 
-def _resolve_telegram_user(payload: dict) -> User:
+def _resolve_telegram_user(payload: dict) -> tuple[User, bool]:
     try:
         telegram_id = int(payload["id"])
     except (KeyError, TypeError, ValueError) as exc:
@@ -142,7 +145,8 @@ def _resolve_telegram_user(payload: dict) -> User:
             )
         user = linked_user
 
-    if user is None:
+    created = user is None
+    if created:
         user = User(
             username=_new_telegram_username(telegram_id),
             telegram_id=telegram_id,
@@ -178,7 +182,7 @@ def _resolve_telegram_user(payload: dict) -> User:
             "Этот Telegram уже связан с другим профилем."
         ) from exc
 
-    return user
+    return user, created
 
 
 def _safe_next_url(request, candidate: str | None, default: str | None = None) -> str:
@@ -253,11 +257,13 @@ def telegram_login(request):
         return redirect("cabinet:login")
 
     try:
-        user = _resolve_telegram_user(payload)
+        user, created = _resolve_telegram_user(payload)
     except TelegramIdentityConflict as exc:
         messages.error(request, str(exc))
         return redirect("cabinet:login")
 
+    if created:
+        mark_referral_registration(request, user)
     login(request, user)
     messages.success(
         request,
@@ -294,13 +300,15 @@ def telegram_webapp_login(request):
         )
 
     try:
-        user = _resolve_telegram_user(telegram_user)
+        user, created = _resolve_telegram_user(telegram_user)
     except TelegramIdentityConflict as exc:
         return JsonResponse(
             {"ok": False, "message": str(exc)},
             status=409,
         )
 
+    if created:
+        mark_referral_registration(request, user)
     login(request, user)
     return JsonResponse(
         {

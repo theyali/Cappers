@@ -183,6 +183,7 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
                     "referral_subscription_percent",
                     "referral_tournament_percent",
                     "referral_balance_topup_percent",
+                    "referral_income_days",
                 ),
                 "description": "Процент начисляется рефереру только если реферер является каппером.",
             },
@@ -198,6 +199,10 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
                     "platform_fee_180_days_percent",
                 ),
             },
+        ),
+        (
+            "Вывод средств",
+            {"fields": ("income_hold_days", "min_withdrawal_amount")},
         ),
         (
             "Главная страница — О нас",

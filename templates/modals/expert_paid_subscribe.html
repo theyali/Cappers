@@ -49,7 +49,7 @@
                 <a href="{% url 'wallets:top_up' %}">Пополнить</a>
             </div>
             {% include "cabinet/includes/_paid_plan_picker.html" %}
-            <button type="submit"{% if not paid_checkout_can_pay %} disabled{% endif %}>Оплатить подписку</button>
+            {% include "cabinet/includes/_paid_checkout_buttons.html" %}
         </form>
     </section>
 </div>

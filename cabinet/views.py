@@ -1,6 +1,3 @@
-from datetime import timedelta
-
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -18,6 +15,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 
 from front.models import PredictionFavorite, PredictionLike
 from game.models import Country, PredictionCoupon, Sport
+from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
 from notifications.telegram_bot import get_bot_token
@@ -46,11 +44,13 @@ from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
 from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
 from .paid_predictions import (
+    build_paid_checkout_context,
     get_active_paid_plans,
     profile_paid_predictions_enabled,
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
+from .services.account_deletion import account_deletion_blockers, delete_user_account
 from .services.bonus_center import build_profile_bonus_summary
 from .services.capper_articles import (
     build_capper_articles_context,
@@ -380,17 +380,6 @@ def _coupon_result(coupon) -> tuple[str, str]:
     if coupon.state_status == PredictionCoupon.StateStatus.REFUND:
         return "refund", "Возврат"
     return "pending", "Ожидает"
-
-
-def _delete_expired_draft_coupons(user: User) -> int:
-    max_age = max(int(getattr(settings, "SESSION_COOKIE_AGE", 1209600)), 1)
-    cutoff = timezone.now() - timedelta(seconds=max_age)
-    deleted, _ = PredictionCoupon.objects.filter(
-        author=user,
-        published_status=PredictionCoupon.PublishedStatus.DRAFT,
-        updated_at__lt=cutoff,
-    ).delete()
-    return deleted
 
 
 def _copybetting_audience_context(user) -> dict:
@@ -838,6 +827,8 @@ def profile(request):
         "real_balance": real_balance,
         "real_balance_display": format_money(real_balance.balance) if real_balance else "",
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
+        "real_held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
+        "delete_account_blockers": account_deletion_blockers(request.user),
         "coin_transactions": coin_transactions,
         "real_transactions": real_transactions,
         "copybetting_subscriptions": copybetting_subscriptions,
@@ -869,12 +860,14 @@ def delete_account(request):
         messages.error(request, "Подтвердите удаление аккаунта.")
         return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 
-    user = request.user
-    with transaction.atomic():
-        user.delete()
+    try:
+        delete_user_account(request.user)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 
     logout(request)
-    messages.success(request, "Аккаунт и связанные данные удалены.")
+    messages.success(request, "Аккаунт удалён, личные данные стёрты.")
     return redirect("front:index")
 
 
@@ -1108,28 +1101,6 @@ def subscribe_paid_predictions_view(request, user_id):
         messages.error(request, "Этот эксперт не публикует платные прогнозы.")
         return redirect(expert_url)
 
-    paid_plans = list(get_active_paid_plans(analyst))
-    real_balance = ensure_real_balance(request.user)
-    checked_plan_marked = False
-    for paid_plan in paid_plans:
-        paid_plan.can_afford = real_balance.balance >= paid_plan.price
-        paid_plan.is_default_checked = False
-        if paid_plan.can_afford and not checked_plan_marked:
-            paid_plan.is_default_checked = True
-            checked_plan_marked = True
-    if paid_plans and not checked_plan_marked:
-        paid_plans[0].is_default_checked = True
-    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
-    legacy_can_afford = (
-        real_balance.balance >= legacy_paid_price
-        if legacy_paid_price and legacy_paid_price > 0
-        else True
-    )
-    paid_checkout_can_pay = (
-        any(plan.can_afford for plan in paid_plans)
-        if paid_plans
-        else legacy_can_afford
-    )
     if request.method == "GET":
         return render(
             request,
@@ -1138,13 +1109,8 @@ def subscribe_paid_predictions_view(request, user_id):
                 "expert": analyst,
                 "analyst_profile": profile,
                 "expert_name": profile.display_name or analyst.get_full_name() or analyst.username,
-                "paid_plans": paid_plans,
-                "real_balance": real_balance,
-                "real_balance_display": format_money(real_balance.balance),
-                "legacy_paid_price": legacy_paid_price,
-                "legacy_can_afford": legacy_can_afford,
-                "paid_checkout_can_pay": paid_checkout_can_pay,
                 "next_url": raw_next_url,
+                **build_paid_checkout_context(request.user, profile, list(get_active_paid_plans(analyst))),
             },
         )
 

@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.cache import cache
@@ -20,6 +21,8 @@ MONEY_STEP = Decimal("0.01")
 PERCENT_STEP = Decimal("0.01")
 TOURNAMENT_LEADERBOARD_CACHE_TTL = 60
 
+logger = logging.getLogger(__name__)
+
 
 def _leaderboard_cache_key(tournament: Tournament) -> str:
     return f"tournaments:leaderboard:v3:{tournament.pk}"
@@ -30,6 +33,10 @@ def tournament_leaderboard(
     *,
     use_cache: bool = True,
 ) -> list[dict]:
+    if tournament.finalized_at:
+        # Finalized results are frozen: later resettlements do not move places or prizes.
+        return _final_rows(tournament)
+
     cache_key = _leaderboard_cache_key(tournament)
     if use_cache:
         cached = cache.get(cache_key)
@@ -40,6 +47,7 @@ def tournament_leaderboard(
     coupons = (
         TournamentCoupon.objects.filter(
             tournament=tournament,
+            participant__status=TournamentParticipant.Status.ACTIVE,
             coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
         .select_related(
@@ -84,10 +92,28 @@ def tournament_leaderboard(
 
 @transaction.atomic
 def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult]:
+    """Fix places and award prizes once, after every tournament coupon is settled."""
+    tournament = Tournament.objects.select_for_update().get(pk=tournament.pk)
+    if tournament.finalized_at:
+        raise ValidationError("Итоги турнира уже зафиксированы.")
     if timezone.now() <= tournament.ends_at:
         raise ValidationError("Итоги можно зафиксировать только после окончания турнира.")
+    pending_count = pending_tournament_coupons(tournament).count()
+    if pending_count:
+        raise ValidationError(
+            f"Не рассчитано турнирных купонов: {pending_count}. "
+            "Итоги можно зафиксировать после расчёта всех купонов."
+        )
 
     rows = tournament_leaderboard(tournament, use_cache=False)
+    prizes = {row["rank"]: prize_for_rank(tournament, row["rank"]) for row in rows}
+    for row in rows:
+        if prizes[row["rank"]] > 0 and not row["user"].is_analyst:
+            raise ValidationError(
+                f"Денежный приз за {row['rank']} место не может получить @{row['user'].username}: "
+                "реальный баланс есть только у капперов. Дисквалифицируйте участника "
+                "и зафиксируйте итоги снова."
+            )
     TournamentResult.objects.filter(tournament=tournament).delete()
     results = [
         TournamentResult(
@@ -102,7 +128,7 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
             total_stake=row["total_stake"],
             profit=row["profit"],
             roi_percent=row["roi_percent"],
-            prize_amount=prize_for_rank(tournament, row["rank"]),
+            prize_amount=prizes[row["rank"]],
             achievement=achievement_for_rank(tournament, row["rank"]),
         )
         for row in rows
@@ -111,7 +137,41 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
     from tournaments.services.rewards import award_tournament_prizes
 
     award_tournament_prizes(tournament, results=created_results)
+    tournament.finalized_at = timezone.now()
+    tournament.save(update_fields=("finalized_at", "updated_at"))
+    cache.delete(_leaderboard_cache_key(tournament))
     return created_results
+
+
+def finalize_finished_tournaments() -> dict:
+    """Finalize published tournaments that are over and have no unsettled coupons."""
+    finalized = waiting = errors = 0
+    tournaments = Tournament.objects.filter(
+        status=Tournament.Status.PUBLISHED,
+        finalized_at__isnull=True,
+        ends_at__lt=timezone.now(),
+    ).order_by("ends_at", "id")
+    for tournament in tournaments:
+        if pending_tournament_coupons(tournament).exists():
+            waiting += 1
+            continue
+        try:
+            finalize_tournament_results(tournament)
+        except Exception:
+            errors += 1
+            logger.exception("Failed to finalize tournament #%s.", tournament.pk)
+        else:
+            finalized += 1
+    return {"finalized": finalized, "waiting": waiting, "errors": errors}
+
+
+def pending_tournament_coupons(tournament: Tournament):
+    return TournamentCoupon.objects.filter(
+        tournament=tournament,
+        participant__status=TournamentParticipant.Status.ACTIVE,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        coupon__state_status=PredictionCoupon.StateStatus.PENDING,
+    )
 
 
 def prize_for_rank(tournament: Tournament, rank: int) -> Decimal:
@@ -151,9 +211,37 @@ def _active_prize_for_rank(tournament: Tournament, rank: int) -> TournamentPrize
     )
 
 
+def _final_rows(tournament: Tournament) -> list[dict]:
+    results = (
+        TournamentResult.objects.filter(tournament=tournament)
+        .select_related("participant__user", "participant__user__analyst_profile")
+        .order_by("rank", "id")
+    )
+    rows = []
+    for result in results:
+        row = _empty_row(result.participant)
+        row.update(
+            rank=result.rank,
+            coupons_count=result.coupons_count,
+            wins_count=result.wins_count,
+            losses_count=result.losses_count,
+            refunds_count=result.refunds_count,
+            pending_count=result.pending_count,
+            total_stake=result.total_stake,
+            profit=result.profit,
+            roi_percent=result.roi_percent,
+        )
+        rows.append(row)
+    return rows
+
+
 def _empty_rows(tournament: Tournament) -> dict[int, dict]:
+    # Disqualified participants and those who left neither rank nor win prizes.
     participants = (
-        TournamentParticipant.objects.filter(tournament=tournament)
+        TournamentParticipant.objects.filter(
+            tournament=tournament,
+            status=TournamentParticipant.Status.ACTIVE,
+        )
         .select_related("user", "user__analyst_profile")
         .order_by("joined_at", "id")
     )

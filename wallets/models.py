@@ -11,7 +11,7 @@ from django.utils import timezone
 class CoinWallet(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="coin_wallet",
         verbose_name="Пользователь",
     )
@@ -42,9 +42,11 @@ class CoinTransaction(models.Model):
         PREDICTION_STAKE = "prediction_stake", "Списание за прогноз"
         PREDICTION_PAYOUT = "prediction_payout", "Выплата по прогнозу"
         PREDICTION_REFUND = "prediction_refund", "Возврат прогноза"
+        PREDICTION_PAYOUT_REVERSAL = "prediction_payout_reversal", "Сторно выплаты по прогнозу"
         COPYBET_STAKE = "copybet_stake", "Списание за копиставку"
         COPYBET_PAYOUT = "copybet_payout", "Выплата по копиставке"
         COPYBET_REFUND = "copybet_refund", "Возврат копиставки"
+        COPYBET_PAYOUT_REVERSAL = "copybet_payout_reversal", "Сторно выплаты по копиставке"
         DAILY_TASK_REWARD = "daily_task_reward", "Ежедневное задание"
         TOURNAMENT_ENTRY_FEE = "tournament_entry_fee", "Вход в турнир"
         TOURNAMENT_PRIZE_COINS = "tournament_prize_coins", "Приз турнира"
@@ -52,7 +54,7 @@ class CoinTransaction(models.Model):
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="coin_transactions",
         verbose_name="Пользователь",
     )
@@ -165,12 +167,19 @@ class CoinPackage(models.Model):
 class CapperRealBalance(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="real_balance",
         verbose_name="Каппер",
     )
     balance = models.DecimalField("Реальный баланс", max_digits=12, decimal_places=2, default=0)
     pending_withdrawal = models.DecimalField("Ожидает вывода", max_digits=12, decimal_places=2, default=0)
+    held = models.DecimalField(
+        "В холде",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Доход с оплат, который ещё нельзя вывести.",
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
 
@@ -228,10 +237,11 @@ class RealBalanceTransaction(models.Model):
         COMPLETED = "completed", "Завершена"
         PENDING = "pending", "Ожидает"
         CANCELED = "canceled", "Отменена"
+        HELD = "held", "В холде"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="real_balance_transactions",
         verbose_name="Каппер",
     )
@@ -242,6 +252,23 @@ class RealBalanceTransaction(models.Model):
     related_model = models.CharField("Связанная модель", max_length=100, blank=True)
     related_id = models.PositiveBigIntegerField("Связанный объект", null=True, blank=True)
     note = models.CharField("Комментарий", max_length=255, blank=True)
+    available_at = models.DateTimeField("Доступно с", null=True, blank=True)
+    payout_details = models.CharField("Реквизиты для вывода", max_length=255, blank=True)
+    payout_reference = models.CharField(
+        "Номер выплаты",
+        max_length=100,
+        blank=True,
+        help_text="Номер платёжного поручения или перевода. Нужен для подтверждения заявки.",
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="Обработал",
+    )
+    processed_at = models.DateTimeField("Обработана", null=True, blank=True)
     created_at = models.DateTimeField("Создана", auto_now_add=True)
 
     class Meta:
@@ -364,19 +391,20 @@ class CopiedBet(models.Model):
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="copied_bets",
         verbose_name="Пользователь",
     )
     analyst = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="source_copied_bets",
         verbose_name="Каппер",
     )
+    # Deleting a coupon must not silently wipe followers' copied stakes.
     source_coupon = models.ForeignKey(
         "game.PredictionCoupon",
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
         related_name="copied_bets",
         verbose_name="Исходный прогноз",
     )

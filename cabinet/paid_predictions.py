@@ -15,7 +15,7 @@ from .models import (
     paid_subscription_expires_at,
 )
 from wallets.models import RealBalanceTransaction
-from wallets.services import credit_real_balance, debit_real_balance
+from wallets.services import credit_real_balance, debit_real_balance, ensure_real_balance, format_money
 
 from .referrals import REFERRAL_ACTION_SUBSCRIPTION, credit_referral_income
 
@@ -37,15 +37,19 @@ def _decimal(value) -> Decimal:
 
 
 def platform_fee_percent_for_duration(duration_days: int) -> Decimal:
-    field = PLATFORM_FEE_FIELDS.get(int(duration_days or 0))
-    if not field:
-        return Decimal("0")
-    return _decimal(getattr(WebsiteSettings.load(), field, 0))
+    # A plan of a non-standard length (e.g. 14 days from the admin) pays the fee of the
+    # longest standard plan that fits into it, never zero.
+    duration_days = max(int(duration_days or 0), min(PLATFORM_FEE_FIELDS))
+    tier = max(days for days in PLATFORM_FEE_FIELDS if days <= duration_days)
+    return _decimal(getattr(WebsiteSettings.load(), PLATFORM_FEE_FIELDS[tier], 0))
 
 
-def paid_subscription_capper_income(price, duration_days: int) -> Decimal:
+def paid_subscription_capper_income(price, duration_days: int, fee_percent=None) -> Decimal:
+    """The capper's share; fee_percent fixed at checkout wins over the current settings."""
     price = _decimal(price)
-    fee_percent = platform_fee_percent_for_duration(duration_days)
+    if fee_percent is None:
+        fee_percent = platform_fee_percent_for_duration(duration_days)
+    fee_percent = _decimal(fee_percent)
     fee_amount = (price * fee_percent / Decimal("100")).quantize(Decimal("0.01"))
     income = price - fee_amount
     return income if income > 0 else Decimal("0.00")
@@ -72,6 +76,43 @@ def get_active_paid_plans(analyst: User):
         price__gt=0,
         duration_days__gt=0,
     ).order_by("order", "duration_days", "id")
+
+
+def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list) -> dict:
+    """Plan picker for buying a subscription with the real balance or through a provider."""
+    from payments.utils import build_payment_options
+
+    real_balance = ensure_real_balance(user)
+    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
+    prices = [plan.price for plan in paid_plans] or [legacy_paid_price or 0]
+    payment_options = build_payment_options(max(prices), user)
+    checked_plan_marked = False
+    for paid_plan in paid_plans:
+        paid_plan.can_afford = real_balance.balance >= paid_plan.price
+        # A plan the balance does not cover can still be paid by card.
+        paid_plan.is_selectable = paid_plan.can_afford or bool(payment_options)
+        paid_plan.is_default_checked = False
+        if paid_plan.can_afford and not checked_plan_marked:
+            paid_plan.is_default_checked = True
+            checked_plan_marked = True
+    if paid_plans and not checked_plan_marked:
+        paid_plans[0].is_default_checked = True
+    legacy_can_afford = (
+        real_balance.balance >= legacy_paid_price
+        if legacy_paid_price and legacy_paid_price > 0
+        else True
+    )
+    return {
+        "paid_plans": paid_plans,
+        "real_balance": real_balance,
+        "real_balance_display": format_money(real_balance.balance),
+        "legacy_paid_price": legacy_paid_price,
+        "legacy_can_afford": legacy_can_afford,
+        "legacy_is_selectable": legacy_can_afford or bool(payment_options),
+        "paid_checkout_can_pay": any(plan.can_afford for plan in paid_plans) if paid_plans else legacy_can_afford,
+        "payment_options": payment_options,
+        "balance_pay_label": "Оплатить с баланса" if payment_options else "Оплатить подписку",
+    }
 
 
 def user_can_view_paid_predictions(user, analyst: User) -> bool:
@@ -127,11 +168,12 @@ def _resolve_paid_plan(analyst: User, plan: AnalystPaidPlan | int | None):
     )
 
 
-def subscribe_to_paid_predictions(
+def paid_subscription_terms(
     subscriber: User,
     analyst: User,
     plan: AnalystPaidPlan | int | None = None,
-) -> AnalystPaidSubscription:
+) -> tuple[AnalystPaidPlan | None, Decimal, int, str]:
+    """Check the subscription can be sold; return (plan, price, duration_days, plan_title)."""
     if subscriber.pk == analyst.pk:
         raise ValueError("Нельзя оформить платную подписку на самого себя.")
     if analyst.role != User.Role.ANALYST:
@@ -156,15 +198,50 @@ def subscribe_to_paid_predictions(
         plan_title = "30 дней"
     else:
         raise ValueError("У этого эксперта нет активных тарифов.")
+    return selected_plan, price, duration_days, plan_title
 
+
+def subscribe_to_paid_predictions(
+    subscriber: User,
+    analyst: User,
+    plan: AnalystPaidPlan | int | None = None,
+) -> AnalystPaidSubscription:
+    """Buy a subscription with the real balance."""
+    selected_plan, price, duration_days, plan_title = paid_subscription_terms(subscriber, analyst, plan)
+    return grant_paid_subscription(
+        subscriber,
+        analyst,
+        plan=selected_plan,
+        price=price,
+        duration_days=duration_days,
+        plan_title=plan_title,
+        capper_income=paid_subscription_capper_income(price, duration_days),
+    )
+
+
+def grant_paid_subscription(
+    subscriber: User,
+    analyst: User,
+    *,
+    plan: AnalystPaidPlan | None,
+    price: Decimal,
+    duration_days: int,
+    plan_title: str,
+    capper_income: Decimal,
+    provider_payment=None,
+) -> AnalystPaidSubscription:
+    """Start or extend a subscription on the given terms.
+
+    Without ``provider_payment`` the subscriber pays from the real balance here;
+    with it the money is already taken by the payment provider.
+    """
     now = timezone.now()
-    capper_income = paid_subscription_capper_income(price, duration_days)
     with transaction.atomic():
         subscription, created = AnalystPaidSubscription.objects.select_for_update().get_or_create(
             subscriber=subscriber,
             analyst=analyst,
             defaults={
-                "plan": selected_plan,
+                "plan": plan,
                 "price": price,
                 "duration_days": duration_days,
                 "starts_at": now,
@@ -183,21 +260,23 @@ def subscribe_to_paid_predictions(
             subscription=subscription,
             subscriber=subscriber,
             analyst=analyst,
-            plan=selected_plan,
+            plan=plan,
             price=price,
             capper_income=capper_income,
             duration_days=duration_days,
             starts_at=base_time,
             expires_at=expires_at,
+            payment=provider_payment,
         )
-        payment_note_prefix = "Покупка" if created else "Продление"
-        debit_real_balance(
-            subscriber,
-            price,
-            RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
-            related_obj=payment,
-            note=f"{payment_note_prefix} подписки @{analyst.username}: {plan_title}",
-        )
+        if provider_payment is None:
+            payment_note_prefix = "Покупка" if created else "Продление"
+            debit_real_balance(
+                subscriber,
+                price,
+                RealBalanceTransaction.Kind.PAID_PREDICTION_PURCHASE,
+                related_obj=payment,
+                note=f"{payment_note_prefix} подписки @{analyst.username}: {plan_title}",
+            )
         if created:
             AnalystFollow.objects.get_or_create(follower=subscriber, analyst=analyst)
             if capper_income > 0:
@@ -210,13 +289,14 @@ def subscribe_to_paid_predictions(
                 )
             credit_referral_income(
                 subscriber,
-                price,
+                price - capper_income,
                 REFERRAL_ACTION_SUBSCRIPTION,
                 related_obj=payment,
                 note=f"Реферал @{subscriber.username}: покупка подписки «{plan_title}»",
+                seller=analyst,
             )
             return subscription
-        subscription.plan = selected_plan
+        subscription.plan = plan
         subscription.price = price
         subscription.duration_days = duration_days
         subscription.expires_at = expires_at
@@ -243,9 +323,10 @@ def subscribe_to_paid_predictions(
             )
         credit_referral_income(
             subscriber,
-            price,
+            price - capper_income,
             REFERRAL_ACTION_SUBSCRIPTION,
             related_obj=payment,
             note=f"Реферал @{subscriber.username}: продление подписки «{plan_title}»",
+            seller=analyst,
         )
     return subscription

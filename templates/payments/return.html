@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load money static %}
+
+{% block title %}Оплата — КапперХаб{% endblock %}
+
+{% block content %}
+<section class="paid-checkout-page" aria-label="Результат оплаты">
+    <article
+        class="paid-checkout-card"
+        data-payment-status
+        data-payment-state="{{ status.state }}"
+        data-payment-status-url="{{ status_url }}"
+        data-payment-status-timeout-text="Если деньги списались, покупка появится автоматически в течение 15 минут."
+    >
+        <div class="paid-checkout-head">
+            <span class="paid-checkout-kicker">{{ product_title }}</span>
+            <h1 data-payment-status-title>{{ status.title }}</h1>
+            <p data-payment-status-text role="status" aria-live="polite">{{ status.text }}</p>
+        </div>
+
+        <div class="paid-checkout-balance">
+            <span>Сумма заказа</span>
+            <strong>{{ amount|money }} ₽</strong>
+        </div>
+
+        <div class="paid-checkout-actions">
+            <a class="is-primary" href="{{ status.retry_url|default:'#' }}" data-payment-status-retry{% if not status.retry_url %} hidden{% endif %}>Попробовать ещё раз</a>
+            <a href="{{ back_url }}">{{ back_label }}</a>
+        </div>
+    </article>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/payment-status.js' %}" defer></script>
+{% endblock %}

@@ -447,7 +447,7 @@
                                     </span>
                                     <div>
                                         <h3>Реальный баланс</h3>
-                                        <p>Ваши реальные средства.</p>
+                                        <p>Ваши реальные средства.{% if real_held_display %} Ещё {{ real_held_display }} ₽ в холде.{% endif %}</p>
                                     </div>
                                 </div>
                                 <strong class="wallet-balance-value is-real">{{ real_balance_display }} ₽</strong>

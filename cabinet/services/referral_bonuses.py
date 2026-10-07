@@ -14,6 +14,7 @@ from cabinet.models import (
     ReferralBonusSettings,
     ReferralVisit,
 )
+from cabinet.referrals import registered_referral_visit
 
 from .bonus_rewards import grant_bonus_reward
 
@@ -31,26 +32,6 @@ def _positive_amount(value) -> Decimal:
     if not amount.is_finite() or amount <= 0:
         return Decimal("0")
     return amount
-
-
-def _registered_referral_visit_for_user(user, *, lock=False):
-    if not getattr(user, "pk", None):
-        return None
-
-    visits = ReferralVisit.objects
-    if lock:
-        visits = visits.select_for_update(of=("self",))
-
-    return (
-        visits.filter(
-            visitor=user,
-            registered_at__isnull=False,
-        )
-        .exclude(referrer=user)
-        .select_related("referrer", "visitor")
-        .order_by("registered_at", "first_seen_at", "id")
-        .first()
-    )
 
 
 def _has_referral_bonus(user, *, title, related_obj) -> bool:
@@ -83,6 +64,10 @@ def grant_referral_registration_bonus(visit):
         or visit.referrer_id == visit.visitor_id
     ):
         return None
+    # Accounts are free to create: the reward waits for a confirmed email or a
+    # Telegram sign-up, otherwise one person could farm it with fake accounts.
+    if not (visit.visitor.email_verified or visit.visitor.telegram_id):
+        return None
 
     settings_obj = ReferralBonusSettings.load()
     if not settings_obj.is_enabled:
@@ -113,13 +98,17 @@ def grant_referral_registration_bonus(visit):
     )
 
 
+def grant_referral_registration_bonus_for_user(user):
+    return grant_referral_registration_bonus(registered_referral_visit(user))
+
+
 @transaction.atomic
 def grant_referral_first_topup_bonus(referred_user, amount, related_obj=None):
     topup_amount = _positive_amount(amount)
     if topup_amount <= 0:
         return None
 
-    visit = _registered_referral_visit_for_user(referred_user, lock=True)
+    visit = registered_referral_visit(referred_user, lock=True)
     if visit is None:
         return None
 
@@ -154,7 +143,7 @@ def grant_referral_first_topup_bonus(referred_user, amount, related_obj=None):
 
 @transaction.atomic
 def grant_referral_first_subscription_bonus(referred_user, related_obj=None):
-    visit = _registered_referral_visit_for_user(referred_user, lock=True)
+    visit = registered_referral_visit(referred_user, lock=True)
     if visit is None:
         return None
 
@@ -396,7 +385,7 @@ def build_referrals_page_context(user, request=None) -> dict:
         referral_income = (
             RealBalanceTransaction.objects.filter(
                 user=user,
-                status=RealBalanceTransaction.Status.COMPLETED,
+                status__in=(RealBalanceTransaction.Status.COMPLETED, RealBalanceTransaction.Status.HELD),
                 amount__gt=0,
                 kind__in=[
                     RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
@@ -416,7 +405,7 @@ def build_referrals_page_context(user, request=None) -> dict:
         income_cards = [
             {
                 "key": "subscription",
-                "title": "С покупки подписки",
+                "title": "С комиссии за подписку",
                 "percent_label": _percent_label(
                     website_settings.referral_subscription_percent
                 ),

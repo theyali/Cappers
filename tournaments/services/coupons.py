@@ -1,22 +1,23 @@
-from decimal import Decimal, InvalidOperation
-
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from cabinet.models import User
 from game.models import Match, Prediction, PredictionCoupon
-from game.prediction_constraints import (
-    MIN_ALLOWED_COEFFICIENT,
-    PREDICTION_STAKE_MAX_COINS,
-    PREDICTION_STAKE_MIN_COINS,
+from game.services.coupon_validation import (
+    MAX_COUPON_ITEMS,
+    coupon_total_coefficient,
+    extract_match_ids,
+    parse_confidence,
+    parse_stake,
+    resolve_coupon_items,
+    validate_match_timing,
+    verify_matches_for_coupon,
 )
-from game.services.coupon_validation import verify_matches_for_coupon
-from game.services.match_timing import prediction_window_open
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.join import get_active_participant
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
-from wallets.services import InsufficientCoins, charge_prediction_stake, copy_published_coupon
+from wallets.services import InsufficientCoins, charge_prediction_stake
 
 
 class TournamentCouponCreateError(ValidationError):
@@ -45,18 +46,10 @@ def create_tournament_coupon(
     items = payload.get("items")
     if not isinstance(items, list):
         raise TournamentCouponCreateError("Передайте список матчей.")
-    if not 1 <= len(items) <= 20:
-        raise TournamentCouponCreateError("В прогнозе должно быть от 1 до 20 игр.")
+    if not 1 <= len(items) <= MAX_COUPON_ITEMS:
+        raise TournamentCouponCreateError(f"В прогнозе должно быть от 1 до {MAX_COUPON_ITEMS} игр.")
 
-    limits_error = _validate_payload_limits(payload)
-    if limits_error:
-        raise TournamentCouponCreateError(limits_error)
-
-    timing_error = _validate_match_timing(payload)
-    if timing_error:
-        raise TournamentCouponCreateError(timing_error)
-
-    match_ids = _extract_match_ids(items)
+    match_ids = extract_match_ids(items)
     if len(set(match_ids)) != len(items):
         raise TournamentCouponCreateError("Один матч нельзя добавить дважды.")
 
@@ -71,20 +64,12 @@ def create_tournament_coupon(
     if len(matches) != len(items):
         raise TournamentCouponCreateError("Один из матчей не найден.")
 
-    non_prematch = [
-        match for match in matches.values() if match.sync_scope != Match.SyncScope.PREMATCH
-    ]
-    if non_prematch:
-        match = non_prematch[0]
-        raise TournamentCouponCreateError(
-            f"Матч «{match.home_team_name} — {match.away_team_name}» уже начался или завершен."
-        )
-
+    stake = parse_stake(payload.get("stake"), required=True)
+    confidence = parse_confidence(payload.get("confidence"))
+    validate_match_timing(matches.values())
     verify_matches_for_coupon(list(matches.values()))
 
-    stake = _parse_stake(payload.get("stake"))
-    confidence = _parse_confidence(payload.get("confidence"))
-    normalized_items = [_normalize_prediction_item(item, matches) for item in items]
+    normalized_items = resolve_coupon_items(items, matches, accept_changed_odds=False)
     validate_tournament_coupon(
         tournament,
         participant,
@@ -92,10 +77,7 @@ def create_tournament_coupon(
         items=normalized_items,
     )
 
-    total_coefficient = Decimal("1")
-    for item in normalized_items:
-        total_coefficient *= item["coefficient"]
-    possible_payout = stake * total_coefficient
+    possible_payout = stake * coupon_total_coefficient(normalized_items)
     coupon_type = (
         PredictionCoupon.CouponType.EXPRESS
         if len(normalized_items) > 1
@@ -132,6 +114,7 @@ def create_tournament_coupon(
                         match=item["match"],
                         market=item["market"],
                         selection=item["selection"],
+                        outcome_code=item["outcome_code"],
                         coefficient=item["coefficient"],
                         stake=stake,
                     )
@@ -155,7 +138,6 @@ def create_tournament_coupon(
                     for prediction in predictions
                 ]
             )
-            copy_published_coupon(coupon)
     except IntegrityError as exc:
         raise TournamentCouponCreateError(
             "В рамках турнира на один матч можно сделать только один прогноз."
@@ -166,145 +148,3 @@ def create_tournament_coupon(
         raise
 
     return coupon, tournament_coupon
-
-
-def _validate_match_timing(payload: dict) -> str:
-    items = payload.get("items")
-    if not isinstance(items, list) or not items:
-        return ""
-
-    match_ids = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        match_id = _to_positive_int(item.get("match_id"))
-        if match_id:
-            match_ids.append(match_id)
-
-    if not match_ids:
-        return ""
-
-    matches = Match.objects.filter(id__in=set(match_ids)).select_related(
-        "home_team",
-        "away_team",
-    )
-    for match in matches:
-        if prediction_window_open(match):
-            continue
-        title = f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
-        if not match.starts_at:
-            return f"Для матча «{title}» не указано время начала. Ставка временно недоступна."
-        return f"Матч «{title}» уже начался или скоро начнется. Добавить ставку больше нельзя."
-    return ""
-
-
-def _validate_payload_limits(payload: dict) -> str:
-    raw_stake = str(payload.get("stake") or "").replace(",", ".").strip()
-    if raw_stake:
-        try:
-            stake = Decimal(raw_stake)
-        except (InvalidOperation, ValueError):
-            stake = None
-        if stake is not None:
-            if stake != stake.to_integral_value():
-                return "Сумма прогноза должна быть целым числом коинов."
-            if stake < PREDICTION_STAKE_MIN_COINS:
-                return f"Минимальная сумма прогноза — {int(PREDICTION_STAKE_MIN_COINS)} коинов."
-            if stake > PREDICTION_STAKE_MAX_COINS:
-                return f"Максимальная сумма прогноза — {int(PREDICTION_STAKE_MAX_COINS):,} коинов.".replace(",", " ")
-
-    items = payload.get("items")
-    if not isinstance(items, list):
-        return ""
-
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        raw_coefficient = str(item.get("coefficient") or "").replace(",", ".").strip()
-        if not raw_coefficient:
-            continue
-        try:
-            coefficient = Decimal(raw_coefficient)
-        except (InvalidOperation, ValueError):
-            continue
-        if coefficient < MIN_ALLOWED_COEFFICIENT:
-            return "Коэффициент 1.00 нельзя добавлять в прогноз. Выберите доступный коэффициент выше 1.00."
-    return ""
-
-
-def _extract_match_ids(items: list[dict]) -> list[int]:
-    match_ids: list[int] = []
-    for item in items:
-        if not isinstance(item, dict):
-            raise TournamentCouponCreateError("Некорректная игра в прогнозе.")
-        match_id = _to_positive_int(item.get("match_id"))
-        if match_id is None:
-            raise TournamentCouponCreateError("Матч не найден.")
-        match_ids.append(match_id)
-    return match_ids
-
-
-def _parse_stake(value) -> Decimal:
-    raw = str(value or "").replace(",", ".").strip()
-    if not raw:
-        raise TournamentCouponCreateError("Укажите сумму ставки.")
-    try:
-        stake = Decimal(raw)
-    except (InvalidOperation, ValueError):
-        raise TournamentCouponCreateError("Укажите корректную сумму ставки.")
-    if stake <= 0:
-        raise TournamentCouponCreateError("Сумма ставки должна быть больше нуля.")
-    if stake != stake.to_integral_value():
-        raise TournamentCouponCreateError("Сумма ставки должна быть целым числом коинов.")
-    return stake
-
-
-def _parse_confidence(value) -> int:
-    try:
-        confidence = int(value if value not in (None, "") else 50)
-    except (TypeError, ValueError):
-        raise TournamentCouponCreateError("Укажите уверенность от 0 до 100%.")
-    if not 0 <= confidence <= 100:
-        raise TournamentCouponCreateError("Уверенность должна быть от 0 до 100%.")
-    return confidence
-
-
-def _normalize_prediction_item(item: dict, matches: dict[int, Match]) -> dict:
-    if not isinstance(item, dict):
-        raise TournamentCouponCreateError("Некорректная игра в прогнозе.")
-
-    match_id = _to_positive_int(item.get("match_id"))
-    if match_id is None or match_id not in matches:
-        raise TournamentCouponCreateError("Матч не найден.")
-
-    market = str(item.get("market") or "").strip()
-    selection = str(item.get("selection") or "").strip()
-    coefficient_raw = str(item.get("coefficient") or "").replace(",", ".").strip()
-
-    if not market:
-        raise TournamentCouponCreateError("Выберите тип ставки.")
-    if not selection:
-        raise TournamentCouponCreateError("Выберите исход.")
-
-    try:
-        coefficient = Decimal(coefficient_raw)
-    except (InvalidOperation, ValueError):
-        raise TournamentCouponCreateError("Укажите коэффициент.")
-
-    if coefficient <= 0:
-        raise TournamentCouponCreateError("Коэффициент должен быть больше нуля.")
-
-    return {
-        "match": matches[match_id],
-        "market": market[:80],
-        "selection": selection[:120],
-        "coefficient": coefficient,
-    }
-
-
-def _to_positive_int(value) -> int | None:
-    try:
-        number = int(value)
-    except (TypeError, ValueError):
-        return None
-    return number if number > 0 else None

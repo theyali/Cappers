@@ -26,13 +26,13 @@ from .achievements import build_achievement_badges
 from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
+    build_paid_checkout_context,
     get_active_paid_plans,
     profile_paid_predictions_enabled,
 )
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
 from .vip import annotate_vip_status, attach_vip_status_to_user
-from wallets.services import ensure_real_balance, format_money
 
 
 RECENT_PERFORMANCE_LIMITS = (10, 100)
@@ -411,33 +411,7 @@ def expert_profile(request, username: str):
         and request.user.pk != profile.user_id
         and context["paid_predictions_enabled"]
     ):
-        paid_real_balance = ensure_real_balance(request.user)
-        checked_plan_marked = False
-        for paid_plan in context["paid_plans"]:
-            paid_plan.can_afford = paid_real_balance.balance >= paid_plan.price
-            paid_plan.is_default_checked = False
-            if paid_plan.can_afford and not checked_plan_marked:
-                paid_plan.is_default_checked = True
-                checked_plan_marked = True
-        if context["paid_plans"] and not checked_plan_marked:
-            context["paid_plans"][0].is_default_checked = True
-        legacy_paid_price = (
-            profile.paid_predictions_price
-            if not context["paid_plans"]
-            else None
-        )
-        context["real_balance_display"] = format_money(paid_real_balance.balance)
-        context["legacy_paid_price"] = legacy_paid_price
-        context["legacy_can_afford"] = (
-            paid_real_balance.balance >= legacy_paid_price
-            if legacy_paid_price and legacy_paid_price > 0
-            else True
-        )
-        context["paid_checkout_can_pay"] = (
-            any(plan.can_afford for plan in context["paid_plans"])
-            if context["paid_plans"]
-            else context["legacy_can_afford"]
-        )
+        context.update(build_paid_checkout_context(request.user, profile, context["paid_plans"]))
     latest_coupons = (
         _published_queryset()
         .filter(

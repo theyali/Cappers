@@ -156,6 +156,8 @@ class TournamentServiceTests(TestCase):
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at=timezone.now() + timedelta(hours=4),
         )
+        MatchOdds.objects.create(match=self.football_match, home_win_bet=2.00)
+        MatchOdds.objects.create(match=self.basketball_match, home_win_bet=2.00)
 
     def _item(self, match=None, coefficient=Decimal("2.00")):
         return {
@@ -324,7 +326,8 @@ class TournamentServiceTests(TestCase):
         )
         self.assertEqual(CoinTransaction.objects.count(), coin_transactions_before)
 
-        finalize_tournament_results(self.tournament)
+        with self.assertRaisesMessage(ValidationError, "уже зафиксированы"):
+            finalize_tournament_results(self.tournament)
         self.analyst.real_balance.refresh_from_db()
         self.assertEqual(self.analyst.real_balance.balance, Decimal("1000.00"))
 
@@ -393,7 +396,8 @@ class TournamentServiceTests(TestCase):
             ).exists()
         )
 
-        finalize_tournament_results(self.tournament)
+        with self.assertRaisesMessage(ValidationError, "уже зафиксированы"):
+            finalize_tournament_results(self.tournament)
         self.analyst.real_balance.refresh_from_db()
         self.analyst.coin_wallet.refresh_from_db()
         self.assertEqual(TournamentPrizeAward.objects.filter(tournament=self.tournament).count(), 1)
@@ -738,6 +742,7 @@ class TournamentCouponEndpointTests(TestCase):
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at=timezone.now() + timedelta(hours=3),
         )
+        MatchOdds.objects.create(match=self.match, home_win_bet=1.80)
 
     def _payload(self):
         return {
@@ -778,6 +783,36 @@ class TournamentCouponEndpointTests(TestCase):
         coupon = PredictionCoupon.objects.get()
         self.assertEqual(coupon.tournament_link.tournament, self.tournament)
         self.assertEqual(coupon.predictions.count(), 1)
+
+    def test_endpoint_rejects_tampered_coefficient_with_current_odds(self):
+        self.client.force_login(self.analyst)
+        payload = self._payload()
+        payload["items"][0]["coefficient"] = "25.00"
+
+        response = self.client.post(
+            reverse("tournaments:create_coupon", kwargs={"slug": self.tournament.slug}),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json()["odds_changed"][0]["coefficient"], "1.80")
+        self.assertFalse(PredictionCoupon.objects.exists())
+
+    def test_endpoint_checks_min_coefficient_against_line(self):
+        self.tournament.min_coefficient = Decimal("2.00")
+        self.tournament.save(update_fields=("min_coefficient", "updated_at"))
+        self.client.force_login(self.analyst)
+
+        response = self.client.post(
+            reverse("tournaments:create_coupon", kwargs={"slug": self.tournament.slug}),
+            data=json.dumps(self._payload()),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Минимальный коэффициент", response.json()["error"])
+        self.assertFalse(PredictionCoupon.objects.exists())
 
     def test_endpoint_rejects_user_without_participation(self):
         other = User.objects.create_user(

@@ -16,7 +16,7 @@ def healthcheck(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     path("tinymce/", include("tinymce.urls")),
     path("health/", healthcheck, name="healthcheck"),
     path("robots.txt", robots_txt, name="robots_txt"),
@@ -30,6 +30,7 @@ urlpatterns = [
     path("tournaments/", include("tournaments.urls")),
     path("notifications/", include("notifications.urls")),
     path("wallets/", include("wallets.urls")),
+    path("payments/", include("payments.urls")),
     path("ajax/", include("back.urls")),
 ]
 
