@@ -30,6 +30,7 @@ urlpatterns = [
     path("tournaments/", include("tournaments.urls")),
     path("notifications/", include("notifications.urls")),
     path("wallets/", include("wallets.urls")),
+    path("payments/", include("payments.urls")),
     path("ajax/", include("back.urls")),
 ]
 

@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from .base import PaymentProvider, PaymentProviderDisabled, PaymentProviderError
+from .cloudpayments import CloudPaymentsProvider
 
 
 class UnknownPaymentProvider(PaymentProviderError):
@@ -14,7 +15,9 @@ class PaymentProviderFactory:
     one visible place. Adding a provider is one class and one line here.
     """
 
-    _providers: dict[str, type[PaymentProvider]] = {}
+    _providers: dict[str, type[PaymentProvider]] = {
+        CloudPaymentsProvider.code: CloudPaymentsProvider,
+    }
 
     @classmethod
     def create(cls, code: str) -> PaymentProvider:

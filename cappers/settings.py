@@ -52,6 +52,27 @@ ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip("/") + "/"
 
 # Payment providers that take payments; empty keeps payments off (PAYMENTS_INTEGRATION_PLAN.md).
 PAYMENTS_ENABLED_PROVIDERS = env_list("PAYMENTS_ENABLED_PROVIDERS")
+# Who takes the payments: ip (ИП), ooo (ООО) or self_employed (самозанятый).
+PAYMENTS_MERCHANT_TYPE = os.getenv("PAYMENTS_MERCHANT_TYPE", "ip").strip().lower()
+if PAYMENTS_MERCHANT_TYPE not in {"ip", "ooo", "self_employed"}:
+    raise ImproperlyConfigured("PAYMENTS_MERCHANT_TYPE must be ip, ooo or self_employed.")
+# Test payments (a CloudPayments test terminal) are refused unless this is on.
+PAYMENTS_ALLOW_TEST_PAYMENTS = env_bool("PAYMENTS_ALLOW_TEST_PAYMENTS", DEBUG)
+
+CLOUDPAYMENTS_PUBLIC_ID = os.getenv("CLOUDPAYMENTS_PUBLIC_ID", "")
+CLOUDPAYMENTS_API_SECRET = os.getenv("CLOUDPAYMENTS_API_SECRET", "")
+CLOUDPAYMENTS_API_URL = os.getenv("CLOUDPAYMENTS_API_URL", "https://api.cloudpayments.ru").rstrip("/")
+CLOUDPAYMENTS_API_TIMEOUT = env_int("CLOUDPAYMENTS_API_TIMEOUT", 15)
+CLOUDPAYMENTS_ORDER_TTL_MINUTES = env_int("CLOUDPAYMENTS_ORDER_TTL_MINUTES", 60)
+# 54-ФЗ receipts through CloudKassir. ИП and ООО need them; a self-employed
+# seller issues the receipt in «Мой налог» instead.
+CLOUDPAYMENTS_RECEIPTS_ENABLED = env_bool("CLOUDPAYMENTS_RECEIPTS_ENABLED", PAYMENTS_MERCHANT_TYPE != "self_employed")
+CLOUDPAYMENTS_TAXATION_SYSTEM = env_int("CLOUDPAYMENTS_TAXATION_SYSTEM", 1)
+# VAT code of the receipt item; empty means "без НДС".
+CLOUDPAYMENTS_VAT = os.getenv("CLOUDPAYMENTS_VAT", "").strip()
+CLOUDPAYMENTS_VAT = int(CLOUDPAYMENTS_VAT) if CLOUDPAYMENTS_VAT else None
+CLOUDPAYMENTS_RECEIPT_METHOD = env_int("CLOUDPAYMENTS_RECEIPT_METHOD", 4)
+CLOUDPAYMENTS_RECEIPT_OBJECT = env_int("CLOUDPAYMENTS_RECEIPT_OBJECT", 4)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -233,6 +254,15 @@ LOGGING = {
             "formatter": "verbose",
             "encoding": "utf-8",
         },
+        "payments_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_DIR / "payments.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "verbose",
+            "encoding": "utf-8",
+        },
     },
     "loggers": {
         "django": {
@@ -244,6 +274,10 @@ LOGGING = {
             "handlers": ["django_file"],
             "level": "ERROR",
             "propagate": False,
+        },
+        "payments": {
+            "handlers": ["payments_file"],
+            "level": "INFO",
         },
     },
 }

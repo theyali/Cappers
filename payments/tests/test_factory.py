@@ -36,8 +36,8 @@ class FakeCardProvider(PaymentProvider):
     def fetch_status(self, payment):
         return None
 
-    def webhook_response(self, *, accepted, code=0):
-        return {"code": code}
+    def webhook_response(self, *, rejection=None):
+        return {"rejection": rejection}
 
 
 class FakeCryptoProvider(FakeCardProvider):

@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
 
-**Статус:** шаги 1–3 выполнены (подготовка по аудиту, приложение `payments`, Factory Method). Следующий шаг — 4, CloudPayments (раздел 12).
+**Статус:** шаги 1–4 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments). Следующий шаг — 5, выдача товара (раздел 12).
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -296,7 +296,7 @@ class PaymentProvider(ABC):
         """Запросить актуальный статус у провайдера (сверка, защита от потерянных вебхуков)."""
 
     @abstractmethod
-    def webhook_response(self, *, accepted: bool, code: int = 0):
+    def webhook_response(self, *, rejection: Rejection | None = None):
         """HTTP-ответ в формате, который ожидает провайдер."""
 
     def refund(self, payment, amount: Decimal | None = None) -> None:
@@ -367,15 +367,24 @@ session = provider.create_checkout(payment, success_url=..., fail_url=..., webho
 ### 6.1 Настройки
 
 ```env
-CLOUDPAYMENTS_PUBLIC_ID=
-CLOUDPAYMENTS_API_SECRET=
+PAYMENTS_MERCHANT_TYPE=ip                    # кто принимает платежи: ip / ooo / self_employed
+PAYMENTS_ALLOW_TEST_PAYMENTS=False           # тестовые платежи (TestMode) отклоняются
+CLOUDPAYMENTS_PUBLIC_ID=pk_change-me-cloudpayments-public-id
+CLOUDPAYMENTS_API_SECRET=change-me-cloudpayments-api-secret
 CLOUDPAYMENTS_API_URL=https://api.cloudpayments.ru
-CLOUDPAYMENTS_ALLOW_TEST_MODE=False          # в production тестовые платежи не выдают товар
-CLOUDPAYMENTS_RECEIPTS_ENABLED=True          # чеки 54-ФЗ через CloudKassir
-CLOUDPAYMENTS_TAXATION_SYSTEM=               # [сверить] код СНО
-CLOUDPAYMENTS_VAT=                           # [сверить] ставка НДС для товара
+CLOUDPAYMENTS_API_TIMEOUT=15
 CLOUDPAYMENTS_ORDER_TTL_MINUTES=60
+CLOUDPAYMENTS_RECEIPTS_ENABLED=True          # чеки 54-ФЗ через CloudKassir
+CLOUDPAYMENTS_TAXATION_SYSTEM=1              # 0 ОСН, 1 УСН доходы, 2 УСН доходы−расходы, 4 ЕСХН, 5 патент
+CLOUDPAYMENTS_VAT=                           # код ставки НДС; пусто — без НДС
+CLOUDPAYMENTS_RECEIPT_METHOD=4               # способ расчёта: полный расчёт
+CLOUDPAYMENTS_RECEIPT_OBJECT=4               # предмет расчёта: услуга
 ```
+
+**Реализовано в шаге 4.** Все значения меняются в `.env`, описание каждого — в `.env.example`.
+- `PUBLIC_ID` и `API_SECRET` в `.env.example` — заглушки. Пока в значении есть `change-me`, провайдер считается не настроенным: `PaymentProviderFactory` его не создаёт, кнопки оплаты нет, вебхуки отвечают 404. Иначе подпись уведомлений проверялась бы секретом, который лежит в открытом репозитории.
+- `PAYMENTS_MERCHANT_TYPE` задаёт значение `CLOUDPAYMENTS_RECEIPTS_ENABLED` по умолчанию (если строки нет в `.env`): для ИП и ООО чеки включены, для самозанятого выключены — он выдаёт чек в «Мой налог». Неизвестный тип останавливает запуск с ошибкой настройки.
+- Тестовые платежи отклоняются общим флагом `PAYMENTS_ALLOW_TEST_PAYMENTS` (по умолчанию равен `DEBUG`). Его проверяет общий обработчик событий, а не провайдер, поэтому флаг подойдёт и для NOWPayments.
 
 ### 6.2 Создание оплаты
 
@@ -436,10 +445,20 @@ def verify_signature(self, request) -> None:
 
 Check-уведомление особенно полезно: оно позволяет **отклонить** оплату, если между созданием заказа и оплатой каппер отключил платные прогнозы или тариф стал недоступен. Деньги тогда не списываются вовсе.
 
+**Реализовано в шаге 4** (`payments/services/providers/cloudpayments.py`, `payments/services/processing.py`, `payments/views.py`):
+- Формат подписи сверен по открытым клиентам API (PyPI `cloudpayments`, `aiocloudpayments`): заголовок `Content-HMAC`, Base64(HMAC-SHA256(сырое тело, ApiSecret)), ответ `{"code": N}`, коды Check 10/11/12/13/20. Официальная документация из этой среды недоступна.
+- Один URL на тип уведомления: `/payments/webhooks/cloudpayments/<check|pay|fail|refund>/`. Неподписанный запрос — 403 и запись в лог, без строки в БД. Неизвестный тип уведомления — 400, выключенный провайдер — 404, не POST — 405.
+- Check ничего не меняет, только проверяет: заказ, плательщика (`AccountId`), сумму и валюту, срок, статус и тестовый режим. Повторный Check с тем же `TransactionId` проверяется заново.
+- Pay, Fail и Refund всегда получают `{"code": 0}`, чтобы CloudPayments не повторял их бесконечно. Если событие нельзя применить (сумма не совпадает, неизвестный заказ, тестовый платёж), статус не меняется, ошибка пишется в `PaymentEvent.error` и в лог `payments` (`logs/payments.log`) с уровнем ERROR.
+- Частичный возврат не переводит платёж в `REFUNDED`: он остаётся для ручного разбора до шага 9.
+- `Token` карты из уведомлений не сохраняется ни в `PaymentEvent.payload`, ни в `Payment.provider_payload`.
+- Товар в шаге 4 ещё не выдаётся. Платёж становится `SUCCEEDED` без `fulfilled_at`, и шаг 5 подхватит такие платежи сверкой.
+
 ### 6.4 Сверка и возвраты [сверить]
 
-- `fetch_status()`: `POST {API_URL}/v2/payments/find` с `{"InvoiceId": "<public_id>"}`. Статус `Completed` → `SUCCEEDED`, `Declined` → `FAILED`.
-- `refund()`: `POST {API_URL}/payments/refund` с `{"TransactionId": ..., "Amount": ...}`. Итоговый статус подтверждает вебхук Refund.
+- `fetch_status()`: `POST {API_URL}/v2/payments/find` с `{"InvoiceId": "<public_id>"}`. Статусы: `Completed` → `SUCCEEDED`, `Authorized`/`AwaitingAuthentication` → `PROCESSING`, `Declined` → `FAILED`, `Cancelled` → `CANCELED`. ✅ Реализовано, вызывать его будет сверка из шага 5.
+- `refund()`: `POST {API_URL}/payments/refund` с `{"TransactionId": ..., "Amount": ...}`. Итоговый статус подтверждает вебхук Refund (✅ уже обрабатывается). Сам вызов API добавится в шаге 9 вместе с `refunds.py`.
+- Чек 54-ФЗ уходит в `orders/create` → `JsonData.CloudPayments.CustomerReceipt` (`Items[label, price, quantity, amount, vat, method, object]`, `taxationSystem`, `email`, `amounts.electronic`). **[сверить]** с CloudKassir: регистр ключей, обязательность `measurementUnit` для ФФД 1.2 и `calculationPlace`.
 - IP-адреса уведомлений CloudPayments (allowlist как дополнительная защита) нужно взять из актуальной документации **[сверить]**.
 
 ---
@@ -559,9 +578,11 @@ def provider_webhook(request, provider_code: str, event_type: str = "ipn"):
         return HttpResponseForbidden()
 
     event = provider.parse_webhook(request, event_type=event_type)
-    result = apply_provider_event(provider_code, event)   # транзакция + журнал PaymentEvent
-    return provider.webhook_response(accepted=result.accepted, code=result.code)
+    rejection = apply_provider_event(provider_code, event)   # транзакция + журнал PaymentEvent
+    return provider.webhook_response(rejection=rejection)
 ```
+
+В шаге 4 ответ построен на общей причине отказа `Rejection` (`base.py`: неизвестный заказ, чужой плательщик, неверная сумма, оплатить нельзя, срок истёк). Каждый провайдер переводит её в свой код, например CloudPayments — в 10/11/12/13/20.
 
 `apply_provider_event()`:
 1. `PaymentEvent.get_or_create(provider, dedup_key)`. Если событие уже обработано, ответить «принято» и выйти.
@@ -628,19 +649,19 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 ## 9. Безопасность (чек-лист)
 
-- [ ] Подпись вебхука проверяется по **сырому** `request.body` через `hmac.compare_digest`.
+- [x] Подпись вебхука проверяется по **сырому** `request.body` через `hmac.compare_digest` (CloudPayments, шаг 4).
 - [ ] Статус и сумма перепроверяются через API провайдера (обязательно для NOWPayments; при сверке — для обоих).
-- [ ] Сумма и валюта вебхука сверяются со снимком; при расхождении товар не выдаётся.
-- [ ] Идемпотентность: `PaymentEvent(provider, dedup_key)` unique, блокировка строки `Payment`, выдача через `related_obj=payment`.
+- [x] Сумма и валюта вебхука сверяются с платежом; при расхождении статус не меняется.
+- [ ] Идемпотентность: ✅ `PaymentEvent(provider, dedup_key)` unique и блокировка строки `Payment` (шаг 4); выдача через `related_obj=payment` — шаг 5.
 - [ ] Return URL ничего не выдаёт.
-- [ ] `csrf_exempt` стоит только на вебхуках; вебхуки принимают только POST; размер тела ограничен.
-- [ ] `public_id` (UUID) используется наружу вместо последовательного id.
-- [ ] Тестовые платежи CloudPayments (`TestMode`) в production товар не выдают.
-- [ ] Секреты только в `.env`, не попадают в логи и в админку.
+- [x] `csrf_exempt` стоит только на вебхуках; вебхуки принимают только POST; размер тела ограничен `DATA_UPLOAD_MAX_MEMORY_SIZE` и `client_max_body_size` nginx.
+- [x] `public_id` (UUID) используется наружу вместо последовательного id.
+- [x] Тестовые платежи CloudPayments (`TestMode`) отклоняются, пока `PAYMENTS_ALLOW_TEST_PAYMENTS=False`.
+- [x] Секреты только в `.env`, не попадают в логи и в админку; заглушки с `change-me` выключают провайдер.
 - [x] `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`, иначе `build_absolute_uri()` построит `http://` для return и callback URL (`CODE_AUDIT.md`, п. 1.12).
 - [ ] Лимит незавершённых платежей на пользователя и rate-limit на `/payments/checkout/` (готовый помощник `cappers/ratelimit.py`).
 - [ ] Опционально: allowlist IP провайдеров по `X-Real-IP` (nginx его передаёт).
-- [ ] Отдельный logger `payments` и алерты на неверную подпись, расхождение суммы и ошибки выдачи.
+- [ ] Отдельный logger `payments` и алерты на неверную подпись, расхождение суммы и ошибки выдачи. ✅ Логгер есть (`logs/payments.log`), алерты — шаг 10.
 
 ---
 
@@ -672,7 +693,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 1. ✅ **Подготовка (из аудита):** `SECURE_PROXY_SSL_HEADER` и secure-настройки (п. 1.12); `PROTECT` на финансовых FK (п. 1.10); холд дохода каппера (п. 1.8); реферальный процент от комиссии (п. 1.9); начисление пакета по снимку (п. 2.4).
 2. ✅ **Каркас `payments`:** модели `Payment` и `PaymentEvent` (миграция `payments/0001`), админка только на чтение, `PAYMENTS_ENABLED_PROVIDERS` в `settings.py` и `.env.example` (по умолчанию пусто, платежи выключены). Настройки конкретных провайдеров добавляются вместе с ними в шагах 4 и 8.
 3. ✅ **Factory Method:** `base.py`, `factory.py`, тесты фабрики на тестовых провайдерах.
-4. **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты.
+4. ✅ **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты (`payments/tests/test_cloudpayments.py`). Настройки, тип продавца и чеки 54-ФЗ — в `.env`.
 5. **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты.
 6. **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки и на странице VIP; return-страница со статусом. Стили — только в `main.css`/`mobile.css`, без inline.
 7. **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=["cloudpayments"]`, сначала на пакетах коинов.
@@ -689,7 +710,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 
 ## 13. Открытые вопросы к владельцу продукта
 
-1. Кто принимает платежи (ИП, ООО, самозанятый) и нужна ли онлайн-касса (CloudKassir)? Какие СНО и НДС?
+1. Кто принимает платежи (ИП, ООО, самозанятый) и нужна ли онлайн-касса (CloudKassir)? Какие СНО и НДС? Код готов к любому варианту: всё задаётся в `.env` (`PAYMENTS_MERCHANT_TYPE`, `CLOUDPAYMENTS_RECEIPTS_ENABLED`, `CLOUDPAYMENTS_TAXATION_SYSTEM`, `CLOUDPAYMENTS_VAT`). Значения нужно подтвердить с бухгалтером. Отдельно: если площадка продаёт подписку каппера как агент, в чек нужны признак агента и данные поставщика.
 2. В какой валюте выставлять крипто-счёт (USD?) и по какому курсу пересчитывать рублёвые цены?
 3. ~~Сколько дней холдить доход каппера~~ (7 дней, настройка сайта). Какая политика возвратов за коины и подписки?
 4. Выплаты капперам: оставить ручное подтверждение или автоматизировать?

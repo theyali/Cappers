@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
+from enum import StrEnum
 from typing import ClassVar
 
 
@@ -15,6 +16,16 @@ class InvalidSignature(PaymentProviderError):
 
 class PaymentProviderDisabled(PaymentProviderError):
     """The provider is turned off in the settings."""
+
+
+class Rejection(StrEnum):
+    """Why a payment cannot be taken; each provider answers it with its own code."""
+
+    UNKNOWN_PAYMENT = "unknown_payment"
+    WRONG_ACCOUNT = "wrong_account"
+    WRONG_AMOUNT = "wrong_amount"
+    NOT_PAYABLE = "not_payable"
+    EXPIRED = "expired"
 
 
 @dataclass(frozen=True)
@@ -37,6 +48,8 @@ class ProviderEvent:
     paid_amount: Decimal | None = None
     paid_currency: str = ""
     is_test: bool = False
+    # The payer's account as the provider saw it; None when the provider sends none.
+    account_id: str | None = None
     dedup_key: str = ""
     failure_reason: str = ""
     raw: dict = field(default_factory=dict)
@@ -78,7 +91,7 @@ class PaymentProvider(ABC):
         """Ask the provider for the current status (reconciliation, lost webhooks)."""
 
     @abstractmethod
-    def webhook_response(self, *, accepted: bool, code: int = 0):
+    def webhook_response(self, *, rejection: Rejection | None = None):
         """The HTTP response in the format the provider expects."""
 
     def refund(self, payment, amount: Decimal | None = None) -> None:
