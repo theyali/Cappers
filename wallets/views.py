@@ -58,7 +58,7 @@ def top_up_balance(request):
     wallet = ensure_coin_wallet(request.user)
     packages = list(CoinPackage.objects.filter(is_active=True).order_by("order", "id"))
     for package in packages:
-        package.payment_options = build_payment_options(package.price_rub)
+        package.payment_options = build_payment_options(package.price_rub, request.user)
 
     if request.method == "POST":
         package_id = request.POST.get("package_id")

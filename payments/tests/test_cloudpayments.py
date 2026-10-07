@@ -24,6 +24,7 @@ SECRET = "test-api-secret"
 CLOUDPAYMENTS_SETTINGS = {
     "PAYMENTS_ENABLED_PROVIDERS": ["cloudpayments"],
     "PAYMENTS_ALLOW_TEST_PAYMENTS": False,
+    "PAYMENTS_STAFF_ONLY": False,
     "CLOUDPAYMENTS_PUBLIC_ID": "pk_test",
     "CLOUDPAYMENTS_API_SECRET": SECRET,
     "CLOUDPAYMENTS_API_URL": "https://api.cloudpayments.test",

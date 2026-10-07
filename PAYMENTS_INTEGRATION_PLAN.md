@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
 
-**Статус:** шаги 1–6 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи, кнопки оплаты и страница результата). Следующий шаг — 7, запуск CloudPayments в production (раздел 12).
+**Статус:** шаги 1–6 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи, кнопки оплаты и страница результата). Шаг 7 готов со стороны кода и ждёт ключей CloudPayments и проверочной оплаты: чек-лист — раздел 12.1.
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -711,10 +711,60 @@ def fulfill_payment(payment_id: int) -> Payment:
 4. ✅ **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты (`payments/tests/test_cloudpayments.py`). Настройки, тип продавца и чеки 54-ФЗ — в `.env`.
 5. ✅ **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты (`payments/tests/test_fulfillment.py`).
 6. ✅ **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки (страница и модалка) и на странице VIP; return-страница со статусом. Стили — только в `main.css`, без inline. Тесты: `payments/tests/test_checkout.py`.
-7. **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=["cloudpayments"]`, сначала на пакетах коинов.
+7. 🟡 **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=cloudpayments`. Код готов: флаг `PAYMENTS_STAFF_ONLY` прячет оплату от всех, кроме сотрудников, на время проверки тестового терминала; проверки `payments.W001–W003` предупреждают при деплое о незаданных ключах и о тестовых платежах, открытых для всех. Осталось пройти чек-лист 12.1.
 8. **NOWPayments:** провайдер, IPN, перепроверка через API, курс RUB → USD, минимальные суммы, тесты на sandbox → включение.
 9. **Возвраты и чеки 54-ФЗ:** `refunds.py`, Refund-вебхук, CloudKassir.
 10. **Мониторинг:** алерты, отчёт сверки с выписками провайдеров.
+
+### 12.1 Чек-лист запуска CloudPayments (шаг 7)
+
+Миграции и перезапуск `web`, `celery` и `celery-beat` выполняет обычный `deploy/deploy.sh`, отдельно ничего запускать не нужно.
+
+**1. Кабинет CloudPayments** (сайт → настройки):
+- Public ID и пароль для API (API Secret) — в `.env` на сервере, в репозиторий не коммитить.
+- Уведомления (метод POST, кодировка UTF-8; формат по умолчанию, JSON тоже поддерживается):
+
+| Уведомление | Адрес |
+|---|---|
+| Check | `https://capper-hub.com/payments/webhooks/cloudpayments/check/` |
+| Pay | `https://capper-hub.com/payments/webhooks/cloudpayments/pay/` |
+| Fail | `https://capper-hub.com/payments/webhooks/cloudpayments/fail/` |
+| Refund | `https://capper-hub.com/payments/webhooks/cloudpayments/refund/` |
+
+  Остальные уведомления (Confirm, Cancel, Recurrent) не включать: на них сайт отвечает 400.
+- Чеки 54-ФЗ: если касса CloudKassir ещё не подключена, поставить `CLOUDPAYMENTS_RECEIPTS_ENABLED=False` до её подключения. Тип продавца, СНО и НДС — по разделу 6.1.
+
+**2. `.env` на сервере, пока сайт CloudPayments в тестовом режиме:**
+
+```env
+PAYMENTS_ENABLED_PROVIDERS=cloudpayments
+CLOUDPAYMENTS_PUBLIC_ID=<из кабинета>
+CLOUDPAYMENTS_API_SECRET=<из кабинета>
+PAYMENTS_STAFF_ONLY=True             # оплату видят только сотрудники (is_staff)
+PAYMENTS_ALLOW_TEST_PAYMENTS=True    # иначе Check отклонит тестовую карту кодом 13
+```
+
+**3. Деплой:** `deploy/deploy.sh`. В выводе `migrate` не должно быть предупреждений `payments.W001–W003`; проверить отдельно — `docker compose run --rm web python manage.py check`.
+
+**4. Проверочные оплаты** под аккаунтом сотрудника, тестовыми картами из документации CloudPayments (раздел «Тестирование»):
+- [ ] Пакет коинов успешной картой: возврат на «Оплата прошла», коины зачислены; в админке «Платежи» статус «Оплачен» и заполнено «Товар выдан», в событиях есть `check` и `pay`.
+- [ ] Отклоняемой картой: «Оплата не прошла»; «Попробовать ещё раз» открывает тот же заказ, и успешная карта его оплачивает.
+- [ ] Подписка на каппера картой: подписка активна, доход каппера в холде.
+- [ ] VIP картой, в том числе переход на другой тариф через окно с предупреждением.
+- [ ] Обычный пользователь кнопок оплаты не видит.
+- [ ] В `logs/payments.log` нет ERROR и сообщений о неверной подписи.
+- Возврат из кабинета CloudPayments переведёт платёж в «Возвращён», но выданное не заберёт: это шаг 9.
+
+**5. Боевой запуск** — после того как CloudPayments переведёт сайт в рабочий режим:
+
+```env
+PAYMENTS_ALLOW_TEST_PAYMENTS=False
+PAYMENTS_STAFF_ONLY=False
+```
+
+затем `deploy/deploy.sh` и одна реальная оплата на небольшую сумму.
+
+**Откат:** `PAYMENTS_STAFF_ONLY=True` и деплой. Кнопки пропадут у всех, кроме сотрудников, а уведомления по уже начатым оплатам продолжат приниматься и выдавать товар. Пустой `PAYMENTS_ENABLED_PROVIDERS` выключает и вебхуки: CloudPayments получит 404 и будет повторять уведомления, а товар по ним выдаст сверка, только когда провайдер снова включат.
 
 Позже, отдельными этапами:
 - автопродление подписок (рекуррентные платежи CloudPayments);

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
@@ -89,6 +90,11 @@ def vip_plan_order(user, plan_id, *, switch: bool) -> dict:
     }
 
 
+def can_pay_with_providers(user) -> bool:
+    """Whether this user is offered provider payments (see PAYMENTS_STAFF_ONLY)."""
+    return not settings.PAYMENTS_STAFF_ONLY or bool(getattr(user, "is_staff", False))
+
+
 def start_checkout(user, order: dict, provider_code: str, *, site_url: str) -> Payment:
     """Create the provider order for a product; the payer is sent to payment.checkout_url.
 
@@ -97,6 +103,8 @@ def start_checkout(user, order: dict, provider_code: str, *, site_url: str) -> P
     Asking again for the same product reuses the open order instead of creating
     another one.
     """
+    if not can_pay_with_providers(user):
+        raise ValidationError("Этот способ оплаты сейчас недоступен.")
     try:
         provider = PaymentProviderFactory.create(provider_code)
     except PaymentProviderError as exc:

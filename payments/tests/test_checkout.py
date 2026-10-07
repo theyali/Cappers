@@ -120,6 +120,18 @@ class CheckoutTests(TestCase):
         urlopen.assert_not_called()
         self.assertIn("Слишком много попыток", self.error(response))
 
+    @override_settings(PAYMENTS_STAFF_ONLY=True)
+    def test_staff_only_launch_refuses_everyone_else(self):
+        response, urlopen = self.checkout("coin_package", {"package_id": self.package.pk})
+
+        urlopen.assert_not_called()
+        self.assertEqual(self.error(response), "Этот способ оплаты сейчас недоступен.")
+        self.assertFalse(Payment.objects.exists())
+
+        User.objects.filter(pk=self.user.pk).update(is_staff=True)
+        self.checkout("coin_package", {"package_id": self.package.pk})
+        self.assertEqual(Payment.objects.get().status, Payment.Status.PENDING)
+
     def test_subscription_order_fixes_the_plan_and_the_platform_fee(self):
         plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
 
@@ -251,6 +263,14 @@ class PayButtonTests(TestCase):
             page = self.client.get(reverse("wallets:top_up"))
         self.assertNotContains(page, "Оплатить картой")
         self.assertContains(page, "Выбрать пакет")
+
+    @override_settings(PAYMENTS_STAFF_ONLY=True)
+    def test_staff_only_launch_shows_card_payment_to_staff_alone(self):
+        self.client.force_login(self.user)
+        self.assertNotContains(self.client.get(reverse("wallets:top_up")), "Оплатить картой")
+
+        User.objects.filter(pk=self.user.pk).update(is_staff=True)
+        self.assertContains(self.client.get(reverse("wallets:top_up")), "Оплатить картой")
 
     def test_plans_the_balance_does_not_cover_can_be_paid_by_card(self):
         plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))

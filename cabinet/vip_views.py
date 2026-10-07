@@ -112,7 +112,7 @@ def vip_plans(request):
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)
         plan.balance_after_display = format_money(plan.balance_after) if plan.can_afford else ""
-        plan.payment_options = build_payment_options(plan.price_rub)
+        plan.payment_options = build_payment_options(plan.price_rub, request.user)
         plan.is_switch = bool(active_vip and active_vip.plan_id != plan.pk)
         if plan.payment_options:
             plan.balance_button_label = "Оплатить с баланса"

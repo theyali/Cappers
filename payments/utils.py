@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from cabinet.models import User
 from payments.models import Payment
+from payments.services.checkout import can_pay_with_providers
 from payments.services.providers.factory import PaymentProviderFactory
 
 DONE_TEXTS = {
@@ -12,8 +13,10 @@ DONE_TEXTS = {
 }
 
 
-def build_payment_options(amount_rub) -> list[dict]:
+def build_payment_options(amount_rub, user) -> list[dict]:
     """Pay buttons for a product at this price; empty while payments are off."""
+    if not can_pay_with_providers(user):
+        return []
     return [
         {"code": provider.code, "label": provider.pay_label}
         for provider in PaymentProviderFactory.available_for(amount_rub)

@@ -58,6 +58,8 @@ if PAYMENTS_MERCHANT_TYPE not in {"ip", "ooo", "self_employed"}:
     raise ImproperlyConfigured("PAYMENTS_MERCHANT_TYPE must be ip, ooo or self_employed.")
 # Test payments (a CloudPayments test terminal) are refused unless this is on.
 PAYMENTS_ALLOW_TEST_PAYMENTS = env_bool("PAYMENTS_ALLOW_TEST_PAYMENTS", DEBUG)
+# Only staff see the pay buttons, e.g. while the terminal is still in test mode.
+PAYMENTS_STAFF_ONLY = env_bool("PAYMENTS_STAFF_ONLY", False)
 
 CLOUDPAYMENTS_PUBLIC_ID = os.getenv("CLOUDPAYMENTS_PUBLIC_ID", "")
 CLOUDPAYMENTS_API_SECRET = os.getenv("CLOUDPAYMENTS_API_SECRET", "")

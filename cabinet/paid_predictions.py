@@ -85,7 +85,7 @@ def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list)
     real_balance = ensure_real_balance(user)
     legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
     prices = [plan.price for plan in paid_plans] or [legacy_paid_price or 0]
-    payment_options = build_payment_options(max(prices))
+    payment_options = build_payment_options(max(prices), user)
     checked_plan_marked = False
     for paid_plan in paid_plans:
         paid_plan.can_afford = real_balance.balance >= paid_plan.price
