@@ -396,7 +396,7 @@ def build_referrals_page_context(user, request=None) -> dict:
         referral_income = (
             RealBalanceTransaction.objects.filter(
                 user=user,
-                status=RealBalanceTransaction.Status.COMPLETED,
+                status__in=(RealBalanceTransaction.Status.COMPLETED, RealBalanceTransaction.Status.HELD),
                 amount__gt=0,
                 kind__in=[
                     RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,

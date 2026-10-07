@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_http_methods
 
+from back.models import WebsiteSettings
 from cabinet.models import User
 
 from .forms import CopyBettingForm
@@ -86,6 +87,8 @@ def top_up_balance(request):
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance) if real_balance else "",
             "pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
+            "held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
+            "min_withdrawal_display": format_money(WebsiteSettings.load().min_withdrawal_amount),
         },
     )
 
@@ -100,7 +103,11 @@ def real_balance_action(request):
     amount = request.POST.get("amount")
     try:
         if action == "withdraw":
-            request_real_withdrawal(request.user, amount)
+            request_real_withdrawal(
+                request.user,
+                amount,
+                payout_details=request.POST.get("payout_details", ""),
+            )
             messages.success(request, "Заявка на вывод создана.")
         else:
             messages.error(request, "Неизвестное действие с реальным балансом.")

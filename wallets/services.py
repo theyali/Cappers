@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
@@ -7,6 +8,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F, Q, Sum
 from django.utils import timezone
 
+from back.models import WebsiteSettings
 from cabinet.models import User
 
 from .models import (
@@ -34,6 +36,12 @@ COPYBET_SETTLEMENT_KINDS = (
     CoinTransaction.Kind.COPYBET_PAYOUT,
     CoinTransaction.Kind.COPYBET_REFUND,
     CoinTransaction.Kind.COPYBET_PAYOUT_REVERSAL,
+)
+# Income that comes from a user's payment can be disputed, so it is held before withdrawal.
+HELD_INCOME_KINDS = (
+    RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+    RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
+    RealBalanceTransaction.Kind.REFERRAL_BALANCE_TOP_UP,
 )
 
 
@@ -269,9 +277,26 @@ def credit_real_balance(
         raise ValidationError("Сумма зачисления должна быть больше нуля.")
     related_model, related_id = _related_subject(related_obj) if related_obj is not None else ("", None)
 
+    hold_days = WebsiteSettings.load().income_hold_days if kind in HELD_INCOME_KINDS else 0
+
     with transaction.atomic():
         balance = _real_balance_for_update(user)
         if _has_real_transaction(user, kind, related_model, related_id):
+            return balance
+        if hold_days:
+            balance.held = _money(balance.held + amount)
+            balance.save(update_fields=["held", "updated_at"])
+            RealBalanceTransaction.objects.create(
+                user=user,
+                kind=kind,
+                status=RealBalanceTransaction.Status.HELD,
+                amount=amount,
+                balance_after=balance.balance,
+                related_model=related_model,
+                related_id=related_id,
+                available_at=timezone.now() + timedelta(days=hold_days),
+                note=note[:255],
+            )
             return balance
         return _apply_real_locked(
             balance,
@@ -283,14 +308,59 @@ def credit_real_balance(
         )
 
 
-def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalance:
+def release_held_real_income(limit: int = 1000) -> int:
+    """Move income whose hold is over to the available balance."""
+    held_ids = list(
+        RealBalanceTransaction.objects.filter(
+            status=RealBalanceTransaction.Status.HELD,
+            available_at__lte=timezone.now(),
+        )
+        .order_by("available_at", "id")
+        .values_list("pk", flat=True)[:limit]
+    )
+    released = 0
+    for held_id in held_ids:
+        with transaction.atomic():
+            held = RealBalanceTransaction.objects.select_for_update().get(pk=held_id)
+            if held.status != RealBalanceTransaction.Status.HELD:
+                continue
+            balance = _real_balance_for_update(held.user)
+            balance.held = max(Decimal("0.00"), _money(balance.held - held.amount))
+            balance.balance = _money(balance.balance + held.amount)
+            balance.save(update_fields=["balance", "held", "updated_at"])
+            held.status = RealBalanceTransaction.Status.COMPLETED
+            held.balance_after = balance.balance
+            held.save(update_fields=["status", "balance_after"])
+        released += 1
+    return released
+
+
+def request_real_withdrawal(
+    user,
+    amount,
+    *,
+    payout_details: str = "",
+    note: str = "",
+) -> CapperRealBalance:
     _validate_analyst(user)
     amount = _money(amount)
     if amount <= 0:
         raise ValidationError("Сумма вывода должна быть больше нуля.")
+    min_amount = _money(WebsiteSettings.load().min_withdrawal_amount)
+    if amount < min_amount:
+        raise ValidationError(f"Минимальная сумма вывода — {format_money(min_amount)} ₽.")
+    payout_details = (payout_details or "").strip()
+    if not payout_details:
+        raise ValidationError("Укажите реквизиты для вывода.")
 
     with transaction.atomic():
         balance = _real_balance_for_update(user)
+        if RealBalanceTransaction.objects.filter(
+            user=user,
+            kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+            status=RealBalanceTransaction.Status.PENDING,
+        ).exists():
+            raise ValidationError("У вас уже есть заявка на вывод. Дождитесь её обработки.")
         if balance.balance < amount:
             raise InsufficientBalance(
                 f"Недостаточно средств на реальном балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
@@ -306,14 +376,23 @@ def request_real_withdrawal(user, amount, *, note: str = "") -> CapperRealBalanc
             RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
             status=RealBalanceTransaction.Status.PENDING,
             note=note or "Заявка на вывод средств",
+            payout_details=payout_details,
         )
         return balance
 
 
-def approve_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTransaction:
+def approve_real_withdrawal(
+    withdrawal: RealBalanceTransaction,
+    *,
+    payout_reference: str = "",
+    processed_by=None,
+) -> RealBalanceTransaction:
     with transaction.atomic():
         locked = RealBalanceTransaction.objects.select_for_update().get(pk=withdrawal.pk)
         _validate_pending_withdrawal_transaction(locked)
+        payout_reference = (payout_reference or locked.payout_reference).strip()
+        if not payout_reference:
+            raise ValidationError("Укажите номер выплаты.")
         balance = _real_balance_for_update(locked.user)
         balance.pending_withdrawal = max(
             Decimal("0.00"),
@@ -321,11 +400,14 @@ def approve_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTr
         )
         balance.save(update_fields=["pending_withdrawal", "updated_at"])
         locked.status = RealBalanceTransaction.Status.COMPLETED
-        locked.save(update_fields=["status"])
+        locked.payout_reference = payout_reference[:100]
+        locked.processed_by = processed_by
+        locked.processed_at = timezone.now()
+        locked.save(update_fields=["status", "payout_reference", "processed_by", "processed_at"])
         return locked
 
 
-def cancel_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTransaction:
+def cancel_real_withdrawal(withdrawal: RealBalanceTransaction, *, processed_by=None) -> RealBalanceTransaction:
     with transaction.atomic():
         locked = RealBalanceTransaction.objects.select_for_update().get(pk=withdrawal.pk)
         _validate_pending_withdrawal_transaction(locked)
@@ -337,7 +419,9 @@ def cancel_real_withdrawal(withdrawal: RealBalanceTransaction) -> RealBalanceTra
         )
         balance.save(update_fields=["pending_withdrawal", "updated_at"])
         locked.status = RealBalanceTransaction.Status.CANCELED
-        locked.save(update_fields=["status"])
+        locked.processed_by = processed_by
+        locked.processed_at = timezone.now()
+        locked.save(update_fields=["status", "processed_by", "processed_at"])
         related_model, related_id = _related_subject(locked)
         if not _has_real_transaction(
             locked.user,
@@ -1274,6 +1358,7 @@ def _apply_real_locked(
     related_model: str = "",
     related_id: int | None = None,
     note: str = "",
+    payout_details: str = "",
 ) -> CapperRealBalance:
     amount = _money(amount)
     balance.balance = _money(balance.balance + amount)
@@ -1287,6 +1372,7 @@ def _apply_real_locked(
         related_model=related_model,
         related_id=related_id,
         note=note[:255],
+        payout_details=payout_details[:255],
     )
     return balance
 

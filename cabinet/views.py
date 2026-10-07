@@ -825,6 +825,7 @@ def profile(request):
         "real_balance": real_balance,
         "real_balance_display": format_money(real_balance.balance) if real_balance else "",
         "real_pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
+        "real_held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
         "coin_transactions": coin_transactions,
         "real_transactions": real_transactions,
         "copybetting_subscriptions": copybetting_subscriptions,

@@ -173,6 +173,13 @@ class CapperRealBalance(models.Model):
     )
     balance = models.DecimalField("Реальный баланс", max_digits=12, decimal_places=2, default=0)
     pending_withdrawal = models.DecimalField("Ожидает вывода", max_digits=12, decimal_places=2, default=0)
+    held = models.DecimalField(
+        "В холде",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Доход с оплат, который ещё нельзя вывести.",
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
 
@@ -230,6 +237,7 @@ class RealBalanceTransaction(models.Model):
         COMPLETED = "completed", "Завершена"
         PENDING = "pending", "Ожидает"
         CANCELED = "canceled", "Отменена"
+        HELD = "held", "В холде"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -244,6 +252,23 @@ class RealBalanceTransaction(models.Model):
     related_model = models.CharField("Связанная модель", max_length=100, blank=True)
     related_id = models.PositiveBigIntegerField("Связанный объект", null=True, blank=True)
     note = models.CharField("Комментарий", max_length=255, blank=True)
+    available_at = models.DateTimeField("Доступно с", null=True, blank=True)
+    payout_details = models.CharField("Реквизиты для вывода", max_length=255, blank=True)
+    payout_reference = models.CharField(
+        "Номер выплаты",
+        max_length=100,
+        blank=True,
+        help_text="Номер платёжного поручения или перевода. Нужен для подтверждения заявки.",
+    )
+    processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="Обработал",
+    )
+    processed_at = models.DateTimeField("Обработана", null=True, blank=True)
     created_at = models.DateTimeField("Создана", auto_now_add=True)
 
     class Meta:

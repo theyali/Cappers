@@ -210,7 +210,7 @@ class CoinPackageAdmin(admin.ModelAdmin):
 
 @admin.register(CapperRealBalance)
 class CapperRealBalanceAdmin(admin.ModelAdmin):
-    list_display = ("user", "balance", "pending_withdrawal", "updated_at")
+    list_display = ("user", "balance", "held", "pending_withdrawal", "updated_at")
     search_fields = ("user__username", "user__email")
     readonly_fields = ("created_at", "updated_at")
 
@@ -250,9 +250,28 @@ class CapperBankStatsAdmin(admin.ModelAdmin):
 
 @admin.register(RealBalanceTransaction)
 class RealBalanceTransactionAdmin(admin.ModelAdmin):
-    list_display = ("user", "kind", "status", "amount", "balance_after", "related_model", "related_id", "created_at")
+    list_display = (
+        "user",
+        "kind",
+        "status",
+        "amount",
+        "balance_after",
+        "available_at",
+        "payout_reference",
+        "processed_by",
+        "related_model",
+        "related_id",
+        "created_at",
+    )
     list_filter = ("kind", "status", "created_at")
-    search_fields = ("user__username", "user__email", "note", "related_model", "related_id")
+    search_fields = (
+        "user__username",
+        "user__email",
+        "note",
+        "related_model",
+        "related_id",
+        "payout_reference",
+    )
     readonly_fields = (
         "user",
         "kind",
@@ -262,25 +281,44 @@ class RealBalanceTransactionAdmin(admin.ModelAdmin):
         "related_model",
         "related_id",
         "note",
+        "available_at",
+        "payout_details",
+        "payout_reference",
+        "processed_by",
+        "processed_at",
         "created_at",
     )
     actions = ("approve_withdrawals", "cancel_withdrawals")
 
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(super().get_readonly_fields(request, obj))
+        if (
+            obj is not None
+            and obj.kind == RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST
+            and obj.status == RealBalanceTransaction.Status.PENDING
+        ):
+            # The payout number is entered before the request is approved.
+            readonly_fields.remove("payout_reference")
+        return readonly_fields
+
     @admin.action(description="Подтвердить выбранные заявки на вывод")
     def approve_withdrawals(self, request, queryset):
         processed = 0
-        failed = 0
+        skipped = []
         for withdrawal in queryset.select_related("user"):
             try:
-                approve_real_withdrawal(withdrawal)
-            except ValidationError:
-                failed += 1
+                approve_real_withdrawal(withdrawal, processed_by=request.user)
+            except ValidationError as exc:
+                skipped.append(f"#{withdrawal.pk}: {exc.messages[0]}")
             else:
                 processed += 1
+        message = f"Подтверждено заявок: {processed}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
         self.message_user(
             request,
-            f"Подтверждено заявок: {processed}. Пропущено: {failed}.",
-            level=messages.SUCCESS if failed == 0 else messages.WARNING,
+            message,
+            level=messages.SUCCESS if not skipped else messages.WARNING,
         )
 
     @admin.action(description="Отменить выбранные заявки на вывод")
@@ -289,7 +327,7 @@ class RealBalanceTransactionAdmin(admin.ModelAdmin):
         failed = 0
         for withdrawal in queryset.select_related("user"):
             try:
-                cancel_real_withdrawal(withdrawal)
+                cancel_real_withdrawal(withdrawal, processed_by=request.user)
             except ValidationError:
                 failed += 1
             else:

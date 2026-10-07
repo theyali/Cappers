@@ -106,6 +106,14 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
         )
 
     rows = tournament_leaderboard(tournament, use_cache=False)
+    prizes = {row["rank"]: prize_for_rank(tournament, row["rank"]) for row in rows}
+    for row in rows:
+        if prizes[row["rank"]] > 0 and not row["user"].is_analyst:
+            raise ValidationError(
+                f"Денежный приз за {row['rank']} место не может получить @{row['user'].username}: "
+                "реальный баланс есть только у капперов. Дисквалифицируйте участника "
+                "и зафиксируйте итоги снова."
+            )
     TournamentResult.objects.filter(tournament=tournament).delete()
     results = [
         TournamentResult(
@@ -120,7 +128,7 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
             total_stake=row["total_stake"],
             profit=row["profit"],
             roi_percent=row["roi_percent"],
-            prize_amount=prize_for_rank(tournament, row["rank"]),
+            prize_amount=prizes[row["rank"]],
             achievement=achievement_for_rank(tournament, row["rank"]),
         )
         for row in rows

@@ -25,6 +25,7 @@ from wallets.services import (
     debit_real_balance,
     ensure_real_balance,
     pause_copybetting,
+    release_held_real_income,
     request_real_withdrawal,
     resume_copybetting,
     settle_orphaned_copied_bets,
@@ -914,8 +915,10 @@ class CoinWalletIntegrationTests(TestCase):
         )
         reader.real_balance.refresh_from_db()
         self.assertEqual(reader.real_balance.balance, Decimal("10.00"))
+        # Subscription income is held before it can be withdrawn.
         self.analyst.real_balance.refresh_from_db()
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("0.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("990.00"))
         self.assertTrue(
             RealBalanceTransaction.objects.filter(
                 user=reader,
@@ -929,11 +932,22 @@ class CoinWalletIntegrationTests(TestCase):
             RealBalanceTransaction.objects.filter(
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
+                status=RealBalanceTransaction.Status.HELD,
                 amount=Decimal("990.00"),
                 related_model=payment._meta.label_lower,
                 related_id=payment.pk,
             ).exists()
         )
+
+        RealBalanceTransaction.objects.filter(
+            user=self.analyst,
+            status=RealBalanceTransaction.Status.HELD,
+        ).update(available_at=timezone.now())
+        self.assertEqual(release_held_real_income(), 1)
+
+        self.analyst.real_balance.refresh_from_db()
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("990.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("0.00"))
 
     def test_paid_subscription_requires_reader_real_balance(self):
         profile = AnalystProfile.objects.get(user=self.analyst)
@@ -989,7 +1003,7 @@ class CoinWalletIntegrationTests(TestCase):
         reader.real_balance.refresh_from_db()
         self.assertEqual(reader.real_balance.balance, Decimal("400.00"))
         self.analyst.real_balance.refresh_from_db()
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+        self.assertEqual(self.analyst.real_balance.held, Decimal("600.00"))
 
     def test_reader_can_have_real_balance(self):
         reader = User.objects.create_user(
@@ -1087,24 +1101,25 @@ class CoinWalletIntegrationTests(TestCase):
     def test_admin_can_approve_real_withdrawal(self):
         self.analyst.real_balance.balance = Decimal("1000.00")
         self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
-        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        request_real_withdrawal(self.analyst, Decimal("600.00"), payout_details="СБП +79990000000")
         withdrawal = RealBalanceTransaction.objects.get(
             user=self.analyst,
             kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
         )
 
-        approve_real_withdrawal(withdrawal)
+        approve_real_withdrawal(withdrawal, payout_reference="PAY-1")
 
         withdrawal.refresh_from_db()
         self.analyst.real_balance.refresh_from_db()
         self.assertEqual(withdrawal.status, RealBalanceTransaction.Status.COMPLETED)
-        self.assertEqual(self.analyst.real_balance.balance, Decimal("600.00"))
+        self.assertEqual(withdrawal.payout_reference, "PAY-1")
+        self.assertEqual(self.analyst.real_balance.balance, Decimal("400.00"))
         self.assertEqual(self.analyst.real_balance.pending_withdrawal, Decimal("0.00"))
 
     def test_admin_can_cancel_real_withdrawal_and_refund_balance(self):
         self.analyst.real_balance.balance = Decimal("1000.00")
         self.analyst.real_balance.save(update_fields=["balance", "updated_at"])
-        request_real_withdrawal(self.analyst, Decimal("400.00"))
+        request_real_withdrawal(self.analyst, Decimal("600.00"), payout_details="СБП +79990000000")
         withdrawal = RealBalanceTransaction.objects.get(
             user=self.analyst,
             kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
@@ -1121,7 +1136,7 @@ class CoinWalletIntegrationTests(TestCase):
             RealBalanceTransaction.objects.filter(
                 user=self.analyst,
                 kind=RealBalanceTransaction.Kind.WITHDRAWAL_CANCEL,
-                amount=Decimal("400.00"),
+                amount=Decimal("600.00"),
                 related_id=withdrawal.id,
             ).exists()
         )

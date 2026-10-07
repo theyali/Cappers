@@ -70,13 +70,16 @@
             <div class="wallet-withdraw-copy">
                 <h2>Запросить вывод реального баланса</h2>
                 <p>Обменяйте выигранные средства на реальные деньги. Заявка будет обработана администратором.</p>
+                <small>Доступно к выводу: {{ real_balance_display }} ₽. Минимальная сумма вывода — {{ min_withdrawal_display }} ₽.</small>
                 <small>Ожидает вывода: {{ pending_withdrawal_display }} ₽</small>
+                {% if held_display %}<small>В холде: {{ held_display }} ₽ — доход с оплат станет доступен после окончания холда.</small>{% endif %}
             </div>
             <form class="wallet-withdraw-form" method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
                 <input type="hidden" name="action" value="withdraw">
-                <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" placeholder="Сумма ₽">
+                <input class="wallet-method-input" type="text" name="payout_details" maxlength="255" required placeholder="Телефон СБП или номер карты" aria-label="Реквизиты для вывода">
+                <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" required placeholder="Сумма ₽" aria-label="Сумма вывода">
                 <button type="submit">Отправить заявку</button>
             </form>
         </article>

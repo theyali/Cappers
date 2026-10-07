@@ -293,6 +293,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tournaments.tasks.finalize_tournaments",
         "schedule": timedelta(minutes=15),
     },
+    "release-held-income": {
+        "task": "wallets.tasks.release_held_income",
+        "schedule": timedelta(hours=1),
+    },
     "run-bot-prediction-cycle": {
         "task": "bots.tasks.run_bot_prediction_cycle",
         "schedule": timedelta(hours=1),

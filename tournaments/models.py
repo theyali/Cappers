@@ -248,6 +248,11 @@ class Tournament(models.Model):
     def get_absolute_url(self) -> str:
         return reverse("tournaments:detail", kwargs={"slug": self.slug})
 
+    def has_money_prizes(self) -> bool:
+        if any(value > 0 for value in (self.prize_first, self.prize_second, self.prize_third)):
+            return True
+        return self.prizes.filter(is_active=True, money_amount__gt=0).exists()
+
     @property
     def runtime_status(self) -> str:
         now = timezone.now()

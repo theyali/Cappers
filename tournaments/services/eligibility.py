@@ -42,7 +42,9 @@ def check_tournament_eligibility(user, tournament: Tournament) -> dict:
         )
         return _eligibility_response(user, tournament, hard_rules, condition_rules)
 
-    if tournament.analysts_only:
+    # Money prizes are paid to the real balance, which only analysts have.
+    money_prizes = not tournament.analysts_only and tournament.has_money_prizes()
+    if tournament.analysts_only or money_prizes:
         hard_rules.append(
             EligibilityRuleResult(
                 code="analysts_only",
@@ -50,7 +52,11 @@ def check_tournament_eligibility(user, tournament: Tournament) -> dict:
                 required=True,
                 current=bool(getattr(user, "is_analyst", False)),
                 passed=bool(getattr(user, "is_analyst", False)),
-                reason="Участвовать могут только капперы.",
+                reason=(
+                    "В турнирах с денежными призами участвуют только капперы."
+                    if money_prizes
+                    else "Участвовать могут только капперы."
+                ),
             )
         )
 

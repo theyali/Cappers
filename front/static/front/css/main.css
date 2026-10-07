@@ -800,7 +800,7 @@ mark { color: var(--blue); background: 0 0; }
     line-height: 1.45;
 }
 .wallet-topup-page .wallet-balance-card span { text-transform: none; }
-.wallet-topup-page .wallet-withdraw-form { grid-column: 1/-1; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; }
+.wallet-topup-page .wallet-withdraw-form { grid-column: 1/-1; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; align-items: stretch; }
 .wallet-topup-page .wallet-method-input {
     width: 100%;
     padding: 14px 16px;

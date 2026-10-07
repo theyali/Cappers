@@ -37,10 +37,11 @@ def _decimal(value) -> Decimal:
 
 
 def platform_fee_percent_for_duration(duration_days: int) -> Decimal:
-    field = PLATFORM_FEE_FIELDS.get(int(duration_days or 0))
-    if not field:
-        return Decimal("0")
-    return _decimal(getattr(WebsiteSettings.load(), field, 0))
+    # A plan of a non-standard length (e.g. 14 days from the admin) pays the fee of the
+    # longest standard plan that fits into it, never zero.
+    duration_days = max(int(duration_days or 0), min(PLATFORM_FEE_FIELDS))
+    tier = max(days for days in PLATFORM_FEE_FIELDS if days <= duration_days)
+    return _decimal(getattr(WebsiteSettings.load(), PLATFORM_FEE_FIELDS[tier], 0))
 
 
 def paid_subscription_capper_income(price, duration_days: int) -> Decimal:

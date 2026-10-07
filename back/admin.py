@@ -200,6 +200,10 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Вывод средств",
+            {"fields": ("income_hold_days", "min_withdrawal_amount")},
+        ),
+        (
             "Главная страница — О нас",
             {
                 "fields": (
