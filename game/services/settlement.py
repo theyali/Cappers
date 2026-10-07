@@ -14,6 +14,7 @@ from game.models import (
     MatchOdds,
     Prediction,
     PredictionCoupon,
+    PredictionCouponResultChange,
 )
 from wallets.models import CoinTransaction
 from wallets.services import (
@@ -366,11 +367,23 @@ def prediction_state(prediction: Prediction, result: dict) -> str | None:
 
 
 @transaction.atomic
-def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
-    coupon = PredictionCoupon.objects.prefetch_related("predictions").filter(pk=coupon_id).first()
+def settle_coupon(
+    coupon_id: int,
+    *,
+    source: str = PredictionCouponResultChange.Source.AUTO,
+    changed_by=None,
+) -> PredictionCoupon | None:
+    """Derive the coupon result from its predictions and settle coins.
+
+    A changed result of a published coupon is recorded in the coupon history,
+    and the coins of the author and copy-betting followers are corrected by the
+    difference between the old and the new result.
+    """
+    coupon = PredictionCoupon.objects.select_for_update().filter(pk=coupon_id).first()
     if coupon is None:
         return None
 
+    previous = (coupon.state_status, coupon.possible_payout, coupon.settled_at)
     predictions = list(coupon.predictions.all())
     states = [prediction.state_status for prediction in predictions]
     effective_payout = _effective_coupon_payout(coupon, predictions)
@@ -390,11 +403,28 @@ def settle_coupon(coupon_id: int) -> PredictionCoupon | None:
     if effective_payout is not None:
         coupon.possible_payout = effective_payout
 
-    update_fields = ["state_status", "settled_at", "updated_at"]
-    if effective_payout is not None:
-        update_fields.append("possible_payout")
-    coupon.save(update_fields=update_fields)
-    settle_prediction_coupon(coupon)
+    if (coupon.state_status, coupon.possible_payout, coupon.settled_at) != previous:
+        coupon.save(update_fields=["state_status", "possible_payout", "settled_at", "updated_at"])
+
+    previous_status, previous_payout, _ = previous
+    change = None
+    if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED and (
+        coupon.state_status != previous_status
+        or (
+            coupon.state_status == PredictionCoupon.StateStatus.WIN
+            and coupon.possible_payout != previous_payout
+        )
+    ):
+        change = PredictionCouponResultChange.objects.create(
+            coupon=coupon,
+            previous_status=previous_status,
+            new_status=coupon.state_status,
+            previous_payout=previous_payout,
+            new_payout=coupon.possible_payout,
+            source=source,
+            changed_by=changed_by,
+        )
+    settle_prediction_coupon(coupon, change=change)
     return coupon
 
 
@@ -463,6 +493,8 @@ def resettle_coupon(
     coupon_id: int,
     *,
     recalculate_predictions: bool = True,
+    source: str = PredictionCouponResultChange.Source.RESETTLE,
+    changed_by=None,
 ) -> PredictionCoupon | None:
     coupon = PredictionCoupon.objects.filter(pk=coupon_id).first()
     if coupon is None:
@@ -512,7 +544,7 @@ def resettle_coupon(
                 prediction.state_status = state
                 prediction.save(update_fields=["state_status", "updated_at"])
 
-    return settle_coupon(coupon_id)
+    return settle_coupon(coupon_id, source=source, changed_by=changed_by)
 
 
 def _effective_coupon_payout(
