@@ -1,0 +1,3 @@
+<input type="hidden" name="analyst_id" value="{{ expert.id }}">
+<button type="submit"{% if not paid_checkout_can_pay %} disabled{% endif %}>{{ balance_pay_label }}</button>
+{% include "payments/includes/_pay_buttons.html" with purpose="paid_subscription" %}

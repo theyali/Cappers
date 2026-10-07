@@ -55,6 +55,7 @@ UNSTORED_FIELDS = {"Token"}
 class CloudPaymentsProvider(PaymentProvider):
     code = Payment.Provider.CLOUDPAYMENTS.value
     title = "Банковская карта"
+    pay_label = "Оплатить картой"
 
     public_id: str
     api_secret: str
@@ -86,12 +87,12 @@ class CloudPaymentsProvider(PaymentProvider):
         credentials = (self.public_id, self.api_secret)
         return all(credentials) and not any(PLACEHOLDER_MARK in value for value in credentials)
 
-    def supports(self, payment) -> bool:
-        return payment.currency == "RUB"
+    def supports(self, amount_rub) -> bool:
+        return amount_rub > 0
 
     def create_checkout(self, payment, *, success_url: str, fail_url: str, webhook_url: str) -> CheckoutSession:
         # Notification URLs are set once in the CloudPayments dashboard, so webhook_url is not sent.
-        description = payment.product_snapshot.get("title") or payment.get_purpose_display()
+        description = payment.product_snapshot.get("description") or payment.get_purpose_display()
         email = payment.user.email
         body = {
             "Amount": float(payment.amount),

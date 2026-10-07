@@ -32,14 +32,14 @@ class PaymentProviderFactory:
         return provider
 
     @classmethod
-    def available_for(cls, payment) -> list[PaymentProvider]:
-        """Providers that can take this payment, for the buttons on the checkout page."""
+    def available_for(cls, amount_rub) -> list[PaymentProvider]:
+        """Providers that can take a product at this price, for the checkout buttons."""
         available = []
         for code in settings.PAYMENTS_ENABLED_PROVIDERS:
             try:
                 provider = cls.create(code)
             except PaymentProviderError:
                 continue
-            if provider.supports(payment):
+            if provider.supports(amount_rub):
                 available.append(provider)
         return available

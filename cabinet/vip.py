@@ -209,6 +209,17 @@ def extend_vip(user, days, source, starts_at=None):
     )
 
 
+def validate_vip_purchase(user, plan, *, switch: bool) -> None:
+    """Raise ValidationError unless ``user`` may buy ``plan`` now."""
+    if not getattr(user, "is_analyst", False):
+        raise ValidationError("VIP-тарифы доступны только капперам.")
+    if not plan.is_active:
+        raise ValidationError("Этот VIP-тариф больше недоступен.")
+    active_subscription = get_active_vip(user)
+    if active_subscription and active_subscription.plan_id != plan.pk and not switch:
+        raise ValidationError(f"{vip_switch_warning(user)} Подтвердите переход на другой VIP-тариф.")
+
+
 def purchase_vip(user, plan, *, switch=False):
     """Purchase an active VIP tariff with real balance in a single transaction."""
     from wallets.models import RealBalanceTransaction
@@ -218,17 +229,10 @@ def purchase_vip(user, plan, *, switch=False):
 
     if plan is None or not getattr(plan, "pk", None):
         raise ValidationError("VIP-тариф не найден.")
-    if not getattr(user, "is_analyst", False):
-        raise ValidationError("VIP-тарифы доступны только капперам.")
 
     with transaction.atomic():
         current_plan = VipPlan.objects.select_for_update().get(pk=plan.pk)
-        if not current_plan.is_active:
-            raise ValidationError("Этот VIP-тариф больше недоступен.")
-
-        active_subscription = get_active_vip(user)
-        if active_subscription and active_subscription.plan_id != current_plan.pk and not switch:
-            raise ValidationError(f"{vip_switch_warning(user)} Подтвердите переход на другой VIP-тариф.")
+        validate_vip_purchase(user, current_plan, switch=switch)
 
         subscription = grant_paid_vip(
             user,

@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from back.models import WebsiteSettings
 from cabinet.models import User
+from payments.utils import build_payment_options
 
 from .forms import CopyBettingForm
 from .context_processors import BALANCE_HIDDEN_SESSION_KEY
@@ -55,7 +56,9 @@ def balance_visibility(request):
 @require_http_methods(["GET", "POST"])
 def top_up_balance(request):
     wallet = ensure_coin_wallet(request.user)
-    packages = CoinPackage.objects.filter(is_active=True).order_by("order", "id")
+    packages = list(CoinPackage.objects.filter(is_active=True).order_by("order", "id"))
+    for package in packages:
+        package.payment_options = build_payment_options(package.price_rub)
 
     if request.method == "POST":
         package_id = request.POST.get("package_id")

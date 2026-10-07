@@ -15,7 +15,7 @@ from .models import (
     paid_subscription_expires_at,
 )
 from wallets.models import RealBalanceTransaction
-from wallets.services import credit_real_balance, debit_real_balance
+from wallets.services import credit_real_balance, debit_real_balance, ensure_real_balance, format_money
 
 from .referrals import REFERRAL_ACTION_SUBSCRIPTION, credit_referral_income
 
@@ -78,6 +78,43 @@ def get_active_paid_plans(analyst: User):
     ).order_by("order", "duration_days", "id")
 
 
+def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list) -> dict:
+    """Plan picker for buying a subscription with the real balance or through a provider."""
+    from payments.utils import build_payment_options
+
+    real_balance = ensure_real_balance(user)
+    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
+    prices = [plan.price for plan in paid_plans] or [legacy_paid_price or 0]
+    payment_options = build_payment_options(max(prices))
+    checked_plan_marked = False
+    for paid_plan in paid_plans:
+        paid_plan.can_afford = real_balance.balance >= paid_plan.price
+        # A plan the balance does not cover can still be paid by card.
+        paid_plan.is_selectable = paid_plan.can_afford or bool(payment_options)
+        paid_plan.is_default_checked = False
+        if paid_plan.can_afford and not checked_plan_marked:
+            paid_plan.is_default_checked = True
+            checked_plan_marked = True
+    if paid_plans and not checked_plan_marked:
+        paid_plans[0].is_default_checked = True
+    legacy_can_afford = (
+        real_balance.balance >= legacy_paid_price
+        if legacy_paid_price and legacy_paid_price > 0
+        else True
+    )
+    return {
+        "paid_plans": paid_plans,
+        "real_balance": real_balance,
+        "real_balance_display": format_money(real_balance.balance),
+        "legacy_paid_price": legacy_paid_price,
+        "legacy_can_afford": legacy_can_afford,
+        "legacy_is_selectable": legacy_can_afford or bool(payment_options),
+        "paid_checkout_can_pay": any(plan.can_afford for plan in paid_plans) if paid_plans else legacy_can_afford,
+        "payment_options": payment_options,
+        "balance_pay_label": "Оплатить с баланса" if payment_options else "Оплатить подписку",
+    }
+
+
 def user_can_view_paid_predictions(user, analyst: User) -> bool:
     if not getattr(user, "is_authenticated", False):
         return False
@@ -131,11 +168,12 @@ def _resolve_paid_plan(analyst: User, plan: AnalystPaidPlan | int | None):
     )
 
 
-def subscribe_to_paid_predictions(
+def paid_subscription_terms(
     subscriber: User,
     analyst: User,
     plan: AnalystPaidPlan | int | None = None,
-) -> AnalystPaidSubscription:
+) -> tuple[AnalystPaidPlan | None, Decimal, int, str]:
+    """Check the subscription can be sold; return (plan, price, duration_days, plan_title)."""
     if subscriber.pk == analyst.pk:
         raise ValueError("Нельзя оформить платную подписку на самого себя.")
     if analyst.role != User.Role.ANALYST:
@@ -160,7 +198,16 @@ def subscribe_to_paid_predictions(
         plan_title = "30 дней"
     else:
         raise ValueError("У этого эксперта нет активных тарифов.")
+    return selected_plan, price, duration_days, plan_title
 
+
+def subscribe_to_paid_predictions(
+    subscriber: User,
+    analyst: User,
+    plan: AnalystPaidPlan | int | None = None,
+) -> AnalystPaidSubscription:
+    """Buy a subscription with the real balance."""
+    selected_plan, price, duration_days, plan_title = paid_subscription_terms(subscriber, analyst, plan)
     return grant_paid_subscription(
         subscriber,
         analyst,

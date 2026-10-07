@@ -557,6 +557,7 @@ mark { color: var(--blue); background: 0 0; }
     font-weight: 800;
     text-decoration: none;
 }
+.paid-checkout-actions .is-primary,
 .paid-checkout-actions button,
 .wallet-form-actions button {
     color: #fff;
@@ -7952,6 +7953,7 @@ body.layout-columns-center_right .predictions-content {
 .expert-public-shell[data-active-tab="predictions"] .expert-recent-performance,
 .expert-public-shell[data-active-tab="predictions"] .expert-sport-profit,
 .expert-public-shell[data-active-tab="stats"] .expert-public-predictions,
+.paid-checkout-actions a[hidden],
 .prediction-comment-replies-more[hidden],
 .prediction-comments-more[hidden],
 .profile-user-verified,
@@ -20119,7 +20121,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
-.vip-plan-action { margin-top: auto; }
+.vip-plan-action { margin-top: auto; display: grid; gap: 8px; }
 .vip-plan-action .profile-save-button {
     width: 100%;
     min-height: 44px;

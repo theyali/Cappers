@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from payments.utils import build_payment_options
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
 from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
@@ -111,6 +112,16 @@ def vip_plans(request):
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)
         plan.balance_after_display = format_money(plan.balance_after) if plan.can_afford else ""
+        plan.payment_options = build_payment_options(plan.price_rub)
+        plan.is_switch = bool(active_vip and active_vip.plan_id != plan.pk)
+        if plan.payment_options:
+            plan.balance_button_label = "Оплатить с баланса"
+        elif plan.is_switch:
+            plan.balance_button_label = "Перейти на тариф"
+        elif active_vip:
+            plan.balance_button_label = "Продлить тариф"
+        else:
+            plan.balance_button_label = "Выбрать тариф"
     comparison_rows = _vip_comparison_rows(plans)
 
     return render(

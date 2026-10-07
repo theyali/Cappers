@@ -61,7 +61,7 @@ def post_notification(client, event_type, fields, *, as_json=False, signature=No
 class CloudPaymentsApiTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="cp-payer", password="safe-test-password", email="payer@example.com")
-        self.payment = make_payment(self.user, status=Payment.Status.PENDING, product_snapshot={"title": "Пакет «Старт»"})
+        self.payment = make_payment(self.user, status=Payment.Status.PENDING, product_snapshot={"description": "Пакет «Старт»"})
 
     def _checkout(self, answer):
         provider = PaymentProviderFactory.create("cloudpayments")

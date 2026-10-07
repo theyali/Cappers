@@ -1,20 +1,20 @@
 {% load money %}
 <div class="paid-checkout-plan-list">
     {% for plan in paid_plans %}
-    <label class="paid-checkout-plan{% if not plan.can_afford %} is-disabled{% endif %}">
-        <input type="radio" name="plan_id" value="{{ plan.id }}" {% if plan.is_default_checked %}checked{% endif %}{% if not plan.can_afford %} disabled{% endif %}>
+    <label class="paid-checkout-plan{% if not plan.is_selectable %} is-disabled{% endif %}">
+        <input type="radio" name="plan_id" value="{{ plan.id }}" {% if plan.is_default_checked %}checked{% endif %}{% if not plan.is_selectable %} disabled{% endif %}>
         <span>
             <small>{{ plan.period_label }}</small>
             <strong>{{ plan.price|money }} ₽</strong>
-            {% if not plan.can_afford %}<em>Недостаточно средств</em>{% endif %}
+            {% if not plan.can_afford %}<em>Недостаточно средств на балансе</em>{% endif %}
         </span>
     </label>
     {% empty %}
-    <div class="paid-checkout-plan{% if not legacy_can_afford %} is-disabled{% endif %}">
+    <div class="paid-checkout-plan{% if not legacy_is_selectable %} is-disabled{% endif %}">
         <span>
             <small>30 дней</small>
             <strong>{{ analyst_profile.paid_predictions_price|money }} ₽</strong>
-            {% if not legacy_can_afford %}<em>Недостаточно средств</em>{% endif %}
+            {% if not legacy_can_afford %}<em>Недостаточно средств на балансе</em>{% endif %}
         </span>
     </div>
     {% endfor %}

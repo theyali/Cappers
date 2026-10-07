@@ -43,7 +43,11 @@
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
                 <input type="hidden" name="package_id" value="{{ package.id }}">
-                <button type="submit">Выбрать пакет</button>
+                {% if package.payment_options %}
+                    {% include "payments/includes/_pay_buttons.html" with payment_options=package.payment_options purpose="coin_package" %}
+                {% else %}
+                    <button type="submit">Выбрать пакет</button>
+                {% endif %}
             </form>
         </article>
         {% empty %}

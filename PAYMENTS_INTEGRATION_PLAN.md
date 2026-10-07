@@ -2,7 +2,7 @@
 
 Дата: 2026-10-06, обновлён 2026-10-07. Ветка: `development`.
 
-**Статус:** шаги 1–5 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи). Следующий шаг — 6, UI: кнопки оплаты и страница возврата (раздел 12).
+**Статус:** шаги 1–6 выполнены (подготовка по аудиту, приложение `payments`, Factory Method, провайдер и вебхуки CloudPayments, выдача товара и фоновые задачи, кнопки оплаты и страница результата). Следующий шаг — 7, запуск CloudPayments в production (раздел 12).
 
 Цель: подключить приём оплат картами (CloudPayments, RUB) и криптовалютой (NOWPayments) через единый платёжный сервис. Конкретный провайдер создаётся фабрикой (паттерн **Factory Method**). Клиентский код (checkout, вебхуки, сверка) работает только с общим интерфейсом и не знает, какая платёжка под ним.
 
@@ -566,6 +566,15 @@ def verify_signature(self, request) -> None:
 
 Return-страница `/payments/<public_id>/return/` **ничего не выдаёт**. Она показывает статус и опрашивает `/payments/<public_id>/status/`.
 
+✅ **Реализовано в шаге 6** (`payments/services/checkout.py`, `payments/views.py`, `payments/utils.py`):
+- Один эндпоинт `POST /payments/checkout/<purpose>/` для всех товаров. Кнопки «Оплатить картой» отправляют существующие формы туда через `formaction`, без нового JS. Кнопки рисуются только для провайдеров из `available_for(price)`: пока `PAYMENTS_ENABLED_PROVIDERS` пуст, страницы выглядят как раньше.
+- Снимок товара собирают `coin_package_order`, `paid_subscription_order`, `vip_plan_order`. Проверки те же, что у покупки с баланса: `paid_subscription_terms` и `validate_vip_purchase` вынесены из старых функций.
+- Повторный запрос того же товара возвращает открытый заказ, если до его истечения больше 10 минут, а не создаёт новый. Не больше 5 открытых заказов на пользователя и 10 попыток оформления за 10 минут.
+- Ошибка провайдера переводит заказ в `FAILED` и показывает пользователю сообщение на странице товара.
+- Return-страница и статус доступны только плательщику. Страница опрашивает статус каждые 3 секунды до 5 минут (`front/static/front/js/payment-status.js`); при отказе банка предлагает повторить оплату того же заказа, пока он не истёк.
+- Подписка: тариф, на который не хватает реального баланса, можно выбрать для оплаты картой; контекст выбора тарифа общий для страницы оплаты и модалки в профиле каппера (`build_paid_checkout_context`).
+- VIP: переход на другой тариф с оплатой картой тоже проходит через окно с предупреждением о сгорающих днях.
+
 ### 8.2 Вебхук
 
 ```python
@@ -626,8 +635,8 @@ def fulfill_payment(payment_id: int) -> Payment:
 | `wallets/services.py:purchase_coin_package` | ✅ С `payment` функция уже начисляет переданный пакет как снимок, без перепроверки `is_active` (`CODE_AUDIT.md`, п. 2.4). `fulfill_coin_package(payment)` = собрать несохраняемый `CoinPackage` из снимка и вызвать `purchase_coin_package(user, package, payment=payment)`. Реферальные начисления считаются от `price_rub` снимка. |
 | `cabinet/paid_predictions.py:subscribe_to_paid_predictions` | ✅ Ядро `grant_paid_subscription(subscriber, analyst, *, plan, price, duration_days, plan_title, capper_income, provider_payment=None)`: без `provider_payment` списывает реальный баланс, как раньше. `fulfill_paid_subscription(payment)` берёт условия и комиссию площадки из снимка (`paid_subscription_capper_income(..., fee_percent)`). Холд дохода и реферальный процент от комиссии работают (п. 1.8, 1.9). |
 | `cabinet/vip.py:purchase_vip` | ✅ Ядро `grant_paid_vip(user, plan, *, duration_days, switch, provider_payment=None)` заменило `switch_vip`. Срок берётся из снимка. Без подтверждённого перехода период встаёт в конец текущего VIP, поэтому дни не сгорают без согласия. |
-| `wallets/views.py:top_up_balance` | Вместо заглушки — кнопки провайдеров из `PaymentProviderFactory.available_for(...)` → `start_checkout`. |
-| `cabinet/views.py` (checkout подписки), `cabinet/vip_views.py` | Добавить «Оплатить картой / криптой» рядом с оплатой с баланса. |
+| `wallets/views.py:top_up_balance` | ✅ Кнопки провайдеров из `PaymentProviderFactory.available_for(...)` → `start_checkout` (шаг 6). Заглушка осталась только на случай, когда платежи выключены. |
+| `cabinet/views.py` (checkout подписки), `cabinet/vip_views.py` | ✅ «Оплатить картой» рядом с оплатой с баланса (шаг 6). |
 
 ### 8.4 Возвраты (`refunds.py`)
 
@@ -659,13 +668,13 @@ def fulfill_payment(payment_id: int) -> Payment:
 - [ ] Статус и сумма перепроверяются через API провайдера (обязательно для NOWPayments; при сверке — для обоих).
 - [x] Сумма и валюта вебхука сверяются с платежом; при расхождении статус не меняется.
 - [x] Идемпотентность: `PaymentEvent(provider, dedup_key)` unique и блокировка строки `Payment` (шаг 4); выдача один раз под блокировкой по `fulfilled_at`, плюс уникальные связи с платежом (`CoinTransaction`, `OneToOne` у подписки и VIP) (шаг 5).
-- [ ] Return URL ничего не выдаёт.
+- [x] Return URL ничего не выдаёт: страница только показывает статус (шаг 6).
 - [x] `csrf_exempt` стоит только на вебхуках; вебхуки принимают только POST; размер тела ограничен `DATA_UPLOAD_MAX_MEMORY_SIZE` и `client_max_body_size` nginx.
 - [x] `public_id` (UUID) используется наружу вместо последовательного id.
 - [x] Тестовые платежи CloudPayments (`TestMode`) отклоняются, пока `PAYMENTS_ALLOW_TEST_PAYMENTS=False`.
 - [x] Секреты только в `.env`, не попадают в логи и в админку; заглушки с `change-me` выключают провайдер.
 - [x] `SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")`, иначе `build_absolute_uri()` построит `http://` для return и callback URL (`CODE_AUDIT.md`, п. 1.12).
-- [ ] Лимит незавершённых платежей на пользователя и rate-limit на `/payments/checkout/` (готовый помощник `cappers/ratelimit.py`).
+- [x] Лимит незавершённых платежей на пользователя (5) и rate-limit на `/payments/checkout/` (10 за 10 минут, `cappers/ratelimit.py`).
 - [ ] Опционально: allowlist IP провайдеров по `X-Real-IP` (nginx его передаёт).
 - [ ] Отдельный logger `payments` и алерты на неверную подпись, расхождение суммы и ошибки выдачи. ✅ Логгер есть (`logs/payments.log`), алерты — шаг 10.
 
@@ -701,7 +710,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 3. ✅ **Factory Method:** `base.py`, `factory.py`, тесты фабрики на тестовых провайдерах.
 4. ✅ **CloudPayments:** провайдер (orders/create, подпись, парсер, Check/Pay/Fail/Refund), вебхуки, тесты (`payments/tests/test_cloudpayments.py`). Настройки, тип продавца и чеки 54-ФЗ — в `.env`.
 5. ✅ **Выдача товара:** рефакторинг `purchase_coin_package`, `subscribe_to_paid_predictions`, `purchase_vip` на ядро + точки входа; `fulfillment.py`; задачи `fulfill`, `reconcile`, `expire`; тесты (`payments/tests/test_fulfillment.py`).
-6. **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки и на странице VIP; return-страница со статусом. Стили — только в `main.css`/`mobile.css`, без inline.
+6. ✅ **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки (страница и модалка) и на странице VIP; return-страница со статусом. Стили — только в `main.css`, без inline. Тесты: `payments/tests/test_checkout.py`.
 7. **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=["cloudpayments"]`, сначала на пакетах коинов.
 8. **NOWPayments:** провайдер, IPN, перепроверка через API, курс RUB → USD, минимальные суммы, тесты на sandbox → включение.
 9. **Возвраты и чеки 54-ФЗ:** `refunds.py`, Refund-вебхук, CloudKassir.

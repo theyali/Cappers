@@ -60,6 +60,8 @@ class PaymentProvider(ABC):
 
     code: ClassVar[str]
     title: ClassVar[str]
+    # Text of the checkout button.
+    pay_label: ClassVar[str]
 
     @classmethod
     @abstractmethod
@@ -71,8 +73,8 @@ class PaymentProvider(ABC):
         """Whether the provider is configured well enough to take payments."""
 
     @abstractmethod
-    def supports(self, payment) -> bool:
-        """Whether this payment can be paid here (currency, minimum amount)."""
+    def supports(self, amount_rub: Decimal) -> bool:
+        """Whether a product at this price can be paid here (e.g. a minimum amount)."""
 
     @abstractmethod
     def create_checkout(self, payment, *, success_url: str, fail_url: str, webhook_url: str) -> CheckoutSession:

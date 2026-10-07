@@ -44,6 +44,7 @@ from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
 from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
 from .paid_predictions import (
+    build_paid_checkout_context,
     get_active_paid_plans,
     profile_paid_predictions_enabled,
     subscribe_to_paid_predictions,
@@ -1100,28 +1101,6 @@ def subscribe_paid_predictions_view(request, user_id):
         messages.error(request, "Этот эксперт не публикует платные прогнозы.")
         return redirect(expert_url)
 
-    paid_plans = list(get_active_paid_plans(analyst))
-    real_balance = ensure_real_balance(request.user)
-    checked_plan_marked = False
-    for paid_plan in paid_plans:
-        paid_plan.can_afford = real_balance.balance >= paid_plan.price
-        paid_plan.is_default_checked = False
-        if paid_plan.can_afford and not checked_plan_marked:
-            paid_plan.is_default_checked = True
-            checked_plan_marked = True
-    if paid_plans and not checked_plan_marked:
-        paid_plans[0].is_default_checked = True
-    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
-    legacy_can_afford = (
-        real_balance.balance >= legacy_paid_price
-        if legacy_paid_price and legacy_paid_price > 0
-        else True
-    )
-    paid_checkout_can_pay = (
-        any(plan.can_afford for plan in paid_plans)
-        if paid_plans
-        else legacy_can_afford
-    )
     if request.method == "GET":
         return render(
             request,
@@ -1130,13 +1109,8 @@ def subscribe_paid_predictions_view(request, user_id):
                 "expert": analyst,
                 "analyst_profile": profile,
                 "expert_name": profile.display_name or analyst.get_full_name() or analyst.username,
-                "paid_plans": paid_plans,
-                "real_balance": real_balance,
-                "real_balance_display": format_money(real_balance.balance),
-                "legacy_paid_price": legacy_paid_price,
-                "legacy_can_afford": legacy_can_afford,
-                "paid_checkout_can_pay": paid_checkout_can_pay,
                 "next_url": raw_next_url,
+                **build_paid_checkout_context(request.user, profile, list(get_active_paid_plans(analyst))),
             },
         )
 

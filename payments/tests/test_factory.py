@@ -11,6 +11,7 @@ from payments.services.providers.factory import PaymentProviderFactory, UnknownP
 class FakeCardProvider(PaymentProvider):
     code = "fake_card"
     title = "Тестовая карта"
+    pay_label = "Оплатить тестовой картой"
     configured = True
     min_amount_rub = Decimal("0")
 
@@ -21,8 +22,8 @@ class FakeCardProvider(PaymentProvider):
     def is_enabled(self):
         return self.configured
 
-    def supports(self, payment):
-        return payment.amount_rub >= self.min_amount_rub
+    def supports(self, amount_rub):
+        return amount_rub >= self.min_amount_rub
 
     def create_checkout(self, payment, *, success_url, fail_url, webhook_url):
         return CheckoutSession(redirect_url=f"https://pay.example/{payment.public_id}")
@@ -77,14 +78,11 @@ class PaymentProviderFactoryTests(SimpleTestCase):
 
     @override_settings(PAYMENTS_ENABLED_PROVIDERS=["fake_card", "fake_crypto", "paypal"])
     def test_checkout_offers_only_providers_that_can_take_the_payment(self):
-        cheap = SimpleNamespace(amount_rub=Decimal("199"))
-        expensive = SimpleNamespace(amount_rub=Decimal("990"))
-
-        self.assertEqual([p.code for p in PaymentProviderFactory.available_for(cheap)], ["fake_card"])
+        self.assertEqual([p.code for p in PaymentProviderFactory.available_for(Decimal("199"))], ["fake_card"])
         self.assertEqual(
-            [p.code for p in PaymentProviderFactory.available_for(expensive)],
+            [p.code for p in PaymentProviderFactory.available_for(Decimal("990"))],
             ["fake_card", "fake_crypto"],
         )
 
     def test_payments_are_off_by_default(self):
-        self.assertEqual(PaymentProviderFactory.available_for(SimpleNamespace(amount_rub=Decimal("990"))), [])
+        self.assertEqual(PaymentProviderFactory.available_for(Decimal("990")), [])
