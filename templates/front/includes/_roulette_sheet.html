@@ -6,6 +6,7 @@
     data-state-url="{% url 'cabinet:roulette_state' %}"
     data-spin-url="{% url 'cabinet:roulette_spin' %}"
     data-csrf="{{ csrf_token }}"
+    data-gift-icon="{% static 'front/img/roulette/gift.svg' %}"
     data-tick-sound="{% static 'front/sounds/roulette-tick.mp3' %}"
     data-win-sound="{% static 'front/sounds/roulette-win.mp3' %}"
     hidden
@@ -29,6 +30,7 @@
         <img class="roulette-sheet-logo" src="{% static 'front/img/logo.png' %}" alt="КапперХаб" width="44" height="44" loading="lazy">
 
         <div class="roulette-sheet-copy" aria-live="polite">
+            <img class="roulette-sheet-prize" alt="" width="80" height="80" data-roulette-sheet-prize hidden>
             <h2 id="roulette-sheet-title" data-roulette-sheet-title>Колесо бонусов</h2>
             <p data-roulette-sheet-text>Загружаем призы…</p>
             <button class="roulette-sheet-code" type="button" data-roulette-sheet-code hidden></button>

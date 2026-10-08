@@ -10,6 +10,7 @@
     const titleNode = sheet.querySelector("[data-roulette-sheet-title]");
     const textNode = sheet.querySelector("[data-roulette-sheet-text]");
     const noteNode = sheet.querySelector("[data-roulette-sheet-note]");
+    const prizeImage = sheet.querySelector("[data-roulette-sheet-prize]");
     const codeButton = sheet.querySelector("[data-roulette-sheet-code]");
     const spinButton = sheet.querySelector("[data-roulette-sheet-spin]");
     const bonusesLink = sheet.querySelector("[data-roulette-sheet-bonuses]");
@@ -378,9 +379,12 @@
         }, 1000);
     };
 
-    const setCopy = ({ title = TITLE, text = "", code = "" }) => {
+    // The prize picture shows only after a win: the prize's own icon, or a gift.
+    const setCopy = ({ title = TITLE, text = "", code = "", icon = "" }) => {
         titleNode.textContent = title;
         textNode.textContent = text;
+        prizeImage.hidden = !icon;
+        if (icon && prizeImage.getAttribute("src") !== icon) prizeImage.setAttribute("src", icon);
         codeButton.hidden = !code;
         codeButton.textContent = code;
         codeButton.dataset.code = code;
@@ -555,6 +559,7 @@
         setCopy({
             title: nothing ? "В этот раз мимо" : `Твой приз: ${prize.title || "подарок"}!`,
             text: rewardText(payload),
+            icon: prize.icon_url || (nothing ? "" : sheet.dataset.giftIcon),
             code: prize.reward_type === "promo_code" ? payload.reward_result?.promo_code || prize.reward_text || "" : "",
         });
         // Restart the prize animation for every win.
