@@ -14132,4 +14132,13 @@ body.expert-public-details-open {
   .cabinet-bonuses-page .bonus-hero {
     display: none;
   }
+
+  /* On phones and in the Mini App the home page shows the card slider instead. */
+  .home-mobile-slider {
+    display: block;
+  }
+
+  .forecast-area {
+    display: none;
+  }
 }

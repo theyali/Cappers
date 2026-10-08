@@ -712,6 +712,12 @@ class PredictionCoupon(models.Model):
         upload_to="prediction_covers/custom/%Y/%m/",
         blank=True,
     )
+    mobile_card_background = models.CharField(
+        "Фон карточки в мобильном слайдере",
+        max_length=255,
+        blank=True,
+        help_text="Путь к картинке из static, выбирается автоматически. Очистите, чтобы выбрать заново.",
+    )
     tags = models.JSONField("Теги", default=list, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
