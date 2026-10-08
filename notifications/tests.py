@@ -1,6 +1,9 @@
 from datetime import timedelta
+from io import StringIO
+from unittest.mock import patch
 
 from django.contrib import admin
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -204,6 +207,32 @@ class TelegramLinkingTests(TestCase):
         self.assertEqual(preferences.telegram_username, "")
         self.assertFalse(preferences.telegram_enabled)
         self.assertIsNone(preferences.telegram_connected_at)
+
+
+@override_settings(SITE_BASE_URL="https://capper-hub.com", TG_BOT_TOKEN="123456:TEST")
+class TelegramMenuButtonResetTests(TestCase):
+    def test_only_buttons_to_another_site_are_reset(self):
+        buttons = {
+            1: {"type": "web_app", "text": "Открыть сайт", "web_app": {"url": "https://cuppershub.com/cabinet/login/telegram-app/?next=%2F"}},
+            2: {"type": "web_app", "text": "Открыть сайт", "web_app": {"url": "https://capper-hub.com/cabinet/login/telegram-app/?next=%2F"}},
+            3: {"type": "default"},
+        }
+        for chat_id in buttons:
+            user = User.objects.create_user(username=f"menu-{chat_id}", password="test-password-123")
+            TelegramAccount.objects.create(user=user, chat_id=str(chat_id))
+
+        def api_call(method, payload):
+            if method == "getChatMenuButton":
+                return buttons[payload["chat_id"]]
+            return True
+
+        output = StringIO()
+        with patch("notifications.management.commands.reset_telegram_menu_buttons.api_call", side_effect=api_call) as call, patch("time.sleep"):
+            call_command("reset_telegram_menu_buttons", stdout=output)
+
+        resets = [args for args, _ in call.call_args_list if args[0] == "setChatMenuButton"]
+        self.assertEqual(resets, [("setChatMenuButton", {"chat_id": 1, "menu_button": {"type": "default"}})])
+        self.assertIn("cuppershub.com", output.getvalue())
 
 
 class NotificationViewsTests(TestCase):
