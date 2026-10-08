@@ -11002,6 +11002,8 @@ body.register footer {
     background: rgba(255, 255, 255, 0.08);
 }
 .profile-edit-section-icon.is-blue { color: #4d8cff; background: rgba(11, 86, 250, 0.15); }
+.profile-edit-section-icon.profile-verification-icon { background: none; }
+.profile-edit-section-icon.profile-verification-icon svg { width: 40px; height: 40px; stroke: none; }
 .profile-edit-visibility-badge {
     min-height: 32px;
     display: inline-flex;
