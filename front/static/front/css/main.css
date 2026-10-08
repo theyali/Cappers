@@ -2043,7 +2043,7 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .roulette-sheet-confetti { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; }
 /* Home slider for phones and the Telegram Mini App (mobile.css shows it there). */
 .home-mobile-slider { display: none; padding: 22px 0 6px; }
-.home-mobile-slider-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.home-mobile-slider-head { display: none; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .home-mobile-slider-head .home-eyebrow { margin-bottom: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
 .home-mobile-slider-head h2 { margin: 0; font-size: 38px; line-height: 1; }
 .home-mobile-slider-head h2 mark { display: block; }
