@@ -1108,6 +1108,26 @@ body.expert-public-details-open {
   .predictions-layout > .predictions-ad-sidebar::-webkit-scrollbar-track {
     background: 0 0;
   }
+  /* Documents scroll with the page, so the footer stays below them. */
+  body:has(.document-page) {
+    height: auto;
+    overflow: visible;
+  }
+  .predictions-page.document-page,
+  .document-page .predictions-layout,
+  .document-page .predictions-content {
+    height: auto;
+    overflow: visible;
+  }
+  .document-page .predictions-layout {
+    align-items: start;
+  }
+  .document-page .predictions-layout > .bookmakers-sidebar,
+  .document-page .predictions-layout > .predictions-filter-sidebar {
+    position: sticky;
+    top: 116px;
+    align-self: start;
+  }
 
   .match-detail-scoreboard > .match-detail-bookmaker-strip {
     grid-column: 1/-1;
@@ -1148,6 +1168,12 @@ body.expert-public-details-open {
 @media (max-width: 1120px) {
   .content-view-container{
     padding:0;
+  }
+  .document-page .predictions-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .document-page .predictions-content {
+    grid-column: 1;
   }
     .profile-income-summary, .profile-income-chart-panel {
         min-width: 0;
@@ -6791,11 +6817,16 @@ body.expert-public-details-open {
   .home-about-brand span {
     white-space: normal;
   }
+  .home-about-copy h1,
   .home-about-copy h2 {
     font-size: 32px;
   }
+  .document-page .home-about-benefits,
   .home-about-benefits {
     grid-template-columns: 1fr;
+  }
+  .static-page-toc ol {
+    columns: 1;
   }
   .home-about-benefit {
     min-height: 0;
@@ -13116,20 +13147,33 @@ body.expert-public-details-open {
 
   .mobile-match-date-tab {
     position: relative;
+    z-index: 1;
+    overflow: hidden;
+    isolation: isolate;
     margin-left: 10px;
     cursor: pointer;
   }
 
   .mobile-match-date-tab input {
+    -webkit-appearance: none;
+    appearance: none;
     position: absolute;
     inset: 0;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
     opacity: 0;
+    background: transparent;
     cursor: pointer;
   }
 
   .mobile-match-view-switcher {
+    position: relative;
+    z-index: 3;
     flex: 0 0 auto;
     margin-left: 8px;
   }

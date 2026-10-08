@@ -4,12 +4,13 @@ from html.parser import HTMLParser
 from types import SimpleNamespace
 
 from django.core.cache import cache
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
 from back.models import WebsiteSettings
+from pages.models import AdvBanner, PageSEO
 from cabinet.models import (
     AnalystProfile,
     CapperMonthlyStat,
@@ -671,6 +672,97 @@ class FooterRenderingTests(TestCase):
 
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, 'class="site-footer site-footer-v2"')
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class DocumentPagesTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        StaticPage.objects.update_or_create(
+            slug="privacy-policy",
+            defaults={
+                "title": "Политика конфиденциальности",
+                "content": "<p>Текст политики</p>",
+                "is_published": True,
+            },
+        )
+
+    def tearDown(self):
+        cache.clear()
+        super().tearDown()
+
+    def test_document_pages_use_three_columns_and_show_footer(self):
+        urls = [
+            reverse("front:about"),
+            reverse("front:rules"),
+            reverse("front:static_page", kwargs={"slug": "privacy-policy"}),
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "predictions-page document-page")
+                self.assertContains(response, 'aria-label="Промо слева"')
+                self.assertContains(response, 'class="bookmakers-sidebar"')
+                self.assertContains(response, '<footer class="site-footer')
+
+    def test_about_page_is_the_home_about_block_with_its_own_heading(self):
+        response = self.client.get(reverse("front:about"))
+
+        self.assertContains(response, 'class="home-about"')
+        self.assertContains(response, '<h1 id="homeAboutTitle">')
+        self.assertContains(response, '<span aria-current="page">О нас</span>', html=True)
+
+    def test_footer_links_to_about_and_rules(self):
+        response = self.client.get(reverse("front:rules"))
+
+        self.assertContains(response, '<a href="/about/">О нас</a>', html=True)
+        self.assertContains(response, '<a href="/rules/">Правила</a>', html=True)
+
+    def test_rules_contents_link_to_every_section(self):
+        response = self.client.get(reverse("front:rules"))
+
+        for number in range(1, 11):
+            self.assertContains(response, f'href="#rules-{number}"')
+            self.assertContains(response, f'id="rules-{number}"')
+
+    def test_static_page_breadcrumbs_end_with_the_page_title(self):
+        response = self.client.get(reverse("front:static_page", kwargs={"slug": "privacy-policy"}))
+
+        self.assertContains(
+            response,
+            '<span aria-current="page">Политика конфиденциальности</span>',
+            html=True,
+        )
+        self.assertNotContains(response, "Страница</span>")
+
+    def test_ads_go_to_the_right_sidebar_even_if_the_page_says_content(self):
+        banner = AdvBanner.objects.create(
+            name="Document ad",
+            size=AdvBanner.Size.FULL_240,
+            image="ads/document-test.png",
+            url="https://example.com/document-ad",
+        )
+        page = PageSEO.objects.create(
+            name="Правила",
+            route_name="front:rules",
+            adv_placement=PageSEO.AdvPlacement.CONTENT,
+        )
+        page.adv_banners.add(banner)
+        cache.clear()
+
+        response = self.client.get(reverse("front:rules"))
+
+        self.assertContains(response, "yjs-additional-b--sidebar")
+        self.assertNotContains(response, "yjs-additional-b--content")
+        self.assertContains(response, "https://example.com/document-ad")
 
 
 class SeoInfrastructureTests(TestCase):

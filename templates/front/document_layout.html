@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="predictions-page document-page container">
+    <div class="predictions-layout">
+        <aside class="prediction-filter-sidebar predictions-filter-sidebar" aria-label="Промо слева">
+            {% for promo_banner in left_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+        </aside>
+
+        <div class="predictions-content">
+            {% for promo_banner in center_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-page-wide" only %}
+            {% endfor %}
+            {% block document %}{% endblock %}
+        </div>
+
+        {% include "front/includes/_prediction_ad_sidebar.html" %}
+    </div>
+</section>
+{% endblock %}

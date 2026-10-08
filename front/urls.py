@@ -141,6 +141,7 @@ urlpatterns = [
     ),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path("wiki/", wiki_views.wiki, name="wiki"),
+    path("about/", TemplateView.as_view(template_name="front/about.html"), name="about"),
     path(
         "rules/",
         TemplateView.as_view(template_name="front/rules.html"),

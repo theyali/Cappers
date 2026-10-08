@@ -1,16 +1,15 @@
-{% extends "base.html" %}
-{% load static %}
+{% extends "front/document_layout.html" %}
 
 {% block title %}{{ page.title }} — КапперХаб{% endblock %}
 
-{% block content %}
-<section class="static-page">
-    <article class="static-page-card">
+{% block document %}
+<article class="static-page-card">
+    <header>
         <p class="static-page-kicker">Документы</p>
         <h1>{{ page.title }}</h1>
-        <div class="static-page-content">
-            {{ page.content|safe }}
-        </div>
-    </article>
-</section>
+    </header>
+    <div class="static-page-content">
+        {{ page.content|safe }}
+    </div>
+</article>
 {% endblock %}
