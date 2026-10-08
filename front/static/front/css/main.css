@@ -1962,18 +1962,21 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .roulette-sheet-disc { will-change: transform; }
 .roulette-sheet-rim { fill: none; stroke-width: 24; }
 .roulette-sheet-rim-edge { fill: none; stroke: #fff; stroke-width: 6; }
-.roulette-sheet-rim-inner { fill: none; stroke: rgba(122, 32, 0, 0.28); stroke-width: 4; }
+.roulette-sheet-rim-inner { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 4; }
+.roulette-sheet-light { fill: var(--yellow); }
+.roulette-sheet-light-glow { fill: rgba(251, 241, 16, 0.28); }
 .roulette-sheet-band { fill: rgba(255, 255, 255, 0.12); }
-.roulette-sheet-separator { stroke: rgba(255, 255, 255, 0.9); stroke-width: 3; }
+.roulette-sheet-separator { stroke: rgba(255, 255, 255, 0.78); stroke-width: 3; }
 .roulette-sheet-label {
     fill: #fff;
     font-weight: 900;
     text-anchor: middle;
     paint-order: stroke;
-    stroke: rgba(122, 32, 0, 0.35);
+    stroke: rgba(0, 0, 0, 0.35);
     stroke-width: 5px;
     stroke-linejoin: round;
 }
+.roulette-sheet-label.is-yellow { fill: var(--ink); stroke: rgba(255, 255, 255, 0.45); }
 .roulette-sheet-highlight { fill: #fff; opacity: 0; }
 .roulette-sheet.is-won .roulette-sheet-highlight { animation: roulette-highlight 0.9s ease-in-out infinite alternate; }
 @keyframes roulette-highlight {

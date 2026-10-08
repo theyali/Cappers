@@ -226,6 +226,7 @@ class RoulettePrizeCondition(models.Model):
         READERS_ONLY = "readers_only", "Только обычные пользователи"
         ANALYSTS_ONLY = "analysts_only", "Только капперы"
         WITHOUT_VIP = "without_vip", "Только без VIP"
+        VIP_ONLY = "vip_only", "Только с VIP"
         MIN_ACCOUNT_AGE_DAYS = "min_account_age_days", "Минимальный возраст аккаунта"
         MIN_ACTIVITY_COUNT = "min_activity_count", "Минимальная активность"
 

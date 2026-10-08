@@ -217,19 +217,20 @@
         return `M0 0L${x1} ${y1}A${RADIUS} ${RADIUS} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}Z`;
     };
 
-    // Warm tones like the reference wheel: dark at the centre, light at the rim.
+    // The site's yellow, ink and blue: dark at the centre, light at the rim.
     const TONES = {
-        gold: ["#f2a900", "#ffc531", "#ffe07a"],
-        orange: ["#f07800", "#ff9a1f", "#ffbf5c"],
-        deep: ["#e04f00", "#ff6f1a", "#ff9a55"],
-        pink: ["#d92a4a", "#ff4d6d", "#ff8299"],
+        yellow: ["#d9cc00", "#fbf110", "#fff98a"],
+        ink: ["#0b0b0c", "#1c1c1f", "#38383e"],
+        blue: ["#06318f", "#0b56fa", "#5a8fff"],
     };
-    const TONE_ORDER = ["gold", "orange", "deep", "pink"];
+    const TONE_ORDER = ["yellow", "ink", "blue", "ink"];
+    const RIM_LIGHTS = 16;
 
     const sectorTone = (index) => {
-        // When the count leaves the last sector next to one of its colour, it takes orange instead.
-        if (index === prizes.length - 1 && index % TONE_ORDER.length === 0 && index > 0) return "orange";
-        return TONE_ORDER[index % TONE_ORDER.length];
+        const tone = TONE_ORDER[index % TONE_ORDER.length];
+        // The last sector never repeats the colour of the first one next to it.
+        if (index > 0 && index === prizes.length - 1 && tone === TONE_ORDER[0]) return "blue";
+        return tone;
     };
 
     const titleLines = (title, maxChars, maxLines) => {
@@ -259,12 +260,12 @@
             });
         });
         const rim = svg("linearGradient", { id: "roulette-rim", x1: 0, y1: 0, x2: 0, y2: 1 }, frameDefs);
-        [[0, "#ffa040"], [0.5, "#ff6b1a"], [1, "#e8480c"]].forEach(([offset, color]) => {
+        [[0, "#3a3a40"], [0.5, "#1c1c1f"], [1, "#0b0b0c"]].forEach(([offset, color]) => {
             svg("stop", { offset, "stop-color": color }, rim);
         });
     };
 
-    const addLabel = (prize, middle, slice) => {
+    const addLabel = (prize, middle, slice, tone) => {
         const count = prizes.length;
         const fontSize = count <= 4 ? 34 : count <= 6 ? 30 : count <= 8 ? 27 : 23;
         // How many letters fit across the sector where the text starts.
@@ -275,7 +276,7 @@
             const size = count <= 8 ? 46 : 38;
             svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 18, width: size, height: size }, label);
         }
-        const text = svg("text", { class: "roulette-sheet-label", "font-size": fontSize, y: -RADIUS + (prize.icon ? 96 : 60) }, label);
+        const text = svg("text", { class: `roulette-sheet-label is-${tone}`, "font-size": fontSize, y: -RADIUS + (prize.icon ? 96 : 60) }, label);
         titleLines(prize.title, maxChars, count <= 4 ? 3 : 2).forEach((line, lineIndex) => {
             svg("tspan", { x: 0, dy: lineIndex ? Math.round(fontSize * 1.08) : 0 }, text).textContent = line;
         });
@@ -289,7 +290,7 @@
         const count = prizes.length;
         const slice = 360 / Math.max(count, 1);
         if (count < 2) {
-            svg("circle", { r: RADIUS, fill: "url(#roulette-tone-gold)" }, disc);
+            svg("circle", { r: RADIUS, fill: "url(#roulette-tone-yellow)" }, disc);
         } else {
             prizes.forEach((prize, index) => {
                 const middle = index * slice;
@@ -301,11 +302,16 @@
             });
         }
         svg("circle", { r: 120, class: "roulette-sheet-band" }, disc);
-        prizes.forEach((prize, index) => addLabel(prize, index * slice, slice));
+        prizes.forEach((prize, index) => addLabel(prize, index * slice, slice, count < 2 ? "yellow" : sectorTone(index)));
 
         svg("circle", { r: RADIUS, class: "roulette-sheet-rim-inner" }, frame);
         svg("circle", { r: RADIUS + 12, class: "roulette-sheet-rim", stroke: "url(#roulette-rim)" }, frame);
         svg("circle", { r: RADIUS + 26, class: "roulette-sheet-rim-edge" }, frame);
+        for (let index = 0; index < RIM_LIGHTS; index += 1) {
+            const [x, y] = point((index * 360) / RIM_LIGHTS, RADIUS + 12);
+            svg("circle", { cx: x, cy: y, r: 9, class: "roulette-sheet-light-glow" }, frame);
+            svg("circle", { cx: x, cy: y, r: 4.5, class: "roulette-sheet-light" }, frame);
+        }
         if (count > 1) svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, frame);
         setRotation(rotation);
     };
