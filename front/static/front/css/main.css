@@ -1831,24 +1831,32 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .roulette-sheet[hidden] { display: none; }
 .roulette-sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.62); opacity: 0; transition: opacity 0.3s; }
 .roulette-sheet-panel {
-    --roulette-wheel-size: min(136vw, 620px);
+    --roulette-sheet-height: min(780px, calc(100vh - var(--telegram-app-top, 0px) - 28px));
+    --roulette-safe-bottom: max(var(--tg-safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+    /* The wheel centre with the spin button sits this high above the bottom edge. */
+    --roulette-hub-lift: calc(96px + var(--roulette-safe-bottom));
+    /* As wide as on the reference, but never so big that it reaches the text above. */
+    --roulette-wheel-size: min(144vw, 640px, calc((var(--roulette-sheet-height) - var(--roulette-hub-lift) - 300px) * 2));
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: min(780px, calc(100vh - var(--telegram-app-top, 0px) - 28px));
-    height: min(780px, calc(100dvh - var(--telegram-app-top, 0px) - 28px));
+    height: var(--roulette-sheet-height);
     display: flex;
     flex-direction: column;
     align-items: center;
     overflow: hidden;
     overflow: clip;
-    padding: 20px 20px 0;
+    /* The text takes the space above the wheel and stays centred in it. */
+    padding: 20px 20px calc(var(--roulette-hub-lift) + var(--roulette-wheel-size) / 2 + 12px);
     border-radius: 32px 32px 0 0;
     background: var(--blue);
     color: #fff;
     transform: translateY(100%);
     transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@supports (height: 100dvh) {
+    .roulette-sheet-panel { --roulette-sheet-height: min(780px, calc(100dvh - var(--telegram-app-top, 0px) - 28px)); }
 }
 .roulette-sheet.is-open .roulette-sheet-backdrop { opacity: 1; }
 .roulette-sheet.is-open .roulette-sheet-panel { transform: none; }
@@ -1890,16 +1898,22 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 }
 .roulette-sheet-close svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .roulette-sheet-logo { position: relative; z-index: 2; width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; }
-/* A steady height keeps the wheel in place when the text changes. */
-.roulette-sheet-copy { position: relative; z-index: 2; min-height: 280px; display: grid; align-content: start; justify-items: center; gap: 10px; margin-top: 10px; text-align: center; }
-.roulette-sheet-prize { width: 112px; height: 112px; object-fit: contain; }
-.roulette-sheet.is-won .roulette-sheet-prize { animation: roulette-prize-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
-@keyframes roulette-prize-pop {
-    from { scale: 0.3; rotate: -14deg; opacity: 0; }
+.roulette-sheet-copy { position: relative; z-index: 2; display: grid; justify-items: center; gap: 12px; margin: auto 0; padding-top: 10px; text-align: center; }
+.roulette-sheet-copy h2 {
+    max-width: 340px;
+    margin: 0;
+    color: var(--yellow);
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.08;
+    text-shadow: 0 4px 0 rgba(0, 0, 0, 0.24);
 }
-.roulette-sheet-copy h2 { max-width: 340px; margin: 4px 0 0; font-size: 30px; font-weight: 800; line-height: 1.12; }
-.roulette-sheet-copy p { max-width: 320px; margin: 0; color: rgba(255, 255, 255, 0.8); font-size: 16px; line-height: 1.4; }
-.roulette-sheet-copy small { min-height: 18px; color: var(--yellow); font-size: 14px; font-weight: 700; }
+.roulette-sheet.is-won .roulette-sheet-copy h2 { animation: roulette-title-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes roulette-title-pop {
+    from { scale: 0.6; opacity: 0; }
+}
+.roulette-sheet-copy p { max-width: 320px; margin: 0; color: #fff; font-size: 18px; font-weight: 700; line-height: 1.35; }
+.roulette-sheet-copy small { min-height: 18px; color: rgba(255, 255, 255, 0.78); font-size: 14px; font-weight: 700; }
 .roulette-sheet-code {
     padding: 10px 26px;
     border: 0;
@@ -1911,64 +1925,107 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     font-weight: 800;
     cursor: pointer;
 }
-.roulette-sheet-code[hidden] { display: none; }
-/* The wheel starts under the text and runs past the bottom edge of the sheet. */
-.roulette-sheet-wheel { position: relative; flex: 1 0 auto; width: 100%; margin-top: 16px; }
-.roulette-sheet-disc {
+.roulette-sheet-bonuses {
+    min-height: 46px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0 30px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 800;
+    text-decoration: none;
+}
+.roulette-sheet-code[hidden],
+.roulette-sheet-bonuses[hidden] { display: none; }
+.roulette-sheet-wheel {
     position: absolute;
-    top: 0;
     left: 50%;
+    bottom: calc(var(--roulette-hub-lift) - var(--roulette-wheel-size) / 2);
     width: var(--roulette-wheel-size);
     height: var(--roulette-wheel-size);
-    display: block;
-    overflow: visible;
     translate: -50% 0;
 }
-.roulette-sheet-pointer { position: absolute; top: -12px; left: 50%; z-index: 2; width: 34px; height: 40px; translate: -50% 0; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35)); }
-.roulette-sheet-pointer::before { content: ""; position: absolute; inset: 0; background: #fff; clip-path: polygon(50% 100%, 0 0, 100% 0); }
-.roulette-sheet-rim { fill: #fff; }
-.roulette-sheet-ring { fill: var(--ink); }
-.roulette-sheet-peg { fill: #fff; }
-.roulette-sheet-sector.is-yellow { fill: var(--yellow); }
-.roulette-sheet-sector.is-ink { fill: var(--panel); }
-.roulette-sheet-sector.is-white { fill: #fff; }
-.roulette-sheet-label { fill: #fff; font-size: 30px; font-weight: 800; text-anchor: middle; }
-.roulette-sheet-label.is-yellow { fill: var(--ink); }
-.roulette-sheet-label.is-white { fill: var(--blue); }
+/* The prizes turn as one layer; the rim and the prize highlight stay still on top. */
+.roulette-sheet-disc,
+.roulette-sheet-frame { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+.roulette-sheet-disc { will-change: transform; }
+.roulette-sheet-rim { fill: none; stroke-width: 24; }
+.roulette-sheet-rim-edge { fill: none; stroke: #fff; stroke-width: 6; }
+.roulette-sheet-rim-inner { fill: none; stroke: rgba(122, 32, 0, 0.28); stroke-width: 4; }
+.roulette-sheet-band { fill: rgba(255, 255, 255, 0.12); }
+.roulette-sheet-separator { stroke: rgba(255, 255, 255, 0.9); stroke-width: 3; }
+.roulette-sheet-label {
+    fill: #fff;
+    font-weight: 900;
+    text-anchor: middle;
+    paint-order: stroke;
+    stroke: rgba(122, 32, 0, 0.35);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+}
 .roulette-sheet-highlight { fill: #fff; opacity: 0; }
 .roulette-sheet.is-won .roulette-sheet-highlight { animation: roulette-highlight 0.9s ease-in-out infinite alternate; }
 @keyframes roulette-highlight {
-    from { opacity: 0.06; }
-    to { opacity: 0.32; }
+    from { opacity: 0.08; }
+    to { opacity: 0.34; }
 }
-.roulette-sheet-actions {
+/* The spin button in the wheel centre, with the arrow that points at the prize. */
+.roulette-sheet-hub {
     position: absolute;
-    left: 20px;
-    right: 20px;
-    bottom: 0;
-    z-index: 3;
-    display: grid;
-    gap: 10px;
-    padding-bottom: calc(16px + max(var(--tg-safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)));
-}
-.roulette-sheet-button {
-    min-height: 54px;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    width: 26%;
+    aspect-ratio: 1;
     display: grid;
     place-items: center;
-    padding: 0 16px;
+    padding: 0;
     border: 0;
-    border-radius: 16px;
-    background: #3d78fb;
+    border-radius: 50%;
+    background: var(--blue);
     color: #fff;
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.24), 0 10px 28px rgba(0, 0, 0, 0.38), inset 0 -7px 0 rgba(0, 0, 0, 0.2);
     font: inherit;
-    font-size: 17px;
-    font-weight: 800;
-    text-decoration: none;
+    font-size: calc(var(--roulette-wheel-size) * 0.036);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    translate: -50% -50%;
     cursor: pointer;
+    transition: scale 0.16s ease;
+    -webkit-tap-highlight-color: transparent;
 }
-.roulette-sheet-button.is-primary { background: #fff; color: var(--ink); }
-.roulette-sheet-button[hidden] { display: none; }
-.roulette-sheet-button:disabled { cursor: default; color: var(--muted); }
+.roulette-sheet-hub::before {
+    content: "";
+    position: absolute;
+    bottom: 86%;
+    left: 50%;
+    width: 30%;
+    height: 44%;
+    translate: -50% 0;
+    background: var(--blue);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.roulette-sheet-hub::after {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    animation: roulette-hub-glow 1.5s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+.roulette-sheet-hub span { position: relative; z-index: 1; }
+.roulette-sheet-hub:active,
+.roulette-sheet-hub.is-pressed { scale: 0.88; }
+.roulette-sheet-hub:disabled { cursor: default; }
+.roulette-sheet-hub:disabled span { opacity: 0.5; }
+.roulette-sheet-hub:disabled::after { animation: none; }
+@keyframes roulette-hub-glow {
+    from { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+    to { box-shadow: 0 0 34px 8px rgba(255, 255, 255, 0.4); }
+}
 .roulette-sheet-confetti { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; }
 .mobile-nav-roulette .nav-notification-badge { top: -26px; right: 2px; }
 /* Page changes: the Mini App fades the content while its header and menu stay put;

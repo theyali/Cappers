@@ -6,7 +6,6 @@
     data-state-url="{% url 'cabinet:roulette_state' %}"
     data-spin-url="{% url 'cabinet:roulette_spin' %}"
     data-csrf="{{ csrf_token }}"
-    data-gift-icon="{% static 'front/img/roulette/gift.svg' %}"
     data-tick-sound="{% static 'front/sounds/roulette-tick.mp3' %}"
     data-win-sound="{% static 'front/sounds/roulette-win.mp3' %}"
     hidden
@@ -30,21 +29,17 @@
         <img class="roulette-sheet-logo" src="{% static 'front/img/logo.png' %}" alt="КапперХаб" width="44" height="44" loading="lazy">
 
         <div class="roulette-sheet-copy" aria-live="polite">
-            <img class="roulette-sheet-prize" src="{% static 'front/img/roulette/gift.svg' %}" alt="" width="112" height="112" loading="lazy" data-roulette-sheet-prize>
             <h2 id="roulette-sheet-title" data-roulette-sheet-title>Колесо бонусов</h2>
             <p data-roulette-sheet-text>Загружаем призы…</p>
             <button class="roulette-sheet-code" type="button" data-roulette-sheet-code hidden></button>
             <small data-roulette-sheet-note></small>
+            <a class="roulette-sheet-bonuses" href="{% url 'cabinet:bonuses' %}" data-roulette-sheet-bonuses hidden>Мои бонусы</a>
         </div>
 
         <div class="roulette-sheet-wheel">
-            <span class="roulette-sheet-pointer" aria-hidden="true"></span>
-            <svg class="roulette-sheet-disc" viewBox="-320 -320 640 640" aria-hidden="true" data-roulette-sheet-disc></svg>
-        </div>
-
-        <div class="roulette-sheet-actions">
-            <button class="roulette-sheet-button is-primary" type="button" data-roulette-sheet-spin disabled>Загрузка…</button>
-            <a class="roulette-sheet-button" href="{% url 'cabinet:bonuses' %}" data-roulette-sheet-bonuses>Мои бонусы</a>
+            <svg class="roulette-sheet-disc" viewBox="-330 -330 660 660" aria-hidden="true" data-roulette-sheet-disc></svg>
+            <svg class="roulette-sheet-frame" viewBox="-330 -330 660 660" aria-hidden="true" data-roulette-sheet-frame></svg>
+            <button class="roulette-sheet-hub" type="button" aria-label="Крутить колесо" data-roulette-sheet-spin disabled><span>Крутить</span></button>
         </div>
 
         <canvas class="roulette-sheet-confetti" aria-hidden="true" data-roulette-sheet-confetti></canvas>

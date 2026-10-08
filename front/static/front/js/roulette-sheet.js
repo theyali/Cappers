@@ -6,10 +6,10 @@
 
     const panel = sheet.querySelector(".roulette-sheet-panel");
     const disc = sheet.querySelector("[data-roulette-sheet-disc]");
+    const frame = sheet.querySelector("[data-roulette-sheet-frame]");
     const titleNode = sheet.querySelector("[data-roulette-sheet-title]");
     const textNode = sheet.querySelector("[data-roulette-sheet-text]");
     const noteNode = sheet.querySelector("[data-roulette-sheet-note]");
-    const prizeImage = sheet.querySelector("[data-roulette-sheet-prize]");
     const codeButton = sheet.querySelector("[data-roulette-sheet-code]");
     const spinButton = sheet.querySelector("[data-roulette-sheet-spin]");
     const bonusesLink = sheet.querySelector("[data-roulette-sheet-bonuses]");
@@ -41,7 +41,6 @@
     let nextSpinAt = null;
     let serverOffsetMs = 0;
     let rotation = 0;
-    let rotor = null;
     let phase = "closed";
     let pendingOperationId = "";
     let countdownTimer = 0;
@@ -217,59 +216,96 @@
         return `M0 0L${x1} ${y1}A${RADIUS} ${RADIUS} 0 ${to - from > 180 ? 1 : 0} 1 ${x2} ${y2}Z`;
     };
 
+    // Warm tones like the reference wheel: dark at the centre, light at the rim.
+    const TONES = {
+        gold: ["#f2a900", "#ffc531", "#ffe07a"],
+        orange: ["#f07800", "#ff9a1f", "#ffbf5c"],
+        deep: ["#e04f00", "#ff6f1a", "#ff9a55"],
+        pink: ["#d92a4a", "#ff4d6d", "#ff8299"],
+    };
+    const TONE_ORDER = ["gold", "orange", "deep", "pink"];
+
     const sectorTone = (index) => {
-        // With an odd count the last sector gets its own color, so equal colors never touch.
-        if (prizes.length % 2 && index === prizes.length - 1) return "is-white";
-        return index % 2 ? "is-ink" : "is-yellow";
+        // When the count leaves the last sector next to one of its colour, it takes orange instead.
+        if (index === prizes.length - 1 && index % TONE_ORDER.length === 0 && index > 0) return "orange";
+        return TONE_ORDER[index % TONE_ORDER.length];
     };
 
-    const titleLines = (title) => {
+    const titleLines = (title, maxChars, maxLines) => {
         const lines = [];
         String(title).split(/\s+/).filter(Boolean).forEach((word) => {
             const lastLine = lines[lines.length - 1];
-            if (lastLine && `${lastLine} ${word}`.length <= 10) lines[lines.length - 1] = `${lastLine} ${word}`;
+            if (lastLine && `${lastLine} ${word}`.length <= maxChars) lines[lines.length - 1] = `${lastLine} ${word}`;
             else lines.push(word);
         });
-        return lines.slice(0, 2).map((line) => (line.length > 11 ? `${line.slice(0, 10)}…` : line));
+        const shown = lines.slice(0, maxLines);
+        if (lines.length > maxLines) shown[maxLines - 1] = `${shown[maxLines - 1]}…`;
+        return shown.map((line) => (line.length > maxChars + 1 ? `${line.slice(0, maxChars)}…` : line));
     };
 
     const setRotation = (degrees) => {
         rotation = degrees;
-        rotor?.setAttribute("transform", `rotate(${degrees})`);
+        disc.style.transform = `rotate(${degrees}deg)`;
+    };
+
+    const addGradients = () => {
+        const defs = svg("defs", {}, disc);
+        const frameDefs = svg("defs", {}, frame);
+        Object.entries(TONES).forEach(([name, [dark, base, light]]) => {
+            const gradient = svg("radialGradient", { id: `roulette-tone-${name}`, gradientUnits: "userSpaceOnUse", cx: 0, cy: 0, r: RADIUS }, defs);
+            [[0, dark], [0.62, base], [1, light]].forEach(([offset, color]) => {
+                svg("stop", { offset, "stop-color": color }, gradient);
+            });
+        });
+        const rim = svg("linearGradient", { id: "roulette-rim", x1: 0, y1: 0, x2: 0, y2: 1 }, frameDefs);
+        [[0, "#ffa040"], [0.5, "#ff6b1a"], [1, "#e8480c"]].forEach(([offset, color]) => {
+            svg("stop", { offset, "stop-color": color }, rim);
+        });
+    };
+
+    const addLabel = (prize, middle, slice) => {
+        const count = prizes.length;
+        const fontSize = count <= 4 ? 34 : count <= 6 ? 30 : count <= 8 ? 27 : 23;
+        // How many letters fit across the sector where the text starts.
+        const width = count < 2 ? RADIUS * 1.6 : 2 * (RADIUS - 80) * Math.sin((Math.min(slice, 150) * Math.PI) / 360);
+        const maxChars = Math.max(4, Math.floor((width * 0.9) / (fontSize * 0.62)));
+        const label = svg("g", { transform: `rotate(${middle})` }, disc);
+        if (prize.icon) {
+            const size = count <= 8 ? 46 : 38;
+            svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 18, width: size, height: size }, label);
+        }
+        const text = svg("text", { class: "roulette-sheet-label", "font-size": fontSize, y: -RADIUS + (prize.icon ? 96 : 60) }, label);
+        titleLines(prize.title, maxChars, count <= 4 ? 3 : 2).forEach((line, lineIndex) => {
+            svg("tspan", { x: 0, dy: lineIndex ? Math.round(fontSize * 1.08) : 0 }, text).textContent = line;
+        });
     };
 
     const buildWheel = () => {
         disc.replaceChildren();
-        svg("circle", { r: 318, class: "roulette-sheet-rim" }, disc);
-        rotor = svg("g", {}, disc);
-        svg("circle", { r: 306, class: "roulette-sheet-ring" }, rotor);
+        frame.replaceChildren();
+        addGradients();
 
-        const slice = 360 / Math.max(prizes.length, 1);
-        if (prizes.length < 2) {
-            svg("circle", { r: RADIUS, class: `roulette-sheet-sector ${prizes.length ? "is-yellow" : "is-ink"}` }, rotor);
-        }
-        prizes.forEach((prize, index) => {
-            const middle = index * slice;
-            const tone = prizes.length < 2 ? "is-yellow" : sectorTone(index);
-            if (prizes.length > 1) {
-                svg("path", { d: wedge(middle - slice / 2, middle + slice / 2), class: `roulette-sheet-sector ${tone}` }, rotor);
-            }
-            const label = svg("g", { transform: `rotate(${middle})` }, rotor);
-            if (prize.icon) {
-                svg("image", { href: prize.icon, x: -24, y: -RADIUS + 20, width: 48, height: 48 }, label);
-            }
-            const text = svg("text", { class: `roulette-sheet-label ${tone}`, y: -RADIUS + (prize.icon ? 102 : 66) }, label);
-            titleLines(prize.title).forEach((line, lineIndex) => {
-                svg("tspan", { x: 0, dy: lineIndex ? 32 : 0 }, text).textContent = line;
-            });
-        });
-        if (prizes.length > 1) {
+        const count = prizes.length;
+        const slice = 360 / Math.max(count, 1);
+        if (count < 2) {
+            svg("circle", { r: RADIUS, fill: "url(#roulette-tone-gold)" }, disc);
+        } else {
             prizes.forEach((prize, index) => {
-                const [x, y] = point(index * slice + slice / 2, 306);
-                svg("circle", { cx: x, cy: y, r: 5, class: "roulette-sheet-peg" }, rotor);
+                const middle = index * slice;
+                svg("path", { d: wedge(middle - slice / 2, middle + slice / 2), fill: `url(#roulette-tone-${sectorTone(index)})` }, disc);
             });
-            svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, disc);
+            prizes.forEach((prize, index) => {
+                const [x, y] = point(index * slice + slice / 2, RADIUS);
+                svg("line", { x1: 0, y1: 0, x2: x, y2: y, class: "roulette-sheet-separator" }, disc);
+            });
         }
+        svg("circle", { r: 120, class: "roulette-sheet-band" }, disc);
+        prizes.forEach((prize, index) => addLabel(prize, index * slice, slice));
+
+        svg("circle", { r: RADIUS, class: "roulette-sheet-rim-inner" }, frame);
+        svg("circle", { r: RADIUS + 12, class: "roulette-sheet-rim", stroke: "url(#roulette-rim)" }, frame);
+        svg("circle", { r: RADIUS + 26, class: "roulette-sheet-rim-edge" }, frame);
+        if (count > 1) svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, frame);
         setRotation(rotation);
     };
 
@@ -342,32 +378,28 @@
         }, 1000);
     };
 
-    const setCopy = ({ title = TITLE, text = "", icon = sheet.dataset.giftIcon, code = "" }) => {
+    const setCopy = ({ title = TITLE, text = "", code = "" }) => {
         titleNode.textContent = title;
         textNode.textContent = text;
-        if (prizeImage.getAttribute("src") !== icon) prizeImage.setAttribute("src", icon);
         codeButton.hidden = !code;
         codeButton.textContent = code;
         codeButton.dataset.code = code;
     };
 
-    const renderActions = () => {
-        const busy = phase === "loading" || phase === "spinning";
-        spinButton.hidden = !busy && !canSpin();
-        spinButton.disabled = busy;
-        spinButton.textContent = {
-            loading: "Загрузка…",
-            spinning: "Крутится…",
-            won: "Крутить ещё",
-        }[phase] || "Крутить";
-        bonusesLink.classList.toggle("is-primary", spinButton.hidden);
+    // The centre spins the wheel; "Мои бонусы" shows after a spin or when no spins are left.
+    const renderControls = () => {
+        const ready = phase === "idle" || phase === "won";
+        spinButton.disabled = !(ready && canSpin());
+        bonusesLink.hidden = !(phase === "won" || (phase === "idle" && !canSpin()));
     };
 
-    const showIdle = (text = INTRO) => {
+    const showIdle = (text) => {
         phase = "idle";
         sheet.classList.remove("is-won");
-        setCopy({ text: enabled && prizes.length ? text : "Колесо сейчас недоступно. Загляните позже." });
-        renderActions();
+        let message = text || (canSpin() ? INTRO : "Попытки на сегодня закончились.");
+        if (!enabled || !prizes.length) message = "Колесо сейчас недоступно. Загляните позже.";
+        setCopy({ text: message });
+        renderControls();
         startCountdown();
     };
 
@@ -395,7 +427,7 @@
             phase = "idle";
             setCopy({ text: error.message || "Не удалось загрузить колесо." });
             noteNode.textContent = "";
-            renderActions();
+            renderControls();
         }
     }
 
@@ -523,14 +555,13 @@
         setCopy({
             title: nothing ? "В этот раз мимо" : `Твой приз: ${prize.title || "подарок"}!`,
             text: rewardText(payload),
-            icon: prize.icon_url || sheet.dataset.giftIcon,
             code: prize.reward_type === "promo_code" ? payload.reward_result?.promo_code || prize.reward_text || "" : "",
         });
         // Restart the prize animation for every win.
         sheet.classList.remove("is-won");
         void panel.offsetWidth;
         sheet.classList.add("is-won");
-        renderActions();
+        renderControls();
         startCountdown();
         if (nothing) {
             haptic("notify", "warning");
@@ -544,13 +575,15 @@
     const spin = async () => {
         if ((phase !== "idle" && phase !== "won") || !canSpin()) return;
         const current = session;
+        spinButton.classList.add("is-pressed");
+        window.setTimeout(() => spinButton.classList.remove("is-pressed"), 170);
         sound.unlock();
         confetti.stop();
         stopCountdown();
         phase = "spinning";
         sheet.classList.remove("is-won");
         setCopy({ text: "Крутим колесо…" });
-        renderActions();
+        renderControls();
         haptic("impact", "medium");
 
         let payload;
@@ -603,8 +636,8 @@
         sheet.classList.remove("is-won");
         setCopy({ text: "Загружаем призы…" });
         noteNode.textContent = "";
-        renderActions();
-        if (!rotor) buildWheel();
+        renderControls();
+        if (!disc.childElementCount) buildWheel();
         loadState();
     };
 
