@@ -1,15 +1,22 @@
+import tempfile
 from io import StringIO
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from cabinet.models import User, UserVipSubscription
 from cabinet.roulette.models import RoulettePrize
 from cabinet.roulette.selectors import get_available_roulette_prizes
+from cabinet.management.commands.seed_roulette_prizes import ICONS_DIR
 from cabinet.vip import extend_vip
 
 
 class RoulettePrizeSeedTests(TestCase):
+    def setUp(self):
+        media = self.enterContext(tempfile.TemporaryDirectory())
+        self.enterContext(override_settings(MEDIA_ROOT=media))
+
     def seed(self, *args):
         output = StringIO()
         call_command("seed_roulette_prizes", *args, stdout=output)
@@ -66,3 +73,18 @@ class RoulettePrizeSeedTests(TestCase):
         self.seed("--disable-other-prizes")
         old.refresh_from_db()
         self.assertFalse(old.is_active)
+
+    def test_prizes_get_icons_and_uploaded_ones_stay(self):
+        own = RoulettePrize.objects.create(
+            title="50 коинов",
+            reward_type=RoulettePrize.RewardType.COINS,
+            reward_value=50,
+            icon=SimpleUploadedFile("mine.png", (ICONS_DIR / "coins.png").read_bytes()),
+        )
+
+        self.seed("--update")
+
+        own.refresh_from_db()
+        self.assertIn("mine", own.icon.name)
+        self.assertIn("spin", RoulettePrize.objects.get(title="+1 попытка").icon.name)
+        self.assertFalse(RoulettePrize.objects.get(title="Пусто").icon)
