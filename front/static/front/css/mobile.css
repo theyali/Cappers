@@ -13147,20 +13147,33 @@ body.expert-public-details-open {
 
   .mobile-match-date-tab {
     position: relative;
+    z-index: 1;
+    overflow: hidden;
+    isolation: isolate;
     margin-left: 10px;
     cursor: pointer;
   }
 
   .mobile-match-date-tab input {
+    -webkit-appearance: none;
+    appearance: none;
     position: absolute;
     inset: 0;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
     height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
     opacity: 0;
+    background: transparent;
     cursor: pointer;
   }
 
   .mobile-match-view-switcher {
+    position: relative;
+    z-index: 3;
     flex: 0 0 auto;
     margin-left: 8px;
   }
