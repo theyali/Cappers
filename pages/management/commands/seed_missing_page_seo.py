@@ -151,13 +151,24 @@ PUBLIC_PAGE_SEEDS = {
         "Справочник терминов, видео и материалов о спортивной аналитике.",
         PageSEO.Robots.INDEX_FOLLOW,
     ),
+    "front:about": PageSeed(
+        "О нас",
+        "О нас — КапперХаб",
+        "КапперХаб собирает матчи, прогнозы и статистику капперов с открытой историей результатов.",
+        PageSEO.Robots.INDEX_FOLLOW,
+        PageSEO.AdvPlacement.SIDEBAR,
+        schema_type="AboutPage",
+    ),
     "front:rules": PageSeed(
         "Правила",
         "Правила КапперХаб",
         "Правила использования платформы КапперХаб.",
         PageSEO.Robots.INDEX_FOLLOW,
+        PageSEO.AdvPlacement.SIDEBAR,
     ),
-    "front:static_page": PageSeed("Статическая страница", "", "", PageSEO.Robots.INDEX_FOLLOW),
+    "front:static_page": PageSeed(
+        "Статическая страница", "", "", PageSEO.Robots.INDEX_FOLLOW, PageSEO.AdvPlacement.SIDEBAR
+    ),
     "game:match_list": PageSeed(
         "Матчи",
         "Спортивные матчи - КапперХаб",

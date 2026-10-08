@@ -24,6 +24,8 @@ FOOTER_VISIBLE_ROUTES = {
     "front:bookmakers",
     "front:article_detail",
     "front:static_page",
+    "front:about",
+    "front:rules",
 }
 
 
@@ -249,6 +251,8 @@ def _breadcrumbs_for_request(request):
         "front:cappers_table": [{"title": "Капперы"}],
         "front:how_it_works": [{"title": "Как пользоваться"}],
         "front:wiki": [{"title": "Wiki"}],
+        "front:about": [{"title": "О нас"}],
+        "front:rules": [{"title": "Правила"}],
         "tournaments:index": [{"title": "Турниры"}],
         "cabinet:profile": [{"title": "Личный кабинет"}],
     }
@@ -277,7 +281,6 @@ def _breadcrumbs_for_request(request):
             {"title": "Турниры", "url": _route_url("tournaments:index")},
             {"title": "Прогноз"},
         ],
-        "front:static_page": [{"title": "Документы"}, {"title": "Страница"}],
     }
 
     trail = dynamic.get(view_name) or items.get(view_name)

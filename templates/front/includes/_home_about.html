@@ -16,10 +16,18 @@
     <div class="home-about-intro">
         <div class="home-about-copy">
             <p class="home-about-eyebrow">О нас</p>
-            <h2 id="homeAboutTitle">{{ website_settings.home_about_title|default:"КапперХаб — место, где важен результат" }}</h2>
+            {% if about_page %}
+                <h1 id="homeAboutTitle">{{ website_settings.home_about_title|default:"КапперХаб — место, где важен результат" }}</h1>
+            {% else %}
+                <h2 id="homeAboutTitle">{{ website_settings.home_about_title|default:"КапперХаб — место, где важен результат" }}</h2>
+            {% endif %}
             <p class="home-about-lead">{{ website_settings.home_about_lead|default:"Собираем матчи, прогнозы и статистику экспертов в одном месте, чтобы пользователям было проще сравнивать капперов, а капперам — строить публичную репутацию." }}</p>
             {% if website_settings.home_about_text %}
-                <p class="home-about-note">{{ website_settings.home_about_text|striptags|truncatechars:300 }}</p>
+                {% if about_page %}
+                    <p class="home-about-note">{{ website_settings.home_about_text|striptags }}</p>
+                {% else %}
+                    <p class="home-about-note">{{ website_settings.home_about_text|striptags|truncatechars:300 }}</p>
+                {% endif %}
             {% endif %}
         </div>
 

@@ -246,6 +246,9 @@ def page_seo(request):
         "front:prediction_detail",
         "front:expert_profile",
         "cabinet:user_profile",
+        "front:about",
+        "front:rules",
+        "front:static_page",
     }:
         adv_placement = PageSEO.AdvPlacement.SIDEBAR
 
