@@ -1,6 +1,7 @@
 import json
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from tinymce.models import HTMLField
 
@@ -306,6 +307,15 @@ class PageSEO(models.Model):
         choices=LayoutColumns.choices,
         default=LayoutColumns.THREE,
         help_text="Используется общим layout CSS для страниц с predictions-layout.",
+    )
+    home_top_experts_limit = models.PositiveSmallIntegerField(
+        "Топовые эксперты на главной",
+        default=4,
+        validators=(MinValueValidator(1), MaxValueValidator(50)),
+        help_text=(
+            "Сколько экспертов показывать в блоке «Топовые эксперты месяца» "
+            "на главной странице. Используется только для route_name='front:index'."
+        ),
     )
     promo_banners = models.ManyToManyField(
         PromoBanner,

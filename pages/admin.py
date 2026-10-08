@@ -124,6 +124,7 @@ class PageSEOAdmin(admin.ModelAdmin):
         "exact_path",
         "meta_title",
         "layout_columns",
+        "home_top_experts_limit",
         "adv_placement",
         "robots",
         "is_active",
@@ -159,6 +160,7 @@ class PageSEOAdmin(admin.ModelAdmin):
                     "route_name",
                     "exact_path",
                     "layout_columns",
+                    "home_top_experts_limit",
                     "is_active",
                 ),
                 "description": (
