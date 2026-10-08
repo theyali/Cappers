@@ -1,0 +1,28 @@
+<section class="profile-edit-section profile-field-full profile-verification" data-profile-verification>
+    <div class="profile-edit-section-head">
+        <span class="profile-edit-section-icon profile-verification-icon" aria-hidden="true">
+            {% include "cabinet/includes/_capper_verified_icon.html" %}
+        </span>
+        <div>
+            <strong>Галочка каппера</strong>
+            <small>Галочка рядом с именем показывает, что профиль заполнен и вы публикуете прогнозы.</small>
+        </div>
+    </div>
+    {% if verification.status == "verified" %}
+        <p class="profile-verification-note">Галочка стоит рядом с вашим именем на всём сайте.</p>
+    {% elif verification.status == "revoked" %}
+        <p class="profile-verification-note">Галочку снял модератор. Если это ошибка, напишите в поддержку.</p>
+    {% else %}
+        <ul class="profile-status-checklist">
+            {% for item in verification.items %}
+                <li{% if item.done %} class="is-done"{% endif %}><span aria-hidden="true">✓</span>{{ item.label }}</li>
+            {% endfor %}
+        </ul>
+        {% if verification.can_request %}
+            <div class="profile-edit-actions">
+                <button class="profile-save-button" type="submit" form="profileVerificationForm">Запросить галочку</button>
+            </div>
+        {% endif %}
+    {% endif %}
+    <div class="profile-save-status" data-profile-save-status aria-live="polite"></div>
+</section>

@@ -1,0 +1,13 @@
+<div class="mobile-offcanvas-quick-grid" data-mobile-quick-access-grid>
+    {% for item in mobile_quick_access_items %}
+    <a href="{{ item.url }}">
+        <span class="mobile-offcanvas-quick-icon is-{{ item.icon_key }}" aria-hidden="true">
+            {{ item.icon_svg }}
+            {% if item.key == "notifications" %}
+            <b class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
+            {% endif %}
+        </span>
+        <span>{{ item.label }}</span>
+    </a>
+    {% endfor %}
+</div>

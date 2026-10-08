@@ -10340,7 +10340,7 @@ body.register footer {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-.expert-public-stats-compact .expert-public-stat-card small { color: rgba(255, 255, 255, 0.5); font-size: 13px; font-weight: 600; }
+.expert-public-stats-compact .expert-public-stat-card small { color: rgba(255, 255, 255, 0.5); font-size: 10px; font-weight: 600; }
 .expert-public-stats-compact .is-followers small,
 .expert-public-stats-compact .is-predictions small,
 .expert-public-stats-compact .is-roi strong {
@@ -10791,7 +10791,7 @@ body.register footer {
 .profile-status-checklist li.is-done {
     color: rgba(255, 255, 255, 0.78);
 }
-.profile-status-checklist li.is-done > span { color: var(--ink); background: #45d483; }
+.profile-status-checklist li.is-done > span { color: white; background: var(--green); }
 .profile-hero-status form { margin: auto 0 0; }
 .profile-status-action { width: 100%; margin-top: auto; color: var(--ink); background: var(--yellow); }
 .profile-status-action.is-pending { cursor: default; color: rgba(255, 255, 255, 0.72); background: #303033; }
@@ -10986,6 +10986,12 @@ body.register footer {
     justify-content: flex-end;
     margin-top: 2px;
 }
+.profile-hidden-form { display: none; }
+.profile-save-status { display: grid; gap: 8px; }
+.profile-save-status:empty { display: none; }
+.profile-verification .profile-status-checklist { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; padding: 6px 40px;}
+.profile-verification .profile-status-checklist li { font-size: 13px; line-height: 1.35; }
+.profile-verification-note { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.5; }
 .profile-edit-section-icon {
     width: 44px;
     height: 44px;
@@ -10996,6 +11002,8 @@ body.register footer {
     background: rgba(255, 255, 255, 0.08);
 }
 .profile-edit-section-icon.is-blue { color: #4d8cff; background: rgba(11, 86, 250, 0.15); }
+.profile-edit-section-icon.profile-verification-icon { background: none; }
+.profile-edit-section-icon.profile-verification-icon svg { width: 40px; height: 40px; stroke: none; }
 .profile-edit-visibility-badge {
     min-height: 32px;
     display: inline-flex;
@@ -18199,8 +18207,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page .coupon-slip-item {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    background: radial-gradient(circle at 18% 16%, rgba(11, 86, 250, 0.18), transparent 38%),
-        linear-gradient(180deg, #202832, #161b21);
+    background: var(--panel);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
         0 20px 44px rgba(0, 0, 0, 0.22);
