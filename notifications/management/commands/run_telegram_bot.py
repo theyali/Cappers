@@ -13,6 +13,7 @@ from notifications.telegram_bot import (
     telegram_webapp_url,
     web_app_menu_button,
 )
+from payments.services.telegram_stars import answer_pre_checkout_query, record_successful_payment
 
 
 class Command(BaseCommand):
@@ -52,7 +53,7 @@ class Command(BaseCommand):
             try:
                 payload = {
                     "timeout": 30,
-                    "allowed_updates": ["message"],
+                    "allowed_updates": ["message", "pre_checkout_query"],
                 }
                 if offset is not None:
                     payload["offset"] = offset
@@ -79,7 +80,15 @@ class Command(BaseCommand):
         )
 
     def _handle_update(self, update: dict) -> None:
+        # Telegram Stars: the question before the payment and the paid message.
+        if update.get("pre_checkout_query"):
+            answer_pre_checkout_query(update["pre_checkout_query"])
+            return
         message = update.get("message") or {}
+        if message.get("successful_payment"):
+            record_successful_payment(message["successful_payment"])
+            return
+
         chat = message.get("chat") or {}
         if chat.get("type") != "private":
             return

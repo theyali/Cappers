@@ -62,6 +62,8 @@ class PaymentProvider(ABC):
     title: ClassVar[str]
     # Text of the checkout button.
     pay_label: ClassVar[str]
+    # Paid only inside Telegram, so offered only in the Telegram Mini App.
+    telegram_only: ClassVar[bool] = False
 
     @classmethod
     @abstractmethod

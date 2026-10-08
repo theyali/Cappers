@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -85,6 +86,16 @@ NOWPAYMENTS_ORDER_TTL_MINUTES = env_int("NOWPAYMENTS_ORDER_TTL_MINUTES", 60)
 NOWPAYMENTS_FEE_PAID_BY_USER = env_bool("NOWPAYMENTS_FEE_PAID_BY_USER", False)
 # Cheaper products are not offered for crypto: coins have minimum amounts.
 NOWPAYMENTS_MIN_AMOUNT_RUB = env_int("NOWPAYMENTS_MIN_AMOUNT_RUB", 0)
+
+# Telegram Stars: invoices go through the bot (TG_BOT_TOKEN) and are paid inside Telegram.
+# Rubles one Star stands for when pricing products in Stars; empty keeps Stars off.
+try:
+    TELEGRAM_STARS_RUB_RATE = Decimal(os.getenv("TELEGRAM_STARS_RUB_RATE", "").strip() or "0")
+except InvalidOperation as error:
+    raise ImproperlyConfigured("TELEGRAM_STARS_RUB_RATE must be a number, e.g. 1.5.") from error
+TELEGRAM_STARS_ORDER_TTL_MINUTES = env_int("TELEGRAM_STARS_ORDER_TTL_MINUTES", 60)
+# Payment buttons inside the Telegram Mini App. Telegram takes only Stars for digital goods there.
+PAYMENTS_TELEGRAM_APP_PROVIDERS = env_list("PAYMENTS_TELEGRAM_APP_PROVIDERS", "telegram_stars")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

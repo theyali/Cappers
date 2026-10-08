@@ -535,6 +535,17 @@ NOWPAYMENTS_MIN_AMOUNT_RUB=0         # дешевле — кнопки «Опл�
 3. Уведомления приходят только на публичный https-адрес: сервер после слияния в `main` или локальный сайт через туннель (cloudflared, ngrok).
 4. Сценарии: счёт в рублях создаётся; успешная оплата выдаёт товар; частичная — нет; истёкший счёт; повторное уведомление ничего не меняет; в `logs/payments.log` нет «bad signature».
 
+## 7а. Telegram Stars (мини-приложение)
+
+Правила Telegram: цифровые товары внутри мини-приложения продаются только за Stars (валюта `XTR`). Поэтому в мини-приложении по умолчанию показываются только Stars (`PAYMENTS_TELEGRAM_APP_PROVIDERS=telegram_stars`), а на сайте Stars не показываются (`telegram_only`).
+
+- **Цена:** `TELEGRAM_STARS_RUB_RATE` — сколько рублей стоит одна звезда; цена в звёздах = рубли / курс, с округлением вверх. Пока курс не задан, провайдер выключен. Платёж хранится в рублях, полученные звёзды — в `paid_amount`/`paid_currency=XTR`.
+- **Счёт:** checkout вызывает `createInvoiceLink`, payload — `"{public_id}:{звёзды}"`; `telegram-app.js` открывает счёт через `Telegram.WebApp.openInvoice`, после оплаты — return-страница.
+- **Подтверждение:** вебхуков нет, всё приходит боту (`run_telegram_bot`, `allowed_updates` = `message`, `pre_checkout_query`). `pre_checkout_query` проверяется как Check-событие (заказ открыт, не истёк, сумма в звёздах совпадает со счётом) и получает ответ `answerPreCheckoutQuery` за 10 секунд. `successful_payment` — Pay-событие, ключ дедупликации — `telegram_payment_charge_id`.
+- **Срок заказа:** `TELEGRAM_STARS_ORDER_TTL_MINUTES` (60).
+- **Не сделано:** автоматический возврат (`refundStarPayment`) и сверка через `getStarTransactions`. Если оплату не удалось сохранить, бот пишет её данные в `logs/payments.log` (`Stars payment … not saved`) для ручного зачисления.
+- **Включение:** задать `TELEGRAM_STARS_RUB_RATE`, добавить `telegram_stars` в `PAYMENTS_ENABLED_PROVIDERS`, задеплоить (`deploy/deploy.sh` перезапускает бота).
+
 ---
 
 ## 8. Сценарии
@@ -703,6 +714,7 @@ def fulfill_payment(payment_id: int) -> Payment:
 6. ✅ **UI:** кнопки оплаты на `wallets/top_up`, на checkout подписки (страница и модалка) и на странице VIP; return-страница со статусом. Стили — только в `main.css`, без inline. Тесты: `payments/tests/test_checkout.py`.
 7. 🟡 **Запуск CloudPayments** в production за флагом `PAYMENTS_ENABLED_PROVIDERS=cloudpayments`. Код готов: флаг `PAYMENTS_STAFF_ONLY` прячет оплату от всех, кроме сотрудников, на время проверки тестового терминала; проверки `payments.W001–W003` предупреждают при деплое о незаданных ключах и о тестовых платежах, открытых для всех. Осталось пройти чек-лист 12.1.
 8. 🟡 **NOWPayments:** провайдер, IPN, перепроверка через API, минимальная сумма настройкой, тесты — готово; проверка в песочнице и включение — раздел 7.5.
+8а. ✅ **Telegram Stars** в мини-приложении: провайдер, счёт через `createInvoiceLink`, pre-checkout и оплата через бота, тесты (`payments/tests/test_telegram_stars.py`); включение — раздел 7а.
 9. **Возвраты и чеки 54-ФЗ:** `refunds.py`, Refund-вебхук, CloudKassir.
 10. **Мониторинг:** алерты, отчёт сверки с выписками провайдеров.
 

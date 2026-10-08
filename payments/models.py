@@ -11,6 +11,7 @@ class Payment(models.Model):
     class Provider(models.TextChoices):
         CLOUDPAYMENTS = "cloudpayments", "CloudPayments (карта)"
         NOWPAYMENTS = "nowpayments", "NOWPayments (крипто)"
+        TELEGRAM_STARS = "telegram_stars", "Telegram Stars"
 
     class Purpose(models.TextChoices):
         COIN_PACKAGE = "coin_package", "Пакет коинов"

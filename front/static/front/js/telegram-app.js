@@ -1,6 +1,6 @@
 (() => {
     // The Telegram Mini App shell: Telegram's colors, its system back button, haptics,
-    // swipe-to-close and external links. Loaded only when the page is open inside the Mini App.
+    // swipe-to-close, external links and Stars payments. Loaded only inside the Mini App.
     const SITE_COLOR = "#131313";
 
     const isSiteReferrer = () => {
@@ -36,6 +36,43 @@
                 telegram.openTelegramLink(url.href);
             } else {
                 telegram.openLink(url.href);
+            }
+        });
+    };
+
+    const bindStarsCheckout = (telegram) => {
+        // Stars are paid in Telegram's own payment sheet, without leaving the app.
+        document.addEventListener("click", async (event) => {
+            const button = event.target.closest("button[name='provider'][value='telegram_stars']");
+            if (!button || !button.form) return;
+            event.preventDefault();
+            if (button.disabled) return;
+
+            button.disabled = true;
+            const body = new FormData(button.form);
+            body.set("provider", button.value);
+            try {
+                const response = await fetch(button.formAction, {
+                    method: "POST",
+                    body,
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || "Не удалось создать оплату. Попробуйте позже.");
+                }
+                telegram.openInvoice(data.checkout_url, (status) => {
+                    button.disabled = false;
+                    if (status === "paid" || status === "pending") {
+                        window.location.assign(data.return_url);
+                    } else if (status === "failed") {
+                        telegram.showAlert("Оплата не прошла. Попробуйте ещё раз.");
+                    }
+                });
+            } catch (error) {
+                button.disabled = false;
+                telegram.showAlert(error.message);
             }
         });
     };
@@ -77,6 +114,7 @@
             telegram.disableVerticalSwipes();
         }
         bindHaptics(telegram);
+        bindStarsCheckout(telegram);
         setUpBackButton(telegram);
     };
 

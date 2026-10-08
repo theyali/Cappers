@@ -7,7 +7,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.urls import NoReverseMatch, reverse
 
 from back.models import Bookmaker, FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
-from cabinet.telegram_auth import TELEGRAM_APP_SESSION_KEY
+from cabinet.telegram_auth import in_telegram_app
 from front.models import WikiVideo
 
 
@@ -412,7 +412,7 @@ def website_settings(request):
         "mobile_coupon_nav_count": mobile_coupon_nav["count"],
         "mobile_coupon_nav_coefficient": mobile_coupon_nav["coefficient"],
         "mobile_quick_access_items": mobile_quick_access,
-        "is_telegram_app": bool(getattr(request, "session", {}).get(TELEGRAM_APP_SESSION_KEY)),
+        "is_telegram_app": in_telegram_app(request),
         "support_email": django_settings.SUPPORT_EMAIL,
         "administrator_email": django_settings.ADMINISTRATOR_EMAIL,
     }

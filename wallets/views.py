@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 
 from back.models import WebsiteSettings
 from cabinet.models import User
+from cabinet.telegram_auth import in_telegram_app
 from payments.utils import build_payment_options
 
 from .forms import CopyBettingForm
@@ -58,7 +59,9 @@ def top_up_balance(request):
     wallet = ensure_coin_wallet(request.user)
     packages = list(CoinPackage.objects.filter(is_active=True).order_by("order", "id"))
     for package in packages:
-        package.payment_options = build_payment_options(package.price_rub, request.user)
+        package.payment_options = build_payment_options(
+            package.price_rub, request.user, in_telegram_app=in_telegram_app(request)
+        )
 
     if request.method == "POST":
         package_id = request.POST.get("package_id")

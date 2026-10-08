@@ -39,6 +39,10 @@ TELEGRAM_FIELDS = (
 TELEGRAM_APP_SESSION_KEY = "telegram_mini_app"
 
 
+def in_telegram_app(request) -> bool:
+    return bool(getattr(request, "session", {}).get(TELEGRAM_APP_SESSION_KEY))
+
+
 class TelegramIdentityConflict(Exception):
     pass
 
