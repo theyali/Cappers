@@ -37,6 +37,7 @@ from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import build_match_winner_odds
+from game.services.card_backgrounds import assign_backgrounds, background_urls
 from notifications.models import MatchWatch
 from pages.models import PageSEO
 
@@ -296,6 +297,10 @@ def _latest_home_predictions() -> list[dict]:
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
     cover_pools = _home_cover_pools()
+    assign_backgrounds(
+        (prediction, getattr(prediction, "home_positions", None) or [])
+        for prediction in queryset
+    )
 
     cards = []
     for prediction in queryset:
@@ -319,11 +324,13 @@ def _latest_home_predictions() -> list[dict]:
         starts_at = "Время не указано"
         starts_date = "Дата не указана"
         starts_time = "—"
+        starts_short = ""
         if match.starts_at:
             local_starts_at = timezone.localtime(match.starts_at)
             starts_at = local_starts_at.strftime("%d.%m · %H:%M")
             starts_date = date_format(local_starts_at, "j E")
             starts_time = local_starts_at.strftime("%H:%M")
+            starts_short = f"{date_format(local_starts_at, 'j b')} · {starts_time}"
 
         count = len(positions_list)
         cover = _home_slider_cover(prediction, match, count, cover_pools)
@@ -366,6 +373,9 @@ def _latest_home_predictions() -> list[dict]:
                 "starts_at": starts_at,
                 "starts_date": starts_date,
                 "starts_time": starts_time,
+                "starts_short": starts_short,
+                "pick_short": "Экспресс" if count > 1 else item.selection,
+                "mobile_background": background_urls(prediction.mobile_card_background),
                 "expert": expert_name,
                 "expert_username": author.username,
                 "expert_initials": _initials(expert_name),

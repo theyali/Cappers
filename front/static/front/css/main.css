@@ -2041,6 +2041,94 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     to { box-shadow: 0 0 32px 12px rgba(255, 255, 255, 0.42), 0 14px 26px rgba(0, 0, 0, 0.3); }
 }
 .roulette-sheet-confetti { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; pointer-events: none; }
+/* Home slider for phones and the Telegram Mini App (mobile.css shows it there). */
+.home-mobile-slider { display: none; padding: 22px 0 6px; }
+.home-mobile-slider-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.home-mobile-slider-head .home-eyebrow { margin-bottom: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
+.home-mobile-slider-head h2 { margin: 0; font-size: 38px; line-height: 1; }
+.home-mobile-slider-head h2 mark { display: block; }
+.home-mobile-slider-all { padding-bottom: 6px; color: var(--muted); font-size: 18px; font-weight: 800; text-decoration: none; }
+.home-mobile-slider-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.home-mobile-slider-track::-webkit-scrollbar { display: none; }
+.home-mobile-card {
+    position: relative;
+    flex: 0 0 min(84%, 380px);
+    aspect-ratio: 632 / 408;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: hidden;
+    padding: 16px 18px;
+    border-radius: 26px;
+    background: var(--panel);
+    color: #fff;
+    text-decoration: none;
+    scroll-snap-align: start;
+}
+.home-mobile-card > * { position: relative; z-index: 1; }
+.home-mobile-card .home-mobile-card-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; }
+.home-mobile-card-expert { display: flex; align-items: center; gap: 7px; max-width: 100%; }
+.home-mobile-card-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+.home-mobile-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.home-mobile-card-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-card .capper-verified-badge { flex: 0 0 auto; }
+.home-mobile-card-rating { flex: 0 0 auto; padding: 3px 7px; border-radius: 8px; background: var(--yellow); color: var(--ink); font-size: 13px; font-weight: 800; }
+.home-mobile-card-meta {
+    max-width: 64%;
+    margin-top: auto;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.home-mobile-card-teams { display: grid; max-width: 64%; margin-top: 6px; font-size: 17px; font-weight: 800; line-height: 1.2; }
+.home-mobile-card-teams span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-card-date { margin-top: 5px; color: rgba(255, 255, 255, 0.72); font-size: 13px; font-weight: 700; }
+.home-mobile-card-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 80%;
+    margin-top: auto;
+    padding: 8px 12px 8px 14px;
+    border-radius: 12px;
+    background: var(--yellow);
+    color: var(--ink);
+}
+.home-mobile-card-pick span { min-width: 0; overflow: hidden; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-card-pick b { flex: 0 0 auto; font-size: 18px; font-weight: 900; }
+.home-mobile-card-pick svg { flex: 0 0 auto; }
+.home-mobile-card.is-light { color: var(--ink); }
+.home-mobile-card.is-light .home-mobile-card-meta,
+.home-mobile-card.is-light .home-mobile-card-date { color: rgba(19, 19, 19, 0.66); }
+.home-mobile-slider-dots { display: flex; justify-content: center; gap: 6px; padding-top: 16px; }
+.home-mobile-slider-dots span { width: 7px; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.24); transition: width 0.2s, background 0.2s; }
+.home-mobile-slider-dots span.is-active { width: 26px; background: var(--yellow); }
+.home-mobile-slider-empty { margin: 18px 0 0; color: var(--muted); }
 .mobile-nav-roulette .nav-notification-badge { top: -26px; right: 2px; }
 /* Page changes: the Mini App fades the content while its header and menu stay put;
    the regular site swaps pages instantly, as before. */
