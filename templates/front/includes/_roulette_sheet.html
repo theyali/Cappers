@@ -1,0 +1,52 @@
+{% load static %}
+{# The bonus wheel sheet, opened from the wheel in the bottom menu; roulette-sheet.js runs it. #}
+<div
+    class="roulette-sheet"
+    data-roulette-sheet
+    data-state-url="{% url 'cabinet:roulette_state' %}"
+    data-spin-url="{% url 'cabinet:roulette_spin' %}"
+    data-csrf="{{ csrf_token }}"
+    data-gift-icon="{% static 'front/img/roulette/gift.svg' %}"
+    data-tick-sound="{% static 'front/sounds/roulette-tick.mp3' %}"
+    data-win-sound="{% static 'front/sounds/roulette-win.mp3' %}"
+    hidden
+>
+    <div class="roulette-sheet-backdrop" data-roulette-sheet-close></div>
+    <section class="roulette-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="roulette-sheet-title">
+        <div class="roulette-sheet-sparkles" aria-hidden="true">
+            <img class="roulette-sheet-sparkle is-1" src="{% static 'front/img/roulette/sparkle-1.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-2" src="{% static 'front/img/roulette/sparkle-2.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-3" src="{% static 'front/img/roulette/sparkle-3.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-4" src="{% static 'front/img/roulette/sparkle-1.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-5" src="{% static 'front/img/roulette/sparkle-2.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-6" src="{% static 'front/img/roulette/sparkle-3.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-7" src="{% static 'front/img/roulette/sparkle-1.svg' %}" alt="" loading="lazy">
+            <img class="roulette-sheet-sparkle is-8" src="{% static 'front/img/roulette/sparkle-3.svg' %}" alt="" loading="lazy">
+        </div>
+
+        <button class="roulette-sheet-close" type="button" data-roulette-sheet-close aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+        </button>
+        <img class="roulette-sheet-logo" src="{% static 'front/img/logo.png' %}" alt="КапперХаб" width="44" height="44" loading="lazy">
+
+        <div class="roulette-sheet-copy" aria-live="polite">
+            <img class="roulette-sheet-prize" src="{% static 'front/img/roulette/gift.svg' %}" alt="" width="112" height="112" loading="lazy" data-roulette-sheet-prize>
+            <h2 id="roulette-sheet-title" data-roulette-sheet-title>Колесо бонусов</h2>
+            <p data-roulette-sheet-text>Загружаем призы…</p>
+            <button class="roulette-sheet-code" type="button" data-roulette-sheet-code hidden></button>
+            <small data-roulette-sheet-note></small>
+        </div>
+
+        <div class="roulette-sheet-wheel">
+            <span class="roulette-sheet-pointer" aria-hidden="true"></span>
+            <svg class="roulette-sheet-disc" viewBox="-320 -320 640 640" aria-hidden="true" data-roulette-sheet-disc></svg>
+        </div>
+
+        <div class="roulette-sheet-actions">
+            <button class="roulette-sheet-button is-primary" type="button" data-roulette-sheet-spin disabled>Загрузка…</button>
+            <a class="roulette-sheet-button" href="{% url 'cabinet:bonuses' %}" data-roulette-sheet-bonuses>Мои бонусы</a>
+        </div>
+
+        <canvas class="roulette-sheet-confetti" aria-hidden="true" data-roulette-sheet-confetti></canvas>
+    </section>
+</div>

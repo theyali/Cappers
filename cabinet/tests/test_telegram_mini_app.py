@@ -78,7 +78,6 @@ class TelegramMiniAppShellTests(TestCase):
         self.assertNotContains(response, "is-telegram-app")
         self.assertNotContains(response, "telegram-app-header")
         self.assertNotContains(response, "telegram-web-app.js")
-        self.assertNotContains(response, "mobile-nav-roulette")
         self.assertContains(response, 'class="site-header"')
 
     def test_login_page_does_not_wait_for_telegram_org(self):
@@ -87,3 +86,37 @@ class TelegramMiniAppShellTests(TestCase):
         self.assertContains(response, "front/js/telegram-webapp-login.js")
         self.assertContains(response, 'data-next="/cabinet/"')
         self.assertNotContains(response, "telegram.org")
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class BottomMenuWheelTests(TestCase):
+    def test_menu_has_five_items_with_the_wheel_in_the_middle(self):
+        reader = User.objects.create_user(username="menu-reader", password="x", role=User.Role.READER)
+        self.client.force_login(reader)
+
+        html = self.client.get(reverse("front:index")).content.decode()
+
+        items = ["mobile-nav-home", "mobile-nav-matches", "mobile-nav-roulette", "mobile-nav-cappers", "mobile-nav-predictions"]
+        positions = [html.index(f"mobile-app-nav-item {item}") for item in items]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn("mobile-nav-feed", html)
+        self.assertNotIn("mobile-nav-tournaments", html)
+
+    def test_signed_in_user_gets_the_wheel_sheet(self):
+        reader = User.objects.create_user(username="sheet-reader", password="x", role=User.Role.READER)
+        self.client.force_login(reader)
+
+        response = self.client.get(reverse("front:index"))
+
+        self.assertContains(response, 'class="roulette-sheet"')
+        self.assertContains(response, f'data-spin-url="{reverse("cabinet:roulette_spin")}"')
+        self.assertContains(response, "front/sounds/roulette-tick.mp3")
+        self.assertContains(response, "front/sounds/roulette-win.mp3")
+        self.assertContains(response, "front/js/roulette-sheet.js")
+
+    def test_guest_wheel_leads_to_the_bonuses_page(self):
+        response = self.client.get(reverse("front:index"))
+
+        self.assertContains(response, "mobile-nav-roulette")
+        self.assertNotContains(response, 'class="roulette-sheet"')
+        self.assertNotContains(response, "front/js/roulette-sheet.js")

@@ -42,7 +42,7 @@
 
     document.addEventListener("click", (event) => {
         const link = event.target.closest("a[href]");
-        if (!link || isModifiedClick(event)) return;
+        if (!link || event.defaultPrevented || isModifiedClick(event)) return;
         if (link.target && link.target !== "_self") return;
         if (link.hasAttribute("download")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
