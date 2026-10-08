@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.core.files import File
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -5,12 +8,13 @@ from cabinet.roulette.models import RoulettePrize, RoulettePrizeCondition
 
 Reward = RoulettePrize.RewardType
 Audience = RoulettePrizeCondition.ConditionType
+ICONS_DIR = Path(__file__).resolve().parents[2] / "roulette" / "prize_icons"
 
 # Wheel prizes by audience; no conditions means everyone. The wheel shows at most
 # 10 sectors, and every mix stays within that: a reader, a VIP reader and a capper
 # see 8 sectors, a VIP capper 10. Sector order alternates big and small prizes.
 # Rating boost is left out: nothing on the site uses it yet. Free predictions go to
-# cappers only, since only they write coupons.
+# cappers only, since only they write coupons. Icons come from roulette/prize_icons.
 ROULETTE_PRIZES = (
     {
         "title": "50 коинов",
@@ -19,6 +23,7 @@ ROULETTE_PRIZES = (
         "reward_value": 50,
         "weight": 30,
         "sector_order": 10,
+        "icon": "coins.png",
         "audience": (),
     },
     {
@@ -28,6 +33,7 @@ ROULETTE_PRIZES = (
         "reward_value": 100,
         "weight": 18,
         "sector_order": 20,
+        "icon": "coins.png",
         "audience": (Audience.READERS_ONLY,),
     },
     {
@@ -37,6 +43,7 @@ ROULETTE_PRIZES = (
         "reward_value": 200,
         "weight": 18,
         "sector_order": 30,
+        "icon": "coins.png",
         "audience": (Audience.ANALYSTS_ONLY,),
     },
     {
@@ -46,6 +53,7 @@ ROULETTE_PRIZES = (
         "reward_value": 0,
         "weight": 20,
         "sector_order": 40,
+        "icon": "",
         "audience": (),
     },
     {
@@ -55,6 +63,7 @@ ROULETTE_PRIZES = (
         "reward_value": 3,
         "weight": 4,
         "sector_order": 50,
+        "icon": "vip.png",
         "audience": (Audience.VIP_ONLY,),
     },
     {
@@ -64,6 +73,7 @@ ROULETTE_PRIZES = (
         "reward_value": 1,
         "weight": 5,
         "sector_order": 60,
+        "icon": "vip.png",
         "audience": (Audience.READERS_ONLY, Audience.WITHOUT_VIP),
     },
     {
@@ -73,6 +83,7 @@ ROULETTE_PRIZES = (
         "reward_value": 1,
         "weight": 12,
         "sector_order": 70,
+        "icon": "free_prediction.png",
         "audience": (Audience.ANALYSTS_ONLY,),
     },
     {
@@ -82,6 +93,7 @@ ROULETTE_PRIZES = (
         "reward_value": 1,
         "weight": 8,
         "sector_order": 80,
+        "icon": "spin.png",
         "audience": (),
     },
     {
@@ -91,6 +103,7 @@ ROULETTE_PRIZES = (
         "reward_value": 3,
         "weight": 2,
         "sector_order": 90,
+        "icon": "vip.png",
         "audience": (Audience.READERS_ONLY, Audience.WITHOUT_VIP),
     },
     {
@@ -100,6 +113,7 @@ ROULETTE_PRIZES = (
         "reward_value": 3,
         "weight": 4,
         "sector_order": 100,
+        "icon": "free_prediction.png",
         "audience": (Audience.ANALYSTS_ONLY,),
     },
     {
@@ -109,6 +123,7 @@ ROULETTE_PRIZES = (
         "reward_value": 400,
         "weight": 8,
         "sector_order": 110,
+        "icon": "coins.png",
         "audience": (Audience.VIP_ONLY,),
     },
     {
@@ -118,6 +133,7 @@ ROULETTE_PRIZES = (
         "reward_value": 300,
         "weight": 4,
         "sector_order": 120,
+        "icon": "coins.png",
         "audience": (),
     },
     {
@@ -127,6 +143,7 @@ ROULETTE_PRIZES = (
         "reward_value": 150,
         "weight": 10,
         "sector_order": 130,
+        "icon": "coins.png",
         "audience": (Audience.READERS_ONLY,),
     },
     {
@@ -136,6 +153,7 @@ ROULETTE_PRIZES = (
         "reward_value": 500,
         "weight": 3,
         "sector_order": 140,
+        "icon": "coins.png",
         "audience": (Audience.ANALYSTS_ONLY,),
     },
 )
@@ -151,7 +169,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--update",
             action="store_true",
-            help="Bring existing prizes with the same titles back to this set, audience included.",
+            help="Bring existing prizes with the same titles back to this set, audience included; icons uploaded in the admin stay.",
         )
         parser.add_argument(
             "--disable-other-prizes",
@@ -164,7 +182,7 @@ class Command(BaseCommand):
         counters = {"created": 0, "updated": 0, "skipped": 0}
         seeded_ids = []
         for data in ROULETTE_PRIZES:
-            fields = {key: value for key, value in data.items() if key not in ("title", "audience")}
+            fields = {key: value for key, value in data.items() if key not in ("title", "audience", "icon")}
             fields["is_active"] = True
             fields["condition_logic"] = RoulettePrize.ConditionLogic.ALL
             prize = RoulettePrize.objects.filter(title=data["title"]).order_by("id").first()
@@ -179,6 +197,10 @@ class Command(BaseCommand):
                 counters["skipped"] += 1
                 seeded_ids.append(prize.pk)
                 continue
+            # An icon uploaded in the admin stays; only prizes without one get the default.
+            if data["icon"] and not prize.icon:
+                with (ICONS_DIR / data["icon"]).open("rb") as icon:
+                    prize.icon.save(data["icon"], File(icon), save=False)
             prize.full_clean()
             prize.save()
             self._set_audience(prize, data["audience"])

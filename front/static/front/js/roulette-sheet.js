@@ -273,10 +273,10 @@
         const maxChars = Math.max(4, Math.floor((width * 0.9) / (fontSize * 0.62)));
         const label = svg("g", { transform: `rotate(${middle})` }, disc);
         if (prize.icon) {
-            const size = count <= 8 ? 46 : 38;
-            svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 18, width: size, height: size }, label);
+            const size = count <= 8 ? 58 : 46;
+            svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 14, width: size, height: size }, label);
         }
-        const text = svg("text", { class: `roulette-sheet-label is-${tone}`, "font-size": fontSize, y: -RADIUS + (prize.icon ? 96 : 60) }, label);
+        const text = svg("text", { class: `roulette-sheet-label is-${tone}`, "font-size": fontSize, y: -RADIUS + (prize.icon ? 104 : 60) }, label);
         titleLines(prize.title, maxChars, count <= 4 ? 3 : 2).forEach((line, lineIndex) => {
             svg("tspan", { x: 0, dy: lineIndex ? Math.round(fontSize * 1.08) : 0 }, text).textContent = line;
         });
