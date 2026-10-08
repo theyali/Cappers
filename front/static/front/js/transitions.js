@@ -19,6 +19,8 @@
     };
 
     const transitionDuration = 420;
+    // In the Telegram Mini App pages change at once and View Transitions animate them.
+    const isTelegramApp = document.body.classList.contains("is-telegram-app");
     const couponDetailPath = /^\/predictions\/\d+\/?$/;
     const matchDetailPath = /^\/games\/[^/]+\/?$/;
 
@@ -57,6 +59,7 @@
         if (url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return;
 
         rememberCouponMatchRoundTrip(new URL(window.location.href), url);
+        if (isTelegramApp) return;
         event.preventDefault();
         showTransition();
         window.setTimeout(() => {
@@ -67,7 +70,7 @@
     document.addEventListener("submit", (event) => {
         const form = event.target;
         if (!(form instanceof HTMLFormElement)) return;
-        if (event.defaultPrevented) return;
+        if (event.defaultPrevented || isTelegramApp) return;
         if (form.matches("[data-no-transition]")) return;
         if (form.dataset.transitionSubmitted === "true") return;
 

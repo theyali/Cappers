@@ -65,6 +65,9 @@ class TelegramMiniAppShellTests(TestCase):
         self.assertNotContains(response, 'class="site-topbar"')
         self.assertNotContains(response, 'class="site-header"')
         self.assertNotContains(response, "site-footer")
+        # The roulette moves from the floating button to the middle of the bottom menu.
+        self.assertContains(response, "mobile-nav-roulette")
+        self.assertNotContains(response, 'class="fixed-roulette"')
 
     def test_regular_site_keeps_its_header(self):
         user = User.objects.create_user(username="web-reader", password="x", role=User.Role.READER)
@@ -75,6 +78,7 @@ class TelegramMiniAppShellTests(TestCase):
         self.assertNotContains(response, "is-telegram-app")
         self.assertNotContains(response, "telegram-app-header")
         self.assertNotContains(response, "telegram-web-app.js")
+        self.assertNotContains(response, "mobile-nav-roulette")
         self.assertContains(response, 'class="site-header"')
 
     def test_login_page_does_not_wait_for_telegram_org(self):

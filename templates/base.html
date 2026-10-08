@@ -42,7 +42,7 @@
         </ul>
     {% endif %}
 
-    {% if request.resolver_match.app_name != 'cabinet' %}
+    {% if request.resolver_match.app_name != 'cabinet' and not is_telegram_app %}
         <a
             href="{% url 'cabinet:bonuses' %}"
             class="fixed-roulette"
@@ -123,6 +123,20 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Лента</span>
         </a>
+        {% if is_telegram_app %}
+            <a
+                class="mobile-app-nav-item mobile-nav-roulette"
+                href="{% url 'cabinet:bonuses' %}"
+                aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
+                data-fixed-roulette
+                data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
+            >
+                <span class="mobile-nav-roulette-wheel" aria-hidden="true">{% include "front/svgs/roulette.svg" %}</span>
+                {% if roulette_available_spins %}
+                    <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
+                {% endif %}
+            </a>
+        {% endif %}
         {% if request.user.is_authenticated and request.user.is_analyst %}
             <a
                 class="mobile-app-nav-item mobile-nav-coupons"
