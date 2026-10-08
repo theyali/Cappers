@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import time
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import parse_qsl
 
 from django.conf import settings
 from django.contrib import messages
@@ -45,32 +45,6 @@ def _telegram_bot_id() -> str:
     return bot_id if bot_id.isdigit() else ""
 
 
-def _site_base_url() -> str:
-    return (getattr(settings, "SITE_BASE_URL", "") or "").strip().rstrip("/")
-
-
-def _telegram_oauth_url(return_path: str) -> str:
-    bot_id = _telegram_bot_id()
-    base_url = _site_base_url()
-    if not bot_id or not base_url:
-        return ""
-
-    parsed_base = urlsplit(base_url)
-    if not parsed_base.scheme or not parsed_base.netloc:
-        return ""
-
-    origin = urlunsplit((parsed_base.scheme, parsed_base.netloc, "", "", ""))
-    return_to = urljoin(origin + "/", return_path.lstrip("/"))
-    return "https://oauth.telegram.org/auth?" + urlencode(
-        {
-            "bot_id": bot_id,
-            "origin": origin,
-            "request_access": "write",
-            "return_to": return_to,
-        }
-    )
-
-
 class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
     authentication_form = LoginForm
@@ -79,9 +53,6 @@ class TelegramAwareLoginView(auth_views.LoginView):
         context = super().get_context_data(**kwargs)
         context["telegram_bot_id"] = _telegram_bot_id()
         context["telegram_auth_url"] = reverse("cabinet:telegram_login")
-        context["telegram_oauth_url"] = _telegram_oauth_url(
-            reverse("cabinet:telegram_login")
-        )
         context["page_class"] = "auth"
 
         next_url = self.request.GET.get(self.redirect_field_name, "")
