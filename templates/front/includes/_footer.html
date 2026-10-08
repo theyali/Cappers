@@ -29,7 +29,6 @@
 
     <div class="site-footer-actions">
         <section class="site-footer-support" aria-label="Поддержка">
-            <span class="site-footer-section-label">Поддержка</span>
             <strong>{{ website_settings.footer_support_title|default:"Поддержка" }}</strong>
             <div class="site-footer-support-contacts">
                 {% if website_settings.footer_support_phone %}
@@ -37,12 +36,8 @@
                 {% endif %}
                 {% if website_settings.footer_support_email %}
                     <a href="mailto:{{ website_settings.footer_support_email }}">{{ website_settings.footer_support_email }}</a>
-                {% endif %}
-                {% if support_email and support_email != website_settings.footer_support_email %}
+                {% elif support_email %}
                     <a href="mailto:{{ support_email }}">{{ support_email }}</a>
-                {% endif %}
-                {% if administrator_email %}
-                    <a href="mailto:{{ administrator_email }}">{{ administrator_email }}</a>
                 {% endif %}
             </div>
         </section>

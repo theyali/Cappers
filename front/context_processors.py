@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from django.conf import settings as django_settings
 from django.core.cache import cache
 from django.db.models import Count, Prefetch
@@ -8,7 +10,7 @@ from back.models import Bookmaker, FooterButton, FooterLink, FooterLinkGroup, We
 from front.models import WikiVideo
 
 
-GLOBAL_CONTEXT_CACHE_KEY = "website-context:v1"
+GLOBAL_CONTEXT_CACHE_KEY = "website-context:v2"
 GLOBAL_CONTEXT_CACHE_SECONDS = 120
 BOOKMAKERS_CONTEXT_CACHE_KEY = "bookmakers-context:v1"
 BOOKMAKERS_CONTEXT_CACHE_SECONDS = 120
@@ -27,6 +29,24 @@ FOOTER_VISIBLE_ROUTES = {
     "front:about",
     "front:rules",
 }
+FOOTER_REQUIRED_LINKS = (
+    {
+        "group_title": "Сервис",
+        "group_id": "service",
+        "group_order": 20,
+        "title": "О нас",
+        "url": "/about/",
+        "order": 5,
+    },
+    {
+        "group_title": "Документы",
+        "group_id": "documents",
+        "group_order": 30,
+        "title": "Правила",
+        "url": "/rules/",
+        "order": 5,
+    },
+)
 
 
 def _route_url(name: str):
@@ -48,6 +68,50 @@ def _cache_set(key: str, value, timeout: int) -> None:
         cache.set(key, value, timeout=timeout)
     except Exception:
         pass
+
+
+def _ensure_required_footer_links(footer_groups):
+    groups = list(footer_groups)
+    groups_by_title = {group.title: group for group in groups}
+
+    for link_data in FOOTER_REQUIRED_LINKS:
+        group = groups_by_title.get(link_data["group_title"])
+        if group is None:
+            group = SimpleNamespace(
+                id=f"fallback-{link_data['group_id']}",
+                title=link_data["group_title"],
+                order=link_data["group_order"],
+                active_links=[],
+            )
+            groups.append(group)
+            groups_by_title[group.title] = group
+
+        links = list(getattr(group, "active_links", None) or [])
+        has_link = any(getattr(item, "url", "") == link_data["url"] for item in links)
+        if has_link:
+            group.active_links = links
+            continue
+
+        links.append(
+            SimpleNamespace(
+                id=f"fallback-{link_data['group_id']}-{link_data['order']}",
+                title=link_data["title"],
+                url=link_data["url"],
+                order=link_data["order"],
+                is_active=True,
+            )
+        )
+        links.sort(key=lambda item: (getattr(item, "order", 0), str(getattr(item, "id", ""))))
+        group.active_links = links
+
+    return [
+        group
+        for group in sorted(
+            groups,
+            key=lambda item: (getattr(item, "order", 0), str(getattr(item, "id", ""))),
+        )
+        if getattr(group, "active_links", None)
+    ]
 
 
 def _load_global_context() -> dict:
@@ -79,9 +143,7 @@ def _load_global_context() -> dict:
         if item.kind == "app" and not (item.url or "").strip("# "):
             continue
         footer_buttons_by_kind.setdefault(item.kind, []).append(item)
-    footer_groups = [
-        group for group in footer_groups if getattr(group, "active_links", None)
-    ]
+    footer_groups = _ensure_required_footer_links(footer_groups)
 
     payload = {
         "settings": settings,

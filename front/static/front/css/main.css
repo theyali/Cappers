@@ -8313,6 +8313,15 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .prediction-sidebar-block { min-width: 0; display: grid; gap: 12px; }
 .favorites-filter-block { padding: 10px; border-radius: 18px; background: var(--panel); }
 .cappers-table-filter-block { padding: 10px; border-radius: 18px; background: var(--panel); }
+.cappers-table-shell .predictions-layout > .predictions-filter-sidebar {
+    --cappers-filter-sticky-top: 116px;
+    --cappers-filter-bottom-gap: 128px;
+    max-height: calc(100dvh - var(--cappers-filter-sticky-top) - var(--cappers-filter-bottom-gap));
+    padding-bottom: var(--cappers-filter-bottom-gap);
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-padding-bottom: var(--cappers-filter-bottom-gap);
+}
 .favorites-empty { min-height: 360px; gap: 0; padding: clamp(34px, 6vw, 64px) 24px; background: var(--panel); }
 .favorites-empty-logo {
     width: 92px;
