@@ -44,6 +44,8 @@ def _condition_matches(condition, *, user, reward_state, now, activity_count) ->
         return getattr(user, "role", "") == "analyst"
     if condition_type == condition.ConditionType.WITHOUT_VIP:
         return not _has_active_vip(user, reward_state, now)
+    if condition_type == condition.ConditionType.VIP_ONLY:
+        return _has_active_vip(user, reward_state, now)
     if condition_type == condition.ConditionType.MIN_ACCOUNT_AGE_DAYS:
         joined_at = getattr(user, "date_joined", None)
         if not joined_at:
