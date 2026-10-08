@@ -32,6 +32,7 @@ from .paid_predictions import (
 )
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
+from .telegram_auth import in_telegram_app
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
@@ -411,7 +412,11 @@ def expert_profile(request, username: str):
         and request.user.pk != profile.user_id
         and context["paid_predictions_enabled"]
     ):
-        context.update(build_paid_checkout_context(request.user, profile, context["paid_plans"]))
+        context.update(
+            build_paid_checkout_context(
+                request.user, profile, context["paid_plans"], in_telegram_app=in_telegram_app(request)
+            )
+        )
     latest_coupons = (
         _published_queryset()
         .filter(

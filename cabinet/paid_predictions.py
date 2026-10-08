@@ -78,14 +78,14 @@ def get_active_paid_plans(analyst: User):
     ).order_by("order", "duration_days", "id")
 
 
-def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list) -> dict:
+def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list, *, in_telegram_app: bool = False) -> dict:
     """Plan picker for buying a subscription with the real balance or through a provider."""
     from payments.utils import build_payment_options
 
     real_balance = ensure_real_balance(user)
     legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
     prices = [plan.price for plan in paid_plans] or [legacy_paid_price or 0]
-    payment_options = build_payment_options(max(prices), user)
+    payment_options = build_payment_options(max(prices), user, in_telegram_app=in_telegram_app)
     checked_plan_marked = False
     for paid_plan in paid_plans:
         paid_plan.can_afford = real_balance.balance >= paid_plan.price

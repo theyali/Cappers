@@ -12,7 +12,19 @@
     };
 
     // Telegram opens the page with the signed login data after "#", as tgWebAppData.
-    const initData = new URLSearchParams(window.location.hash.slice(1)).get("tgWebAppData") || "";
+    const launchParams = new URLSearchParams(window.location.hash.slice(1));
+    const initData = launchParams.get("tgWebAppData") || "";
+
+    // The Telegram script on the next pages has no "#" data and reads it from here
+    // (its own storage key); without it the script cannot tell the Telegram version.
+    try {
+        window.sessionStorage.setItem(
+            "__telegram__initParams",
+            JSON.stringify(Object.fromEntries(launchParams))
+        );
+    } catch (error) {
+        // The site still works; only Telegram's back button stays hidden.
+    }
     if (!initData) {
         fail(
             window.TelegramWebviewProxy

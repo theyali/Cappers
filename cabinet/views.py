@@ -60,6 +60,7 @@ from .services.capper_articles import (
 )
 from .services.daily_tasks import record_daily_task_action
 from .services.verification import grant_verification, verification_state
+from .telegram_auth import in_telegram_app
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
@@ -1141,7 +1142,12 @@ def subscribe_paid_predictions_view(request, user_id):
                 "analyst_profile": profile,
                 "expert_name": profile.display_name or analyst.get_full_name() or analyst.username,
                 "next_url": raw_next_url,
-                **build_paid_checkout_context(request.user, profile, list(get_active_paid_plans(analyst))),
+                **build_paid_checkout_context(
+                    request.user,
+                    profile,
+                    list(get_active_paid_plans(analyst)),
+                    in_telegram_app=in_telegram_app(request),
+                ),
             },
         )
 

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -13,14 +14,21 @@ DONE_TEXTS = {
 }
 
 
-def build_payment_options(amount_rub, user) -> list[dict]:
-    """Pay buttons for a product at this price; empty while payments are off."""
+def build_payment_options(amount_rub, user, *, in_telegram_app: bool = False) -> list[dict]:
+    """Pay buttons for a product at this price; empty while payments are off.
+
+    Inside the Telegram Mini App only PAYMENTS_TELEGRAM_APP_PROVIDERS are offered,
+    since Telegram takes only Stars for digital goods there; on the site Stars are
+    not offered, since they are paid only inside Telegram.
+    """
     if not can_pay_with_providers(user):
         return []
-    return [
-        {"code": provider.code, "label": provider.pay_label}
-        for provider in PaymentProviderFactory.available_for(amount_rub)
-    ]
+    providers = PaymentProviderFactory.available_for(amount_rub)
+    if in_telegram_app:
+        providers = [provider for provider in providers if provider.code in settings.PAYMENTS_TELEGRAM_APP_PROVIDERS]
+    else:
+        providers = [provider for provider in providers if not provider.telegram_only]
+    return [{"code": provider.code, "label": provider.pay_label} for provider in providers]
 
 
 def build_payment_status(payment: Payment) -> dict:

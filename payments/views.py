@@ -41,9 +41,17 @@ def checkout(request, purpose: str):
     if purpose not in back_urls:
         raise Http404
     back_url = back_urls[purpose]
-    if rate_limited(f"payments:checkout:{request.user.pk}", limit=CHECKOUT_ATTEMPTS_LIMIT, window=10 * 60):
-        messages.error(request, "Слишком много попыток оплаты. Попробуйте через несколько минут.")
+    # The Mini App pays Stars in Telegram's own payment sheet and asks for JSON.
+    wants_json = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    def refuse(message: str):
+        if wants_json:
+            return JsonResponse({"ok": False, "message": message}, status=400)
+        messages.error(request, message)
         return redirect(back_url)
+
+    if rate_limited(f"payments:checkout:{request.user.pk}", limit=CHECKOUT_ATTEMPTS_LIMIT, window=10 * 60):
+        return refuse("Слишком много попыток оплаты. Попробуйте через несколько минут.")
 
     try:
         if purpose == Payment.Purpose.COIN_PACKAGE:
@@ -54,8 +62,15 @@ def checkout(request, purpose: str):
             order = vip_plan_order(request.user, data.get("plan_id"), switch=data.get("purchase_mode") == "switch")
         payment = start_checkout(request.user, order, data.get("provider", ""), site_url=request.build_absolute_uri("/"))
     except ValidationError as exc:
-        messages.error(request, exc.messages[0] if exc.messages else str(exc))
-        return redirect(back_url)
+        return refuse(exc.messages[0] if exc.messages else str(exc))
+    if wants_json:
+        return JsonResponse(
+            {
+                "ok": True,
+                "checkout_url": payment.checkout_url,
+                "return_url": reverse("payments:return", args=[payment.public_id]),
+            }
+        )
     return redirect(payment.checkout_url)
 
 

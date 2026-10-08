@@ -25,9 +25,13 @@
     <link rel="stylesheet" href="{% static 'front/css/mobile.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{{ page_class|default:'' }} {{ page_layout_class|default:'' }}">
-    {% include "front/includes/_top_header.html" %}
-    {% include "front/includes/_main_header.html" %}
+<body class="{{ page_class|default:'' }} {{ page_layout_class|default:'' }}{% if is_telegram_app %} is-telegram-app{% endif %}">
+    {% if is_telegram_app %}
+        {% include "front/includes/_telegram_app_header.html" %}
+    {% else %}
+        {% include "front/includes/_top_header.html" %}
+        {% include "front/includes/_main_header.html" %}
+    {% endif %}
     {% include "front/includes/_mobile_offcanvas.html" %}
 
     {% if messages %}
@@ -38,7 +42,7 @@
         </ul>
     {% endif %}
 
-    {% if request.resolver_match.app_name != 'cabinet' %}
+    {% if request.resolver_match.app_name != 'cabinet' and not is_telegram_app %}
         <a
             href="{% url 'cabinet:bonuses' %}"
             class="fixed-roulette"
@@ -57,7 +61,7 @@
         </a>
     {% endif %}
 
-    {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link %}
+    {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link and not is_telegram_app %}
         <div class="fixed-tg-btn-wrapper">
             <a href="{{ request.website_settings.fixed_tg_link }}"
                target="_blank"
@@ -72,7 +76,7 @@
     {% endif %}
 
     <main class="site-main {{ page_class|default:'' }} {{ page_layout_class|default:'' }}">
-        {% if breadcrumbs and page_class != 'profile' %}
+        {% if breadcrumbs and page_class != 'profile' and not is_telegram_app %}
             <div class="container breadcrumbs-container">
                 <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
                     {% for crumb in breadcrumbs %}
@@ -100,7 +104,7 @@
 
     </main>
 
-    {% if not hide_footer and request.resolver_match.view_name != 'front:article_detail' and request.resolver_match.view_name != 'front:news_detail' %}
+    {% if not hide_footer and not is_telegram_app and request.resolver_match.view_name != 'front:article_detail' and request.resolver_match.view_name != 'front:news_detail' %}
         {% include "front/includes/_footer.html" %}
     {% endif %}
 
@@ -119,6 +123,20 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Лента</span>
         </a>
+        {% if is_telegram_app %}
+            <a
+                class="mobile-app-nav-item mobile-nav-roulette"
+                href="{% url 'cabinet:bonuses' %}"
+                aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
+                data-fixed-roulette
+                data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
+            >
+                <span class="mobile-nav-roulette-wheel" aria-hidden="true">{% include "front/svgs/roulette.svg" %}</span>
+                {% if roulette_available_spins %}
+                    <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
+                {% endif %}
+            </a>
+        {% endif %}
         {% if request.user.is_authenticated and request.user.is_analyst %}
             <a
                 class="mobile-app-nav-item mobile-nav-coupons"
@@ -166,5 +184,9 @@
     <script src="{% static 'front/js/active-scroll-tabs.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
     <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
+    {% if is_telegram_app %}
+    <script id="telegram-web-app-sdk" src="https://telegram.org/js/telegram-web-app.js" async></script>
+    <script src="{% static 'front/js/telegram-app.js' %}" defer></script>
+    {% endif %}
 </body>
 </html>

@@ -14,6 +14,7 @@ from payments.utils import build_payment_options
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
 from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
+from .telegram_auth import in_telegram_app
 from .vip import get_active_vip, plural_ru, purchase_vip, vip_switch_warning
 
 
@@ -112,7 +113,9 @@ def vip_plans(request):
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)
         plan.balance_after_display = format_money(plan.balance_after) if plan.can_afford else ""
-        plan.payment_options = build_payment_options(plan.price_rub, request.user)
+        plan.payment_options = build_payment_options(
+            plan.price_rub, request.user, in_telegram_app=in_telegram_app(request)
+        )
         plan.is_switch = bool(active_vip and active_vip.plan_id != plan.pk)
         if plan.payment_options:
             plan.balance_button_label = "Оплатить с баланса"
