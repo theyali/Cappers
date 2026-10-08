@@ -47,12 +47,16 @@
                                     const status = document.getElementById("telegram-login-status");
                                     const botId = "{{ telegram_bot_id|escapejs }}";
                                     const authUrl = "{{ telegram_auth_url|escapejs }}";
+                                    const oauthUrl = "{{ telegram_oauth_url|escapejs }}";
                                     const fields = ["id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash"];
 
                                     const isReady = () => Boolean(
-                                        window.Telegram &&
-                                        window.Telegram.Login &&
-                                        typeof window.Telegram.Login.auth === "function"
+                                        oauthUrl ||
+                                        (
+                                            window.Telegram &&
+                                            window.Telegram.Login &&
+                                            typeof window.Telegram.Login.auth === "function"
+                                        )
                                     );
 
                                     const showStatus = (message) => {
@@ -76,7 +80,7 @@
 
                                     if (isReady()) {
                                         enableButton();
-                                    } else {
+                                    } else if (!oauthUrl) {
                                         sdk.addEventListener("load", enableButton, { once: true });
                                         sdk.addEventListener("error", () => {
                                             button.disabled = true;
@@ -93,6 +97,11 @@
                                         status.hidden = true;
                                         button.disabled = true;
                                         button.classList.add("is-loading");
+
+                                        if (oauthUrl) {
+                                            window.location.assign(oauthUrl);
+                                            return;
+                                        }
 
                                         window.Telegram.Login.auth({ bot_id: botId, request_access: "write" }, (user) => {
                                             if (!user) {

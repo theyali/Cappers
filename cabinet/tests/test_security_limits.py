@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 from unittest.mock import patch
 
 from django.conf import settings
@@ -12,6 +13,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, override_setti
 from django.urls import reverse
 
 from cabinet.models import User
+from cabinet.telegram_auth import _telegram_oauth_url
 
 
 TEST_STORAGES = {
@@ -55,6 +57,21 @@ class ProductionSettingsTests(SimpleTestCase):
 
         self.assertTrue(request.is_secure())
         self.assertTrue(request.build_absolute_uri("/pay/return/").startswith("https://"))
+
+    @override_settings(
+        SITE_BASE_URL="https://capper-hub.com",
+        TG_BOT_TOKEN="8842559788:test-token",
+    )
+    def test_telegram_oauth_url_uses_site_base_url(self):
+        url = _telegram_oauth_url("/cabinet/login/telegram/")
+        parsed = urlsplit(url)
+        query = parse_qs(parsed.query)
+
+        self.assertEqual(parsed.scheme, "https")
+        self.assertEqual(parsed.netloc, "oauth.telegram.org")
+        self.assertEqual(query["bot_id"], ["8842559788"])
+        self.assertEqual(query["origin"], ["https://capper-hub.com"])
+        self.assertEqual(query["return_to"], ["https://capper-hub.com/cabinet/login/telegram/"])
 
 
 @override_settings(STORAGES=TEST_STORAGES)

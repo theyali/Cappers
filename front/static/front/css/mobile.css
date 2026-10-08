@@ -8504,6 +8504,9 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 760px) {
+  .predictions-content.articles-content {
+    padding: 0;
+  }
   .expert-public-shell .expert-recommendations{
     padding:0;
   }
@@ -10330,6 +10333,41 @@ body.expert-public-details-open {
     align-items: start;
   }
 
+  body.register {
+    overflow-x: hidden;
+    background-position: center top;
+    background-size: cover;
+  }
+
+  .auth-stage-register {
+    width: 100%;
+    padding: 0 0 calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .auth-stage-register > .container.auth-register-grid {
+    width: 100%;
+    max-width: none;
+    padding: 0 12px 18px;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .auth-stage-register .capper-landing {
+    display: none;
+  }
+
+  #register-form.capper-onboarding-shell {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 18px 14px 22px;
+    border-radius: 18px;
+  }
+
+  .auth-stage-register .auth-back {
+    display: none;
+  }
+
   .auth-shell,
   .auth-shell-register {
     width: 100%;
@@ -10339,7 +10377,6 @@ body.expert-public-details-open {
     overflow: visible;
     border: 0;
     border-radius: 0;
-    background: var(--ink);
     box-shadow: none;
   }
 
@@ -10350,7 +10387,6 @@ body.expert-public-details-open {
   .auth-panel {
     min-height: calc(100dvh - 58px - 70px);
     align-items: flex-start;
-    background: var(--ink);
   }
 
   .auth-panel-inner,
@@ -10422,6 +10458,25 @@ body.expert-public-details-open {
 
   .auth-grid-full {
     grid-column: auto;
+  }
+
+  .auth-stage-register [data-register-role-switch] {
+    gap: 10px;
+  }
+
+  .auth-stage-register [data-register-role] {
+    min-height: 62px;
+    padding: 12px;
+  }
+
+  .auth-stage-register [data-register-role] small {
+    white-space: normal;
+  }
+
+  .sport-preference-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .auth-field {
@@ -12415,14 +12470,20 @@ body.expert-public-details-open {
   }
 
   .league-picker-modal {
-    align-items: end;
-    padding: 0;
+    z-index: 2200;
+    align-items: stretch;
+    justify-items: center;
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+    overflow: hidden;
   }
 
   .league-picker-card {
-    width: 100%;
-    max-height: 92vh;
-    border-radius: 18px 18px 0 0;
+    align-self: end;
+    width: min(100%, 520px);
+    max-width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px - env(safe-area-inset-bottom));
+    min-height: min(620px, calc(100dvh - 20px - env(safe-area-inset-bottom)));
+    border-radius: 18px;
   }
 
   .league-picker-head,
@@ -12430,9 +12491,28 @@ body.expert-public-details-open {
     padding: 16px;
   }
 
+  .league-picker-head h2 {
+    font-size: clamp(30px, 8vw, 38px);
+    line-height: 0.95;
+  }
+
+  .league-picker-close {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    font-size: 34px;
+  }
+
   .league-picker-controls {
     grid-template-columns: 1fr 1fr;
     padding: 14px 16px;
+  }
+
+  .league-picker-controls input,
+  .league-picker-controls select {
+    min-height: 52px;
+    border-radius: 13px;
+    font-size: 16px;
   }
 
   .league-picker-search {
@@ -12440,23 +12520,85 @@ body.expert-public-details-open {
   }
 
   .league-picker-body {
+    display: block;
+    min-height: 0;
+    overflow-y: auto;
     padding: 2px 16px 16px;
   }
 
+  .league-picker-section {
+    min-height: 0;
+    display: block;
+  }
+
+  .league-picker-section + .league-picker-section {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .league-picker-section-head {
+    min-height: 0;
+    margin-bottom: 12px;
+  }
+
+  .league-picker-section-head strong {
+    font-size: 18px;
+    line-height: 1.15;
+  }
+
   .league-picker-results {
-    display: flex;
-    grid-template-columns: none;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    overflow: visible;
+    padding: 0;
+    scroll-snap-type: none;
   }
 
   .league-picker-option {
-    flex-basis: min(78vw, 260px);
-    min-width: min(78vw, 260px);
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    flex-basis: auto;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 24px;
+    padding: 10px;
+  }
+
+  .league-picker-option-logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .league-picker-option strong {
+    font-size: 14px;
+    white-space: normal;
+  }
+
+  .league-picker-option small {
+    font-size: 12px;
+  }
+
+  .league-picker-option i {
+    justify-self: end;
+  }
+
+  .league-picker-more {
+    width: 100%;
+    min-height: 52px;
+    margin: 12px 0 0;
+    border-radius: 14px;
+    color: #fff;
+    background: #303033;
+    font-size: 16px;
+    font-weight: 800;
   }
 
   .league-picker-actions {
     align-items: stretch;
     flex-direction: column;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 
   .league-picker-actions > div {
