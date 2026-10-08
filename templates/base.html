@@ -119,24 +119,19 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
-        <a class="mobile-app-nav-item mobile-nav-feed {% if request.resolver_match.view_name == 'front:following_feed' %}is-active{% endif %}" href="{% url 'front:following_feed' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Лента</span>
+        <a
+            class="mobile-app-nav-item mobile-nav-roulette"
+            href="{% url 'cabinet:bonuses' %}"
+            aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
+            data-fixed-roulette
+            data-roulette-sheet-open
+            data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
+        >
+            <span class="mobile-nav-roulette-wheel" aria-hidden="true">{% include "front/svgs/roulette.svg" %}</span>
+            {% if roulette_available_spins %}
+                <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
+            {% endif %}
         </a>
-        {% if is_telegram_app %}
-            <a
-                class="mobile-app-nav-item mobile-nav-roulette"
-                href="{% url 'cabinet:bonuses' %}"
-                aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
-                data-fixed-roulette
-                data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
-            >
-                <span class="mobile-nav-roulette-wheel" aria-hidden="true">{% include "front/svgs/roulette.svg" %}</span>
-                {% if roulette_available_spins %}
-                    <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
-                {% endif %}
-            </a>
-        {% endif %}
         {% if request.user.is_authenticated and request.user.is_analyst %}
             <a
                 class="mobile-app-nav-item mobile-nav-coupons"
@@ -163,11 +158,11 @@
             <span class="mobile-app-nav-icon" aria-hidden="true"></span>
             <span class="mobile-app-nav-label">Прогнозы</span>
         </a>
-        <a class="mobile-app-nav-item mobile-nav-tournaments {% if request.resolver_match.app_name == 'tournaments' %}is-active{% endif %}" href="{% url 'tournaments:index' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
-            <span class="mobile-app-nav-label">Турниры</span>
-        </a>
     </nav>
+
+    {% if request.user.is_authenticated %}
+        {% include "front/includes/_roulette_sheet.html" %}
+    {% endif %}
 
     <div class="logo-transition" aria-hidden="true">
         <span><img src="{% static 'front/img/logo.png' %}" width="88" height="88" alt=""></span>
@@ -184,6 +179,9 @@
     <script src="{% static 'front/js/active-scroll-tabs.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
     <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
+    {% if request.user.is_authenticated %}
+    <script src="{% static 'front/js/roulette-sheet.js' %}" defer></script>
+    {% endif %}
     {% if is_telegram_app %}
     <script id="telegram-web-app-sdk" src="https://telegram.org/js/telegram-web-app.js" async></script>
     <script src="{% static 'front/js/telegram-app.js' %}" defer></script>

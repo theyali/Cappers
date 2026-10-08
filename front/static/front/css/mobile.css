@@ -1748,7 +1748,7 @@ body.expert-public-details-open {
     z-index: 1200;
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 76px minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
     gap: 0;
     padding: 0px 0px 0px;
@@ -1786,8 +1786,9 @@ body.expert-public-details-open {
     order: 2;
   }
 
-  .mobile-nav-feed {
+  .mobile-nav-roulette {
     order: 3;
+    align-self: start;
   }
 
   .mobile-nav-coupons {
@@ -1803,10 +1804,6 @@ body.expert-public-details-open {
   }
 
   .mobile-nav-profile {
-    order: 6;
-  }
-
-  .mobile-nav-tournaments {
     order: 6;
   }
 
@@ -1852,11 +1849,6 @@ body.expert-public-details-open {
     mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
   }
 
-  .mobile-app-nav .mobile-nav-feed .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-feed.svg") center / contain no-repeat;
-  }
-
   .mobile-app-nav .mobile-nav-coupons .mobile-app-nav-icon {
     -webkit-mask: url("../svgs/coupons.svg") center / contain no-repeat;
     mask: url("../svgs/coupons.svg") center / contain no-repeat;
@@ -1875,11 +1867,6 @@ body.expert-public-details-open {
   .mobile-app-nav .mobile-nav-profile .mobile-app-nav-icon {
     -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
     mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-tournaments .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/trophy.svg") center / contain no-repeat;
-    mask: url("../svgs/trophy.svg") center / contain no-repeat;
   }
 
   .mobile-app-nav-label {
@@ -6666,7 +6653,10 @@ body.expert-public-details-open {
   .match-watch-card-shell.is-lazy-added,
   .matches-lazy-button,
   .matches-lazy-dots i,
-  .slider-progress span.is-running {
+  .slider-progress span.is-running,
+  .mobile-nav-roulette-wheel,
+  .mobile-nav-roulette-wheel svg,
+  .roulette-sheet-sparkle {
     animation: none;
     transition: none;
   }
@@ -14134,5 +14124,12 @@ body.expert-public-details-open {
     font-size: 14px;
     line-height: 1.25;
     white-space: normal;
+  }
+}
+
+/* Phones open the wheel from the bottom menu, so the bonuses page has no wheel of its own. */
+@media (max-width: 1120px) {
+  .cabinet-bonuses-page .bonus-hero {
+    display: none;
   }
 }
