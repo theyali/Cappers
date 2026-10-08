@@ -35,6 +35,10 @@ TELEGRAM_FIELDS = (
 )
 
 
+# Set when the user signs in through the Mini App, so pages render the Telegram shell.
+TELEGRAM_APP_SESSION_KEY = "telegram_mini_app"
+
+
 class TelegramIdentityConflict(Exception):
     pass
 
@@ -310,6 +314,7 @@ def telegram_webapp_login(request):
     if created:
         mark_referral_registration(request, user)
     login(request, user)
+    request.session[TELEGRAM_APP_SESSION_KEY] = True
     return JsonResponse(
         {
             "ok": True,
