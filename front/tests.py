@@ -373,6 +373,21 @@ class CapperTrustRankingIntegrationTests(TestCase):
         self.assertEqual(table_top, service_top)
         self.assertEqual(home_top, service_top)
 
+    def test_home_top_experts_limit_comes_from_page_seo(self):
+        PageSEO.objects.update_or_create(
+            route_name="front:index",
+            exact_path="",
+            defaults={
+                "name": "Главная",
+                "home_top_experts_limit": 5,
+            },
+        )
+
+        response = self.client.get(reverse("front:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["top_experts"]), 5)
+
     def test_all_time_table_uses_canonical_trust_order(self):
         table_response = self.client.get(reverse("front:cappers_table"))
 

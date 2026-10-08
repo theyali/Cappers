@@ -243,3 +243,26 @@
         initBackLink();
     }
 })();
+
+(() => {
+    // Inside the Telegram app a page is covered by Telegram's loading screen until it
+    // reports "ready" or every image and script has loaded. Report it once the page
+    // is parsed, with Telegram's own bridge, so no telegram.org script is needed.
+    const proxy = window.TelegramWebviewProxy;
+    if (!proxy || typeof proxy.postEvent !== "function") return;
+
+    const showPage = () => {
+        try {
+            proxy.postEvent("web_app_ready", JSON.stringify(""));
+            proxy.postEvent("web_app_expand", JSON.stringify(""));
+        } catch (error) {
+            // Telegram then shows the page after it has fully loaded.
+        }
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", showPage, { once: true });
+    } else {
+        showPage();
+    }
+})();
