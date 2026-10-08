@@ -38,6 +38,7 @@ from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import build_match_winner_odds
 from notifications.models import MatchWatch
+from pages.models import PageSEO
 
 
 HOME_PREDICTIONS_LIMIT = 8
@@ -46,6 +47,7 @@ HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 9
 HOME_EXPERTS_LIMIT = 10
 HOME_TOP_EXPERTS_LIMIT = 4
+HOME_TOP_EXPERTS_MAX_LIMIT = 50
 HOME_MATCH_CANDIDATE_LIMIT = 120
 HOME_MATCH_DEFER_FIELDS = (
     "raw_data",
@@ -132,14 +134,16 @@ def _render_home_index(request):
     can_write_coupon = (
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
+    top_experts_limit = _home_top_experts_limit(request)
     ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
     all_time_profiles = ranked_expert_profiles(period_days=None)
-    monthly_top_ids = current_month_top_expert_ids(HOME_TOP_EXPERTS_LIMIT)
+    monthly_top_ids = current_month_top_expert_ids(top_experts_limit)
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
     all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
     top_profiles, top_experts_scope = _top_home_profiles(
         all_time_profiles,
         monthly_top_ids,
+        limit=top_experts_limit,
     )
     main_article, latest_articles = _home_articles()
     recommended_experts = (
@@ -158,6 +162,7 @@ def _render_home_index(request):
             "best_predictions": _best_home_predictions(request),
             "top_experts": _top_home_experts(
                 top_profiles,
+                limit=top_experts_limit,
                 monthly_leader_id=monthly_leader_id,
                 all_time_leader_id=all_time_leader_id,
             ),
@@ -433,7 +438,33 @@ def _best_home_predictions(request):
     return cards
 
 
-def _top_home_profiles(all_time_profiles, monthly_top_ids: list[int]) -> tuple[list, str]:
+def _home_top_experts_limit(request) -> int:
+    page = (
+        PageSEO.objects.filter(route_name="front:index", is_active=True)
+        .filter(Q(exact_path=request.path) | Q(exact_path=""))
+        .order_by(
+            Case(
+                When(exact_path=request.path, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+            "exact_path",
+            "id",
+        )
+        .only("home_top_experts_limit")
+        .first()
+    )
+    if page is None:
+        return HOME_TOP_EXPERTS_LIMIT
+    return max(1, min(page.home_top_experts_limit, HOME_TOP_EXPERTS_MAX_LIMIT))
+
+
+def _top_home_profiles(
+    all_time_profiles,
+    monthly_top_ids: list[int],
+    *,
+    limit: int,
+) -> tuple[list, str]:
     if monthly_top_ids:
         profiles_by_id = {profile.user_id: profile for profile in all_time_profiles}
         monthly_profiles = [
@@ -443,7 +474,7 @@ def _top_home_profiles(all_time_profiles, monthly_top_ids: list[int]) -> tuple[l
         ]
         if monthly_profiles:
             return monthly_profiles, "month"
-    return list(all_time_profiles[:HOME_TOP_EXPERTS_LIMIT]), "all_time"
+    return list(all_time_profiles[:limit]), "all_time"
 
 
 def _home_articles() -> tuple[Article | None, list[Article]]:
@@ -461,6 +492,7 @@ def _home_articles() -> tuple[Article | None, list[Article]]:
 def _top_home_experts(
     profiles,
     *,
+    limit: int,
     monthly_leader_id=None,
     all_time_leader_id=None,
 ) -> list[dict]:
@@ -468,7 +500,7 @@ def _top_home_experts(
         return DEMO_EXPERTS
 
     experts = []
-    for profile in profiles[:HOME_TOP_EXPERTS_LIMIT]:
+    for profile in profiles[:limit]:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
         experts.append(
             {
