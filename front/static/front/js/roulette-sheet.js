@@ -233,16 +233,59 @@
         return tone;
     };
 
-    const titleLines = (title, maxChars, maxLines) => {
-        const lines = [];
-        String(title).split(/\s+/).filter(Boolean).forEach((word) => {
-            const lastLine = lines[lines.length - 1];
-            if (lastLine && `${lastLine} ${word}`.length <= maxChars) lines[lines.length - 1] = `${lastLine} ${word}`;
-            else lines.push(word);
+    // Every way to break the words into up to three lines.
+    const lineLayouts = (words) => {
+        const layouts = [[words.join(" ")]];
+        for (let first = 1; first < words.length; first += 1) {
+            layouts.push([words.slice(0, first).join(" "), words.slice(first).join(" ")]);
+            for (let second = first + 1; second < words.length; second += 1) {
+                layouts.push([
+                    words.slice(0, first).join(" "),
+                    words.slice(first, second).join(" "),
+                    words.slice(second).join(" "),
+                ]);
+            }
+        }
+        return layouts;
+    };
+
+    // Picks the line breaks that need the least shrinking, then shrinks the label until every
+    // line fits its sector, which narrows towards the centre.
+    const fitLabels = () => {
+        const count = prizes.length;
+        const halfSlice = (Math.min(360 / Math.max(count, 1), 150) * Math.PI) / 360;
+        disc.querySelectorAll(".roulette-sheet-label").forEach((text) => {
+            const baseSize = Number(text.dataset.baseSize);
+            const top = -Number(text.getAttribute("y"));
+            const probe = svg("text", { class: "roulette-sheet-label", "font-size": baseSize, visibility: "hidden" }, disc);
+            const width = (line) => {
+                probe.textContent = line;
+                return probe.getComputedTextLength();
+            };
+            const room = (index) => (
+                count < 2 ? RADIUS * 1.6 : 2 * (top - index * baseSize * 1.08) * Math.sin(halfSlice) * 0.86
+            );
+            // Not laid out while the sheet is hidden: keep the lines as they are.
+            if (!width(text.dataset.title)) {
+                probe.remove();
+                return;
+            }
+            let best = null;
+            lineLayouts(text.dataset.title.split(/\s+/).filter(Boolean)).forEach((lines) => {
+                const scale = Math.min(...lines.map((line, index) => room(index) / width(line)));
+                const better = !best
+                    || (scale >= 1 && best.scale >= 1 ? lines.length < best.lines.length : scale > best.scale);
+                if (better) best = { lines, scale };
+            });
+            probe.remove();
+
+            const size = Math.max(12, baseSize * Math.min(1, best.scale));
+            text.setAttribute("font-size", size.toFixed(1));
+            text.replaceChildren();
+            best.lines.forEach((line, index) => {
+                svg("tspan", { x: 0, dy: index ? (size * 1.08).toFixed(1) : 0 }, text).textContent = line;
+            });
         });
-        const shown = lines.slice(0, maxLines);
-        if (lines.length > maxLines) shown[maxLines - 1] = `${shown[maxLines - 1]}…`;
-        return shown.map((line) => (line.length > maxChars + 1 ? `${line.slice(0, maxChars)}…` : line));
     };
 
     const setRotation = (degrees) => {
@@ -265,21 +308,22 @@
         });
     };
 
-    const addLabel = (prize, middle, slice, tone) => {
+    const addLabel = (prize, middle, tone) => {
         const count = prizes.length;
-        const fontSize = count <= 4 ? 34 : count <= 6 ? 30 : count <= 8 ? 27 : 23;
-        // How many letters fit across the sector where the text starts.
-        const width = count < 2 ? RADIUS * 1.6 : 2 * (RADIUS - 80) * Math.sin((Math.min(slice, 150) * Math.PI) / 360);
-        const maxChars = Math.max(4, Math.floor((width * 0.9) / (fontSize * 0.62)));
+        const fontSize = count <= 4 ? 34 : count <= 6 ? 30 : count <= 8 ? 27 : 24;
         const label = svg("g", { transform: `rotate(${middle})` }, disc);
         if (prize.icon) {
             const size = count <= 8 ? 58 : 46;
             svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 14, width: size, height: size }, label);
         }
-        const text = svg("text", { class: `roulette-sheet-label is-${tone}`, "font-size": fontSize, y: -RADIUS + (prize.icon ? 104 : 60) }, label);
-        titleLines(prize.title, maxChars, count <= 4 ? 3 : 2).forEach((line, lineIndex) => {
-            svg("tspan", { x: 0, dy: lineIndex ? Math.round(fontSize * 1.08) : 0 }, text).textContent = line;
-        });
+        const text = svg("text", {
+            class: `roulette-sheet-label is-${tone}`,
+            "font-size": fontSize,
+            "data-base-size": fontSize,
+            "data-title": prize.title,
+            y: -RADIUS + (prize.icon ? 104 : 60),
+        }, label);
+        text.textContent = prize.title;
     };
 
     const buildWheel = () => {
@@ -302,7 +346,7 @@
             });
         }
         svg("circle", { r: 120, class: "roulette-sheet-band" }, disc);
-        prizes.forEach((prize, index) => addLabel(prize, index * slice, slice, count < 2 ? "yellow" : sectorTone(index)));
+        prizes.forEach((prize, index) => addLabel(prize, index * slice, count < 2 ? "yellow" : sectorTone(index)));
 
         svg("circle", { r: RADIUS, class: "roulette-sheet-rim-inner" }, frame);
         svg("circle", { r: RADIUS + 12, class: "roulette-sheet-rim", stroke: "url(#roulette-rim)" }, frame);
@@ -314,6 +358,7 @@
         }
         if (count > 1) svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, frame);
         setRotation(rotation);
+        fitLabels();
     };
 
     const normalizePrize = (item) => ({
@@ -677,6 +722,7 @@
         open();
     }, true);
 
+    document.fonts?.ready.then(fitLabels);
     sheet.querySelectorAll("[data-roulette-sheet-close]").forEach((node) => node.addEventListener("click", close));
     spinButton.addEventListener("click", spin);
     codeButton.addEventListener("click", copyCode);
