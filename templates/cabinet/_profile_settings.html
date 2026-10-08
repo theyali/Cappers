@@ -1,8 +1,13 @@
 <div class="profile-layout">
-    <form id="mobileQuickAccessForm" method="post" action="{% url 'cabinet:profile' %}?tab=settings#profile-edit-quick-access">
+    <form id="mobileQuickAccessForm" class="profile-hidden-form" method="post" action="{% url 'cabinet:profile' %}?tab=settings#profile-edit-quick-access">
         {% csrf_token %}
         <input type="hidden" name="profile_settings_action" value="mobile_quick_access">
     </form>
+    {% if analyst_profile %}
+    <form id="profileVerificationForm" class="profile-hidden-form" method="post" action="{% url 'cabinet:request_verification' %}">
+        {% csrf_token %}
+    </form>
+    {% endif %}
     <form method="post" action="{% url 'cabinet:profile' %}?tab=settings" class="profile-form-card profile-edit-form" novalidate>
         {% csrf_token %}
         <div class="profile-edit-hero">
@@ -154,6 +159,7 @@
                         <small>По умолчанию: профиль, уведомления, мои прогнозы и избранное.</small>
                     </div>
                 </div>
+                <div class="profile-save-status" data-profile-save-status aria-live="polite"></div>
                 <div class="profile-edit-actions profile-quick-access-actions">
                     <button
                         type="submit"
@@ -316,9 +322,12 @@
                     </div>
                 </div>
             </section>
+
+            {% include "cabinet/includes/_profile_verification.html" %}
             {% endif %}
         </div>
 
+        <div class="profile-save-status" data-profile-save-status aria-live="polite"></div>
         <div class="profile-edit-actions profile-mobile-save">
             <a class="profile-edit-cancel" href="{% url 'cabinet:profile' %}?tab=profile">Отмена</a>
             <button type="submit" class="profile-save-button">Сохранить изменения</button>

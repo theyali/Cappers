@@ -135,10 +135,14 @@ class AnalystProfile(models.Model):
     x = models.CharField("X", max_length=160, blank=True)
     is_verified = models.BooleanField("Проверен", default=False, db_index=True)
     verification_requested_at = models.DateTimeField(
-        "Запрос проверки отправлен",
+        "Галочка запрошена",
         null=True,
         blank=True,
         db_index=True,
+        help_text=(
+            "Когда каппер получил галочку кнопкой в настройках. Если снять «Проверен» и оставить "
+            "эту дату, кнопка у каппера больше не появится. Очистите дату, чтобы разрешить снова."
+        ),
     )
     is_recommended = models.BooleanField(
         "Рекомендовать подписаться",

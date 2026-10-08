@@ -77,19 +77,7 @@
                 <h3 id="mobile-offcanvas-quick-title">Быстрый доступ</h3>
                 <a href="{% url 'cabinet:profile' %}?tab=settings#profile-edit-quick-access">Настроить <span aria-hidden="true"></span></a>
             </div>
-            <div class="mobile-offcanvas-quick-grid">
-                {% for item in mobile_quick_access_items %}
-                <a href="{{ item.url }}">
-                    <span class="mobile-offcanvas-quick-icon is-{{ item.icon_key }}" aria-hidden="true">
-                        {{ item.icon_svg }}
-                        {% if item.key == "notifications" %}
-                        <b class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
-                        {% endif %}
-                    </span>
-                    <span>{{ item.label }}</span>
-                </a>
-                {% endfor %}
-            </div>
+            {% include "front/includes/_mobile_quick_access_grid.html" %}
         </section>
 
         <nav class="mobile-offcanvas-links" aria-label="Меню аккаунта">

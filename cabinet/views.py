@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.db.models import Count, Max, Q, Sum
 from django.http import JsonResponse
@@ -13,7 +13,6 @@ from django.utils.dateparse import parse_datetime
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from front.models import PredictionFavorite, PredictionLike
 from game.models import Country, PredictionCoupon, Sport
 from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
@@ -60,6 +59,7 @@ from .services.capper_articles import (
     submit_capper_article_for_moderation,
 )
 from .services.daily_tasks import record_daily_task_action
+from .services.verification import grant_verification, verification_state
 from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
@@ -334,38 +334,46 @@ def _profile_completion(user, analyst_profile) -> int:
     return round(sum(checks) / len(checks) * 100)
 
 
-def _verification_requirements(user, analyst_profile) -> dict:
-    profile_completion = _profile_completion(user, analyst_profile)
-    published = PredictionCoupon.objects.filter(
-        author=user,
-        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+def _is_ajax(request) -> bool:
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+
+def _profile_name(user, analyst_profile) -> str:
+    if analyst_profile is not None and analyst_profile.display_name:
+        return analyst_profile.display_name
+    return user.get_full_name() or user.username
+
+
+def _verification_html(user, analyst_profile) -> str:
+    if analyst_profile is None:
+        return ""
+    return render_to_string(
+        "cabinet/includes/_profile_verification.html",
+        {"verification": verification_state(user, analyst_profile)},
     )
-    stats = published.aggregate(
-        predictions=Count("id"),
-        wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+
+
+def _settings_errors_response(*forms) -> JsonResponse:
+    """Form errors for the settings page, keyed by input name."""
+    field_errors = {}
+    other_errors = []
+    for form in forms:
+        if form is None:
+            continue
+        for field, errors in form.errors.items():
+            if field == NON_FIELD_ERRORS:
+                other_errors.extend(errors)
+            else:
+                field_errors[form.add_prefix(field)] = list(errors)
+    return JsonResponse(
+        {
+            "ok": False,
+            "message": "Проверьте поля с ошибками.",
+            "errors": field_errors,
+            "non_field_errors": other_errors,
+        },
+        status=400,
     )
-    likes_count = PredictionLike.objects.filter(
-        prediction__author=user,
-        prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-    ).count()
-    favorites_count = PredictionFavorite.objects.filter(
-        prediction__author=user,
-        prediction__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-    ).count()
-    requirements = [
-        {"label": "заполнить профиль", "done": profile_completion >= 100},
-        {"label": "Первый прогноз", "done": (stats["predictions"] or 0) >= 1},
-        {"label": "3 победы", "done": (stats["wins"] or 0) >= 3},
-        {"label": "10 лайков", "done": likes_count >= 10},
-        {"label": "10 сохранений", "done": favorites_count >= 10},
-    ]
-    missing = [item["label"] for item in requirements if not item["done"]]
-    return {
-        "can_request": not missing,
-        "missing": missing,
-        "missing_text": ", ".join(missing),
-        "profile_completion": profile_completion,
-    }
 
 
 def _coupon_result(coupon) -> tuple[str, str]:
@@ -612,8 +620,21 @@ def profile(request):
     if request.method == "POST" and is_mobile_quick_access_post:
         if mobile_quick_access_form.is_valid():
             mobile_quick_access_form.save()
+            if _is_ajax(request):
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "message": "Быстрый доступ обновлён.",
+                        "quick_access_html": render_to_string(
+                            "front/includes/_mobile_quick_access_grid.html",
+                            request=request,
+                        ),
+                    }
+                )
             messages.success(request, "Быстрый доступ обновлён.")
             return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+        if _is_ajax(request):
+            return _settings_errors_response(mobile_quick_access_form)
         active_tab = "settings"
     elif request.method == "POST":
         user_is_valid = user_form.is_valid()
@@ -649,8 +670,25 @@ def profile(request):
                 DailyTask.TaskType.UPDATE_PROFILE,
                 related_obj=request.user,
             )
+            if _is_ajax(request):
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "message": "Профиль обновлён.",
+                        "profile_name": _profile_name(request.user, analyst_profile),
+                        "profile_completion": _profile_completion(request.user, analyst_profile),
+                        "verification_html": _verification_html(request.user, analyst_profile),
+                    }
+                )
             messages.success(request, "Профиль обновлён.")
             return redirect(f"{reverse('cabinet:profile')}?tab=settings")
+        if _is_ajax(request):
+            return _settings_errors_response(
+                user_form,
+                analyst_form,
+                focus_form,
+                paid_plan_form if paid_predictions_enabled else None,
+            )
         active_tab = "settings"
 
     followers_count = request.user.analyst_followers.count() if request.user.role == User.Role.ANALYST else 0
@@ -780,16 +818,12 @@ def profile(request):
         is_verified=bool(analyst_profile and analyst_profile.is_verified),
     )
 
-    verification_requirements = (
-        _verification_requirements(request.user, analyst_profile)
-        if request.user.role == User.Role.ANALYST and analyst_profile
+    verification = (
+        verification_state(request.user, analyst_profile)
+        if analyst_profile is not None
         else None
     )
-    profile_completion = (
-        verification_requirements["profile_completion"]
-        if verification_requirements
-        else _profile_completion(request.user, analyst_profile)
-    )
+    profile_completion = _profile_completion(request.user, analyst_profile)
     profile_bonus_summary = (
         build_profile_bonus_summary(request.user)
         if active_tab == "profile"
@@ -817,7 +851,7 @@ def profile(request):
         "predictions_count": predictions_count,
         "achievement_overview": achievement_overview,
         "profile_completion": profile_completion,
-        "verification_requirements": verification_requirements,
+        "verification": verification,
         "profile_bonus_summary": profile_bonus_summary,
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
@@ -876,27 +910,24 @@ def delete_account(request):
 def request_verification(request):
     analyst_profile = _get_analyst_profile(request.user)
     if analyst_profile is None:
-        messages.error(request, "Проверка доступна только аналитикам.")
-        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
-    if analyst_profile.is_verified:
-        messages.info(request, "Профиль уже проверен.")
-        return redirect(f"{reverse('cabinet:profile')}?tab=profile")
-
-    requirements = _verification_requirements(request.user, analyst_profile)
-    if not requirements["can_request"]:
-        messages.error(
-            request,
-            f"Для проверки профиля нужно: {requirements['missing_text']}.",
-        )
-        return redirect(f"{reverse('cabinet:profile')}?tab=settings")
-
-    if analyst_profile.verification_requested_at:
-        messages.info(request, "Запрос проверки уже отправлен.")
+        ok, message = False, "Галочка доступна только капперам."
     else:
-        analyst_profile.verification_requested_at = timezone.now()
-        analyst_profile.save(update_fields=["verification_requested_at", "updated_at"])
-        messages.success(request, "Запрос проверки отправлен администраторам.")
-    return redirect(f"{reverse('cabinet:profile')}?tab=profile")
+        ok, message = grant_verification(request.user, analyst_profile)
+        analyst_profile.refresh_from_db(fields=["is_verified", "verification_requested_at"])
+
+    if _is_ajax(request):
+        payload = {"ok": ok, "message": message}
+        if analyst_profile is not None:
+            payload["verification_html"] = _verification_html(request.user, analyst_profile)
+            if analyst_profile.is_verified:
+                payload["badge_html"] = render_to_string("cabinet/includes/_capper_verified_badge.html")
+        return JsonResponse(payload, status=200 if ok else 400)
+
+    if ok:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+    return redirect(f"{reverse('cabinet:profile')}?tab=settings")
 
 
 @login_required

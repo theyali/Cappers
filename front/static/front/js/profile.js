@@ -24,7 +24,7 @@
     const initProfileEditTabs = () => {
         const tabs = Array.from(page.querySelectorAll("[data-profile-edit-tab]"));
         const panels = Array.from(page.querySelectorAll("[data-profile-edit-panel]"));
-        if (!tabs.length || !panels.length) return;
+        if (!tabs.length || !panels.length) return null;
 
         const activate = (target) => {
             const hasTarget = panels.some((panel) => panel.dataset.profileEditPanel === target);
@@ -61,9 +61,10 @@
             || panelWithErrors?.dataset.profileEditPanel
             || tabs.find((tab) => tab.classList.contains("is-active"))?.dataset.profileEditTab;
         activate(initial || tabs[0].dataset.profileEditTab);
+        return activate;
     };
 
-    initProfileEditTabs();
+    const activateProfileEditTab = initProfileEditTabs();
 
     const initMobileQuickAccessLimit = () => {
         const wrapper = page.querySelector("[data-mobile-quick-access-options]");
@@ -282,6 +283,137 @@
     if (document.querySelector(".profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-row[href], .profile-coupons-list:not([data-profile-coupon-inline='false']) > .profile-coupon-card")) {
         loadJQuery()
             .then(initCouponInline)
+            .catch((error) => console.error(error));
+    }
+
+    // Settings forms save in the background; without jQuery they post as usual.
+    const initSettingsAjax = ($) => {
+        const profileForm = page.querySelector(".profile-edit-form");
+        const quickAccessForm = document.getElementById("mobileQuickAccessForm");
+        const verificationForm = document.getElementById("profileVerificationForm");
+
+        const showStatus = (statusBox, kind, text) => {
+            if (!statusBox) return;
+            $(statusBox).empty().append($("<p>", { class: `message-item ${kind}`, text }));
+        };
+
+        const clearErrors = () => {
+            $(profileForm).find(".errorlist, .profile-form-alert").remove();
+        };
+
+        const fieldContainer = (form, name) => {
+            const field = Array.from(form.elements).find((element) => element.name === name);
+            if (!field) return null;
+            return field.closest(".profile-field, .profile-paid-plan-price, .profile-quick-access-field") || field.parentElement;
+        };
+
+        const showErrors = (form, response, statusBox) => {
+            const unplaced = [];
+            let firstContainer = null;
+            Object.entries(response.errors || {}).forEach(([name, messages]) => {
+                const container = fieldContainer(form, name);
+                if (!container) {
+                    unplaced.push(...messages);
+                    return;
+                }
+                const $list = $("<ul>", { class: "errorlist" });
+                messages.forEach((message) => $list.append($("<li>", { text: message })));
+                $(container).append($list);
+                firstContainer = firstContainer || container;
+            });
+            const details = [...(response.non_field_errors || []), ...unplaced];
+            showStatus(statusBox, "error", [response.message || "Не удалось сохранить.", ...details].join(" "));
+
+            if (!firstContainer) return;
+            const panel = firstContainer.closest("[data-profile-edit-panel]");
+            if (panel && activateProfileEditTab) {
+                activateProfileEditTab(panel.dataset.profileEditPanel);
+            }
+            firstContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+        };
+
+        const bindAjaxForm = (form, statusBoxFor, onSuccess) => {
+            if (!form) return;
+            $(form).on("submit", (event) => {
+                event.preventDefault();
+                if (form.dataset.saving === "true") return;
+
+                const $buttons = $(Array.from(form.elements).filter((element) => element.type === "submit"));
+                form.dataset.saving = "true";
+                $buttons.prop("disabled", true).attr("aria-busy", "true");
+
+                $.ajax({
+                    url: form.action,
+                    method: "POST",
+                    data: $(form).serialize(),
+                    dataType: "json",
+                })
+                    .done((response) => {
+                        clearErrors();
+                        onSuccess(response);
+                        showStatus(statusBoxFor(), "success", response.message || "Сохранено.");
+                    })
+                    .fail((xhr) => {
+                        clearErrors();
+                        const response = xhr.responseJSON;
+                        if (response) {
+                            replaceVerification(response.verification_html);
+                            showErrors(form, response, statusBoxFor());
+                        } else {
+                            showStatus(statusBoxFor(), "error", "Не удалось сохранить. Проверьте соединение и попробуйте ещё раз.");
+                        }
+                    })
+                    .always(() => {
+                        delete form.dataset.saving;
+                        $buttons.prop("disabled", false).removeAttr("aria-busy");
+                    });
+            });
+        };
+
+        const replaceVerification = (html) => {
+            if (html) $("[data-profile-verification]").replaceWith(html);
+        };
+
+        bindAjaxForm(
+            profileForm,
+            () => profileForm.querySelector(":scope > [data-profile-save-status]"),
+            (response) => {
+                if (response.profile_name) $("[data-profile-name]").text(response.profile_name);
+                if (typeof response.profile_completion === "number") {
+                    const percent = `${response.profile_completion}%`;
+                    $(".profile-edit-completion strong").text(percent);
+                    $(".profile-completion-progress").val(response.profile_completion).text(percent);
+                }
+                replaceVerification(response.verification_html);
+            }
+        );
+
+        bindAjaxForm(
+            quickAccessForm,
+            () => page.querySelector("#profile-edit-quick-access [data-profile-save-status]"),
+            (response) => {
+                if (response.quick_access_html) {
+                    $("[data-mobile-quick-access-grid]").replaceWith(response.quick_access_html);
+                }
+            }
+        );
+
+        bindAjaxForm(
+            verificationForm,
+            () => page.querySelector("[data-profile-verification] [data-profile-save-status]"),
+            (response) => {
+                replaceVerification(response.verification_html);
+                const $nameLine = $("[data-profile-name-line]");
+                if (response.badge_html && !$nameLine.find(".capper-verified-badge").length) {
+                    $nameLine.append(response.badge_html);
+                }
+            }
+        );
+    };
+
+    if (page.querySelector(".profile-edit-form")) {
+        loadJQuery()
+            .then(initSettingsAjax)
             .catch((error) => console.error(error));
     }
 

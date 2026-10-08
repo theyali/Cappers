@@ -6828,6 +6828,9 @@ body.expert-public-details-open {
   .static-page-toc ol {
     columns: 1;
   }
+  .profile-verification .profile-status-checklist {
+    grid-template-columns: 1fr;
+  }
   .home-about-benefit {
     min-height: 0;
     flex-direction: row;
