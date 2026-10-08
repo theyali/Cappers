@@ -5163,6 +5163,43 @@ body.expert-public-details-open {
   .profile-copy-table-row {
     min-width: 880px;
   }
+
+  .profile-wallet-history {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .profile-wallet-history > * {
+    min-width: 0;
+  }
+
+  .profile-wallet-history .profile-income-card {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .profile-wallet-history .profile-wallet-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .profile-wallet-history .profile-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .profile-wallet-history .profile-section-heading .profile-save-button {
+    width: 100%;
+  }
+
   #profile-tab-copybetting .profile-list-card {
     padding: 0;
     background: transparent;
@@ -12797,7 +12834,6 @@ body.expert-public-details-open {
   .coupon-detail-layout-page .coupon-detail-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    padding: 0 12px;
   }
 
   .coupon-detail-layout-page .coupon-detail-stat {
@@ -12830,7 +12866,7 @@ body.expert-public-details-open {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 7px;
     min-height: 0;
-    padding: 0 12px;
+    padding: 0;
   }
 
   .coupon-detail-layout-page
@@ -12849,7 +12885,7 @@ body.expert-public-details-open {
   }
 
   .coupon-detail-layout-page .coupon-detail-panel {
-    padding: 0 12px;
+    padding: 0;
   }
 
   .coupon-detail-layout-page .coupon-slip.is-compact {
@@ -13000,9 +13036,8 @@ body.expert-public-details-open {
 
   .coupon-detail-layout-page .prediction-comments {
     gap: 14px;
-    margin: 0 12px;
-    padding: 14px;
     border-radius: 16px;
+    margin-top:20px;
   }
 
   .coupon-detail-layout-page .prediction-comments-head {
@@ -13105,6 +13140,47 @@ body.expert-public-details-open {
   .earnings-source-legend em {
     grid-column: 2 / -1;
     text-align: left;
+  }
+}
+
+@media (max-width: 1240px) {
+  body:has(.coupon-detail-layout-page) {
+    height: auto !important;
+    min-height: 100dvh;
+    display: block !important;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+  }
+
+  body:has(.coupon-detail-layout-page) .site-main {
+    min-height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 92px;
+  }
+
+  body:has(.coupon-detail-layout-page) .breadcrumbs-container {
+    display: none !important;
+  }
+
+  .coupon-detail-layout-page,
+  .coupon-detail-layout-page .predictions-layout,
+  .coupon-detail-layout-page .coupon-detail-layout,
+  .coupon-detail-layout-page .coupon-detail-content,
+  .coupon-detail-layout-page .coupon-detail-page {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .coupon-detail-layout-page .predictions-layout {
+    align-items: start;
+  }
+
+  .coupon-detail-layout-page .coupon-detail-content {
+    overscroll-behavior: auto;
+    padding-right: 0;
+    scrollbar-gutter: auto;
   }
 }
 
