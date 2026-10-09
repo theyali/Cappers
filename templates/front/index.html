@@ -271,6 +271,10 @@
 
     {% include "cabinet/_expert_recommendations.html" %}
 
+    {% if best_predictions %}
+        {% include "front/includes/_home_mobile_best.html" %}
+    {% endif %}
+
     <section class="home-articles home-best-predictions" aria-labelledby="home-best-predictions-title">
         <header class="home-articles-head">
             <div>
@@ -448,6 +452,7 @@
 
     {% home_bookmakers %}
 
+    {% include "front/includes/_home_mobile_experts.html" %}
     {% include "front/includes/_home_best_experts.html" %}
 
     <section class="home-articles home-editorial-articles" aria-labelledby="home-articles-title" data-home-card-slider>
@@ -575,6 +580,7 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/home.js' %}" defer></script>
+<script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>

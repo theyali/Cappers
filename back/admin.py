@@ -43,6 +43,7 @@ class BookmakerAdmin(admin.ModelAdmin):
                 "fields": (
                     "name",
                     "icon",
+                    "slider_img",
                     "description",
                     "link",
                     "bonus_link",

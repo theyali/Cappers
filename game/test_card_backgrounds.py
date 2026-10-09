@@ -4,11 +4,13 @@ from itertools import count
 from urllib.parse import unquote
 
 from django.test import TestCase, override_settings
+from django.urls import reverse
 
 from cabinet.models import User
 from game.models import Match, Prediction, PredictionCoupon, Sport
 from front.home_views import _latest_home_predictions
-from game.services.card_backgrounds import EXPRESS_DIR, assign_backgrounds, backgrounds
+from game.services.bet_options import pick_label, picked_side
+from game.services.card_backgrounds import EXPRESS_DIR, assign_backgrounds, assign_coupon_backgrounds, backgrounds
 
 EXTERNAL_IDS = count(992001)
 
@@ -77,3 +79,56 @@ class CardBackgroundTests(TestCase):
         self.assertIn(coupon.mobile_card_background, backgrounds()["hockey"])
         self.assertTrue(unquote(card["mobile_background"]["url"]).endswith(coupon.mobile_card_background))
         self.assertIn("png@3x", unquote(card["mobile_background"]["url_3x"]))
+
+    def test_published_coupon_gives_each_event_a_picture_of_its_sport(self):
+        coupon, _ = self.coupon("football", "tennis", "darts")
+
+        assign_coupon_backgrounds(coupon)
+
+        coupon.refresh_from_db()
+        self.assertTrue(coupon.mobile_card_background.startswith(EXPRESS_DIR))
+        events = {
+            event.match.sport.code: event.mobile_card_background
+            for event in coupon.predictions.select_related("match__sport")
+        }
+        self.assertIn(events["football"], backgrounds()["football"])
+        self.assertIn(events["tennis"], backgrounds()["tennis"])
+        self.assertTrue(events["darts"].startswith(EXPRESS_DIR))
+
+
+    @override_settings(STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    })
+    def test_coupon_page_shows_old_events_with_their_pictures(self):
+        coupon, events = self.coupon("tennis")
+        PredictionCoupon.objects.filter(pk=coupon.pk).update(audience=PredictionCoupon.Audience.FREE)
+
+        response = self.client.get(reverse("front:prediction_detail", args=[coupon.pk]))
+
+        events[0].refresh_from_db()
+        self.assertIn(events[0].mobile_card_background, backgrounds()["tennis"])
+        self.assertContains(response, "coupon-mobile-event")
+        self.assertContains(response, "Победитель: П1")
+        self.assertContains(response, "coupon-detail-body")
+
+
+class PickLabelTests(TestCase):
+    def event(self, market, selection, outcome_code=""):
+        match = Match(external_id=1, raw_data={"teams": {"home": {"name": {"ru": "Хансен"}}, "away": {"name": {"ru": "Поповик"}}}})
+        return Prediction(match=match, market=market, selection=selection, outcome_code=outcome_code)
+
+    def test_winner_shows_the_side_and_highlights_the_team(self):
+        by_code = self.event("winner", "Поповик", "2")
+        legacy = self.event("winner", "Хансен")
+
+        self.assertEqual(pick_label(by_code), "Победитель: П2")
+        self.assertEqual(picked_side(by_code), "away")
+        self.assertEqual(pick_label(legacy), "Победитель: П1")
+        self.assertEqual(picked_side(legacy), "home")
+
+    def test_other_markets_keep_their_text(self):
+        self.assertEqual(pick_label(self.event("total", "ТБ 2.5", "over 2.5")), "Тотал: ТБ 2.5")
+        self.assertEqual(picked_side(self.event("total", "ТБ 2.5", "over 2.5")), "")
+        self.assertEqual(pick_label(self.event("both_score", "Обе забьют: да", "yes")), "Обе забьют: да")
+        self.assertEqual(picked_side(self.event("handicap", "Ф2 (+1.5)", "away +1.5")), "away")

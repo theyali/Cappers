@@ -1,0 +1,65 @@
+{# Bonus slider for phones and the Telegram Mini App; the wide bookmaker table is hidden there. #}
+{% url 'front:bookmakers' as bookmakers_url %}
+<section class="home-mobile-slider home-mobile-bookmakers" data-home-mobile-slider aria-labelledby="home-mobile-bookmakers-title">
+    <div class="home-mobile-bookmakers-top">
+        <p class="home-eyebrow">Букмекеры</p>
+        <span class="home-mobile-bookmakers-age">18+</span>
+    </div>
+    <div class="home-mobile-bookmakers-head">
+        <h2 id="home-mobile-bookmakers-title">Лучшие бонусы от <mark>проверенных</mark> букмекеров</h2>
+        <a class="home-mobile-bookmakers-all" href="{{ bookmakers_url }}">Все</a>
+    </div>
+    <p class="home-mobile-bookmakers-lead">Сравнивайте условия, выбирайте лучший бонус и начинайте играть с преимуществом</p>
+
+    <div class="home-mobile-slider-track" data-home-mobile-track>
+        {% for bookmaker in bookmakers %}
+        <a class="home-mobile-card home-mobile-bookmaker" href="{{ bookmaker.effective_bonus_link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">
+            {% if bookmaker.slider_img %}
+            <img class="home-mobile-card-bg" src="{{ bookmaker.slider_img.url }}" alt="" loading="lazy" decoding="async">
+            {% endif %}
+            <span class="home-mobile-bookmaker-brand">
+                <span class="home-mobile-bookmaker-logo">
+                    {% if bookmaker.icon %}
+                        <img src="{{ bookmaker.icon.url }}" alt="" width="40" height="40" loading="lazy" decoding="async">
+                    {% else %}
+                        {{ bookmaker.initials }}
+                    {% endif %}
+                </span>
+                <span class="home-mobile-bookmaker-title">
+                    <strong>{{ bookmaker.name }}</strong>
+                    {% if bookmaker.is_reliable or bookmaker.exclusive %}
+                    <span class="home-mobile-bookmaker-tags">
+                        {% if bookmaker.is_reliable %}<span>Надёжный</span>{% endif %}
+                        {% if bookmaker.exclusive %}<span class="is-exclusive">Эксклюзив</span>{% endif %}
+                    </span>
+                    {% endif %}
+                </span>
+            </span>
+            <span class="home-mobile-card-meta">Бонус</span>
+            <strong class="home-mobile-bookmaker-bonus">{{ bookmaker.bonus_text|default:"Бонус" }}</strong>
+            <span class="home-mobile-bookmaker-payout">
+                <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 14h7l-1.5 8L20 10h-7l.5-8Z" fill="currentColor"/></svg>
+                {{ bookmaker.payout_speed|default:"Быстрые выплаты" }}
+            </span>
+            <span class="home-mobile-card-pick">
+                <span>Забрать бонус</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    <div class="home-mobile-bookmakers-foot">
+        <div class="home-mobile-slider-dots" aria-hidden="true">
+            {% for bookmaker in bookmakers %}
+                <span class="{% if forloop.first %}is-active{% endif %}" data-home-mobile-dot></span>
+            {% endfor %}
+        </div>
+        <a class="home-mobile-bookmakers-compare" href="{{ bookmakers_url }}">Сравнить всех
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </a>
+    </div>
+</section>

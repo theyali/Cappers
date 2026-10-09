@@ -288,8 +288,7 @@ body.expert-public-details-open {
 @media (max-width: 980px) {
   .auth-form-grid,
   .game-grid,
-  .hero,
-  .quick-stats {
+  .hero {
     grid-template-columns: 1fr;
   }
   .hero {
@@ -358,23 +357,6 @@ body.expert-public-details-open {
   }
   .profile-referral-row .profile-referral-metric:nth-of-type(3) {
     display: none;
-  }
-
-  .coupon-detail-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .coupon-detail-analysis,
-  .coupon-detail-page .coupon-slip-result,
-  .coupon-detail-showcase-bottom {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .coupon-detail-showcase blockquote {
-    text-align: center;
-  }
-  .coupon-detail-page .coupon-slip-status-row {
-    border-left: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.14);
-    padding-top: 14px;
   }
 
   .profile-income-card {
@@ -1249,23 +1231,6 @@ body.expert-public-details-open {
     width: 100%;
     max-height: none;
     overflow: visible;
-  }
-
-  .home-best-prediction-row,
-  .home-best-predictions-head-row {
-    min-width: 1180px;
-    grid-template-columns: 34px minmax(330px, 1.5fr) minmax(235px, 1fr) minmax(
-        245px,
-        1.1fr
-      ) 110px 132px 156px;
-    gap: 20px;
-  }
-  .home-best-prediction-featured-grid {
-    grid-template-columns: minmax(360px, 1.4fr) minmax(250px, 1fr) minmax(
-        190px,
-        0.9fr
-      ) minmax(130px, 0.6fr) minmax(200px, 0.8fr);
-    gap: 22px;
   }
 
   .content-table-view {
@@ -3190,9 +3155,6 @@ body.expert-public-details-open {
     min-height: 76px;
     font-size: 20px;
   }
-  .quick-stats strong {
-    font-size: 28px;
-  }
   .feature-card {
     min-height: 320px;
     padding: 22px;
@@ -3362,22 +3324,12 @@ body.expert-public-details-open {
     margin-right: 5px;
   }
 
-  .coupon-detail-page .coupon-slip-match-head,
   .expert-sport-profit-head,
   .public-coupon-item-foot,
   .public-coupon-item-head,
   .public-coupon-section-head,
   .public-coupon-title-row {
     align-items: flex-start;
-  }
-  .coupon-detail-page .coupon-slip-match-meta {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-  }
-  .coupon-detail-page .coupon-slip-match-state,
-  .coupon-detail-page .coupon-slip-sport-badge {
-    min-height: 25px;
   }
   .capper-landing-hero,
   .capper-onboarding-shell {
@@ -3569,73 +3521,6 @@ body.expert-public-details-open {
   }
   .coupon-detail-layout-page .coupon-detail-page {
     padding-inline: 0;
-  }
-  .coupon-detail-showcase {
-    min-height: 360px;
-    border-radius: 0;
-  }
-  .coupon-detail-showcase-content {
-    padding-inline: 16px;
-  }
-  .coupon-detail-type-pill {
-    min-height: 36px;
-    padding-inline: 12px;
-  }
-  .coupon-detail-type-pill strong {
-    font-size: 13px;
-  }
-  .coupon-detail-showcase-bottom {
-    justify-items: center;
-  }
-  .coupon-detail-hero-author {
-    flex-direction: column;
-    text-align: center;
-  }
-  .coupon-detail-stats {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-  .coupon-detail-stat {
-    min-height: 82px;
-  }
-  .coupon-detail-page > .prediction-reactions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding-inline: 10px;
-  }
-  .coupon-detail-page > .prediction-reactions .prediction-reaction {
-    min-width: 0;
-    padding-inline: 12px;
-  }
-  .coupon-detail-page > .prediction-reactions .prediction-views {
-    margin-left: 0;
-  }
-  .coupon-detail-page .coupon-slip-match {
-    padding: 16px 14px 8px;
-  }
-  .coupon-detail-page .coupon-slip-teams {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-  .coupon-detail-page .coupon-slip-team,
-  .coupon-detail-page .coupon-slip-team.is-away,
-  .coupon-detail-page .coupon-slip-team.is-home {
-    justify-content: center;
-    text-align: center;
-  }
-  .coupon-detail-page .coupon-slip-team strong {
-    font-size: 17px;
-  }
-  .coupon-detail-page .coupon-slip-score {
-    order: -1;
-    min-width: 0;
-  }
-  .coupon-detail-page .coupon-slip-result {
-    margin: 0 14px 14px;
-    padding: 14px;
-  }
-  .coupon-detail-analysis {
-    padding-inline: 10px;
   }
   .prediction-comments {
     gap: 18px;
@@ -4201,31 +4086,11 @@ body.expert-public-details-open {
   .yjs-additional-block--half_450 {
     grid-column: 1/-1;
   }
-  .forecast-body,
   .home-sidebar {
     grid-template-columns: 1fr;
   }
-  .home-heading {
-    min-height: 74px;
-    align-items: center;
-  }
-  .forecast-body {
-    padding-top: 38px;
-  }
-  .forecast-pick-card {
-    min-height: 165px;
-  }
   .page-promo-banner.is-home-sidebar {
     min-height: 260px;
-  }
-
-  .forecast-team-logo {
-    width: 54px;
-    height: 54px;
-    border-radius: 15px;
-  }
-  .forecast-body {
-    padding-top: 24px;
   }
 
   .latest-predictions {
@@ -4313,157 +4178,6 @@ body.expert-public-details-open {
     flex: 1 1 0;
   }
 
-  .home-heading {
-    min-height: 0;
-    margin-bottom: 18px;
-  }
-
-  .home-heading h1 {
-    font-size: clamp(38px, 8vw, 50px);
-  }
-
-  .home-heading-subtitle {
-    max-width: 100%;
-    margin-top: 11px;
-    font-size: 13px;
-  }
-
-  .slider-actions {
-    padding-bottom: 0;
-  }
-
-  .forecast-slider {
-    min-height: 0;
-    padding: 0;
-    border-radius: 20px;
-    border:none;
-  }
-
-  .home-layout .forecast-meta {
-    display: none;
-  }
-
-  .forecast-team,
-  .forecast-team-away {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 10px;
-    text-align: center;
-  }
-
-  .forecast-team-logo {
-    width: 76px;
-    height: 76px;
-    border-radius: 20px;
-  }
-
-  .forecast-team-copy {
-    align-items: center;
-    gap: 9px;
-  }
-
-  .forecast-team strong {
-    font-size: 18px;
-    text-align: center;
-  }
-
-  .forecast-vs {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    font-size: 11px;
-  }
-
-  .forecast-body {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding-top: 20px;
-  }
-
-  .forecast-match-copy {
-    padding-top: 0;
-  }
-
-  .forecast-match-details {
-    gap: 10px 16px;
-    margin-top: 20px;
-  }
-
-  .forecast-note {
-    min-height: 76px;
-    margin-top: 18px;
-    padding: 14px 16px;
-  }
-
-  .forecast-pick-column {
-    grid-template-rows: auto 56px;
-    gap: 12px;
-  }
-
-  .forecast-open-match {
-    min-height: 56px;
-    border-radius: 14px;
-  }
-
-  .home-layout .forecast-expert strong {
-    max-width: 230px;
-    overflow: hidden;
-    font-size: 16px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .home-layout .forecast-expert > div > span {
-    font-size: 12px;
-  }
-
-  .home-layout .forecast-center {
-    width: 150px;
-  }
-
-  .home-layout .forecast-center .forecast-vs {
-    margin: 30px 0 25px;
-    font-size: 54px;
-  }
-
-  .home-layout .forecast-center-league {
-    font-size: 11px;
-  }
-
-  .home-layout .forecast-center-time {
-    font-size: 26px;
-  }
-
-  .home-layout .forecast-center-status {
-    margin-top: 13px;
-    font-size: 11px;
-  }
-
-  .home-layout .forecast-note {
-    min-height: 128px;
-    padding: 18px;
-    gap: 12px;
-    font-size: 12px;
-  }
-
-  .home-layout .forecast-pick-card {
-    min-height: 84px;
-    padding: 16px 135px 14px 18px;
-  }
-
-  .home-layout .forecast-coefficient {
-    right: 18px;
-  }
-
-  .home-layout .forecast-open-match {
-    min-height: 54px;
-  }
-
-  .home-layout .slider-footer {
-    min-height: 68px;
-    padding: 0 20px 16px;
-  }
-
   .profile-page .profile-hero.is-reader .profile-xp-card {
     width: 100%;
     justify-self: stretch;
@@ -4477,10 +4191,6 @@ body.expert-public-details-open {
 }
   .expert-public-copy h1{
       font-size: 20px !important;
-  }
-  .home-bookmakers-hero,
-  .home-heading {
-    display: block;
   }
   .wallet-topup-page {
     padding-inline: 0;
@@ -5374,7 +5084,6 @@ body.expert-public-details-open {
     flex-direction: column;
     gap: 16px;
   }
-  .home-best-predictions .home-articles-head h2,
   .home-editorial-articles .home-articles-head h2 {
     font-size: 31px;
   }
@@ -5400,10 +5109,6 @@ body.expert-public-details-open {
   .home-article-featured {
     grid-template-columns: 1fr;
     border-radius: 14px;
-  }
-  .home-best-featured-teams,
-  .home-best-prediction-featured-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
   .article-list-image,
   .home-article-featured-image,
@@ -5436,45 +5141,7 @@ body.expert-public-details-open {
   .home-article-copy {
     padding: 16px 18px 18px;
   }
-  .home-best-predictions {
-    gap: 18px;
-    margin-top: 26px;
-  }
-  .home-best-featured-status,
-  .home-best-predictions .home-articles-head {
-    align-items: stretch;
-  }
-  .home-best-prediction-featured-label {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 14px;
-  }
-  .home-best-prediction-featured-label::after {
-    width: 100%;
-  }
-  .home-best-prediction-featured-grid {
-    gap: 18px;
-    padding: 16px 14px 18px;
-  }
-  .home-best-featured-expert,
-  .home-best-featured-match,
-  .home-best-featured-pick {
-    padding-right: 0;
-    padding-bottom: 16px;
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .home-best-featured-vs {
-    display: none;
-  }
-  .home-best-featured-logo {
-    width: 48px;
-    flex-basis: 48px;
-  }
-  .capper-pro-metric strong,
-  .home-best-featured-expert strong,
-  .home-best-featured-pick strong,
-  .home-best-featured-team strong {
+  .capper-pro-metric strong {
     font-size: 16px;
   }
   .cappers-summary {
@@ -6353,158 +6020,6 @@ body.expert-public-details-open {
   .profile-user-copy > span {
     white-space: normal;
   }
-  .home-layout .forecast-avatar {
-    width: 41px;
-    height: 41px;
-    flex-basis: 41px;
-  }
-
-  .home-layout .forecast-expert {
-    gap: 10px;
-  }
-
-  .home-layout .forecast-expert strong {
-    max-width: 150px;
-    font-size: 14px;
-  }
-
-  .home-layout .forecast-expert > div > span {
-    font-size: 10px;
-  }
-
-  .home-layout .forecast-team-logo {
-    width: min(15vw, 160px);
-    height: min(15vw, 160px);
-  }
-
-  .home-layout .forecast-center {
-    width: 92px;
-  }
-
-  .home-layout .forecast-center-sport {
-    font-size: 8px;
-    letter-spacing: 0.13em;
-  }
-
-  .home-layout .forecast-center-league {
-    max-width: 92px;
-    margin-top: 4px;
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center .forecast-vs {
-    margin: 24px 0 21px;
-    font-size: 38px;
-  }
-
-  .home-layout .forecast-center-date {
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center-time {
-    margin-top: 4px;
-    font-size: 18px;
-  }
-
-  .home-layout .forecast-center-status {
-    min-height: 22px;
-    margin-top: 9px;
-    gap: 4px;
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center-status svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .home-layout .forecast-body {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .home-layout .forecast-match-copy {
-    min-height: 86px;
-  }
-
-  .home-layout .forecast-note {
-    min-height: 86px;
-    padding: 14px;
-    border-radius: 14px;
-    font-size: 11px;
-    line-height: 1.35;
-  }
-
-  .home-layout .forecast-note > svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  .home-layout .forecast-note-arrow {
-    font-size: 30px;
-  }
-
-  .home-layout .forecast-pick-column {
-    grid-template-rows: 88px 50px;
-    gap: 8px;
-  }
-
-  .home-layout .forecast-pick-card {
-    min-height: 88px;
-    padding: 14px 108px 12px 16px;
-    border-radius: 14px;
-  }
-
-  .home-layout .forecast-pick-card > strong {
-    font-size: 16px;
-  }
-
-  .home-layout .forecast-pick-card > span:first-child,
-  .home-layout .forecast-market,
-  .home-layout .forecast-coefficient small {
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-coefficient {
-    right: 14px;
-  }
-
-  .home-layout .forecast-coefficient b {
-    font-size: 28px;
-  }
-
-  .home-layout .forecast-open-match {
-    min-height: 50px;
-    padding: 0 16px;
-    border-radius: 13px;
-    font-size: 12px;
-  }
-
-  .home-layout .slider-footer {
-    min-height: 62px;
-    padding: 0 14px 14px;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-  }
-
-  .home-layout .slider-progress {
-    display: none;
-  }
-
-  .home-layout .slider-dot {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-    min-height: 8px;
-  }
-
-  .home-layout .slider-dot.is-active {
-    width: 30px;
-  }
-
-  .home-layout .slider-counter {
-    font-size: 12px;
-  }
 
   #profile-tab-wallet .wallet-dashboard {
     gap: 12px;
@@ -6877,27 +6392,6 @@ body.expert-public-details-open {
   .match-prediction-card {
     padding: 14px;
   }
-  .home-heading {
-    align-items: flex-end;
-  }
-  .slider-arrow {
-    width: 40px;
-    height: 40px;
-  }
-  .forecast-body {
-    gap: 16px;
-    padding-top: 30px;
-  }
-  .forecast-note {
-    margin-top: 14px;
-  }
-  .forecast-pick-card {
-    min-height: 152px;
-    padding: 18px;
-  }
-  .forecast-coefficient b {
-    font-size: 38px;
-  }
   .forecast-bottom {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -6958,21 +6452,6 @@ body.expert-public-details-open {
     display: none;
   }
 
-  .forecast-team-away,
-  .forecast-team-home {
-    flex-direction: column;
-    justify-content: center;
-    gap: 7px;
-    text-align: center;
-  }
-  .forecast-team strong {
-    width: 100%;
-    font-size: 13px;
-  }
-  .forecast-team-logo {
-    width: 46px;
-    height: 46px;
-  }
   .latest-predictions-head {
     align-items: center;
     gap: 12px;
@@ -7578,46 +7057,6 @@ body.expert-public-details-open {
     text-align: left;
   }
 
-  .home-heading {
-    gap: 12px;
-  }
-
-  .home-heading h1 {
-    font-size: 34px;
-  }
-
-  .home-heading-subtitle {
-    font-size: 12px;
-  }
-
-  .slider-arrow {
-    width: 44px;
-    height: 44px;
-    border-radius: 13px;
-  }
-
-  .forecast-slide {
-    padding: 0;
-  }
-
-  .forecast-avatar {
-    width: 50px;
-    height: 50px;
-  }
-
-  .forecast-expert strong {
-    font-size: 15px;
-  }
-
-  .forecast-team-logo {
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-  }
-
-  .forecast-team strong {
-    font-size: 14px;
-  }
   .expert-recommendation-card {
     min-height: auto;
   }
@@ -7632,58 +7071,12 @@ body.expert-public-details-open {
   .home-match-league {
     grid-template-columns: 34px minmax(0, 1fr);
   }
-  .forecast-team .forecast-league-meta {
-    display: none !important;
-  }
   .home-match-league-logo {
     width: 34px;
     height: 34px;
   }
   .expert-recommendation-body {
     min-height: 0;
-  }
-  .forecast-vs {
-    width: 40px;
-    height: 40px;
-    font-size: 9px;
-  }
-
-  .forecast-match-copy h2 {
-    font-size: 24px;
-  }
-
-  .forecast-match-details {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .forecast-match-detail,
-  .forecast-result {
-    min-height: 36px;
-  }
-
-  .forecast-note {
-    grid-template-columns: 28px minmax(0, 1fr) 20px;
-    gap: 10px;
-    font-size: 12px;
-  }
-
-  .forecast-pick-card {
-    min-height: 210px;
-    padding: 20px;
-  }
-
-  .forecast-pick-card > strong {
-    font-size: 26px;
-  }
-
-  .forecast-coefficient b {
-    font-size: 44px;
-  }
-
-  .slider-footer {
-    padding: 16px 8px 0;
   }
 
   .vip-cappers-banner__panel {
@@ -7890,14 +7283,6 @@ body.expert-public-details-open {
   }
   .matches-tabs  .is-active svg{
     color: white;
-  }
-.quick-stats {
-    display: flex;
-    gap: 14px;
-    margin: 18px 0;
-}
-  .home-heading .slider-actions{
-    display:none;
   }
     .profile-hero{
         padding:0px;
@@ -8666,23 +8051,6 @@ body.expert-public-details-open {
     width: 100px;
     height: 72px;
   }
-  .forecast-team {
-    gap: 9px;
-  }
-  .forecast-team-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 13px;
-  }
-  .forecast-team strong {
-    font-size: 15px;
-  }
-  .forecast-vs {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 9px;
-  }
   .forecast-bottom-real {
     grid-template-columns: 1fr;
     align-items: start;
@@ -8690,147 +8058,6 @@ body.expert-public-details-open {
   .forecast-time {
     min-width: 0;
     align-items: flex-start;
-  }
-  .slider-footer {
-    grid-template-columns: 1fr auto;
-    padding: 20px;
-  }
-  .slider-progress {
-    grid-column: 1/-1;
-    grid-row: 1;
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  .slider-counter,
-  .slider-dots {
-    grid-row: 2;
-  }
-
-  .home-best-predictions-table {
-    overflow: visible;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .home-best-predictions-scroll {
-    overflow: visible;
-  }
-  .home-best-predictions-head-row {
-    display: none;
-  }
-  .home-best-predictions-body {
-    min-width: 0;
-    display: grid;
-    gap: 14px;
-  }
-  .home-best-prediction-row {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 34px repeat(11, minmax(0, 1fr));
-    grid-template-areas:
-      "number match match match match match match match match match match match"
-      "expert expert expert expert expert expert expert expert expert expert expert expert"
-      "pick pick pick pick pick pick pick pick pick pick pick pick"
-      "coefficient coefficient coefficient coefficient coefficient coefficient status status status status status status"
-      "actions actions actions actions actions actions actions actions actions actions actions actions";
-    align-items: center;
-    gap: 8px 12px;
-    padding: 22px 14px;
-    border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  }
-  .home-best-prediction-number {
-    grid-area: number;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 20px;
-    font-weight: 700;
-    text-align: left;
-  }
-  .home-best-prediction-match {
-    grid-area: match;
-    gap: 16px;
-    text-decoration: none;
-  }
-  .home-best-prediction-teams {
-    width: auto;
-    flex: 0 0 auto;
-    gap: 10px;
-  }
-  .home-best-team-logo {
-    width: clamp(44px, 10vw, 64px);
-    height: clamp(44px, 10vw, 64px);
-    flex-basis: clamp(44px, 10vw, 64px);
-  }
-
-  .home-best-prediction-match-copy span {
-    margin-top: 6px;
-    font-size: clamp(15px, 3.7vw, 20px);
-    font-weight: 600;
-  }
-
-  .home-best-prediction-avatar {
-    width: 56px;
-    height: 56px;
-    flex-basis: 56px;
-  }
-
-  .home-best-prediction-expert strong {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.1;
-    white-space: normal;
-  }
-  .home-best-prediction-expert .home-best-prediction-verified {
-    width: 26px;
-    height: 26px;
-    margin-left: -8px;
-    flex: 0 0 26px;
-  }
-  .home-best-prediction-vip {
-    display: none;
-  }
-  .home-best-prediction-pick {
-    grid-area: pick;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    text-decoration: none;
-  }
-
-  .home-best-prediction-pick strong {
-    margin-top: 6px;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.12;
-    white-space: normal;
-  }
-  .home-best-prediction-status {
-    grid-area: status;
-    min-width: 0;
-    min-height: 45px;
-    font-size: 16px;
-  }
-  .home-best-prediction-coefficient {
-    grid-area: coefficient;
-    min-width: 0;
-    min-height: 45px;
-    font-size: 16px;
-  }
-  .home-best-prediction-actions {
-    grid-area: actions;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-  }
-  .home-best-prediction-action {
-    width: auto;
-    height: 57px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.075);
-  }
-  .home-best-prediction-action svg {
-    width: 34px;
-    height: 34px;
-    stroke-width: 1.8;
   }
 
   .home-important-matches .home-articles-head {
@@ -8882,9 +8109,6 @@ body.expert-public-details-open {
   .home-match-league strong,
   .home-match-team strong {
     font-size: 11px;
-  }
-  .home-bookmakers-note {
-    display: none;
   }
   .home-match-predictions-button {
     min-height: 48px;
@@ -10305,9 +9529,6 @@ body.expert-public-details-open {
     font-size: 9px;
   }
 
-  .forecast-matchup {
-    height: 186px;
-  }
   .experts-card,
   .follow-card {
     padding: 13px;
@@ -10744,33 +9965,6 @@ body.expert-public-details-open {
   .home-all-link {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .home-best-prediction-avatar .capper-trust-badge {
-    right: -9px;
-    min-width: 41px;
-    height: 29px;
-    padding: 0 5px;
-    font-size: 13px;
-  }
-  .home-best-prediction-pick span {
-    font-size: 13px;
-    font-weight: 700;
-    white-space: normal;
-  }
-  .home-best-prediction-expert {
-    grid-area: expert;
-    gap: 18px;
-    min-height: 96px;
-    padding: 8px;
-    border-radius: 16px;
-    text-decoration: none;
-  }
-  .home-best-prediction-match-copy strong {
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.12;
-    white-space: normal;
   }
 
   .capper-landing-hero {
@@ -11435,603 +10629,7 @@ body.expert-public-details-open {
   }
 
   /* Home best experts: mobile leaderboard */
-  .home-best-experts {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    gap: 12px;
-    margin-top: 16px;
-    padding: 0;
-    overflow: hidden;
-  }
 
-  .home-best-experts,
-  .home-best-experts * {
-    box-sizing: border-box;
-    font-weight: 600;
-  }
-
-  .home-best-experts .home-best-experts-head {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 7px;
-    margin: 0;
-  }
-
-  .home-best-experts .home-best-experts-head > div {
-    min-width: 0;
-  }
-
-  .home-best-experts .home-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 0;
-    color: var(--yellow);
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .home-best-experts .home-eyebrow::before {
-    content: "";
-    width: 16px;
-    height: 14px;
-    flex: 0 0 16px;
-    background: url("../img/gold_crown.png") center / contain no-repeat;
-  }
-
-  .home-best-experts .home-best-experts-head h2 {
-    margin: 0;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: 0;
-  }
-
-  .home-best-experts .home-best-experts-head p:last-child {
-    max-width: 100%;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 12px;
-    line-height: 1.4;
-  }
-
-  .home-best-experts .home-best-experts-head .home-all-link {
-    display: none;
-  }
-
-  .home-best-experts .home-best-experts-stage {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-    align-items: stretch;
-  }
-
-  .home-best-experts .home-best-experts-podium {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-    align-items: stretch;
-    margin: 0;
-    padding: 0;
-  }
-
-  .home-best-experts .home-best-experts-runners {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 7px;
-    align-self: stretch;
-    margin: 0;
-  }
-
-  .home-best-experts .home-best-expert-podium-card {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    order: 0;
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-    align-items: center;
-    padding: 9px 10px;
-    border-radius: 12px;
-    color: #fff;
-    background: var(--panel);
-    box-shadow: none;
-  }
-
-  .home-best-experts .home-best-expert-podium-card.is-rank-1 {
-    order: 0;
-    min-height: 0;
-    border: 1px solid var(--yellow);
-    background: #171719;
-    box-shadow: 0 0 14px rgba(251, 241, 16, 0.12);
-  }
-
-  .home-best-experts .home-best-expert-podium-card.is-rank-2,
-  .home-best-experts .home-best-expert-podium-card.is-rank-3 {
-    order: 0;
-    min-height: 0;
-  }
-
-  .home-best-experts .home-best-expert-podium-link {
-    min-width: 0;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 28px 44px minmax(0, 1fr);
-    grid-template-areas:
-      "rank avatar name"
-      "rank avatar username"
-      "rank avatar roi"
-      "stats stats stats";
-    gap: 3px 8px;
-    align-items: center;
-    padding: 0;
-    border-radius: 0;
-    color: inherit;
-    background: transparent;
-    box-shadow: none;
-    text-align: left;
-    text-decoration: none;
-  }
-
-  .home-best-experts .home-best-expert-podium-link::before {
-    display: none;
-  }
-
-  .home-best-experts .home-best-expert-rank-badge {
-    grid-area: rank;
-    align-self: center;
-    justify-self: start;
-    min-width: 0;
-    min-height: 0;
-    margin: 0;
-    padding: 0;
-    border-radius: 0;
-    color: rgba(255, 255, 255, 0.82);
-    background: transparent;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-    box-shadow: none;
-  }
-
-  .home-best-experts
-    .home-best-expert-podium-card.is-rank-1
-    .home-best-expert-rank-badge {
-    min-width: 28px;
-    min-height: 26px;
-    display: grid;
-    place-items: center;
-    border-radius: 7px;
-    color: #111;
-    background: var(--yellow);
-    font-size: 12px;
-  }
-
-  .home-best-experts .home-best-expert-portrait {
-    grid-area: avatar;
-    position: relative;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 0;
-    display: grid;
-    place-items: center;
-  }
-
-  .home-best-experts
-    .home-best-expert-podium-card.is-rank-1
-    .home-best-expert-portrait {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-  }
-
-  .home-best-experts .home-best-expert-avatar,
-  .home-best-experts .home-best-expert-row-avatar {
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 50%;
-    color: #111;
-    background: var(--yellow);
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  .home-best-experts .home-best-expert-avatar {
-    width: 44px;
-    height: 44px;
-  }
-
-  .home-best-experts
-    .home-best-expert-podium-card.is-rank-1
-    .home-best-expert-avatar {
-    width: 48px;
-    height: 48px;
-    box-shadow: 0 0 0 2px var(--yellow);
-  }
-
-  .home-best-experts .home-best-expert-avatar img,
-  .home-best-experts .home-best-expert-row-avatar img,
-  .home-best-experts .home-best-expert-achievement img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: cover;
-  }
-
-  .home-best-experts .home-best-expert-crown,
-  .home-best-experts .home-best-expert-laurel,
-  .home-best-experts .home-best-expert-pedestal {
-    display: none;
-  }
-
-  .home-best-experts .home-best-expert-verified {
-    position: absolute;
-    right: -5px;
-    bottom: -3px;
-    width: 18px;
-    height: 18px;
-    filter: none;
-  }
-
-  .home-best-experts .home-best-expert-verified svg,
-  .home-best-experts .home-best-expert-row-name .capper-verified-badge svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .home-best-experts .home-best-expert-name,
-  .home-best-experts .home-best-expert-username {
-    min-width: 0;
-    max-width: 100%;
-    margin: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .home-best-experts .home-best-expert-name {
-    grid-area: name;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.12;
-  }
-
-  .home-best-experts
-    .home-best-expert-podium-card.is-rank-1
-    .home-best-expert-name {
-    font-size: 15px;
-  }
-
-  .home-best-experts .home-best-expert-username {
-    grid-area: username;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
-    line-height: 1.15;
-  }
-
-  .home-best-experts .home-best-expert-roi {
-    display: none;
-  }
-
-  .home-best-experts .home-best-expert-roi.is-negative {
-    color: #fff;
-    background: var(--danger);
-  }
-
-  .home-best-experts .home-best-expert-achievements {
-    display: none;
-  }
-
-  .home-best-experts .home-best-expert-stats {
-    grid-area: stats;
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    margin: 4px 0 0;
-    padding: 6px 0 0;
-  }
-
-  .home-best-experts .home-best-expert-stats > span {
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 4px;
-    padding: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .home-best-experts .home-best-expert-stats small,
-  .home-best-experts .home-best-expert-row-stat small {
-    min-width: 0;
-    color: rgba(255, 255, 255, 0.46);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.1;
-    text-transform: none;
-  }
-
-  .home-best-experts .home-best-expert-stats strong,
-  .home-best-experts .home-best-expert-row-stat strong {
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .home-best-experts .home-best-expert-follow,
-  .home-best-experts .home-best-expert-row-follow {
-    position: static;
-    min-width: 0;
-    width: clamp(78px, 23vw, 92px);
-    min-height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    align-self: center;
-    margin: 0;
-    padding: 6px 7px;
-    border: 0;
-    border-radius: 8px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1.1;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-align: center;
-    text-decoration: none;
-    box-shadow: none;
-  }
-
-  .home-best-experts
-    .home-best-expert-podium-card.is-rank-1
-    .home-best-expert-follow {
-    color: #111;
-    background: var(--yellow);
-  }
-
-  .home-best-experts .home-best-expert-row {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-    grid-template-rows: auto auto auto;
-    gap: 4px 8px;
-    align-items: center;
-    padding: 8px 10px;
-    overflow: hidden;
-    border-radius: 11px;
-    background: var(--panel);
-  }
-
-  .home-best-experts .home-best-expert-row-rank {
-    grid-column: 1;
-    grid-row: 1 / 4;
-    align-self: center;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .home-best-experts .home-best-expert-row-profile {
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 8px;
-    align-items: center;
-    color: inherit;
-    text-decoration: none;
-  }
-
-  .home-best-experts .home-best-expert-row-avatar {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.64);
-  }
-
-  .home-best-experts .home-best-expert-row-copy {
-    min-width: 0;
-    display: grid;
-    gap: 3px;
-  }
-
-  .home-best-experts .home-best-expert-row-name {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .home-best-experts .home-best-expert-row-name strong {
-    min-width: 0;
-    overflow: hidden;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.1;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .home-best-experts .home-best-expert-row-name .capper-verified-badge {
-    flex: 0 0 16px;
-  }
-
-  .home-best-experts .home-best-expert-row-copy > span:last-child {
-    min-width: 0;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 11px;
-    line-height: 1.1;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  .home-best-experts .home-best-expert-row-performance {
-    grid-column: 2;
-    grid-row: 2;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    overflow: hidden;
-  }
-
-  .home-best-experts .home-best-expert-row .home-best-expert-roi {
-    flex: 0 1 auto;
-    min-width: 0;
-    min-height: 23px;
-    max-width: 100%;
-  }
-
-  .home-best-experts .home-best-expert-row-achievements {
-    min-width: 0;
-    display: flex;
-    flex: 1 1 auto;
-    gap: 3px;
-    overflow: hidden;
-  }
-
-  .home-best-experts .home-best-expert-achievement {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.07);
-  }
-
-  .home-best-experts .home-best-expert-row-stat {
-    min-width: 0;
-    display: grid;
-    gap: 2px;
-    align-content: center;
-    padding-top: 2px;
-  }
-
-  .home-best-experts .home-best-expert-row-stat:nth-of-type(2) {
-    grid-column: 2;
-    grid-row: 3;
-    justify-self: start;
-  }
-
-  .home-best-experts .home-best-expert-row-stat:nth-of-type(3) {
-    grid-column: 3;
-    grid-row: 3;
-    justify-self: center;
-  }
-
-  .home-best-experts .home-best-expert-row-follow {
-    grid-column: 3;
-    grid-row: 1 / 3;
-    justify-self: end;
-  }
-
-  .home-best-experts .home-best-experts-proof {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-    margin-top: 2px;
-    padding-top: 11px;
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
-  }
-
-  .home-best-experts .home-best-experts-proof-lead {
-    display: none;
-  }
-
-  .home-best-experts .home-best-experts-proof-item {
-    min-width: 0;
-    min-height: 44px;
-    display: grid;
-    grid-template-columns: 18px minmax(0, 1fr);
-    gap: 5px;
-    align-items: center;
-    padding: 0 5px;
-  }
-
-  .home-best-experts
-    .home-best-experts-proof-item
-    + .home-best-experts-proof-item {
-    box-shadow: inset 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  .home-best-experts .home-best-experts-proof-item svg {
-    width: 18px;
-    height: 18px;
-    fill: rgba(255, 255, 255, 0.65);
-  }
-
-  .home-best-experts .home-best-experts-proof strong {
-    display: block;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .home-best-experts .home-best-experts-proof small {
-    display: block;
-    margin-top: 3px;
-    overflow-wrap: anywhere;
-    color: rgba(255, 255, 255, 0.48);
-    font-size: 11px;
-    line-height: 1.15;
-  }
-
-  .home-best-experts .home-best-experts-empty {
-    min-height: 120px;
-    gap: 6px;
-    padding: 18px 12px;
-    border-radius: 12px;
-    background: var(--panel);
-  }
-
-  .home-best-experts .home-best-experts-empty strong {
-    font-size: 14px;
-    font-weight: 700;
-  }
-
-  .home-best-experts .home-best-experts-empty p {
-    max-width: 100%;
-    margin: 0;
-    font-size: 12px;
-    line-height: 1.4;
-  }
 }
 
 @media (max-width: 1500px) and (min-width: 1121px) {
@@ -12708,176 +11306,6 @@ body.expert-public-details-open {
     padding: 0 0 22px;
   }
 
-  .coupon-detail-layout-page .coupon-detail-back {
-    width: max-content;
-    max-width: calc(100% - 24px);
-    margin: 0 12px;
-    min-height: 38px;
-    padding: 0 12px;
-    border-radius: 10px;
-    background: #1d1d1f;
-    font-size: 12px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase {
-    min-height: 286px;
-    align-items: end;
-    border-radius: 0 0 18px 18px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase::after {
-    background: linear-gradient(
-      180deg,
-      rgba(4, 8, 12, 0.42),
-      rgba(4, 8, 12, 0.92)
-    );
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase-content {
-    justify-items: start;
-    gap: 10px;
-    padding: 56px 14px 16px;
-    text-align: left;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-type-pill {
-    min-height: 34px;
-    gap: 8px;
-    padding: 0 10px;
-    border-radius: 9px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-type-pill > span {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-type-pill strong {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase h1 {
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase p {
-    max-width: 100%;
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase-bottom {
-    width: 100%;
-    grid-template-columns: 1fr auto;
-    justify-items: stretch;
-    gap: 10px;
-    margin-top: 6px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-hero-author {
-    min-width: 0;
-    flex-direction: row;
-    gap: 10px;
-    text-align: left;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-hero-avatar {
-    width: 46px;
-    height: 46px;
-    border-width: 3px;
-    font-size: 12px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-hero-author small {
-    font-size: 10px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-hero-author strong {
-    margin-top: 3px;
-    font-size: 12px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase .coupon-detail-status {
-    min-height: 34px;
-    gap: 7px;
-    padding: 0 10px;
-    border-radius: 9px;
-    font-size: 11px;
-    white-space: nowrap;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase .coupon-detail-status svg {
-    width: 21px;
-    height: 21px;
-    padding: 3px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-showcase blockquote {
-    grid-column: 1 / -1;
-    font-size: 12px;
-    line-height: 1.35;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-stat {
-    min-height: 78px;
-    grid-template-columns: 38px minmax(0, 1fr);
-    column-gap: 10px;
-    padding: 11px;
-    border-radius: 13px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-stat > span {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-stat small {
-    font-size: 10px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-stat strong {
-    min-width: 0;
-    overflow: hidden;
-    font-size: 15px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-page > .prediction-reactions {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
-    min-height: 0;
-    padding: 0;
-  }
-
-  .coupon-detail-layout-page
-    .coupon-detail-page
-    > .prediction-reactions
-    .prediction-reaction,
-  .coupon-detail-layout-page
-    .coupon-detail-page
-    > .prediction-reactions
-    .prediction-views {
-    min-width: 0;
-    min-height: 42px;
-    padding: 0 8px;
-    border-radius: 11px;
-    font-size: 12px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-panel {
-    padding: 0;
-  }
-
   .coupon-detail-layout-page .coupon-slip.is-compact {
     gap: 9px;
   }
@@ -13000,49 +11428,12 @@ body.expert-public-details-open {
     font-size: 16px;
   }
 
-  .coupon-detail-layout-page .coupon-detail-analysis {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 0 12px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-analysis h2,
-  .coupon-detail-layout-page .coupon-detail-facts h3 {
-    margin-bottom: 10px;
-    font-size: 15px;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-analysis-copy p,
-  .coupon-detail-layout-page .coupon-detail-facts li {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.45;
-  }
-
-  .coupon-detail-layout-page .coupon-detail-facts {
-    padding: 16px;
-    border-radius: 14px;
-  }
-
   .coupon-detail-layout-page .prediction-comments {
     gap: 14px;
     border-radius: 16px;
     margin-top:20px;
   }
 
-  .coupon-detail-layout-page .prediction-comments-head {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .coupon-detail-layout-page .prediction-comment-form {
-    grid-template-columns: 38px minmax(0, 1fr);
-  }
-
-  .coupon-detail-layout-page
-    .prediction-comment-form
-    .prediction-comment-avatar,
   .coupon-detail-layout-page .prediction-comment-avatar {
     width: 38px;
     height: 38px;
@@ -13145,7 +11536,6 @@ body.expert-public-details-open {
   body:has(.coupon-detail-layout-page) .site-main {
     min-height: auto !important;
     overflow: visible !important;
-    padding-bottom: 92px;
   }
 
   body:has(.coupon-detail-layout-page) .breadcrumbs-container {
@@ -14140,5 +12530,144 @@ body.expert-public-details-open {
 
   .forecast-area {
     display: none;
+  }
+
+  .home-mobile-best {
+    display: block;
+  }
+
+  .home-best-predictions {
+    display: none;
+  }
+
+  .home-trusted-bookmakers.is-home-bookmakers {
+    display: none;
+  }
+
+  .home-mobile-experts {
+    display: block;
+  }
+
+  .home-best-experts {
+    display: none;
+  }
+
+  /* Coupon page: the phone layout replaces the wide blocks and the reactions take the bottom menu's place. */
+  .coupon-mobile {
+    display: block;
+  }
+
+  .coupon-detail-back,
+  .coupon-detail-showcase,
+  .coupon-detail-stats,
+  .coupon-detail-panel,
+  .coupon-detail-analysis,
+  .coupon-detail-body .mobile-app-nav,
+  .coupon-detail-page .prediction-comments-empty,
+  .coupon-detail-page [data-comments-total-label] {
+    display: none;
+  }
+
+  .coupon-detail-page > .prediction-reactions {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1200;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 13px 16px calc(13px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--ink);
+  }
+
+  .coupon-detail-page > .prediction-reactions .prediction-reaction {
+    min-height: 46px;
+    border-radius: 12px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .coupon-detail-page > .prediction-reactions .prediction-reaction svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .coupon-detail-page > .prediction-reactions .prediction-share {
+    background: var(--blue);
+  }
+
+  .coupon-detail-page > .prediction-reactions .prediction-views,
+  .coupon-detail-page > .prediction-reactions .prediction-views:hover {
+    margin: 0;
+    color: var(--muted);
+    background: none;
+  }
+
+  .coupon-detail-page .prediction-comments {
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .coupon-detail-page .prediction-comments-list {
+    min-height: 0;
+  }
+
+  .coupon-detail-page .prediction-comments-head {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .coupon-detail-page .prediction-comments-head h2 {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    font-weight: 400;
+  }
+
+  .coupon-detail-page .prediction-comments-total {
+    padding: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .coupon-detail-page .prediction-comment-form {
+    grid-template-columns: 32px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-height: 0;
+    padding: 9px 9px 9px 12px;
+    border-radius: 18px;
+    background: var(--panel);
+  }
+
+  .coupon-detail-page .prediction-comment-form .prediction-comment-avatar {
+    width: 32px;
+    height: 32px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+  }
+
+  .coupon-detail-page .prediction-comment-form textarea,
+  .coupon-detail-page .prediction-comment-form textarea:focus {
+    height: 40px;
+    min-height: 40px;
+    padding: 7px 48px 7px 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 15px;
+  }
+
+  .coupon-detail-page .prediction-comment-submit {
+    top: 9px;
+    right: 9px;
+    border-radius: 10px;
+    background: var(--blue);
+    box-shadow: none;
   }
 }

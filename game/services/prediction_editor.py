@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import bet_option_key
+from game.services.card_backgrounds import assign_coupon_backgrounds
 from game.services.coupon_validation import (
     CouponMatchVerificationError,
     CouponOddsChangedError,
@@ -299,6 +300,8 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     coupon.sync_coupon_type()
     if not coupon.custom_cover_image and not coupon.cover_image_id:
         coupon.assign_cover_image()
+    if status == PredictionCoupon.PublishedStatus.PUBLISHED:
+        assign_coupon_backgrounds(coupon)
     return coupon
 
 

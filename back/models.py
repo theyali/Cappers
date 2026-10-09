@@ -16,6 +16,7 @@ class Bookmaker(models.Model):
 
     name = models.CharField("Название", max_length=120)
     icon = models.ImageField("Иконка", upload_to="bookmakers/", blank=True)
+    slider_img = models.ImageField("Фон карточки в мобильном слайдере", upload_to="bookmakers/slider/", blank=True)
     bonus_text = models.CharField("Текст бонуса", max_length=160, blank=True)
     description = models.CharField("Краткое описание", max_length=220, blank=True)
     link = models.URLField("Ссылка", max_length=500)
@@ -59,6 +60,17 @@ class Bookmaker(models.Model):
     @property
     def effective_bonus_link(self) -> str:
         return self.bonus_link or self.link
+
+    @property
+    def initials(self) -> str:
+        # ColdBet -> CB, Лига Ставок -> ЛС, PARI -> PA
+        capitals = [char for char in self.name if char.isupper()]
+        if len(capitals) >= 2:
+            return "".join(capitals[:2])
+        words = self.name.split()
+        if len(words) >= 2:
+            return (words[0][0] + words[1][0]).upper()
+        return self.name[:2].upper()
 
 
 class Bonus(models.Model):

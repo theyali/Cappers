@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from cabinet.models import User
 from game.models import Match, Prediction, PredictionCoupon
+from game.services.card_backgrounds import assign_coupon_backgrounds
 from game.services.coupon_validation import (
     MAX_COUPON_ITEMS,
     coupon_total_coefficient,
@@ -121,6 +122,7 @@ def create_tournament_coupon(
                     for item in normalized_items
                 ]
             )
+            assign_coupon_backgrounds(coupon)
             tournament_coupon = TournamentCoupon.objects.create(
                 tournament=tournament,
                 participant=participant,

@@ -24,6 +24,7 @@ from game.services.bet_options import (
     build_match_winner_odds,
     human_market_label,
 )
+from game.services.card_backgrounds import assign_coupon_backgrounds
 from game.services.coupon_validation import (
     COUPON_PUBLISH_LIMIT_MESSAGE,
     MAX_COUPON_ITEMS,
@@ -429,6 +430,7 @@ def create_coupon(request):
         coupon.sync_coupon_type()
         if not autosave:
             coupon.assign_cover_image()
+            assign_coupon_backgrounds(coupon)
 
     coupon = (
         PredictionCoupon.objects.prefetch_related("predictions__match")

@@ -13,6 +13,8 @@
 
         <div class="predictions-content coupon-detail-content">
             <section class="coupon-detail-page" aria-label="{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }}">
+                {% include "front/includes/_coupon_detail_mobile.html" %}
+
                 <a class="coupon-detail-back" href="{% url 'front:predictions' %}">
                     <span aria-hidden="true">←</span>
                     <span>Вернуться к прогнозам</span>
@@ -172,7 +174,7 @@
                             name="text"
                             rows="1"
                             maxlength="1000"
-                            placeholder="Напишите комментарий..."
+                            placeholder="{% if comments_total_count %}Напишите комментарий...{% else %}Будьте первым — напишите комментарий{% endif %}"
                             data-comment-text
                         ></textarea>
                         <p class="prediction-comment-feedback" data-comment-feedback role="status" aria-live="polite" hidden></p>
@@ -363,4 +365,5 @@
 {% block extra_js %}
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/comments.js' %}" defer></script>
+<script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
 {% endblock %}

@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from back.models import WebsiteSettings
+from back.models import Bookmaker, WebsiteSettings
 from pages.models import AdvBanner, PageSEO
 from cabinet.models import (
     AnalystProfile,
@@ -115,6 +115,82 @@ class PredictionFilterSidebarTemplateTests(SimpleTestCase):
 
         self.assertTrue(parser.banner_inside_prediction_sidebar)
         self.assertFalse(parser.banner_inside_filter_matches)
+
+
+class HomeMobileBookmakersTemplateTests(SimpleTestCase):
+    def bookmakers(self):
+        return [
+            Bookmaker(
+                name="ColdBet",
+                link="https://example.com/cold",
+                bonus_link="https://example.com/cold-bonus",
+                bonus_text="Фрибет 5 000 ₽",
+                slider_img="bookmakers/slider/cold.webp",
+                exclusive=True,
+            ),
+            Bookmaker(name="Лига Ставок", link="https://example.com/liga", is_reliable=False),
+        ]
+
+    def test_home_gets_the_bonus_slider_with_slider_backgrounds(self):
+        html = render_to_string(
+            "front/includes/_home_bookmakers.html",
+            {"bookmakers": self.bookmakers(), "is_home_bookmakers": True},
+        )
+
+        self.assertIn("home-mobile-bookmakers", html)
+        self.assertIn('href="https://example.com/cold-bonus"', html)
+        self.assertIn("bookmakers/slider/cold.webp", html)
+        self.assertIn(">Эксклюзив<", html)
+        self.assertIn("CB", html)
+        self.assertIn("ЛС", html)
+        self.assertEqual(html.count("data-home-mobile-dot"), 2)
+
+    def test_catalog_page_keeps_only_the_table(self):
+        html = render_to_string("front/includes/_home_bookmakers.html", {"bookmakers": self.bookmakers()})
+
+        self.assertNotIn("home-mobile-bookmakers", html)
+        self.assertIn("home-trusted-bookmaker", html)
+
+
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class HomeMobileExpertsTemplateTests(SimpleTestCase):
+    def expert(self, index, **extra):
+        return {
+            "name": f"Expert {index}",
+            "username": f"expert{index}",
+            "initials": f"E{index}",
+            "avatar_url": "",
+            "verified": False,
+            "trust_index": Decimal("7.3"),
+            "publications": 52,
+            "publications_label": "прогноза",
+            "is_month_leader": False,
+            **extra,
+        }
+
+    def test_leader_card_and_the_next_six_in_the_list(self):
+        experts = [self.expert(1, is_month_leader=True, avatar_url="/media/a.webp")]
+        experts += [self.expert(index, verified=index == 3) for index in range(2, 10)]
+
+        html = render_to_string("front/includes/_home_mobile_experts.html", {"best_experts": experts})
+
+        self.assertIn("front/img/trophy_blue.png", html)
+        self.assertIn("Эксперт №1 месяца", html)
+        self.assertIn('src="/media/a.webp"', html)
+        self.assertEqual(html.count("home-mobile-experts-row\""), 6)
+        self.assertIn("@expert7", html)
+        self.assertNotIn("@expert8", html)
+        self.assertEqual(html.count("capper-verified-badge"), 1)
+        self.assertIn("<b>52</b> прогноза", html)
+
+    def test_leader_of_all_time_is_not_called_leader_of_the_month(self):
+        html = render_to_string("front/includes/_home_mobile_experts.html", {"best_experts": [self.expert(1)]})
+
+        self.assertNotIn("месяца", html)
+        self.assertNotIn("home-mobile-experts-list", html)
 
 
 class ExpertRankingScoreTests(SimpleTestCase):

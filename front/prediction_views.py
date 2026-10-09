@@ -37,6 +37,8 @@ from cabinet.paid_predictions import user_can_view_paid_predictions
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.cover_images import active_cover_ids
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage, Sport
+from game.services.bet_options import pick_label, picked_side
+from game.services.card_backgrounds import assign_event_backgrounds, background_urls
 
 from .expert_ranking import ranked_expert_profiles
 from .metrics import (
@@ -924,6 +926,12 @@ def prediction_detail(request, prediction_id: int):
     coupon.views_count = metrics.views_count
     coupon.shares_count = metrics.shares_count
     positions = list(getattr(coupon, "detail_positions", []) or [])
+    # Event cards of the phone layout; older coupons get their pictures on the first visit.
+    assign_event_backgrounds(positions)
+    for position in positions:
+        position.mobile_background = background_urls(position.mobile_card_background)
+        position.pick_label = pick_label(position)
+        position.picked_side = picked_side(position)
 
     total_coefficient = Decimal("1")
     for position in positions:
@@ -977,6 +985,7 @@ def prediction_detail(request, prediction_id: int):
         request,
         "front/prediction_detail.html",
         {
+            "page_class": "coupon-detail-body",
             "coupon": coupon,
             "positions": positions,
             "total_coefficient": total_coefficient,

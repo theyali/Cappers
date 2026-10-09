@@ -1,0 +1,124 @@
+{% load capper_trust %}
+{# Coupon page for phones and the Telegram Mini App; the wide showcase, stats and slip are hidden there. #}
+<div class="coupon-mobile">
+    <header class="coupon-mobile-bar">
+        <a class="coupon-mobile-icon" href="{% url 'front:predictions' %}" aria-label="Вернуться к прогнозам">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <div class="coupon-mobile-title">
+            <strong>Купон #{{ coupon.id }}</strong>
+            <span class="coupon-mobile-state is-{{ coupon.state_status|default:'pending' }}">
+                {% if coupon.state_status == "win" %}Выигрыш{% elif coupon.state_status == "lose" %}Проигрыш{% elif coupon.state_status == "refund" %}Возврат{% else %}Опубликован{% endif %}
+            </span>
+        </div>
+        <button
+            class="coupon-mobile-icon prediction-share"
+            type="button"
+            data-prediction-id="{{ coupon.id }}"
+            data-share-url="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
+            data-share-endpoint="{% url 'front:prediction_share' prediction_id=coupon.id %}"
+            aria-label="Поделиться прогнозом"
+        >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        </button>
+    </header>
+
+    <section class="coupon-mobile-summary" aria-label="Показатели купона">
+        <div class="coupon-mobile-summary-top">
+            <span class="coupon-mobile-odds">
+                <small>Коэффициент</small>
+                <strong>{{ total_coefficient }}</strong>
+            </span>
+            <span class="coupon-mobile-payout">
+                <small>Возможная выплата</small>
+                <strong>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>
+                    {{ coupon.possible_payout|floatformat:"0" }}
+                </strong>
+            </span>
+        </div>
+        <div class="coupon-mobile-summary-pills">
+            <span class="coupon-mobile-pill">
+                <small>Ставка</small>
+                <strong>{% include "front/includes/_coin_icon.html" %}{{ coupon.total_stake|floatformat:"0" }}</strong>
+            </span>
+            <span class="coupon-mobile-pill is-confidence">
+                <small>Уверенность</small>
+                <strong>{{ coupon.confidence }}%</strong>
+                <progress value="{{ coupon.confidence }}" max="100" aria-label="Уверенность {{ coupon.confidence }}%"></progress>
+            </span>
+        </div>
+    </section>
+
+    <a class="coupon-mobile-author" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Открыть профиль эксперта {{ expert_name }}">
+        <span class="coupon-mobile-avatar">
+            {% if expert_avatar_url %}
+                <img src="{{ expert_avatar_url }}" alt="" width="44" height="44" loading="lazy" decoding="async">
+            {% else %}
+                {{ expert_initials }}
+            {% endif %}
+            {% capper_trust_badge expert_trust_index %}
+        </span>
+        <span class="coupon-mobile-author-copy">
+            <span class="coupon-mobile-author-name">
+                <strong>{{ expert_name }}</strong>
+                {% if expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+            </span>
+            <small>{{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</small>
+        </span>
+        <span class="coupon-mobile-author-link">Профиль</span>
+    </a>
+
+    <p class="coupon-mobile-lead">{{ coupon.headline|default:"Топовые матчи. Выверенная аналитика. Уверенная игра." }}</p>
+    {% if coupon.description %}
+        <p class="coupon-mobile-lead">{{ coupon.description|linebreaksbr }}</p>
+    {% endif %}
+
+    {% if positions %}
+    <section class="home-mobile-slider coupon-mobile-events" data-home-mobile-slider aria-labelledby="coupon-mobile-events-title">
+        <h2 class="coupon-mobile-heading" id="coupon-mobile-events-title">События <span>{{ positions|length }}</span></h2>
+        <div class="home-mobile-slider-track" data-home-mobile-track>
+            {% for position in positions %}
+            <a class="home-mobile-card coupon-mobile-event{% if position.mobile_background.is_light %} is-light{% endif %}" href="{{ position.match.get_absolute_url }}">
+                {% if position.mobile_background.url %}
+                <img
+                    class="home-mobile-card-bg"
+                    src="{{ position.mobile_background.url }}"
+                    {% if position.mobile_background.url_3x %}srcset="{{ position.mobile_background.url }} 2x, {{ position.mobile_background.url_3x }} 3x"{% endif %}
+                    alt=""
+                    width="632"
+                    height="408"
+                    loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                    decoding="async"
+                >
+                {% endif %}
+                <span class="coupon-mobile-event-meta">{{ position.match.sport.name_ru|default:"Спорт" }} · {{ position.match.league_name|default:"Лига" }}</span>
+                {% if position.match.starts_at %}
+                <span class="home-mobile-card-date">{{ position.match.starts_at|date:"d.m.Y · H:i" }}</span>
+                {% endif %}
+                <strong class="coupon-mobile-event-teams{% if position.picked_side %} is-{{ position.picked_side }}-picked{% endif %}">
+                    <span>{{ position.match.home_team_name|default:"Хозяева" }}</span>
+                    <span>{{ position.match.away_team_name|default:"Гости" }}</span>
+                </strong>
+                <span class="coupon-mobile-event-foot">
+                    <span class="home-mobile-card-pick">
+                        <span>{{ position.pick_label }}</span>
+                        <b>{{ position.coefficient|floatformat:2 }}</b>
+                    </span>
+                    <span class="coupon-mobile-event-status is-{{ position.state_status|default:'pending' }}">
+                        {% if position.state_status == "win" %}Выигрыш{% elif position.state_status == "lose" %}Проигрыш{% elif position.state_status == "refund" %}Возврат{% else %}Принята{% endif %}
+                    </span>
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+        {% if positions|length > 1 %}
+        <div class="home-mobile-slider-dots" aria-hidden="true">
+            {% for position in positions %}
+                <span class="{% if forloop.first %}is-active{% endif %}" data-home-mobile-dot></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
