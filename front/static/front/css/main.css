@@ -8989,6 +8989,11 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     scrollbar-color: #3a3a3d transparent;
 }
 .filter_matches { padding: 10px; background: var(--panel); }
+.filter_matches .matches-table-filter-head-icon .solar-icon,
+.filter_matches .matches-table-scope-icon .solar-icon {
+    fill: currentColor;
+    stroke: none;
+}
 .prediction-filter-promos {
     min-width: 0;
     display: grid;
