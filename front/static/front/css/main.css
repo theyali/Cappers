@@ -1321,6 +1321,10 @@ body.wiki-video-player-open {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+.site-nav-center .nav-icon .solar-icon {
+    fill: currentColor;
+    stroke: none;
+}
 .coupon-detail-page .coupon-slip-sport-badge-icon svg [stroke]:not([stroke="none"]),
 .coupon-slip-sport-icon svg [stroke]:not([stroke="none"]),
 .expert-sport-profit-icon svg [stroke]:not([stroke="none"]),
@@ -1667,11 +1671,8 @@ body.wiki-video-player-open {
 .site-topbar-icon svg{
     width: 100%;
     height: 100%;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
 .site-nav-center .site-nav-cappers-dropdown a {
     min-height: 62px;

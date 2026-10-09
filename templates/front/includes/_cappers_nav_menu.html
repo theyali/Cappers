@@ -2,6 +2,6 @@
     class="site-nav-cappers-trigger{% if request.resolver_match.url_name == 'cappers_table' or request.resolver_match.url_name == 'cappers_table_group' or request.resolver_match.url_name == 'cappers_table_period' or request.resolver_match.url_name == 'cappers_table_sport' %} is-active{% endif %}"
     href="{% url 'front:cappers_table' %}"
 >
-    <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V9m7 10V5m7 14v-7M3 19h18"/></svg></span>
+    <span class="nav-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" %}</span>
     <span class="site-nav-cappers-label">Капперы</span>
 </a>
