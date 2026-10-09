@@ -20,7 +20,6 @@
     function initExpertTabs(root) {
         const buttons = Array.from(root.querySelectorAll("[data-expert-public-tab]"));
         const panels = Array.from(root.querySelectorAll(MANAGED_PANEL_SELECTOR));
-        const mobileTabs = Array.from(root.querySelectorAll(".expert-public-mobile-tabs"));
         if (!buttons.length) return;
 
         const setPanelVisibility = (tabName) => {
@@ -34,10 +33,6 @@
                 } else {
                     panel.style.setProperty("display", "none", "important");
                 }
-            });
-            mobileTabs.forEach((tabs) => {
-                tabs.hidden = false;
-                tabs.style.removeProperty("display");
             });
         };
 

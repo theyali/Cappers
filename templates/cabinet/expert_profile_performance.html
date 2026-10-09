@@ -19,13 +19,8 @@
             </section>
         </aside>
 
-        <div class="matches-mobile-scope-panel expert-public-mobile-tabs" aria-label="Разделы публичного профиля на мобильных устройствах">
-            <nav class="matches-tabs" role="tablist" aria-label="Разделы профиля эксперта">
-                {% include "cabinet/includes/_expert_public_tab_links.html" with public_tab_link_class="" %}
-            </nav>
-        </div>
-
         <section class="predictions-content expert-public-shell{% if analyst_profile.user.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
+            {% include "cabinet/includes/_expert_public_mobile.html" %}
             {{ block.super }}
 
             {% if profile_presence %}
@@ -54,6 +49,7 @@
 {% block extra_js %}
 {{ block.super }}
 <script src="{% static 'front/js/expert-public-tabs.js' %}" defer></script>
+<script src="{% static 'front/js/expert-public-mobile.js' %}" defer></script>
 <script src="{% static 'front/js/expert-public-presence.js' %}" defer></script>
 <script src="{% static 'front/js/expert-sport-profit.js' %}" defer></script>
 <script src="{% static 'front/js/expert-recent-performance.js' %}" defer></script>

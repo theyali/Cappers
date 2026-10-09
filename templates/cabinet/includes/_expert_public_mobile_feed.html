@@ -1,0 +1,30 @@
+{# Coupon feed of the phone profile with its filters; the wide table is hidden there. #}
+<div class="expert-mobile-feed" data-expert-mobile-feed>
+    <div class="expert-mobile-filters" role="group" aria-label="Какие прогнозы показать">
+        <button class="is-active" type="button" data-expert-mobile-filter="all" aria-pressed="true">Все · {{ predictions_count }}</button>
+        <button type="button" data-expert-mobile-filter="win" aria-pressed="false">Выигрыши · {{ wins_count }}</button>
+        <button type="button" data-expert-mobile-filter="pending" aria-pressed="false">В игре · {{ open_predictions_count }}</button>
+    </div>
+    {% for prediction in latest_predictions %}
+    <a class="expert-mobile-coupon" href="{% url 'front:prediction_detail' prediction_id=prediction.id %}" data-state="{{ prediction.state_status|default:'pending' }}" data-sport="{{ prediction.match.sport.code }}">
+        <span class="expert-mobile-coupon-copy">
+            <span class="expert-mobile-coupon-meta">
+                <b>{{ prediction.match.sport.name_ru|default:"Спорт" }}</b>{% if prediction.match.starts_at %} · {{ prediction.match.starts_at|date:"d.m, H:i" }}{% endif %}{% if prediction.match.score %} · {{ prediction.match.score }}{% endif %}
+            </span>
+            <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
+            <span>{{ prediction.feed_subtitle }}</span>
+        </span>
+        <span class="expert-mobile-coupon-result">
+            <b>{{ prediction.coefficient|floatformat:2 }}</b>
+            <small class="is-{{ prediction.state_status|default:'pending' }}">
+                {% if prediction.state_status == "win" %}Выигрыш{% elif prediction.state_status == "lose" %}Проигрыш{% elif prediction.state_status == "refund" %}Возврат{% else %}В игре{% endif %}
+            </small>
+        </span>
+    </a>
+    {% endfor %}
+    <p class="expert-mobile-feed-empty" data-expert-mobile-feed-empty hidden>В последних прогнозах таких нет.</p>
+    <a class="expert-mobile-feed-all" href="{% url 'front:predictions' %}?capper={{ expert.username|urlencode }}">
+        Все прогнозы каппера
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+</div>

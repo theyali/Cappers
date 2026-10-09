@@ -327,8 +327,7 @@ body.expert-public-details-open {
   .expert-public-quote {
     text-align: left;
   }
-  .expert-public-actions,
-  .expert-public-socials {
+  .expert-public-actions {
     justify-content: flex-start;
   }
   .expert-public-tags {
@@ -337,9 +336,6 @@ body.expert-public-details-open {
   }
   .expert-public-stats.expert-public-stats-compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .expert-public-latest-articles-grid {
-    grid-template-columns: 1fr;
   }
 
   .profile-referrals-hero {
@@ -7433,77 +7429,6 @@ body.expert-public-details-open {
         text-overflow: clip;
     }
 
-    [data-expert-public-tabs] .expert-public-mobile-tabs {
-        display: block !important;
-        grid-column: 1 / -1;
-        order: -1;
-        width: 100%;
-        margin: 0 0 14px;
-        padding: 0;
-        overflow: hidden;
-        background: var(--ink);
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs {
-        width: 100%;
-        min-height: 42px;
-        display: flex !important;
-        align-items: stretch;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-radius: 0;
-        background: transparent;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs::-webkit-scrollbar {
-        display: none;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a {
-        min-width: max-content;
-        min-height: 42px;
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0 13px;
-        border-radius: 11px;
-        color: rgba(255, 255, 255, 0.72) !important;
-        background: var(--panel) !important;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a.is-active {
-        color: #fff !important;
-        background: var(--blue) !important;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-tabs a.is-active::after {
-        display: none;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-icon,
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-icon svg {
-        width: 18px;
-        height: 18px;
-        flex: 0 0 18px;
-    }
-
-    [data-expert-public-tabs] .expert-public-mobile-tabs .matches-table-scope-copy {
-        overflow: visible;
-        font-size: 12px;
-        font-weight: 600;
-        text-overflow: clip;
-    }
-
     body:has(.predictions-page[data-expert-public-tabs]) {
         height: auto;
         display: block;
@@ -9320,10 +9245,6 @@ body.expert-public-details-open {
     min-width: 190px;
     min-height: 54px;
     font-size: 16px;
-  }
-  .expert-public-action-icon {
-    width: 54px;
-    height: 54px;
   }
   .expert-public-stats.expert-public-stats-compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -12669,5 +12590,28 @@ body.expert-public-details-open {
     border-radius: 10px;
     background: var(--blue);
     box-shadow: none;
+  }
+
+  /* Public capper page: the phone layout replaces the hero, stat cards, old tab bar and the table. */
+  .expert-mobile,
+  .expert-mobile-tabs,
+  .expert-mobile-feed {
+    display: block;
+  }
+
+  .expert-public-hero,
+  .expert-public-feed > .expert-public-section-head,
+  .expert-public-feed .content-table-view {
+    display: none;
+  }
+
+  .expert-public-shell > .expert-public-page > .expert-public-stats-compact,
+  .expert-public-body .breadcrumbs-container {
+    display: none !important;
+  }
+
+  /* clip, unlike hidden, keeps the page scrolling on the root, so the tabs can stick. */
+  .expert-public-body {
+    overflow-x: clip;
   }
 }

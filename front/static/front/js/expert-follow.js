@@ -42,8 +42,10 @@
             });
         }
 
+        // Only the profile's own follow buttons change its counters, not the recommended experts below.
+        if (!button.closest(".expert-public-page, [data-expert-mobile], [data-expert-mobile-tabs]")) return;
         document
-            .querySelectorAll(".expert-public-page [data-followers-count]")
+            .querySelectorAll(".expert-public-page [data-followers-count], [data-expert-mobile] [data-followers-count]")
             .forEach((node) => updateCounter(node, value));
     };
 

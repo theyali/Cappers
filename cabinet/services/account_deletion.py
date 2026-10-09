@@ -62,8 +62,6 @@ def delete_user_account(user) -> User:
 
     profile = AnalystProfile.objects.filter(user=user).first()
     if profile is not None:
-        if profile.cover_image:
-            profile.cover_image.delete(save=False)
         for field in (
             "bio",
             "specialization",

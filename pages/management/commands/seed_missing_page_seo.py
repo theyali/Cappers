@@ -269,7 +269,6 @@ ACTION_ROUTES = {
     "cabinet:following_summary",
     "cabinet:referral_stats",
     "cabinet:avatar_upload",
-    "cabinet:cover_upload",
     "cabinet:follow_analyst",
     "cabinet:paid_predictions_subscribe",
     "cabinet:paid_predictions_decline",

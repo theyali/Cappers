@@ -72,7 +72,6 @@ urlpatterns = [
     path("prediction-demand/", demand_views.prediction_demand, name="prediction_demand"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),
     path("profile/avatar/", avatar_views.avatar, name="avatar_upload"),
-    path("profile/cover/", avatar_views.cover, name="cover_upload"),
     path("profile/follow/<int:user_id>/", referral_views.follow_analyst, name="follow_analyst"),
     path(
         "experts/<int:user_id>/paid-subscribe/",

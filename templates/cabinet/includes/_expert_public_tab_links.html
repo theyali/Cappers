@@ -10,6 +10,7 @@
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </span>
     <span class="matches-table-scope-copy">Прогнозы</span>
+    {% if show_tab_counts %}<b class="expert-mobile-tab-count">{{ predictions_count }}</b>{% endif %}
 </a>
 <a
     class="{{ public_tab_link_class }}"

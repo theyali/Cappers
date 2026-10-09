@@ -106,11 +106,6 @@ class AnalystProfile(models.Model):
         verbose_name="Пользователь",
     )
     display_name = models.CharField("Отображаемое имя", max_length=120, blank=True)
-    cover_image = models.ImageField(
-        "Обложка профиля",
-        upload_to="profile_covers/%Y/%m/",
-        blank=True,
-    )
     bio = models.TextField("О себе", max_length=2000, blank=True)
     specialization = models.CharField("Специализация", max_length=220, blank=True)
     favorite_sports = models.CharField("Любимые виды спорта", max_length=320, blank=True)
@@ -195,8 +190,8 @@ class AnalystProfile(models.Model):
     @property
     def social_links(self) -> list[dict]:
         values = [
-            ("telegram_channel", "Telegram канал", self.telegram_channel, "telegram"),
-            ("telegram_account", "Telegram аккаунт", self.telegram_account, "telegram"),
+            ("telegram_channel", "Telegram-канал", self.telegram_channel, "telegram"),
+            ("telegram_account", "Telegram · личный", self.telegram_account, "telegram"),
             ("instagram", "Instagram", self.instagram, "instagram"),
             ("threads", "Threads", self.threads, "threads"),
             ("youtube", "YouTube", self.youtube, "youtube"),
