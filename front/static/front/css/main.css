@@ -2134,10 +2134,13 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .home-mobile-bookmakers-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
 .home-mobile-bookmakers-top .home-eyebrow { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
 .home-mobile-bookmakers-age { padding: 3px 8px; border: 1.5px solid rgba(255, 255, 255, 0.3); border-radius: 8px; color: rgba(255, 255, 255, 0.72); font-size: 12px; font-weight: 800; }
-.home-mobile-bookmakers-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.home-mobile-bookmakers-head h2 { margin: 0; font-size: 25px; line-height: 1.08; }
+.home-mobile-bookmakers-head,
+.home-mobile-experts-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.home-mobile-bookmakers-head h2,
+.home-mobile-experts-head h2 { margin: 0; font-size: 25px; line-height: 1.08; }
 .home-mobile-bookmakers-head h2 mark { display: block; }
-.home-mobile-bookmakers-all { color: var(--muted); font-size: 16px; font-weight: 800; text-decoration: none; }
+.home-mobile-bookmakers-all,
+.home-mobile-experts-link { color: var(--muted); font-size: 16px; font-weight: 800; text-decoration: none; }
 .home-mobile-bookmakers-lead { margin: 10px 0 20px; color: rgba(255, 255, 255, 0.58); font-size: 15px; font-weight: 500; line-height: 1.4; }
 .home-mobile-card.home-mobile-bookmaker {
     aspect-ratio: 1378 / 1018;
@@ -2181,6 +2184,70 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .home-mobile-bookmakers-foot .home-mobile-slider-dots { padding-top: 0; }
 .home-mobile-bookmakers-compare { display: inline-flex; align-items: center; gap: 6px; color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; }
 .home-mobile-bookmakers-compare svg { color: var(--blue); }
+/* Expert rating for phones and the Telegram Mini App (mobile.css shows it there); it shares the bookmaker slider header. */
+.home-mobile-experts { display: none; margin-top: 30px; }
+.home-mobile-experts > .home-eyebrow { margin: 0 0 22px; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
+.home-mobile-experts-leader {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 18px;
+    overflow: hidden;
+    padding: 18px 18px 17px;
+    border-radius: 20px;
+    background: var(--blue);
+    color: #fff;
+    text-decoration: none;
+}
+.home-mobile-experts-leader > * { position: relative; z-index: 1; }
+.home-mobile-experts-leader .home-mobile-experts-leader-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
+.home-mobile-experts-leader-label { display: inline-flex; align-items: center; gap: 8px; color: var(--yellow); font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.home-mobile-experts-leader-person { display: flex; align-items: center; gap: 14px; max-width: 64%; }
+.home-mobile-experts-avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #2a2c33;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+}
+.home-mobile-experts-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.home-mobile-experts-leader .home-mobile-experts-avatar { width: 52px; height: 52px; background: var(--ink); box-shadow: 0 0 0 3px var(--yellow); font-size: 17px; }
+.home-mobile-experts-avatar .capper-trust-badge { top: auto; right: -7px; bottom: -4px; left: auto; width: auto; height: auto; padding: 2px 5px; border-radius: 5px; font-size: 11px; box-shadow: none; }
+.home-mobile-experts-person { display: grid; gap: 3px; min-width: 0; }
+.home-mobile-experts-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.home-mobile-experts-name strong { overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-experts-name .capper-verified-badge { flex: 0 0 auto; }
+.home-mobile-experts-username { overflow: hidden; color: var(--muted); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-experts-leader .home-mobile-experts-name strong { font-size: 18px; }
+.home-mobile-experts-leader .home-mobile-experts-username { color: rgba(255, 255, 255, 0.78); }
+.home-mobile-experts-leader-actions { display: flex; gap: 10px; }
+.home-mobile-experts-leader-count,
+.home-mobile-experts-leader-profile { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 16px; border-radius: 12px; white-space: nowrap; }
+.home-mobile-experts-leader-count { background: var(--ink); color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 700; }
+.home-mobile-experts-leader-count b { color: #fff; font-family: var(--font-heading); font-size: 20px; font-weight: 400; }
+.home-mobile-experts-leader-profile { background: var(--yellow); color: var(--ink); font-size: 15px; font-weight: 800; }
+.home-mobile-experts-list { margin-top: 16px; overflow: hidden; border-radius: 16px; background: var(--panel); }
+.home-mobile-experts-row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px 10px 8px; color: #fff; text-decoration: none; }
+.home-mobile-experts-row + .home-mobile-experts-row { box-shadow: inset 0 1px rgba(255, 255, 255, 0.06); }
+.home-mobile-experts-rank { width: 22px; flex: 0 0 auto; color: #5f6168; font-family: var(--font-heading); font-size: 17px; text-align: center; }
+.home-mobile-experts-rank.is-rank-2 { color: #c9cbd1; }
+.home-mobile-experts-rank.is-rank-3 { color: #c08d56; }
+.home-mobile-experts-row .home-mobile-experts-person { flex: 1 1 auto; }
+.home-mobile-experts-count { display: grid; flex: 0 0 auto; justify-items: end; color: var(--muted); font-size: 11px; font-weight: 700; }
+.home-mobile-experts-count b { color: #fff; font-family: var(--font-heading); font-size: 20px; font-weight: 400; line-height: 1.1; }
+.home-mobile-experts-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.home-mobile-experts-feed,
+.home-mobile-experts-rating { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; }
+.home-mobile-experts-feed { background: var(--panel); }
+.home-mobile-experts-rating { background: var(--blue); }
 /* High-odds predictions for phones and the Telegram Mini App (mobile.css shows it there). */
 .home-mobile-best { display: none; margin-top: 30px; }
 .home-mobile-best-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }

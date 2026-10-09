@@ -1,0 +1,85 @@
+{% load capper_trust static %}
+{# Expert rating for phones and the Telegram Mini App; the podium block is hidden there. #}
+{% url 'front:cappers_table' as rating_url %}
+<section class="home-mobile-experts" aria-labelledby="home-mobile-experts-title">
+    <p class="home-eyebrow">Рейтинг</p>
+    <div class="home-mobile-experts-head">
+        <h2 id="home-mobile-experts-title">Топовые <mark>эксперты</mark></h2>
+        <a class="home-mobile-experts-link" href="{{ rating_url }}">Все</a>
+    </div>
+
+    {% if best_experts %}
+    {% with leader=best_experts.0 %}
+    <a class="home-mobile-experts-leader" href="{% url 'front:expert_profile' leader.username %}">
+        <img class="home-mobile-experts-leader-bg" src="{% static 'front/img/trophy_blue.png' %}" alt="" width="1080" height="606" loading="lazy" decoding="async">
+        <span class="home-mobile-experts-leader-label">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 7 4.5 4L12 5l4.5 6L21 7l-2 11H5L3 7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Эксперт №1{% if leader.is_month_leader %} месяца{% endif %}
+        </span>
+        <span class="home-mobile-experts-leader-person">
+            <span class="home-mobile-experts-avatar">
+                {% if leader.avatar_url %}
+                    <img src="{{ leader.avatar_url }}" alt="" width="54" height="54" loading="lazy" decoding="async">
+                {% else %}
+                    {{ leader.initials }}
+                {% endif %}
+                {% capper_trust_badge leader.trust_index %}
+            </span>
+            <span class="home-mobile-experts-person">
+                <span class="home-mobile-experts-name">
+                    <strong>{{ leader.name }}</strong>
+                    {% if leader.verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+                </span>
+                <span class="home-mobile-experts-username">@{{ leader.username }}</span>
+            </span>
+        </span>
+        <span class="home-mobile-experts-leader-actions">
+            <span class="home-mobile-experts-leader-count"><b>{{ leader.publications }}</b> {{ leader.publications_label }}</span>
+            <span class="home-mobile-experts-leader-profile">
+                Профиль
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+        </span>
+    </a>
+    {% endwith %}
+
+    {% if best_experts|length > 1 %}
+    <div class="home-mobile-experts-list">
+        {% for expert in best_experts|slice:"1:7" %}
+        <a class="home-mobile-experts-row" href="{% url 'front:expert_profile' expert.username %}">
+            <span class="home-mobile-experts-rank is-rank-{{ forloop.counter|add:1 }}">{{ forloop.counter|add:1 }}</span>
+            <span class="home-mobile-experts-avatar">
+                {% if expert.avatar_url %}
+                    <img src="{{ expert.avatar_url }}" alt="" width="44" height="44" loading="lazy" decoding="async">
+                {% else %}
+                    {{ expert.initials }}
+                {% endif %}
+                {% capper_trust_badge expert.trust_index %}
+            </span>
+            <span class="home-mobile-experts-person">
+                <span class="home-mobile-experts-name">
+                    <strong>{{ expert.name }}</strong>
+                    {% if expert.verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+                </span>
+                <span class="home-mobile-experts-username">@{{ expert.username }}</span>
+            </span>
+            <span class="home-mobile-experts-count"><b>{{ expert.publications }}</b>{{ expert.publications_label }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="home-mobile-slider-empty">Рейтинг появится после первых опубликованных прогнозов.</p>
+    {% endif %}
+
+    <div class="home-mobile-experts-actions">
+        <a class="home-mobile-experts-feed" href="{% url 'front:following_feed' %}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            Моя Лента
+        </a>
+        <a class="home-mobile-experts-rating" href="{{ rating_url }}">
+            Весь рейтинг
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</section>
