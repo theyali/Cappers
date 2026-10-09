@@ -288,8 +288,7 @@ body.expert-public-details-open {
 @media (max-width: 980px) {
   .auth-form-grid,
   .game-grid,
-  .hero,
-  .quick-stats {
+  .hero {
     grid-template-columns: 1fr;
   }
   .hero {
@@ -1249,23 +1248,6 @@ body.expert-public-details-open {
     width: 100%;
     max-height: none;
     overflow: visible;
-  }
-
-  .home-best-prediction-row,
-  .home-best-predictions-head-row {
-    min-width: 1180px;
-    grid-template-columns: 34px minmax(330px, 1.5fr) minmax(235px, 1fr) minmax(
-        245px,
-        1.1fr
-      ) 110px 132px 156px;
-    gap: 20px;
-  }
-  .home-best-prediction-featured-grid {
-    grid-template-columns: minmax(360px, 1.4fr) minmax(250px, 1fr) minmax(
-        190px,
-        0.9fr
-      ) minmax(130px, 0.6fr) minmax(200px, 0.8fr);
-    gap: 22px;
   }
 
   .content-table-view {
@@ -3190,9 +3172,6 @@ body.expert-public-details-open {
     min-height: 76px;
     font-size: 20px;
   }
-  .quick-stats strong {
-    font-size: 28px;
-  }
   .feature-card {
     min-height: 320px;
     padding: 22px;
@@ -4201,31 +4180,11 @@ body.expert-public-details-open {
   .yjs-additional-block--half_450 {
     grid-column: 1/-1;
   }
-  .forecast-body,
   .home-sidebar {
     grid-template-columns: 1fr;
   }
-  .home-heading {
-    min-height: 74px;
-    align-items: center;
-  }
-  .forecast-body {
-    padding-top: 38px;
-  }
-  .forecast-pick-card {
-    min-height: 165px;
-  }
   .page-promo-banner.is-home-sidebar {
     min-height: 260px;
-  }
-
-  .forecast-team-logo {
-    width: 54px;
-    height: 54px;
-    border-radius: 15px;
-  }
-  .forecast-body {
-    padding-top: 24px;
   }
 
   .latest-predictions {
@@ -4313,157 +4272,6 @@ body.expert-public-details-open {
     flex: 1 1 0;
   }
 
-  .home-heading {
-    min-height: 0;
-    margin-bottom: 18px;
-  }
-
-  .home-heading h1 {
-    font-size: clamp(38px, 8vw, 50px);
-  }
-
-  .home-heading-subtitle {
-    max-width: 100%;
-    margin-top: 11px;
-    font-size: 13px;
-  }
-
-  .slider-actions {
-    padding-bottom: 0;
-  }
-
-  .forecast-slider {
-    min-height: 0;
-    padding: 0;
-    border-radius: 20px;
-    border:none;
-  }
-
-  .home-layout .forecast-meta {
-    display: none;
-  }
-
-  .forecast-team,
-  .forecast-team-away {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    gap: 10px;
-    text-align: center;
-  }
-
-  .forecast-team-logo {
-    width: 76px;
-    height: 76px;
-    border-radius: 20px;
-  }
-
-  .forecast-team-copy {
-    align-items: center;
-    gap: 9px;
-  }
-
-  .forecast-team strong {
-    font-size: 18px;
-    text-align: center;
-  }
-
-  .forecast-vs {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    font-size: 11px;
-  }
-
-  .forecast-body {
-    grid-template-columns: 1fr;
-    gap: 18px;
-    padding-top: 20px;
-  }
-
-  .forecast-match-copy {
-    padding-top: 0;
-  }
-
-  .forecast-match-details {
-    gap: 10px 16px;
-    margin-top: 20px;
-  }
-
-  .forecast-note {
-    min-height: 76px;
-    margin-top: 18px;
-    padding: 14px 16px;
-  }
-
-  .forecast-pick-column {
-    grid-template-rows: auto 56px;
-    gap: 12px;
-  }
-
-  .forecast-open-match {
-    min-height: 56px;
-    border-radius: 14px;
-  }
-
-  .home-layout .forecast-expert strong {
-    max-width: 230px;
-    overflow: hidden;
-    font-size: 16px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .home-layout .forecast-expert > div > span {
-    font-size: 12px;
-  }
-
-  .home-layout .forecast-center {
-    width: 150px;
-  }
-
-  .home-layout .forecast-center .forecast-vs {
-    margin: 30px 0 25px;
-    font-size: 54px;
-  }
-
-  .home-layout .forecast-center-league {
-    font-size: 11px;
-  }
-
-  .home-layout .forecast-center-time {
-    font-size: 26px;
-  }
-
-  .home-layout .forecast-center-status {
-    margin-top: 13px;
-    font-size: 11px;
-  }
-
-  .home-layout .forecast-note {
-    min-height: 128px;
-    padding: 18px;
-    gap: 12px;
-    font-size: 12px;
-  }
-
-  .home-layout .forecast-pick-card {
-    min-height: 84px;
-    padding: 16px 135px 14px 18px;
-  }
-
-  .home-layout .forecast-coefficient {
-    right: 18px;
-  }
-
-  .home-layout .forecast-open-match {
-    min-height: 54px;
-  }
-
-  .home-layout .slider-footer {
-    min-height: 68px;
-    padding: 0 20px 16px;
-  }
-
   .profile-page .profile-hero.is-reader .profile-xp-card {
     width: 100%;
     justify-self: stretch;
@@ -4478,8 +4286,7 @@ body.expert-public-details-open {
   .expert-public-copy h1{
       font-size: 20px !important;
   }
-  .home-bookmakers-hero,
-  .home-heading {
+  .home-bookmakers-hero {
     display: block;
   }
   .wallet-topup-page {
@@ -5374,7 +5181,6 @@ body.expert-public-details-open {
     flex-direction: column;
     gap: 16px;
   }
-  .home-best-predictions .home-articles-head h2,
   .home-editorial-articles .home-articles-head h2 {
     font-size: 31px;
   }
@@ -5400,10 +5206,6 @@ body.expert-public-details-open {
   .home-article-featured {
     grid-template-columns: 1fr;
     border-radius: 14px;
-  }
-  .home-best-featured-teams,
-  .home-best-prediction-featured-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
   .article-list-image,
   .home-article-featured-image,
@@ -5436,45 +5238,7 @@ body.expert-public-details-open {
   .home-article-copy {
     padding: 16px 18px 18px;
   }
-  .home-best-predictions {
-    gap: 18px;
-    margin-top: 26px;
-  }
-  .home-best-featured-status,
-  .home-best-predictions .home-articles-head {
-    align-items: stretch;
-  }
-  .home-best-prediction-featured-label {
-    align-items: flex-start;
-    flex-wrap: wrap;
-    padding: 14px;
-  }
-  .home-best-prediction-featured-label::after {
-    width: 100%;
-  }
-  .home-best-prediction-featured-grid {
-    gap: 18px;
-    padding: 16px 14px 18px;
-  }
-  .home-best-featured-expert,
-  .home-best-featured-match,
-  .home-best-featured-pick {
-    padding-right: 0;
-    padding-bottom: 16px;
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .home-best-featured-vs {
-    display: none;
-  }
-  .home-best-featured-logo {
-    width: 48px;
-    flex-basis: 48px;
-  }
-  .capper-pro-metric strong,
-  .home-best-featured-expert strong,
-  .home-best-featured-pick strong,
-  .home-best-featured-team strong {
+  .capper-pro-metric strong {
     font-size: 16px;
   }
   .cappers-summary {
@@ -6353,158 +6117,6 @@ body.expert-public-details-open {
   .profile-user-copy > span {
     white-space: normal;
   }
-  .home-layout .forecast-avatar {
-    width: 41px;
-    height: 41px;
-    flex-basis: 41px;
-  }
-
-  .home-layout .forecast-expert {
-    gap: 10px;
-  }
-
-  .home-layout .forecast-expert strong {
-    max-width: 150px;
-    font-size: 14px;
-  }
-
-  .home-layout .forecast-expert > div > span {
-    font-size: 10px;
-  }
-
-  .home-layout .forecast-team-logo {
-    width: min(15vw, 160px);
-    height: min(15vw, 160px);
-  }
-
-  .home-layout .forecast-center {
-    width: 92px;
-  }
-
-  .home-layout .forecast-center-sport {
-    font-size: 8px;
-    letter-spacing: 0.13em;
-  }
-
-  .home-layout .forecast-center-league {
-    max-width: 92px;
-    margin-top: 4px;
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center .forecast-vs {
-    margin: 24px 0 21px;
-    font-size: 38px;
-  }
-
-  .home-layout .forecast-center-date {
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center-time {
-    margin-top: 4px;
-    font-size: 18px;
-  }
-
-  .home-layout .forecast-center-status {
-    min-height: 22px;
-    margin-top: 9px;
-    gap: 4px;
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-center-status svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .home-layout .forecast-body {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .home-layout .forecast-match-copy {
-    min-height: 86px;
-  }
-
-  .home-layout .forecast-note {
-    min-height: 86px;
-    padding: 14px;
-    border-radius: 14px;
-    font-size: 11px;
-    line-height: 1.35;
-  }
-
-  .home-layout .forecast-note > svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  .home-layout .forecast-note-arrow {
-    font-size: 30px;
-  }
-
-  .home-layout .forecast-pick-column {
-    grid-template-rows: 88px 50px;
-    gap: 8px;
-  }
-
-  .home-layout .forecast-pick-card {
-    min-height: 88px;
-    padding: 14px 108px 12px 16px;
-    border-radius: 14px;
-  }
-
-  .home-layout .forecast-pick-card > strong {
-    font-size: 16px;
-  }
-
-  .home-layout .forecast-pick-card > span:first-child,
-  .home-layout .forecast-market,
-  .home-layout .forecast-coefficient small {
-    font-size: 9px;
-  }
-
-  .home-layout .forecast-coefficient {
-    right: 14px;
-  }
-
-  .home-layout .forecast-coefficient b {
-    font-size: 28px;
-  }
-
-  .home-layout .forecast-open-match {
-    min-height: 50px;
-    padding: 0 16px;
-    border-radius: 13px;
-    font-size: 12px;
-  }
-
-  .home-layout .slider-footer {
-    min-height: 62px;
-    padding: 0 14px 14px;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-  }
-
-  .home-layout .slider-progress {
-    display: none;
-  }
-
-  .home-layout .slider-dot {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-    min-height: 8px;
-  }
-
-  .home-layout .slider-dot.is-active {
-    width: 30px;
-  }
-
-  .home-layout .slider-counter {
-    font-size: 12px;
-  }
 
   #profile-tab-wallet .wallet-dashboard {
     gap: 12px;
@@ -6877,27 +6489,6 @@ body.expert-public-details-open {
   .match-prediction-card {
     padding: 14px;
   }
-  .home-heading {
-    align-items: flex-end;
-  }
-  .slider-arrow {
-    width: 40px;
-    height: 40px;
-  }
-  .forecast-body {
-    gap: 16px;
-    padding-top: 30px;
-  }
-  .forecast-note {
-    margin-top: 14px;
-  }
-  .forecast-pick-card {
-    min-height: 152px;
-    padding: 18px;
-  }
-  .forecast-coefficient b {
-    font-size: 38px;
-  }
   .forecast-bottom {
     grid-template-columns: 1fr;
     gap: 14px;
@@ -6958,21 +6549,6 @@ body.expert-public-details-open {
     display: none;
   }
 
-  .forecast-team-away,
-  .forecast-team-home {
-    flex-direction: column;
-    justify-content: center;
-    gap: 7px;
-    text-align: center;
-  }
-  .forecast-team strong {
-    width: 100%;
-    font-size: 13px;
-  }
-  .forecast-team-logo {
-    width: 46px;
-    height: 46px;
-  }
   .latest-predictions-head {
     align-items: center;
     gap: 12px;
@@ -7578,46 +7154,6 @@ body.expert-public-details-open {
     text-align: left;
   }
 
-  .home-heading {
-    gap: 12px;
-  }
-
-  .home-heading h1 {
-    font-size: 34px;
-  }
-
-  .home-heading-subtitle {
-    font-size: 12px;
-  }
-
-  .slider-arrow {
-    width: 44px;
-    height: 44px;
-    border-radius: 13px;
-  }
-
-  .forecast-slide {
-    padding: 0;
-  }
-
-  .forecast-avatar {
-    width: 50px;
-    height: 50px;
-  }
-
-  .forecast-expert strong {
-    font-size: 15px;
-  }
-
-  .forecast-team-logo {
-    width: 58px;
-    height: 58px;
-    border-radius: 16px;
-  }
-
-  .forecast-team strong {
-    font-size: 14px;
-  }
   .expert-recommendation-card {
     min-height: auto;
   }
@@ -7632,58 +7168,12 @@ body.expert-public-details-open {
   .home-match-league {
     grid-template-columns: 34px minmax(0, 1fr);
   }
-  .forecast-team .forecast-league-meta {
-    display: none !important;
-  }
   .home-match-league-logo {
     width: 34px;
     height: 34px;
   }
   .expert-recommendation-body {
     min-height: 0;
-  }
-  .forecast-vs {
-    width: 40px;
-    height: 40px;
-    font-size: 9px;
-  }
-
-  .forecast-match-copy h2 {
-    font-size: 24px;
-  }
-
-  .forecast-match-details {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .forecast-match-detail,
-  .forecast-result {
-    min-height: 36px;
-  }
-
-  .forecast-note {
-    grid-template-columns: 28px minmax(0, 1fr) 20px;
-    gap: 10px;
-    font-size: 12px;
-  }
-
-  .forecast-pick-card {
-    min-height: 210px;
-    padding: 20px;
-  }
-
-  .forecast-pick-card > strong {
-    font-size: 26px;
-  }
-
-  .forecast-coefficient b {
-    font-size: 44px;
-  }
-
-  .slider-footer {
-    padding: 16px 8px 0;
   }
 
   .vip-cappers-banner__panel {
@@ -7890,14 +7380,6 @@ body.expert-public-details-open {
   }
   .matches-tabs  .is-active svg{
     color: white;
-  }
-.quick-stats {
-    display: flex;
-    gap: 14px;
-    margin: 18px 0;
-}
-  .home-heading .slider-actions{
-    display:none;
   }
     .profile-hero{
         padding:0px;
@@ -8666,23 +8148,6 @@ body.expert-public-details-open {
     width: 100px;
     height: 72px;
   }
-  .forecast-team {
-    gap: 9px;
-  }
-  .forecast-team-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 13px;
-  }
-  .forecast-team strong {
-    font-size: 15px;
-  }
-  .forecast-vs {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 9px;
-  }
   .forecast-bottom-real {
     grid-template-columns: 1fr;
     align-items: start;
@@ -8690,147 +8155,6 @@ body.expert-public-details-open {
   .forecast-time {
     min-width: 0;
     align-items: flex-start;
-  }
-  .slider-footer {
-    grid-template-columns: 1fr auto;
-    padding: 20px;
-  }
-  .slider-progress {
-    grid-column: 1/-1;
-    grid-row: 1;
-    width: 100%;
-    margin-bottom: 10px;
-  }
-  .slider-counter,
-  .slider-dots {
-    grid-row: 2;
-  }
-
-  .home-best-predictions-table {
-    overflow: visible;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .home-best-predictions-scroll {
-    overflow: visible;
-  }
-  .home-best-predictions-head-row {
-    display: none;
-  }
-  .home-best-predictions-body {
-    min-width: 0;
-    display: grid;
-    gap: 14px;
-  }
-  .home-best-prediction-row {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 34px repeat(11, minmax(0, 1fr));
-    grid-template-areas:
-      "number match match match match match match match match match match match"
-      "expert expert expert expert expert expert expert expert expert expert expert expert"
-      "pick pick pick pick pick pick pick pick pick pick pick pick"
-      "coefficient coefficient coefficient coefficient coefficient coefficient status status status status status status"
-      "actions actions actions actions actions actions actions actions actions actions actions actions";
-    align-items: center;
-    gap: 8px 12px;
-    padding: 22px 14px;
-    border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  }
-  .home-best-prediction-number {
-    grid-area: number;
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 20px;
-    font-weight: 700;
-    text-align: left;
-  }
-  .home-best-prediction-match {
-    grid-area: match;
-    gap: 16px;
-    text-decoration: none;
-  }
-  .home-best-prediction-teams {
-    width: auto;
-    flex: 0 0 auto;
-    gap: 10px;
-  }
-  .home-best-team-logo {
-    width: clamp(44px, 10vw, 64px);
-    height: clamp(44px, 10vw, 64px);
-    flex-basis: clamp(44px, 10vw, 64px);
-  }
-
-  .home-best-prediction-match-copy span {
-    margin-top: 6px;
-    font-size: clamp(15px, 3.7vw, 20px);
-    font-weight: 600;
-  }
-
-  .home-best-prediction-avatar {
-    width: 56px;
-    height: 56px;
-    flex-basis: 56px;
-  }
-
-  .home-best-prediction-expert strong {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.1;
-    white-space: normal;
-  }
-  .home-best-prediction-expert .home-best-prediction-verified {
-    width: 26px;
-    height: 26px;
-    margin-left: -8px;
-    flex: 0 0 26px;
-  }
-  .home-best-prediction-vip {
-    display: none;
-  }
-  .home-best-prediction-pick {
-    grid-area: pick;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    text-decoration: none;
-  }
-
-  .home-best-prediction-pick strong {
-    margin-top: 6px;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.12;
-    white-space: normal;
-  }
-  .home-best-prediction-status {
-    grid-area: status;
-    min-width: 0;
-    min-height: 45px;
-    font-size: 16px;
-  }
-  .home-best-prediction-coefficient {
-    grid-area: coefficient;
-    min-width: 0;
-    min-height: 45px;
-    font-size: 16px;
-  }
-  .home-best-prediction-actions {
-    grid-area: actions;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-  }
-  .home-best-prediction-action {
-    width: auto;
-    height: 57px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.075);
-  }
-  .home-best-prediction-action svg {
-    width: 34px;
-    height: 34px;
-    stroke-width: 1.8;
   }
 
   .home-important-matches .home-articles-head {
@@ -10305,9 +9629,6 @@ body.expert-public-details-open {
     font-size: 9px;
   }
 
-  .forecast-matchup {
-    height: 186px;
-  }
   .experts-card,
   .follow-card {
     padding: 13px;
@@ -10744,33 +10065,6 @@ body.expert-public-details-open {
   .home-all-link {
     width: 100%;
     justify-content: space-between;
-  }
-
-  .home-best-prediction-avatar .capper-trust-badge {
-    right: -9px;
-    min-width: 41px;
-    height: 29px;
-    padding: 0 5px;
-    font-size: 13px;
-  }
-  .home-best-prediction-pick span {
-    font-size: 13px;
-    font-weight: 700;
-    white-space: normal;
-  }
-  .home-best-prediction-expert {
-    grid-area: expert;
-    gap: 18px;
-    min-height: 96px;
-    padding: 8px;
-    border-radius: 16px;
-    text-decoration: none;
-  }
-  .home-best-prediction-match-copy strong {
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.12;
-    white-space: normal;
   }
 
   .capper-landing-hero {
@@ -14138,6 +13432,14 @@ body.expert-public-details-open {
   }
 
   .forecast-area {
+    display: none;
+  }
+
+  .home-mobile-best {
+    display: block;
+  }
+
+  .home-best-predictions {
     display: none;
   }
 }

@@ -2129,6 +2129,109 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .home-mobile-slider-dots span { width: 7px; height: 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.24); transition: width 0.2s, background 0.2s; }
 .home-mobile-slider-dots span.is-active { width: 26px; background: var(--yellow); }
 .home-mobile-slider-empty { margin: 18px 0 0; color: var(--muted); }
+/* High-odds predictions for phones and the Telegram Mini App (mobile.css shows it there). */
+.home-mobile-best { display: none; margin-top: 30px; }
+.home-mobile-best-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.home-mobile-best-head .home-eyebrow { margin-bottom: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.14em; }
+.home-mobile-best-head h2 { margin: 0; font-size: 30px; line-height: 1.02; }
+.home-mobile-best-head h2 mark { display: block; }
+.home-mobile-best-all { padding-bottom: 4px; color: var(--muted); font-size: 18px; font-weight: 800; text-decoration: none; }
+.home-mobile-best-featured {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 22px;
+    overflow: hidden;
+    padding: 18px 16px 16px;
+    border-radius: 24px;
+    background: var(--panel);
+    color: #fff;
+    text-decoration: none;
+}
+.home-mobile-best-featured > * { position: relative; z-index: 1; }
+.home-mobile-best-featured .home-mobile-best-featured-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
+.home-mobile-best-label { display: inline-flex; align-items: center; gap: 8px; color: var(--yellow); font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.home-mobile-best-label svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.home-mobile-best-meta,
+.home-mobile-best-pick { max-width: 64%; color: rgba(255, 255, 255, 0.72); font-size: 13px; font-weight: 700; }
+.home-mobile-best-teams { display: grid; max-width: 64%; font-size: 20px; font-weight: 800; line-height: 1.15; }
+.home-mobile-best-expert { display: flex; align-items: center; gap: 8px; max-width: 70%; margin-top: 4px; }
+.home-mobile-best-avatar {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+.home-mobile-best-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.home-mobile-best-expert-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-best .capper-trust-badge { position: static; flex: 0 0 auto; width: auto; height: auto; padding: 3px 7px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 800; }
+.home-mobile-best-result { display: flex; align-items: stretch; gap: 10px; margin-top: 6px; }
+.home-mobile-best-odds { display: inline-grid; place-items: center; padding: 6px 12px; border-radius: 12px; background: var(--yellow); color: var(--ink); font-size: 18px; font-weight: 900; }
+.home-mobile-best-result .home-mobile-best-odds { padding: 10px 22px; border-radius: 16px; font-size: 28px; }
+.home-mobile-best-status { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; border-radius: 16px; background: var(--panel); color: #fff; font-size: 16px; font-weight: 800; }
+.home-mobile-best-status svg,
+.home-mobile-best-row-status svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.home-mobile-best-status.is-win { background: #2f7a3a; }
+.home-mobile-best-status.is-lose { background: #b3261e; }
+.home-mobile-best-list { margin-top: 14px; overflow: hidden; border-radius: 22px; background: var(--panel); }
+.home-mobile-best-row { display: grid; grid-template-columns: 22px 54px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 14px 14px 14px 16px; color: #fff; text-decoration: none; }
+.home-mobile-best-row[hidden] { display: none; }
+.home-mobile-best-row + .home-mobile-best-row { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); }
+.home-mobile-best-rank { color: var(--muted); font-size: 18px; font-weight: 800; }
+.home-mobile-best-teams-badges { display: flex; }
+.home-mobile-best-teams-badges span {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #2a2a2e;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px var(--panel);
+}
+.home-mobile-best-teams-badges span + span { margin-left: -6px; }
+.home-mobile-best-teams-badges img { width: 74%; height: 74%; object-fit: contain; }
+.home-mobile-best-row-copy { display: grid; gap: 3px; min-width: 0; }
+.home-mobile-best-row-copy strong,
+.home-mobile-best-row-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-mobile-best-row-copy strong { font-size: 15px; font-weight: 800; }
+.home-mobile-best-row-copy span { color: var(--muted); font-size: 13px; font-weight: 700; }
+.home-mobile-best-row-result { display: grid; justify-items: center; gap: 4px; }
+.home-mobile-best-row-status { color: var(--muted); font-size: 12px; font-weight: 800; }
+.home-mobile-best-row-status svg { display: none; }
+.home-mobile-best-row-status.is-win { color: #6fd36f; }
+.home-mobile-best-row-status.is-lose { color: #ff6b5e; }
+.home-mobile-best-more {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 18px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--panel);
+    color: #fff;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.home-mobile-best-more svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .mobile-nav-roulette .nav-notification-badge { top: -26px; right: 2px; }
 /* Page changes: the Mini App fades the content while its header and menu stay put;
    the regular site swaps pages instantly, as before. */

@@ -301,3 +301,13 @@
         if (!frame) frame = requestAnimationFrame(update);
     }, { passive: true });
 })();
+
+(() => {
+    // "Показать ещё" opens the rest of the high-odds list on phones.
+    const button = document.querySelector("[data-home-mobile-best-show]");
+    if (!button) return;
+    button.addEventListener("click", () => {
+        document.querySelectorAll("[data-home-mobile-best-more]").forEach((row) => { row.hidden = false; });
+        button.remove();
+    });
+})();

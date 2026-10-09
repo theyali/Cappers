@@ -1,0 +1,75 @@
+{% load capper_trust static %}
+{# High-odds predictions for phones and the Telegram Mini App; the wide table is hidden there. #}
+<section class="home-mobile-best" data-home-mobile-best aria-labelledby="home-mobile-best-title">
+    <div class="home-mobile-best-head">
+        <div>
+            <p class="home-eyebrow">Высокие кэфы</p>
+            <h2 id="home-mobile-best-title">Прогнозы с высоким <mark>коэффициентом</mark></h2>
+        </div>
+        <a class="home-mobile-best-all" href="{% url 'front:predictions' %}">Все</a>
+    </div>
+
+    {% with prediction=best_predictions.0 %}
+    <a class="home-mobile-best-featured" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <img class="home-mobile-best-featured-bg" src="{% static 'front/img/best.webp' %}" alt="" width="1050" height="696" loading="lazy" decoding="async">
+        <span class="home-mobile-best-label">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 1.8-10.2 4 4.1L12 5l2.2 6.9 4-4.1L20 18H4Z"></path><path d="M4 21h16"></path></svg>
+            Лучший прогноз
+        </span>
+        <span class="home-mobile-best-meta">
+            {{ prediction.match.league_name|default:"Лига" }}{% if prediction.match.starts_at %} · {{ prediction.match.starts_at|date:"d.m, H:i" }}{% endif %}{% if prediction.match.score %} · {{ prediction.match.score }}{% endif %}
+        </span>
+        <strong class="home-mobile-best-teams">
+            <span>{{ prediction.match.home_team_name|default:"Хозяева" }}</span>
+            <span>{{ prediction.match.away_team_name|default:"Гости" }}</span>
+        </strong>
+        <span class="home-mobile-best-pick">{{ prediction.selection }}{% if prediction.positions_count > 1 %} · экспресс {{ prediction.positions_count }}{% endif %}</span>
+        <span class="home-mobile-best-expert">
+            <span class="home-mobile-best-avatar">
+                {% if prediction.expert_avatar_url %}
+                    <img src="{{ prediction.expert_avatar_url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
+                {% else %}
+                    {{ prediction.expert_initials }}
+                {% endif %}
+            </span>
+            <span class="home-mobile-best-expert-name">{{ prediction.expert_name }}</span>
+            {% capper_trust_badge prediction.expert_trust_index %}
+        </span>
+        <span class="home-mobile-best-result">
+            <b class="home-mobile-best-odds">{{ prediction.coefficient|floatformat:2 }}</b>
+            {% include "front/includes/_home_mobile_best_status.html" with status=prediction.state_status status_class="home-mobile-best-status" %}
+        </span>
+    </a>
+    {% endwith %}
+
+    {% if best_predictions|length > 1 %}
+    <div class="home-mobile-best-list">
+        {% for prediction in best_predictions %}
+            {% if not forloop.first %}
+            <a class="home-mobile-best-row" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"{% if forloop.counter > 6 %} data-home-mobile-best-more hidden{% endif %}>
+                <span class="home-mobile-best-rank">{{ forloop.counter }}</span>
+                <span class="home-mobile-best-teams-badges" aria-hidden="true">
+                    <span>{% if prediction.match.home_team_logo %}<img src="{{ prediction.match.home_team_logo }}" alt="" loading="lazy" decoding="async">{% else %}{{ prediction.home_initials }}{% endif %}</span>
+                    <span>{% if prediction.match.away_team_logo %}<img src="{{ prediction.match.away_team_logo }}" alt="" loading="lazy" decoding="async">{% else %}{{ prediction.away_initials }}{% endif %}</span>
+                </span>
+                <span class="home-mobile-best-row-copy">
+                    <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
+                    <span>{{ prediction.selection }} · {{ prediction.expert_name }}</span>
+                </span>
+                <span class="home-mobile-best-row-result">
+                    <b class="home-mobile-best-odds">{{ prediction.coefficient|floatformat:2 }}</b>
+                    {% include "front/includes/_home_mobile_best_status.html" with status=prediction.state_status status_class="home-mobile-best-row-status" %}
+                </span>
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if best_predictions|length > 6 %}
+    <button class="home-mobile-best-more" type="button" data-home-mobile-best-show>
+        Показать ещё {{ best_predictions|length|add:"-6" }}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+    </button>
+    {% endif %}
+</section>

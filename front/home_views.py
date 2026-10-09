@@ -391,6 +391,18 @@ def _latest_home_predictions() -> list[dict]:
     return cards
 
 
+def _team_initials(name: str) -> str:
+    """Two letters for a team badge: "Вигры Сувалки" → ВС, "Бешикташ" → БШ."""
+    words = [word for word in (name or "").split() if word[:1].isalpha()]
+    if not words:
+        return "?"
+    if len(words) > 1:
+        return (words[0][0] + words[1][0]).upper()
+    word = words[0]
+    consonant = next((letter for letter in word[1:] if letter.isalpha() and letter.lower() not in "аеёиоуыэюяaeiouy"), word[1:2])
+    return (word[0] + consonant).upper()
+
+
 def _best_home_predictions(request):
     queryset = _published_queryset().filter(
         state_status=PredictionCoupon.StateStatus.WIN,
@@ -403,6 +415,10 @@ def _best_home_predictions(request):
     cards = _decorate_predictions(request, queryset)
     if not cards:
         return cards
+
+    for card in cards:
+        card.home_initials = _team_initials(card.match.home_team_name)
+        card.away_initials = _team_initials(card.match.away_team_name)
 
     featured = cards[0]
     money_field = DecimalField(max_digits=18, decimal_places=4)
