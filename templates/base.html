@@ -111,12 +111,12 @@
     <nav class="mobile-app-nav" aria-label="Мобильная навигация">
         <a class="mobile-app-nav-item mobile-nav-home {% if request.resolver_match.view_name == 'front:index' %}is-active{% endif %}" href="{% url 'front:index' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5.5 9.5V21h13V9.5"></path><path d="M9 21v-6h6v6"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="home-2-bold" %}
             </span>
             <span class="mobile-app-nav-label">Главная</span>
         </a>
         <a class="mobile-app-nav-item mobile-nav-matches {% if request.resolver_match.app_name == 'game' %}is-active{% endif %}" href="{% url 'game:match_list' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="balls-bold" %}</span>
             <span class="mobile-app-nav-label">Матчи</span>
         </a>
         <a
@@ -144,18 +144,18 @@
                 aria-label="Купон"
             >
                 <span class="mobile-coupon-nav-tooltip" data-mobile-coupon-tooltip hidden>К = {{ mobile_coupon_nav_coefficient|default:"0.00" }}</span>
-                <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+                <span class="mobile-app-nav-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="ticket-bold" %}</span>
                 <span class="mobile-coupon-nav-badge" data-mobile-coupon-badge{% if not mobile_coupon_nav_count %} hidden{% endif %}>{{ mobile_coupon_nav_count|default:0 }}</span>
                 <span class="mobile-app-nav-label">Купон</span>
             </a>
         {% else %}
             <a class="mobile-app-nav-item mobile-nav-cappers {% if request.resolver_match.view_name == 'front:cappers_table' or request.resolver_match.view_name == 'front:cappers_table_group' or request.resolver_match.view_name == 'front:cappers_table_period' or request.resolver_match.view_name == 'front:cappers_table_sport' %}is-active{% endif %}" href="{% url 'front:cappers_table' %}">
-                <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+                <span class="mobile-app-nav-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" %}</span>
                 <span class="mobile-app-nav-label">Капперы</span>
             </a>
         {% endif %}
         <a class="mobile-app-nav-item mobile-nav-predictions {% if request.resolver_match.url_name == 'predictions' or request.resolver_match.url_name == 'predictions_rich' or request.resolver_match.url_name == 'predictions_by_sport' or request.resolver_match.url_name == 'predictions_rich_by_sport' or request.resolver_match.url_name == 'prediction_expresses' or request.resolver_match.url_name == 'prediction_expresses_rich' %}is-active{% endif %}" href="{% url 'front:predictions' %}">
-            <span class="mobile-app-nav-icon" aria-hidden="true"></span>
+            <span class="mobile-app-nav-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="chart-2-bold" %}</span>
             <span class="mobile-app-nav-label">Прогнозы</span>
         </a>
     </nav>

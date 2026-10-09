@@ -1792,42 +1792,13 @@ body.expert-public-details-open {
     width: 25px;
     height: 25px;
     display: block;
-    background: currentColor;
-    font-size: 0;
   }
 
-  .mobile-app-nav-icon svg,
-  .mobile-app-nav-icon img {
-    display: none !important;
-  }
-
-  .mobile-app-nav .mobile-nav-home .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-home.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-home.svg") center / contain no-repeat;
-  }
-  .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-coupons .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/coupons.svg") center / contain no-repeat;
-    mask: url("../svgs/coupons.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-cappers .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-predictions .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-profile .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
+  .mobile-app-nav-icon .solar-icon {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: currentColor;
   }
 
   .mobile-app-nav-label {
