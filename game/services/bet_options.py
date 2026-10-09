@@ -721,6 +721,50 @@ def _extra_market_sections(payload: dict) -> list[dict]:
     return sections
 
 
+# Market names on the event cards of the coupon page.
+MARKET_TITLES = {
+    "winner": "Победитель",
+    "first_half_winner": "Победитель 1-го тайма",
+    "double_chance": "Двойной шанс",
+    "total": "Тотал",
+    "first_half_total": "Тотал 1-го тайма",
+    "handicap": "Фора",
+    "first_half_handicap": "Фора 1-го тайма",
+    "both_score": "Обе забьют",
+    "exact_score": "Точный счёт",
+}
+
+
+def picked_side(prediction) -> str:
+    """"home" or "away" when the pick backs one team, else ""."""
+    code = (prediction.outcome_code or "").lower()
+    if code in ("1", "1x") or code.startswith("home"):
+        return "home"
+    if code in ("2", "x2") or code.startswith("away"):
+        return "away"
+    if not code:
+        # Old picks have no outcome code, only the text.
+        match = prediction.match
+        if prediction.selection in ("П1", match.home_team_name):
+            return "home"
+        if prediction.selection in ("П2", match.away_team_name):
+            return "away"
+    return ""
+
+
+def pick_label(prediction) -> str:
+    """Market and pick for an event card: "Победитель: П2", "Тотал: ТБ 2.5"."""
+    selection = prediction.selection
+    if prediction.market in ("winner", "first_half_winner"):
+        side = picked_side(prediction)
+        if side:
+            selection = "П1" if side == "home" else "П2"
+    title = MARKET_TITLES.get(prediction.market, "")
+    if not title or selection.lower().startswith(title.lower()):
+        return selection
+    return f"{title}: {selection}"
+
+
 def human_market_label(value) -> str:
     text = str(value or "").strip()
     replacements = {

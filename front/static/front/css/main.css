@@ -2248,6 +2248,94 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .home-mobile-experts-rating { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 800; text-decoration: none; }
 .home-mobile-experts-feed { background: var(--panel); }
 .home-mobile-experts-rating { background: var(--blue); }
+/* Coupon page for phones and the Telegram Mini App (mobile.css shows it there); the events reuse the home slider. */
+.coupon-mobile { display: none; min-width: 0; }
+.coupon-mobile-bar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 12px; }
+.coupon-mobile-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--panel);
+    color: #fff;
+    cursor: pointer;
+}
+.coupon-mobile-title { display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.coupon-mobile-title strong { overflow: hidden; font-family: var(--font-heading); font-size: 20px; font-weight: 400; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.coupon-mobile-state { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 12px; font-weight: 700; }
+.coupon-mobile-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.coupon-mobile-state.is-lose { color: #ff5a5a; }
+.coupon-mobile-state.is-refund { color: var(--muted); }
+.coupon-mobile-summary { display: grid; gap: 14px; margin-top: 18px; padding: 18px 18px 17px; border-radius: 20px; background: var(--yellow); color: var(--ink); }
+.coupon-mobile-summary-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.coupon-mobile-summary-top > span { display: grid; gap: 2px; }
+.coupon-mobile-summary small { font-size: 13px; font-weight: 700; }
+.coupon-mobile-odds strong { font-family: var(--font-heading); font-size: 44px; font-weight: 400; line-height: 1; }
+.coupon-mobile-payout { justify-items: end; text-align: right; }
+.coupon-mobile-payout strong { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-heading); font-size: 30px; font-weight: 400; line-height: 1.1; }
+.coupon-mobile-summary-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.coupon-mobile-pill {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    align-content: center;
+    gap: 7px 8px;
+    min-height: 50px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--ink);
+    color: #fff;
+}
+.coupon-mobile-pill small { color: rgba(255, 255, 255, 0.6); font-size: 13px; font-weight: 600; }
+.coupon-mobile-pill strong { display: inline-flex; align-items: center; justify-self: end; gap: 6px; font-size: 16px; font-weight: 800; }
+.coupon-mobile-pill .coin-icon { width: 18px; height: 18px; flex-basis: 18px; }
+.coupon-mobile-pill progress { grid-column: 1 / -1; width: 100%; height: 4px; overflow: hidden; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.12); appearance: none; }
+.coupon-mobile-pill progress::-webkit-progress-bar { background: rgba(255, 255, 255, 0.12); }
+.coupon-mobile-pill progress::-webkit-progress-value { border-radius: 999px; background: var(--green); }
+.coupon-mobile-pill progress::-moz-progress-bar { border-radius: 999px; background: var(--green); }
+.coupon-mobile-author { display: flex; align-items: center; gap: 12px; margin-top: 13px; padding: 12px 14px; border-radius: 18px; background: var(--panel); color: #fff; text-decoration: none; }
+.coupon-mobile-avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+}
+.coupon-mobile-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.coupon-mobile-avatar .capper-trust-badge { top: -6px; right: -10px; left: auto; width: auto; height: auto; padding: 2px 5px; border-radius: 5px; font-size: 11px; box-shadow: none; }
+.coupon-mobile-author-copy { display: grid; flex: 1 1 auto; gap: 3px; min-width: 0; }
+.coupon-mobile-author-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.coupon-mobile-author-name strong { overflow: hidden; font-size: 16px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.coupon-mobile-author-name .capper-verified-badge { flex: 0 0 auto; }
+.coupon-mobile-author-copy small { color: var(--muted); font-size: 13px; font-weight: 600; }
+.coupon-mobile-author-link { flex: 0 0 auto; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); font-size: 14px; font-weight: 800; }
+.coupon-mobile-lead { margin: 20px 0 0; color: rgba(255, 255, 255, 0.86); font-size: 15px; font-weight: 500; line-height: 1.45; }
+.coupon-mobile-lead + .coupon-mobile-lead { margin-top: 10px; }
+.coupon-mobile-heading { display: flex; align-items: baseline; gap: 8px; margin: 0 0 14px; font-family: var(--font-heading); font-size: 22px; font-weight: 400; line-height: 1.1; }
+.coupon-mobile-heading span { color: var(--muted); font-family: var(--font-body); font-size: 14px; font-weight: 700; }
+.coupon-mobile-events { padding-top: 26px; }
+.home-mobile-card.coupon-mobile-event { flex-basis: min(88%, 420px); }
+.home-mobile-card.coupon-mobile-event:only-child { flex-basis: min(100%, 560px); aspect-ratio: 500 / 290; }
+.coupon-mobile-event-meta { max-width: 70%; overflow: hidden; color: var(--yellow); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.coupon-mobile-event .home-mobile-card-date { margin-top: 6px; color: rgba(255, 255, 255, 0.86); }
+.coupon-mobile-event-teams { display: grid; max-width: 66%; margin-top: auto; font-family: var(--font-heading); font-size: 17px; font-weight: 400; line-height: 1.2; }
+.coupon-mobile-event-teams.is-home-picked span + span,
+.coupon-mobile-event-teams.is-away-picked span:first-child { color: rgba(255, 255, 255, 0.55); }
+.coupon-mobile-event-foot { display: flex; align-items: center; gap: 8px; max-width: 100%; margin-top: auto; }
+.coupon-mobile-event-foot .home-mobile-card-pick { max-width: none; min-width: 0; margin-top: 0; padding: 9px 12px; }
+.coupon-mobile-event-status { flex: 0 0 auto; padding: 10px 12px; border-radius: 12px; background: rgba(35, 45, 86, 0.92); color: #9fb1f6; font-size: 13px; font-weight: 800; }
+.coupon-mobile-event-status.is-win { background: var(--green); color: #fff; }
+.coupon-mobile-event-status.is-lose { background: #c73636; color: #fff; }
+.coupon-mobile-event-status.is-refund { background: rgba(255, 255, 255, 0.16); color: #fff; }
 /* High-odds predictions for phones and the Telegram Mini App (mobile.css shows it there). */
 .home-mobile-best { display: none; margin-top: 30px; }
 .home-mobile-best-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -19170,6 +19258,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     color: var(--muted);
     font-size: 12px;
 }
+.prediction-comment-replying[hidden] { display: none; }
 .prediction-comment-replying button {
     border: 0;
     color: var(--blue);

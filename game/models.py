@@ -894,6 +894,12 @@ class Prediction(models.Model):
         blank=True,
         db_index=True,
     )
+    mobile_card_background = models.CharField(
+        "Фон карточки события на телефоне",
+        max_length=255,
+        blank=True,
+        help_text="Путь к картинке из static по виду спорта, выбирается автоматически.",
+    )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
 
