@@ -19747,6 +19747,10 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+.profile-sidebar-modern .profile-sidebar-link-icon .solar-icon {
+    fill: currentColor;
+    stroke: none;
+}
 .profile-sidebar-link > span:nth-child(2) {
     min-width: 0;
     overflow: hidden;
