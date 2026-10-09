@@ -2147,13 +2147,11 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 }
 .home-mobile-bookmaker-brand { display: flex; align-items: center; gap: 10px; max-width: 100%; }
 .home-mobile-bookmaker-logo {
-    width: 40px;
-    height: 40px;
+    width: 55px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
     overflow: hidden;
-    border-radius: 10px;
     background: var(--ink);
     color: #a9c6ff;
     font-family: var(--font-heading);
