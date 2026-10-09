@@ -13145,7 +13145,6 @@ body.expert-public-details-open {
   body:has(.coupon-detail-layout-page) .site-main {
     min-height: auto !important;
     overflow: visible !important;
-    padding-bottom: 92px;
   }
 
   body:has(.coupon-detail-layout-page) .breadcrumbs-container {
