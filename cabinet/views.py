@@ -606,6 +606,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
                     if match.sport and match.sport.name_ru
                     else "Спорт"
                 ),
+                "league_name": match.league_name or "",
                 "starts_at": match.starts_at,
                 "score": match.score or "",
                 "title": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",

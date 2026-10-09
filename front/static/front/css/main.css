@@ -273,7 +273,6 @@ mark { color: var(--blue); background: 0 0; }
 .predictions-tabs a.predictions-tab-top.is-active,
 .predictions-tabs a.predictions-tab-top.is-active:hover,
 .profile-achievement-state.is-unlocked,
-.profile-coupon-expand,
 .profile-demand-sort button.is-active,
 .profile-referral-stat.is-accent,
 .profile-referral-status.is-subscribed,
@@ -750,7 +749,6 @@ mark { color: var(--blue); background: 0 0; }
 .predictions-filter-sidebar .predictions-tab-top,
 .predictions-tabs a.predictions-tab-top.is-active b,
 .profile-coupon-status.is-refund,
-.profile-coupon-view,
 .profile-referral-copy.is-copied,
 .profile-status-action.is-complete,
 .profile-telegram-connect,
@@ -4242,8 +4240,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .page-promo-banner.is-home-sidebar .page-promo-banner-copy p,
 .prediction-comment-reply-item .prediction-comment-meta time,
 .predictions-hero p,
-.profile-copy-table .profile-coupon-copy strong,
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-team strong{
+.profile-copy-table .profile-coupon-copy strong{
     font-size: 13px;
 }
 .page-promo-banner.is-home-sidebar .page-promo-banner-copy h2 { font-size: clamp(29px, 3vw, 38px); }
@@ -4511,8 +4508,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 }
 .bookmakers-catalog .home-trusted-bookmakers-list,
 .forecast-meta,
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-list,
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-match-head,
 .profile-daily-tasks-card{
     gap: 10px;
 }
@@ -4850,8 +4845,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     text-align: center;
 }
 .cappers-table-empty h2,
-.forecast-empty strong,
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-score strong {
+.forecast-empty strong {
     font-size: 24px;
 }
 .forecast-empty p { max-width: 460px; margin: 0; color: var(--muted); line-height: 1.5; }
@@ -6837,8 +6831,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .match-demand-login:hover,
 .matches-lazy-button:hover,
 .odds-button:hover,
-.profile-coupon-expand:hover,
-.profile-coupon-view:hover,
 .rich-prediction-submit:hover {
     transform: translateY(-1px);
 }
@@ -8133,8 +8125,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     display: grid;
     gap: 12px;
 }
-#profile-tab-predictions .profile-list-card,
-.profile-coupon-inline .coupon-detail-panel {
+#profile-tab-predictions .profile-list-card {
     padding: 0;
     background: 0 0;
     outline: 0;
@@ -8388,14 +8379,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     background: var(--panel);
     text-align: center;
 }
-.profile-coupon-inline .coupon-slip { width: 100%; max-width: none; }
-.profile-coupon-inline .coupon-slip-overview { padding-left: 4px; padding-right: 4px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-item { border-radius: 14px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-match { gap: 6px; padding: 11px 14px 8px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-teams { gap: 12px; padding: 4px 0 2px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-team-logo { width: 42px; height: 42px; border-radius: 12px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-score { min-width: 58px; }
-.profile-coupon-inline .coupon-slip.is-compact .coupon-slip-result { gap: 4px; padding: 8px 14px 9px; }
 .expert-panel { background: var(--panel); padding: 10px; }
 .expert-profit-chart-head > div:first-child,
 .expert-public-stats-compact .expert-public-stat-card > div{
@@ -14723,47 +14706,7 @@ body.register {
 .profile-demand-error {
     color: #ff7b70;
 }
-.profile-coupon-card .profile-coupon-row { grid-template-columns: minmax(190px, 1.35fr) auto repeat(3, minmax(90px, 0.65fr)) minmax(188px, auto); cursor: default; }
-.profile-coupon-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.profile-coupon-expand,
-.profile-coupon-view {
-    min-height: 38px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 13px;
-    border: 0;
-    border-radius: 10px;
-    font: inherit;
-    font-size: 10px;
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
-    transition:
-        transform 0.18s,
-        background 0.18s,
-        color 0.18s;
-}
-.profile-coupon-expand:disabled { cursor: wait; opacity: 0.72; transform: none; }
-.profile-coupon-inline { display: none; min-width: 0; overflow: hidden; padding: 10px 0 4px; background: 0 0; }
-.profile-coupon-inline-view { display: none; }
-.profile-coupon-inline .coupon-slip,
-.tournament-predict-page {
-    margin: 0 auto;
-}
-.profile-coupon-inline-error {
-    min-height: 74px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px;
-    border-radius: 14px;
-    color: var(--muted);
-    background: var(--panel);
-    font-size: 11px;
-    text-align: center;
-}
+.tournament-predict-page { margin: 0 auto; }
 .profile-user-row.is-profile-link {
     cursor: pointer;
     transition:
@@ -23933,12 +23876,15 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 }
 #profile-tab-predictions .profile-desktop-coupon-filters button.is-active { background: var(--yellow); color: var(--ink); }
 #profile-tab-predictions .profile-coupons-desktop-list {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 375px), 1fr));
     gap: 12px;
 }
 #profile-tab-predictions .profile-desktop-coupon {
-    display: block;
+    position: relative;
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    min-height: 178px;
     border-radius: 16px;
     background: var(--panel);
     overflow: hidden;
@@ -23950,26 +23896,45 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 #profile-tab-predictions .profile-desktop-coupon[data-sport*="basketball"] { box-shadow: inset 4px 0 #f28c28; }
 #profile-tab-predictions .profile-desktop-coupon[data-sport*="hockey"] { box-shadow: inset 4px 0 #4fc3f7; }
 #profile-tab-predictions .profile-desktop-coupon[hidden] { display: none; }
-#profile-tab-predictions .profile-desktop-coupon .profile-coupon-row,
-#profile-tab-predictions .profile-desktop-coupon .profile-coupon-row:hover {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-    background: transparent;
-    transform: none;
-}
 #profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon {
-    flex: 1;
+    flex: 1 1 auto;
+    align-items: flex-start;
     width: 100%;
-    min-height: 112px;
+    min-height: 120px;
     margin: 0;
-    padding: 16px 16px 12px 20px;
+    padding: 14px 16px 8px 20px;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
 }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-copy { gap: 5px; padding-right: 87px; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-meta { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-meta b { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+#profile-tab-predictions .profile-desktop-coupon-sport {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #f1f3f6;
+    color: var(--ink);
+}
+#profile-tab-predictions .profile-desktop-coupon-sport svg { display: block; width: 15px; height: 15px; }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="tennis"] .profile-desktop-coupon-sport { background: #a5dd24; }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="basketball"] .profile-desktop-coupon-sport { background: #f28c28; }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="hockey"] .profile-desktop-coupon-sport { background: #4fc3f7; }
+#profile-tab-predictions .profile-desktop-coupon-date { color: var(--muted); font-size: 11px; font-weight: 600; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result { position: absolute; top: 14px; right: 16px; gap: 10px; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small {
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: #303033;
+    color: #c2c2c7;
+    font-size: 11px;
+}
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small.is-win { background: #24492c; color: #a8eab5; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small.is-lose { background: #542626; color: #ffaaaa; }
 #profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-copy strong {
     display: -webkit-box;
     overflow: hidden;
@@ -23978,7 +23943,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
 }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result b { font-size: 18px; }
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result b { font-size: 18px; font-weight: 600; }
 #profile-tab-predictions .profile-desktop-coupon-footer {
     display: flex;
     align-items: center;
@@ -23986,12 +23951,48 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     gap: 10px;
     padding: 0 14px 12px 20px;
 }
-#profile-tab-predictions .profile-desktop-coupon-reactions { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 11px; }
-#profile-tab-predictions .profile-desktop-coupon .profile-coupon-expand {
-    min-height: 32px;
-    padding: 0 11px;
+#profile-tab-predictions .profile-desktop-coupon-reactions,
+#profile-tab-predictions .profile-desktop-coupon-reactions > span,
+#profile-tab-predictions .profile-desktop-coupon-actions { display: flex; align-items: center; }
+#profile-tab-predictions .profile-desktop-coupon-reactions { gap: 13px; min-width: 0; color: var(--muted); font-size: 11px; }
+#profile-tab-predictions .profile-desktop-coupon-reactions > span { gap: 4px; white-space: nowrap; }
+#profile-tab-predictions .profile-desktop-coupon-reactions svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#profile-tab-predictions .profile-desktop-coupon-actions { gap: 8px; flex: 0 0 auto; }
+#profile-tab-predictions .profile-desktop-coupon-view,
+#profile-tab-predictions .profile-desktop-coupon-share {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 10px;
     background: #303033;
     color: #fff;
-    font-size: 11px;
+    font: inherit;
+    font-size: 12px;
     font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
 }
+#profile-tab-predictions .profile-desktop-coupon-view:hover,
+#profile-tab-predictions .profile-desktop-coupon-share:hover { background: #3a3a3d; }
+#profile-tab-predictions .profile-desktop-coupon-share { width: 36px; padding: 0; }
+#profile-tab-predictions .profile-desktop-coupon-share svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#profile-tab-predictions .profile-desktop-coupon-share:disabled { cursor: wait; opacity: 0.6; }
