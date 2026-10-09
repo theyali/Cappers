@@ -12642,10 +12642,13 @@ body.expert-public-details-open {
     max-width: 100vw;
     overflow: hidden;
     padding: 0 0 18px;
+    background: transparent;
+    border-radius: 0;
   }
 
   #profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-track {
     display: grid;
+    gap: 12px;
     grid-auto-flow: column;
     grid-auto-columns: min(calc(100vw - 48px), 380px);
     justify-content: start;
@@ -12655,6 +12658,9 @@ body.expert-public-details-open {
     width: 100%;
     min-width: 0;
     flex: none;
+    aspect-ratio: 632 / 408;
+    padding: 16px 18px;
+    border-radius: 26px;
   }
 
   #profile-tab-predictions .profile-mobile-coupons-feed,
