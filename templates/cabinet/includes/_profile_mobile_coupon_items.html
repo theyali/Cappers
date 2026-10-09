@@ -1,4 +1,8 @@
 {% for coupon in mobile_coupons %}
+{% if desktop %}
+<article class="profile-coupon-card profile-desktop-coupon" data-state="{{ coupon.state_status }}" data-sport="{{ coupon.sport_code }}">
+    <div class="profile-coupon-row" data-coupon-href="{% url 'front:prediction_detail' prediction_id=coupon.id %}">
+{% endif %}
 <a
     class="expert-mobile-coupon"
     href="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
@@ -17,4 +21,26 @@
         <small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>
     </span>
 </a>
+{% if desktop %}
+        <span hidden data-profile-coupon-sort-data
+              data-coupon-id="{{ coupon.id }}"
+              data-sort-date="{{ coupon.created_at|date:'U' }}"
+              data-sort-stake="{{ coupon.total_stake }}"
+              data-sort-payout="{{ coupon.possible_payout }}"
+              data-sort-likes="{{ coupon.likes_count }}"
+              data-sort-favorites="{{ coupon.favorites_count }}"></span>
+        <div class="profile-desktop-coupon-footer">
+            <div class="profile-desktop-coupon-reactions" aria-label="Реакции">
+                <span title="Лайки">♡ {{ coupon.likes_count }}</span>
+                <span title="Комментарии">◯ {{ coupon.comments_count }}</span>
+                <span title="Сохранения">▢ {{ coupon.favorites_count }}</span>
+            </div>
+            <button class="profile-coupon-expand" type="button"
+                    aria-expanded="false" aria-controls="profile-coupon-inline-{{ coupon.id }}"
+                    data-coupon-url="{% url 'front:prediction_detail' prediction_id=coupon.id %}">Раскрыть</button>
+        </div>
+    </div>
+    <div id="profile-coupon-inline-{{ coupon.id }}" class="profile-coupon-inline" aria-hidden="true"></div>
+</article>
+{% endif %}
 {% endfor %}

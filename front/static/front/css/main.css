@@ -23804,3 +23804,194 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .wallet-method-price{
     color:white;
 }
+
+
+/* Desktop predictions tab: high-odds carousel, stats, and compact coupon cards. */
+#profile-tab-predictions .profile-predictions-feature {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 16px;
+    margin: 0 0 22px;
+}
+#profile-tab-predictions .profile-best-coupons-slider,
+#profile-tab-predictions .profile-desktop-feature-empty {
+    display: block;
+    min-width: 0;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head { margin: 0 0 14px; }
+#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head .eyebrow {
+    margin: 0 0 6px;
+    color: var(--yellow);
+    font-size: 11px;
+}
+#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+}
+#profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-track { gap: 0; }
+#profile-tab-predictions .profile-best-coupons-slider .home-mobile-card {
+    flex: 0 0 100%;
+    min-width: 100%;
+    height: clamp(255px, 23vw, 320px);
+    aspect-ratio: auto;
+    border-radius: 14px;
+}
+#profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-dots { padding-top: 14px; }
+#profile-tab-predictions .profile-desktop-feature-empty { color: var(--muted); font-size: 13px; }
+#profile-tab-predictions .profile-predictions-insights { min-width: 0; display: grid; gap: 12px; }
+#profile-tab-predictions .profile-predictions-stats,
+#profile-tab-predictions .profile-predictions-expresses {
+    min-width: 0;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel);
+}
+#profile-tab-predictions .profile-predictions-side-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+#profile-tab-predictions .profile-predictions-side-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+#profile-tab-predictions .profile-predictions-side-head > span { color: var(--muted); font-size: 11px; white-space: nowrap; }
+#profile-tab-predictions .profile-predictions-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+}
+#profile-tab-predictions .profile-predictions-stat-grid > div {
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    min-height: 76px;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: #29292c;
+}
+#profile-tab-predictions .profile-predictions-stat-grid span { color: var(--muted); font-size: 10px; }
+#profile-tab-predictions .profile-predictions-stat-grid strong { color: #fff; font-size: 22px; font-weight: 600; line-height: 1; }
+#profile-tab-predictions .profile-predictions-stat-grid strong.is-win { color: #5fd17a; }
+#profile-tab-predictions .profile-predictions-stat-grid strong.is-lose { color: #ff6b6b; }
+#profile-tab-predictions .profile-predictions-expresses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+}
+#profile-tab-predictions .profile-predictions-expresses-list a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    background: #29292c;
+    color: #fff;
+    text-decoration: none;
+}
+#profile-tab-predictions .profile-predictions-express-rank {
+    flex: 0 0 26px;
+    display: grid;
+    place-items: center;
+    height: 30px;
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 15px;
+    font-weight: 600;
+}
+#profile-tab-predictions .profile-predictions-express-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+#profile-tab-predictions .profile-predictions-express-copy strong { font-size: 14px; font-weight: 600; }
+#profile-tab-predictions .profile-predictions-express-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+#profile-tab-predictions .profile-predictions-expresses-list a > span:last-child { color: var(--muted); }
+#profile-tab-predictions .profile-predictions-express-empty { margin: 0; color: var(--muted); font-size: 12px; }
+#profile-tab-predictions .profile-desktop-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+#profile-tab-predictions .profile-desktop-list-head h3 { margin: 0; font-size: 23px; font-weight: 600; }
+#profile-tab-predictions .profile-desktop-coupon-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+#profile-tab-predictions .profile-desktop-coupon-filters button {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #29292c;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+#profile-tab-predictions .profile-desktop-coupon-filters button.is-active { background: var(--yellow); color: var(--ink); }
+#profile-tab-predictions .profile-coupons-desktop-list {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 12px;
+}
+#profile-tab-predictions .profile-desktop-coupon {
+    display: block;
+    min-width: 0;
+    border-radius: 16px;
+    background: var(--panel);
+    overflow: hidden;
+    box-shadow: inset 4px 0 rgba(255, 255, 255, 0.12);
+}
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="football"],
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="soccer"] { box-shadow: inset 4px 0 var(--green); }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="tennis"] { box-shadow: inset 4px 0 var(--blue); }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="basketball"] { box-shadow: inset 4px 0 #f28c28; }
+#profile-tab-predictions .profile-desktop-coupon[data-sport*="hockey"] { box-shadow: inset 4px 0 #4fc3f7; }
+#profile-tab-predictions .profile-desktop-coupon[hidden] { display: none; }
+#profile-tab-predictions .profile-desktop-coupon .profile-coupon-row,
+#profile-tab-predictions .profile-desktop-coupon .profile-coupon-row:hover {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    background: transparent;
+    transform: none;
+}
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon {
+    flex: 1;
+    width: 100%;
+    min-height: 112px;
+    margin: 0;
+    padding: 16px 16px 12px 20px;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-copy strong {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result b { font-size: 18px; }
+#profile-tab-predictions .profile-desktop-coupon-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 14px 12px 20px;
+}
+#profile-tab-predictions .profile-desktop-coupon-reactions { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 11px; }
+#profile-tab-predictions .profile-desktop-coupon .profile-coupon-expand {
+    min-height: 32px;
+    padding: 0 11px;
+    background: #303033;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+}

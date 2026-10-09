@@ -12621,6 +12621,12 @@ body.expert-public-details-open {
 
 /* Phones open the wheel from the bottom menu, so the bonuses page has no wheel of its own. */
 @media (max-width: 1120px) {
+  /* Keep the existing phone/tablet predictions layout unchanged. */
+  #profile-tab-predictions .profile-predictions-feature { display: contents; }
+  #profile-tab-predictions .profile-predictions-insights,
+  #profile-tab-predictions .profile-desktop-feature-empty,
+  #profile-tab-predictions .profile-desktop-list-head { display: none; }
+  #profile-tab-predictions .profile-best-coupons-slider .home-mobile-card { height: auto; }
   .profile-list-card{
     border-radius: 0;
   }
