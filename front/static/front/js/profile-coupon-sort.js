@@ -1,7 +1,8 @@
 (() => {
-    const list = document.querySelector("[data-profile-coupon-sort-list]");
+    const desktopLists = Array.from(document.querySelectorAll("[data-profile-coupon-sort-list]"));
     const controls = document.querySelector("[data-profile-coupon-sort-controls]");
-    if (!list || !controls) return;
+    const mobileFeed = document.querySelector("[data-profile-mobile-coupons]");
+    if ((!desktopLists.length && !mobileFeed) || !controls) return;
 
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
@@ -46,20 +47,23 @@
 
     loadJQuery()
         .then(($) => {
-            const $list = $(list);
             const $controls = $(controls);
             const $buttons = $controls.find("[data-profile-coupon-sort]");
+            const mobileList = mobileFeed?.querySelector("[data-profile-mobile-coupons-list]");
+            const moreButton = mobileFeed?.querySelector("[data-profile-mobile-coupons-more]");
+            const $mobileFeed = mobileFeed ? $(mobileFeed) : null;
             let activeKey = "date";
             let direction = "desc";
+            let isLoading = false;
 
             const getSortData = (item) => {
                 const dataNode = item.querySelector("[data-profile-coupon-sort-data]");
                 return dataNode ? dataNode.dataset : {};
             };
 
-            const getItems = () => $list
-                .children(".profile-coupon-row, .profile-coupon-card")
-                .get();
+            const getDesktopItems = (list) => (
+                $(list).children(".profile-coupon-row, .profile-coupon-card").get()
+            );
 
             const updateControls = () => {
                 $buttons.each(function () {
@@ -76,28 +80,74 @@
                 });
             };
 
-            const sortRows = () => {
-                const items = getItems();
-                items.sort((left, right) => {
-                    const leftData = getSortData(left);
-                    const rightData = getSortData(right);
-                    const dataKey = `sort${activeKey.charAt(0).toUpperCase()}${activeKey.slice(1)}`;
-                    const leftValue = parseNumber(leftData[dataKey]);
-                    const rightValue = parseNumber(rightData[dataKey]);
+            const sortDesktopRows = () => {
+                desktopLists.forEach((list) => {
+                    const $list = $(list);
+                    const items = getDesktopItems(list);
+                    items.sort((left, right) => {
+                        const leftData = getSortData(left);
+                        const rightData = getSortData(right);
+                        const dataKey = `sort${activeKey.charAt(0).toUpperCase()}${activeKey.slice(1)}`;
+                        const leftValue = parseNumber(leftData[dataKey]);
+                        const rightValue = parseNumber(rightData[dataKey]);
 
-                    if (leftValue === rightValue) {
-                        const leftId = parseNumber(leftData.couponId);
-                        const rightId = parseNumber(rightData.couponId);
-                        return direction === "asc" ? leftId - rightId : rightId - leftId;
-                    }
+                        if (leftValue === rightValue) {
+                            const leftId = parseNumber(leftData.couponId);
+                            const rightId = parseNumber(rightData.couponId);
+                            return direction === "asc" ? leftId - rightId : rightId - leftId;
+                        }
 
-                    return direction === "asc"
-                        ? leftValue - rightValue
-                        : rightValue - leftValue;
+                        return direction === "asc"
+                            ? leftValue - rightValue
+                            : rightValue - leftValue;
+                    });
+
+                    items.forEach((item) => $list.append(item));
                 });
+            };
 
-                items.forEach((item) => $list.append(item));
-                updateControls();
+            const setMobileLoading = (loading) => {
+                isLoading = loading;
+                if (mobileFeed) mobileFeed.classList.toggle("is-loading", loading);
+                if (moreButton) moreButton.disabled = loading;
+            };
+
+            const renderMobileCoupons = (payload, append) => {
+                if (!mobileList || !payload || !payload.ok) return;
+
+                const $nodes = $(payload.html || "").hide();
+                if (append) {
+                    $(mobileList).append($nodes);
+                    $nodes.slideDown(180);
+                } else {
+                    $(mobileList).empty().append($nodes);
+                    $nodes.fadeIn(160);
+                }
+
+                if (moreButton) {
+                    moreButton.dataset.nextOffset = String(payload.next_offset || 0);
+                    moreButton.hidden = !payload.has_more;
+                }
+            };
+
+            const loadMobileCoupons = ({ append = false, offset = 0 } = {}) => {
+                if (!$mobileFeed || !mobileList || isLoading) {
+                    return $.Deferred().resolve().promise();
+                }
+
+                setMobileLoading(true);
+                return $.ajax({
+                    url: String($mobileFeed.data("url") || ""),
+                    method: "GET",
+                    dataType: "json",
+                    data: {
+                        sort: activeKey,
+                        direction,
+                        offset,
+                    },
+                })
+                    .done((payload) => renderMobileCoupons(payload, append))
+                    .always(() => setMobileLoading(false));
             };
 
             $buttons.on("click", function () {
@@ -111,8 +161,19 @@
                     direction = "desc";
                 }
 
-                sortRows();
+                sortDesktopRows();
+                updateControls();
+                loadMobileCoupons({ append: false, offset: 0 });
             });
+
+            if (moreButton) {
+                moreButton.addEventListener("click", () => {
+                    loadMobileCoupons({
+                        append: true,
+                        offset: parseNumber(moreButton.dataset.nextOffset),
+                    });
+                });
+            }
 
             updateControls();
         })

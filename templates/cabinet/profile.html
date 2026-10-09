@@ -759,7 +759,56 @@
                         {% endif %}
                     </div>
                     {% if my_coupons %}
-                    <div class="profile-coupons-list" data-profile-coupon-sort-list>
+                    {% if profile_best_mobile_coupons %}
+                    <section class="home-mobile-slider profile-best-coupons-slider" data-home-mobile-slider aria-labelledby="profile-best-coupons-title">
+                        <div class="profile-mobile-block-head">
+                            <p class="eyebrow">Лучшие прогнозы</p>
+                            <h3 id="profile-best-coupons-title">Высокие коэффициенты</h3>
+                        </div>
+                        <div class="home-mobile-slider-track" data-home-mobile-track>
+                            {% for prediction in profile_best_mobile_coupons %}
+                                {% url 'front:prediction_detail' prediction.id as prediction_href %}
+                                {% if forloop.first %}
+                                    {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href card_loading="eager" only %}
+                                {% else %}
+                                    {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href only %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="home-mobile-slider-dots" aria-hidden="true">
+                            {% for prediction in profile_best_mobile_coupons %}
+                                <span class="{% if forloop.first %}is-active{% endif %}" data-home-mobile-dot></span>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <div
+                        class="profile-mobile-coupons-feed"
+                        data-profile-mobile-coupons
+                        data-url="{% url 'cabinet:profile_mobile_coupons' %}"
+                    >
+                        <div class="profile-mobile-block-head">
+                            <p class="eyebrow">Купоны</p>
+                            <h3>Все прогнозы</h3>
+                        </div>
+                        <div data-profile-mobile-coupons-list>
+                            {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=profile_mobile_coupons only %}
+                        </div>
+                        <div class="profile-mobile-load-more-wrap">
+                            <button
+                                class="expert-mobile-feed-all"
+                                type="button"
+                                data-profile-mobile-coupons-more
+                                data-next-offset="{{ profile_mobile_next_offset }}"
+                                {% if not profile_mobile_has_more %}hidden{% endif %}
+                            >
+                                Показать ещё
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="profile-coupons-list profile-coupons-desktop-list" data-profile-coupon-sort-list>
                         {% for coupon in my_coupons %}
                             {% url 'front:prediction_detail' coupon.id as coupon_href %}
                             {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix=" коинов" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix=" коинов" inline_actions=True coupon_status_icon=True only %}
@@ -988,4 +1037,5 @@
 <script src="{% static 'front/js/profile.js' %}" defer></script>
 <script src="{% static 'front/js/league-picker.js' %}" defer></script>
 <script src="{% static 'front/js/profile-coupon-sort.js' %}" defer></script>
+<script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
 {% endblock %}

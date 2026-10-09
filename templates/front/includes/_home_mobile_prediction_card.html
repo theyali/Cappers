@@ -1,0 +1,45 @@
+<a class="home-mobile-card{% if card.mobile_background.is_light %} is-light{% endif %}" href="{{ card_href }}">
+    {% if card.mobile_background.url %}
+    <img
+        class="home-mobile-card-bg"
+        src="{{ card.mobile_background.url }}"
+        {% if card.mobile_background.url_3x %}srcset="{{ card.mobile_background.url }} 2x, {{ card.mobile_background.url_3x }} 3x"{% endif %}
+        alt=""
+        width="632"
+        height="408"
+        loading="{{ card_loading|default:'lazy' }}"
+        decoding="async"
+    >
+    {% endif %}
+    <span class="home-mobile-card-expert">
+        <span class="home-mobile-card-avatar">
+            {% if card.expert_avatar_url %}
+                <img src="{{ card.expert_avatar_url }}" alt="" width="36" height="36" loading="lazy" decoding="async">
+            {% else %}
+                {{ card.expert_initials }}
+            {% endif %}
+        </span>
+        <span class="home-mobile-card-name">{{ card.expert }}</span>
+        {% if card.expert_verified %}
+            {% include "cabinet/includes/_capper_verified_badge.html" %}
+        {% endif %}
+        {% if card.expert_trust_index %}
+            <span class="home-mobile-card-rating">{{ card.expert_trust_index|floatformat:"1u" }}</span>
+        {% endif %}
+    </span>
+    <span class="home-mobile-card-meta">
+        {% if card.positions_count > 1 %}{{ card.market }}{% else %}{{ card.sport }} · {{ card.league }}{% endif %}
+    </span>
+    <strong class="home-mobile-card-teams">
+        <span>{{ card.home_name }}</span>
+        <span>{{ card.away_name }}</span>
+    </strong>
+    <span class="home-mobile-card-date">{{ card.starts_short|default:card.starts_at }}</span>
+    <span class="home-mobile-card-pick">
+        <span>{{ card.pick_short }}</span>
+        <b>{{ card.coefficient }}</b>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </span>
+</a>
