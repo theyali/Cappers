@@ -1,19 +1,37 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
-from django.db.models import Count, Max, Q, Sum
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Prefetch,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.formats import date_format
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from game.models import Country, PredictionCoupon, Sport
+from game.models import Country, Prediction, PredictionCoupon, Sport
+from game.services.card_backgrounds import assign_backgrounds, background_urls
 from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
@@ -24,6 +42,7 @@ from wallets.models import (
     CopyBettingSubscription,
     RealBalanceTransaction,
 )
+from front.views import _initials
 from wallets.services import ensure_coin_wallet, ensure_real_balance, format_coins, format_money
 from wallets.services import InsufficientBalance
 
@@ -65,6 +84,8 @@ from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 WALLET_OPERATION_PAGE_SIZE = 20
+PROFILE_MOBILE_COUPONS_PAGE_SIZE = 6
+PROFILE_BEST_COUPONS_LIMIT = 5
 FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
@@ -389,6 +410,215 @@ def _coupon_result(coupon) -> tuple[str, str]:
     if coupon.state_status == PredictionCoupon.StateStatus.REFUND:
         return "refund", "Возврат"
     return "pending", "Ожидает"
+
+
+def _coupon_positions_queryset():
+    return (
+        Prediction.objects.select_related("match", "match__sport", "match__league")
+        .order_by("id")
+    )
+
+
+def _combined_coefficient_expression():
+    return Case(
+        When(
+            total_stake__gt=0,
+            then=ExpressionWrapper(
+                F("possible_payout") / F("total_stake"),
+                output_field=DecimalField(max_digits=12, decimal_places=4),
+            ),
+        ),
+        default=Value(Decimal("0")),
+        output_field=DecimalField(max_digits=12, decimal_places=4),
+    )
+
+
+def _profile_coupons_queryset(user):
+    return (
+        PredictionCoupon.objects.filter(author=user)
+        .exclude(published_status=PredictionCoupon.PublishedStatus.DRAFT)
+        .select_related("metrics")
+        .annotate(
+            predictions_count=Count("predictions", distinct=True),
+            likes_count=Coalesce(
+                F("metrics__likes_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            favorites_count=Coalesce(
+                F("metrics__favorites_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            comments_count=Coalesce(
+                F("metrics__comments_count"),
+                Value(0),
+                output_field=IntegerField(),
+            ),
+            combined_coefficient=_combined_coefficient_expression(),
+        )
+        .prefetch_related(
+            Prefetch(
+                "predictions",
+                queryset=_coupon_positions_queryset(),
+                to_attr="profile_positions",
+            )
+        )
+    )
+
+
+def _sort_profile_coupons(queryset, sort_key: str, direction: str):
+    sort_fields = {
+        "date": "created_at",
+        "stake": "total_stake",
+        "payout": "possible_payout",
+        "likes": "likes_count",
+        "favorites": "favorites_count",
+    }
+    field = sort_fields.get(sort_key, "created_at")
+    prefix = "" if direction == "asc" else "-"
+    return queryset.order_by(f"{prefix}{field}", f"{prefix}id")
+
+
+def _coupon_state_label(state_status: str) -> str:
+    if state_status == PredictionCoupon.StateStatus.WIN:
+        return "Выигрыш"
+    if state_status == PredictionCoupon.StateStatus.LOSE:
+        return "Проигрыш"
+    if state_status == PredictionCoupon.StateStatus.REFUND:
+        return "Возврат"
+    return "В игре"
+
+
+def _mobile_coupon_cards(coupons, author) -> list[dict]:
+    cards = []
+    try:
+        profile = author.analyst_profile
+    except AnalystProfile.DoesNotExist:
+        profile = None
+
+    expert_name = (
+        profile.display_name
+        if profile and profile.display_name
+        else author.get_full_name() or author.username
+    )
+    assign_backgrounds(
+        (coupon, list(getattr(coupon, "profile_positions", []) or []))
+        for coupon in coupons
+    )
+
+    for coupon in coupons:
+        positions = list(getattr(coupon, "profile_positions", []) or [])
+        if not positions:
+            continue
+
+        item = positions[0]
+        match = item.match
+        count = len(positions)
+        starts_at = "Время не указано"
+        starts_short = ""
+        if match.starts_at:
+            local_starts_at = timezone.localtime(match.starts_at)
+            starts_at = local_starts_at.strftime("%d.%m · %H:%M")
+            starts_short = f"{date_format(local_starts_at, 'j b')} · {local_starts_at:%H:%M}"
+
+        coefficient = item.coefficient
+        pick_short = item.selection
+        market = item.market
+        if count > 1:
+            pick_short = "Экспресс"
+            market = f"Экспресс · {count} игр"
+            coefficient = (
+                coupon.possible_payout / coupon.total_stake
+                if coupon.total_stake
+                else Decimal("0")
+            )
+
+        cards.append(
+            {
+                "id": coupon.id,
+                "created_at": coupon.created_at,
+                "total_stake": coupon.total_stake,
+                "possible_payout": coupon.possible_payout,
+                "sport": (
+                    match.sport.name_ru
+                    if match.sport and match.sport.name_ru
+                    else "Спорт"
+                ),
+                "league": match.league_name or "Лига",
+                "home_name": match.home_team_name or "Хозяева",
+                "away_name": match.away_team_name or "Гости",
+                "pick_short": pick_short,
+                "market": market,
+                "coefficient": coefficient.quantize(Decimal("0.01")),
+                "positions_count": count,
+                "starts_at": starts_at,
+                "starts_short": starts_short,
+                "mobile_background": background_urls(coupon.mobile_card_background),
+                "expert": expert_name,
+                "expert_initials": _initials(expert_name),
+                "expert_avatar_url": author.avatar.url if author.avatar else "",
+                "expert_verified": bool(profile and profile.is_verified),
+                "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
+            }
+        )
+    return cards
+
+
+def _expert_mobile_coupon_cards(coupons) -> list[dict]:
+    cards = []
+    for coupon in coupons:
+        positions = list(getattr(coupon, "profile_positions", []) or [])
+        if not positions:
+            continue
+
+        item = positions[0]
+        match = item.match
+        count = len(positions)
+        coefficient = getattr(coupon, "combined_coefficient", None)
+        if coefficient is None:
+            coefficient = (
+                coupon.possible_payout / coupon.total_stake
+                if coupon.total_stake
+                else Decimal("0")
+            )
+        subtitle = item.selection
+        if count > 1:
+            subtitle = f"Экспресс · {count} игр · {item.selection}"
+        elif item.market:
+            subtitle = f"{item.market} · {item.selection}"
+
+        cards.append(
+            {
+                "id": coupon.id,
+                "state_status": coupon.state_status,
+                "state_label": _coupon_state_label(coupon.state_status),
+                "sport_code": match.sport.code if match.sport else "",
+                "sport_name": (
+                    match.sport.name_ru
+                    if match.sport and match.sport.name_ru
+                    else "Спорт"
+                ),
+                "starts_at": match.starts_at,
+                "score": match.score or "",
+                "title": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+                "subtitle": subtitle,
+                "coefficient": Decimal(coefficient or 0).quantize(Decimal("0.01")),
+            }
+        )
+    return cards
+
+
+def _profile_mobile_coupon_page(user, *, sort_key="date", direction="desc", offset=0):
+    queryset = _sort_profile_coupons(
+        _profile_coupons_queryset(user),
+        sort_key,
+        direction,
+    )
+    rows = list(queryset[offset : offset + PROFILE_MOBILE_COUPONS_PAGE_SIZE + 1])
+    visible = rows[:PROFILE_MOBILE_COUPONS_PAGE_SIZE]
+    has_more = len(rows) > PROFILE_MOBILE_COUPONS_PAGE_SIZE
+    return _expert_mobile_coupon_cards(visible), has_more, offset + len(visible)
 
 
 def _copybetting_audience_context(user) -> dict:
@@ -797,21 +1027,33 @@ def profile(request):
         )
 
     my_coupons = []
+    profile_best_mobile_coupons = []
+    profile_mobile_coupons = []
+    profile_mobile_has_more = False
+    profile_mobile_next_offset = 0
     coupons_count = 0
     predictions_count = 0
     if request.user.role == User.Role.ANALYST:
         _delete_expired_draft_coupons(request.user)
-        my_coupons = list(
-            PredictionCoupon.objects.filter(author=request.user)
-            .exclude(published_status=PredictionCoupon.PublishedStatus.DRAFT)
-            .annotate(predictions_count=Count("predictions", distinct=True))
-            .order_by("-created_at", "-id")
-        )
+        base_coupons = _profile_coupons_queryset(request.user)
+        my_coupons = list(base_coupons.order_by("-created_at", "-id"))
         for coupon in my_coupons:
             coupon.result_key, coupon.result_label = _coupon_result(coupon)
 
         coupons_count = len(my_coupons)
         predictions_count = coupons_count
+        best_coupons = list(
+            base_coupons.filter(state_status=PredictionCoupon.StateStatus.WIN)
+            .order_by("-combined_coefficient", "-created_at", "-id")[
+                :PROFILE_BEST_COUPONS_LIMIT
+            ]
+        )
+        profile_best_mobile_coupons = _mobile_coupon_cards(best_coupons, request.user)
+        (
+            profile_mobile_coupons,
+            profile_mobile_has_more,
+            profile_mobile_next_offset,
+        ) = _profile_mobile_coupon_page(request.user)
 
     achievement_overview = build_achievement_overview(
         request.user,
@@ -848,6 +1090,10 @@ def profile(request):
         "active_paid_subscribers": active_paid_subscribers,
         "active_paid_subscriber_ids": active_paid_subscriber_ids,
         "my_coupons": my_coupons,
+        "profile_best_mobile_coupons": profile_best_mobile_coupons,
+        "profile_mobile_coupons": profile_mobile_coupons,
+        "profile_mobile_has_more": profile_mobile_has_more,
+        "profile_mobile_next_offset": profile_mobile_next_offset,
         "coupons_count": coupons_count,
         "predictions_count": predictions_count,
         "achievement_overview": achievement_overview,
@@ -886,6 +1132,42 @@ def profile(request):
         context.update(earnings_context)
 
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+@require_GET
+def profile_mobile_coupons(request):
+    if request.user.role != User.Role.ANALYST:
+        return JsonResponse({"ok": False, "message": "Недоступно."}, status=403)
+
+    sort_key = request.GET.get("sort", "date")
+    direction = request.GET.get("direction", "desc")
+    if direction not in {"asc", "desc"}:
+        direction = "desc"
+    try:
+        offset = max(0, int(request.GET.get("offset", 0)))
+    except (TypeError, ValueError):
+        offset = 0
+
+    mobile_coupons, has_more, next_offset = _profile_mobile_coupon_page(
+        request.user,
+        sort_key=sort_key,
+        direction=direction,
+        offset=offset,
+    )
+    html = render_to_string(
+        "cabinet/includes/_profile_mobile_coupon_items.html",
+        {"mobile_coupons": mobile_coupons},
+        request=request,
+    )
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": html,
+            "has_more": has_more,
+            "next_offset": next_offset,
+        }
+    )
 
 
 @login_required

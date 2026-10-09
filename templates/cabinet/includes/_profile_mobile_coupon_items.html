@@ -1,0 +1,20 @@
+{% for coupon in mobile_coupons %}
+<a
+    class="expert-mobile-coupon"
+    href="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
+    data-state="{{ coupon.state_status|default:'pending' }}"
+    data-sport="{{ coupon.sport_code }}"
+>
+    <span class="expert-mobile-coupon-copy">
+        <span class="expert-mobile-coupon-meta">
+            <b>{{ coupon.sport_name }}</b>{% if coupon.starts_at %} · {{ coupon.starts_at|date:"d.m, H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}
+        </span>
+        <strong>{{ coupon.title }}</strong>
+        <span>{{ coupon.subtitle }}</span>
+    </span>
+    <span class="expert-mobile-coupon-result">
+        <b>{{ coupon.coefficient|floatformat:2 }}</b>
+        <small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>
+    </span>
+</a>
+{% endfor %}

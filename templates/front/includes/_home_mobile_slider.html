@@ -11,51 +11,12 @@
     {% if latest_predictions %}
     <div class="home-mobile-slider-track" data-home-mobile-track>
         {% for prediction in latest_predictions %}
-        <a class="home-mobile-card{% if prediction.mobile_background.is_light %} is-light{% endif %}" href="{% url 'front:prediction_detail' prediction.id %}">
-            {% if prediction.mobile_background.url %}
-            <img
-                class="home-mobile-card-bg"
-                src="{{ prediction.mobile_background.url }}"
-                {% if prediction.mobile_background.url_3x %}srcset="{{ prediction.mobile_background.url }} 2x, {{ prediction.mobile_background.url_3x }} 3x"{% endif %}
-                alt=""
-                width="632"
-                height="408"
-                loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                decoding="async"
-            >
+            {% url 'front:prediction_detail' prediction.id as prediction_href %}
+            {% if forloop.first %}
+                {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href card_loading="eager" only %}
+            {% else %}
+                {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href only %}
             {% endif %}
-            <span class="home-mobile-card-expert">
-                <span class="home-mobile-card-avatar">
-                    {% if prediction.expert_avatar_url %}
-                        <img src="{{ prediction.expert_avatar_url }}" alt="" width="36" height="36" loading="lazy" decoding="async">
-                    {% else %}
-                        {{ prediction.expert_initials }}
-                    {% endif %}
-                </span>
-                <span class="home-mobile-card-name">{{ prediction.expert }}</span>
-                {% if prediction.expert_verified %}
-                    {% include "cabinet/includes/_capper_verified_badge.html" %}
-                {% endif %}
-                {% if prediction.expert_trust_index %}
-                    <span class="home-mobile-card-rating">{{ prediction.expert_trust_index|floatformat:"1u" }}</span>
-                {% endif %}
-            </span>
-            <span class="home-mobile-card-meta">
-                {% if prediction.positions_count > 1 %}{{ prediction.market }}{% else %}{{ prediction.sport }} · {{ prediction.league }}{% endif %}
-            </span>
-            <strong class="home-mobile-card-teams">
-                <span>{{ prediction.home_name }}</span>
-                <span>{{ prediction.away_name }}</span>
-            </strong>
-            <span class="home-mobile-card-date">{{ prediction.starts_short|default:prediction.starts_at }}</span>
-            <span class="home-mobile-card-pick">
-                <span>{{ prediction.pick_short }}</span>
-                <b>{{ prediction.coefficient }}</b>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
-        </a>
         {% endfor %}
     </div>
     <div class="home-mobile-slider-dots" aria-hidden="true">

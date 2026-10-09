@@ -62,6 +62,7 @@ def top_up_balance(request):
         package.payment_options = build_payment_options(
             package.price_rub, request.user, in_telegram_app=in_telegram_app(request)
         )
+    default_package = packages[2] if len(packages) >= 3 else (packages[0] if packages else None)
 
     if request.method == "POST":
         package_id = request.POST.get("package_id")
@@ -90,6 +91,7 @@ def top_up_balance(request):
             "coin_balance": wallet.balance,
             "coin_balance_display": format_coins(wallet.balance),
             "coin_packages": packages,
+            "default_coin_package": default_package,
             "real_balance": real_balance,
             "real_balance_display": format_money(real_balance.balance) if real_balance else "",
             "pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",

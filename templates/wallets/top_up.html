@@ -4,21 +4,48 @@
 {% block title %}Пополнение коинов — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="wallet-page wallet-topup-page container">
+<section class="wallet-page wallet-topup-page container" data-wallet-topup>
     <div class="wallet-hero" aria-labelledby="wallet-title">
-        <h1 id="wallet-title">Коины и пакеты</h1>
-        <p>Пополни баланс коинов и используй их для покупки прогнозов, подписок и участия в турнирах.</p>
+        <button class="wallet-mobile-back" type="button" data-wallet-mobile-back aria-label="Назад">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path></svg>
+        </button>
+        <div class="wallet-hero-copy">
+            <h1 id="wallet-title">Коины и пакеты</h1>
+            <p>Выберите пакет — коины пойдут на прогнозы, подписки и турниры</p>
+        </div>
+        <div class="wallet-mobile-balance" aria-label="Баланс коинов">
+            {% include "front/includes/_coin_icon.html" %}
+            <strong>{{ coin_balance_display }}</strong>
+        </div>
     </div>
 
-    <div class="wallet-methods" aria-label="Пакеты коинов">
+    <div class="wallet-methods" aria-label="Пакеты коинов" role="radiogroup">
         {% for package in coin_packages %}
-        <article class="wallet-method{% if forloop.counter == 3 %} is-featured{% endif %}">
-            {% if forloop.counter == 3 %}
-                <span class="wallet-method-badge">Лучший выбор</span>
+        <article
+            class="wallet-method{% if forloop.counter == 3 %} is-featured{% endif %}{% if default_coin_package and package.id == default_coin_package.id %} is-selected{% endif %}"
+            role="radio"
+            tabindex="0"
+            aria-checked="{% if default_coin_package and package.id == default_coin_package.id %}true{% else %}false{% endif %}"
+            data-wallet-package
+            data-package-id="{{ package.id }}"
+            data-package-title="{{ package.total_coins|coins }}"
+            data-package-price="{{ package.price_rub|money }} ₽"
+            data-package-submit="Купить за {{ package.price_rub|money }} ₽"
+            {% if forloop.counter == 3 %}style="--wallet-featured-bg: url('{% static 'front/img/profile_default_cover.png' %}')"{% endif %}
+        >
+            {% if forloop.counter == 4 %}
+                <span class="wallet-method-badge">Выгода 42%</span>
             {% endif %}
+            <span class="wallet-method-coin-mark" aria-hidden="true">{% include "front/includes/_coin_icon.html" %}</span>
+            {% if package.bonus_coins %}
+                <span class="wallet-method-bonus-pill">+{{ package.bonus_coins|coins }}</span>
+            {% endif %}
+            <span class="wallet-method-selected-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m7 12 3 3 7-7"></path></svg>
+            </span>
             <div class="wallet-method-body">
-                <div class="wallet-method-copy">
-                    <h2>{{ package.title }}</h2>
+                <div class="wallet-method-head">
+                    <div class="wallet-method-title">{{ package.total_coins|coins }}</div>
                     {% if forloop.first %}
                         <p>Для старта</p>
                     {% elif forloop.counter == 2 %}
@@ -36,7 +63,7 @@
                     <p class="wallet-method-coins"><strong>{{ package.coins|coins }}</strong><span>коинов</span></p>
                     <p class="wallet-method-bonus"><strong>+ {{ package.bonus_coins|coins }} </strong><span>бонусных коинов</span></p>
                     <p class="wallet-method-price">{{ package.price_rub|money }} ₽</p>
-                    <p class="wallet-method-rate"><strong>≈ {{ package|coin_package_rate }} ₽</strong><span>за 1 коин</span></p>
+                    <p class="wallet-method-rate"><span>коинов · {{ package|coin_package_rate }} ₽/шт</span></p>
                 </div>
             </div>
             <form class="wallet-method-action" method="post" action="{% url 'wallets:top_up' %}" data-no-transition>
@@ -53,8 +80,8 @@
         {% empty %}
         <article class="wallet-method is-disabled" aria-disabled="true">
             <div class="wallet-method-body">
-                <div class="wallet-method-copy">
-                    <h2>Пакеты пока недоступны</h2>
+                <div class="wallet-method-head">
+                    <div class="wallet-method-title">Пакеты пока недоступны</div>
                     <p>Администратор ещё не добавил активные пакеты коинов.</p>
                 </div>
             </div>
@@ -72,10 +99,13 @@
                 <svg viewBox="0 0 24 24"><path d="M19 7H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"></path><path d="M16 7V5a2 2 0 0 0-2-2H6"></path><path d="M17 13h.01"></path></svg>
             </span>
             <div class="wallet-withdraw-copy">
-                <h2>Запросить вывод реального баланса</h2>
+                <h2>Вывод реального баланса</h2>
                 <p>Обменяйте выигранные средства на реальные деньги. Заявка будет обработана администратором.</p>
-                <small>Доступно к выводу: {{ real_balance_display }} ₽. Минимальная сумма вывода — {{ min_withdrawal_display }} ₽.</small>
-                <small>Ожидает вывода: {{ pending_withdrawal_display }} ₽</small>
+                <div class="wallet-withdraw-available">
+                    <span>Доступно к выводу</span>
+                    <strong>{{ real_balance_display }} ₽</strong>
+                </div>
+                <small>Минимум {{ min_withdrawal_display }} ₽ · ожидает вывода {{ pending_withdrawal_display }} ₽</small>
                 {% if held_display %}<small>В холде: {{ held_display }} ₽ — доход с оплат станет доступен после окончания холда.</small>{% endif %}
             </div>
             <form class="wallet-withdraw-form" method="post" action="{% url 'wallets:real_action' %}" data-no-transition>
@@ -84,7 +114,7 @@
                 <input type="hidden" name="action" value="withdraw">
                 <input class="wallet-method-input" type="text" name="payout_details" maxlength="255" required placeholder="Телефон СБП или номер карты" aria-label="Реквизиты для вывода">
                 <input class="wallet-method-input" type="number" name="amount" min="1" step="0.01" required placeholder="Сумма ₽" aria-label="Сумма вывода">
-                <button type="submit">Отправить заявку</button>
+                <button class="wallet-withdraw-submit" type="submit">Запросить вывод <span aria-hidden="true">→</span></button>
             </form>
         </article>
         {% endif %}
@@ -93,16 +123,79 @@
     <div class="wallet-benefits" aria-label="Преимущества">
         <div>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.2 2.7 8.1 7 10 4.3-1.9 7-5.8 7-10V6l-7-3Z"></path><path d="m9 12 2 2 4-5"></path></svg>
-            <p><strong>Безопасные платежи</strong><span>Ваши данные под защитой</span></p>
+            <p><strong>Безопасно</strong><span>Ваши данные под защитой</span></p>
         </div>
         <div>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z"></path></svg>
-            <p><strong>Моментальное зачисление</strong><span>Коины придут сразу после оплаты</span></p>
+            <p><strong>Мгновенно</strong><span>Коины придут сразу после оплаты</span></p>
         </div>
         <div>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
-            <p><strong>Выгодные пакеты</strong><span>Больше коинов — меньше цена</span></p>
+            <p><strong>Выгодно</strong><span>Больше коинов — меньше цена</span></p>
         </div>
     </div>
+
+    {% if default_coin_package %}
+    <form class="wallet-mobile-purchase" method="post" action="{% url 'wallets:top_up' %}" data-wallet-mobile-purchase data-no-transition>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'wallets:top_up' %}">
+        <input type="hidden" name="package_id" value="{{ default_coin_package.id }}" data-wallet-selected-package>
+        <div class="wallet-mobile-purchase-summary">
+            <span>Популярный</span>
+            <strong>{% include "front/includes/_coin_icon.html" %}<span data-wallet-selected-title>{{ default_coin_package.total_coins|coins }}</span></strong>
+        </div>
+        <button class="wallet-mobile-buy-button" type="submit">
+            <span data-wallet-selected-submit>Купить за {{ default_coin_package.price_rub|money }} ₽</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+        </button>
+    </form>
+    {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const root = document.querySelector("[data-wallet-topup]");
+    if (!root) return;
+
+    const cards = Array.from(root.querySelectorAll("[data-wallet-package]"));
+    const packageInput = root.querySelector("[data-wallet-selected-package]");
+    const selectedTitle = root.querySelector("[data-wallet-selected-title]");
+    const selectedSubmit = root.querySelector("[data-wallet-selected-submit]");
+    const backButton = root.querySelector("[data-wallet-mobile-back]");
+
+    const selectCard = (card) => {
+        cards.forEach((item) => {
+            const isSelected = item === card;
+            item.classList.toggle("is-selected", isSelected);
+            item.setAttribute("aria-checked", isSelected ? "true" : "false");
+        });
+
+        if (packageInput) packageInput.value = card.dataset.packageId || "";
+        if (selectedTitle) selectedTitle.textContent = card.dataset.packageTitle || "";
+        if (selectedSubmit) selectedSubmit.textContent = card.dataset.packageSubmit || "Купить";
+    };
+
+    cards.forEach((card) => {
+        card.addEventListener("click", (event) => {
+            if (event.target.closest("button, a, input, form")) return;
+            selectCard(card);
+        });
+        card.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
+            selectCard(card);
+        });
+    });
+
+    const initialCard = cards.find((card) => card.classList.contains("is-selected")) || cards[0];
+    if (initialCard) selectCard(initialCard);
+
+    backButton?.addEventListener("click", () => {
+        if (window.history.length > 1) window.history.back();
+        else window.location.href = "/";
+    });
+})();
+</script>
 {% endblock %}

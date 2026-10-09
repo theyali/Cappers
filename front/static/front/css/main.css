@@ -343,7 +343,7 @@ mark { color: var(--blue); background: 0 0; }
 .wallet-topup-page .wallet-balance-card p,
 .wallet-topup-page .wallet-hero h1,
 .wallet-topup-page .wallet-hero p,
-.wallet-topup-page .wallet-method-copy h2,
+.wallet-topup-page .wallet-method-title,
 .wallet-topup-page .wallet-method-copy p,
 .wallet-topup-page .wallet-withdraw-card h2,
 .wallet-topup-page .wallet-withdraw-card p,
@@ -595,6 +595,14 @@ mark { color: var(--blue); background: 0 0; }
     background: rgba(255, 255, 255, 0.08);
 }
 .wallet-topup-page { margin: 0 auto; gap: 26px; color: var(--text); }
+.wallet-mobile-back,
+.wallet-mobile-balance,
+.wallet-method-coin-mark,
+.wallet-method-selected-mark,
+.wallet-method-bonus-pill,
+.wallet-mobile-purchase {
+    display: none;
+}
 .wallet-topup-page .wallet-hero {
     min-height: 0;
     display: grid;
@@ -648,9 +656,11 @@ mark { color: var(--blue); background: 0 0; }
     display: grid;
     gap: 22px;
 }
+.wallet-topup-page .wallet-method-head,
 .wallet-topup-page .wallet-method-copy { min-width: 0; display: grid; justify-items: start; gap: 9px; }
-.wallet-topup-page .wallet-method-copy h2 { color: #fff; font-size: 17px; font-weight: 600; line-height: 1.15; }
-.wallet-topup-page .wallet-method-copy p { color: #9799a2; font-size: 15px; font-weight: 500; line-height: 1.35; }
+.wallet-topup-page .wallet-method-title { color: #fff; font-size: 17px; font-weight: 600; line-height: 1.15; }
+.wallet-topup-page .wallet-method-head p,
+.wallet-topup-page .wallet-method-copy p { font-size: 15px; font-weight: 500; line-height: 1.35; }
 .wallet-topup-page .wallet-coin-stack { width: min(48%, 120px); justify-self: center; margin: 8px 0 0; }
 .wallet-topup-page .wallet-coin-stack img { width: 100%; display: block; }
 .wallet-topup-page .wallet-method-bonus,
@@ -680,6 +690,8 @@ mark { color: var(--blue); background: 0 0; }
     font-size: 17px;
     font-weight: 600;
 }
+
+
 .wallet-topup-page .wallet-balance-value span,
 .wallet-topup-page .wallet-method-bonus span,
 .wallet-topup-page .wallet-method-rate span {
@@ -2567,8 +2579,8 @@ html.is-expert-socials-open body { overflow: hidden; }
 .home-mobile-best-label { display: inline-flex; align-items: center; gap: 8px; color: var(--yellow); font-size: 13px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .home-mobile-best-label svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 .home-mobile-best-meta,
-.home-mobile-best-pick { max-width: 64%; color: rgba(255, 255, 255, 0.72); font-size: 13px; font-weight: 700; }
-.home-mobile-best-teams { display: grid; max-width: 64%; font-size: 20px; font-weight: 800; line-height: 1.15; }
+.home-mobile-best-pick { max-width: 64%; color: rgba(255, 255, 255, 0.72); font-size: 10px; font-weight: 700; }
+.home-mobile-best-teams { display: grid; max-width: 64%; font-size: 16px; font-weight: 800; line-height: 1.15; }
 .home-mobile-best-expert { display: flex; align-items: center; gap: 8px; max-width: 70%; margin-top: 4px; }
 .home-mobile-best-avatar {
     width: 32px;
@@ -2587,9 +2599,18 @@ html.is-expert-socials-open body { overflow: hidden; }
 .home-mobile-best-expert-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .home-mobile-best .capper-trust-badge { position: static; flex: 0 0 auto; width: auto; height: auto; padding: 3px 7px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 800; }
 .home-mobile-best-result { display: flex; align-items: stretch; gap: 10px; margin-top: 6px; }
-.home-mobile-best-odds { display: inline-grid; place-items: center; padding: 6px 12px; border-radius: 12px; background: var(--yellow); color: var(--ink); font-size: 18px; font-weight: 900; }
-.home-mobile-best-result .home-mobile-best-odds { padding: 10px 22px; border-radius: 16px; font-size: 28px; }
-.home-mobile-best-status { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; border-radius: 16px; background: var(--panel); color: #fff; font-size: 16px; font-weight: 800; }
+.home-mobile-best-odds {
+    display: inline-grid;
+    place-items: center;
+    padding: 4px 8px;
+    border-radius: 13px;
+    background: var(--yellow);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 900;
+}
+.home-mobile-best-result .home-mobile-best-odds { padding: 10px 22px; border-radius: 12px; font-size: 16px; }
+.home-mobile-best-status { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; border-radius: 12px; background: var(--panel); color: #fff; font-size: 16px; font-weight: 800; }
 .home-mobile-best-status svg,
 .home-mobile-best-row-status svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .home-mobile-best-status.is-win { background: #2f7a3a; }
@@ -14807,6 +14828,8 @@ body.register {
 }
 .profile-demand-toolbar-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 .profile-demand-sort { display: flex; gap: 7px; }
+.profile-mobile-coupons-feed,
+.profile-mobile-load-more-wrap { display: none; }
 .profile-demand-sort button {
     min-height: 38px;
     padding: 0 14px;
@@ -23756,4 +23779,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 }
 .profile-sidebar-modern{
     background: transparent!important;
+}
+.wallet-method-price{
+    color:white;
 }
