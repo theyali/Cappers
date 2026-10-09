@@ -4184,7 +4184,6 @@ body.expert-public-details-open {
   body:has(.wallet-topup-page) .site-main {
     padding: 0;
   }
-
   .wallet-topup-page .wallet-hero {
     grid-template-columns: 48px minmax(0, 1fr) auto;
     align-items: start;
