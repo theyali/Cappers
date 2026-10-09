@@ -1548,14 +1548,11 @@ body.wiki-video-player-open {
     background: transparent;
     transition: color 0.18s;
 }
-.nav-profile-dropdown-icon svg {
+.nav-profile-dropdown .nav-profile-dropdown-icon svg {
     width: 24px;
     height: 24px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.75;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
 .site-nav-actions .nav-profile-dropdown a:hover .nav-profile-dropdown-icon { color: #fff; }
 .nav-profile-dropdown-meta {
@@ -14962,11 +14959,8 @@ body.register {
     width: 22px;
     height: 22px;
     display: block;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
 .nav-notification-badge {
     position: absolute;
