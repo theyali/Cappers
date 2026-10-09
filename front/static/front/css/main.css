@@ -15151,6 +15151,16 @@ body.register {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+.notifications-page .notification-kind .solar-icon {
+    fill: currentColor;
+    stroke: none;
+}
+.notifications-filters .notification-watch-head > .solar-icon {
+    width: 42px;
+    height: 42px;
+    fill: var(--yellow);
+    stroke: none;
+}
 .notification-kind .nav-icon {
     width: 23px;
     height: 23px;
