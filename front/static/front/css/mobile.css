@@ -1918,12 +1918,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-close svg {
+
     width: 30px;
+
     height: 30px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-user {
@@ -1976,13 +1976,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-edit svg {
+
     width: 15px;
+
     height: 15px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-user-copy {
@@ -2092,13 +2091,14 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-balance-toggle svg {
+
     width: 18px;
+
     height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    display: block;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-balance-toggle .mobile-balance-eye-off,
@@ -2152,13 +2152,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-wallet a svg {
+
     width: 22px;
+
     height: 22px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-quick,
@@ -2235,25 +2234,27 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-quick-icon svg {
+
     width: 28px;
+
     height: 28px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-quick-icon.is-profile,
-  .mobile-offcanvas-quick-icon.is-chart {
+  .mobile-offcanvas-quick-icon.is-predictions {
     color: var(--blue);
   }
 
-  .mobile-offcanvas-quick-icon.is-bell {
+  .mobile-offcanvas-quick-icon.is-notifications {
     color: #dbe8ff;
   }
 
-  .mobile-offcanvas-quick-icon.is-star {
+  .mobile-offcanvas-quick-icon.is-favorites,
+  .mobile-offcanvas-quick-icon.is-tournaments,
+  .mobile-offcanvas-quick-icon.is-achievements,
+  .mobile-offcanvas-quick-icon.is-vip {
     color: var(--yellow);
   }
 
@@ -2312,13 +2313,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-link-icon svg {
+
     width: 26px;
+
     height: 26px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-logout {
@@ -2347,13 +2347,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-logout svg {
+
     width: 26px;
+
     height: 26px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-links-guest {
