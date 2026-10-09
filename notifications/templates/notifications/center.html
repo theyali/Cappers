@@ -21,7 +21,8 @@
                         <a href="{% url 'notifications:center' %}?filter=unread" data-notification-filter="unread"{% if active_filter == 'unread' %} class="is-active"{% endif %}>
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
-                                    <svg width="42" height="42" viewBox="0 0 24 24" fill="#fbf110" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v3.1c0 1.3-.4 2.5-1.2 3.5l-1.5 1.9A1 1 0 0 0 4.1 18h15.8a1 1 0 0 0 .8-1.5l-1.5-1.9a5.7 5.7 0 0 1-1.2-3.5V8a6 6 0 0 0-6-6Zm-2.3 18a2.5 2.5 0 0 0 4.6 0H9.7Z"></path></svg>
+
+                                    {% include "front/includes/_solar_icon.html" with name="notifications" %}
                                     <h2 data-unread-count>{{ unread_count }}</h2>
                                 </div>
                                 <div class="notification-arrow" aria-hidden="true">›</div>
@@ -35,7 +36,7 @@
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
                                     <div class="notification-kind is-new_prediction" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
+                                        {% include "front/includes/_solar_icon.html" with name="predictions" %}
                                     </div>
                                     <h2>{{ prediction_alert_count }}</h2>
                                 </div>
@@ -50,7 +51,7 @@
                             <div class="notification-watch-head">
                                 <div class="notification-watch-head">
                                     <div class="notification-kind" aria-hidden="true">
-                                        <span class="nav-icon" aria-hidden="true">{% include "front/svgs/nav-matches.svg" %}</span>
+                                        {% include "front/includes/_solar_icon.html" with name="balls-bold" %}
                                     </div>
                                     <h2>{{ match_event_count }}</h2>
                                 </div>
@@ -85,7 +86,7 @@
                     <div class="notification-settings-group">
                         <strong>Каналы уведомлений</strong>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="email" %}
                             <span class="notification-copy">
                                 <strong>Email</strong>
                                 <small>Важные события и дайджест</small>
@@ -96,7 +97,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 4-8 16-3.5-6.5L3 10l18-6Z"></path><path d="m9.5 13.5 5-4"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="telegram" %}
                             <span class="notification-copy">
                                 <strong>Telegram</strong>
                                 <small>Мгновенные уведомления</small>
@@ -107,7 +108,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="1"></rect><path d="M8 21h8M12 17v4"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="in_app" %}
                             <span class="notification-copy">
                                 <strong>На сайте</strong>
                                 <small>Уведомления в браузере</small>
@@ -122,7 +123,7 @@
                     <div class="notification-settings-group">
                         <strong>Типы уведомлений</strong>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2V4Z"></path><path d="M9 9h6M9 13h4"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="predictions" %}
                             <span>Новые прогнозы</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="new_prediction" {% if preferences.new_prediction %}checked{% endif %}>
@@ -130,7 +131,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 8.6c0 5.4-8.8 10.4-8.8 10.4S3.2 14 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="prediction_like" %}
                             <span>Реакции на прогнозы</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="prediction_like" {% if preferences.prediction_like %}checked{% endif %}>
@@ -138,7 +139,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="followers" %}
                             <span>Новые подписчики</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="new_follower" {% if preferences.new_follower %}checked{% endif %}>
@@ -146,7 +147,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="m12 7 3 2-.8 3.5H9.8L9 9l3-2ZM9.8 12.5 7 15m7.2-2.5L17 15M12 17v3"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="balls-bold" %}
                             <span>События матчей</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="match_reminder" {% if preferences.match_reminder %}checked{% endif %}>
@@ -154,7 +155,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v4a4 4 0 0 1-8 0V3Z"></path><path d="M8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 11v5M8 21h8"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="achievements" %}
                             <span>Достижения капперов</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="achievement" {% if preferences.achievement %}checked{% endif %}>
@@ -162,7 +163,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M14.5 8.5c-.6-.7-1.4-1-2.5-1-1.4 0-2.5.7-2.5 1.8 0 2.8 5.4 1.3 5.4 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.2-.4-2.9-1.2M12 5.5v13"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="own_coupon_settled" %}
                             <span>Расчёты прогнозов</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="own_coupon_settled" {% if preferences.own_coupon_settled %}checked{% endif %}>
@@ -174,7 +175,7 @@
                     <div class="notification-settings-group">
                         <strong>Бонусы</strong>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v4H7zM5 8h14v12H5z"></path><path d="M12 8v12M5 12h14M9 4c-1.6 0-3-1-3-2 2.8-.2 5 .5 6 2M15 4c1.6 0 3-1 3-2-2.8-.2-5 .5-6 2"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="bonus_tasks" %}
                             <span>Ежедневные задания и награды</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="bonus_daily_task" {% if preferences.bonus_daily_task %}checked{% endif %}>
@@ -182,7 +183,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3c1 4-2 4-1 7 1-2 3-2 4-4 3 3 4 6 3 9a7 7 0 1 1-13-5c1.2-1.7 2.7-2.8 4.5-4.5C10 9 12 10 13 3Z"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="bonus_streak" %}
                             <span>Серия дней</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="bonus_streak" {% if preferences.bonus_streak %}checked{% endif %}>
@@ -190,7 +191,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8L12 3Z"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="bonus_levels" %}
                             <span>Новые уровни</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="bonus_level" {% if preferences.bonus_level %}checked{% endif %}>
@@ -198,7 +199,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 4v3M18.9 8l-2.6 1.5M18.9 16l-2.6-1.5M12 20v-3M5.1 16l2.6-1.5M5.1 8l2.6 1.5"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="bonus_roulette" %}
                             <span>Призы рулетки</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="bonus_roulette" {% if preferences.bonus_roulette %}checked{% endif %}>
@@ -206,7 +207,7 @@
                             </span>
                         </label>
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"></circle><circle cx="17" cy="9" r="2.5"></circle><path d="M3 19c.6-3.4 2.4-5.1 5-5.1s4.4 1.7 5 5.1M14 14c3.3-.4 5.4 1.3 6 5"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="referrals" %}
                             <span>Реферальные бонусы</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">
                                 <input type="checkbox" name="bonus_referral" {% if preferences.bonus_referral %}checked{% endif %}>

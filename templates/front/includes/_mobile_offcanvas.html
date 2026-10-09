@@ -8,7 +8,7 @@
 >
     <div class="mobile-offcanvas-head">
         <button class="mobile-offcanvas-close" type="button" aria-label="Закрыть меню" data-mobile-offcanvas-close>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"></path></svg>
+            {% include "front/includes/_solar_icon.html" with name="close" %}
         </button>
         <h2>Меню</h2>
     </div>
@@ -22,7 +22,7 @@
                     <img src="{% static 'front/svgs/profile.svg' %}" alt="">
                 {% endif %}
                 <span class="mobile-offcanvas-edit" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"></path><path d="m13 7 4 4"></path></svg>
+                    {% include "front/includes/_solar_icon.html" with name="edit" %}
                 </span>
             </span>
             <span class="mobile-offcanvas-user-copy">
@@ -51,8 +51,8 @@
                             data-visible-label="Скрыть баланс"
                             data-hidden-label="Показать баланс"
                         >
-                            <svg class="mobile-balance-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            <svg class="mobile-balance-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M9.9 5.2A9.8 9.8 0 0 1 12 5c5 0 8.8 4.3 10 7a13.5 13.5 0 0 1-3.2 4.6M6.2 6.3A13.2 13.2 0 0 0 2 12c1.2 2.7 5 7 10 7 1.6 0 3.1-.4 4.4-1.1M10.5 10.7a2 2 0 0 0 2.8 2.8"></path></svg>
+                            <span class="mobile-balance-eye">{% include "front/includes/_solar_icon.html" with name="eye" %}</span>
+                            <span class="mobile-balance-eye-off">{% include "front/includes/_solar_icon.html" with name="eye_closed" %}</span>
                         </button>
                     </span>
                     <strong>
@@ -66,7 +66,7 @@
                     <small>Доступно для ставок</small>
                 </div>
                 <a href="{% url 'wallets:top_up' %}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v11H4z"></path><path d="M7 7V5h10v2M17 12h4M18.5 10.5v3"></path></svg>
+                    {% include "front/includes/_solar_icon.html" with name="top_up" %}
                     <span>Пополнить</span>
                 </a>
             </section>
@@ -82,54 +82,54 @@
 
         <nav class="mobile-offcanvas-links" aria-label="Меню аккаунта">
             <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path d="M8 8h7M8 12h7M8 16h5"></path><path d="M19 6h1v14"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="articles" %}</span>
                 <span>Статьи</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:sports_news' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="sports_news" %}</span>
                 <span>Новости спорта</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" %}</span>
                 <span>Турниры</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5C6 4.5 8 4 10 4c1.2 0 2 .3 2 .3S12.8 4 14 4c2 0 4 .5 6 1.5v14c-2-1-4-1.5-6-1.5-1.2 0-2 .3-2 .3s-.8-.3-2-.3c-2 0-4 .5-6 1.5v-14Z"></path><path d="M12 4.3v14"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="how_it_works" %}</span>
                 <span>Как пользоваться</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:about' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path><path d="M19 4v6M16 7h6"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="about" %}</span>
                 <span>О нас</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'cabinet:profile' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 14 5l2.5-.7 1.2 2.2 2.3.9-.3 2.6 1.6 2-1.6 2 .3 2.6-2.3.9-1.2 2.2L14 19l-2 1.5L10 19l-2.5.7-1.2-2.2-2.3-.9.3-2.6-1.6-2 1.6-2L4 7.4l2.3-.9 1.2-2.2L10 5z"></path><circle cx="12" cy="12" r="3.2"></circle></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="profile" %}</span>
                 <span>Профиль</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'notifications:center' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="notifications" %}</span>
                 <span>Уведомления</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             {% if request.user.is_analyst %}
             <a href="{% url 'cabinet:profile' %}?tab=predictions">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20V9"></path><path d="M12 20V4"></path><path d="M19 20v-8"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="predictions" %}</span>
                 <span>Мои прогнозы</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             {% endif %}
             <a href="{% url 'front:following_feed' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v5H4z"></path><path d="M4 14h16M4 19h10"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="following_feed" %}</span>
                 <span>Моя лента</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:favorites' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="favorites" %}</span>
                 <span>Избранное</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
@@ -138,7 +138,7 @@
         <form method="post" action="{% url 'cabinet:logout' %}" class="mobile-offcanvas-logout">
             {% csrf_token %}
             <button type="submit">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="logout" %}
                 <span>Выйти</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </button>
@@ -146,37 +146,37 @@
     {% else %}
         <nav class="mobile-offcanvas-links mobile-offcanvas-links-guest" aria-label="Меню">
             <a href="{% url 'cabinet:login' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="login" %}</span>
                 <span>Войти</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'cabinet:register' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"></circle><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="register" %}</span>
                 <span>Регистрация</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5h11a2 2 0 0 1 2 2v15H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z"></path><path d="M8 8h7M8 12h7M8 16h5"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="articles" %}</span>
                 <span>Статьи</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:sports_news' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="sports_news" %}</span>
                 <span>Новости спорта</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9z"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" %}</span>
                 <span>Турниры</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5C6 4.5 8 4 10 4c1.2 0 2 .3 2 .3S12.8 4 14 4c2 0 4 .5 6 1.5v14c-2-1-4-1.5-6-1.5-1.2 0-2 .3-2 .3s-.8-.3-2-.3c-2 0-4 .5-6 1.5v-14Z"></path><path d="M12 4.3v14"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="how_it_works" %}</span>
                 <span>Как пользоваться</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
             <a href="{% url 'front:about' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path><path d="M19 4v6M16 7h6"></path></svg></span>
+                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="about" %}</span>
                 <span>О нас</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>

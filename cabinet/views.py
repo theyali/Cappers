@@ -591,6 +591,13 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
         cards.append(
             {
                 "id": coupon.id,
+                "created_at": coupon.created_at,
+                "total_stake": coupon.total_stake,
+                "possible_payout": coupon.possible_payout,
+                "likes_count": coupon.likes_count,
+                "comments_count": coupon.comments_count,
+                "favorites_count": coupon.favorites_count,
+                "positions_count": count,
                 "state_status": coupon.state_status,
                 "state_label": _coupon_state_label(coupon.state_status),
                 "sport_code": match.sport.code if match.sport else "",
@@ -599,6 +606,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
                     if match.sport and match.sport.name_ru
                     else "Спорт"
                 ),
+                "league_name": match.league_name or "",
                 "starts_at": match.starts_at,
                 "score": match.score or "",
                 "title": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
@@ -1028,6 +1036,9 @@ def profile(request):
 
     my_coupons = []
     profile_best_mobile_coupons = []
+    profile_desktop_coupons = []
+    profile_best_expresses = []
+    profile_coupon_stats = {"total": 0, "wins": 0, "losses": 0, "win_rate": 0}
     profile_mobile_coupons = []
     profile_mobile_has_more = False
     profile_mobile_next_offset = 0
@@ -1042,6 +1053,26 @@ def profile(request):
 
         coupons_count = len(my_coupons)
         predictions_count = coupons_count
+        wins = sum(coupon.state_status == PredictionCoupon.StateStatus.WIN for coupon in my_coupons)
+        losses = sum(coupon.state_status == PredictionCoupon.StateStatus.LOSE for coupon in my_coupons)
+        profile_coupon_stats = {
+            "total": coupons_count,
+            "wins": wins,
+            "losses": losses,
+            "win_rate": round(wins * 100 / coupons_count) if coupons_count else 0,
+        }
+        profile_desktop_coupons = _expert_mobile_coupon_cards(my_coupons)
+        winning_expresses = sorted(
+            (
+                coupon
+                for coupon in my_coupons
+                if coupon.state_status == PredictionCoupon.StateStatus.WIN
+                and coupon.predictions_count > 1
+            ),
+            key=lambda coupon: (coupon.combined_coefficient, coupon.created_at, coupon.id),
+            reverse=True,
+        )[:3]
+        profile_best_expresses = _expert_mobile_coupon_cards(winning_expresses)
         best_coupons = list(
             base_coupons.filter(state_status=PredictionCoupon.StateStatus.WIN)
             .order_by("-combined_coefficient", "-created_at", "-id")[
@@ -1091,6 +1122,9 @@ def profile(request):
         "active_paid_subscriber_ids": active_paid_subscriber_ids,
         "my_coupons": my_coupons,
         "profile_best_mobile_coupons": profile_best_mobile_coupons,
+        "profile_desktop_coupons": profile_desktop_coupons,
+        "profile_best_expresses": profile_best_expresses,
+        "profile_coupon_stats": profile_coupon_stats,
         "profile_mobile_coupons": profile_mobile_coupons,
         "profile_mobile_has_more": profile_mobile_has_more,
         "profile_mobile_next_offset": profile_mobile_next_offset,

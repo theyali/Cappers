@@ -53,6 +53,7 @@
             const moreButton = mobileFeed?.querySelector("[data-profile-mobile-coupons-more]");
             const $mobileFeed = mobileFeed ? $(mobileFeed) : null;
             let activeKey = "date";
+            let activeFilter = "all";
             let direction = "desc";
             let isLoading = false;
 
@@ -105,6 +106,26 @@
                     items.forEach((item) => $list.append(item));
                 });
             };
+
+            const filterDesktopRows = () => {
+                desktopLists.forEach((list) => {
+                    getDesktopItems(list).forEach((item) => {
+                        item.hidden = activeFilter !== "all" && item.dataset.state !== activeFilter;
+                    });
+                });
+            };
+
+            document.querySelectorAll("[data-profile-coupon-filter]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    activeFilter = button.dataset.profileCouponFilter;
+                    document.querySelectorAll("[data-profile-coupon-filter]").forEach((control) => {
+                        const selected = control.dataset.profileCouponFilter === activeFilter;
+                        control.classList.toggle("is-active", selected);
+                        control.setAttribute("aria-pressed", String(selected));
+                    });
+                    filterDesktopRows();
+                });
+            });
 
             const setMobileLoading = (loading) => {
                 isLoading = loading;

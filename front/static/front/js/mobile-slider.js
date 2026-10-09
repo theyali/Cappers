@@ -19,5 +19,27 @@
         track.addEventListener("scroll", () => {
             if (!frame) frame = requestAnimationFrame(update);
         }, { passive: true });
+
+        // Autoplay only for the desktop profile carousel; mobile scrolling is unchanged.
+        if (slider.classList.contains("profile-best-coupons-slider") && cards.length > 1) {
+            const desktop = window.matchMedia("(min-width: 1121px)");
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+            let paused = false;
+            slider.addEventListener("mouseenter", () => { paused = true; });
+            slider.addEventListener("mouseleave", () => { paused = false; });
+            slider.addEventListener("focusin", () => { paused = true; });
+            slider.addEventListener("focusout", (event) => {
+                if (!slider.contains(event.relatedTarget)) paused = false;
+            });
+            window.setInterval(() => {
+                if (!desktop.matches || reducedMotion.matches || paused || document.hidden) return;
+                if (!slider.closest(".profile-tab-panel")?.classList.contains("is-active")) return;
+                const step = cards[1].offsetLeft - cards[0].offsetLeft;
+                if (!step) return;
+                const current = Math.round(track.scrollLeft / step);
+                const next = (current + 1) % cards.length;
+                track.scrollTo({ left: cards[next].offsetLeft - cards[0].offsetLeft, behavior: "smooth" });
+            }, 5500);
+        }
     });
 })();

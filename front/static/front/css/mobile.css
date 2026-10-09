@@ -1792,42 +1792,13 @@ body.expert-public-details-open {
     width: 25px;
     height: 25px;
     display: block;
-    background: currentColor;
-    font-size: 0;
   }
 
-  .mobile-app-nav-icon svg,
-  .mobile-app-nav-icon img {
-    display: none !important;
-  }
-
-  .mobile-app-nav .mobile-nav-home .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-home.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-home.svg") center / contain no-repeat;
-  }
-  .mobile-app-nav .mobile-nav-matches .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-matches.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-coupons .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/coupons.svg") center / contain no-repeat;
-    mask: url("../svgs/coupons.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-cappers .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-predictions .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-stats.svg") center / contain no-repeat;
-  }
-
-  .mobile-app-nav .mobile-nav-profile .mobile-app-nav-icon {
-    -webkit-mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
-    mask: url("../svgs/nav-profile.svg") center / contain no-repeat;
+  .mobile-app-nav-icon .solar-icon {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: currentColor;
   }
 
   .mobile-app-nav-label {
@@ -1947,12 +1918,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-close svg {
+
     width: 30px;
+
     height: 30px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-user {
@@ -2005,13 +1976,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-edit svg {
+
     width: 15px;
+
     height: 15px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-user-copy {
@@ -2121,13 +2091,14 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-balance-toggle svg {
+
     width: 18px;
+
     height: 18px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    display: block;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-balance-toggle .mobile-balance-eye-off,
@@ -2181,13 +2152,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-wallet a svg {
+
     width: 22px;
+
     height: 22px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-quick,
@@ -2264,25 +2234,27 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-quick-icon svg {
+
     width: 28px;
+
     height: 28px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-quick-icon.is-profile,
-  .mobile-offcanvas-quick-icon.is-chart {
+  .mobile-offcanvas-quick-icon.is-predictions {
     color: var(--blue);
   }
 
-  .mobile-offcanvas-quick-icon.is-bell {
+  .mobile-offcanvas-quick-icon.is-notifications {
     color: #dbe8ff;
   }
 
-  .mobile-offcanvas-quick-icon.is-star {
+  .mobile-offcanvas-quick-icon.is-favorites,
+  .mobile-offcanvas-quick-icon.is-tournaments,
+  .mobile-offcanvas-quick-icon.is-achievements,
+  .mobile-offcanvas-quick-icon.is-vip {
     color: var(--yellow);
   }
 
@@ -2341,13 +2313,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-link-icon svg {
+
     width: 26px;
+
     height: 26px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-logout {
@@ -2376,13 +2347,12 @@ body.expert-public-details-open {
   }
 
   .mobile-offcanvas-logout svg {
+
     width: 26px;
+
     height: 26px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+
+    fill: currentColor;
   }
 
   .mobile-offcanvas-links-guest {
@@ -4214,7 +4184,6 @@ body.expert-public-details-open {
   body:has(.wallet-topup-page) .site-main {
     padding: 0;
   }
-
   .wallet-topup-page .wallet-hero {
     grid-template-columns: 48px minmax(0, 1fr) auto;
     align-items: start;
@@ -12651,6 +12620,12 @@ body.expert-public-details-open {
 
 /* Phones open the wheel from the bottom menu, so the bonuses page has no wheel of its own. */
 @media (max-width: 1120px) {
+  /* Keep the existing phone/tablet predictions layout unchanged. */
+  #profile-tab-predictions .profile-predictions-feature { display: contents; }
+  #profile-tab-predictions .profile-predictions-insights,
+  #profile-tab-predictions .profile-desktop-feature-empty,
+  #profile-tab-predictions .profile-desktop-list-head { display: none; }
+  #profile-tab-predictions .profile-best-coupons-slider .home-mobile-card { height: auto; }
   .profile-list-card{
     border-radius: 0;
   }
@@ -12672,10 +12647,13 @@ body.expert-public-details-open {
     max-width: 100vw;
     overflow: hidden;
     padding: 0 0 18px;
+    background: transparent;
+    border-radius: 0;
   }
 
   #profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-track {
     display: grid;
+    gap: 12px;
     grid-auto-flow: column;
     grid-auto-columns: min(calc(100vw - 48px), 380px);
     justify-content: start;
@@ -12685,6 +12663,9 @@ body.expert-public-details-open {
     width: 100%;
     min-width: 0;
     flex: none;
+    aspect-ratio: 632 / 408;
+    padding: 16px 18px;
+    border-radius: 26px;
   }
 
   #profile-tab-predictions .profile-mobile-coupons-feed,

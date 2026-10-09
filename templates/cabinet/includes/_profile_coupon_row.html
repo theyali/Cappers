@@ -1,11 +1,6 @@
 {% load capper_trust static prediction_reactions %}
 {% if row_id %}{% profile_coupon_reaction_counts row_id as row_reactions %}{% endif %}
-{% if inline_actions %}
-<article class="profile-coupon-card">
-<div class="profile-coupon-row" data-coupon-href="{{ row_href }}">
-{% else %}
 <a class="profile-coupon-row" href="{{ row_href }}">
-{% endif %}
     <div class="profile-coupon-main">
         {% if row_user %}
             <span class="nav-profile-dropdown-avatar" data-skeleton-image>
@@ -102,24 +97,5 @@
     <div class="profile-coupon-metric"><span>{{ metric_1_label }}</span><strong>{% if metric_1_suffix == '₽' %}{{ metric_1_value|money }} ₽{% elif metric_1_suffix == 'коинов' or metric_1_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_1_value|floatformat:"0" }}</span></span>{% else %}{{ metric_1_value }}{% if metric_1_suffix %} {{ metric_1_suffix }}{% endif %}{% endif %}</strong></div>
     <div class="profile-coupon-metric"><span>{{ metric_2_label }}</span><strong>{% if metric_2_suffix == '₽' %}{{ metric_2_value|money }} ₽{% elif metric_2_suffix == 'коинов' or metric_2_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_2_value|floatformat:"0" }}</span></span>{% else %}{{ metric_2_value }}{% if metric_2_suffix %} {{ metric_2_suffix }}{% endif %}{% endif %}</strong></div>
     <div class="profile-coupon-metric"><span>{{ metric_3_label }}</span><strong>{% if metric_3_suffix == '₽' %}{{ metric_3_value|money }} ₽{% elif metric_3_suffix == 'коинов' or metric_3_suffix == ' коинов' %}<span class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ metric_3_value|floatformat:"0" }}</span></span>{% else %}{{ metric_3_value }}{% if metric_3_suffix %} {{ metric_3_suffix }}{% endif %}{% endif %}</strong></div>
-    {% if inline_actions %}
-    <div class="profile-coupon-actions">
-        <a class="profile-coupon-view" href="{{ row_href }}">Посмотреть</a>
-        <button
-            class="profile-coupon-expand"
-            type="button"
-            aria-expanded="false"
-            aria-controls="profile-coupon-inline-{{ row_id }}"
-            data-coupon-url="{{ row_href }}"
-        >Раскрыть</button>
-    </div>
-    {% else %}
     <span class="profile-coupon-open" aria-hidden="true">→</span>
-    {% endif %}
-{% if inline_actions %}
-</div>
-<div id="profile-coupon-inline-{{ row_id }}" class="profile-coupon-inline" aria-hidden="true"></div>
-</article>
-{% else %}
 </a>
-{% endif %}

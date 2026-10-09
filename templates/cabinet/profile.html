@@ -759,6 +759,7 @@
                         {% endif %}
                     </div>
                     {% if my_coupons %}
+                    <div class="profile-predictions-feature">
                     {% if profile_best_mobile_coupons %}
                     <section class="home-mobile-slider profile-best-coupons-slider" data-home-mobile-slider aria-labelledby="profile-best-coupons-title">
                         <div class="profile-mobile-block-head">
@@ -781,7 +782,43 @@
                             {% endfor %}
                         </div>
                     </section>
+                    {% else %}
+                    <div class="profile-desktop-feature-empty">Выигрышные прогнозы с высокими коэффициентами пока не появились.</div>
                     {% endif %}
+                    <aside class="profile-predictions-insights" aria-label="Статистика моих прогнозов">
+                        <section class="profile-predictions-stats" aria-labelledby="profile-coupon-stats-title">
+                            <div class="profile-predictions-side-head">
+                                <h3 id="profile-coupon-stats-title">Моя статистика</h3>
+                                <span>За всё время</span>
+                            </div>
+                            <div class="profile-predictions-stat-grid">
+                                <div><span>Всего купонов</span><strong>{{ profile_coupon_stats.total }}</strong></div>
+                                <div><span>Победы</span><strong class="is-win">{{ profile_coupon_stats.wins }}</strong></div>
+                                <div><span>Поражения</span><strong class="is-lose">{{ profile_coupon_stats.losses }}</strong></div>
+                                <div><span>Проходимость</span><strong>{{ profile_coupon_stats.win_rate }}%</strong></div>
+                            </div>
+                        </section>
+                        <section class="profile-predictions-expresses" aria-labelledby="profile-expresses-title">
+                            <div class="profile-predictions-side-head">
+                                <h3 id="profile-expresses-title">Лучшие экспрессы</h3>
+                                <span>Топ за всё время</span>
+                            </div>
+                            {% if profile_best_expresses %}
+                            <div class="profile-predictions-expresses-list">
+                                {% for coupon in profile_best_expresses %}
+                                <a href="{% url 'front:prediction_detail' coupon.id %}">
+                                    <span class="profile-predictions-express-rank">{{ forloop.counter }}</span>
+                                    <span class="profile-predictions-express-copy"><strong>{{ coupon.coefficient }}</strong><small>{{ coupon.positions_count }} игр · {{ coupon.created_at|date:"d.m" }}</small></span>
+                                    <span aria-hidden="true">›</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="profile-predictions-express-empty">Выигрышных экспрессов пока нет.</p>
+                            {% endif %}
+                        </section>
+                    </aside>
+                    </div>
 
                     <div
                         class="profile-mobile-coupons-feed"
@@ -808,11 +845,16 @@
                             </button>
                         </div>
                     </div>
+                    <div class="profile-desktop-list-head">
+                        <h3>Все прогнозы</h3>
+                        <div class="profile-desktop-coupon-filters" role="group" aria-label="Фильтр по результату">
+                            <button type="button" class="is-active" data-profile-coupon-filter="all" aria-pressed="true">Все</button>
+                            <button type="button" data-profile-coupon-filter="win" aria-pressed="false">Выигрыш</button>
+                            <button type="button" data-profile-coupon-filter="lose" aria-pressed="false">Проигрыш</button>
+                        </div>
+                    </div>
                     <div class="profile-coupons-list profile-coupons-desktop-list" data-profile-coupon-sort-list>
-                        {% for coupon in my_coupons %}
-                            {% url 'front:prediction_detail' coupon.id as coupon_href %}
-                            {% include "cabinet/includes/_profile_coupon_row.html" with row_href=coupon_href row_id=coupon.id row_date=coupon.created_at row_status_key=coupon.result_key row_status_label=coupon.result_label metric_1_label="Матчи" metric_1_value=coupon.predictions_count metric_2_label="Сумма" metric_2_value=coupon.total_stake metric_2_suffix=" коинов" metric_3_label="Стоимость купона" metric_3_value=coupon.possible_payout metric_3_suffix=" коинов" inline_actions=True coupon_status_icon=True only %}
-                        {% endfor %}
+                        {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=profile_desktop_coupons desktop=True only %}
                     </div>
                     {% else %}
                     <div class="profile-empty-state">
@@ -1038,4 +1080,5 @@
 <script src="{% static 'front/js/league-picker.js' %}" defer></script>
 <script src="{% static 'front/js/profile-coupon-sort.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
+<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 {% endblock %}

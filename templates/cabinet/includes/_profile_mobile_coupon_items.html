@@ -1,4 +1,7 @@
 {% for coupon in mobile_coupons %}
+{% if desktop %}
+<article class="profile-coupon-card profile-desktop-coupon" data-state="{{ coupon.state_status }}" data-sport="{{ coupon.sport_code }}">
+{% endif %}
 <a
     class="expert-mobile-coupon"
     href="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
@@ -7,14 +10,75 @@
 >
     <span class="expert-mobile-coupon-copy">
         <span class="expert-mobile-coupon-meta">
+            {% if desktop %}
+            <span class="profile-desktop-coupon-sport" aria-hidden="true">
+                {% if coupon.sport_code == 'football' or coupon.sport_code == 'soccer' %}
+                    {% include "front/svgs/soccer.svg" %}
+                {% elif coupon.sport_code == 'tennis' %}
+                    {% include "front/svgs/tennis.svg" %}
+                {% elif coupon.sport_code == 'basketball' %}
+                    {% include "front/svgs/basketball.svg" %}
+                {% elif coupon.sport_code == 'hockey' or coupon.sport_code == 'ice-hockey' %}
+                    {% include "front/svgs/hockey.svg" %}
+                {% else %}
+                    {% include "front/svgs/nav-matches.svg" %}
+                {% endif %}
+            </span>
+            <b>{{ coupon.sport_name }}{% if coupon.league_name %} · {{ coupon.league_name }}{% endif %}</b>
+            {% else %}
             <b>{{ coupon.sport_name }}</b>{% if coupon.starts_at %} · {{ coupon.starts_at|date:"d.m, H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}
+            {% endif %}
         </span>
+        {% if desktop %}
+        <span class="profile-desktop-coupon-date">{% if coupon.starts_at %}{{ coupon.starts_at|date:"d.m.Y · H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}</span>
+        {% endif %}
         <strong>{{ coupon.title }}</strong>
         <span>{{ coupon.subtitle }}</span>
     </span>
     <span class="expert-mobile-coupon-result">
+        {% if desktop %}<small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>{% endif %}
         <b>{{ coupon.coefficient|floatformat:2 }}</b>
-        <small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>
+        {% if not desktop %}<small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>{% endif %}
     </span>
 </a>
+{% if desktop %}
+        <span hidden data-profile-coupon-sort-data
+              data-coupon-id="{{ coupon.id }}"
+              data-sort-date="{{ coupon.created_at|date:'U' }}"
+              data-sort-stake="{{ coupon.total_stake }}"
+              data-sort-payout="{{ coupon.possible_payout }}"
+              data-sort-likes="{{ coupon.likes_count }}"
+              data-sort-favorites="{{ coupon.favorites_count }}"></span>
+        <div class="profile-desktop-coupon-footer">
+            <span class="profile-desktop-coupon-reactions">
+                <span title="Лайки" aria-label="Лайки: {{ coupon.likes_count }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z"></path></svg>
+                    {{ coupon.likes_count }}
+                </span>
+                <span title="Комментарии" aria-label="Комментарии: {{ coupon.comments_count }}">
+                    {% include "front/svgs/comment.svg" %}
+                    {{ coupon.comments_count }}
+                </span>
+                <span title="Сохранения" aria-label="Сохранения: {{ coupon.favorites_count }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
+                    {{ coupon.favorites_count }}
+                </span>
+            </span>
+            <span class="profile-desktop-coupon-actions">
+                <a class="profile-desktop-coupon-view" href="{% url 'front:prediction_detail' prediction_id=coupon.id %}">Посмотреть</a>
+                <button class="profile-desktop-coupon-share prediction-share" type="button"
+                        data-prediction-id="{{ coupon.id }}"
+                        data-share-url="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
+                        data-share-endpoint="{% url 'front:prediction_share' prediction_id=coupon.id %}"
+                        aria-label="Поделиться прогнозом" title="Поделиться прогнозом">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 16V4"></path>
+                        <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
+                        <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
+                    </svg>
+                </button>
+            </span>
+        </div>
+</article>
+{% endif %}
 {% endfor %}

@@ -6,43 +6,43 @@
     <nav class="site-topbar-nav">
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'bookmakers' %} is-active{% endif %}" href="{% url 'front:bookmakers' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                {% include "front/svgs/bk.svg" %}
+                {% include "front/includes/_solar_icon.html" with name="bookmakers" %}
             </span>
             <span>Букмекеры</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'bonuses' %} is-active{% endif %}" href="{% url 'front:bonuses' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                {% include "front/svgs/bonus.svg" %}
+                {% include "front/includes/_solar_icon.html" with name="bonuses" %}
             </span>
             <span>Бонусы</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'favorites' %} is-active{% endif %}" href="{% url 'front:favorites' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="m12 4 2.35 4.76 5.25.77-3.8 3.7.9 5.23L12 16l-4.7 2.46.9-5.23-3.8-3.7 5.25-.77L12 4Z"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="favorites" %}
             </span>
             <span>Избранные прогнозы</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'sports_news' or request.resolver_match.url_name == 'news_detail' %} is-active{% endif %}" href="{% url 'front:sports_news' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="sports_news" %}
             </span>
             <span>Новости спорта</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'how_it_works' %} is-active{% endif %}" href="{% url 'front:how_it_works' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M9.8 9a2.4 2.4 0 0 1 4.65.8c0 1.8-2.45 2.05-2.45 4"></path><path d="M12 17h.01"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="how_it_works" %}
             </span>
             <span>Как пользоваться</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'wiki' %} is-active{% endif %}" href="{% url 'front:wiki' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"></path><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16Z"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="wiki" %}
             </span>
             <span>Wiki</span>
         </a>
         <a class="site-topbar-link{% if request.resolver_match.url_name == 'articles' or request.resolver_match.url_name == 'article_detail' %} is-active{% endif %}" href="{% url 'front:articles' %}">
             <span class="site-topbar-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 8h6M9 12h6M9 16h4"></path></svg>
+                {% include "front/includes/_solar_icon.html" with name="articles" %}
             </span>
             <span>Статьи</span>
         </a>

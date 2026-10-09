@@ -1,12 +1,7 @@
 <aside class="matches-table-filter-sidebar" aria-label="Фильтры таблицы матчей">
     <div class="matches-table-filter-head">
         <span class="matches-table-filter-head-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                <circle cx="8" cy="6" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                <circle cx="15" cy="12" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-                <circle cx="12" cy="18" r="2" fill="var(--panel)" stroke="currentColor" stroke-width="1.8"/>
-            </svg>
+            {% include "front/includes/_solar_icon.html" with name="match_filters" %}
         </span>
         <div>
             <strong>Фильтры</strong>
@@ -28,15 +23,15 @@
             >
                 <span class="matches-table-scope-icon" aria-hidden="true">
                     {% if tab.scope == 'watched' %}
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M7 4.5A1.5 1.5 0 0 1 8.5 3h7A1.5 1.5 0 0 1 17 4.5V21l-5-3.1L7 21V4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="match_watched" %}
                     {% elif tab.scope == 'live' %}
-                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="match_live" %}
                     {% elif tab.scope == 'prematch' %}
-                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="match_prematch" %}
                     {% elif tab.scope == 'finished' %}
-                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m8.5 12 2.3 2.3 4.8-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="match_finished" %}
                     {% else %}
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="balls-bold" %}
                     {% endif %}
                 </span>
                 <span class="matches-table-scope-copy">{{ tab.label }}</span>
@@ -62,21 +57,21 @@
             <div class="matches-table-date-arrows">
                 {% if previous_date_url %}
                 <a href="{{ previous_date_url }}" aria-label="Предыдущий день" title="Предыдущий день">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="match_previous" %}
                 </a>
                 {% else %}
                 <span class="is-disabled" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none"><path d="m14.5 6-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="match_previous" %}
                 </span>
                 {% endif %}
 
                 {% if next_date_url %}
                 <a href="{{ next_date_url }}" aria-label="Следующий день" title="Следующий день">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="match_next" %}
                 </a>
                 {% else %}
                 <span class="is-disabled" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none"><path d="m9.5 6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="match_next" %}
                 </span>
                 {% endif %}
             </div>
@@ -93,9 +88,7 @@
 
         <label class="matches-table-date-picker">
             <span class="matches-table-date-picker-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                </svg>
+                {% include "front/includes/_solar_icon.html" with name="match_calendar" %}
             </span>
             <span>Выбрать дату</span>
             <input
@@ -128,14 +121,14 @@
             {% if request.user.is_authenticated and request.user.is_analyst %}
             <a class="matches-table-scope-link" href="{% url 'game:rich_prediction_create' %}">
                 <span class="matches-table-scope-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="requested_match_prediction" %}
                 </span>
                 <span class="matches-table-scope-copy">Создать прогноз</span>
             </a>
             {% else %}
             <a class="matches-table-scope-link" href="{% url 'cabinet:become_capper' %}">
                 <span class="matches-table-scope-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.8"/><path d="M18 4v6M15 7h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    {% include "front/includes/_solar_icon.html" with name="match_become_capper" %}
                 </span>
                 <span class="matches-table-scope-copy">Стать каппером</span>
             </a>
