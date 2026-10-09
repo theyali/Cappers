@@ -26,6 +26,7 @@ from achievements.services import get_analyst_achievement_definitions
 from cabinet.achievements import build_achievement_badges
 from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
+from cabinet.vip import plural_ru
 from front.expert_ranking import (
     current_month_top_expert_ids,
     expert_leader_badges,
@@ -607,6 +608,8 @@ def _best_home_experts(
                 "followers": profile.followers_count,
                 "predictions": profile.publications_count,
                 "publications": profile.publications_count,
+                "publications_label": plural_ru(profile.publications_count, "прогноз", "прогноза", "прогнозов"),
+                "is_month_leader": profile.user_id == monthly_leader_id,
                 "sports": profile.sports_count,
                 "recent_publications": profile.recent_publications_count,
                 "wins": profile.wins_count,
