@@ -4286,9 +4286,6 @@ body.expert-public-details-open {
   .expert-public-copy h1{
       font-size: 20px !important;
   }
-  .home-bookmakers-hero {
-    display: block;
-  }
   .wallet-topup-page {
     padding-inline: 0;
   }
@@ -8206,9 +8203,6 @@ body.expert-public-details-open {
   .home-match-league strong,
   .home-match-team strong {
     font-size: 11px;
-  }
-  .home-bookmakers-note {
-    display: none;
   }
   .home-match-predictions-button {
     min-height: 48px;
@@ -13440,6 +13434,10 @@ body.expert-public-details-open {
   }
 
   .home-best-predictions {
+    display: none;
+  }
+
+  .home-trusted-bookmakers.is-home-bookmakers {
     display: none;
   }
 }

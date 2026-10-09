@@ -1,4 +1,5 @@
 {% if bookmakers or show_empty %}
+{% if is_home_bookmakers %}{% include "front/includes/_home_mobile_bookmakers.html" %}{% endif %}
 <section class="home-trusted-bookmakers bookmakers-catalog{% if is_home_bookmakers %} is-home-bookmakers{% endif %}" aria-label="Каталог букмекеров">
     {% url 'front:bookmakers' as bookmakers_url %}
     {% if is_home_bookmakers %}

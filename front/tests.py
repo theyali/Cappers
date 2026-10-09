@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
-from back.models import WebsiteSettings
+from back.models import Bookmaker, WebsiteSettings
 from pages.models import AdvBanner, PageSEO
 from cabinet.models import (
     AnalystProfile,
@@ -115,6 +115,41 @@ class PredictionFilterSidebarTemplateTests(SimpleTestCase):
 
         self.assertTrue(parser.banner_inside_prediction_sidebar)
         self.assertFalse(parser.banner_inside_filter_matches)
+
+
+class HomeMobileBookmakersTemplateTests(SimpleTestCase):
+    def bookmakers(self):
+        return [
+            Bookmaker(
+                name="ColdBet",
+                link="https://example.com/cold",
+                bonus_link="https://example.com/cold-bonus",
+                bonus_text="Фрибет 5 000 ₽",
+                slider_img="bookmakers/slider/cold.webp",
+                exclusive=True,
+            ),
+            Bookmaker(name="Лига Ставок", link="https://example.com/liga", is_reliable=False),
+        ]
+
+    def test_home_gets_the_bonus_slider_with_slider_backgrounds(self):
+        html = render_to_string(
+            "front/includes/_home_bookmakers.html",
+            {"bookmakers": self.bookmakers(), "is_home_bookmakers": True},
+        )
+
+        self.assertIn("home-mobile-bookmakers", html)
+        self.assertIn('href="https://example.com/cold-bonus"', html)
+        self.assertIn("bookmakers/slider/cold.webp", html)
+        self.assertIn(">Эксклюзив<", html)
+        self.assertIn("CB", html)
+        self.assertIn("ЛС", html)
+        self.assertEqual(html.count("data-home-mobile-dot"), 2)
+
+    def test_catalog_page_keeps_only_the_table(self):
+        html = render_to_string("front/includes/_home_bookmakers.html", {"bookmakers": self.bookmakers()})
+
+        self.assertNotIn("home-mobile-bookmakers", html)
+        self.assertIn("home-trusted-bookmaker", html)
 
 
 class ExpertRankingScoreTests(SimpleTestCase):
