@@ -1,0 +1,20 @@
+{# Follow button of the phone profile; expert-follow.js keeps every copy of it in sync. #}
+{% if is_self %}
+    <a class="{{ follow_class }}" href="{% url 'cabinet:profile' %}">Редактировать</a>
+{% elif request.user.is_authenticated %}
+    <button
+        class="{{ follow_class }}{% if is_following %} is-active{% endif %}"
+        type="button"
+        data-expert-follow
+        data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+        aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+    >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+    </button>
+{% else %}
+    <a class="{{ follow_class }}" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <span>Подписаться</span>
+    </a>
+{% endif %}

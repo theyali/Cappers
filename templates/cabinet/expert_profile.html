@@ -478,7 +478,7 @@
     </section>
     {% endif %}
 
-    <section class="expert-public-predictions">
+    <section class="expert-public-predictions expert-public-feed">
         <div class="expert-public-section-head">
             <div>
                 <p class="expert-public-kicker">Последние публикации</p>
@@ -521,6 +521,7 @@
             </article>
         </div>
         {% elif latest_predictions %}
+        {% include "cabinet/includes/_expert_public_mobile_feed.html" %}
         <div class="content-table-view predictions-table-view predictions-table-view-flat">
             <div class="content-table-scroll">
                 <div class="content-table-head prediction-table-head" aria-hidden="true">

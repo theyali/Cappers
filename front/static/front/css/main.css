@@ -2336,6 +2336,211 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .coupon-mobile-event-status.is-win { background: var(--green); color: #fff; }
 .coupon-mobile-event-status.is-lose { background: #c73636; color: #fff; }
 .coupon-mobile-event-status.is-refund { background: rgba(255, 255, 255, 0.16); color: #fff; }
+/* Public capper page for phones and the Telegram Mini App (mobile.css shows it there). */
+.expert-mobile,
+.expert-mobile-tabs,
+.expert-mobile-feed { display: none; }
+.expert-mobile { order: 12; min-width: 0; }
+.expert-mobile-bar { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 10px; }
+.expert-mobile-icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: var(--panel);
+    color: #fff;
+    cursor: pointer;
+}
+.expert-mobile-path { margin: 0; overflow: hidden; color: var(--muted); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.expert-mobile-path a { color: inherit; text-decoration: none; }
+.expert-mobile-path strong { color: #fff; font-weight: 800; }
+.expert-mobile-card {
+    position: relative;
+    min-height: 262px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 14px;
+    overflow: hidden;
+    padding: 18px 16px 16px;
+    border-radius: 20px;
+    background: var(--blue);
+    color: #fff;
+}
+.expert-mobile-card > * { position: relative; z-index: 1; }
+.expert-mobile-card .expert-mobile-card-bg { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; }
+.expert-mobile-card .expert-mobile-avatar {
+    position: absolute;
+    top: 13px;
+    right: -52px;
+    width: 190px;
+    height: 190px;
+    display: grid;
+    place-items: center;
+    border: 3px solid var(--yellow);
+    border-radius: 26px;
+    background: var(--ink);
+    font-family: var(--font-heading);
+    font-size: 40px;
+}
+.expert-mobile-avatar img { width: 100%; height: 100%; border-radius: 23px; object-fit: cover; }
+.expert-mobile-avatar .capper-trust-badge { top: -3px; left: 10px; width: auto; height: auto; padding: 3px 7px; border-radius: 7px; font-size: 12px; }
+.expert-mobile-kicker { margin: 0; color: var(--yellow); font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.expert-mobile-presence { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; padding: 4px 9px; border-radius: 8px; background: var(--ink); font-size: 11px; font-weight: 700; }
+.expert-mobile-presence::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.expert-mobile-presence.is-online::before { background: #4ade80; }
+.expert-mobile-name { max-width: 58%; margin-top: 10px; font-family: var(--font-heading); font-size: 23px; font-weight: 400; line-height: 1.05; }
+.expert-mobile-username { display: inline-flex; align-items: center; gap: 6px; max-width: 60%; margin-top: 8px; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 600; }
+.expert-mobile-username .capper-verified-badge,
+.expert-mobile-compact-name .capper-verified-badge { flex: 0 0 auto; }
+.expert-mobile-stats { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; margin-top: auto; padding-top: 18px; }
+.expert-mobile-stats > span { display: grid; gap: 2px; padding: 9px 10px; border-radius: 10px; background: var(--ink); color: rgba(255, 255, 255, 0.6); font-size: 11px; font-weight: 600; }
+.expert-mobile-stats b { color: #fff; font-family: var(--font-heading); font-size: 17px; font-weight: 400; line-height: 1.1; }
+.expert-mobile-stats .is-accent b { color: var(--yellow); }
+.expert-mobile-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 12px; }
+.expert-mobile-follow,
+.expert-mobile-socials-button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 14px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+.expert-mobile-follow { background: var(--yellow); color: var(--ink); }
+.expert-mobile-follow.is-active { background: var(--panel); color: #fff; }
+.expert-mobile-follow.is-active svg,
+.expert-mobile-follow.is-compact svg { display: none; }
+.expert-mobile-follow.is-compact { min-height: 34px; padding: 0 14px; border-radius: 12px; font-size: 14px; white-space: nowrap; }
+.expert-mobile-socials-button { background: var(--panel); color: #fff; }
+.expert-mobile-quote { margin: 18px 0 0; color: #fff; font-size: 15px; font-style: italic; font-weight: 800; }
+.expert-mobile-bio { margin: 6px 0 0; color: rgba(255, 255, 255, 0.6); font-size: 13px; line-height: 1.45; }
+.expert-mobile-bio button { padding: 0; border: 0; background: none; color: #5b8cff; font: inherit; font-weight: 800; cursor: pointer; }
+.expert-mobile-chips { display: flex; gap: 8px; margin: 16px -12px 0 0; padding-right: 12px; overflow-x: auto; scrollbar-width: none; }
+.expert-mobile-chips::-webkit-scrollbar { display: none; }
+.expert-mobile-chips > * { flex: 0 0 auto; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--panel); color: #fff; font: inherit; font-size: 13px; font-weight: 700; }
+.expert-mobile-chips > :first-child { background: var(--green); }
+.expert-mobile-chips button { color: var(--muted); cursor: pointer; }
+.expert-mobile-tabs { position: sticky; top: 0; z-index: 30; order: 30; min-width: 0; margin: 0 -12px; background: var(--ink); box-shadow: inset 0 -1px rgba(255, 255, 255, 0.08); transition: top 0.2s; }
+.expert-mobile-tabs.is-condensed { top: calc(var(--telegram-app-top, 0px) + 56px); }
+.expert-mobile-tabs-scroll { display: flex; gap: 26px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.expert-mobile-tabs-scroll::-webkit-scrollbar { display: none; }
+.expert-mobile-tab { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; padding: 14px 0 13px; color: #9a9aa0; font-size: 15px; font-weight: 700; text-decoration: none; }
+.expert-mobile-tab .matches-table-scope-icon { display: none; }
+.expert-mobile-tab .matches-table-scope-copy { font: inherit; }
+.expert-mobile-tab.is-active { color: #fff; }
+.expert-mobile-tab.is-active::after { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--yellow); }
+.expert-mobile-tab-count { padding: 2px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 11px; font-weight: 800; }
+.expert-mobile-compact {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: 36px 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: calc(var(--telegram-app-top, 0px) + 10px) 16px 10px;
+    background: var(--ink);
+    visibility: hidden;
+    transform: translateY(-100%);
+    transition: transform 0.2s, visibility 0.2s;
+}
+.expert-mobile-tabs.is-condensed .expert-mobile-compact { visibility: visible; transform: none; }
+.expert-mobile-compact-avatar {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--panel);
+    font-size: 12px;
+    font-weight: 800;
+}
+.expert-mobile-compact-avatar img { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; }
+.expert-mobile-compact-avatar.is-online::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; border: 2px solid var(--ink); border-radius: 50%; background: #4ade80; }
+.expert-mobile-compact-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.expert-mobile-compact-name strong { overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.expert-mobile-filters { display: flex; gap: 8px; padding: 0 0 12px; overflow-x: auto; scrollbar-width: none; }
+.expert-mobile-filters button { flex: 0 0 auto; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--panel); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.expert-mobile-filters button.is-active { background: var(--yellow); color: var(--ink); }
+.expert-mobile-coupon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 14px 14px 14px 16px;
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: inset 3px 0 rgba(255, 255, 255, 0.16);
+    color: #fff;
+    text-decoration: none;
+}
+.expert-mobile-coupon[hidden] { display: none; }
+.expert-mobile-coupon[data-sport*="football"],
+.expert-mobile-coupon[data-sport*="soccer"] { box-shadow: inset 3px 0 var(--green); }
+.expert-mobile-coupon[data-sport*="tennis"] { box-shadow: inset 3px 0 var(--blue); }
+.expert-mobile-coupon[data-sport*="basketball"] { box-shadow: inset 3px 0 #f28c28; }
+.expert-mobile-coupon[data-sport*="hockey"] { box-shadow: inset 3px 0 #4fc3f7; }
+.expert-mobile-coupon-copy { display: grid; flex: 1 1 auto; gap: 4px; min-width: 0; }
+.expert-mobile-coupon-meta { color: var(--muted); font-size: 11px; font-weight: 600; }
+.expert-mobile-coupon-meta b { color: rgba(255, 255, 255, 0.75); font-weight: 800; }
+.expert-mobile-coupon-copy strong { font-size: 15px; font-weight: 800; line-height: 1.25; }
+.expert-mobile-coupon-copy > span:last-child { overflow: hidden; color: var(--muted); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.expert-mobile-coupon-result { display: grid; flex: 0 0 auto; justify-items: end; gap: 6px; }
+.expert-mobile-coupon-result b { padding: 6px 9px; border-radius: 8px; background: var(--yellow); color: var(--ink); font-family: var(--font-heading); font-size: 15px; font-weight: 400; }
+.expert-mobile-coupon-result small { font-size: 11px; font-weight: 800; }
+.expert-mobile-coupon-result .is-win { color: #5fd17a; }
+.expert-mobile-coupon-result .is-lose { color: #ff6b6b; }
+.expert-mobile-coupon-result .is-refund { color: var(--muted); }
+.expert-mobile-coupon-result .is-pending { color: #9fb1f6; }
+.expert-mobile-feed-empty { margin: 0 0 10px; padding: 16px; border-radius: 14px; background: var(--panel); color: var(--muted); font-size: 14px; }
+.expert-mobile-feed-all { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; border-radius: 14px; background: var(--panel); color: #fff; font-size: 14px; font-weight: 800; text-decoration: none; }
+.expert-socials-sheet { position: fixed; inset: 0; z-index: 1300; display: grid; align-items: end; }
+.expert-socials-sheet[hidden] { display: none; }
+.expert-socials-backdrop { position: absolute; inset: 0; border: 0; background: rgba(0, 0, 0, 0.62); opacity: 0; transition: opacity 0.2s; }
+.expert-socials-panel {
+    position: relative;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+    background: #16171b;
+    color: #fff;
+    transform: translateY(100%);
+    transition: transform 0.22s ease-out;
+}
+.expert-socials-sheet.is-open .expert-socials-backdrop { opacity: 1; }
+.expert-socials-sheet.is-open .expert-socials-panel { transform: none; }
+html.is-expert-socials-open body { overflow: hidden; }
+.expert-socials-handle { display: block; width: 40px; height: 4px; margin: 0 auto 14px; border-radius: 4px; background: rgba(255, 255, 255, 0.2); }
+.expert-socials-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 36px; align-items: center; gap: 12px; margin-bottom: 14px; }
+.expert-socials-avatar { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: var(--panel); font-size: 13px; font-weight: 800; }
+.expert-socials-title { display: grid; gap: 2px; min-width: 0; }
+.expert-socials-title strong { font-size: 16px; font-weight: 800; }
+.expert-socials-title small,
+.expert-socials-copy small { overflow: hidden; color: var(--muted); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.expert-socials-list { display: grid; gap: 8px; }
+.expert-socials-item { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--panel); color: #fff; text-decoration: none; }
+.expert-socials-item[hidden] { display: none; }
+.expert-socials-icon { width: 36px; height: 36px; overflow: hidden; border-radius: 10px; }
+.expert-socials-icon img { width: 100%; height: 100%; object-fit: cover; }
+.expert-socials-copy { display: grid; gap: 2px; min-width: 0; }
+.expert-socials-copy strong { font-size: 14px; font-weight: 800; }
+.expert-socials-open { padding: 7px 12px; border-radius: 10px; background: var(--yellow); color: var(--ink); font-size: 13px; font-weight: 800; }
+.expert-socials-arrow { color: var(--muted); }
+.expert-socials-more { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px; border: 0; border-radius: 14px; background: var(--panel); color: #fff; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
 /* High-odds predictions for phones and the Telegram Mini App (mobile.css shows it there). */
 .home-mobile-best { display: none; margin-top: 30px; }
 .home-mobile-best-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -7595,8 +7800,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     text-overflow: ellipsis;
 }
 .feed-prediction-author-copy,
-.matches-table-filter-head > div,
-.profile-cover-lock-copy {
+.matches-table-filter-head > div {
     min-width: 0;
     display: grid;
     gap: 2px;
@@ -11274,65 +11478,7 @@ body.register footer {
 }
 .profile-username { display: block; margin-top: 5px; color: rgba(255, 255, 255, 0.64); font-size: 13px; }
 .profile-summary { max-width: 520px; margin: 12px 0 0; color: rgba(255, 255, 255, 0.72); font-size: 12px; line-height: 1.55; }
-.profile-cover-locked,
-.profile-cover-tools {
-    align-items: center;
-    margin-top: 12px;
-    min-width: 0;
-}
-.profile-cover-button,
-.profile-cover-lock-copy strong {
-    color: #fff;
-    font-size: 10px;
-    font-weight: 600;
-}
-.profile-cover-tools { display: flex; flex-wrap: wrap; gap: 8px 10px; }
-.profile-cover-button {
-    min-height: 34px;
-    padding: 0 12px;
-    border: 0;
-    border-radius: 9px;
-    background: var(--blue);
-    cursor: pointer;
-}
-.profile-cover-button:disabled { cursor: default; opacity: 0.62; }
-.profile-cover-upload-status { min-width: 0; color: var(--yellow); font-size: 9px; line-height: 1.3; }
-.avatar-upload-status.is-error,
-.profile-cover-upload-status.is-error {
-    color: #ff7479;
-}
-.profile-cover-locked {
-    width: min(100%, 470px);
-    display: grid;
-    grid-template-columns: 30px minmax(0, 1fr) auto;
-    gap: 9px;
-    padding: 9px 10px;
-    border-radius: 11px;
-    background: var(--panel);
-}
-.profile-cover-lock {
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    border-radius: 8px;
-    background: #2a2a2d;
-    font-size: 13px;
-}
-.profile-cover-lock-copy small { color: var(--muted); font-size: 9px; line-height: 1.3; }
-.profile-cover-locked > a {
-    min-height: 30px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 10px;
-    border-radius: 8px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 9px;
-    font-weight: 600;
-    white-space: nowrap;
-}
+.avatar-upload-status.is-error { color: #ff7479; }
 .profile-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 18px; }
 .profile-hero-edit,
 .profile-status-action{

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from PIL import Image, UnidentifiedImageError
 
-from .models import AnalystProfile, User
+from .models import User
 
 
 ALLOWED_PROFILE_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -65,51 +65,5 @@ def avatar(request):
             "ok": True,
             "avatar_url": avatar.url,
             "message": "Аватар обновлён.",
-        }
-    )
-
-
-@login_required
-@require_http_methods(["POST"])
-def cover(request):
-    if not request.user.is_analyst:
-        return JsonResponse(
-            {"ok": False, "error": "Обложка профиля доступна только капперам."},
-            status=403,
-        )
-    if not request.user.is_vip:
-        return JsonResponse(
-            {
-                "ok": False,
-                "error": "Обложка профиля доступна VIP-капперам.",
-            },
-            status=403,
-        )
-
-    upload = request.FILES.get("cover_image")
-    error = _validate_profile_image(upload)
-    if error:
-        return JsonResponse({"ok": False, "error": error}, status=400)
-
-    profile, _ = AnalystProfile.objects.get_or_create(user=request.user)
-    previous_name = profile.cover_image.name if profile.cover_image else ""
-    storage = profile.cover_image.storage if profile.cover_image else None
-
-    profile.cover_image = upload
-    profile.save(update_fields=["cover_image", "updated_at"])
-
-    if (
-        previous_name
-        and storage
-        and previous_name != profile.cover_image.name
-        and storage.exists(previous_name)
-    ):
-        storage.delete(previous_name)
-
-    return JsonResponse(
-        {
-            "ok": True,
-            "cover_url": profile.cover_image.url,
-            "message": "Обложка профиля обновлена.",
         }
     )

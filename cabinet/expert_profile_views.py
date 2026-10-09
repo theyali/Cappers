@@ -15,6 +15,7 @@ from front.expert_ranking import (
 )
 from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
+from game.services.bet_options import MARKET_TITLES, human_market_label
 from notifications.models import Notification, NotificationSectionState
 from notifications.services import refresh_section_state
 from tournaments.models import Tournament, TournamentParticipant, TournamentResult
@@ -33,7 +34,7 @@ from .paid_predictions import (
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
 from .telegram_auth import in_telegram_app
-from .vip import annotate_vip_status, attach_vip_status_to_user
+from .vip import annotate_vip_status, attach_vip_status_to_user, plural_ru
 
 
 RECENT_PERFORMANCE_LIMITS = (10, 100)
@@ -327,6 +328,15 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
     return current_rows, finished_rows
 
 
+def _feed_subtitle(card) -> str:
+    """Second line of a coupon in the phone feed: "Экспресс 2 игры" or "Победитель · Арсенал"."""
+    count = card.positions_count
+    if count > 1:
+        return f"Экспресс {count} {plural_ru(count, 'игра', 'игры', 'игр')}"
+    title = MARKET_TITLES.get(card.market) or human_market_label(card.market)
+    return f"{title} · {card.selection}"
+
+
 @ensure_csrf_cookie
 def expert_profile(request, username: str):
     profile = get_object_or_404(
@@ -426,6 +436,11 @@ def expert_profile(request, username: str):
         .order_by("-published_at", "-created_at", "-id")[:12]
     )
     context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
+    for card in context["latest_predictions"]:
+        card.feed_subtitle = _feed_subtitle(card)
+    socials_count = len(profile.social_links)
+    context["socials_label"] = f"{socials_count} {plural_ru(socials_count, 'ссылка', 'ссылки', 'ссылок')}"
+    context["page_class"] = "expert-public-body"
     context["paid_predictions_locked"] = (
         context["paid_predictions_enabled"]
         and not context["latest_predictions"]
