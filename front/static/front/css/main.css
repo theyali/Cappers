@@ -4637,7 +4637,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-bookmakers-feature-pattern {
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -4647,13 +4647,15 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     position: absolute;
     right: -15px;
     bottom: -3px;
-    z-index: -1;
+    z-index: 0;
     width: 36%;
     max-width: 320px;
     height: auto;
     pointer-events: none;
 }
 .home-bookmakers-feature-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
