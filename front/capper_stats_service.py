@@ -608,6 +608,9 @@ class CapperStatsService:
         result = []
         for row in rows:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
+            win_rate = round((row["wins"] or 0) / settled * 100) if settled else 0
+            is_low_sample = (row["total"] or 0) < 5
+            bar_tone = "muted" if is_low_sample else "high" if win_rate >= 90 else "low" if win_rate < 50 else "normal"
             result.append(
                 {
                     "label": MARKET_LABELS.get(
@@ -617,11 +620,9 @@ class CapperStatsService:
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": (
-                        round((row["wins"] or 0) / settled * 100)
-                        if settled
-                        else 0
-                    ),
+                    "win_rate": win_rate,
+                    "is_low_sample": is_low_sample,
+                    "bar_tone": bar_tone,
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )
@@ -649,6 +650,9 @@ class CapperStatsService:
         result = []
         for row in rows:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
+            win_rate = round((row["wins"] or 0) / settled * 100) if settled else 0
+            is_low_sample = (row["total"] or 0) < 5
+            bar_tone = "muted" if is_low_sample else "high" if win_rate >= 90 else "low" if win_rate < 50 else "normal"
             result.append(
                 {
                     "label": (
@@ -660,11 +664,9 @@ class CapperStatsService:
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": (
-                        round((row["wins"] or 0) / settled * 100)
-                        if settled
-                        else 0
-                    ),
+                    "win_rate": win_rate,
+                    "is_low_sample": is_low_sample,
+                    "bar_tone": bar_tone,
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )
