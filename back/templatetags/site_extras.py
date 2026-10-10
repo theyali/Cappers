@@ -328,9 +328,16 @@ def home_bookmakers(context):
     bookmakers = context.get("home_bookmakers")
     if bookmakers is None:
         bookmakers = list(
-            Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")[:3]
+            Bookmaker.objects.filter(show_on_home=True).order_by("home_order", "id")[:5]
         )
-    return {"bookmakers": bookmakers, "is_home_bookmakers": True}
+    bookmakers = list(bookmakers)
+    return {
+        "bookmakers": bookmakers,
+        "mobile_bookmakers": bookmakers[:3],
+        "featured_bookmaker": bookmakers[0] if bookmakers else None,
+        "compact_bookmakers": bookmakers[1:5],
+        "is_home_bookmakers": True,
+    }
 
 
 @register.inclusion_tag("front/includes/_hot_matches_sidebar.html")
