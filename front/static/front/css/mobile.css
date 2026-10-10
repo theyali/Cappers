@@ -2277,9 +2277,6 @@ body.expert-public-details-open {
         padding: 9px 11px;
     }
 
-.following-stories {
-  gap:0px;
-}
   .mobile-offcanvas-links a {
     min-height: 49px;
     display: grid;
@@ -8290,6 +8287,50 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 760px) {
+  .following-stories {
+    gap: 12px;
+    padding: 16px 14px 13px;
+    border-radius: 18px;
+  }
+  .following-stories-heading { gap: 8px; }
+  .following-stories-vip { min-height: 24px; padding: 0 9px; }
+  .following-stories-head h2 { font-size: 17px; }
+  .following-stories-title-desktop,
+  .following-stories-all-desktop,
+  .following-stories-count,
+  .following-story-name-desktop,
+  .following-story-all { display: none; }
+  .following-stories-title-mobile,
+  .following-stories-all-mobile,
+  .following-story-name-mobile { display: inline; }
+  .following-stories-head > a { color: #aaaab2; font-size: 12px; }
+  .following-stories-row {
+    grid-auto-columns: 74px;
+    gap: 16px;
+    margin-right: -14px;
+    padding: 5px 16px 4px 4px;
+    scroll-snap-type: x mandatory;
+  }
+  .following-story-name { margin-top: 7px; font-size: 12px; }
+  .following-story-roi { font-size: 11px; }
+  .following-stories-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 5px;
+  }
+  .following-stories-dots i {
+    width: 9px;
+    height: 3px;
+    border-radius: 4px;
+    background: #303035;
+  }
+  .following-stories-dots i.is-active {
+    width: 20px;
+    background: var(--yellow);
+  }
+  .following-stories-dots[hidden] { display: none; }
   .predictions-content.articles-content {
     padding: 0;
   }

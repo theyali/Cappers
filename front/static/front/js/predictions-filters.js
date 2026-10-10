@@ -438,4 +438,21 @@
     });
 
     initPredictionsLazy(document);
+
+    const vipStoriesRow = document.querySelector("[data-following-stories-row]");
+    const vipStoryDots = document.querySelector("[data-following-stories-dots]");
+    if (vipStoriesRow && vipStoryDots) {
+        const dots = Array.from(vipStoryDots.children);
+        const syncVipStoryDots = () => {
+            const availableScroll = vipStoriesRow.scrollWidth - vipStoriesRow.clientWidth;
+            vipStoryDots.hidden = availableScroll <= 0;
+            const position = availableScroll > 0
+                ? Math.round(vipStoriesRow.scrollLeft / availableScroll * (dots.length - 1))
+                : 0;
+            dots.forEach((dot, index) => dot.classList.toggle("is-active", index === position));
+        };
+        vipStoriesRow.addEventListener("scroll", syncVipStoryDots, { passive: true });
+        window.addEventListener("resize", syncVipStoryDots);
+        syncVipStoryDots();
+    }
 })(window.jQuery);
