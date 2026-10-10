@@ -12832,8 +12832,12 @@ body.expert-public-details-open {
   .coupon-mobile {
     display: block;
   }
+  .coupon-detail-page { grid-template-columns: minmax(0, 1fr); }
 
   .coupon-detail-back,
+  .coupon-detail-heading,
+  .coupon-detail-events,
+  .coupon-detail-aside,
   .coupon-detail-showcase,
   .coupon-detail-stats,
   .coupon-detail-panel,
@@ -12845,6 +12849,8 @@ body.expert-public-details-open {
   }
 
   .coupon-detail-page > .prediction-reactions {
+    grid-column: auto;
+    grid-row: auto;
     position: fixed;
     right: 0;
     bottom: 0;
@@ -12883,6 +12889,10 @@ body.expert-public-details-open {
   }
 
   .coupon-detail-page .prediction-comments {
+    grid-column: auto;
+    grid-row: auto;
+    padding: 0;
+    background: transparent;
     gap: 14px;
     margin-top: 28px;
   }
@@ -12938,6 +12948,16 @@ body.expert-public-details-open {
     box-shadow: none;
     font-size: 15px;
   }
+
+  .coupon-detail-page > .prediction-comments .prediction-comment-submit span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+  }
+  .coupon-detail-page > .prediction-comments .prediction-comment-submit svg { display: block; }
 
   .coupon-detail-page .prediction-comment-submit {
     top: 9px;
