@@ -238,6 +238,7 @@ class CapperStatsService:
             str(days): self._profit_chart(settled_coupons, days=days, now=now)
             for days in (7, 30, 90)
         }
+        profit_chart["all"] = self._profit_chart(settled_coupons, days=None, now=now)
 
         is_following = False
         if (
@@ -499,11 +500,16 @@ class CapperStatsService:
         self,
         coupons: list[PredictionCoupon],
         *,
-        days: int,
+        days: int | None,
         now,
     ) -> list[dict]:
         today = timezone.localtime(now).date()
-        start_date = today - timedelta(days=days - 1)
+        if days is None:
+            dates = [timezone.localtime(self._coupon_result_date(coupon)).date() for coupon in coupons]
+            start_date = min((date for date in dates if date <= today), default=today)
+            days = (today - start_date).days + 1
+        else:
+            start_date = today - timedelta(days=days - 1)
         daily_profit: dict = {}
 
         for coupon in coupons:
