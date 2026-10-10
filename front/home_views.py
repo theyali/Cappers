@@ -17,7 +17,9 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, RowNumber
+from django.http import HttpResponse
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -130,16 +132,11 @@ def _print_home_sql_debug(*, queries: list[dict], total_seconds: float) -> None:
     print("[home-sql-debug] end\n")
 
 
-def _render_home_index(request):
-    can_write_coupon = (
-        request.user.is_authenticated and request.user.role == User.Role.ANALYST
-    )
-    top_experts_limit = _home_top_experts_limit(request)
+def _home_best_experts_context(request) -> dict:
     best_experts_period = request.GET.get("experts_period", "30")
     if best_experts_period not in {"30", "90", "all"}:
         best_experts_period = "30"
     ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
-    all_time_profiles = ranked_expert_profiles(period_days=None)
     if best_experts_period == "all":
         for profile in ranked_profiles:
             profile.author_roi = profile.author_roi_all_time
@@ -155,6 +152,19 @@ def _render_home_index(request):
         )
         for profile in ranked_profiles:
             profile.author_roi = roi_values.get(profile.user_id, Decimal("0"))
+    return {
+        "best_experts": _best_home_experts(request, ranked_profiles),
+        "best_experts_period": best_experts_period,
+    }
+
+
+def _render_home_index(request):
+    can_write_coupon = (
+        request.user.is_authenticated and request.user.role == User.Role.ANALYST
+    )
+    top_experts_limit = _home_top_experts_limit(request)
+    best_experts_context = _home_best_experts_context(request)
+    all_time_profiles = ranked_expert_profiles(period_days=None)
     monthly_top_ids = current_month_top_expert_ids(top_experts_limit)
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
     all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
@@ -188,8 +198,7 @@ def _render_home_index(request):
             "top_experts_scope_label": (
                 "МЕСЯЦ" if top_experts_scope == "month" else "ВСЁ ВРЕМЯ"
             ),
-            "best_experts": _best_home_experts(request, ranked_profiles),
-            "best_experts_period": best_experts_period,
+            **best_experts_context,
             "main_article": main_article,
             "latest_articles": latest_articles,
             "recommended_experts": recommended_experts,
@@ -787,6 +796,17 @@ def _important_home_matches(request, can_write_coupon: bool = False) -> list[Mat
 
 @ensure_csrf_cookie
 def index(request):
+    if (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        and request.GET.get("fragment") == "best_experts"
+    ):
+        return HttpResponse(
+            render_to_string(
+                "front/includes/_home_best_experts.html",
+                _home_best_experts_context(request),
+                request=request,
+            )
+        )
     if settings.DEBUG and request.GET.get(HOME_SQL_DEBUG_PARAM) == "1":
         return _render_home_index_with_sql_debug(request)
     return _render_home_index(request)

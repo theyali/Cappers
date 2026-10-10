@@ -220,3 +220,76 @@
         button.remove();
     });
 })();
+
+(($) => {
+    "use strict";
+
+    if (!$ || !document.querySelector("#home-best-experts")) return;
+
+    let activeRequest = null;
+    let requestVersion = 0;
+
+    const loadExperts = (url, updateHistory = false) => {
+        const target = new URL(url, window.location.href);
+        const requestUrl = new URL(target);
+        requestUrl.hash = "";
+        requestUrl.searchParams.set("fragment", "best_experts");
+
+        const version = ++requestVersion;
+        if (activeRequest) activeRequest.abort();
+
+        const section = document.querySelector("#home-best-experts");
+        window.CappersSkeleton?.loading(section);
+
+        activeRequest = $.ajax({
+            url: requestUrl.toString(),
+            method: "GET",
+            dataType: "html",
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+        }).done((html) => {
+            if (version !== requestVersion) return;
+
+            const $next = $($.parseHTML(html, document, false)).filter("#home-best-experts").first();
+            if (!$next.length) {
+                window.location.assign(target.toString());
+                return;
+            }
+
+            $("#home-best-experts").replaceWith($next);
+            window.CappersSkeleton?.ready($next[0]);
+            window.CappersSkeleton?.watchImages($next[0]);
+
+            if (updateHistory) window.history.pushState(null, "", target.toString());
+        }).fail((_xhr, status) => {
+            if (version !== requestVersion || status === "abort") return;
+            window.location.assign(target.toString());
+        }).always(() => {
+            if (version !== requestVersion) return;
+            activeRequest = null;
+            window.CappersSkeleton?.ready(document.querySelector("#home-best-experts"));
+        });
+    };
+
+    $(document).on("click", "#home-best-experts .home-best-experts-periods a", function (event) {
+        if (event.isDefaultPrevented() || event.button !== 0 ||
+            event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+        const selected = new URL(this.href, window.location.href);
+        if (selected.origin !== window.location.origin) return;
+
+        event.preventDefault();
+        if ($(this).hasClass("is-active")) return;
+
+        const next = new URL(window.location.href);
+        next.searchParams.set("experts_period", selected.searchParams.get("experts_period"));
+        next.hash = "";
+        loadExperts(next, true);
+    });
+
+    window.addEventListener("popstate", () => {
+        const period = new URL(window.location.href).searchParams.get("experts_period") || "30";
+        const active = document.querySelector("#home-best-experts .home-best-experts-periods a.is-active");
+        const displayed = active && new URL(active.href, window.location.href).searchParams.get("experts_period");
+        if (period !== displayed) loadExperts(window.location.href);
+    });
+})(window.jQuery);
