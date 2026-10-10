@@ -23856,7 +23856,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .home-search-main { max-width: 720px; margin: 0 auto; text-align: center; }
 .home-search-brand { margin: 0 0 13px; color: var(--yellow); font-size: 12px; font-weight: 700; letter-spacing: .13em; }
 .home-search-main h1 { margin: 0; color: #fff; font-family: var(--font-heading); font-size: clamp(38px, 4.2vw, 56px); font-weight: 400; line-height: 1.08; }
-.home-search-main h1 mark { color: #416fff; background: transparent; }
+.home-search-main h1 mark { color: var(--blue); background: transparent; }
 .home-search-description { max-width: 690px; margin: 18px auto 22px; color: #99999f; font-size: 16px; line-height: 1.55; }
 .site-search-form { position: relative; z-index: 25; display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 7px 8px 7px 19px; border-radius: 17px; background: #1c1d22; text-align: left; }
 .site-search-form:focus-within { outline: 2px solid var(--yellow); outline-offset: 0; }
