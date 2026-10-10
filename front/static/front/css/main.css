@@ -17862,10 +17862,9 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     height: 118px;
     display: grid;
     place-items: center;
-    border: 2px solid rgba(11, 86, 250, 0.78);
     border-radius: 22px;
     color: #b9d7ff;
-    background: linear-gradient(145deg, rgba(11, 86, 250, 0.42), rgba(18, 36, 70, 0.82));
+    background: var(--tournament-icon-color, #09663f);
 }
 .tournament-detail-hero-icon img,
 .tournament-detail-hero-icon svg {

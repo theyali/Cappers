@@ -903,7 +903,12 @@ def _tournament_user_prizes(user):
 
 def _tournament_card(tournament: Tournament, now, *, participation=None) -> SimpleNamespace:
     allowed_sports = list(tournament.allowed_sports.all())
-    first_sport = allowed_sports[0] if allowed_sports else None
+    is_all_sports = (
+        len(allowed_sports) != 1
+        or "всем видам спорта" in tournament.title.casefold()
+        or "все виды спорта" in tournament.title.casefold()
+    )
+    first_sport = allowed_sports[0] if not is_all_sports else None
     prizes = _active_prizes_by_place(tournament)
     prize_total = sum((prize.money_amount or Decimal("0") for prize in prizes), Decimal("0"))
     runtime_status = _runtime_status(tournament, now)

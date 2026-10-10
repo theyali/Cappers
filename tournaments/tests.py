@@ -1137,3 +1137,52 @@ class TournamentCatalogCardTests(TestCase):
         self.tournament.card_icon_bg_color = "javascript:alert(1)"
         with self.assertRaises(ValidationError):
             self.tournament.full_clean()
+
+
+    def test_multi_sport_card_does_not_show_only_first_sport(self):
+        basketball = Sport.objects.create(
+            code="basketball", name="Basketball", name_ru="Баскетбол",
+        )
+        hockey = Sport.objects.create(
+            code="hockey", name="Hockey", name_ru="Хоккей",
+        )
+        self.tournament.allowed_sports.add(basketball, hockey)
+
+        response = self.client.get(reverse("tournaments:index"))
+
+        self.assertContains(response, "Все виды спорта")
+        self.assertNotContains(response, "<small>Баскетбол</small>")
+
+    def test_open_all_sports_tournament_title_is_not_labeled_basketball(self):
+        basketball = Sport.objects.create(
+            code="basketball", name="Basketball", name_ru="Баскетбол",
+        )
+        self.tournament.title = "Открытый Турнир по всем видам спорта"
+        self.tournament.save(update_fields=["title"])
+        self.tournament.allowed_sports.add(basketball)
+
+        response = self.client.get(reverse("tournaments:index"))
+
+        self.assertContains(response, "<small>Все виды спорта</small>")
+        self.assertNotContains(response, "<small>Баскетбол</small>")
+
+    def test_single_sport_tournament_keeps_its_sport(self):
+        basketball = Sport.objects.create(
+            code="basketball", name="Basketball", name_ru="Баскетбол",
+        )
+        self.tournament.allowed_sports.add(basketball)
+
+        response = self.client.get(reverse("tournaments:index"))
+
+        self.assertContains(response, "<small>Баскетбол</small>")
+
+    def test_detail_icon_uses_admin_background_color(self):
+        response = self.client.get(
+            reverse("tournaments:detail", kwargs={"slug": self.tournament.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'class="tournament-detail-hero-icon" data-tournament-icon-color="#0F7A43"',
+        )
