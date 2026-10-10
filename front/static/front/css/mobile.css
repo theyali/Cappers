@@ -8288,8 +8288,8 @@ body.expert-public-details-open {
   .predictions-content.articles-content {
     padding: 0;
   }
-  .expert-public-shell .expert-recommendations{
-    padding:0;
+  .expert-public-shell .expert-recommendations {
+    padding: 20px 16px;
   }
 .expert-public-shell {
     display: grid;
@@ -9453,18 +9453,28 @@ body.expert-public-details-open {
   .expert-achievement-badge {
     flex: 0 0 auto;
   }
+  .expert-recommendations {
+    gap: 14px;
+  }
   .expert-recommendations-head {
     align-items: flex-start;
     flex-direction: column;
-    gap: 7px;
+    gap: 16px;
   }
   .expert-recommendations-head h2 {
-    font-size: 30px;
+    font-size: 28px;
+  }
+  .expert-recommendations-controls {
+    width: 100%;
+    justify-content: space-between;
   }
   .expert-recommendations-track {
-    grid-auto-columns: minmax(350px, 78vw);
-    margin-right: -12px;
-    padding-right: 12px;
+    grid-auto-columns: minmax(170px, min(72vw, 210px));
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+  .expert-recommendation-body {
+    min-height: 252px;
   }
   .capper-discovery-intro {
     grid-template-columns: 1fr;
