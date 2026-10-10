@@ -12616,6 +12616,72 @@ body.expert-public-details-open {
     line-height: 1.25;
     white-space: normal;
   }
+
+  /* Search: mobile introduction and full-screen search/results. */
+  .home-search-hero { margin-bottom: 12px; padding: 0 0 18px; }
+  .home-search-main { max-width: none; text-align: left; }
+  .home-search-brand { margin-bottom: 16px; font-size: 11px; }
+  .home-search-main h1 { max-width: 540px; font-size: clamp(30px, 7.8vw, 41px); line-height: 1.08; }
+  .home-search-main h1 mark { display: block; }
+  .home-search-description { margin: 18px 0 18px; font-size: 14px; line-height: 1.5; }
+  .home-search-popular { justify-content: flex-start; gap: 7px; margin-top: 13px; font-size: 12px; }
+  .home-search-popular a { padding: 8px 10px; }
+  .home-search-sports { gap: 8px; flex-wrap: nowrap; overflow-x: auto; margin: 18px 0 0; padding-bottom: 3px; scrollbar-width: none; }
+  .home-search-sports::-webkit-scrollbar { display: none; }
+  .home-search-sports a { flex: 0 0 auto; padding: 10px 14px; white-space: nowrap; }
+  .site-search-form { min-height: 56px; padding: 5px 6px 5px 14px; border-radius: 15px; gap: 8px; }
+  .site-search-form-icon { flex-basis: 21px; }
+  .site-search-form input { min-width: 0; font-size: 13px; }
+  .site-search-submit { flex-basis: 47px; min-height: 45px; border-radius: 11px; }
+  .site-search-submit-text { display: none; }
+  .site-search-submit-icon { display: grid; place-items: center; }
+  .site-search-suggestions { max-height: 63vh; }
+  .site-search-suggest-row { gap: 11px; min-height: 66px; padding: 10px 13px; }
+  .site-search-suggest-label { padding: 14px 13px 8px; }
+  .site-search-suggest-count { padding: 6px 8px; font-size: 11px; }
+  .site-search-shell { width: calc(100% - 30px); min-height: 100dvh; }
+  body.site-search-page .site-header,
+  body.site-search-page .site-topbar,
+  body.site-search-page .mobile-app-nav,
+  body.site-search-page .fixed-roulette,
+  body.site-search-page .fixed-tg-btn-wrapper { display: none !important; }
+  body.site-search-page .site-main { min-height: 100dvh; padding: 0 0 24px; margin: 0; }
+  .site-search-page-toolbar { position: relative; z-index: 30; gap: 9px; align-items: center; margin: 0 0 25px; padding-top: 14px; }
+  .site-search-back { height: 54px; flex-basis: 45px; border-radius: 13px; }
+  .site-search-page-toolbar > .site-search-form { flex: 1; width: 0; }
+  .site-search-page-toolbar .site-search-submit { display: none; }
+  .site-search-page-toolbar .site-search-form { min-height: 54px; }
+  .site-search-page-toolbar .site-search-form:focus-within { outline-width: 1px; }
+  .site-search-page-toolbar .site-search-suggestions {
+    position: fixed; top: 79px; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; max-height: none;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-radius: 0; background: #101114; box-shadow: none;
+  }
+  .site-search-page-toolbar .site-search-suggestions[hidden] { display: none; }
+  .site-search-page-toolbar .site-search-suggest-group { flex: 0 0 auto; }
+  .site-search-page-toolbar .site-search-suggest-group + .site-search-suggest-group { border-top: 1px solid rgba(255,255,255,.09); }
+  .site-search-page-toolbar .site-search-suggest-all { margin: auto 15px 16px; padding: 17px 10px; border-radius: 13px; }
+  .site-search-results-title { gap: 10px; margin-bottom: 16px; }
+  .site-search-results-title h1 { font-size: 25px; }
+  .site-search-results-title > span { font-size: 12px; }
+  .site-search-tabs { gap: 8px; margin-right: -15px; padding-bottom: 12px; }
+  .site-search-tabs a { padding: 10px 12px; font-size: 13px; }
+  .site-search-filters { flex-wrap: nowrap; gap: 8px; overflow-x: auto; margin: 0 -15px 22px 0; padding-bottom: 3px; scrollbar-width: none; }
+  .site-search-filters label { flex: 0 0 auto; }
+  .site-search-filters select { max-width: 180px; min-height: 37px; padding: 0 8px; font-size: 12px; }
+  .site-search-group { margin-bottom: 25px; }
+  .site-search-group > h2 { margin-bottom: 12px; font-size: 11px !important; }
+  .site-search-rows { gap: 9px; }
+  .site-search-row { min-height: 74px; gap: 10px; padding: 12px; border-radius: 15px; }
+  .site-search-row-icon { flex-basis: 46px; width: 46px; height: 46px; font-size: 24px; }
+  .site-search-row-copy strong { font-size: 13px; }
+  .site-search-row-copy small { font-size: 11px; }
+  .site-search-row-count { padding: 8px; font-size: 11px; }
+  .site-search-row-coefficient { padding: 8px; font-size: 14px; }
+  .site-search-row-status { padding: 7px; font-size: 10px; }
+  .site-search-row-profile { padding: 9px; font-size: 11px; }
+  .site-search-row-arrow { flex-basis: 14px; width: 14px; }
 }
 
 /* Phones open the wheel from the bottom menu, so the bonuses page has no wheel of its own. */
@@ -12866,4 +12932,9 @@ body.expert-public-details-open {
   .expert-public-body {
     overflow-x: clip;
   }
+
+  /* Search: tablet sizing; shared blocks stay untouched. */
+  .home-search-hero { padding-top: 10px; }
+  .home-search-main { max-width: 680px; }
+  .site-search-shell { max-width: 860px; }
 }
