@@ -4,7 +4,7 @@
         <div class="home-best-experts-heading">
             <p class="home-eyebrow">Рейтинг</p>
             <h2 id="home-best-experts-title">Топовые <mark>эксперты месяца</mark></h2>
-            <p>Лидер месяца и топ-7: синий остался только в ссылках и отметках, акцент — жёлтый</p>
+            <p>Лидер месяца и топ-7 экспертов по проходимости, ROI и доверию аудитории.</p>
         </div>
         <div class="home-best-experts-actions">
             <nav class="home-best-experts-periods" aria-label="Период рейтинга">
@@ -73,9 +73,9 @@
                         <small>@{{ expert.username }} · {{ expert.sport_label }}</small>
                     </span>
                 </a>
-                <div class="home-best-expert-row-performance">
+                <div class="home-best-expert-row-performance is-{{ expert.win_rate_tone }}">
                     <span>Проходимость <strong>{{ expert.win_rate }}%</strong></span>
-                    <progress class="is-{{ expert.win_rate_tone }}" max="100" value="{{ expert.win_rate }}">{{ expert.win_rate }}%</progress>
+                    <progress max="100" value="{{ expert.win_rate }}">{{ expert.win_rate }}%</progress>
                 </div>
                 <span class="home-best-expert-row-roi{% if expert.roi_negative %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%</span>
                 <div class="home-best-expert-row-recent" aria-label="Последние результаты">
