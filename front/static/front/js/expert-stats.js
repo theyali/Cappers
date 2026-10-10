@@ -14,6 +14,7 @@
     const height = 260;
     const paddingY = 22;
     const path = root.querySelector("[data-profit-path]");
+    const area = root.querySelector("[data-profit-area]");
     const pointsGroup = root.querySelector("[data-profit-points]");
     const zeroLine = root.querySelector(".expert-profit-zero");
     const tooltip = root.querySelector("[data-profit-tooltip]");
@@ -102,7 +103,7 @@
             valueNode.textContent = signed(finalValue);
             valueNode.style.color = lineColor;
         }
-        if (captionNode) captionNode.textContent = `за последние ${days} дней`;
+        if (captionNode) captionNode.textContent = days === "all" ? "ед. за всё время" : `ед. за ${days} дней`;
         if (startNode) startNode.textContent = chartPoints[0]?.label || "—";
         if (maxNode) maxNode.textContent = compact(geometry.max);
         if (minNode) minNode.textContent = compact(geometry.min);
@@ -112,42 +113,36 @@
             zeroLine.setAttribute("y2", geometry.zeroY.toFixed(2));
         }
 
-        if (path) {
-            path.setAttribute(
-                "d",
-                chartPoints.length
-                    ? chartPoints.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ")
-                    : "",
-            );
-        }
+        const lineD = chartPoints.map((point, index) =>
+            `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+        ).join(" ");
+        if (path) path.setAttribute("d", lineD);
+        if (area) area.setAttribute("d", last
+            ? `${lineD} L ${last.x.toFixed(2)} ${height} L ${chartPoints[0].x.toFixed(2)} ${height} Z`
+            : "");
 
         if (pointsGroup) {
-            pointsGroup.innerHTML = "";
-            chartPoints.forEach((point, index) => {
-                const previous = chartPoints[index - 1];
-                const changed = !previous || Number(previous.value) !== Number(point.value);
-                const shouldShow = changed && (days <= 30 || index === chartPoints.length - 1 || index % 3 === 0);
-                if (!shouldShow && index !== chartPoints.length - 1) return;
-
+            pointsGroup.replaceChildren();
+            if (last) {
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("class", "expert-profit-point");
-                circle.setAttribute("cx", point.x.toFixed(2));
-                circle.setAttribute("cy", point.y.toFixed(2));
-                circle.setAttribute("r", index === chartPoints.length - 1 ? "5" : "3.5");
+                circle.setAttribute("cx", last.x.toFixed(2));
+                circle.setAttribute("cy", last.y.toFixed(2));
+                circle.setAttribute("r", "4");
                 pointsGroup.appendChild(circle);
-            });
+            }
         }
 
         root.dataset.activeDays = String(days);
         root._profitPoints = chartPoints;
         buttons.forEach((button) => {
-            button.classList.toggle("is-active", Number(button.dataset.profitDays) === Number(days));
+            button.classList.toggle("is-active", button.dataset.profitDays === days);
         });
         hideTooltip();
     };
 
     buttons.forEach((button) => {
-        button.addEventListener("click", () => render(Number(button.dataset.profitDays || 30)));
+        button.addEventListener("click", () => render(button.dataset.profitDays || "30"));
     });
 
     if (canvas && svg && tooltip) {
@@ -179,7 +174,7 @@
         canvas.addEventListener("mouseleave", hideTooltip);
     }
 
-    render(30);
+    render("30");
 })();
 
 (() => {
