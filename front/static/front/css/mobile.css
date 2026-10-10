@@ -6598,7 +6598,8 @@ body.expert-public-details-open {
   .slider-progress span.is-running,
   .mobile-nav-roulette-wheel,
   .mobile-nav-roulette-wheel svg,
-  .roulette-sheet-sparkle {
+  .roulette-sheet-sparkle,
+  .home-search-coupon-col {
     animation: none;
     transition: none;
   }
@@ -12618,21 +12619,25 @@ body.expert-public-details-open {
   }
 
   /* Search: mobile introduction and full-screen search/results. */
-  .home-search-hero { margin-bottom: 12px; padding: 0 0 18px; }
-  .home-search-main { max-width: none; text-align: left; }
+  .home-search-hero { min-height: 0; margin-bottom: 18px; padding: 44px 18px 32px; border-radius: 22px; }
+  .home-search-coupon-bg { padding: 0 8px; opacity: .6; }
+  .home-search-coupon-col:nth-child(2),
+  .home-search-coupon-col:nth-child(3) { display: none; }
+  .home-search-main { max-width: none; align-items: flex-start; text-align: left; }
   .home-search-brand { margin-bottom: 16px; font-size: 11px; }
   .home-search-main h1 { max-width: 540px; font-size: clamp(30px, 7.8vw, 41px); line-height: 1.08; }
   .home-search-main h1 mark { display: block; }
-  .home-search-description { margin: 18px 0 18px; font-size: 14px; line-height: 1.5; }
+  .home-search-description { margin: 18px 0 20px; font-size: 14px; line-height: 1.5; }
   .home-search-popular { justify-content: flex-start; gap: 7px; margin-top: 13px; font-size: 12px; }
   .home-search-popular a { padding: 8px 10px; }
   .home-search-sports { gap: 8px; flex-wrap: nowrap; overflow-x: auto; margin: 18px 0 0; padding-bottom: 3px; scrollbar-width: none; }
   .home-search-sports::-webkit-scrollbar { display: none; }
   .home-search-sports a { flex: 0 0 auto; padding: 10px 14px; white-space: nowrap; }
-  .site-search-form { min-height: 56px; padding: 5px 6px 5px 14px; border-radius: 15px; gap: 8px; }
+  .site-search-form,
+  .home-search-main .site-search-form { min-height: 56px; padding: 5px 6px 5px 14px; border-radius: 15px; gap: 8px; }
   .site-search-form-icon { flex-basis: 21px; }
-  .site-search-form input { min-width: 0; font-size: 13px; }
-  .site-search-submit { flex-basis: 47px; min-height: 45px; border-radius: 11px; }
+  .site-search-form input, .home-search-main .site-search-form input { min-width: 0; font-size: 13px; }
+  .site-search-submit, .home-search-main .site-search-submit { flex-basis: 47px; min-height: 45px; border-radius: 11px; font-size: 14px; }
   .site-search-submit-text { display: none; }
   .site-search-submit-icon { display: grid; place-items: center; }
   .site-search-suggestions { max-height: 63vh; }
@@ -12933,8 +12938,6 @@ body.expert-public-details-open {
     overflow-x: clip;
   }
 
-  /* Search: tablet sizing; shared blocks stay untouched. */
-  .home-search-hero { padding-top: 10px; }
-  .home-search-main { max-width: 680px; }
+  /* Search results retain the existing tablet width. */
   .site-search-shell { max-width: 860px; }
 }
