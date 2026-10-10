@@ -22,9 +22,7 @@
             </span>
         {% endif %}
         <span class="wiki-video-play" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="68" height="68" fill="currentColor">
-                <path d="M9 7.2v9.6L17 12 9 7.2Z"></path>
-            </svg>
+            {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
         </span>
         <span
             class="wiki-video-duration"
@@ -37,9 +35,7 @@
         <div class="wiki-video-meta">
             <span class="wiki-video-category">{{ video.section.name }}</span>
             <span class="wiki-video-type">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                    <path d="M4 6h11a2 2 0 0 1 2 2v1.2l4-2.2v10l-4-2.2V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path>
-                </svg>
+                {% include "front/includes/_solar_icon.html" with name="videocamera-bold" only %}
                 Видео
             </span>
         </div>

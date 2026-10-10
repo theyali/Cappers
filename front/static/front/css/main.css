@@ -7736,6 +7736,15 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     width: 16px;
     height: 16px;
 }
+.wiki-video-play .solar-icon {
+    width: 30px;
+    height: 30px;
+}
+.wiki-video-play .solar-icon,
+.wiki-video-type .solar-icon {
+    fill: currentColor;
+    stroke: none;
+}
 .matches-table-date-link {
     min-height: 38px;
     display: flex;
