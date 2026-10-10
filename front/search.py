@@ -152,6 +152,7 @@ def build_search_context(query, *, preview=False, sport="", date="", status="", 
     if counts["matches"]:
         match_rows = (
             matches.select_related("home_team", "away_team", "league", "sport")
+            .defer("raw_data", "winning_bet_keys", "refund_bet_keys", "odds_result_data", "provider_predictions")
             .annotate(
                 prediction_count=Count(
                     "predictions__coupon",
@@ -176,6 +177,9 @@ def build_search_context(query, *, preview=False, sport="", date="", status="", 
     if limits["predictions"] and counts["predictions"]:
         positions = Prediction.objects.select_related(
             "match__home_team", "match__away_team", "match__league", "match__sport"
+        ).defer(
+            "match__raw_data", "match__winning_bet_keys", "match__refund_bet_keys",
+            "match__odds_result_data", "match__provider_predictions",
         ).order_by("id")
         coupon_rows = (
             coupons.select_related("author", "author__analyst_profile")
