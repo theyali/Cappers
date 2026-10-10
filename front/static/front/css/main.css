@@ -17588,7 +17588,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     letter-spacing: 0.15em;
     text-transform: uppercase;
 }
-.wiki-dictionary-title h2 { margin: 0; color: var(--text); font-size: 42px; line-height: 1; }
+.wiki-dictionary-title h1 { margin: 0; color: var(--text); font-size: 42px; line-height: 1; }
 .wiki-dictionary-title > p:last-child { max-width: 920px; margin: 12px 0 0; color: rgba(255, 255, 255, 0.66); font-size: 16px; line-height: 1.55; }
 .wiki-dictionary-note {
     flex: 0 0 auto;

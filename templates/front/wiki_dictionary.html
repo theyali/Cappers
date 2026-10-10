@@ -36,7 +36,7 @@
                         <button class="wiki-dictionary-filter{% if not wiki_selected_term_section %} is-active{% endif %}" type="button" data-wiki-term-filter data-section-id="" aria-pressed="{% if not wiki_selected_term_section %}true{% else %}false{% endif %}">
                             <span class="wiki-dictionary-filter-main">
                                 <span class="wiki-dictionary-filter-icon wiki-term-accent-blue" aria-hidden="true">
-                                    {% include "front/includes/_solar_icon.html" with name="widget-bold" only %}
+                                    {% include "front/includes/_wiki_term_section_icon.html" with icon="all" only %}
                                 </span>
                                 <span>Все термины</span>
                             </span>
