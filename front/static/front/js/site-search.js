@@ -49,7 +49,8 @@
 
                 const section = document.createElement("section");
                 section.className = "site-search-suggest-group";
-                section.append(text("h2", label, "site-search-suggest-label"));
+                section.setAttribute("aria-label", label);
+                section.append(text("div", label, "site-search-suggest-label"));
 
                 for (const item of rows) {
                     const link = document.createElement("a");
