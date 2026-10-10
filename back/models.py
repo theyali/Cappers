@@ -17,6 +17,15 @@ class Bookmaker(models.Model):
     name = models.CharField("Название", max_length=120)
     icon = models.ImageField("Иконка", upload_to="bookmakers/", blank=True)
     slider_img = models.ImageField("Фон карточки в мобильном слайдере", upload_to="bookmakers/slider/", blank=True)
+    desktop_banner_img = models.ImageField(
+        "Фон большого баннера на ПК", upload_to="bookmakers/desktop/", blank=True,
+    )
+    rating = models.DecimalField(
+        "Оценка для главной", max_digits=2, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+    )
+    minimum_deposit = models.CharField("Минимальный депозит", max_length=80, blank=True)
+    bonus_updated_at = models.DateField("Дата обновления бонуса", null=True, blank=True)
     bonus_text = models.CharField("Текст бонуса", max_length=160, blank=True)
     description = models.CharField("Краткое описание", max_length=220, blank=True)
     link = models.URLField("Ссылка", max_length=500)
