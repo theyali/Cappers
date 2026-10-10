@@ -14173,17 +14173,21 @@ body.register {
 }
 .expert-recommendations-track::-webkit-scrollbar { display: none; }
 .expert-recommendation-card {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     min-width: 0;
     min-height: 325px;
+    padding-top: 14px;
     border-radius: 14px;
     background: var(--panel);
     box-shadow: inset 0 0 0 1px #222328;
     scroll-snap-align: start;
 }
 .expert-recommendation-avatar {
-    width: 56px;
-    height: 56px;
+    flex: 0 0 74px;
+    width: 74px;
+    height: 74px;
     display: grid;
     place-items: center;
     border-radius: 50%;
@@ -14191,7 +14195,7 @@ body.register {
     background: #305bff;
     box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .18);
     font-family: var(--font-heading);
-    font-size: 17px;
+    font-size: 22px;
     font-weight: 400;
 }
 .expert-recommendation-avatar strong { font-weight: 400; }
@@ -14201,19 +14205,19 @@ body.register {
 .expert-recommendation-card:nth-child(5n+5) .expert-recommendation-avatar:not(.has-image) { background: #4438ca; }
 .expert-recommendation-avatar img {
     display: block;
-    width: 56px;
-    height: 56px;
+    width: 74px;
+    height: 74px;
     border-radius: 50%;
     object-fit: cover;
 }
 .expert-recommendation-body {
     display: flex;
+    flex: 1;
     flex-direction: column;
     align-items: center;
+    width: 100%;
     min-width: 0;
-    min-height: 243.5px;
-    height: 100%;
-    padding: 78.5px 12px 12.5px;
+    padding: 12px 12px 12.5px;
     text-align: center;
 }
 .expert-recommendation-name {
@@ -14230,9 +14234,9 @@ body.register {
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    font-size: 11.5px;
+    font-size: 20px;
     font-weight: 700;
-    line-height: 14px;
+    line-height: 24px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -14249,25 +14253,25 @@ body.register {
     overflow: hidden;
     margin: 2.25px 0 0;
     color: #6d6d77;
-    font-size: 8.25px;
+    font-size: 11px;
     font-weight: 600;
-    line-height: 11px;
+    line-height: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .expert-recommendation-feature {
     display: block;
     max-width: 100%;
-    height: 19.25px;
+    height: 24px;
     overflow: hidden;
     margin-top: 11px;
-    padding: 0 7.75px 1px;
+    padding: 0 8px;
     border-radius: 5px;
     color: #f6ec4e;
     background: #313224;
-    font-size: 8.38px;
+    font-size: 11px;
     font-weight: 700;
-    line-height: 18.25px;
+    line-height: 24px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -14334,7 +14338,7 @@ body.register {
     justify-content: center;
     gap: 7px;
     width: 100%;
-    height: 29px;
+    height: 40px;
     margin-top: auto;
     padding: 0 8px 1.5px;
     border: 0;
@@ -14343,7 +14347,7 @@ body.register {
     background: #f6ec4d;
     cursor: pointer;
     font: inherit;
-    font-size: 9.85px;
+    font-size: 13px;
     font-weight: 700;
     text-decoration: none;
 }
@@ -15667,7 +15671,8 @@ body.register {
 }
 .expert-recommendation-avatar .capper-trust-badge {
     top: -5.5px;
-    left: 29.75px;
+    right: -6px;
+    left: auto;
     width: auto;
     min-width: 32.5px;
     height: 21.25px;
@@ -15794,12 +15799,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     letter-spacing: 0.06em;
     line-height: 1;
     pointer-events: none;
-}
-.expert-recommendation-card .expert-recommendation-avatar {
-    position: absolute;
-    top: 13.5px;
-    left: 50%;
-    transform: translateX(-50%);
 }
 .match-detail-scoreboard { flex-wrap: wrap; }
 .match-detail-bookmaker-strip {
