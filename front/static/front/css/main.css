@@ -532,7 +532,6 @@ mark { color: var(--blue); background: 0 0; }
 }
 .bookmakers-hero-features,
 .capper-articles-page .profile-user-list,
-.expert-confidence-row,
 .following-feed-onboarding-actions,
 .notifications-list,
 .paid-checkout-head,
@@ -727,7 +726,6 @@ mark { color: var(--blue); background: 0 0; }
 .cappers-ranking-table tbody tr:nth-child(3) .cappers-ranking-position,
 .cappers-sport-filter.is-active,
 .expert-leader-badge.is-all-time,
-.expert-period-switch button.is-active,
 .expert-public-tab.is-active,
 .expert-public-tab[aria-selected="true"],
 .expert-result-item.is-open .expert-result-track i,
@@ -808,7 +806,6 @@ mark { color: var(--blue); background: 0 0; }
     line-height: 1.25;
 }
 .coupon-items,
-.expert-profit-periods,
 .league-picker-section,
 .notification-settings-form,
 .notification-settings-group,
@@ -2778,7 +2775,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .auth-field-row,
 .cappers-admin-panel-head,
 .coupon-confidence-head,
-.expert-public-chart-head,
 .prediction-confidence-head,
 .profile-achievements-overall > div:first-child {
     display: flex;
@@ -3259,12 +3255,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-.expert-period-card > div:first-child span,
-.expert-profit-chart-head small,
-.expert-profit-chart-head span,
-.expert-public-kpi-grid small,
-.expert-public-kpi-grid span,
-.expert-recent-performance-copy small,
 .home-best-experts-proof small,
 .matches-table-filter-head small,
 .matches-table-filter-title small,
@@ -3330,7 +3320,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     }
 }
 .match-predictions-sentinel { min-height: 2px; }
-.expert-confidence-summary strong,
 .match-predictions-empty strong,
 .match-predictions-error strong {
     color: var(--text);
@@ -3673,7 +3662,6 @@ body.layout-columns-center_only .predictions-layout {
 .expert-monthly-hit.is-high,
 .expert-monthly-results .is-refund,
 .expert-monthly-table thead .is-refund,
-.expert-recent-performance-item.is-refund .expert-recent-performance-copy strong,
 .home-layout .forecast-verified,
 .prediction-comment-author-link:hover strong,
 .prediction-comment-reaction.is-active,
@@ -3854,8 +3842,6 @@ body.layout-columns-center_only .predictions-layout {
     border-radius: 12px;
     background: #171718;
 }
-.expert-confidence-row-head > div:last-child,
-.expert-performance-value,
 .prediction-card-money > div:last-child,
 .profile-transaction-row > div:last-child {
     text-align: right;
@@ -5566,7 +5552,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     overflow: hidden;
 }
 .capper-spotlight-metrics strong,
-.expert-confidence-row-head strong,
 .profile-transaction-row strong{
     color: var(--text);
     font-size: 12px;
@@ -5879,9 +5864,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .expert-monthly-results .is-win,
 .expert-monthly-table .is-positive,
 .expert-monthly-table thead .is-win,
-.expert-period-card.is-positive > div:first-child strong,
-.expert-public-kpi-grid strong.is-positive,
-.expert-recent-performance-item.is-win .expert-recent-performance-copy strong {
+.expert-period-card.is-positive > div:first-child strong {
     color: var(--green);
 }
 .capper-pro-calibration.is-warning { border-color: rgba(245, 190, 67, 0.34); }
@@ -5897,9 +5880,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .expert-monthly-results .is-loss,
 .expert-monthly-table .is-negative,
 .expert-monthly-table thead .is-loss,
-.expert-period-card.is-negative > div:first-child strong,
-.expert-public-kpi-grid strong.is-negative,
-.expert-recent-performance-item.is-loss .expert-recent-performance-copy strong {
+.expert-period-card.is-negative > div:first-child strong {
     color: var(--danger);
 }
 .home-best-experts {
@@ -7554,7 +7535,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .content-league-logo img { width: 24px; height: 24px; display: block; object-fit: contain; }
 .content-league-copy { min-width: 0; display: grid; gap: 1px; }
 .content-league-copy strong,
-.expert-performance-copy strong,
 .matches-table-date-current strong {
     overflow: hidden;
     color: var(--text);
@@ -7563,9 +7543,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     text-overflow: ellipsis;
 }
 .content-league-copy span,
-.expert-confidence-row small,
-.expert-confidence-summary span,
-.expert-period-card dt,
 .expert-result-item small,
 .expert-result-item span,
 .matches-table-date-link small,
@@ -8271,7 +8248,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     font-size: 12px;
 }
 .coupon-slip-overview-row.is-payout strong,
-.expert-performance-value strong,
 .prediction-card-rich-coefficient strong {
     color: var(--yellow);
     font-size: 17px;
@@ -8405,7 +8381,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     text-align: center;
 }
 .expert-panel { background: var(--panel); padding: 10px; }
-.expert-profit-chart-head > div:first-child,
 .expert-public-stats-compact .expert-public-stat-card > div{
     min-width: 0;
     display: grid;
@@ -9970,7 +9945,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     background: #fff;
 }
 .league-picker-actions strong { color: #fff; font-size: 12px; }
-.expert-performance-copy span { margin-top: 4px; color: var(--muted); font-size: 9px; }
 .following-capper-pill.is-active small,
 .tournament-back-link.is-dark,
 .tournament-predict-hero p {
@@ -10516,7 +10490,6 @@ body.register footer {
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
-.expert-public-chart-head > div > span,
 .expert-public-kicker{
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -19683,9 +19656,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .expert-sport-result-bar .is-win { background: #32a852; }
 .expert-sport-result-bar .is-loss { background: #ef3131; }
 .expert-public-stats-compact .is-winrate .expert-public-stat-icon { background: #5bb940; }
-.expert-recent-performance-item.is-win .expert-recent-performance-progress { stroke: var(--green); }
-.expert-recent-performance-item.is-loss .expert-recent-performance-progress { stroke: var(--danger); }
-.expert-recent-performance-item.is-refund .expert-recent-performance-progress { stroke: var(--blue); }
 .prediction-card.feed-prediction-card .feed-prediction-cover {
     position: relative;
     display: block;
