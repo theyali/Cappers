@@ -1,177 +1,97 @@
 {% load static %}
-<section class="home-best-experts" aria-labelledby="home-best-experts-title">
+<section class="home-best-experts" id="home-best-experts" aria-labelledby="home-best-experts-title">
     <header class="home-best-experts-head">
-        <div>
-            <p class="home-eyebrow">Рейтинг экспертов</p>
-            <h2 id="home-best-experts-title">Лучшие прогнозисты</h2>
-            <p>Эксперты с лучшими результатами по опубликованным прогнозам и доверию аудитории.</p>
+        <div class="home-best-experts-heading">
+            <p class="home-eyebrow">Рейтинг</p>
+            <h2 id="home-best-experts-title">Топовые <mark>эксперты месяца</mark></h2>
+            <p>Лидер месяца и топ-7: синий остался только в ссылках и отметках, акцент — жёлтый</p>
         </div>
-        <a class="home-all-link" href="{% url 'front:cappers_table' %}">
-            <span>Все прогнозисты</span>
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M1 8h12M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </a>
+        <div class="home-best-experts-actions">
+            <nav class="home-best-experts-periods" aria-label="Период рейтинга">
+                <a href="?experts_period=30#home-best-experts"{% if best_experts_period == "30" %} class="is-active" aria-current="page"{% endif %}>30 дней</a>
+                <a href="?experts_period=90#home-best-experts"{% if best_experts_period == "90" %} class="is-active" aria-current="page"{% endif %}>3 месяца</a>
+                <a href="?experts_period=all#home-best-experts"{% if best_experts_period == "all" %} class="is-active" aria-current="page"{% endif %}>Всё время</a>
+            </nav>
+            <a class="home-best-experts-all" href="{% url 'front:cappers_table' %}">
+                Весь рейтинг
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+            </a>
+        </div>
     </header>
-
     {% if best_experts %}
     <div class="home-best-experts-stage">
-        <div class="home-best-experts-podium">
-            {% for expert in best_experts|slice:":3" %}
-            <article class="home-best-expert-podium-card is-rank-{{ forloop.counter }}" data-follow-card>
-                <a class="home-best-expert-podium-link" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
-                    <span class="home-best-expert-crown" data-skeleton-image>
-                        {% if forloop.counter == 1 %}
-                            <img src="/static/front/img/gold_crown.png" width="72" height="58" alt="" loading="lazy">
-                        {% elif forloop.counter == 2 %}
-                            <img src="/static/front/img/silver_crown.png" width="72" height="58" alt="" loading="lazy">
-                        {% else %}
-                            <img src="/static/front/img/bronze_crown.png" width="72" height="58" alt="" loading="lazy">
-                        {% endif %}
-                    </span>
-                    <span class="home-best-expert-rank-badge">#{{ forloop.counter }}</span>
-                    <span class="home-best-expert-portrait">
-                        <span class="home-best-expert-laurel is-left" data-skeleton-image>
-                            <img src="/static/front/img/clever.png" width="70" height="132" alt="" loading="lazy">
-                        </span>
-                        <span class="home-best-expert-avatar{% if not expert.avatar_url %} is-initials{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
-                            {% if expert.avatar_url %}
-                                <img src="{{ expert.avatar_url }}" width="116" height="116" alt="" loading="lazy">
-                            {% else %}
-                                {{ expert.initials }}
-                            {% endif %}
-                        </span>
-                        <span class="home-best-expert-laurel is-right" data-skeleton-image>
-                            <img src="/static/front/img/clever2.png" width="70" height="132" alt="" loading="lazy">
-                        </span>
-                        {% if expert.verified %}
-                        <span class="capper-verified-badge home-best-expert-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                            <svg viewBox="0 0 16 16" aria-hidden="true">
-                                <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
-                                <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
-                            </svg>
-                        </span>
-                        {% endif %}
-                    </span>
-
-                    <span class="home-best-expert-roi{% if expert.roi < 0 %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · всё время</span>
-                    <strong class="home-best-expert-name">{{ expert.name }}</strong>
-                    <span class="home-best-expert-username">@{{ expert.username }}</span>
-
-                    {% if expert.latest_achievements %}
-                    <span class="home-best-expert-achievements" aria-label="Достижения {{ expert.name }}">
-                        {% if forloop.counter == 1 %}
-                            {% for achievement in expert.latest_achievements|slice:":5" %}
-                            <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
-                                {% if achievement.icon_url %}
-                                <img src="{{ achievement.icon_url }}" width="28" height="28" alt="" loading="lazy">
-                                {% else %}
-                                <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
-                                {% endif %}
-                            </span>
-                            {% endfor %}
-                        {% else %}
-                            {% for achievement in expert.latest_achievements|slice:":4" %}
-                            <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
-                                {% if achievement.icon_url %}
-                                <img src="{{ achievement.icon_url }}" width="28" height="28" alt="" loading="lazy">
-                                {% else %}
-                                <img src="{% static achievement.icon %}" width="28" height="28" alt="" loading="lazy">
-                                {% endif %}
-                            </span>
-                            {% endfor %}
-                        {% endif %}
-                    </span>
-                    {% endif %}
-
-                    <span class="home-best-expert-stats">
-                        <span><small>Публикации</small><strong>{{ expert.publications }}</strong></span>
-                        <span><small>Подписчики</small><strong data-followers-count>{{ expert.followers }}</strong></span>
-                    </span>
-                </a>
-                {% include "front/includes/_home_expert_follow_action.html" with expert=expert action_class="home-best-expert-follow" %}
-                <div class="home-best-expert-pedestal" aria-hidden="true">
-                    <span class="home-best-expert-pedestal-laurel is-left">
-                        <img src="/static/front/img/clever.png" alt="" loading="lazy">
-                    </span>
-                    <strong>{{ forloop.counter }}</strong>
-                    <span class="home-best-expert-pedestal-laurel is-right">
-                        <img src="/static/front/img/clever2.png" alt="" loading="lazy">
-                    </span>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-
-        <div class="home-best-experts-runners">
-            {% for expert in best_experts|slice:"3:8" %}
-            <article class="home-best-expert-row" data-follow-card>
-                <span class="home-best-expert-row-rank">#{{ forloop.counter|add:"3" }}</span>
-                <a class="home-best-expert-row-profile" href="{% url 'front:expert_profile' expert.username %}" aria-label="Открыть профиль {{ expert.name }}">
-                    <span class="home-best-expert-row-avatar{% if not expert.avatar_url %} is-initials{% endif %}"{% if expert.avatar_url %} data-skeleton-image{% endif %}>
+        {% with expert=best_experts.0 %}
+        <article class="home-best-expert-leader" data-follow-card>
+            <span class="home-best-expert-leader-label">{% include "front/includes/_solar_icon.html" with name="crown-bold" only %} Эксперт №1 за {% if best_experts_period == "all" %}всё время{% elif best_experts_period == "90" %}3 месяца{% else %}30 дней{% endif %}</span>
+            <div class="home-best-expert-leader-bottom">
+                <a class="home-best-expert-leader-profile" href="{% url 'front:expert_profile' expert.username %}">
+                    <span class="home-best-expert-avatar">
                         {% if expert.avatar_url %}
-                            <img src="{{ expert.avatar_url }}" width="62" height="62" alt="" loading="lazy">
+                            <img src="{{ expert.avatar_url }}" width="52" height="52" alt="" loading="lazy">
                         {% else %}
                             {{ expert.initials }}
                         {% endif %}
+                        <b>{{ expert.trust_index|floatformat:"1" }}</b>
+                    </span>
+                    <span class="home-best-expert-leader-identity">
+                        <strong>{{ expert.name }}</strong>
+                        <small>@{{ expert.username }} · {{ expert.sport_label }}</small>
+                    </span>
+                </a>
+                <div class="home-best-expert-leader-metric"><small>Прогнозов</small><strong>{{ expert.publications }}</strong></div>
+                <div class="home-best-expert-leader-metric"><small>Проходимость</small><strong>{{ expert.win_rate }}%</strong></div>
+                <div class="home-best-expert-leader-metric"><small>ROI</small><strong class="{% if expert.roi_negative %}is-negative{% else %}is-positive{% endif %}">{% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%</strong></div>
+                <div class="home-best-expert-leader-metric"><small>Подписчиков</small><strong data-followers-count>{{ expert.followers }}</strong></div>
+                <div class="home-best-expert-leader-actions">
+                    {% include "front/includes/_home_expert_follow_action.html" with expert=expert action_class="home-best-expert-follow" %}
+                    <a class="home-best-expert-leader-open" href="{% url 'front:expert_profile' expert.username %}">Профиль <span aria-hidden="true">→</span></a>
+                </div>
+            </div>
+        </article>
+        {% endwith %}
+        <div class="home-best-experts-runners">
+            {% for expert in best_experts|slice:"1:7" %}
+            <article class="home-best-expert-row" data-follow-card>
+                <span class="home-best-expert-row-rank is-rank-{{ forloop.counter|add:"1" }}">
+                    {% if forloop.counter <= 2 %}{% include "front/includes/_solar_icon.html" with name="crown-bold" only %}{% endif %}
+                    {{ forloop.counter|add:"1" }}
+                </span>
+                <a class="home-best-expert-row-profile" href="{% url 'front:expert_profile' expert.username %}">
+                    <span class="home-best-expert-row-avatar">
+                        {% if expert.avatar_url %}
+                            <img src="{{ expert.avatar_url }}" width="36" height="36" alt="" loading="lazy">
+                        {% else %}
+                            {{ expert.initials }}
+                        {% endif %}
+                        <b>{{ expert.trust_index|floatformat:"1" }}</b>
                     </span>
                     <span class="home-best-expert-row-copy">
                         <span class="home-best-expert-row-name">
                             <strong>{{ expert.name }}</strong>
-                            {% if expert.verified %}
-                            <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                                <svg viewBox="0 0 16 16" aria-hidden="true">
-                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
-                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
-                                </svg>
-                            </span>
-                            {% endif %}
+                            {% if expert.verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
                         </span>
-                        <span>@{{ expert.username }}</span>
+                        <small>@{{ expert.username }} · {{ expert.sport_label }}</small>
                     </span>
                 </a>
-
                 <div class="home-best-expert-row-performance">
-                    <span class="home-best-expert-roi{% if expert.roi < 0 %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}% · всё время</span>
-                    {% if expert.latest_achievements %}
-                    <div class="home-best-expert-row-achievements" aria-label="Достижения {{ expert.name }}">
-                        {% for achievement in expert.latest_achievements|slice:":4" %}
-                        <span class="home-best-expert-achievement" title="{{ achievement.label }} — {{ achievement.description }}" data-skeleton-image>
-                            {% if achievement.icon_url %}
-                                <img src="{{ achievement.icon_url }}" width="26" height="26" alt="" loading="lazy">
-                                {% else %}
-                                <img src="{% static achievement.icon %}" width="26" height="26" alt="" loading="lazy">
-                                {% endif %}
-                        </span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
+                    <span>Проходимость <strong>{{ expert.win_rate }}%</strong></span>
+                    <progress class="is-{{ expert.win_rate_tone }}" max="100" value="{{ expert.win_rate }}">{{ expert.win_rate }}%</progress>
                 </div>
-
-                <div class="home-best-expert-row-stat"><small>Публикации</small><strong>{{ expert.publications }}</strong></div>
-                <div class="home-best-expert-row-stat"><small>Подписчики</small><strong data-followers-count>{{ expert.followers }}</strong></div>
+                <span class="home-best-expert-row-roi{% if expert.roi_negative %} is-negative{% endif %}">ROI {% if expert.roi > 0 %}+{% endif %}{{ expert.roi|floatformat:1 }}%</span>
+                <div class="home-best-expert-row-recent" aria-label="Последние результаты">
+                    <small>Последние 10</small>
+                    <span class="home-best-expert-row-dots">
+                        {% for result in expert.recent_results %}
+                        <i class="is-{{ result }}" title="{% if result == 'win' %}Выигрыш{% elif result == 'lose' %}Проигрыш{% else %}Возврат{% endif %}"></i>
+                        {% empty %}
+                        <span>Нет результатов</span>
+                        {% endfor %}
+                    </span>
+                </div>
+                <span class="home-best-expert-row-predictions"><strong>{{ expert.publications }}</strong><small>{{ expert.publications_label }}</small></span>
                 {% include "front/includes/_home_expert_follow_action.html" with expert=expert action_class="home-best-expert-row-follow" %}
             </article>
             {% endfor %}
-        </div>
-    </div>
-
-    <div class="home-best-experts-proof" aria-label="Преимущества рейтинга КапперХаб">
-        <div class="home-best-experts-proof-lead">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z"/></svg>
-            <span><strong>Больше, чем прогнозы</strong><small>Реальные результаты, рейтинг и доверие аудитории.</small></span>
-        </div>
-        <div class="home-best-experts-proof-item">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/></svg>
-            <span><strong>{{ best_experts|length }}</strong><small>лидеров на главной</small></span>
-        </div>
-        <div class="home-best-experts-proof-item">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M4.5 9a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 1 0-1h4a.5.5 0 0 1 0 1z"/></svg>
-            <span><strong>ROI</strong><small>главная метрика результата</small></span>
-        </div>
-        <div class="home-best-experts-proof-item">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
-            <span><strong>LIVE</strong><small>актуальные данные профилей</small></span>
         </div>
     </div>
     {% else %}

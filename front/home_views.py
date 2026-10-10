@@ -10,20 +10,18 @@ from django.db.models import (
     F,
     IntegerField,
     Prefetch,
+    Window,
     Q,
     Sum,
     Value,
     When,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, RowNumber
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from achievements.models import UserAchievement
-from achievements.services import get_analyst_achievement_definitions
-from cabinet.achievements import build_achievement_badges
 from cabinet.expert_profile_views import _recommended_experts
 from cabinet.models import AnalystProfile, User
 from cabinet.vip import plural_ru
@@ -33,6 +31,7 @@ from front.expert_ranking import (
     ranked_expert_profiles,
 )
 from front.models import Article
+from front.prediction_metrics import annotate_author_roi
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
@@ -46,7 +45,7 @@ HOME_PREDICTIONS_LIMIT = 8
 HOME_BEST_PREDICTIONS_LIMIT = 10
 HOME_ARTICLES_LIMIT = 6
 HOME_MATCHES_LIMIT = 9
-HOME_EXPERTS_LIMIT = 10
+HOME_EXPERTS_LIMIT = 7
 HOME_TOP_EXPERTS_LIMIT = 4
 HOME_TOP_EXPERTS_MAX_LIMIT = 50
 HOME_MATCH_CANDIDATE_LIMIT = 120
@@ -136,8 +135,26 @@ def _render_home_index(request):
         request.user.is_authenticated and request.user.role == User.Role.ANALYST
     )
     top_experts_limit = _home_top_experts_limit(request)
+    best_experts_period = request.GET.get("experts_period", "30")
+    if best_experts_period not in {"30", "90", "all"}:
+        best_experts_period = "30"
     ranked_profiles = ranked_expert_profiles(limit=HOME_EXPERTS_LIMIT)
     all_time_profiles = ranked_expert_profiles(period_days=None)
+    if best_experts_period == "all":
+        for profile in ranked_profiles:
+            profile.author_roi = profile.author_roi_all_time
+    elif best_experts_period == "90":
+        roi_values = dict(
+            annotate_author_roi(
+                AnalystProfile.objects.filter(
+                    user_id__in=[profile.user_id for profile in ranked_profiles]
+                ),
+                author_outer_ref="user_id",
+                period_days=90,
+            ).values_list("user_id", "author_roi")
+        )
+        for profile in ranked_profiles:
+            profile.author_roi = roi_values.get(profile.user_id, Decimal("0"))
     monthly_top_ids = current_month_top_expert_ids(top_experts_limit)
     monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
     all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
@@ -171,12 +188,8 @@ def _render_home_index(request):
             "top_experts_scope_label": (
                 "МЕСЯЦ" if top_experts_scope == "month" else "ВСЁ ВРЕМЯ"
             ),
-            "best_experts": _best_home_experts(
-                request,
-                ranked_profiles,
-                monthly_leader_id=monthly_leader_id,
-                all_time_leader_id=all_time_leader_id,
-            ),
+            "best_experts": _best_home_experts(request, ranked_profiles),
+            "best_experts_period": best_experts_period,
             "main_article": main_article,
             "latest_articles": latest_articles,
             "recommended_experts": recommended_experts,
@@ -572,51 +585,48 @@ def _top_home_experts(
     return experts
 
 
-def _best_home_experts(
-    request,
-    profiles,
-    *,
-    monthly_leader_id=None,
-    all_time_leader_id=None,
-) -> list[dict]:
+def _best_home_experts(request, profiles) -> list[dict]:
     profiles = list(profiles[:HOME_EXPERTS_LIMIT])
-    profile_user_ids = [profile.user_id for profile in profiles]
-
-    best_streaks = _best_streaks_for_authors(profile_user_ids)
-    achievement_definitions = list(get_analyst_achievement_definitions())
-    achievement_ids = [item.id for item in achievement_definitions]
-    awarded_by_user = {}
-    if profile_user_ids and achievement_ids:
-        awarded_rows = UserAchievement.objects.filter(
-            user_id__in=profile_user_ids,
-            achievement_id__in=achievement_ids,
-        ).values_list("user_id", "achievement_id")
-        for user_id, achievement_id in awarded_rows:
-            awarded_by_user.setdefault(user_id, set()).add(achievement_id)
-
+    user_ids = [profile.user_id for profile in profiles]
     following_ids = set()
     if request.user.is_authenticated:
         following_ids = set(
-            request.user.analyst_follows.filter(
-                analyst_id__in=profile_user_ids
-            ).values_list("analyst_id", flat=True)
+            request.user.analyst_follows.filter(analyst_id__in=user_ids)
+            .values_list("analyst_id", flat=True)
         )
+
+    recent_results = {user_id: [] for user_id in user_ids}
+    if user_ids:
+        results = (
+            PredictionCoupon.objects.filter(
+                author_id__in=user_ids,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                state_status__in=(
+                    PredictionCoupon.StateStatus.WIN,
+                    PredictionCoupon.StateStatus.LOSE,
+                    PredictionCoupon.StateStatus.REFUND,
+                ),
+            )
+            .order_by()
+            .annotate(
+                result_rank=Window(
+                    RowNumber(),
+                    partition_by=[F("author_id")],
+                    order_by=[F("created_at").desc(), F("id").desc()],
+                )
+            )
+            .filter(result_rank__lte=10)
+            .values_list("author_id", "state_status")
+        )
+        for author_id, state in results:
+            recent_results[author_id].append(state)
 
     experts = []
     for profile in profiles:
         settled = profile.wins_count + profile.losses_count
         win_rate = round(profile.wins_count / settled * 100) if settled else 0
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
-        unlocked_achievements = build_achievement_badges(
-            predictions_count=profile.publications_count,
-            wins_count=profile.wins_count,
-            overall_roi=profile.author_roi,
-            followers_count=profile.followers_count,
-            best_win_streak=best_streaks.get(profile.user_id, 0),
-            is_verified=profile.is_verified,
-            achievements=achievement_definitions,
-            awarded_ids=awarded_by_user.get(profile.user_id, ()),
-        )
+        sport_label = (profile.favorite_sports or profile.specialization or "Спортивные прогнозы").replace(",", " · ")
         experts.append(
             {
                 "id": profile.user_id,
@@ -627,28 +637,15 @@ def _best_home_experts(
                 "verified": profile.is_verified,
                 "trust_index": profile.trust_index,
                 "roi": profile.author_roi,
-                "ranking_score": profile.ranking_score,
+                "roi_negative": profile.author_roi < 0,
                 "followers": profile.followers_count,
-                "predictions": profile.publications_count,
                 "publications": profile.publications_count,
                 "publications_label": plural_ru(profile.publications_count, "прогноз", "прогноза", "прогнозов"),
-                "is_month_leader": profile.user_id == monthly_leader_id,
-                "sports": profile.sports_count,
-                "recent_publications": profile.recent_publications_count,
-                "wins": profile.wins_count,
                 "win_rate": win_rate,
-                "last_publication_at": profile.last_publication_at,
-                "joined_at": profile.created_at,
-                "latest_achievements": list(reversed(unlocked_achievements[-5:])),
-                "leader_badges": expert_leader_badges(
-                    profile.user_id,
-                    monthly_leader_id=monthly_leader_id,
-                    all_time_leader_id=all_time_leader_id,
-                ),
-                "is_self": (
-                    request.user.is_authenticated
-                    and request.user.id == profile.user_id
-                ),
+                "win_rate_tone": "low" if win_rate < 50 else "high",
+                "sport_label": sport_label,
+                "recent_results": recent_results[profile.user_id],
+                "is_self": request.user.is_authenticated and request.user.id == profile.user_id,
                 "is_following": profile.user_id in following_ids,
             }
         )
