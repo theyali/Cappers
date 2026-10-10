@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Поиск по матчам, прогнозам и капперам — КапперХаб{% endblock %}
+
+{% block content %}
+<div class="container site-search-shell">
+    <div class="site-search-page-toolbar">
+        <a class="site-search-back" href="{% url 'front:index' %}" aria-label="На главную">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="m15 5-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        {% include "front/includes/_site_search_form.html" with query=query search_input_id="results-site-search-input" only %}
+    </div>
+    {% if query|length >= 2 %}
+    <section class="site-search-results" aria-labelledby="search-results-title">
+        <div class="site-search-results-title">
+            <h1 id="search-results-title">Результаты</h1>
+            <span>{{ total }} совпадений</span>
+        </div>
+        <nav class="site-search-tabs" aria-label="Категории поиска">
+            {% for tab in tabs %}
+            <a href="{{ tab.url }}" class="{% if tab.key == active_category %}is-active{% endif %}">
+                {{ tab.label }} <span>{{ tab.count }}</span>
+            </a>
+            {% endfor %}
+        </nav>
+        <form method="get" action="{% url 'front:search' %}" class="site-search-filters">
+            <input type="hidden" name="q" value="{{ query }}">
+            <input type="hidden" name="category" value="{{ active_category }}">
+            <label>
+                <span class="sr-only">Вид спорта</span>
+                <select name="sport" onchange="this.form.requestSubmit()">
+                    {% for value, label in search_sports %}
+                    <option value="{{ value }}"{% if filters.sport == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span class="sr-only">Дата матча</span>
+                <select name="date" onchange="this.form.requestSubmit()">
+                    {% for value, label in search_dates %}
+                    <option value="{{ value }}"{% if filters.date == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span class="sr-only">Статус прогноза</span>
+                <select name="status" onchange="this.form.requestSubmit()">
+                    {% for value, label in search_statuses %}
+                    <option value="{{ value }}"{% if filters.status == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span class="sr-only">Коэффициент</span>
+                <select name="coefficient" onchange="this.form.requestSubmit()">
+                    {% for value, label in search_coefficients %}
+                    <option value="{{ value }}"{% if filters.coefficient == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </form>
+        {% if total %}
+            {% for section in sections %}
+                {% if active_category == "all" or active_category == section.key %}
+                    {% if section.rows %}
+                    <div class="site-search-group">
+                        <h2>{{ section.title }} <span>· {{ section.count }}</span></h2>
+                        <div class="site-search-rows">
+                            {% for row in section.rows %}
+                            <a href="{{ row.url }}" class="site-search-row is-{{ section.key }}">
+                                {% if row.avatar %}
+                                    <span class="site-search-row-icon is-avatar"><img src="{{ row.avatar }}" width="44" height="44" alt="" loading="lazy" decoding="async"></span>
+                                {% elif row.initials %}
+                                    <span class="site-search-row-icon is-avatar">{{ row.initials }}</span>
+                                {% else %}
+                                    <span class="site-search-row-icon">{{ row.icon }}</span>
+                                {% endif %}
+                                <span class="site-search-row-copy">
+                                    <strong data-site-search-highlight>{{ row.title }}</strong>
+                                    <small>{{ row.subtitle }}</small>
+                                </span>
+                                {% if row.count %}
+                                <span class="site-search-row-count">{{ row.count }} прогн.</span>
+                                {% elif row.coefficient %}
+                                <span class="site-search-row-coefficient">{{ row.coefficient }}</span>
+                                {% elif row.rating %}
+                                <span class="site-search-row-rating">{{ row.rating }}</span>
+                                {% endif %}
+                                {% if row.status %}
+                                <span class="site-search-row-status is-{{ row.status_key }}">{{ row.status }}</span>
+                                {% endif %}
+                                {% if section.key == "cappers" %}
+                                <span class="site-search-row-profile">Профиль</span>
+                                {% else %}
+                                <svg class="site-search-row-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                {% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p class="site-search-no-results">По запросу «{{ query }}» ничего не найдено. Попробуйте другое название или уберите фильтры.</p>
+        {% endif %}
+    </section>
+    {% else %}
+        <p class="site-search-hint">Начните вводить название матча, команды, турнира или имя каппера.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/site-search.js' %}" defer></script>
+{% endblock %}
