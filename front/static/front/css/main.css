@@ -23853,7 +23853,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 
 /* Homepage search/SEO introduction and shared search results. */
 .home-search-hero { padding: 22px 0 34px; margin-bottom: 30px; }
-.home-search-main { max-width: 720px; margin: 0 auto; text-align: center; }
+.home-search-main { max-width: 920px; margin: 0 auto; text-align: center; }
 .home-search-brand { margin: 0 0 13px; color: var(--yellow); font-size: 12px; font-weight: 700; letter-spacing: .13em; }
 .home-search-main h1 { margin: 0; color: #fff; font-family: var(--font-heading); font-size: clamp(38px, 4.2vw, 56px); font-weight: 400; line-height: 1.08; }
 .home-search-main h1 mark { color: var(--blue); background: transparent; }
@@ -23931,3 +23931,4 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .site-search-row-profile { padding: 10px 14px; border-radius: 11px; color: var(--ink); background: var(--yellow); font-size: 12px; font-weight: 800; }
 .site-search-row-arrow { flex: 0 0 18px; color: #888891; }
 .site-search-hint, .site-search-no-results { margin: 30px 0; color: #aaaab2; font-size: 15px; }
+#home-search-title{max-width:100%;}
