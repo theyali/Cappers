@@ -22,31 +22,51 @@
             <div class="predictions-content following-feed-content" data-predictions-content>
                 <section class="following-stories" aria-labelledby="following-stories-title">
                     <div class="following-stories-head">
-                        <div>VIP Капперы</div>
+                        <div class="following-stories-heading">
+                            <span class="following-stories-vip">{% include "front/includes/_solar_icon.html" with name="vip" only %} VIP</span>
+                            <h2 id="following-stories-title"><span class="following-stories-title-desktop">Капперы с VIP-доступом</span><span class="following-stories-title-mobile">Капперы с VIP</span></h2>
+                            <span class="following-stories-count">{{ vip_stories_count }} эксперта</span>
+                        </div>
                         <a href="{{ vip_ranking_url }}">
-                            <span>Смотреть все</span>
+                            <span class="following-stories-all-desktop">Смотреть все</span>
+                            <span class="following-stories-all-mobile">Все {{ vip_stories_count }}</span>
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"></path></svg>
                         </a>
                     </div>
-
-                    <div class="following-stories-row" aria-label="Истории капперов">
+                    <div class="following-stories-row" aria-label="VIP-капперы" data-following-stories-row>
                         {% for story in vip_stories %}
-                        <a class="following-story-card" href="{{ story.profile_url }}">
-                            <span class="following-story-avatar has-ring{% if forloop.first %} is-live{% endif %}">
-                                {% if story.avatar_url %}
-                                    <img src="{{ story.avatar_url }}" width="72" height="72" loading="lazy" alt="">
-                                {% else %}
-                                    {{ story.initial }}
-                                {% endif %}
-                                {% if forloop.first %}
-                                <b>1</b>
-                                {% else %}
-                                <small class="capper-verified-badge prediction-verified" aria-hidden="true"></small>
-                                {% endif %}
-                            </span>
-                            <span>{{ story.name }}</span>
-                        </a>
+                            <a class="following-story-card" href="{{ story.profile_url }}" aria-label="{{ story.name }}. ROI {{ story.roi_label }}{% if story.unread_count %}. Непрочитанных прогнозов: {{ story.unread_count }}{% endif %}">
+                                <span class="following-story-avatar{% if story.unread_count %} has-ring{% endif %}{% if story.is_live %} is-live{% endif %}">
+                                    {% if story.avatar_url %}
+                                        <img src="{{ story.avatar_url }}" width="56" height="56" loading="lazy" alt="">
+                                    {% else %}
+                                        {{ story.initials }}
+                                    {% endif %}
+                                    {% if story.unread_count %}
+                                        <b class="following-story-unread" aria-hidden="true">{{ story.unread_count }}</b>
+                                    {% endif %}
+                                    {% if story.is_live %}
+                                        <b class="following-story-live">LIVE</b>
+                                    {% endif %}
+                                    {% if story.is_verified %}
+                                        <span class="following-story-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">✓</span>
+                                    {% endif %}
+                                </span>
+                                <span class="following-story-name" title="{{ story.name }}">
+                                    <span class="following-story-name-desktop">{{ story.name }}</span>
+                                    <span class="following-story-name-mobile">{{ story.short_name }}</span>
+                                </span>
+                                <small class="following-story-roi{% if not story.roi_positive %} is-negative{% endif %}">ROI {{ story.roi_label }}</small>
+                            </a>
                         {% endfor %}
+                        <a class="following-story-card following-story-all" href="{{ vip_ranking_url }}">
+                            <span class="following-story-avatar"><span aria-hidden="true">+</span></span>
+                            <span class="following-story-name">Все VIP</span>
+                            <small class="following-story-roi">{{ vip_stories_count }}</small>
+                        </a>
+                    </div>
+                    <div class="following-stories-dots" aria-hidden="true" data-following-stories-dots>
+                        <i class="is-active"></i><i></i><i></i>
                     </div>
                 </section>
 

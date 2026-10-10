@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
@@ -10,8 +10,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, DailyTask, User
 from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
-from game.models import PredictionCoupon, Sport
+from game.models import Match, PredictionCoupon, Sport
+from notifications.models import Notification
 
+from .prediction_metrics import annotate_author_roi
 from .prediction_catalog_views import (
     PREDICTION_TYPE_PAID,
     PREDICTION_TYPE_VIP,
@@ -53,7 +55,13 @@ def _feed_url(request, params) -> str:
     return f"{request.path}?{query}" if query else request.path
 
 
-def _vip_story_payloads(limit: int = VIP_STORIES_LIMIT) -> list[dict]:
+def _vip_story_payloads(user, limit: int = VIP_STORIES_LIMIT) -> tuple[list[dict], int]:
+    live_coupons = PredictionCoupon.objects.filter(
+        author_id=OuterRef("user_id"),
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        state_status=PredictionCoupon.StateStatus.PENDING,
+        predictions__match__sync_scope=Match.SyncScope.LIVE,
+    )
     queryset = annotate_vip_status(
         AnalystProfile.objects.filter(
             is_public=True,
@@ -62,30 +70,53 @@ def _vip_story_payloads(limit: int = VIP_STORIES_LIMIT) -> list[dict]:
         user_outer_ref="user_id",
         activated_annotation_name="vip_subscription_activated_at",
     ).filter(is_vip_active=True)
+    queryset = annotate_author_roi(
+        queryset,
+        author_outer_ref="user_id",
+    ).annotate(has_live_prediction=Exists(live_coupons))
+
+    total_count = queryset.count()
+    profiles = list(queryset.order_by("-vip_subscription_activated_at", "-user_id")[:limit])
+    author_ids = [profile.user_id for profile in profiles]
+    unread_by_author = {
+        row["actor_id"]: row["total"]
+        for row in Notification.objects.filter(
+            recipient=user,
+            actor_id__in=author_ids,
+            kind__in=(
+                Notification.Kind.NEW_PREDICTION,
+                Notification.Kind.REQUESTED_MATCH_PREDICTION,
+            ),
+            show_in_app=True,
+            is_read=False,
+        ).values("actor_id").annotate(total=Count("id"))
+    } if author_ids else {}
 
     stories = []
-    for profile in queryset.order_by("-vip_subscription_activated_at", "-user_id")[:limit]:
-        user = profile.user
-        name = profile.display_name or user.get_full_name() or user.username
-        avatar_url = ""
-        if user.avatar:
-            avatar_url = user.avatar.url
+    for profile in profiles:
+        author = profile.user
+        name = profile.display_name or author.get_full_name() or author.username
+        parts = name.split()
+        roi = profile.author_roi
         stories.append(
             {
-                "id": user.pk,
+                "id": author.pk,
                 "name": name,
-                "username": user.username,
-                "initial": (name or user.username or "К")[0].upper(),
-                "avatar_url": avatar_url,
+                "short_name": parts[0] if parts else author.username,
+                "initials": "".join(part[0] for part in parts[:2]).upper() or "К",
+                "avatar_url": author.avatar.url if author.avatar else "",
                 "profile_url": reverse(
                     "front:expert_profile",
-                    kwargs={"username": user.username},
+                    kwargs={"username": author.username},
                 ),
-                "vip_activated_at": getattr(profile, "vip_subscription_activated_at", None),
-                "vip_ends_at": getattr(profile, "vip_ends_at", None),
+                "roi_label": f"{roi:+.1f}%".replace(".", ","),
+                "roi_positive": roi >= 0,
+                "is_verified": profile.is_verified,
+                "is_live": profile.has_live_prediction,
+                "unread_count": unread_by_author.get(author.pk, 0),
             }
         )
-    return stories
+    return stories, total_count
 
 
 def _sport_from_filter(value: str) -> Sport | None:
@@ -259,7 +290,7 @@ def following_feed(request):
     )
     paid_analyst_ids = {subscription.analyst_id for subscription in paid_subscriptions}
     paid_usernames = {subscription.analyst.username for subscription in paid_subscriptions}
-    vip_stories = _vip_story_payloads()
+    vip_stories, vip_stories_count = _vip_story_payloads(request.user)
 
     selected_capper = request.GET.get("capper", "").strip()
     if selected_capper and selected_capper not in followed_usernames | paid_usernames:
@@ -519,6 +550,7 @@ def following_feed(request):
             "page_obj": page_obj,
             "following": following,
             "vip_stories": vip_stories,
+            "vip_stories_count": vip_stories_count,
             "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
             "paid_subscriptions": paid_subscriptions,
             "has_feed_sources": bool(following or paid_subscriptions or vip_stories),
