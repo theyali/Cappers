@@ -1286,9 +1286,6 @@ body.expert-public-details-open {
   .expert-public-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .expert-public-kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 
   .profile-achievements-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4905,29 +4902,14 @@ body.expert-public-details-open {
     min-height: 52px;
   }
 
-  .expert-recent-performance {
-    gap: 18px;
-    padding: 16px;
-  }
-  .expert-recent-performance-title-row {
-    align-items: stretch;
-  }
-  .expert-recent-performance-title-row select,
   .notifications-toolbar button {
     width: 100%;
   }
   .bonus-cards-grid,
   .bookmakers-list,
-  .expert-recent-performance-grid,
   .notifications-side,
   .popular_matches-list {
     grid-template-columns: 1fr;
-  }
-  .expert-recent-performance-item {
-    min-height: 210px;
-  }
-  .expert-recent-performance-ring {
-    width: 170px;
   }
   .expert-monthly-stats {
     gap: 14px;
@@ -5140,24 +5122,9 @@ body.expert-public-details-open {
   .coupon-slip-pick-row b {
     font-size: 18px;
   }
-  .expert-profit-periods,
   .expert-results-grid,
   .profile-hero-stats {
     grid-template-columns: 1fr;
-  }
-  .expert-profit-chart-card {
-    min-height: 360px;
-    padding: 14px;
-  }
-  .expert-profit-chart-stage {
-    grid-template-columns: 44px minmax(0, 1fr);
-    min-height: 220px;
-  }
-  .expert-profit-canvas {
-    min-height: 220px;
-  }
-  .expert-profit-axis {
-    padding-left: 54px;
   }
   .expert-achievement-badge {
     min-height: 36px;
@@ -5274,15 +5241,6 @@ body.expert-public-details-open {
     flex-direction: column;
   }
 
-  .expert-profit-layout {
-    grid-template-columns: 1fr;
-  }
-  .expert-profit-periods {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .expert-period-card {
-    min-height: 116px;
-  }
 }
 
 @media (max-width: 1100px) {
@@ -6678,7 +6636,6 @@ body.expert-public-details-open {
   .expert-monthly-more svg,
   .expert-monthly-table tbody tr,
   .expert-public-tab,
-  .expert-recent-performance-progress,
   .expert-row,
   .experts-bottom-action,
   .favorites-empty-action,
@@ -9432,7 +9389,6 @@ body.expert-public-details-open {
   .how-start-panel .how-start-cta-copy > p:last-child {
     font-size: 14px;
   }
-  .expert-profit-chart-head,
   .expert-public-hero,
   .expert-public-main,
   .expert-public-section-head {
@@ -9441,21 +9397,12 @@ body.expert-public-details-open {
   .expert-public-name-row h1 {
     white-space: normal;
   }
-  .expert-period-switch,
-  .expert-profit-chart-head,
   .expert-public-main-stack {
     width: 100%;
   }
-  .expert-confidence-summary,
-  .expert-public-analytics-grid,
-  .expert-public-grid,
-  .expert-public-kpi-grid {
+  .expert-public-grid {
     grid-template-columns: 1fr;
   }
-  .expert-period-switch button {
-    flex: 1;
-  }
-  .expert-profit-periods,
   .expert-results-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -13182,4 +13129,114 @@ body.expert-public-details-open {
 
   /* Search results retain the existing tablet width. */
   .site-search-shell { max-width: 860px; }
+}
+
+/* Public expert statistics: tablet and phone layouts. */
+@media (max-width: 1120px) {
+  .expert-public-analysis-panels {
+    grid-template-columns: 1fr;
+  }
+  .expert-public-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .expert-recent-performance {
+    gap: 14px;
+    padding: 18px;
+  }
+  .expert-recent-performance-head {
+    align-items: flex-start;
+  }
+  .expert-recent-performance-head h2 {
+    font-size: 19px;
+  }
+  .expert-recent-performance-head select {
+    max-width: 116px;
+    padding: 0 7px;
+    font-size: 11px;
+  }
+  .expert-recent-performance-summary strong {
+    font-size: 44px;
+  }
+  .expert-recent-performance-summary span {
+    flex: 1 1 130px;
+    font-size: 12px;
+  }
+  .expert-recent-performance-grid {
+    gap: 10px;
+  }
+  .expert-recent-performance-item {
+    padding: 11px 12px;
+  }
+  .expert-recent-performance-item span {
+    font-size: 10px;
+  }
+  .expert-recent-performance-history {
+    align-items: flex-start;
+  }
+  .expert-recent-performance-history > span {
+    max-width: 62px;
+  }
+  .expert-recent-performance-states {
+    flex-wrap: wrap;
+  }
+  .expert-recent-performance-states span {
+    width: 20px;
+    height: 20px;
+  }
+  .expert-public-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .expert-public-kpi-grid article {
+    min-height: 93px;
+    padding: 13px 14px;
+  }
+  .expert-public-kpi-grid article > strong {
+    font-size: 19px;
+  }
+  .expert-public-analysis-panels,
+  .expert-public-analytics-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .expert-profit-chart-card,
+  .expert-confidence-card,
+  .expert-public-chart-card {
+    padding: 18px;
+  }
+  .expert-public-chart-head h3 {
+    font-size: 19px;
+  }
+  .expert-profit-total strong {
+    font-size: 30px;
+  }
+  .expert-profit-canvas {
+    height: 155px;
+  }
+  .expert-period-card {
+    padding: 9px;
+  }
+  .expert-period-card > strong {
+    font-size: 14px;
+  }
+  .expert-confidence-row-title > strong,
+  .expert-performance-row-title > strong {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 390px) {
+  .expert-recent-performance-item {
+    padding: 10px 8px;
+  }
+  .expert-recent-performance-states span {
+    width: 18px;
+    height: 18px;
+  }
+  .expert-public-kpi-grid article > strong {
+    font-size: 17px;
+  }
 }
