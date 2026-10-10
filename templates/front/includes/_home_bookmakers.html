@@ -1,17 +1,10 @@
 {% if bookmakers or show_empty %}
-{% if is_home_bookmakers %}{% include "front/includes/_home_mobile_bookmakers.html" %}{% endif %}
-<section class="home-trusted-bookmakers bookmakers-catalog{% if is_home_bookmakers %} is-home-bookmakers{% endif %}" aria-label="Каталог букмекеров">
+{% if is_home_bookmakers %}
+    {% include "front/includes/_home_mobile_bookmakers.html" with bookmakers=mobile_bookmakers|default:bookmakers only %}
+    {% include "front/includes/_home_bookmakers_desktop.html" with featured=featured_bookmaker compact=compact_bookmakers only %}
+{% else %}
+<section class="home-trusted-bookmakers bookmakers-catalog" aria-label="Каталог букмекеров">
     {% url 'front:bookmakers' as bookmakers_url %}
-    {% if is_home_bookmakers %}
-    <header class="home-bookmakers-hero">
-        <div>
-            <p class="home-eyebrow">Букмекеры</p>
-            <h2>Лучшие бонусы от проверенных букмекеров</h2>
-            <p class='add-text'>Сравнивайте условия, выбирайте лучший бонус и начинайте играть с преимуществом</p>
-        </div>
-        <a class="home-all-link" href="{{ bookmakers_url }}">Смотреть всех букмекеров <span aria-hidden="true">→</span></a>
-    </header>
-    {% else %}
     <div class="bookmakers-filter-bar">
         <div class="bookmakers-filter-group">
             <span>Фильтры:</span>
@@ -35,7 +28,6 @@
         </form>
         <strong class="home-trusted-bookmakers-count" aria-label="Найдено букмекеров: {{ bookmakers|length }}">Найдено {{ bookmakers|length }} букмекера</strong>
     </div>
-    {% endif %}
 
     <div class="bookmakers-catalog-head" aria-hidden="true">
         <span>Букмекер</span>
@@ -119,11 +111,6 @@
         <strong>Букмекеров для этого фильтра пока нет</strong>
     </div>
     {% endif %}
-    {% if is_home_bookmakers %}
-    <footer class="home-bookmakers-note">
-        <strong>Только проверенные букмекеры</strong>
-        <span>Актуальные бонусы, честные обзоры, реальные отзывы</span>
-    </footer>
-    {% endif %}
 </section>
+{% endif %}
 {% endif %}
