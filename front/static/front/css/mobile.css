@@ -12649,7 +12649,6 @@ body.expert-public-details-open {
   .tournaments-page .tournament-card-action { min-height: 46px; font-size: 14px; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-body { padding-top: 18px; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-heading { align-items: start; }
-  .tournaments-page .tournament-card.is-no-cover .tournament-card-icon { margin-top: 0; }
 
 
   .tournaments-page .tournaments-hero,
