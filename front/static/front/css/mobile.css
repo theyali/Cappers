@@ -12622,6 +12622,8 @@ body.expert-public-details-open {
 @media (max-width: 1120px) {
   /* Keep the existing phone/tablet predictions layout unchanged. */
   #profile-tab-predictions .profile-predictions-feature { display: contents; }
+  #profile-tab-predictions .profile-header-sort { display: flex; }
+  #profile-tab-predictions .profile-desktop-sort-toolbar { display: none; }
   #profile-tab-predictions .profile-predictions-insights,
   #profile-tab-predictions .profile-desktop-feature-empty,
   #profile-tab-predictions .profile-desktop-list-head { display: none; }

@@ -1,18 +1,20 @@
 {% for coupon in mobile_coupons %}
 {% if desktop %}
-<article class="profile-coupon-card profile-desktop-coupon" data-state="{{ coupon.state_status }}" data-sport="{{ coupon.sport_code }}">
+<article class="profile-coupon-card profile-desktop-coupon" data-state="{{ coupon.state_status }}" data-sport="{% if coupon.is_express %}express{% else %}{{ coupon.sport_code }}{% endif %}">
 {% endif %}
 <a
     class="expert-mobile-coupon"
     href="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
     data-state="{{ coupon.state_status|default:'pending' }}"
-    data-sport="{{ coupon.sport_code }}"
+    data-sport="{% if desktop and coupon.is_express %}express{% else %}{{ coupon.sport_code }}{% endif %}"
 >
     <span class="expert-mobile-coupon-copy">
         <span class="expert-mobile-coupon-meta">
             {% if desktop %}
             <span class="profile-desktop-coupon-sport" aria-hidden="true">
-                {% if coupon.sport_code == 'football' or coupon.sport_code == 'soccer' %}
+                {% if coupon.is_express %}
+                    {% include "front/includes/_solar_icon.html" with name="ticket-bold" only %}
+                {% elif coupon.sport_code == 'football' or coupon.sport_code == 'soccer' %}
                     {% include "front/svgs/soccer.svg" %}
                 {% elif coupon.sport_code == 'tennis' %}
                     {% include "front/svgs/tennis.svg" %}
@@ -24,7 +26,11 @@
                     {% include "front/svgs/nav-matches.svg" %}
                 {% endif %}
             </span>
-            <b>{{ coupon.sport_name }}{% if coupon.league_name %} · {{ coupon.league_name }}{% endif %}</b>
+            {% if coupon.is_express %}
+                <b>Экспресс · {{ coupon.positions_count }} игр</b>
+            {% else %}
+                <b>{{ coupon.sport_name }}{% if coupon.league_name %} · {{ coupon.league_name }}{% endif %}</b>
+            {% endif %}
             {% else %}
             <b>{{ coupon.sport_name }}</b>{% if coupon.starts_at %} · {{ coupon.starts_at|date:"d.m, H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}
             {% endif %}

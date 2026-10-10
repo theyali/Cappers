@@ -575,6 +575,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
         item = positions[0]
         match = item.match
         count = len(positions)
+        is_express = coupon.coupon_type == PredictionCoupon.CouponType.EXPRESS
         coefficient = getattr(coupon, "combined_coefficient", None)
         if coefficient is None:
             coefficient = (
@@ -598,6 +599,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
                 "comments_count": coupon.comments_count,
                 "favorites_count": coupon.favorites_count,
                 "positions_count": count,
+                "is_express": is_express,
                 "state_status": coupon.state_status,
                 "state_label": _coupon_state_label(coupon.state_status),
                 "sport_code": match.sport.code if match.sport else "",
