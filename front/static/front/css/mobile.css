@@ -5162,6 +5162,15 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1280px) {
+  /* Compact desktop bookmaker cards before switching to the existing mobile slider. */
+  .is-home-bookmakers .home-bookmakers-showcase,
+  .is-home-bookmakers .home-bookmakers-grid { gap: 16px; }
+  .is-home-bookmakers .home-bookmakers-card { padding: 14px; }
+  .is-home-bookmakers .home-bookmakers-card-head { gap: 8px; }
+  .is-home-bookmakers .home-bookmakers-card-logo { width: 54px; height: 54px; padding: 6px; }
+  .is-home-bookmakers .home-bookmakers-card-rating { padding: 6px; font-size: 11px; }
+  .is-home-bookmakers .home-bookmakers-card-claim { min-height: 42px; padding: 0 12px; }
+  .is-home-bookmakers .home-bookmakers-feature-content { padding: 24px; }
   .expert-public-kicker {
       font-size: 9px;
   }
