@@ -199,7 +199,12 @@ def build_search_context(query, *, preview=False, sport="", date="", status="", 
                 "url": reverse("front:prediction_detail", args=(coupon.pk,)),
                 "icon": SPORT_ICONS.get(match.sport_code, "🏆"),
                 "coefficient": f"{coefficient_value:.2f}".replace(".", ","),
-                "status": coupon.get_state_status_display(),
+                "status": {
+                    PredictionCoupon.StateStatus.PENDING: "Ожидает",
+                    PredictionCoupon.StateStatus.WIN: "Выигрыш",
+                    PredictionCoupon.StateStatus.LOSE: "Проигрыш",
+                    PredictionCoupon.StateStatus.REFUND: "Возврат",
+                }.get(coupon.state_status, coupon.get_state_status_display()),
                 "status_key": coupon.state_status,
             })
 
