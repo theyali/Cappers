@@ -6,6 +6,7 @@ from cabinet import expert_profile_views as cabinet_expert_profile_views
 from cabinet import referral_views as cabinet_referral_views
 
 from . import (
+    ajax,
     article_views,
     bookmaker_views,
     capper_views,
@@ -18,6 +19,7 @@ from . import (
     prediction_catalog_views,
     prediction_views,
     reaction_views,
+    views,
     static_views,
     wiki_views,
 )
@@ -26,6 +28,8 @@ app_name = "front"
 
 urlpatterns = [
     path("", home_views.index, name="index"),
+    path("search/", views.search, name="search"),
+    path("search/suggestions/", ajax.search_suggestions, name="search_suggestions"),
     path("ui/content-view/", content_view_state, name="content_view_state"),
     path("ui/match-table-odds/", match_table_views.match_table_odds, name="match_table_odds"),
     path(

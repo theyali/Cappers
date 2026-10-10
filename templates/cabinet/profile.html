@@ -746,14 +746,7 @@
                             <h2>Мои купоны</h2>
                         </div>
                         {% if my_coupons %}
-                        <div class="profile-demand-sort" data-profile-coupon-sort-controls role="group" aria-label="Сортировать мои купоны">
-                            <button class="is-active" type="button" data-profile-coupon-sort="date" aria-pressed="true">Дата <span data-sort-arrow>↓</span></button>
-                            <button type="button" data-profile-coupon-sort="stake" aria-pressed="false">Сумма <span data-sort-arrow></span></button>
-                            <button type="button" data-profile-coupon-sort="payout" aria-pressed="false">Стоимость <span data-sort-arrow></span></button>
-                            <button type="button" data-profile-coupon-sort="likes" aria-pressed="false">Лайки <span data-sort-arrow></span></button>
-                            <button type="button" data-profile-coupon-sort="favorites" aria-pressed="false">Сохранили <span data-sort-arrow></span></button>
-                            <span class="profile-coupon-count" title="Всего купонов">{{ coupons_count }}</span>
-                        </div>
+                        {% include "cabinet/includes/_profile_coupon_sort.html" with sort_class="profile-header-sort" coupons_count=coupons_count only %}
                         {% else %}
                             <span class="profile-coupon-count">{{ coupons_count }}</span>
                         {% endif %}
@@ -852,6 +845,10 @@
                             <button type="button" data-profile-coupon-filter="win" aria-pressed="false">Выигрыш</button>
                             <button type="button" data-profile-coupon-filter="lose" aria-pressed="false">Проигрыш</button>
                         </div>
+                    </div>
+                    <div class="profile-desktop-sort-toolbar">
+                        <span class="profile-desktop-sort-label">Сортировка</span>
+                        {% include "cabinet/includes/_profile_coupon_sort.html" with sort_class="profile-desktop-sort" coupons_count=coupons_count only %}
                     </div>
                     <div class="profile-coupons-list profile-coupons-desktop-list" data-profile-coupon-sort-list>
                         {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=profile_desktop_coupons desktop=True only %}

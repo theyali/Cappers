@@ -1,8 +1,8 @@
 (() => {
     const desktopLists = Array.from(document.querySelectorAll("[data-profile-coupon-sort-list]"));
-    const controls = document.querySelector("[data-profile-coupon-sort-controls]");
+    const controls = document.querySelectorAll("[data-profile-coupon-sort-controls]");
     const mobileFeed = document.querySelector("[data-profile-mobile-coupons]");
-    if ((!desktopLists.length && !mobileFeed) || !controls) return;
+    if ((!desktopLists.length && !mobileFeed) || !controls.length) return;
 
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
@@ -47,8 +47,7 @@
 
     loadJQuery()
         .then(($) => {
-            const $controls = $(controls);
-            const $buttons = $controls.find("[data-profile-coupon-sort]");
+            const $buttons = $(controls).find("[data-profile-coupon-sort]");
             const mobileList = mobileFeed?.querySelector("[data-profile-mobile-coupons-list]");
             const moreButton = mobileFeed?.querySelector("[data-profile-mobile-coupons-more]");
             const $mobileFeed = mobileFeed ? $(mobileFeed) : null;

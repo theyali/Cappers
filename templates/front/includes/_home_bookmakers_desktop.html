@@ -1,0 +1,139 @@
+{% url 'front:bookmakers' as bookmakers_url %}
+<section class="home-trusted-bookmakers bookmakers-catalog is-home-bookmakers" aria-labelledby="home-bookmakers-title">
+    <header class="home-bookmakers-hero">
+        <div class="home-bookmakers-heading">
+            <p class="home-eyebrow">Букмекеры</p>
+            <h2 id="home-bookmakers-title">Лучшие бонусы от <mark>проверенных букмекеров</mark></h2>
+            <p>Один бонус выделен в баннер, остальные — компактной сеткой рядом</p>
+        </div>
+        <div class="home-bookmakers-heading-actions">
+            <span class="home-bookmakers-age">18+</span>
+            <a class="home-bookmakers-all" href="{{ bookmakers_url }}">Все букмекеры <span aria-hidden="true">→</span></a>
+        </div>
+    </header>
+
+    {% if featured %}
+    <div class="home-bookmakers-showcase">
+        <article class="home-bookmakers-feature">
+            {% if featured.desktop_banner_img %}
+                <img class="home-bookmakers-feature-bg" src="{{ featured.desktop_banner_img.url }}" alt="" width="860" height="540" loading="lazy" decoding="async">
+            {% else %}
+                <svg class="home-bookmakers-feature-pattern" viewBox="0 0 860 540" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                        <pattern id="home-bookmakers-stripes" width="54" height="54" patternUnits="userSpaceOnUse" patternTransform="rotate(50)">
+                            <rect width="54" height="54" fill="#315fff"/>
+                            <rect width="16" height="54" fill="#406bff"/>
+                        </pattern>
+                    </defs>
+                    <rect width="860" height="540" fill="url(#home-bookmakers-stripes)"/>
+                </svg>
+                <svg class="home-bookmakers-gift" viewBox="0 0 320 275" aria-hidden="true">
+                    <path d="M56 118h236v148c0 6-5 9-10 9H66c-6 0-10-4-10-10Z" fill="#e2d543"/>
+                    <path d="M56 117h118v158H66c-6 0-10-4-10-10Z" fill="#efe954"/>
+                    <path d="M155 118h38v157h-38Z" fill="#d3c94c"/>
+                    <path d="M42 99h266v49c0 8-7 14-15 14H57c-8 0-15-6-15-14Z" fill="#d9ce3e"/>
+                    <path d="M42 94h266v47H42c-9 0-16-8-16-17v-13c0-9 7-17 16-17Z" fill="#fff47b"/>
+                    <path d="M155 94h38v47h-38Z" fill="#eee461"/>
+                    <path d="M172 92C118 88 112 43 136 31c22-11 43 12 51 42 10-35 33-54 52-42 30 19 11 66-44 61Z" fill="none" stroke="#131313" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            {% endif %}
+
+            <div class="home-bookmakers-feature-content">
+                <div class="home-bookmakers-feature-top">
+                    <span class="home-bookmakers-feature-label">Лучший бонус месяца</span>
+                    {% if featured.bonus_updated_at %}
+                        <time datetime="{{ featured.bonus_updated_at|date:'Y-m-d' }}">Обновлено {{ featured.bonus_updated_at|date:"j E" }}</time>
+                    {% endif %}
+                </div>
+
+                <div class="home-bookmakers-feature-brand">
+                    <span class="home-bookmakers-feature-logo">
+                        {% if featured.icon %}
+                            <img src="{{ featured.icon.url }}" alt="" width="96" height="96" loading="lazy" decoding="async">
+                        {% else %}
+                            <strong>{{ featured.initials }}</strong>
+                        {% endif %}
+                    </span>
+                    <div class="home-bookmakers-feature-name">
+                        <h3>{{ featured.name }}</h3>
+                        <div class="home-bookmakers-feature-tags">
+                            {% if featured.is_reliable %}<span>Надёжный</span>{% endif %}
+                            {% if featured.exclusive %}<span>Эксклюзив</span>{% endif %}
+                            {% if featured.rating %}<span class="home-bookmakers-rating"><span aria-hidden="true">★</span> {{ featured.rating }}</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-bookmakers-feature-offer">
+                    <p>Бонусное предложение</p>
+                    <strong>{{ featured.bonus_text|default:"Бонус букмекера" }}</strong>
+                </div>
+
+                <div class="home-bookmakers-feature-perks">
+                    {% if featured.minimum_deposit %}<span>Депозит от {{ featured.minimum_deposit }}</span>{% endif %}
+                    {% for advantage in featured.advantages_list|slice:":2" %}
+                        <span>{{ advantage }}</span>
+                    {% endfor %}
+                    {% if featured.payout_speed %}<span>{{ featured.payout_speed }}</span>{% endif %}
+                </div>
+
+                <div class="home-bookmakers-feature-actions">
+                    <a class="home-bookmakers-claim" href="{{ featured.effective_bonus_link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">Забрать бонус <span aria-hidden="true">→</span></a>
+                    <a class="home-bookmakers-feature-secondary" href="{{ bookmakers_url }}">Сравнить букмекеров</a>
+                </div>
+            </div>
+        </article>
+
+        {% if compact %}
+        <div class="home-bookmakers-grid">
+            {% for bookmaker in compact %}
+            <article class="home-bookmakers-card">
+                <div class="home-bookmakers-card-head">
+                    <span class="home-bookmakers-card-logo">
+                        {% if bookmaker.icon %}
+                            <img src="{{ bookmaker.icon.url }}" alt="" width="70" height="70" loading="lazy" decoding="async">
+                        {% else %}
+                            <strong>{{ bookmaker.initials }}</strong>
+                        {% endif %}
+                    </span>
+                    <span class="home-bookmakers-card-info">
+                        <strong>{{ bookmaker.name }}</strong>
+                        {% if bookmaker.description %}
+                            <small>{{ bookmaker.description }}</small>
+                        {% elif bookmaker.minimum_deposit %}
+                            <small>Депозит от {{ bookmaker.minimum_deposit }}</small>
+                        {% elif bookmaker.payout_speed %}
+                            <small>{{ bookmaker.payout_speed }}</small>
+                        {% endif %}
+                    </span>
+                    {% if bookmaker.rating %}
+                    <span class="home-bookmakers-card-rating"><span aria-hidden="true">★</span> {{ bookmaker.rating }}</span>
+                    {% endif %}
+                </div>
+
+                <strong class="home-bookmakers-card-bonus">{{ bookmaker.bonus_text|default:"Бонус букмекера" }}</strong>
+
+                <div class="home-bookmakers-card-bottom">
+                    <span class="home-bookmakers-card-platforms">
+                        {% if bookmaker.mobile_ios %}<span>iOS</span>{% endif %}
+                        {% if bookmaker.mobile_android %}<span>Android</span>{% endif %}
+                    </span>
+                    <a class="home-bookmakers-card-claim" href="{{ bookmaker.effective_bonus_link }}" target="_blank" rel="noopener noreferrer nofollow sponsored">Забрать</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="articles-empty"><strong>Букмекеры скоро появятся</strong></div>
+    {% endif %}
+
+    <footer class="home-bookmakers-disclaimer">
+        <span>Реклама · 18+ · Условия акций — на сайтах букмекеров.{% if featured.bonus_updated_at %} Данные обновлены {{ featured.bonus_updated_at|date:"j E" }}.{% endif %}</span>
+        <span class="home-bookmakers-disclaimer-check">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true"><path d="M12 2.5 20 6v5.7c0 5.1-3.1 8.4-8 10-4.9-1.6-8-4.9-8-10V6l8-3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Проверяйте лицензии и условия предложений
+        </span>
+    </footer>
+</section>

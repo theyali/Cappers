@@ -1,0 +1,227 @@
+(() => {
+    const forms = document.querySelectorAll("[data-site-search-form]");
+    if (!forms.length) return;
+
+    const compact = () => window.matchMedia("(max-width: 760px)").matches;
+    const onResultsPage = document.body.classList.contains("site-search-page");
+
+    const highlight = (node, value, term) => {
+        const start = value.toLocaleLowerCase().indexOf(term.toLocaleLowerCase());
+        if (start < 0 || !term) {
+            node.textContent = value;
+            return;
+        }
+        node.append(document.createTextNode(value.slice(0, start)));
+        const mark = document.createElement("mark");
+        mark.textContent = value.slice(start, start + term.length);
+        node.append(mark, document.createTextNode(value.slice(start + term.length)));
+    };
+
+    forms.forEach((form) => {
+        const input = form.querySelector("[data-site-search-input]");
+        const clear = form.querySelector("[data-site-search-clear]");
+        const panel = form.querySelector("[data-site-search-suggestions]");
+        if (!input || !panel) return;
+
+        let timer;
+        let controller;
+        let sequence = 0;
+
+        const close = () => {
+            panel.hidden = true;
+            panel.replaceChildren();
+            input.setAttribute("aria-expanded", "false");
+        };
+
+        const text = (tag, value, className) => {
+            const el = document.createElement(tag);
+            el.className = className || "";
+            el.textContent = value;
+            return el;
+        };
+
+        const render = (data) => {
+            panel.replaceChildren();
+            const labels = { matches: "Матчи", cappers: "Капперы", tournaments: "Турниры" };
+            for (const [key, label] of Object.entries(labels)) {
+                const rows = data.groups?.[key] || [];
+                if (!rows.length) continue;
+
+                const section = document.createElement("section");
+                section.className = "site-search-suggest-group";
+                section.setAttribute("aria-label", label);
+                section.append(text("div", label, "site-search-suggest-label"));
+
+                for (const item of rows) {
+                    const link = document.createElement("a");
+                    link.className = "site-search-suggest-row";
+                    link.href = item.url;
+                    const avatar = document.createElement("span");
+                    avatar.className = "site-search-suggest-icon";
+                    if (item.avatar) {
+                        const img = document.createElement("img");
+                        img.src = item.avatar;
+                        img.alt = "";
+                        img.width = 42;
+                        img.height = 42;
+                        avatar.append(img);
+                    } else {
+                        avatar.textContent = item.initials || item.icon || "🏆";
+                    }
+                    const copy = document.createElement("span");
+                    copy.className = "site-search-suggest-copy";
+                    const title = document.createElement("strong");
+                    highlight(title, item.title, data.query);
+                    copy.append(title, text("small", item.subtitle));
+                    link.append(avatar, copy);
+                    if (item.count) link.append(text("span", String(item.count), "site-search-suggest-count"));
+                    const arrow = text("span", "›", "site-search-suggest-arrow");
+                    arrow.setAttribute("aria-hidden", "true");
+                    link.append(arrow);
+                    section.append(link);
+                }
+                panel.append(section);
+            }
+
+            if (!data.total) {
+                panel.append(text("p", "Совпадений пока нет", "site-search-suggest-empty"));
+            } else {
+                const all = document.createElement("a");
+                all.className = "site-search-suggest-all";
+                const url = new URL(form.action, window.location.href);
+                url.searchParams.set("q", data.query);
+                all.href = url.href;
+                const count = data.total;
+                const ending = count % 10 === 1 && count % 100 !== 11 ? "результат"
+                    : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14)
+                        ? "результата" : "результатов";
+                all.textContent = `Показать все ${count} ${ending} →`;
+                panel.append(all);
+            }
+            panel.hidden = false;
+            input.setAttribute("aria-expanded", "true");
+        };
+
+        const search = async () => {
+            const q = input.value.trim();
+            clear.hidden = !q;
+            if (q.length < 2) {
+                controller?.abort();
+                close();
+                return;
+            }
+            controller?.abort();
+            controller = new AbortController();
+            const current = ++sequence;
+            try {
+                const url = new URL(form.dataset.suggestionsUrl, window.location.href);
+                url.searchParams.set("q", q);
+                const response = await fetch(url, { signal: controller.signal, credentials: "same-origin" });
+                if (!response.ok) throw new Error("Search unavailable");
+                const data = await response.json();
+                if (current === sequence && input.value.trim() === q) render(data);
+            } catch (error) {
+                if (error.name !== "AbortError") close();
+            }
+        };
+
+        input.setAttribute("aria-autocomplete", "list");
+        input.setAttribute("aria-expanded", "false");
+        input.addEventListener("input", () => {
+            window.clearTimeout(timer);
+            clear.hidden = !input.value;
+            timer = window.setTimeout(search, 260);
+        });
+        input.addEventListener("focus", () => {
+            if (compact() && !onResultsPage) {
+                window.location.assign(form.action);
+                return;
+            }
+            if (input.value.trim().length >= 2) search();
+        });
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                close();
+                input.blur();
+            }
+        });
+        clear.addEventListener("click", () => {
+            window.clearTimeout(timer);
+            controller?.abort();
+            input.value = "";
+            clear.hidden = true;
+            close();
+            input.focus();
+        });
+        form.addEventListener("submit", (event) => {
+            if (!input.value.trim()) {
+                event.preventDefault();
+                input.focus();
+            }
+        });
+        document.addEventListener("pointerdown", (event) => {
+            if (!form.contains(event.target)) close();
+        });
+        clear.hidden = !input.value;
+
+        if (compact() && onResultsPage && !input.value) {
+            window.requestAnimationFrame(() => input.focus());
+        }
+    });
+
+    const filters = document.querySelector("[data-site-search-filters]");
+    filters?.addEventListener("change", () => filters.requestSubmit());
+
+    const query = new URLSearchParams(window.location.search).get("q");
+    if (query && onResultsPage) {
+        document.querySelectorAll("[data-site-search-highlight]").forEach((node) => {
+            const value = node.textContent;
+            node.replaceChildren();
+            highlight(node, value, query);
+        });
+    }
+})();
+
+
+/* Decorative coupon background on the homepage; values never query the database. */
+(() => {
+    const background = document.querySelector("[data-home-coupon-bg]");
+    if (!background) return;
+
+    const markets = [
+        "ТБ 2.5", "П1", "ТМ 2.5", "П2", "Ф1 -1.5", "Ф2 +2.5",
+        "Обе забьют", "Ничья", "Экспресс 2", "Экспресс 3", "ТМ 4.5", "ТБ 228.5",
+    ];
+    const odds = [
+        "1,35", "1,47", "1,62", "1,73", "1,88", "1,96",
+        "2,05", "2,20", "2,38", "2,50", "2,75", "3,10", "3,40", "4,20", "5,60",
+    ];
+    const random = (items) => items[Math.floor(Math.random() * items.length)];
+    const columns = document.createDocumentFragment();
+
+    for (let columnIndex = 0; columnIndex < 4; columnIndex += 1) {
+        const column = document.createElement("div");
+        column.className = "home-search-coupon-col";
+        const chips = document.createDocumentFragment();
+
+        for (let index = 0; index < 16; index += 1) {
+            const chip = document.createElement("span");
+            chip.className = "home-search-coupon-pill";
+            if ((index + 1) % 5 === 0) chip.classList.add("is-hot");
+            else if ((index + 1) % 4 === 0) chip.classList.add("is-win");
+
+            const market = document.createElement("span");
+            market.textContent = random(markets);
+            const coefficient = document.createElement("b");
+            coefficient.textContent = random(odds);
+            chip.append(market, coefficient);
+            chips.append(chip);
+        }
+
+        const loop = chips.cloneNode(true);
+        column.append(chips, loop);
+        columns.append(column);
+    }
+
+    background.replaceChildren(columns);
+})();

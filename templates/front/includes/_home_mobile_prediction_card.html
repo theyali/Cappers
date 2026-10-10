@@ -1,9 +1,8 @@
-<a class="home-mobile-card{% if card.mobile_background.is_light %} is-light{% endif %}" href="{{ card_href }}">
-    {% if card.mobile_background.url %}
+<a class="home-mobile-card" href="{{ card_href }}">
+    {% if card.mobile_cover_url or card.cover_url %}
     <img
         class="home-mobile-card-bg"
-        src="{{ card.mobile_background.url }}"
-        {% if card.mobile_background.url_3x %}srcset="{{ card.mobile_background.url }} 2x, {{ card.mobile_background.url_3x }} 3x"{% endif %}
+        src="{{ card.mobile_cover_url|default:card.cover_url }}"
         alt=""
         width="632"
         height="408"

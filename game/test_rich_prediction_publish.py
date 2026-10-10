@@ -7,7 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import User
+from cabinet.models import User, UserVipSubscription
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon
 from game.services.coupon_validation import CouponMatchVerificationError
 from game.services.prediction_editor import update_rich_prediction
@@ -28,6 +28,13 @@ class RichPredictionPublishTests(TestCase):
             username="rich-capper",
             password="safe-test-password",
             role=User.Role.ANALYST,
+        )
+        UserVipSubscription.objects.create(
+            user=self.analyst,
+            starts_at=timezone.now() - timedelta(minutes=1),
+            ends_at=timezone.now() + timedelta(days=30),
+            duration_days=30,
+            source=UserVipSubscription.Source.ADMIN,
         )
         self.match = Match.objects.create(
             external_id=773001,

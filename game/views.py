@@ -24,7 +24,7 @@ from game.services.bet_options import (
     build_match_winner_odds,
     human_market_label,
 )
-from game.services.card_backgrounds import assign_coupon_backgrounds
+from game.cover_images import assign_prediction_cover_images
 from game.services.coupon_validation import (
     COUPON_PUBLISH_LIMIT_MESSAGE,
     MAX_COUPON_ITEMS,
@@ -184,8 +184,8 @@ def match_detail(request, slug: str):
 
 @login_required
 def rich_prediction_create(request):
-    if not request.user.is_analyst:
-        raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
+    if not request.user.is_analyst or not request.user.is_vip:
+        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
 
     source_coupon = _active_draft_coupon(request.user)
     context = build_prediction_editor_context(request, coupon=source_coupon)
@@ -218,8 +218,8 @@ def rich_prediction_create(request):
 
 @login_required
 def rich_prediction_edit(request, coupon_id):
-    if not request.user.is_analyst:
-        raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
+    if not request.user.is_analyst or not request.user.is_vip:
+        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
 
     coupon = get_object_or_404(
         PredictionCoupon.objects.select_related("cover_image"),
@@ -413,7 +413,7 @@ def create_coupon(request):
                 return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
 
         coupon.predictions.all().delete()
-        Prediction.objects.bulk_create(
+        predictions = Prediction.objects.bulk_create(
             [
                 Prediction(
                     coupon=coupon,
@@ -427,10 +427,10 @@ def create_coupon(request):
                 for item in normalized_items
             ]
         )
+        assign_prediction_cover_images(predictions)
         coupon.sync_coupon_type()
         if not autosave:
             coupon.assign_cover_image()
-            assign_coupon_backgrounds(coupon)
 
     coupon = (
         PredictionCoupon.objects.prefetch_related("predictions__match")

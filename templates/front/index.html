@@ -1,19 +1,43 @@
 {% extends "base.html" %}
 {% load capper_trust static site_extras %}
 
-{% block title %}КапперХаб — прогнозы и эксперты{% endblock %}
+{% block title %}Прогнозы на спорт от проверенных капперов — КапперХаб{% endblock %}
 
 {% block extra_css %}{% endblock %}
 
 {% block content %}
 <div class="container">
+    <section class="home-search-hero" aria-labelledby="home-search-title">
+        <div class="home-search-coupon-bg" data-home-coupon-bg aria-hidden="true"></div>
+        <div class="home-search-main">
+            <p class="home-search-brand">КАППЕРХАБ</p>
+            <h1 id="home-search-title">Прогнозы на спорт <mark>от проверенных капперов</mark></h1>
+            <p class="home-search-description">Бесплатные прогнозы на футбол, теннис, баскетбол и хоккей. У каждого эксперта открытая статистика: проходимость, ROI и вся история ставок.</p>
+            {% include "front/includes/_site_search_form.html" with search_input_id="home-search-input" only %}
+            <div class="home-search-popular" aria-label="Популярные запросы">
+                <span>Популярно:</span>
+                <a href="{% url 'front:search' %}?q=Лига%20чемпионов">Лига чемпионов</a>
+                <a href="{% url 'front:search' %}?q=Арсенал%20—%20Челси">Арсенал — Челси</a>
+                <a href="{% url 'front:search' %}?q=Kirill%20Pavlenko">Kirill Pavlenko</a>
+                <a href="{% url 'front:prediction_expresses' %}">Экспрессы на сегодня</a>
+            </div>
+        </div>
+        <nav class="home-search-sports" aria-label="Поиск прогнозов по видам спорта">
+            <a href="{% url 'front:predictions_by_sport' 'football' %}">Футбол</a>
+            <a href="{% url 'front:predictions_by_sport' 'tennis' %}">Теннис</a>
+            <a href="{% url 'front:predictions_by_sport' 'basketball' %}">Баскетбол</a>
+            <a href="{% url 'front:predictions_by_sport' 'hockey' %}">Хоккей</a>
+            <a href="{% url 'front:prediction_expresses' %}">Экспрессы</a>
+            <a href="{% url 'game:match_list' %}?scope=live">Live</a>
+        </nav>
+    </section>
     {% include "front/includes/_home_mobile_slider.html" %}
     <section class="home-layout" aria-label="Главная лента прогнозов">
         <div class="forecast-area">
             <div class="home-heading">
     <div class="home-heading-copy">
         <p class="home-eyebrow">Свежая лента</p>
-        <h1>Последние <mark>прогнозы</mark></h1>
+        <h2>Последние <mark>прогнозы</mark></h2>
         <p class="home-heading-subtitle">Актуальные прогнозы от проверенных экспертов. Следи, анализируй, выигрывай.</p>
     </div>
     <div class="slider-actions" aria-label="Управление слайдером">
@@ -30,193 +54,111 @@
     </div>
             </div>
 
-            <div class="forecast-slider" data-forecast-slider data-direction="next">
-    {% if latest_predictions %}
-    <div class="forecast-track">
-        {% for prediction in latest_predictions %}
-        <article class="forecast-slide{% if forloop.first %} is-active{% endif %}" data-slide aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
-            {% if prediction.cover_url %}
-            <span class="forecast-cover-background" data-skeleton-image aria-hidden="true">
-                <img src="{{ prediction.cover_url }}" alt="" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async" width="1280" height="720">
-            </span>
-            {% endif %}
-
-            <div class="forecast-topline">
-                <div class="forecast-expert">
-                    <span class="forecast-avatar" data-skeleton-image>
-                        {% capper_trust_badge prediction.expert_trust_index %}
-                        {% if prediction.expert_avatar_url %}
-                            <img src="{{ prediction.expert_avatar_url }}" alt="" loading="lazy" decoding="async" width="58" height="58">
-                        {% else %}
-                            <span class="forecast-avatar-initials">{{ prediction.expert_initials }}</span>
-                        {% endif %}
-                    </span>
-                    <div>
-                        <strong>
-                            {{ prediction.expert }}
-                            {% if prediction.expert_verified %}
-                            <span class="forecast-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                                    <path d="M10 1.8l2.05 1.35 2.45-.13 1.08 2.2 2.08 1.3-.38 2.43.86 2.3-1.68 1.79-.12 2.45-2.34.76-1.48 1.96L10 17.5l-2.52.71L6 16.25l-2.34-.76-.12-2.45-1.68-1.79.86-2.3-.38-2.43 2.08-1.3 1.08-2.2 2.45.13L10 1.8Z" fill="currentColor"/>
-                                    <path d="m6.8 10.1 2.05 2.05 4.35-4.4" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+            <div class="forecast-vertical-slider" data-forecast-slider>
+                {% if latest_predictions %}
+                <div class="forecast-vertical-track" aria-label="Последние прогнозы">
+                    {% for prediction in latest_predictions|slice:":4" %}
+                    <article class="forecast-vertical-card{% if forloop.first %} is-active{% endif %}" data-slide data-slide-index="{{ forloop.counter0 }}">
+                        <button class="forecast-vertical-preview" type="button" data-slide-select="{{ forloop.counter0 }}" aria-label="Показать прогноз {{ prediction.home_name }} — {{ prediction.away_name }}" {% if forloop.first %}tabindex="-1" aria-hidden="true"{% endif %}>
+                            <span class="forecast-vertical-preview-image" aria-hidden="true">
+                                {% if prediction.cover_url %}
+                                <img src="{{ prediction.cover_url }}" alt="" width="160" height="100" loading="lazy" decoding="async">
+                                {% endif %}
                             </span>
+                            <span class="forecast-vertical-preview-match">
+                                <small>{{ prediction.sport }} · {{ prediction.league }} · {{ prediction.starts_short }}</small>
+                                <strong>{{ prediction.home_name }} — {{ prediction.away_name }}</strong>
+                            </span>
+                            <span class="forecast-vertical-preview-expert">
+                                <span class="forecast-vertical-preview-avatar">
+                                    {% if prediction.expert_avatar_url %}
+                                    <img src="{{ prediction.expert_avatar_url }}" alt="" width="32" height="32" loading="lazy" decoding="async">
+                                    {% else %}{{ prediction.expert_initials }}{% endif %}
+                                </span>
+                                <span><strong>{{ prediction.expert }}</strong><small>★ {{ prediction.expert_trust_index|floatformat:"1u" }}</small></span>
+                            </span>
+                            <span class="forecast-vertical-preview-pick">{{ prediction.pick }}</span>
+                            <b class="forecast-vertical-preview-odd">{{ prediction.coefficient }}</b>
+                            <span class="forecast-vertical-status is-{{ prediction.status_key }}">{{ prediction.status_label }}</span>
+                        </button>
+                        <div class="forecast-vertical-feature" {% if not forloop.first %}aria-hidden="true" inert{% endif %}>
+                            {% if prediction.cover_url %}
+                            <img class="forecast-vertical-feature-bg" src="{{ prediction.cover_url }}" alt="" width="1280" height="720" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async">
                             {% endif %}
-                        </strong>
-                        <span>Эксперт КапперХаб</span>
-                    </div>
-                </div>
-                <div class="forecast-meta">
-                    <span>{{ prediction.sport }}</span>
-                    <span class="forecast-league-meta">
-                        {% if prediction.league_logo %}
-                        <span class="forecast-league-logo" data-skeleton-image>
-                            <img src="{{ prediction.league_logo }}" alt="" loading="lazy" decoding="async" width="20" height="20">
-                        </span>
-                        {% else %}
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M4 19V9l4-3 4 3 4-5 4 3v12H4Z" fill="#2dbd87"/>
-                            <path d="M8 19v-5m4 5v-7m4 7v-9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
-                        </svg>
-                        {% endif %}
-                        {{ prediction.league }}
-                    </span>
-                </div>
-            </div>
-
-            <a class="forecast-matchup" href="{{ prediction.url }}" aria-label="Открыть матч {{ prediction.home_name }} — {{ prediction.away_name }}">
-                <div class="forecast-team forecast-team-home">
-                    <span class="forecast-team-logo" data-skeleton-image>
-                        {% if prediction.home_logo %}
-                            <img src="{{ prediction.home_logo }}" alt="Логотип {{ prediction.home_name }}" loading="lazy" decoding="async" width="112" height="112">
-                        {% else %}
-                            {{ prediction.home_name|slice:":1" }}
-                        {% endif %}
-                    </span>
-                    <div class="forecast-team-copy">
-                        <strong>{{ prediction.home_name }}</strong>
-                        <span class="forecast-league-meta">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            {{ prediction.league }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="forecast-center">
-                    <span class="forecast-center-sport">{{ prediction.sport }}</span>
-                    <strong class="forecast-center-league">{{ prediction.league }}</strong>
-                    <span class="forecast-vs">VS</span>
-                    <span class="forecast-center-date">{{ prediction.starts_date }}</span>
-                    <strong class="forecast-center-time">{{ prediction.starts_time }}</strong>
-                    <span class="forecast-center-status is-{{ prediction.status_key }}">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-                            <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        {{ prediction.status_label }}
-                    </span>
-                </div>
-
-                <div class="forecast-team forecast-team-away">
-                    <span class="forecast-team-logo" data-skeleton-image>
-                        {% if prediction.away_logo %}
-                            <img src="{{ prediction.away_logo }}" alt="Логотип {{ prediction.away_name }}" loading="lazy" decoding="async" width="112" height="112">
-                        {% else %}
-                            {{ prediction.away_name|slice:":1" }}
-                        {% endif %}
-                    </span>
-                    <div class="forecast-team-copy">
-                        <strong>{{ prediction.away_name }}</strong>
-                        <span class="forecast-league-meta">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M5 19v-6m4 6V8m5 11V5m5 14v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            {{ prediction.league }}
-                        </span>
-                    </div>
-                </div>
-            </a>
-
-            <div class="forecast-body">
-                <a class="forecast-match-copy forecast-real-copy forecast-match-link" href="{{ prediction.url }}">
-                    <p class="forecast-label">Матч</p>
-                    <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
-                    <div class="forecast-match-details">
-                        <span class="forecast-match-detail">
-                            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M7 3v3m10-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <strong>{{ prediction.starts_at }}</strong>
-                        </span>
-                        <span class="forecast-match-detail">
-                            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/>
-                            </svg>
-                            <strong>{{ prediction.league }}</strong>
-                        </span>
-                        <span class="forecast-result is-{{ prediction.status_key }}">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-                                <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            {{ prediction.status_label }}
-                        </span>
-                    </div>
-                    <div class="forecast-note">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M4 19v-6m4 6V9m4 10V5m4 14v-8m4 8V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                        <span>Статистика игроков, форма и актуальные коэффициенты в одном месте</span>
-                        <span class="forecast-note-arrow" aria-hidden="true">›</span>
-                    </div>
-                </a>
-
-                <div class="forecast-pick-column">
-                    <div class="forecast-pick-card">
-                        <span>Прогноз</span>
-                        <strong>{{ prediction.pick }}</strong>
-                        <small class="forecast-market">{{ prediction.market }}</small>
-                        <div class="forecast-coefficient">
-                            <small>Коэффициент</small>
-                            <b>{{ prediction.coefficient }}</b>
+                            <div class="forecast-vertical-feature-top">
+                                <span class="forecast-vertical-author">
+                                    <span class="forecast-vertical-author-avatar">
+                                        {% if prediction.expert_avatar_url %}
+                                        <img src="{{ prediction.expert_avatar_url }}" alt="" width="40" height="40" loading="lazy" decoding="async">
+                                        {% else %}{{ prediction.expert_initials }}{% endif %}
+                                    </span>
+                                    <strong>{{ prediction.expert }}</strong>
+                                    {% if prediction.expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+                                    <b class="forecast-vertical-rating">{{ prediction.expert_trust_index|floatformat:"1u" }}</b>
+                                </span>
+                                <span class="forecast-vertical-top-info">
+                                    <span class="forecast-vertical-reactions">
+                                        <span title="Просмотры" aria-label="Просмотры: {{ prediction.views_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="eye" only %}
+                                            {{ prediction.views_count }}
+                                        </span>
+                                        <span title="Лайки" aria-label="Лайки: {{ prediction.likes_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="prediction_like" only %}
+                                            {{ prediction.likes_count }}
+                                        </span>
+                                        <span title="Комментарии" aria-label="Комментарии: {{ prediction.comments_count }}">
+                                            {% include "front/svgs/comment.svg" %}
+                                            {{ prediction.comments_count }}
+                                        </span>
+                                        <span title="Избранное" aria-label="Избранное: {{ prediction.favorites_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="favorites" only %}
+                                            {{ prediction.favorites_count }}
+                                        </span>
+                                    </span>
+                                    <span class="forecast-vertical-status is-{{ prediction.status_key }}">{% if prediction.status_key == 'pending' %}Купон ожидает{% else %}{{ prediction.status_label }}{% endif %}</span>
+                                    {% if prediction.status_key == 'pending' %}
+                                    <time class="forecast-vertical-countdown" data-starts-at="{{ prediction.starts_iso }}" hidden></time>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="forecast-vertical-feature-main">
+                                <p>{{ prediction.sport }} · {{ prediction.league }}</p>
+                                <h2>{{ prediction.home_name }} — {{ prediction.away_name }}</h2>
+                                <span>{{ prediction.starts_short }} · {% if prediction.positions_count > 1 %}экспресс {{ prediction.positions_count }} события{% else %}{{ prediction.market }}{% endif %}</span>
+                            </div>
+                            <div class="forecast-vertical-feature-bottom">
+                                <span class="forecast-vertical-stat">
+                                    <small>Коэффициент</small>
+                                    <strong>{{ prediction.coefficient }}</strong>
+                                </span>
+                                <span class="forecast-vertical-stat">
+                                    <small>Ставка</small>
+                                    <strong>{{ prediction.total_stake|floatformat:0 }} {% include "front/includes/_coin_icon.html" %}</strong>
+                                </span>
+                                <span class="forecast-vertical-stat">
+                                    <small>Выигрыш</small>
+                                    <strong>{{ prediction.possible_payout|floatformat:0 }} {% include "front/includes/_coin_icon.html" %}</strong>
+                                </span>
+                                <span class="forecast-vertical-stat forecast-vertical-confidence">
+                                    <small>Уверенность <b>{{ prediction.confidence|default:0 }}%</b></small>
+                                    <progress value="{{ prediction.confidence|default:0 }}" max="100">{{ prediction.confidence|default:0 }}%</progress>
+                                </span>
+                                <a class="forecast-vertical-open" href="{% url 'front:prediction_detail' prediction.id %}">
+                                    Посмотреть купон
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <a class="forecast-open-match" href="{% url 'front:prediction_detail' prediction.id %}">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M5.5 8.5 8.5 5.5l2 2 6-6 6 6-6 6 2 2-3 3-2-2-6 6-6-6 6-6-2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span>Посмотреть купон</span>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M6 12h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </a>
+                    </article>
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="forecast-empty">
+                    <strong>Опубликованных прогнозов пока нет</strong>
+                    <p>Как только капперы опубликуют первый прогноз, он появится здесь.</p>
+                </div>
+                {% endif %}
             </div>
-        </article>
-        {% endfor %}
-    </div>
-
-    <div class="slider-footer">
-        <div class="slider-dots" role="tablist" aria-label="Выбор прогноза">
-            {% for prediction in latest_predictions %}
-            <button class="slider-dot{% if forloop.first %} is-active{% endif %}" type="button" data-slider-dot="{{ forloop.counter0 }}" aria-label="Прогноз {{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
-            {% endfor %}
-        </div>
-        <div class="slider-progress" aria-hidden="true">
-            <span data-slider-progress></span>
-        </div>
-        <span class="slider-counter"><b data-slider-current>01</b> / {{ latest_predictions|length|stringformat:"02d" }}</span>
-    </div>
-    {% else %}
-    <div class="forecast-empty">
-        <strong>Опубликованных прогнозов пока нет</strong>
-        <p>Как только капперы опубликуют первый прогноз, он автоматически появится в этом слайдере.</p>
-    </div>
-    {% endif %}
-        </div>
     </div>
     <aside class="home-sidebar">
         {% for promo_banner in right_promo_banners %}
@@ -580,6 +522,7 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/home.js' %}" defer></script>
+<script src="{% static 'front/js/site-search.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>

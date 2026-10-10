@@ -44,6 +44,7 @@ class BookmakerAdmin(admin.ModelAdmin):
                     "name",
                     "icon",
                     "slider_img",
+                    "desktop_banner_img",
                     "description",
                     "link",
                     "bonus_link",
@@ -67,6 +68,17 @@ class BookmakerAdmin(admin.ModelAdmin):
                     "for_beginners",
                     "exclusive",
                 )
+            },
+        ),
+        (
+            "Бонус на главной",
+            {
+                "fields": (
+                    "rating",
+                    "minimum_deposit",
+                    "bonus_updated_at",
+                ),
+                "description": "Необязательные данные. Рейтинг и даты выводятся только после заполнения.",
             },
         ),
         (

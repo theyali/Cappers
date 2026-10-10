@@ -1,7 +1,11 @@
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from .cover_images import assign_coupon_cover_image, invalidate_cover_ids_cache
+from .cover_images import (
+    assign_coupon_cover_image,
+    assign_prediction_cover_image,
+    invalidate_cover_ids_cache,
+)
 from .models import Prediction, PredictionCoupon, PredictionCoverImage
 
 
@@ -23,6 +27,7 @@ def assign_cover_after_coupon_publish(sender, instance: PredictionCoupon, **kwar
 
 @receiver(post_save, sender=Prediction)
 def sync_coupon_type_after_prediction_save(sender, instance: Prediction, **kwargs) -> None:
+    assign_prediction_cover_image(instance)
     _sync_coupon_type(instance.coupon_id)
 
 

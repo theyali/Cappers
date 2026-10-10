@@ -12,9 +12,10 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     IntegerField,
-    Max,
+    OuterRef,
     Prefetch,
     Q,
+    Subquery,
     Sum,
     Value,
     When,
@@ -31,7 +32,6 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from game.models import Country, Prediction, PredictionCoupon, Sport
-from game.services.card_backgrounds import assign_backgrounds, background_urls
 from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
@@ -90,6 +90,31 @@ FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
 )
+
+
+def _following_unread_annotations(recipient) -> dict:
+    """Unread "new prediction" notices from each followed capper to this reader.
+
+    Subqueries per row: joining every notification the capper ever sent (to all
+    readers) and filtering only inside COUNT multiplied the rows badly.
+    """
+    unread = Notification.objects.filter(
+        actor_id=OuterRef("analyst_id"),
+        recipient=recipient,
+        show_in_app=True,
+        is_read=False,
+        kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+    ).order_by()
+    return {
+        "new_predictions_count": Coalesce(
+            Subquery(
+                unread.values("actor_id").annotate(total=Count("id")).values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+        ),
+        "latest_new_prediction_at": Subquery(unread.order_by("-created_at").values("created_at")[:1]),
+    }
 
 
 def _error_message(exc) -> str:
@@ -490,6 +515,26 @@ def _coupon_state_label(state_status: str) -> str:
     return "В игре"
 
 
+def _field_url(field) -> str:
+    if not field:
+        return ""
+    try:
+        return field.url
+    except ValueError:
+        return ""
+
+
+def _coupon_cover_urls(coupon: PredictionCoupon) -> tuple[str, str]:
+    if coupon.custom_cover_image:
+        cover_url = _field_url(coupon.custom_cover_image)
+        return cover_url, cover_url
+
+    cover = coupon.cover_image if coupon.cover_image_id else coupon.assign_cover_image()
+    cover_url = _field_url(cover.image if cover else None)
+    mobile_cover_url = _field_url(cover.mobile_image if cover else None) or cover_url
+    return cover_url, mobile_cover_url
+
+
 def _mobile_coupon_cards(coupons, author) -> list[dict]:
     cards = []
     try:
@@ -502,11 +547,6 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
         if profile and profile.display_name
         else author.get_full_name() or author.username
     )
-    assign_backgrounds(
-        (coupon, list(getattr(coupon, "profile_positions", []) or []))
-        for coupon in coupons
-    )
-
     for coupon in coupons:
         positions = list(getattr(coupon, "profile_positions", []) or [])
         if not positions:
@@ -533,6 +573,7 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
                 if coupon.total_stake
                 else Decimal("0")
             )
+        cover_url, mobile_cover_url = _coupon_cover_urls(coupon)
 
         cards.append(
             {
@@ -554,7 +595,8 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
                 "positions_count": count,
                 "starts_at": starts_at,
                 "starts_short": starts_short,
-                "mobile_background": background_urls(coupon.mobile_card_background),
+                "cover_url": cover_url,
+                "mobile_cover_url": mobile_cover_url,
                 "expert": expert_name,
                 "expert_initials": _initials(expert_name),
                 "expert_avatar_url": author.avatar.url if author.avatar else "",
@@ -575,6 +617,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
         item = positions[0]
         match = item.match
         count = len(positions)
+        is_express = coupon.coupon_type == PredictionCoupon.CouponType.EXPRESS
         coefficient = getattr(coupon, "combined_coefficient", None)
         if coefficient is None:
             coefficient = (
@@ -598,6 +641,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
                 "comments_count": coupon.comments_count,
                 "favorites_count": coupon.favorites_count,
                 "positions_count": count,
+                "is_express": is_express,
                 "state_status": coupon.state_status,
                 "state_label": _coupon_state_label(coupon.state_status),
                 "sport_code": match.sport.code if match.sport else "",
@@ -949,25 +993,7 @@ def profile(request):
             "analyst",
             "analyst__analyst_profile",
         ).annotate(
-            new_predictions_count=Count(
-                "analyst__notification_actions",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-                distinct=True,
-            ),
-            latest_new_prediction_at=Max(
-                "analyst__notification_actions__created_at",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-            ),
+            **_following_unread_annotations(request.user),
         ).order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at"),
         user_outer_ref="analyst_id",
     )
@@ -1277,34 +1303,33 @@ def following_summary(request):
         AnalystFollow.objects.filter(follower=request.user)
         .select_related("analyst", "analyst__analyst_profile")
         .annotate(
-            predictions_count=Count(
-                "analyst__prediction_coupons",
-                filter=Q(
-                    analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    analyst__prediction_coupons__audience=PredictionCoupon.Audience.FREE,
+            predictions_count=Coalesce(
+                Subquery(
+                    PredictionCoupon.objects.filter(
+                        author_id=OuterRef("analyst_id"),
+                        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                        audience=PredictionCoupon.Audience.FREE,
+                    )
+                    .order_by()
+                    .values("author_id")
+                    .annotate(total=Count("id"))
+                    .values("total")[:1],
+                    output_field=IntegerField(),
                 ),
-                distinct=True,
+                Value(0),
             ),
-            followers_count=Count("analyst__analyst_followers", distinct=True),
-            new_predictions_count=Count(
-                "analyst__notification_actions",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+            followers_count=Coalesce(
+                Subquery(
+                    AnalystFollow.objects.filter(analyst_id=OuterRef("analyst_id"))
+                    .order_by()
+                    .values("analyst_id")
+                    .annotate(total=Count("id"))
+                    .values("total")[:1],
+                    output_field=IntegerField(),
                 ),
-                distinct=True,
+                Value(0),
             ),
-            latest_new_prediction_at=Max(
-                "analyst__notification_actions__created_at",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-            ),
+            **_following_unread_annotations(request.user),
         )
         .order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at")
     )

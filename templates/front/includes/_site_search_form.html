@@ -1,0 +1,20 @@
+{% load static %}
+<form class="site-search-form" action="{% url 'front:search' %}" method="get"
+      data-site-search-form data-suggestions-url="{% url 'front:search_suggestions' %}" role="search">
+    <span class="site-search-form-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </span>
+    <input id="{{ search_input_id|default:'site-search-input' }}" name="q" type="search" autocomplete="off"
+           maxlength="100" placeholder="Матч, команда, турнир или каппер" aria-label="Поиск по сайту"
+           value="{{ query|default:'' }}" data-site-search-input>
+    <button type="button" class="site-search-clear" aria-label="Очистить поиск" data-site-search-clear hidden>
+        {% include "front/includes/_solar_icon.html" with name="close" only %}
+    </button>
+    <button class="site-search-submit" type="submit">
+        <span class="site-search-submit-text">Найти</span>
+        <span class="site-search-submit-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </span>
+    </button>
+    <div class="site-search-suggestions" data-site-search-suggestions hidden aria-live="polite"></div>
+</form>

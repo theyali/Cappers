@@ -1,6 +1,10 @@
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import render
+from django.urls import reverse
+from urllib.parse import urlencode
+
+from .search import SEARCH_COEFFICIENTS, SEARCH_DATES, SEARCH_GROUPS, SEARCH_SPORTS, SEARCH_STATUSES, build_search_context
 
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.models import PredictionCoupon
@@ -159,3 +163,40 @@ def _best_streaks_for_authors(author_ids: list[int]) -> dict[int, int]:
             current[author_id] = 0
     return best
 
+
+
+def search(request):
+    """Страница поиска: все категории и GET-фильтры без JS-зависимости."""
+    context = build_search_context(
+        request.GET.get("q", ""),
+        sport=request.GET.get("sport", ""),
+        date=request.GET.get("date", ""),
+        status=request.GET.get("status", ""),
+        coefficient=request.GET.get("coefficient", ""),
+    )
+    selected = request.GET.get("category", "all")
+    if selected not in {"all", *(key for key, _ in SEARCH_GROUPS)}:
+        selected = "all"
+
+    params = {"q": context["query"], **{key: value for key, value in context["filters"].items() if value}}
+    tabs = [{"key": "all", "label": "Все", "count": context["total"]}]
+    tabs.extend({"key": key, "label": label, "count": context["counts"][key]} for key, label in SEARCH_GROUPS)
+    for tab in tabs:
+        tab["url"] = reverse("front:search") + "?" + urlencode({**params, "category": tab["key"]})
+
+    context.update({
+        "sections": [
+            {"key": key, "title": label, "count": context["counts"][key], "rows": context["groups"][key]}
+            for key, label in SEARCH_GROUPS
+        ],
+        "active_category": selected,
+        "tabs": tabs,
+        "search_sports": SEARCH_SPORTS,
+        "search_dates": SEARCH_DATES,
+        "search_statuses": SEARCH_STATUSES,
+        "search_coefficients": SEARCH_COEFFICIENTS,
+        "page_class": "site-search-page",
+        "hide_footer": True,
+        "seo_meta": {"robots": "noindex,follow"},
+    })
+    return render(request, "front/search.html", context)

@@ -14,6 +14,7 @@ from cabinet.models import AnalystFollow, AnalystPaidSubscription
 from game.models import Prediction, PredictionCoupon
 
 from .expert_ranking import current_month_top_expert_ids, expert_leader_badges, ranked_expert_profiles
+from .models import PredictionFavorite, PredictionLike
 from .prediction_metrics import ROI_PERIOD_DAYS
 
 
@@ -167,10 +168,11 @@ class CapperStatsService:
                 "id", filter=Q(state_status=PredictionCoupon.StateStatus.PENDING)
             ),
         )
-        engagement = published.aggregate(
-            likes=Count("likes", distinct=True),
-            saves=Count("favorites", distinct=True),
-        )
+        # Separate counts: one aggregate over both joins multiplies likes by saves for every coupon.
+        engagement = {
+            "likes": PredictionLike.objects.filter(prediction__in=published).count(),
+            "saves": PredictionFavorite.objects.filter(prediction__in=published).count(),
+        }
 
         wins_count = stats["wins"] or 0
         losses_count = stats["losses"] or 0

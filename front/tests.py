@@ -18,7 +18,7 @@ from cabinet.models import (
     UserLeaguePreference,
     UserSportPreference,
 )
-from game.models import League, Match, Prediction, PredictionCoupon, Sport
+from game.models import League, Match, Prediction, PredictionCoupon, Sport, Team
 
 from .models import Article, News, StaticPage
 
@@ -144,6 +144,42 @@ class HomeMobileBookmakersTemplateTests(SimpleTestCase):
         self.assertIn("CB", html)
         self.assertIn("ЛС", html)
         self.assertEqual(html.count("data-home-mobile-dot"), 2)
+
+    def test_home_desktop_banner_uses_own_image_and_four_bookmakers(self):
+        featured = Bookmaker(
+            name="ColdBet",
+            icon="bookmakers/cold.webp",
+            slider_img="bookmakers/slider/mobile.webp",
+            desktop_banner_img="bookmakers/desktop/desktop.webp",
+            link="https://example.com/cold",
+            bonus_text="100% до 25 000 ₽",
+            rating=Decimal("4.8"),
+            minimum_deposit="500 ₽",
+        )
+        other_bookmakers = [
+            Bookmaker(name=f"БК {index}", icon=f"bookmakers/bk{index}.webp",
+                      link=f"https://example.com/bk{index}", bonus_text=f"Бонус {index}")
+            for index in range(4)
+        ]
+        bookmakers = [featured, *other_bookmakers]
+        html = render_to_string(
+            "front/includes/_home_bookmakers.html",
+            {
+                "bookmakers": bookmakers,
+                "mobile_bookmakers": bookmakers[:3],
+                "featured_bookmaker": featured,
+                "compact_bookmakers": other_bookmakers,
+                "is_home_bookmakers": True,
+            },
+        )
+
+        self.assertIn("bookmakers/desktop/desktop.webp", html)
+        self.assertIn("bookmakers/slider/mobile.webp", html)
+        self.assertIn("bookmakers/cold.webp", html)
+        self.assertIn("Депозит от 500 ₽", html)
+        self.assertEqual(html.count('class="home-bookmakers-card"'), 4)
+        self.assertEqual(html.count("data-home-mobile-dot"), 3)
+        self.assertNotIn("bookmakers-catalog-head", html)
 
     def test_catalog_page_keeps_only_the_table(self):
         html = render_to_string("front/includes/_home_bookmakers.html", {"bookmakers": self.bookmakers()})
@@ -999,3 +1035,60 @@ class SportsNewsTests(TestCase):
         self.assertFalse(first.is_main)
         self.assertTrue(second.is_main)
         self.assertEqual(News.objects.filter(is_main=True).count(), 1)
+
+
+class SiteSearchTests(TestCase):
+    def test_search_page_handles_missing_query(self):
+        response = self.client.get(reverse("front:search"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Начните вводить")
+        self.assertEqual(response.context["total"], 0)
+        self.assertEqual(response.context["seo_meta"]["robots"], "noindex,follow")
+
+    def test_search_finds_matches_and_public_predictions_only(self):
+        sport = Sport.objects.create(code="football", name="Футбол")
+        home = Team.objects.create(sport=sport, external_id=91001, name="Arsenal", name_ru="Арсенал")
+        away = Team.objects.create(sport=sport, external_id=91002, name="Chelsea", name_ru="Челси")
+        match = Match.objects.create(
+            sport=sport, external_id=91003,
+            sync_scope=Match.SyncScope.PREMATCH,
+            home_team=home, away_team=away,
+            starts_at=timezone.now(),
+        )
+        analyst = User.objects.create_user(username="search-analyst", password="example", role=User.Role.ANALYST)
+        for audience in (PredictionCoupon.Audience.FREE, PredictionCoupon.Audience.PAID):
+            coupon = PredictionCoupon.objects.create(
+                author=analyst,
+                audience=audience,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                total_stake=Decimal("100"),
+                possible_payout=Decimal("190"),
+            )
+            Prediction.objects.create(
+                coupon=coupon,
+                match=match,
+                market="Победитель",
+                selection="П1",
+                stake=Decimal("100"),
+                coefficient=Decimal("1.9"),
+            )
+
+        result = self.client.get(reverse("front:search"), {"q": "Арсенал"})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.context["counts"]["matches"], 1)
+        self.assertEqual(result.context["counts"]["predictions"], 1)
+        self.assertContains(result, "Арсенал — Челси")
+
+        preview = self.client.get(reverse("front:search_suggestions"), {"q": "Арсенал"})
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.json()["total"], 2)
+        self.assertEqual(len(preview.json()["groups"]["matches"]), 1)
+
+    def test_invalid_filters_are_ignored_and_empty_prefix_is_safe(self):
+        preview = self.client.get(reverse("front:search_suggestions"), {"q": "a"})
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.json()["total"], 0)
+        result = self.client.get(reverse("front:search"), {"q": "Arsenal", "sport": "invalid", "status": "invalid"})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.context["filters"]["sport"], "")
+        self.assertEqual(result.context["filters"]["status"], "")

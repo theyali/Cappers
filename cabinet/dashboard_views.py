@@ -192,14 +192,10 @@ def build_dashboard_context(analyst) -> dict:
     )
     published_coupons = list(published.order_by("settled_at", "updated_at", "id"))
     confidence_calibration = build_confidence_calibration(published_coupons)
-    engagement_stats = published.aggregate(
-        published_count=Count("id", distinct=True),
-        total_likes=Count("likes", distinct=True),
-        total_saves=Count("favorites", distinct=True),
-    )
-    published_count = engagement_stats["published_count"] or 0
-    total_likes_count = engagement_stats["total_likes"] or 0
-    total_saves_count = engagement_stats["total_saves"] or 0
+    # Separate counts: one aggregate over both joins multiplies likes by saves for every coupon.
+    published_count = len(published_coupons)
+    total_likes_count = PredictionLike.objects.filter(prediction__in=published).count()
+    total_saves_count = PredictionFavorite.objects.filter(prediction__in=published).count()
     avg_likes_per_prediction = round(total_likes_count / published_count, 1) if published_count else 0
     avg_saves_per_prediction = round(total_saves_count / published_count, 1) if published_count else 0
 
