@@ -71,7 +71,7 @@ def _refresh_selected_local_media(
 class PredictionCoverImageInline(admin.TabularInline):
     model = PredictionCoverImage
     extra = 1
-    fields = ("placement", "image", "title", "is_active")
+    fields = ("placement", "image", "mobile_image", "title", "is_active")
     verbose_name = "Обложка прогноза"
     verbose_name_plural = "Обложки прогнозов"
 
@@ -113,7 +113,16 @@ class PredictionCoverImageAdmin(admin.ModelAdmin):
     search_fields = ("title", "sport__name", "sport__name_ru", "sport__code")
     autocomplete_fields = ("sport",)
     readonly_fields = ("created_at",)
-    fields = ("placement", "cover_type", "sport", "image", "title", "is_active", "created_at")
+    fields = (
+        "placement",
+        "cover_type",
+        "sport",
+        "image",
+        "mobile_image",
+        "title",
+        "is_active",
+        "created_at",
+    )
 
 
 @admin.register(Country)
@@ -356,8 +365,8 @@ class MatchOddsAdmin(admin.ModelAdmin):
 class PredictionItemInline(admin.TabularInline):
     model = Prediction
     extra = 0
-    autocomplete_fields = ("match",)
-    fields = ("match", "market", "selection", "coefficient", "stake", "state_status")
+    autocomplete_fields = ("match", "cover_image")
+    fields = ("match", "market", "selection", "coefficient", "stake", "state_status", "cover_image")
     verbose_name = "Позиция прогноза"
     verbose_name_plural = "Позиции прогноза"
 

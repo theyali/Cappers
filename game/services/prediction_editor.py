@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import bet_option_key
-from game.services.card_backgrounds import assign_coupon_backgrounds
 from game.services.coupon_validation import (
     CouponMatchVerificationError,
     CouponOddsChangedError,
@@ -300,8 +299,6 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     coupon.sync_coupon_type()
     if not coupon.custom_cover_image and not coupon.cover_image_id:
         coupon.assign_cover_image()
-    if status == PredictionCoupon.PublishedStatus.PUBLISHED:
-        assign_coupon_backgrounds(coupon)
     return coupon
 
 
@@ -310,6 +307,8 @@ def _ensure_editor_access(user) -> None:
         raise PermissionDenied("Войдите, чтобы создавать прогнозы.")
     if not getattr(user, "is_analyst", False):
         raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
+    if not getattr(user, "is_vip", False):
+        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
 
 
 def _ensure_coupon_edit_access(user, coupon: PredictionCoupon) -> None:

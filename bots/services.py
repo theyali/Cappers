@@ -21,8 +21,8 @@ from bots.models import (
 from cabinet.models import AnalystFollow, AnalystProfile, User
 from cabinet.presence import UserPresence
 from front.models import PredictionLike
+from game.cover_images import assign_prediction_cover_images
 from game.models import Match, Prediction, PredictionCoupon
-from game.services.card_backgrounds import assign_coupon_backgrounds
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.join import TournamentJoinError, join_tournament
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
@@ -1971,8 +1971,8 @@ def _create_coupon(
         for match, pick in items
     ]
     predictions = list(Prediction.objects.bulk_create(predictions))
+    assign_prediction_cover_images(predictions)
     coupon.assign_cover_image()
-    assign_coupon_backgrounds(coupon)
     return coupon, predictions, True
 
 

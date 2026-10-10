@@ -34,12 +34,10 @@
                 {% if latest_predictions %}
                 <div class="forecast-vertical-track" aria-label="Последние прогнозы">
                     {% for prediction in latest_predictions|slice:":4" %}
-                    <article class="forecast-vertical-card{% if forloop.first %} is-active{% endif %}{% if prediction.mobile_background.is_light %} is-light{% endif %}" data-slide data-slide-index="{{ forloop.counter0 }}">
+                    <article class="forecast-vertical-card{% if forloop.first %} is-active{% endif %}" data-slide data-slide-index="{{ forloop.counter0 }}">
                         <button class="forecast-vertical-preview" type="button" data-slide-select="{{ forloop.counter0 }}" aria-label="Показать прогноз {{ prediction.home_name }} — {{ prediction.away_name }}" {% if forloop.first %}tabindex="-1" aria-hidden="true"{% endif %}>
                             <span class="forecast-vertical-preview-image" aria-hidden="true">
-                                {% if prediction.mobile_background.url %}
-                                <img src="{{ prediction.mobile_background.url }}" alt="" width="160" height="100" loading="lazy" decoding="async">
-                                {% elif prediction.cover_url %}
+                                {% if prediction.cover_url %}
                                 <img src="{{ prediction.cover_url }}" alt="" width="160" height="100" loading="lazy" decoding="async">
                                 {% endif %}
                             </span>
@@ -60,10 +58,8 @@
                             <span class="forecast-vertical-status is-{{ prediction.status_key }}">{{ prediction.status_label }}</span>
                         </button>
                         <div class="forecast-vertical-feature" {% if not forloop.first %}aria-hidden="true" inert{% endif %}>
-                            {% if prediction.mobile_background.url %}
-                            <img class="forecast-vertical-feature-bg" src="{{ prediction.mobile_background.url }}" alt="" width="632" height="408" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async">
-                            {% elif prediction.cover_url %}
-                            <img class="forecast-vertical-feature-bg" src="{{ prediction.cover_url }}" alt="" width="1280" height="720" loading="lazy" decoding="async">
+                            {% if prediction.cover_url %}
+                            <img class="forecast-vertical-feature-bg" src="{{ prediction.cover_url }}" alt="" width="1280" height="720" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async">
                             {% endif %}
                             <div class="forecast-vertical-feature-top">
                                 <span class="forecast-vertical-author">

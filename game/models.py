@@ -1,5 +1,3 @@
-import random
-
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -157,7 +155,12 @@ class PredictionCoverImage(models.Model):
         null=True,
         blank=True,
     )
-    image = models.ImageField("Изображение", upload_to="prediction_covers/")
+    image = models.ImageField("Изображение для компьютера", upload_to="prediction_covers/")
+    mobile_image = models.ImageField(
+        "Компактное изображение для телефона",
+        upload_to="prediction_covers/mobile/",
+        blank=True,
+    )
     title = models.CharField("Название", max_length=120, blank=True)
     is_active = models.BooleanField("Активно", default=True, db_index=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
@@ -712,12 +715,6 @@ class PredictionCoupon(models.Model):
         upload_to="prediction_covers/custom/%Y/%m/",
         blank=True,
     )
-    mobile_card_background = models.CharField(
-        "Фон карточки в мобильном слайдере",
-        max_length=255,
-        blank=True,
-        help_text="Путь к картинке из static, выбирается автоматически. Очистите, чтобы выбрать заново.",
-    )
     tags = models.JSONField("Теги", default=list, blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)
@@ -767,38 +764,10 @@ class PredictionCoupon(models.Model):
         if self.cover_image_id:
             return self.cover_image
 
-        predictions = list(
-            self.predictions.select_related("match__sport").order_by("id")
-        )
-        if not predictions:
+        from game.cover_images import assign_coupon_cover_image
+
+        if not assign_coupon_cover_image(self, save=save):
             return None
-
-        if len(predictions) > 1 or self.coupon_type == self.CouponType.EXPRESS:
-            queryset = PredictionCoverImage.objects.filter(
-                cover_type=PredictionCoverImage.CoverType.EXPRESS,
-                placement=PredictionCoverImage.Placement.GRID,
-                is_active=True,
-            )
-        else:
-            sport_id = predictions[0].match.sport_id
-            if not sport_id:
-                return None
-            queryset = PredictionCoverImage.objects.filter(
-                cover_type=PredictionCoverImage.CoverType.SPORT,
-                placement=PredictionCoverImage.Placement.GRID,
-                sport_id=sport_id,
-                is_active=True,
-            )
-
-        cover_ids = list(queryset.values_list("id", flat=True))
-        if not cover_ids:
-            return None
-
-        self.cover_image_id = random.choice(cover_ids)
-        if save:
-            type(self).objects.filter(pk=self.pk, cover_image__isnull=True).update(
-                cover_image_id=self.cover_image_id
-            )
         return self.cover_image
 
     def __str__(self) -> str:
@@ -894,11 +863,13 @@ class Prediction(models.Model):
         blank=True,
         db_index=True,
     )
-    mobile_card_background = models.CharField(
-        "Фон карточки события на телефоне",
-        max_length=255,
+    cover_image = models.ForeignKey(
+        PredictionCoverImage,
+        on_delete=models.SET_NULL,
+        related_name="prediction_events",
+        verbose_name="Обложка события",
+        null=True,
         blank=True,
-        help_text="Путь к картинке из static по виду спорта, выбирается автоматически.",
     )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлен", auto_now=True)

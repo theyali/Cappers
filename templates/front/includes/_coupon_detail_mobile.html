@@ -79,12 +79,11 @@
         <h2 class="coupon-mobile-heading" id="coupon-mobile-events-title">События <span>{{ positions|length }}</span></h2>
         <div class="home-mobile-slider-track" data-home-mobile-track>
             {% for position in positions %}
-            <a class="home-mobile-card coupon-mobile-event{% if position.mobile_background.is_light %} is-light{% endif %}" href="{{ position.match.get_absolute_url }}">
-                {% if position.mobile_background.url %}
+            <a class="home-mobile-card coupon-mobile-event" href="{{ position.match.get_absolute_url }}">
+                {% if position.event_mobile_cover_url or position.event_cover_url %}
                 <img
                     class="home-mobile-card-bg"
-                    src="{{ position.mobile_background.url }}"
-                    {% if position.mobile_background.url_3x %}srcset="{{ position.mobile_background.url }} 2x, {{ position.mobile_background.url_3x }} 3x"{% endif %}
+                    src="{{ position.event_mobile_cover_url|default:position.event_cover_url }}"
                     alt=""
                     width="632"
                     height="408"

@@ -113,19 +113,20 @@
         {% endif %}
     </section>
     {% endif %}
+    {% if not request.user.is_authenticated or not request.user.is_analyst or request.user.is_vip %}
     <section class="matches-table-filter-group matches-table-create-prediction" aria-labelledby="table-create-prediction-title">
         <div class="matches-table-filter-title" id="table-create-prediction-title">
             <span>Прогноз</span>
         </div>
         <nav class="matches-table-scope-list" aria-label="Создание прогноза">
-            {% if request.user.is_authenticated and request.user.is_analyst %}
+            {% if request.user.is_authenticated and request.user.is_analyst and request.user.is_vip %}
             <a class="matches-table-scope-link" href="{% url 'game:rich_prediction_create' %}">
                 <span class="matches-table-scope-icon" aria-hidden="true">
                     {% include "front/includes/_solar_icon.html" with name="requested_match_prediction" %}
                 </span>
                 <span class="matches-table-scope-copy">Создать прогноз</span>
             </a>
-            {% else %}
+            {% elif not request.user.is_authenticated or not request.user.is_analyst %}
             <a class="matches-table-scope-link" href="{% url 'cabinet:become_capper' %}">
                 <span class="matches-table-scope-icon" aria-hidden="true">
                     {% include "front/includes/_solar_icon.html" with name="match_become_capper" %}
@@ -135,4 +136,5 @@
             {% endif %}
         </nav>
     </section>
+    {% endif %}
 </aside>

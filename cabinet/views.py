@@ -32,7 +32,6 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from game.models import Country, Prediction, PredictionCoupon, Sport
-from game.services.card_backgrounds import assign_backgrounds, background_urls
 from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
@@ -516,6 +515,26 @@ def _coupon_state_label(state_status: str) -> str:
     return "В игре"
 
 
+def _field_url(field) -> str:
+    if not field:
+        return ""
+    try:
+        return field.url
+    except ValueError:
+        return ""
+
+
+def _coupon_cover_urls(coupon: PredictionCoupon) -> tuple[str, str]:
+    if coupon.custom_cover_image:
+        cover_url = _field_url(coupon.custom_cover_image)
+        return cover_url, cover_url
+
+    cover = coupon.cover_image if coupon.cover_image_id else coupon.assign_cover_image()
+    cover_url = _field_url(cover.image if cover else None)
+    mobile_cover_url = _field_url(cover.mobile_image if cover else None) or cover_url
+    return cover_url, mobile_cover_url
+
+
 def _mobile_coupon_cards(coupons, author) -> list[dict]:
     cards = []
     try:
@@ -528,11 +547,6 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
         if profile and profile.display_name
         else author.get_full_name() or author.username
     )
-    assign_backgrounds(
-        (coupon, list(getattr(coupon, "profile_positions", []) or []))
-        for coupon in coupons
-    )
-
     for coupon in coupons:
         positions = list(getattr(coupon, "profile_positions", []) or [])
         if not positions:
@@ -559,6 +573,7 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
                 if coupon.total_stake
                 else Decimal("0")
             )
+        cover_url, mobile_cover_url = _coupon_cover_urls(coupon)
 
         cards.append(
             {
@@ -580,7 +595,8 @@ def _mobile_coupon_cards(coupons, author) -> list[dict]:
                 "positions_count": count,
                 "starts_at": starts_at,
                 "starts_short": starts_short,
-                "mobile_background": background_urls(coupon.mobile_card_background),
+                "cover_url": cover_url,
+                "mobile_cover_url": mobile_cover_url,
                 "expert": expert_name,
                 "expert_initials": _initials(expert_name),
                 "expert_avatar_url": author.avatar.url if author.avatar else "",

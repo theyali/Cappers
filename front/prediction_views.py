@@ -38,7 +38,6 @@ from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.cover_images import active_cover_ids
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage, Sport
 from game.services.bet_options import pick_label, picked_side
-from game.services.card_backgrounds import assign_event_backgrounds, background_urls
 
 from .expert_ranking import ranked_expert_profiles
 from .metrics import (
@@ -92,6 +91,7 @@ def _following_ids(user) -> set[int]:
 
 def _positions_queryset():
     return Prediction.objects.select_related(
+        "cover_image",
         "match__sport",
         "match__league__country",
         "match__home_team",
@@ -237,8 +237,16 @@ def _attach_display_cover_urls(coupons: list[PredictionCoupon]) -> None:
             continue
 
         cover = getattr(coupon, "cover_image", None)
+        if cover:
+            coupon.display_cover_url = (
+                _cover_url_from_field(cover.mobile_image)
+                or _cover_url_from_field(cover.image)
+            )
+            if coupon.display_cover_url:
+                continue
+
         if cover and cover.image:
-            coupon.display_cover_url = cover.image.url
+            coupon.display_cover_url = _cover_url_from_field(cover.image)
             continue
 
         positions = list(getattr(coupon, "card_positions", []) or [])
@@ -270,7 +278,11 @@ def _attach_display_cover_urls(coupons: list[PredictionCoupon]) -> None:
 
     covers_by_id = {
         cover.id: cover
-        for cover in PredictionCoverImage.objects.filter(id__in=selected_cover_ids).only("id", "image")
+        for cover in PredictionCoverImage.objects.filter(id__in=selected_cover_ids).only(
+            "id",
+            "image",
+            "mobile_image",
+        )
     }
     for coupon, cover_type, sport_id in missing:
         cover_ids = cover_ids_by_key.get((cover_type, sport_id), [])
@@ -278,7 +290,10 @@ def _attach_display_cover_urls(coupons: list[PredictionCoupon]) -> None:
             coupon.display_cover_url = ""
             continue
         cover = covers_by_id.get(cover_ids[coupon.id % len(cover_ids)])
-        coupon.display_cover_url = cover.image.url if cover and cover.image else ""
+        coupon.display_cover_url = (
+            _cover_url_from_field(cover.mobile_image if cover else None)
+            or _cover_url_from_field(cover.image if cover else None)
+        )
 
 
 def _decorate_predictions(request, predictions, following_ids: set[int] | None = None):
@@ -926,10 +941,13 @@ def prediction_detail(request, prediction_id: int):
     coupon.views_count = metrics.views_count
     coupon.shares_count = metrics.shares_count
     positions = list(getattr(coupon, "detail_positions", []) or [])
-    # Event cards of the phone layout; older coupons get their pictures on the first visit.
-    assign_event_backgrounds(positions)
     for position in positions:
-        position.mobile_background = background_urls(position.mobile_card_background)
+        cover = position.cover_image if position.cover_image_id else None
+        position.event_cover_url = _cover_url_from_field(cover.image if cover else None)
+        position.event_mobile_cover_url = (
+            _cover_url_from_field(cover.mobile_image if cover else None)
+            or position.event_cover_url
+        )
         position.pick_label = pick_label(position)
         position.picked_side = picked_side(position)
 

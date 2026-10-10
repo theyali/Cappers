@@ -3,8 +3,8 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from cabinet.models import User
+from game.cover_images import assign_prediction_cover_images
 from game.models import Match, Prediction, PredictionCoupon
-from game.services.card_backgrounds import assign_coupon_backgrounds
 from game.services.coupon_validation import (
     MAX_COUPON_ITEMS,
     coupon_total_coefficient,
@@ -122,7 +122,8 @@ def create_tournament_coupon(
                     for item in normalized_items
                 ]
             )
-            assign_coupon_backgrounds(coupon)
+            assign_prediction_cover_images(predictions)
+            coupon.assign_cover_image()
             tournament_coupon = TournamentCoupon.objects.create(
                 tournament=tournament,
                 participant=participant,

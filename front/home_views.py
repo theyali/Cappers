@@ -38,7 +38,6 @@ from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import build_match_winner_odds
-from game.services.card_backgrounds import assign_backgrounds, background_urls
 from notifications.models import MatchWatch
 from pages.models import PageSEO
 
@@ -235,13 +234,20 @@ def _state_label(prediction: PredictionCoupon) -> tuple[str, str]:
 
 def _home_cover_pools() -> dict[tuple[str, str, int | None], list[PredictionCoverImage]]:
     pools: dict[tuple[str, str, int | None], list[PredictionCoverImage]] = {}
-    covers = PredictionCoverImage.objects.filter(is_active=True).only(
-        "id",
-        "placement",
-        "cover_type",
-        "sport_id",
-        "image",
-    ).order_by("id")
+    covers = (
+        PredictionCoverImage.objects.filter(
+            is_active=True,
+            placement=PredictionCoverImage.Placement.GRID,
+        )
+        .only(
+            "id",
+            "placement",
+            "cover_type",
+            "sport_id",
+            "image",
+        )
+        .order_by("id")
+    )
     for cover in covers:
         key = (cover.placement, cover.cover_type, cover.sport_id)
         pools.setdefault(key, []).append(cover)
@@ -265,18 +271,30 @@ def _home_slider_cover(
     )
     sport_id = None if is_express else match.sport_id
 
-    for placement in (
-        PredictionCoverImage.Placement.HOME_SLIDER,
-        PredictionCoverImage.Placement.GRID,
-    ):
-        pool = cover_pools.get((placement, cover_type, sport_id), [])
-        if pool:
-            return pool[prediction.id % len(pool)]
-
     existing_cover = prediction.cover_image
-    if existing_cover and existing_cover.is_active and existing_cover.image:
+    if (
+        existing_cover
+        and existing_cover.placement == PredictionCoverImage.Placement.GRID
+        and existing_cover.is_active
+        and existing_cover.image
+    ):
         return existing_cover
+    pool = cover_pools.get(
+        (PredictionCoverImage.Placement.GRID, cover_type, sport_id),
+        [],
+    )
+    if pool:
+        return pool[prediction.id % len(pool)]
     return None
+
+
+def _cover_url(field) -> str:
+    if not field:
+        return ""
+    try:
+        return field.url
+    except ValueError:
+        return ""
 
 
 def _latest_home_predictions() -> list[dict]:
@@ -298,10 +316,6 @@ def _latest_home_predictions() -> list[dict]:
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
     cover_pools = _home_cover_pools()
-    assign_backgrounds(
-        (prediction, getattr(prediction, "home_positions", None) or [])
-        for prediction in queryset
-    )
 
     cards = []
     for prediction in queryset:
@@ -336,7 +350,8 @@ def _latest_home_predictions() -> list[dict]:
 
         count = len(positions_list)
         cover = _home_slider_cover(prediction, match, count, cover_pools)
-        cover_url = cover.image.url if cover and cover.image else ""
+        cover_url = _cover_url(cover.image if cover else None)
+        mobile_cover_url = _cover_url(cover.mobile_image if cover else None) or cover_url
 
         if prediction.total_stake:
             coefficient = prediction.possible_payout / prediction.total_stake
@@ -373,6 +388,7 @@ def _latest_home_predictions() -> list[dict]:
                 "home_logo": _logo_url(match.home_team_logo, match.home_team),
                 "away_logo": _logo_url(match.away_team_logo, match.away_team),
                 "cover_url": cover_url,
+                "mobile_cover_url": mobile_cover_url,
                 "score": match.score or "",
                 "pick": pick,
                 "market": market,
@@ -384,7 +400,6 @@ def _latest_home_predictions() -> list[dict]:
                 "starts_time": starts_time,
                 "starts_short": starts_short,
                 "pick_short": "Экспресс" if count > 1 else item.selection,
-                "mobile_background": background_urls(prediction.mobile_card_background),
                 "expert": expert_name,
                 "expert_username": author.username,
                 "expert_initials": _initials(expert_name),
