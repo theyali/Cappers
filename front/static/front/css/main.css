@@ -19563,7 +19563,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     color: var(--danger, #ff6268);
 }
 /* Desktop coupon detail: only one event is visible in the carousel. */
-.coupon-detail-layout-page { max-width: 1600px; margin: 0 auto; padding: 26px; }
 .coupon-detail-content { min-width: 0; }
 .coupon-detail-page { display: grid; grid-template-columns: minmax(0, 1.87fr) minmax(0, 1fr); column-gap: 20px; row-gap: 13px; color: #fff; }
 .coupon-detail-back { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin-bottom: 16px; color: #aaaab5; font-size: 13px; font-weight: 600; }
@@ -19572,7 +19571,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-heading { grid-column: 1 / -1; margin-bottom: 14px; }
 .coupon-detail-heading-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .coupon-detail-heading h1 { margin: 0; font-family: var(--font-heading); font-size: 34px; font-weight: 700; line-height: 1.15; }
-.coupon-detail-heading p { margin: 24px 0 0; color: #a5a6b1; font-size: 15px; font-weight: 600; }
+.coupon-detail-heading p { margin: 10px 0 0; color: #a5a6b1; font-size: 15px; font-weight: 600; }
 .coupon-detail-kind { color: #858692; font-size: 13px; font-weight: 600; }
 .coupon-detail-state { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; gap: 5px; padding: 9px 13px; border-radius: 9px; color: #a9baff; background: #1e2b58; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .coupon-detail-state.is-lose { color: #ff737d; background: #371e23; }
