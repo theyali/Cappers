@@ -291,7 +291,7 @@ def _latest_home_predictions() -> list[dict]:
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
             audience=PredictionCoupon.Audience.FREE,
         )
-        .select_related("author", "author__analyst_profile", "cover_image")
+        .select_related("author", "author__analyst_profile", "cover_image", "metrics")
         .prefetch_related(
             Prefetch("predictions", queryset=positions, to_attr="home_positions")
         )
@@ -310,6 +310,7 @@ def _latest_home_predictions() -> list[dict]:
             continue
         item = positions_list[0]
         author = prediction.author
+        metrics = getattr(prediction, "metrics", None)
         try:
             profile = author.analyst_profile
         except AnalystProfile.DoesNotExist:
@@ -351,6 +352,13 @@ def _latest_home_predictions() -> list[dict]:
             {
                 "id": prediction.id,
                 "url": match.get_absolute_url(),
+                "total_stake": prediction.total_stake,
+                "possible_payout": prediction.possible_payout,
+                "views_count": metrics.views_count if metrics else 0,
+                "likes_count": metrics.likes_count if metrics else 0,
+                "comments_count": metrics.comments_count if metrics else 0,
+                "favorites_count": metrics.favorites_count if metrics else 0,
+                "starts_iso": match.starts_at.isoformat() if match.starts_at else "",
                 "sport": (
                     match.sport.name_ru
                     if match.sport and match.sport.name_ru
