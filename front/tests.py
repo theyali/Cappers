@@ -117,6 +117,48 @@ class PredictionFilterSidebarTemplateTests(SimpleTestCase):
         self.assertFalse(parser.banner_inside_filter_matches)
 
 
+class ExpertRecommendationsTemplateTests(SimpleTestCase):
+    def test_compact_cards_show_real_metrics_and_navigation(self):
+        recommendation = {
+            "id": 4,
+            "name": "Kirill Pavlenko",
+            "initials": "KP",
+            "avatar_url": "",
+            "is_vip": False,
+            "is_verified": True,
+            "trust_index": Decimal("7.3"),
+            "profile_url": "/experts/kirill/",
+            "sport_label": "Футбол · Теннис",
+            "highlight": "Рекомендуем КапперХаб",
+            "hit_rate": 61,
+            "roi_label": "+24,1%",
+            "roi_positive": True,
+            "wins_count": 15,
+            "losses_count": 9,
+            "refunds_count": 1,
+            "decided_count": 24,
+            "is_following": False,
+        }
+        html = render_to_string(
+            "cabinet/_expert_recommendations.html",
+            {
+                "recommended_experts": [recommendation],
+                "request": SimpleNamespace(user=SimpleNamespace(is_authenticated=False)),
+            },
+        )
+
+        self.assertIn("data-expert-recommendations-track", html)
+        self.assertIn("data-expert-recommendations-prev", html)
+        self.assertIn("data-expert-recommendations-dots", html)
+        self.assertIn('value="15" max="24"', html)
+        self.assertIn("61% заходит", html)
+        self.assertIn("ROI +24,1%", html)
+        self.assertIn("Футбол · Теннис", html)
+        self.assertIn("Проверенный эксперт", html)
+        self.assertIn("Все капперы", html)
+        self.assertIn("Подписаться", html)
+
+
 class HomeMobileBookmakersTemplateTests(SimpleTestCase):
     def bookmakers(self):
         return [
