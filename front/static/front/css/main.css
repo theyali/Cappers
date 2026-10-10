@@ -18907,7 +18907,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-state.is-refund { color: #f2d878; background: #39321c; }
 .coupon-detail-events { grid-column: 1; grid-row: 3; min-width: 0; }
 .coupon-detail-events-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 27px; margin-bottom: 9px; }
-.coupon-detail-events-head h2, .coupon-detail-related h2 { margin: 0; font-family: var(--font-heading); font-size: 18px; font-weight: 700; line-height: 1.1; }
+.coupon-detail-events-head h2 { margin: 0; font-family: var(--font-heading); font-size: 18px; font-weight: 700; line-height: 1.1; }
 .coupon-detail-events-head h2 span { margin-left: 4px; color: #81818c; font-family: var(--font-body); font-size: 11px; font-weight: 600; }
 .coupon-detail-events-controls { display: flex; align-items: center; gap: 7px; }
 .coupon-detail-events-controls > span { margin-right: 4px; color: #8e8e99; font-size: 11px; font-weight: 600; }
@@ -18952,8 +18952,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-summary-pill progress::-webkit-progress-value { background: var(--yellow); }
 .coupon-detail-summary-pill progress::-moz-progress-bar { background: var(--yellow); }
 .coupon-detail-author { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px; border-radius: 14px; background: #191a21; }
-.coupon-detail-author-avatar, .coupon-detail-related-avatar { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; color: #fff; background: #7131e6; font-size: 12px; font-weight: 700; }
-.coupon-detail-author-avatar { position: relative; width: 40px; height: 40px; }
+.coupon-detail-author-avatar, .coupon-detail-related-avatar { display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #fff; font-weight: 700; }
+.coupon-detail-author-avatar { position: relative; width: 40px; height: 40px; background: #7131e6; font-size: 12px; }
 .coupon-detail-author-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .coupon-detail-author-avatar .capper-trust-badge { position: absolute; top: -6px; left: -8px; }
 .coupon-detail-author-info { display: grid; flex: 1 1 auto; gap: 4px; min-width: 0; }
@@ -18963,7 +18963,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-author-link { flex: 0 0 auto; padding: 9px 10px; border-radius: 10px; color: #fff; background: #24252c; font-size: 11px; font-weight: 700; }
 .coupon-detail-related { display: grid; gap: 10px; padding: 12px; border-radius: 15px; background: #191a21; }
 .coupon-detail-related header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.coupon-detail-related h2 { font-size: 16px; }
+.coupon-detail-related h2 { margin: 0; font-family: var(--font-heading); font-size: 16px; font-weight: 700; line-height: 1.1; }
 .coupon-detail-related header a { color: #a2a2ae; font-size: 10px; }
 .coupon-detail-related-list { display: grid; gap: 8px; }
 .coupon-detail-related-item { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px; border-radius: 12px; background: #111217; }
@@ -18976,7 +18976,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-related-item .coupon-detail-state { padding: 6px 8px; font-size: 9px; }
 .coupon-detail-related-empty { margin: 0; padding: 8px 0; color: #92929c; font-size: 11px; }
 .coupon-detail-page > .prediction-reactions { grid-column: 1; grid-row: 4; display: flex; align-items: center; gap: 6px; min-height: 31px; margin-top: 0; }
-.coupon-detail-page > .prediction-reactions .prediction-reaction { min-width: 38px; min-height: 30px; padding: 6px; border-radius: 10px; background: #17181e; }
+.coupon-detail-page > .prediction-reactions .prediction-reaction { min-width: 38px; min-height: 30px; border-radius: 10px; background: #17181e; }
 .coupon-detail-page > .prediction-reactions .prediction-reaction svg { width: 15px; height: 15px; }
 .coupon-detail-page > .prediction-reactions .prediction-views { margin-left: auto; background: none; }
 .coupon-detail-page > .prediction-reactions .prediction-like.is-active { color: #ff747d; }
