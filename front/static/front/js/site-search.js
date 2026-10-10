@@ -181,3 +181,47 @@
         });
     }
 })();
+
+
+/* Decorative coupon background on the homepage; values never query the database. */
+(() => {
+    const background = document.querySelector("[data-home-coupon-bg]");
+    if (!background) return;
+
+    const markets = [
+        "ТБ 2.5", "П1", "ТМ 2.5", "П2", "Ф1 -1.5", "Ф2 +2.5",
+        "Обе забьют", "Ничья", "Экспресс 2", "Экспресс 3", "ТМ 4.5", "ТБ 228.5",
+    ];
+    const odds = [
+        "1,35", "1,47", "1,62", "1,73", "1,88", "1,96",
+        "2,05", "2,20", "2,38", "2,50", "2,75", "3,10", "3,40", "4,20", "5,60",
+    ];
+    const random = (items) => items[Math.floor(Math.random() * items.length)];
+    const columns = document.createDocumentFragment();
+
+    for (let columnIndex = 0; columnIndex < 4; columnIndex += 1) {
+        const column = document.createElement("div");
+        column.className = "home-search-coupon-col";
+        const chips = document.createDocumentFragment();
+
+        for (let index = 0; index < 16; index += 1) {
+            const chip = document.createElement("span");
+            chip.className = "home-search-coupon-pill";
+            if ((index + 1) % 5 === 0) chip.classList.add("is-hot");
+            else if ((index + 1) % 4 === 0) chip.classList.add("is-win");
+
+            const market = document.createElement("span");
+            market.textContent = random(markets);
+            const coefficient = document.createElement("b");
+            coefficient.textContent = random(odds);
+            chip.append(market, coefficient);
+            chips.append(chip);
+        }
+
+        const loop = chips.cloneNode(true);
+        column.append(chips, loop);
+        columns.append(column);
+    }
+
+    background.replaceChildren(columns);
+})();
