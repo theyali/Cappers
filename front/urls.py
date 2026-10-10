@@ -145,6 +145,17 @@ urlpatterns = [
     ),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path("wiki/", wiki_views.wiki, name="wiki"),
+    path("wiki/videos/<int:video_id>/view/", wiki_views.wiki_video_view, name="wiki_video_view"),
+    path(
+        "wiki/videos/<int:video_id>/reaction/",
+        wiki_views.wiki_video_reaction,
+        name="wiki_video_reaction",
+    ),
+    path(
+        "wiki/videos/<int:video_id>/progress/",
+        wiki_views.wiki_video_progress,
+        name="wiki_video_progress",
+    ),
     path("about/", TemplateView.as_view(template_name="front/about.html"), name="about"),
     path(
         "rules/",

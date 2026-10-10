@@ -3780,23 +3780,66 @@ body.expert-public-details-open {
     gap: 6px;
   }
 
-  .wiki-videos-section {
-    padding: 24px 0 8px;
+  .wiki-youtube-page.site-main {
+    min-height: 100vh;
   }
 
-  .wiki-videos-heading h2 {
-    font-size: 36px;
+  .wiki-shell-head {
+    height: 106px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 0 24px;
   }
 
-  .wiki-videos-lead {
-    font-size: 13px;
+  .wiki-shell-brand {
+    gap: 12px;
+  }
+
+  .wiki-logo strong {
+    font-size: 24px;
+  }
+
+  .wiki-logo .wiki-brand-mark {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border-radius: 12px;
+  }
+
+  .wiki-search {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    top: 86px;
+    z-index: 20;
+    display: none;
+  }
+
+  .wiki-shell.is-search-open .wiki-search {
+    display: grid;
+  }
+
+  .wiki-head-actions {
+    gap: 10px;
+  }
+
+  .wiki-mobile-search-button {
+    display: inline-grid;
+  }
+
+  .wiki-layout {
+    display: block;
+    padding: 0 24px 56px;
+  }
+
+  .wiki-sidebar {
+    display: none;
   }
 
   .wiki-video-filters {
     flex-wrap: nowrap;
-    gap: 8px;
-    margin-top: 22px;
-    padding-bottom: 2px;
+    gap: 10px;
+    margin: 0 0 20px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -3807,45 +3850,44 @@ body.expert-public-details-open {
   }
 
   .wiki-video-filter {
-    min-height: 46px;
+    min-height: 50px;
     flex: 0 0 auto;
-    padding: 0 16px;
+    padding: 0 20px;
     border-radius: 13px;
-    font-size: 12px;
-  }
-
-  .wiki-video-filter-icon {
-    width: 18px;
-    height: 18px;
-    flex-basis: 18px;
+    font-size: 16px;
   }
 
   .wiki-video-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
-    margin-top: 22px;
-  }
-
-  .wiki-video-card {
-    border-radius: 15px;
+    gap: 28px;
   }
 
   .wiki-video-preview {
-    aspect-ratio: 1.28 / 1;
+    border-radius: 13px;
   }
 
-  .wiki-video-play {
-    width: 58px;
-    height: 58px;
+  .wiki-video-card {
+    gap: 14px;
   }
 
   .wiki-video-copy {
-    min-height: 224px;
-    padding: 16px;
+    grid-template-columns: 44px minmax(0, 1fr) 22px;
+    gap: 12px;
   }
 
-  .wiki-video-copy h3 {
-    font-size: 18px;
+  .wiki-video-copy .wiki-brand-mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .wiki-video-title {
+    margin-bottom: 6px;
+    font-size: 21px;
+  }
+
+  .wiki-video-text p {
+    font-size: 17px;
   }
 
   .prediction-results-filters,
@@ -8237,7 +8279,7 @@ body.expert-public-details-open {
   }
 }
 
-@media (max-width: 1320px) {
+@media (min-width: 761px) and (max-width: 1320px) {
   .wiki-video-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -9922,28 +9964,156 @@ body.expert-public-details-open {
     font-size: 14px;
   }
 
-  .wiki-video-player {
-    padding: 0;
+  .wiki-shell[data-view-mode="watch"] .wiki-layout {
+    padding: 0 0 56px;
   }
 
-  .wiki-video-player-shell {
-    width: 100%;
-    min-height: 100dvh;
-    align-content: center;
-    padding: 12px;
+  .wiki-shell[data-view-mode="watch"] .wiki-watch-view {
+    display: block;
+  }
+
+  .wiki-watch-player {
     border-radius: 0;
   }
 
-  .wiki-video-player-head {
-    padding: 0;
+  .wiki-watch-play {
+    width: 66px;
+    height: 66px;
+    border-width: 3px;
   }
 
-  .wiki-video-player-head strong {
+  .wiki-player-controls {
+    padding: 46px 12px 10px;
+    gap: 7px;
+  }
+
+  .wiki-player-controls-row {
+    min-height: 32px;
+    gap: 9px;
+  }
+
+  .wiki-player-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .wiki-player-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .wiki-player-volume {
+    width: 54px;
+  }
+
+  .wiki-player-time,
+  .wiki-player-remaining {
+    font-size: 11px;
+  }
+
+  .wiki-player-remaining {
+    display: none;
+  }
+
+  .wiki-watch-primary h1 {
+    margin: 20px 24px 18px;
+    font-size: 30px;
+    line-height: 1.12;
+  }
+
+  .wiki-watch-meta-row {
+    display: grid;
+    gap: 18px;
+    margin: 0 24px;
+  }
+
+  .wiki-watch-author {
+    order: 2;
+    min-height: 90px;
+    padding: 0 20px;
+    border: 1px solid #292b33;
+    border-radius: 20px;
+    background: #17181d;
+  }
+
+  .wiki-watch-author .wiki-brand-mark {
+    width: 54px;
+    height: 54px;
+    flex-basis: 54px;
+  }
+
+  .wiki-watch-author strong {
+    font-size: 18px;
+  }
+
+  .wiki-watch-author small {
+    font-size: 15px;
+  }
+
+  .wiki-watch-actions {
+    max-width: 100%;
+    margin: 0 24px 28px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .wiki-watch-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .wiki-watch-actions button {
+    flex: 0 0 auto;
+    min-height: 52px;
+    padding: 0 20px;
+    font-size: 18px;
+  }
+
+  .wiki-watch-about {
+    margin: 20px 24px 0;
+    padding: 18px 20px;
+    border-radius: 20px;
+  }
+
+  .wiki-watch-description-text {
+    max-height: 58px;
+    font-size: 17px;
+  }
+
+  .wiki-watch-description-text.is-expanded {
+    max-height: 520px;
+  }
+
+  .wiki-watch-next {
+    margin: 24px 24px 0;
+  }
+
+  .wiki-watch-next-head {
+    min-height: 34px;
+  }
+
+  .wiki-watch-next-head h2 {
+    font-size: 22px;
+  }
+
+  .wiki-watch-next-head span {
+    display: none;
+  }
+
+  .wiki-watch-next-list {
+    gap: 22px;
+  }
+
+  .wiki-next-card button {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .wiki-next-copy strong {
     font-size: 14px;
   }
 
-  .wiki-video-player-media {
-    border-radius: 12px;
+  .wiki-next-copy span {
+    font-size: 11px;
   }
 
   .wiki-dictionary {

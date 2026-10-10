@@ -9,6 +9,8 @@ from .models import (
     WikiTerm,
     WikiTermSection,
     WikiVideo,
+    WikiVideoProgress,
+    WikiVideoReaction,
     WikiVideoSection,
 )
 
@@ -115,18 +117,71 @@ class WikiVideoSectionAdmin(admin.ModelAdmin):
 
 @admin.register(WikiVideo)
 class WikiVideoAdmin(admin.ModelAdmin):
-    list_display = ("title", "section", "duration", "is_published", "sort_order", "updated_at")
+    list_display = (
+        "title",
+        "section",
+        "duration",
+        "views_count",
+        "likes_count",
+        "dislikes_count",
+        "is_published",
+        "sort_order",
+        "updated_at",
+    )
     list_display_links = ("title",)
     list_editable = ("is_published", "sort_order")
     list_filter = ("is_published", "section")
-    search_fields = ("title", "section__name", "description")
+    search_fields = ("title", "section__name", "description", "tags")
+    prepopulated_fields = {"slug": ("title",)}
     ordering = ("section__sort_order", "sort_order", "title")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("views_count", "likes_count", "dislikes_count", "created_at", "updated_at")
     fieldsets = (
-        ("Видео", {"fields": ("title", "section", "description", "video", "preview_image", "duration")}),
+        (
+            "Видео",
+            {
+                "fields": (
+                    "title",
+                    "slug",
+                    "section",
+                    "description",
+                    "video",
+                    "preview_image",
+                    "duration",
+                    "tags",
+                )
+            },
+        ),
+        ("Метрики", {"fields": ("views_count", "likes_count", "dislikes_count")}),
         ("Публикация", {"fields": ("is_published", "sort_order")}),
         ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
+
+
+@admin.register(WikiVideoReaction)
+class WikiVideoReactionAdmin(admin.ModelAdmin):
+    list_display = ("video", "user", "kind", "updated_at")
+    list_filter = ("kind", "updated_at")
+    search_fields = ("video__title", "user__username", "user__email")
+    readonly_fields = ("created_at", "updated_at")
+    autocomplete_fields = ("video", "user")
+    ordering = ("-updated_at",)
+
+
+@admin.register(WikiVideoProgress)
+class WikiVideoProgressAdmin(admin.ModelAdmin):
+    list_display = (
+        "video",
+        "user",
+        "position_seconds",
+        "duration_seconds",
+        "completed",
+        "last_watched_at",
+    )
+    list_filter = ("completed", "last_watched_at")
+    search_fields = ("video__title", "user__username", "user__email")
+    readonly_fields = ("created_at", "last_watched_at")
+    autocomplete_fields = ("video", "user")
+    ordering = ("-last_watched_at",)
 
 
 @admin.register(WikiTermSection)

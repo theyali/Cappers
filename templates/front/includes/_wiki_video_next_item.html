@@ -1,0 +1,23 @@
+<article
+    class="wiki-next-card"
+    data-wiki-video-next
+    data-video-id="{{ video.pk }}"
+>
+    <button type="button" aria-label="Смотреть видео: {{ video.title }}">
+        <span class="wiki-next-thumb wiki-thumb-surface is-color-{{ video.wiki_color_index }}">
+            {% if video.preview_image %}
+                <img src="{{ video.preview_image.url }}" width="260" height="146" loading="lazy" alt="">
+            {% endif %}
+            <span class="wiki-video-doc" aria-hidden="true"></span>
+            {% if video.wiki_user_progress %}
+                <span class="wiki-video-progress" aria-hidden="true"><i style="width: {{ video.wiki_user_progress.percent }}%"></i></span>
+            {% endif %}
+            <span class="wiki-video-duration"{% if not video.wiki_duration_label %} hidden{% endif %}>{{ video.wiki_duration_label }}</span>
+        </span>
+        <span class="wiki-next-copy">
+            <strong>{{ video.title }}</strong>
+            <span>{{ video.wiki_author_name }}</span>
+            <span>{{ video.wiki_views_label }} просмотров · {{ video.wiki_added_label }}</span>
+        </span>
+    </button>
+</article>

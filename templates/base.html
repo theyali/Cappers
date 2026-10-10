@@ -28,11 +28,13 @@
 <body class="{{ page_class|default:'' }} {{ page_layout_class|default:'' }}{% if is_telegram_app %} is-telegram-app{% endif %}">
     {% if is_telegram_app %}
         {% include "front/includes/_telegram_app_header.html" %}
-    {% else %}
+    {% elif not hide_site_chrome %}
         {% include "front/includes/_top_header.html" %}
         {% include "front/includes/_main_header.html" %}
     {% endif %}
-    {% include "front/includes/_mobile_offcanvas.html" %}
+    {% if not hide_site_chrome %}
+        {% include "front/includes/_mobile_offcanvas.html" %}
+    {% endif %}
 
     {% if messages %}
         <ul class="messages" role="status" aria-live="polite">
@@ -42,7 +44,7 @@
         </ul>
     {% endif %}
 
-    {% if request.resolver_match.app_name != 'cabinet' and not is_telegram_app %}
+    {% if request.resolver_match.app_name != 'cabinet' and not is_telegram_app and not hide_site_chrome %}
         <a
             href="{% url 'cabinet:bonuses' %}"
             class="fixed-roulette"
@@ -61,7 +63,7 @@
         </a>
     {% endif %}
 
-    {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link and not is_telegram_app %}
+    {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link and not is_telegram_app and not hide_site_chrome %}
         <div class="fixed-tg-btn-wrapper">
             <a href="{{ request.website_settings.fixed_tg_link }}"
                target="_blank"
@@ -76,7 +78,7 @@
     {% endif %}
 
     <main class="site-main {{ page_class|default:'' }} {{ page_layout_class|default:'' }}">
-        {% if breadcrumbs and page_class != 'profile' and not is_telegram_app %}
+        {% if breadcrumbs and page_class != 'profile' and not is_telegram_app and not hide_site_chrome %}
             <div class="container breadcrumbs-container">
                 <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
                     {% for crumb in breadcrumbs %}
@@ -108,6 +110,7 @@
         {% include "front/includes/_footer.html" %}
     {% endif %}
 
+    {% if not hide_site_chrome %}
     <nav class="mobile-app-nav" aria-label="Мобильная навигация">
         <a class="mobile-app-nav-item mobile-nav-home {% if request.resolver_match.view_name == 'front:index' %}is-active{% endif %}" href="{% url 'front:index' %}">
             <span class="mobile-app-nav-icon" aria-hidden="true">
@@ -159,8 +162,9 @@
             <span class="mobile-app-nav-label">Прогнозы</span>
         </a>
     </nav>
+    {% endif %}
 
-    {% if request.user.is_authenticated %}
+    {% if request.user.is_authenticated and not hide_site_chrome %}
         {% include "front/includes/_roulette_sheet.html" %}
     {% endif %}
 

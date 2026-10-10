@@ -4,6 +4,7 @@ from html.parser import HTMLParser
 from types import SimpleNamespace
 
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -20,7 +21,17 @@ from cabinet.models import (
 )
 from game.models import League, Match, Prediction, PredictionCoupon, Sport, Team
 
-from .models import Article, News, StaticPage
+from .models import (
+    Article,
+    News,
+    StaticPage,
+    WikiTerm,
+    WikiTermSection,
+    WikiVideo,
+    WikiVideoProgress,
+    WikiVideoReaction,
+    WikiVideoSection,
+)
 
 from .expert_ranking import (
     expert_ranking_score,
@@ -199,6 +210,100 @@ class ExpertRecommendationsTemplateTests(SimpleTestCase):
         self.assertIn("Проверенный эксперт", html)
         self.assertIn("Все капперы", html)
         self.assertIn("Подписаться", html)
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class WikiVideoBackendTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="wiki-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        self.section = WikiVideoSection.objects.create(name="Обучение", icon="general")
+        self.video = WikiVideo.objects.create(
+            title="Как смотреть прогнозы",
+            section=self.section,
+            description="<p>Подробное описание видео</p>",
+            video=SimpleUploadedFile("wiki.mp4", b"video", content_type="video/mp4"),
+            tags="прогнозы, обучение",
+        )
+
+    def test_wiki_search_filters_videos_by_tags(self):
+        other_section = WikiVideoSection.objects.create(name="Другое", icon="general")
+        WikiVideo.objects.create(
+            title="Баланс",
+            section=other_section,
+            description="<p>Пополнение счета</p>",
+            video=SimpleUploadedFile("balance.mp4", b"video", content_type="video/mp4"),
+            tags="кошелек",
+        )
+        term_section = WikiTermSection.objects.create(name="Термины")
+        WikiTerm.objects.create(
+            term="ROI",
+            section=term_section,
+            description="Доходность ставок",
+        )
+
+        response = self.client.get(reverse("front:wiki"), {"q": "прогнозы"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Как смотреть прогнозы")
+        self.assertNotContains(response, "Пополнение счета")
+
+    def test_video_view_endpoint_increments_views_for_guest(self):
+        response = self.client.post(
+            reverse("front:wiki_video_view", kwargs={"video_id": self.video.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.views_count, 1)
+        self.assertEqual(response.json()["views_count"], 1)
+
+    def test_video_reaction_toggles_and_switches_counts(self):
+        self.client.force_login(self.user)
+
+        like_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_LIKE},
+        )
+        dislike_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_DISLIKE},
+        )
+        clear_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_DISLIKE},
+        )
+
+        self.assertEqual(like_response.status_code, 200)
+        self.assertEqual(dislike_response.status_code, 200)
+        self.assertEqual(clear_response.status_code, 200)
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.likes_count, 0)
+        self.assertEqual(self.video.dislikes_count, 0)
+        self.assertFalse(WikiVideoReaction.objects.filter(video=self.video, user=self.user).exists())
+
+    def test_video_progress_endpoint_saves_resume_position(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("front:wiki_video_progress", kwargs={"video_id": self.video.pk}),
+            {"position_seconds": "95.4", "duration_seconds": "100"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        progress = WikiVideoProgress.objects.get(video=self.video, user=self.user)
+        self.assertEqual(progress.position_seconds, 95)
+        self.assertEqual(progress.duration_seconds, 100)
+        self.assertTrue(progress.completed)
+        self.assertEqual(response.json()["percent"], 95)
 
 
 class HomeMobileBookmakersTemplateTests(SimpleTestCase):
@@ -865,7 +970,6 @@ class FooterRenderingTests(TestCase):
         cache.clear()
 
         urls = [
-            reverse("front:wiki"),
             reverse("front:sports_news"),
             reverse("front:how_it_works"),
             reverse("front:bonuses"),

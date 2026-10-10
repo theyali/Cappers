@@ -1,144 +1,204 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Wiki — КапперХаб{% endblock %}
+{% block title %}База знаний — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="articles-page container" aria-label="Wiki КапперХаб">
-    <header class="articles-hero">
-        <div>
-            <p class="articles-eyebrow">База знаний КапперХаб</p>
-            <h1>Wiki</h1>
-            <p>Видеоинструкции по работе с сайтом и словарь терминов — всё в одном месте.</p>
+<section
+    class="wiki-shell"
+    aria-label="База знаний КапперХаб"
+    data-wiki-page
+    data-view-mode="feed"
+>
+    <header class="wiki-shell-head">
+        <div class="wiki-shell-brand">
+            <a class="wiki-logo" href="{% url 'front:wiki' %}" aria-label="База знаний">
+                <span class="wiki-brand-logo" aria-hidden="true">
+                    <img src="{% static 'front/img/logo.png' %}" width="34" height="34" alt="">
+                </span>
+                <strong>База знаний</strong>
+            </a>
         </div>
-        <div class="articles-total">
-            <strong>{{ wiki_total_count }}</strong>
-            <span>материалов</span>
+
+        <form class="wiki-search" action="{% url 'front:wiki' %}" method="get" role="search" data-wiki-search>
+            <input
+                type="search"
+                name="q"
+                value="{{ wiki_term_query }}"
+                placeholder="Поиск по базе знаний"
+                aria-label="Поиск по базе знаний"
+            >
+            <button type="submit" aria-label="Найти">
+                {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
+            </button>
+        </form>
+
+        <div class="wiki-head-actions">
+            <button class="wiki-mobile-search-button" type="button" aria-label="Поиск" data-wiki-mobile-search>
+                {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
+            </button>
+            {% if request.user.is_authenticated %}
+                <a class="wiki-profile-link" href="{% url 'cabinet:profile' %}" aria-label="Профиль">
+                    {% if request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" width="44" height="44" alt="">
+                    {% else %}
+                        <span>{{ request.user.username|default:request.user.email|slice:":18" }}</span>
+                    {% endif %}
+                </a>
+            {% endif %}
         </div>
     </header>
 
-    <section class="wiki-videos-section" id="wiki-videos">
-        <header class="wiki-videos-heading">
-            <p class="wiki-videos-kicker">Обучение</p>
-            <h2>Видео</h2>
-            <p class="wiki-videos-lead">Выберите нужный раздел и откройте видео. Новые инструкции публикуются через админку.</p>
-        </header>
-
-        {% if wiki_video_sections %}
-            <nav class="wiki-video-filters" aria-label="Фильтр видео по разделам">
-                <a
-                    class="wiki-video-filter{% if not wiki_selected_video_section %} is-active{% endif %}"
-                    href="{% url 'front:wiki' %}#wiki-videos"
-                >
-                    Все
+    <div class="wiki-layout">
+        <aside class="wiki-sidebar" aria-label="Разделы базы знаний">
+            <nav class="wiki-side-nav">
+                <a href="{% url 'front:index' %}">
+                    {% include "front/includes/_solar_icon.html" with name="home-2-bold" only %}
+                    <span>Главная</span>
                 </a>
-                {% for section in wiki_video_sections %}
-                    <a
-                        class="wiki-video-filter{% if wiki_selected_video_section.pk == section.pk %} is-active{% endif %}"
-                        href="{% url 'front:wiki' %}?section={{ section.pk }}#wiki-videos"
-                    >
-                        <span class="wiki-video-filter-icon">
-                            {% include "front/includes/_wiki_video_section_icon.html" with icon=section.icon %}
-                        </span>
-                        <span>{{ section.name }}</span>
-                    </a>
-                {% endfor %}
+                <a class="is-active" href="{% url 'front:wiki' %}">
+                    {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
+                    <span>Все видео</span>
+                </a>
+                <a href="?section={{ wiki_video_sections.0.pk|default:'' }}#wiki-videos">
+                    {% include "front/includes/_solar_icon.html" with name="how_it_works" only %}
+                    <span>Как работает</span>
+                </a>
+                <a href="#wiki-dictionary">
+                    {% include "front/includes/_solar_icon.html" with name="dictionary-bold" only %}
+                    <span>Словарь терминов</span>
+                </a>
             </nav>
-        {% endif %}
 
-        {% if wiki_videos %}
-            <div class="wiki-video-grid">
-                {% for video in wiki_videos %}
-                    {% include "front/includes/_wiki_video_card.html" with video=video only %}
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="articles-empty">
-                <strong>Видео пока нет</strong>
-                <p>После публикации через админку видео автоматически появятся здесь.</p>
-            </div>
-        {% endif %}
-    </section>
+            {% if request.user.is_authenticated %}
+                <div class="wiki-progress-card">
+                    <strong>Ваш прогресс</strong>
+                    <span><i style="width: {{ wiki_user_progress_percent|default:0 }}%"></i></span>
+                    <p>{{ wiki_user_completed_count|default:0 }} из {{ wiki_video_count }} · осталось {{ wiki_user_remaining_minutes|default:0 }} минут</p>
+                </div>
+            {% endif %}
+        </aside>
 
-    <section class="wiki-dictionary" id="wiki-dictionary" data-wiki-dictionary>
-        <header class="wiki-dictionary-head">
-            <div class="wiki-dictionary-title">
-                <p class="wiki-dictionary-kicker">Термины</p>
-                <h2>Словарь</h2>
-                <p>Простые объяснения всех важных терминов. Найдите нужный термин или выберите раздел.</p>
-            </div>
-            <div class="wiki-dictionary-note" aria-hidden="true">
-                <span>Больше знаний —<br>больше побед</span>
-                <i></i>
-            </div>
-        </header>
+        <div class="wiki-main">
+            <section class="wiki-feed-view" id="wiki-videos" data-wiki-feed-view>
+                {% if wiki_video_sections %}
+                    <nav class="wiki-video-filters" aria-label="Фильтр видео">
+                        <a class="wiki-video-filter{% if not wiki_selected_video_section %} is-active{% endif %}" href="{% url 'front:wiki' %}">
+                            Все
+                        </a>
+                        {% for section in wiki_video_sections %}
+                            <a
+                                class="wiki-video-filter{% if wiki_selected_video_section.pk == section.pk %} is-active{% endif %}"
+                                href="{% url 'front:wiki' %}?section={{ section.pk }}"
+                            >
+                                {{ section.name }}
+                            </a>
+                        {% endfor %}
+                        <a class="wiki-video-filter" href="{% url 'front:wiki' %}?sort=new">Новое</a>
+                        <a class="wiki-video-filter" href="{% url 'front:wiki' %}?progress=unwatched">Непросмотренное</a>
+                    </nav>
+                {% endif %}
 
-        <form class="wiki-dictionary-search" role="search" data-wiki-terms-search>
-            <span class="wiki-dictionary-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
-            </span>
-            <input
-                type="search"
-                value="{{ wiki_term_query }}"
-                placeholder="Поиск по терминам..."
-                aria-label="Поиск по терминам"
-                data-wiki-terms-query
-            >
-        </form>
+                {% if wiki_videos %}
+                    <div class="wiki-video-grid">
+                        {% for video in wiki_videos %}
+                            {% include "front/includes/_wiki_video_card.html" with video=video only %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="wiki-empty-state">
+                        <strong>Видео не найдены</strong>
+                        <p>Измените запрос или выберите другой раздел.</p>
+                    </div>
+                {% endif %}
+            </section>
 
-        <div class="wiki-dictionary-layout">
-            <aside class="wiki-dictionary-sidebar" aria-label="Разделы словаря">
-                <button
-                    class="wiki-dictionary-filter wiki-term-accent-blue{% if not wiki_selected_term_section %} is-active{% endif %}"
-                    type="button"
-                    data-wiki-term-filter
-                    data-section-id=""
-                    aria-pressed="{% if not wiki_selected_term_section %}true{% else %}false{% endif %}"
-                >
-                    <span class="wiki-dictionary-filter-main">
-                        <span class="wiki-dictionary-filter-icon">
-                            {% include "front/includes/_wiki_term_section_icon.html" with icon="all" %}
-                        </span>
-                        <span>Все термины</span>
-                    </span>
-                    <span class="wiki-dictionary-filter-count">{{ wiki_term_count }}</span>
-                </button>
+            <section class="wiki-watch-view" data-wiki-watch-view hidden aria-live="polite">
+                <div class="wiki-watch-primary">
+                    <div class="wiki-watch-player wiki-thumb-surface is-green" data-wiki-watch-player-shell>
+                        <img class="wiki-watch-poster" src="" width="1280" height="720" alt="" data-wiki-watch-poster hidden>
+                        <video playsinline preload="metadata" data-wiki-watch-player></video>
+                        <button class="wiki-watch-play" type="button" aria-label="Запустить видео" data-wiki-watch-play>
+                            {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
+                        </button>
+                        <div class="wiki-player-controls" data-wiki-player-controls>
+                            <input class="wiki-player-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Позиция видео" data-wiki-player-seek>
+                            <div class="wiki-player-controls-row">
+                                <button class="wiki-player-button" type="button" aria-label="Пауза" data-wiki-player-toggle>
+                                    <span class="wiki-player-icon is-play">{% include "front/includes/_solar_icon.html" with name="play-bold" only %}</span>
+                                    <span class="wiki-player-icon is-pause">{% include "front/includes/_solar_icon.html" with name="pause-bold" only %}</span>
+                                </button>
+                                <button class="wiki-player-button" type="button" aria-label="Выключить звук" data-wiki-player-mute>
+                                    <span class="wiki-player-icon is-volume">{% include "front/includes/_solar_icon.html" with name="volume-loud-bold" only %}</span>
+                                    <span class="wiki-player-icon is-muted">{% include "front/includes/_solar_icon.html" with name="volume-cross-bold" only %}</span>
+                                </button>
+                                <input class="wiki-player-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость" data-wiki-player-volume>
+                                <span class="wiki-player-time">
+                                    <span data-wiki-player-current>0:00</span>
+                                    <span>/</span>
+                                    <span data-wiki-player-duration>0:00</span>
+                                </span>
+                                <span class="wiki-player-spacer"></span>
+                                <span class="wiki-player-remaining" data-wiki-player-remaining>осталось 0:00</span>
+                                <button class="wiki-player-button" type="button" aria-label="Во весь экран" data-wiki-player-fullscreen>
+                                    {% include "front/includes/_solar_icon.html" with name="fullscreen-bold" only %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
-                {% for section in wiki_term_sections %}
-                    <button
-                        class="wiki-dictionary-filter wiki-term-accent-{{ section.accent }}{% if wiki_selected_term_section.pk == section.pk %} is-active{% endif %}"
-                        type="button"
-                        data-wiki-term-filter
-                        data-section-id="{{ section.pk }}"
-                        aria-pressed="{% if wiki_selected_term_section.pk == section.pk %}true{% else %}false{% endif %}"
-                    >
-                        <span class="wiki-dictionary-filter-main">
-                            <span class="wiki-dictionary-filter-icon">
-                                {% include "front/includes/_wiki_term_section_icon.html" with icon=section.icon %}
+                    <h1 data-wiki-watch-title>Видео</h1>
+
+                    <div class="wiki-watch-actions">
+                        <button type="button" data-wiki-share>
+                            {% include "front/includes/_solar_icon.html" with name="coupon_upload_linear" only %}
+                            <span>Поделиться</span>
+                        </button>
+                    </div>
+
+                    <div class="wiki-watch-meta-row">
+                        <div class="wiki-watch-author">
+                            <span class="wiki-brand-logo" aria-hidden="true">
+                                <img src="{% static 'front/img/logo.png' %}" width="34" height="34" alt="">
                             </span>
-                            <span>{{ section.name }}</span>
-                        </span>
-                        <span class="wiki-dictionary-filter-count">{{ section.term_count }}</span>
-                    </button>
-                {% endfor %}
-            </aside>
+                            <span>
+                                <strong>КапперХаб</strong>
+                                <small>{{ wiki_video_count }} видео в базе знаний</small>
+                            </span>
+                        </div>
+                    </div>
 
-            <div
-                class="wiki-dictionary-content"
-                data-wiki-terms-content
-                data-skeleton-block
-                aria-live="polite"
-            >
-                {% include "front/includes/_wiki_term_results.html" %}
-            </div>
+                    <div class="wiki-watch-about" data-wiki-watch-about>
+                        <p class="wiki-watch-stats">
+                            <span class="wiki-watch-views">
+                                {% include "front/includes/_solar_icon.html" with name="eye" only %}
+                                <strong data-wiki-watch-views>0</strong>
+                            </span>
+                            <span data-wiki-watch-added></span>
+                            <span data-wiki-watch-tags></span>
+                        </p>
+                        <div class="wiki-watch-description-text" data-wiki-watch-description></div>
+                        <button class="wiki-watch-more" type="button" data-wiki-description-toggle hidden>Показать еще</button>
+                    </div>
+                </div>
+
+                <aside class="wiki-watch-next" aria-label="Смотреть далее">
+                    <div class="wiki-watch-next-head">
+                        <h2>Смотреть далее</h2>
+                        <span>Автовоспроизведение</span>
+                    </div>
+                    <div class="wiki-watch-next-list">
+                        {% for video in wiki_videos %}
+                            {% include "front/includes/_wiki_video_next_item.html" with video=video only %}
+                        {% endfor %}
+                    </div>
+                </aside>
+            </section>
         </div>
-    </section>
+    </div>
 </section>
-
-{% include "front/includes/_wiki_video_player.html" %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous" defer></script>
-<script src="{% static 'front/js/wiki-terms.js' %}" defer></script>
+<script src="{% static 'front/js/wiki-videos.js' %}" defer></script>
 {% endblock %}

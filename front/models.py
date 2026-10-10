@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.urls import reverse
+from django.utils.text import slugify
 from tinymce.models import HTMLField
 
 from game.models import PredictionCoupon
@@ -301,13 +302,21 @@ class WikiVideoSection(models.Model):
 
 class WikiVideo(models.Model):
     title = models.CharField("Название", max_length=220)
+    slug = models.SlugField(
+        "Slug",
+        max_length=240,
+        unique=True,
+        allow_unicode=True,
+        blank=True,
+        null=True,
+    )
     section = models.ForeignKey(
         WikiVideoSection,
         on_delete=models.PROTECT,
         related_name="videos",
         verbose_name="Раздел",
     )
-    description = models.TextField("Краткое описание", max_length=700)
+    description = HTMLField("Описание")
     video = models.FileField("Видео", upload_to="wiki/videos/%Y/%m/")
     preview_image = models.ImageField(
         "Preview image",
@@ -316,6 +325,10 @@ class WikiVideo(models.Model):
         null=True,
     )
     duration = models.CharField("Длительность", max_length=12, blank=True, help_text="Например: 5:18")
+    tags = models.CharField("Теги", max_length=300, blank=True, help_text="Через запятую")
+    views_count = models.PositiveIntegerField("Просмотры", default=0)
+    likes_count = models.PositiveIntegerField("Лайки", default=0)
+    dislikes_count = models.PositiveIntegerField("Дизлайки", default=0)
     is_published = models.BooleanField("Опубликовано", default=True, db_index=True)
     sort_order = models.PositiveSmallIntegerField("Порядок", default=100, db_index=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
@@ -325,9 +338,124 @@ class WikiVideo(models.Model):
         verbose_name = "Wiki: видео"
         verbose_name_plural = "Wiki: видео"
         ordering = ("section_id", "sort_order", "title", "id")
+        indexes = [
+            models.Index(fields=("is_published", "created_at"), name="wiki_video_pub_created_idx"),
+            models.Index(fields=("section", "is_published", "sort_order"), name="wiki_video_section_sort_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self._build_unique_slug()
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def tag_list(self) -> list[str]:
+        return [tag.strip() for tag in self.tags.split(",") if tag.strip()]
+
+    def _build_unique_slug(self) -> str:
+        base_slug = slugify(self.title, allow_unicode=True)[:210] or "wiki-video"
+        slug = base_slug
+        index = 2
+        qs = type(self).objects.all()
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        while qs.filter(slug=slug).exists():
+            suffix = f"-{index}"
+            slug = f"{base_slug[:240 - len(suffix)]}{suffix}"
+            index += 1
+        return slug
+
+
+class WikiVideoReaction(models.Model):
+    KIND_LIKE = "like"
+    KIND_DISLIKE = "dislike"
+
+    KIND_CHOICES = (
+        (KIND_LIKE, "Лайк"),
+        (KIND_DISLIKE, "Дизлайк"),
+    )
+
+    video = models.ForeignKey(
+        WikiVideo,
+        on_delete=models.CASCADE,
+        related_name="user_reactions",
+        verbose_name="Видео",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="wiki_video_reactions",
+        verbose_name="Пользователь",
+    )
+    kind = models.CharField("Реакция", max_length=12, choices=KIND_CHOICES)
+    created_at = models.DateTimeField("Создана", auto_now_add=True)
+    updated_at = models.DateTimeField("Обновлена", auto_now=True)
+
+    class Meta:
+        verbose_name = "Wiki: реакция на видео"
+        verbose_name_plural = "Wiki: реакции на видео"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("video", "user"),
+                name="unique_wiki_video_reaction",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("video", "kind"), name="wiki_video_react_kind_idx"),
+            models.Index(fields=("user", "updated_at"), name="wiki_video_react_user_idx"),
+        ]
+        ordering = ("-updated_at",)
+
+    def __str__(self) -> str:
+        return f"{self.user} {self.kind} {self.video_id}"
+
+
+class WikiVideoProgress(models.Model):
+    video = models.ForeignKey(
+        WikiVideo,
+        on_delete=models.CASCADE,
+        related_name="user_progress",
+        verbose_name="Видео",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="wiki_video_progress",
+        verbose_name="Пользователь",
+    )
+    position_seconds = models.PositiveIntegerField("Позиция, сек", default=0)
+    duration_seconds = models.PositiveIntegerField("Длительность, сек", default=0)
+    completed = models.BooleanField("Просмотрено", default=False, db_index=True)
+    completed_at = models.DateTimeField("Просмотрено в", null=True, blank=True)
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+    last_watched_at = models.DateTimeField("Последний просмотр", auto_now=True)
+
+    class Meta:
+        verbose_name = "Wiki: прогресс видео"
+        verbose_name_plural = "Wiki: прогресс видео"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("video", "user"),
+                name="unique_wiki_video_progress",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("user", "last_watched_at"), name="wiki_video_prog_user_idx"),
+            models.Index(fields=("video", "last_watched_at"), name="wiki_video_prog_video_idx"),
+        ]
+        ordering = ("-last_watched_at",)
+
+    @property
+    def percent(self) -> int:
+        if not self.duration_seconds:
+            return 0
+        return min(100, round(self.position_seconds * 100 / self.duration_seconds))
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.video_id} - {self.position_seconds}s"
 
 
 class WikiTermSection(models.Model):

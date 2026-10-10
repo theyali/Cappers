@@ -1,46 +1,63 @@
+{% load static %}
+
 <article
     class="wiki-video-card"
-    role="button"
-    tabindex="0"
     data-wiki-video-card
+    data-video-id="{{ video.pk }}"
     data-video-url="{{ video.video.url }}"
+    data-video-preview="{% if video.preview_image %}{{ video.preview_image.url }}{% endif %}"
+    data-video-duration="{{ video.wiki_duration_label }}"
     data-video-title="{{ video.title }}"
-    aria-label="Смотреть видео: {{ video.title }}"
+    data-video-section="{{ video.section.name }}"
+    data-video-author="{{ video.wiki_author_name }}"
+    data-video-views="{{ video.views_count }}"
+    data-video-views-label="{{ video.wiki_views_label }}"
+    data-video-added="{{ video.wiki_added_label }}"
+    data-video-progress-position="{{ video.wiki_user_progress.position_seconds|default:0 }}"
+    data-video-progress-duration="{{ video.wiki_user_progress.duration_seconds|default:0 }}"
+    data-video-view-url="{% url 'front:wiki_video_view' video.pk %}"
+    data-video-progress-url="{% url 'front:wiki_video_progress' video.pk %}"
 >
-    <div class="wiki-video-preview" data-skeleton-image>
-        {% if video.preview_image %}
-            <img
-                src="{{ video.preview_image.url }}"
-                width="720"
-                height="540"
-                loading="lazy"
-                alt="{{ video.title }}"
-            >
-        {% else %}
-            <span class="wiki-video-preview-placeholder" aria-hidden="true">
-                {% include "front/includes/_wiki_video_section_icon.html" with icon=video.section.icon %}
+    <button class="wiki-video-open" type="button" aria-label="Смотреть видео: {{ video.title }}">
+        <span class="wiki-video-preview wiki-thumb-surface is-color-{{ video.wiki_color_index }}" data-skeleton-image>
+            {% if video.preview_image %}
+                <img
+                    src="{{ video.preview_image.url }}"
+                    width="720"
+                    height="405"
+                    loading="lazy"
+                    alt=""
+                >
+            {% endif %}
+            <span class="wiki-video-doc" aria-hidden="true"></span>
+            <span class="wiki-video-play" aria-hidden="true">
+                {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
             </span>
-        {% endif %}
-        <span class="wiki-video-play" aria-hidden="true">
-            {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
+            {% if video.wiki_user_progress %}
+                <span class="wiki-video-progress" aria-hidden="true"><i style="width: {{ video.wiki_user_progress.percent }}%"></i></span>
+            {% endif %}
+            <span class="wiki-video-duration" data-wiki-video-duration {% if not video.wiki_duration_label %}hidden{% endif %}>{{ video.wiki_duration_label }}</span>
         </span>
-        <span
-            class="wiki-video-duration"
-            data-wiki-video-duration
-            {% if not video.duration %}hidden{% endif %}
-        >{{ video.duration }}</span>
-    </div>
+    </button>
 
     <div class="wiki-video-copy">
-        <div class="wiki-video-meta">
-            <span class="wiki-video-category">{{ video.section.name }}</span>
-            <span class="wiki-video-type">
-                {% include "front/includes/_solar_icon.html" with name="videocamera-bold" only %}
-                Видео
-            </span>
+        <span class="wiki-brand-logo" aria-hidden="true">
+            <img src="{% static 'front/img/logo.png' %}" width="37" height="37" alt="">
+        </span>
+        <div class="wiki-video-text">
+            <div class="wiki-video-title">{{ video.title }}</div>
+            <p>{{ video.wiki_author_name }} · {{ video.section.name }}</p>
+            <p>{{ video.wiki_views_label }} просмотров · {{ video.wiki_added_label }}</p>
         </div>
+        <button class="wiki-video-more" type="button" aria-label="Поделиться видео" data-wiki-card-share>
+            {% include "front/includes/_solar_icon.html" with name="coupon_upload_linear" only %}
+        </button>
+    </div>
 
-        <h3>{{ video.title }}</h3>
-        <p>{{ video.description }}</p>
+    <div class="wiki-video-description" hidden>{{ video.description|safe }}</div>
+    <div class="wiki-video-tags" hidden>
+        {% for tag in video.tag_list %}
+            <span>#{{ tag }}</span>
+        {% endfor %}
     </div>
 </article>
