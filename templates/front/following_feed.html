@@ -23,7 +23,7 @@
                 <section class="following-stories" aria-labelledby="following-stories-title">
                     <div class="following-stories-head">
                         <div class="following-stories-heading">
-                            <span class="following-stories-vip">{% include "front/includes/_solar_icon.html" with name="vip" only %} VIP</span>
+                            <span class="following-stories-vip">{% include "front/includes/_solar_icon.html" with name="crown-bold" only %} VIP</span>
                             <h2 id="following-stories-title"><span class="following-stories-title-desktop">Капперы с VIP-доступом</span><span class="following-stories-title-mobile">Капперы с VIP</span></h2>
                             <span class="following-stories-count">{{ vip_stories_count_label }}</span>
                         </div>
@@ -49,7 +49,12 @@
                                         <b class="following-story-live">LIVE</b>
                                     {% endif %}
                                     {% if story.is_verified %}
-                                        <span class="following-story-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">✓</span>
+                                        <span class="capper-verified-badge" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                                            <svg viewBox="0 0 16 16" aria-hidden="true">
+                                                                    <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                                                                    <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                                                                </svg>
+                                        </span>
                                     {% endif %}
                                 </span>
                                 <span class="following-story-name" title="{{ story.name }}">
@@ -59,11 +64,6 @@
                                 <small class="following-story-roi{% if not story.roi_positive %} is-negative{% endif %}"><span class="following-story-roi-prefix">ROI </span>{{ story.roi_label }}</small>
                             </a>
                         {% endfor %}
-                        <a class="following-story-card following-story-all" href="{{ vip_ranking_url }}">
-                            <span class="following-story-avatar"><span aria-hidden="true">+</span></span>
-                            <span class="following-story-name">Все VIP</span>
-                            <small class="following-story-roi">{{ vip_stories_count }}</small>
-                        </a>
                     </div>
                     <div class="following-stories-dots" aria-hidden="true" data-following-stories-dots>
                         <i class="is-active"></i><i></i><i></i>

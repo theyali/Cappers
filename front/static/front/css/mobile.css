@@ -8298,8 +8298,7 @@ body.expert-public-details-open {
   .following-stories-title-desktop,
   .following-stories-all-desktop,
   .following-stories-count,
-  .following-story-name-desktop,
-  .following-story-all { display: none; }
+  .following-story-name-desktop { display: none; }
   .following-stories-title-mobile,
   .following-stories-all-mobile,
   .following-story-name-mobile { display: inline; }

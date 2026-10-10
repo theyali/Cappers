@@ -9717,20 +9717,10 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     letter-spacing: .03em;
     line-height: 1;
 }
-.following-story-verified {
+.following-story-avatar > .capper-verified-badge {
     position: absolute;
     right: -7px;
     bottom: -3px;
-    width: 16px;
-    height: 16px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: #fff;
-    background: var(--blue);
-    box-shadow: 0 0 0 2px #19191d;
-    font-size: 11px;
-    font-weight: 700;
 }
 .following-story-name {
     width: 100%;
@@ -9755,14 +9745,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     white-space: nowrap;
 }
 .following-story-roi.is-negative { color: #ff7474; }
-.following-story-all .following-story-avatar {
-    color: var(--yellow);
-    background: transparent;
-    box-shadow: 0 0 0 2px #292a30;
-    font-size: 30px;
-    font-weight: 400;
-}
-.following-story-all .following-story-roi { color: #7f7f86; }
 .following-stories-dots { display: none; }
 
 .following-feed-page .predictions-grid,
