@@ -1,0 +1,39 @@
+{% load static %}
+<header class="wiki-shell-head">
+    <div class="wiki-shell-brand">
+        <a class="wiki-logo" href="{% url 'front:wiki' %}" aria-label="База знаний">
+            <span class="wiki-brand-logo" aria-hidden="true">
+                <img src="{% static 'front/img/logo.png' %}" width="34" height="34" alt="">
+            </span>
+            <strong>База знаний</strong>
+        </a>
+    </div>
+
+    <form class="wiki-search" action="{{ wiki_search_action }}" method="get" role="search" data-wiki-search>
+        <input
+            type="search"
+            name="q"
+            value="{{ wiki_term_query }}"
+            placeholder="Поиск по базе знаний"
+            aria-label="Поиск по базе знаний"
+        >
+        <button type="submit" aria-label="Найти">
+            {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
+        </button>
+    </form>
+
+    <div class="wiki-head-actions">
+        <button class="wiki-mobile-search-button" type="button" aria-label="Поиск" data-wiki-mobile-search>
+            {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
+        </button>
+        {% if request.user.is_authenticated %}
+            <a class="wiki-profile-link" href="{% url 'cabinet:profile' %}" aria-label="Профиль">
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" width="44" height="44" alt="">
+                {% else %}
+                    <span>{{ request.user.username|default:request.user.email|slice:":18" }}</span>
+                {% endif %}
+            </a>
+        {% endif %}
+    </div>
+</header>

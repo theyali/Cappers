@@ -999,6 +999,40 @@ def prediction_detail(request, prediction_id: int):
     comments_previous_page = comments_last_page - 1 if comments_last_page > 1 else None
     comments_total_count = prediction_comments_total_count(coupon)
 
+    related_coupons = (
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            audience=PredictionCoupon.Audience.FREE,
+            coupon_type=coupon.coupon_type,
+        )
+        .exclude(pk=coupon.pk)
+        .select_related("author", "author__analyst_profile")
+        .annotate(
+            positions_count=Count("predictions", distinct=True),
+            display_coefficient=_combined_coefficient_expression(),
+        )
+        .order_by("-published_at", "-pk")[:3]
+    )
+    similar_coupons = []
+    for related in related_coupons:
+        related_profile = getattr(related.author, "analyst_profile", None)
+        name = (
+            related_profile.display_name
+            if related_profile and related_profile.display_name
+            else related.author.get_full_name() or related.author.username
+        )
+        similar_coupons.append(
+            {
+                "id": related.id,
+                "name": name,
+                "initials": _initials(name),
+                "kind": "Экспресс" if related.coupon_type == PredictionCoupon.CouponType.EXPRESS else "Ординар",
+                "positions_count": related.positions_count,
+                "coefficient": _normalized_coefficient(related.display_coefficient),
+                "status": related.state_status,
+            }
+        )
+
     return render(
         request,
         "front/prediction_detail.html",
@@ -1017,6 +1051,7 @@ def prediction_detail(request, prediction_id: int):
             "initial_comments": initial_comments,
             "comments_previous_page": comments_previous_page,
             "comments_total_count": comments_total_count,
+            "similar_coupons": similar_coupons,
         },
     )
 

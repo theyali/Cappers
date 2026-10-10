@@ -11,7 +11,7 @@
         </span>
         {% endif %}
 
-        <span class="feed-prediction-cover-fallback">
+        <span class="feed-prediction-cover-fallback is-{{ prediction.match.sport.code|default:'other' }}{% if prediction.display_cover_url %} has-cover{% endif %}">
             <span class="feed-prediction-cover-center">
                 <span class="feed-prediction-cover-league"{% if prediction.match.league and prediction.match.league.logo_url %} data-skeleton-image{% endif %}>
                     {% if prediction.match.league and prediction.match.league.logo_url %}
@@ -24,19 +24,26 @@
             </span>
 
             <span class="feed-prediction-cover-teams">
-                <span class="feed-prediction-cover-team is-home"{% if prediction.match.home_team_logo %} data-skeleton-image{% endif %}>
-                    {% if prediction.match.home_team_logo %}
-                        <img src="{{ prediction.match.home_team_logo }}" width="96" height="96" alt="" loading="lazy">
-                    {% else %}
-                        {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
-                    {% endif %}
+                <span class="feed-prediction-cover-team-group">
+                    <span class="feed-prediction-cover-team is-home"{% if prediction.match.home_team_logo %} data-skeleton-image{% endif %}>
+                        {% if prediction.match.home_team_logo %}
+                            <img src="{{ prediction.match.home_team_logo }}" width="96" height="96" alt="" loading="lazy">
+                        {% else %}
+                            {{ prediction.match.home_team_name|default:"Х"|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ prediction.match.home_team_name|default:"Хозяева" }}</strong>
                 </span>
-                <span class="feed-prediction-cover-team is-away"{% if prediction.match.away_team_logo %} data-skeleton-image{% endif %}>
-                    {% if prediction.match.away_team_logo %}
-                        <img src="{{ prediction.match.away_team_logo }}" width="96" height="96" alt="" loading="lazy">
-                    {% else %}
-                        {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
-                    {% endif %}
+                <span class="feed-prediction-cover-vs" aria-hidden="true">VS</span>
+                <span class="feed-prediction-cover-team-group">
+                    <span class="feed-prediction-cover-team is-away"{% if prediction.match.away_team_logo %} data-skeleton-image{% endif %}>
+                        {% if prediction.match.away_team_logo %}
+                            <img src="{{ prediction.match.away_team_logo }}" width="96" height="96" alt="" loading="lazy">
+                        {% else %}
+                            {{ prediction.match.away_team_name|default:"Г"|slice:":1" }}
+                        {% endif %}
+                    </span>
+                    <strong>{{ prediction.match.away_team_name|default:"Гости" }}</strong>
                 </span>
             </span>
         </span>
@@ -71,7 +78,6 @@
                 </svg>
                 <strong>{{ prediction.coupon.confidence }}%</strong>
             </span>
-            <span>Уверенность</span>
         </span>
     </a>
 

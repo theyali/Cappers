@@ -4,6 +4,7 @@ from html.parser import HTMLParser
 from types import SimpleNamespace
 
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -20,7 +21,17 @@ from cabinet.models import (
 )
 from game.models import League, Match, Prediction, PredictionCoupon, Sport, Team
 
-from .models import Article, News, StaticPage
+from .models import (
+    Article,
+    News,
+    StaticPage,
+    WikiTerm,
+    WikiTermSection,
+    WikiVideo,
+    WikiVideoProgress,
+    WikiVideoReaction,
+    WikiVideoSection,
+)
 
 from .expert_ranking import (
     expert_ranking_score,
@@ -115,6 +126,184 @@ class PredictionFilterSidebarTemplateTests(SimpleTestCase):
 
         self.assertTrue(parser.banner_inside_prediction_sidebar)
         self.assertFalse(parser.banner_inside_filter_matches)
+
+
+class ExpertRecommendationsTemplateTests(SimpleTestCase):
+    def test_result_bar_splits_wins_refunds_and_losses(self):
+        from cabinet.expert_profile_views import _result_bar
+
+        card = {"wins_count": 35, "refunds_count": 2, "losses_count": 23}
+        self.assertEqual(
+            _result_bar(card),
+            [
+                {"key": "win", "x": "0.00", "width": "58.33"},
+                {"key": "refund", "x": "58.33", "width": "3.33"},
+                {"key": "loss", "x": "61.67", "width": "38.33"},
+            ],
+        )
+        self.assertEqual(_result_bar({"wins_count": 0, "refunds_count": 0, "losses_count": 0}), [])
+
+    def test_highlights_go_to_month_leader_best_roi_and_most_active(self):
+        from cabinet.expert_profile_views import _assign_recommendation_highlights
+
+        cards = [
+            {"id": user_id, "predictions_count": count, "predictions_label": "прогнозов"}
+            for user_id, count in ((1, 40), (2, 30), (3, 258), (4, 12), (5, 0))
+        ]
+        _assign_recommendation_highlights(cards, {1: 5, 2: 103, 4: 8}, month_leader_id=1)
+
+        self.assertEqual(
+            [card["highlight"] for card in cards],
+            [
+                "Лидер рейтинга месяца",
+                "Лучший ROI за месяц",
+                "Самый активный: 258 прогнозов",
+                "Растущий эксперт",
+                "Рекомендуем КапперХаб",
+            ],
+        )
+
+    def test_compact_cards_show_real_metrics_and_navigation(self):
+        recommendation = {
+            "id": 4,
+            "name": "Kirill Pavlenko",
+            "initials": "KP",
+            "avatar_url": "",
+            "is_vip": False,
+            "is_verified": True,
+            "trust_index": Decimal("7.3"),
+            "profile_url": "/experts/kirill/",
+            "sport_label": "Футбол · Теннис",
+            "highlight": "Рекомендуем КапперХаб",
+            "hit_rate": 61,
+            "roi_label": "+24,1%",
+            "roi_positive": True,
+            "wins_count": 15,
+            "losses_count": 9,
+            "refunds_count": 1,
+            "decided_count": 24,
+            "result_bar": [
+                {"key": "win", "x": "0.00", "width": "60.00"},
+                {"key": "refund", "x": "60.00", "width": "4.00"},
+                {"key": "loss", "x": "64.00", "width": "36.00"},
+            ],
+            "is_following": False,
+        }
+        html = render_to_string(
+            "cabinet/_expert_recommendations.html",
+            {
+                "recommended_experts": [recommendation],
+                "request": SimpleNamespace(user=SimpleNamespace(is_authenticated=False)),
+            },
+        )
+
+        self.assertIn("data-expert-recommendations-track", html)
+        self.assertIn("data-expert-recommendations-prev", html)
+        self.assertIn("data-expert-recommendations-dots", html)
+        self.assertIn('<rect class="is-win" x="0.00" width="60.00" height="4">', html)
+        self.assertIn('<rect class="is-refund" x="60.00" width="4.00" height="4">', html)
+        self.assertIn('<rect class="is-loss" x="64.00" width="36.00" height="4">', html)
+        self.assertIn("Побед 15, возвратов 1, поражений 9", html)
+        self.assertIn("61% заходит", html)
+        self.assertIn("ROI +24,1%", html)
+        self.assertIn("Футбол · Теннис", html)
+        self.assertIn("Проверенный эксперт", html)
+        self.assertIn("Все капперы", html)
+        self.assertIn("Подписаться", html)
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class WikiVideoBackendTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="wiki-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        self.section = WikiVideoSection.objects.create(name="Обучение", icon="general")
+        self.video = WikiVideo.objects.create(
+            title="Как смотреть прогнозы",
+            section=self.section,
+            description="<p>Подробное описание видео</p>",
+            video=SimpleUploadedFile("wiki.mp4", b"video", content_type="video/mp4"),
+            tags="прогнозы, обучение",
+        )
+
+    def test_wiki_search_filters_videos_by_tags(self):
+        other_section = WikiVideoSection.objects.create(name="Другое", icon="general")
+        WikiVideo.objects.create(
+            title="Баланс",
+            section=other_section,
+            description="<p>Пополнение счета</p>",
+            video=SimpleUploadedFile("balance.mp4", b"video", content_type="video/mp4"),
+            tags="кошелек",
+        )
+        term_section = WikiTermSection.objects.create(name="Термины")
+        WikiTerm.objects.create(
+            term="ROI",
+            section=term_section,
+            description="Доходность ставок",
+        )
+
+        response = self.client.get(reverse("front:wiki"), {"q": "прогнозы"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Как смотреть прогнозы")
+        self.assertNotContains(response, "Пополнение счета")
+
+    def test_video_view_endpoint_increments_views_for_guest(self):
+        response = self.client.post(
+            reverse("front:wiki_video_view", kwargs={"video_id": self.video.pk})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.views_count, 1)
+        self.assertEqual(response.json()["views_count"], 1)
+
+    def test_video_reaction_toggles_and_switches_counts(self):
+        self.client.force_login(self.user)
+
+        like_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_LIKE},
+        )
+        dislike_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_DISLIKE},
+        )
+        clear_response = self.client.post(
+            reverse("front:wiki_video_reaction", kwargs={"video_id": self.video.pk}),
+            {"kind": WikiVideoReaction.KIND_DISLIKE},
+        )
+
+        self.assertEqual(like_response.status_code, 200)
+        self.assertEqual(dislike_response.status_code, 200)
+        self.assertEqual(clear_response.status_code, 200)
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.likes_count, 0)
+        self.assertEqual(self.video.dislikes_count, 0)
+        self.assertFalse(WikiVideoReaction.objects.filter(video=self.video, user=self.user).exists())
+
+    def test_video_progress_endpoint_saves_resume_position(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("front:wiki_video_progress", kwargs={"video_id": self.video.pk}),
+            {"position_seconds": "95.4", "duration_seconds": "100"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        progress = WikiVideoProgress.objects.get(video=self.video, user=self.user)
+        self.assertEqual(progress.position_seconds, 95)
+        self.assertEqual(progress.duration_seconds, 100)
+        self.assertTrue(progress.completed)
+        self.assertEqual(response.json()["percent"], 95)
 
 
 class HomeMobileBookmakersTemplateTests(SimpleTestCase):
@@ -781,7 +970,6 @@ class FooterRenderingTests(TestCase):
         cache.clear()
 
         urls = [
-            reverse("front:wiki"),
             reverse("front:sports_news"),
             reverse("front:how_it_works"),
             reverse("front:bonuses"),
@@ -1092,3 +1280,98 @@ class SiteSearchTests(TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.context["filters"]["sport"], "")
         self.assertEqual(result.context["filters"]["status"], "")
+
+
+class WikiPageNavigationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.section = WikiTermSection.objects.create(name="Основы", is_active=True)
+        cls.hidden_section = WikiTermSection.objects.create(name="Скрытый раздел", is_active=False)
+        WikiTerm.objects.create(term="Коэффициент", section=cls.section, description="Число для расчёта выплаты")
+        WikiTerm.objects.create(term="Скрытый термин", section=cls.hidden_section, description="Недоступное описание")
+
+    def test_video_sidebar_links_to_pages(self):
+        response = self.client.get(reverse("front:wiki"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'href="{reverse("front:how_it_works")}"')
+        self.assertContains(response, f'href="{reverse("front:wiki_dictionary")}"')
+        self.assertContains(response, f'class="is-active" aria-current="page" href="{reverse("front:wiki")}"')
+
+    def test_dictionary_is_separate_page_with_own_active_link(self):
+        response = self.client.get(reverse("front:wiki_dictionary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Словарь терминов')
+        self.assertContains(response, "Коэффициент")
+        self.assertNotContains(response, "Скрытый термин")
+        self.assertContains(response, f'class="is-active" aria-current="page" href="{reverse("front:wiki_dictionary")}"')
+
+    def test_dictionary_filters_work_on_page_and_ajax(self):
+        url = reverse("front:wiki_dictionary")
+        response = self.client.get(url, {"q": "несуществующее"})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<h3>Коэффициент</h3>")
+
+        response = self.client.get(
+            url,
+            {"fragment": "terms", "term_section": self.section.pk},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Коэффициент", response.json()["html"])
+        self.assertEqual(response.json()["filtered_count"], 1)
+
+
+class VipStoriesPresentationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import timedelta
+        from cabinet.models import UserVipSubscription
+        from notifications.models import Notification
+
+        cls.reader = User.objects.create_user(
+            username="vip-stories-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        cls.author = User.objects.create_user(
+            username="vip-stories-author",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        profile, _ = AnalystProfile.objects.get_or_create(user=cls.author)
+        profile.display_name = "Антон Тестовый"
+        profile.is_public = True
+        profile.is_verified = True
+        profile.save(update_fields=["display_name", "is_public", "is_verified"])
+        UserVipSubscription.objects.create(
+            user=cls.author,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(days=30),
+            duration_days=30,
+        )
+        cls.notification = Notification.objects.create(
+            recipient=cls.reader,
+            actor=cls.author,
+            kind=Notification.Kind.NEW_PREDICTION,
+            title="Новый прогноз",
+            event_key="vip-story-test-new-prediction",
+        )
+
+    def test_vip_stories_include_real_unread_counts_and_roi(self):
+        from front.feed_views import _vip_story_payloads
+
+        stories, count = _vip_story_payloads(self.reader)
+        self.assertEqual(count, 1)
+        self.assertEqual(len(stories), 1)
+        self.assertEqual(stories[0]["unread_count"], 1)
+        self.assertEqual(stories[0]["roi_label"], "+0,0%")
+        self.assertEqual(stories[0]["initials"], "АТ")
+        self.assertTrue(stories[0]["is_verified"])
+        self.assertFalse(stories[0]["is_live"])
+
+        self.notification.is_read = True
+        self.notification.save(update_fields=["is_read"])
+        stories, _ = _vip_story_payloads(self.reader)
+        self.assertEqual(stories[0]["unread_count"], 0)
