@@ -23744,7 +23744,17 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-weight: 700;
 }
 .forecast-vertical-top-info { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
-.forecast-vertical-reactions { display: inline-flex; align-items: center; gap: 9px; color: #fff; font-size: 11px; white-space: nowrap; }
+.forecast-vertical-reactions {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: #fafafa;
+    font-size: 11px;
+    white-space: nowrap;
+    background: rgba(12, 35, 111, 0.65);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
 .forecast-vertical-reactions > span { display: inline-flex; align-items: center; gap: 4px; }
 .forecast-vertical-reactions svg { display: block; flex: 0 0 14px; width: 14px; height: 14px; }
 .forecast-vertical-reactions .solar-icon { fill: currentColor; stroke: none; }
@@ -23805,6 +23815,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .forecast-vertical-confidence progress::-webkit-progress-value { background: var(--yellow); border-radius: 999px; }
 .forecast-vertical-confidence progress::-moz-progress-bar { background: var(--yellow); border-radius: 999px; }
 .forecast-vertical-open {
+    outline: 3px solid;
     min-width: 0;
     min-height: 58px;
     display: flex;
