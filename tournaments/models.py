@@ -159,7 +159,7 @@ class Tournament(models.Model):
         upload_to=tournament_image_upload_path,
         blank=True,
         null=True,
-        help_text="Показывается в hero на внутренней странице турнира и в карточке.",
+        help_text="Показывается в hero на внутренней странице турнира.",
     )
     card_icon_bg_color = models.CharField(
         "Фон иконки в карточке",

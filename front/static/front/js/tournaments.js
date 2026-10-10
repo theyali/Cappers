@@ -1,4 +1,13 @@
 (() => {
+    document.querySelectorAll("[data-tournament-icon-color]").forEach((icon) => {
+        const color = icon.dataset.tournamentIconColor || "";
+        if (/^#[0-9a-fA-F]{6}$/.test(color)) {
+            icon.style.setProperty("--tournament-icon-color", color);
+        }
+    });
+})();
+
+(() => {
     const pad = (value) => String(value).padStart(2, "0");
 
     const formatRemaining = (milliseconds) => {
