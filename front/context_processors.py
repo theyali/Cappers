@@ -13,7 +13,7 @@ from front.models import WikiVideo
 
 GLOBAL_CONTEXT_CACHE_KEY = "website-context:v2"
 GLOBAL_CONTEXT_CACHE_SECONDS = 120
-BOOKMAKERS_CONTEXT_CACHE_KEY = "bookmakers-context:v1"
+BOOKMAKERS_CONTEXT_CACHE_KEY = "bookmakers-context:v2"
 BOOKMAKERS_CONTEXT_CACHE_SECONDS = 120
 HOME_WIKI_CACHE_KEY = "home-wiki-videos:v1"
 HOME_WIKI_CACHE_SECONDS = 120
@@ -171,7 +171,7 @@ def _load_bookmakers_context() -> dict:
             key=lambda item: (item.home_order, item.id),
         )
         if bookmaker.show_on_home
-    ][:3]
+    ][:5]
     payload = {
         "bookmakers": bookmakers,
         "home_bookmakers": home_bookmakers,
