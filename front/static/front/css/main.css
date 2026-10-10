@@ -18981,18 +18981,18 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page > .prediction-reactions .prediction-views { margin-left: auto; background: none; }
 .coupon-detail-page > .prediction-reactions .prediction-like.is-active { color: #ff747d; }
 .coupon-detail-page > .prediction-comments { grid-column: 1; grid-row: 5; gap: 12px; padding: 15px; border-radius: 15px; background: #191a21; }
-.coupon-detail-page > .prediction-comments .prediction-comments-head { justify-content: flex-start; gap: 7px; }
-.coupon-detail-page > .prediction-comments .prediction-comments-head h2 { font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
-.coupon-detail-page > .prediction-comments .prediction-comments-total { color: #888895; font-size: 11px; }
-.coupon-detail-page > .prediction-comments .prediction-comment-form { grid-template-columns: 28px minmax(0,1fr); align-items: center; min-height: 39px; gap: 8px; padding: 6px 7px 6px 10px; border-radius: 13px; background: #111217; }
-.coupon-detail-page > .prediction-comments .prediction-comment-avatar { width: 27px; height: 27px; font-size: 10px; }
-.coupon-detail-page > .prediction-comments .prediction-comment-form textarea { min-height: 28px; height: 28px; padding: 5px 74px 5px 4px; border: 0; background: transparent; box-shadow: none; font-size: 11px; }
-.coupon-detail-page > .prediction-comments .prediction-comment-submit { top: 6px; right: 7px; min-height: 27px; padding: 0 12px; border-radius: 9px; background: var(--yellow); color: #111; font-size: 11px; }
-.coupon-detail-page > .prediction-comments .prediction-comment-submit span { position: static; width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
-.coupon-detail-page > .prediction-comments .prediction-comment-submit svg { display: none; }
-.coupon-detail-page > .prediction-comments .prediction-comments-empty { min-height: 106px; background: #121319; }
-.coupon-detail-page > .prediction-comments .prediction-comments-empty strong { color: #fff; font-size: 12px; }
-.coupon-detail-page > .prediction-comments .prediction-comments-empty span { font-size: 10px; }
+.coupon-detail-page .prediction-comments-head { justify-content: flex-start; gap: 7px; }
+.coupon-detail-page .prediction-comments-head h2 { font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
+.coupon-detail-page .prediction-comments-total { color: #888895; font-size: 11px; }
+.coupon-detail-page .prediction-comment-form { grid-template-columns: 28px minmax(0,1fr); align-items: center; min-height: 39px; gap: 8px; padding: 6px 7px 6px 10px; border-radius: 13px; background: #111217; }
+.coupon-detail-page .prediction-comment-avatar { width: 27px; height: 27px; font-size: 10px; }
+.coupon-detail-page .prediction-comment-form textarea { min-height: 28px; height: 28px; padding: 5px 74px 5px 4px; border: 0; background: transparent; box-shadow: none; font-size: 11px; }
+.coupon-detail-page .prediction-comment-submit { top: 6px; right: 7px; min-height: 27px; padding: 0 12px; border-radius: 9px; background: var(--yellow); color: #111; font-size: 11px; }
+.coupon-detail-page .prediction-comment-submit span { position: static; width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
+.coupon-detail-page .prediction-comment-submit svg { display: none; }
+.coupon-detail-page .prediction-comments-empty { min-height: 106px; background: #121319; }
+.coupon-detail-page .prediction-comments-empty strong { color: #fff; font-size: 12px; }
+.coupon-detail-page .prediction-comments-empty span { font-size: 10px; }
 
 .expert-sport-result-bar .is-win { background: #32a852; }
 .expert-sport-result-bar .is-loss { background: #ef3131; }
