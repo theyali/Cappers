@@ -185,6 +185,10 @@ def search(request):
         tab["url"] = reverse("front:search") + "?" + urlencode({**params, "category": tab["key"]})
 
     context.update({
+        "sections": [
+            {"key": key, "title": label, "count": context["counts"][key], "rows": context["groups"][key]}
+            for key, label in SEARCH_GROUPS
+        ],
         "active_category": selected,
         "tabs": tabs,
         "search_sports": SEARCH_SPORTS,
