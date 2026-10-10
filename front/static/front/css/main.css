@@ -14094,109 +14094,299 @@ body.register {
     transition: transform 0.22s;
 }
 .expert-monthly-empty { display: grid; gap: 4px; padding: 20px; border-radius: 14px; background: #171718; }
-.expert-recommendations { min-width: 0; display: grid; gap: 14px; padding-top: 4px; }
-.expert-recommendations-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; padding: 8px 2px 0; }
-.expert-recommendations-head h2 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.05; }
-.expert-recommendations-head > span { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.expert-recommendations {
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    padding: 28px 30px 22px;
+    background: #0e0f12;
+}
+.expert-recommendations-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 22px;
+}
+.expert-recommendations-heading { min-width: 0; }
+.expert-recommendations-heading .expert-public-kicker {
+    margin: 0 0 7px;
+    color: var(--yellow);
+    font-size: 10px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+}
+.expert-recommendations-head h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 2.8vw, 34px);
+    font-weight: 400;
+    line-height: 1.05;
+}
+.expert-recommendations-head h2 mark { color: var(--blue); background: transparent; }
+.expert-recommendations-heading > p:last-child {
+    margin: 7px 0 0;
+    color: #9b9ca4;
+    font-size: 11px;
+    line-height: 1.35;
+}
+.expert-recommendations-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 9px;
+    padding-bottom: 2px;
+}
+.expert-recommendations-controls > span {
+    color: #999ba3;
+    font-size: 11px;
+    white-space: nowrap;
+}
+.expert-recommendations-arrows { display: flex; gap: 6px; }
+.expert-recommendations-arrows button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: #202127;
+    cursor: pointer;
+}
+.expert-recommendations-arrows button:hover:not(:disabled) { color: var(--yellow); background: #2c2d33; }
+.expert-recommendations-arrows button:disabled { cursor: default; opacity: .38; }
+.expert-recommendations-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 11px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.expert-recommendations-all:hover { background: #fff76b; }
+.expert-recommendations-all span { font-size: 16px; }
 .expert-recommendations-track {
     min-width: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(270px, 286px);
+    grid-auto-columns: clamp(178px, calc((100% - 48px) / 5), 200px);
     gap: 12px;
     overflow-x: auto;
-    padding: 2px 0 8px;
-    scroll-snap-type: x proximity;
+    overflow-y: hidden;
+    padding: 0 0 2px;
+    scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-.expert-recommendations-track::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.expert-recommendations-track::-webkit-scrollbar { display: none; }
 .expert-recommendation-card {
     position: relative;
-    min-height: 332px;
-    overflow: hidden;
-    border-radius: 18px;
-    background: var(--panel);
+    min-width: 0;
+    min-height: 252px;
+    height: 100%;
+    border-radius: 16px;
+    background: #191a20;
     scroll-snap-align: start;
 }
-.expert-recommendation-cover { height: 88px; background: #171718; }
 .expert-recommendation-avatar {
-    top: 42px;
-    left: 50%;
-    width: 82px;
-    height: 82px;
+    width: 66px;
+    height: 66px;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    color: var(--ink);
-    background: var(--yellow);
-    box-shadow: 0 0 0 6px var(--panel);
-    transform: translateX(-50%);
-    font-size: 20px;
-    font-weight: 800;
+    color: #fff;
+    background: #275cf8;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+    font-size: 22px;
+    font-weight: 700;
 }
-.expert-recommendation-avatar img { width: 82px; height: 82px; display: block; object-fit: cover; border-radius: 50%; }
+.expert-recommendation-card:nth-child(5n+2) .expert-recommendation-avatar:not(.has-image) { background: #17894d; }
+.expert-recommendation-card:nth-child(5n+3) .expert-recommendation-avatar:not(.has-image) { background: #7435dc; }
+.expert-recommendation-card:nth-child(5n+4) .expert-recommendation-avatar:not(.has-image) { background: #2c4c9f; }
+.expert-recommendation-card:nth-child(5n+5) .expert-recommendation-avatar:not(.has-image) { background: #4536c3; }
+.expert-recommendation-avatar img {
+    display: block;
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    object-fit: cover;
+}
 .expert-recommendation-body {
-    min-height: 244px;
-    display: grid;
-    align-content: start;
-    justify-items: center;
-    gap: 11px;
-    padding: 50px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 252px;
+    height: 100%;
+    padding: 80px 11px 12px;
     text-align: center;
 }
 .expert-recommendation-name {
-    min-width: 0;
-    max-width: 100%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    color: var(--text);
+    gap: 5px;
+    max-width: 100%;
+    min-width: 0;
+    color: #fff;
+    text-decoration: none;
 }
 .expert-recommendation-name > strong {
     min-width: 0;
-    max-width: 205px;
+    max-width: 100%;
     overflow: hidden;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 18px;
-    line-height: 1.15;
 }
-.expert-recommendation-badge { width: 19px; height: 19px; flex: 0 0 19px; display: inline-grid; place-items: center; }
-.expert-recommendation-badge svg { width: 19px; height: 19px; display: block; }
-.expert-recommendation-results {
+.expert-recommendation-badge {
+    display: inline-grid;
+    flex: 0 0 14px;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+}
+.expert-recommendation-badge svg { display: block; width: 14px; height: 14px; }
+.expert-recommendation-sport {
+    min-height: 13px;
+    max-width: 100%;
+    overflow: hidden;
+    margin: -3px 0 0;
+    color: #85868d;
+    font-size: 9px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.expert-recommendation-feature {
+    display: block;
+    max-width: 100%;
+    min-height: 21px;
+    overflow: hidden;
+    margin-top: 3px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    color: var(--yellow);
+    background: rgba(251, 241, 16, .11);
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.expert-recommendation-metrics {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 11px;
-    font-size: 15px;
-    font-variant-numeric: tabular-nums;
+    gap: 7px;
+    max-width: 100%;
+    font-size: 9px;
+    font-weight: 700;
+    white-space: nowrap;
 }
-.expert-recommendation-total { margin: -2px 0 2px; color: var(--muted); font-size: 13px; }
-.expert-recommendation-follow {
+.expert-recommendation-metrics > span {
+    padding: 5px 7px;
+    border-radius: 6px;
+    color: #f0f0f2;
+    background: #101115;
+}
+.expert-recommendation-metrics .is-roi {
+    color: #60e48d;
+    background: rgba(27, 117, 58, .24);
+}
+.expert-recommendation-metrics .is-roi.is-negative {
+    color: #ff777f;
+    background: rgba(180, 38, 54, .22);
+}
+.expert-recommendation-bar {
+    display: block;
     width: 100%;
-    min-height: 42px;
+    height: 5px;
+    overflow: hidden;
+    margin: -1px 0 0;
+    border: 0;
+    border-radius: 10px;
+    appearance: none;
+    background: #e83b51;
+}
+.expert-recommendation-bar::-webkit-progress-bar { border-radius: inherit; background: #e83b51; }
+.expert-recommendation-bar::-webkit-progress-value { border-radius: 10px 0 0 10px; background: #43d87b; }
+.expert-recommendation-bar::-moz-progress-bar { background: #43d87b; }
+.expert-recommendation-results {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    margin: -2px 0 0;
+    font-size: 9px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.expert-recommendation-results .is-win { color: #43d87b; }
+.expert-recommendation-results .is-refund { color: #9b9ba5; }
+.expert-recommendation-results .is-loss { color: #f36a79; }
+.expert-recommendation-follow {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 32px;
     margin-top: auto;
-    padding: 0 14px;
+    padding: 0 8px;
     border: 0;
-    border-radius: 11px;
-    color: #fff;
-    background: var(--blue);
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--yellow);
     cursor: pointer;
     font: inherit;
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 700;
+    text-decoration: none;
 }
-.expert-recommendation-follow:hover { color: #fff; background: #0a4be0; }
+.expert-recommendation-follow::before { content: "+"; font-size: 17px; font-weight: 500; }
+.expert-recommendation-follow.is-active {
+    color: #b6b7c0;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #303138;
+}
+.expert-recommendation-follow.is-active::before { content: "✓"; font-size: 13px; }
+.expert-recommendation-follow:hover:not(.is-active) { color: var(--ink); background: #fff76b; }
 .expert-recommendation-follow:disabled,
-.profile-demand-sort button:disabled {
-    cursor: wait;
-    opacity: 0.65;
+.profile-demand-sort button:disabled { cursor: wait; opacity: .65; }
+.expert-recommendations-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 7px;
 }
+.expert-recommendations-dots button {
+    width: 9px;
+    height: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: #31323a;
+    cursor: pointer;
+}
+.expert-recommendations-dots button.is-active { width: 22px; background: var(--yellow); }
+.expert-recommendations-dots button:focus-visible,
+.expert-recommendations-arrows button:focus-visible,
+.expert-recommendation-follow:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
 .auth-stage { min-height: calc(100vh - 145px); display: grid; align-items: center; padding: 10px 0 20px; }
 .auth-shell {
     width: min(1180px, 100%);
@@ -15420,7 +15610,7 @@ body.register {
 .expert-public-shell .expert-public-analytics { order: 50; }
 .expert-public-shell .expert-sport-profit { order: 60; }
 .expert-public-shell .expert-monthly-stats { order: 70; }
-.expert-public-shell .expert-recommendations { order: 80; padding: 0 10px; }
+.expert-public-shell .expert-recommendations { order: 80; }
 .fixed-tg-btn {
     width: 50px;
     min-width: 50px;
@@ -15486,7 +15676,20 @@ body.register {
     border-width: 1.5px;
     font-size: 7px;
 }
-.expert-recommendation-avatar .capper-trust-badge { top: -8px; left: -8px; width: 28px; height: 28px; font-size: 9px; }
+.expert-recommendation-avatar .capper-trust-badge {
+    top: -5px;
+    right: -9px;
+    left: auto;
+    width: auto;
+    min-width: 27px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 7px;
+    color: var(--ink);
+    background: var(--yellow);
+    font-size: 10px;
+    box-shadow: none;
+}
 .expert-public-avatar .capper-trust-badge { top: -8px; left: -8px; width: 40px; height: 40px; font-size: 15px; }
 .expert-leader-badges {
     position: absolute;
@@ -15601,11 +15804,9 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     line-height: 1;
     pointer-events: none;
 }
-.expert-recommendations-track { align-items: stretch; }
-.expert-recommendation-avatar.is-vip,
 .expert-recommendation-card .expert-recommendation-avatar {
     position: absolute;
-    top: 42px;
+    top: 12px;
     left: 50%;
     transform: translateX(-50%);
 }
