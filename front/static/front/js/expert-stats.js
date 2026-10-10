@@ -38,8 +38,9 @@
 
     const signed = (value) => {
         const number = Number(value || 0);
-        const prefix = number > 0 ? "+" : "";
-        return `${prefix}${number.toFixed(2)}`;
+        const sign = number > 0 ? "+" : number < 0 ? "−" : "";
+        const amount = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Math.abs(number));
+        return `${sign}${amount}`;
     };
 
     const compact = (value) => {
