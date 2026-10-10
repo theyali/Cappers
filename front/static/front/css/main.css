@@ -23745,6 +23745,9 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 }
 .forecast-vertical-top-info { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
 .forecast-vertical-reactions { display: inline-flex; align-items: center; gap: 9px; color: #fff; font-size: 11px; white-space: nowrap; }
+.forecast-vertical-reactions > span { display: inline-flex; align-items: center; gap: 4px; }
+.forecast-vertical-reactions svg { display: block; flex: 0 0 14px; width: 14px; height: 14px; }
+.forecast-vertical-reactions .solar-icon { fill: currentColor; stroke: none; }
 .forecast-vertical-feature-top .forecast-vertical-status { background: #182b69; color: #e1eaff; }
 .forecast-vertical-countdown { padding: 7px 10px; border-radius: 9px; color: #fff; background: #15171b; font-size: 11px; font-weight: 600; }
 .forecast-vertical-countdown[hidden] { display: none; }

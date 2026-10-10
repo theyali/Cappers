@@ -78,10 +78,22 @@
                                 </span>
                                 <span class="forecast-vertical-top-info">
                                     <span class="forecast-vertical-reactions">
-                                        <span title="Просмотры">◉ {{ prediction.views_count }}</span>
-                                        <span title="Лайки">♡ {{ prediction.likes_count }}</span>
-                                        <span title="Комментарии">◯ {{ prediction.comments_count }}</span>
-                                        <span title="Избранное">▯ {{ prediction.favorites_count }}</span>
+                                        <span title="Просмотры" aria-label="Просмотры: {{ prediction.views_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="eye" only %}
+                                            {{ prediction.views_count }}
+                                        </span>
+                                        <span title="Лайки" aria-label="Лайки: {{ prediction.likes_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="prediction_like" only %}
+                                            {{ prediction.likes_count }}
+                                        </span>
+                                        <span title="Комментарии" aria-label="Комментарии: {{ prediction.comments_count }}">
+                                            {% include "front/svgs/comment.svg" %}
+                                            {{ prediction.comments_count }}
+                                        </span>
+                                        <span title="Избранное" aria-label="Избранное: {{ prediction.favorites_count }}">
+                                            {% include "front/includes/_solar_icon.html" with name="favorites" only %}
+                                            {{ prediction.favorites_count }}
+                                        </span>
                                     </span>
                                     <span class="forecast-vertical-status is-{{ prediction.status_key }}">{% if prediction.status_key == 'pending' %}Купон ожидает{% else %}{{ prediction.status_label }}{% endif %}</span>
                                     {% if prediction.status_key == 'pending' %}
