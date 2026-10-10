@@ -91,7 +91,11 @@
                 const url = new URL(form.action, window.location.href);
                 url.searchParams.set("q", data.query);
                 all.href = url.href;
-                all.textContent = `Показать все ${data.total} результата →`;
+                const count = data.total;
+                const ending = count % 10 === 1 && count % 100 !== 11 ? "результат"
+                    : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14)
+                        ? "результата" : "результатов";
+                all.textContent = `Показать все ${count} ${ending} →`;
                 panel.append(all);
             }
             panel.hidden = false;
