@@ -32,8 +32,8 @@
 
             <div class="forecast-vertical-slider" data-forecast-slider>
                 {% if latest_predictions %}
-                <div class="forecast-vertical-track" data-forecast-track aria-label="Последние прогнозы">
-                    {% for prediction in latest_predictions %}
+                <div class="forecast-vertical-track" aria-label="Последние прогнозы">
+                    {% for prediction in latest_predictions|slice:":4" %}
                     <article class="forecast-vertical-card{% if forloop.first %} is-active{% endif %}{% if prediction.mobile_background.is_light %} is-light{% endif %}" data-slide data-slide-index="{{ forloop.counter0 }}">
                         <button class="forecast-vertical-preview" type="button" data-slide-select="{{ forloop.counter0 }}" aria-label="Показать прогноз {{ prediction.home_name }} — {{ prediction.away_name }}" {% if forloop.first %}tabindex="-1" aria-hidden="true"{% endif %}>
                             <span class="forecast-vertical-preview-image" aria-hidden="true">

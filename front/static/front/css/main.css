@@ -23564,13 +23564,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     display: grid;
     align-content: start;
     gap: 12px;
-    max-height: 696px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-width: none;
 }
-.forecast-vertical-track::-webkit-scrollbar { display: none; }
 .forecast-vertical-card {
     position: relative;
     height: 96px;

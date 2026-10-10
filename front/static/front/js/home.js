@@ -2,7 +2,6 @@
     const slider = document.querySelector("[data-forecast-slider]");
     if (!slider) return;
 
-    const track = slider.querySelector("[data-forecast-track]");
     const slides = Array.from(slider.querySelectorAll("[data-slide]"));
     const previousButton = document.querySelector("[data-slider-prev]");
     const nextButton = document.querySelector("[data-slider-next]");
@@ -17,19 +16,7 @@
     let activeIndex = 0;
     let timer = null;
 
-    const focusSelectedSlide = (index) => {
-        if (!track) return;
-        const slide = slides[index];
-        window.requestAnimationFrame(() => {
-            const top = slide.offsetTop - track.offsetTop;
-            const bottom = top + slide.offsetHeight;
-            if (top < track.scrollTop || bottom > track.scrollTop + track.clientHeight) {
-                track.scrollTo({ top, behavior: reducedMotion.matches ? "instant" : "smooth" });
-            }
-        });
-    };
-
-    const show = (index, scroll = true) => {
+    const show = (index) => {
         activeIndex = (index + slides.length) % slides.length;
         slides.forEach((slide, i) => {
             const active = i === activeIndex;
@@ -47,7 +34,6 @@
                 feature.setAttribute("aria-hidden", String(!active));
             }
         });
-        if (scroll) focusSelectedSlide(activeIndex);
     };
 
     const stopAutoplay = () => {
@@ -93,7 +79,7 @@
         node.hidden = false;
     });
 
-    show(0, false);
+    show(0);
     startAutoplay();
 })();
 
