@@ -122,6 +122,85 @@
         window.CappersSkeleton?.watchImage(icon);
     };
 
+    const initRecommendationsSlider = () => {
+        const section = document.querySelector("[data-expert-recommendations]");
+        if (!section) return;
+
+        const track = section.querySelector("[data-expert-recommendations-track]");
+        const previous = section.querySelector("[data-expert-recommendations-prev]");
+        const next = section.querySelector("[data-expert-recommendations-next]");
+        const dots = section.querySelector("[data-expert-recommendations-dots]");
+        const card = track?.querySelector(".expert-recommendation-card");
+        if (!track || !card || !previous || !next || !dots) return;
+
+        let positions = [0];
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const moveTo = (position) => {
+            track.scrollTo({
+                left: Math.max(0, Math.min(position, track.scrollWidth - track.clientWidth)),
+                behavior: reducedMotion.matches ? "instant" : "smooth",
+            });
+        };
+
+        const updateControls = () => {
+            const current = track.scrollLeft;
+            const max = Math.max(0, track.scrollWidth - track.clientWidth);
+            previous.disabled = current <= 2;
+            next.disabled = current >= max - 2;
+            let closest = 0;
+            positions.forEach((position, index) => {
+                if (Math.abs(position - current) < Math.abs(positions[closest] - current)) {
+                    closest = index;
+                }
+            });
+            dots.querySelectorAll("button").forEach((dot, index) => {
+                dot.classList.toggle("is-active", index === closest);
+                dot.setAttribute("aria-current", index === closest ? "true" : "false");
+            });
+        };
+
+        const rebuild = () => {
+            const max = Math.max(0, track.scrollWidth - track.clientWidth);
+            const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+            const step = card.getBoundingClientRect().width + gap;
+            positions = [0];
+            if (step > 0 && max > 2) {
+                for (let offset = step; offset < max - 2; offset += step) {
+                    positions.push(Math.round(offset));
+                }
+                positions.push(max);
+            }
+            dots.replaceChildren();
+            positions.forEach((position, index) => {
+                const dot = document.createElement("button");
+                dot.type = "button";
+                dot.setAttribute("aria-label", `Показать карточки, позиция ${index + 1} из ${positions.length}`);
+                dot.addEventListener("click", () => moveTo(position));
+                dots.append(dot);
+            });
+            dots.hidden = positions.length <= 1;
+            updateControls();
+        };
+
+        previous.addEventListener("click", () => {
+            const index = positions.findLastIndex((position) => position < track.scrollLeft - 2);
+            moveTo(positions[Math.max(0, index)]);
+        });
+        next.addEventListener("click", () => {
+            const position = positions.find((position) => position > track.scrollLeft + 2);
+            moveTo(position ?? positions[positions.length - 1]);
+        });
+        track.addEventListener("scroll", updateControls, { passive: true });
+        if (typeof ResizeObserver !== "undefined") {
+            new ResizeObserver(rebuild).observe(track);
+        } else {
+            window.addEventListener("resize", rebuild);
+        }
+        rebuild();
+    };
+
+    initRecommendationsSlider();
+
     hideCopybettingForCapper();
     initShareButton();
 
