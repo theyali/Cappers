@@ -7,13 +7,36 @@
 
 {% block content %}
 <div class="container">
+    <section class="home-search-hero" aria-labelledby="home-search-title">
+        <div class="home-search-main">
+            <p class="home-search-brand">КАППЕРХАБ</p>
+            <h1 id="home-search-title">Прогнозы на спорт <mark>от проверенных капперов</mark></h1>
+            <p class="home-search-description">Бесплатные прогнозы на футбол, теннис, баскетбол и хоккей. У каждого эксперта открытая статистика: проходимость, ROI и вся история ставок.</p>
+            {% include "front/includes/_site_search_form.html" with search_input_id="home-search-input" only %}
+            <div class="home-search-popular" aria-label="Популярные запросы">
+                <span>Популярно:</span>
+                <a href="{% url 'front:search' %}?q=Лига%20чемпионов">Лига чемпионов</a>
+                <a href="{% url 'front:search' %}?q=Арсенал%20—%20Челси">Арсенал — Челси</a>
+                <a href="{% url 'front:search' %}?q=Kirill%20Pavlenko">Kirill Pavlenko</a>
+                <a href="{% url 'front:prediction_expresses' %}">Экспрессы на сегодня</a>
+            </div>
+        </div>
+        <nav class="home-search-sports" aria-label="Поиск прогнозов по видам спорта">
+            <a href="{% url 'front:predictions_by_sport' 'football' %}">Футбол</a>
+            <a href="{% url 'front:predictions_by_sport' 'tennis' %}">Теннис</a>
+            <a href="{% url 'front:predictions_by_sport' 'basketball' %}">Баскетбол</a>
+            <a href="{% url 'front:predictions_by_sport' 'hockey' %}">Хоккей</a>
+            <a href="{% url 'front:prediction_expresses' %}">Экспрессы</a>
+            <a href="{% url 'game:match_list' %}?scope=live">Live</a>
+        </nav>
+    </section>
     {% include "front/includes/_home_mobile_slider.html" %}
     <section class="home-layout" aria-label="Главная лента прогнозов">
         <div class="forecast-area">
             <div class="home-heading">
     <div class="home-heading-copy">
         <p class="home-eyebrow">Свежая лента</p>
-        <h1>Последние <mark>прогнозы</mark></h1>
+        <h2>Последние <mark>прогнозы</mark></h2>
         <p class="home-heading-subtitle">Актуальные прогнозы от проверенных экспертов. Следи, анализируй, выигрывай.</p>
     </div>
     <div class="slider-actions" aria-label="Управление слайдером">
@@ -498,6 +521,7 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/home.js' %}" defer></script>
+<script src="{% static 'front/js/site-search.js' %}" defer></script>
 <script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>
