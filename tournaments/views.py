@@ -904,11 +904,11 @@ def _tournament_user_prizes(user):
 def _tournament_card(tournament: Tournament, now, *, participation=None) -> SimpleNamespace:
     allowed_sports = list(tournament.allowed_sports.all())
     is_all_sports = (
-        len(allowed_sports) != 1
+        not allowed_sports
         or "всем видам спорта" in tournament.title.casefold()
         or "все виды спорта" in tournament.title.casefold()
     )
-    first_sport = allowed_sports[0] if not is_all_sports else None
+    first_sport = allowed_sports[0] if len(allowed_sports) == 1 and not is_all_sports else None
     prizes = _active_prizes_by_place(tournament)
     prize_total = sum((prize.money_amount or Decimal("0") for prize in prizes), Decimal("0"))
     runtime_status = _runtime_status(tournament, now)
@@ -942,7 +942,10 @@ def _tournament_card(tournament: Tournament, now, *, participation=None) -> Simp
         coupons_count=getattr(tournament, "coupons_count", 0),
         prize_total=prize_total,
         sport_code=(first_sport.code if first_sport else "all"),
-        sport_label=(first_sport.name_ru or first_sport.name if first_sport else "Все виды спорта"),
+        sport_label=(
+            "Все виды спорта" if is_all_sports else
+            (first_sport.name_ru or first_sport.name if first_sport else "Несколько видов спорта")
+        ),
         sport_icon=_tournament_sport_icon(first_sport.code if first_sport else "all"),
     )
 

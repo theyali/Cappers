@@ -1150,7 +1150,7 @@ class TournamentCatalogCardTests(TestCase):
 
         response = self.client.get(reverse("tournaments:index"))
 
-        self.assertContains(response, "Все виды спорта")
+        self.assertContains(response, "<small>Несколько видов спорта</small>")
         self.assertNotContains(response, "<small>Баскетбол</small>")
 
     def test_open_all_sports_tournament_title_is_not_labeled_basketball(self):
