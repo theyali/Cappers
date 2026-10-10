@@ -8333,9 +8333,6 @@ body.expert-public-details-open {
   .predictions-content.articles-content {
     padding: 0;
   }
-  .expert-public-shell .expert-recommendations {
-    padding: 20px 16px;
-  }
 .expert-public-shell {
     display: grid;
     padding: 0;
@@ -9514,7 +9511,7 @@ body.expert-public-details-open {
     justify-content: space-between;
   }
   .expert-recommendations-track {
-    grid-auto-columns: minmax(170px, min(72vw, 210px));
+    grid-auto-columns: minmax(238px, min(72vw, 210px));
     margin-right: -16px;
     padding-right: 16px;
   }
