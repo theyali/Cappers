@@ -2,9 +2,11 @@ from datetime import date
 from decimal import Decimal
 from html.parser import HTMLParser
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import HttpResponse
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -1375,3 +1377,51 @@ class VipStoriesPresentationTests(TestCase):
         self.notification.save(update_fields=["is_read"])
         stories, _ = _vip_story_payloads(self.reader)
         self.assertEqual(stories[0]["unread_count"], 0)
+
+
+class HomeBestExpertsAjaxTests(TestCase):
+    def test_ajax_returns_only_updated_ranking(self):
+        from front import home_views
+
+        with (
+            patch.object(
+                home_views,
+                "_home_best_experts_context",
+                return_value={"best_experts": [], "best_experts_period": "90"},
+            ) as build_context,
+            patch.object(home_views, "_render_home_index") as render_full,
+        ):
+            response = self.client.get(
+                reverse("front:index"),
+                {"experts_period": "90", "fragment": "best_experts"},
+                HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="home-best-experts"')
+        self.assertContains(response, 'data-skeleton-block')
+        self.assertContains(response, 'experts_period=90#home-best-experts" class="is-active"')
+        self.assertNotContains(response, "<!doctype html>")
+        build_context.assert_called_once()
+        render_full.assert_not_called()
+
+    def test_regular_navigation_uses_full_home_page(self):
+        from front import home_views
+
+        with (
+            patch.object(
+                home_views,
+                "_render_home_index",
+                return_value=HttpResponse("full page"),
+            ) as render_full,
+            patch.object(home_views, "_home_best_experts_context") as build_context,
+        ):
+            response = self.client.get(
+                reverse("front:index"),
+                {"experts_period": "all", "fragment": "best_experts"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"full page")
+        render_full.assert_called_once()
+        build_context.assert_not_called()
