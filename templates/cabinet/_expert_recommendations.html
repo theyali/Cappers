@@ -56,7 +56,7 @@
                     <span>{{ recommendation.hit_rate }}% заходит</span>
                     <span class="is-roi{% if not recommendation.roi_positive %} is-negative{% endif %}">ROI {{ recommendation.roi_label }}</span>
                 </div>
-                <progress class="expert-recommendation-bar" value="{{ recommendation.wins_count }}" max="{{ recommendation.decided_count }}" aria-label="Выигрышей {{ recommendation.wins_count }} из {{ recommendation.decided_count }} завершённых прогнозов"></progress>
+                <progress class="expert-recommendation-bar" value="{{ recommendation.wins_count }}" max="{{ recommendation.decided_count|default:1 }}" aria-label="Выигрышей {{ recommendation.wins_count }} из {{ recommendation.decided_count }} завершённых прогнозов"></progress>
                 <div class="expert-recommendation-results" aria-label="Результаты прогнозов">
                     <span class="is-win">{{ recommendation.wins_count }} побед</span>
                     <span class="is-refund">{{ recommendation.refunds_count }} возврат</span>
