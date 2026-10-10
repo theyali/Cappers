@@ -1321,3 +1321,57 @@ class WikiPageNavigationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Коэффициент", response.json()["html"])
         self.assertEqual(response.json()["filtered_count"], 1)
+
+
+class VipStoriesPresentationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import timedelta
+        from cabinet.models import UserVipSubscription
+        from notifications.models import Notification
+
+        cls.reader = User.objects.create_user(
+            username="vip-stories-reader",
+            password="test-password",
+            role=User.Role.READER,
+        )
+        cls.author = User.objects.create_user(
+            username="vip-stories-author",
+            password="test-password",
+            role=User.Role.ANALYST,
+        )
+        profile, _ = AnalystProfile.objects.get_or_create(user=cls.author)
+        profile.display_name = "Антон Тестовый"
+        profile.is_public = True
+        profile.is_verified = True
+        profile.save(update_fields=["display_name", "is_public", "is_verified"])
+        UserVipSubscription.objects.create(
+            user=cls.author,
+            starts_at=timezone.now(),
+            ends_at=timezone.now() + timedelta(days=30),
+            duration_days=30,
+        )
+        cls.notification = Notification.objects.create(
+            recipient=cls.reader,
+            actor=cls.author,
+            kind=Notification.Kind.NEW_PREDICTION,
+            title="Новый прогноз",
+            event_key="vip-story-test-new-prediction",
+        )
+
+    def test_vip_stories_include_real_unread_counts_and_roi(self):
+        from front.feed_views import _vip_story_payloads
+
+        stories, count = _vip_story_payloads(self.reader)
+        self.assertEqual(count, 1)
+        self.assertEqual(len(stories), 1)
+        self.assertEqual(stories[0]["unread_count"], 1)
+        self.assertEqual(stories[0]["roi_label"], "+0,0%")
+        self.assertEqual(stories[0]["initials"], "АТ")
+        self.assertTrue(stories[0]["is_verified"])
+        self.assertFalse(stories[0]["is_live"])
+
+        self.notification.is_read = True
+        self.notification.save(update_fields=["is_read"])
+        stories, _ = _vip_story_payloads(self.reader)
+        self.assertEqual(stories[0]["unread_count"], 0)
