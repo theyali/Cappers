@@ -92,13 +92,27 @@ def _format_metric(metric: str, value) -> str:
     return str(int(_to_decimal(value)))
 
 
-def _icon_url(achievement) -> str:
-    if not achievement.icon:
+def _file_url(file_field) -> str:
+    if not file_field:
         return ""
     try:
-        return achievement.icon.url
+        return file_field.url
     except ValueError:
         return ""
+
+
+def _achievement_icon_url(achievement) -> str:
+    if achievement.metric == Achievement.Metric.CUSTOM:
+        icon_url = _file_url(achievement.icon)
+        if icon_url:
+            return icon_url
+    return _file_url(achievement.category.icon)
+
+
+def _achievement_static_icon(achievement) -> str:
+    if achievement.metric == Achievement.Metric.CUSTOM and achievement.icon:
+        return ""
+    return achievement.category.fallback_static_icon or DEFAULT_ACHIEVEMENT_ICON
 
 
 def _serialize_achievement(
@@ -113,8 +127,8 @@ def _serialize_achievement(
         "label": achievement.title,
         "title": achievement.title,
         "description": achievement.description,
-        "icon": achievement.fallback_static_icon or DEFAULT_ACHIEVEMENT_ICON,
-        "icon_url": _icon_url(achievement),
+        "icon": _achievement_static_icon(achievement),
+        "icon_url": _achievement_icon_url(achievement),
         "category": achievement.category.title,
         "metric": achievement.metric,
         "target": achievement.target_value,

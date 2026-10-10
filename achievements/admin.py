@@ -8,17 +8,39 @@ from .services import sync_user_achievements
 
 @admin.register(AchievementCategory)
 class AchievementCategoryAdmin(admin.ModelAdmin):
-    list_display = ("title", "slug", "sort_order", "is_active")
+    list_display = ("icon_preview", "title", "slug", "sort_order", "is_active")
     list_editable = ("sort_order", "is_active")
     search_fields = ("title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     ordering = ("sort_order", "title")
+    readonly_fields = ("icon_preview",)
+    fields = (
+        "title",
+        "slug",
+        "description",
+        "icon",
+        "fallback_static_icon",
+        "icon_preview",
+        "color",
+        "sort_order",
+        "is_active",
+    )
+
+    @admin.display(description="Иконка")
+    def icon_preview(self, obj):
+        if obj.icon:
+            return format_html(
+                '<img src="{}" style="width:32px;height:32px;object-fit:contain">',
+                obj.icon.url,
+            )
+        if obj.fallback_static_icon:
+            return obj.fallback_static_icon
+        return "—"
 
 
 @admin.register(Achievement)
 class AchievementAdmin(admin.ModelAdmin):
     list_display = (
-        "icon_preview",
         "title",
         "key",
         "category",
@@ -30,6 +52,7 @@ class AchievementAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_active", "audience", "metric", "category")
     list_editable = ("is_active", "sort_order")
+    list_select_related = ("category",)
     search_fields = ("title", "key", "description")
     autocomplete_fields = ("category",)
     readonly_fields = ("icon_preview", "created_at", "updated_at")
@@ -47,11 +70,11 @@ class AchievementAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Иконка",
+            "Особая иконка",
             {
+                "description": "Заполняйте только для особых достижений с метрикой «Другое». Обычные достижения используют иконку категории.",
                 "fields": (
                     "icon",
-                    "fallback_static_icon",
                     "icon_preview",
                 )
             },
@@ -100,13 +123,19 @@ class AchievementAdmin(admin.ModelAdmin):
 
     @admin.display(description="Иконка")
     def icon_preview(self, obj):
-        if obj.icon:
+        if obj.metric == Achievement.Metric.CUSTOM and obj.icon:
             return format_html(
                 '<img src="{}" style="width:32px;height:32px;object-fit:contain">',
                 obj.icon.url,
             )
-        if obj.fallback_static_icon:
-            return obj.fallback_static_icon
+        if obj.category_id:
+            if obj.category.icon:
+                return format_html(
+                    '<img src="{}" style="width:32px;height:32px;object-fit:contain;opacity:.72">',
+                    obj.category.icon.url,
+                )
+            if obj.category.fallback_static_icon:
+                return obj.category.fallback_static_icon
         return "—"
 
 

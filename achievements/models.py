@@ -12,6 +12,12 @@ class AchievementCategory(models.Model):
         upload_to="achievements/categories/",
         blank=True,
     )
+    fallback_static_icon = models.CharField(
+        "Статическая иконка",
+        max_length=255,
+        blank=True,
+        help_text="Используется для всех обычных достижений категории, если не загружена иконка.",
+    )
     color = models.CharField("Цвет", max_length=16, default="#0b56fa")
     sort_order = models.PositiveIntegerField("Порядок", default=0)
     is_active = models.BooleanField("Активна", default=True)
@@ -65,14 +71,10 @@ class Achievement(models.Model):
         blank=True,
     )
     icon = models.ImageField(
-        "Иконка",
+        "Иконка особого достижения",
         upload_to="achievements/icons/",
         blank=True,
-    )
-    fallback_static_icon = models.CharField(
-        "Статическая иконка",
-        max_length=255,
-        blank=True,
+        help_text="Используется только для особых достижений с метрикой «Другое». Обычные достижения берут иконку категории.",
     )
     audience = models.CharField(
         "Аудитория",

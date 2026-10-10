@@ -1,6 +1,7 @@
 import tempfile
 from decimal import Decimal
 from io import StringIO
+from pathlib import Path
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -9,9 +10,13 @@ from django.test import TestCase, override_settings
 from cabinet.models import AnalystFollow, User
 
 from achievements.management.commands.seed_achievements import (
+    CATEGORY_STATIC_ICONS,
     EXPERT_ACHIEVEMENT_DEFINITIONS,
     REFERRAL_ACHIEVEMENT_DEFINITIONS,
     USER_ACTIVITY_ACHIEVEMENT_DEFINITIONS,
+)
+from achievements.management.commands.seed_achievement_category_icons import (
+    CATEGORY_ICON_FILES,
 )
 from achievements.models import Achievement, AchievementCategory, UserAchievement
 from achievements.services import (
@@ -54,7 +59,7 @@ class SeedAchievementsTests(TestCase):
         self.assertEqual(first_pick.title, "Первый прогноз")
         self.assertEqual(first_pick.description, "Опубликуйте первый прогноз")
         self.assertEqual(
-            first_pick.fallback_static_icon,
+            first_pick.category.fallback_static_icon,
             "front/img/badges/first-pick.svg",
         )
         self.assertEqual(first_pick.metric, Achievement.Metric.PREDICTIONS)
@@ -64,6 +69,14 @@ class SeedAchievementsTests(TestCase):
 
         likes = Achievement.objects.get(key="likes-5")
         self.assertEqual(likes.audience, Achievement.Audience.ALL)
+        self.assertEqual(
+            set(
+                AchievementCategory.objects.exclude(
+                    fallback_static_icon="",
+                ).values_list("slug", flat=True)
+            ),
+            set(CATEGORY_STATIC_ICONS),
+        )
 
     def test_seed_achievements_is_idempotent(self):
         self.run_seed()
@@ -86,6 +99,29 @@ class SeedAchievementsTests(TestCase):
             Achievement.objects.count(),
             len(ALL_SEEDED_DEFINITIONS),
         )
+
+    def test_seed_category_icons_uploads_icons_from_seed_data(self):
+        self.run_seed()
+
+        with tempfile.TemporaryDirectory() as media_root:
+            with tempfile.TemporaryDirectory() as seed_dir:
+                seed_path = Path(seed_dir)
+                for filename in CATEGORY_ICON_FILES.values():
+                    (seed_path / filename).write_bytes(b"test image")
+
+                with override_settings(MEDIA_ROOT=media_root):
+                    call_command(
+                        "seed_achievement_category_icons",
+                        seed_dir=str(seed_path),
+                        stdout=StringIO(),
+                    )
+
+                for slug, filename in CATEGORY_ICON_FILES.items():
+                    category = AchievementCategory.objects.get(slug=slug)
+                    self.assertEqual(
+                        category.icon.name,
+                        f"achievements/categories/{filename}",
+                    )
 
 
 class AchievementServiceTests(TestCase):
@@ -214,19 +250,38 @@ class AchievementServiceTests(TestCase):
         self.assertEqual(item["progress"], 50)
         self.assertEqual(overview["next_achievement"]["key"], item["key"])
 
-    def test_uploaded_icon_url_has_priority_over_static_fallback(self):
+    def test_regular_achievement_uses_category_icon(self):
+        self.category.fallback_static_icon = "front/img/badges/category.svg"
+        self.category.save(update_fields=["fallback_static_icon"])
+        self.create_achievement(
+            audience=Achievement.Audience.ALL,
+            metric=Achievement.Metric.LIKES_GIVEN,
+            target_value=Decimal("1"),
+            icon=SimpleUploadedFile(
+                "ignored.svg",
+                b"<svg xmlns='http://www.w3.org/2000/svg'></svg>",
+                content_type="image/svg+xml",
+            ),
+        )
+
+        overview = build_achievement_overview(self.reader)
+        item = overview["items"][0]
+
+        self.assertEqual(item["icon"], "front/img/badges/category.svg")
+        self.assertEqual(item["icon_url"], "")
+
+    def test_custom_achievement_uses_uploaded_icon(self):
         with tempfile.TemporaryDirectory() as media_root:
             with override_settings(MEDIA_ROOT=media_root):
                 self.create_achievement(
                     audience=Achievement.Audience.ALL,
-                    metric=Achievement.Metric.LIKES_GIVEN,
+                    metric=Achievement.Metric.CUSTOM,
                     target_value=Decimal("1"),
                     icon=SimpleUploadedFile(
                         "badge.svg",
                         b"<svg xmlns='http://www.w3.org/2000/svg'></svg>",
                         content_type="image/svg+xml",
                     ),
-                    fallback_static_icon="front/img/badges/fallback.svg",
                 )
 
                 overview = build_achievement_overview(self.reader)
@@ -237,17 +292,13 @@ class AchievementServiceTests(TestCase):
                 "/achievements/icons/badge.svg"
             )
         )
-        self.assertEqual(
-            item["icon"],
-            "front/img/badges/fallback.svg",
-        )
+        self.assertEqual(item["icon"], "")
 
     def test_missing_static_icon_uses_default_fallback(self):
         self.create_achievement(
             audience=Achievement.Audience.ALL,
             metric=Achievement.Metric.LIKES_GIVEN,
             target_value=Decimal("1"),
-            fallback_static_icon="",
         )
 
         overview = build_achievement_overview(self.reader)
