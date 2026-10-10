@@ -18895,7 +18895,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page { display: grid; grid-template-columns: minmax(0, 1.87fr) minmax(0, 1fr); column-gap: 20px; row-gap: 13px; color: #fff; }
 .coupon-detail-back { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin-bottom: 16px; color: #aaaab5; font-size: 13px; font-weight: 600; }
 .coupon-detail-back:hover { color: var(--yellow); }
-.coupon-detail-back span { font-size: 18px; line-height: 0.8; }
+.coupon-detail-back .solar-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 .coupon-detail-heading { grid-column: 1 / -1; margin-bottom: 14px; }
 .coupon-detail-heading-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .coupon-detail-heading h1 { margin: 0; font-family: var(--font-heading); font-size: 34px; font-weight: 700; line-height: 1.15; }
@@ -18978,6 +18978,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page > .prediction-reactions { grid-column: 1; grid-row: 4; display: flex; align-items: center; gap: 9px; min-height: 42px; margin-top: 0; }
 .coupon-detail-page > .prediction-reactions .prediction-reaction { min-width: 46px; min-height: 40px; border-radius: 10px; background: #17181e; }
 .coupon-detail-page > .prediction-reactions .prediction-reaction svg { width: 17px; height: 17px; }
+.coupon-detail-page > .prediction-reactions .prediction-comment-metric { text-decoration: none; }
 .coupon-detail-page > .prediction-reactions .prediction-views { margin-left: auto; background: none; }
 .coupon-detail-page > .prediction-reactions .prediction-like.is-active { color: #ff747d; }
 .coupon-detail-page > .prediction-comments { grid-column: 1; grid-row: 5; gap: 14px; padding: 20px; border-radius: 18px; background: #191a21; }
@@ -18986,10 +18987,11 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page .prediction-comments-total { color: #888895; font-size: 12px; }
 .coupon-detail-page .prediction-comment-form { grid-template-columns: 32px minmax(0,1fr); align-items: center; min-height: 53px; gap: 12px; padding: 8px 9px 8px 13px; border-radius: 13px; background: #111217; }
 .coupon-detail-page .prediction-comment-avatar { width: 32px; height: 32px; font-size: 12px; }
-.coupon-detail-page .prediction-comment-form textarea { min-height: 34px; height: 34px; padding: 7px 100px 7px 4px; border: 0; background: transparent; box-shadow: none; font-size: 13px; }
-.coupon-detail-page .prediction-comment-submit { top: 8px; right: 9px; min-height: 37px; padding: 0 16px; border-radius: 10px; background: var(--yellow); color: #111; font-size: 13px; }
+.coupon-detail-page .prediction-comment-form textarea { min-height: 34px; height: 34px; padding: 7px 150px 7px 4px; border: 0; background: transparent; box-shadow: none; font-size: 13px; }
+.coupon-detail-page .prediction-comment-submit { top: 8px; right: 9px; width: auto; height: 37px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 16px; border-radius: 10px; background: var(--yellow); color: #111; font-size: 13px; white-space: nowrap; }
+.coupon-detail-page .prediction-comment-submit:disabled { color: #111; background: var(--yellow); opacity: 0.65; }
 .coupon-detail-page .prediction-comment-submit span { position: static; width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
-.coupon-detail-page .prediction-comment-submit svg { display: none; }
+.coupon-detail-page .prediction-comment-submit .solar-icon { display: block; width: 16px; height: 16px; flex: 0 0 16px; }
 .coupon-detail-page .prediction-comments-empty { min-height: 150px; background: #121319; }
 .coupon-detail-page .prediction-comments-empty strong { color: #fff; font-size: 14px; }
 .coupon-detail-page .prediction-comments-empty span { font-size: 12px; }

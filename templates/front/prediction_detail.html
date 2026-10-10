@@ -8,7 +8,7 @@
   <div class="coupon-detail-content">
     <section class="coupon-detail-page" aria-label="Подробности купона #{{ coupon.id }}">
       {% include "front/includes/_coupon_detail_mobile.html" %}
-      <a class="coupon-detail-back" href="{% url 'front:predictions' %}"><span aria-hidden="true">←</span> Вернуться в ленту</a>
+      <a class="coupon-detail-back" href="{% url 'front:predictions' %}">{% include "front/includes/_solar_icon.html" with name="coupon_arrow_left_linear" %}Вернуться в ленту</a>
       <header class="coupon-detail-heading">
         <div class="coupon-detail-heading-top">
           <h1>Купон #{{ coupon.id }}</h1>
@@ -72,7 +72,7 @@
           </div>
         </section>
       </aside>
-      {% coupon_reactions coupon show_comments=False %}
+      {% coupon_reactions coupon show_comments=True %}
                 <section
                     class="prediction-comments"
                     id="comments"
@@ -125,9 +125,7 @@
                             aria-label="Отправить комментарий"
                             disabled
                         >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"></path>
-                            </svg>
+                            {% include "front/includes/_solar_icon.html" with name="coupon_plain_linear" %}
                             <span>Отправить</span>
                         </button>
                     </form>

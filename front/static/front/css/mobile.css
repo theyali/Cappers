@@ -12843,6 +12843,9 @@ body.expert-public-details-open {
   .coupon-detail-page > .prediction-reactions .prediction-share {
     background: var(--blue);
   }
+  .coupon-detail-page > .prediction-reactions .prediction-comment-metric {
+    display: none;
+  }
 
   .coupon-detail-page > .prediction-reactions .prediction-views,
   .coupon-detail-page > .prediction-reactions .prediction-views:hover {
@@ -12925,9 +12928,16 @@ body.expert-public-details-open {
   .coupon-detail-page .prediction-comment-submit {
     top: 9px;
     right: 9px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     border-radius: 10px;
     background: var(--blue);
     box-shadow: none;
+  }
+  .coupon-detail-page .prediction-comment-submit:disabled {
+    color: #fff;
+    background: #1f61de;
   }
 
   /* Public capper page: the phone layout replaces the hero, stat cards, old tab bar and the table. */

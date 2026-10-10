@@ -15,9 +15,7 @@
         title="{% if is_own %}Нельзя лайкать свой прогноз{% elif is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}"
         {% if is_own %}disabled aria-disabled="true"{% endif %}
     >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M20.8 5.9c-1.8-2-4.8-2.1-6.8-.2L12 7.6l-2-1.9C8 3.8 5 3.9 3.2 5.9c-1.8 2-1.6 5 .4 6.9L12 20l8.4-7.2c2-1.9 2.2-4.9.4-6.9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-        </svg>
+        {% include "front/includes/_solar_icon.html" with name="coupon_heart_linear" %}
         <b data-reaction-count>{{ likes_count }}</b>
     </button>
 
@@ -33,14 +31,15 @@
         title="{% if is_own %}Нельзя сохранять свой прогноз в избранное{% elif is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
         {% if is_own %}disabled aria-disabled="true"{% endif %}
     >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-        </svg>
+        {% include "front/includes/_solar_icon.html" with name="coupon_bookmark_linear" %}
         <b data-reaction-count>{{ favorites_count }}</b>
     </button>
 
     {% if show_comments %}
-        {% include "front/includes/_comment_metric.html" with prediction_id=coupon.id comments_count=coupon.comments_count metric_class="prediction-reaction" only %}
+    <a class="prediction-reaction prediction-comment-metric" href="#comments" aria-label="Комментарии. Всего комментариев: {{ coupon.comments_count }}" title="Комментарии">
+        {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
+        <b data-comment-count="{{ coupon.id }}">{{ coupon.comments_count }}</b>
+    </a>
     {% endif %}
 
     <button
@@ -52,19 +51,12 @@
         aria-label="Поделиться прогнозом. Всего репостов: {{ shares_count }}"
         title="Поделиться прогнозом"
     >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 16V4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
-            <path d="m7.5 8.5 4.5-4.5 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-        </svg>
+        {% include "front/includes/_solar_icon.html" with name="coupon_upload_linear" %}
         <b data-share-count>{{ shares_count }}</b>
     </button>
 
     <span class="prediction-reaction prediction-views" title="Просмотры" aria-label="Просмотров: {{ views_count }}">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
-            <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.8"></circle>
-        </svg>
+        {% include "front/includes/_solar_icon.html" with name="coupon_eye_linear" %}
         <b>{{ views_count }}</b>
     </span>
 </div>
