@@ -354,14 +354,14 @@
                     <div class="expert-performance-row">
                         <div class="expert-performance-row-title">
                             <strong>{{ row.label }}</strong>
-                            {% if row.count < 5 %}<small>мало данных</small>{% endif %}
+                            {% if row.is_low_sample %}<small>мало данных</small>{% endif %>
                             <b>{{ row.win_rate }}%</b>
                         </div>
                         <div class="expert-performance-row-detail">
                             <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
                             <span>{{ row.wins }}–{{ row.losses }}</span>
                         </div>
-                        <svg class="expert-performance-track{% if row.win_rate >= 90 and row.count >= 5 %} is-high{% elif row.win_rate < 50 %} is-low{% endif %}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
+                        <svg class="expert-performance-track is-{{ row.bar_tone }}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
                             <rect x="0" y="0" width="{{ row.win_rate }}" height="8"></rect>
                         </svg>
                     </div>
@@ -386,14 +386,14 @@
                     <div class="expert-performance-row">
                         <div class="expert-performance-row-title">
                             <strong>{{ row.label }}</strong>
-                            {% if row.count < 5 %}<small>мало данных</small>{% endif %}
+                            {% if row.is_low_sample %}<small>мало данных</small>{% endif %>
                             <b>{{ row.win_rate }}%</b>
                         </div>
                         <div class="expert-performance-row-detail">
                             <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
                             <span>{{ row.wins }}–{{ row.losses }}</span>
                         </div>
-                        <svg class="expert-performance-track{% if row.win_rate >= 90 and row.count >= 5 %} is-high{% elif row.win_rate < 50 %} is-low{% endif %}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
+                        <svg class="expert-performance-track is-{{ row.bar_tone }}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
                             <rect x="0" y="0" width="{{ row.win_rate }}" height="8"></rect>
                         </svg>
                     </div>
