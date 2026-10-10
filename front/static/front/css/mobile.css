@@ -9595,19 +9595,35 @@ body.expert-public-details-open {
     height: 24px;
   }
   .prediction-card.feed-prediction-card .feed-prediction-cover-fallback {
-    gap: 12px;
-    padding: 14px;
+    padding: 0;
   }
-  .prediction-card.feed-prediction-card
-    .feed-prediction-cover-center
-    > span:last-child {
-    max-width: min(100%, 230px);
-    font-size: 12px;
+  .prediction-card.feed-prediction-card .feed-prediction-cover-center {
+    top: 42%;
+    max-width: calc(100% - 32px);
+    gap: 7px;
+    padding: 5px 10px 5px 6px;
+  }
+  .prediction-card.feed-prediction-card .feed-prediction-cover-center > span:last-child {
+    max-width: min(100%, 190px);
+    font-size: 11px;
+  }
+  .prediction-card.feed-prediction-card .feed-prediction-cover-league {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+  }
+  .prediction-card.feed-prediction-card .feed-prediction-cover-teams {
+    width: min(82%, 270px);
+    bottom: 12px;
+    gap: 12px;
   }
   .prediction-card.feed-prediction-card .feed-prediction-cover-team {
-    width: clamp(66px, 24%, 92px);
-    height: clamp(66px, 24%, 92px);
+    width: clamp(58px, 18vw, 78px);
+    height: clamp(58px, 18vw, 78px);
+    font-size: 23px;
   }
+  .feed-prediction-cover-team-group > strong { font-size: 11px; }
+  .feed-prediction-cover-vs { margin-bottom: 18px; font-size: 13px; }
   .feed-prediction-cover-confidence,
   .feed-prediction-cover-status {
     top: 12px;
@@ -9624,21 +9640,18 @@ body.expert-public-details-open {
   }
   .feed-prediction-cover-confidence {
     right: 12px;
-    width: 86px;
-    gap: 5px;
+    width: 56px;
+    height: 56px;
   }
   .feed-prediction-confidence-ring {
-    width: 43px;
-    height: 43px;
+    width: 56px;
+    height: 56px;
   }
   .feed-prediction-confidence-progress,
   .feed-prediction-confidence-track {
-    stroke-width: 4.5;
+    stroke-width: 3.5;
   }
-  .feed-prediction-cover-confidence strong,
-  .feed-prediction-cover-confidence > span:last-child {
-    font-size: 9px;
-  }
+  .feed-prediction-cover-confidence strong { font-size: 15px; }
 
   .experts-card,
   .follow-card {
