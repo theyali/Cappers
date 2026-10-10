@@ -12,9 +12,10 @@ from django.db.models import (
     ExpressionWrapper,
     F,
     IntegerField,
-    Max,
+    OuterRef,
     Prefetch,
     Q,
+    Subquery,
     Sum,
     Value,
     When,
@@ -90,6 +91,31 @@ FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
 )
+
+
+def _following_unread_annotations(recipient) -> dict:
+    """Unread "new prediction" notices from each followed capper to this reader.
+
+    Subqueries per row: joining every notification the capper ever sent (to all
+    readers) and filtering only inside COUNT multiplied the rows badly.
+    """
+    unread = Notification.objects.filter(
+        actor_id=OuterRef("analyst_id"),
+        recipient=recipient,
+        show_in_app=True,
+        is_read=False,
+        kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+    ).order_by()
+    return {
+        "new_predictions_count": Coalesce(
+            Subquery(
+                unread.values("actor_id").annotate(total=Count("id")).values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+        ),
+        "latest_new_prediction_at": Subquery(unread.order_by("-created_at").values("created_at")[:1]),
+    }
 
 
 def _error_message(exc) -> str:
@@ -951,25 +977,7 @@ def profile(request):
             "analyst",
             "analyst__analyst_profile",
         ).annotate(
-            new_predictions_count=Count(
-                "analyst__notification_actions",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-                distinct=True,
-            ),
-            latest_new_prediction_at=Max(
-                "analyst__notification_actions__created_at",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-            ),
+            **_following_unread_annotations(request.user),
         ).order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at"),
         user_outer_ref="analyst_id",
     )
@@ -1279,34 +1287,33 @@ def following_summary(request):
         AnalystFollow.objects.filter(follower=request.user)
         .select_related("analyst", "analyst__analyst_profile")
         .annotate(
-            predictions_count=Count(
-                "analyst__prediction_coupons",
-                filter=Q(
-                    analyst__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                    analyst__prediction_coupons__audience=PredictionCoupon.Audience.FREE,
+            predictions_count=Coalesce(
+                Subquery(
+                    PredictionCoupon.objects.filter(
+                        author_id=OuterRef("analyst_id"),
+                        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                        audience=PredictionCoupon.Audience.FREE,
+                    )
+                    .order_by()
+                    .values("author_id")
+                    .annotate(total=Count("id"))
+                    .values("total")[:1],
+                    output_field=IntegerField(),
                 ),
-                distinct=True,
+                Value(0),
             ),
-            followers_count=Count("analyst__analyst_followers", distinct=True),
-            new_predictions_count=Count(
-                "analyst__notification_actions",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
+            followers_count=Coalesce(
+                Subquery(
+                    AnalystFollow.objects.filter(analyst_id=OuterRef("analyst_id"))
+                    .order_by()
+                    .values("analyst_id")
+                    .annotate(total=Count("id"))
+                    .values("total")[:1],
+                    output_field=IntegerField(),
                 ),
-                distinct=True,
+                Value(0),
             ),
-            latest_new_prediction_at=Max(
-                "analyst__notification_actions__created_at",
-                filter=Q(
-                    analyst__notification_actions__recipient=request.user,
-                    analyst__notification_actions__show_in_app=True,
-                    analyst__notification_actions__is_read=False,
-                    analyst__notification_actions__kind__in=FOLLOWING_NEW_PREDICTION_KINDS,
-                ),
-            ),
+            **_following_unread_annotations(request.user),
         )
         .order_by("-new_predictions_count", "-latest_new_prediction_at", "-created_at")
     )

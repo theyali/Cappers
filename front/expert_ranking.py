@@ -4,12 +4,13 @@ import re
 
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, Q, Value
+from django.db.models import Count, ExpressionWrapper, F, IntegerField, Max, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from cabinet.models import AnalystProfile, CapperMonthlyStat, User
+from cabinet.models import AnalystFollow, AnalystProfile, CapperMonthlyStat, User
 from cabinet.vip import annotate_vip_status
-from game.models import PredictionCoupon
+from game.models import Prediction, PredictionCoupon
 from .models import ExpertRankingEntry, ExpertRankingSnapshot
 
 from .prediction_metrics import ROI_PERIOD_DAYS, annotate_author_roi, roi_period_q
@@ -156,6 +157,71 @@ def _resolve_group(group: str | None) -> str:
     return value
 
 
+def _coupon_tallies(user_ids: list[int], *, period_days: int | None) -> dict[int, dict]:
+    """Coupon counters per capper from the coupons table alone.
+
+    Counting coupons, followers and events in one GROUP BY multiplies the rows
+    (followers x coupons x events per capper) and made PostgreSQL spill
+    gigabytes into temporary files, so each relation is counted on its own.
+    """
+    recent_cutoff = timezone.now() - timedelta(days=30)
+    settled = Q(state_status__in=SETTLED_EXPERT_STATES)
+    roi_settled = settled & roi_period_q(days=period_days) if period_days is not None else settled
+    rows = (
+        PredictionCoupon.objects.filter(
+            author_id__in=user_ids,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .order_by()
+        .values("author_id")
+        .annotate(
+            publications_count=Count("id"),
+            settled_count=Count("id", filter=settled),
+            roi_settled_count=Count("id", filter=roi_settled),
+            wins_count=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+            losses_count=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE)),
+            recent_publications_count=Count("id", filter=Q(published_at__gte=recent_cutoff)),
+            last_publication_at=Max("published_at"),
+        )
+    )
+    tallies = {row.pop("author_id"): row for row in rows}
+
+    sports = (
+        Prediction.objects.filter(
+            coupon__author_id__in=user_ids,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .order_by()
+        .values("coupon__author_id")
+        .annotate(sports_count=Count("match__sport_id", distinct=True))
+    )
+    for row in sports:
+        tallies.setdefault(row["coupon__author_id"], {})["sports_count"] = row["sports_count"]
+
+    followers = (
+        AnalystFollow.objects.filter(analyst_id__in=user_ids)
+        .order_by()
+        .values("analyst_id")
+        .annotate(followers_count=Count("id"))
+    )
+    for row in followers:
+        tallies.setdefault(row["analyst_id"], {})["followers_count"] = row["followers_count"]
+    return tallies
+
+
+TALLY_DEFAULTS = {
+    "followers_count": 0,
+    "publications_count": 0,
+    "settled_count": 0,
+    "roi_settled_count": 0,
+    "wins_count": 0,
+    "losses_count": 0,
+    "sports_count": 0,
+    "recent_publications_count": 0,
+    "last_publication_at": None,
+}
+
+
 def _annotated_public_profiles(
     *,
     period_days: int | None,
@@ -166,76 +232,10 @@ def _annotated_public_profiles(
     is always calculated from all-time ROI/history. This keeps the canonical
     all-time place stable when a page merely switches the ROI display period.
     """
-    recent_cutoff = timezone.now() - timedelta(days=30)
-    published_filter = Q(
-        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-    )
-    settled_filter = published_filter & Q(
-        user__prediction_coupons__state_status__in=SETTLED_EXPERT_STATES
-    )
-    roi_settled_filter = settled_filter
-    if period_days is not None:
-        roi_settled_filter &= roi_period_q(
-            prefix="user__prediction_coupons__",
-            days=period_days,
-        )
-
-    queryset = (
-        AnalystProfile.objects.filter(
-            is_public=True,
-            user__role=User.Role.ANALYST,
-        )
-        .select_related("user")
-        .annotate(
-            followers_count=Count("user__analyst_followers", distinct=True),
-            publications_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter,
-                distinct=True,
-            ),
-            settled_count=Count(
-                "user__prediction_coupons",
-                filter=settled_filter,
-                distinct=True,
-            ),
-            roi_settled_count=Count(
-                "user__prediction_coupons",
-                filter=roi_settled_filter,
-                distinct=True,
-            ),
-            wins_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter
-                & Q(
-                    user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN
-                ),
-                distinct=True,
-            ),
-            losses_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter
-                & Q(
-                    user__prediction_coupons__state_status=PredictionCoupon.StateStatus.LOSE
-                ),
-                distinct=True,
-            ),
-            sports_count=Count(
-                "user__prediction_coupons__predictions__match__sport",
-                filter=published_filter,
-                distinct=True,
-            ),
-            recent_publications_count=Count(
-                "user__prediction_coupons",
-                filter=published_filter
-                & Q(user__prediction_coupons__published_at__gte=recent_cutoff),
-                distinct=True,
-            ),
-            last_publication_at=Max(
-                "user__prediction_coupons__published_at",
-                filter=published_filter,
-            ),
-        )
-    )
+    queryset = AnalystProfile.objects.filter(
+        is_public=True,
+        user__role=User.Role.ANALYST,
+    ).select_related("user")
     queryset = annotate_vip_status(
         queryset,
         user_outer_ref="user_id",
@@ -255,8 +255,11 @@ def _annotated_public_profiles(
             period_days=None,
         )
     )
+    tallies = _coupon_tallies([profile.user_id for profile in profiles], period_days=period_days)
 
     for profile in profiles:
+        for name, default in TALLY_DEFAULTS.items():
+            setattr(profile, name, tallies.get(profile.user_id, {}).get(name, default))
         profile.user.is_vip_active = profile.is_vip_active
         profile.user.vip_ends_at = profile.vip_ends_at
         profile.user.vip_activated_at = profile.vip_subscription_activated_at
@@ -848,31 +851,30 @@ def recommended_experts_for_user(
     if not sport_ids and not league_ids:
         return []
 
-    published_filter = Q(
-        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-    )
+    def matching_events(**match_filter):
+        # A counting subquery per capper: filtering events in WHERE keeps the scan on the index
+        # instead of a COUNT(DISTINCT) over every event of every capper.
+        events = (
+            Prediction.objects.filter(
+                coupon__author_id=OuterRef("user_id"),
+                coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                **match_filter,
+            )
+            .order_by()
+            .values("coupon__author_id")
+            .annotate(total=Count("id"))
+            .values("total")[:1]
+        )
+        return Coalesce(Subquery(events, output_field=IntegerField()), Value(0))
+
     annotations = {
         "preference_sport_matches": (
-            Count(
-                "user__prediction_coupons__predictions",
-                filter=published_filter
-                & Q(
-                    user__prediction_coupons__predictions__match__sport_id__in=sport_ids
-                ),
-                distinct=True,
-            )
+            matching_events(match__sport_id__in=sport_ids)
             if sport_ids
             else Value(0, output_field=IntegerField())
         ),
         "preference_league_matches": (
-            Count(
-                "user__prediction_coupons__predictions",
-                filter=published_filter
-                & Q(
-                    user__prediction_coupons__predictions__match__league_id__in=league_ids
-                ),
-                distinct=True,
-            )
+            matching_events(match__league_id__in=league_ids)
             if league_ids
             else Value(0, output_field=IntegerField())
         ),

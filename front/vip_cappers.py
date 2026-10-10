@@ -17,6 +17,35 @@ def _normalize_limit(limit) -> int:
         return DEFAULT_VIP_CAPPERS_LIMIT
 
 
+def _attach_counts(profiles: list[AnalystProfile]) -> None:
+    """Followers and results of the few cards shown, counted per table so the rows don't multiply."""
+    user_ids = [profile.user_id for profile in profiles]
+    followers = dict(
+        AnalystFollow.objects.filter(analyst_id__in=user_ids)
+        .order_by()
+        .values("analyst_id")
+        .annotate(total=Count("id"))
+        .values_list("analyst_id", "total")
+    )
+    results = {
+        row["author_id"]: row
+        for row in PredictionCoupon.objects.filter(
+            author_id__in=user_ids,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .order_by()
+        .values("author_id")
+        .annotate(
+            wins=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.WIN)),
+            losses=Count("id", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE)),
+        )
+    }
+    for profile in profiles:
+        profile.followers_count = followers.get(profile.user_id, 0)
+        profile.wins_count = results.get(profile.user_id, {}).get("wins", 0)
+        profile.losses_count = results.get(profile.user_id, {}).get("losses", 0)
+
+
 def _main_sport_category(profile: AnalystProfile) -> str:
     sports = (profile.favorite_sports or "").replace(";", ",")
     main_sport = next(
@@ -62,41 +91,18 @@ def _card_payload(profile: AnalystProfile) -> dict:
 def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> dict:
     """Return the canonical VIP capper source used by every public banner.
 
-    Followers, wins, losses and viewer follow state are SQL annotations on the same
-    queryset, while ``user`` is joined with ``select_related``. Rendering the six
-    cards therefore does not execute per-capper queries.
+    VIP state and viewer follow state are SQL annotations on the profile queryset;
+    followers, wins and losses come from two grouped queries for the cards shown.
+    Rendering the six cards therefore does not execute per-capper queries.
 
     The top card is the latest active VIP activation.
     """
 
     safe_limit = _normalize_limit(limit)
-    published_filter = Q(
-        user__prediction_coupons__published_status=PredictionCoupon.PublishedStatus.PUBLISHED
-    )
-    wins_filter = published_filter & Q(
-        user__prediction_coupons__state_status=PredictionCoupon.StateStatus.WIN
-    )
-    losses_filter = published_filter & Q(
-        user__prediction_coupons__state_status=PredictionCoupon.StateStatus.LOSE
-    )
-
-    queryset = (
-        AnalystProfile.objects.filter(is_public=True, user__role=User.Role.ANALYST)
-        .select_related("user")
-        .annotate(
-            followers_count=Count("user__analyst_followers", distinct=True),
-            wins_count=Count(
-                "user__prediction_coupons",
-                filter=wins_filter,
-                distinct=True,
-            ),
-            losses_count=Count(
-                "user__prediction_coupons",
-                filter=losses_filter,
-                distinct=True,
-            ),
-        )
-    )
+    queryset = AnalystProfile.objects.filter(
+        is_public=True,
+        user__role=User.Role.ANALYST,
+    ).select_related("user")
     queryset = annotate_vip_status(
         queryset,
         user_outer_ref="user_id",
@@ -114,6 +120,7 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
         )
 
     vip_profiles = list(queryset.order_by("-vip_sort_at", "-id")[:safe_limit])
+    _attach_counts(vip_profiles)
     vip_cappers = [_card_payload(profile) for profile in vip_profiles]
 
     return {
