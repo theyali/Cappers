@@ -9703,7 +9703,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     background: 0 0;
 }
 .feed-prediction-cover { border-radius: 8px; }
-.feed-prediction-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(19 19 19 / 59%) 54%, rgba(19, 19, 19, 0.42) 100%); pointer-events: none; }
 .feed-prediction-cover > img {
     width: 100%;
     height: 100%;
@@ -9715,64 +9714,73 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 }
 .feed-prediction-card:hover .feed-prediction-cover > img { transform: scale(1.025); filter: brightness(1.04); }
 .feed-prediction-cover-fallback {
-    background: radial-gradient(circle at 18% 48%, rgba(255, 54, 75, 0.28), transparent 42%),
-        radial-gradient(circle at 84% 44%, rgba(44, 107, 255, 0.3), transparent 45%),
-        linear-gradient(135deg, #28171b 0, #141923 48%, #10203d 100%);
     position: absolute;
     inset: 0;
     z-index: 1;
+    display: block;
+    width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px;
     color: #fff;
+    background: #161821;
+    background-image: var(--feed-cover-image, none);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
     text-align: center;
 }
-.feed-prediction-cover-fallback::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.18), transparent 38%, transparent 62%, rgba(0, 0, 0, 0.18)),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
-    pointer-events: none;
-}
+/* Existing static sport backgrounds; variants rotate by card position. */
+.feed-prediction-cover-fallback.is-football { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/football_A_center@2x.png"); }
+.feed-prediction-cover-fallback.is-tennis { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/tennis_D_night@2x.png"); }
+.feed-prediction-cover-fallback.is-basketball { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/basketball_A_arc@2x.png"); }
+.feed-prediction-cover-fallback.is-hockey { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/hockey_A_faceoff@2x.png"); }
+.feed-prediction-card:nth-child(4n+2) .feed-prediction-cover-fallback.is-football { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/football_D_blue@2x.png"); }
+.feed-prediction-card:nth-child(4n+2) .feed-prediction-cover-fallback.is-tennis { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/tennis_A_hard@2x.png"); }
+.feed-prediction-card:nth-child(4n+2) .feed-prediction-cover-fallback.is-basketball { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/basketball_B_red@2x.png"); }
+.feed-prediction-card:nth-child(4n+2) .feed-prediction-cover-fallback.is-hockey { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/hockey_B_ice@2x.png"); }
+.feed-prediction-card:nth-child(4n+3) .feed-prediction-cover-fallback.is-football { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/football_B_stripes@2x.png"); }
+.feed-prediction-card:nth-child(4n+3) .feed-prediction-cover-fallback.is-tennis { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/tennis_B_clay@2x.png"); }
+.feed-prediction-card:nth-child(4n+3) .feed-prediction-cover-fallback.is-basketball { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/basketball_C_parquet@2x.png"); }
+.feed-prediction-card:nth-child(4n+3) .feed-prediction-cover-fallback.is-hockey { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/hockey_C_arena@2x.png"); }
+.feed-prediction-card:nth-child(4n) .feed-prediction-cover-fallback.is-football { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/football_C_neon@2x.png"); }
+.feed-prediction-card:nth-child(4n) .feed-prediction-cover-fallback.is-tennis { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/tennis_C_grass@2x.png"); }
+.feed-prediction-card:nth-child(4n) .feed-prediction-cover-fallback.is-basketball { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/basketball_D_teal@2x.png"); }
+.feed-prediction-card:nth-child(4n) .feed-prediction-cover-fallback.is-hockey { --feed-cover-image: url("../img/forecast-card-backgrounds/png@2x/hockey_D_bordeaux@2x.png"); }
+.feed-prediction-cover-fallback.has-cover { background: transparent; }
 .feed-prediction-cover-team {
-    aspect-ratio: 1;
-    border-radius: 50%;
-    color: var(--ink);
-    width: clamp(72px, 25%, 104px);
-    height: clamp(72px, 25%, 104px);
     display: grid;
+    flex: 0 0 auto;
     place-items: center;
+    width: 92px;
+    height: 92px;
+    aspect-ratio: 1;
     overflow: hidden;
-    margin-top: 0;
-    box-shadow: none;
-    font-size: 18px;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(16, 19, 32, .68);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .26);
+    font-size: 32px;
     font-weight: 700;
 }
 .feed-prediction-cover-league {
-    inline-size: clamp(2.9rem, 64%, 4.6rem);
-    aspect-ratio: 1;
     display: grid;
+    flex: 0 0 32px;
     place-items: center;
+    width: 32px;
+    height: 32px;
     overflow: hidden;
-    border-radius: 12px;
-    color: var(--text);
-    background: rgba(8, 9, 12, 0.56);
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
-    font-size: 17px;
-    font-weight: 600;
+    border-radius: 9px;
+    color: #fff;
+    background: rgba(255, 255, 255, .13);
+    font-size: 13px;
+    font-weight: 700;
 }
 .feed-prediction-cover-center > span:last-child {
-    max-width: 100%;
+    min-width: 0;
     overflow: hidden;
-    color: rgba(255, 255, 255, 0.82);
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.15;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
