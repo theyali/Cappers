@@ -34,7 +34,7 @@ from front.models import Article
 from front.prediction_metrics import annotate_author_roi
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.recommendations import personalized_recommended_experts
-from front.views import DEMO_EXPERTS, _best_streaks_for_authors, _initials
+from front.views import DEMO_EXPERTS, _initials
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
 from game.services.bet_options import build_match_winner_odds
 from notifications.models import MatchWatch

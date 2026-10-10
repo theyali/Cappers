@@ -1246,8 +1246,6 @@ body.wiki-video-player-open {
 }
 .site-nav .brand { justify-self: start; min-width: 0; }
 .capper-spotlight-name,
-.home-best-expert-achievements,
-.home-best-expert-row-achievements,
 .prediction-card-rich-status small,
 .site-nav-actions,
 .site-nav-center {
@@ -1365,7 +1363,6 @@ body.wiki-video-player-open {
     overflow: hidden;
     border-radius: 12px;
 }
-.home-best-expert-achievement img,
 .nav-profile-dropdown-avatar img,
 .nav-profile-icon img {
     width: 27px;
@@ -2746,7 +2743,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .experts-card .verified-mark,
 .forecast-expert .capper-verified-badge,
 .forecast-expert .forecast-verified,
-.home-best-expert-verified,
 .prediction-expert .capper-verified-badge,
 .prediction-verified {
     width: 20px !important;
@@ -2770,7 +2766,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .capper-verified-badge svg { flex: 0 0 20px; }
 .experts-card .verified-mark,
 .forecast-expert .forecast-verified,
-.home-best-expert-verified,
 .prediction-verified {
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%230b56fa' d='M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z'/%3E%3Cpath fill='white' d='M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z'/%3E%3C/svg%3E")
         center/20px 20px no-repeat !important;
@@ -3650,7 +3645,6 @@ body.layout-columns-center_only .predictions-layout {
 .cabinet-bonuses-page .bonus-level-row-meta,
 .capper-pro-calibration > div,
 .capper-pro-foot > div,
-.home-best-expert-row-stat,
 .prediction-expert-copy,
 .profile-coupon-metric,
 .profile-email-control > div{
@@ -3681,7 +3675,6 @@ body.layout-columns-center_only .predictions-layout {
 .expert-monthly-results .is-refund,
 .expert-monthly-table thead .is-refund,
 .expert-recent-performance-item.is-refund .expert-recent-performance-copy strong,
-.home-best-expert-podium-card.is-rank-1 .home-best-expert-stats > span:first-child strong,
 .home-layout .forecast-verified,
 .prediction-comment-author-link:hover strong,
 .prediction-comment-reaction.is-active,
@@ -5933,7 +5926,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     letter-spacing: .1em;
 }
 .home-best-experts-head h2 {
-    margin: 0;
     font-size: 30px;
     line-height: 1.12;
 }
@@ -6028,7 +6020,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 }
 .home-best-expert-avatar { width: 52px; height: 52px; font-size: 17px; }
 .home-best-expert-avatar img,
-.home-best-expert-row-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.home-best-expert-row-avatar img { border-radius: 50%; }
 .home-best-expert-avatar b,
 .home-best-expert-row-avatar b {
     position: absolute;
@@ -6153,7 +6145,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-best-expert-row-performance progress::-moz-progress-bar { background: #53d489; border-radius: 99px; }
 .home-best-expert-row-performance progress.is-low::-webkit-progress-value { background: #e69b4e; }
 .home-best-expert-row-performance progress.is-low::-moz-progress-bar { background: #e69b4e; }
-.home-best-expert-row-performance progress.is-low + span { color: #e69b4e; }
 .home-best-expert-row-roi {
     width: max-content;
     max-width: 100%;
