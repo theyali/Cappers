@@ -6737,43 +6737,6 @@ body.expert-public-details-open {
   }
 }
 
-@media (min-width: 641px) {
-  .coupon-detail-content {
-    align-content: start;
-  }
-  .coupon-detail-page {
-    display: flex;
-    flex-direction: column;
-    align-self: start;
-    gap: 8px;
-  }
-  .coupon-detail-page .coupon-detail-heading {
-    padding: 4px 4px 2px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-list {
-    gap: 10px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-item {
-    border-radius: 16px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-match {
-    gap: 6px;
-    padding: 11px 16px 8px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-teams {
-    gap: 12px;
-    padding: 4px 0 2px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-team-logo {
-    width: 46px;
-    height: 46px;
-  }
-  .coupon-detail-page .coupon-slip.is-compact .coupon-slip-result {
-    gap: 4px;
-    padding: 8px 16px 9px;
-  }
-}
-
 @media (max-width: 649px) {
   .matches-grid-home {
     grid-template-columns: 1fr;
