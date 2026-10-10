@@ -8312,7 +8312,6 @@ body.expert-public-details-open {
     scroll-snap-type: x mandatory;
   }
   .following-story-name { margin-top: 7px; font-size: 12px; }
-  .following-story-roi { font-size: 11px; }
   .following-story-roi-prefix { display: none; }
   .following-stories-dots {
     display: flex;
