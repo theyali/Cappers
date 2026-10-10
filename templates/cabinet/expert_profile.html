@@ -216,20 +216,16 @@
     </section>
 
     <section class="expert-public-analytics" aria-label="Подробная статистика эксперта">
-        <div class="expert-public-section-head">
-            <div>
-                <p class="expert-public-kicker">Подробная статистика</p>
-                <h2>Результаты без лишних цифр</h2>
-                <p class="expert-public-section-note">ROI и прибыль считаются по рассчитанным купонам. Winrate — по отдельным прогнозам.</p>
-            </div>
-            <span>{{ settled_coupons_count }} купонов рассчитано</span>
-        </div>
-
         <div class="expert-public-kpi-grid">
             <article>
                 <span>Чистая прибыль</span>
                 <strong class="{% if total_profit > 0 %}is-positive{% elif total_profit < 0 %}is-negative{% endif %}">{{ total_profit_display }}</strong>
                 <small>за всю историю</small>
+            </article>
+            <article>
+                <span>ROI</span>
+                <strong class="{% if overall_roi > 0 %}is-positive{% elif overall_roi < 0 %}is-negative{% endif %}">{{ overall_roi|floatformat:1 }}%</strong>
+                <small>по рассчитанным</small>
             </article>
             <article>
                 <span>Средний кф</span>
@@ -244,125 +240,103 @@
             <article>
                 <span>Оборот</span>
                 <strong>{{ settled_stake|floatformat:0 }}</strong>
-                <small>сумма рассчитанных купонов</small>
+                <small>сумма купонов</small>
             </article>
             <article>
                 <span>Текущая серия</span>
                 <strong class="{% if current_streak.state == 'win' %}is-positive{% elif current_streak.state == 'lose' %}is-negative{% endif %}">{{ current_streak.count }}</strong>
                 <small>{{ current_streak.label }}</small>
             </article>
-            <article>
-                <span>В ожидании</span>
-                <strong>{{ open_predictions_count }}</strong>
-                <small>прогнозов еще не рассчитано</small>
-            </article>
         </div>
 
-        <article class="expert-confidence-card{% if confidence_calibration.has_data %} is-{{ confidence_calibration.accuracy_tone }}{% endif %}">
-            <div class="expert-public-chart-head">
-                <div>
-                    <span>Калибровка уверенности</span>
-                    <h3>Заявлено против факта</h3>
-                </div>
-                <span>{{ confidence_calibration.total }}</span>
-            </div>
-            {% if confidence_calibration.has_data %}
-                <div class="expert-confidence-summary">
-                    <div>
-                        <span>Среднее отклонение</span>
-                        <strong>{{ confidence_calibration.average_abs_error|floatformat:1 }} п.п.</strong>
-                    </div>
-                    <div>
-                        <span>Поведение</span>
-                        <strong>{{ confidence_calibration.average_delta_label }}</strong>
-                    </div>
-                    <div>
-                        <span>Оценка</span>
-                        <strong>{{ confidence_calibration.accuracy_label }}</strong>
-                    </div>
-                    {% if confidence_calibration.strongest_row %}
-                    <div>
-                        <span>{{ confidence_calibration.strongest_row.label }}</span>
-                        <strong>{{ confidence_calibration.strongest_row.actual_rate|floatformat:1 }}%</strong>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="expert-confidence-list">
-                    {% for row in confidence_calibration.rows %}
-                    <div class="expert-confidence-row is-{{ row.accuracy_tone }}{% if not row.is_reliable %} is-low-sample{% endif %}">
-                        <div class="expert-confidence-row-head">
-                            <div>
-                                <strong>{{ row.label }}</strong>
-                                <span>{{ row.total }} купонов · {{ row.wins }}–{{ row.losses }}{% if row.refunds %} · {{ row.refunds }} возврат{% endif %}</span>
-                            </div>
-                            <div>
-                                <strong>{{ row.actual_rate|floatformat:1 }}%</strong>
-                                <span>{% if row.delta > 0 %}+{% endif %}{{ row.delta|floatformat:1 }} п.п.</span>
-                            </div>
-                        </div>
-                        <div class="expert-confidence-bars" aria-hidden="true">
-                            <span class="is-declared" style="width: {{ row.declared_rate_width }}%"></span>
-                            <span class="is-actual" style="width: {{ row.actual_rate_width }}%"></span>
-                        </div>
-                        {% if not row.is_full_sample %}
-                            <small>{{ row.sample_label }}</small>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="expert-public-muted">Пока недостаточно рассчитанных купонов для калибровки уверенности.</p>
-            {% endif %}
-        </article>
-
         {{ profit_chart|json_script:"expert-profit-chart-data" }}
-        <div class="expert-profit-layout">
-            <article class="expert-profit-chart-card" data-profit-chart>
-                <div class="expert-profit-chart-head">
-                    <div>
-                        <span>Динамика прибыли</span>
+        <div class="expert-public-analysis-panels">
+            <div class="expert-profit-layout">
+                <article class="expert-profit-chart-card" data-profit-chart>
+                    <div class="expert-public-chart-head">
+                        <div>
+                            <span>Динамика прибыли</span>
+                            <h3>Прибыль по дням</h3>
+                        </div>
+                    </div>
+                    <div class="expert-profit-total">
                         <strong data-profit-chart-value>{{ profit_periods.30.profit_display }}</strong>
-                        <small data-profit-chart-caption>за последние 30 дней</small>
+                        <span data-profit-chart-caption>ед. за 30 дней</span>
                     </div>
                     <div class="expert-period-switch" aria-label="Период графика">
                         <button type="button" data-profit-days="7">7 дней</button>
                         <button type="button" class="is-active" data-profit-days="30">30 дней</button>
                         <button type="button" data-profit-days="90">90 дней</button>
+                        <button type="button" data-profit-days="all">Всё</button>
                     </div>
-                </div>
-
-                <div class="expert-profit-chart-stage">
-                    <div class="expert-profit-scale">
-                        <span data-profit-max>0</span>
-                        <span>0</span>
-                        <span data-profit-min>0</span>
+                    <div class="expert-profit-chart-stage">
+                        <div class="expert-profit-canvas">
+                            <svg viewBox="0 0 760 260" preserveAspectRatio="none" aria-label="Динамика накопленной прибыли">
+                                <line class="expert-profit-zero" x1="0" y1="130" x2="760" y2="130"></line>
+                                <path class="expert-profit-area" data-profit-area d=""></path>
+                                <path class="expert-profit-line" data-profit-path d=""></path>
+                                <g data-profit-points></g>
+                            </svg>
+                            <div class="expert-profit-tooltip" data-profit-tooltip hidden></div>
+                        </div>
+                        <div class="expert-profit-axis"><span data-profit-start>—</span><span>сегодня</span></div>
                     </div>
-                    <div class="expert-profit-canvas">
-                        <svg viewBox="0 0 760 260" preserveAspectRatio="none" aria-label="График накопленной прибыли">
-                            <line class="expert-profit-zero" x1="0" y1="130" x2="760" y2="130"></line>
-                            <path class="expert-profit-line" data-profit-path d=""></path>
-                            <g data-profit-points></g>
-                        </svg>
-                        <div class="expert-profit-tooltip" data-profit-tooltip hidden></div>
+                    <div class="expert-profit-periods" aria-label="Прибыль по периодам">
+                        {% for key, period in profit_periods.items %}
+                        <article class="expert-period-card{% if period.positive %} is-positive{% elif period.negative %} is-negative{% endif %}">
+                            <span>{{ period.days }} дней</span>
+                            <strong>{{ period.profit_display }}</strong>
+                            <small>ROI {{ period.roi|floatformat:1 }}% · {{ period.count }} купонов</small>
+                        </article>
+                        {% endfor %}
                     </div>
-                </div>
-                <div class="expert-profit-axis"><span data-profit-start>—</span><span>Сегодня</span></div>
-            </article>
-
-            <div class="expert-profit-periods" aria-label="Прибыль по периодам">
-                {% for key, period in profit_periods.items %}
-                <article class="expert-period-card{% if period.positive %} is-positive{% elif period.negative %} is-negative{% endif %}">
-                    <div>
-                        <span>{{ period.days }} дней</span>
-                        <strong>{{ period.profit_display }}</strong>
-                    </div>
-                    <dl>
-                        <div><dt>ROI</dt><dd>{% if period.roi > 0 %}+{% endif %}{{ period.roi }}%</dd></div>
-                        <div><dt>Купонов</dt><dd>{{ period.count }}</dd></div>
-                    </dl>
                 </article>
-                {% endfor %}
             </div>
+
+            <article class="expert-confidence-card{% if confidence_calibration.has_data %} is-{{ confidence_calibration.accuracy_tone }}{% endif %}">
+                <div class="expert-public-chart-head">
+                    <div>
+                        <span>Калибровка уверенности</span>
+                        <h3>Заявлено против факта</h3>
+                    </div>
+                    <span>{{ confidence_calibration.total }} купонов</span>
+                </div>
+                {% if confidence_calibration.has_data %}
+                <div class="expert-confidence-summary">
+                    <span class="expert-confidence-summary-icon" aria-hidden="true">!</span>
+                    <div>
+                        <strong>{{ confidence_calibration.accuracy_label|capfirst }}</strong>
+                        <span>В среднем {{ confidence_calibration.average_delta_label }} · отклонение {{ confidence_calibration.average_abs_error|floatformat:1 }} п.п.</span>
+                    </div>
+                </div>
+                <div class="expert-confidence-legend" aria-label="Условные обозначения">
+                    <span class="is-declared">заявлено</span>
+                    <span class="is-higher">факт выше</span>
+                    <span class="is-lower">факт ниже</span>
+                </div>
+                <div class="expert-confidence-list">
+                    {% for row in confidence_calibration.rows %}
+                    <div class="expert-confidence-row is-{{ row.accuracy_tone }}">
+                        <div class="expert-confidence-row-title">
+                            <strong>{{ row.label }}</strong>
+                            {% if not row.is_reliable %}<small>мало данных</small>{% endif %}
+                            <b>{{ row.actual_rate|floatformat:1 }}%</b>
+                        </div>
+                        <div class="expert-confidence-row-detail">
+                            <span>{{ row.total }} купонов · {{ row.wins }}–{{ row.losses }}</span>
+                            <strong class="{% if row.delta > 0 %}is-positive{% elif row.delta < 0 %}is-negative{% endif %}">{% if row.delta > 0 %}+{% endif %}{{ row.delta|floatformat:1 }} п.п.</strong>
+                        </div>
+                        <svg class="expert-confidence-bars" viewBox="0 0 100 10" preserveAspectRatio="none" role="img" aria-label="Фактически {{ row.actual_rate|floatformat:1 }}%, заявлено {{ row.declared_rate|floatformat:1 }}%">
+                            <rect class="is-actual" x="0" y="2" width="{{ row.actual_rate_width }}" height="6"></rect>
+                            <line class="is-declared" x1="{{ row.declared_rate_width }}" x2="{{ row.declared_rate_width }}" y1="0" y2="10"></line>
+                        </svg>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-muted">Пока недостаточно рассчитанных купонов для калибровки уверенности.</p>
+                {% endif %}
+            </article>
         </div>
 
         <div class="expert-public-analytics-grid">
@@ -378,15 +352,18 @@
                 <div class="expert-performance-list">
                     {% for row in market_distribution %}
                     <div class="expert-performance-row">
-                        <div class="expert-performance-copy">
+                        <div class="expert-performance-row-title">
                             <strong>{{ row.label }}</strong>
-                            <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
+                            {% if row.count < 5 %}<small>мало данных</small>{% endif %}
+                            <b>{{ row.win_rate }}%</b>
                         </div>
-                        <div class="expert-performance-value">
-                            <strong>{{ row.win_rate }}%</strong>
+                        <div class="expert-performance-row-detail">
+                            <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
                             <span>{{ row.wins }}–{{ row.losses }}</span>
                         </div>
-                        <div class="expert-performance-track"><i style="width: {{ row.win_rate }}%"></i></div>
+                        <svg class="expert-performance-track{% if row.win_rate >= 90 and row.count >= 5 %} is-high{% elif row.win_rate < 50 %} is-low{% endif %}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
+                            <rect x="0" y="0" width="{{ row.win_rate }}" height="8"></rect>
+                        </svg>
                     </div>
                     {% endfor %}
                 </div>
@@ -407,15 +384,18 @@
                 <div class="expert-performance-list">
                     {% for row in league_distribution %}
                     <div class="expert-performance-row">
-                        <div class="expert-performance-copy">
+                        <div class="expert-performance-row-title">
                             <strong>{{ row.label }}</strong>
-                            <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
+                            {% if row.count < 5 %}<small>мало данных</small>{% endif %}
+                            <b>{{ row.win_rate }}%</b>
                         </div>
-                        <div class="expert-performance-value">
-                            <strong>{{ row.win_rate }}%</strong>
+                        <div class="expert-performance-row-detail">
+                            <span>{{ row.count }} прогнозов · ср. кф {{ row.avg_coefficient|floatformat:2 }}</span>
                             <span>{{ row.wins }}–{{ row.losses }}</span>
                         </div>
-                        <div class="expert-performance-track"><i style="width: {{ row.win_rate }}%"></i></div>
+                        <svg class="expert-performance-track{% if row.win_rate >= 90 and row.count >= 5 %} is-high{% elif row.win_rate < 50 %} is-low{% endif %}" viewBox="0 0 100 8" preserveAspectRatio="none" role="img" aria-label="Проходимость {{ row.win_rate }}%">
+                            <rect x="0" y="0" width="{{ row.win_rate }}" height="8"></rect>
+                        </svg>
                     </div>
                     {% endfor %}
                 </div>
@@ -424,25 +404,6 @@
                 {% endif %}
             </article>
         </div>
-
-        <article class="expert-results-card">
-            <div class="expert-public-chart-head">
-                <div>
-                    <span>Все прогнозы</span>
-                    <h3>Результаты</h3>
-                </div>
-                <span>{{ predictions_count }}</span>
-            </div>
-            <div class="expert-results-grid">
-                {% for row in status_distribution %}
-                <div class="expert-result-item is-{{ row.state }}">
-                    <div><span>{{ row.label }}</span><strong>{{ row.count }}</strong></div>
-                    <div class="expert-result-track"><i style="width: {{ row.percent }}%"></i></div>
-                    <small>{{ row.percent }}%</small>
-                </div>
-                {% endfor %}
-            </div>
-        </article>
     </section>
 
     {% if expert_articles %}
