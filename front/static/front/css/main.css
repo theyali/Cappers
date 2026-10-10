@@ -23851,14 +23851,141 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .forecast-vertical-card.is-light .forecast-vertical-feature-bottom { color: #fff; }
 
 
-/* Homepage search/SEO introduction and shared search results. */
-.home-search-hero { padding: 22px 0 34px; margin-bottom: 30px; }
-.home-search-main { max-width: 920px; margin: 0 auto; text-align: center; }
-.home-search-brand { margin: 0 0 13px; color: var(--yellow); font-size: 12px; font-weight: 700; letter-spacing: .13em; }
-.home-search-main h1 { margin: 0; color: #fff; font-family: var(--font-heading); font-size: clamp(38px, 4.2vw, 56px); font-weight: 400; line-height: 1.08; }
+
+/* Homepage hero: decorative coupon columns, no database lookups. */
+.home-search-hero {
+    position: relative;
+    z-index: 5;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 744px;
+    margin-bottom: 28px;
+    padding: 80px 32px 66px;
+    border-radius: 34px;
+    background: #0e0f12;
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.home-search-coupon-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 0 26px;
+    border-radius: inherit;
+    pointer-events: none;
+    -webkit-mask-image:
+        linear-gradient(90deg, #000, transparent 30%, transparent 70%, #000),
+        radial-gradient(92% 96% at 50% 50%, #000 28%, transparent 86%);
+    mask-image:
+        linear-gradient(90deg, #000, transparent 30%, transparent 70%, #000),
+        radial-gradient(92% 96% at 50% 50%, #000 28%, transparent 86%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+}
+.home-search-coupon-col {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 16px;
+    will-change: transform;
+    animation: home-search-coupon-rise 52s linear infinite;
+}
+.home-search-coupon-col:nth-child(2) { animation-duration: 59s; animation-delay: -7s; }
+.home-search-coupon-col:nth-child(3) { animation-duration: 66s; animation-delay: -14s; }
+.home-search-coupon-col:nth-child(4) { animation-duration: 73s; animation-delay: -21s; }
+.home-search-coupon-pill {
+    display: flex;
+    align-items: center;
+    height: 34px;
+    overflow: hidden;
+    border-radius: 11px;
+    background: rgba(23, 24, 30, .9);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07);
+    white-space: nowrap;
+}
+.home-search-coupon-pill span {
+    padding: 0 10px;
+    color: rgba(255, 255, 255, .34);
+    font-size: 11px;
+    font-weight: 700;
+}
+.home-search-coupon-pill b {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: rgba(251, 241, 16, .72);
+    background: rgba(251, 241, 16, .16);
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 400;
+}
+.home-search-coupon-pill.is-hot b {
+    color: var(--yellow);
+    background: rgba(251, 241, 16, .26);
+}
+.home-search-coupon-pill.is-win b {
+    color: rgba(91, 227, 138, .75);
+    background: rgba(91, 227, 138, .14);
+}
+@keyframes home-search-coupon-rise {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+}
+.home-search-main {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    text-align: center;
+}
+.home-search-brand {
+    margin: 0 0 26px;
+    color: var(--yellow);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .2em;
+}
+.home-search-main h1 {
+    max-width: 1120px;
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: clamp(44px, 4.65vw, 80px);
+    font-weight: 400;
+    line-height: .99;
+    text-wrap: balance;
+}
 .home-search-main h1 mark { color: var(--blue); background: transparent; }
-.home-search-description { max-width: 690px; margin: 18px auto 22px; color: #99999f; font-size: 16px; line-height: 1.55; }
-.site-search-form { position: relative; z-index: 25; display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 7px 8px 7px 19px; border-radius: 17px; background: #1c1d22; text-align: left; }
+.home-search-description {
+    max-width: 875px;
+    margin: 26px auto 28px;
+    color: #a3a3ac;
+    font-size: 17px;
+    line-height: 1.5;
+}
+.site-search-form {
+    position: relative;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 70px;
+    padding: 7px 8px 7px 19px;
+    border-radius: 17px;
+    background: #1c1d22;
+    text-align: left;
+}
 .site-search-form:focus-within { outline: 2px solid var(--yellow); outline-offset: 0; }
 .site-search-form-icon { display: grid; flex: 0 0 24px; place-items: center; color: #a0a1ad; }
 .site-search-form input { min-width: 0; flex: 1; padding: 10px 0; outline: none; border: 0; color: #fff; background: transparent; font: 600 15px var(--font-body); }
@@ -23870,11 +23997,58 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .site-search-submit { display: grid; flex: 0 0 78px; min-height: 55px; place-items: center; border: 0; border-radius: 13px; color: var(--ink); background: var(--yellow); font: 800 14px var(--font-body); cursor: pointer; }
 .site-search-submit:hover, .site-search-suggest-all:hover { background: #fff76b; }
 .site-search-submit-icon { display: none; }
-.home-search-popular { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 9px; margin-top: 15px; color: #89898e; font-size: 13px; }
-.home-search-popular a { padding: 8px 11px; border-radius: 999px; color: #d4d4d9; background: #1b1c20; text-decoration: none; }
+.home-search-main .site-search-form {
+    width: min(1040px, 100%);
+    min-height: 86px;
+    padding: 10px 10px 10px 22px;
+    border-radius: 22px;
+    background: rgba(23, 24, 30, .94);
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.home-search-main .site-search-form input { font-size: 18px; }
+.home-search-main .site-search-submit {
+    flex-basis: 124px;
+    min-height: 66px;
+    border-radius: 16px;
+    font-size: 17px;
+}
+.home-search-popular {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 26px;
+    color: #89898e;
+    font-size: 13px;
+}
+.home-search-popular a {
+    padding: 10px 16px;
+    border-radius: 999px;
+    color: #d4d4d9;
+    background: rgba(23, 24, 30, .94);
+    text-decoration: none;
+}
 .home-search-popular a:hover, .home-search-sports a:hover { color: var(--yellow); }
-.home-search-sports { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
-.home-search-sports a { padding: 12px 17px; border-radius: 13px; color: #f2f2f5; background: var(--panel); font-size: 13px; font-weight: 700; text-decoration: none; }
+.home-search-sports {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+.home-search-sports a {
+    padding: 13px 20px;
+    border-radius: 999px;
+    color: #f2f2f5;
+    background: rgba(23, 24, 30, .94);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+}
 .site-search-suggestions { position: absolute; top: calc(100% + 8px); left: 0; width: 100%; max-height: min(64vh, 520px); overflow-y: auto; border-radius: 16px; background: #1b1c20; box-shadow: 0 18px 40px rgba(0,0,0,.32); }
 .site-search-suggestions[hidden] { display: none; }
 .site-search-suggest-group + .site-search-suggest-group { border-top: 1px solid rgba(255,255,255,.07); }
@@ -23931,4 +24105,3 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .site-search-row-profile { padding: 10px 14px; border-radius: 11px; color: var(--ink); background: var(--yellow); font-size: 12px; font-weight: 800; }
 .site-search-row-arrow { flex: 0 0 18px; color: #888891; }
 .site-search-hint, .site-search-no-results { margin: 30px 0; color: #aaaab2; font-size: 15px; }
-#home-search-title{max-width:100%;}
