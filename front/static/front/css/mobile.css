@@ -12641,8 +12641,8 @@ body.expert-public-details-open {
     grid-template-columns: minmax(0, 1fr);
   }
   .tournaments-page .tournament-card-image { height: 140px; }
-  .tournaments-page .tournament-card-body { gap: 16px; padding: 0 16px 16px; }
-  .tournaments-page .tournament-card-heading { min-height: 75px; }
+  .tournaments-page .tournament-card-body { gap: 10px; padding-bottom: 12px; }
+  .tournaments-page .tournament-card-heading { min-height: 56px; }
   .tournaments-page .tournament-card-icon { width: 56px; height: 56px; flex-basis: 56px; }
   .tournaments-page .tournament-card-head strong { font-size: 18px; }
   .tournaments-page .tournament-card-prize strong { font-size: 30px; }
@@ -12650,8 +12650,6 @@ body.expert-public-details-open {
   .tournaments-page .tournament-card.is-no-cover .tournament-card-body { padding-top: 18px; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-heading { align-items: start; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-icon { margin-top: 0; }
-  .tournaments-page .tournament-card.is-no-cover .tournament-card-sponsor { top: auto; bottom: 12px; }
-  .tournaments-page .tournament-card.is-no-cover { padding-bottom: 46px; }
 
 
   .tournaments-page .tournaments-hero,

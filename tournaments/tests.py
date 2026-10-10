@@ -1097,3 +1097,43 @@ class TournamentPageTests(TestCase):
         self.assertContains(response, "Хозяева")
         self.assertContains(response, "page-capper")
         self.assertContains(response, 'data-prediction-card="')
+
+
+class TournamentCatalogCardTests(TestCase):
+    def setUp(self):
+        self.tournament = Tournament.objects.create(
+            title="Экспресс-челлендж",
+            status=Tournament.Status.PUBLISHED,
+            starts_at=timezone.now() - timedelta(hours=1),
+            ends_at=timezone.now() + timedelta(days=2),
+            sponsor_name="COLDBET",
+            sponsor_url="https://example.com/sponsor/",
+            card_icon_bg_color="#0F7A43",
+        )
+
+    def test_card_shows_sponsor_and_custom_icon_color(self):
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-tournament-icon-color="#0F7A43"')
+        self.assertContains(response, 'href="https://example.com/sponsor/"')
+        self.assertContains(response, 'rel="sponsored noopener noreferrer"')
+        self.assertContains(response, "COLDBET")
+        self.assertContains(response, "Призовой фонд")
+        self.assertContains(response, "Участвовать")
+        self.assertContains(response, 'class="tournament-card tournament-card-live is-no-cover"')
+
+    def test_joined_participant_changes_button_without_extra_queries_per_card(self):
+        analyst = User.objects.create_user(
+            username="tournament-card-member",
+            password="secret",
+            role=User.Role.ANALYST,
+        )
+        TournamentParticipant.objects.create(tournament=self.tournament, user=analyst)
+        self.client.force_login(analyst)
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertContains(response, "Вы в турнире")
+
+    def test_card_color_requires_hex(self):
+        self.tournament.card_icon_bg_color = "javascript:alert(1)"
+        with self.assertRaises(ValidationError):
+            self.tournament.full_clean()

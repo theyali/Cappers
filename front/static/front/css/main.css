@@ -16514,6 +16514,8 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .tournaments-page .tournament-card.is-no-cover .tournament-card-icon { margin-top: 0; }
 .tournaments-page .tournament-card.is-no-cover .tournament-card-status { min-height: 19px; font-size: 10px; }
 .tournaments-page .tournament-card.is-no-cover .tournament-card-head { gap: 6px; }
+.tournaments-page .tournament-card.is-no-cover { padding-bottom: 46px; }
+.tournaments-page .tournament-card.is-no-cover .tournament-card-sponsor { top: auto; bottom: 12px; }
 
 .bonus-cards-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 .bonuses-catalog-page .bonuses-content {
