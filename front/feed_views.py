@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, DailyTask, User
 from cabinet.services.daily_tasks import record_daily_task_action
-from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
+from cabinet.vip import annotate_vip_status, attach_vip_status_to_user, plural_ru
 from game.models import Match, PredictionCoupon, Sport
 from notifications.models import Notification
 
@@ -551,6 +551,7 @@ def following_feed(request):
             "following": following,
             "vip_stories": vip_stories,
             "vip_stories_count": vip_stories_count,
+            "vip_stories_count_label": f"{vip_stories_count} {plural_ru(vip_stories_count, 'эксперт', 'эксперта', 'экспертов')}",
             "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
             "paid_subscriptions": paid_subscriptions,
             "has_feed_sources": bool(following or paid_subscriptions or vip_stories),

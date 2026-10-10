@@ -25,7 +25,7 @@
                         <div class="following-stories-heading">
                             <span class="following-stories-vip">{% include "front/includes/_solar_icon.html" with name="vip" only %} VIP</span>
                             <h2 id="following-stories-title"><span class="following-stories-title-desktop">Капперы с VIP-доступом</span><span class="following-stories-title-mobile">Капперы с VIP</span></h2>
-                            <span class="following-stories-count">{{ vip_stories_count }} эксперта</span>
+                            <span class="following-stories-count">{{ vip_stories_count_label }}</span>
                         </div>
                         <a href="{{ vip_ranking_url }}">
                             <span class="following-stories-all-desktop">Смотреть все</span>
@@ -56,7 +56,7 @@
                                     <span class="following-story-name-desktop">{{ story.name }}</span>
                                     <span class="following-story-name-mobile">{{ story.short_name }}</span>
                                 </span>
-                                <small class="following-story-roi{% if not story.roi_positive %} is-negative{% endif %}">ROI {{ story.roi_label }}</small>
+                                <small class="following-story-roi{% if not story.roi_positive %} is-negative{% endif %}"><span class="following-story-roi-prefix">ROI </span>{{ story.roi_label }}</small>
                             </a>
                         {% endfor %}
                         <a class="following-story-card following-story-all" href="{{ vip_ranking_url }}">
