@@ -118,6 +118,40 @@ class PredictionFilterSidebarTemplateTests(SimpleTestCase):
 
 
 class ExpertRecommendationsTemplateTests(SimpleTestCase):
+    def test_result_bar_splits_wins_refunds_and_losses(self):
+        from cabinet.expert_profile_views import _result_bar
+
+        card = {"wins_count": 35, "refunds_count": 2, "losses_count": 23}
+        self.assertEqual(
+            _result_bar(card),
+            [
+                {"key": "win", "x": "0.00", "width": "58.33"},
+                {"key": "refund", "x": "58.33", "width": "3.33"},
+                {"key": "loss", "x": "61.67", "width": "38.33"},
+            ],
+        )
+        self.assertEqual(_result_bar({"wins_count": 0, "refunds_count": 0, "losses_count": 0}), [])
+
+    def test_highlights_go_to_month_leader_best_roi_and_most_active(self):
+        from cabinet.expert_profile_views import _assign_recommendation_highlights
+
+        cards = [
+            {"id": user_id, "predictions_count": count, "predictions_label": "прогнозов"}
+            for user_id, count in ((1, 40), (2, 30), (3, 258), (4, 12), (5, 0))
+        ]
+        _assign_recommendation_highlights(cards, {1: 5, 2: 103, 4: 8}, month_leader_id=1)
+
+        self.assertEqual(
+            [card["highlight"] for card in cards],
+            [
+                "Лидер рейтинга месяца",
+                "Лучший ROI за месяц",
+                "Самый активный: 258 прогнозов",
+                "Растущий эксперт",
+                "Рекомендуем КапперХаб",
+            ],
+        )
+
     def test_compact_cards_show_real_metrics_and_navigation(self):
         recommendation = {
             "id": 4,
@@ -137,6 +171,11 @@ class ExpertRecommendationsTemplateTests(SimpleTestCase):
             "losses_count": 9,
             "refunds_count": 1,
             "decided_count": 24,
+            "result_bar": [
+                {"key": "win", "x": "0.00", "width": "60.00"},
+                {"key": "refund", "x": "60.00", "width": "4.00"},
+                {"key": "loss", "x": "64.00", "width": "36.00"},
+            ],
             "is_following": False,
         }
         html = render_to_string(
@@ -150,7 +189,10 @@ class ExpertRecommendationsTemplateTests(SimpleTestCase):
         self.assertIn("data-expert-recommendations-track", html)
         self.assertIn("data-expert-recommendations-prev", html)
         self.assertIn("data-expert-recommendations-dots", html)
-        self.assertIn('value="15" max="24"', html)
+        self.assertIn('<rect class="is-win" x="0.00" width="60.00" height="4">', html)
+        self.assertIn('<rect class="is-refund" x="60.00" width="4.00" height="4">', html)
+        self.assertIn('<rect class="is-loss" x="64.00" width="36.00" height="4">', html)
+        self.assertIn("Побед 15, возвратов 1, поражений 9", html)
         self.assertIn("61% заходит", html)
         self.assertIn("ROI +24,1%", html)
         self.assertIn("Футбол · Теннис", html)

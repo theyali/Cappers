@@ -242,7 +242,6 @@ mark { color: var(--blue); background: 0 0; }
 .expert-follow-button.is-active,
 .expert-leader-badge.is-month,
 .expert-public-buy-button.is-active,
-.expert-recommendation-follow.is-active,
 .experts-bottom-action:hover,
 .home-articles-actions button.is-accent,
 .home-best-expert-follow.is-active,
@@ -3682,7 +3681,6 @@ body.layout-columns-center_only .predictions-layout {
 .expert-monthly-results .is-refund,
 .expert-monthly-table thead .is-refund,
 .expert-recent-performance-item.is-refund .expert-recent-performance-copy strong,
-.expert-recommendation-results .is-refund,
 .home-best-expert-podium-card.is-rank-1 .home-best-expert-stats > span:first-child strong,
 .home-layout .forecast-verified,
 .prediction-comment-author-link:hover strong,
@@ -5892,8 +5890,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .expert-monthly-table thead .is-win,
 .expert-period-card.is-positive > div:first-child strong,
 .expert-public-kpi-grid strong.is-positive,
-.expert-recent-performance-item.is-win .expert-recent-performance-copy strong,
-.expert-recommendation-results .is-win {
+.expert-recent-performance-item.is-win .expert-recent-performance-copy strong {
     color: var(--green);
 }
 .capper-pro-calibration.is-warning { border-color: rgba(245, 190, 67, 0.34); }
@@ -5911,8 +5908,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .expert-monthly-table thead .is-loss,
 .expert-period-card.is-negative > div:first-child strong,
 .expert-public-kpi-grid strong.is-negative,
-.expert-recent-performance-item.is-loss .expert-recent-performance-copy strong,
-.expert-recommendation-results .is-loss {
+.expert-recent-performance-item.is-loss .expert-recent-performance-copy strong {
     color: var(--danger);
 }
 .home-best-experts {
@@ -14097,92 +14093,99 @@ body.register {
 .expert-recommendations {
     min-width: 0;
     display: grid;
-    gap: 16px;
-    padding: 28px 30px 22px;
-    background: #0e0f12;
+    gap: 16.25px;
+    padding: 29px 30px 35.75px;
+    background: #0e0f13;
+    font-family: var(--font-body);
 }
 .expert-recommendations-head {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 22px;
+    margin-bottom: 1px;
 }
 .expert-recommendations-heading { min-width: 0; }
 .expert-recommendations-heading .expert-public-kicker {
-    margin: 0 0 7px;
-    color: var(--yellow);
-    font-size: 10px;
-    letter-spacing: .11em;
+    margin: 0 0 4px;
+    color: #f6ec4e;
+    font-size: 8.3px;
+    font-weight: 700;
+    letter-spacing: .19em;
+    line-height: 12px;
     text-transform: uppercase;
 }
 .expert-recommendations-head h2 {
     margin: 0;
     color: #fff;
     font-family: var(--font-heading);
-    font-size: clamp(24px, 2.8vw, 34px);
+    font-size: clamp(24px, 2.8vw, 30px);
     font-weight: 400;
-    line-height: 1.05;
+    line-height: 30px;
 }
-.expert-recommendations-head h2 mark { color: var(--blue); background: transparent; }
+.expert-recommendations-head h2 mark { color: #4a70ff; background: transparent; }
 .expert-recommendations-heading > p:last-child {
-    margin: 7px 0 0;
-    color: #9b9ca4;
-    font-size: 11px;
-    line-height: 1.35;
+    margin: .25px 0 0;
+    color: #a5a5af;
+    font-size: 9.92px;
+    font-weight: 500;
+    line-height: 14px;
 }
 .expert-recommendations-controls {
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 9px;
-    padding-bottom: 2px;
+    gap: 6.25px;
+    margin-bottom: -.75px;
 }
 .expert-recommendations-controls > span {
-    color: #999ba3;
-    font-size: 11px;
+    margin: 0 1.12px 2px 0;
+    color: #6d6d77;
+    font-size: 10.1px;
+    font-weight: 500;
     white-space: nowrap;
 }
-.expert-recommendations-arrows { display: flex; gap: 6px; }
+.expert-recommendations-arrows { display: flex; gap: 6.25px; }
 .expert-recommendations-arrows button {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 33px;
+    height: 33px;
     padding: 0;
     border: 0;
-    border-radius: 10px;
+    border-radius: 8.5px;
     color: #fff;
-    background: #202127;
+    background: #1f1f27;
     cursor: pointer;
 }
-.expert-recommendations-arrows button:hover:not(:disabled) { color: var(--yellow); background: #2c2d33; }
-.expert-recommendations-arrows button:disabled { cursor: default; opacity: .38; }
+.expert-recommendations-arrows button:hover:not(:disabled) { color: var(--yellow); background: #2a2a33; }
+.expert-recommendations-arrows button:disabled { cursor: default; color: #6d6d77; }
 .expert-recommendations-all {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 11px;
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 11px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 11px;
+    gap: 9px;
+    height: 32.5px;
+    margin-left: 1.75px;
+    padding: 0 13.75px 0 13.13px;
+    border-radius: 9px;
+    color: #131313;
+    background: #f6ec4d;
+    font-size: 10.4px;
     font-weight: 700;
     text-decoration: none;
     white-space: nowrap;
 }
 .expert-recommendations-all:hover { background: #fff76b; }
-.expert-recommendations-all span { font-size: 16px; }
+.expert-recommendations-all span { font-size: 12px; }
 .expert-recommendations-track {
     min-width: 0;
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: clamp(178px, calc((100% - 48px) / 5), 200px);
+    grid-auto-columns: 192px;
     gap: 12px;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 0 0 2px;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -14191,32 +14194,34 @@ body.register {
 .expert-recommendation-card {
     position: relative;
     min-width: 0;
-    min-height: 252px;
-    height: 100%;
-    border-radius: 16px;
-    background: #191a20;
+    min-height: 243.5px;
+    border-radius: 14px;
+    background: #17181d;
+    box-shadow: inset 0 0 0 1px #222328;
     scroll-snap-align: start;
 }
 .expert-recommendation-avatar {
-    width: 66px;
-    height: 66px;
+    width: 56px;
+    height: 56px;
     display: grid;
     place-items: center;
     border-radius: 50%;
     color: #fff;
-    background: #275cf8;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
-    font-size: 22px;
-    font-weight: 700;
+    background: #305bff;
+    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .18);
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 400;
 }
-.expert-recommendation-card:nth-child(5n+2) .expert-recommendation-avatar:not(.has-image) { background: #17894d; }
-.expert-recommendation-card:nth-child(5n+3) .expert-recommendation-avatar:not(.has-image) { background: #7435dc; }
-.expert-recommendation-card:nth-child(5n+4) .expert-recommendation-avatar:not(.has-image) { background: #2c4c9f; }
-.expert-recommendation-card:nth-child(5n+5) .expert-recommendation-avatar:not(.has-image) { background: #4536c3; }
+.expert-recommendation-avatar strong { font-weight: 400; }
+.expert-recommendation-card:nth-child(5n+2) .expert-recommendation-avatar:not(.has-image) { background: #127941; }
+.expert-recommendation-card:nth-child(5n+3) .expert-recommendation-avatar:not(.has-image) { background: #6a2ae0; }
+.expert-recommendation-card:nth-child(5n+4) .expert-recommendation-avatar:not(.has-image) { background: #1e3b8b; }
+.expert-recommendation-card:nth-child(5n+5) .expert-recommendation-avatar:not(.has-image) { background: #4438ca; }
 .expert-recommendation-avatar img {
     display: block;
-    width: 66px;
-    height: 66px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -14224,18 +14229,17 @@ body.register {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
     min-width: 0;
-    min-height: 252px;
+    min-height: 243.5px;
     height: 100%;
-    padding: 80px 11px 12px;
+    padding: 78.5px 12px 12.5px;
     text-align: center;
 }
 .expert-recommendation-name {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
     max-width: 100%;
     min-width: 0;
     color: #fff;
@@ -14245,44 +14249,44 @@ body.register {
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 14px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .expert-recommendation-badge {
     display: inline-grid;
-    flex: 0 0 14px;
+    flex: 0 0 11px;
     place-items: center;
-    width: 14px;
-    height: 14px;
+    width: 11px;
+    height: 11px;
 }
-.expert-recommendation-badge svg { display: block; width: 14px; height: 14px; }
+.expert-recommendation-badge svg { display: block; width: 11px; height: 11px; }
 .expert-recommendation-sport {
-    min-height: 13px;
     max-width: 100%;
     overflow: hidden;
-    margin: -3px 0 0;
-    color: #85868d;
-    font-size: 9px;
-    line-height: 1.4;
+    margin: 2.25px 0 0;
+    color: #6d6d77;
+    font-size: 8.25px;
+    font-weight: 600;
+    line-height: 11px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .expert-recommendation-feature {
     display: block;
     max-width: 100%;
-    min-height: 21px;
+    height: 19.25px;
     overflow: hidden;
-    margin-top: 3px;
-    padding: 5px 8px;
-    border-radius: 7px;
-    color: var(--yellow);
-    background: rgba(251, 241, 16, .11);
-    font-size: 9px;
+    margin-top: 11px;
+    padding: 0 7.75px 1px;
+    border-radius: 5px;
+    color: #f6ec4e;
+    background: #313224;
+    font-size: 8.38px;
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 18.25px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -14292,98 +14296,102 @@ body.register {
     justify-content: center;
     gap: 7px;
     max-width: 100%;
-    font-size: 9px;
+    margin-top: 9.5px;
+    font-size: 8.38px;
     font-weight: 700;
+    line-height: 16.25px;
     white-space: nowrap;
 }
 .expert-recommendation-metrics > span {
-    padding: 5px 7px;
-    border-radius: 6px;
-    color: #f0f0f2;
-    background: #101115;
+    height: 17px;
+    padding: 0 7px .75px;
+    border-radius: 5px;
+    color: #fff;
+    background: #121318;
 }
 .expert-recommendation-metrics .is-roi {
-    color: #60e48d;
-    background: rgba(27, 117, 58, .24);
+    color: #5ae38b;
+    background: #15351e;
 }
 .expert-recommendation-metrics .is-roi.is-negative {
-    color: #ff777f;
-    background: rgba(180, 38, 54, .22);
+    color: #f47c85;
+    background: #3a1a1f;
 }
 .expert-recommendation-bar {
     display: block;
+    flex: 0 0 auto;
     width: 100%;
-    height: 5px;
-    overflow: hidden;
-    margin: -1px 0 0;
-    border: 0;
-    border-radius: 10px;
-    appearance: none;
-    background: #e83b51;
+    height: 4px;
+    margin-top: 9.75px;
+    border-radius: 2px;
+    background: #2a2b33;
+    clip-path: inset(0 round 2px);
 }
-.expert-recommendation-bar::-webkit-progress-bar { border-radius: inherit; background: #e83b51; }
-.expert-recommendation-bar::-webkit-progress-value { border-radius: 10px 0 0 10px; background: #43d87b; }
-.expert-recommendation-bar::-moz-progress-bar { background: #43d87b; }
+.expert-recommendation-bar .is-win { fill: #5ae389; }
+.expert-recommendation-bar .is-refund { fill: #5a5d6c; }
+.expert-recommendation-bar .is-loss { fill: #cb3442; }
 .expert-recommendation-results {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    gap: 3px;
+    gap: 8.5px;
     width: 100%;
-    margin: -2px 0 0;
-    font-size: 9px;
+    margin-top: 4.75px;
+    font-size: 8px;
     font-weight: 700;
+    line-height: 10px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
-.expert-recommendation-results .is-win { color: #43d87b; }
-.expert-recommendation-results .is-refund { color: #9b9ba5; }
-.expert-recommendation-results .is-loss { color: #f36a79; }
+.expert-recommendation-results .is-win { color: #5ae389; }
+.expert-recommendation-results .is-refund { color: #a5a5af; }
+.expert-recommendation-results .is-loss { color: #f47c85; }
 .expert-recommendation-follow {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     gap: 7px;
     width: 100%;
-    min-height: 32px;
+    height: 29px;
     margin-top: auto;
-    padding: 0 8px;
+    padding: 0 8px 1.5px;
     border: 0;
-    border-radius: 9px;
-    color: var(--ink);
-    background: var(--yellow);
+    border-radius: 8.5px;
+    color: #131313;
+    background: #f6ec4d;
     cursor: pointer;
     font: inherit;
-    font-size: 10px;
+    font-size: 9.85px;
     font-weight: 700;
     text-decoration: none;
 }
-.expert-recommendation-follow::before { content: "+"; font-size: 17px; font-weight: 500; }
+.expert-recommendation-follow::before { content: "+"; font-size: 14px; font-weight: 500; line-height: 1; }
 .expert-recommendation-follow.is-active {
-    color: #b6b7c0;
-    background: transparent;
-    box-shadow: inset 0 0 0 1px #303138;
+    color: #a5a5af;
+    background: #161920;
+    box-shadow: inset 0 0 0 1px #26272c;
 }
-.expert-recommendation-follow.is-active::before { content: "✓"; font-size: 13px; }
-.expert-recommendation-follow:hover:not(.is-active) { color: var(--ink); background: #fff76b; }
+.expert-recommendation-follow.is-active::before { content: "✓"; font-size: 10px; }
+.expert-recommendation-follow:hover:not(.is-active) { color: #131313; background: #fff76b; }
 .expert-recommendation-follow:disabled,
 .profile-demand-sort button:disabled { cursor: wait; opacity: .65; }
 .expert-recommendations-dots {
     display: flex;
     align-items: center;
-    gap: 5px;
-    min-height: 7px;
+    gap: 4.5px;
+    min-height: 3px;
 }
 .expert-recommendations-dots button {
-    width: 9px;
-    height: 4px;
+    width: 7.5px;
+    height: 3px;
     padding: 0;
     border: 0;
-    border-radius: 5px;
-    background: #31323a;
+    border-radius: 2px;
+    background: #23262d;
     cursor: pointer;
 }
-.expert-recommendations-dots button.is-active { width: 22px; background: var(--yellow); }
+.expert-recommendations-dots button.is-active { width: 19.5px; background: #f6ec4d; }
 .expert-recommendations-dots button:focus-visible,
 .expert-recommendations-arrows button:focus-visible,
 .expert-recommendation-follow:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
@@ -15677,17 +15685,19 @@ body.register {
     font-size: 7px;
 }
 .expert-recommendation-avatar .capper-trust-badge {
-    top: -5px;
-    right: -9px;
-    left: auto;
+    top: -5.5px;
+    left: 29.75px;
     width: auto;
-    min-width: 27px;
-    height: 20px;
-    padding: 0 5px;
-    border-radius: 7px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 10px;
+    min-width: 32.5px;
+    height: 21.25px;
+    padding: 0 4px;
+    border: 2.5px solid #17181d;
+    border-radius: 7.5px;
+    color: #131313;
+    background: #f6ec4d;
+    font-family: var(--font-heading);
+    font-size: 9.3px;
+    font-weight: 400;
     box-shadow: none;
 }
 .expert-public-avatar .capper-trust-badge { top: -8px; left: -8px; width: 40px; height: 40px; font-size: 15px; }
@@ -15806,7 +15816,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .expert-recommendation-card .expert-recommendation-avatar {
     position: absolute;
-    top: 12px;
+    top: 13.5px;
     left: 50%;
     transform: translateX(-50%);
 }

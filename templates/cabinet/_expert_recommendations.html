@@ -11,10 +11,10 @@
             <span>{{ recommended_experts|length }} экспертов</span>
             <div class="expert-recommendations-arrows" aria-label="Управление слайдером">
                 <button type="button" data-expert-recommendations-prev aria-label="Предыдущие капперы" disabled>
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true"><path d="m15 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg viewBox="0 0 24 24" width="12.25" height="12.25" fill="none" aria-hidden="true"><path d="m15 5-7 7 7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <button type="button" data-expert-recommendations-next aria-label="Следующие капперы">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <svg viewBox="0 0 24 24" width="12.25" height="12.25" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
             </div>
             <a class="expert-recommendations-all" href="{% url 'front:cappers_table' %}">Все капперы <span aria-hidden="true">→</span></a>
@@ -32,7 +32,7 @@
             >
                 {% capper_trust_badge recommendation.trust_index %}
                 {% if recommendation.avatar_url %}
-                    <img src="{{ recommendation.avatar_url }}" width="66" height="66" loading="lazy" alt="{{ recommendation.name }}">
+                    <img src="{{ recommendation.avatar_url }}" width="56" height="56" loading="lazy" alt="{{ recommendation.name }}">
                 {% else %}
                     <strong>{{ recommendation.initials }}</strong>
                 {% endif %}
@@ -56,7 +56,9 @@
                     <span>{{ recommendation.hit_rate }}% заходит</span>
                     <span class="is-roi{% if not recommendation.roi_positive %} is-negative{% endif %}">ROI {{ recommendation.roi_label }}</span>
                 </div>
-                <progress class="expert-recommendation-bar" value="{{ recommendation.wins_count }}" max="{{ recommendation.decided_count|default:1 }}" aria-label="Выигрышей {{ recommendation.wins_count }} из {{ recommendation.decided_count }} завершённых прогнозов"></progress>
+                <svg class="expert-recommendation-bar" viewBox="0 0 100 4" preserveAspectRatio="none" role="img" aria-label="Побед {{ recommendation.wins_count }}, возвратов {{ recommendation.refunds_count }}, поражений {{ recommendation.losses_count }}">
+                    {% for segment in recommendation.result_bar %}<rect class="is-{{ segment.key }}" x="{{ segment.x }}" width="{{ segment.width }}" height="4"></rect>{% endfor %}
+                </svg>
                 <div class="expert-recommendation-results" aria-label="Результаты прогнозов">
                     <span class="is-win">{{ recommendation.wins_count }} побед</span>
                     <span class="is-refund">{{ recommendation.refunds_count }} возврат</span>

@@ -9,6 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from front.capper_stats_service import CapperStatsService
 from front.expert_ranking import (
+    current_month_start,
     current_month_top_expert_ids,
     expert_leader_badges,
     ranked_expert_profiles,
@@ -162,19 +163,84 @@ def _recommended_experts(
     if not profiles:
         return []
 
+    return recommended_expert_cards(
+        request,
+        profiles,
+        {profile.user_id: int(profile.followers_count or 0) for profile in profiles},
+    )
+
+
+RESULT_BAR_SEGMENTS = (("win", "wins_count"), ("refund", "refunds_count"), ("loss", "losses_count"))
+
+
+def _result_bar(card: dict) -> list[dict]:
+    """Wins, refunds and losses as consecutive SVG rect offsets on a 0–100 scale."""
+    total = sum(card[field] for _key, field in RESULT_BAR_SEGMENTS)
+    segments = []
+    offset = 0.0
+    for key, field in RESULT_BAR_SEGMENTS:
+        if not total or not card[field]:
+            continue
+        width = card[field] * 100 / total
+        segments.append({"key": key, "x": f"{offset:.2f}", "width": f"{width:.2f}"})
+        offset += width
+    return segments
+
+
+def _assign_recommendation_highlights(cards: list[dict], month_roi: dict, month_leader_id) -> None:
+    """One distinct achievement per card: month leader, best month ROI, most active, then the rest."""
+    remaining = {card["id"]: card for card in cards}
+    leader = remaining.pop(month_leader_id, None)
+    if leader:
+        leader["highlight"] = "Лидер рейтинга месяца"
+    best_roi = max(
+        (card for card in remaining.values() if month_roi.get(card["id"], 0) > 0),
+        key=lambda card: month_roi[card["id"]],
+        default=None,
+    )
+    if best_roi:
+        best_roi["highlight"] = "Лучший ROI за месяц"
+        remaining.pop(best_roi["id"])
+    most_active = max(
+        (card for card in remaining.values() if card["predictions_count"]),
+        key=lambda card: card["predictions_count"],
+        default=None,
+    )
+    if most_active:
+        most_active["highlight"] = (
+            f"Самый активный: {most_active['predictions_count']} {most_active['predictions_label']}"
+        )
+        remaining.pop(most_active["id"])
+    for card in remaining.values():
+        card["highlight"] = (
+            "Растущий эксперт" if month_roi.get(card["id"], 0) > 0 else "Рекомендуем КапперХаб"
+        )
+
+
+def recommended_expert_cards(request, profiles: list[AnalystProfile], followers_by_analyst: dict) -> list[dict]:
+    """Card data for the «Рекомендуем подписаться» carousel; profiles come with user and VIP status."""
     analyst_ids = [profile.user_id for profile in profiles]
+    totals = dict(
+        predictions_count=Sum("bets_count"),
+        wins_count=Sum("wins_count"),
+        losses_count=Sum("losses_count"),
+        refunds_count=Sum("refunds_count"),
+        total_stake=Sum("total_stake"),
+        total_profit=Sum("total_profit"),
+    )
     stats_by_analyst = {
         row["analyst_id"]: row
         for row in CapperMonthlyStat.objects.filter(analyst_id__in=analyst_ids)
         .values("analyst_id")
-        .annotate(
-            predictions_count=Sum("bets_count"),
-            wins_count=Sum("wins_count"),
-            losses_count=Sum("losses_count"),
-            refunds_count=Sum("refunds_count"),
-            total_stake=Sum("total_stake"),
-            total_profit=Sum("total_profit"),
-        )
+        .annotate(**totals)
+    }
+    month_roi = {
+        row["analyst_id"]: row["total_profit"] * 100 / row["total_stake"]
+        for row in CapperMonthlyStat.objects.filter(
+            analyst_id__in=analyst_ids,
+            month=current_month_start(),
+            total_stake__gt=0,
+        ).values("analyst_id", "total_stake", "total_profit")
     }
 
     following_ids: set[int] = set()
@@ -200,48 +266,44 @@ def _recommended_experts(
         losses_count = int(stats.get("losses_count") or 0)
         refunds_count = int(stats.get("refunds_count") or 0)
         settled_count = wins_count + losses_count + refunds_count
-        decided_count = wins_count + losses_count
         hit_rate = round(wins_count * 100 / settled_count) if settled_count else 0
         total_stake = stats.get("total_stake") or 0
         total_profit = stats.get("total_profit") or 0
         roi = round(total_profit * 100 / total_stake, 1) if total_stake else 0
-        roi_label = f"{roi:+.1f}%".replace(".", ",")
         sport_labels = _profile_tag_list(
             profile.favorite_sports, profile.specialization, fallback="Спортивные прогнозы",
         )[:2]
-        highlight = (
-            f"Активный: {predictions_count} {_prediction_word(predictions_count)}"
-            if predictions_count >= 100 else "Рекомендуем КапперХаб"
-        )
-        result.append(
-            {
-                "id": profile.user_id,
-                "username": user.username,
-                "name": name,
-                "initials": _initials(name),
-                "avatar_url": avatar_url,
-                "is_vip": bool(user.is_vip),
-                "trust_index": profile.trust_index,
-                "profile_url": reverse(
-                    "front:expert_profile",
-                    kwargs={"username": user.username},
-                ),
-                "followers_count": int(profile.followers_count or 0),
-                "predictions_count": predictions_count,
-                "predictions_label": _prediction_word(predictions_count),
-                "wins_count": wins_count,
-                "losses_count": losses_count,
-                "refunds_count": refunds_count,
-                "decided_count": decided_count,
-                "hit_rate": hit_rate,
-                "roi_label": roi_label,
-                "roi_positive": roi >= 0,
-                "sport_label": " · ".join(sport_labels),
-                "highlight": highlight,
-                "is_verified": profile.is_verified,
-                "is_following": profile.user_id in following_ids,
-            }
-        )
+        card = {
+            "id": profile.user_id,
+            "username": user.username,
+            "name": name,
+            "initials": _initials(name),
+            "avatar_url": avatar_url,
+            "is_vip": bool(user.is_vip),
+            "trust_index": profile.trust_index,
+            "profile_url": reverse(
+                "front:expert_profile",
+                kwargs={"username": user.username},
+            ),
+            "followers_count": int(followers_by_analyst.get(profile.user_id, 0)),
+            "predictions_count": predictions_count,
+            "predictions_label": _prediction_word(predictions_count),
+            "wins_count": wins_count,
+            "losses_count": losses_count,
+            "refunds_count": refunds_count,
+            "decided_count": wins_count + losses_count,
+            "hit_rate": hit_rate,
+            "roi_label": f"{roi:+.1f}%".replace(".", ","),
+            "roi_positive": roi >= 0,
+            "sport_label": " · ".join(sport_labels),
+            "is_verified": profile.is_verified,
+            "is_following": profile.user_id in following_ids,
+        }
+        card["result_bar"] = _result_bar(card)
+        result.append(card)
+
+    month_leader_ids = current_month_top_expert_ids(1)
+    _assign_recommendation_highlights(result, month_roi, month_leader_ids[0] if month_leader_ids else None)
     return result
 
 
