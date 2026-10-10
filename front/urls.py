@@ -145,6 +145,7 @@ urlpatterns = [
     ),
     path("how-it-works/", how_views.how_it_works, name="how_it_works"),
     path("wiki/", wiki_views.wiki, name="wiki"),
+    path("wiki/dictionary/", wiki_views.wiki_dictionary, name="wiki_dictionary"),
     path("wiki/videos/<int:video_id>/view/", wiki_views.wiki_video_view, name="wiki_video_view"),
     path(
         "wiki/videos/<int:video_id>/reaction/",

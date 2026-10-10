@@ -1280,3 +1280,44 @@ class SiteSearchTests(TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.context["filters"]["sport"], "")
         self.assertEqual(result.context["filters"]["status"], "")
+
+
+class WikiPageNavigationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.section = WikiTermSection.objects.create(name="Основы", is_active=True)
+        cls.hidden_section = WikiTermSection.objects.create(name="Скрытый раздел", is_active=False)
+        WikiTerm.objects.create(term="Коэффициент", section=cls.section, description="Число для расчёта выплаты")
+        WikiTerm.objects.create(term="Скрытый термин", section=cls.hidden_section, description="Недоступное описание")
+
+    def test_video_sidebar_links_to_pages(self):
+        response = self.client.get(reverse("front:wiki"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'href="{reverse("front:how_it_works")}"')
+        self.assertContains(response, f'href="{reverse("front:wiki_dictionary")}"')
+        self.assertContains(response, f'class="is-active" aria-current="page" href="{reverse("front:wiki")}"')
+
+    def test_dictionary_is_separate_page_with_own_active_link(self):
+        response = self.client.get(reverse("front:wiki_dictionary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Словарь терминов')
+        self.assertContains(response, "Коэффициент")
+        self.assertNotContains(response, "Скрытый термин")
+        self.assertContains(response, f'class="is-active" aria-current="page" href="{reverse("front:wiki_dictionary")}"')
+
+    def test_dictionary_filters_work_on_page_and_ajax(self):
+        url = reverse("front:wiki_dictionary")
+        response = self.client.get(url, {"q": "несуществующее"})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "<h3>Коэффициент</h3>")
+
+        response = self.client.get(
+            url,
+            {"fragment": "terms", "term_section": self.section.pk},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Коэффициент", response.json()["html"])
+        self.assertEqual(response.json()["filtered_count"], 1)

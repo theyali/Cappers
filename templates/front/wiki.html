@@ -10,74 +10,10 @@
     data-wiki-page
     data-view-mode="feed"
 >
-    <header class="wiki-shell-head">
-        <div class="wiki-shell-brand">
-            <a class="wiki-logo" href="{% url 'front:wiki' %}" aria-label="База знаний">
-                <span class="wiki-brand-logo" aria-hidden="true">
-                    <img src="{% static 'front/img/logo.png' %}" width="34" height="34" alt="">
-                </span>
-                <strong>База знаний</strong>
-            </a>
-        </div>
-
-        <form class="wiki-search" action="{% url 'front:wiki' %}" method="get" role="search" data-wiki-search>
-            <input
-                type="search"
-                name="q"
-                value="{{ wiki_term_query }}"
-                placeholder="Поиск по базе знаний"
-                aria-label="Поиск по базе знаний"
-            >
-            <button type="submit" aria-label="Найти">
-                {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
-            </button>
-        </form>
-
-        <div class="wiki-head-actions">
-            <button class="wiki-mobile-search-button" type="button" aria-label="Поиск" data-wiki-mobile-search>
-                {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
-            </button>
-            {% if request.user.is_authenticated %}
-                <a class="wiki-profile-link" href="{% url 'cabinet:profile' %}" aria-label="Профиль">
-                    {% if request.user.avatar %}
-                        <img src="{{ request.user.avatar.url }}" width="44" height="44" alt="">
-                    {% else %}
-                        <span>{{ request.user.username|default:request.user.email|slice:":18" }}</span>
-                    {% endif %}
-                </a>
-            {% endif %}
-        </div>
-    </header>
+    {% include "front/includes/_wiki_shell_header.html" %}
 
     <div class="wiki-layout">
-        <aside class="wiki-sidebar" aria-label="Разделы базы знаний">
-            <nav class="wiki-side-nav">
-                <a href="{% url 'front:index' %}">
-                    {% include "front/includes/_solar_icon.html" with name="home-2-bold" only %}
-                    <span>Главная</span>
-                </a>
-                <a class="is-active" href="{% url 'front:wiki' %}">
-                    {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
-                    <span>Все видео</span>
-                </a>
-                <a href="?section={{ wiki_video_sections.0.pk|default:'' }}#wiki-videos">
-                    {% include "front/includes/_solar_icon.html" with name="how_it_works" only %}
-                    <span>Как работает</span>
-                </a>
-                <a href="#wiki-dictionary">
-                    {% include "front/includes/_solar_icon.html" with name="dictionary-bold" only %}
-                    <span>Словарь терминов</span>
-                </a>
-            </nav>
-
-            {% if request.user.is_authenticated %}
-                <div class="wiki-progress-card">
-                    <strong>Ваш прогресс</strong>
-                    <span><i style="width: {{ wiki_user_progress_percent|default:0 }}%"></i></span>
-                    <p>{{ wiki_user_completed_count|default:0 }} из {{ wiki_video_count }} · осталось {{ wiki_user_remaining_minutes|default:0 }} минут</p>
-                </div>
-            {% endif %}
-        </aside>
+        {% include "front/includes/_wiki_sidebar.html" %}
 
         <div class="wiki-main">
             <section class="wiki-feed-view" id="wiki-videos" data-wiki-feed-view>

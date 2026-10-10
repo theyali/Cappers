@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
@@ -87,6 +88,44 @@ def _wiki_terms_context(request):
     }
 
 
+def _wiki_terms_fragment(request, terms_context):
+    return JsonResponse(
+        {
+            "html": render_to_string(
+                "front/includes/_wiki_term_results.html",
+                terms_context,
+                request=request,
+            ),
+            "selected_section_id": (
+                terms_context["wiki_selected_term_section"].pk
+                if terms_context["wiki_selected_term_section"]
+                else None
+            ),
+            "filtered_count": terms_context["wiki_filtered_term_count"],
+        }
+    )
+
+
+@ensure_csrf_cookie
+def wiki_dictionary(request):
+    terms_context = _wiki_terms_context(request)
+    if (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        and request.GET.get("fragment") == "terms"
+    ):
+        return _wiki_terms_fragment(request, terms_context)
+
+    context = {
+        "page_class": "wiki-youtube-page",
+        "hide_site_chrome": True,
+        "hide_footer": True,
+        "wiki_nav_active": "dictionary",
+        "wiki_search_action": reverse("front:wiki_dictionary"),
+    }
+    context.update(terms_context)
+    return render(request, "front/wiki_dictionary.html", context)
+
+
 @ensure_csrf_cookie
 def wiki(request):
     terms_context = _wiki_terms_context(request)
@@ -96,21 +135,7 @@ def wiki(request):
         and request.GET.get("fragment") == "terms"
     )
     if is_terms_ajax:
-        return JsonResponse(
-            {
-                "html": render_to_string(
-                    "front/includes/_wiki_term_results.html",
-                    terms_context,
-                    request=request,
-                ),
-                "selected_section_id": (
-                    terms_context["wiki_selected_term_section"].pk
-                    if terms_context["wiki_selected_term_section"]
-                    else None
-                ),
-                "filtered_count": terms_context["wiki_filtered_term_count"],
-            }
-        )
+        return _wiki_terms_fragment(request, terms_context)
 
     video_sections = list(
         WikiVideoSection.objects.filter(
@@ -183,6 +208,9 @@ def wiki(request):
         "wiki_selected_video_section": selected_video_section,
         "wiki_video_count": all_video_count,
         "wiki_total_count": all_video_count + terms_context["wiki_term_count"],
+        "wiki_nav_active": "videos",
+        "wiki_search_action": reverse("front:wiki"),
+        "wiki_show_progress": True,
         "wiki_user_completed_count": user_completed_count,
         "wiki_user_progress_percent": user_progress_percent,
         "wiki_user_remaining_minutes": max(0, (len(videos) - user_completed_count) * 2),

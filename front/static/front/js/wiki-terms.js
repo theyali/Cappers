@@ -4,6 +4,14 @@
     const $dictionary = $('[data-wiki-dictionary]');
     if (!$dictionary.length) return;
 
+    const $wikiShell = $dictionary.closest('.wiki-shell');
+    $wikiShell.find('[data-wiki-mobile-search]').on('click', () => {
+        $wikiShell.toggleClass('is-search-open');
+        if ($wikiShell.hasClass('is-search-open')) {
+            $wikiShell.find('[data-wiki-search] input').trigger('focus');
+        }
+    });
+
     const $content = $dictionary.find('[data-wiki-terms-content]');
     const $searchForm = $dictionary.find('[data-wiki-terms-search]');
     const $query = $dictionary.find('[data-wiki-terms-query]');

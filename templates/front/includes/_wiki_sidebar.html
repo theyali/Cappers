@@ -1,0 +1,28 @@
+        <aside class="wiki-sidebar" aria-label="Разделы базы знаний">
+            <nav class="wiki-side-nav">
+                <a href="{% url 'front:index' %}">
+                    {% include "front/includes/_solar_icon.html" with name="home-2-bold" only %}
+                    <span>Главная</span>
+                </a>
+                <a{% if wiki_nav_active == "videos" %} class="is-active" aria-current="page"{% endif %} href="{% url 'front:wiki' %}">
+                    {% include "front/includes/_solar_icon.html" with name="play-bold" only %}
+                    <span>Все видео</span>
+                </a>
+                <a href="{% url 'front:how_it_works' %}">
+                    {% include "front/includes/_solar_icon.html" with name="how_it_works" only %}
+                    <span>Как работает</span>
+                </a>
+                <a{% if wiki_nav_active == "dictionary" %} class="is-active" aria-current="page"{% endif %} href="{% url 'front:wiki_dictionary' %}">
+                    {% include "front/includes/_solar_icon.html" with name="dictionary-bold" only %}
+                    <span>Словарь терминов</span>
+                </a>
+            </nav>
+
+            {% if wiki_show_progress and request.user.is_authenticated %}
+                <div class="wiki-progress-card">
+                    <strong>Ваш прогресс</strong>
+                    <span><i style="width: {{ wiki_user_progress_percent|default:0 }}%"></i></span>
+                    <p>{{ wiki_user_completed_count|default:0 }} из {{ wiki_video_count }} · осталось {{ wiki_user_remaining_minutes|default:0 }} минут</p>
+                </div>
+            {% endif %}
+        </aside>
