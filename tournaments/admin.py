@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
@@ -65,8 +66,16 @@ class TournamentEligibilityRuleInline(admin.TabularInline):
     ordering = ("sort_order", "id")
 
 
+class TournamentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Tournament
+        fields = "__all__"
+        widgets = {"card_icon_bg_color": forms.TextInput(attrs={"type": "color"})}
+
+
 @admin.register(Tournament)
 class TournamentAdmin(admin.ModelAdmin):
+    form = TournamentAdminForm
     list_display = (
         "title",
         "status",
@@ -123,7 +132,8 @@ class TournamentAdmin(admin.ModelAdmin):
         ),
         ("Стоимость участия", {"fields": ("entry_type", "entry_fee_coins")}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
-        ("Изображения", {"fields": ("card_image", "hero_image", "hero_icon")}),
+        ("Изображения карточки", {"fields": ("card_image", "hero_image", "hero_icon", "card_icon_bg_color")}),
+        ("Спонсор карточки", {"fields": ("sponsor_name", "sponsor_logo", "sponsor_url")}),
         ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",

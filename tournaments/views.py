@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 from urllib.parse import urlencode
@@ -18,7 +19,7 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
 from cabinet.models import AnalystFollow
-from cabinet.vip import active_vip_subscriptions, annotate_vip_status, attach_vip_status_to_user
+from cabinet.vip import active_vip_subscriptions, annotate_vip_status, attach_vip_status_to_user, plural_ru
 from front.models import PredictionFavorite, PredictionLike
 from front.views import _initials
 from game import date_views
@@ -87,7 +88,26 @@ def index(request):
             Q(allowed_sports__code=active_sport) | Q(allowed_sports__isnull=True)
         ).distinct()
 
-    cards = [_tournament_card(tournament, now, request.user) for tournament in tournaments]
+    tournament_list = list(tournaments)
+    participations_by_tournament = {}
+    if request.user.is_authenticated and tournament_list:
+        participations_by_tournament = {
+            participation.tournament_id: participation
+            for participation in TournamentParticipant.objects.filter(
+                tournament_id__in=[item.pk for item in tournament_list],
+                user=request.user,
+                status=TournamentParticipant.Status.ACTIVE,
+            ).select_related("result")
+        }
+
+    cards = [
+        _tournament_card(
+            tournament,
+            now,
+            participation=participations_by_tournament.get(tournament.pk),
+        )
+        for tournament in tournament_list
+    ]
     if active_filter == "finished":
         cards = [card for card in cards if card.runtime_status["key"] == "finished"]
     elif active_filter == "popular":
@@ -881,70 +901,53 @@ def _tournament_user_prizes(user):
     )
 
 
-def _tournament_card(tournament: Tournament, now, user=None) -> SimpleNamespace:
+def _tournament_card(tournament: Tournament, now, *, participation=None) -> SimpleNamespace:
     allowed_sports = list(tournament.allowed_sports.all())
-    first_sport = allowed_sports[0] if allowed_sports else None
+    is_all_sports = (
+        not allowed_sports
+        or "всем видам спорта" in tournament.title.casefold()
+        or "все виды спорта" in tournament.title.casefold()
+    )
+    first_sport = allowed_sports[0] if len(allowed_sports) == 1 and not is_all_sports else None
     prizes = _active_prizes_by_place(tournament)
     prize_total = sum((prize.money_amount or Decimal("0") for prize in prizes), Decimal("0"))
-    coins_total = sum((int(prize.coins_amount or 0) for prize in prizes), 0)
-    vip_days_max = max((int(prize.vip_days or 0) for prize in prizes), default=0)
-    eligibility = check_tournament_eligibility(user, tournament)
+    runtime_status = _runtime_status(tournament, now)
+    if runtime_status["key"] == "finished":
+        time_label = f"завершён {date_format(timezone.localtime(tournament.ends_at), 'j E')}"
+    else:
+        remaining = max(tournament.starts_at - now if runtime_status["key"] == "upcoming" else tournament.ends_at - now, timedelta(0))
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        if runtime_status["key"] == "upcoming":
+            time_label = f"старт через {days} {plural_ru(days, 'день', 'дня', 'дней')}" if days else f"старт через {max(1, hours)} ч"
+        else:
+            time_label = f"{days} {plural_ru(days, 'день', 'дня', 'дней')} {hours} ч" if days else f"{hours} ч"
+
+    rank = None
+    if participation is not None:
+        try:
+            rank = participation.result.rank
+        except TournamentResult.DoesNotExist:
+            pass
+
     return SimpleNamespace(
         tournament=tournament,
-        runtime_status=_runtime_status(tournament, now),
+        has_cover=bool(tournament.card_image or tournament.hero_image),
+        status_label={"live": "Идёт сейчас", "upcoming": "Скоро старт", "finished": "Завершён"}[runtime_status["key"]],
+        time_label=time_label,
+        is_joined=participation is not None,
+        participant_rank=rank,
+        runtime_status=runtime_status,
         participants_count=getattr(tournament, "participants_count", 0),
         coupons_count=getattr(tournament, "coupons_count", 0),
         prize_total=prize_total,
-        coins_total=coins_total,
-        vip_days_max=vip_days_max,
-        prize_places=[_tournament_card_prize_place(prize) for prize in prizes[:3]],
-        access_badges=_tournament_access_badges(tournament, eligibility),
-        reward_badges=_tournament_card_reward_badges(coins_total, vip_days_max, prizes),
-        eligibility_badge=_tournament_card_eligibility_badge(user, eligibility),
         sport_code=(first_sport.code if first_sport else "all"),
-        sport_label=(first_sport.name_ru or first_sport.name if first_sport else "Все виды спорта"),
+        sport_label=(
+            "Все виды спорта" if is_all_sports else
+            (first_sport.name_ru or first_sport.name if first_sport else "Несколько видов спорта")
+        ),
         sport_icon=_tournament_sport_icon(first_sport.code if first_sport else "all"),
     )
-
-
-def _tournament_card_prize_place(prize: TournamentPrize) -> SimpleNamespace:
-    amount = prize.money_amount or Decimal("0")
-    if amount > 0:
-        label = f"{format_money(amount)} ₽"
-        reward_kind = "money"
-    elif prize.coins_amount:
-        label = format_coins(prize.coins_amount)
-        reward_kind = "coins"
-    elif prize.vip_days:
-        label = f"VIP {prize.vip_days} дн."
-        reward_kind = "vip"
-    elif prize.achievement:
-        label = prize.achievement.title
-        reward_kind = "achievement"
-    else:
-        label = prize.title or "Приз"
-        reward_kind = "reward"
-    return SimpleNamespace(place=prize.place, label=label, reward_kind=reward_kind)
-
-
-def _tournament_card_reward_badges(coins_total: int, vip_days_max: int, prizes: list[TournamentPrize]) -> list[dict]:
-    badges = []
-    if coins_total:
-        badges.append({"label": f"+ {format_coins(coins_total)}", "tone": "coins"})
-    if vip_days_max:
-        badges.append({"label": f"VIP до {vip_days_max} дн.", "tone": "vip"})
-    if any(prize.achievement_id for prize in prizes):
-        badges.append({"label": "Достижение", "tone": "achievement"})
-    return badges
-
-
-def _tournament_card_eligibility_badge(user, eligibility: dict) -> dict:
-    if not getattr(user, "is_authenticated", False):
-        return {"label": "Войдите для проверки", "tone": "neutral"}
-    if eligibility.get("allowed"):
-        return {"label": "Вы подходите", "tone": "ok"}
-    reason = (eligibility.get("reasons") or ["Условия не выполнены."])[0]
-    return {"label": reason.rstrip("."), "tone": "danger"}
 
 
 def _tournament_sport_icon(code: str) -> str:

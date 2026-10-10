@@ -104,12 +104,18 @@ def _recent_performance(author, limit: int) -> dict:
         percent = round(count / total * 100) if total else 0
         return {"count": count, "percent": percent}
 
+    wins = bucket(PredictionCoupon.StateStatus.WIN)
+    losses = bucket(PredictionCoupon.StateStatus.LOSE)
+    refunds = bucket(PredictionCoupon.StateStatus.REFUND)
+    losses["start"] = wins["percent"]
+    refunds["start"] = wins["percent"] + losses["percent"]
     return {
         "limit": limit,
         "total": total,
-        "wins": bucket(PredictionCoupon.StateStatus.WIN),
-        "losses": bucket(PredictionCoupon.StateStatus.LOSE),
-        "refunds": bucket(PredictionCoupon.StateStatus.REFUND),
+        "wins": wins,
+        "losses": losses,
+        "refunds": refunds,
+        "recent_states": states[:10],
     }
 
 

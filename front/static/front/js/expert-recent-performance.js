@@ -3,10 +3,8 @@
     const dataNode = document.getElementById("expert-recent-performance-data");
     if (!root || !dataNode) return;
 
-    const statsAnchor = document.querySelector(".expert-public-stats");
-    if (statsAnchor && statsAnchor.parentElement) {
-        statsAnchor.insertAdjacentElement("afterend", root);
-    }
+    const analytics = document.querySelector(".expert-public-analytics");
+    if (analytics) analytics.insertAdjacentElement("beforebegin", root);
 
     let windows = {};
     try {
@@ -18,14 +16,6 @@
     const select = root.querySelector("[data-expert-performance-range]");
     const caption = root.querySelector("[data-performance-caption]");
 
-    const pluralizePredictions = (count) => {
-        const mod10 = count % 10;
-        const mod100 = count % 100;
-        if (mod10 === 1 && mod100 !== 11) return "прогноз";
-        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "прогноза";
-        return "прогнозов";
-    };
-
     const render = (limit) => {
         const data = windows[String(limit)] || windows["10"];
         if (!data) return;
@@ -36,20 +26,21 @@
             const percent = Math.max(0, Math.min(100, Number(item.percent || 0)));
             const count = Math.max(0, Number(item.count || 0));
 
-            card.querySelector("[data-performance-ring]")?.setAttribute(
-                "stroke-dasharray",
-                `${percent} 100`,
-            );
-            const percentNode = card.querySelector("[data-performance-percent]");
             const countNode = card.querySelector("[data-performance-count]");
-            if (percentNode) percentNode.textContent = `${percent}%`;
-            if (countNode) countNode.textContent = `${count} ${pluralizePredictions(count)}`;
+            if (countNode) countNode.textContent = String(count);
+            const bar = root.querySelector(`[data-performance-bar="${state}"]`);
+            if (bar) {
+                bar.setAttribute("width", String(percent));
+                bar.setAttribute("x", String(Math.max(0, Number(item.start || 0))));
+            }
         });
 
+        const winrate = root.querySelector("[data-performance-winrate]");
+        if (winrate) winrate.textContent = `${data.wins?.percent || 0}%`;
         const total = Math.max(0, Number(data.total || 0));
         if (caption) {
             caption.textContent = total
-                ? `По ${total} рассчитанным ${pluralizePredictions(total)}`
+                ? `винрейт по ${total} рассчитанным`
                 : "Пока нет рассчитанных прогнозов";
         }
     };

@@ -238,6 +238,7 @@ class CapperStatsService:
             str(days): self._profit_chart(settled_coupons, days=days, now=now)
             for days in (7, 30, 90)
         }
+        profit_chart["all"] = self._profit_chart(settled_coupons, days=None, now=now)
 
         is_following = False
         if (
@@ -499,11 +500,16 @@ class CapperStatsService:
         self,
         coupons: list[PredictionCoupon],
         *,
-        days: int,
+        days: int | None,
         now,
     ) -> list[dict]:
         today = timezone.localtime(now).date()
-        start_date = today - timedelta(days=days - 1)
+        if days is None:
+            dates = [timezone.localtime(self._coupon_result_date(coupon)).date() for coupon in coupons]
+            start_date = min((date for date in dates if date <= today), default=today)
+            days = (today - start_date).days + 1
+        else:
+            start_date = today - timedelta(days=days - 1)
         daily_profit: dict = {}
 
         for coupon in coupons:
@@ -602,6 +608,9 @@ class CapperStatsService:
         result = []
         for row in rows:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
+            win_rate = round((row["wins"] or 0) / settled * 100) if settled else 0
+            is_low_sample = (row["total"] or 0) < 5
+            bar_tone = "muted" if is_low_sample else "high" if win_rate >= 90 else "low" if win_rate < 50 else "normal"
             result.append(
                 {
                     "label": MARKET_LABELS.get(
@@ -611,11 +620,9 @@ class CapperStatsService:
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": (
-                        round((row["wins"] or 0) / settled * 100)
-                        if settled
-                        else 0
-                    ),
+                    "win_rate": win_rate,
+                    "is_low_sample": is_low_sample,
+                    "bar_tone": bar_tone,
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )
@@ -643,6 +650,9 @@ class CapperStatsService:
         result = []
         for row in rows:
             settled = (row["wins"] or 0) + (row["losses"] or 0)
+            win_rate = round((row["wins"] or 0) / settled * 100) if settled else 0
+            is_low_sample = (row["total"] or 0) < 5
+            bar_tone = "muted" if is_low_sample else "high" if win_rate >= 90 else "low" if win_rate < 50 else "normal"
             result.append(
                 {
                     "label": (
@@ -654,11 +664,9 @@ class CapperStatsService:
                     "wins": row["wins"] or 0,
                     "losses": row["losses"] or 0,
                     "refunds": row["refunds"] or 0,
-                    "win_rate": (
-                        round((row["wins"] or 0) / settled * 100)
-                        if settled
-                        else 0
-                    ),
+                    "win_rate": win_rate,
+                    "is_low_sample": is_low_sample,
+                    "bar_tone": bar_tone,
                     "avg_coefficient": row["avg_coefficient"] or 0,
                 }
             )

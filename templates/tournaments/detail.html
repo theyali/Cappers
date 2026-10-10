@@ -47,7 +47,7 @@
                             style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_4.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;"
                         {% endif %}
                     >
-                        <div class="tournament-detail-hero-icon" aria-hidden="true">
+                        <div class="tournament-detail-hero-icon" data-tournament-icon-color="{{ tournament.card_icon_bg_color }}" aria-hidden="true">
                             {% if home_tab.hero_icon_url %}
                                 <img src="{{ home_tab.hero_icon_url }}" width="62" height="62" alt="" loading="lazy">
                             {% else %}

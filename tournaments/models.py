@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -160,6 +161,25 @@ class Tournament(models.Model):
         null=True,
         help_text="Показывается в hero на внутренней странице турнира.",
     )
+    card_icon_bg_color = models.CharField(
+        "Фон иконки в карточке",
+        max_length=7,
+        default="#09663F",
+        validators=[
+            RegexValidator(
+                regex=r"^#[0-9a-fA-F]{6}$",
+                message="Укажите цвет в формате #RRGGBB.",
+            )
+        ],
+    )
+    sponsor_name = models.CharField("Имя спонсора", max_length=100, blank=True)
+    sponsor_logo = models.ImageField(
+        "Логотип спонсора",
+        upload_to=tournament_image_upload_path,
+        blank=True,
+        null=True,
+    )
+    sponsor_url = models.URLField("Ссылка спонсора", max_length=500, blank=True)
     prize_first = models.DecimalField("Приз за 1 место", max_digits=12, decimal_places=2, default=0)
     prize_second = models.DecimalField("Приз за 2 место", max_digits=12, decimal_places=2, default=0)
     prize_third = models.DecimalField("Приз за 3 место", max_digits=12, decimal_places=2, default=0)

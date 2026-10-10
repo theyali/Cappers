@@ -21,7 +21,7 @@ class AchievementAdminTests(SimpleTestCase):
 
         self.assertEqual(
             model_admin.list_display,
-            ("title", "slug", "sort_order", "is_active"),
+            ("icon_preview", "title", "slug", "sort_order", "is_active"),
         )
         self.assertEqual(
             model_admin.list_editable,
@@ -38,6 +38,10 @@ class AchievementAdminTests(SimpleTestCase):
         self.assertEqual(
             model_admin.ordering,
             ("sort_order", "title"),
+        )
+        self.assertEqual(
+            model_admin.readonly_fields,
+            ("icon_preview",),
         )
 
     def test_achievement_admin_configuration(self):
