@@ -4629,7 +4629,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-bookmakers-all span { font-size: 20px; }
 .home-bookmakers-showcase {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.03fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
     gap: 24px;
     align-items: start;
 }
@@ -4637,7 +4637,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     position: relative;
     isolation: isolate;
     min-width: 0;
-    min-height: 540px;
+    min-height: 430px;
     overflow: hidden;
     border-radius: 26px;
     color: #fff;
@@ -4669,7 +4669,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    min-height: 540px;
+    min-height: 430px;
     padding: 27px 30px 28px;
 }
 .home-bookmakers-feature-top {
