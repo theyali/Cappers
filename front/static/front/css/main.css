@@ -11366,6 +11366,7 @@ body.register footer {
 .expert-performance-track rect { fill: #305bff; }
 .expert-performance-track.is-high rect { fill: #5be38a; }
 .expert-performance-track.is-low rect { fill: #ff7a7f; }
+.expert-performance-track.is-muted rect { fill: #3a3c45; }
 .expert-public-chart-card { gap: 16px; }
 .expert-public-muted,
 .profile-achievement-card p {
