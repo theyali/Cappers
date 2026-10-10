@@ -232,7 +232,7 @@ def _recommended_experts(
                 "wins_count": wins_count,
                 "losses_count": losses_count,
                 "refunds_count": refunds_count,
-                "decided_count": max(decided_count, 1),
+                "decided_count": decided_count,
                 "hit_rate": hit_rate,
                 "roi_label": roi_label,
                 "roi_positive": roi >= 0,
