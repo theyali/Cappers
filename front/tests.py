@@ -145,6 +145,42 @@ class HomeMobileBookmakersTemplateTests(SimpleTestCase):
         self.assertIn("ЛС", html)
         self.assertEqual(html.count("data-home-mobile-dot"), 2)
 
+    def test_home_desktop_banner_uses_own_image_and_four_bookmakers(self):
+        featured = Bookmaker(
+            name="ColdBet",
+            icon="bookmakers/cold.webp",
+            slider_img="bookmakers/slider/mobile.webp",
+            desktop_banner_img="bookmakers/desktop/desktop.webp",
+            link="https://example.com/cold",
+            bonus_text="100% до 25 000 ₽",
+            rating=Decimal("4.8"),
+            minimum_deposit="500 ₽",
+        )
+        other_bookmakers = [
+            Bookmaker(name=f"БК {index}", icon=f"bookmakers/bk{index}.webp",
+                      link=f"https://example.com/bk{index}", bonus_text=f"Бонус {index}")
+            for index in range(4)
+        ]
+        bookmakers = [featured, *other_bookmakers]
+        html = render_to_string(
+            "front/includes/_home_bookmakers.html",
+            {
+                "bookmakers": bookmakers,
+                "mobile_bookmakers": bookmakers[:3],
+                "featured_bookmaker": featured,
+                "compact_bookmakers": other_bookmakers,
+                "is_home_bookmakers": True,
+            },
+        )
+
+        self.assertIn("bookmakers/desktop/desktop.webp", html)
+        self.assertIn("bookmakers/slider/mobile.webp", html)
+        self.assertIn("bookmakers/cold.webp", html)
+        self.assertIn("Депозит от 500 ₽", html)
+        self.assertEqual(html.count('class="home-bookmakers-card"'), 4)
+        self.assertEqual(html.count("data-home-mobile-dot"), 3)
+        self.assertNotIn("bookmakers-catalog-head", html)
+
     def test_catalog_page_keeps_only_the_table(self):
         html = render_to_string("front/includes/_home_bookmakers.html", {"bookmakers": self.bookmakers()})
 
