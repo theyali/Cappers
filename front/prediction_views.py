@@ -1038,6 +1038,7 @@ def prediction_detail(request, prediction_id: int):
         "front/prediction_detail.html",
         {
             "page_class": "coupon-detail-body",
+            "breadcrumbs": [],
             "coupon": coupon,
             "positions": positions,
             "total_coefficient": total_coefficient,
