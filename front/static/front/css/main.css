@@ -8973,7 +8973,8 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 }
 .filter_matches { padding: 10px; background: var(--panel); }
 .filter_matches .matches-table-filter-head-icon .solar-icon,
-.filter_matches .matches-table-scope-icon .solar-icon {
+.filter_matches .matches-table-scope-icon .solar-icon,
+.matches-table-scope-list[role="tablist"] .matches-table-scope-icon .solar-icon {
     fill: currentColor;
     stroke: none;
 }
