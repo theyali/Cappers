@@ -24,12 +24,12 @@
             </a>
             {% endfor %}
         </nav>
-        <form method="get" action="{% url 'front:search' %}" class="site-search-filters">
+        <form method="get" action="{% url 'front:search' %}" class="site-search-filters" data-site-search-filters>
             <input type="hidden" name="q" value="{{ query }}">
             <input type="hidden" name="category" value="{{ active_category }}">
             <label>
                 <span class="sr-only">Вид спорта</span>
-                <select name="sport" onchange="this.form.requestSubmit()">
+                <select name="sport">
                     {% for value, label in search_sports %}
                     <option value="{{ value }}"{% if filters.sport == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -37,7 +37,7 @@
             </label>
             <label>
                 <span class="sr-only">Дата матча</span>
-                <select name="date" onchange="this.form.requestSubmit()">
+                <select name="date">
                     {% for value, label in search_dates %}
                     <option value="{{ value }}"{% if filters.date == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -45,7 +45,7 @@
             </label>
             <label>
                 <span class="sr-only">Статус прогноза</span>
-                <select name="status" onchange="this.form.requestSubmit()">
+                <select name="status">
                     {% for value, label in search_statuses %}
                     <option value="{{ value }}"{% if filters.status == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -53,7 +53,7 @@
             </label>
             <label>
                 <span class="sr-only">Коэффициент</span>
-                <select name="coefficient" onchange="this.form.requestSubmit()">
+                <select name="coefficient">
                     {% for value, label in search_coefficients %}
                     <option value="{{ value }}"{% if filters.coefficient == value %} selected{% endif %}>{{ label }}</option>
                     {% endfor %}
