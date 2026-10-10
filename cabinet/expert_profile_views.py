@@ -172,6 +172,8 @@ def _recommended_experts(
             wins_count=Sum("wins_count"),
             losses_count=Sum("losses_count"),
             refunds_count=Sum("refunds_count"),
+            total_stake=Sum("total_stake"),
+            total_profit=Sum("total_profit"),
         )
     }
 
@@ -194,6 +196,23 @@ def _recommended_experts(
             avatar_url = user.avatar.url
         stats = stats_by_analyst.get(profile.user_id, {})
         predictions_count = int(stats.get("predictions_count") or 0)
+        wins_count = int(stats.get("wins_count") or 0)
+        losses_count = int(stats.get("losses_count") or 0)
+        refunds_count = int(stats.get("refunds_count") or 0)
+        settled_count = wins_count + losses_count + refunds_count
+        decided_count = wins_count + losses_count
+        hit_rate = round(wins_count * 100 / settled_count) if settled_count else 0
+        total_stake = stats.get("total_stake") or 0
+        total_profit = stats.get("total_profit") or 0
+        roi = round(total_profit * 100 / total_stake, 1) if total_stake else 0
+        roi_label = f"{roi:+.1f}%".replace(".", ",")
+        sport_labels = _profile_tag_list(
+            profile.favorite_sports, profile.specialization, fallback="Спортивные прогнозы",
+        )[:2]
+        highlight = (
+            f"Активный: {predictions_count} {_prediction_word(predictions_count)}"
+            if predictions_count >= 100 else "Рекомендуем КапперХаб"
+        )
         result.append(
             {
                 "id": profile.user_id,
@@ -210,9 +229,16 @@ def _recommended_experts(
                 "followers_count": int(profile.followers_count or 0),
                 "predictions_count": predictions_count,
                 "predictions_label": _prediction_word(predictions_count),
-                "wins_count": int(stats.get("wins_count") or 0),
-                "losses_count": int(stats.get("losses_count") or 0),
-                "refunds_count": int(stats.get("refunds_count") or 0),
+                "wins_count": wins_count,
+                "losses_count": losses_count,
+                "refunds_count": refunds_count,
+                "decided_count": max(decided_count, 1),
+                "hit_rate": hit_rate,
+                "roi_label": roi_label,
+                "roi_positive": roi >= 0,
+                "sport_label": " · ".join(sport_labels),
+                "highlight": highlight,
+                "is_verified": profile.is_verified,
                 "is_following": profile.user_id in following_ids,
             }
         )
