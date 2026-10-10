@@ -19035,46 +19035,77 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .prediction-card.feed-prediction-card .feed-prediction-cover-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .prediction-card.feed-prediction-card:hover .feed-prediction-cover-image img { transform: none; filter: none; }
 .prediction-card.feed-prediction-card .feed-prediction-cover-center {
-    position: relative;
-    z-index: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
+    position: absolute;
+    top: 41%;
+    left: 50%;
+    z-index: 2;
+    display: inline-flex;
+    flex-direction: row;
     align-items: center;
-    align-self: center;
-    gap: 8px;
+    align-self: auto;
+    gap: 10px;
+    max-width: calc(100% - 48px);
+    padding: 6px 12px 6px 7px;
+    border-radius: 13px;
+    background: rgba(12, 13, 21, .82);
+    transform: translate(-50%, -50%);
 }
 .prediction-card.feed-prediction-card .feed-prediction-cover-league {
-    width: clamp(52px, 18%, 72px);
-    height: clamp(52px, 18%, 72px);
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    background: #13131333;
-    box-shadow: none;
-    font-size: 17px;
-    font-weight: 700;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    background: rgba(255, 255, 255, .14);
+    font-size: 13px;
 }
 .prediction-card.feed-prediction-card .feed-prediction-cover-center > span:last-child {
-    max-width: min(100%, 260px);
+    max-width: 260px;
     overflow: hidden;
-    padding: 5px 10px;
+    padding: 0;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.prediction-card.feed-prediction-card .feed-prediction-cover-teams {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    z-index: 2;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    width: min(62%, 305px);
+    transform: translateX(-50%);
+}
+.feed-prediction-cover-team-group {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.feed-prediction-cover-team-group > strong {
+    max-width: 100%;
+    overflow: hidden;
     color: #fff;
-    background: #13131333;
     font-size: 13px;
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.prediction-card.feed-prediction-card .feed-prediction-cover-teams {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px;
+.feed-prediction-cover-vs {
+    flex: 0 0 auto;
+    align-self: end;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, .57);
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 600;
 }
 .feed-prediction-cover-confidence,
 .feed-prediction-cover-status {
@@ -19108,50 +19139,50 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .feed-prediction-cover-status.is-lose { color: #fff; background: radial-gradient(circle, #fd1a01 0, #de3c2a 50%, #cc1400 100%); }
 .feed-prediction-cover-status.is-refund { color: #111; background: radial-gradient(circle, #fff330 0, #fbf110 52%, #d7c900 100%); }
 .feed-prediction-cover-confidence {
-    right: 8px;
-    width: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
+    top: 20px;
+    right: 20px;
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
     color: #fff;
-    background: 0 0;
     text-align: center;
 }
 .feed-prediction-confidence-ring {
     position: relative;
-    width: 43px;
-    height: 43px;
     display: grid;
     place-items: center;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    background: #101114;
+    background: rgba(20, 21, 24, .86);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .28);
 }
 .feed-prediction-confidence-ring svg {
     position: absolute;
     inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
     overflow: visible;
     transform: rotate(-90deg);
 }
 .feed-prediction-confidence-progress,
 .feed-prediction-confidence-track {
     fill: none;
-    stroke-width: 5;
+    stroke-width: 3.5;
 }
-.feed-prediction-confidence-track { stroke: #2b3036; }
-.feed-prediction-confidence-progress { stroke: #1595ff; stroke-linecap: butt; }
+.feed-prediction-confidence-track { stroke: rgba(255, 255, 255, .28); }
+.feed-prediction-confidence-progress { stroke: var(--yellow); stroke-linecap: round; }
 .feed-prediction-cover-confidence strong {
     position: relative;
     z-index: 1;
     color: #fff;
-    font-size: 9px;
-    font-weight: 700;
+    font-family: var(--font-heading);
+    font-size: 21px;
+    font-weight: 600;
     line-height: 1;
 }
-.feed-prediction-cover-confidence > span:last-child { color: rgba(255, 255, 255, 0.58); font-size: 8px; font-weight: 600; line-height: 1.1; }
 .coin-amount { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .coin-icon {
     width: 28px;
