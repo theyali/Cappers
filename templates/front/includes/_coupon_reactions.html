@@ -19,6 +19,13 @@
         <b data-reaction-count>{{ likes_count }}</b>
     </button>
 
+    {% if show_comments %}
+    <a class="prediction-reaction prediction-comment-metric" href="#comments" aria-label="Комментарии. Всего комментариев: {{ coupon.comments_count }}" title="Комментарии">
+        {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
+        <b data-comment-count="{{ coupon.id }}">{{ coupon.comments_count }}</b>
+    </a>
+    {% endif %}
+
     <button
         class="prediction-reaction prediction-favorite{% if is_favorite %} is-active{% endif %}"
         type="button"
@@ -35,12 +42,7 @@
         <b data-reaction-count>{{ favorites_count }}</b>
     </button>
 
-    {% if show_comments %}
-    <a class="prediction-reaction prediction-comment-metric" href="#comments" aria-label="Комментарии. Всего комментариев: {{ coupon.comments_count }}" title="Комментарии">
-        {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
-        <b data-comment-count="{{ coupon.id }}">{{ coupon.comments_count }}</b>
-    </a>
-    {% endif %}
+
 
     <button
         class="prediction-reaction prediction-share"
