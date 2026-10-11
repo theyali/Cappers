@@ -99,7 +99,7 @@
                                     </span>
                                 {% endif %}
                                 <small>
-                                    {% if request.user.email_verified %}
+                                    {% if request.user.email and request.user.email_verified %}
                                         Для смены сначала подтвердите доступ к текущей почте.
                                     {% elif request.user.email %}
                                         Подтвердите адрес, чтобы получать уведомления и восстанавливать доступ.
@@ -108,7 +108,7 @@
                                     {% endif %}
                                 </small>
                             </div>
-                            {% if request.user.email_verified %}
+                            {% if request.user.email and request.user.email_verified %}
                                 <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
                             {% elif request.user.email %}
                                 <a class="profile-email-action" href="#profile-email-change-modal">Подтвердить</a>
