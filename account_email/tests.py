@@ -95,7 +95,7 @@ class AccountEmailFlowTests(TestCase):
         self.assertContains(page, 'class="message-item success" role="status"')
         self.assertContains(page, "Ссылка подтверждения отправлена на вашу почту.")
 
-        link = re.search(r"https?://[^\\s]+", mail.outbox[0].body)
+        link = re.search(r"https?://[^\s]+", mail.outbox[0].body)
         self.assertIsNotNone(link)
         response = self.client.get(urlsplit(link.group(0)).path)
         self.assertRedirects(response, settings_url, fetch_redirect_response=False)
