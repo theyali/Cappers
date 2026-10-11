@@ -64,8 +64,34 @@ SORT_OPTIONS = (
     ("new", "Новые"),
     ("roi", "Лучший ROI"),
     ("popular", "Самые популярные"),
+    ("confidence", "По уверенности"),
+    ("payout", "По возможному выигрышу"),
+    ("discussed", "Самые обсуждаемые"),
 )
 PREDICTION_FILTER_COLLAPSED_SESSION_KEY = "front.prediction_filter_collapsed"
+
+
+def _sort_prediction_queryset(queryset, active_sort, *, default_ordering, popular_ordering=None):
+    if active_sort == "roi":
+        return queryset.order_by("-author_roi", "-likes_count", "-published_at", "-created_at")
+    if active_sort == "popular":
+        if popular_ordering is not None:
+            return queryset.order_by(*popular_ordering)
+        return queryset.annotate(
+            popularity_score=ExpressionWrapper(
+                F("likes_count") * Value(2) + F("favorites_count") * Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by("-popularity_score", "-likes_count", "-published_at", "-created_at")
+
+    sort_field = {
+        "confidence": "-confidence",
+        "payout": "-possible_payout",
+        "discussed": "-comments_count",
+    }.get(active_sort)
+    if sort_field:
+        return queryset.order_by(sort_field, "-published_at", "-created_at", "-id")
+    return queryset.order_by(*default_ordering)
 
 
 def prediction_filter_collapsed(request) -> bool:

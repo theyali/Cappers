@@ -99,15 +99,19 @@
                                     </span>
                                 {% endif %}
                                 <small>
-                                    {% if request.user.email %}
+                                    {% if request.user.email and request.user.email_verified %}
                                         Для смены сначала подтвердите доступ к текущей почте.
+                                    {% elif request.user.email %}
+                                        Подтвердите адрес, чтобы получать уведомления и восстанавливать доступ.
                                     {% else %}
                                         Добавьте почту, чтобы получать системные уведомления и восстанавливать доступ.
                                     {% endif %}
                                 </small>
                             </div>
-                            {% if request.user.email %}
+                            {% if request.user.email and request.user.email_verified %}
                                 <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
+                            {% elif request.user.email %}
+                                <a class="profile-email-action" href="#profile-email-change-modal">Подтвердить</a>
                             {% else %}
                                 <a class="profile-email-action" href="#profile-email-add-modal">Добавить почту</a>
                             {% endif %}
@@ -122,6 +126,16 @@
                         <span>{{ user_form.last_name.label }}</span>
                         {{ user_form.last_name }}
                         {{ user_form.last_name.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ user_form.gender.label }}</span>
+                        {{ user_form.gender }}
+                        {{ user_form.gender.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ user_form.country.label }}</span>
+                        {{ user_form.country }}
+                        {{ user_form.country.errors }}
                     </label>
             {% if analyst_form %}
                     <label class="profile-field profile-field-full">
@@ -344,11 +358,25 @@
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
                 </span>
                 <div>
-                    <p class="eyebrow">Смена почты</p>
-                    <h2 id="profile-email-change-title">Подтвердите текущую почту</h2>
+                    {% if request.user.email_verified %}
+                        <p class="eyebrow">Смена почты</p>
+                        <h2 id="profile-email-change-title">Подтвердите текущую почту</h2>
+                    {% else %}
+                        <p class="eyebrow">Подтверждение почты</p>
+                        <h2 id="profile-email-change-title">Подтвердите почту</h2>
+                    {% endif %}
                 </div>
             </div>
-            <p class="profile-email-modal-copy">Мы отправим ссылку на {{ request.user.email }}. После перехода по ссылке вы сможете указать новую почту и подтвердить ее кодом.</p>
+            {% if request.user.email_verified %}
+                <p class="profile-email-modal-copy">Мы отправим ссылку на {{ request.user.email }}. После перехода по ссылке вы сможете указать новую почту и подтвердить ее кодом.</p>
+            {% else %}
+                <p class="profile-email-modal-copy">Отправим письмо на {{ request.user.email }}. Перейдите по ссылке, чтобы подтвердить адрес.</p>
+                {% for message in messages %}
+                    {% if 'email-verification-sent' in message.tags %}
+                        <div class="message-item success" role="status">{{ message }} Проверьте входящие и папку «Спам».</div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
             <form method="post" action="{% url 'account_email:request_change' %}">
                 {% csrf_token %}
                 <button class="profile-email-modal-submit" type="submit">Отправить ссылку</button>

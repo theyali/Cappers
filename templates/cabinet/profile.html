@@ -30,15 +30,10 @@
                                 {% else %}
                                     <span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>
                                 {% endif %}
-                                {% if analyst_profile %}
-                                <label class="avatar-upload-button" for="avatarUploadInput" title="Изменить аватар" aria-label="Изменить аватар">
+                                <a class="avatar-upload-button" href="#profile-avatar-modal" title="Изменить аватар" aria-label="Изменить аватар">
                                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.4-2h7.2L17 7h3v12H4z"></path><circle cx="12" cy="13" r="3.2"></circle></svg>
-                                </label>
-                                {% endif %}
+                                </a>
                             </div>
-                            {% if analyst_profile %}
-                                <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
-                            {% endif %}
                             <a class="profile-hero-edit" href="{% url 'cabinet:profile' %}?tab=settings" data-profile-tab-link>Редактировать</a>
                         </div>
 
@@ -86,7 +81,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="avatar-upload-status" id="profileAvatarStatus" aria-live="polite"></div>
+
                         </div>
                     </div>
 
@@ -950,6 +945,57 @@
         </section>
     </div>
 </section>
+<div class="profile-email-modal" id="profile-avatar-modal" role="dialog" aria-modal="true" aria-labelledby="profile-avatar-modal-title">
+    <a class="profile-email-modal-backdrop" href="{% url 'cabinet:profile' %}?tab=profile" aria-label="Закрыть"></a>
+    <section class="profile-email-modal-card profile-avatar-modal-card">
+        <a class="profile-email-modal-close" href="{% url 'cabinet:profile' %}?tab=profile" aria-label="Закрыть">×</a>
+        <div class="profile-email-modal-head">
+            <span class="profile-email-modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+            </span>
+            <div>
+                <p class="eyebrow">Ваш профиль</p>
+                <h2 id="profile-avatar-modal-title">Выберите аватар</h2>
+            </div>
+        </div>
+        <div class="profile-avatar-modal-current">
+            <span class="profile-avatar-modal-preview" data-avatar-current>
+                {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" width="56" height="56" alt="Ваш текущий аватар">
+                {% else %}
+                    {{ request.user.username|first|upper }}
+                {% endif %}
+            </span>
+            <div>
+                <strong>Текущий аватар</strong>
+                <small>Выберите готовый вариант или загрузите свою фотографию.</small>
+            </div>
+        </div>
+        <div class="profile-avatar-modal-label">
+            <strong>Готовые аватары</strong>
+            <span>{% if request.user.gender %}Подобраны с учётом пола{% else %}Для всех пользователей{% endif %}</span>
+        </div>
+        <form id="profileAvatarPresetForm" method="post" action="{% url 'cabinet:avatar_upload' %}">
+            {% csrf_token %}
+            <div class="profile-avatar-choice-grid">
+                {% for preset in preset_avatars %}
+                    <button class="profile-avatar-choice" type="submit" name="preset_id" value="{{ preset.pk }}" title="{{ preset.title }}">
+                        <img src="{{ preset.image.url }}" width="110" height="110" alt="{{ preset.title }}" loading="lazy">
+                        <span>{{ preset.title }}</span>
+                    </button>
+                {% empty %}
+                    <p class="profile-email-modal-copy profile-avatar-empty">Готовые аватары пока не добавлены. Вы можете загрузить своё фото.</p>
+                {% endfor %}
+            </div>
+        </form>
+        <label class="profile-avatar-upload-card" for="avatarUploadInput">
+            <span class="profile-avatar-upload-mark" aria-hidden="true">+</span>
+            <span><strong>Загрузить своё фото</strong><small>JPG, PNG или WebP · до 5 МБ</small></span>
+        </label>
+        <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
+        <div class="avatar-upload-status" id="profileAvatarStatus" role="status" aria-live="polite"></div>
+    </section>
+</div>
 {% endblock %}
 
 {% block extra_js %}

@@ -35,6 +35,7 @@
                     <div class="expert-public-meta">
                         <span class="expert-public-username">@{{ expert.username }}</span>
                         <span class="expert-public-since">На КапперХаб с {{ analyst_profile.created_at|date:"Y" }} года</span>
+                        {% include "cabinet/includes/_public_profile_location.html" with public_user=expert only %}
                     </div>
                     {% if analyst_profile.bio %}
                     <div class="expert-public-bio-block">

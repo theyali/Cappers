@@ -49,6 +49,8 @@ def delete_user_account(user) -> User:
     user.username = f"deleted-{user.pk}"
     user.first_name = ""
     user.last_name = ""
+    user.gender = ""
+    user.country = None
     user.email = ""
     user.email_verified = False
     user.telegram_id = None
