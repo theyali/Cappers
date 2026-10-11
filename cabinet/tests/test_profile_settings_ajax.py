@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from cabinet.models import AnalystProfile, User, UserSportPreference
 from cabinet.services.verification import MIN_PUBLISHED_COUPONS, verification_state
-from game.models import PredictionCoupon, Sport
+from game.models import Country, PredictionCoupon, Sport
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -82,6 +82,63 @@ class ProfileSettingsAjaxTests(CapperSetupMixin, TestCase):
         self.assertEqual(self.user.first_name, "Пётр")
         # A background save must not leave a flash message for the next page.
         self.assertFalse(list(response.wsgi_request._messages))
+
+    def test_profile_gender_and_country_save_and_render_in_public_profile(self):
+        country = Country.objects.create(
+            code="AZ",
+            name="Azerbaijan",
+            name_ru="Азербайджан",
+            logo="country/flags/az.webp",
+        )
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "settings"})
+        self.assertContains(response, 'name="gender"')
+        self.assertContains(response, 'name="country"')
+
+        response = self.client.post(
+            reverse("cabinet:profile"),
+            self.settings_payload(gender=User.Gender.MALE, country=str(country.pk)),
+            **AJAX,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.gender, User.Gender.MALE)
+        self.assertEqual(self.user.country_id, country.pk)
+
+        public_response = self.client.get(
+            reverse("front:expert_profile", kwargs={"username": self.user.username})
+        )
+        self.assertContains(public_response, "Азербайджан")
+        self.assertContains(public_response, "country/flags/az.webp")
+        self.assertContains(public_response, "Мужской")
+
+    def test_invalid_country_is_rejected(self):
+        response = self.client.post(
+            reverse("cabinet:profile"),
+            self.settings_payload(country="999999999"),
+            **AJAX,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("country", response.json()["errors"])
+
+    def test_reader_public_profile_shows_country_and_flag(self):
+        country = Country.objects.create(
+            code="AZ",
+            name_ru="Азербайджан",
+            logo="country/flags/az.webp",
+        )
+        reader = User.objects.create_user(
+            username="public-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+            gender=User.Gender.FEMALE,
+            country=country,
+        )
+        response = self.client.get(
+            reverse("cabinet:user_profile", kwargs={"username": reader.username})
+        )
+        self.assertContains(response, "Азербайджан")
+        self.assertContains(response, "country/flags/az.webp")
+        self.assertContains(response, "Женский")
 
     def test_ajax_save_returns_errors_keyed_by_input_name(self):
         response = self.client.post(

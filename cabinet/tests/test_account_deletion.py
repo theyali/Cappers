@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
-from game.models import PredictionCoupon
+from game.models import Country, PredictionCoupon
 from notifications.models import TelegramAccount
 from wallets.models import CoinTransaction, CopyBettingSubscription, RealBalanceTransaction
 from wallets.services import activate_copybetting, credit_real_balance, ensure_real_balance
@@ -32,6 +32,9 @@ class AccountDeletionTests(TestCase):
             telegram_id=555000111,
             telegram_username="leaving_tg",
         )
+        self.analyst.gender = User.Gender.MALE
+        self.analyst.country = Country.objects.create(code="AZ", name_ru="Азербайджан")
+        self.analyst.save(update_fields=["gender", "country"])
         self.profile, _ = AnalystProfile.objects.get_or_create(user=self.analyst)
         self.profile.display_name = "Иван Петров"
         self.profile.bio = "Пишу прогнозы"
@@ -68,6 +71,8 @@ class AccountDeletionTests(TestCase):
         self.assertEqual(user.username, f"deleted-{user.pk}")
         self.assertEqual((user.email, user.first_name, user.last_name, user.telegram_username), ("", "", "", ""))
         self.assertIsNone(user.telegram_id)
+        self.assertEqual(user.gender, "")
+        self.assertIsNone(user.country_id)
         self.assertFalse(user.is_active)
         self.assertFalse(user.has_usable_password())
         self.assertIsNotNone(user.deleted_at)

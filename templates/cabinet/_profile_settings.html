@@ -127,6 +127,16 @@
                         {{ user_form.last_name }}
                         {{ user_form.last_name.errors }}
                     </label>
+                    <label class="profile-field">
+                        <span>{{ user_form.gender.label }}</span>
+                        {{ user_form.gender }}
+                        {{ user_form.gender.errors }}
+                    </label>
+                    <label class="profile-field">
+                        <span>{{ user_form.country.label }}</span>
+                        {{ user_form.country }}
+                        {{ user_form.country.errors }}
+                    </label>
             {% if analyst_form %}
                     <label class="profile-field profile-field-full">
                         <span>{{ analyst_form.display_name.label }}</span>

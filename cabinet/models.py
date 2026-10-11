@@ -31,6 +31,19 @@ class User(AbstractUser):
         READER = "reader", "Пользователь"
         ANALYST = "analyst", "Аналитик"
 
+    class Gender(models.TextChoices):
+        MALE = "male", "Мужской"
+        FEMALE = "female", "Женский"
+
+    gender = models.CharField("Пол", max_length=10, choices=Gender.choices, blank=True)
+    country = models.ForeignKey(
+        "game.Country",
+        verbose_name="Страна",
+        related_name="users",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     role = models.CharField(
         "Роль",
         max_length=16,

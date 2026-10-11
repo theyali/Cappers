@@ -10855,6 +10855,8 @@ body.register footer {
     background: rgba(255, 255, 255, 0.28);
     transform: translateY(-50%);
 }
+.expert-public-country { display: inline-flex; align-items: center; gap: 6px; }
+.expert-public-country img { width: 22px; height: 16px; object-fit: contain; }
 .expert-public-meta .public-presence-status { display: inline-flex; align-items: center; gap: 8px; color: #4ed461; }
 .expert-public-username { display: block; color: var(--muted); }
 .expert-public-bio { max-width: 770px; margin: 20px 0 0; color: rgba(255, 255, 255, 0.68); font-size: 15px; font-weight: 600; }
@@ -12098,6 +12100,7 @@ body.register footer {
 }
 .profile-edit-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
 .profile-edit-form .profile-field input,
+.profile-edit-form .profile-field select,
 .profile-edit-form .profile-field textarea,
 .profile-edit-form .profile-readonly,
 .profile-edit-form .profile-email-control {
@@ -12156,6 +12159,7 @@ body.register footer {
 }
 .profile-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .profile-field input,
+.profile-field select,
 .profile-field textarea,
 .profile-readonly {
     width: 100%;
@@ -12170,6 +12174,7 @@ body.register footer {
 }
 .profile-field textarea { min-height: 150px; padding-top: 14px; padding-bottom: 14px; resize: vertical; line-height: 1.55; }
 .profile-field input:focus,
+.profile-field select:focus,
 .profile-field textarea:focus,
 .profile-paid-plan-price input:focus {
     outline: #0b56fa solid 2px;

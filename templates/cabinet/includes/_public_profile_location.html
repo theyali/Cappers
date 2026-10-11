@@ -1,0 +1,11 @@
+{% if public_user.country %}
+    <span class="expert-public-country">
+        {% if public_user.country.logo %}
+            <img src="{{ public_user.country.logo_url }}" width="22" height="16" alt="">
+        {% endif %}
+        {{ public_user.country }}
+    </span>
+{% endif %}
+{% if public_user.gender %}
+    <span>{{ public_user.get_gender_display }}</span>
+{% endif %}
