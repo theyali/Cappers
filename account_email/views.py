@@ -15,6 +15,7 @@ from .services import (
     send_change_new_email_code,
     start_add_email,
     start_change_confirmation,
+    start_email_verification,
 )
 
 
@@ -47,6 +48,19 @@ def add_email(request):
 @login_required
 @require_POST
 def request_email_change(request):
+    if request.user.email and not request.user.email_verified:
+        try:
+            start_email_verification(request.user, request=request)
+        except EmailVerificationError as exc:
+            messages.error(request, str(exc))
+            return redirect(_profile_settings_url())
+        messages.success(
+            request,
+            "Ссылка подтверждения отправлена на вашу почту.",
+            extra_tags="email-verification-sent",
+        )
+        return redirect(f"{_profile_settings_url()}#profile-email-change-modal")
+
     try:
         start_change_confirmation(request.user, request)
     except EmailChangeError as exc:
@@ -123,10 +137,13 @@ def verify_new_email(request, request_id: int):
 
 def verify_registration_email(request, token: str):
     try:
-        complete_email_verification(token)
+        flow = complete_email_verification(token)
     except EmailVerificationError as exc:
         messages.error(request, str(exc))
     else:
+        if request.user.is_authenticated and request.user.pk == flow.user_id:
+            messages.success(request, "Почта подтверждена.")
+            return redirect(_profile_settings_url())
         messages.success(request, "Почта подтверждена. Теперь вы можете войти в аккаунт.")
     return redirect("cabinet:login")
 
