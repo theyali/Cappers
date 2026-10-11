@@ -432,6 +432,7 @@
     if (!input || !status) return;
 
     const uploadUrl = page.dataset.avatarUploadUrl;
+    const presetForm = document.getElementById("profileAvatarPresetForm");
 
     const showStatus = (message, isError = false) => {
         status.textContent = message;
@@ -444,7 +445,6 @@
 
         let image = document.getElementById("profileAvatarImage");
         const fallback = document.getElementById("profileAvatarFallback");
-
         if (!image) {
             image = document.createElement("img");
             image.id = "profileAvatarImage";
@@ -455,35 +455,32 @@
             if (fallback) fallback.remove();
             avatar.appendChild(image);
         }
-
-        image.width = 128;
-        image.height = 128;
-        image.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        const refreshedUrl = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        image.src = refreshedUrl;
         window.CappersSkeleton?.watchImage(avatar);
+
+        const current = document.querySelector("[data-avatar-current]");
+        if (current) {
+            let preview = current.querySelector("img");
+            if (!preview) {
+                current.textContent = "";
+                preview = document.createElement("img");
+                preview.width = 56;
+                preview.height = 56;
+                preview.alt = "Ваш текущий аватар";
+                current.appendChild(preview);
+            }
+            preview.src = refreshedUrl;
+        }
     };
 
-    input.addEventListener("change", async () => {
-        const file = input.files && input.files[0];
-        if (!file) return;
-
-        const allowed = ["image/jpeg", "image/png", "image/webp"];
-        if (!allowed.includes(file.type)) {
-            showStatus("Разрешены только JPG, PNG и WebP.", true);
-            input.value = "";
-            return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-            showStatus("Файл больше 5 МБ.", true);
-            input.value = "";
-            return;
-        }
-
-        const data = new FormData();
-        data.append("avatar", file);
-        showStatus("Загружаем аватар…");
+    let isSavingAvatar = false;
+    const saveAvatar = async (data, pendingMessage) => {
+        if (isSavingAvatar) return;
+        isSavingAvatar = true;
         input.disabled = true;
-
+        presetForm?.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+        showStatus(pendingMessage);
         try {
             const response = await fetch(uploadUrl, {
                 method: "POST",
@@ -494,20 +491,47 @@
                     "X-Requested-With": "XMLHttpRequest",
                 },
             });
-
             const payload = await response.json();
             if (!response.ok || !payload.ok) {
-                throw new Error(payload.error || "Не удалось загрузить аватар.");
+                throw new Error(payload.error || "Не удалось обновить аватар.");
             }
-
             replaceAvatar(payload.avatar_url);
             showStatus(payload.message || "Аватар обновлён.");
         } catch (error) {
             showStatus(error.message || "Ошибка загрузки.", true);
         } finally {
+            isSavingAvatar = false;
             input.disabled = false;
             input.value = "";
+            presetForm?.querySelectorAll("button").forEach((button) => { button.disabled = false; });
         }
+    };
+
+    presetForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const chosen = event.submitter;
+        if (!chosen?.value) return;
+        const data = new FormData(presetForm);
+        data.set("preset_id", chosen.value);
+        saveAvatar(data, "Применяем готовый аватар…");
+    });
+
+    input.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            showStatus("Разрешены только JPG, PNG и WebP.", true);
+            input.value = "";
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showStatus("Файл больше 5 МБ.", true);
+            input.value = "";
+            return;
+        }
+        const data = new FormData();
+        data.append("avatar", file);
+        saveAvatar(data, "Загружаем фотографию…");
     });
 })();
 

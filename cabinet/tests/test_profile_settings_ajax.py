@@ -1,9 +1,14 @@
 from decimal import Decimal
+from io import BytesIO
+from tempfile import TemporaryDirectory
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from cabinet.models import AnalystProfile, User, UserSportPreference
+from cabinet.models import AnalystProfile, PresetAvatar, User, UserSportPreference
 from cabinet.services.verification import MIN_PUBLISHED_COUPONS, verification_state
 from game.models import Country, PredictionCoupon, Sport
 
@@ -275,3 +280,86 @@ class CapperVerificationTests(CapperSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(AnalystProfile.objects.filter(user=reader).exists())
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class ProfileAvatarTests(CapperSetupMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        media = TemporaryDirectory()
+        self.addCleanup(media.cleanup)
+        settings_override = override_settings(MEDIA_ROOT=media.name)
+        settings_override.enable()
+        self.addCleanup(settings_override.disable)
+        self.user.gender = User.Gender.MALE
+        self.user.save(update_fields=["gender"])
+
+    @staticmethod
+    def image_upload(name="avatar.png"):
+        image = BytesIO()
+        Image.new("RGB", (32, 32), "#0b56fa").save(image, format="PNG")
+        return SimpleUploadedFile(name, image.getvalue(), content_type="image/png")
+
+    def create_preset(self, title="Синий", gender=PresetAvatar.Gender.MALE, active=True):
+        return PresetAvatar.objects.create(
+            title=title,
+            gender=gender,
+            is_active=active,
+            image=self.image_upload(f"{title}.png"),
+        )
+
+    def test_modal_shows_only_gender_appropriate_presets(self):
+        male = self.create_preset()
+        self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
+        self.create_preset("Универсальный", gender=PresetAvatar.Gender.ALL)
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
+        self.assertContains(response, 'id="profile-avatar-modal"')
+        self.assertContains(response, 'href="#profile-avatar-modal"')
+        self.assertContains(response, male.title)
+        self.assertContains(response, "Универсальный")
+        self.assertNotContains(response, ">Женский</span>")
+
+    def test_preset_image_is_copied_and_custom_upload_still_works(self):
+        preset = self.create_preset()
+        endpoint = reverse("cabinet:avatar_upload")
+        response = self.client.post(endpoint, {"preset_id": str(preset.pk)})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.user.refresh_from_db()
+        previous_image = self.user.avatar.name
+        self.assertNotEqual(previous_image, preset.image.name)
+        with self.user.avatar.open("rb") as saved:
+            self.assertEqual(saved.read(), self.image_upload().read())
+
+        response = self.client.post(endpoint, {"avatar": self.image_upload("own.png")})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.avatar.name, previous_image)
+        self.assertTrue(self.user.avatar.storage.exists(self.user.avatar.name))
+        self.assertFalse(self.user.avatar.storage.exists(previous_image))
+
+    def test_rejects_inactive_wrong_gender_and_invalid_preset(self):
+        female = self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
+        inactive = self.create_preset("Скрытый", active=False)
+        endpoint = reverse("cabinet:avatar_upload")
+        for preset_id in (str(female.pk), str(inactive.pk), "bad", "9" * 100):
+            with self.subTest(preset_id=preset_id):
+                response = self.client.post(endpoint, {"preset_id": preset_id})
+                self.assertEqual(response.status_code, 400)
+                self.assertFalse(response.json()["ok"])
+        self.user.refresh_from_db()
+        self.assertFalse(bool(self.user.avatar))
+
+    def test_reader_can_change_avatar_and_unset_gender_sees_all(self):
+        reader = User.objects.create_user(
+            username="avatar-reader", password="safe-test-password", role=User.Role.READER
+        )
+        self.client.force_login(reader)
+        preset = self.create_preset("Любой", gender=PresetAvatar.Gender.FEMALE)
+        response = self.client.get(reverse("cabinet:profile"))
+        self.assertContains(response, 'href="#profile-avatar-modal"')
+        self.assertContains(response, ">Любой</span>")
+        response = self.client.post(reverse("cabinet:avatar_upload"), {"preset_id": str(preset.pk)})
+        self.assertEqual(response.status_code, 200)
+        reader.refresh_from_db()
+        self.assertTrue(bool(reader.avatar))

@@ -60,7 +60,7 @@ from .forms import (
 )
 from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
-from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
+from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, PresetAvatar, User
 from .paid_predictions import (
     build_paid_checkout_context,
     get_active_paid_plans,
@@ -1138,6 +1138,10 @@ def profile(request):
         "paid_plan_form": paid_plan_form,
         "mobile_quick_access_form": mobile_quick_access_form,
         "active_tab": active_tab,
+        "preset_avatars": PresetAvatar.objects.filter(is_active=True).filter(
+            Q(gender__in=(PresetAvatar.Gender.ALL, request.user.gender))
+            if request.user.gender else Q()
+        ).order_by("sort_order", "pk")[:60],
         "followers_count": followers_count,
         "following_count": following_count,
         "followers": followers,

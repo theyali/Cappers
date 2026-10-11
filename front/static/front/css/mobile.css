@@ -13240,3 +13240,14 @@ body.expert-public-details-open {
     font-size: 17px;
   }
 }
+
+@media (max-width: 600px) {
+  .profile-avatar-modal-card { padding: 18px; gap: 15px; }
+  .profile-avatar-choice-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .profile-avatar-choice { padding: 7px; gap: 6px; }
+  .profile-avatar-choice span { font-size: 11px; }
+  .profile-avatar-modal-current { padding: 10px; }
+}
+@media (max-width: 390px) {
+  .profile-avatar-choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

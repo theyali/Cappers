@@ -111,6 +111,27 @@ class User(AbstractUser):
         return active_vip_subscriptions().filter(user_id=self.pk).exists()
 
 
+class PresetAvatar(models.Model):
+    class Gender(models.TextChoices):
+        ALL = "all", "Для всех"
+        MALE = User.Gender.MALE, "Мужской"
+        FEMALE = User.Gender.FEMALE, "Женский"
+
+    title = models.CharField("Название", max_length=100)
+    image = models.ImageField("Аватар", upload_to="users/preset_avatars/")
+    gender = models.CharField("Пол", max_length=10, choices=Gender.choices, default=Gender.ALL)
+    is_active = models.BooleanField("Доступен для выбора", default=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=0)
+
+    class Meta:
+        verbose_name = "Готовый аватар"
+        verbose_name_plural = "Готовые аватары"
+        ordering = ("sort_order", "pk")
+
+    def __str__(self):
+        return self.title
+
+
 class AnalystProfile(models.Model):
     user = models.OneToOneField(
         User,

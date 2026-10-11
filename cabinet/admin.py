@@ -14,6 +14,7 @@ from .models import (
     CapperMonthlyStat,
     DailyTask,
     MatchPredictionRequest,
+    PresetAvatar,
     ReferralBonusSettings,
     ReferralVisit,
     StreakReward,
@@ -144,6 +145,23 @@ class UserLeaguePreferenceAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("user", "league")
     list_select_related = ("user", "league", "league__sport", "league__country")
+
+
+@admin.register(PresetAvatar)
+class PresetAvatarAdmin(admin.ModelAdmin):
+    list_display = ("preview", "title", "gender", "is_active", "sort_order")
+    list_filter = ("gender", "is_active")
+    list_editable = ("is_active", "sort_order")
+    search_fields = ("title",)
+    fields = ("title", "image", "preview", "gender", "is_active", "sort_order")
+    readonly_fields = ("preview",)
+    ordering = ("sort_order", "pk")
+
+    @admin.display(description="Превью")
+    def preview(self, obj):
+        if not obj or not obj.image:
+            return "Нет изображения"
+        return format_html('<img src="{}" width="64" height="64" alt="">', obj.image.url)
 
 
 @admin.register(User)

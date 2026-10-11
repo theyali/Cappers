@@ -64,6 +64,11 @@ class SportPreferenceField(forms.ModelMultipleChoiceField):
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
+    gender = forms.ChoiceField(
+        label="Пол",
+        choices=[("", "Не указан"), *User.Gender.choices],
+        required=False,
+    )
 
     def __init__(self, *args, require_sports: bool = False, **kwargs):
         self.require_sports = require_sports
@@ -114,6 +119,7 @@ class RegistrationForm(UserCreationForm):
             "email",
             "first_name",
             "last_name",
+            "gender",
             "role",
             "sports",
             "leagues",
