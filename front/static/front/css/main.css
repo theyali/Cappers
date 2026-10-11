@@ -10929,8 +10929,7 @@ body.register footer {
 }
 .expert-follow-button:disabled { cursor: wait; opacity: 0.6; }
 .expert-public-action-icon svg,
-.expert-public-buy-button svg,
-.prediction-comment-submit svg {
+.expert-public-buy-button svg {
     width: 22px;
     height: 22px;
     fill: none;
@@ -12932,6 +12931,398 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     vertical-align: 1px;
     background: var(--yellow);
     box-shadow: 0 0 0 3px rgba(255, 242, 0, 0.12);
+}
+.profile-social {
+    color: #fff;
+}
+.profile-social-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 760px);
+    align-items: end;
+    gap: 28px;
+    margin-bottom: 26px;
+}
+.profile-social-kicker {
+    margin: 0 0 9px;
+    color: var(--yellow);
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+.profile-social-head h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: clamp(38px, 4.4vw, 64px);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: 0;
+}
+.profile-social-controls {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) 220px;
+    gap: 14px;
+}
+.profile-social-search,
+.profile-social-sort {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 0 21px;
+    border: 1px solid rgba(116, 122, 138, 0.22);
+    border-radius: 22px;
+    color: #8d8d98;
+    background: var(--panel);
+}
+.profile-social-search .solar-icon {
+    width: 21px;
+    height: 21px;
+}
+.profile-social-sort .solar-icon {
+    width: 22px;
+    height: 22px;
+}
+.profile-social-search input,
+.profile-social-sort select {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: #fff;
+    background: transparent;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+}
+.profile-social-search input::placeholder { color: #7d7d88; }
+.profile-social-sort select { appearance: none; cursor: pointer; }
+.profile-social-mobile-metrics { display: none; }
+.profile-social-tabs {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 31px;
+    padding: 7px;
+    border: 1px solid rgba(116, 122, 138, 0.18);
+    border-radius: 22px;
+    background: var(--panel);
+    overflow-x: auto;
+}
+.profile-social-tabs::-webkit-scrollbar { display: none; }
+.profile-social-tabs button {
+    min-height: 62px;
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 16px;
+    color: #aaaab4;
+    background: transparent;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.profile-social-tabs button.is-active {
+    color: #fff;
+    background: #2a2c36;
+}
+.profile-social-tabs strong {
+    color: #858590;
+    font-size: 19px;
+}
+.profile-social-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 384px;
+    gap: 20px;
+    align-items: start;
+}
+.profile-social-main {
+    min-width: 0;
+}
+.profile-social-group h3 {
+    margin: 0 0 17px;
+    color: #8a8a95;
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+.profile-social-list {
+    display: grid;
+    border: 1px solid rgba(116, 122, 138, 0.18);
+    border-radius: 28px;
+    background: var(--panel);
+    overflow: hidden;
+}
+.profile-social-row {
+    min-height: 52px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 22px;
+    padding: 19px 28px;
+    border-bottom: 1px solid rgba(116, 122, 138, 0.16);
+}
+.profile-social-row:last-child { border-bottom: 0; }
+.profile-social-person {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+}
+.profile-social-avatar {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: #2458ff;
+    box-shadow: inset 0 0 0 4px transparent;
+    font-size: 30px;
+    font-weight: 900;
+    line-height: 1;
+}
+.profile-social-row.is-vip .profile-social-avatar {
+    box-shadow: 0 0 0 4px var(--yellow);
+}
+.profile-social-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+.profile-social-avatar .capper-verified-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 23px;
+    height: 23px;
+}
+.profile-social-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+.profile-social-title {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.profile-social-title strong {
+    overflow: hidden;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.profile-social-title b {
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    border-radius: 8px;
+    color: var(--yellow);
+    background: rgba(255, 242, 0, 0.16);
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 900;
+}
+.profile-social-title b .solar-icon {
+    width: 14px;
+    height: 14px;
+}
+.profile-social-copy small,
+.profile-social-copy em,
+.profile-social-paid {
+    overflow: hidden;
+    color: #9b9ba6;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.profile-social-copy em.is-positive,
+.profile-social-roi.is-positive { color: #55df8c; }
+.profile-social-copy em.is-negative,
+.profile-social-roi.is-negative { color: #ff6e78; }
+.profile-social-paid { color: var(--yellow); }
+.profile-social-roi {
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 7px;
+    border-radius: 7px;
+    background: rgba(85, 223, 140, 0.12);
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+.profile-social-roi.is-negative { background: rgba(255, 110, 120, 0.14); }
+.profile-social-action {
+    min-width: 109px;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 13px;
+    border: 1px solid rgba(255, 242, 0, 0.38);
+    border-radius: 16px;
+    color: var(--yellow);
+    background: rgba(255, 242, 0, 0.12);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+.profile-social-action > span:first-child {
+    font-size: 16px;
+    line-height: 1;
+}
+.profile-social-action.is-muted {
+    border-color: rgba(116, 122, 138, 0.25);
+    color: #fff;
+    background: #101116;
+}
+.profile-social-action.is-ghost {
+    min-width: 122px;
+    border-color: rgba(116, 122, 138, 0.22);
+    color: #aaaab4;
+    background: transparent;
+}
+.profile-social-more-button {
+    width: 100%;
+    min-height: 66px;
+    margin-top: 28px;
+    border: 1px solid rgba(116, 122, 138, 0.18);
+    border-radius: 22px;
+    color: #fff;
+    background: var(--panel);
+    font: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    cursor: pointer;
+}
+.profile-social-side {
+    display: grid;
+    gap: 22px;
+}
+.profile-social-side-card {
+    padding: 31px;
+    border: 1px solid rgba(116, 122, 138, 0.18);
+    border-radius: 28px;
+    background: var(--panel);
+}
+.profile-social-side-card > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+.profile-social-side-card h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+}
+.profile-social-side-card a {
+    color: #9b9ba6;
+    font-size: 16px;
+    font-weight: 800;
+    text-decoration: none;
+}
+.profile-social-side-card dl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px 24px;
+    margin: 0;
+}
+.profile-social-side-card dt,
+.profile-social-side-card p {
+    margin: 0;
+    color: #9b9ba6;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.profile-social-side-card dd {
+    margin: 0;
+    color: #fff;
+    font-size: 27px;
+    font-weight: 900;
+    line-height: 1;
+}
+.profile-social-side-card dd.is-positive { color: #55df8c; }
+.profile-social-side-card.is-accent {
+    border-color: rgba(255, 242, 0, 0.34);
+    background: rgba(255, 242, 0, 0.1);
+}
+.profile-social-empty {
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 9px;
+    padding: 24px;
+    text-align: center;
+}
+.profile-social-empty > span {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: var(--yellow);
+    background: rgba(255, 242, 0, 0.1);
+}
+.profile-social-empty strong {
+    color: #fff;
+    font-size: 18px;
+}
+.profile-social-empty p {
+    margin: 0;
+    color: #9b9ba6;
+    font-size: 14px;
+}
+.profile-social.is-updating .profile-social-list {
+    opacity: 0.62;
+}
+@media (max-width: 1540px) {
+    .profile-social-head {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+    .profile-social-controls {
+        width: min(100%, 760px);
+        justify-self: end;
+    }
+    .profile-social-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .profile-social-side {
+        display: none;
+    }
 }
 .profile-wallet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 22px; }
 .profile-wallet-card { min-width: 0; display: grid; gap: 12px; padding: 16px; border-radius: 16px; }
@@ -19646,9 +20037,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page .prediction-comment-form { grid-template-columns: 32px minmax(0,1fr); align-items: center; min-height: 53px; gap: 12px; padding: 8px 9px 8px 13px; border-radius: 13px; background: #111217; }
 .coupon-detail-page .prediction-comment-avatar { width: 32px; height: 32px; font-size: 12px; }
 .coupon-detail-page .prediction-comment-form textarea { min-height: 34px; height: 34px; padding: 7px 150px 7px 4px; border: 0; background: transparent; box-shadow: none; font-size: 13px; }
-.coupon-detail-page .prediction-comment-submit { top: 8px; right: 9px; width: auto; height: 37px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 16px; border-radius: 10px; background: var(--yellow); color: #111; font-size: 13px; white-space: nowrap; }
+.coupon-detail-page .prediction-comment-submit { position: absolute; top: 8px; right: 9px; width: auto; height: 37px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 16px; border-radius: 10px; background: var(--yellow); color: #111; font-size: 13px; white-space: nowrap; }
 .coupon-detail-page .prediction-comment-submit:disabled { color: #111; background: var(--yellow); opacity: 0.65; }
-.coupon-detail-page .prediction-comment-submit span { position: static; width: auto; height: auto; overflow: visible; clip: auto; clip-path: none; }
 .coupon-detail-page .prediction-comment-submit .solar-icon { display: block; width: 16px; height: 16px; flex: 0 0 16px; }
 .coupon-detail-page .prediction-comments-empty { min-height: 150px; background: #121319; }
 .coupon-detail-page .prediction-comments-empty strong { color: #fff; font-size: 14px; }
@@ -19863,8 +20253,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     align-items: start;
     gap: 11px;
 }
-.prediction-comment-form label,
-.prediction-comment-submit span {
+.prediction-comment-form label {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -19891,7 +20280,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 26px;
 }
 .prediction-comment-form textarea::placeholder { color: #747d8c; }
-.prediction-comment-form textarea:focus { border-color: rgb(172 172 172 / 42%); background: rgb(32 32 32 / 96%); }
 .prediction-comment-form textarea:disabled { opacity: 0.65; cursor: wait; }
 .prediction-comment-feedback,
 .prediction-comments-load-error {
@@ -19933,21 +20321,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     cursor: pointer;
     font: inherit;
 }
-.prediction-comment-submit {
-    position: absolute;
-    top: 5px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 9px;
-    color: #fff;
-    background: linear-gradient(180deg, #2474ff, #0b56fa);
-    box-shadow: 0 10px 22px rgba(11, 86, 250, 0.28);
-}
-.prediction-comment-submit:disabled { color: #fff; background: #1f61de; opacity: 0.62; cursor: not-allowed; }
 .prediction-comments-auth { display: grid; gap: 8px; padding: 16px; border-radius: 14px; background: #29292d; }
 .prediction-comments-auth a {
     width: fit-content;

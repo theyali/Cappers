@@ -1,0 +1,56 @@
+{% for row in profile_social_rows %}
+<article class="profile-social-row{% if row.is_vip %} is-vip{% endif %}{% if row.is_paid %} is-paid{% endif %}" data-profile-social-row>
+    <a class="profile-social-person" href="{{ row.profile_url }}">
+        <span class="profile-social-avatar" data-skeleton-image>
+            {% if row.avatar_url %}
+                <img src="{{ row.avatar_url }}" width="76" height="76" alt="" loading="lazy" decoding="async">
+            {% else %}
+                {{ row.initials }}
+            {% endif %}
+            {% if row.is_verified %}
+                {% include "cabinet/includes/_capper_verified_badge.html" %}
+            {% endif %}
+        </span>
+        <span class="profile-social-copy">
+            <span class="profile-social-title">
+                <strong>{{ row.username }}</strong>
+                {% if row.is_vip %}<b>{% include "front/includes/_solar_icon.html" with name="crown-bold" only %} VIP</b>{% endif %}
+            </span>
+            <small>{{ row.display_name }}</small>
+            <em class="{% if row.roi_positive %}is-positive{% else %}is-negative{% endif %}">
+                {{ row.meta }}
+            </em>
+            {% if row.is_paid and row.paid_expires_label %}
+                <span class="profile-social-paid">до {{ row.paid_expires_label }} · {{ row.paid_price_label }} ₽</span>
+            {% endif %}
+        </span>
+    </a>
+
+    {% if row.is_analyst %}
+        <span class="profile-social-roi{% if row.roi_positive %} is-positive{% else %} is-negative{% endif %}">ROI {{ row.roi_label }}</span>
+    {% endif %}
+
+    {% if row.follow_url %}
+        <button class="profile-social-action" type="button" data-follow-url="{{ row.follow_url }}">
+            <span aria-hidden="true">+</span>
+            <span>Подписаться</span>
+        </button>
+    {% elif row.is_following %}
+        <a class="profile-social-action is-muted" href="{{ row.profile_url }}">
+            <span aria-hidden="true">✓</span>
+            <span>Вы подписаны</span>
+        </a>
+    {% else %}
+        <a class="profile-social-action is-ghost" href="{{ row.profile_url }}">
+            <span>Открыть</span>
+        </a>
+    {% endif %}
+
+</article>
+{% empty %}
+<div class="profile-social-empty">
+    <span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}</span>
+    <strong>Ничего не найдено</strong>
+    <p>Попробуйте изменить поиск или фильтр.</p>
+</div>
+{% endfor %}

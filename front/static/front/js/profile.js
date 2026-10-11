@@ -395,6 +395,7 @@
     };
 
     document.querySelectorAll("[data-follow-url]").forEach((button) => {
+        if (button.closest("[data-profile-social]")) return;
         button.addEventListener("click", async () => {
             if (button.disabled) return;
 
@@ -509,6 +510,147 @@
             input.value = "";
         }
     });
+})();
+
+(() => {
+    const root = document.querySelector(".profile-page");
+    if (!root || !root.querySelector("[data-profile-social]")) return;
+
+    const loadJQuery = () => {
+        if (window.jQuery) return Promise.resolve(window.jQuery);
+
+        return new Promise((resolve, reject) => {
+            let script = document.querySelector("script[data-profile-jquery]");
+            if (!script) {
+                script = document.createElement("script");
+                script.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+                script.dataset.profileJquery = "true";
+                script.async = true;
+                document.head.appendChild(script);
+            }
+            script.addEventListener("load", () => {
+                if (window.jQuery) resolve(window.jQuery);
+                else reject(new Error("jQuery не загрузился."));
+            }, { once: true });
+            script.addEventListener("error", () => reject(new Error("Не удалось загрузить jQuery.")), { once: true });
+        });
+    };
+
+    const initSocialAjax = ($) => {
+        const csrf = () => {
+            const cookie = document.cookie.split(";").map((item) => item.trim()).find((item) => item.startsWith("csrftoken="));
+            return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
+        };
+
+        const requestSocial = ($block, { append = false } = {}) => {
+            const $form = $block.find("[data-profile-social-form]");
+            const url = $block.data("profile-social-url");
+            const payload = $form.serializeArray();
+            payload.push({ name: "offset", value: append ? ($block.attr("data-profile-social-next-offset") || 0) : 0 });
+
+            $block.addClass("is-updating");
+            return $.ajax({
+                url,
+                method: "GET",
+                data: $.param(payload),
+                dataType: "json",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            }).done((response) => {
+                if (!response?.ok) return;
+                const $results = $block.find("[data-profile-social-results]");
+                if (append) $results.append(response.html);
+                else $results.html(response.html);
+
+                $block.attr("data-profile-social-next-offset", response.next_offset || 0);
+                $block.attr("data-profile-social-has-more", response.has_more ? "true" : "false");
+
+                const remaining = Math.max(0, Number(response.total || 0) - Number(response.next_offset || 0));
+                const $more = $block.find("[data-profile-social-more]");
+                $more.prop("hidden", !response.has_more);
+                $more.find("[data-profile-social-more-count]").text(String(remaining));
+
+                Object.entries(response.metrics || {}).forEach(([key, value]) => {
+                    $block.find(`[data-profile-social-metric="${key}"]`).each(function updateMetric() {
+                        const prefix = this.hasAttribute("data-profile-social-signed") ? "+" : "";
+                        $(this).text(`${prefix}${value}`);
+                    });
+                    $block.find(`[data-profile-social-count="${key}"]`).text(value);
+                });
+            }).always(() => {
+                $block.removeClass("is-updating");
+            });
+        };
+
+        $("[data-profile-social]").each(function initBlock() {
+            const $block = $(this);
+            let timer = null;
+
+            $block.on("submit", "[data-profile-social-form]", (event) => {
+                event.preventDefault();
+                requestSocial($block);
+            });
+
+            $block.on("input", "[data-profile-social-search]", () => {
+                window.clearTimeout(timer);
+                timer = window.setTimeout(() => requestSocial($block), 220);
+            });
+
+            $block.on("change", "[data-profile-social-sort]", () => {
+                requestSocial($block);
+            });
+
+            $block.on("click", "[data-profile-social-filter]", function onFilterClick() {
+                const filter = this.dataset.profileSocialFilter || "all";
+                $block.find("[data-profile-social-filter]").removeClass("is-active");
+                $(this).addClass("is-active");
+                $block.find("[data-profile-social-filter-input]").val(filter);
+                requestSocial($block);
+            });
+
+            $block.on("click", "[data-profile-social-more]", () => {
+                requestSocial($block, { append: true });
+            });
+
+            $block.on("click", "[data-follow-url]", function onFollowClick(event) {
+                event.preventDefault();
+                const button = this;
+                if (button.disabled) return;
+                const $button = $(button);
+                const original = $button.text();
+                button.disabled = true;
+                $button.text("Подписываем...");
+                $.ajax({
+                    url: button.dataset.followUrl,
+                    method: "POST",
+                    dataType: "json",
+                    headers: {
+                        "X-CSRFToken": csrf(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }).done((response) => {
+                    if (!response?.ok) {
+                        $button.text(response?.error || "Ошибка");
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            $button.text(original);
+                        }, 1600);
+                        return;
+                    }
+                    $button.addClass("is-muted").removeAttr("data-follow-url").html("<span aria-hidden=\"true\">✓</span><span>Вы подписаны</span>");
+                }).fail(() => {
+                    $button.text("Ошибка");
+                    window.setTimeout(() => {
+                        button.disabled = false;
+                        $button.text(original);
+                    }, 1600);
+                });
+            });
+        });
+    };
+
+    loadJQuery()
+        .then(initSocialAjax)
+        .catch((error) => console.error(error));
 })();
 
 (() => {

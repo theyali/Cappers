@@ -1,0 +1,106 @@
+{% with social=profile_social %}
+<div
+    class="profile-social"
+    data-profile-social="{{ social.profile_social_kind }}"
+    data-profile-social-url="{% url 'cabinet:profile_social' %}"
+    data-profile-social-next-offset="{{ social.profile_social_next_offset }}"
+    data-profile-social-has-more="{% if social.profile_social_has_more %}true{% else %}false{% endif %}"
+>
+    <header class="profile-social-head">
+        <div>
+            <p class="profile-social-kicker">
+                {% if social.profile_social_kind == "followers" %}Подписчики{% else %}Подписки{% endif %}
+            </p>
+            <h2>{% if social.profile_social_kind == "followers" %}Кто следит за вами{% else %}На кого вы подписаны{% endif %}</h2>
+        </div>
+        <form class="profile-social-controls" action="{% url 'cabinet:profile_social' %}" method="get" data-profile-social-form>
+            <input type="hidden" name="kind" value="{{ social.profile_social_kind }}">
+            <input type="hidden" name="filter" value="{{ social.profile_social_filter|default:'all' }}" data-profile-social-filter-input>
+            <label class="profile-social-search">
+                {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
+                <input type="search" name="q" value="{{ social.profile_social_query }}" placeholder="Поиск по username" autocomplete="off" data-profile-social-search>
+            </label>
+            <label class="profile-social-sort">
+                {% include "front/includes/_solar_icon.html" with name="match_filters" only %}
+                <select name="sort" data-profile-social-sort aria-label="Сортировка">
+                    <option value="new"{% if social.profile_social_sort == "new" %} selected{% endif %}>Сначала новые</option>
+                    <option value="old"{% if social.profile_social_sort == "old" %} selected{% endif %}>Сначала старые</option>
+                    <option value="roi"{% if social.profile_social_sort == "roi" %} selected{% endif %}>Лучший ROI</option>
+                    <option value="followers"{% if social.profile_social_sort == "followers" %} selected{% endif %}>Больше подписчиков</option>
+                </select>
+            </label>
+        </form>
+    </header>
+
+    <div class="profile-social-mobile-metrics" aria-label="Метрики">
+        <article><strong data-profile-social-metric="total">{{ social.profile_social_metrics.total }}</strong><span>{% if social.profile_social_kind == "followers" %}подписчика{% else %}подписки{% endif %}</span></article>
+        <article><strong data-profile-social-metric="week" data-profile-social-signed>+{{ social.profile_social_metrics.week }}</strong><span>за 7 дней</span></article>
+        <article><strong data-profile-social-metric="mutual">{{ social.profile_social_metrics.mutual }}</strong><span>взаимных</span></article>
+    </div>
+
+    <nav class="profile-social-tabs" aria-label="Фильтры списка">
+        <button type="button" class="is-active" data-profile-social-filter="all">
+            <span>Все</span>
+            <strong data-profile-social-count="total">{{ social.profile_social_metrics.total }}</strong>
+        </button>
+        <button type="button" data-profile-social-filter="cappers">
+            <span>Капперы</span>
+        </button>
+        <button type="button" data-profile-social-filter="mutual">
+            <span>Взаимные</span>
+            <strong data-profile-social-count="mutual">{{ social.profile_social_metrics.mutual }}</strong>
+        </button>
+        <button type="button" data-profile-social-filter="paid">
+            <span>Платные подписчики</span>
+            <strong data-profile-social-count="paid">{{ social.profile_social_metrics.paid }}</strong>
+        </button>
+        <button type="button" data-profile-social-filter="vip">
+            <span>VIP</span>
+        </button>
+    </nav>
+
+    <div class="profile-social-layout">
+        <div class="profile-social-main">
+            <section class="profile-social-group" aria-labelledby="profile-social-new-{{ social.profile_social_kind }}">
+                <h3 id="profile-social-new-{{ social.profile_social_kind }}">Новые за неделю · <span data-profile-social-metric="week">{{ social.profile_social_metrics.week }}</span></h3>
+                <div class="profile-social-list" data-profile-social-results>
+                    {% include "cabinet/includes/_profile_social_rows.html" with profile_social_rows=social.profile_social_rows %}
+                </div>
+            </section>
+            <button
+                class="profile-social-more-button"
+                type="button"
+                data-profile-social-more
+                {% if not social.profile_social_has_more %}hidden{% endif %}
+            >
+                Показать ещё <span data-profile-social-more-count>{{ social.profile_social_remaining }}</span>
+            </button>
+        </div>
+
+        <aside class="profile-social-side" aria-label="Статистика">
+            <section class="profile-social-side-card">
+                <div>
+                    <h3>{% if social.profile_social_kind == "followers" %}Ваша аудитория{% else %}Ваши подписки{% endif %}</h3>
+                    <a href="{% url 'cabinet:profile' %}?tab=earnings">Отчёт</a>
+                </div>
+                <dl>
+                    <dt>{% if social.profile_social_kind == "followers" %}Всего подписчиков{% else %}Всего подписок{% endif %}</dt>
+                    <dd data-profile-social-metric="total">{{ social.profile_social_metrics.total }}</dd>
+                    <dt>За последние 7 дней</dt>
+                    <dd class="is-positive" data-profile-social-metric="week" data-profile-social-signed>+{{ social.profile_social_metrics.week }}</dd>
+                    <dt>Платных подписчиков</dt>
+                    <dd data-profile-social-metric="paid">{{ social.profile_social_metrics.paid }}</dd>
+                    <dt>Взаимных подписок</dt>
+                    <dd data-profile-social-metric="mutual">{{ social.profile_social_metrics.mutual }}</dd>
+                </dl>
+            </section>
+            <section class="profile-social-side-card is-accent">
+                <div>
+                    <h3>Платные подписчики</h3>
+                </div>
+                <p>Здесь показываются пользователи с активным доступом к вашим платным прогнозам.</p>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endwith %}

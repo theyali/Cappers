@@ -3511,12 +3511,6 @@ body.expert-public-details-open {
     padding: 15px 60px 15px 14px;
     font-size: 14px;
   }
-  .prediction-comment-submit {
-    top: 6px;
-    right: 6px;
-    width: 40px;
-    height: 40px;
-  }
   .prediction-comments-empty,
   .prediction-comments-list {
     min-height: 260px;
@@ -5160,6 +5154,181 @@ body.expert-public-details-open {
   .profile-row-action {
     grid-column: 1/-1;
     width: 100%;
+  }
+  #profile-tab-followers,
+  #profile-tab-following {
+    box-sizing: border-box;
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    overflow: hidden;
+  }
+  .profile-social {
+    box-sizing: border-box;
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    overflow: hidden;
+    padding: 0;
+  }
+  .profile-social *,
+  .profile-social *::before,
+  .profile-social *::after {
+    box-sizing: border-box;
+  }
+  .profile-social-head {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-bottom: 26px;
+  }
+  .profile-social-kicker {
+    margin-bottom: 12px;
+    font-size: 15px;
+    letter-spacing: 4px;
+  }
+  .profile-social-head h2 {
+    font-size: clamp(38px, 12vw, 56px);
+    line-height: 0.94;
+  }
+  .profile-social-controls {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .profile-social-search,
+  .profile-social-sort {
+    min-height: 68px;
+    border-radius: 20px;
+    padding: 0 22px;
+  }
+  .profile-social-search input,
+  .profile-social-sort select {
+    font-size: 21px;
+  }
+  .profile-social-sort {
+    display: none;
+  }
+  .profile-social-mobile-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .profile-social-mobile-metrics article {
+    min-height: 98px;
+    display: grid;
+    align-content: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 0 14px;
+    border: 1px solid rgba(116, 122, 138, 0.22);
+    border-radius: 20px;
+    background: var(--panel);
+  }
+  .profile-social-mobile-metrics strong {
+    color: #fff;
+    font-size: 29px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .profile-social-mobile-metrics article:nth-child(2) strong {
+    color: #55df8c;
+  }
+  .profile-social-mobile-metrics span {
+    color: #8d8d98;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .profile-social-tabs {
+    width: 100%;
+    min-height: 56px;
+    gap: 12px;
+    margin: 0 -16px 24px 0;
+    padding: 0 16px 0 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .profile-social-tabs button {
+    min-height: 54px;
+    padding: 0 22px;
+    border: 1px solid rgba(116, 122, 138, 0.22);
+    border-radius: 16px;
+    background: var(--panel);
+    font-size: 18px;
+  }
+  .profile-social-tabs button.is-active {
+    color: #111;
+    background: var(--yellow);
+  }
+  .profile-social-tabs strong {
+    font-size: 18px;
+  }
+  .profile-social-layout {
+    display: block;
+  }
+  .profile-social-side {
+    display: none;
+  }
+  .profile-social-group h3 {
+    margin-bottom: 16px;
+    font-size: 16px;
+    letter-spacing: 4px;
+  }
+  .profile-social-list {
+    width: 100%;
+    border-radius: 24px;
+  }
+  .profile-social-row {
+    position: relative;
+    min-height: 118px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 17px 86px 17px 18px;
+  }
+  .profile-social-person {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+  .profile-social-title strong {
+    font-size: 24px;
+  }
+  .profile-social-title b {
+    min-height: 25px;
+    font-size: 13px;
+  }
+  .profile-social-copy small,
+  .profile-social-copy em,
+  .profile-social-paid {
+    font-size: 17px;
+  }
+  .profile-social-roi {
+    display: none;
+  }
+  .profile-social-action {
+    position: absolute;
+    top: 50%;
+    right: 18px;
+    transform: translateY(-50%);
+    min-width: 62px;
+    width: 62px;
+    min-height: 62px;
+    padding: 0;
+    border-radius: 17px;
+  }
+  .profile-social-action span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+  }
+  .profile-social-action.is-ghost {
+    display: none;
+  }
+  .profile-social-more-button {
+    min-height: 70px;
+    margin-top: 26px;
+    border-radius: 20px;
+    font-size: 20px;
   }
   .profile-coupon-inline {
     padding-top: 8px;
