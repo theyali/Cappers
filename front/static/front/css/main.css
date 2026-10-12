@@ -11107,6 +11107,8 @@ body.register footer {
     border-radius: 26px;
     background: #4557f5;
     color: #fff;
+    font-family: var(--font-body);
+    line-height: normal;
 }
 .expert-public-hero-art {
     position: absolute;
@@ -11382,7 +11384,6 @@ body.register footer {
     justify-content: center;
     gap: 3px;
     min-width: 0;
-    min-height: 75px;
     padding: 13px 16px;
     border-radius: 16px;
     background: #121318;
