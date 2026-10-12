@@ -16,26 +16,14 @@
     >
         {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="predictions-filter" filter_label="Фильтры прогнозов" filter_total=filtered_predictions reset_url=all_predictions_url sport_tabs="" %}
 
-        <div class="predictions-content" data-predictions-content>
-            <div class="predictions-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/long_1.webp' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
-                <div>
-                    <p class="predictions-eyebrow">Лента экспертов</p>
-                    <h1 data-predictions-heading>{{ page_heading|default:"Все прогнозы" }}</h1>
-                    <p data-predictions-intro>{{ page_intro }}</p>
-                </div>
-                <div class="predictions-total">
-                    <strong data-predictions-total-value>{{ filtered_predictions }}</strong>
-                    <span>найдено</span>
-                </div>
-            </div>
-
+        <div class="predictions-content matches-list-panel" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
+            <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
+            {% include "front/includes/_prediction_matches_head.html" %}
             {% if page_obj.object_list %}
                 {% if is_rich_predictions %}
-                    {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=False %}
                     {% include "front/includes/_prediction_grid_view.html" with feed_card_view=True %}
                 {% else %}
-                <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
-                    {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=True %}
+                <div>
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                             {% include "front/includes/_prediction_grid_view.html" with feed_card_view=True %}
@@ -59,7 +47,6 @@
                     <span data-predictions-lazy-status></span>
                 </div>
             {% else %}
-            {% include "front/includes/_prediction_results_head.html" with sport_filter_tabs=sport_tabs show_sort=True show_content_view_switcher=False %}
             <div class="predictions-empty">
                 <h2>Ничего не нашли</h2>
                 <p>Попробуйте убрать часть фильтров или расширить диапазон коэффициентов.</p>
@@ -75,6 +62,7 @@
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+<script src="{% static 'front/js/matches-head.js' %}" defer></script>
 <script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
 <script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>

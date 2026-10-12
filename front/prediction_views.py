@@ -582,7 +582,10 @@ def _apply_position_filters(
     only_live,
     only_today,
     match_scope="all",
+    express_only=False,
 ):
+    if express_only:
+        queryset = queryset.filter(coupon_type=PredictionCoupon.CouponType.EXPRESS)
     if selected_sport.isdigit():
         queryset = queryset.filter(predictions__match__sport_id=int(selected_sport))
     if selected_league.isdigit():

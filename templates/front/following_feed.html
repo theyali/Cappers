@@ -19,7 +19,7 @@
         >
             {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
 
-            <div class="predictions-content following-feed-content" data-predictions-content>
+            <div class="predictions-content following-feed-content matches-list-panel" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
                 <section class="following-stories" aria-labelledby="following-stories-title">
                     <div class="following-stories-head">
                         <div class="following-stories-heading">
@@ -70,18 +70,17 @@
                     </div>
                 </section>
 
+                <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
+                {% include "front/includes/_prediction_matches_head.html" %}
                 {% if page_obj.object_list or paid_predictions or paid_upgrade_offers %}
                     {% if is_rich_predictions %}
-                        {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
                         <div class="content-view-container">
                             {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
                             {% include "front/includes/_paid_upgrade_block.html" with paid_feed_view_mode="grid" %}
                             {% include "front/includes/_following_feed_predictions_section.html" with feed_view_mode="grid" %}
                         </div>
                     {% else %}
-                    <div data-content-view-root data-content-view-current="{{ content_view_mode }}">
-                        {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=True %}
-
+                    <div>
                         <div class="content-view-container" data-content-view-container>
                             <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
                                 {% include "front/includes/_paid_feed_predictions.html" with paid_feed_view_mode="grid" %}
@@ -111,7 +110,6 @@
                     </div>
                     {% endif %}
                 {% else %}
-                {% include "front/includes/_prediction_results_head.html" with show_sort=True show_content_view_switcher=False %}
                 <div class="predictions-empty following-feed-empty">
                     <h2>По этим условиям прогнозов нет</h2>
                     <p>Попробуйте сбросить фильтры или дождитесь новых прогнозов от ваших капперов.</p>
@@ -144,6 +142,7 @@
 {% block extra_js %}
 {% if has_feed_sources %}
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
+    <script src="{% static 'front/js/matches-head.js' %}" defer></script>
     <script src="{% static 'front/js/predictions-filters.js' %}" defer></script>
     <script src="{% static 'front/js/content-view-mode.js' %}" defer></script>
 {% endif %}
