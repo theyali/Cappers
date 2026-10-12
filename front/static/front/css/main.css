@@ -21577,6 +21577,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 13px;
     line-height: 1.4;
 }
+
 .prediction-comment-feedback { grid-column: 2; padding-right: 58px; }
 .prediction-comment-replying {
     grid-column: 2;
