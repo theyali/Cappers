@@ -17525,6 +17525,234 @@ body.register {
 }
 .expert-public-tab:hover { color: #fff; background: #29292c; }
 .expert-public-tab:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+/* Tournament history: TR2 · List (desktop). */
+.expert-public-tournaments-desktop {
+    width: 100%;
+    min-width: 0;
+    height: 536px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 24px;
+    background: #0e0f12;
+    color: #fff;
+    box-sizing: border-box;
+}
+.expert-public-tournaments-mobile { display: none; }
+.expert-public-tournaments-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+.expert-public-tournaments-heading { display: flex; flex-direction: column; gap: 6px; }
+.expert-public-tournaments-heading > span {
+    color: #f6ec4e;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+.expert-public-tournaments-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+}
+.expert-public-tournaments-head > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #f6ec4e;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.expert-public-tournaments-summary { display: flex; gap: 10px; }
+.expert-public-tournaments-stat {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    border-radius: 14px;
+    background: #17181e;
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.expert-public-tournaments-stat strong {
+    overflow: hidden;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.expert-public-tournaments-stat.is-wins strong { color: #f6ec4e; }
+.expert-public-tournaments-stat.is-prizes strong { color: #5be38a; }
+.expert-public-tournaments-stat > span {
+    color: #6b6e78;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.expert-public-tournaments-table { min-width: 0; }
+.expert-public-tournaments-columns,
+.expert-public-tournaments-row {
+    display: grid;
+    grid-template-columns: 46px minmax(160px, 300px) minmax(100px, 150px) minmax(75px, 130px) minmax(90px, 1fr) minmax(78px, 110px);
+    align-items: center;
+    column-gap: 16px;
+}
+.expert-public-tournaments-columns {
+    padding: 0 0 10px;
+    color: #6b6e78;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.expert-public-tournaments-columns span:last-child { text-align: right; }
+.expert-public-tournaments-rows { display: flex; flex-direction: column; }
+.expert-public-tournaments-row {
+    padding: 15px 0;
+    border-bottom: 1px solid #24262e;
+    color: #fff;
+    text-decoration: none;
+}
+.expert-public-tournaments-row:last-child { border-bottom: 0; }
+.expert-public-tournaments-icon {
+    --tournament-icon-color: #09663f;
+    position: relative;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--tournament-icon-color);
+}
+.expert-public-tournaments-icon-pattern {
+    position: absolute;
+    inset: 0;
+    width: 46px;
+    height: 46px;
+}
+.expert-public-tournaments-icon-image { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.expert-public-tournaments-icon-image img { display: block; width: 23px; height: 23px; object-fit: contain; }
+.expert-public-tournaments-icon-image svg { display: block; width: 23px; height: 23px; }
+.expert-public-tournaments-name {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.expert-public-tournaments-name strong {
+    overflow: hidden;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.expert-public-tournaments-name small {
+    color: #6b6e78;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+.expert-public-tournaments-state {
+    width: fit-content;
+    height: 23px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: #23252d;
+    color: #a3a6b0;
+    font-size: 10.5px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.expert-public-tournaments-state.is-live {
+    padding-left: 8px;
+    color: #5be38a;
+    background: rgba(91, 227, 138, .14);
+}
+.expert-public-tournaments-state.is-live i {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+    border-radius: 50%;
+    background: #5be38a;
+}
+.expert-public-tournaments-place { display: inline-flex; align-items: baseline; gap: 5px; min-width: 0; }
+.expert-public-tournaments-place strong {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.expert-public-tournaments-place strong.is-first { color: #f6ec4e; }
+.expert-public-tournaments-place strong.is-third { color: #ce8e4d; }
+.expert-public-tournaments-place small { color: #6b6e78; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.expert-public-tournaments-reward { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.expert-public-tournaments-reward-empty {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border: 1.5px dashed #2e313b;
+    border-radius: 10px;
+}
+.expert-public-tournaments-reward-icon {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #23252d;
+    overflow: hidden;
+}
+.expert-public-tournaments-reward-icon.is-winner { background: #b45309; }
+.expert-public-tournaments-reward-icon.is-prize { background: #9f1239; }
+.expert-public-tournaments-reward-icon svg { display: block; width: 16px; height: 16px; }
+.expert-public-tournaments-reward-icon img { display: block; width: 32px; height: 32px; object-fit: contain; }
+.expert-public-tournaments-reward-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.expert-public-tournaments-reward-label.is-muted { color: #6b6e78; }
+.expert-public-tournaments-winnings { display: flex; justify-content: flex-end; min-width: 0; }
+.expert-public-tournaments-winnings strong {
+    color: #6b6e78;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.expert-public-tournaments-winnings strong.is-positive { color: #5be38a; }
+.expert-public-tournaments-empty {
+    margin: 0;
+    padding: 28px 0;
+    color: #6b6e78;
+    font-size: 13px;
+    font-weight: 700;
+}
 .expert-public-shell .expert-public-predictions,
 .expert-public-shell .expert-recent-performance {
     order: 40;
