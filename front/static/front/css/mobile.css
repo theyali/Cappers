@@ -8045,121 +8045,304 @@ body.expert-public-details-open {
     }
 
     .expert-public-tournaments .expert-public-tournaments-desktop { display: none; }
-    .expert-public-tournaments .expert-public-tournaments-mobile { display: block; }
-
-    .expert-public-tournaments .profile-list-card {
+    .expert-public-tournaments .expert-public-tournaments-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
         min-width: 0;
-        padding: 16px;
-        border-radius: 18px;
+        min-height: 587px;
+        box-sizing: border-box;
+        padding: 20px;
+        background: #0e0f12;
+        color: #fff;
+        font-family: var(--font-body);
     }
-
-    .expert-public-tournaments .profile-section-heading {
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 22px;
+    .expert-public-tournaments-mobile-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
     }
-
-    .expert-public-tournaments .profile-section-heading .eyebrow,
-    .expert-public-tournaments .profile-list-head .eyebrow {
-        margin: 0 0 8px;
-        color: var(--yellow);
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 1.1;
-        letter-spacing: 0.15em;
+    .expert-public-tournaments-mobile-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
     }
-
-    .expert-public-tournaments .profile-section-heading h2,
-    .expert-public-tournaments .profile-list-head h2 {
+    .expert-public-tournaments-mobile-heading > span {
+        color: #f6ec4e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+    }
+    .expert-public-tournaments-mobile-heading h2 {
         margin: 0;
-        font-size: 28px;
-        font-weight: 600;
-        line-height: 1.05;
-    }
-
-    .expert-public-tournaments .profile-coupon-count {
-        min-width: 54px;
-        min-height: 54px;
-        border-radius: 13px;
+        color: #fff;
+        font-family: var(--font-display);
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 800;
     }
-
-    .expert-public-tournaments .profile-list-head {
-        display: block;
-        margin: 0 0 12px;
+    .expert-public-tournaments-mobile-head > a {
+        flex: none;
+        color: #f6ec4e;
+        font-size: 12.5px;
+        font-weight: 800;
+        text-decoration: none;
     }
-
-    .expert-public-tournaments .profile-coupons-list {
+    .expert-public-tournaments-mobile-summary {
+        display: flex;
         gap: 8px;
     }
-
-    .expert-public-tournaments .profile-coupon-row {
-        min-height: 66px;
-        grid-template-columns: 54px minmax(0, 1fr) auto 22px;
-        gap: 10px;
-        padding: 8px;
-        border-radius: 14px;
-        background: transparent;
-    }
-
-    .expert-public-tournaments .profile-coupon-main {
-        display: contents;
-    }
-
-    .expert-public-tournaments .profile-coupon-id {
-        width: 44px;
-        height: 44px;
-        align-self: center;
-        border-radius: 10px;
-        font-size: 10px;
-        font-weight: 600;
-        line-height: 1.05;
-    }
-
-    .expert-public-tournaments .profile-coupon-copy {
+    .expert-public-tournaments-mobile-stat {
+        flex: 1;
         min-width: 0;
-        align-self: center;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #17181e;
+        box-shadow: inset 0 0 0 1px #24262e;
     }
-
-    .expert-public-tournaments .profile-coupon-copy strong {
-        display: block;
-        font-size: 15px;
-        font-weight: 600;
-        line-height: 1.15;
-    }
-
-    .expert-public-tournaments .profile-coupon-copy span {
-        display: block;
-        max-width: 100%;
-        margin-top: 5px;
+    .expert-public-tournaments-mobile-stat strong {
         overflow: hidden;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 1.25;
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
-
-    .expert-public-tournaments .profile-coupon-status {
-        align-self: center;
-        min-height: 34px;
-        padding: 0 10px;
-        border-radius: 11px;
+    .expert-public-tournaments-mobile-stat.is-wins strong { color: #f6ec4e; }
+    .expert-public-tournaments-mobile-stat.is-prizes strong { color: #5be38a; }
+    .expert-public-tournaments-mobile-stat > span {
+        color: #6b6e78;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
+        white-space: nowrap;
     }
-
-    .expert-public-tournaments .profile-coupon-metric {
-        display: none;
+    .expert-public-tournaments-mobile-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
     }
-
-    .expert-public-tournaments .profile-coupon-open {
-        align-self: center;
-        color: var(--blue);
-        font-size: 28px;
-        line-height: 1;
+    .expert-public-tournaments-mobile-card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 14px;
+        border-radius: 16px;
+        background: #17181e;
+        box-shadow: inset 0 0 0 1px #24262e;
+        color: #fff;
+        text-decoration: none;
+    }
+    .expert-public-tournaments-mobile-card.is-live {
+        box-shadow: inset 0 0 0 1.5px rgba(91, 227, 138, .4);
+    }
+    .expert-public-tournaments-mobile-card-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-icon {
+        --tournament-icon-color: #09663f;
+        position: relative;
+        display: inline-flex;
+        flex: 0 0 44px;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        overflow: hidden;
+        border-radius: 13px;
+        background: var(--tournament-icon-color);
+    }
+    .expert-public-tournaments-mobile-icon-pattern {
+        position: absolute;
+        inset: 0;
+        width: 44px;
+        height: 44px;
+    }
+    .expert-public-tournaments-mobile-icon-inner {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .expert-public-tournaments-mobile-icon-inner img,
+    .expert-public-tournaments-mobile-icon-inner svg {
+        display: block;
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+    }
+    .expert-public-tournaments-mobile-card-title {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .expert-public-tournaments-mobile-card-title strong {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+    .expert-public-tournaments-mobile-state {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 23px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: #23252d;
+        color: #a3a6b0;
+        font-size: 10.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-state.is-live {
+        padding-left: 8px;
+        background: rgba(91, 227, 138, .14);
+        color: #5be38a;
+    }
+    .expert-public-tournaments-mobile-state.is-live i {
+        flex: 0 0 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #5be38a;
+    }
+    .expert-public-tournaments-mobile-separator {
+        flex: none;
+        height: 1px;
+        background: #24262e;
+    }
+    .expert-public-tournaments-mobile-card-bottom {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-rank {
+        display: inline-flex;
+        flex: 0 0 32px;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #24262e;
+        color: #a3a6b0;
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 800;
+    }
+    .expert-public-tournaments-mobile-rank.is-first {
+        background: #f6ec4e;
+        color: #141519;
+        font-size: 13px;
+    }
+    .expert-public-tournaments-mobile-rank.is-third {
+        background: #ce8e4d;
+        color: #141519;
+        font-size: 13px;
+    }
+    .expert-public-tournaments-mobile-result {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-place {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 5px;
+    }
+    .expert-public-tournaments-mobile-place strong {
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }
+    .expert-public-tournaments-mobile-place strong.is-first { color: #f6ec4e; }
+    .expert-public-tournaments-mobile-place strong.is-third { color: #ce8e4d; }
+    .expert-public-tournaments-mobile-place small {
+        color: #6b6e78;
+        font-size: 10.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-result-caption {
+        overflow: hidden;
+        color: #6b6e78;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .expert-public-tournaments-mobile-award {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-remaining {
+        color: #f6ec4e;
+        font-size: 11.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-award-icon {
+        display: inline-flex;
+        flex: 0 0 32px;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        overflow: hidden;
+        border-radius: 9px;
+        background: #23252d;
+    }
+    .expert-public-tournaments-mobile-award-icon.is-winner { background: #b45309; }
+    .expert-public-tournaments-mobile-award-icon.is-prize { background: #9f1239; }
+    .expert-public-tournaments-mobile-award-icon img {
+        display: block;
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+    .expert-public-tournaments-mobile-award-icon svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+    }
+    .expert-public-tournaments-mobile-prize {
+        color: #5be38a;
+        font-size: 11.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-empty {
+        margin: 0;
+        padding: 20px 0;
+        color: #6b6e78;
+        font-size: 13px;
+        font-weight: 700;
     }
 
     .cabinet-bonuses-page .bonus-dashboard-grid {
