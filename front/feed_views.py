@@ -19,6 +19,7 @@ from .prediction_catalog_views import (
     PREDICTION_TYPE_VIP,
     build_prediction_type_context,
 )
+from .prediction_head import apply_prediction_status, build_prediction_head, prediction_sport_counts
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     SORT_OPTIONS,
@@ -143,9 +144,12 @@ def _apply_feed_filters(
     only_live,
     only_today,
     match_scope="all",
+    express_only=False,
 ):
     if selected_capper:
         queryset = queryset.filter(author__username=selected_capper)
+    if express_only:
+        queryset = queryset.filter(coupon_type=PredictionCoupon.CouponType.EXPRESS)
     if selected_sport:
         queryset = queryset.filter(predictions__match__sport=selected_sport)
     if match_scope != "all":
@@ -296,6 +300,9 @@ def following_feed(request):
         selected_capper = ""
 
     selected_sport = _sport_from_filter(request.GET.get("sport", "").strip())
+    active_express = request.GET.get("express") == "1"
+    if active_express:
+        selected_sport = None
     only_live = request.GET.get("live") == "1"
     only_today = request.GET.get("today") == "1"
     active_match_scope = request.GET.get("match_scope", "all")
@@ -339,11 +346,50 @@ def following_feed(request):
         only_live=only_live,
         only_today=only_today,
     )
-    sport_filter_tabs = build_sport_filter_tabs(request, active_sport=selected_sport)
-
     free_count_queryset = free_meta_queryset
     paid_count_queryset = paid_meta_queryset
-    if selected_sport:
+    sport_count_querysets = (
+        (paid_meta_queryset,)
+        if is_paid_predictions_tab
+        else (free_meta_queryset,)
+        if is_vip_predictions_tab
+        else (free_meta_queryset, paid_meta_queryset)
+    )
+    sport_counts_by_code, _sport_single_total = prediction_sport_counts(
+        tuple(queryset.exclude(coupon_type=PredictionCoupon.CouponType.EXPRESS) for queryset in sport_count_querysets),
+        active_status=active_status,
+    )
+    sport_total_count = sum(
+        apply_prediction_status(queryset, active_status).values("id").distinct().count()
+        for queryset in sport_count_querysets
+    )
+    express_count = sum(
+        apply_prediction_status(
+            queryset.filter(coupon_type=PredictionCoupon.CouponType.EXPRESS),
+            active_status,
+        )
+        .values("id")
+        .distinct()
+        .count()
+        for queryset in sport_count_querysets
+    )
+    sport_filter_tabs = build_sport_filter_tabs(
+        request,
+        active_sport=selected_sport,
+        active_express=active_express,
+        counts_by_code=sport_counts_by_code,
+        total_count=sport_total_count,
+        include_express=True,
+        express_count=express_count,
+    )
+    if active_express:
+        free_count_queryset = free_count_queryset.filter(
+            coupon_type=PredictionCoupon.CouponType.EXPRESS
+        )
+        paid_count_queryset = paid_count_queryset.filter(
+            coupon_type=PredictionCoupon.CouponType.EXPRESS
+        )
+    elif selected_sport:
         free_count_queryset = free_count_queryset.filter(
             predictions__match__sport=selected_sport
         ).distinct()
@@ -354,6 +400,7 @@ def following_feed(request):
     count_signature = (
         *feed_source_signature,
         selected_sport.pk if selected_sport else None,
+        active_express,
         prediction_type_context["active_prediction_type"],
     )
     count_keys = ("total", "pending", "win", "lose", "refund")
@@ -374,6 +421,7 @@ def following_feed(request):
             key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
             for key in count_keys
         }
+    status_tabs = _status_tabs(request, counts, active_status)
 
     # Full querysets are evaluated only for the cards that will actually render.
     queryset = _apply_feed_filters(
@@ -385,6 +433,7 @@ def following_feed(request):
         selected_sport=selected_sport,
         only_live=only_live,
         only_today=only_today,
+        express_only=active_express,
     )
     if is_paid_predictions_tab:
         queryset = _apply_feed_filters(
@@ -397,6 +446,7 @@ def following_feed(request):
             selected_sport=selected_sport,
             only_live=only_live,
             only_today=only_today,
+            express_only=active_express,
         )
     elif is_vip_predictions_tab:
         queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
@@ -411,6 +461,7 @@ def following_feed(request):
         selected_sport=selected_sport,
         only_live=only_live,
         only_today=only_today,
+        express_only=active_express,
     )
     if is_paid_predictions_tab or is_vip_predictions_tab:
         paid_queryset = paid_queryset.none()
@@ -463,6 +514,7 @@ def following_feed(request):
         if is_paid_predictions_tab or is_vip_predictions_tab
         else _feed_status_count(paid_counts, active_status)
     )
+    feed_total_count = paginator.count + paid_predictions_count
 
     paid_upgrade_follows = (
         []
@@ -528,6 +580,7 @@ def following_feed(request):
             only_live,
             only_today,
             active_match_scope != "all",
+            active_express,
             active_status != "all",
         ]
     )
@@ -550,10 +603,24 @@ def following_feed(request):
             "paid_predictions_count": paid_predictions_count,
             "paid_upgrade_offers": paid_upgrade_follows,
             "paid_upgrade_offers_count": len(paid_upgrade_follows),
-            "feed_total_count": paginator.count + paid_predictions_count,
+            "feed_total_count": feed_total_count,
             "feed_predictions_count": paginator.count,
             "sport_filter_tabs": sport_filter_tabs,
-            "status_tabs": _status_tabs(request, counts, active_status),
+            "prediction_head": build_prediction_head(
+                request,
+                title_main="Моя лента",
+                title_rest="прогнозов",
+                lede="Прогнозы от капперов, на которых вы подписаны, с быстрыми фильтрами по видам спорта и статусам.",
+                total_count=feed_total_count,
+                count_context="в ленте",
+                sport_tabs=sport_filter_tabs,
+                status_tabs=status_tabs,
+                prediction_type_tabs=prediction_type_context["prediction_type_tabs"],
+                active_sort=active_sort,
+                sort_options=FEED_SORT_OPTIONS,
+                show_content_view_switcher=not prediction_type_context["is_rich_predictions"],
+            ),
+            "status_tabs": status_tabs,
             "active_status": active_status,
             "active_sort": active_sort,
             "sort_options": FEED_SORT_OPTIONS,

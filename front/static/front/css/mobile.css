@@ -4711,14 +4711,12 @@ body.expert-public-details-open {
   .matches-lazy-button {
     min-height: 44px;
   }
-  .cappers-hero,
-  .predictions-hero {
+  .cappers-hero {
     min-height: 190px;
     align-items: flex-start;
     flex-direction: column;
   }
-  .cappers-total,
-  .predictions-total {
+  .cappers-total {
     width: 100%;
     min-height: auto;
     justify-content: space-between !important;

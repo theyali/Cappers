@@ -7,8 +7,8 @@
     const LEAVE_OFFSET = 40;
     const LEAVE_MIN_GAP = 16;
 
-    const panel = document.querySelector(".matches-list-panel");
-    const sentinel = document.querySelector("[data-matches-head-sentinel]");
+    let panel = document.querySelector(".matches-list-panel");
+    let sentinel = document.querySelector("[data-matches-head-sentinel]");
     if (!panel || !sentinel) return;
 
     let head = null;
@@ -17,10 +17,16 @@
     let isCompact = false;
     let holdUntil = 0;
 
-    const currentHead = () => panel.querySelector(":scope > [data-matches-head]");
+    const refreshRefs = () => {
+        panel = document.querySelector(".matches-list-panel");
+        sentinel = document.querySelector("[data-matches-head-sentinel]");
+    };
+
+    const currentHead = () => panel?.querySelector(":scope > [data-matches-head]") || null;
 
     // Desktop scrolls inside the list column, phones scroll the page.
     const pickScroller = () => {
+        if (!panel) return window;
         const overflow = window.getComputedStyle(panel).overflowY;
         return overflow === "auto" || overflow === "scroll" ? panel : window;
     };
@@ -32,6 +38,7 @@
 
     // The sentinel sits before the head, so its position does not move when the head folds.
     const measure = () => {
+        if (!sentinel) return;
         const top = sentinel.getBoundingClientRect().top;
         anchor = scroller === window
             ? top + window.scrollY
@@ -72,6 +79,7 @@
     };
 
     const refresh = () => {
+        refreshRefs();
         head = currentHead();
         if (!head) return;
         head.classList.toggle("is-compact", isCompact);
@@ -124,6 +132,7 @@
     scroller.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", refresh);
     document.addEventListener("matches:filters-updated", refresh);
+    document.addEventListener("predictions:updated", refresh);
     window.setInterval(updateAgo, 5000);
     window.CappersMatchesHead = { hold, scrollToList };
 

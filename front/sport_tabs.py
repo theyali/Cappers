@@ -9,6 +9,18 @@ SPORT_ORDER = {
     "basketball": 30,
     "tennis": 40,
 }
+SPORT_TILE_KEYS = {
+    "football": "f",
+    "soccer": "f",
+    "tennis": "t",
+    "basketball": "b",
+    "hockey": "h",
+    "ice-hockey": "h",
+    "ice_hockey": "h",
+    "esports": "e",
+    "cybersport": "e",
+    "volleyball": "v",
+}
 MOBILE_MATCH_SCOPE_TABS = (
     ("all", "Все"),
     ("live", "Live"),
@@ -21,8 +33,13 @@ def build_sport_filter_tabs(
     request,
     *,
     active_sport=None,
+    active_express: bool = False,
     base_url: str | None = None,
     drop_params: tuple[str, ...] = (),
+    counts_by_code: dict | None = None,
+    total_count: int | None = None,
+    include_express: bool = False,
+    express_count: int = 0,
 ) -> list[dict]:
     active_code = ""
     if isinstance(active_sport, Sport):
@@ -39,14 +56,38 @@ def build_sport_filter_tabs(
 
     all_params = params.copy()
     all_params.pop("sport", None)
+    all_params.pop("express", None)
+    all_href = _url_with_query(path, all_params)
     tabs = [
         {
             "code": "",
             "label": "Все",
-            "href": _url_with_query(path, all_params),
-            "active": not active_code,
+            "count": total_count or 0,
+            "href": all_href,
+            "url": all_href,
+            "toggle_url": all_href,
+            "tile_key": "all",
+            "active": not active_code and not active_express,
         }
     ]
+    if include_express:
+        express_params = params.copy()
+        express_params.pop("sport", None)
+        express_params.pop("league", None)
+        express_params["express"] = "1"
+        express_href = _url_with_query(path, express_params)
+        tabs.append(
+            {
+                "code": "express",
+                "label": "Экспрессы",
+                "count": int(express_count or 0),
+                "href": express_href,
+                "url": express_href,
+                "toggle_url": all_href if active_express else express_href,
+                "tile_key": "x",
+                "active": active_express,
+            }
+        )
 
     sports = sorted(
         Sport.objects.all(),
@@ -57,13 +98,21 @@ def build_sport_filter_tabs(
     )
     for sport in sports:
         tab_params = params.copy()
+        tab_params.pop("express", None)
         tab_params["sport"] = sport.code
+        href = _url_with_query(path, tab_params)
+        code = sport.code or ""
+        active = active_code == code
         tabs.append(
             {
-                "code": sport.code,
-                "label": sport.name_ru or sport.name or sport.code,
-                "href": _url_with_query(path, tab_params),
-                "active": active_code == sport.code,
+                "code": code,
+                "label": sport.name_ru or sport.name or code,
+                "count": int((counts_by_code or {}).get(code, 0) or 0),
+                "href": href,
+                "url": href,
+                "toggle_url": all_href if active else href,
+                "tile_key": SPORT_TILE_KEYS.get(code.lower(), "x"),
+                "active": active,
             }
         )
     return tabs

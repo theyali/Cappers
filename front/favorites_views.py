@@ -11,6 +11,7 @@ from .prediction_catalog_views import (
     apply_prediction_type_scope,
     build_prediction_type_context,
 )
+from .prediction_head import apply_prediction_status, build_prediction_head, prediction_sport_counts
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
     SORT_OPTIONS,
@@ -111,6 +112,9 @@ def favorites(request):
         active_sort = "new"
 
     active_sport = _sport_from_filter(request.GET.get("sport", "").strip())
+    active_express = request.GET.get("express") == "1"
+    if active_express:
+        active_sport = None
     selected_sport = str(active_sport.pk) if active_sport else ""
     selected_league = request.GET.get("league", "").strip()
     selected_capper = request.GET.get("capper", "").strip()
@@ -149,6 +153,38 @@ def favorites(request):
     meta_base_queryset = base_meta_queryset
     total_predictions = meta_base_queryset.count()
 
+    sport_count_queryset = _apply_position_filters(
+        meta_base_queryset,
+        selected_sport="",
+        selected_league=selected_league,
+        only_live=only_live,
+        only_today=only_today,
+        match_scope=active_match_scope,
+    )
+    if selected_capper:
+        sport_count_queryset = sport_count_queryset.filter(author__username=selected_capper)
+    if coefficient_min is not None:
+        sport_count_queryset = sport_count_queryset.filter(combined_coefficient__gte=coefficient_min)
+    if coefficient_max is not None:
+        sport_count_queryset = sport_count_queryset.filter(combined_coefficient__lte=coefficient_max)
+    sport_counts_by_code, _sport_single_total = prediction_sport_counts(
+        (sport_count_queryset.exclude(coupon_type=PredictionCoupon.CouponType.EXPRESS),),
+        active_status=active_status,
+    )
+    sport_total_count = apply_prediction_status(
+        sport_count_queryset,
+        active_status,
+    ).values("id").distinct().count()
+    express_count = (
+        apply_prediction_status(
+            sport_count_queryset.filter(coupon_type=PredictionCoupon.CouponType.EXPRESS),
+            active_status,
+        )
+        .values("id")
+        .distinct()
+        .count()
+    )
+
     filtered = _apply_position_filters(
         base_queryset,
         selected_sport=selected_sport,
@@ -156,6 +192,7 @@ def favorites(request):
         only_live=only_live,
         only_today=only_today,
         match_scope=active_match_scope,
+        express_only=active_express,
     )
     meta_filtered = _apply_position_filters(
         meta_base_queryset,
@@ -164,6 +201,7 @@ def favorites(request):
         only_live=only_live,
         only_today=only_today,
         match_scope=active_match_scope,
+        express_only=active_express,
     )
     if selected_capper:
         filtered = filtered.filter(author__username=selected_capper)
@@ -233,6 +271,7 @@ def favorites(request):
             only_live,
             only_today,
             active_match_scope != "all",
+            active_express,
             active_status != "all",
         ]
     )
@@ -240,6 +279,17 @@ def favorites(request):
     pagination_params = _query_without_page(request)
     pagination_query = pagination_params.urlencode()
     favorites_url = prediction_type_context["prediction_type_reset_url"]
+    status_tabs = _favorites_status_tabs(request, counts, active_status)
+    sport_filter_tabs = build_sport_filter_tabs(
+        request,
+        active_sport=active_sport,
+        active_express=active_express,
+        drop_params=("league",),
+        counts_by_code=sport_counts_by_code,
+        total_count=sport_total_count,
+        include_express=True,
+        express_count=express_count,
+    )
 
     return render(
         request,
@@ -248,11 +298,21 @@ def favorites(request):
             "page_obj": page_obj,
             "total_predictions": total_predictions,
             "filtered_predictions": paginator.count,
-            "status_tabs": _favorites_status_tabs(request, counts, active_status),
-            "sport_filter_tabs": build_sport_filter_tabs(
+            "status_tabs": status_tabs,
+            "sport_filter_tabs": sport_filter_tabs,
+            "prediction_head": build_prediction_head(
                 request,
-                active_sport=active_sport,
-                drop_params=("league",),
+                title_main="Избранные",
+                title_rest="прогнозы",
+                lede="Сохраненные прогнозы с быстрыми фильтрами по видам спорта, статусам и сортировке.",
+                total_count=paginator.count,
+                count_context="в избранном",
+                sport_tabs=sport_filter_tabs,
+                status_tabs=status_tabs,
+                prediction_type_tabs=prediction_type_context["prediction_type_tabs"],
+                active_sort=active_sort,
+                sort_options=SORT_OPTIONS,
+                show_content_view_switcher=not prediction_type_context["is_rich_predictions"],
             ),
             "active_status": active_status,
             "active_sort": active_sort,

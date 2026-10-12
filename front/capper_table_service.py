@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 import re
 
 from django.core.cache import cache
+from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from cabinet.presence import presence_payloads
-from game.models import Sport
+from game.models import PredictionCoupon, Sport
 
 from .expert_ranking import rank_experts, ranking_cache_version
 
@@ -126,6 +127,13 @@ def _next_month(month: date) -> date:
     return date(month.year, month.month + 1, 1)
 
 
+def _aware_start(day: date):
+    value = datetime.combine(day, time.min)
+    if timezone.is_aware(timezone.now()):
+        return timezone.make_aware(value, timezone.get_current_timezone())
+    return value
+
+
 def _month_label(month: date | None) -> str:
     if month is None:
         return "Все время"
@@ -225,6 +233,8 @@ def _month_showcase_progress(month: date) -> dict:
 
 def _monthly_showcase_rows(period: str) -> list[dict]:
     rows = []
+    year, month_number = (int(part) for part in period.split("-", 1))
+    month = date(year, month_number, 1)
     for entry in rank_experts(period=period, limit=3):
         profile = entry["profile"]
         row = _profile_payload(profile)
@@ -235,7 +245,47 @@ def _monthly_showcase_rows(period: str) -> list[dict]:
         row["roi_negative"] = _decimal(row.get("roi")) < 0
         row["hit_rate_display"] = _signed_percent(row.get("hit_rate")).lstrip("+")
         rows.append(row)
+    streaks = _monthly_best_streaks([row["id"] for row in rows], month)
+    for row in rows:
+        row["best_streak"] = streaks.get(row["id"], 0)
     return rows
+
+
+def _monthly_best_streaks(author_ids: list[int], month: date) -> dict[int, int]:
+    if not author_ids:
+        return {}
+    start = _aware_start(month)
+    end = _aware_start(_next_month(month))
+    rows = (
+        PredictionCoupon.objects.filter(
+            author_id__in=author_ids,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status__in=[
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+            ],
+        )
+        .annotate(
+            result_at=Coalesce(
+                "settled_at",
+                "updated_at",
+                "published_at",
+                "created_at",
+            )
+        )
+        .filter(result_at__gte=start, result_at__lt=end)
+        .order_by("author_id", "result_at", "id")
+        .values_list("author_id", "state_status")
+    )
+    best: dict[int, int] = {}
+    current: dict[int, int] = {}
+    for author_id, state in rows:
+        if state == PredictionCoupon.StateStatus.WIN:
+            current[author_id] = current.get(author_id, 0) + 1
+            best[author_id] = max(best.get(author_id, 0), current[author_id])
+        else:
+            current[author_id] = 0
+    return best
 
 
 def _monthly_showcase(available_months: list[date]) -> dict | None:
@@ -251,6 +301,7 @@ def _monthly_showcase(available_months: list[date]) -> dict | None:
     return {
         "month": month,
         "month_name": MONTH_NAMES[month.month],
+        "month_genitive": MONTH_NAMES_GENITIVE[month.month],
         "month_label": _month_label(month),
         "roi_caption": f"ROI ЗА {MONTH_NAMES[month.month].upper()}",
         "progress": _month_showcase_progress(month),

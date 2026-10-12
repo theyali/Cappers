@@ -34,7 +34,12 @@ from .prediction_views import (
     _url_with_query,
     prediction_filter_collapsed,
 )
-from .sport_tabs import build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
+from .prediction_head import build_prediction_head
+from .sport_tabs import (
+    SPORT_TILE_KEYS,
+    build_mobile_prediction_filter_tabs,
+    build_mobile_prediction_match_scope_tabs,
+)
 from .views import PREDICTION_STATUS_FILTERS
 
 
@@ -374,41 +379,54 @@ def _sport_tabs(
         }
         cache.set(cache_key, cached, PREDICTIONS_META_CACHE_TTL)
 
+    all_href = _url_with_query(
+        _rich_path() if uses_rich_path else _prediction_sport_path(),
+        params,
+    )
+    express_href = _url_with_query(
+        _rich_path(express_only=True) if uses_rich_path else _express_path(),
+        params,
+    )
     tabs = [
         {
             "code": "",
             "label": "Все",
             "count": cached["all_count"],
-            "href": _url_with_query(
-                _rich_path() if uses_rich_path else _prediction_sport_path(),
-                params,
-            ),
+            "href": all_href,
+            "url": all_href,
+            "toggle_url": all_href,
+            "tile_key": "all",
             "active": active_sport is None and not express_only,
         },
         {
             "code": "express",
             "label": "Экспрессы",
             "count": cached["express_count"],
-            "href": _url_with_query(
-                _rich_path(express_only=True) if uses_rich_path else _express_path(),
-                params,
-            ),
+            "href": express_href,
+            "url": express_href,
+            "toggle_url": all_href if express_only else express_href,
+            "tile_key": "x",
             "active": express_only,
         },
     ]
 
     for row in cached["rows"]:
         code = row["match__sport__code"]
+        href = _url_with_query(
+            _rich_path(code) if uses_rich_path else _prediction_sport_path(code),
+            params,
+        )
+        active = bool(active_sport and active_sport.pk == row["match__sport_id"])
         tabs.append(
             {
                 "code": code,
                 "label": row["match__sport__name_ru"] or row["match__sport__name"] or code,
                 "count": row["count"],
-                "href": _url_with_query(
-                    _rich_path(code) if uses_rich_path else _prediction_sport_path(code),
-                    params,
-                ),
-                "active": bool(active_sport and active_sport.pk == row["match__sport_id"]),
+                "href": href,
+                "url": href,
+                "toggle_url": all_href if active else href,
+                "tile_key": SPORT_TILE_KEYS.get((code or "").lower(), "x"),
+                "active": active,
             }
         )
     return tabs
@@ -809,22 +827,39 @@ def predictions(
         if prediction_type_context["uses_prediction_type_query"]
         else _prediction_sport_path()
     )
+    status_tabs = _status_tabs(request, counts, active_status)
+    sport_tabs = _sport_tabs(
+        request,
+        published_items,
+        active_sport,
+        express_only=express_only,
+        prediction_format=prediction_format,
+        prediction_type=active_prediction_type,
+        cache_scope=request.user.pk if is_paid_predictions else "",
+    )
+    prediction_head = build_prediction_head(
+        request,
+        title_main=seo_context["page_heading"],
+        title_rest="",
+        lede=seo_context["page_intro"],
+        total_count=paginator.count,
+        count_context="найдено",
+        sport_tabs=sport_tabs,
+        status_tabs=status_tabs,
+        prediction_type_tabs=prediction_type_context["prediction_type_tabs"],
+        active_sort=active_sort,
+        sort_options=SORT_OPTIONS,
+        show_content_view_switcher=not prediction_type_context["is_rich_predictions"],
+    )
 
     return render(
         request,
         "front/predictions.html",
         {
             "page_obj": page_obj,
-            "status_tabs": _status_tabs(request, counts, active_status),
-            "sport_tabs": _sport_tabs(
-                request,
-                published_items,
-                active_sport,
-                express_only=express_only,
-                prediction_format=prediction_format,
-                prediction_type=active_prediction_type,
-                cache_scope=request.user.pk if is_paid_predictions else "",
-            ),
+            "status_tabs": status_tabs,
+            "sport_tabs": sport_tabs,
+            "prediction_head": prediction_head,
             "top_experts_tab": top_experts_tab,
             "top_experts_only": top_experts_only,
             "active_status": active_status,
