@@ -68,6 +68,8 @@ class BotActionLog(models.Model):
         UNFOLLOW = "unfollow", "Отписка"
         LIKE = "like", "Лайк"
         UNLIKE = "unlike", "Снять лайк"
+        PREDICTION_FAVORITE = "prediction_favorite", "Сохранение прогноза"
+        MATCH_WATCH = "match_watch", "Сохранение матча"
         PREDICTION = "prediction", "Прогноз"
 
     bot = models.ForeignKey(BotAccount, on_delete=models.CASCADE, related_name="action_logs")

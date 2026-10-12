@@ -24,6 +24,8 @@ EMAIL_REQUEST_TTL_MINUTES = 30
 PASSWORD_RESET_TTL_MINUTES = 30
 PASSWORD_RESETS_PER_HOUR = 3
 EMAIL_VERIFICATION_TTL_MINUTES = 120
+EMAIL_LINK_RESEND_COOLDOWN_SECONDS = 60
+EMAIL_LINK_REQUESTS_PER_HOUR = 3
 
 
 class EmailChangeError(ValueError):
@@ -36,6 +38,49 @@ class PasswordResetError(ValueError):
 
 class EmailVerificationError(ValueError):
     pass
+
+
+def _format_wait_time(seconds: int) -> str:
+    seconds = max(1, int(seconds))
+    if seconds >= 60:
+        minutes = (seconds + 59) // 60
+        return f"{minutes} мин."
+    return f"{seconds} сек."
+
+
+def _enforce_email_verification_rate_limit(user: User, now) -> None:
+    recent = EmailVerificationRequest.objects.filter(
+        user=user,
+        created_at__gte=now - timedelta(hours=1),
+    )
+    latest = recent.order_by("-created_at").first()
+    if latest:
+        elapsed = (now - latest.created_at).total_seconds()
+        if elapsed < EMAIL_LINK_RESEND_COOLDOWN_SECONDS:
+            wait = EMAIL_LINK_RESEND_COOLDOWN_SECONDS - elapsed
+            raise EmailVerificationError(
+                f"Ссылку можно отправить повторно через {_format_wait_time(wait)}"
+            )
+    if recent.count() >= EMAIL_LINK_REQUESTS_PER_HOUR:
+        raise EmailVerificationError("Лимит отправки ссылок исчерпан. Попробуйте через час.")
+
+
+def _enforce_email_change_rate_limit(user: User, now) -> None:
+    recent = EmailChangeRequest.objects.filter(
+        user=user,
+        purpose=EmailChangeRequest.Purpose.CHANGE,
+        created_at__gte=now - timedelta(hours=1),
+    )
+    latest = recent.order_by("-created_at").first()
+    if latest:
+        elapsed = (now - latest.created_at).total_seconds()
+        if elapsed < EMAIL_LINK_RESEND_COOLDOWN_SECONDS:
+            wait = EMAIL_LINK_RESEND_COOLDOWN_SECONDS - elapsed
+            raise EmailChangeError(
+                f"Ссылку можно отправить повторно через {_format_wait_time(wait)}"
+            )
+    if recent.count() >= EMAIL_LINK_REQUESTS_PER_HOUR:
+        raise EmailChangeError("Лимит отправки ссылок исчерпан. Попробуйте через час.")
 
 
 def send_account_email(*, subject: str, template_name: str, to_email: str, context: dict) -> None:
@@ -61,6 +106,7 @@ def start_email_verification(user: User, *, request) -> EmailVerificationRequest
         raise EmailVerificationError("Почта уже подтверждена.")
 
     now = timezone.now()
+    _enforce_email_verification_rate_limit(user, now)
     secret = secrets.token_urlsafe(32)
     with transaction.atomic():
         EmailVerificationRequest.objects.filter(
@@ -141,12 +187,14 @@ def start_change_confirmation(user: User, request) -> EmailChangeRequest:
     if not user.email:
         raise EmailChangeError("Сначала добавьте почту.")
 
+    now = timezone.now()
+    _enforce_email_change_rate_limit(user, now)
     flow = EmailChangeRequest.objects.create(
         user=user,
         purpose=EmailChangeRequest.Purpose.CHANGE,
         current_email=user.email,
         current_token=secrets.token_urlsafe(32),
-        expires_at=_expires_at(),
+        expires_at=now + timedelta(minutes=EMAIL_REQUEST_TTL_MINUTES),
     )
     url = request.build_absolute_uri(
         reverse("account_email:confirm_change", kwargs={"token": flow.current_token})

@@ -26,6 +26,7 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("profile/comments/", views.profile_comments, name="profile_comments"),
     path(
         "profile/predictions/mobile-coupons/",
         views.profile_mobile_coupons,
@@ -73,6 +74,7 @@ urlpatterns = [
     path("profile/earnings/", earnings_views.profile_earnings, name="profile_earnings"),
     path("profile/achievements/", views.achievement_stats, name="achievement_stats"),
     path("profile/following/summary/", views.following_summary, name="following_summary"),
+    path("profile/social/", views.profile_social, name="profile_social"),
     path("referrals/stats/", referral_views.referral_stats, name="referral_stats"),
     path("prediction-demand/", demand_views.prediction_demand, name="prediction_demand"),
     path("profile/edit/", views.legacy_profile_edit, name="profile_edit"),

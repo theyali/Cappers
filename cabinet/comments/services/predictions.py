@@ -201,6 +201,12 @@ def create_prediction_comment(
         comment.replies_next_page = None
         comment.published_replies = []
         comment.viewer_reaction = ""
+        transaction.on_commit(
+            lambda comment_id=comment.pk, prediction_id=prediction.pk: _create_comment_notifications(
+                comment_id=comment_id,
+                prediction_id=prediction_id,
+            )
+        )
         return comment
 
 
@@ -381,6 +387,66 @@ def _resolve_reply_parent(
             http_status=422,
         )
     return parent
+
+
+def _create_comment_notifications(*, comment_id: int, prediction_id: int) -> None:
+    from notifications.models import Notification
+    from notifications.services import create_notification
+
+    comment = (
+        Comment.objects.select_related("user", "parent__user")
+        .filter(pk=comment_id, status=Comment.Status.PUBLISHED)
+        .first()
+    )
+    if comment is None:
+        return
+
+    prediction = (
+        PredictionCoupon.objects.select_related("author")
+        .filter(pk=prediction_id, published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
+        .first()
+    )
+    if prediction is None:
+        return
+
+    actor_name = comment.user.get_full_name() or comment.user.username
+    comment_text = comment.text.strip()
+    if len(comment_text) > 120:
+        comment_text = f"{comment_text[:117]}..."
+    prediction_title = prediction.headline.strip() or f"Прогноз #{prediction.pk}"
+    url = f"{reverse('front:prediction_detail', kwargs={'prediction_id': prediction.pk})}#comment-{comment.pk}"
+    base_meta = {
+        "prediction_id": prediction.pk,
+        "comment_id": comment.pk,
+        "parent_id": comment.parent_id,
+    }
+
+    sent_to: set[int] = set()
+
+    if comment.parent_id and comment.parent and comment.parent.user_id != comment.user_id:
+        create_notification(
+            recipient=comment.parent.user,
+            actor=comment.user,
+            kind=Notification.Kind.COMMENT_REPLY,
+            title="Новый ответ на комментарий",
+            message=f"{actor_name}: {comment_text}",
+            url=url,
+            event_key=f"comment-reply:{comment.pk}:{comment.parent.user_id}",
+            meta={**base_meta, "prediction_title": prediction_title},
+        )
+        sent_to.add(comment.parent.user_id)
+
+    if prediction.author_id != comment.user_id and prediction.author_id not in sent_to:
+        create_notification(
+            recipient=prediction.author,
+            actor=comment.user,
+            kind=Notification.Kind.PREDICTION_COMMENT,
+            title="Новый комментарий к прогнозу",
+            message=f"{actor_name}: {comment_text}",
+            url=url,
+            event_key=f"prediction-comment:{comment.pk}:{prediction.author_id}",
+            meta={**base_meta, "prediction_title": prediction_title},
+        )
 
 
 def _comments_count_for_comment_target(comment: Comment) -> int | None:

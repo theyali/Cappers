@@ -34,6 +34,7 @@
                                 <div class="expert-public-meta">
                                     <span class="expert-public-username">@{{ profile_user.username }}</span>
                                     <span class="expert-public-since">На КапперХаб с {{ profile_user.date_joined|date:"Y" }} года</span>
+                                    {% include "cabinet/includes/_public_profile_location.html" with public_user=profile_user only %}
                                 </div>
                                 {% if profile_presence %}
                                 <span class="public-presence-status{% if profile_presence.is_online %} is-online{% endif %}">

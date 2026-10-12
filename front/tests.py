@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from html.parser import HTMLParser
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -1425,3 +1425,29 @@ class HomeBestExpertsAjaxTests(TestCase):
         self.assertEqual(response.content, b"full page")
         render_full.assert_called_once()
         build_context.assert_not_called()
+
+
+class PredictionSortTests(SimpleTestCase):
+    def test_requested_options_are_available(self):
+        from .feed_views import FEED_SORT_OPTIONS
+        from .prediction_views import SORT_OPTIONS
+
+        for options in (SORT_OPTIONS, FEED_SORT_OPTIONS):
+            self.assertTrue({"new", "confidence", "payout", "popular", "discussed"}.issubset(
+                {key for key, _ in options}
+            ))
+
+    def test_new_sort_fields_order_before_pagination(self):
+        from .prediction_views import _sort_prediction_queryset
+
+        for key, field in (
+            ("confidence", "-confidence"),
+            ("payout", "-possible_payout"),
+            ("discussed", "-comments_count"),
+        ):
+            with self.subTest(sort=key):
+                queryset = Mock()
+                _sort_prediction_queryset(queryset, key, default_ordering=("-created_at",))
+                queryset.order_by.assert_called_once_with(
+                    field, "-published_at", "-created_at", "-id"
+                )

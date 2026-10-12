@@ -1,0 +1,36 @@
+{% if profile_comments_preview %}
+<section class="profile-comments-card profile-comments-preview" aria-labelledby="profile-comments-preview-title">
+    <header class="profile-comments-head">
+        <div>
+            <h2 id="profile-comments-preview-title">Комментарии</h2>
+            <span>Под вашими прогнозами, ваши комментарии и ответы на них</span>
+        </div>
+        <a class="profile-comments-all" href="{% url 'cabinet:profile_comments' %}">
+            <span>Все комментарии</span>
+            <span aria-hidden="true">→</span>
+        </a>
+    </header>
+    <nav class="profile-comments-tabs" aria-label="Комментарии профиля">
+        <a class="is-active" href="{% url 'cabinet:profile_comments' %}?kind=received">
+            Под прогнозами
+            <span>{{ profile_comments_preview.profile_comments_counts.received }}</span>
+        </a>
+        <a href="{% url 'cabinet:profile_comments' %}?kind=mine">
+            Мои
+            <span>{{ profile_comments_preview.profile_comments_counts.mine }}</span>
+        </a>
+        <a href="{% url 'cabinet:profile_comments' %}?kind=replies">
+            Ответы
+            <span>{{ profile_comments_preview.profile_comments_counts.replies }}</span>
+        </a>
+    </nav>
+    <div class="profile-comments-list is-preview">
+        {% include "cabinet/includes/_profile_comments_rows.html" with profile_comments_rows=profile_comments_preview.profile_comments_rows profile_comments_kind=profile_comments_preview.profile_comments_kind only %}
+    </div>
+    {% if profile_comments_preview.profile_comments_has_more %}
+        <a class="profile-comments-more-link" href="{% url 'cabinet:profile_comments' %}">
+            Показать ещё {{ profile_comments_preview.profile_comments_remaining }}
+        </a>
+    {% endif %}
+</section>
+{% endif %}

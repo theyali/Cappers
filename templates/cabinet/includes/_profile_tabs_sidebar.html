@@ -33,6 +33,11 @@
                 <span class="profile-sidebar-chevron" aria-hidden="true"></span>
             </a>
             {% endif %}
+            <a class="profile-sidebar-link{% if active_tab == 'comments' %} is-active{% endif %}" href="{% url 'cabinet:profile_comments' %}"{% if active_tab == 'comments' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}</span>
+                <span>Комментарии</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
         </nav>
     </section>
 

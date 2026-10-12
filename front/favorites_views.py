@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -21,6 +21,7 @@ from .prediction_views import (
     _following_ids,
     _parse_decimal,
     _published_queryset,
+    _sort_prediction_queryset,
     _sport_from_filter,
 )
 from .sport_tabs import (
@@ -204,27 +205,11 @@ def favorites(request):
     elif active_status != "all":
         queryset = queryset.filter(state_status=active_status)
 
-    if active_sort == "roi":
-        queryset = queryset.order_by(
-            "-author_roi",
-            "-likes_count",
-            "-published_at",
-            "-created_at",
-        )
-    elif active_sort == "popular":
-        queryset = queryset.annotate(
-            popularity_score=ExpressionWrapper(
-                F("likes_count") * Value(2) + F("favorites_count") * Value(3),
-                output_field=IntegerField(),
-            )
-        ).order_by(
-            "-popularity_score",
-            "-likes_count",
-            "-published_at",
-            "-created_at",
-        )
-    else:
-        queryset = queryset.order_by("-favorites__created_at", "-created_at")
+    queryset = _sort_prediction_queryset(
+        queryset,
+        active_sort,
+        default_ordering=("-favorites__created_at", "-created_at"),
+    )
 
     following_ids = _following_ids(request.user)
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)

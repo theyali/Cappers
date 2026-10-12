@@ -1,0 +1,9 @@
+{# Sport glyph from the mockup chips; key is the sport tile key. #}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke|default:'1.9' }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if key == 'f' %}<circle cx="12" cy="12" r="9"/><path d="M12 7.6l3.8 2.8-1.45 4.5h-4.7L8.2 10.4z"/><path d="M12 3v4.6M3.6 13.1l4.6-2.7M20.4 13.1l-4.6-2.7M8 20.4l2.35-5.5M16 20.4l-2.35-5.5"/>
+{% elif key == 't' %}<circle cx="12" cy="12" r="9"/><path d="M5.1 5.5c4.4 3 4.4 10 0 13M18.9 5.5c-4.4 3-4.4 10 0 13"/>
+{% elif key == 'b' %}<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.7 5.7c3.1 3 3.1 9.6 0 12.6M18.3 5.7c-3.1 3-3.1 9.6 0 12.6"/>
+{% elif key == 'h' %}<ellipse cx="12" cy="9" rx="8" ry="3"/><path d="M4 9v6a8 3 0 0 0 16 0V9"/>
+{% elif key == 'e' %}<path d="M7.7 8.2h8.6a4.3 4.3 0 0 1 4.2 3.5l.6 3.5a2.6 2.6 0 0 1-4.8 1.8l-1-1.5H8.7l-1 1.5a2.6 2.6 0 0 1-4.8-1.8l.6-3.5a4.3 4.3 0 0 1 4.2-3.5z"/><path d="M7 11.3v2.6M5.7 12.6h2.6M16.2 11.8h.01M18.4 13.8h.01"/>
+{% elif key == 'v' %}<circle cx="12" cy="12" r="9"/><path d="M12 3c-3 4.6-3.4 11.3 1.6 17.9M20.8 10.2c-5.4-1-11.3 1.6-14.5 8.3M4 16.2c1.4-5.2 5.9-9.6 12.9-10.4"/>
+{% else %}<circle cx="12" cy="12" r="9"/>{% endif %}</svg>

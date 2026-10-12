@@ -1,12 +1,15 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.db.models import (
     Case,
+    Exists,
     Count,
     DecimalField,
     ExpressionWrapper,
@@ -21,7 +24,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -47,6 +50,7 @@ from wallets.services import ensure_coin_wallet, ensure_real_balance, format_coi
 from wallets.services import InsufficientBalance
 
 from .achievements import build_achievement_overview
+from .comments.models import Comment
 from .dashboard_views import build_dashboard_context
 from .earnings_views import build_earnings_context
 from .forms import (
@@ -60,7 +64,15 @@ from .forms import (
 )
 from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
-from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, User
+from .models import (
+    AnalystFollow,
+    AnalystPaidSubscription,
+    AnalystProfile,
+    CapperArticle,
+    DailyTask,
+    PresetAvatar,
+    User,
+)
 from .paid_predictions import (
     build_paid_checkout_context,
     get_active_paid_plans,
@@ -81,11 +93,15 @@ from .services.daily_tasks import record_daily_task_action
 from .services.verification import grant_verification, verification_state
 from .telegram_auth import in_telegram_app
 from .vip import annotate_vip_status, attach_vip_status_to_user
+from front.prediction_metrics import annotate_author_roi
 
 
 WALLET_OPERATION_PAGE_SIZE = 20
 PROFILE_MOBILE_COUPONS_PAGE_SIZE = 6
 PROFILE_BEST_COUPONS_LIMIT = 5
+PROFILE_SOCIAL_PAGE_SIZE = 8
+PROFILE_COMMENTS_PAGE_SIZE = 10
+PROFILE_COMMENTS_PREVIEW_LIMIT = 4
 FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
@@ -152,6 +168,457 @@ def _relative_time_ru(value) -> str:
         unit = _ru_plural(minutes, "минуту", "минуты", "минут")
         return f"{minutes} {unit} назад"
     return "только что"
+
+
+def _compact_count(value) -> str:
+    value = int(value or 0)
+    if value >= 1_000_000:
+        amount = value / 1_000_000
+        return f"{amount:.1f} млн".replace(".0", "").replace(".", ",")
+    if value >= 1000:
+        amount = value / 1000
+        return f"{amount:.1f} тыс".replace(".0", "").replace(".", ",")
+    return str(value)
+
+
+def _roi_label(value) -> str:
+    try:
+        roi = Decimal(str(value or 0))
+    except Exception:
+        roi = Decimal("0")
+    return f"{roi:+.1f}%".replace(".", ",")
+
+
+def _profile_social_base_queryset(user, kind: str):
+    now = timezone.now()
+    if kind == "followers":
+        if user.role != User.Role.ANALYST:
+            return User.objects.none()
+        return User.objects.filter(analyst_follows__analyst=user).annotate(
+            social_created_at=F("analyst_follows__created_at"),
+            social_is_mutual=Exists(
+                AnalystFollow.objects.filter(
+                    follower=user,
+                    analyst_id=OuterRef("pk"),
+                )
+            ),
+            social_is_paid=Exists(
+                AnalystPaidSubscription.objects.filter(
+                    subscriber_id=OuterRef("pk"),
+                    analyst=user,
+                    expires_at__gt=now,
+                )
+            ),
+        )
+
+    if kind == "following":
+        return User.objects.filter(analyst_followers__follower=user).annotate(
+            social_created_at=F("analyst_followers__created_at"),
+            social_is_mutual=Exists(
+                AnalystFollow.objects.filter(
+                    follower_id=OuterRef("pk"),
+                    analyst=user,
+                )
+            ),
+            social_is_paid=Exists(
+                AnalystPaidSubscription.objects.filter(
+                    subscriber=user,
+                    analyst_id=OuterRef("pk"),
+                    expires_at__gt=now,
+                )
+            ),
+        )
+
+    if kind == "paid":
+        if user.role != User.Role.ANALYST:
+            return User.objects.none()
+        active_subscription = AnalystPaidSubscription.objects.filter(
+            subscriber_id=OuterRef("pk"),
+            analyst=user,
+            expires_at__gt=now,
+        ).order_by("-expires_at", "-id")
+        return User.objects.filter(
+            Exists(active_subscription),
+        ).annotate(
+            social_created_at=Subquery(active_subscription.values("starts_at")[:1]),
+            social_paid_expires_at=Subquery(active_subscription.values("expires_at")[:1]),
+            social_paid_price=Subquery(active_subscription.values("price")[:1]),
+            social_is_mutual=Exists(
+                AnalystFollow.objects.filter(
+                    follower=user,
+                    analyst_id=OuterRef("pk"),
+                )
+            ),
+            social_is_paid=Value(True),
+        )
+
+    raise Http404("Unknown social list.")
+
+
+def _profile_social_queryset(user, *, kind: str, filter_key: str, query: str, sort: str):
+    queryset = _profile_social_base_queryset(user, kind).select_related("analyst_profile")
+    queryset = annotate_vip_status(queryset, user_outer_ref="pk")
+    queryset = annotate_author_roi(
+        queryset,
+        author_outer_ref="pk",
+        annotation_name="social_roi",
+    )
+    queryset = queryset.annotate(
+        social_followers_count=Coalesce(
+            Subquery(
+                AnalystFollow.objects.filter(analyst_id=OuterRef("pk"))
+                .order_by()
+                .values("analyst_id")
+                .annotate(total=Count("id"))
+                .values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+        ),
+        social_predictions_count=Coalesce(
+            Subquery(
+                PredictionCoupon.objects.filter(
+                    author_id=OuterRef("pk"),
+                    published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                )
+                .order_by()
+                .values("author_id")
+                .annotate(total=Count("id"))
+                .values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+        ),
+    )
+
+    if query:
+        queryset = queryset.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(analyst_profile__display_name__icontains=query)
+        )
+
+    if filter_key == "cappers":
+        queryset = queryset.filter(role=User.Role.ANALYST)
+    elif filter_key == "mutual":
+        queryset = queryset.filter(social_is_mutual=True)
+    elif filter_key == "vip":
+        queryset = queryset.filter(is_vip_active=True)
+    elif filter_key == "paid":
+        queryset = queryset.filter(social_is_paid=True)
+
+    order_map = {
+        "new": ("-social_created_at", "-id"),
+        "old": ("social_created_at", "id"),
+        "roi": ("-social_roi", "-social_created_at", "-id"),
+        "followers": ("-social_followers_count", "-social_created_at", "-id"),
+    }
+    return queryset.distinct().order_by(*order_map.get(sort, order_map["new"]))
+
+
+def _profile_social_row(user, person, *, kind: str, following_ids: set[int]) -> dict:
+    profile = getattr(person, "analyst_profile", None)
+    display_name = (
+        profile.display_name
+        if profile and profile.display_name
+        else person.get_full_name() or person.username
+    )
+    is_analyst = person.role == User.Role.ANALYST
+    followers_count = int(getattr(person, "social_followers_count", 0) or 0)
+    predictions_count = int(getattr(person, "social_predictions_count", 0) or 0)
+    is_paid = bool(getattr(person, "social_is_paid", False))
+    is_mutual = bool(getattr(person, "social_is_mutual", False))
+    created_at = getattr(person, "social_created_at", None)
+    expires_at = getattr(person, "social_paid_expires_at", None)
+    meta_parts = []
+    if is_analyst:
+        meta_parts.append(f"ROI {_roi_label(getattr(person, 'social_roi', 0))}")
+        meta_parts.append(f"{_compact_count(predictions_count)} {_ru_plural(predictions_count, 'прогноз', 'прогноза', 'прогнозов')}")
+    else:
+        meta_parts.append(f"{_compact_count(followers_count)} {_ru_plural(followers_count, 'подписчик', 'подписчика', 'подписчиков')}")
+    if is_mutual:
+        meta_parts.append("взаимно")
+    if is_paid:
+        meta_parts.append("платный доступ")
+
+    return {
+        "id": person.pk,
+        "username": person.username,
+        "display_name": display_name,
+        "initials": _initials(display_name),
+        "avatar_url": person.avatar.url if person.avatar else "",
+        "profile_url": (
+            reverse("front:expert_profile", kwargs={"username": person.username})
+            if is_analyst
+            else reverse("cabinet:user_profile", kwargs={"username": person.username})
+        ),
+        "is_analyst": is_analyst,
+        "is_verified": bool(profile and profile.is_verified),
+        "is_vip": bool(getattr(person, "is_vip_active", False)),
+        "is_mutual": is_mutual,
+        "is_paid": is_paid,
+        "is_following": person.pk in following_ids,
+        "roi_label": _roi_label(getattr(person, "social_roi", 0)),
+        "roi_positive": Decimal(str(getattr(person, "social_roi", 0) or 0)) >= 0,
+        "followers_label": _compact_count(followers_count),
+        "predictions_label": _compact_count(predictions_count),
+        "meta": " · ".join(meta_parts),
+        "created_label": _relative_time_ru(created_at),
+        "paid_expires_label": date_format(
+            timezone.localtime(expires_at),
+            "j E",
+        ) if expires_at else "",
+        "paid_price_label": format_money(getattr(person, "social_paid_price", 0) or 0),
+        "follow_url": (
+            reverse("cabinet:follow_analyst", kwargs={"user_id": person.pk})
+            if user.role == User.Role.ANALYST
+            and is_analyst
+            and person.pk not in following_ids
+            else ""
+        ),
+        "kind": kind,
+    }
+
+
+def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort="new", offset=0) -> dict:
+    if filter_key not in {"all", "cappers", "mutual", "vip", "paid"}:
+        filter_key = "all"
+    if sort not in {"new", "old", "roi", "followers"}:
+        sort = "new"
+    try:
+        offset = max(0, int(offset or 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    query = (query or "").strip()
+    following_ids = set(user.analyst_follows.values_list("analyst_id", flat=True))
+    base = _profile_social_base_queryset(user, kind)
+    paid_total = (
+        AnalystPaidSubscription.objects.filter(
+            analyst=user,
+            expires_at__gt=timezone.now(),
+        ).count()
+        if user.role == User.Role.ANALYST
+        else 0
+    )
+    metrics = {
+        "total": base.distinct().count(),
+        "week": base.filter(social_created_at__gte=timezone.now() - timedelta(days=7)).distinct().count(),
+        "mutual": base.filter(social_is_mutual=True).distinct().count(),
+        "paid": paid_total if kind != "following" else base.filter(social_is_paid=True).distinct().count(),
+    }
+    queryset = _profile_social_queryset(
+        user,
+        kind=kind,
+        filter_key=filter_key,
+        query=query,
+        sort=sort,
+    )
+    total = queryset.count()
+    users = list(queryset[offset : offset + PROFILE_SOCIAL_PAGE_SIZE + 1])
+    has_more = len(users) > PROFILE_SOCIAL_PAGE_SIZE
+    users = users[:PROFILE_SOCIAL_PAGE_SIZE]
+    rows = [
+        _profile_social_row(
+            user,
+            person,
+            kind=kind,
+            following_ids=following_ids,
+        )
+        for person in users
+    ]
+    return {
+        "profile_social_kind": kind,
+        "profile_social_filter": filter_key,
+        "profile_social_query": query,
+        "profile_social_sort": sort,
+        "profile_social_offset": offset,
+        "profile_social_next_offset": offset + len(rows),
+        "profile_social_remaining": max(0, total - (offset + len(rows))),
+        "profile_social_has_more": has_more,
+        "profile_social_total": total,
+        "profile_social_rows": rows,
+        "profile_social_metrics": metrics,
+    }
+
+
+def _prediction_comment_content_type():
+    return ContentType.objects.get_for_model(PredictionCoupon)
+
+
+def _profile_comments_base_queryset(user, kind: str):
+    content_type = _prediction_comment_content_type()
+    queryset = (
+        Comment.objects.filter(
+            content_type=content_type,
+            status=Comment.Status.PUBLISHED,
+        )
+        .filter(Q(parent__isnull=True) | Q(parent__status=Comment.Status.PUBLISHED))
+        .select_related("user", "parent", "parent__user", "metrics")
+    )
+    if kind == "mine":
+        return queryset.filter(user=user)
+    if kind == "replies":
+        return queryset.filter(parent__user=user).exclude(user=user)
+    return queryset.filter(
+        object_id__in=PredictionCoupon.objects.filter(author=user).values("id")
+    ).exclude(user=user)
+
+
+def _profile_comments_counts(user) -> dict:
+    return {
+        "received": _profile_comments_base_queryset(user, "received").count(),
+        "mine": _profile_comments_base_queryset(user, "mine").count(),
+        "replies": _profile_comments_base_queryset(user, "replies").count(),
+    }
+
+
+def _profile_comments_queryset(user, *, kind: str, query: str, sort: str):
+    queryset = _profile_comments_base_queryset(user, kind)
+    query = (query or "").strip()
+    if query:
+        queryset = queryset.filter(
+            Q(text__icontains=query)
+            | Q(user__username__icontains=query)
+            | Q(parent__text__icontains=query)
+        )
+    if sort == "old":
+        return queryset.order_by("created_at", "id")
+    return queryset.order_by("-created_at", "-id")
+
+
+def _comment_user_name(user) -> str:
+    try:
+        profile = user.analyst_profile
+    except AnalystProfile.DoesNotExist:
+        profile = None
+    if profile and profile.display_name:
+        return profile.display_name
+    return user.get_full_name() or user.username
+
+
+def _profile_comment_target_context(comment, coupon_map, first_position_map) -> dict:
+    coupon = coupon_map.get(comment.object_id)
+    position = first_position_map.get(comment.object_id)
+    if not coupon:
+        return {
+            "title": "Прогноз",
+            "meta": "",
+            "url": "#",
+        }
+
+    title = coupon.headline or "Прогноз"
+    meta = ""
+    if position:
+        match = position.match
+        title = (
+            f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
+        )
+        coefficient = position.coefficient.quantize(Decimal("0.01")) if position.coefficient else ""
+        meta = f"{position.selection} {coefficient}".strip()
+
+    return {
+        "title": title,
+        "meta": meta,
+        "url": f"{reverse('front:prediction_detail', kwargs={'prediction_id': coupon.pk})}#comment-{comment.pk}",
+    }
+
+
+def _profile_comments_rows(comments) -> list[dict]:
+    coupon_ids = {comment.object_id for comment in comments}
+    coupons = (
+        PredictionCoupon.objects.filter(pk__in=coupon_ids)
+        .select_related("author", "author__analyst_profile")
+    )
+    coupon_map = {coupon.pk: coupon for coupon in coupons}
+    first_position_map = {}
+    for position in (
+        Prediction.objects.filter(coupon_id__in=coupon_ids)
+        .select_related("match")
+        .order_by("coupon_id", "id")
+    ):
+        first_position_map.setdefault(position.coupon_id, position)
+
+    reply_parent_ids = [
+        comment.pk
+        for comment in comments
+        if comment.parent_id is None
+    ]
+    my_replies = {}
+    if reply_parent_ids:
+        for reply in (
+            Comment.objects.filter(
+                parent_id__in=reply_parent_ids,
+                status=Comment.Status.PUBLISHED,
+            )
+            .select_related("user")
+            .order_by("created_at", "id")
+        ):
+            my_replies.setdefault(reply.parent_id, reply)
+
+    rows = []
+    for comment in comments:
+        author = comment.user
+        target = _profile_comment_target_context(comment, coupon_map, first_position_map)
+        parent = comment.parent
+        parent_id = comment.parent_id
+        my_reply = my_replies.get(comment.pk)
+        rows.append(
+            {
+                "id": comment.pk,
+                "comment": comment,
+                "author": author,
+                "author_name": _comment_user_name(author),
+                "author_url": reverse("cabinet:user_profile", kwargs={"username": author.username}),
+                "author_avatar_url": _field_url(author.avatar),
+                "created_label": _relative_time_ru(comment.created_at),
+                "target": target,
+                "parent_text": parent.text if parent_id and parent else "",
+                "parent_author": _comment_user_name(parent.user) if parent_id and parent else "",
+                "my_reply": my_reply,
+                "my_reply_label": _relative_time_ru(my_reply.created_at) if my_reply else "",
+                "is_unanswered": comment.parent_id is None and my_reply is None,
+                "comment_url": target["url"],
+            }
+        )
+    return rows
+
+
+def _profile_comments_context(
+    user,
+    *,
+    kind: str = "received",
+    query: str = "",
+    sort: str = "new",
+    offset: int = 0,
+    limit: int = PROFILE_COMMENTS_PAGE_SIZE,
+) -> dict:
+    if kind not in {"received", "mine", "replies"}:
+        kind = "received"
+    if sort not in {"new", "old"}:
+        sort = "new"
+    offset = max(0, int(offset or 0))
+    limit = max(1, int(limit or PROFILE_COMMENTS_PAGE_SIZE))
+
+    counts = _profile_comments_counts(user)
+    queryset = _profile_comments_queryset(user, kind=kind, query=query, sort=sort)
+    total = queryset.count()
+    comments = list(queryset[offset : offset + limit + 1])
+    visible = comments[:limit]
+    rows = _profile_comments_rows(visible)
+
+    return {
+        "profile_comments_kind": kind,
+        "profile_comments_query": query,
+        "profile_comments_sort": sort,
+        "profile_comments_counts": counts,
+        "profile_comments_rows": rows,
+        "profile_comments_total": total,
+        "profile_comments_next_offset": offset + len(rows),
+        "profile_comments_has_more": len(comments) > limit,
+        "profile_comments_remaining": max(0, total - (offset + len(rows))),
+    }
 
 
 def _mark_notification_section_read(user, section: str, kinds: tuple[str, ...]) -> int:
@@ -1028,6 +1495,12 @@ def profile(request):
             for subscription in earnings_context["active_paid_subscriptions"]
         }
     active_paid_subscribers = len(active_paid_subscriber_ids)
+    followers_social_context = (
+        _profile_social_context(request.user, kind="followers")
+        if request.user.role == User.Role.ANALYST
+        else {}
+    )
+    following_social_context = _profile_social_context(request.user, kind="following")
 
     unread_follower_ids = (
         set(
@@ -1129,6 +1602,22 @@ def profile(request):
         if active_tab == "profile"
         else None
     )
+    profile_comments_preview = (
+        _profile_comments_context(
+            request.user,
+            kind="received",
+            limit=PROFILE_COMMENTS_PREVIEW_LIMIT,
+        )
+        if active_tab == "profile"
+        else None
+    )
+
+    preset_avatars = PresetAvatar.objects.filter(is_active=True).order_by("sort_order", "pk")
+    preset_avatar_counts = {
+        "all": preset_avatars.count(),
+        "male": preset_avatars.filter(gender=PresetAvatar.Gender.MALE).count(),
+        "female": preset_avatars.filter(gender=PresetAvatar.Gender.FEMALE).count(),
+    }
 
     context = {
         "analyst_profile": analyst_profile,
@@ -1138,6 +1627,8 @@ def profile(request):
         "paid_plan_form": paid_plan_form,
         "mobile_quick_access_form": mobile_quick_access_form,
         "active_tab": active_tab,
+        "preset_avatars": preset_avatars[:60],
+        "preset_avatar_counts": preset_avatar_counts,
         "followers_count": followers_count,
         "following_count": following_count,
         "followers": followers,
@@ -1146,6 +1637,8 @@ def profile(request):
         "following_ids": following_ids,
         "active_paid_subscribers": active_paid_subscribers,
         "active_paid_subscriber_ids": active_paid_subscriber_ids,
+        "followers_social": followers_social_context,
+        "following_social": following_social_context,
         "my_coupons": my_coupons,
         "profile_best_mobile_coupons": profile_best_mobile_coupons,
         "profile_desktop_coupons": profile_desktop_coupons,
@@ -1160,6 +1653,7 @@ def profile(request):
         "profile_completion": profile_completion,
         "verification": verification,
         "profile_bonus_summary": profile_bonus_summary,
+        "profile_comments_preview": profile_comments_preview,
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
@@ -1196,6 +1690,40 @@ def profile(request):
 
 @login_required
 @require_GET
+def profile_comments(request):
+    context = _profile_comments_context(
+        request.user,
+        kind=request.GET.get("kind", "received"),
+        query=request.GET.get("q", ""),
+        sort=request.GET.get("sort", "new"),
+        offset=request.GET.get("offset", 0),
+    )
+    context.update(
+        {
+            "active_tab": "comments",
+            "page_class": "profile profile-comments-page",
+        }
+    )
+    if _is_ajax(request):
+        return JsonResponse(
+            {
+                "html": render_to_string(
+                    "cabinet/includes/_profile_comments_rows.html",
+                    context,
+                    request=request,
+                ),
+                "total": context["profile_comments_total"],
+                "counts": context["profile_comments_counts"],
+                "has_more": context["profile_comments_has_more"],
+                "next_offset": context["profile_comments_next_offset"],
+                "remaining": context["profile_comments_remaining"],
+            }
+        )
+    return render(request, "cabinet/profile_comments.html", context)
+
+
+@login_required
+@require_GET
 def profile_mobile_coupons(request):
     if request.user.role != User.Role.ANALYST:
         return JsonResponse({"ok": False, "message": "Недоступно."}, status=403)
@@ -1226,6 +1754,40 @@ def profile_mobile_coupons(request):
             "html": html,
             "has_more": has_more,
             "next_offset": next_offset,
+        }
+    )
+
+
+@login_required
+@require_GET
+def profile_social(request):
+    kind = request.GET.get("kind", "following")
+    if kind not in {"followers", "following", "paid"}:
+        return JsonResponse({"ok": False, "message": "Неизвестный список."}, status=400)
+    if kind in {"followers", "paid"} and request.user.role != User.Role.ANALYST:
+        return JsonResponse({"ok": False, "message": "Недоступно."}, status=403)
+
+    context = _profile_social_context(
+        request.user,
+        kind=kind,
+        filter_key=request.GET.get("filter", "all"),
+        query=request.GET.get("q", ""),
+        sort=request.GET.get("sort", "new"),
+        offset=request.GET.get("offset", 0),
+    )
+    html = render_to_string(
+        "cabinet/includes/_profile_social_rows.html",
+        context,
+        request=request,
+    )
+    return JsonResponse(
+        {
+            "ok": True,
+            "html": html,
+            "total": context["profile_social_total"],
+            "metrics": context["profile_social_metrics"],
+            "has_more": context["profile_social_has_more"],
+            "next_offset": context["profile_social_next_offset"],
         }
     )
 

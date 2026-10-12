@@ -434,7 +434,7 @@ def _feed_subtitle(card) -> str:
 @ensure_csrf_cookie
 def expert_profile(request, username: str):
     profile = get_object_or_404(
-        AnalystProfile.objects.select_related("user"),
+        AnalystProfile.objects.select_related("user", "user__country"),
         user__username=username,
         user__role=User.Role.ANALYST,
         is_public=True,

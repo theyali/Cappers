@@ -41,6 +41,34 @@
         </nav>
     </section>
 
+    <section class="matches-table-filter-group" aria-labelledby="table-match-filter-title">
+        <div class="matches-table-filter-title" id="table-match-filter-title">
+            <span>Прогнозы</span>
+            <small>{{ match_filter_tabs|length }}</small>
+        </div>
+        <nav class="matches-table-scope-list" aria-label="Фильтр матчей по прогнозам">
+            {% for tab in match_filter_tabs %}
+            <a
+                class="matches-table-scope-link{% if active_match_filter == tab.value %} is-active{% endif %}"
+                href="{{ tab.url }}"
+                {% if active_match_filter == tab.value %}aria-current="page"{% endif %}
+            >
+                <span class="matches-table-scope-icon" aria-hidden="true">
+                    {% if tab.value == 'with_predictions' %}
+                        {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
+                    {% elif tab.value == 'predictable' %}
+                        {% include "front/includes/_solar_icon.html" with name="requested_match_prediction" %}
+                    {% else %}
+                        {% include "front/includes/_solar_icon.html" with name="balls-bold" %}
+                    {% endif %}
+                </span>
+                <span class="matches-table-scope-copy">{{ tab.label }}</span>
+                <b>{{ tab.count }}</b>
+            </a>
+            {% endfor %}
+        </nav>
+    </section>
+
     {% if not hide_date_filter %}
     <section class="matches-table-filter-group matches-table-date-group" aria-labelledby="table-date-title">
         <div class="matches-table-filter-title" id="table-date-title">

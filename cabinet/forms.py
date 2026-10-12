@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
 from cappers.ratelimit import count_attempt, limit_reached
-from game.models import League, Sport
+from game.models import Country, League, Sport
 
 from .models import (
     AnalystPaidPlan,
@@ -64,6 +64,11 @@ class SportPreferenceField(forms.ModelMultipleChoiceField):
 
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(label="Email", required=True)
+    gender = forms.ChoiceField(
+        label="Пол",
+        choices=[("", "Не указан"), *User.Gender.choices],
+        required=False,
+    )
 
     def __init__(self, *args, require_sports: bool = False, **kwargs):
         self.require_sports = require_sports
@@ -114,6 +119,7 @@ class RegistrationForm(UserCreationForm):
             "email",
             "first_name",
             "last_name",
+            "gender",
             "role",
             "sports",
             "leagues",
@@ -140,9 +146,21 @@ class RegistrationForm(UserCreationForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    gender = forms.ChoiceField(
+        label="Пол",
+        choices=[("", "Не указан"), *User.Gender.choices],
+        required=False,
+    )
+    country = forms.ModelChoiceField(
+        label="Страна",
+        queryset=Country.objects.all(),
+        empty_label="Не выбрана",
+        required=False,
+    )
+
     class Meta:
         model = User
-        fields = ("first_name", "last_name")
+        fields = ("first_name", "last_name", "gender", "country")
         widgets = {
             "first_name": forms.TextInput(attrs={"placeholder": "Имя"}),
             "last_name": forms.TextInput(attrs={"placeholder": "Фамилия"}),

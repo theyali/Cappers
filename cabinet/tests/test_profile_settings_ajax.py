@@ -1,11 +1,16 @@
 from decimal import Decimal
+from io import BytesIO
+from tempfile import TemporaryDirectory
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from cabinet.models import AnalystProfile, User, UserSportPreference
+from cabinet.models import AnalystProfile, PresetAvatar, User, UserSportPreference
 from cabinet.services.verification import MIN_PUBLISHED_COUPONS, verification_state
-from game.models import PredictionCoupon, Sport
+from game.models import Country, PredictionCoupon, Sport
 
 TEST_STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -17,12 +22,21 @@ AJAX = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 class CapperSetupMixin:
     def setUp(self):
         self.sport = Sport.objects.create(code="football-ajax", name="Football", name_ru="Футбол")
+        self.country = Country.objects.create(
+            code="TS",
+            name="Testland",
+            name_ru="Тестовая страна",
+        )
         self.user = User.objects.create_user(
             username="ajax-capper",
             password="safe-test-password",
             role=User.Role.ANALYST,
             first_name="Иван",
             last_name="Петров",
+            email="ajax-capper@example.com",
+            email_verified=True,
+            gender=User.Gender.MALE,
+            country=self.country,
         )
         # A profile is created for every capper by a signal.
         self.profile, _ = AnalystProfile.objects.update_or_create(
@@ -56,6 +70,8 @@ class CapperSetupMixin:
             "specialization": self.profile.specialization,
             "bio": self.profile.bio,
             "telegram_channel": self.profile.telegram_channel,
+            "gender": self.user.gender,
+            "country": self.user.country_id or "",
             "paid_predictions_price": "0",
             "is_public": "on",
             "sports": [self.sport.pk],
@@ -82,6 +98,63 @@ class ProfileSettingsAjaxTests(CapperSetupMixin, TestCase):
         self.assertEqual(self.user.first_name, "Пётр")
         # A background save must not leave a flash message for the next page.
         self.assertFalse(list(response.wsgi_request._messages))
+
+    def test_profile_gender_and_country_save_and_render_in_public_profile(self):
+        country = Country.objects.create(
+            code="AZ",
+            name="Azerbaijan",
+            name_ru="Азербайджан",
+            logo="country/flags/az.webp",
+        )
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "settings"})
+        self.assertContains(response, 'name="gender"')
+        self.assertContains(response, 'name="country"')
+
+        response = self.client.post(
+            reverse("cabinet:profile"),
+            self.settings_payload(gender=User.Gender.MALE, country=str(country.pk)),
+            **AJAX,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.gender, User.Gender.MALE)
+        self.assertEqual(self.user.country_id, country.pk)
+
+        public_response = self.client.get(
+            reverse("front:expert_profile", kwargs={"username": self.user.username})
+        )
+        self.assertContains(public_response, "Азербайджан")
+        self.assertContains(public_response, "country/flags/az.webp")
+        self.assertContains(public_response, "Мужской")
+
+    def test_invalid_country_is_rejected(self):
+        response = self.client.post(
+            reverse("cabinet:profile"),
+            self.settings_payload(country="999999999"),
+            **AJAX,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("country", response.json()["errors"])
+
+    def test_reader_public_profile_shows_country_and_flag(self):
+        country = Country.objects.create(
+            code="AZ",
+            name_ru="Азербайджан",
+            logo="country/flags/az.webp",
+        )
+        reader = User.objects.create_user(
+            username="public-reader",
+            password="safe-test-password",
+            role=User.Role.READER,
+            gender=User.Gender.FEMALE,
+            country=country,
+        )
+        response = self.client.get(
+            reverse("cabinet:user_profile", kwargs={"username": reader.username})
+        )
+        self.assertContains(response, "Азербайджан")
+        self.assertContains(response, "country/flags/az.webp")
+        self.assertContains(response, "Женский")
 
     def test_ajax_save_returns_errors_keyed_by_input_name(self):
         response = self.client.post(
@@ -152,6 +225,9 @@ class CapperVerificationTests(CapperSetupMixin, TestCase):
             "socials": ("profile", "telegram_channel", ""),
             "first_name": ("user", "first_name", ""),
             "last_name": ("user", "last_name", ""),
+            "email_verified": ("user", "email_verified", False),
+            "country": ("user", "country", None),
+            "gender": ("user", "gender", ""),
             "avatar": ("user", "avatar", ""),
         }
         for name, (target, field, value) in missing.items():
@@ -218,3 +294,86 @@ class CapperVerificationTests(CapperSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(AnalystProfile.objects.filter(user=reader).exists())
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class ProfileAvatarTests(CapperSetupMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        media = TemporaryDirectory()
+        self.addCleanup(media.cleanup)
+        settings_override = override_settings(MEDIA_ROOT=media.name)
+        settings_override.enable()
+        self.addCleanup(settings_override.disable)
+        self.user.gender = User.Gender.MALE
+        self.user.save(update_fields=["gender"])
+
+    @staticmethod
+    def image_upload(name="avatar.png"):
+        image = BytesIO()
+        Image.new("RGB", (32, 32), "#0b56fa").save(image, format="PNG")
+        return SimpleUploadedFile(name, image.getvalue(), content_type="image/png")
+
+    def create_preset(self, title="Синий", gender=PresetAvatar.Gender.MALE, active=True):
+        return PresetAvatar.objects.create(
+            title=title,
+            gender=gender,
+            is_active=active,
+            image=self.image_upload(f"{title}.png"),
+        )
+
+    def test_modal_shows_only_gender_appropriate_presets(self):
+        male = self.create_preset()
+        self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
+        self.create_preset("Универсальный", gender=PresetAvatar.Gender.ALL)
+        response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
+        self.assertContains(response, 'id="profile-avatar-modal"')
+        self.assertContains(response, 'href="#profile-avatar-modal"')
+        self.assertContains(response, male.title)
+        self.assertContains(response, "Универсальный")
+        self.assertNotContains(response, ">Женский</span>")
+
+    def test_preset_image_is_copied_and_custom_upload_still_works(self):
+        preset = self.create_preset()
+        endpoint = reverse("cabinet:avatar_upload")
+        response = self.client.post(endpoint, {"preset_id": str(preset.pk)})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.user.refresh_from_db()
+        previous_image = self.user.avatar.name
+        self.assertNotEqual(previous_image, preset.image.name)
+        with self.user.avatar.open("rb") as saved:
+            self.assertEqual(saved.read(), self.image_upload().read())
+
+        response = self.client.post(endpoint, {"avatar": self.image_upload("own.png")})
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.avatar.name, previous_image)
+        self.assertTrue(self.user.avatar.storage.exists(self.user.avatar.name))
+        self.assertFalse(self.user.avatar.storage.exists(previous_image))
+
+    def test_rejects_inactive_wrong_gender_and_invalid_preset(self):
+        female = self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
+        inactive = self.create_preset("Скрытый", active=False)
+        endpoint = reverse("cabinet:avatar_upload")
+        for preset_id in (str(female.pk), str(inactive.pk), "bad", "9" * 100):
+            with self.subTest(preset_id=preset_id):
+                response = self.client.post(endpoint, {"preset_id": preset_id})
+                self.assertEqual(response.status_code, 400)
+                self.assertFalse(response.json()["ok"])
+        self.user.refresh_from_db()
+        self.assertFalse(bool(self.user.avatar))
+
+    def test_reader_can_change_avatar_and_unset_gender_sees_all(self):
+        reader = User.objects.create_user(
+            username="avatar-reader", password="safe-test-password", role=User.Role.READER
+        )
+        self.client.force_login(reader)
+        preset = self.create_preset("Любой", gender=PresetAvatar.Gender.FEMALE)
+        response = self.client.get(reverse("cabinet:profile"))
+        self.assertContains(response, 'href="#profile-avatar-modal"')
+        self.assertContains(response, ">Любой</span>")
+        response = self.client.post(reverse("cabinet:avatar_upload"), {"preset_id": str(preset.pk)})
+        self.assertEqual(response.status_code, 200)
+        reader.refresh_from_db()
+        self.assertTrue(bool(reader.avatar))

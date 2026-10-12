@@ -3,7 +3,7 @@ import json
 
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.db.models import Count, ExpressionWrapper, F, IntegerField, Q, Value
+from django.db.models import Count, Q, Value
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -28,6 +28,7 @@ from .prediction_views import (
     _prediction_sport_path,
     _published_queryset,
     _resolve_sport_route,
+    _sort_prediction_queryset,
     _status_tabs,
     _top_experts_tab,
     _url_with_query,
@@ -731,30 +732,12 @@ def predictions(
         queryset = queryset.filter(state_status=active_status)
 
     following_ids = _following_ids(request.user)
-    if active_sort == "roi":
-        queryset = queryset.order_by(
-            "-author_roi",
-            "-likes_count",
-            "-published_at",
-            "-created_at",
-        )
-    elif active_sort == "popular":
-        queryset = queryset.annotate(
-            popularity_score=ExpressionWrapper(
-                F("likes_count") * Value(2) + F("favorites_count") * Value(3),
-                output_field=IntegerField(),
-            )
-        ).order_by(
-            "-popularity_score",
-            "-likes_count",
-            "-published_at",
-            "-created_at",
-        )
-    else:
-        # The public catalog's default "new" sort must be chronological for everyone.
-        # Personal author/follow priorities belong to the dedicated following feed and
-        # must not push older coupons above newer ones in /predictions/.
-        queryset = queryset.order_by("-published_at", "-created_at", "-id")
+    # Keep the public catalog's default "new" order chronological.
+    queryset = _sort_prediction_queryset(
+        queryset,
+        active_sort,
+        default_ordering=("-published_at", "-created_at", "-id"),
+    )
 
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
     # Avoid a second COUNT() over the fully annotated ROI/card queryset.

@@ -19,7 +19,7 @@ def _match_title(match) -> str:
 
 
 def user_profile(request, username: str):
-    user = get_object_or_404(User, username=username, is_active=True)
+    user = get_object_or_404(User.objects.select_related("country"), username=username, is_active=True)
     if user.is_analyst:
         return redirect("front:expert_profile", username=user.username)
 

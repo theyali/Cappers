@@ -394,7 +394,113 @@
         return "";
     };
 
+    const profileModalOpenButtons = Array.from(document.querySelectorAll("[data-profile-modal-open]"));
+    const profileModalCloseButtons = Array.from(document.querySelectorAll("[data-profile-modal-close]"));
+    let profileModalCloseTimer = 0;
+
+    const openProfileModal = (modal) => {
+        if (!modal) return;
+        window.clearTimeout(profileModalCloseTimer);
+        modal.classList.remove("is-open", "is-closing");
+        modal.classList.add("is-preparing");
+        modal.offsetHeight;
+        modal.classList.remove("is-preparing");
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        document.documentElement.classList.add("is-profile-modal-open");
+        window.setTimeout(() => {
+            modal.querySelector("[data-profile-modal-close]")?.focus();
+        }, 40);
+    };
+
+    const closeProfileModal = (modal) => {
+        if (!modal || !modal.classList.contains("is-open")) return;
+        modal.classList.remove("is-open", "is-preparing");
+        modal.classList.add("is-closing");
+        modal.setAttribute("aria-hidden", "true");
+        document.documentElement.classList.remove("is-profile-modal-open");
+        window.clearTimeout(profileModalCloseTimer);
+        profileModalCloseTimer = window.setTimeout(() => {
+            modal.classList.remove("is-closing");
+            const statusNode = modal.querySelector("[data-profile-email-request-status]");
+            if (statusNode) {
+                statusNode.textContent = "";
+                statusNode.classList.remove("is-error");
+            }
+        }, 240);
+    };
+
+    profileModalOpenButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            openProfileModal(document.getElementById(button.dataset.profileModalOpen || ""));
+        });
+    });
+
+    profileModalCloseButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            closeProfileModal(button.closest(".profile-email-modal"));
+        });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        const openedModal = document.querySelector(".profile-email-modal.is-open");
+        if (openedModal && openedModal.id !== "profile-avatar-modal") closeProfileModal(openedModal);
+    });
+
+    const requestedProfileModal = window.location.hash
+        ? document.getElementById(window.location.hash.slice(1))
+        : null;
+    if (requestedProfileModal && requestedProfileModal.id !== "profile-avatar-modal") {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+        openProfileModal(requestedProfileModal);
+    }
+
+    document.querySelectorAll("[data-profile-email-request-form]").forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (form.dataset.sending === "true") return;
+
+            const submitButton = form.querySelector(".profile-email-modal-submit");
+            const statusNode = form.querySelector("[data-profile-email-request-status]");
+            form.dataset.sending = "true";
+            submitButton?.setAttribute("disabled", "disabled");
+            if (statusNode) {
+                statusNode.textContent = "Отправляем ссылку...";
+                statusNode.classList.remove("is-error");
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": getCookie("csrftoken"),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.ok) {
+                    throw new Error(payload.error || "Не удалось отправить ссылку.");
+                }
+                if (statusNode) statusNode.textContent = payload.message || "Ссылка отправлена. Проверьте почту.";
+            } catch (error) {
+                if (statusNode) {
+                    statusNode.textContent = error.message || "Не удалось отправить ссылку.";
+                    statusNode.classList.add("is-error");
+                }
+            } finally {
+                delete form.dataset.sending;
+                submitButton?.removeAttribute("disabled");
+            }
+        });
+    });
+
     document.querySelectorAll("[data-follow-url]").forEach((button) => {
+        if (button.closest("[data-profile-social]")) return;
         button.addEventListener("click", async () => {
             if (button.disabled) return;
 
@@ -431,11 +537,89 @@
 
     if (!input || !status) return;
 
+    const modal = document.getElementById("profile-avatar-modal");
     const uploadUrl = page.dataset.avatarUploadUrl;
+    const presetForm = document.getElementById("profileAvatarPresetForm");
+    const presetInput = presetForm?.querySelector("[data-avatar-preset-input]");
+    const saveButton = document.querySelector("[data-avatar-save]");
+    const cropSaveButton = document.querySelector("[data-avatar-crop-save]");
+    const modeButtons = Array.from(document.querySelectorAll(".profile-avatar-mode-tabs [data-avatar-mode]"));
+    const panelModeButtons = Array.from(document.querySelectorAll("[data-avatar-mode]"));
+    const filterButtons = Array.from(document.querySelectorAll("[data-avatar-filter]"));
+    const choiceButtons = Array.from(document.querySelectorAll("[data-avatar-choice]"));
+    const panels = Array.from(document.querySelectorAll("[data-avatar-panel]"));
+    const selectedLabel = document.querySelector("[data-avatar-selected-label]");
+    const cropStage = document.querySelector("[data-avatar-crop-stage]");
+    const cropImage = document.querySelector("[data-avatar-crop-image]");
+    const zoomInput = document.querySelector("[data-avatar-zoom]");
+    const openAvatarButtons = Array.from(document.querySelectorAll("[data-avatar-modal-open], a[href='#profile-avatar-modal']"));
+    const closeAvatarButtons = Array.from(document.querySelectorAll("[data-avatar-modal-close]"));
+
+    let activePanel = "ready";
+    let pendingFile = null;
+    let pendingObjectUrl = "";
+    let selectedPresetId = "";
+    let cropZoom = 1;
+    let cropX = 0;
+    let cropY = 0;
+    let isDraggingCrop = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let closeTimer = 0;
+    let panelTimer = 0;
+    let hasAvatarChanges = false;
+    let currentSavedAvatarUrl = document.getElementById("profileAvatarImage")?.getAttribute("src")
+        || document.querySelector(".nav-profile-icon .nav-profile-avatar-image")?.getAttribute("src")
+        || "";
 
     const showStatus = (message, isError = false) => {
         status.textContent = message;
         status.classList.toggle("is-error", isError);
+    };
+
+    const updateAvatarSaveState = () => {
+        const canSave = hasAvatarChanges && !isSavingAvatar;
+        saveButton?.toggleAttribute("disabled", !canSave);
+        cropSaveButton?.toggleAttribute("disabled", !pendingFile || isSavingAvatar);
+    };
+
+    const updatePreviewNode = (node, url, size, alt) => {
+        if (!node || !url) return;
+        let image = node.querySelector("img");
+        if (!image) {
+            node.textContent = "";
+            image = document.createElement("img");
+            image.width = size;
+            image.height = size;
+            image.alt = alt;
+            image.decoding = "async";
+            node.appendChild(image);
+        }
+        image.src = url;
+    };
+
+    const setModalPreview = (url) => {
+        updatePreviewNode(document.querySelector("[data-avatar-current]"), url, 148, "Ваш текущий аватар");
+        updatePreviewNode(document.querySelector("[data-avatar-current-mini]"), url, 36, "");
+        updatePreviewNode(document.querySelector("[data-avatar-crop-preview]"), url, 148, "");
+    };
+
+    const fadeImageSource = (image, url) => {
+        if (!image || !url) return;
+        const shell = image.closest(".profile-avatar, .nav-profile-icon, .nav-profile-dropdown-avatar") || image;
+        shell.classList.add("is-avatar-updating");
+        const nextImage = new Image();
+        nextImage.onload = () => {
+            image.src = url;
+            window.requestAnimationFrame(() => {
+                shell.classList.remove("is-avatar-updating");
+            });
+        };
+        nextImage.onerror = () => {
+            image.src = url;
+            shell.classList.remove("is-avatar-updating");
+        };
+        nextImage.src = url;
     };
 
     const replaceAvatar = (url) => {
@@ -444,7 +628,6 @@
 
         let image = document.getElementById("profileAvatarImage");
         const fallback = document.getElementById("profileAvatarFallback");
-
         if (!image) {
             image = document.createElement("img");
             image.id = "profileAvatarImage";
@@ -455,35 +638,226 @@
             if (fallback) fallback.remove();
             avatar.appendChild(image);
         }
-
-        image.width = 128;
-        image.height = 128;
-        image.src = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        const refreshedUrl = `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
+        fadeImageSource(image, refreshedUrl);
+        document.querySelectorAll(".nav-profile-icon > img, .site-nav-actions .nav-profile-avatar-image").forEach((navImage) => {
+            navImage.classList.add("nav-profile-avatar-image");
+            navImage.width = 42;
+            navImage.height = 42;
+            navImage.alt = navImage.alt || "";
+            fadeImageSource(navImage, refreshedUrl);
+            window.CappersSkeleton?.watchImage(navImage.closest("[data-skeleton-image]"));
+        });
+        setModalPreview(refreshedUrl);
+        currentSavedAvatarUrl = refreshedUrl;
         window.CappersSkeleton?.watchImage(avatar);
     };
 
-    input.addEventListener("change", async () => {
-        const file = input.files && input.files[0];
-        if (!file) return;
+    const resetAvatarDraft = () => {
+        if (pendingObjectUrl) {
+            URL.revokeObjectURL(pendingObjectUrl);
+            pendingObjectUrl = "";
+        }
+        pendingFile = null;
+        selectedPresetId = "";
+        hasAvatarChanges = false;
+        if (presetInput) presetInput.value = "";
+        input.value = "";
+        choiceButtons.forEach((choice) => choice.classList.remove("is-selected"));
+        if (selectedLabel) selectedLabel.textContent = "Выбрано: 0";
+        if (currentSavedAvatarUrl) setModalPreview(currentSavedAvatarUrl);
+        updateAvatarSaveState();
+    };
 
-        const allowed = ["image/jpeg", "image/png", "image/webp"];
-        if (!allowed.includes(file.type)) {
-            showStatus("Разрешены только JPG, PNG и WebP.", true);
-            input.value = "";
+    const openAvatarModal = () => {
+        if (!modal) return;
+        resetAvatarDraft();
+        showPanel("ready");
+        window.clearTimeout(closeTimer);
+        modal.classList.remove("is-open", "is-closing");
+        modal.classList.add("is-preparing");
+        modal.offsetHeight;
+        modal.classList.remove("is-preparing");
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        document.documentElement.classList.add("is-profile-avatar-modal-open");
+        window.setTimeout(() => {
+            modal.querySelector("[data-avatar-modal-close]")?.focus();
+        }, 40);
+    };
+
+    const closeAvatarModal = () => {
+        if (!modal || !modal.classList.contains("is-open")) return;
+        modal.classList.remove("is-open", "is-preparing");
+        modal.classList.add("is-closing");
+        modal.setAttribute("aria-hidden", "true");
+        document.documentElement.classList.remove("is-profile-avatar-modal-open");
+        window.clearTimeout(closeTimer);
+        closeTimer = window.setTimeout(() => {
+            modal.classList.remove("is-closing");
+            showStatus("");
+            resetAvatarDraft();
+        }, 240);
+    };
+
+    const showPanel = (name) => {
+        if (activePanel === name) return;
+        const previousPanel = panels.find((panel) => !panel.hidden);
+        const nextPanel = panels.find((panel) => panel.dataset.avatarPanel === name);
+        if (!nextPanel) return;
+        activePanel = name;
+        modeButtons.forEach((button) => {
+            const isActive = button.dataset.avatarMode === name || (name === "crop" && button.dataset.avatarMode === "upload");
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        window.clearTimeout(panelTimer);
+        if (previousPanel && previousPanel !== nextPanel) {
+            previousPanel.classList.remove("is-panel-entering", "is-panel-active");
+            previousPanel.classList.add("is-panel-leaving");
+            panelTimer = window.setTimeout(() => {
+                previousPanel.hidden = true;
+                previousPanel.classList.remove("is-panel-leaving");
+            }, 180);
+        }
+        nextPanel.hidden = false;
+        nextPanel.classList.add("is-panel-entering");
+        window.requestAnimationFrame(() => {
+            nextPanel.classList.add("is-panel-active");
+        });
+        window.setTimeout(() => {
+            nextPanel.classList.remove("is-panel-entering", "is-panel-active");
+        }, 210);
+        showStatus("");
+    };
+
+    const resetCropPosition = () => {
+        cropZoom = 1;
+        cropX = 0;
+        cropY = 0;
+        if (zoomInput) zoomInput.value = "1";
+        cropStage?.style.setProperty("--avatar-crop-x", "0px");
+        cropStage?.style.setProperty("--avatar-crop-y", "0px");
+        cropStage?.style.setProperty("--avatar-crop-zoom", "1");
+    };
+
+    const fitCropImage = () => {
+        if (!cropStage || !cropImage || !cropImage.naturalWidth || !cropImage.naturalHeight) return;
+        const stageRect = cropStage.getBoundingClientRect();
+        const imageRatio = cropImage.naturalWidth / cropImage.naturalHeight;
+        const stageRatio = stageRect.width / stageRect.height;
+        let baseWidth = stageRect.width;
+        let baseHeight = stageRect.height;
+        if (imageRatio > stageRatio) {
+            baseHeight = stageRect.height;
+            baseWidth = baseHeight * imageRatio;
+        } else {
+            baseWidth = stageRect.width;
+            baseHeight = baseWidth / imageRatio;
+        }
+        cropImage.style.width = `${baseWidth}px`;
+        cropImage.style.height = `${baseHeight}px`;
+        cropImage.dataset.baseWidth = String(baseWidth);
+        cropImage.dataset.baseHeight = String(baseHeight);
+    };
+
+    const applyCropPosition = () => {
+        cropStage?.style.setProperty("--avatar-crop-x", `${cropX}px`);
+        cropStage?.style.setProperty("--avatar-crop-y", `${cropY}px`);
+        cropStage?.style.setProperty("--avatar-crop-zoom", String(cropZoom));
+    };
+
+    const selectPreset = (button) => {
+        selectedPresetId = button.dataset.avatarId || "";
+        pendingFile = null;
+        if (pendingObjectUrl) {
+            URL.revokeObjectURL(pendingObjectUrl);
+            pendingObjectUrl = "";
+        }
+        hasAvatarChanges = Boolean(selectedPresetId);
+        if (presetInput) presetInput.value = selectedPresetId;
+        choiceButtons.forEach((choice) => choice.classList.toggle("is-selected", choice === button));
+        setModalPreview(button.dataset.avatarSrc || "");
+        if (selectedLabel) selectedLabel.textContent = "Выбрано: 1";
+        updateAvatarSaveState();
+    };
+
+    const savePresetAvatar = () => {
+        if (!selectedPresetId || !presetForm) {
+            showStatus("Выберите аватар.", true);
             return;
         }
+        const data = new FormData(presetForm);
+        data.set("preset_id", selectedPresetId);
+        saveAvatar(data, "Применяем готовый аватар...");
+    };
 
-        if (file.size > 5 * 1024 * 1024) {
-            showStatus("Файл больше 5 МБ.", true);
-            input.value = "";
+    const selectedVisibleChoice = () => choiceButtons.find((button) => (
+        button.classList.contains("is-selected") && !button.hidden
+    ));
+
+    const filterAvatars = (filter) => {
+        filterButtons.forEach((button) => {
+            button.classList.toggle("is-active", button.dataset.avatarFilter === filter);
+        });
+        choiceButtons.forEach((button) => {
+            const gender = button.dataset.avatarGender || "all";
+            button.hidden = filter !== "all" && gender !== filter;
+        });
+        if (selectedLabel) {
+            selectedLabel.textContent = selectedVisibleChoice() ? "Выбрано: 1" : "Выбрано: 0";
+        }
+    };
+
+    const createCroppedAvatar = () => new Promise((resolve, reject) => {
+        if (!pendingFile || !cropStage || !cropImage || !cropImage.naturalWidth) {
+            reject(new Error("Выберите фото для кадрирования."));
             return;
         }
+        const stageRect = cropStage.getBoundingClientRect();
+        const baseWidth = Number.parseFloat(cropImage.dataset.baseWidth || "0");
+        const baseHeight = Number.parseFloat(cropImage.dataset.baseHeight || "0");
+        if (!baseWidth || !baseHeight) {
+            reject(new Error("Не удалось подготовить изображение."));
+            return;
+        }
+        const cropSize = Math.min(stageRect.width, stageRect.height) * 0.7;
+        const renderedWidth = baseWidth * cropZoom;
+        const renderedHeight = baseHeight * cropZoom;
+        const imageLeft = stageRect.width / 2 + cropX - renderedWidth / 2;
+        const imageTop = stageRect.height / 2 + cropY - renderedHeight / 2;
+        const scale = renderedWidth / cropImage.naturalWidth;
+        const sx = Math.max(0, ((stageRect.width - cropSize) / 2 - imageLeft) / scale);
+        const sy = Math.max(0, ((stageRect.height - cropSize) / 2 - imageTop) / scale);
+        const sourceSize = Math.min(
+            cropImage.naturalWidth - sx,
+            cropImage.naturalHeight - sy,
+            cropSize / scale,
+        );
 
-        const data = new FormData();
-        data.append("avatar", file);
-        showStatus("Загружаем аватар…");
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 512;
+        const context = canvas.getContext("2d");
+        context.drawImage(cropImage, sx, sy, sourceSize, sourceSize, 0, 0, 512, 512);
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                reject(new Error("Не удалось сохранить кадр."));
+                return;
+            }
+            resolve(blob);
+        }, "image/png");
+    });
+
+    let isSavingAvatar = false;
+    const saveAvatar = async (data, pendingMessage) => {
+        if (isSavingAvatar) return;
+        isSavingAvatar = true;
         input.disabled = true;
-
+        saveButton?.setAttribute("disabled", "disabled");
+        cropSaveButton?.setAttribute("disabled", "disabled");
+        presetForm?.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+        showStatus(pendingMessage);
         try {
             const response = await fetch(uploadUrl, {
                 method: "POST",
@@ -494,21 +868,293 @@
                     "X-Requested-With": "XMLHttpRequest",
                 },
             });
-
             const payload = await response.json();
             if (!response.ok || !payload.ok) {
-                throw new Error(payload.error || "Не удалось загрузить аватар.");
+                throw new Error(payload.error || "Не удалось обновить аватар.");
             }
-
             replaceAvatar(payload.avatar_url);
+            hasAvatarChanges = false;
+            pendingFile = null;
+            selectedPresetId = "";
+            updateAvatarSaveState();
             showStatus(payload.message || "Аватар обновлён.");
+            window.setTimeout(() => {
+                closeAvatarModal();
+            }, 650);
         } catch (error) {
             showStatus(error.message || "Ошибка загрузки.", true);
         } finally {
+            isSavingAvatar = false;
             input.disabled = false;
             input.value = "";
+            updateAvatarSaveState();
+            presetForm?.querySelectorAll("button").forEach((button) => { button.disabled = false; });
+        }
+    };
+
+    choiceButtons.forEach((button) => {
+        button.addEventListener("click", () => selectPreset(button));
+    });
+
+    openAvatarButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            openAvatarModal();
+        });
+    });
+
+    closeAvatarButtons.forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            closeAvatarModal();
+        });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal?.classList.contains("is-open")) {
+            closeAvatarModal();
         }
     });
+
+    filterButtons.forEach((button) => {
+        button.addEventListener("click", () => filterAvatars(button.dataset.avatarFilter || "all"));
+    });
+
+    panelModeButtons.forEach((button) => {
+        button.addEventListener("click", () => showPanel(button.dataset.avatarMode || "ready"));
+    });
+
+    saveButton?.addEventListener("click", async () => {
+        if (activePanel === "crop" && pendingFile) {
+            try {
+                const blob = await createCroppedAvatar();
+                const data = new FormData();
+                data.append("avatar", blob, "avatar.png");
+                saveAvatar(data, "Сохраняем фото...");
+            } catch (error) {
+                showStatus(error.message || "Не удалось сохранить кадр.", true);
+            }
+            return;
+        }
+        savePresetAvatar();
+    });
+
+    cropSaveButton?.addEventListener("click", () => saveButton?.click());
+
+    cropImage?.addEventListener("load", () => {
+        fitCropImage();
+        resetCropPosition();
+    });
+
+    zoomInput?.addEventListener("input", () => {
+        cropZoom = Number.parseFloat(zoomInput.value || "1");
+        applyCropPosition();
+    });
+
+    cropStage?.addEventListener("pointerdown", (event) => {
+        if (!pendingFile) return;
+        isDraggingCrop = true;
+        dragStartX = event.clientX - cropX;
+        dragStartY = event.clientY - cropY;
+        cropStage.setPointerCapture(event.pointerId);
+    });
+
+    cropStage?.addEventListener("pointermove", (event) => {
+        if (!isDraggingCrop) return;
+        cropX = event.clientX - dragStartX;
+        cropY = event.clientY - dragStartY;
+        applyCropPosition();
+    });
+
+    cropStage?.addEventListener("pointerup", (event) => {
+        isDraggingCrop = false;
+        cropStage.releasePointerCapture(event.pointerId);
+    });
+
+    cropStage?.addEventListener("pointercancel", () => {
+        isDraggingCrop = false;
+    });
+
+    window.addEventListener("resize", fitCropImage);
+
+    input.addEventListener("change", () => {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            showStatus("Разрешены только JPG, PNG и WebP.", true);
+            input.value = "";
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showStatus("Файл больше 5 МБ.", true);
+            input.value = "";
+            return;
+        }
+        pendingFile = file;
+        selectedPresetId = "";
+        hasAvatarChanges = true;
+        choiceButtons.forEach((choice) => choice.classList.remove("is-selected"));
+        if (selectedLabel) selectedLabel.textContent = "Выбрано: 0";
+        if (pendingObjectUrl) URL.revokeObjectURL(pendingObjectUrl);
+        pendingObjectUrl = URL.createObjectURL(file);
+        if (cropImage) cropImage.src = pendingObjectUrl;
+        setModalPreview(pendingObjectUrl);
+        showPanel("crop");
+        updateAvatarSaveState();
+    });
+
+    presetForm?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        savePresetAvatar();
+    });
+
+    if (window.location.hash === "#profile-avatar-modal") {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+        openAvatarModal();
+    }
+
+    updateAvatarSaveState();
+})();
+
+(() => {
+    const root = document.querySelector(".profile-page");
+    if (!root || !root.querySelector("[data-profile-social]")) return;
+
+    const loadJQuery = () => {
+        if (window.jQuery) return Promise.resolve(window.jQuery);
+
+        return new Promise((resolve, reject) => {
+            let script = document.querySelector("script[data-profile-jquery]");
+            if (!script) {
+                script = document.createElement("script");
+                script.src = "https://code.jquery.com/jquery-3.7.1.min.js";
+                script.dataset.profileJquery = "true";
+                script.async = true;
+                document.head.appendChild(script);
+            }
+            script.addEventListener("load", () => {
+                if (window.jQuery) resolve(window.jQuery);
+                else reject(new Error("jQuery не загрузился."));
+            }, { once: true });
+            script.addEventListener("error", () => reject(new Error("Не удалось загрузить jQuery.")), { once: true });
+        });
+    };
+
+    const initSocialAjax = ($) => {
+        const csrf = () => {
+            const cookie = document.cookie.split(";").map((item) => item.trim()).find((item) => item.startsWith("csrftoken="));
+            return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
+        };
+
+        const requestSocial = ($block, { append = false } = {}) => {
+            const $form = $block.find("[data-profile-social-form]");
+            const url = $block.data("profile-social-url");
+            const payload = $form.serializeArray();
+            payload.push({ name: "offset", value: append ? ($block.attr("data-profile-social-next-offset") || 0) : 0 });
+
+            $block.addClass("is-updating");
+            return $.ajax({
+                url,
+                method: "GET",
+                data: $.param(payload),
+                dataType: "json",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            }).done((response) => {
+                if (!response?.ok) return;
+                const $results = $block.find("[data-profile-social-results]");
+                if (append) $results.append(response.html);
+                else $results.html(response.html);
+
+                $block.attr("data-profile-social-next-offset", response.next_offset || 0);
+                $block.attr("data-profile-social-has-more", response.has_more ? "true" : "false");
+
+                const remaining = Math.max(0, Number(response.total || 0) - Number(response.next_offset || 0));
+                const $more = $block.find("[data-profile-social-more]");
+                $more.prop("hidden", !response.has_more);
+                $more.find("[data-profile-social-more-count]").text(String(remaining));
+
+                Object.entries(response.metrics || {}).forEach(([key, value]) => {
+                    $block.find(`[data-profile-social-metric="${key}"]`).each(function updateMetric() {
+                        const prefix = this.hasAttribute("data-profile-social-signed") ? "+" : "";
+                        $(this).text(`${prefix}${value}`);
+                    });
+                    $block.find(`[data-profile-social-count="${key}"]`).text(value);
+                });
+            }).always(() => {
+                $block.removeClass("is-updating");
+            });
+        };
+
+        $("[data-profile-social]").each(function initBlock() {
+            const $block = $(this);
+            let timer = null;
+
+            $block.on("submit", "[data-profile-social-form]", (event) => {
+                event.preventDefault();
+                requestSocial($block);
+            });
+
+            $block.on("input", "[data-profile-social-search]", () => {
+                window.clearTimeout(timer);
+                timer = window.setTimeout(() => requestSocial($block), 220);
+            });
+
+            $block.on("change", "[data-profile-social-sort]", () => {
+                requestSocial($block);
+            });
+
+            $block.on("click", "[data-profile-social-filter]", function onFilterClick() {
+                const filter = this.dataset.profileSocialFilter || "all";
+                $block.find("[data-profile-social-filter]").removeClass("is-active");
+                $(this).addClass("is-active");
+                $block.find("[data-profile-social-filter-input]").val(filter);
+                requestSocial($block);
+            });
+
+            $block.on("click", "[data-profile-social-more]", () => {
+                requestSocial($block, { append: true });
+            });
+
+            $block.on("click", "[data-follow-url]", function onFollowClick(event) {
+                event.preventDefault();
+                const button = this;
+                if (button.disabled) return;
+                const $button = $(button);
+                const original = $button.text();
+                button.disabled = true;
+                $button.text("Подписываем...");
+                $.ajax({
+                    url: button.dataset.followUrl,
+                    method: "POST",
+                    dataType: "json",
+                    headers: {
+                        "X-CSRFToken": csrf(),
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }).done((response) => {
+                    if (!response?.ok) {
+                        $button.text(response?.error || "Ошибка");
+                        window.setTimeout(() => {
+                            button.disabled = false;
+                            $button.text(original);
+                        }, 1600);
+                        return;
+                    }
+                    $button.addClass("is-muted").removeAttr("data-follow-url").html("<span aria-hidden=\"true\">✓</span><span>Вы подписаны</span>");
+                }).fail(() => {
+                    $button.text("Ошибка");
+                    window.setTimeout(() => {
+                        button.disabled = false;
+                        $button.text(original);
+                    }, 1600);
+                });
+            });
+        });
+    };
+
+    loadJQuery()
+        .then(initSocialAjax)
+        .catch((error) => console.error(error));
 })();
 
 (() => {

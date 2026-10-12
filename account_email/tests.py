@@ -8,7 +8,7 @@ from django.urls import reverse
 from cabinet.forms import UserProfileForm
 from cabinet.models import User
 
-from .models import EmailChangeRequest, PasswordResetRequest
+from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetRequest
 
 
 TEST_STORAGES = {
@@ -71,9 +71,66 @@ class AccountEmailFlowTests(TestCase):
         self.assertEqual(self.user.email, "new.email@example.com")
         self.assertIsNotNone(flow.completed_at)
 
+    def test_unverified_email_is_confirmed_from_profile_modal(self):
+        self.user.email = "unverified@example.com"
+        self.user.save(update_fields=["email"])
+        self.client.force_login(self.user)
+        settings_url = f"{reverse('cabinet:profile')}?tab=settings"
+
+        page = self.client.get(settings_url)
+        self.assertContains(page, 'data-profile-modal-open="profile-email-change-modal">Подтвердить</button>')
+        self.assertNotContains(page, 'data-profile-modal-open="profile-email-change-modal">Изменить почту</button>')
+
+        response = self.client.post(reverse("account_email:request_change"))
+        self.assertRedirects(response, settings_url, fetch_redirect_response=False)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["unverified@example.com"])
+        self.assertEqual(EmailChangeRequest.objects.count(), 0)
+        self.assertEqual(EmailVerificationRequest.objects.filter(user=self.user).count(), 1)
+
+        page = self.client.get(settings_url)
+        self.assertContains(page, 'class="message-item success" role="status"')
+        self.assertContains(page, "Ссылка подтверждения отправлена на вашу почту.")
+
+        link = re.search(r"https?://[^\s]+", mail.outbox[0].body)
+        self.assertIsNotNone(link)
+        response = self.client.get(urlsplit(link.group(0)).path)
+        self.assertRedirects(response, settings_url, fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+
+        page = self.client.get(settings_url)
+        self.assertContains(page, 'data-profile-modal-open="profile-email-change-modal">Изменить почту</button>')
+        self.assertNotContains(page, 'data-profile-modal-open="profile-email-change-modal">Подтвердить</button>')
+
+    def test_email_verification_request_ajax_is_limited(self):
+        self.user.email = "unverified@example.com"
+        self.user.save(update_fields=["email"])
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("account_email:request_change"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["ok"], True)
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(
+            reverse("account_email:request_change"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json()["ok"], False)
+        self.assertIn("повторно", response.json()["error"])
+        self.assertEqual(len(mail.outbox), 1)
+
     def test_user_changes_email_after_current_email_link(self):
         self.user.email = "old@example.com"
-        self.user.save(update_fields=["email"])
+        self.user.email_verified = True
+        self.user.save(update_fields=["email", "email_verified"])
         self.client.force_login(self.user)
 
         response = self.client.post(reverse("account_email:request_change"))

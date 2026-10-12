@@ -7,6 +7,8 @@ from django.conf import settings
 
 KIND_PRESENTATION = {
     "new_prediction": ("🔥", "📊 Открыть прогноз"),
+    "prediction_comment": ("💬", "📊 Открыть прогноз"),
+    "comment_reply": ("💬", "📊 Открыть комментарий"),
     "favorite_settled": ("✅", "📊 Открыть прогноз"),
     "match_prediction": ("🎯", "📊 Открыть прогноз"),
     "achievement": ("🏆", "👤 Открыть профиль"),
@@ -34,6 +36,7 @@ KNOWN_TITLE_EMOJIS = (
     "📊",
     "🎯",
     "🔔",
+    "💬",
 )
 
 

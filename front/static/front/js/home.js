@@ -229,7 +229,7 @@
     let activeRequest = null;
     let requestVersion = 0;
 
-    const loadExperts = (url, updateHistory = false) => {
+    const loadExperts = (url) => {
         const target = new URL(url, window.location.href);
         const requestUrl = new URL(target);
         requestUrl.hash = "";
@@ -251,18 +251,16 @@
 
             const $next = $($.parseHTML(html, document, false)).filter("#home-best-experts").first();
             if (!$next.length) {
-                window.location.assign(target.toString());
+                window.CappersSkeleton?.ready(document.querySelector("#home-best-experts"));
                 return;
             }
 
             $("#home-best-experts").replaceWith($next);
             window.CappersSkeleton?.ready($next[0]);
             window.CappersSkeleton?.watchImages($next[0]);
-
-            if (updateHistory) window.history.pushState(null, "", target.toString());
         }).fail((_xhr, status) => {
             if (version !== requestVersion || status === "abort") return;
-            window.location.assign(target.toString());
+            window.CappersSkeleton?.ready(document.querySelector("#home-best-experts"));
         }).always(() => {
             if (version !== requestVersion) return;
             activeRequest = null;
@@ -280,16 +278,7 @@
         event.preventDefault();
         if ($(this).hasClass("is-active")) return;
 
-        const next = new URL(window.location.href);
-        next.searchParams.set("experts_period", selected.searchParams.get("experts_period"));
-        next.hash = "";
-        loadExperts(next, true);
-    });
-
-    window.addEventListener("popstate", () => {
-        const period = new URL(window.location.href).searchParams.get("experts_period") || "30";
-        const active = document.querySelector("#home-best-experts .home-best-experts-periods a.is-active");
-        const displayed = active && new URL(active.href, window.location.href).searchParams.get("experts_period");
-        if (period !== displayed) loadExperts(window.location.href);
+        selected.hash = "";
+        loadExperts(selected);
     });
 })(window.jQuery);

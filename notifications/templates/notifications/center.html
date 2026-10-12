@@ -139,6 +139,22 @@
                             </span>
                         </label>
                         <label>
+                            {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
+                            <span>Комментарии к прогнозам</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="prediction_comment" {% if preferences.prediction_comment %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
+                            {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
+                            <span>Ответы на комментарии</span>
+                            <span class="switch-control feed-prediction-save" aria-hidden="true">
+                                <input type="checkbox" name="comment_reply" {% if preferences.comment_reply %}checked{% endif %}>
+                                <span></span>
+                            </span>
+                        </label>
+                        <label>
                             {% include "front/includes/_solar_icon.html" with name="followers" %}
                             <span>Новые подписчики</span>
                             <span class="switch-control feed-prediction-save" aria-hidden="true">

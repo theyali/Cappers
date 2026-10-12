@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Комментарии — Cappers{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page profile-comments-page container">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+
+        <section class="matches-list-panel profile-page">
+            <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
+                <nav class="matches-tabs" aria-label="Разделы профиля">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+
+            <section
+                class="profile-comments-card profile-comments-full"
+                data-profile-comments
+                data-comments-url="{% url 'cabinet:profile_comments' %}"
+                data-next-offset="{{ profile_comments_next_offset }}"
+                data-has-more="{% if profile_comments_has_more %}true{% else %}false{% endif %}"
+            >
+                <header class="profile-comments-title">
+                    <h1>Комментарии</h1>
+                    <span>Под вашими прогнозами, ваши комментарии и ответы на них</span>
+                </header>
+
+                <form class="profile-comments-filters" data-profile-comments-form>
+                    <input type="hidden" name="kind" value="{{ profile_comments_kind }}" data-profile-comments-kind>
+                    <nav class="profile-comments-tabs" aria-label="Фильтр комментариев">
+                        <button class="{% if profile_comments_kind == 'received' %}is-active{% endif %}" type="button" data-profile-comments-filter="received">
+                            <span class="is-desktop">Под моими прогнозами</span>
+                            <span class="is-mobile">Под прогнозами</span>
+                            <strong data-profile-comments-count="received">{{ profile_comments_counts.received }}</strong>
+                        </button>
+                        <button class="{% if profile_comments_kind == 'mine' %}is-active{% endif %}" type="button" data-profile-comments-filter="mine">
+                            <span class="is-desktop">Мои комментарии</span>
+                            <span class="is-mobile">Мои</span>
+                            <strong data-profile-comments-count="mine">{{ profile_comments_counts.mine }}</strong>
+                        </button>
+                        <button class="{% if profile_comments_kind == 'replies' %}is-active{% endif %}" type="button" data-profile-comments-filter="replies">
+                            <span class="is-desktop">Ответы мне</span>
+                            <span class="is-mobile">Ответы</span>
+                            <strong data-profile-comments-count="replies">{{ profile_comments_counts.replies }}</strong>
+                        </button>
+                    </nav>
+                    <div class="profile-comments-tools">
+                        <label class="profile-comments-search">
+                            <span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="search-bold" %}</span>
+                            <input type="search" name="q" value="{{ profile_comments_query }}" placeholder="Поиск по комментариям" data-profile-comments-search>
+                        </label>
+                        <label class="profile-comments-sort">
+                            <span>Сортировка</span>
+                            <select name="sort" data-profile-comments-sort>
+                                <option value="new"{% if profile_comments_sort == 'new' %} selected{% endif %}>Сначала новые</option>
+                                <option value="old"{% if profile_comments_sort == 'old' %} selected{% endif %}>Сначала старые</option>
+                            </select>
+                        </label>
+                    </div>
+                </form>
+
+                <div class="profile-comments-list" data-profile-comments-results aria-live="polite">
+                    {% include "cabinet/includes/_profile_comments_rows.html" %}
+                </div>
+
+                <button
+                    class="profile-comments-more"
+                    type="button"
+                    data-profile-comments-more
+                    {% if not profile_comments_has_more %}hidden{% endif %}
+                >
+                    Показать ещё <span data-profile-comments-remaining>{{ profile_comments_remaining }}</span>
+                </button>
+            </section>
+        </section>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'front/js/profile.js' %}" defer></script>
+<script src="{% static 'front/js/profile-comments.js' %}" defer></script>
+{% endblock %}

@@ -22,6 +22,8 @@ PREDICTION_ALERT_KINDS = (
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
     Notification.Kind.PREDICTION_LIKE,
     Notification.Kind.PREDICTION_FAVORITE,
+    Notification.Kind.PREDICTION_COMMENT,
+    Notification.Kind.COMMENT_REPLY,
     Notification.Kind.NEW_FOLLOWER,
     Notification.Kind.COPYBETTING,
     Notification.Kind.PAID_SUBSCRIPTION,

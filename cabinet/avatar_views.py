@@ -1,9 +1,10 @@
 from django.contrib.auth.decorators import login_required
+from django.core.files import File
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from PIL import Image, UnidentifiedImageError
 
-from .models import User
+from .models import PresetAvatar, User
 
 
 ALLOWED_PROFILE_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -46,24 +47,42 @@ def avatar(request):
     if request.method == "GET":
         return JsonResponse({"ok": True, "avatar_url": _avatar_url(request.user)})
 
-    upload = request.FILES.get("avatar")
-    error = _validate_profile_image(upload)
-    if error:
-        return JsonResponse({"ok": False, "error": error}, status=400)
+    preset_id = request.POST.get("preset_id")
+    if preset_id:
+        if len(preset_id) > 18 or not preset_id.isdecimal():
+            return JsonResponse({"ok": False, "error": "Аватар недоступен для выбора."}, status=400)
+        preset = PresetAvatar.objects.filter(pk=preset_id, is_active=True).first()
+        if not preset or not preset.image:
+            return JsonResponse({"ok": False, "error": "Аватар недоступен для выбора."}, status=400)
+        try:
+            if preset.image.size > MAX_PROFILE_IMAGE_SIZE:
+                return JsonResponse({"ok": False, "error": "Размер аватара превышает 5 МБ."}, status=400)
+            with preset.image.open("rb") as image:
+                previous_name = request.user.avatar.name if request.user.avatar else ""
+                storage = request.user.avatar.storage
+                request.user.avatar.save(
+                    f"preset-{preset.pk}.{preset.image.name.rsplit('.', 1)[-1].lower()}",
+                    File(image),
+                    save=False,
+                )
+                request.user.save(update_fields=["avatar"])
+        except (OSError, ValueError):
+            return JsonResponse({"ok": False, "error": "Не удалось прочитать изображение."}, status=400)
+    else:
+        upload = request.FILES.get("avatar")
+        error = _validate_profile_image(upload)
+        if error:
+            return JsonResponse({"ok": False, "error": error}, status=400)
 
-    previous_name = request.user.avatar.name if request.user.avatar else ""
-    storage = request.user.avatar.storage if request.user.avatar else None
-    request.user.avatar = upload
-    request.user.save(update_fields=["avatar"])
+        previous_name = request.user.avatar.name if request.user.avatar else ""
+        storage = request.user.avatar.storage if request.user.avatar else None
+        request.user.avatar = upload
+        request.user.save(update_fields=["avatar"])
+
     avatar = request.user.avatar
-
     if previous_name and storage and previous_name != avatar.name and storage.exists(previous_name):
         storage.delete(previous_name)
 
     return JsonResponse(
-        {
-            "ok": True,
-            "avatar_url": avatar.url,
-            "message": "Аватар обновлён.",
-        }
+        {"ok": True, "avatar_url": avatar.url, "message": "Аватар обновлён."}
     )

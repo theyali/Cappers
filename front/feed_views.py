@@ -21,7 +21,9 @@ from .prediction_catalog_views import (
 )
 from .prediction_views import (
     PREDICTIONS_PAGE_SIZE,
+    SORT_OPTIONS,
     _decorate_predictions,
+    _sort_prediction_queryset,
     _published_queryset,
     _status_tabs,
     prediction_filter_collapsed,
@@ -34,10 +36,7 @@ from .sport_tabs import (
 from .views import PREDICTION_STATUS_FILTERS
 
 
-FEED_SORT_OPTIONS = (
-    ("new", "Новые"),
-    ("popular", "Популярные"),
-)
+FEED_SORT_OPTIONS = tuple(option for option in SORT_OPTIONS if option[0] != "roi")
 PAID_FEED_LIMIT = 12
 VIP_STORIES_LIMIT = 30
 FEED_META_CACHE_TTL = 60
@@ -425,22 +424,12 @@ def following_feed(request):
     elif active_status != "all":
         paid_queryset = paid_queryset.filter(state_status=active_status)
 
-    if active_sort == "popular":
-        queryset = queryset.order_by(
-            "-likes_count",
-            "-favorites_count",
-            "-published_at",
-            "-created_at",
-        )
-        paid_queryset = paid_queryset.order_by(
-            "-likes_count",
-            "-favorites_count",
-            "-published_at",
-            "-created_at",
-        )
-    else:
-        queryset = queryset.order_by("-published_at", "-created_at")
-        paid_queryset = paid_queryset.order_by("-published_at", "-created_at")
+    sort_kwargs = {
+        "default_ordering": ("-published_at", "-created_at"),
+        "popular_ordering": ("-likes_count", "-favorites_count", "-published_at", "-created_at"),
+    }
+    queryset = _sort_prediction_queryset(queryset, active_sort, **sort_kwargs)
+    paid_queryset = _sort_prediction_queryset(paid_queryset, active_sort, **sort_kwargs)
 
     free_predictions_count = _feed_status_count(
         paid_counts if is_paid_predictions_tab else free_counts,

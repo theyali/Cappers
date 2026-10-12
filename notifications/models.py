@@ -22,6 +22,8 @@ class NotificationPreference(models.Model):
 
     prediction_like = models.BooleanField("Лайки моих прогнозов", default=True)
     prediction_favorite = models.BooleanField("Сохранения моих прогнозов", default=True)
+    prediction_comment = models.BooleanField("Комментарии к моим прогнозам", default=True)
+    comment_reply = models.BooleanField("Ответы на мои комментарии", default=True)
     copybetting = models.BooleanField("Копибеттинг моих прогнозов", default=True)
     new_follower = models.BooleanField("Новые подписчики", default=True)
     paid_subscription = models.BooleanField("Покупка платной подписки", default=True)
@@ -108,6 +110,8 @@ class Notification(models.Model):
     class Kind(models.TextChoices):
         PREDICTION_LIKE = "prediction_like", "Лайк прогноза"
         PREDICTION_FAVORITE = "prediction_favorite", "Сохранение прогноза"
+        PREDICTION_COMMENT = "prediction_comment", "Комментарий к прогнозу"
+        COMMENT_REPLY = "comment_reply", "Ответ на комментарий"
         COPYBETTING = "copybetting", "Копибеттинг"
         NEW_FOLLOWER = "new_follower", "Новый подписчик"
         PAID_SUBSCRIPTION = "paid_subscription", "Платная подписка"
