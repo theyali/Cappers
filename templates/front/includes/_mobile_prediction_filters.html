@@ -29,5 +29,10 @@
         </nav>
         {% endif %}
     </div>
+    {% if prediction_head.show_content_view_switcher %}
+    <div class="mobile-match-view-switcher mobile-prediction-view-switcher">
+        {% include "front/includes/_content_view_switcher.html" %}
+    </div>
+    {% endif %}
 </div>
 {% endif %}
