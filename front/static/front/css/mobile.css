@@ -8044,6 +8044,9 @@ body.expert-public-details-open {
         scrollbar-width: auto;
     }
 
+    .expert-public-tournaments .expert-public-tournaments-desktop { display: none; }
+    .expert-public-tournaments .expert-public-tournaments-mobile { display: block; }
+
     .expert-public-tournaments .profile-list-card {
         min-width: 0;
         padding: 16px;
