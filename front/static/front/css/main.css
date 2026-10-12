@@ -17529,7 +17529,6 @@ body.register {
 .expert-public-tournaments-desktop {
     width: 100%;
     min-width: 0;
-    height: 536px;
     display: flex;
     flex-direction: column;
     gap: 18px;
