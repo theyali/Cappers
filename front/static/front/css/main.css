@@ -11977,6 +11977,7 @@ body.register footer {
     background: var(--yellow);
     font-size: 36px;
     font-weight: 700;
+    outline:5px solid black;
 }
 .profile-page .avatar-upload-button {
     position: absolute;
@@ -12063,7 +12064,7 @@ body.register footer {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    color: rgba(255, 255, 255, 0.64);
+    color: white;
     font-size: 10px;
     white-space: nowrap;
 }
@@ -25971,19 +25972,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .site-footer-copyright { margin-top: 5px !important; color: #b6b6b8 !important; }
 .profile-page .profile-hero { position: relative; overflow: hidden; }
 .profile-page .profile-hero:has(.profile-hero-cover) { background-image: none; }
-.profile-page .profile-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        90deg,
-        rgba(20, 20, 21, 0.94) 0,
-        rgba(20, 20, 21, 0.76) 43%,
-        rgba(11, 21, 34, 0.76) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-}
 .profile-page .profile-hero > :not(.profile-hero-cover) { position: relative; z-index: 2; }
 .profile-page .profile-hero > .profile-hero-cover {
     position: absolute;
