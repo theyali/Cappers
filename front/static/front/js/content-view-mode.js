@@ -48,8 +48,14 @@
     const getSwitchers = ($root) => {
         const $switchers = $root.find("[data-content-view-switcher]");
         const $matchesPage = $root.closest(".matches-page");
-        if (!$matchesPage.length) return $switchers;
-        return $switchers.add($(".mobile-match-filters [data-content-view-switcher]"));
+        if ($matchesPage.length) {
+            return $switchers.add($(".mobile-match-filters [data-content-view-switcher]"));
+        }
+        const $predictionsPage = $root.closest(".predictions-page");
+        if ($predictionsPage.length) {
+            return $switchers.add($(".mobile-prediction-filters [data-content-view-switcher]"));
+        }
+        return $switchers;
     };
 
     const setButtons = ($switchers, mode) => {
@@ -141,6 +147,9 @@
         let $root = $switcher.closest("[data-content-view-root]");
         if (!$root.length && $button.closest(".mobile-match-filters").length) {
             $root = $(".matches-page [data-content-view-root]").first();
+        }
+        if (!$root.length && $button.closest(".mobile-prediction-filters").length) {
+            $root = $(".predictions-page [data-content-view-root]").first();
         }
         const currentMode = String($root.attr("data-content-view-current") || "grid");
 

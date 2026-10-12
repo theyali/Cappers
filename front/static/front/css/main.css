@@ -1853,7 +1853,8 @@ body.wiki-video-player-open {
     animation: roulette-nav-glow 2.6s ease-in-out infinite alternate;
     transition: scale 0.3s;
 }
-.mobile-nav-roulette-wheel svg { width: 100%; height: 100%; display: block; animation: roulette-nav-spin 18s linear infinite; }
+.mobile-nav-roulette-wheel svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.mobile-nav-roulette-disc { transform-box: fill-box; transform-origin: center; animation: roulette-nav-spin 18s linear infinite; }
 .mobile-nav-roulette:active .mobile-nav-roulette-wheel { scale: 0.94; }
 @keyframes roulette-nav-spin { to { rotate: 360deg; } }
 @keyframes roulette-nav-glow {
