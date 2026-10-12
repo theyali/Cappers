@@ -7840,7 +7840,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 /* Match list sticky head («Липкая шапка Live»): title and tiles fold into chips on scroll. */
 .matches-head {
     --mh-bg: #121212;
-    --mh-card: #17181e;
+    --mh-card: var(--panel);
     --mh-line: #24262e;
     --mh-grey: #a3a6b0;
     --mh-dim: #6b6e78;
@@ -7857,9 +7857,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 }
 .is-telegram-app .matches-head { top: calc(var(--telegram-app-top, 0px) + 60px); }
 .matches-head.is-compact {
-    background: rgba(18, 18, 18, .92);
-    box-shadow: 0 1px 0 var(--mh-line), 0 14px 28px -22px #000;
-    backdrop-filter: blur(14px);
+    background: #121212;
 }
 :where(.matches-head) a { color: inherit; text-decoration: none; }
 .matches-head-in {
@@ -8137,7 +8135,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     color: var(--mh-dim);
     background: transparent;
 }
-.matches-head-toggle .content-view-button.is-active { color: #fff; background: #2a2d36; }
+.matches-head-toggle .content-view-button.is-active { color: #fff; background: var(--yellow); }
 .matches-head-toggle .content-view-button svg {
     width: 17px;
     height: 17px;
