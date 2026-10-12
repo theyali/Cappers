@@ -11124,11 +11124,6 @@ body.register footer {
     );
     pointer-events: none;
 }
-.expert-public-hero.is-bg-1 { background-image: url("../img/public_hero/publ_1.png"); }
-.expert-public-hero.is-bg-2 { background-image: url("../img/public_hero/publ_2.png"); }
-.expert-public-hero.is-bg-3 { background-image: url("../img/public_hero/publ_3.png"); }
-.expert-public-hero.is-bg-4 { background-image: url("../img/public_hero/publ_4.png"); }
-.expert-public-hero.is-bg-5 { background-image: url("../img/public_hero/publ_5.png"); }
 .expert-public-main-stack {
     position: relative;
     z-index: 1;
