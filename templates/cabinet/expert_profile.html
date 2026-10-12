@@ -41,18 +41,10 @@
             <path d="M1382 378L1970 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
             <path d="M1452 378L2040 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
         </svg>
-        <div class="expert-public-main-stack">
-            <div class="expert-public-main">
-                <span class="expert-public-avatar">
-                    {% capper_trust_badge analyst_profile.trust_index %}
-                    {% if expert.avatar %}
-                        <img src="{{ expert.avatar.url }}" width="150" height="150" alt="{{ expert_name }}">
-                    {% else %}
-                        {{ expert_initials }}
-                    {% endif %}
-                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
-                </span>
-                <div class="expert-public-copy">
+        <div class="expert-public-hero-content">
+            <div class="expert-public-hero-top">
+                <div class="expert-public-main-stack">
+                    <div class="expert-public-copy">
                     <p class="expert-public-kicker">Эксперт КапперХаб</p>
                     <div class="expert-public-status-row">
                         <span class="expert-public-presence{% if profile_presence.is_online %} is-online{% endif %}">
@@ -77,7 +69,6 @@
                     </div>
                     <div class="expert-public-meta">
                         <span class="expert-public-username">@{{ expert.username }}</span>
-                        {% include "cabinet/includes/_public_profile_location.html" with public_user=expert only %}
                     </div>
                     {% if analyst_profile.bio %}
                     <div class="expert-public-bio-block">
@@ -99,42 +90,23 @@
                     </div>
                     {% endif %}
                 </div>
-            </div>
-            <div class="expert-public-tags" aria-label="Темы эксперта">
+                    <div class="expert-public-tags" aria-label="Темы эксперта">
                 {% for tag in expert_public_tags %}
                     <span>{{ tag }}</span>
                 {% endfor %}
             </div>
-        </div>
-
-        <div class="expert-public-side">
-            <p class="expert-public-quote">«Дисциплина приносит результат»</p>
-            <div class="expert-public-actions">
-                {% if is_self %}
-                    <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Редактировать</a>
-                {% elif request.user.is_authenticated %}
-                    <button
-                        class="expert-follow-button expert-public-buy-button{% if is_following %} is-active{% endif %}"
-                        type="button"
-                        data-expert-follow
-                        data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
-                        aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
-                    >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-                        <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
-                    </button>
-                {% else %}
-                    <a class="expert-follow-button expert-public-buy-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
-                        <span>Подписаться</span>
-                    </a>
-                {% endif %}
-                <a class="expert-public-action-icon" href="{{ request.get_full_path }}" role="button" aria-label="Поделиться профилем" data-expert-share>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 8l4-4 4 4M5 15v4h14v-4"></path></svg>
-                    <span data-expert-share-label>Поделиться профилем</span>
-                </a>
-            </div>
-            <div class="expert-public-social-wrap" aria-label="Социальные сети эксперта">
+                </div>
+                <div class="expert-public-hero-visual">
+                    <span class="expert-public-avatar">
+                    {% capper_trust_badge analyst_profile.trust_index %}
+                    {% if expert.avatar %}
+                        <img src="{{ expert.avatar.url }}" width="150" height="150" alt="{{ expert_name }}">
+                    {% else %}
+                        {{ expert_initials }}
+                    {% endif %}
+                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
+                </span>
+                    <div class="expert-public-social-wrap" aria-label="Социальные сети эксперта">
                 {% if analyst_profile.social_links %}
                 <div class="expert-public-socials">
                     {% for social in analyst_profile.social_links %}
@@ -168,12 +140,10 @@
                 <p class="expert-public-social-empty">Социальные сети пока не указаны.</p>
                 {% endif %}
             </div>
-            <div class="expert-public-hero-followers">
-                <strong data-followers-count>{{ followers_count }}</strong>
-                <span>подписчиков</span>
+                </div>
             </div>
-        </div>
-        <div class="expert-public-hero-metrics" aria-label="Ключевые показатели эксперта">
+            <div class="expert-public-hero-bottom">
+                <div class="expert-public-hero-metrics" aria-label="Ключевые показатели эксперта">
             <div class="expert-public-hero-metric">
                 <strong data-followers-count>{{ followers_count }}</strong>
                 <span>подписчиков</span>
@@ -189,6 +159,35 @@
             <div class="expert-public-hero-metric is-roi">
                 <strong class="{% if overall_roi > 0 %}is-positive{% elif overall_roi < 0 %}is-negative{% endif %}">{% if overall_roi > 0 %}+{% endif %}{{ overall_roi|floatformat:1 }}%</strong>
                 <span>ROI</span>
+            </div>
+        </div>
+                <div class="expert-public-side">
+                    <div class="expert-public-actions">
+                {% if is_self %}
+                    <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Редактировать</a>
+                {% elif request.user.is_authenticated %}
+                    <button
+                        class="expert-follow-button expert-public-buy-button{% if is_following %} is-active{% endif %}"
+                        type="button"
+                        data-expert-follow
+                        data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
+                        aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                        <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
+                    </button>
+                {% else %}
+                    <a class="expert-follow-button expert-public-buy-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                        <span>Подписаться</span>
+                    </a>
+                {% endif %}
+                <a class="expert-public-action-icon" href="{{ request.get_full_path }}" role="button" aria-label="Поделиться профилем" data-expert-share>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 8l4-4 4 4M5 15v4h14v-4"></path></svg>
+                    <span data-expert-share-label>Поделиться профилем</span>
+                </a>
+            </div>
+                </div>
             </div>
         </div>
     </section>
