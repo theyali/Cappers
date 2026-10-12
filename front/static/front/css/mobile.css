@@ -9648,6 +9648,7 @@ body.expert-public-details-open {
     width: 100%;
     justify-content: space-between;
   }
+  
   .expert-recommendations-track {
     grid-auto-columns: minmax(238px, min(72vw, 210px));
   }
