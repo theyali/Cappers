@@ -497,7 +497,7 @@ def expert_profile(request, username: str):
         CapperArticle.objects.filter(
             author=profile.user,
             status=CapperArticle.Status.APPROVED,
-        ).order_by("-published_at", "-id")
+        ).select_related("author").order_by("-published_at", "-id")
     )
     context["expert_articles"] = expert_articles
     context["expert_latest_articles"] = expert_articles[:3]
