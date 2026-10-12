@@ -8051,10 +8051,8 @@ body.expert-public-details-open {
         gap: 14px;
         width: 100%;
         min-width: 0;
-        min-height: 587px;
         box-sizing: border-box;
-        padding: 20px;
-        background: #0e0f12;
+        padding: 0px;
         color: #fff;
         font-family: var(--font-body);
     }
