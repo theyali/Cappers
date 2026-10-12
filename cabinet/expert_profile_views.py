@@ -1,5 +1,3 @@
-from random import randint
-
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
@@ -455,7 +453,6 @@ def expert_profile(request, username: str):
 
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
-    context["expert_public_hero_index"] = randint(1, 5)
     context["profile_presence"] = presence_payload(profile.user)
     context["expert_public_tags"] = _profile_tag_list(
         profile.favorite_sports,
