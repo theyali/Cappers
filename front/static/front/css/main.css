@@ -11258,7 +11258,6 @@ body.register footer {
     font-size: 13px;
     font-weight: 700;
 }
-.expert-public-hero .expert-achievements-list { display: none; }
 .expert-public-side {
     position: absolute;
     z-index: 2;
