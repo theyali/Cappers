@@ -1,3 +1,5 @@
+from math import ceil
+
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
@@ -418,9 +420,15 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
             reward_label = "награда ещё не определена"
             reward_kind = "pending"
 
+        remaining_label = ""
+        if status_key == "live":
+            remaining_days = max(1, ceil((tournament.ends_at - timezone.now()).total_seconds() / 86400))
+            remaining_label = f"осталось {remaining_days} {plural_ru(remaining_days, 'день', 'дня', 'дней')}"
+
         rows.append(
             {
                 "participant": participant,
+                "remaining_label": remaining_label,
                 "participants_count": participant.participants_count,
                 "date_label": date_label,
                 "display_status_label": "Идёт сейчас" if status_key == "live" else status_label,
