@@ -6791,7 +6791,7 @@ body.expert-public-details-open {
   .matches-lazy-dots i,
   .slider-progress span.is-running,
   .mobile-nav-roulette-wheel,
-  .mobile-nav-roulette-wheel svg,
+  .mobile-nav-roulette-disc,
   .roulette-sheet-sparkle,
   .home-search-coupon-col {
     animation: none;
