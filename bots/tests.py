@@ -844,6 +844,18 @@ class BotAvatarCommandTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.avatar.name, original)
 
+    def test_replaces_existing_bot_avatar_by_default(self):
+        self._preset(PresetAvatar.Gender.MALE, "male.png", b"new-image")
+        bot = self._bot("replace_bot")
+        bot.avatar.save("old.png", SimpleUploadedFile("old.png", b"old-image"), save=True)
+        original = bot.avatar.name
+
+        call_command("update_bot_avatars", stdout=StringIO())
+        bot.refresh_from_db()
+        self.assertNotEqual(bot.avatar.name, original)
+        with bot.avatar.open("rb") as file:
+            self.assertEqual(file.read(), b"new-image")
+
     def test_skips_bots_without_matching_gender(self):
         self._preset(PresetAvatar.Gender.FEMALE, "female.png", b"female-image")
         male = self._bot("male_bot", User.Gender.MALE)
