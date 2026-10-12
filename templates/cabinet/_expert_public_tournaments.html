@@ -1,4 +1,70 @@
 <section class="expert-public-predictions expert-public-tournaments" data-expert-public-panel="tournaments" hidden>
+    <div class="expert-public-tournaments-desktop" aria-labelledby="expert-public-tournaments-title">
+        <div class="expert-public-tournaments-head">
+            <div class="expert-public-tournaments-heading"><span>Участие</span><h2 id="expert-public-tournaments-title">Турниры</h2></div>
+            <a href="{% url 'tournaments:index' %}">Все турниры <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="expert-public-tournaments-summary">
+            <div class="expert-public-tournaments-stat"><strong>{{ expert_tournament_stats.played }}</strong><span>турниров сыграно</span></div>
+            <div class="expert-public-tournaments-stat is-wins"><strong>{{ expert_tournament_stats.wins }}</strong><span>первых мест</span></div>
+            <div class="expert-public-tournaments-stat"><strong>{{ expert_tournament_stats.podiums }}</strong><span>призовых мест</span></div>
+            <div class="expert-public-tournaments-stat is-prizes"><strong>{{ expert_tournament_stats.prize_total|money }} ₽</strong><span>выиграно всего</span></div>
+        </div>
+        <div class="expert-public-tournaments-table">
+            <div class="expert-public-tournaments-columns" aria-hidden="true">
+                <span></span><span>Турнир</span><span>Статус</span><span>Место</span><span>Награда</span><span>Выигрыш</span>
+            </div>
+            <div class="expert-public-tournaments-rows">
+                {% for row in expert_tournament_preview_rows %}
+                <a class="expert-public-tournaments-row" href="{{ row.url }}">
+                    <span class="expert-public-tournaments-icon" data-tournament-icon-color="{{ row.tournament.card_icon_bg_color }}">
+                        <svg class="expert-public-tournaments-icon-pattern" width="46" height="46" viewBox="0 0 46 46" aria-hidden="true"><path d="M-59 52L20 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M-46 52L33 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M-33 52L46 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M-20 52L59 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M-7 52L72 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M6 52L85 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M19 52L98 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M32 52L111 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M45 52L124 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path><path d="M58 52L137 -6" stroke="#fff" stroke-opacity="0.12" stroke-width="5"></path></svg>
+                        <span class="expert-public-tournaments-icon-image">
+                            {% if row.tournament.hero_icon %}
+                                <img src="{{ row.tournament.hero_icon.url }}" width="23" height="23" alt="" loading="lazy">
+                            {% else %}
+                                <svg width="23" height="23" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M11 13.6h2V17h-2zM8 18.6h8v1.8H8z"></path><path d="M7 5.6H4.4a3.6 3.6 0 0 0 3.6 3.6V7.4H5.9a1.6 1.6 0 0 1-.5-.6H7zM17 5.6h2.6a3.6 3.6 0 0 1-3.6 3.6V7.4h2.1c.2-.2.4-.4.5-.6H17z"></path></svg>
+                            {% endif %}
+                        </span>
+                    </span>
+                    <span class="expert-public-tournaments-name"><strong>{{ row.tournament.title }}</strong><small>{{ row.date_label }}</small></span>
+                    <span class="expert-public-tournaments-status">
+                        <span class="expert-public-tournaments-state is-{{ row.status_key }}">{% if row.status_key == "live" %}<i aria-hidden="true"></i>{% endif %}{{ row.display_status_label }}</span>
+                    </span>
+                    <span class="expert-public-tournaments-place">
+                        {% if row.rank %}
+                            <strong class="{% if row.is_finished and row.rank == 1 %}is-first{% elif row.is_finished and row.rank == 3 %}is-third{% endif %}">{{ row.rank }}</strong><small>из {{ row.participants_count }}</small>
+                        {% else %}
+                            <strong>—</strong>
+                        {% endif %}
+                    </span>
+                    <span class="expert-public-tournaments-reward">
+                        {% if row.reward_kind == "pending" %}
+                            <span class="expert-public-tournaments-reward-empty" aria-hidden="true"></span>
+                        {% elif row.achievement and row.achievement.icon %}
+                            <span class="expert-public-tournaments-reward-icon"><img src="{{ row.achievement.icon.url }}" width="32" height="32" alt="" loading="lazy"></span>
+                        {% elif row.reward_kind == "winner" %}
+                            <span class="expert-public-tournaments-reward-icon is-winner">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"></path><path d="M7 5.5H4.6A3.4 3.4 0 0 0 8 9M17 5.5h2.4A3.4 3.4 0 0 1 16 9"></path><path d="M12 14v3M8.5 20h7"></path></svg>
+                            </span>
+                        {% elif row.reward_kind == "prize" %}
+                            <span class="expert-public-tournaments-reward-icon is-prize">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="14.5" r="5.5"></circle><path d="M8.5 9.4L6 3h5l2 4M15.5 9.4L18 3h-5"></path></svg>
+                            </span>
+                        {% endif %}
+                        <span class="expert-public-tournaments-reward-label{% if row.reward_kind == 'pending' or row.reward_kind == 'other' %} is-muted{% endif %}">{{ row.reward_label }}</span>
+                    </span>
+                    <span class="expert-public-tournaments-winnings">
+                        {% if row.prize_amount > 0 %}<strong class="is-positive">{{ row.prize_amount|money }} ₽</strong>{% else %}<strong>—</strong>{% endif %}
+                    </span>
+                </a>
+                {% empty %}
+                    <p class="expert-public-tournaments-empty">Эксперт пока не участвовал в турнирах.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="expert-public-tournaments-mobile">
     <div class="profile-list-card">
         <div class="profile-section-heading">
             <div>
@@ -42,5 +108,6 @@
             <p>Эксперт пока не участвовал в турнирах.</p>
         </div>
         {% endif %}
+    </div>
     </div>
 </section>
