@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation
 import re
 
 from django.core.cache import cache
 from django.http import Http404
 from django.urls import reverse
+from django.utils import timezone
 
 from cabinet.models import AnalystProfile, CapperMonthlyStat, User
 from cabinet.presence import presence_payloads
@@ -37,6 +39,21 @@ MONTH_NAMES = (
     "Октябрь",
     "Ноябрь",
     "Декабрь",
+)
+MONTH_NAMES_GENITIVE = (
+    "",
+    "января",
+    "февраля",
+    "марта",
+    "апреля",
+    "мая",
+    "июня",
+    "июля",
+    "августа",
+    "сентября",
+    "октября",
+    "ноября",
+    "декабря",
 )
 SPORT_ORDER = {
     "football": 10,
@@ -75,6 +92,38 @@ def _cache_set(key: str, value) -> None:
 def _initials(name: str) -> str:
     parts = [part for part in (name or "").split() if part]
     return "".join(part[0] for part in parts[:2]).upper() or "К"
+
+
+def _decimal(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value or 0))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal("0")
+
+
+def _signed_percent(value) -> str:
+    number = _decimal(value)
+    sign = "+" if number > 0 else ""
+    return f"{sign}{number:.1f}%".replace(".", ",")
+
+
+def _plural_days(value: int) -> str:
+    value = max(0, int(value or 0))
+    if value % 10 == 1 and value % 100 != 11:
+        word = "день"
+    elif value % 10 in (2, 3, 4) and value % 100 not in (12, 13, 14):
+        word = "дня"
+    else:
+        word = "дней"
+    return f"{value} {word}"
+
+
+def _next_month(month: date) -> date:
+    if month.month == 12:
+        return date(month.year + 1, 1, 1)
+    return date(month.year, month.month + 1, 1)
 
 
 def _month_label(month: date | None) -> str:
@@ -139,6 +188,75 @@ def _profile_payload(profile: AnalystProfile) -> dict:
         "paid_predictions_price": profile.paid_predictions_price,
         "followers": int(getattr(profile, "followers_count", 0) or 0),
         "_last_login": profile.user.last_login,
+    }
+
+
+def _month_showcase_period(available_months: list[date]) -> date | None:
+    if not available_months:
+        return None
+    current_month = timezone.localdate().replace(day=1)
+    if current_month in available_months:
+        return current_month
+    return available_months[0]
+
+
+def _month_showcase_progress(month: date) -> dict:
+    today = timezone.localdate()
+    month_start = month
+    month_end = _next_month(month)
+    month_last_day = month_end - timedelta(days=1)
+    days_total = (month_end - month_start).days
+    if today < month_start:
+        elapsed_days = 0
+        days_left = days_total
+    elif today >= month_end:
+        elapsed_days = days_total
+        days_left = 0
+    else:
+        elapsed_days = today.day
+        days_left = max(0, (month_end - today).days)
+    progress = int(round(elapsed_days / days_total * 100)) if days_total else 0
+    return {
+        "percent": max(0, min(100, progress)),
+        "date_range": f"1–{month_last_day.day} {MONTH_NAMES_GENITIVE[month.month]}",
+        "days_left_label": f"осталось {_plural_days(days_left)}",
+    }
+
+
+def _monthly_showcase_rows(period: str) -> list[dict]:
+    rows = []
+    for entry in rank_experts(period=period, limit=3):
+        profile = entry["profile"]
+        row = _profile_payload(profile)
+        row.update(entry["metrics"])
+        row["rank"] = entry.get("rank") or len(rows) + 1
+        row["profile_url"] = reverse("front:expert_profile", args=[row["username"]])
+        row["roi_display"] = _signed_percent(row.get("roi"))
+        row["roi_negative"] = _decimal(row.get("roi")) < 0
+        row["hit_rate_display"] = _signed_percent(row.get("hit_rate")).lstrip("+")
+        rows.append(row)
+    return rows
+
+
+def _monthly_showcase(available_months: list[date]) -> dict | None:
+    month = _month_showcase_period(available_months)
+    if month is None:
+        return None
+    period = month.strftime("%Y-%m")
+    rows = _monthly_showcase_rows(period)
+    if not rows:
+        return None
+
+    leader = rows[0]
+    return {
+        "month": month,
+        "month_name": MONTH_NAMES[month.month],
+        "month_label": _month_label(month),
+        "roi_caption": f"ROI ЗА {MONTH_NAMES[month.month].upper()}",
+        "progress": _month_showcase_progress(month),
+        "leader": leader,
+        "runners": rows[1:3],
+        "url": _table_url(group=GROUP_ALL, period=period, sport_code=ALL_SPORTS),
     }
 
 
@@ -336,6 +454,7 @@ def _build_capper_table_base_context(
 
     return {
         "ranking_rows": rows,
+        "monthly_showcase": _monthly_showcase(available_months),
         "selected_group": group,
         "selected_month": selected_month,
         "selected_period": selected_period,

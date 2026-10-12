@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.db import transaction
 from django.db.models import (
@@ -49,6 +50,7 @@ from wallets.services import ensure_coin_wallet, ensure_real_balance, format_coi
 from wallets.services import InsufficientBalance
 
 from .achievements import build_achievement_overview
+from .comments.models import Comment
 from .dashboard_views import build_dashboard_context
 from .earnings_views import build_earnings_context
 from .forms import (
@@ -62,7 +64,15 @@ from .forms import (
 )
 from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
-from .models import AnalystFollow, AnalystProfile, CapperArticle, DailyTask, PresetAvatar, User
+from .models import (
+    AnalystFollow,
+    AnalystPaidSubscription,
+    AnalystProfile,
+    CapperArticle,
+    DailyTask,
+    PresetAvatar,
+    User,
+)
 from .paid_predictions import (
     build_paid_checkout_context,
     get_active_paid_plans,
@@ -90,6 +100,8 @@ WALLET_OPERATION_PAGE_SIZE = 20
 PROFILE_MOBILE_COUPONS_PAGE_SIZE = 6
 PROFILE_BEST_COUPONS_LIMIT = 5
 PROFILE_SOCIAL_PAGE_SIZE = 8
+PROFILE_COMMENTS_PAGE_SIZE = 10
+PROFILE_COMMENTS_PREVIEW_LIMIT = 4
 FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
@@ -428,6 +440,184 @@ def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort
         "profile_social_total": total,
         "profile_social_rows": rows,
         "profile_social_metrics": metrics,
+    }
+
+
+def _prediction_comment_content_type():
+    return ContentType.objects.get_for_model(PredictionCoupon)
+
+
+def _profile_comments_base_queryset(user, kind: str):
+    content_type = _prediction_comment_content_type()
+    queryset = (
+        Comment.objects.filter(
+            content_type=content_type,
+            status=Comment.Status.PUBLISHED,
+        )
+        .filter(Q(parent__isnull=True) | Q(parent__status=Comment.Status.PUBLISHED))
+        .select_related("user", "parent", "parent__user", "metrics")
+    )
+    if kind == "mine":
+        return queryset.filter(user=user)
+    if kind == "replies":
+        return queryset.filter(parent__user=user).exclude(user=user)
+    return queryset.filter(
+        object_id__in=PredictionCoupon.objects.filter(author=user).values("id")
+    ).exclude(user=user)
+
+
+def _profile_comments_counts(user) -> dict:
+    return {
+        "received": _profile_comments_base_queryset(user, "received").count(),
+        "mine": _profile_comments_base_queryset(user, "mine").count(),
+        "replies": _profile_comments_base_queryset(user, "replies").count(),
+    }
+
+
+def _profile_comments_queryset(user, *, kind: str, query: str, sort: str):
+    queryset = _profile_comments_base_queryset(user, kind)
+    query = (query or "").strip()
+    if query:
+        queryset = queryset.filter(
+            Q(text__icontains=query)
+            | Q(user__username__icontains=query)
+            | Q(parent__text__icontains=query)
+        )
+    if sort == "old":
+        return queryset.order_by("created_at", "id")
+    return queryset.order_by("-created_at", "-id")
+
+
+def _comment_user_name(user) -> str:
+    try:
+        profile = user.analyst_profile
+    except AnalystProfile.DoesNotExist:
+        profile = None
+    if profile and profile.display_name:
+        return profile.display_name
+    return user.get_full_name() or user.username
+
+
+def _profile_comment_target_context(comment, coupon_map, first_position_map) -> dict:
+    coupon = coupon_map.get(comment.object_id)
+    position = first_position_map.get(comment.object_id)
+    if not coupon:
+        return {
+            "title": "Прогноз",
+            "meta": "",
+            "url": "#",
+        }
+
+    title = coupon.headline or "Прогноз"
+    meta = ""
+    if position:
+        match = position.match
+        title = (
+            f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}"
+        )
+        coefficient = position.coefficient.quantize(Decimal("0.01")) if position.coefficient else ""
+        meta = f"{position.selection} {coefficient}".strip()
+
+    return {
+        "title": title,
+        "meta": meta,
+        "url": f"{reverse('front:prediction_detail', kwargs={'prediction_id': coupon.pk})}#comment-{comment.pk}",
+    }
+
+
+def _profile_comments_rows(comments) -> list[dict]:
+    coupon_ids = {comment.object_id for comment in comments}
+    coupons = (
+        PredictionCoupon.objects.filter(pk__in=coupon_ids)
+        .select_related("author", "author__analyst_profile")
+    )
+    coupon_map = {coupon.pk: coupon for coupon in coupons}
+    first_position_map = {}
+    for position in (
+        Prediction.objects.filter(coupon_id__in=coupon_ids)
+        .select_related("match")
+        .order_by("coupon_id", "id")
+    ):
+        first_position_map.setdefault(position.coupon_id, position)
+
+    reply_parent_ids = [
+        comment.pk
+        for comment in comments
+        if comment.parent_id is None
+    ]
+    my_replies = {}
+    if reply_parent_ids:
+        for reply in (
+            Comment.objects.filter(
+                parent_id__in=reply_parent_ids,
+                status=Comment.Status.PUBLISHED,
+            )
+            .select_related("user")
+            .order_by("created_at", "id")
+        ):
+            my_replies.setdefault(reply.parent_id, reply)
+
+    rows = []
+    for comment in comments:
+        author = comment.user
+        target = _profile_comment_target_context(comment, coupon_map, first_position_map)
+        parent = comment.parent
+        parent_id = comment.parent_id
+        my_reply = my_replies.get(comment.pk)
+        rows.append(
+            {
+                "id": comment.pk,
+                "comment": comment,
+                "author": author,
+                "author_name": _comment_user_name(author),
+                "author_url": reverse("cabinet:user_profile", kwargs={"username": author.username}),
+                "author_avatar_url": _field_url(author.avatar),
+                "created_label": _relative_time_ru(comment.created_at),
+                "target": target,
+                "parent_text": parent.text if parent_id and parent else "",
+                "parent_author": _comment_user_name(parent.user) if parent_id and parent else "",
+                "my_reply": my_reply,
+                "my_reply_label": _relative_time_ru(my_reply.created_at) if my_reply else "",
+                "is_unanswered": comment.parent_id is None and my_reply is None,
+                "comment_url": target["url"],
+            }
+        )
+    return rows
+
+
+def _profile_comments_context(
+    user,
+    *,
+    kind: str = "received",
+    query: str = "",
+    sort: str = "new",
+    offset: int = 0,
+    limit: int = PROFILE_COMMENTS_PAGE_SIZE,
+) -> dict:
+    if kind not in {"received", "mine", "replies"}:
+        kind = "received"
+    if sort not in {"new", "old"}:
+        sort = "new"
+    offset = max(0, int(offset or 0))
+    limit = max(1, int(limit or PROFILE_COMMENTS_PAGE_SIZE))
+
+    counts = _profile_comments_counts(user)
+    queryset = _profile_comments_queryset(user, kind=kind, query=query, sort=sort)
+    total = queryset.count()
+    comments = list(queryset[offset : offset + limit + 1])
+    visible = comments[:limit]
+    rows = _profile_comments_rows(visible)
+
+    return {
+        "profile_comments_kind": kind,
+        "profile_comments_query": query,
+        "profile_comments_sort": sort,
+        "profile_comments_counts": counts,
+        "profile_comments_rows": rows,
+        "profile_comments_total": total,
+        "profile_comments_next_offset": offset + len(rows),
+        "profile_comments_has_more": len(comments) > limit,
+        "profile_comments_remaining": max(0, total - (offset + len(rows))),
     }
 
 
@@ -1412,6 +1602,22 @@ def profile(request):
         if active_tab == "profile"
         else None
     )
+    profile_comments_preview = (
+        _profile_comments_context(
+            request.user,
+            kind="received",
+            limit=PROFILE_COMMENTS_PREVIEW_LIMIT,
+        )
+        if active_tab == "profile"
+        else None
+    )
+
+    preset_avatars = PresetAvatar.objects.filter(is_active=True).order_by("sort_order", "pk")
+    preset_avatar_counts = {
+        "all": preset_avatars.count(),
+        "male": preset_avatars.filter(gender=PresetAvatar.Gender.MALE).count(),
+        "female": preset_avatars.filter(gender=PresetAvatar.Gender.FEMALE).count(),
+    }
 
     context = {
         "analyst_profile": analyst_profile,
@@ -1421,10 +1627,8 @@ def profile(request):
         "paid_plan_form": paid_plan_form,
         "mobile_quick_access_form": mobile_quick_access_form,
         "active_tab": active_tab,
-        "preset_avatars": PresetAvatar.objects.filter(is_active=True).filter(
-            Q(gender__in=(PresetAvatar.Gender.ALL, request.user.gender))
-            if request.user.gender else Q()
-        ).order_by("sort_order", "pk")[:60],
+        "preset_avatars": preset_avatars[:60],
+        "preset_avatar_counts": preset_avatar_counts,
         "followers_count": followers_count,
         "following_count": following_count,
         "followers": followers,
@@ -1449,6 +1653,7 @@ def profile(request):
         "profile_completion": profile_completion,
         "verification": verification,
         "profile_bonus_summary": profile_bonus_summary,
+        "profile_comments_preview": profile_comments_preview,
         "notification_preferences": notification_preferences,
         "telegram_account": telegram_account,
         "telegram_bot_configured": bool(get_bot_token()),
@@ -1481,6 +1686,40 @@ def profile(request):
         context.update(earnings_context)
 
     return render(request, "cabinet/profile.html", context)
+
+
+@login_required
+@require_GET
+def profile_comments(request):
+    context = _profile_comments_context(
+        request.user,
+        kind=request.GET.get("kind", "received"),
+        query=request.GET.get("q", ""),
+        sort=request.GET.get("sort", "new"),
+        offset=request.GET.get("offset", 0),
+    )
+    context.update(
+        {
+            "active_tab": "comments",
+            "page_class": "profile profile-comments-page",
+        }
+    )
+    if _is_ajax(request):
+        return JsonResponse(
+            {
+                "html": render_to_string(
+                    "cabinet/includes/_profile_comments_rows.html",
+                    context,
+                    request=request,
+                ),
+                "total": context["profile_comments_total"],
+                "counts": context["profile_comments_counts"],
+                "has_more": context["profile_comments_has_more"],
+                "next_offset": context["profile_comments_next_offset"],
+                "remaining": context["profile_comments_remaining"],
+            }
+        )
+    return render(request, "cabinet/profile_comments.html", context)
 
 
 @login_required

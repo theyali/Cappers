@@ -395,6 +395,25 @@ class NotificationViewsTests(TestCase):
         self.assertContains(center_response, 'name="bonus_roulette"')
         self.assertContains(center_response, 'name="bonus_referral"')
 
+    def test_update_preferences_saves_comment_notification_fields(self):
+        response = self.client.post(
+            reverse("notifications:preferences"),
+            {
+                "in_app_enabled": "on",
+                "prediction_comment": "on",
+                "comment_reply": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        preferences = get_preferences(self.user)
+        self.assertTrue(preferences.prediction_comment)
+        self.assertTrue(preferences.comment_reply)
+
+        center_response = self.client.get(reverse("notifications:center"))
+        self.assertContains(center_response, 'name="prediction_comment"')
+        self.assertContains(center_response, 'name="comment_reply"')
+
     def test_telegram_disconnect_view(self):
         preferences = get_preferences(self.user)
         preferences.telegram_chat_id = "999"

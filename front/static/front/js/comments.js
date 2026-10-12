@@ -164,6 +164,7 @@
         const row = document.createElement("article");
         row.className = isReply ? "prediction-comment prediction-comment-reply-item" : "prediction-comment";
         row.dataset.commentId = String(comment.id);
+        row.id = `comment-${comment.id}`;
 
         const avatar = document.createElement("a");
         avatar.className = "prediction-comment-avatar";

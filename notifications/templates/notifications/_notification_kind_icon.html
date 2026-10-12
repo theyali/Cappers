@@ -12,11 +12,13 @@
     >
 </span>
 {% else %}
-<span class="notification-kind{% if notification.kind == 'match_reminder' or notification.kind == 'match_prediction' %} is-match-event{% elif notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %} is-achievement{% elif notification.kind == 'new_follower' or notification.kind == 'new_prediction' or notification.kind == 'requested_match_prediction' or notification.kind == 'prediction_like' or notification.kind == 'prediction_favorite' %} is-new_prediction{% endif %}" aria-hidden="true">
+<span class="notification-kind{% if notification.kind == 'match_reminder' or notification.kind == 'match_prediction' %} is-match-event{% elif notification.kind == 'achievement' or notification.kind == 'tournament_started' or notification.kind == 'tournament_finished' %} is-achievement{% elif notification.kind == 'new_follower' or notification.kind == 'new_prediction' or notification.kind == 'requested_match_prediction' or notification.kind == 'prediction_like' or notification.kind == 'prediction_favorite' or notification.kind == 'prediction_comment' or notification.kind == 'comment_reply' %} is-new_prediction{% endif %}" aria-hidden="true">
     {% if notification.kind == 'prediction_like' %}
         {% include "front/includes/_solar_icon.html" with name="prediction_like" %}
     {% elif notification.kind == 'prediction_favorite' %}
         {% include "front/includes/_solar_icon.html" with name="favorites" %}
+    {% elif notification.kind == 'prediction_comment' or notification.kind == 'comment_reply' %}
+        {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
     {% elif notification.kind == 'copybetting' %}
         {% include "front/includes/_solar_icon.html" with name="copybetting" %}
     {% elif notification.kind == 'new_follower' %}

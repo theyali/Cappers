@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.core.files import File
-from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from PIL import Image, UnidentifiedImageError
@@ -52,12 +51,7 @@ def avatar(request):
     if preset_id:
         if len(preset_id) > 18 or not preset_id.isdecimal():
             return JsonResponse({"ok": False, "error": "Аватар недоступен для выбора."}, status=400)
-        available = PresetAvatar.objects.filter(pk=preset_id, is_active=True)
-        if request.user.gender:
-            available = available.filter(
-                Q(gender=PresetAvatar.Gender.ALL) | Q(gender=request.user.gender)
-            )
-        preset = available.first()
+        preset = PresetAvatar.objects.filter(pk=preset_id, is_active=True).first()
         if not preset or not preset.image:
             return JsonResponse({"ok": False, "error": "Аватар недоступен для выбора."}, status=400)
         try:

@@ -109,11 +109,11 @@
                                 </small>
                             </div>
                             {% if request.user.email and request.user.email_verified %}
-                                <a class="profile-email-action" href="#profile-email-change-modal">Изменить почту</a>
+                                <button class="profile-email-action" type="button" data-profile-modal-open="profile-email-change-modal">Изменить почту</button>
                             {% elif request.user.email %}
-                                <a class="profile-email-action" href="#profile-email-change-modal">Подтвердить</a>
+                                <button class="profile-email-action" type="button" data-profile-modal-open="profile-email-change-modal">Подтвердить</button>
                             {% else %}
-                                <a class="profile-email-action" href="#profile-email-add-modal">Добавить почту</a>
+                                <button class="profile-email-action" type="button" data-profile-modal-open="profile-email-add-modal">Добавить почту</button>
                             {% endif %}
                         </div>
                     </div>
@@ -349,10 +349,10 @@
     </form>
 
     {% if request.user.email %}
-    <div class="profile-email-modal" id="profile-email-change-modal" role="dialog" aria-modal="true" aria-labelledby="profile-email-change-title">
-        <a class="profile-email-modal-backdrop" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть"></a>
+    <div class="profile-email-modal" id="profile-email-change-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="profile-email-change-title">
+        <button class="profile-email-modal-backdrop" type="button" data-profile-modal-close aria-label="Закрыть"></button>
         <section class="profile-email-modal-card">
-            <a class="profile-email-modal-close" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть">×</a>
+            <button class="profile-email-modal-close" type="button" data-profile-modal-close aria-label="Закрыть">×</button>
             <div class="profile-email-modal-head">
                 <span class="profile-email-modal-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>
@@ -377,17 +377,18 @@
                     {% endif %}
                 {% endfor %}
             {% endif %}
-            <form method="post" action="{% url 'account_email:request_change' %}">
+            <form method="post" action="{% url 'account_email:request_change' %}" data-profile-email-request-form>
                 {% csrf_token %}
+                <div class="avatar-upload-status" data-profile-email-request-status role="status" aria-live="polite"></div>
                 <button class="profile-email-modal-submit" type="submit">Отправить ссылку</button>
             </form>
         </section>
     </div>
     {% else %}
-    <div class="profile-email-modal" id="profile-email-add-modal" role="dialog" aria-modal="true" aria-labelledby="profile-email-add-title">
-        <a class="profile-email-modal-backdrop" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть"></a>
+    <div class="profile-email-modal" id="profile-email-add-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="profile-email-add-title">
+        <button class="profile-email-modal-backdrop" type="button" data-profile-modal-close aria-label="Закрыть"></button>
         <section class="profile-email-modal-card">
-            <a class="profile-email-modal-close" href="{% url 'cabinet:profile' %}?tab=settings" aria-label="Закрыть">×</a>
+            <button class="profile-email-modal-close" type="button" data-profile-modal-close aria-label="Закрыть">×</button>
             <div class="profile-email-modal-head">
                 <span class="profile-email-modal-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 7 8 6 8-6"></path></svg>

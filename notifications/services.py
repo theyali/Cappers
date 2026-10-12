@@ -20,6 +20,8 @@ from .models import (
 CATEGORY_FIELD_BY_KIND = {
     Notification.Kind.PREDICTION_LIKE: "prediction_like",
     Notification.Kind.PREDICTION_FAVORITE: "prediction_favorite",
+    Notification.Kind.PREDICTION_COMMENT: "prediction_comment",
+    Notification.Kind.COMMENT_REPLY: "comment_reply",
     Notification.Kind.COPYBETTING: "copybetting",
     Notification.Kind.NEW_FOLLOWER: "new_follower",
     Notification.Kind.PAID_SUBSCRIPTION: "paid_subscription",
@@ -43,6 +45,8 @@ CATEGORY_FIELD_BY_KIND = {
 SECTION_BY_KIND = {
     Notification.Kind.PREDICTION_LIKE: NotificationSectionState.Section.PREDICTIONS,
     Notification.Kind.PREDICTION_FAVORITE: NotificationSectionState.Section.PREDICTIONS,
+    Notification.Kind.PREDICTION_COMMENT: NotificationSectionState.Section.PREDICTIONS,
+    Notification.Kind.COMMENT_REPLY: NotificationSectionState.Section.PREDICTIONS,
     Notification.Kind.OWN_COUPON_SETTLED: NotificationSectionState.Section.PREDICTIONS,
     Notification.Kind.COPYBETTING: NotificationSectionState.Section.COPYBETTING,
     Notification.Kind.NEW_FOLLOWER: NotificationSectionState.Section.FOLLOWERS,

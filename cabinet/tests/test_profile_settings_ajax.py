@@ -22,12 +22,21 @@ AJAX = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 class CapperSetupMixin:
     def setUp(self):
         self.sport = Sport.objects.create(code="football-ajax", name="Football", name_ru="Футбол")
+        self.country = Country.objects.create(
+            code="TS",
+            name="Testland",
+            name_ru="Тестовая страна",
+        )
         self.user = User.objects.create_user(
             username="ajax-capper",
             password="safe-test-password",
             role=User.Role.ANALYST,
             first_name="Иван",
             last_name="Петров",
+            email="ajax-capper@example.com",
+            email_verified=True,
+            gender=User.Gender.MALE,
+            country=self.country,
         )
         # A profile is created for every capper by a signal.
         self.profile, _ = AnalystProfile.objects.update_or_create(
@@ -61,6 +70,8 @@ class CapperSetupMixin:
             "specialization": self.profile.specialization,
             "bio": self.profile.bio,
             "telegram_channel": self.profile.telegram_channel,
+            "gender": self.user.gender,
+            "country": self.user.country_id or "",
             "paid_predictions_price": "0",
             "is_public": "on",
             "sports": [self.sport.pk],
@@ -214,6 +225,9 @@ class CapperVerificationTests(CapperSetupMixin, TestCase):
             "socials": ("profile", "telegram_channel", ""),
             "first_name": ("user", "first_name", ""),
             "last_name": ("user", "last_name", ""),
+            "email_verified": ("user", "email_verified", False),
+            "country": ("user", "country", None),
+            "gender": ("user", "gender", ""),
             "avatar": ("user", "avatar", ""),
         }
         for name, (target, field, value) in missing.items():

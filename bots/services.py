@@ -20,9 +20,10 @@ from bots.models import (
 )
 from cabinet.models import AnalystFollow, AnalystProfile, User
 from cabinet.presence import UserPresence
-from front.models import PredictionLike
+from front.models import PredictionFavorite, PredictionLike
 from game.cover_images import assign_prediction_cover_images
 from game.models import Match, Prediction, PredictionCoupon
+from notifications.models import MatchWatch
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
 from tournaments.services.join import TournamentJoinError, join_tournament
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
@@ -140,6 +141,27 @@ BOT_PRESENCE_RECENT_SHARE_RANGE = (0.24, 0.42)
 BOT_PRESENCE_RECENT_MINUTES_RANGE = (7, 180)
 BOT_PLANNED_ACTION_CLEANUP_DAYS = 14
 BOT_ONLINE_SESSION_CLEANUP_DAYS = 14
+BOT_READER_ACTIVITY_WEIGHTS = {
+    "like_prediction": 44,
+    "save_prediction": 24,
+    "watch_match": 18,
+    "follow": 14,
+}
+BOT_SINGLE_STAKE_OPTIONS = {
+    BotExpertStrategy.RiskProfile.SAFE: (
+        (100, 150, 200, 250, 300, 500, 700, 1000),
+        (6, 10, 18, 20, 20, 14, 8, 4),
+    ),
+    BotExpertStrategy.RiskProfile.BALANCED: (
+        (100, 150, 200, 300, 500, 700, 1000, 1500, 2000),
+        (3, 6, 12, 18, 20, 17, 13, 8, 3),
+    ),
+    BotExpertStrategy.RiskProfile.AGGRESSIVE: (
+        (150, 200, 300, 500, 700, 1000, 1500, 2000, 3000),
+        (3, 6, 10, 15, 17, 18, 15, 10, 6),
+    ),
+}
+BOT_EXPRESS_STAKE_MULTIPLIERS = (Decimal("0.70"), Decimal("0.80"), Decimal("0.90"), Decimal("1.00"))
 COMMENTS = {
     "winner": [
         "Выбор по форме команд и качеству последних матчей.",
@@ -702,12 +724,7 @@ def _execute_planned_action(action: BotPlannedAction, now) -> tuple[bool, str, d
             user_id=action.bot.user_id,
             defaults={"last_seen_at": now - timedelta(seconds=random.randint(0, 45))},
         )
-        if random.random() < 0.58:
-            done = _like_prediction(action.bot)
-            reason = "like" if done else "like_skipped"
-        else:
-            done = _follow_or_unfollow(action.bot)
-            reason = "follow" if done else "follow_skipped"
+        done, reason = _perform_reader_activity(action.bot)
         if done and session is not None:
             BotOnlineSession.objects.filter(pk=session.pk).update(
                 actions_done=F("actions_done") + 1,
@@ -788,10 +805,8 @@ def _run_bot_activity_immediately(max_actions: int = 80) -> dict:
     actions = 0
     for _ in range(max_actions):
         bot = random.choice(reader_bots)
-        if random.random() < 0.58:
-            actions += int(_like_prediction(bot))
-        else:
-            actions += int(_follow_or_unfollow(bot))
+        done, _reason = _perform_reader_activity(bot)
+        actions += int(done)
     return {"actions": actions}
 
 
@@ -1939,7 +1954,6 @@ def _create_coupon(
     if existing is not None:
         return existing.coupon, list(existing.coupon.predictions.all()), False
 
-    stake = Decimal(str(random.choice([100, 150, 200, 250, 300])))
     coefficients = [pick.coefficient for _, pick in items]
     total_coefficient = _total_coefficient(coefficients)
     coupon_type = (
@@ -1947,6 +1961,7 @@ def _create_coupon(
         if len(items) > 1
         else PredictionCoupon.CouponType.SINGLE
     )
+    stake = _bot_stake(bot, coupon_type=coupon_type)
     coupon = PredictionCoupon.objects.create(
         author=bot.user,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -1994,6 +2009,54 @@ def _create_prediction(
     return predictions[0], was_created
 
 
+def _bot_stake(bot: BotAccount, *, coupon_type: str) -> Decimal:
+    strategy = getattr(bot, "expert_strategy", None)
+    risk_profile = getattr(strategy, "risk_profile", BotExpertStrategy.RiskProfile.BALANCED)
+    amounts, weights = BOT_SINGLE_STAKE_OPTIONS.get(
+        risk_profile,
+        BOT_SINGLE_STAKE_OPTIONS[BotExpertStrategy.RiskProfile.BALANCED],
+    )
+    amount = Decimal(str(random.choices(amounts, weights=weights, k=1)[0]))
+    if coupon_type == PredictionCoupon.CouponType.EXPRESS:
+        amount *= random.choice(BOT_EXPRESS_STAKE_MULTIPLIERS)
+    return amount.quantize(Decimal("0.01"))
+
+
+def _perform_reader_activity(bot: BotAccount) -> tuple[bool, str]:
+    primary_action = _weighted_activity_choice()
+    fallback_actions = [action for action in BOT_READER_ACTIVITY_WEIGHTS if action != primary_action]
+    random.shuffle(fallback_actions)
+
+    for activity in [primary_action, *fallback_actions]:
+        if activity == "like_prediction":
+            if _like_prediction(bot):
+                return True, "like"
+            continue
+        if activity == "save_prediction":
+            if _save_prediction(bot):
+                return True, "prediction_favorite"
+            continue
+        if activity == "watch_match":
+            if _watch_match(bot):
+                return True, "match_watch"
+            continue
+        if activity == "follow" and _follow_or_unfollow(bot):
+            return True, "follow"
+
+    return False, "reader_activity_skipped"
+
+
+def _weighted_activity_choice() -> str:
+    total = sum(BOT_READER_ACTIVITY_WEIGHTS.values())
+    roll = random.random() * total
+    cursor = 0
+    for action, weight in BOT_READER_ACTIVITY_WEIGHTS.items():
+        cursor += weight
+        if roll < cursor:
+            return action
+    return next(iter(BOT_READER_ACTIVITY_WEIGHTS))
+
+
 def _like_prediction(bot: BotAccount) -> bool:
     coupon_ids = list(
         PredictionCoupon.objects.filter(
@@ -2016,6 +2079,59 @@ def _like_prediction(bot: BotAccount) -> bool:
         return True
     if created:
         BotActionLog.objects.create(bot=bot, action=BotActionLog.Action.LIKE, target=str(coupon_id))
+    return created
+
+
+def _save_prediction(bot: BotAccount) -> bool:
+    coupon_ids = list(
+        PredictionCoupon.objects.filter(
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        )
+        .exclude(author=bot.user)
+        .exclude(favorites__user=bot.user)
+        .order_by("-created_at")
+        .values_list("id", flat=True)[:160]
+    )
+    if not coupon_ids:
+        return False
+    coupon_id = random.choice(coupon_ids)
+    _favorite, created = PredictionFavorite.objects.get_or_create(
+        user=bot.user,
+        prediction_id=coupon_id,
+    )
+    if created:
+        BotActionLog.objects.create(
+            bot=bot,
+            action=BotActionLog.Action.PREDICTION_FAVORITE,
+            target=str(coupon_id),
+        )
+    return created
+
+
+def _watch_match(bot: BotAccount) -> bool:
+    now = timezone.now()
+    match_ids = list(
+        Match.objects.filter(
+            sync_scope__in=[Match.SyncScope.PREMATCH, Match.SyncScope.LIVE],
+            starts_at__gte=now - timedelta(minutes=30),
+        )
+        .exclude(notification_watchers__user=bot.user)
+        .order_by("starts_at", "id")
+        .values_list("id", flat=True)[:160]
+    )
+    if not match_ids:
+        return False
+    match_id = random.choice(match_ids)
+    _watch, created = MatchWatch.objects.get_or_create(
+        user=bot.user,
+        match_id=match_id,
+    )
+    if created:
+        BotActionLog.objects.create(
+            bot=bot,
+            action=BotActionLog.Action.MATCH_WATCH,
+            target=str(match_id),
+        )
     return created
 
 

@@ -78,14 +78,11 @@ class AccountEmailFlowTests(TestCase):
         settings_url = f"{reverse('cabinet:profile')}?tab=settings"
 
         page = self.client.get(settings_url)
-        self.assertContains(page, 'href="#profile-email-change-modal">Подтвердить</a>')
-        self.assertNotContains(page, 'href="#profile-email-change-modal">Изменить почту</a>')
+        self.assertContains(page, 'data-profile-modal-open="profile-email-change-modal">Подтвердить</button>')
+        self.assertNotContains(page, 'data-profile-modal-open="profile-email-change-modal">Изменить почту</button>')
 
         response = self.client.post(reverse("account_email:request_change"))
-        self.assertRedirects(
-            response, f"{settings_url}#profile-email-change-modal",
-            fetch_redirect_response=False,
-        )
+        self.assertRedirects(response, settings_url, fetch_redirect_response=False)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["unverified@example.com"])
         self.assertEqual(EmailChangeRequest.objects.count(), 0)
@@ -103,8 +100,32 @@ class AccountEmailFlowTests(TestCase):
         self.assertTrue(self.user.email_verified)
 
         page = self.client.get(settings_url)
-        self.assertContains(page, 'href="#profile-email-change-modal">Изменить почту</a>')
-        self.assertNotContains(page, 'href="#profile-email-change-modal">Подтвердить</a>')
+        self.assertContains(page, 'data-profile-modal-open="profile-email-change-modal">Изменить почту</button>')
+        self.assertNotContains(page, 'data-profile-modal-open="profile-email-change-modal">Подтвердить</button>')
+
+    def test_email_verification_request_ajax_is_limited(self):
+        self.user.email = "unverified@example.com"
+        self.user.save(update_fields=["email"])
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("account_email:request_change"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["ok"], True)
+        self.assertEqual(len(mail.outbox), 1)
+
+        response = self.client.post(
+            reverse("account_email:request_change"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response.json()["ok"], False)
+        self.assertIn("повторно", response.json()["error"])
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_user_changes_email_after_current_email_link(self):
         self.user.email = "old@example.com"

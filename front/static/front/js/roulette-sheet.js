@@ -7,6 +7,8 @@
     const panel = sheet.querySelector(".roulette-sheet-panel");
     const disc = sheet.querySelector("[data-roulette-sheet-disc]");
     const frame = sheet.querySelector("[data-roulette-sheet-frame]");
+    const heroDisc = document.querySelector("[data-roulette-hero-disc]");
+    const heroFrame = document.querySelector("[data-roulette-hero-frame]");
     const titleNode = sheet.querySelector("[data-roulette-sheet-title]");
     const textNode = sheet.querySelector("[data-roulette-sheet-text]");
     const noteNode = sheet.querySelector("[data-roulette-sheet-note]");
@@ -251,13 +253,13 @@
 
     // Picks the line breaks that need the least shrinking, then shrinks the label until every
     // line fits its sector, which narrows towards the centre.
-    const fitLabels = () => {
+    const fitLabels = (targetDisc = disc) => {
         const count = prizes.length;
         const halfSlice = (Math.min(360 / Math.max(count, 1), 150) * Math.PI) / 360;
-        disc.querySelectorAll(".roulette-sheet-label").forEach((text) => {
+        targetDisc.querySelectorAll(".roulette-sheet-label").forEach((text) => {
             const baseSize = Number(text.dataset.baseSize);
             const top = -Number(text.getAttribute("y"));
-            const probe = svg("text", { class: "roulette-sheet-label", "font-size": baseSize, visibility: "hidden" }, disc);
+            const probe = svg("text", { class: "roulette-sheet-label", "font-size": baseSize, visibility: "hidden" }, targetDisc);
             const width = (line) => {
                 probe.textContent = line;
                 return probe.getComputedTextLength();
@@ -291,27 +293,28 @@
     const setRotation = (degrees) => {
         rotation = degrees;
         disc.style.transform = `rotate(${degrees}deg)`;
+        if (heroDisc) heroDisc.style.transform = `rotate(${degrees}deg)`;
     };
 
-    const addGradients = () => {
-        const defs = svg("defs", {}, disc);
-        const frameDefs = svg("defs", {}, frame);
+    const addGradients = (targetDisc, targetFrame, prefix) => {
+        const defs = svg("defs", {}, targetDisc);
+        const frameDefs = svg("defs", {}, targetFrame);
         Object.entries(TONES).forEach(([name, [dark, base, light]]) => {
-            const gradient = svg("radialGradient", { id: `roulette-tone-${name}`, gradientUnits: "userSpaceOnUse", cx: 0, cy: 0, r: RADIUS }, defs);
+            const gradient = svg("radialGradient", { id: `${prefix}-tone-${name}`, gradientUnits: "userSpaceOnUse", cx: 0, cy: 0, r: RADIUS }, defs);
             [[0, dark], [0.62, base], [1, light]].forEach(([offset, color]) => {
                 svg("stop", { offset, "stop-color": color }, gradient);
             });
         });
-        const rim = svg("linearGradient", { id: "roulette-rim", x1: 0, y1: 0, x2: 0, y2: 1 }, frameDefs);
+        const rim = svg("linearGradient", { id: `${prefix}-rim`, x1: 0, y1: 0, x2: 0, y2: 1 }, frameDefs);
         [[0, "#3a3a40"], [0.5, "#1c1c1f"], [1, "#0b0b0c"]].forEach(([offset, color]) => {
             svg("stop", { offset, "stop-color": color }, rim);
         });
     };
 
-    const addLabel = (prize, middle, tone) => {
+    const addLabel = (targetDisc, prize, middle, tone) => {
         const count = prizes.length;
         const fontSize = count <= 4 ? 34 : count <= 6 ? 30 : count <= 8 ? 27 : 24;
-        const label = svg("g", { transform: `rotate(${middle})` }, disc);
+        const label = svg("g", { transform: `rotate(${middle})` }, targetDisc);
         if (prize.icon) {
             const size = count <= 8 ? 58 : 46;
             svg("image", { href: prize.icon, x: -size / 2, y: -RADIUS + 14, width: size, height: size }, label);
@@ -326,39 +329,44 @@
         text.textContent = prize.title;
     };
 
-    const buildWheel = () => {
-        disc.replaceChildren();
-        frame.replaceChildren();
-        addGradients();
+    const buildWheelTarget = (targetDisc, targetFrame, prefix) => {
+        targetDisc.replaceChildren();
+        targetFrame.replaceChildren();
+        addGradients(targetDisc, targetFrame, prefix);
 
         const count = prizes.length;
         const slice = 360 / Math.max(count, 1);
         if (count < 2) {
-            svg("circle", { r: RADIUS, fill: "url(#roulette-tone-yellow)" }, disc);
+            svg("circle", { r: RADIUS, fill: `url(#${prefix}-tone-yellow)` }, targetDisc);
         } else {
             prizes.forEach((prize, index) => {
                 const middle = index * slice;
-                svg("path", { d: wedge(middle - slice / 2, middle + slice / 2), fill: `url(#roulette-tone-${sectorTone(index)})` }, disc);
+                svg("path", { d: wedge(middle - slice / 2, middle + slice / 2), fill: `url(#${prefix}-tone-${sectorTone(index)})` }, targetDisc);
             });
             prizes.forEach((prize, index) => {
                 const [x, y] = point(index * slice + slice / 2, RADIUS);
-                svg("line", { x1: 0, y1: 0, x2: x, y2: y, class: "roulette-sheet-separator" }, disc);
+                svg("line", { x1: 0, y1: 0, x2: x, y2: y, class: "roulette-sheet-separator" }, targetDisc);
             });
         }
-        svg("circle", { r: 120, class: "roulette-sheet-band" }, disc);
-        prizes.forEach((prize, index) => addLabel(prize, index * slice, count < 2 ? "yellow" : sectorTone(index)));
+        svg("circle", { r: 120, class: "roulette-sheet-band" }, targetDisc);
+        prizes.forEach((prize, index) => addLabel(targetDisc, prize, index * slice, count < 2 ? "yellow" : sectorTone(index)));
 
-        svg("circle", { r: RADIUS, class: "roulette-sheet-rim-inner" }, frame);
-        svg("circle", { r: RADIUS + 12, class: "roulette-sheet-rim", stroke: "url(#roulette-rim)" }, frame);
-        svg("circle", { r: RADIUS + 26, class: "roulette-sheet-rim-edge" }, frame);
+        svg("circle", { r: RADIUS, class: "roulette-sheet-rim-inner" }, targetFrame);
+        svg("circle", { r: RADIUS + 12, class: "roulette-sheet-rim", stroke: `url(#${prefix}-rim)` }, targetFrame);
+        svg("circle", { r: RADIUS + 26, class: "roulette-sheet-rim-edge" }, targetFrame);
         for (let index = 0; index < RIM_LIGHTS; index += 1) {
             const [x, y] = point((index * 360) / RIM_LIGHTS, RADIUS + 12);
-            svg("circle", { cx: x, cy: y, r: 9, class: "roulette-sheet-light-glow" }, frame);
-            svg("circle", { cx: x, cy: y, r: 4.5, class: "roulette-sheet-light" }, frame);
+            svg("circle", { cx: x, cy: y, r: 9, class: "roulette-sheet-light-glow" }, targetFrame);
+            svg("circle", { cx: x, cy: y, r: 4.5, class: "roulette-sheet-light" }, targetFrame);
         }
-        if (count > 1) svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, frame);
+        if (count > 1) svg("path", { d: wedge(-slice / 2, slice / 2), class: "roulette-sheet-highlight" }, targetFrame);
+        fitLabels(targetDisc);
+    };
+
+    const buildWheel = () => {
+        buildWheelTarget(disc, frame, "roulette-sheet");
+        if (heroDisc && heroFrame) buildWheelTarget(heroDisc, heroFrame, "roulette-hero");
         setRotation(rotation);
-        fitLabels();
     };
 
     const normalizePrize = (item) => ({
@@ -722,11 +730,15 @@
         open();
     }, true);
 
-    document.fonts?.ready.then(fitLabels);
+    document.fonts?.ready.then(() => {
+        fitLabels(disc);
+        if (heroDisc) fitLabels(heroDisc);
+    });
     sheet.querySelectorAll("[data-roulette-sheet-close]").forEach((node) => node.addEventListener("click", close));
     spinButton.addEventListener("click", spin);
     codeButton.addEventListener("click", copyCode);
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") close();
     });
+    if (heroDisc && heroFrame) loadState();
 })();

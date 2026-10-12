@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST, require_http_methods
@@ -21,6 +22,37 @@ from .services import (
 
 def _profile_settings_url() -> str:
     return f"{reverse('cabinet:profile')}?tab=settings"
+
+
+def _wants_json(request) -> bool:
+    return request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+
+def _json_or_redirect(
+    request,
+    *,
+    message: str = "",
+    error: str = "",
+    status: int = 200,
+    extra_tags: str = "",
+):
+    if _wants_json(request):
+        payload = {"ok": not bool(error)}
+        if error:
+            payload["error"] = error
+        if message:
+            payload["message"] = message
+        return JsonResponse(payload, status=status)
+    if error:
+        messages.error(request, error)
+    elif message:
+        messages.success(request, message, extra_tags=extra_tags)
+    return redirect(_profile_settings_url())
+
+
+def _email_error_status(error: Exception) -> int:
+    text = str(error)
+    return 429 if "повторно" in text or "Лимит" in text else 400
 
 
 @login_required
@@ -52,25 +84,21 @@ def request_email_change(request):
         try:
             start_email_verification(request.user, request=request)
         except EmailVerificationError as exc:
-            messages.error(request, str(exc))
-            return redirect(_profile_settings_url())
-        messages.success(
+            return _json_or_redirect(request, error=str(exc), status=_email_error_status(exc))
+        return _json_or_redirect(
             request,
-            "Ссылка подтверждения отправлена на вашу почту.",
+            message="Ссылка подтверждения отправлена на вашу почту.",
             extra_tags="email-verification-sent",
         )
-        return redirect(f"{_profile_settings_url()}#profile-email-change-modal")
 
     try:
         start_change_confirmation(request.user, request)
     except EmailChangeError as exc:
-        messages.error(request, str(exc))
-    else:
-        messages.success(
-            request,
-            "Ссылка для смены почты отправлена на вашу текущую почту.",
-        )
-    return redirect(_profile_settings_url())
+        return _json_or_redirect(request, error=str(exc), status=_email_error_status(exc))
+    return _json_or_redirect(
+        request,
+        message="Ссылка для смены почты отправлена на вашу текущую почту.",
+    )
 
 
 @login_required

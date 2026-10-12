@@ -26,6 +26,7 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("profile/comments/", views.profile_comments, name="profile_comments"),
     path(
         "profile/predictions/mobile-coupons/",
         views.profile_mobile_coupons,

@@ -17,35 +17,59 @@
                 </div>
 
                 <section class="bonus-hero" aria-labelledby="bonus-center-title">
-                    <div class="bonus-hero-copy">
-                        <h1 id="bonus-center-title">
-                            {{ bonus_page.hero.title }}<br>
-                            {{ bonus_page.hero.title_prefix }} <span>{{ bonus_page.hero.brand }}</span>
-                        </h1>
-                        <p>{{ bonus_page.hero.description }}</p>
+                    <div class="bonus-hero-sparkles" aria-hidden="true">
+                        <img class="roulette-sheet-sparkle is-1" src="{% static 'front/img/roulette/sparkle-1.svg' %}" alt="" loading="lazy">
+                        <img class="roulette-sheet-sparkle is-2" src="{% static 'front/img/roulette/sparkle-2.svg' %}" alt="" loading="lazy">
+                        <img class="roulette-sheet-sparkle is-3" src="{% static 'front/img/roulette/sparkle-3.svg' %}" alt="" loading="lazy">
+                        <img class="roulette-sheet-sparkle is-4" src="{% static 'front/img/roulette/sparkle-1.svg' %}" alt="" loading="lazy">
+                        <img class="roulette-sheet-sparkle is-5" src="{% static 'front/img/roulette/sparkle-2.svg' %}" alt="" loading="lazy">
+                        <img class="roulette-sheet-sparkle is-6" src="{% static 'front/img/roulette/sparkle-3.svg' %}" alt="" loading="lazy">
                     </div>
 
+                    <div class="bonus-hero-copy">
+                        <img class="bonus-hero-logo" src="{% static 'front/img/logo.png' %}" alt="КапперХаб" width="48" height="48" loading="lazy">
+                        <h1 id="bonus-center-title">
+                            Колесо бонусов
+                        </h1>
+                        <p>Крути колесо и забирай призы каждый день.</p>
+                        <small data-bonus-status>Загрузка состояния рулетки…</small>
+                        <button class="bonus-hero-action" type="button" data-roulette-sheet-open>
+                            Крутить
+                        </button>
+                    </div>
+
+                    <button class="bonus-hero-wheel-preview" type="button" data-roulette-sheet-open aria-label="{{ bonus_page.hero.canvas_label }}">
+                        <span class="bonus-hero-wheel-stage" aria-hidden="true">
+                            <svg class="roulette-sheet-disc" viewBox="-330 -330 660 660" data-roulette-hero-disc></svg>
+                            <svg class="roulette-sheet-frame" viewBox="-330 -330 660 660" data-roulette-hero-frame></svg>
+                            <span class="roulette-sheet-hub bonus-hero-wheel-hub"><span>Крутить</span></span>
+                        </span>
+                    </button>
+                </section>
+
+                <div
+                    class="bonus-roulette-state"
+                    data-roulette-root
+                    data-skeleton-block
+                    data-roulette-state-url="{{ roulette_state_url }}"
+                    data-roulette-spin-url="{{ roulette_spin_url }}"
+                    data-roulette-csrf="{{ roulette_csrf_token }}"
+                    aria-hidden="true"
+                >
                     <div
                         class="bonus-wheel"
-                        data-roulette-root
                         data-skeleton-block
-                        data-roulette-state-url="{{ roulette_state_url }}"
-                        data-roulette-spin-url="{{ roulette_spin_url }}"
-                        data-roulette-csrf="{{ roulette_csrf_token }}"
                     >
                         <canvas
                             data-roulette-canvas
                             width="720"
                             height="720"
-                            role="button"
-                            tabindex="0"
-                            aria-label="{{ bonus_page.hero.canvas_label }}"
                             aria-busy="true"
                         >
                             {{ bonus_page.hero.canvas_fallback }}
                         </canvas>
                     </div>
-                </section>
+                </div>
 
                 <div class="bonus-dashboard-grid">
                     {% include "cabinet/includes/_bonus_dashboard_card.html" with card=next_bonus only %}

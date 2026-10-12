@@ -147,7 +147,7 @@
                         aria-busy="false"
                     >
                         {% for comment in initial_comments %}
-                        <article class="prediction-comment" data-comment-id="{{ comment.id }}">
+                        <article class="prediction-comment" id="comment-{{ comment.id }}" data-comment-id="{{ comment.id }}">
                             <a class="prediction-comment-avatar" href="{% url 'front:expert_profile' comment.user.username %}"{% if comment.user.avatar %} data-skeleton-image{% endif %} aria-label="Открыть профиль {% firstof comment.user.get_full_name comment.user.username %}">
                                 {% if comment.user.avatar %}
                                     <img src="{{ comment.user.avatar.url }}" width="52" height="52" loading="lazy" alt="">
@@ -209,7 +209,7 @@
                             </div>
                             <div class="prediction-comment-replies" data-comment-replies="{{ comment.id }}">
                                 {% for reply in comment.published_replies %}
-                                <article class="prediction-comment prediction-comment-reply-item" data-comment-id="{{ reply.id }}">
+                                <article class="prediction-comment prediction-comment-reply-item" id="comment-{{ reply.id }}" data-comment-id="{{ reply.id }}">
                                     <a class="prediction-comment-avatar" href="{% url 'front:expert_profile' reply.user.username %}"{% if reply.user.avatar %} data-skeleton-image{% endif %} aria-label="Открыть профиль {% firstof reply.user.get_full_name reply.user.username %}">
                                         {% if reply.user.avatar %}
                                             <img src="{{ reply.user.avatar.url }}" width="52" height="52" loading="lazy" alt="">

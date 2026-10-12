@@ -28,6 +28,10 @@
     <span class="nav-profile-dropdown-dot{% if not notification_section_badges.earnings %} is-empty{% endif %}" data-notification-section-badge="earnings" aria-hidden="true"></span>
 </a>
 {% endif %}
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'comments' %} is-active{% endif %}" href="{% url 'cabinet:profile_comments' %}"{% if active_tab == 'comments' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}</span>
+    <span class="matches-table-scope-copy">Комментарии</span>
+</a>
 <a class="{{ profile_tab_link_class }}{% if active_tab == 'following' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=following" data-profile-tab-link{% if active_tab == 'following' %} aria-current="page"{% endif %}>
     <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="following" %}</span>
     <span class="matches-table-scope-copy">Подписки</span>

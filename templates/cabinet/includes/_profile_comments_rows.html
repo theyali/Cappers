@@ -1,0 +1,50 @@
+{% for row in profile_comments_rows %}
+<article class="profile-comment-row" data-profile-comment-row data-comment-id="{{ row.id }}">
+    <a class="profile-comment-avatar" href="{{ row.author_url }}" aria-label="Открыть профиль {{ row.author_name }}">
+        {% if row.author_avatar_url %}
+            <img src="{{ row.author_avatar_url }}" width="34" height="34" loading="lazy" alt="">
+        {% else %}
+            {{ row.author.username|first|upper }}
+        {% endif %}
+    </a>
+    <div class="profile-comment-body">
+        <div class="profile-comment-meta">
+            <a class="profile-comment-author" href="{{ row.author_url }}">@{{ row.author.username }}</a>
+            <span>{{ row.created_label }}</span>
+            <span class="profile-comment-spacer" aria-hidden="true"></span>
+            {% if row.is_unanswered %}
+                <span class="profile-comment-state">Без ответа</span>
+            {% endif %}
+        </div>
+        <div class="profile-comment-target">
+            {% if profile_comments_kind == "mine" %}
+                к прогнозу
+            {% elif profile_comments_kind == "replies" %}
+                ответ на ваш комментарий к прогнозу
+            {% else %}
+                к вашему прогнозу
+            {% endif %}
+            <a href="{{ row.comment_url }}">{{ row.target.title }}</a>{% if row.target.meta %} · {{ row.target.meta }}{% endif %}
+        </div>
+        {% if row.parent_text %}
+            <div class="profile-comment-quote">{{ row.parent_text|truncatechars:130 }}</div>
+        {% endif %}
+        <p class="profile-comment-text">{{ row.comment.text }}</p>
+        {% if row.my_reply %}
+            <div class="profile-comment-reply-preview">
+                <span>вы · {{ row.my_reply_label }}</span>
+                <p>{{ row.my_reply.text }}</p>
+            </div>
+        {% endif %}
+        <div class="profile-comment-actions">
+            <a href="{{ row.comment_url }}">Перейти</a>
+            <a href="{{ row.comment_url }}">Ответить</a>
+        </div>
+    </div>
+</article>
+{% empty %}
+<div class="profile-comments-empty">
+    <strong>Комментариев пока нет</strong>
+    <span>Здесь появятся обсуждения прогнозов и ответы на ваши комментарии.</span>
+</div>
+{% endfor %}
