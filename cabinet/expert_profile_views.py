@@ -2,6 +2,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.html import strip_tags
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -500,6 +501,9 @@ def expert_profile(request, username: str):
     )
     context["expert_articles"] = expert_articles
     context["expert_latest_articles"] = expert_articles[:3]
+    for article in context["expert_latest_articles"]:
+        word_count = len(strip_tags(article.content).split())
+        article.reading_minutes = max(1, (word_count + 199) // 200)
 
     paid_subscription = active_paid_subscriptions_by_analyst(
         request.user,
