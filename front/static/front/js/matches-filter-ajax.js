@@ -6,33 +6,13 @@
     const PAGE_SELECTOR = ".matches-page";
     const LINK_SELECTOR = [
         ".matches-table-filter-sidebar a[href]",
-        ".matches-sport-tabs a[href]",
-        ".feed-sport-tabs a[href]",
+        ".matches-head a[href]",
         ".matches-tabs a[href]",
         ".matches-date-filter a[href]",
     ].join(",");
-    const MOBILE_FILTER_BLOCK_SELECTOR = ".matches-mobile-sports-panel";
 
     let activeRequest = null;
     let activeSeq = 0;
-
-    const mobileFilterBlocks = ($page) => {
-        return $page
-            .find(MOBILE_FILTER_BLOCK_SELECTOR)
-            .add($(".matches-mobile-sports-panel").first());
-    };
-
-    const setMobileFiltersLoading = ($page) => {
-        mobileFilterBlocks($page).each((_index, block) => {
-            window.CappersSkeleton?.loading(block);
-        });
-    };
-
-    const setMobileFiltersReady = ($page) => {
-        mobileFilterBlocks($page).each((_index, block) => {
-            window.CappersSkeleton?.ready(block);
-        });
-    };
 
     const sameOriginPath = (rawUrl) => {
         const url = new URL(rawUrl, window.location.origin);
@@ -145,9 +125,8 @@
         if (!$page.length || !payload?.ok) return;
 
         const $listPanel = $page.find(".matches-list-panel").first();
-        replaceNode($page.children(".matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
+        window.CappersMatchesHead?.hold(450);
         replaceNode($page.children(".matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
-        replaceNode($(".matches-mobile-sports-panel > .matches-sport-tabs").first(), payload.sport_tabs_html, ".matches-sport-tabs");
         replaceNode($(".mobile-match-filters .matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
         replaceNode($page.find(".matches-mobile-scope-panel > .matches-tabs").first(), payload.scope_tabs_html, ".matches-tabs");
         syncMobileMatchQuickState();
@@ -165,14 +144,16 @@
         }
 
         replaceNode($page.find(".matches-table-filter-sidebar").first(), payload.sidebar_html, ".matches-table-filter-sidebar");
-        const $hero = replaceWithFade($listPanel.children(".matches-hero").first(), payload.hero_html, ".matches-hero");
+        // The sticky head is swapped in place and keeps its folded state: a fade would flash it while pinned.
+        const $oldHead = $listPanel.children(".matches-head").first();
+        const headWasCompact = $oldHead.hasClass("is-compact");
+        const $head = replaceNode($oldHead, payload.hero_html, ".matches-head");
+        if (headWasCompact) $head.addClass("is-compact");
         const $content = replaceWithFade($listPanel.children("[data-matches-content-region]").first(), payload.content_html, "[data-matches-content-region]");
 
         const mode = payload.content_view_mode || $listPanel.attr("data-content-view-current") || "grid";
         $listPanel.attr("data-content-view-current", mode);
-        if ($hero.length) $hero.attr("aria-busy", "false").removeClass("is-skeleton-loading");
 
-        setMobileFiltersReady($page);
         replaceHeadMeta(payload);
 
         const nextUrl = publicUrl(payload, fallbackUrl);
@@ -180,9 +161,8 @@
             window.history.pushState({ matchesFilterUrl: nextUrl }, "", nextUrl);
         }
 
-        const panel = $listPanel.get(0);
-        if (panel) panel.scrollTo({ top: 0, behavior: "smooth" });
         dispatchUpdated($page, $content.length ? $content : $listPanel);
+        window.CappersMatchesHead?.scrollToList();
     };
 
     const go = (rawUrl, options = {}) => {
@@ -197,7 +177,6 @@
         if (activeRequest) activeRequest.abort();
 
         $page.addClass("is-filter-loading");
-        setMobileFiltersLoading($page);
         activeRequest = $.ajax({
             url: `${requestUrl.pathname}${requestUrl.search}`,
             method: "GET",
@@ -235,6 +214,18 @@
         if (!url || !url.pathname.startsWith("/games/")) return;
 
         event.preventDefault();
+        go(url.toString());
+    });
+
+    // Search runs through the same partial request; empty fields are left out of the URL.
+    $(document).on("submit", "[data-matches-head-search]", function (event) {
+        const url = sameOriginPath(this.getAttribute("action") || window.location.pathname);
+        if (!url) return;
+        event.preventDefault();
+        new FormData(this).forEach((value, name) => {
+            const text = String(value).trim();
+            if (text) url.searchParams.set(name, text);
+        });
         go(url.toString());
     });
 

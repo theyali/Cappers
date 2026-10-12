@@ -47,7 +47,7 @@
         if (link.hasAttribute("download")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
         if (link.hasAttribute("data-prediction-ajax-link")) return;
-        if (link.closest(".matches-table-filter-sidebar, .matches-sport-tabs, .feed-sport-tabs, .matches-tabs, .matches-date-filter, .cappers-period-filter, .home-best-experts-periods")) return;
+        if (link.closest(".matches-table-filter-sidebar, .matches-head, .matches-sport-tabs, .feed-sport-tabs, .matches-tabs, .matches-date-filter, .cappers-period-filter, .home-best-experts-periods")) return;
         if (link.hasAttribute("data-mobile-coupon-toggle")) {
             event.preventDefault();
             return;

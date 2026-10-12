@@ -1,16 +1,84 @@
-{% load static %}
-<div
-    class="matches-hero long-bg long-bg-2 is-skeleton-loading"
-    data-skeleton-block
-    data-matches-hero-skeleton
-    data-skeleton-background="{% static 'front/img/long_2.webp' %}"
-    aria-busy="true"
->
-    <div>
-        <h1>{{ match_list_h1|default:"Матчи" }}</h1>
+{# Sticky header of the match list: title, sport tiles that fold into chips on scroll, scope/search/sort row. #}
+{% with head=match_head %}
+<header class="matches-head" data-matches-head aria-label="Фильтры матчей">
+    <div class="matches-head-in">
+        <div class="matches-head-lane is-title"><div class="matches-head-pane"><div class="matches-head-inner">
+            <div class="matches-head-titlerow">
+                <div class="matches-head-tl">
+                    {% if head.is_live %}
+                    <div class="matches-head-pillrow">
+                        <span class="matches-head-livepill"><span class="matches-head-dot"></span>В ЭФИРЕ</span>
+                        <span class="matches-head-ago" data-matches-head-ago>обновлено только что</span>
+                    </div>
+                    {% endif %}
+                    <h1 class="matches-head-title">{{ head.title_main }} <span>{{ head.title_rest }}</span></h1>
+                    <p class="matches-head-lede">{{ head.lede }}</p>
+                </div>
+                <div class="matches-head-bignum">
+                    <b>{{ head.count }}</b>
+                    <span><strong>{{ head.count_label }}</strong><small>{{ head.with_predictions_label }}</small></span>
+                </div>
+            </div>
+        </div></div></div>
+
+        <div class="matches-head-lane is-tiles"><div class="matches-head-pane"><div class="matches-head-inner">
+            <nav class="matches-head-tiles" aria-label="Виды спорта">
+                {% for sport in head.sports %}
+                <a class="matches-sport-tile is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}"{% if sport.active %} aria-current="page"{% endif %}>
+                    {% include "game/includes/_match_sport_tile_art.html" with key=sport.tile_key code=sport.code %}
+                    <span class="matches-sport-tile-face">
+                        {% if head.is_live %}<span class="matches-sport-tile-lv"><span class="matches-head-dot"></span>LIVE</span>{% endif %}
+                        <span class="matches-sport-tile-copy">
+                            <span class="matches-sport-tile-q">{{ sport.count }}</span>
+                            <span class="matches-sport-tile-nm">{{ sport.label }}</span>
+                        </span>
+                    </span>
+                </a>
+                {% endfor %}
+            </nav>
+        </div></div></div>
+
+        <div class="matches-head-lane is-chips"><div class="matches-head-pane"><div class="matches-head-inner">
+            <nav class="matches-head-chips" aria-label="Виды спорта">
+                <a class="matches-head-chipcount" href="{{ head.all_sports_url }}"{% if head.all_sports_active %} aria-current="page"{% endif %}>
+                    {% if head.is_live %}<span class="matches-head-dot"></span>{% endif %}
+                    <b>{{ head.sports_total }}</b>{{ head.sports_total_label }}
+                </a>
+                <span class="matches-head-sep" aria-hidden="true"></span>
+                {% for sport in head.sports %}
+                <a class="matches-sport-chip is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}"{% if sport.active %} aria-current="page"{% endif %}>
+                    <span class="matches-sport-chip-glyph">{% include "game/includes/_match_sport_glyph.html" with key=sport.tile_key size=17 %}</span>
+                    <span class="matches-sport-chip-nm">{{ sport.label }}</span>
+                    <span class="matches-sport-chip-q">{{ sport.count }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+        </div></div></div>
+
+        <div class="matches-head-lane is-util"><div class="matches-head-pane"><div class="matches-head-inner">
+            <div class="matches-head-util">
+                <nav class="matches-head-seg" aria-label="Статус матчей">
+                    {% for scope in head.scopes %}
+                    <a class="{% if scope.active %}is-active{% endif %}" href="{{ scope.url }}"{% if scope.active %} aria-current="page"{% endif %}>
+                        {% if scope.scope == 'live' %}<span class="matches-head-dot"></span>{% endif %}{{ scope.label }}
+                    </a>
+                    {% endfor %}
+                </nav>
+                <span class="matches-head-grow"></span>
+                <form class="matches-head-field" action="{{ head.search_action }}" method="get" role="search" data-matches-head-search data-no-transition>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+                    {% for param in head.search_hidden %}<input type="hidden" name="{{ param.name }}" value="{{ param.value }}">{% endfor %}
+                    <input type="search" name="q" value="{{ head.search_query }}" maxlength="80" placeholder="Команда, лига или турнир" aria-label="Поиск: команда, лига или турнир">
+                </form>
+                <a class="matches-head-ghost" href="{{ head.sort_url }}" title="Сменить сортировку">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M17 20V4M17 4l3 3"></path></svg>
+                    {{ head.sort_label }}
+                </a>
+                <div class="matches-head-toggle">
+                    {% include "front/includes/_content_view_switcher.html" %}
+                </div>
+            </div>
+        </div></div></div>
     </div>
-    <div class="matches-hero-meta">
-        <span>{{ hero_count|default:total_count }}</span>
-        <small>{{ match_list_hero_meta|default:"игр на сегодня" }}</small>
-    </div>
-</div>
+</header>
+{% endwith %}

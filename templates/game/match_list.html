@@ -8,9 +8,6 @@
 {% block content %}
 {% content_view_mode as content_view_mode %}
 {% include "game/includes/_mobile_match_filters.html" %}
-<div class="matches-mobile-sports-panel" aria-label="Выбор спорта на мобильных устройствах" data-skeleton-block>
-    {% include "game/includes/_match_sport_tabs.html" %}
-</div>
 <section class="matches-page container" aria-label="Матчи">
     {% include "game/includes/_match_scope_tabs.html" %}
     {% include "game/includes/_match_date_filter.html" %}
@@ -30,6 +27,7 @@
             data-content-view-root
             data-content-view-current="{{ content_view_mode }}"
         >
+            <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
             {% include "game/includes/_match_list_hero.html" %}
             {% include "game/includes/_match_list_content.html" %}
         </section>
@@ -41,7 +39,7 @@
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="{% static 'front/js/matches-hero-skeleton.js' %}" defer></script>
+<script src="{% static 'front/js/matches-head.js' %}" defer></script>
 <script src="{% static 'front/js/matches-filter-ajax.js' %}" defer></script>
 <script src="{% static 'front/js/matches-date-filter.js' %}" defer></script>
 <script src="{% static 'front/js/match-card-watch.js' %}" defer></script>

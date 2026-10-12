@@ -13649,3 +13649,111 @@ body.expert-public-details-open {
     flex: 1;
   }
 }
+
+/* Match list sticky head: the column width decides the layout, so it also fits next to the sidebars. */
+@container matches-list (max-width: 860px) {
+  .matches-head-util {
+    flex-wrap: wrap;
+  }
+  .matches-head-grow {
+    display: none;
+  }
+  .matches-head-seg {
+    min-width: 0;
+    flex: 0 1 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .matches-head-seg::-webkit-scrollbar {
+    display: none;
+  }
+  .matches-head-ghost {
+    margin-left: auto;
+  }
+  .matches-head-field {
+    width: auto;
+    order: 5;
+    flex: 1 1 100%;
+  }
+}
+
+@container matches-list (max-width: 600px) {
+  .matches-head-seg {
+    flex-basis: 100%;
+  }
+  .matches-head-field {
+    order: 0;
+    flex: 1 1 180px;
+  }
+  .matches-head-ghost {
+    margin-left: 0;
+  }
+}
+
+@container matches-list (max-width: 700px) {
+  .matches-head-lede {
+    display: none;
+  }
+  .matches-head .matches-head-title {
+    font-size: 23px;
+  }
+  .matches-head-titlerow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .matches-head-bignum b {
+    font-size: 34px;
+  }
+  .matches-head-tiles {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .matches-head-tiles::-webkit-scrollbar {
+    display: none;
+  }
+  .matches-sport-tile {
+    width: 126px;
+    height: 112px;
+    flex: none;
+  }
+  .matches-sport-tile-art {
+    --rx: -18px;
+    --by: -20px;
+    transform: scale(.66);
+    transform-origin: bottom right;
+  }
+  .matches-sport-tile-q {
+    font-size: 22px;
+  }
+  .matches-sport-tile-nm {
+    font-size: 12px;
+  }
+}
+
+/* Phones keep scope, date and view in the mobile filter bar above the list. */
+@media (max-width: 1024px) {
+  .matches-head-lane.is-util {
+    display: none;
+  }
+  .matches-head-in {
+    padding-top: 14px;
+  }
+  .matches-head-tiles,
+  .matches-head-chips {
+    margin: 0 -10px;
+    padding: 0 10px;
+  }
+  .matches-head-chips {
+    padding-bottom: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matches-head,
+  .matches-head-in,
+  .matches-head-lane,
+  .matches-head-inner {
+    transition: none;
+  }
+}

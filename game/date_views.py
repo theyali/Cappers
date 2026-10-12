@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from urllib.parse import urlencode
+from urllib.parse import parse_qsl, urlencode
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,11 +10,13 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateformat import format as date_format
 from django.utils.dateparse import parse_date
 
 from back.content_view import content_view_mode, group_by_sport_and_league
 from cabinet.models import User
 from cabinet.roulette.models import RouletteSettings
+from cabinet.vip import plural_ru
 from game.models import Match, PredictionCoupon, Sport
 from game.services.bet_options import build_match_winner_odds
 from game.views import (
@@ -42,6 +44,41 @@ MATCH_FILTERS = (
     (MATCH_FILTER_WITH_PREDICTIONS, "С прогнозами"),
     (MATCH_FILTER_PREDICTABLE, "Доступны для прогноза"),
 )
+MATCH_SORT_PARAM = "sort"
+MATCH_SORT_TIME = "time"
+MATCH_SORT_POPULAR = "popular"
+MATCH_SORTS = {
+    MATCH_SORT_TIME: "Сначала ближайшие",
+    MATCH_SORT_POPULAR: "Сначала популярные",
+}
+MATCH_SEARCH_PARAM = "q"
+MATCH_SEARCH_MAX_LENGTH = 80
+# Header tiles use the mockup's colour, pattern and artwork per sport key.
+SPORT_TILE_KEYS = {
+    "football": "f",
+    "soccer": "f",
+    "tennis": "t",
+    "basketball": "b",
+    "hockey": "h",
+    "ice-hockey": "h",
+    "esports": "e",
+    "cybersport": "e",
+    "volleyball": "v",
+}
+SCOPE_HEAD_LEDES = {
+    "all": "Расписание, счёт и коэффициенты матчей дня — и прогнозы капперов КапперХаба по каждому из них.",
+    WATCHED_SCOPE: "Матчи, за которыми вы следите: счёт, статус и прогнозы капперов КапперХаба.",
+    Match.SyncScope.LIVE: "Счёт, время и коэффициенты матчей, которые идут прямо сейчас, — и прогнозы капперов КапперХаба по каждому из них.",
+    Match.SyncScope.PREMATCH: "Расписание и коэффициенты матчей, которые скоро начнутся, — и прогнозы капперов КапперХаба по каждому из них.",
+    Match.SyncScope.FINISHED: "Итоговый счёт завершённых матчей и прогнозы капперов КапперХаба по каждому из них.",
+}
+SCOPE_HEAD_LABELS = {
+    "all": "Все",
+    WATCHED_SCOPE: "Отслеживаемые",
+    Match.SyncScope.LIVE: "Лайв",
+    Match.SyncScope.PREMATCH: "Скоро начнутся",
+    Match.SyncScope.FINISHED: "Завершённые",
+}
 SPORT_FILTERS = (
     ("all", "Все"),
     ("football", "Футбол"),
@@ -96,6 +133,11 @@ def match_list(request, sport=None, scope=None, selected_date=None):
     valid_match_filters = {value for value, _ in MATCH_FILTERS}
     if active_match_filter not in valid_match_filters:
         active_match_filter = MATCH_FILTER_ALL
+    active_sort = request.GET.get(MATCH_SORT_PARAM, MATCH_SORT_TIME)
+    if active_sort not in MATCH_SORTS:
+        active_sort = MATCH_SORT_TIME
+    search_query = " ".join(request.GET.get(MATCH_SEARCH_PARAM, "").split())[:MATCH_SEARCH_MAX_LENGTH]
+    list_params = {"match_filter": active_match_filter, "sort": active_sort, "query": search_query}
 
     today = timezone.localdate()
     selected_date = _selected_date(selected_date or request.GET.get("date"), today=today)
@@ -108,7 +150,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             scope=active_scope,
             selected_date=selected_date,
             sport=active_sport,
-            match_filter=active_match_filter,
+            **list_params,
         )
         live_path = live_url.split("?", 1)[0]
         if request.path != live_path or any(param in request.GET for param in ("sport", "scope", "date")):
@@ -124,7 +166,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
                 scope=active_scope,
                 selected_date=selected_date,
                 sport=active_sport,
-                match_filter=active_match_filter,
+                **list_params,
             ),
             permanent=False,
         )
@@ -151,6 +193,16 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             matches_queryset = matches_queryset.none()
     elif active_scope != "all":
         matches_queryset = matches_queryset.filter(sync_scope=active_scope)
+
+    if search_query:
+        matches_queryset = matches_queryset.filter(
+            Q(home_team__name__icontains=search_query)
+            | Q(home_team__name_ru__icontains=search_query)
+            | Q(away_team__name__icontains=search_query)
+            | Q(away_team__name_ru__icontains=search_query)
+            | Q(league__name__icontains=search_query)
+            | Q(league__name_ru__icontains=search_query)
+        )
 
     if request.user.is_authenticated:
         watch_exists = MatchWatch.objects.filter(
@@ -179,14 +231,18 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             ),
             distinct=True,
         ),
-    ).order_by("-is_watched", "scope_order", "starts_at", "id")
+    )
+    if active_sort == MATCH_SORT_POPULAR:
+        matches_queryset = matches_queryset.order_by("-is_watched", "scope_order", "-predictions_count", "starts_at", "id")
+    else:
+        matches_queryset = matches_queryset.order_by("-is_watched", "scope_order", "starts_at", "id")
     match_filter_tabs = _match_filter_tabs(
         request,
         matches_queryset=matches_queryset,
-        active_match_filter=active_match_filter,
         active_scope=active_scope,
         selected_date=selected_date,
         active_sport=active_sport,
+        list_params=list_params,
     )
     matches_queryset = _apply_match_filter(matches_queryset, active_match_filter)
 
@@ -286,18 +342,27 @@ def match_list(request, sport=None, scope=None, selected_date=None):
                     scope=scope,
                     selected_date=selected_date,
                     sport=active_sport,
-                    match_filter=active_match_filter,
+                    **list_params,
                 ),
             }
         )
 
+    sport_counts = {
+        row["sport__code"]: row["total"]
+        for row in _sport_count_source(date_matches_all, live_matches_all, active_scope, request.user)
+        .order_by()
+        .values("sport__code")
+        .annotate(total=Count("id", distinct=True))
+        if row["sport__code"]
+    }
     sport_tabs = _match_sport_filter_tabs(
         request,
         active_scope=active_scope,
         selected_date=selected_date,
         active_sport=active_sport,
         sport_catalog=sport_catalog,
-        active_match_filter=active_match_filter,
+        sport_counts=sport_counts,
+        list_params=list_params,
     )
 
     date_shortcuts = []
@@ -317,7 +382,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
                     scope=active_scope,
                     selected_date=shortcut_date,
                     sport=active_sport,
-                    match_filter=active_match_filter,
+                    **list_params,
                 ),
             }
         )
@@ -330,7 +395,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             scope=active_scope,
             selected_date=previous_date,
             sport=active_sport,
-            match_filter=active_match_filter,
+            **list_params,
         )
         if active_scope == Match.SyncScope.LIVE or previous_date >= min_match_date
         else ""
@@ -341,7 +406,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             scope=active_scope,
             selected_date=next_date,
             sport=active_sport,
-            match_filter=active_match_filter,
+            **list_params,
         )
         if active_scope == Match.SyncScope.LIVE or next_date <= max_match_date
         else ""
@@ -387,7 +452,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             scope=active_scope,
             selected_date="__DATE__",
             sport=active_sport,
-            match_filter=active_match_filter,
+            **list_params,
         ),
         "previous_date_iso": previous_date.isoformat(),
         "previous_date_url": previous_date_url,
@@ -397,7 +462,20 @@ def match_list(request, sport=None, scope=None, selected_date=None):
         "today_iso": today.isoformat(),
         "locked_card_odds": card_odds,
         "match_list_h1": seo["h1"],
-        "match_list_hero_meta": seo["hero_meta"],
+        "match_head": _match_head(
+            request,
+            active_scope=active_scope,
+            active_sport=active_sport,
+            active_sort=active_sort,
+            search_query=search_query,
+            selected_date=selected_date,
+            list_params=list_params,
+            seo=seo,
+            scope_tabs=scope_tabs,
+            sport_tabs=sport_tabs,
+            match_filter_tabs=match_filter_tabs,
+            matches_count=filtered_total_count,
+        ),
         "seo_meta": seo["meta"],
     }
 
@@ -407,7 +485,7 @@ def match_list(request, sport=None, scope=None, selected_date=None):
             scope=active_scope,
             selected_date=selected_date,
             sport=active_sport,
-            match_filter=active_match_filter,
+            **list_params,
         )
         return JsonResponse(
             {
@@ -424,11 +502,6 @@ def match_list(request, sport=None, scope=None, selected_date=None):
                     "twitter_title": seo["meta"]["og_title"],
                     "twitter_description": seo["meta"]["og_description"],
                 },
-                "sport_tabs_html": render_to_string(
-                    "game/includes/_match_sport_tabs.html",
-                    context,
-                    request=request,
-                ),
                 "scope_tabs_html": render_to_string(
                     "game/includes/_match_scope_tabs.html",
                     context,
@@ -501,27 +574,24 @@ def _match_sport_filter_tabs(
     selected_date,
     active_sport,
     sport_catalog,
-    active_match_filter,
+    sport_counts,
+    list_params,
 ) -> list[dict]:
+    all_url = _match_list_url(
+        request,
+        scope=active_scope,
+        selected_date=selected_date,
+        sport="all",
+        **list_params,
+    )
     tabs = [
         {
             "code": "",
             "label": "Все",
-            "href": _match_list_url(
-                request,
-                scope=active_scope,
-                selected_date=selected_date,
-                sport="all",
-                match_filter=active_match_filter,
-            ),
-            "url": _match_list_url(
-                request,
-                scope=active_scope,
-                selected_date=selected_date,
-                sport="all",
-                match_filter=active_match_filter,
-            ),
+            "href": all_url,
+            "url": all_url,
             "active": active_sport == "all",
+            "count": sum(sport_counts.values()),
         }
     ]
     for sport in sport_catalog:
@@ -530,15 +600,20 @@ def _match_sport_filter_tabs(
             scope=active_scope,
             selected_date=selected_date,
             sport=sport["code"],
-            match_filter=active_match_filter,
+            **list_params,
         )
+        active = active_sport == sport["code"]
         tabs.append(
             {
                 "code": sport["code"],
                 "label": sport["label"],
                 "href": url,
                 "url": url,
-                "active": active_sport == sport["code"],
+                # A second click on the selected sport goes back to all sports.
+                "toggle_url": all_url if active else url,
+                "active": active,
+                "count": sport_counts.get(sport["code"], 0),
+                "tile_key": SPORT_TILE_KEYS.get(sport["code"].lower(), "x"),
             }
         )
     return tabs
@@ -556,10 +631,10 @@ def _match_filter_tabs(
     request,
     *,
     matches_queryset,
-    active_match_filter: str,
     active_scope: str,
     selected_date,
     active_sport: str,
+    list_params: dict,
 ) -> list[dict]:
     counts = {
         MATCH_FILTER_ALL: matches_queryset.count(),
@@ -576,7 +651,7 @@ def _match_filter_tabs(
                 scope=active_scope,
                 selected_date=selected_date,
                 sport=active_sport,
-                match_filter=value,
+                **{**list_params, "match_filter": value},
             ),
         }
         for value, label in MATCH_FILTERS
@@ -717,20 +792,39 @@ def _should_redirect_to_clean_url(request, *, sport, scope) -> bool:
     return any(param in request.GET for param in ("sport", "scope", "date"))
 
 
-def _match_list_url(request, *, scope, selected_date, sport=None, match_filter=MATCH_FILTER_ALL):
+def _match_list_url(
+    request,
+    *,
+    scope,
+    selected_date,
+    sport=None,
+    match_filter=MATCH_FILTER_ALL,
+    sort=MATCH_SORT_TIME,
+    query="",
+):
     sport_code = sport or "all"
     if scope == Match.SyncScope.LIVE:
         base_url = reverse("game:match_list_live", kwargs={"sport": sport_code})
-        return _with_match_filter(base_url, match_filter)
+        return _with_list_params(base_url, match_filter=match_filter, sort=sort, query=query)
     selected_date_iso = selected_date.isoformat() if hasattr(selected_date, "isoformat") else str(selected_date)
     base_url = reverse("game:match_list")
-    return _with_match_filter(f"{base_url}{sport_code}/{scope}/{selected_date_iso}/", match_filter)
+    return _with_list_params(
+        f"{base_url}{sport_code}/{scope}/{selected_date_iso}/",
+        match_filter=match_filter,
+        sort=sort,
+        query=query,
+    )
 
 
-def _with_match_filter(url: str, match_filter: str) -> str:
-    if match_filter in ("", None, MATCH_FILTER_ALL):
-        return url
-    return f"{url}?{urlencode({MATCH_FILTER_PARAM: match_filter})}"
+def _with_list_params(url: str, *, match_filter: str, sort: str, query: str) -> str:
+    params = {}
+    if match_filter not in ("", None, MATCH_FILTER_ALL):
+        params[MATCH_FILTER_PARAM] = match_filter
+    if sort not in ("", None, MATCH_SORT_TIME):
+        params[MATCH_SORT_PARAM] = sort
+    if query:
+        params[MATCH_SEARCH_PARAM] = query
+    return f"{url}?{urlencode(params)}" if params else url
 
 
 def _date_in_index_window(selected_date, *, today) -> bool:
@@ -739,12 +833,85 @@ def _date_in_index_window(selected_date, *, today) -> bool:
     return min_date <= selected_date <= max_date
 
 
-def _hero_count(active_scope: str, total_count: int, counts: dict, watched_count: int) -> int:
-    if active_scope == "all":
-        return total_count
-    if active_scope == WATCHED_SCOPE:
-        return watched_count
-    return counts.get(active_scope, 0)
+def _match_head(
+    request,
+    *,
+    active_scope: str,
+    active_sport: str,
+    active_sort: str,
+    search_query: str,
+    selected_date,
+    list_params: dict,
+    seo: dict,
+    scope_tabs: list[dict],
+    sport_tabs: list[dict],
+    match_filter_tabs: list[dict],
+    matches_count: int,
+) -> dict:
+    """Sticky header of the match list: title, sport tiles and chips, scope/search/sort row."""
+    is_live = active_scope == Match.SyncScope.LIVE
+    matches_word = plural_ru(matches_count, "матч", "матча", "матчей")
+    if is_live:
+        count_label = f"{matches_word} в эфире"
+    elif active_scope == WATCHED_SCOPE:
+        count_label = f"{matches_word} в отслеживании"
+    else:
+        count_label = f"{matches_word} на {date_format(selected_date, 'j E')}"
+    with_predictions = next(
+        (tab["count"] for tab in match_filter_tabs if tab["value"] == MATCH_FILTER_WITH_PREDICTIONS),
+        0,
+    )
+    sports_total = sport_tabs[0]["count"] if sport_tabs else 0
+    other_sort = MATCH_SORT_POPULAR if active_sort == MATCH_SORT_TIME else MATCH_SORT_TIME
+    search_url = _match_list_url(
+        request,
+        scope=active_scope,
+        selected_date=selected_date,
+        sport=active_sport,
+        **{**list_params, "query": ""},
+    )
+    return {
+        "is_live": is_live,
+        "title_main": seo["h1_main"],
+        "title_rest": seo["h1_rest"],
+        "lede": SCOPE_HEAD_LEDES.get(active_scope, SCOPE_HEAD_LEDES["all"]),
+        "count": matches_count,
+        "count_label": count_label,
+        "with_predictions": with_predictions,
+        "with_predictions_label": (
+            f"{with_predictions} уже с прогнозами" if with_predictions else "пока без прогнозов"
+        ),
+        "sports_total": sports_total,
+        "sports_total_label": (
+            "в эфире" if is_live else plural_ru(sports_total, "матч", "матча", "матчей")
+        ),
+        "all_sports_url": sport_tabs[0]["url"] if sport_tabs else "",
+        "all_sports_active": active_sport == "all",
+        "sports": sport_tabs[1:],
+        "scopes": [
+            {
+                "scope": tab["scope"],
+                "label": SCOPE_HEAD_LABELS.get(tab["scope"], tab["label"]),
+                "url": tab["url"],
+                "active": tab["scope"] == active_scope,
+            }
+            for tab in scope_tabs
+        ],
+        "sort_label": MATCH_SORTS[active_sort],
+        "sort_url": _match_list_url(
+            request,
+            scope=active_scope,
+            selected_date=selected_date,
+            sport=active_sport,
+            **{**list_params, "sort": other_sort},
+        ),
+        "search_query": search_query,
+        "search_action": search_url.split("?", 1)[0],
+        "search_hidden": [
+            {"name": name, "value": value}
+            for name, value in parse_qsl(search_url.split("?", 1)[1] if "?" in search_url else "")
+        ],
+    }
 
 
 def _match_list_seo(request, *, active_scope: str, active_sport: str, selected_date, today) -> dict:
@@ -753,17 +920,15 @@ def _match_list_seo(request, *, active_scope: str, active_sport: str, selected_d
     date_label = selected_date.strftime("%d.%m.%Y")
 
     if active_scope == Match.SyncScope.LIVE:
-        h1 = f"{scope_label} {sport_label}"
-        title = f"{h1} — КапперХаб"
+        h1_rest = sport_label
         description = f"Актуальные live-матчи {sport_label}: счет, статус игры и коэффициенты на КапперХаб."
-        hero_meta = "игр сейчас"
     else:
-        h1 = f"{scope_label} {sport_label} на {date_label}"
-        title = f"{h1} — КапперХаб"
+        h1_rest = f"{sport_label} на {date_label}"
         description = f"{scope_label} {sport_label} на {date_label}: расписание, статусы, коэффициенты и прогнозы капперов."
-        hero_meta = f"игр на {selected_date.strftime('%d.%m')}"
+    h1 = f"{scope_label} {h1_rest}"
+    title = f"{h1} — КапперХаб"
 
-    utility_params = {"partial", "lazy", "page", "window", "view", "table_sport", MATCH_FILTER_PARAM}
+    utility_params = {"partial", "lazy", "page", "window", "view", "table_sport", MATCH_FILTER_PARAM, MATCH_SORT_PARAM}
     public_query_params = set(request.GET) - utility_params
     robots = "index,follow"
     if active_scope == WATCHED_SCOPE or public_query_params:
@@ -779,7 +944,8 @@ def _match_list_seo(request, *, active_scope: str, active_sport: str, selected_d
 
     return {
         "h1": h1,
-        "hero_meta": hero_meta,
+        "h1_main": scope_label,
+        "h1_rest": h1_rest,
         "meta": {
             "page": None,
             "title": title,
