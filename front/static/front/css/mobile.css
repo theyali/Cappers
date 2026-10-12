@@ -53,7 +53,6 @@ summary:focus-visible,
 }
 
 .matches-mobile-scope-panel,
-.matches-mobile-sports-panel,
 .mobile-prediction-filters,
 .mobile-match-filters {
   display: none;
@@ -12263,84 +12262,6 @@ body.expert-public-details-open {
     scrollbar-gutter: auto;
   }
 
-  .matches-mobile-sports-panel {
-    display: block !important;
-    position: sticky;
-    top: 0;
-    z-index: 45;
-    width: 100%;
-    margin-right: 0;
-    margin-left: 0;
-    background: #08111c;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tabs {
-      width: 100%;
-      min-height: auto;
-      display: flex !important;
-      align-items: center;
-      justify-content: space-around;
-      gap: 3px;
-      margin: 0;
-      padding: 0;
-      overflow-x: auto;
-      overflow-y: hidden;
-      overscroll-behavior-x: contain;
-      border-radius: 0;
-      background: var(--ink);
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tab {
-    position: relative;
-    width: 48px;
-    min-width: 48px;
-    height: 50px;
-    min-height: 50px;
-    flex: 0 0 48px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    border-radius: 12px;
-    color: rgba(255, 255, 255, 0.58) !important;
-    background: transparent !important;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-tab.is-active::after {
-    content: "";
-    position: absolute;
-    right: 10px;
-    bottom: 0;
-    left: 10px;
-    height: 3px;
-    border-radius: 999px 999px 0 0;
-    background: var(--yellow);
-  }
-
-  .matches-mobile-sports-panel .matches-sport-icon {
-    width: 24px;
-    height: 24px;
-    display: grid;
-    place-items: center;
-    color: currentColor;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-icon svg {
-    width: 100%;
-    height: 100%;
-    color: currentColor !important;
-  }
-
-  .matches-mobile-sports-panel .matches-sport-label,
-  .matches-mobile-sports-panel .matches-sport-tab > b {
-    display: none !important;
-  }
 }
 
 @media (max-width: 1180px) {
@@ -12949,7 +12870,7 @@ body.expert-public-details-open {
   .home-search-main h1 { max-width: 540px; font-size: clamp(30px, 7.8vw, 41px); line-height: 1.08; }
   .home-search-main h1 mark { display: block; }
   .home-search-description { margin: 18px 0 20px; font-size: 14px; line-height: 1.5; }
-  .home-search-popular { justify-content: flex-start; gap: 7px; margin-top: 13px; font-size: 12px; }
+  .home-search-popular { display: none; }
   .home-search-popular a { padding: 8px 10px; }
   .home-search-sports { gap: 8px; flex-wrap: nowrap; overflow-x: auto; margin: 18px 0 0; padding-bottom: 3px; scrollbar-width: none; }
   .home-search-sports::-webkit-scrollbar { display: none; }

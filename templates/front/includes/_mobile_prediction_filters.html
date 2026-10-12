@@ -29,11 +29,5 @@
         </nav>
         {% endif %}
     </div>
-
-    {% if sport_tabs %}
-    <div class="matches-mobile-sports-panel prediction-mobile-sports-panel" aria-label="Фильтр по спорту на мобильных устройствах">
-        {% include "game/includes/_match_sport_tabs.html" with sport_tabs=sport_tabs sport_tabs_aria_label="Фильтр по спорту" %}
-    </div>
-    {% endif %}
 </div>
 {% endif %}
