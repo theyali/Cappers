@@ -9948,19 +9948,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     font-weight: 700;
     line-height: 1;
 }
-.following-story-live {
-    position: absolute;
-    right: 7px;
-    bottom: -9px;
-    padding: 3px 6px;
-    border-radius: 4px;
-    color: #fff;
-    background: #c73245;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: .03em;
-    line-height: 1;
-}
 .following-story-avatar > .capper-verified-badge {
     position: absolute;
     right: -7px;
