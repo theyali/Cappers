@@ -11152,7 +11152,8 @@ body.register footer {
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
 }
 .expert-public-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-.expert-public-kicker {
+.expert-public-kicker { margin: 0 0 7px; color: #ffe500; font-size: 13px; font-weight: 600; }
+.expert-public-hero .expert-public-kicker {
     margin: 0;
     color: #f6ec4e;
     font-size: 12px;
@@ -11190,7 +11191,7 @@ body.register footer {
 }
 .expert-public-since svg { flex: 0 0 15px; }
 .expert-public-name-row { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; width: 100%; min-width: 0; }
-.expert-public-name-row h1 {
+.expert-public-hero .expert-public-name-row h1 {
     overflow: hidden;
     max-width: 100%;
     min-width: 0;
@@ -17526,7 +17527,7 @@ body.register {
     font-weight: 400;
     box-shadow: none;
 }
-.expert-public-avatar .capper-trust-badge { top: -8px; left: -8px; width: 40px; height: 40px; font-size: 15px; }
+.expert-public-avatar .capper-trust-badge { top: -11px; left: -11px; width: 34px; height: 34px; font-size: 14px; }
 .expert-leader-badges {
     position: absolute;
     right: -7px;
