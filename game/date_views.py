@@ -173,7 +173,12 @@ def match_list(request, sport=None, scope=None, selected_date=None):
 
     day_start, day_end = _local_day_bounds(selected_date)
 
-    date_matches_all = Match.objects.filter(starts_at__gte=day_start, starts_at__lt=day_end)
+    date_filter = Q(starts_at__gte=day_start, starts_at__lt=day_end)
+    if selected_date == today:
+        # Matches being played now belong to today even when they kicked off earlier,
+        # so «Все» and the sport counts cover every match the Live tab shows.
+        date_filter |= Q(sync_scope=Match.SyncScope.LIVE)
+    date_matches_all = Match.objects.filter(date_filter)
     live_matches_all = Match.objects.filter(sync_scope=Match.SyncScope.LIVE)
     date_matches = _filter_by_sport(date_matches_all, active_sport)
     live_matches = _filter_by_sport(live_matches_all, active_sport)

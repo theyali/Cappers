@@ -122,3 +122,20 @@ class MatchListHeadTests(TestCase):
         self.assertIn("<strong>матч в эфире</strong>", payload["hero_html"])
         self.assertNotIn("sport_tabs_html", payload)
         self.assertNotIn("prediction-results-head", payload["content_html"])
+
+    def test_today_counts_live_matches_that_started_before_the_day(self):
+        self.match(self.football)
+        late_live = self.match(self.hockey, scope=Match.SyncScope.LIVE)
+        late_live.starts_at = timezone.now() - timedelta(days=1)
+        late_live.save(update_fields=["starts_at"])
+
+        today = self.client.get(self.url())
+        tomorrow = self.client.get(f"/games/all/all/{(self.today + timedelta(days=1)).isoformat()}/")
+
+        scope_counts = {tab["scope"]: tab["count"] for tab in today.context["scope_tabs"]}
+        self.assertEqual(scope_counts["all"], 2)
+        self.assertEqual(scope_counts[Match.SyncScope.LIVE], 1)
+        self.assertIn(late_live.id, [match.id for match in today.context["matches"]])
+        tiles = {sport["code"]: sport["count"] for sport in today.context["match_head"]["sports"]}
+        self.assertEqual(tiles, {"football": 1, "ice-hockey": 1})
+        self.assertNotIn(late_live.id, [match.id for match in tomorrow.context["matches"]])
