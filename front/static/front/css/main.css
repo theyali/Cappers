@@ -22456,21 +22456,16 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 }
 .vip-cappers-banner {
     width: 100%;
-    max-width: 340px;
-    height: 559px;
     min-width: 0;
     box-sizing: border-box;
-    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 0;
-    background: #0e0f12;
     font-family: var(--font-body);
     color: #fff;
 }
 .vip-cappers-banner__panel {
     width: 100%;
-    max-width: 300px;
     box-sizing: border-box;
     padding: 16px;
     border-radius: 20px;
@@ -22478,7 +22473,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    background-color: #141519;
+    background-color: var(--panel);
 }
 .vip-cappers-banner__head {
     display: flex;
