@@ -1,11 +1,14 @@
 from decimal import Decimal
+from tempfile import TemporaryDirectory
 from datetime import timedelta
 from io import StringIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.core.management import call_command
-from django.test import SimpleTestCase, TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management.base import CommandError
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from bots.models import (
@@ -34,7 +37,7 @@ from bots.services import (
     run_bot_tournament_activity,
     set_bot_runtime_mode,
 )
-from cabinet.models import User
+from cabinet.models import PresetAvatar, User
 from cabinet.presence import UserPresence
 from front.models import PredictionLike
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
@@ -772,3 +775,95 @@ class BotRuntimeTests(TestCase):
 
         self.assertEqual(result["skipped"], 1)
         self.assertEqual(result["reasons"], {"no_active_session": 1})
+
+
+class BotAvatarCommandTests(TestCase):
+    def setUp(self):
+        self.media_dir = TemporaryDirectory()
+        self.addCleanup(self.media_dir.cleanup)
+        media_override = override_settings(MEDIA_ROOT=self.media_dir.name)
+        media_override.enable()
+        self.addCleanup(media_override.disable)
+
+    def _preset(self, gender, filename, content):
+        return PresetAvatar.objects.create(
+            title=filename,
+            gender=gender,
+            is_active=True,
+            image=SimpleUploadedFile(filename, content, content_type="image/png"),
+        )
+
+    def _bot(self, username, gender="", *, is_active=True):
+        user = User.objects.create_user(
+            username=username, password="test-password", gender=gender,
+        )
+        BotAccount.objects.create(
+            user=user, kind=BotAccount.Kind.READER, is_active=is_active,
+        )
+        return user
+
+    def test_all_bots_use_matching_presets_without_touching_real_users(self):
+        self._preset(PresetAvatar.Gender.MALE, "male.png", b"male-image")
+        self._preset(PresetAvatar.Gender.FEMALE, "female.png", b"female-image")
+        self._preset(PresetAvatar.Gender.ALL, "all.png", b"universal-image")
+        male = self._bot("male_bot", User.Gender.MALE)
+        female = self._bot("female_bot", User.Gender.FEMALE)
+        unknown = self._bot("unknown_bot")
+        inactive = self._bot("inactive_bot", is_active=False)
+        real = User.objects.create_user(username="real_user", password="test-password")
+
+        output = StringIO()
+        call_command("update_bot_avatars", seed=5, stdout=output)
+
+        self.assertIn("Обновлено аватаров: 4", output.getvalue())
+        for user, allowed in (
+            (male, {b"male-image", b"universal-image"}),
+            (female, {b"female-image", b"universal-image"}),
+            (unknown, {b"male-image", b"universal-image"}),
+            (inactive, {b"male-image", b"universal-image"}),
+        ):
+            user.refresh_from_db()
+            with user.avatar.open("rb") as uploaded:
+                self.assertIn(uploaded.read(), allowed)
+        real.refresh_from_db()
+        self.assertFalse(real.avatar)
+
+    def test_dry_run_does_not_change_existing_avatar(self):
+        self._preset(PresetAvatar.Gender.MALE, "male.png", b"male-image")
+        user = self._bot("test_bot")
+        user.avatar.save("original.png", SimpleUploadedFile("original.png", b"old"), save=True)
+        original = user.avatar.name
+
+        output = StringIO()
+        call_command("update_bot_avatars", dry_run=True, stdout=output)
+        user.refresh_from_db()
+        self.assertEqual(user.avatar.name, original)
+        self.assertIn("Можно обновить аватаров: 1", output.getvalue())
+
+        call_command("update_bot_avatars", only_missing=True, stdout=StringIO())
+        user.refresh_from_db()
+        self.assertEqual(user.avatar.name, original)
+
+    def test_replaces_existing_bot_avatar_by_default(self):
+        self._preset(PresetAvatar.Gender.MALE, "male.png", b"new-image")
+        bot = self._bot("replace_bot")
+        bot.avatar.save("old.png", SimpleUploadedFile("old.png", b"old-image"), save=True)
+        original = bot.avatar.name
+
+        call_command("update_bot_avatars", stdout=StringIO())
+        bot.refresh_from_db()
+        self.assertNotEqual(bot.avatar.name, original)
+        with bot.avatar.open("rb") as file:
+            self.assertEqual(file.read(), b"new-image")
+
+    def test_skips_bots_without_matching_gender(self):
+        self._preset(PresetAvatar.Gender.FEMALE, "female.png", b"female-image")
+        male = self._bot("male_bot", User.Gender.MALE)
+        call_command("update_bot_avatars", stdout=StringIO(), stderr=StringIO())
+        male.refresh_from_db()
+        self.assertFalse(male.avatar)
+
+    def test_fails_when_no_active_preset_avatars_exist(self):
+        self._bot("bot")
+        with self.assertRaises(CommandError):
+            call_command("update_bot_avatars", stdout=StringIO())

@@ -1,9 +1,11 @@
-from random import randint
+from math import ceil
 
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.formats import date_format
+from django.utils.html import strip_tags
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -26,6 +28,7 @@ from achievements.evaluators import user_achievement_metrics
 
 from .achievements import build_achievement_badges
 from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
+from .services.capper_articles import decorate_capper_articles
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
     build_paid_checkout_context,
@@ -348,6 +351,7 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
             tournament__status__in=(Tournament.Status.PUBLISHED, Tournament.Status.ARCHIVED),
         )
         .select_related("tournament")
+        .annotate(participants_count=Count("tournament__participants", distinct=True))
         .order_by("-tournament__ends_at", "-joined_at", "-id")
     )
     if not participations:
@@ -395,9 +399,42 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
         profit = getattr(source, "profit", 0) if result is not None else (source or {}).get("profit", 0)
         roi_percent = getattr(source, "roi_percent", 0) if result is not None else (source or {}).get("roi_percent", 0)
 
+        if is_finished:
+            date_label = f"завершён {date_format(timezone.localtime(tournament.ends_at), 'j E')}"
+        elif runtime_status == "live":
+            date_label = "идёт сейчас"
+        else:
+            date_label = f"начало {date_format(timezone.localtime(tournament.starts_at), 'j E')}"
+
+        if is_finished:
+            achievement = result.achievement if result is not None else None
+            if achievement:
+                reward_label = achievement.title
+            elif rank == 1:
+                reward_label = "Победитель турнира"
+            elif rank in (2, 3):
+                reward_label = "Призёр турнира"
+            else:
+                reward_label = "Без награды"
+            reward_kind = "winner" if rank == 1 else "prize" if rank in (2, 3) else "other"
+        else:
+            reward_label = "награда ещё не определена"
+            reward_kind = "pending"
+
+        remaining_label = ""
+        if status_key == "live":
+            remaining_days = max(1, ceil((tournament.ends_at - timezone.now()).total_seconds() / 86400))
+            remaining_label = f"осталось {remaining_days} {plural_ru(remaining_days, 'день', 'дня', 'дней')}"
+
         rows.append(
             {
                 "participant": participant,
+                "remaining_label": remaining_label,
+                "participants_count": participant.participants_count,
+                "date_label": date_label,
+                "display_status_label": "Идёт сейчас" if status_key == "live" else status_label,
+                "reward_label": reward_label,
+                "reward_kind": reward_kind,
                 "tournament": tournament,
                 "url": tournament.get_absolute_url(),
                 "runtime_status": runtime_status,
@@ -455,7 +492,6 @@ def expert_profile(request, username: str):
 
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
-    context["expert_public_hero_index"] = randint(1, 5)
     context["profile_presence"] = presence_payload(profile.user)
     context["expert_public_tags"] = _profile_tag_list(
         profile.favorite_sports,
@@ -495,14 +531,24 @@ def expert_profile(request, username: str):
         row for row in finished_tournaments if row["achievement"] is not None
     ]
     context["expert_tournaments_count"] = len(current_tournaments) + len(finished_tournaments)
-    expert_articles = list(
+    context["expert_tournament_preview_rows"] = (current_tournaments + finished_tournaments)[:4]
+    context["expert_tournament_stats"] = {
+        "played": len(finished_tournaments),
+        "wins": sum(row["rank"] == 1 for row in finished_tournaments),
+        "podiums": sum(row["rank"] in (1, 2, 3) for row in finished_tournaments),
+        "prize_total": sum((row["prize_amount"] for row in finished_tournaments), 0),
+    }
+    expert_articles = decorate_capper_articles(
         CapperArticle.objects.filter(
             author=profile.user,
             status=CapperArticle.Status.APPROVED,
-        ).order_by("-published_at", "-id")
+        ).select_related("author").order_by("-published_at", "-id")
     )
     context["expert_articles"] = expert_articles
     context["expert_latest_articles"] = expert_articles[:3]
+    context["expert_articles_total_views"] = sum(
+        article.article_views_count for article in expert_articles
+    )
 
     paid_subscription = active_paid_subscriptions_by_analyst(
         request.user,

@@ -1275,8 +1275,7 @@ body.expert-public-details-open {
   .predictions-layout > .predictions-filter-sidebar {
     display: none;
   }
-  .predictions-layout > .predictions-ad-sidebar,
-  .favorites-layout > .favorites-right-sidebar {
+  .predictions-layout > .predictions-ad-sidebar {
     position: static;
     grid-column: 1/-1;
     max-height: none;
@@ -5835,19 +5834,6 @@ body.expert-public-details-open {
     justify-self: start;
     text-align: left;
   }
-  .favorites-empty {
-    min-height: 320px;
-    padding: 38px 18px;
-  }
-  .favorites-empty-logo {
-    width: 78px;
-    height: 78px;
-    border-radius: 20px;
-  }
-  .favorites-empty-logo img {
-    width: 58px;
-    height: 58px;
-  }
   .articles-hero {
     align-items: flex-start;
     flex-direction: column;
@@ -6377,15 +6363,6 @@ body.expert-public-details-open {
     grid-row: 1;
   }
 
-  .favorites-layout > .favorites-filter-sidebar,
-  .favorites-layout > .favorites-right-sidebar,
-  .favorites-layout > .favorites-content {
-    position: static;
-    grid-column: 1;
-    max-height: none;
-    overflow: visible;
-    scrollbar-gutter: auto;
-  }
   .predictions-content {
     grid-column: 1;
     grid-row: 2;
@@ -6826,7 +6803,6 @@ body.expert-public-details-open {
   .expert-public-tab,
   .expert-row,
   .experts-bottom-action,
-  .favorites-empty-action,
   .forecast-slide,
   .home-all-link,
   .home-article-card,
@@ -8044,119 +8020,303 @@ body.expert-public-details-open {
         scrollbar-width: auto;
     }
 
-    .expert-public-tournaments .profile-list-card {
+    .expert-public-tournaments .expert-public-tournaments-desktop { display: none; }
+    .expert-public-tournaments .expert-public-tournaments-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
         min-width: 0;
-        padding: 16px;
-        border-radius: 18px;
+        box-sizing: border-box;
+        padding: 0px;
+        color: #fff;
+        font-family: var(--font-body);
     }
-
-    .expert-public-tournaments .profile-section-heading {
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 22px;
+    .expert-public-tournaments-mobile-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
     }
-
-    .expert-public-tournaments .profile-section-heading .eyebrow,
-    .expert-public-tournaments .profile-list-head .eyebrow {
-        margin: 0 0 8px;
-        color: var(--yellow);
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 1.1;
-        letter-spacing: 0.15em;
+    .expert-public-tournaments-mobile-heading {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
     }
-
-    .expert-public-tournaments .profile-section-heading h2,
-    .expert-public-tournaments .profile-list-head h2 {
+    .expert-public-tournaments-mobile-heading > span {
+        color: #f6ec4e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+    }
+    .expert-public-tournaments-mobile-heading h2 {
         margin: 0;
-        font-size: 28px;
-        font-weight: 600;
-        line-height: 1.05;
-    }
-
-    .expert-public-tournaments .profile-coupon-count {
-        min-width: 54px;
-        min-height: 54px;
-        border-radius: 13px;
+        color: #fff;
+        font-family: var(--font-display);
         font-size: 18px;
-        font-weight: 600;
+        font-weight: 800;
     }
-
-    .expert-public-tournaments .profile-list-head {
-        display: block;
-        margin: 0 0 12px;
+    .expert-public-tournaments-mobile-head > a {
+        flex: none;
+        color: #f6ec4e;
+        font-size: 12.5px;
+        font-weight: 800;
+        text-decoration: none;
     }
-
-    .expert-public-tournaments .profile-coupons-list {
+    .expert-public-tournaments-mobile-summary {
+        display: flex;
         gap: 8px;
     }
-
-    .expert-public-tournaments .profile-coupon-row {
-        min-height: 66px;
-        grid-template-columns: 54px minmax(0, 1fr) auto 22px;
-        gap: 10px;
-        padding: 8px;
-        border-radius: 14px;
-        background: transparent;
-    }
-
-    .expert-public-tournaments .profile-coupon-main {
-        display: contents;
-    }
-
-    .expert-public-tournaments .profile-coupon-id {
-        width: 44px;
-        height: 44px;
-        align-self: center;
-        border-radius: 10px;
-        font-size: 10px;
-        font-weight: 600;
-        line-height: 1.05;
-    }
-
-    .expert-public-tournaments .profile-coupon-copy {
+    .expert-public-tournaments-mobile-stat {
+        flex: 1;
         min-width: 0;
-        align-self: center;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #17181e;
+        box-shadow: inset 0 0 0 1px #24262e;
     }
-
-    .expert-public-tournaments .profile-coupon-copy strong {
-        display: block;
-        font-size: 15px;
-        font-weight: 600;
-        line-height: 1.15;
-    }
-
-    .expert-public-tournaments .profile-coupon-copy span {
-        display: block;
-        max-width: 100%;
-        margin-top: 5px;
+    .expert-public-tournaments-mobile-stat strong {
         overflow: hidden;
-        color: var(--muted);
-        font-size: 11px;
-        font-weight: 600;
-        line-height: 1.25;
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
         white-space: nowrap;
         text-overflow: ellipsis;
     }
-
-    .expert-public-tournaments .profile-coupon-status {
-        align-self: center;
-        min-height: 34px;
-        padding: 0 10px;
-        border-radius: 11px;
+    .expert-public-tournaments-mobile-stat.is-wins strong { color: #f6ec4e; }
+    .expert-public-tournaments-mobile-stat.is-prizes strong { color: #5be38a; }
+    .expert-public-tournaments-mobile-stat > span {
+        color: #6b6e78;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
+        white-space: nowrap;
     }
-
-    .expert-public-tournaments .profile-coupon-metric {
-        display: none;
+    .expert-public-tournaments-mobile-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
     }
-
-    .expert-public-tournaments .profile-coupon-open {
-        align-self: center;
-        color: var(--blue);
-        font-size: 28px;
-        line-height: 1;
+    .expert-public-tournaments-mobile-card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 14px;
+        border-radius: 16px;
+        background: #17181e;
+        box-shadow: inset 0 0 0 1px #24262e;
+        color: #fff;
+        text-decoration: none;
+    }
+    .expert-public-tournaments-mobile-card.is-live {
+        box-shadow: inset 0 0 0 1.5px rgba(91, 227, 138, .4);
+    }
+    .expert-public-tournaments-mobile-card-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-icon {
+        --tournament-icon-color: #09663f;
+        position: relative;
+        display: inline-flex;
+        flex: 0 0 44px;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        overflow: hidden;
+        border-radius: 13px;
+        background: var(--tournament-icon-color);
+    }
+    .expert-public-tournaments-mobile-icon-pattern {
+        position: absolute;
+        inset: 0;
+        width: 44px;
+        height: 44px;
+    }
+    .expert-public-tournaments-mobile-icon-inner {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .expert-public-tournaments-mobile-icon-inner img,
+    .expert-public-tournaments-mobile-icon-inner svg {
+        display: block;
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+    }
+    .expert-public-tournaments-mobile-card-title {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .expert-public-tournaments-mobile-card-title strong {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+    .expert-public-tournaments-mobile-state {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 23px;
+        padding: 0 10px;
+        border-radius: 8px;
+        background: #23252d;
+        color: #a3a6b0;
+        font-size: 10.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-state.is-live {
+        padding-left: 8px;
+        background: rgba(91, 227, 138, .14);
+        color: #5be38a;
+    }
+    .expert-public-tournaments-mobile-state.is-live i {
+        flex: 0 0 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #5be38a;
+    }
+    .expert-public-tournaments-mobile-separator {
+        flex: none;
+        height: 1px;
+        background: #24262e;
+    }
+    .expert-public-tournaments-mobile-card-bottom {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-rank {
+        display: inline-flex;
+        flex: 0 0 32px;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #24262e;
+        color: #a3a6b0;
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 800;
+    }
+    .expert-public-tournaments-mobile-rank.is-first {
+        background: #f6ec4e;
+        color: #141519;
+        font-size: 13px;
+    }
+    .expert-public-tournaments-mobile-rank.is-third {
+        background: #ce8e4d;
+        color: #141519;
+        font-size: 13px;
+    }
+    .expert-public-tournaments-mobile-result {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-place {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 5px;
+    }
+    .expert-public-tournaments-mobile-place strong {
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }
+    .expert-public-tournaments-mobile-place strong.is-first { color: #f6ec4e; }
+    .expert-public-tournaments-mobile-place strong.is-third { color: #ce8e4d; }
+    .expert-public-tournaments-mobile-place small {
+        color: #6b6e78;
+        font-size: 10.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-result-caption {
+        overflow: hidden;
+        color: #6b6e78;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .expert-public-tournaments-mobile-award {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+    }
+    .expert-public-tournaments-mobile-remaining {
+        color: #f6ec4e;
+        font-size: 11.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-award-icon {
+        display: inline-flex;
+        flex: 0 0 32px;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        overflow: hidden;
+        border-radius: 9px;
+        background: #23252d;
+    }
+    .expert-public-tournaments-mobile-award-icon.is-winner { background: #b45309; }
+    .expert-public-tournaments-mobile-award-icon.is-prize { background: #9f1239; }
+    .expert-public-tournaments-mobile-award-icon img {
+        display: block;
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+    .expert-public-tournaments-mobile-award-icon svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+    }
+    .expert-public-tournaments-mobile-prize {
+        color: #5be38a;
+        font-size: 11.5px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .expert-public-tournaments-mobile-empty {
+        margin: 0;
+        padding: 20px 0;
+        color: #6b6e78;
+        font-size: 13px;
+        font-weight: 700;
     }
 
     .cabinet-bonuses-page .bonus-dashboard-grid {
@@ -9122,15 +9282,6 @@ body.expert-public-details-open {
   .cappers-table-page {
     gap: 12px;
   }
-  .cappers-table-hero {
-    min-height: 0;
-    align-items: stretch;
-    flex-direction: column;
-    padding: 20px;
-  }
-  .cappers-table-hero h1 {
-    font-size: 34px;
-  }
   .cappers-table-total {
     min-width: 0;
     min-height: 64px;
@@ -9206,59 +9357,6 @@ body.expert-public-details-open {
     min-width: 0;
     overflow: visible;
     padding: 0 0 92px;
-  }
-  .cappers-table-hero {
-    position: relative;
-    overflow: hidden;
-    min-height: 260px;
-    padding: 18px;
-    border-radius: 18px;
-    background-position: center;
-  }
-  .cappers-table-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(90deg, rgba(10, 10, 12, 0.92) 0%, rgba(10, 10, 12, 0.72) 52%, rgba(10, 10, 12, 0.24) 100%),
-      linear-gradient(0deg, rgba(10, 10, 12, 0.68), rgba(10, 10, 12, 0.08));
-  }
-  .cappers-table-hero > * {
-    position: relative;
-    z-index: 1;
-  }
-  .cappers-table-eyebrow {
-    font-size: 11px;
-  }
-  .cappers-table-hero h1 {
-    max-width: 300px;
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .cappers-table-hero p:last-child {
-    max-width: 300px;
-    font-size: 12px;
-    line-height: 1.45;
-  }
-  .cappers-table-hero .profile-hero-stats {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-top: 16px;
-  }
-  .cappers-table-hero .cappers-ranking-expert {
-    width: 100%;
-    min-width: 0;
-    padding: 8px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.07);
-  }
-  .cappers-table-hero .home-best-expert-name {
-    font-size: 14px;
-    font-weight: 700;
-  }
-  .cappers-table-hero .home-best-expert-username {
-    font-size: 11px;
   }
   .cappers-ranking-region {
     min-width: 0;
@@ -10970,6 +11068,209 @@ body.expert-public-details-open {
     border-radius: 14px;
   }
 
+  .capper-article-showcase {
+    gap: 16px;
+    padding: 20px;
+    border-radius: 0;
+  }
+
+  .capper-articles-page .capper-article-showcase,
+  .expert-public-articles .capper-article-showcase {
+    border-radius: 16px;
+  }
+
+  .capper-article-showcase-head {
+    gap: 6px;
+  }
+
+  .capper-article-showcase-head > span {
+    font-size: 10px;
+  }
+
+  .capper-article-showcase-head h2 {
+    font-size: 22px;
+  }
+
+  .capper-article-showcase-head p {
+    font-size: 12.5px;
+  }
+
+  .capper-article-showcase-toolbar {
+    display: block;
+    min-width: 0;
+  }
+
+  .capper-article-filter-rail {
+    gap: 8px;
+    margin: 0 -20px;
+    padding: 0 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .capper-article-filter-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .capper-article-filter-rail > span {
+    height: 34px;
+    padding: 0 14px;
+  }
+
+  .capper-article-toolbar-spacer,
+  .capper-article-toolbar-control {
+    display: none;
+  }
+
+  .capper-article-list-item {
+    gap: 12px;
+    padding: 14px 0;
+  }
+
+  .capper-article-list-media {
+    width: 96px;
+    height: 84px;
+    border-radius: 12px;
+  }
+
+  .capper-article-visual-object {
+    right: -16px;
+    bottom: -21px;
+    width: 79px;
+    height: 79px;
+  }
+
+  .capper-article-visual.is-hockey .capper-article-visual-object {
+    right: -12px;
+    bottom: -3px;
+    width: 88px;
+    height: 88px;
+  }
+
+  .capper-article-list-copy {
+    gap: 6px;
+  }
+
+  .capper-article-list-meta {
+    gap: 9px;
+    font-size: 10.5px;
+  }
+
+  .capper-article-kind {
+    font-size: 9.5px;
+  }
+
+  .capper-article-list-title {
+    overflow: hidden;
+    display: -webkit-box;
+    font-size: 13.5px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .capper-article-list-excerpt,
+  .capper-article-list-side {
+    display: none;
+  }
+
+  .capper-article-mobile-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    color: #6b6e78;
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+
+  .capper-article-mobile-details span:nth-child(2) {
+    color: #24262e;
+  }
+
+  .capper-article-list-item.is-featured {
+    width: 100%;
+    overflow: hidden;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    background: #17181e;
+    box-shadow: inset 0 0 0 1px #24262e;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-list-media {
+    width: 100%;
+    height: 150px;
+    border-radius: 0;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-list-copy {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    padding: 14px;
+    gap: 9px;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-list-title {
+    font-size: 15px;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-list-excerpt {
+    display: -webkit-box;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-list-meta {
+    display: none;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-mobile-badge,
+  .capper-article-list-item.is-featured .capper-article-mobile-time {
+    position: absolute;
+    top: 12px;
+    z-index: 1;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 7px;
+    color: #fff;
+    background: rgba(8, 10, 14, .55);
+    font-size: 10.5px;
+    font-weight: 800;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-mobile-badge {
+    left: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14);
+  }
+
+  .capper-article-list-item.is-featured .capper-article-mobile-time {
+    right: 12px;
+    font-size: 11px;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-visual-object {
+    right: -29px;
+    bottom: -38px;
+    width: 142px;
+    height: 142px;
+  }
+
+  .capper-article-list-item.is-featured .capper-article-visual.is-hockey .capper-article-visual-object {
+    right: -20px;
+    bottom: -5px;
+    width: 142px;
+    height: 142px;
+  }
+
   .capper-articles-page .profile-empty-state {
     padding: 14px;
   }
@@ -11980,8 +12281,7 @@ body.expert-public-details-open {
 @media (max-width: 1024px) {
   body:has(.matches-page) .breadcrumbs-container,
   body:has(.following-feed-page) .breadcrumbs-container,
-  body:has(.predictions-index-page) .breadcrumbs-container,
-  body:has(.favorites-page) .breadcrumbs-container {
+  body:has(.predictions-index-page) .breadcrumbs-container {
     display: none !important;
   }
 
@@ -11993,13 +12293,7 @@ body.expert-public-details-open {
   }
 
   .following-feed-page .prediction-type-tabs,
-  .predictions-index-page .prediction-type-tabs,
-  .favorites-page .prediction-type-tabs {
-    display: none !important;
-  }
-
-  .favorites-page .predictions-layout > .favorites-filter-sidebar,
-  .favorites-page .predictions-layout > .matches-table-filter-sidebar.prediction-filter-sidebar.predictions-filter-sidebar.favorites-filter-sidebar {
+  .predictions-index-page .prediction-type-tabs {
     display: none !important;
   }
 
@@ -12138,6 +12432,36 @@ body.expert-public-details-open {
     background: var(--yellow);
   }
 
+  .mobile-prediction-favorite-tab {
+    min-height: 34px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-left: 10px;
+    padding: 0 10px;
+    border-radius: 9px;
+    color: rgba(255, 255, 255, 0.72);
+    background: #1c1d22;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .mobile-prediction-favorite-tab .solar-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .mobile-prediction-favorite-tab.is-active {
+    color: var(--ink);
+    background: var(--yellow);
+  }
+
   .mobile-prediction-quick-tabs {
     flex: 0 0 auto;
     display: flex;
@@ -12230,8 +12554,7 @@ body.expert-public-details-open {
   }
 
   body:has(.predictions-index-page),
-  body:has(.following-feed-page),
-  body:has(.favorites-page) {
+  body:has(.following-feed-page) {
     height: auto !important;
     min-height: 100dvh;
     display: block !important;
@@ -12240,8 +12563,7 @@ body.expert-public-details-open {
   }
 
   body:has(.predictions-index-page) .site-main,
-  body:has(.following-feed-page) .site-main,
-  body:has(.favorites-page) .site-main {
+  body:has(.following-feed-page) .site-main {
     min-height: auto !important;
     overflow: visible !important;
     padding-bottom: 92px;
@@ -12249,10 +12571,8 @@ body.expert-public-details-open {
 
   .predictions-index-page,
   .following-feed-page,
-  .favorites-page,
   .predictions-index-page .predictions-layout,
-  .following-feed-page .predictions-layout,
-  .favorites-page .predictions-layout {
+  .following-feed-page .predictions-layout {
     height: auto !important;
     max-height: none !important;
     min-height: 0 !important;
@@ -12261,13 +12581,10 @@ body.expert-public-details-open {
 
   .predictions-index-page .predictions-content,
   .following-feed-page .predictions-content,
-  .favorites-page .predictions-content,
   .predictions-index-page .predictions-layout > .predictions-filter-sidebar,
   .following-feed-page .predictions-layout > .predictions-filter-sidebar,
-  .favorites-page .predictions-layout > .favorites-filter-sidebar,
   .predictions-index-page .predictions-layout > .bookmakers-sidebar,
   .following-feed-page .predictions-layout > .bookmakers-sidebar,
-  .favorites-page .predictions-layout > .favorites-right-sidebar,
   .predictions-index-page .predictions-layout > .predictions-ad-sidebar,
   .following-feed-page .predictions-layout > .predictions-ad-sidebar {
     height: auto !important;
@@ -12723,100 +13040,6 @@ body.expert-public-details-open {
     padding-bottom: 96px;
   }
 
-  .cappers-table-hero {
-    position: relative;
-    min-height: auto;
-    overflow: hidden;
-    align-items: stretch;
-    padding: 22px;
-    border-radius: 18px;
-    background-position: center;
-  }
-
-  .cappers-table-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(90deg, rgba(10, 10, 12, 0.92), rgba(10, 10, 12, 0.62)),
-      linear-gradient(0deg, rgba(10, 10, 12, 0.65), rgba(10, 10, 12, 0.1));
-  }
-
-  .cappers-table-hero > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .cappers-table-hero h1 {
-    max-width: 100%;
-    font-size: clamp(34px, 7vw, 48px);
-    line-height: 0.98;
-  }
-
-  .cappers-table-hero > div:first-child > p:not(.cappers-table-eyebrow) {
-    max-width: 680px;
-    margin-top: 14px;
-    font-size: 16px;
-    line-height: 1.35;
-  }
-
-  .cappers-table-hero .profile-hero-stats {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 22px;
-    overflow: visible;
-  }
-
-  .cappers-table-hero .cappers-ranking-expert {
-    width: 100%;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    overflow: hidden;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.08);
-  }
-
-  .cappers-table-hero .cappers-ranking-expert > span[data-skeleton-image] {
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    flex: 0 0 44px;
-  }
-
-  .cappers-table-hero .cappers-ranking-expert img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-  }
-
-  .cappers-table-hero .cappers-ranking-expert > div {
-    min-width: 0;
-  }
-
-  .cappers-table-hero .home-best-expert-name {
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .cappers-table-hero .home-best-expert-username {
-    display: block;
-    margin-top: 3px;
-    overflow: visible;
-    color: rgba(255, 255, 255, 0.68);
-    font-size: 13px;
-    line-height: 1.2;
-    white-space: normal;
-    text-overflow: clip;
-  }
-
   .cappers-ranking-toolbar {
     min-width: 0;
   }
@@ -12831,30 +13054,112 @@ body.expert-public-details-open {
     width: min(100% - 20px, 720px);
   }
 
-  .cappers-table-hero {
-    padding: 18px;
-    background-position: center;
+  .cappers-table-hero-card {
+    height: 330px;
+    border-radius: 22px;
+    background: #2F5BFF;
+  }
+
+  .cappers-table-hero-pattern.is-desktop {
+    display: none;
+  }
+
+  .cappers-table-hero-pattern.is-mobile {
+    display: block;
+  }
+
+  .cappers-table-hero-pattern path {
+    stroke: #FFFFFF;
+    stroke-opacity: 0.07;
+    stroke-width: 16;
+  }
+
+  .cappers-table-hero-trophy {
+    top: -26px;
+    right: -34px;
+    transform: none;
+    opacity: 0.95;
+  }
+
+  .cappers-table-hero-trophy svg {
+    width: 176px;
+    height: 176px;
+  }
+
+  .cappers-table-hero-trophy-handle {
+    stroke: #D8C92E;
+  }
+
+  .cappers-table-hero-trophy-main {
+    fill: #F6EC4E;
+  }
+
+  .cappers-table-hero-trophy-side {
+    fill: #D8C92E;
+  }
+
+  .cappers-table-hero-trophy-star {
+    fill: #B9AB22;
+  }
+
+  .cappers-table-hero-content {
+    width: auto;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px;
   }
 
   .cappers-table-eyebrow {
-    font-size: 12px;
+    color: #C9D4FF;
+    font-size: 11px;
   }
 
   .cappers-table-hero h1 {
-    font-size: clamp(36px, 10vw, 44px);
+    color: #FFFFFF;
+    font-size: 29px;
+    line-height: 1.06;
   }
 
-  .cappers-table-hero > div:first-child > p:not(.cappers-table-eyebrow) {
-    max-width: 100%;
-    font-size: 16px;
+  .cappers-table-hero h1 span {
+    color: #BFCBFF;
   }
 
-  .cappers-table-hero .profile-hero-stats {
-    grid-template-columns: minmax(0, 1fr);
+  .cappers-table-hero p {
+    max-width: 300px;
+    color: #D5DDFF;
+    font-size: 13px;
   }
 
-  .cappers-table-hero .cappers-ranking-expert {
-    min-height: 72px;
+  .cappers-table-copy-desktop,
+  .cappers-table-stat-desktop {
+    display: none;
+  }
+
+  .cappers-table-copy-mobile,
+  .cappers-table-stat-mobile {
+    display: inline;
+  }
+
+  .cappers-table-hero-stats {
+    gap: 8px;
+    padding-top: 0;
+  }
+
+  .cappers-table-hero-stat {
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+    padding: 10px 11px;
+    border-radius: 13px;
+    background: #0E0F12;
+  }
+
+  .cappers-table-hero-stat > span {
+    font-size: 17px;
+  }
+
+  .cappers-table-hero-stat b {
+    font-size: 10px;
   }
 
   .cappers-ranking-toolbar {

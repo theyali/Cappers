@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -10,9 +11,10 @@ from django.utils import timezone
 
 from cabinet.models import MatchPredictionRequest, User
 from front.metrics import increment_match_views
-from game.models import Match
+from game.models import Match, Prediction, PredictionCoupon
 from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
 from game.tasks import refresh_match_provider_predictions
+from game.templatetags.match_ui import live_status_label
 from notifications.models import MatchWatch
 
 from . import views as legacy_views
@@ -85,6 +87,234 @@ def _match_watch_state(request, match: Match) -> bool:
     return MatchWatch.objects.filter(user=request.user, match=match).exists()
 
 
+def _team_code(name: str, fallback: str) -> str:
+    clean = str(name or "").replace("(", " ").replace(")", " ").replace("-", " ")
+    parts = [part for part in clean.split() if part]
+    if not parts:
+        return fallback
+    if len(parts) == 1:
+        return parts[0][:3].upper()
+    return "".join(part[0] for part in parts[:3]).upper()
+
+
+def _score_parts(score: str) -> tuple[str, str] | None:
+    clean = str(score or "").strip().replace(":", "-")
+    if "-" not in clean:
+        return None
+    left, right = [part.strip() for part in clean.split("-", 1)]
+    if not left or not right:
+        return None
+    return left, right
+
+
+def _score_numbers(score: str) -> tuple[int, int] | None:
+    parts = _score_parts(score)
+    if not parts:
+        return None
+    try:
+        return int(parts[0]), int(parts[1])
+    except (TypeError, ValueError):
+        return None
+
+
+def _live_progress(match: Match) -> int:
+    if match.sync_scope == Match.SyncScope.FINISHED:
+        return 100
+    if match.sync_scope != Match.SyncScope.LIVE:
+        return 0
+    try:
+        minute = int(match.live_minute or 0)
+    except (TypeError, ValueError):
+        minute = 0
+    if not minute:
+        return 0
+    duration = 90
+    if match.sport_code == "basketball":
+        duration = 40
+    elif match.sport_code == "hockey":
+        duration = 60
+    return max(0, min(100, round((minute / duration) * 100)))
+
+
+def _team_recent_line(match: Match, side: str) -> str:
+    team = match.home_team if side == "home" else match.away_team
+    if not team:
+        return "форма команды пока недоступна"
+    queryset = (
+        Match.objects.filter(Q(home_team=team) | Q(away_team=team))
+        .exclude(pk=match.pk)
+        .filter(score__gt="")
+        .order_by("-starts_at", "-id")[:6]
+    )
+    wins = draws = losses = 0
+    for item in queryset:
+        parts = _score_numbers(item.score)
+        if not parts:
+            continue
+        home_score, away_score = parts
+        team_is_home = item.home_team_id == team.pk
+        team_score = home_score if team_is_home else away_score
+        rival_score = away_score if team_is_home else home_score
+        if team_score > rival_score:
+            wins += 1
+        elif team_score == rival_score:
+            draws += 1
+        else:
+            losses += 1
+    total = wins + draws + losses
+    if not total:
+        return "последние игры не найдены"
+    return f"{wins} побед · {draws} ничьих · {losses} поражений"
+
+
+def _h2h_matches(match: Match) -> list[dict]:
+    if not match.home_team_id or not match.away_team_id:
+        return []
+    rows = (
+        Match.objects.select_related("league")
+        .filter(
+            Q(home_team_id=match.home_team_id, away_team_id=match.away_team_id)
+            | Q(home_team_id=match.away_team_id, away_team_id=match.home_team_id)
+        )
+        .exclude(pk=match.pk)
+        .filter(score__gt="")
+        .order_by("-starts_at", "-id")[:5]
+    )
+    items = []
+    home_wins = away_wins = draws = 0
+    for item in rows:
+        parts = _score_numbers(item.score)
+        result = "X"
+        if parts:
+            home_score, away_score = parts
+            if home_score == away_score:
+                draws += 1
+            else:
+                current_home_won = (
+                    item.home_team_id == match.home_team_id and home_score > away_score
+                ) or (
+                    item.away_team_id == match.home_team_id and away_score > home_score
+                )
+                if current_home_won:
+                    home_wins += 1
+                    result = "П1"
+                else:
+                    away_wins += 1
+                    result = "П2"
+        items.append(
+            {
+                "date": item.starts_at,
+                "league": item.league_name or "Лига",
+                "title": f"{item.home_team_name or 'Хозяева'} {item.score} {item.away_team_name or 'Гости'}",
+                "result": result,
+            }
+        )
+    return {
+        "items": items,
+        "summary": f"{match.home_team_name or 'Хозяева'} {home_wins} · ничьи {draws} · {match.away_team_name or 'Гости'} {away_wins}",
+    }
+
+
+def _compact_odds(odds_tabs: list[dict]) -> list[dict]:
+    groups = []
+    for tab in odds_tabs:
+        for section in tab.get("sections", []):
+            for row in section.get("rows", []):
+                odds = row.get("odds", [])
+                if odds:
+                    groups.append(
+                        {
+                            "title": row.get("title") or section.get("title") or "Исход",
+                            "odds": odds[:3],
+                        }
+                    )
+                if len(groups) >= 3:
+                    return groups
+    return groups
+
+
+def _prediction_votes(match: Match) -> dict:
+    queryset = Prediction.objects.filter(
+        match=match,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        coupon__audience=PredictionCoupon.Audience.FREE,
+    )
+    total = queryset.values("coupon_id").distinct().count()
+    if not total:
+        return {"total": 0, "items": []}
+    rows = (
+        queryset.values("selection")
+        .annotate(count=Count("coupon_id", distinct=True))
+        .order_by("-count", "selection")[:3]
+    )
+    palette = ("home", "draw", "away")
+    return {
+        "total": total,
+        "items": [
+            {
+                "label": row["selection"],
+                "count": row["count"],
+                "percent": round((row["count"] / total) * 100),
+                "tone": palette[index] if index < len(palette) else "draw",
+            }
+            for index, row in enumerate(rows)
+        ],
+    }
+
+
+def _match_stats_rows(match: Match) -> list[dict]:
+    statistics = (match.raw_data or {}).get("statistics") or {}
+    rows = statistics.get("items") if isinstance(statistics, dict) else []
+    if not isinstance(rows, list):
+        return []
+    normalized = []
+    for item in rows[:6]:
+        if not isinstance(item, dict):
+            continue
+        label = item.get("name") or item.get("label") or item.get("type")
+        home = item.get("home") or item.get("home_value") or item.get("team1")
+        away = item.get("away") or item.get("away_value") or item.get("team2")
+        if label and home not in (None, "") and away not in (None, ""):
+            try:
+                home_number = float(str(home).replace("%", "").replace(",", "."))
+                away_number = float(str(away).replace("%", "").replace(",", "."))
+            except (TypeError, ValueError):
+                home_number = away_number = 0
+            max_value = max(home_number + away_number, 1)
+            normalized.append(
+                {
+                    "label": label,
+                    "home": home,
+                    "away": away,
+                    "home_percent": round((home_number / max_value) * 100),
+                }
+            )
+    return normalized
+
+
+def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
+    score_parts = _score_parts(match.score)
+    first_half_score = str((match.raw_data or {}).get("first_time_score") or "").strip()
+    h2h = _h2h_matches(match)
+    return {
+        "home_code": _team_code(match.home_team_name, "Х"),
+        "away_code": _team_code(match.away_team_name, "Г"),
+        "home_form": _team_recent_line(match, "home"),
+        "away_form": _team_recent_line(match, "away"),
+        "score_home": score_parts[0] if score_parts else "",
+        "score_away": score_parts[1] if score_parts else "",
+        "score_label": match.score if match.score else "VS",
+        "first_half_score": first_half_score,
+        "live_progress": _live_progress(match),
+        "status_label": live_status_label(match) if match.sync_scope == Match.SyncScope.LIVE else match.get_sync_scope_display(),
+        "league_badge": _team_code(match.league_name, "Л"),
+        "compact_odds": _compact_odds(odds_tabs),
+        "votes": _prediction_votes(match),
+        "stats_rows": _match_stats_rows(match),
+        "h2h": h2h,
+    }
+
+
 def match_detail(request, slug: str):
     match = get_object_or_404(
         Match.objects.select_related(
@@ -116,6 +346,7 @@ def match_detail(request, slug: str):
     # for the provider timeout. Refresh it in Celery instead.
     _queue_provider_predictions_refresh(match)
 
+    odds_tabs = build_match_odds_tabs(match)
     context = {
         "match": match,
         "match_metrics": match_metrics,
@@ -127,7 +358,8 @@ def match_detail(request, slug: str):
             else None
         ),
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
-        "odds_tabs": build_match_odds_tabs(match),
+        "odds_tabs": odds_tabs,
+        "match_page": _match_page_context(match, odds_tabs),
         "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
         "match_predictions_total": match_metrics.predictions_count,
         "match_demand": _match_demand_context(request, match),

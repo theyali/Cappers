@@ -938,7 +938,7 @@ class FooterRenderingTests(TestCase):
         )
         self.client.force_login(user)
 
-        response = self.client.get(reverse("front:favorites"))
+        response = self.client.get(f"{reverse('front:following_feed')}?favorites=1")
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'class="site-footer site-footer-v2"')

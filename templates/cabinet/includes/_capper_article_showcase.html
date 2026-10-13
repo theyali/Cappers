@@ -1,0 +1,98 @@
+<section class="capper-article-showcase{% if public_list %} is-public{% endif %}" aria-labelledby="{{ heading_id }}">
+    <header class="capper-article-showcase-head">
+        <span>{{ eyebrow }}</span>
+        <h2 id="{{ heading_id }}">{{ title }}</h2>
+        <p>{{ total_count }} публикаций · {{ total_views|default:0 }} просмотров{% if not compact_total %} за всё время{% endif %}</p>
+    </header>
+
+    <div class="capper-article-showcase-toolbar">
+        <nav class="capper-article-filter-rail" aria-label="Фильтр статей">
+            <span class="is-active">{% include "front/includes/_solar_icon.html" with name="articles" only %} Все <b>{{ total_count }}</b></span>
+            {% if show_status_chips %}
+                <span>{% include "front/includes/_solar_icon.html" with name="edit" only %} Черновики <b>{{ draft_count|default:0 }}</b></span>
+                <span>{% include "front/includes/_solar_icon.html" with name="match_prematch" only %} На модерации <b>{{ pending_count|default:0 }}</b></span>
+                <span>{% include "front/includes/_solar_icon.html" with name="match_finished" only %} Опубликованы <b>{{ approved_count|default:0 }}</b></span>
+            {% else %}
+                <span>{% include "front/includes/_solar_icon.html" with name="predictions" only %} Разборы <b>0</b></span>
+                <span>{% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %} Стратегии <b>0</b></span>
+                <span>{% include "front/includes/_solar_icon.html" with name="how_it_works" only %} Советы <b>0</b></span>
+            {% endif %}
+        </nav>
+        <span class="capper-article-toolbar-spacer"></span>
+        <span class="capper-article-toolbar-control">Сначала новые <b>▾</b></span>
+        {% if action_url and action_label %}
+            <a class="capper-article-toolbar-control is-action" href="{{ action_url }}">{{ action_label }}</a>
+        {% else %}
+            <span class="capper-article-toolbar-control">Поиск</span>
+        {% endif %}
+    </div>
+
+    {% if articles %}
+    <div class="capper-article-list">
+        {% for article in articles %}
+            {% firstof article.published_at article.updated_at as article_date %}
+            {% if public_list %}
+            <a class="capper-article-list-item{% if forloop.first %} is-featured{% endif %}" href="{{ article.get_absolute_url }}">
+            {% else %}
+            <article class="capper-article-list-item{% if forloop.first %} is-featured{% endif %}">
+            {% endif %}
+                <span class="capper-article-list-media">
+                    {% include "cabinet/includes/_capper_article_visual.html" with article=article only %}
+                    <span class="capper-article-mobile-badge">{% if public_list %}Статья{% else %}{{ article.get_status_display|default:"Статья" }}{% endif %}</span>
+                    <span class="capper-article-mobile-time">{{ article.reading_minutes }} мин</span>
+                </span>
+
+                <span class="capper-article-list-copy">
+                    <span class="capper-article-list-meta">
+                        <span class="capper-article-kind{% if article.status and not public_list %} is-{{ article.status }}{% endif %}">{% if public_list %}Статья{% else %}{{ article.get_status_display|default:"Статья" }}{% endif %}</span>
+                        <span>{{ article_date|date:"j E" }} · {{ article.reading_minutes }} мин чтения</span>
+                    </span>
+                    {% if public_list %}
+                        <span class="capper-article-list-title">{{ article.title }}</span>
+                    {% elif article.can_edit %}
+                        <a class="capper-article-list-title" href="{% url 'cabinet:capper_article_edit' article.id %}">{{ article.title }}</a>
+                    {% elif article.status == "approved" %}
+                        <a class="capper-article-list-title" href="{{ article.get_absolute_url }}">{{ article.title }}</a>
+                    {% else %}
+                        <span class="capper-article-list-title">{{ article.title }}</span>
+                    {% endif %}
+                    {% if article.excerpt %}
+                        <span class="capper-article-list-excerpt">{{ article.excerpt }}</span>
+                    {% elif article.moderation_note %}
+                        <span class="capper-article-list-excerpt">{{ article.moderation_note }}</span>
+                    {% endif %}
+                    <span class="capper-article-mobile-details">
+                        <span>{{ article_date|date:"j E" }}</span>
+                        <span>·</span>
+                        <span>{{ article.article_views_count|default:0 }} просмотров</span>
+                    </span>
+                </span>
+
+                <span class="capper-article-list-side">
+                    <span>
+                        <strong>{{ article.article_views_count|default:0 }}</strong>
+                        <small>Просмотров</small>
+                    </span>
+                    {% if not public_list and article.can_edit %}
+                        <a href="{% url 'cabinet:capper_article_edit' article.id %}">Редактировать</a>
+                    {% else %}
+                        <em>{{ article.article_comments_count|default:0 }} комм.</em>
+                    {% endif %}
+                </span>
+            {% if public_list %}
+            </a>
+            {% else %}
+            </article>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="profile-empty-state capper-article-showcase-empty">
+        {% include "front/includes/_solar_icon.html" with name="articles" only %}
+        <p>{{ empty_text }}</p>
+        {% if action_url and action_label %}
+            <a class="profile-save-button" href="{{ action_url }}">{{ action_label }}</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>

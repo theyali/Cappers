@@ -62,37 +62,43 @@
         </aside>
 
         <div class="predictions-content cappers-table-page">
-            <header class="cappers-table-hero" style="background-color:#0b56fa;background-image:url('{% static 'front/img/cappers_hero.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
-                <div>
-                    <p class="cappers-table-eyebrow">Рейтинг прогнозистов</p>
-                    <h1 id="cappers-table-title" data-cappers-table-title>Таблица капперов{% if not period_is_all %} — {{ selected_month_label }}{% endif %}</h1>
-                    <p>Лучшие прогнозисты на одном экране. Реальная статистика, прибыль, ROI и результаты за каждый месяц.</p>
-                    <div class="profile-hero-stats" aria-label="Статистика рейтинга">
-                        <div class="cappers-ranking-expert">
-                            <span data-skeleton-image>
-                                <img src="{% static 'front/img/cappers_stat_users.svg' %}" width="36" height="36" alt="" loading="eager">
-                            </span>
-                            <div>
-                                <div><strong class="home-best-expert-name">{{ hero_stats.active_cappers }}</strong></div>
-                                <div><span class="home-best-expert-username">активных капперов</span></div>
+            <header class="cappers-table-hero">
+                <div class="cappers-table-hero-card">
+                    <svg class="cappers-table-hero-pattern is-desktop" width="1040" height="296" viewBox="0 0 1040 296" aria-hidden="true">
+                        <path d="M-352 306L120 -10"></path><path d="M-296 306L176 -10"></path><path d="M-240 306L232 -10"></path><path d="M-184 306L288 -10"></path><path d="M-128 306L344 -10"></path><path d="M-72 306L400 -10"></path><path d="M-16 306L456 -10"></path><path d="M40 306L512 -10"></path><path d="M96 306L568 -10"></path><path d="M152 306L624 -10"></path><path d="M208 306L680 -10"></path><path d="M264 306L736 -10"></path><path d="M320 306L792 -10"></path><path d="M376 306L848 -10"></path><path d="M432 306L904 -10"></path><path d="M488 306L960 -10"></path><path d="M544 306L1016 -10"></path><path d="M600 306L1072 -10"></path><path d="M656 306L1128 -10"></path><path d="M712 306L1184 -10"></path><path d="M768 306L1240 -10"></path><path d="M824 306L1296 -10"></path><path d="M880 306L1352 -10"></path><path d="M936 306L1408 -10"></path><path d="M992 306L1464 -10"></path><path d="M1048 306L1520 -10"></path><path d="M1104 306L1576 -10"></path>
+                    </svg>
+                    <svg class="cappers-table-hero-pattern is-mobile" width="350" height="330" viewBox="0 0 350 330" aria-hidden="true">
+                        <path d="M-374 340L120 -10"></path><path d="M-330 340L164 -10"></path><path d="M-286 340L208 -10"></path><path d="M-242 340L252 -10"></path><path d="M-198 340L296 -10"></path><path d="M-154 340L340 -10"></path><path d="M-110 340L384 -10"></path><path d="M-66 340L428 -10"></path><path d="M-22 340L472 -10"></path><path d="M22 340L516 -10"></path><path d="M66 340L560 -10"></path><path d="M110 340L604 -10"></path><path d="M154 340L648 -10"></path><path d="M198 340L692 -10"></path><path d="M242 340L736 -10"></path><path d="M286 340L780 -10"></path><path d="M330 340L824 -10"></path><path d="M374 340L868 -10"></path><path d="M418 340L912 -10"></path>
+                    </svg>
+                    <div class="cappers-table-hero-trophy" aria-hidden="true">
+                        <svg viewBox="0 0 200 200" width="248" height="248">
+                            <path class="cappers-table-hero-trophy-handle" d="M54 36H30a34 34 0 0 0 30 40"></path>
+                            <path class="cappers-table-hero-trophy-handle" d="M146 36h24a34 34 0 0 1-30 40"></path>
+                            <path class="cappers-table-hero-trophy-main" d="M50 28h100v38a50 50 0 0 1-100 0z"></path>
+                            <path class="cappers-table-hero-trophy-side" d="M100 28h50v38a50 50 0 0 1-50 50z"></path>
+                            <path class="cappers-table-hero-trophy-star" d="M100 48l6.2 12.6 13.8 2-10 9.8 2.4 13.8L100 79.7 87.6 86.2 90 72.4l-10-9.8 13.8-2z"></path>
+                            <rect class="cappers-table-hero-trophy-side" x="88" y="114" width="24" height="26"></rect>
+                            <rect class="cappers-table-hero-trophy-star" x="100" y="114" width="12" height="26"></rect>
+                            <rect class="cappers-table-hero-trophy-main" x="60" y="140" width="80" height="14" rx="5"></rect>
+                            <rect class="cappers-table-hero-trophy-side" x="48" y="156" width="104" height="18" rx="6"></rect>
+                        </svg>
+                    </div>
+                    <div class="cappers-table-hero-content">
+                        <span class="cappers-table-eyebrow">Рейтинг прогнозистов</span>
+                        <h1 id="cappers-table-title" data-cappers-table-title>Таблица <span>капперов</span>{% if not period_is_all %} — {{ selected_month_label }}{% endif %}</h1>
+                        <p><span class="cappers-table-copy-desktop">Рейтинг по индексу доверия: прибыль, ROI и проходимость каждого прогнозиста за любой период — всё считается автоматически, без скриншотов и обещаний.</span><span class="cappers-table-copy-mobile">Прибыль, ROI и проходимость каждого прогнозиста — считается автоматически.</span></p>
+                        <div class="cappers-table-hero-stats" aria-label="Статистика рейтинга">
+                            <div class="cappers-table-hero-stat">
+                                <span>{{ hero_stats.active_cappers }}</span>
+                                <b><span class="cappers-table-stat-desktop">активных капперов</span><span class="cappers-table-stat-mobile">капперов</span></b>
                             </div>
-                        </div>
-                        <div class="cappers-ranking-expert">
-                            <span data-skeleton-image>
-                                <img src="{% static 'front/img/cappers_stat_crown.svg' %}" width="36" height="36" alt="" loading="eager">
-                            </span>
-                            <div>
-                                <div><strong class="home-best-expert-name">{{ hero_stats.predictions_month }}</strong></div>
-                                <div><span class="home-best-expert-username">прогнозов за месяц</span></div>
+                            <div class="cappers-table-hero-stat">
+                                <span>{{ hero_stats.predictions_month }}</span>
+                                <b><span class="cappers-table-stat-desktop">прогнозов за месяц</span><span class="cappers-table-stat-mobile">за месяц</span></b>
                             </div>
-                        </div>
-                        <div class="cappers-ranking-expert">
-                            <span data-skeleton-image>
-                                <img src="{% static 'front/img/cappers_stat_users.svg' %}" width="36" height="36" alt="" loading="eager">
-                            </span>
-                            <div>
-                                <div><strong class="home-best-expert-name">{{ hero_stats.predictions_all_time }}</strong></div>
-                                <div><span class="home-best-expert-username">прогнозов за все время</span></div>
+                            <div class="cappers-table-hero-stat">
+                                <span>{{ hero_stats.predictions_all_time }}</span>
+                                <b><span class="cappers-table-stat-desktop">за всё время</span><span class="cappers-table-stat-mobile">всего</span></b>
                             </div>
                         </div>
                     </div>

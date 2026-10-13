@@ -15,7 +15,6 @@ PAGE_CONTEXT_CACHE_SECONDS = 120
 PAGE_CONTEXT_CACHE_VERSION_KEY = "page-seo-context-version"
 ROUTE_FALLBACKS = {
     "front:prediction_detail": ("front:predictions",),
-    "front:favorites": ("front:predictions",),
     "game:match_detail": ("game:match_list",),
     "game:match_list_filtered": ("game:match_list",),
     "game:match_list_live": ("game:match_list",),

@@ -58,25 +58,28 @@
             });
     };
 
-    const updateFavoritePage = (button, active) => {
+    const updateFavoritesFilter = (button, active) => {
         if (active || !button.classList.contains("prediction-favorite")) return;
-        const page = document.querySelector("[data-favorites-page]");
+        const isFavoritesFeed = window.location.pathname === "/feed/"
+            && new URLSearchParams(window.location.search).get("favorites") === "1";
+        if (!isFavoritesFeed) return;
+
         const card = button.closest("[data-prediction-card]");
         const predictionId = card?.dataset.predictionCard;
-        if (!page || !predictionId) return;
+        if (!predictionId) return;
 
-        page
+        document
             .querySelectorAll(`[data-prediction-card="${CSS.escape(predictionId)}"]`)
             .forEach((copy) => copy.remove());
 
-        const totalNode = page.querySelector(".predictions-total strong");
+        const totalNode = document.querySelector(".predictions-total strong, .paid-feed-head > strong");
         if (totalNode) {
             const nextTotal = Math.max(0, Number.parseInt(totalNode.textContent || "0", 10) - 1);
             totalNode.textContent = String(nextTotal);
         }
 
-        const remaining = page.querySelector("[data-prediction-card]");
-        if (!remaining) window.location.reload();
+        const remaining = document.querySelector("[data-prediction-card]");
+        if (!remaining) document.querySelector("[data-predictions-lazy]")?.remove();
     };
 
     lockOwnPredictionReactions();
@@ -425,7 +428,7 @@
             }
 
             syncReactionCopies(button, result);
-            updateFavoritePage(button, Boolean(result.active));
+            updateFavoritesFilter(button, Boolean(result.active));
         } catch (error) {
             console.error(error);
         } finally {

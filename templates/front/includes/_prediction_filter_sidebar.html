@@ -165,6 +165,12 @@
                     {% endif %}
 
                     <div class="prediction-filter-quick">
+                        {% if show_favorites_filter %}
+                        <label class="prediction-filter-toggle is-favorites">
+                            <input type="checkbox" name="favorites" value="1"{% if favorites_only %} checked{% endif %}>
+                            <span><i>{% include "front/includes/_solar_icon.html" with name="favorites" only %}</i>Избранные</span>
+                        </label>
+                        {% endif %}
                         <label class="prediction-filter-toggle">
                             <input type="checkbox" name="live" value="1"{% if only_live %} checked{% endif %}>
                             <span><i></i>Только live</span>

@@ -17,7 +17,7 @@
             data-predictions-layout
             data-filter-state-url="{% url 'front:prediction_filter_state' %}"
         >
-            {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url %}
+            {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url show_favorites_filter=True %}
 
             <div class="predictions-content following-feed-content matches-list-panel" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
                 <section class="following-stories" aria-labelledby="following-stories-title">

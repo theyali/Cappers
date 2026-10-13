@@ -7,35 +7,68 @@
 
 {% block content %}
 <section class="expert-public-page" aria-label="Профиль эксперта">
-    <section class="expert-public-hero is-bg-{{ expert_public_hero_index|default:1 }}">
-        <div class="expert-public-main-stack">
-            <div class="expert-public-main">
-                <span class="expert-public-avatar">
-                    {% capper_trust_badge analyst_profile.trust_index %}
-                    {% if expert.avatar %}
-                        <img src="{{ expert.avatar.url }}" alt="{{ expert_name }}">
-                    {% else %}
-                        {{ expert_initials }}
-                    {% endif %}
-                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
-                </span>
-                <div class="expert-public-copy">
+    <section class="expert-public-hero">
+        <svg class="expert-public-hero-art" viewBox="0 0 1360 368" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs><radialGradient id="expert-public-hero-glow" cx="0.82" cy="0.1" r="0.95"><stop offset="0" stop-color="#ffffff" stop-opacity="0.22"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop></radialGradient></defs>
+            <rect width="1360" height="368" fill="#4557F5"></rect>
+            <rect width="1360" height="368" fill="url(#expert-public-hero-glow)"></rect>
+            <path d="M-438 378L150 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-368 378L220 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-298 378L290 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-228 378L360 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-158 378L430 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-88 378L500 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M-18 378L570 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M52 378L640 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M122 378L710 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M192 378L780 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M262 378L850 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M332 378L920 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M402 378L990 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M472 378L1060 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M542 378L1130 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M612 378L1200 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M682 378L1270 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M752 378L1340 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M822 378L1410 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M892 378L1480 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M962 378L1550 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1032 378L1620 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1102 378L1690 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1172 378L1760 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1242 378L1830 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1312 378L1900 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1382 378L1970 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+            <path d="M1452 378L2040 -10" stroke="#ffffff" stroke-opacity="0.07" stroke-width="26"></path>
+        </svg>
+        <div class="expert-public-hero-content">
+            <div class="expert-public-hero-top">
+                <div class="expert-public-main-stack">
+                    <div class="expert-public-copy">
                     <p class="expert-public-kicker">Эксперт КапперХаб</p>
+                    <div class="expert-public-status-row">
+                        <span class="expert-public-presence{% if profile_presence.is_online %} is-online{% endif %}">
+                            <span class="expert-public-presence-dot" aria-hidden="true"></span>
+                            {{ profile_presence.label }}
+                        </span>
+                        <span class="expert-public-since">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg>
+                            на КапперХабе с {{ analyst_profile.created_at|date:"Y" }} года
+                        </span>
+                    </div>
                     <div class="expert-public-name-row">
                         <h1>{{ expert_name }}</h1>
                         {% if analyst_profile.is_verified %}
-                        <span class="capper-verified-badge expert-public-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
-                            <svg viewBox="0 0 16 16" aria-hidden="true">
-                                <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"/>
-                                <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+                        <span class="expert-public-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                            <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2l2.4 1.8 3-.2.9 2.9 2.4 1.8-1.2 2.7 1.2 2.7-2.4 1.8-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9L3.3 15.7l1.2-2.7-1.2-2.7 2.4-1.8.9-2.9 3 .2z" fill="#ffffff"></path>
+                                <path d="M8.5 12.2l2.3 2.3 4.6-4.9" fill="none" stroke="#4557F5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
                         </span>
                         {% endif %}
                     </div>
                     <div class="expert-public-meta">
                         <span class="expert-public-username">@{{ expert.username }}</span>
-                        <span class="expert-public-since">На КапперХаб с {{ analyst_profile.created_at|date:"Y" }} года</span>
-                        {% include "cabinet/includes/_public_profile_location.html" with public_user=expert only %}
                     </div>
                     {% if analyst_profile.bio %}
                     <div class="expert-public-bio-block">
@@ -57,18 +90,81 @@
                     </div>
                     {% endif %}
                 </div>
-            </div>
-            <div class="expert-public-tags" aria-label="Темы эксперта">
+                    <div class="expert-public-tags" aria-label="Темы эксперта">
                 {% for tag in expert_public_tags %}
                     <span>{{ tag }}</span>
                 {% endfor %}
             </div>
-            {% expert_achievement_badges expert wins_count overall_roi followers_count analyst_profile.is_verified %}
+                </div>
+                <div class="expert-public-hero-visual">
+                    <span class="expert-public-avatar">
+                    {% capper_trust_badge analyst_profile.trust_index %}
+                    {% if expert.avatar %}
+                        <img src="{{ expert.avatar.url }}" width="150" height="150" alt="{{ expert_name }}">
+                    {% else %}
+                        {{ expert_initials }}
+                    {% endif %}
+                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
+                </span>
+                    <div class="expert-public-social-wrap" aria-label="Социальные сети эксперта">
+                {% if analyst_profile.social_links %}
+                <div class="expert-public-socials">
+                    {% for social in analyst_profile.social_links %}
+                    <a class="expert-public-social is-{{ social.key }}"
+                       href="{{ social.url }}"
+                       target="_blank"
+                       rel="nofollow noopener noreferrer">
+                        <span class="expert-public-social-icon" aria-hidden="true">
+                            {% if social.key == "telegram_channel" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l5 2 2 6 3-4 5 4z" fill="currentColor"></path></svg>
+                            {% elif social.key == "telegram_account" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 4L3 11l5 2 2 6 3-4 5 4z" fill="currentColor"></path></svg>
+                            {% elif social.key == "instagram" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="2"></rect><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"></circle><circle cx="17" cy="7" r="1.3" fill="currentColor"></circle></svg>
+                            {% elif social.key == "youtube" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="4" fill="currentColor"></rect><path d="M11 10l4 2-4 2z" fill="#4557F5"></path></svg>
+                            {% elif social.key == "tiktok" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4v9.5a3.5 3.5 0 1 1-3-3.46" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M14 4c.6 2.4 2.2 3.6 4.5 3.8" fill="none" stroke="currentColor" stroke-width="2"></path></svg>
+                            {% elif social.key == "facebook" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7h2.4l.4-3h-2.8V9.2c0-.9.3-1.5 1.6-1.5h1.3V5.1c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8V11H8v3h2.5v7z" fill="currentColor"></path></svg>
+                            {% elif social.key == "vk" %}
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8c.6 4.4 3 7.4 7.2 7.9V8h2.2v4.4c1.6-.2 3.2-1.9 3.8-4.4h2.2v.01c-.5 2.2-1.7 3.9-3 4.7 1.4.7 2.7 2.4 3.3 4.7h-2.4c-.5-1.7-1.8-3-3.9-3.2V18h-.5C7.9 18 4.7 14.2 4 8z" fill="currentColor"></path></svg>
+                            {% elif social.key == "threads" %}
+                                <img src="{% static 'front/img/socials/threads.png' %}" width="17" height="17" alt="">
+                            {% elif social.key == "x" %}
+                                <img src="{% static 'front/img/socials/x.png' %}" width="17" height="17" alt="">
+                            {% endif %}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="expert-public-social-empty">Социальные сети пока не указаны.</p>
+                {% endif %}
+            </div>
+                </div>
+            </div>
+            <div class="expert-public-hero-bottom">
+                <div class="expert-public-hero-metrics" aria-label="Ключевые показатели эксперта">
+            <div class="expert-public-hero-metric">
+                <strong data-followers-count>{{ followers_count }}</strong>
+                <span>подписчиков</span>
+            </div>
+            <div class="expert-public-hero-metric">
+                <strong>{{ predictions_count }}</strong>
+                <span>прогнозов</span>
+            </div>
+            <div class="expert-public-hero-metric is-winrate">
+                <strong>{{ win_rate|floatformat:1 }}%</strong>
+                <span>проходимость</span>
+            </div>
+            <div class="expert-public-hero-metric is-roi">
+                <strong class="{% if overall_roi > 0 %}is-positive{% elif overall_roi < 0 %}is-negative{% endif %}">{% if overall_roi > 0 %}+{% endif %}{{ overall_roi|floatformat:1 }}%</strong>
+                <span>ROI</span>
+            </div>
         </div>
-
-        <div class="expert-public-side">
-            <p class="expert-public-quote">«Дисциплина приносит результат»</p>
-            <div class="expert-public-actions">
+                <div class="expert-public-side">
+                    <div class="expert-public-actions">
                 {% if is_self %}
                     <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Редактировать</a>
                 {% elif request.user.is_authenticated %}
@@ -79,57 +175,21 @@
                         data-url="{% url 'cabinet:toggle_follow' user_id=expert.id %}"
                         aria-pressed="{% if is_following %}true{% else %}false{% endif %}"
                     >
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"></path><path d="M7 6H4v2a4 4 0 0 0 4 4"></path><path d="M17 6h3v2a4 4 0 0 1-4 4"></path></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
                         <span data-follow-label>{% if is_following %}Вы подписаны{% else %}Подписаться{% endif %}</span>
                     </button>
                 {% else %}
                     <a class="expert-follow-button expert-public-buy-button" href="{% url 'cabinet:login' %}?next={{ request.path|urlencode }}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"></path><path d="M7 6H4v2a4 4 0 0 0 4 4"></path><path d="M17 6h3v2a4 4 0 0 1-4 4"></path></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
                         <span>Подписаться</span>
                     </a>
                 {% endif %}
                 <a class="expert-public-action-icon" href="{{ request.get_full_path }}" role="button" aria-label="Поделиться профилем" data-expert-share>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"></path></svg>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 8l4-4 4 4M5 15v4h14v-4"></path></svg>
                     <span data-expert-share-label>Поделиться профилем</span>
                 </a>
             </div>
-            <div class="expert-public-social-wrap" aria-label="Социальные сети эксперта">
-                {% if analyst_profile.social_links %}
-                <div class="expert-public-socials">
-                    {% for social in analyst_profile.social_links %}
-                    <a class="expert-public-social is-{{ social.key }}"
-                       href="{{ social.url }}"
-                       target="_blank"
-                       rel="nofollow noopener noreferrer">
-                        <span class="expert-public-social-icon" aria-hidden="true">
-                            {% if social.key == "telegram_channel" %}
-                                <img src="{% static 'front/img/socials/tg_channel.png' %}" alt="">
-                            {% elif social.key == "telegram_account" %}
-                                <img src="{% static 'front/img/socials/telegram.png' %}" alt="">
-                            {% elif social.key == "instagram" %}
-                                <img src="{% static 'front/img/socials/instagram.png' %}" alt="">
-                            {% elif social.key == "threads" %}
-                                <img src="{% static 'front/img/socials/threads.png' %}" alt="">
-                            {% elif social.key == "youtube" %}
-                                <img src="{% static 'front/img/socials/youtube.png' %}" alt="">
-                            {% elif social.key == "tiktok" %}
-                                <img src="{% static 'front/img/socials/tiktok.png' %}" alt="">
-                            {% elif social.key == "facebook" %}
-                                <img src="{% static 'front/img/socials/facebook.png' %}" alt="">
-                            {% elif social.key == "x" %}
-                                <img src="{% static 'front/img/socials/x.png' %}" alt="">
-                            {% endif %}
-                        </span>
-                    </a>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <p class="expert-public-social-empty">Социальные сети пока не указаны.</p>
-                {% endif %}
-            </div>
-            <div class="expert-public-hero-followers">
-                <strong data-followers-count>{{ followers_count }}</strong>
-                <span>подписчиков</span>
             </div>
         </div>
     </section>
@@ -189,25 +249,109 @@
         {% if expert_latest_articles %}
         <div class="expert-public-latest-articles" aria-labelledby="expert-public-latest-articles-title">
             <div class="expert-public-latest-articles-head">
-                <div>
-                    <p class="expert-public-kicker">Последние статьи</p>
+                <div class="expert-public-latest-articles-heading">
+                    <span class="expert-public-latest-articles-label">Последние публикации</span>
                     <h2 id="expert-public-latest-articles-title">Статьи эксперта</h2>
                 </div>
-                <span>{{ expert_latest_articles|length }} из {{ expert_articles|length }}</span>
+                <a class="expert-public-latest-articles-all" href="#articles" data-expert-public-tab="articles">Все статьи <span aria-hidden="true">→</span></a>
             </div>
             <div class="expert-public-latest-articles-grid">
                 {% for article in expert_latest_articles %}
-                <a class="expert-public-latest-article{% if article.cover_image %} has-cover{% endif %}" href="{{ article.get_absolute_url }}">
-                    {% if article.cover_image %}
-                        <img src="{{ article.cover_image.url }}" alt="" loading="lazy">
-                    {% endif %}
+                <a class="expert-public-latest-article" href="{{ article.get_absolute_url }}">
+                    <div class="expert-public-latest-article-cover">
+                        <div class="expert-public-latest-article-visual is-art-{{ forloop.counter }}">
+                            {% if article.cover_image %}
+                                <img src="{{ article.cover_image.url }}" width="357" height="148" alt="" loading="lazy">
+                            {% elif forloop.first %}
+                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                    <path d="M-192 158L120 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M-148 158L164 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M-104 158L208 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M-60 158L252 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M-16 158L296 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M28 158L340 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M72 158L384 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M116 158L428 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M160 158L472 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M204 158L516 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M248 158L560 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M292 158L604 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M336 158L648 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M380 158L692 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                <path d="M424 158L736 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                                </svg>
+                                <div class="expert-public-latest-article-sport-icon">
+                                    <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
+                                        <defs><clipPath id="expert-article-ball"><circle cx="100" cy="100" r="90"></circle></clipPath></defs>
+                                        <circle cx="100" cy="100" r="90" fill="#ffffff"></circle>
+                                        <g clip-path="url(#expert-article-ball)" fill="#141519">
+                                            <polygon points="100,72 126.6,91.3 116.5,122.7 83.5,122.7 73.4,91.3"></polygon>
+                                            <polygon points="100,2 126,20 116,46 84,46 74,20"></polygon>
+                                            <polygon points="182,72 205,90 196,118 168,112 162,86"></polygon>
+                                            <polygon points="18,72 38,86 32,112 4,118 -5,90"></polygon>
+                                            <polygon points="150,170 174,160 186,184 166,206 140,196"></polygon>
+                                            <polygon points="50,170 60,196 34,206 14,184 26,160"></polygon>
+                                        </g>
+                                        <path d="M100 72V46M126.6 91.3L162 86M116.5 122.7L150 170M83.5 122.7L50 170M73.4 91.3L38 86" stroke="#141519" stroke-width="3" fill="none"></path>
+                                        <circle cx="100" cy="100" r="89" fill="none" stroke="#141519" stroke-width="3"></circle>
+                                    </svg>
+                                </div>
+                            {% elif forloop.counter == 2 %}
+                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                    <rect x="0" y="-10" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                                <rect x="0" y="26" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                                <rect x="0" y="62" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                                <rect x="0" y="98" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                                <rect x="0" y="134" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                                </svg>
+                                <div class="expert-public-latest-article-sport-icon">
+                                    <svg viewBox="0 0 200 200" width="155" height="155" aria-hidden="true">
+                                        <path d="M150 18L96 138Q90 152 76 152L24 152" fill="none" stroke="#EEF3F9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        <path d="M34 152H62" stroke="#14161B" stroke-width="14"></path>
+                                        <ellipse cx="112" cy="180" rx="44" ry="14" fill="#05070B"></ellipse>
+                                        <rect x="68" y="160" width="88" height="20" fill="#05070B"></rect>
+                                        <ellipse cx="112" cy="160" rx="44" ry="14" fill="#2D3140"></ellipse>
+                                    </svg>
+                                </div>
+                            {% else %}
+                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                    <path d="M15 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M45 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M75 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M105 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M135 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M165 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M195 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M225 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M255 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M285 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M315 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M345 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M0 15H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M0 45H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M0 75H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M0 105H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                <path d="M0 135H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                                </svg>
+                                <div class="expert-public-latest-article-sport-icon">
+                                    <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
+                                        <circle cx="100" cy="100" r="90" fill="#F0862A"></circle>
+                                        <path d="M100 10v180M10 100h180M38 35c30 30 30 100 0 130M162 35c-30 30-30 100 0 130" fill="none" stroke="#2A1607" stroke-width="5"></path>
+                                    </svg>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <span class="expert-public-latest-article-category">Статья</span>
+                        <span class="expert-public-latest-article-time">{{ article.reading_minutes }} мин</span>
+                    </div>
                     <div class="expert-public-latest-article-copy">
-                        <span>Статья</span>
                         <strong>{{ article.title }}</strong>
-                        {% if article.excerpt %}
-                            <p>{{ article.excerpt|truncatechars:92 }}</p>
-                        {% endif %}
-                        <small>{{ article.published_at|date:"d.m.Y" }}</small>
+                        <p>{{ article.excerpt }}</p>
+                        <div class="expert-public-latest-article-footer">
+                            <div class="expert-public-latest-article-details">
+                                <span>{{ article.published_at|date:"j E" }}</span>
+                            </div>
+                        </div>
                     </div>
                 </a>
                 {% endfor %}
@@ -409,34 +553,7 @@
 
     {% if expert_articles %}
     <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" hidden>
-        <div class="expert-public-section-head">
-            <div>
-                <p class="expert-public-kicker">Публикации эксперта</p>
-                <h2>Статьи</h2>
-            </div>
-            <span>{{ expert_articles|length }} опубликовано</span>
-        </div>
-
-        <div class="profile-user-list">
-            {% for article in expert_articles %}
-            <a class="profile-user-row" href="{{ article.get_absolute_url }}">
-                <div class="profile-user-avatar"{% if article.cover_image %} data-skeleton-image{% endif %}>
-                    {% if article.cover_image %}
-                        <img src="{{ article.cover_image.url }}" width="46" height="46" alt="" loading="lazy">
-                    {% else %}
-                        A
-                    {% endif %}
-                </div>
-                <div class="profile-user-copy">
-                    <strong>{{ article.title }}</strong>
-                    {% if article.excerpt %}
-                        <span>{{ article.excerpt|truncatechars:180 }}</span>
-                    {% endif %}
-                    <small>{{ article.published_at|date:"d.m.Y" }}</small>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
+        {% include "cabinet/includes/_capper_article_showcase.html" with heading_id="expert-public-articles-title" eyebrow="Публикации каппера" title="Статьи" total_count=expert_articles|length total_views=expert_articles_total_views articles=expert_articles public_list=True compact_total=True empty_text="У эксперта пока нет статей." only %}
     </section>
     {% endif %}
 

@@ -191,7 +191,6 @@ PUBLIC_PAGE_SEEDS = {
 
 PRIVATE_PAGE_SEEDS = {
     "front:following_feed": PageSeed("Моя лента"),
-    "front:favorites": PageSeed("Избранные прогнозы"),
     "notifications:center": PageSeed("Уведомления"),
     "cabinet:dashboard": PageSeed("Кабинет"),
     "cabinet:reader_dashboard": PageSeed("Кабинет читателя"),

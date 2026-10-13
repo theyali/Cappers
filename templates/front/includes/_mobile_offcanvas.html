@@ -128,7 +128,7 @@
                 <span>Моя лента</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
             </a>
-            <a href="{% url 'front:favorites' %}">
+            <a href="{% url 'front:following_feed' %}?favorites=1">
                 <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="favorites" %}</span>
                 <span>Избранное</span>
                 <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>

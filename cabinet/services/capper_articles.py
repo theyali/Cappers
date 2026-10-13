@@ -86,6 +86,27 @@ _CYRILLIC_TRANSLIT = str.maketrans(
 )
 
 
+_ARTICLE_VISUAL_TONES = (
+    "football",
+    "hockey",
+    "basketball",
+    "tennis",
+    "football-alt",
+    "purple",
+)
+
+
+def decorate_capper_articles(articles) -> list:
+    decorated = list(articles)
+    for index, article in enumerate(decorated):
+        word_count = len(strip_tags(article.content).split())
+        article.reading_minutes = max(1, (word_count + 199) // 200)
+        article.article_visual_tone = _ARTICLE_VISUAL_TONES[index % len(_ARTICLE_VISUAL_TONES)]
+        article.article_views_count = int(getattr(article, "views_count", 0) or 0)
+        article.article_comments_count = int(getattr(article, "comments_count", 0) or 0)
+    return decorated
+
+
 def can_create_capper_article(user) -> bool:
     return bool(
         getattr(user, "is_authenticated", False)
@@ -116,11 +137,23 @@ def build_capper_articles_context(user) -> dict:
         .select_related("reviewed_by")
         .order_by("-updated_at", "-id")
     ) if is_analyst else []
+    articles = decorate_capper_articles(articles)
     for article in articles:
         article.can_edit = can_edit_capper_article(user, article)
 
     return {
         "articles": articles,
+        "articles_total_count": len(articles),
+        "articles_total_views": sum(article.article_views_count for article in articles),
+        "articles_approved_count": sum(
+            article.status == CapperArticle.Status.APPROVED for article in articles
+        ),
+        "articles_pending_count": sum(
+            article.status == CapperArticle.Status.PENDING for article in articles
+        ),
+        "articles_draft_count": sum(
+            article.status == CapperArticle.Status.DRAFT for article in articles
+        ),
         "can_create_article": can_create,
         "active_tab": "articles",
         "vip_locked_label": "Стать VIP, чтобы публиковать статьи",

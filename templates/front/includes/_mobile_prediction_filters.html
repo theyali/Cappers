@@ -28,6 +28,17 @@
             {% endfor %}
         </nav>
         {% endif %}
+        {% if mobile_favorites_filter %}
+        <a
+            class="mobile-prediction-favorite-tab{% if mobile_favorites_filter.active %} is-active{% endif %}"
+            href="{{ mobile_favorites_filter.href }}"
+            data-prediction-ajax-link
+            {% if mobile_favorites_filter.active %}aria-current="page"{% endif %}
+        >
+            {% include "front/includes/_solar_icon.html" with name="favorites" only %}
+            <span>{{ mobile_favorites_filter.label }}</span>
+        </a>
+        {% endif %}
     </div>
     {% if prediction_head.show_content_view_switcher %}
     <div class="mobile-match-view-switcher mobile-prediction-view-switcher">

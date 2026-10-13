@@ -175,8 +175,11 @@
                     : "Вернуться в мой профиль";
             }
             if (/^\/experts\/[^/]+\/?$/.test(path)) return "Вернуться к профилю каппера";
-            if (path === "/favorites/") return "Вернуться в избранное";
-            if (path === "/feed/") return "Вернуться в мою ленту";
+            if (path === "/feed/") {
+                return url.searchParams.get("favorites") === "1"
+                    ? "Вернуться в избранное"
+                    : "Вернуться в мою ленту";
+            }
             if (path === "/tournaments/") return "Вернуться к турнирам";
             if (path.startsWith("/tournaments/")) return "Вернуться к турниру";
             if (path === "/cappers/" || path.startsWith("/cappers-table/")) {
