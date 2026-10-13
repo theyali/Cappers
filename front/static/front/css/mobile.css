@@ -3047,25 +3047,9 @@ body.expert-public-details-open {
     display: none !important;
   }
 
-  .vip-cappers-banner__panel {
-    gap: 14px;
-    padding: 16px;
-    border-radius: 18px;
-  }
 
-  .vip-cappers-banner__hero {
-    padding: 16px;
-    border-radius: 18px;
-  }
 
-  .vip-cappers-banner__hero-card {
-    grid-template-columns: minmax(0, 1fr) minmax(106px, 36%);
-  }
 
-  .vip-cappers-banner__list-box {
-    padding: 15px;
-    border-radius: 18px;
-  }
 
 }
 
@@ -7639,98 +7623,25 @@ body.expert-public-details-open {
     min-height: 0;
   }
 
-  .vip-cappers-banner__panel {
-    gap: 12px;
-    padding: 13px;
-  }
 
-  .vip-cappers-banner__head-link {
-    grid-template-columns: 34px minmax(0, 1fr) 22px;
-    gap: 9px;
-  }
 
-  .vip-cappers-banner__head-icon {
-    width: 34px;
-  }
 
-  .vip-cappers-banner__subtitle {
-    font-size: 12px;
-  }
 
-  .vip-cappers-banner__hero {
-    padding: 14px;
-  }
 
-  .vip-cappers-banner__hero-card {
-    grid-template-columns: minmax(0, 1fr) minmax(92px, 34%);
-    gap: 10px;
-  }
 
-  .vip-cappers-banner__hero-main {
-    gap: 8px;
-  }
 
-  .vip-cappers-banner__week-badge {
-    padding: 7px 10px;
-    font-size: 10px;
-  }
 
-  .vip-cappers-banner__hero-name {
-    font-size: 15px;
-  }
 
-  .vip-cappers-banner__hero-meta,
-  .vip-cappers-banner__hero-stat span {
-    font-size: 11px;
-  }
 
-  .vip-cappers-banner__hero-avatar {
-    box-shadow: 0 0 0 2px #126dff, 0 0 0 8px rgba(11, 86, 250, 0.12),
-      0 0 28px rgba(11, 86, 250, 0.78);
-  }
 
-  .vip-cappers-banner__subscribe {
-    padding: 12px 14px;
-    font-size: 15px;
-  }
 
-  .vip-cappers-banner__list-box {
-    gap: 10px;
-    padding: 13px;
-  }
 
-  .vip-cappers-banner__row {
-    grid-template-columns: 32px 42px minmax(0, 1fr) auto;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 11px;
-  }
 
-  .vip-cappers-banner__row-rank {
-    width: 32px;
-    font-size: 13px;
-  }
 
-  .vip-cappers-banner__row-avatar {
-    width: 42px;
-  }
 
-  .vip-cappers-banner__row-name-line strong {
-    font-size: 13px;
-  }
 
-  .vip-cappers-banner__row-subscribers,
-  .vip-cappers-banner__row-metric span {
-    font-size: 10px;
-  }
 
-  .vip-cappers-banner__row-metric {
-    min-width: 48px;
-  }
 
-  .vip-cappers-banner__row-metric strong {
-    font-size: 15px;
-  }
 
   .profile-xp-card {
     min-height: 154px;
@@ -7794,40 +7705,13 @@ body.expert-public-details-open {
     font-size: 13px;
   }
 
-  .vip-cappers-banner__panel {
-    padding: 11px;
-  }
 
-  .vip-cappers-banner__hero-card {
-    grid-template-columns: minmax(0, 1fr) 82px;
-  }
 
-  .vip-cappers-banner__hero-meta {
-    white-space: normal;
-  }
 
-  .vip-cappers-banner__row {
-    grid-template-columns: 28px 36px minmax(0, 1fr) auto;
-    gap: 7px;
-    padding: 7px;
-  }
 
-  .vip-cappers-banner__row-rank {
-    width: 28px;
-    font-size: 12px;
-  }
 
-  .vip-cappers-banner__row-avatar {
-    width: 36px;
-  }
 
-  .vip-cappers-banner__row-metric {
-    min-width: 40px;
-  }
 
-  .vip-cappers-banner__row-metric span {
-    display: none;
-  }
 }
 
 @media (min-width: 1350px) and (max-width: 1500px) {
