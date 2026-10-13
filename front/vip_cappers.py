@@ -5,6 +5,8 @@ from cabinet.models import AnalystFollow, AnalystProfile, User
 from cabinet.vip import annotate_vip_status
 from game.models import PredictionCoupon
 
+from .prediction_metrics import annotate_author_roi
+
 
 DEFAULT_VIP_CAPPERS_LIMIT = 6
 MAX_VIP_CAPPERS_LIMIT = 12
@@ -76,6 +78,7 @@ def _card_payload(profile: AnalystProfile) -> dict:
         "verified": bool(profile.is_verified),
         "followers_count": int(getattr(profile, "followers_count", 0) or 0),
         "success_rate": success_rate,
+        "roi": profile.author_roi,
         "wins_count": wins_count,
         "losses_count": losses_count,
         "main_sport_category": _main_sport_category(profile),
@@ -108,6 +111,11 @@ def build_vip_cappers_data(limit=DEFAULT_VIP_CAPPERS_LIMIT, *, viewer=None) -> d
         user_outer_ref="user_id",
         activated_annotation_name="vip_sort_at",
     ).filter(is_vip_active=True)
+    queryset = annotate_author_roi(
+        queryset,
+        author_outer_ref="user_id",
+        period_days=None,
+    )
 
     if getattr(viewer, "is_authenticated", False):
         queryset = queryset.annotate(
