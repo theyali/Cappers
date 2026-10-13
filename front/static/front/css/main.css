@@ -2918,7 +2918,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     display: grid;
     gap: 24px;
     margin-top: 24px;
-    padding: clamp(20px, 3vw, 34px);
     border-radius: 22px;
 }
 .coupon-head,
