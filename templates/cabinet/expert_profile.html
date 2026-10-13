@@ -553,34 +553,7 @@
 
     {% if expert_articles %}
     <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" hidden>
-        <div class="expert-public-section-head">
-            <div>
-                <p class="expert-public-kicker">Публикации эксперта</p>
-                <h2>Статьи</h2>
-            </div>
-            <span>{{ expert_articles|length }} опубликовано</span>
-        </div>
-
-        <div class="profile-user-list">
-            {% for article in expert_articles %}
-            <a class="profile-user-row" href="{{ article.get_absolute_url }}">
-                <div class="profile-user-avatar"{% if article.cover_image %} data-skeleton-image{% endif %}>
-                    {% if article.cover_image %}
-                        <img src="{{ article.cover_image.url }}" width="46" height="46" alt="" loading="lazy">
-                    {% else %}
-                        A
-                    {% endif %}
-                </div>
-                <div class="profile-user-copy">
-                    <strong>{{ article.title }}</strong>
-                    {% if article.excerpt %}
-                        <span>{{ article.excerpt|truncatechars:180 }}</span>
-                    {% endif %}
-                    <small>{{ article.published_at|date:"d.m.Y" }}</small>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
+        {% include "cabinet/includes/_capper_article_showcase.html" with heading_id="expert-public-articles-title" eyebrow="Публикации каппера" title="Статьи" total_count=expert_articles|length total_views=expert_articles_total_views articles=expert_articles public_list=True compact_total=True empty_text="У эксперта пока нет статей." only %}
     </section>
     {% endif %}
 

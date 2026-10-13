@@ -1,0 +1,8 @@
+<span class="capper-article-visual is-{{ article.article_visual_tone|default:'football' }}{% if article.cover_image %} has-image{% endif %}"{% if article.cover_image %} data-skeleton-image{% endif %}>
+    {% if article.cover_image %}
+        <img src="{{ article.cover_image.url }}" alt="" loading="lazy">
+    {% else %}
+        <span class="capper-article-visual-pattern" aria-hidden="true"></span>
+        <span class="capper-article-visual-object" aria-hidden="true"></span>
+    {% endif %}
+</span>

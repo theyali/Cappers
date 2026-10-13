@@ -34,6 +34,10 @@ def _public_profile(user: User) -> str:
     return reverse("front:expert_profile", kwargs={"username": user.username})
 
 
+def _favorites_feed_url(user: User) -> str:
+    return f"{reverse('front:following_feed')}?favorites=1"
+
+
 MOBILE_QUICK_ACCESS_OPTIONS = (
     MobileQuickAccessOption(
         "profile",
@@ -62,7 +66,7 @@ MOBILE_QUICK_ACCESS_OPTIONS = (
         "Избранное",
         "star",
         '<svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"></path></svg>',
-        _static_url("front:favorites"),
+        _favorites_feed_url,
     ),
     MobileQuickAccessOption(
         "articles",

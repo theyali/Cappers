@@ -28,6 +28,7 @@ from achievements.evaluators import user_achievement_metrics
 
 from .achievements import build_achievement_badges
 from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
+from .services.capper_articles import decorate_capper_articles
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
     build_paid_checkout_context,
@@ -537,7 +538,7 @@ def expert_profile(request, username: str):
         "podiums": sum(row["rank"] in (1, 2, 3) for row in finished_tournaments),
         "prize_total": sum((row["prize_amount"] for row in finished_tournaments), 0),
     }
-    expert_articles = list(
+    expert_articles = decorate_capper_articles(
         CapperArticle.objects.filter(
             author=profile.user,
             status=CapperArticle.Status.APPROVED,
@@ -545,9 +546,9 @@ def expert_profile(request, username: str):
     )
     context["expert_articles"] = expert_articles
     context["expert_latest_articles"] = expert_articles[:3]
-    for article in context["expert_latest_articles"]:
-        word_count = len(strip_tags(article.content).split())
-        article.reading_minutes = max(1, (word_count + 199) // 200)
+    context["expert_articles_total_views"] = sum(
+        article.article_views_count for article in expert_articles
+    )
 
     paid_subscription = active_paid_subscriptions_by_analyst(
         request.user,

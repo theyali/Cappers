@@ -306,7 +306,6 @@ def _breadcrumbs_for_request(request):
         "game:match_list": [{"title": "Матчи"}],
         "front:predictions": [{"title": "Все прогнозы"}],
         "front:following_feed": [{"title": "Моя лента"}],
-        "front:favorites": [{"title": "Избранное"}],
         "front:bookmakers": [{"title": "Букмекеры"}],
         "front:bonuses": [{"title": "Бонусы"}],
         "front:sports_news": [{"title": "Новости спорта"}],

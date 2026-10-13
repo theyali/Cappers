@@ -1086,34 +1086,6 @@ def prediction_detail(request, prediction_id: int):
     )
 
 
-@login_required
-@ensure_csrf_cookie
-def favorites(request):
-    following_ids = _following_ids(request.user)
-    queryset = (
-        _published_queryset()
-        .filter(favorites__user=request.user)
-        .order_by("-favorites__created_at", "-created_at")
-        .distinct()
-    )
-    paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
-    page_obj = paginator.get_page(request.GET.get("page"))
-    page_obj.object_list = _decorate_predictions(
-        request,
-        page_obj.object_list,
-        following_ids=following_ids,
-    )
-
-    return render(
-        request,
-        "front/favorites.html",
-        {
-            "page_obj": page_obj,
-            "total_predictions": paginator.count,
-        },
-    )
-
-
 def _published_prediction(prediction_id: int) -> PredictionCoupon:
     prediction = get_object_or_404(
         PredictionCoupon,

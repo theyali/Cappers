@@ -16,7 +16,7 @@
             </span>
             <span>Бонусы</span>
         </a>
-        <a class="site-topbar-link{% if request.resolver_match.url_name == 'favorites' %} is-active{% endif %}" href="{% url 'front:favorites' %}">
+        <a class="site-topbar-link{% if request.resolver_match.url_name == 'following_feed' and request.GET.favorites == '1' %} is-active{% endif %}" href="{% url 'front:following_feed' %}?favorites=1">
             <span class="site-topbar-icon" aria-hidden="true">
                 {% include "front/includes/_solar_icon.html" with name="favorites" %}
             </span>

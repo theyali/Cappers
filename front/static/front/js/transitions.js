@@ -236,11 +236,10 @@
         ) {
             return "Вернуться к прогнозам";
         }
-        if (path === "/favorites/") {
-            return "Вернуться в избранное";
-        }
         if (path === "/feed/") {
-            return "Вернуться в мою ленту";
+            return url.searchParams.get("favorites") === "1"
+                ? "Вернуться в избранное"
+                : "Вернуться в мою ленту";
         }
         if (path === "/") {
             return "Вернуться на главную";

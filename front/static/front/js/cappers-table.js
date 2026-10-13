@@ -74,7 +74,14 @@
         const nextTitle = monthLabel && monthLabel !== "Все время"
             ? `${BASE_TITLE} — ${monthLabel}`
             : BASE_TITLE;
-        title.textContent = nextTitle;
+        title.textContent = "";
+        title.append("Таблица ");
+        const accent = document.createElement("span");
+        accent.textContent = "капперов";
+        title.append(accent);
+        if (monthLabel && monthLabel !== "Все время") {
+            title.append(` — ${monthLabel}`);
+        }
         document.title = `${nextTitle} — КапперХаб`;
     }
 
