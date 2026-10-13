@@ -33,7 +33,10 @@
     const distributionKey = (market, selection) => `${String(market || "").trim()}\u0000${String(selection || "").trim()}`;
 
     const enrichLockedOddsButtons = () => {
-        const teamNames = document.querySelectorAll(".match-detail-scoreboard .match-detail-team > strong");
+        const teamNames = document.querySelectorAll(
+            ".match-v2-scoreboard .match-v2-team-copy > strong, " +
+            ".match-detail-scoreboard .match-detail-team > strong",
+        );
         const homeName = teamNames[0]?.textContent.trim() || "Хозяева";
         const awayName = teamNames[1]?.textContent.trim() || "Гости";
         const mapping = new Map([

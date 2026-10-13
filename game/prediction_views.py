@@ -10,6 +10,7 @@ from cabinet.models import AnalystFollow, AnalystProfile
 from front.models import PredictionFavorite, PredictionLike
 from front.prediction_metrics import annotate_author_roi
 from game.models import Match, Prediction, PredictionCoupon
+from game.services.bet_options import pick_label
 
 
 MATCH_PREDICTIONS_PAGE_SIZE = 6
@@ -148,6 +149,17 @@ def match_predictions(request, slug: str):
         prediction.is_following_author = (
             author.pk in following_ids and not prediction.is_own
         )
+        prediction.match_pick_label = pick_label(prediction)
+        prediction.match_prediction_text = (
+            prediction.coupon.description
+            or prediction.coupon.headline
+            or "Каппер оставил прогноз на этот матч."
+        )
+        prediction.match_status_label = {
+            Prediction.StateStatus.WIN: "Выигрыш",
+            Prediction.StateStatus.LOSE: "Проигрыш",
+            Prediction.StateStatus.REFUND: "Возврат",
+        }.get(prediction.state_status, "Играет")
 
     html = render_to_string(
         "game/_match_prediction_cards.html",

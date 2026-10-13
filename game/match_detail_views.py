@@ -306,6 +306,7 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
         "score_label": match.score if match.score else "VS",
         "first_half_score": first_half_score,
         "live_progress": _live_progress(match),
+        "show_timeline": match.sync_scope != Match.SyncScope.PREMATCH,
         "status_label": live_status_label(match) if match.sync_scope == Match.SyncScope.LIVE else match.get_sync_scope_display(),
         "league_badge": _team_code(match.league_name, "Л"),
         "compact_odds": _compact_odds(odds_tabs),
@@ -347,6 +348,16 @@ def match_detail(request, slug: str):
     _queue_provider_predictions_refresh(match)
 
     odds_tabs = build_match_odds_tabs(match)
+    match_page = _match_page_context(match, odds_tabs)
+    match_page["has_predictions"] = True
+    match_page["has_tabs"] = any(
+        (
+            match_page["compact_odds"],
+            match_page["has_predictions"],
+            match_page["stats_rows"],
+            match_page["h2h"]["items"],
+        )
+    )
     context = {
         "match": match,
         "match_metrics": match_metrics,
@@ -359,8 +370,7 @@ def match_detail(request, slug: str):
         ),
         "coupon_match_stale_seconds": settings.COUPON_MATCH_STALE_SECONDS,
         "odds_tabs": odds_tabs,
-        "match_page": _match_page_context(match, odds_tabs),
-        "provider_prediction_panel": legacy_views._provider_prediction_panel(match),
+        "match_page": match_page,
         "match_predictions_total": match_metrics.predictions_count,
         "match_demand": _match_demand_context(request, match),
         "is_watched": match.is_watched,
@@ -392,16 +402,21 @@ def match_detail(request, slug: str):
                 1,
             )
 
-    feed_html = render_to_string(
-        "game/_match_predictions_feed.html",
-        context,
-        request=request,
-    )
+    if "data-match-predictions-feed" not in page_html:
+        feed_html = render_to_string(
+            "game/_match_predictions_feed.html",
+            context,
+            request=request,
+        )
 
-    # Keep the feed shell in the first HTML response so the layout does not jump.
-    # JavaScript only fills .match-predictions-list after the page is visible.
-    closing_main = "</main>"
-    if closing_main in page_html:
-        page_html = page_html.replace(closing_main, f"{feed_html}\n{closing_main}", 1)
+        # Keep the feed shell in the first HTML response so the layout does not jump.
+        # JavaScript only fills .match-predictions-list after the page is visible.
+        closing_main = "</main>"
+        if closing_main in page_html:
+            page_html = page_html.replace(
+                closing_main,
+                f"{feed_html}\n{closing_main}",
+                1,
+            )
 
     return HttpResponse(page_html)
