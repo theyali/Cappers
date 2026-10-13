@@ -1,3 +1,60 @@
 {% for prediction in predictions %}
-    {% include "front/includes/_prediction_table_row.html" %}
+<article
+    class="match-v2-prediction{% if prediction.is_own %} is-own-prediction{% elif prediction.is_following_author %} is-followed-prediction{% endif %}"
+    data-prediction-card="{{ prediction.coupon.id }}"
+    data-analyst-id="{{ prediction.coupon.author_id }}"
+>
+    <div class="match-v2-prediction-top">
+        <a class="match-v2-author-link" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
+            <span class="match-v2-avatar" {% if prediction.expert_avatar_url %}data-skeleton-image{% endif %}>
+                {% if prediction.expert_avatar_url %}
+                    <img src="{{ prediction.expert_avatar_url }}" width="42" height="42" alt="" loading="lazy">
+                {% else %}
+                    {{ prediction.expert_initials }}
+                {% endif %}
+            </span>
+            <span class="match-v2-prediction-author">
+                <strong>
+                    {{ prediction.expert_name }}
+                    {% if prediction.expert_verified %}
+                    <svg class="match-v2-verified" width="13" height="13" viewBox="0 0 24 24" aria-label="Подтвержденный эксперт">
+                        <path d="M12 1.8l2.5 1.9 3.1-.2.9 3 2.5 1.9-1.2 2.9 1.2 2.9-2.5 1.9-.9 3-3.1-.2L12 22.8l-2.5-1.9-3.1.2-.9-3L3 14.2l1.2-2.9L3 8.4l2.5-1.9.9-3 3.1.2z" fill="#2F6BFF"></path>
+                        <path d="M8.4 12.2l2.4 2.4 4.8-5.1" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    {% endif %}
+                </strong>
+                <small>
+                    @{{ prediction.coupon.author.username }}
+                    {% if prediction.author_roi %}
+                        · ROI <b class="{% if prediction.author_roi > 0 %}is-positive{% elif prediction.author_roi < 0 %}is-negative{% endif %}">{% if prediction.author_roi > 0 %}+{% endif %}{{ prediction.author_roi|floatformat:1 }}%</b>
+                    {% endif %}
+                    · {{ prediction.coupon.published_at|timesince }} назад
+                </small>
+            </span>
+        </a>
+        <span class="match-v2-prediction-status is-{{ prediction.state_status|default:'pending' }}">
+            {{ prediction.match_status_label }}
+        </span>
+    </div>
+
+    <p class="match-v2-prediction-text">{{ prediction.match_prediction_text|striptags|truncatechars:170 }}</p>
+
+    <div class="match-v2-prediction-bottom">
+        <span class="match-v2-prediction-pick">
+            {{ prediction.match_pick_label }}
+            <b>{{ prediction.coefficient|floatformat:2 }}</b>
+        </span>
+        <div class="match-v2-confidence" aria-label="Уверенность {{ prediction.coupon.confidence }} процентов">
+            <div>
+                <span>УВЕРЕННОСТЬ</span>
+                <strong>{{ prediction.coupon.confidence }}%</strong>
+            </div>
+            <progress value="{{ prediction.coupon.confidence }}" max="100">{{ prediction.coupon.confidence }}%</progress>
+        </div>
+        <a class="match-v2-prediction-open" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+            Купон
+            <span aria-hidden="true">→</span>
+        </a>
+    </div>
+</article>
 {% endfor %}

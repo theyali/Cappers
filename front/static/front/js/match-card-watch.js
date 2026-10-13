@@ -152,7 +152,7 @@
     });
 
     const loadMatchPredictionsScript = () => {
-        if (!document.querySelector(".match-detail-page")) return;
+        if (!document.querySelector(".match-detail-page, .match-page-v2")) return;
         if (document.querySelector("script[data-match-predictions-script]")) return;
 
         const source = Array.from(document.scripts).find((script) =>
