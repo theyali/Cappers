@@ -30,7 +30,7 @@
                                 </svg>
                             {% endif %}
                         </span>
-                        <span class="vip-cappers-banner__row-subscribers{% if forloop.first %} is-first{% endif %}">{{ item.followers_count }} подписчиков</span>
+                        <span class="vip-cappers-banner__row-subscribers{% if forloop.first %} is-first{% endif %}">{% if forloop.first %}{{ item.followers_count }}<br>подписчиков{% else %}{{ item.followers_count }} подписчиков{% endif %}</span>
                     </span>
                     <strong class="vip-cappers-banner__row-metric{% if item.roi > 0 %} is-positive{% elif item.roi < 0 %} is-negative{% endif %}">{% if item.roi > 0 %}+{% endif %}{{ item.roi|floatformat:1 }}%</strong>
                 </a>
