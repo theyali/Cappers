@@ -8811,7 +8811,6 @@ html:has(.matches-head) { overflow-anchor: none; }
 .cappers-table-hero {
     width: 100%;
     box-sizing: border-box;
-    background: #0E0F12;
     color: #FFFFFF;
     font-family: var(--font-body);
 }
