@@ -1,11 +1,14 @@
+import hashlib
+import json
 import logging
+from decimal import Decimal, InvalidOperation
 from functools import partial
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Max, Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
@@ -14,7 +17,10 @@ from game.models import (
     League,
     LeagueSeason,
     Match,
+    MatchEvent,
+    MatchEventParticipant,
     MatchOdds,
+    MatchStatistic,
     Provider,
     Sport,
     Team,
@@ -29,6 +35,35 @@ from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 
 logger = logging.getLogger(__name__)
+
+
+STAT_SORT_ORDER = {
+    "ball_possession": 10,
+    "possession": 10,
+    "shots": 20,
+    "shots_total": 20,
+    "total_shots": 20,
+    "shots_on_goal": 30,
+    "shots_on_target": 30,
+    "corner_kicks": 40,
+    "corners": 40,
+    "yellow_cards": 50,
+    "red_cards": 60,
+}
+
+STAT_LABELS_RU = {
+    "ball_possession": "Владение, %",
+    "possession": "Владение, %",
+    "shots": "Удары",
+    "shots_total": "Удары",
+    "total_shots": "Удары",
+    "shots_on_goal": "Удары в створ",
+    "shots_on_target": "Удары в створ",
+    "corner_kicks": "Угловые",
+    "corners": "Угловые",
+    "yellow_cards": "Жёлтые карточки",
+    "red_cards": "Красные карточки",
+}
 
 
 class MatchSyncService:
@@ -120,6 +155,106 @@ class MatchSyncService:
             "available": bool((payload.get("predictions") or {}).get("available")),
         }
 
+    def sync_match_statistics(self, match: Match) -> dict:
+        if match.sync_scope == Match.SyncScope.PREMATCH:
+            return {"status": "skipped", "reason": "prematch", "external_id": match.external_id}
+
+        embedded = self._embedded_statistics_payload(match.raw_data)
+        if embedded is not None:
+            return self._sync_statistics_payload(match, {"statistics": embedded})
+
+        payload = self.provider.fetch_game_statistics(match.external_id)
+        return self._sync_statistics_payload(match, payload)
+
+    def sync_match_events(self, match: Match) -> dict:
+        if match.sync_scope == Match.SyncScope.PREMATCH:
+            return {
+                "status": "skipped",
+                "reason": "prematch",
+                "external_id": match.external_id,
+                "available": match.events_available,
+                "rows": MatchEvent.objects.filter(match=match).count(),
+            }
+
+        # A direct refresh must always read the provider. ``raw_data.events`` is
+        # only a snapshot from an earlier sync and may be stale for a live match.
+        payload = self.provider.fetch_game_events(match.external_id)
+        return self._sync_events_payload(match, payload)
+
+    def sync_live_statistics(self, *, limit: int | None = None) -> dict:
+        limit = max(
+            int(limit or getattr(settings, "NEUROKEFF_LIVE_STATISTICS_LIMIT", 80)),
+            1,
+        )
+        matches = list(
+            Match.objects.filter(
+                provider=Provider.NEUROKEFF,
+                sync_scope=Match.SyncScope.LIVE,
+            )
+            .annotate(last_stats_fetched=Max("statistics_rows__fetched_at"))
+            .order_by("last_stats_fetched", "last_seen_at", "id")[:limit]
+        )
+        updated = 0
+        skipped = 0
+        errors = 0
+        for match in matches:
+            try:
+                result = self.sync_match_statistics(match)
+            except Exception:
+                errors += 1
+                logger.exception("Failed to sync Neurokeff statistics for match %s", match.pk)
+                continue
+            if result.get("status") == "ok":
+                updated += 1
+            else:
+                skipped += 1
+        return {
+            "status": "ok",
+            "checked": len(matches),
+            "updated": updated,
+            "skipped": skipped,
+            "errors": errors,
+        }
+
+    def sync_live_events(self, *, limit: int | None = None) -> dict:
+        limit = max(
+            int(limit or getattr(settings, "NEUROKEFF_LIVE_EVENTS_LIMIT", 80)),
+            1,
+        )
+        matches = list(
+            Match.objects.filter(
+                provider=Provider.NEUROKEFF,
+                sync_scope=Match.SyncScope.LIVE,
+            )
+            .order_by(
+                F("events_fetched_at").asc(nulls_first=True),
+                "last_seen_at",
+                "id",
+            )[:limit]
+        )
+        updated = 0
+        skipped = 0
+        errors = 0
+        for match in matches:
+            try:
+                result = self.sync_match_events(match)
+            except Exception:
+                errors += 1
+                logger.exception("Failed to sync Neurokeff events for match %s", match.pk)
+                continue
+            if result.get("status") == "ok":
+                updated += 1
+            else:
+                skipped += 1
+        return {
+            "status": "ok",
+            "checked": len(matches),
+            "updated": updated,
+            "skipped": skipped,
+            "errors": errors,
+        }
+
+
     def sync_stuck_live_matches(self) -> dict:
         stale_after = timedelta(
             minutes=max(
@@ -175,6 +310,8 @@ class MatchSyncService:
                     setattr(match, field, value)
                 match.save(update_fields=[*defaults.keys(), "updated_at"])
                 self._sync_odds(match, payload.get("odds") or {})
+                self._sync_embedded_statistics(match, payload)
+                self._sync_embedded_events(match, payload)
                 updated += 1
                 scopes[scope] = scopes.get(scope, 0) + 1
 
@@ -222,6 +359,8 @@ class MatchSyncService:
                 defaults={**self._match_defaults(payload, match_scope), "last_seen_at": now},
             )
             self._sync_odds(match, payload.get("odds") or {})
+            self._sync_embedded_statistics(match, payload)
+            self._sync_embedded_events(match, payload)
             scopes[match_scope] = scopes.get(match_scope, 0) + 1
             if was_created:
                 created += 1
@@ -259,6 +398,479 @@ class MatchSyncService:
         return timezone.now() - match.provider_predictions_updated_at > timedelta(
             seconds=stale_seconds
         )
+
+    @transaction.atomic
+    def _sync_events_payload(self, match: Match, payload: dict[str, Any]) -> dict:
+        events = payload.get("events") if isinstance(payload, dict) else None
+        now = timezone.now()
+        if not isinstance(events, dict) or events.get("available") is not True:
+            self._record_events_sync_state(
+                match,
+                events=events,
+                fetched_at=now,
+                available=False,
+            )
+            return {
+                "status": "skipped",
+                "reason": "unavailable",
+                "external_id": match.external_id,
+                "available": False,
+                "rows": MatchEvent.objects.filter(match=match).count(),
+            }
+
+        items = events.get("items")
+        if not isinstance(items, list):
+            self._record_events_sync_state(
+                match,
+                events=events,
+                fetched_at=now,
+                available=None,
+            )
+            return {
+                "status": "skipped",
+                "reason": "invalid_items",
+                "external_id": match.external_id,
+                "available": True,
+                "rows": MatchEvent.objects.filter(match=match).count(),
+            }
+
+        rows = self._normalize_event_rows(match, events)
+        if not rows:
+            # An explicit empty list is an authoritative snapshot and may clear
+            # rows. A malformed non-empty list must never destroy known events.
+            if items:
+                self._record_events_sync_state(
+                    match,
+                    events=events,
+                    fetched_at=now,
+                    available=None,
+                )
+                return {
+                    "status": "skipped",
+                    "reason": "invalid_items",
+                    "external_id": match.external_id,
+                    "available": True,
+                    "rows": MatchEvent.objects.filter(match=match).count(),
+                }
+
+            with transaction.atomic():
+                existing_events = MatchEvent.objects.filter(match=match)
+                deleted = existing_events.count()
+                existing_events.delete()
+                self._record_events_sync_state(
+                    match,
+                    events=events,
+                    fetched_at=now,
+                    available=True,
+                )
+            return {
+                "status": "ok",
+                "reason": "empty",
+                "external_id": match.external_id,
+                "available": True,
+                "rows": 0,
+                "deleted": deleted,
+            }
+
+        active_keys = {row["event_key"] for row in rows}
+        with transaction.atomic():
+            for row in rows:
+                participants = row.pop("participants")
+                event, _ = MatchEvent.objects.update_or_create(
+                    match=match,
+                    event_key=row["event_key"],
+                    defaults={
+                        **row,
+                        "provider": Provider.NEUROKEFF,
+                        "fetched_at": now,
+                    },
+                )
+                event.participants_rows.all().delete()
+                MatchEventParticipant.objects.bulk_create(
+                    [
+                        MatchEventParticipant(
+                            event=event,
+                            role=participant["role"],
+                            player_external_id=participant["player_external_id"],
+                            player_name=participant["player_name"],
+                            player_name_ru=participant["player_name_ru"],
+                            raw_data=participant["raw_data"],
+                        )
+                        for participant in participants
+                    ]
+                )
+
+            stale_events = MatchEvent.objects.filter(match=match).exclude(
+                event_key__in=active_keys,
+            )
+            deleted = stale_events.count()
+            stale_events.delete()
+            self._record_events_sync_state(
+                match,
+                events=events,
+                fetched_at=now,
+                available=True,
+            )
+        return {
+            "status": "ok",
+            "external_id": match.external_id,
+            "available": True,
+            "rows": len(rows),
+            "deleted": deleted,
+        }
+
+    @staticmethod
+    def _record_events_sync_state(
+        match: Match,
+        *,
+        events: dict[str, Any] | None,
+        fetched_at: datetime,
+        available: bool | None,
+    ) -> None:
+        locked_match = Match.objects.select_for_update().get(pk=match.pk)
+        raw_data = locked_match.raw_data if isinstance(locked_match.raw_data, dict) else {}
+        if isinstance(events, dict):
+            raw_data = {**raw_data, "events": events}
+
+        match.raw_data = raw_data
+        match.events_fetched_at = fetched_at
+        match.events_available = available
+        locked_match.raw_data = raw_data
+        locked_match.events_fetched_at = fetched_at
+        locked_match.events_available = available
+        locked_match.updated_at = fetched_at
+        locked_match.save(
+            update_fields=(
+                "raw_data",
+                "events_fetched_at",
+                "events_available",
+                "updated_at",
+            )
+        )
+
+    def _sync_embedded_events(self, match: Match, payload: dict[str, Any]) -> dict | None:
+        events = self._embedded_events_payload(payload)
+        if events is None:
+            return None
+        return self._sync_events_payload(match, {"events": events})
+
+    @staticmethod
+    def _embedded_events_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        section = payload.get("events")
+        if isinstance(section, dict) and "available" in section:
+            return section
+        data = payload.get("data")
+        if isinstance(data, dict):
+            section = data.get("events")
+            if isinstance(section, dict) and "available" in section:
+                return section
+        return None
+
+    def _normalize_event_rows(self, match: Match, events: dict[str, Any]) -> list[dict[str, Any]]:
+        items = events.get("items")
+        if not isinstance(items, list):
+            return []
+
+        rows = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            external_id = self._to_int(item.get("id"))
+            uid = self._to_int(item.get("uid"))
+            seq = self._to_int(item.get("seq"))
+            event_key = self._event_key(item, external_id=external_id, uid=uid, seq=seq)
+            event_type = item.get("type") if isinstance(item.get("type"), dict) else {}
+            detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
+            time_payload = item.get("time") if isinstance(item.get("time"), dict) else {}
+            team_payload = item.get("team") if isinstance(item.get("team"), dict) else {}
+            player = item.get("player") if isinstance(item.get("player"), dict) else {}
+            assist = item.get("assist") if isinstance(item.get("assist"), dict) else {}
+            team_external_id = self._to_int(team_payload.get("id"))
+            team_side = str(team_payload.get("side") or "").strip().lower()
+            team = self._event_team(match, team_external_id=team_external_id, side=team_side)
+
+            rows.append(
+                {
+                    "event_key": event_key,
+                    "external_id": external_id,
+                    "uid": uid,
+                    "seq": seq,
+                    "event_type_code": str(event_type.get("code") or "").strip(),
+                    "event_type_name": str(event_type.get("name") or "").strip(),
+                    "event_type_name_ru": str(event_type.get("name_ru") or "").strip(),
+                    "detail_code": str(detail.get("code") or "").strip(),
+                    "detail_name": str(detail.get("name") or "").strip(),
+                    "detail_name_ru": str(detail.get("name_ru") or "").strip(),
+                    "minute": self._to_int(time_payload.get("minute")),
+                    "extra_minute": self._to_int(time_payload.get("extra")),
+                    "team": team,
+                    "team_external_id": team_external_id,
+                    "team_name": str(team_payload.get("name") or "").strip(),
+                    "team_name_ru": str(team_payload.get("name_ru") or "").strip(),
+                    "team_side": team_side,
+                    "player_external_id": self._to_int(player.get("id")),
+                    "player_name": str(player.get("name") or "").strip(),
+                    "player_name_ru": str(player.get("name_ru") or "").strip(),
+                    "assist_external_id": self._to_int(assist.get("id")),
+                    "assist_name": str(assist.get("name") or "").strip(),
+                    "assist_name_ru": str(assist.get("name_ru") or "").strip(),
+                    "participants": self._normalize_event_participants(item),
+                    "raw_data": item,
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _event_key(
+        item: dict[str, Any],
+        *,
+        external_id: int | None,
+        uid: int | None,
+        seq: int | None,
+    ) -> str:
+        if external_id is not None:
+            return f"id:{external_id}"
+        if uid is not None:
+            return f"uid:{uid}"
+        if seq is not None:
+            return f"seq:{seq}"
+        event_type = item.get("type") if isinstance(item.get("type"), dict) else {}
+        detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
+        time_payload = item.get("time") if isinstance(item.get("time"), dict) else {}
+        team_payload = item.get("team") if isinstance(item.get("team"), dict) else {}
+        player = item.get("player") if isinstance(item.get("player"), dict) else {}
+        assist = item.get("assist") if isinstance(item.get("assist"), dict) else {}
+        identity = {
+            "type": event_type.get("code"),
+            "detail": detail.get("code"),
+            "minute": time_payload.get("minute"),
+            "extra": time_payload.get("extra"),
+            "team_id": team_payload.get("id"),
+            "team_side": team_payload.get("side"),
+            "player_id": player.get("id"),
+            "player_name": player.get("name"),
+            "assist_id": assist.get("id"),
+        }
+        digest = hashlib.sha256(
+            json.dumps(identity, ensure_ascii=True, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()[:32]
+        return f"fallback:{digest}"
+
+    def _event_team(
+        self,
+        match: Match,
+        *,
+        team_external_id: int | None,
+        side: str,
+    ) -> Team | None:
+        for team in (match.home_team, match.away_team):
+            if team is not None and team_external_id is not None and team.external_id == team_external_id:
+                return team
+        if side == "home":
+            return match.home_team
+        if side == "away":
+            return match.away_team
+        return None
+
+    def _normalize_event_participants(self, item: dict[str, Any]) -> list[dict[str, Any]]:
+        participants = item.get("participants")
+        if not isinstance(participants, list):
+            return []
+
+        rows = []
+        for participant in participants:
+            if not isinstance(participant, dict):
+                continue
+            player = participant.get("player") if isinstance(participant.get("player"), dict) else {}
+            rows.append(
+                {
+                    "role": str(participant.get("role") or "").strip(),
+                    "player_external_id": self._to_int(player.get("id")),
+                    "player_name": str(player.get("name") or "").strip(),
+                    "player_name_ru": str(player.get("name_ru") or "").strip(),
+                    "raw_data": participant,
+                }
+            )
+        return rows
+
+    def _sync_statistics_payload(self, match: Match, payload: dict[str, Any]) -> dict:
+        statistics = payload.get("statistics") if isinstance(payload, dict) else None
+        if not isinstance(statistics, dict) or not statistics.get("available"):
+            embedded = self._embedded_statistics_payload(match.raw_data)
+            if embedded is None:
+                MatchStatistic.objects.filter(match=match).delete()
+                return {
+                    "status": "skipped",
+                    "reason": "unavailable",
+                    "external_id": match.external_id,
+                }
+            statistics = embedded
+
+        rows = self._normalize_statistics_rows(statistics)
+        now = timezone.now()
+        if not rows:
+            MatchStatistic.objects.filter(match=match).delete()
+            return {
+                "status": "skipped",
+                "reason": "empty",
+                "external_id": match.external_id,
+            }
+
+        active_keys = {(row["period_code"], row["stat_code"]) for row in rows}
+        with transaction.atomic():
+            for row in rows:
+                MatchStatistic.objects.update_or_create(
+                    match=match,
+                    period_code=row["period_code"],
+                    stat_code=row["stat_code"],
+                    defaults={
+                        "period_name": row["period_name"],
+                        "stat_name": row["stat_name"],
+                        "stat_name_ru": row["stat_name_ru"],
+                        "category": row["category"],
+                        "unit": row["unit"],
+                        "value_type": row["value_type"],
+                        "home_value": row["home_value"],
+                        "away_value": row["away_value"],
+                        "home_display": row["home_display"],
+                        "away_display": row["away_display"],
+                        "sort_order": row["sort_order"],
+                        "raw_data": row["raw_data"],
+                        "fetched_at": now,
+                    },
+                )
+            stale_rows = MatchStatistic.objects.filter(match=match)
+            for period_code, stat_code in active_keys:
+                stale_rows = stale_rows.exclude(period_code=period_code, stat_code=stat_code)
+            stale_rows.delete()
+
+        raw_data = match.raw_data if isinstance(match.raw_data, dict) else {}
+        raw_data = {**raw_data, "statistics": statistics}
+        Match.objects.filter(pk=match.pk).update(raw_data=raw_data, updated_at=now)
+        return {
+            "status": "ok",
+            "external_id": match.external_id,
+            "rows": len(rows),
+        }
+
+    def _sync_embedded_statistics(self, match: Match, payload: dict[str, Any]) -> dict | None:
+        statistics = self._embedded_statistics_payload(payload)
+        if statistics is None:
+            return None
+        return self._sync_statistics_payload(match, {"statistics": statistics})
+
+    @staticmethod
+    def _embedded_statistics_payload(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        for key in ("statistics", "player_statistics", "players"):
+            section = payload.get(key)
+            if (
+                isinstance(section, dict)
+                and section.get("available")
+                and isinstance(section.get("items"), list)
+            ):
+                return section
+        return None
+
+    def _normalize_statistics_rows(self, statistics: dict[str, Any]) -> list[dict[str, Any]]:
+        items = statistics.get("items")
+        if not isinstance(items, list):
+            return []
+
+        merged: dict[tuple[str, str], dict[str, Any]] = {}
+        for side_item in items:
+            if not isinstance(side_item, dict):
+                continue
+            side = str(side_item.get("side") or "").strip().lower()
+            if side not in {"home", "away"}:
+                continue
+            team = side_item.get("team") if isinstance(side_item.get("team"), dict) else {}
+            stats = side_item.get("stats")
+            if not isinstance(stats, list):
+                continue
+            for stat in stats:
+                if not isinstance(stat, dict):
+                    continue
+                stat_type = stat.get("type") if isinstance(stat.get("type"), dict) else {}
+                stat_code = str(stat_type.get("code") or "").strip()
+                if not stat_code:
+                    continue
+                period_code = str(stat.get("period_code") or "").strip()
+                period = stat.get("period") if isinstance(stat.get("period"), dict) else {}
+                key = (period_code, stat_code)
+                row = merged.setdefault(
+                    key,
+                    {
+                        "period_code": period_code,
+                        "period_name": str(period.get("name_ru") or period.get("name") or ""),
+                        "stat_code": stat_code,
+                        "stat_name": str(stat_type.get("name") or ""),
+                        "stat_name_ru": self._stat_label_ru(stat_code, stat_type),
+                        "category": str(stat_type.get("category") or ""),
+                        "unit": str(stat_type.get("unit") or ""),
+                        "value_type": str(stat_type.get("value_type") or ""),
+                        "home_value": None,
+                        "away_value": None,
+                        "home_display": "",
+                        "away_display": "",
+                        "sort_order": STAT_SORT_ORDER.get(stat_code, 100),
+                        "raw_data": {
+                            "home": {},
+                            "away": {},
+                            "type": stat_type,
+                            "period": period,
+                        },
+                    },
+                )
+                value = stat.get("value")
+                row[f"{side}_value"] = self._decimal_value(value)
+                row[f"{side}_display"] = self._display_value(value)
+                row["raw_data"][side] = {
+                    "team": team,
+                    "stat": stat,
+                }
+
+        return [
+            row
+            for row in merged.values()
+            if row["home_display"] != "" and row["away_display"] != ""
+        ]
+
+    @staticmethod
+    def _stat_label_ru(stat_code: str, stat_type: dict[str, Any]) -> str:
+        if stat_code in STAT_LABELS_RU:
+            return STAT_LABELS_RU[stat_code]
+        name = str(stat_type.get("name_ru") or stat_type.get("name") or stat_code).strip()
+        if not name:
+            return stat_code
+        label = name[:1].upper() + name[1:]
+        if stat_type.get("unit") == "percent" and "%" not in label:
+            label = f"{label}, %"
+        return label
+
+    @staticmethod
+    def _decimal_value(value: Any) -> Decimal | None:
+        if value in (None, ""):
+            return None
+        try:
+            return Decimal(str(value).replace("%", "").replace(",", "."))
+        except (InvalidOperation, ValueError):
+            return None
+
+    @staticmethod
+    def _display_value(value: Any) -> str:
+        if value in (None, ""):
+            return ""
+        number = MatchSyncService._decimal_value(value)
+        if number is None:
+            return str(value)
+        if number == number.to_integral():
+            return str(int(number))
+        return str(number.normalize()).replace(".", ",")
 
     def _match_defaults(
         self,

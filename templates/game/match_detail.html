@@ -7,9 +7,10 @@
 
 {% block content %}
 <section
-    class="match-page-v2 container"
+    class="matches-page match-page-v2 container"
     data-coupon-page
     data-create-url="{% url 'game:create_coupon' %}"
+    data-events-url="{% url 'game:match_events' slug=match.slug %}"
     data-can-write="{% if can_write_coupon %}true{% else %}false{% endif %}"
     data-stale-seconds="{{ coupon_match_stale_seconds|default:60 }}"
     aria-label="Страница матча"
@@ -19,8 +20,14 @@
         <span>Все матчи</span>
     </a>
 
-    <div class="match-page-shell-v2">
-        <main class="match-v2-main">
+    <div class="matches-shell match-page-shell-v2">
+        <aside class="matches-table-filter-sidebar match-v2-left-sidebar" aria-label="Левый сайдбар матча">
+            {% for promo_banner in left_promo_banners %}
+                {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
+            {% endfor %}
+        </aside>
+
+        <section class="matches-list-panel match-v2-content" aria-label="Матч">
             <article class="match-v2-score-card{% if match.sync_scope == 'live' %} is-live{% endif %}">
                 <header class="match-v2-score-head">
                     <div class="match-v2-league">
@@ -42,9 +49,9 @@
                     </div>
 
                     <div class="match-v2-head-actions">
-                        <span class="match-status match-status-{{ match.sync_scope }} match-v2-status" data-sport-code="{{ match.sport_code }}">
+                        <span class="match-status match-status-{{ match.sync_scope }} match-v2-status" data-match-status data-sport-code="{{ match.sport_code }}">
                             {% if match.sync_scope == 'live' %}<i class="match-live-dot" aria-hidden="true"></i>{% endif %}
-                            <span>{{ match_page.status_label }}</span>
+                            <span data-match-status-label>{{ match_page.status_label }}</span>
                         </span>
                         {% if request.user.is_authenticated and match.sync_scope != 'finished' %}
                         <button
@@ -80,19 +87,13 @@
                         </span>
                     </div>
 
-                    <div class="match-detail-score match-v2-score">
+                    <div class="match-v2-score" data-match-score-block>
                         {% if match.score %}
-                            <strong><span>{{ match_page.score_home|default:"0" }}</span><i>:</i><span>{{ match_page.score_away|default:"0" }}</span></strong>
+                            <strong data-match-score><span data-match-score-home>{{ match_page.score_home|default:"0" }}</span><i>:</i><span data-match-score-away>{{ match_page.score_away|default:"0" }}</span></strong>
                         {% else %}
-                            <strong>{{ match_page.score_label }}</strong>
+                            <strong data-match-score><span data-match-score-label>{{ match_page.score_label }}</span></strong>
                         {% endif %}
-                        {% if match_page.first_half_score %}
-                            <span>1-й тайм {{ match_page.first_half_score }}</span>
-                        {% elif match.starts_at %}
-                            <span>{{ match.starts_at|date:"d.m.Y H:i" }}</span>
-                        {% else %}
-                            <span>Время не указано</span>
-                        {% endif %}
+                        <span>{{ match_page.score_meta }}</span>
                     </div>
 
                     <div class="match-v2-team is-away">
@@ -110,28 +111,72 @@
                     </div>
                 </div>
 
-                {% if match_page.show_timeline %}
-                <div class="match-v2-timeline" aria-label="Ход матча">
-                    <progress value="{{ match_page.live_progress }}" max="100">{{ match_page.live_progress }}%</progress>
-                    <span class="match-v2-timeline-half" aria-hidden="true"></span>
-                    {% if match.sync_scope == 'live' %}
-                        <b>{{ match.live_minute_label|default:match.live_minute }}′</b>
-                    {% endif %}
+            <div class="match-v2-timeline" data-match-timeline data-match-v2-progress="{{ match_page.live_progress }}" aria-label="Ход матча"{% if not match_page.show_timeline %} hidden{% endif %}>
+                <progress value="{{ match_page.live_progress }}" max="100">{{ match_page.live_progress }}%</progress>
+                <span class="match-v2-timeline-half" aria-hidden="true"></span>
+                <b data-match-timeline-label{% if not match_page.timeline_marker_label %} hidden{% endif %}>{{ match_page.timeline_marker_label }}</b>
+            </div>
+
+            <section
+                class="match-v2-events is-{{ match_page.events.state }}"
+                data-match-events-panel
+                data-events-state="{{ match_page.events.state }}"
+                aria-labelledby="match-events-title"
+            >
+                <header class="match-v2-events-head">
+                    <div>
+                        <h2 id="match-events-title">События матча <span data-match-events-count>{{ match_page.events.count }}</span></h2>
+                        <span class="match-v2-events-sync" data-match-events-sync>
+                            <i aria-hidden="true"></i>
+                            <span data-match-events-status>{{ match_page.events.status_label }}</span>
+                        </span>
+                    </div>
+                    <button class="match-v2-events-retry" type="button" data-match-events-retry hidden>Повторить</button>
+                </header>
+
+                <ol class="match-v2-events-list" data-match-events-list{% if not match_page.events.items %} hidden{% endif %}>
+                    {% for item in match_page.events.items %}
+                    <li
+                        class="match-v2-event is-{{ item.presentation.side }} is-{{ item.presentation.kind }}"
+                        data-event-key="{{ item.key }}"
+                    >
+                        <div class="match-v2-event-copy">
+                            <span class="match-v2-event-type"><i aria-hidden="true">{{ item.presentation.icon }}</i>{{ item.type.name_ru|default:item.type.name|default:item.type.code|default:"Событие" }}</span>
+                            <strong>{{ item.player.name_ru|default:item.player.name|default:item.team.name_ru|default:item.team.name|default:"Событие матча" }}</strong>
+                            {% if item.assist.name_ru or item.assist.name %}<small>Ассист: {{ item.assist.name_ru|default:item.assist.name }}</small>{% endif %}
+                            {% if item.detail.name_ru or item.detail.name %}<small>{{ item.detail.name_ru|default:item.detail.name }}</small>{% endif %}
+                        </div>
+                        <time>{{ item.time.label|default:"—" }}</time>
+                    </li>
+                    {% endfor %}
+                </ol>
+
+                <div class="match-v2-events-empty" data-match-events-empty{% if match_page.events.items %} hidden{% endif %}>
+                    <span aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 12h3l2-5 4 10 2-5h5"></path></svg>
+                    </span>
+                    <div>
+                        <strong data-match-events-empty-title>{{ match_page.events.empty_title }}</strong>
+                        <p data-match-events-empty-text>{{ match_page.events.empty_text }}</p>
+                    </div>
                 </div>
-                {% endif %}
-            </article>
+                <p class="match-v2-events-announcer" data-match-events-announcer role="status" aria-live="polite" aria-atomic="true"></p>
+            </section>
+        </article>
 
-            {% if match_page.has_tabs %}
-            <nav class="match-v2-tabs" aria-label="Разделы матча">
-                <a class="is-active" href="#match-overview" aria-current="page">Обзор</a>
-                {% if match_page.compact_odds %}<a href="#match-odds">Коэффициенты</a>{% endif %}
-                <a href="#match-predictions">Прогнозы <span data-match-predictions-total>{{ match_predictions_total|default:0 }}</span></a>
-                {% if match_page.stats_rows %}<a href="#match-stats">Статистика</a>{% endif %}
-                {% if match_page.h2h.items %}<a href="#match-h2h">Личные встречи</a>{% endif %}
-            </nav>
-            {% endif %}
+        {% if match_page.has_tabs %}
+        <nav class="match-v2-tabs" aria-label="Разделы матча">
+            <a class="is-active" href="#match-overview" aria-current="page">Обзор</a>
+            {% if match_page.compact_odds %}<a href="#match-odds">Коэффициенты</a>{% endif %}
+            <a href="#match-predictions">Прогнозы <span data-match-predictions-total>{{ match_predictions_total|default:0 }}</span></a>
+            {% if match_page.stats_rows %}<a href="#match-stats">Статистика</a>{% endif %}
+            {% if match_page.h2h.items %}<a href="#match-h2h">Личные встречи</a>{% endif %}
+        </nav>
+        {% endif %}
 
-            <span id="match-overview" class="match-v2-anchor" aria-hidden="true"></span>
+        <span id="match-overview" class="match-v2-anchor" aria-hidden="true"></span>
+
+            <main class="match-v2-main">
 
             {% if match_page.compact_odds %}
             <section
@@ -253,12 +298,16 @@
             <section id="match-stats" class="match-v2-panel match-v2-stats" aria-label="Статистика матча">
                 <div class="match-v2-panel-head">
                     <h2>Статистика матча</h2>
-                    {% if match.sync_scope == 'live' %}<span class="match-v2-live-note"><i></i>обновляется</span>{% endif %}
+                    {% if match.sync_scope == 'live' %}<span class="match-v2-live-note"><i></i>обновляется в реальном времени</span>{% endif %}
                 </div>
                 <div class="match-v2-stat-list">
                     {% for row in match_page.stats_rows %}
                     <div class="match-v2-stat-row">
-                        <div><strong>{{ row.home }}</strong><span>{{ row.label }}</span><strong>{{ row.away }}</strong></div>
+                        <div class="match-v2-stat-values">
+                            <strong{% if not row.home_is_better %} class="is-muted"{% endif %}>{{ row.home }}</strong>
+                            <span>{{ row.label }}</span>
+                            <strong{% if not row.away_is_better %} class="is-muted"{% endif %}>{{ row.away }}</strong>
+                        </div>
                         <progress value="{{ row.home_percent }}" max="100"></progress>
                     </div>
                     {% endfor %}
@@ -284,7 +333,8 @@
                 </div>
             </section>
             {% endif %}
-        </main>
+            </main>
+        </section>
 
         <aside class="match-v2-side" aria-label="Прогноз и показатели">
             {% include "game/_coupon_sidebar.html" %}

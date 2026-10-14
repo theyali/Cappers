@@ -678,7 +678,7 @@ body.expert-public-details-open {
   .matches-page .matches-shell > .matches-list-panel {
     grid-column: 2;
     gap: 20px;
-    padding-bottom: 40px;
+    padding: 0 9px;
   }
   .matches-page .matches-list-panel .prediction-results-head {
     position: sticky;
@@ -3113,7 +3113,6 @@ body.expert-public-details-open {
     border-radius: 24px;
   }
   .matches-page {
-    width: 100%;
     overflow: hidden;
   }
   .matches-page .matches-sport-tabs {
@@ -6748,6 +6747,9 @@ body.expert-public-details-open {
   .logo-transition img,
   .logo-transition span,
   .match-watch-card-shell.is-lazy-added,
+  .match-v2-event.is-new .match-v2-event-copy,
+  .match-v2-events.is-refreshing .match-v2-events-sync > i,
+  .match-v2-score strong.is-updated,
   .matches-lazy-button,
   .matches-lazy-dots i,
   .slider-progress span.is-running,
@@ -13894,31 +13896,39 @@ body.expert-public-details-open {
 /* Match detail v2 */
 @media (max-width: 760px) {
   .match-page-v2 {
-    width: 390px;
     max-width: 100%;
     min-height: 100vh;
     margin: 0 auto;
-    padding: 20px;
     gap: 14px;
-    background: #0e0f12;
   }
 
   .match-page-shell-v2 {
-    width: 350px;
     max-width: 100%;
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
 
+  .match-page-shell-v2 > .match-v2-left-sidebar {
+    display: none !important;
+  }
+
+  .matches-page .match-page-shell-v2 > .match-v2-content {
+    grid-column: 1;
+    width: 100%;
+    min-width: 0;
+    gap: 14px;
+    padding: 0;
+  }
+
   .match-v2-main,
   .match-v2-side {
+    grid-column: 1;
     width: 100%;
     min-width: 0;
     gap: 14px;
   }
 
   .match-v2-back {
-    width: 350px;
     height: 42px;
     max-width: 100%;
     padding: 0;
@@ -13926,6 +13936,8 @@ body.expert-public-details-open {
   }
 
   .match-v2-score-card {
+    grid-column: 1;
+    max-width: 100%;
     min-height: 238px;
     padding: 16px;
     border-radius: 20px;
@@ -14048,10 +14060,62 @@ body.expert-public-details-open {
     font-size: 10px;
   }
 
+  .match-v2-events {
+    margin: 0 -4px -2px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .match-v2-events-head > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  html:root .match-v2-events-head h2 {
+    font-size: 14px;
+  }
+
+  .match-v2-events-list {
+    gap: 7px;
+    margin-top: 11px;
+  }
+
+  .match-v2-event {
+    grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
+    min-height: 50px;
+  }
+
+  .match-v2-event-copy {
+    padding: 8px 9px;
+  }
+
+  .match-v2-event-copy strong {
+    font-size: 10.5px;
+    white-space: normal;
+  }
+
+  .match-v2-event-copy small {
+    display: none;
+  }
+
+  .match-v2-event-type {
+    font-size: 8px;
+  }
+
+  .match-v2-event time {
+    min-width: 32px;
+    height: 22px;
+    font-size: 8px;
+  }
+
+  .match-v2-events-empty {
+    min-height: 72px;
+    padding: 10px;
+  }
+
   .match-v2-tabs {
-    width: 100vw;
-    max-width: 100vw;
-    margin-right: calc(50% - 50vw);
+    grid-column: 1;
     margin-left: calc(50% - 50vw);
     padding: 0 20px;
     overflow-x: auto;
@@ -14116,9 +14180,8 @@ body.expert-public-details-open {
   }
 
   .match-v2-odd {
-    height: 64px;
-    min-height: 64px;
-    padding: 0;
+    min-height: 70px;
+    padding: 12px 31px 12px 12px;
     border-radius: 14px;
   }
 
@@ -14126,8 +14189,23 @@ body.expert-public-details-open {
     display: none;
   }
 
-  .match-v2-odd strong {
+  .match-v2-odd b {
     font-size: 13px;
+  }
+
+  .match-v2-odd .match-v2-odd-lock {
+    position: absolute;
+    inset: 8px 8px auto auto;
+    width: 17px;
+    height: 17px;
+    min-width: 17px;
+    z-index: 2;
+    transform: none;
+  }
+
+  .match-v2-odd .match-v2-odd-lock .solar-icon {
+    width: 11px;
+    height: 11px;
   }
 
   .match-v2-odd em {
@@ -14143,7 +14221,7 @@ body.expert-public-details-open {
   }
 
   .match-v2-odd:disabled em {
-    right: 31px;
+    right: 30px;
   }
 
   .match-v2-prediction {
@@ -14195,7 +14273,7 @@ body.expert-public-details-open {
     flex: 0 0 auto;
   }
 
-  .match-v2-stat-row > div {
+  .match-v2-stat-values {
     gap: 10px;
   }
 
@@ -14212,5 +14290,21 @@ body.expert-public-details-open {
   .match-v2-side > .coupon-sidebar {
     width: 100%;
     max-width: 100%;
+  }
+}
+
+@media (min-width: 1121px) {
+  .matches-page .match-page-shell-v2 {
+    grid-template-columns: 340px minmax(0, 1fr) minmax(320px, 350px);
+  }
+
+  .matches-page .match-page-shell-v2 > .match-v2-left-sidebar {
+    width: 340px;
+    display: block;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    animation: none;
   }
 }

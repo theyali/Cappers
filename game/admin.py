@@ -10,8 +10,11 @@ from game.models import (
     League,
     LeagueSeason,
     Match,
+    MatchEvent,
+    MatchEventParticipant,
     MatchManualReview,
     MatchOdds,
+    MatchStatistic,
     Prediction,
     PredictionCoupon,
     PredictionCouponResultChange,
@@ -258,7 +261,14 @@ class MatchAdmin(admin.ModelAdmin):
         "away_team__name",
         "away_team__name_ru",
     )
-    readonly_fields = ("created_at", "updated_at", "last_seen_at", "raw_data")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "last_seen_at",
+        "events_fetched_at",
+        "events_available",
+        "raw_data",
+    )
     autocomplete_fields = ("sport", "league", "league_season", "home_team", "away_team", "venue")
 
     def get_queryset(self, request):
@@ -360,6 +370,32 @@ class MatchOddsAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("match",)
     readonly_fields = ("raw_data", "extra_markets")
+
+
+@admin.register(MatchStatistic)
+class MatchStatisticAdmin(admin.ModelAdmin):
+    list_display = (
+        "match",
+        "period_code",
+        "stat_code",
+        "stat_name_ru",
+        "home_display",
+        "away_display",
+        "fetched_at",
+    )
+    list_filter = ("period_code", "stat_code", "match__sport", "match__sync_scope")
+    search_fields = (
+        "=match__external_id",
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+        "stat_code",
+        "stat_name",
+        "stat_name_ru",
+    )
+    autocomplete_fields = ("match",)
+    readonly_fields = ("raw_data", "updated_at")
 
 
 class PredictionItemInline(admin.TabularInline):
@@ -508,3 +544,44 @@ class PredictionItemAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         _settle_published_coupon_after_admin_edit(request, obj.coupon_id)
+class MatchEventParticipantInline(admin.TabularInline):
+    model = MatchEventParticipant
+    extra = 0
+    fields = ("role", "player_external_id", "player_name_ru", "player_name")
+    readonly_fields = ("role", "player_external_id", "player_name_ru", "player_name")
+    can_delete = False
+
+
+@admin.register(MatchEvent)
+class MatchEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "match",
+        "minute",
+        "extra_minute",
+        "event_type_name_ru",
+        "detail_name_ru",
+        "team_name_ru",
+        "player_name_ru",
+        "seq",
+        "fetched_at",
+    )
+    list_filter = ("event_type_code", "detail_code", "team_side", "provider", "fetched_at")
+    search_fields = (
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+        "event_type_name",
+        "event_type_name_ru",
+        "detail_name",
+        "detail_name_ru",
+        "team_name",
+        "team_name_ru",
+        "player_name",
+        "player_name_ru",
+        "=external_id",
+        "=uid",
+    )
+    autocomplete_fields = ("match", "team")
+    readonly_fields = ("created_at", "updated_at", "fetched_at", "raw_data")
+    inlines = (MatchEventParticipantInline,)

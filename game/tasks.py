@@ -195,6 +195,62 @@ def refresh_match_provider_predictions(match_id: int):
 
 
 @shared_task
+def refresh_match_statistics(match_id: int):
+    match = Match.objects.filter(pk=match_id).first()
+    if match is None:
+        return {
+            "status": "skipped",
+            "reason": "match_not_found",
+            "match_id": match_id,
+        }
+    try:
+        return MatchSyncService().sync_match_statistics(match)
+    except NeurokeffProviderError as exc:
+        return {
+            "status": "error",
+            "reason": "provider_error",
+            "match_id": match_id,
+            "message": str(exc),
+        }
+
+
+@shared_task
+def refresh_match_events(match_id: int):
+    match = Match.objects.filter(pk=match_id).first()
+    if match is None:
+        return {
+            "status": "skipped",
+            "reason": "match_not_found",
+            "match_id": match_id,
+        }
+    try:
+        return MatchSyncService().sync_match_events(match)
+    except NeurokeffProviderError as exc:
+        return {
+            "status": "error",
+            "reason": "provider_error",
+            "match_id": match_id,
+            "message": str(exc),
+        }
+
+
+@shared_task
+def refresh_live_match_statistics():
+    return _run_locked(
+        "match-statistics:live",
+        lambda: MatchSyncService().sync_live_statistics(),
+    )
+
+
+@shared_task
+def refresh_live_match_events():
+    return _run_locked(
+        "match-events:live",
+        lambda: MatchSyncService().sync_live_events(),
+    )
+
+
+@shared_task
 def settle_predictions():
     # One settlement at a time: every finished-match sync queues this task.
     return _run_locked("settlement:finished", settle_finished_matches)
