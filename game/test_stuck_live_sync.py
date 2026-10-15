@@ -119,7 +119,7 @@ class StuckLiveSyncTests(TestCase):
         expected = {
             "0": Match.SyncScope.PREMATCH,
             "1": Match.SyncScope.LIVE,
-            "2": Match.SyncScope.LIVE,
+            "2": Match.SyncScope.CONNECTION_LOST,
             "3": Match.SyncScope.FINISHED,
             "4": Match.SyncScope.POSTPONED,
             "5": Match.SyncScope.CANCELED,

@@ -1,0 +1,18 @@
+<svg viewBox="0 0 24 24" aria-hidden="true">
+    {% if status == 'all' %}
+        <rect x="4" y="4" width="6" height="6" rx="1"></rect>
+        <rect x="14" y="4" width="6" height="6" rx="1"></rect>
+        <rect x="4" y="14" width="6" height="6" rx="1"></rect>
+        <rect x="14" y="14" width="6" height="6" rx="1"></rect>
+    {% elif status == 'pending' %}
+        <path d="M12 7.5v5l3.2 1.8"></path>
+        <circle cx="12" cy="12" r="8.5"></circle>
+    {% elif status == 'win' %}
+        <path d="M7.5 12.2 10.5 15.2 16.8 8.8"></path>
+    {% elif status == 'lose' %}
+        <path d="M7.8 7.8 16.2 16.2M16.2 7.8 7.8 16.2"></path>
+    {% else %}
+        <path d="M8.2 8.4A6.5 6.5 0 1 1 6 13"></path>
+        <path d="M8.2 5v3.4H4.8"></path>
+    {% endif %}
+</svg>

@@ -1,8 +1,8 @@
 {% if status_tabs or sport_tabs or mobile_status_tabs %}
 <div class="mobile-prediction-filters" data-mobile-prediction-filters aria-label="Фильтры прогнозов на мобильных устройствах">
-    <div class="mobile-prediction-filter-top" aria-label="Статусы прогнозов">
+    <div class="mobile-prediction-filter-top" aria-label="Типы прогнозов">
         {% if mobile_status_tabs %}
-        <nav class="mobile-prediction-status-tabs" aria-label="Статусы прогнозов">
+        <nav class="mobile-prediction-status-tabs" aria-label="Типы прогнозов">
             {% for tab in mobile_status_tabs %}
             <a
                 class="mobile-prediction-status-tab{% if tab.active %} is-active{% endif %}"
@@ -44,6 +44,25 @@
     <div class="mobile-match-view-switcher mobile-prediction-view-switcher">
         {% include "front/includes/_content_view_switcher.html" %}
     </div>
+    {% endif %}
+    {% if status_tabs %}
+    <nav class="mobile-prediction-result-tabs" aria-label="Фильтр по результату прогноза">
+        {% for tab in status_tabs %}
+        <a
+            class="mobile-prediction-result-tab{% if tab.active %} is-active{% endif %}"
+            href="{{ tab.href }}"
+            data-prediction-ajax-link
+            aria-label="{{ tab.label }}: {{ tab.count }}"
+            title="{{ tab.label }}: {{ tab.count }}"
+            {% if tab.active %}aria-current="page"{% endif %}
+        >
+            <span class="feed-prediction-cover-status is-{{ tab.key }}" aria-hidden="true">
+                {% include "front/includes/_prediction_status_icon.html" with status=tab.key only %}
+            </span>
+            <span>{{ tab.label }}</span>
+        </a>
+        {% endfor %}
+    </nav>
     {% endif %}
 </div>
 {% endif %}

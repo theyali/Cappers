@@ -28,12 +28,6 @@
                         </span>
                     </div>
                     <span>@{{ expert.username }}</span>
-                    {% if expert.presence %}
-                    <span class="public-presence-status capper-pro-presence{% if expert.presence.is_online %} is-online{% endif %}">
-                        <span class="public-presence-dot" aria-hidden="true"></span>
-                        <span>{{ expert.presence.label }}</span>
-                    </span>
-                    {% endif %}
                 </div>
             </div>
             <span class="capper-pro-rank">#{{ rank }}</span>

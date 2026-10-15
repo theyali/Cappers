@@ -15,52 +15,49 @@
 
         <div class="predictions-content">
             <section class="expert-public-page" aria-label="Публичный профиль пользователя">
-                <section class="expert-public-hero is-bg-1">
-                    <div class="expert-public-main-stack">
-                        <div class="expert-public-main">
-                            <span class="expert-public-avatar" data-skeleton-image>
-                                {% if profile_user.avatar %}
-                                    <img src="{{ profile_user.avatar.url }}" width="128" height="128" alt="Аватар {{ display_name }}">
-                                {% else %}
-                                    {{ initials }}
-                                {% endif %}
-                            </span>
-
-                            <div class="expert-public-copy">
-                                <p class="expert-public-kicker">Пользователь КапперХаб</p>
-                                <div class="expert-public-name-row">
-                                    <h1>{{ display_name }}</h1>
-                                </div>
-                                <div class="expert-public-meta">
-                                    <span class="expert-public-username">@{{ profile_user.username }}</span>
+                <section class="expert-public-hero expert-public-hero--user" aria-label="{{ display_name }}">
+                    {% include "cabinet/includes/_public_profile_hero_art.html" %}
+                    <div class="expert-public-hero-content">
+                        <div class="expert-public-hero-top">
+                            <div class="expert-public-main-stack">
+                                <div class="expert-public-copy">
+                                    <p class="expert-public-kicker">Пользователь КапперХаб</p>
                                     <span class="expert-public-since">На КапперХаб с {{ profile_user.date_joined|date:"Y" }} года</span>
-                                    {% include "cabinet/includes/_public_profile_location.html" with public_user=profile_user only %}
+                                    <div class="expert-public-name-row">
+                                        <h1>{{ display_name }}</h1>
+                                    </div>
+                                    <div class="expert-public-meta">
+                                        <span class="expert-public-username">@{{ profile_user.username }}</span>
+                                        {% include "cabinet/includes/_public_profile_location.html" with public_user=profile_user only %}
+                                    </div>
                                 </div>
-                                {% if profile_presence %}
-                                <span class="public-presence-status{% if profile_presence.is_online %} is-online{% endif %}">
-                                    <span class="public-presence-dot" aria-hidden="true"></span>
-                                    <span>{{ profile_presence.label }}</span>
+                                <div class="expert-public-tags" aria-label="Тип профиля">
+                                    <span>Пользователь</span>
+                                    <span>Участник сообщества</span>
+                                </div>
+                            </div>
+                            <div class="expert-public-hero-visual">
+                                <span class="expert-public-avatar"{% if profile_user.avatar %} data-skeleton-image{% endif %}>
+                                    {% if profile_user.avatar %}
+                                        <img src="{{ profile_user.avatar.url }}" width="150" height="150" alt="Аватар {{ display_name }}">
+                                    {% else %}
+                                        {{ initials }}
+                                    {% endif %}
                                 </span>
-                                {% endif %}
                             </div>
                         </div>
-
-                        <div class="expert-public-tags" aria-label="Тип профиля">
-                            <span>Пользователь</span>
-                            <span>Участник сообщества</span>
-                        </div>
-                    </div>
-
-                    <div class="expert-public-side">
-                        <p class="expert-public-quote">Публичный профиль пользователя</p>
-                        {% if is_self %}
-                        <div class="expert-public-actions">
-                            <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
-                        </div>
-                        {% endif %}
-                        <div class="expert-public-hero-followers">
-                            <strong>{{ achievement_unlocked_count }}/{{ achievement_total }}</strong>
-                            <span>достижений</span>
+                        <div class="expert-public-hero-bottom">
+                            <div class="expert-public-hero-metric">
+                                <strong>{{ achievement_unlocked_count }}/{{ achievement_total }}</strong>
+                                <span>достижений открыто</span>
+                            </div>
+                            {% if is_self %}
+                            <div class="expert-public-side">
+                                <div class="expert-public-actions">
+                                    <a class="expert-public-buy-button" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </section>

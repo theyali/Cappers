@@ -314,23 +314,23 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     "fetch-live-tennis-matches": {
         "task": "game.tasks.fetch_live_tennis_matches",
-        "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "schedule": timedelta(minutes=1),
+        "options": {"expires": 55},
     },
     "fetch-live-football-matches": {
         "task": "game.tasks.fetch_live_football_matches",
-        "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "schedule": timedelta(minutes=1),
+        "options": {"expires": 55},
     },
     "fetch-live-hockey-matches": {
         "task": "game.tasks.fetch_live_hockey_matches",
-        "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "schedule": timedelta(minutes=1),
+        "options": {"expires": 55},
     },
     "fetch-live-basketball-matches": {
         "task": "game.tasks.fetch_live_basketball_matches",
-        "schedule": timedelta(seconds=15),
-        "options": {"expires": 14},
+        "schedule": timedelta(minutes=1),
+        "options": {"expires": 55},
     },
     "sync-stuck-live-matches": {
         "task": "game.tasks.sync_stuck_live_matches",
@@ -516,6 +516,8 @@ NEUROKEFF_LIVE_STATISTICS_LIMIT = env_int("NEUROKEFF_LIVE_STATISTICS_LIMIT", 10)
 NEUROKEFF_STUCK_LIVE_AFTER_MINUTES = env_int("NEUROKEFF_STUCK_LIVE_AFTER_MINUTES", 10)
 NEUROKEFF_STUCK_LIVE_LIMIT = env_int("NEUROKEFF_STUCK_LIVE_LIMIT", 500)
 NEUROKEFF_MATCH_SYNC_LOCK_SECONDS = env_int("NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600)
+NEUROKEFF_LIVE_WS_URL = os.getenv("NEUROKEFF_LIVE_WS_URL", "wss://sports.api-neurokeff.ru/ws/v1/live/")
+NEUROKEFF_LIVE_WS_SPORTS = env_list("NEUROKEFF_LIVE_WS_SPORTS")
 NEUROKEFF_PREMATCH_DAYS_AHEAD = env_int("NEUROKEFF_PREMATCH_DAYS_AHEAD", 1)
 NEUROKEFF_FINISHED_DAYS_BACK = env_int("NEUROKEFF_FINISHED_DAYS_BACK", 2)
 COUPON_MATCH_STALE_SECONDS = env_int("COUPON_MATCH_STALE_SECONDS", 60)

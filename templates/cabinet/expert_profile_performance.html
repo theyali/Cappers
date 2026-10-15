@@ -23,15 +23,6 @@
             {% include "cabinet/includes/_expert_public_mobile.html" %}
             {{ block.super }}
 
-            {% if profile_presence %}
-            <span
-                hidden
-                data-public-presence-source
-                data-online="{% if profile_presence.is_online %}1{% else %}0{% endif %}"
-                data-label="{{ profile_presence.label }}"
-            ></span>
-            {% endif %}
-
             {% include "cabinet/_expert_recent_performance.html" %}
             {% include "cabinet/_expert_sport_profit.html" %}
             {% include "cabinet/_expert_monthly_stats.html" %}
@@ -51,7 +42,6 @@
 <script src="{% static 'front/js/expert-public-tabs.js' %}" defer></script>
 <script src="{% static 'front/js/tournaments.js' %}" defer></script>
 <script src="{% static 'front/js/expert-public-mobile.js' %}" defer></script>
-<script src="{% static 'front/js/expert-public-presence.js' %}" defer></script>
 <script src="{% static 'front/js/expert-sport-profit.js' %}" defer></script>
 <script src="{% static 'front/js/expert-recent-performance.js' %}" defer></script>
 <script src="{% static 'front/js/expert-monthly-stats.js' %}" defer></script>

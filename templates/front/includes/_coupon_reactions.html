@@ -20,12 +20,17 @@
     </button>
 
     {% if show_comments %}
+    {% if compact %}
+        {% include "front/includes/_comment_metric.html" with prediction_id=coupon.id comments_count=comments_count metric_class="prediction-reaction" only %}
+    {% else %}
     <a class="prediction-reaction prediction-comment-metric" href="#comments" aria-label="Комментарии. Всего комментариев: {{ coupon.comments_count }}" title="Комментарии">
         {% include "front/includes/_solar_icon.html" with name="coupon_chat_round_linear" %}
         <b data-comment-count="{{ coupon.id }}">{{ coupon.comments_count }}</b>
     </a>
     {% endif %}
+    {% endif %}
 
+    {% if not compact %}
     <button
         class="prediction-reaction prediction-favorite{% if is_favorite %} is-active{% endif %}"
         type="button"
@@ -41,8 +46,7 @@
         {% include "front/includes/_solar_icon.html" with name="coupon_bookmark_linear" %}
         <b data-reaction-count>{{ favorites_count }}</b>
     </button>
-
-
+    {% endif %}
 
     <button
         class="prediction-reaction prediction-share"
@@ -57,8 +61,10 @@
         <b data-share-count>{{ shares_count }}</b>
     </button>
 
+    {% if not compact %}
     <span class="prediction-reaction prediction-views" title="Просмотры" aria-label="Просмотров: {{ views_count }}">
         {% include "front/includes/_solar_icon.html" with name="coupon_eye_linear" %}
         <b>{{ views_count }}</b>
     </span>
+    {% endif %}
 </div>

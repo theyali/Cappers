@@ -130,6 +130,26 @@ services:
       redis:
         condition: service_healthy
 
+  neurokeff-live:
+    build: .
+    profiles: ["live"]
+    env_file:
+      - .env
+    environment:
+      RUN_COLLECTSTATIC: "0"
+    command: python manage.py run_neurokeff_live
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   telegram-bot:
     build: .
     env_file:
