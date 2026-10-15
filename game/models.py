@@ -429,6 +429,18 @@ class Match(models.Model):
     provider_predictions = models.JSONField(default=dict, blank=True)
     provider_predictions_updated_at = models.DateTimeField(null=True, blank=True)
 
+    events_fetched_at = models.DateTimeField(
+        "События получены",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    events_available = models.BooleanField(
+        "События доступны у провайдера",
+        null=True,
+        blank=True,
+    )
+
     raw_data = models.JSONField(default=dict, blank=True)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -595,6 +607,151 @@ class MatchManualReview(models.Model):
         return f"{self.match} — {self.get_reason_display()}"
 
 
+class MatchStatistic(models.Model):
+    match = models.ForeignKey(
+        Match,
+        on_delete=models.CASCADE,
+        related_name="statistics_rows",
+        verbose_name="Матч",
+    )
+    period_code = models.CharField("Код периода", max_length=64, blank=True, db_index=True)
+    period_name = models.CharField("Период", max_length=128, blank=True)
+    stat_code = models.CharField("Код статистики", max_length=96, db_index=True)
+    stat_name = models.CharField("Название", max_length=128, blank=True)
+    stat_name_ru = models.CharField("Название RU", max_length=128, blank=True)
+    category = models.CharField("Категория", max_length=64, blank=True)
+    unit = models.CharField("Единица", max_length=32, blank=True)
+    value_type = models.CharField("Тип значения", max_length=32, blank=True)
+    home_value = models.DecimalField("Значение хозяев", max_digits=12, decimal_places=3, null=True, blank=True)
+    away_value = models.DecimalField("Значение гостей", max_digits=12, decimal_places=3, null=True, blank=True)
+    home_display = models.CharField("Отображение хозяев", max_length=32, blank=True)
+    away_display = models.CharField("Отображение гостей", max_length=32, blank=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100)
+    raw_data = models.JSONField(default=dict, blank=True)
+    fetched_at = models.DateTimeField("Получено", null=True, blank=True, db_index=True)
+    updated_at = models.DateTimeField("Обновлено", auto_now=True)
+
+    class Meta:
+        verbose_name = "Статистика матча"
+        verbose_name_plural = "Статистика матчей"
+        ordering = ("match_id", "period_code", "sort_order", "stat_name_ru", "stat_name", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["match", "period_code", "stat_code"],
+                name="unique_match_stat_period_code",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["match", "period_code", "sort_order"], name="match_stat_match_period_idx"),
+            models.Index(fields=["stat_code"], name="match_stat_code_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.match_id}: {self.stat_name_ru or self.stat_name or self.stat_code}"
+
+
+class MatchEvent(models.Model):
+    match = models.ForeignKey(
+        Match,
+        on_delete=models.CASCADE,
+        related_name="events_rows",
+        verbose_name="Матч",
+    )
+    provider = models.CharField(
+        max_length=32,
+        choices=Provider.choices,
+        default=Provider.NEUROKEFF,
+        db_index=True,
+    )
+    event_key = models.CharField("Ключ события", max_length=96)
+    external_id = models.PositiveBigIntegerField("ID события", null=True, blank=True, db_index=True)
+    uid = models.PositiveBigIntegerField("UID события", null=True, blank=True, db_index=True)
+    seq = models.PositiveIntegerField("Порядок", null=True, blank=True, db_index=True)
+
+    event_type_code = models.CharField("Код события", max_length=96, blank=True, db_index=True)
+    event_type_name = models.CharField("Событие", max_length=128, blank=True)
+    event_type_name_ru = models.CharField("Событие RU", max_length=128, blank=True)
+    detail_code = models.CharField("Код детали", max_length=96, blank=True, db_index=True)
+    detail_name = models.CharField("Деталь", max_length=128, blank=True)
+    detail_name_ru = models.CharField("Деталь RU", max_length=128, blank=True)
+
+    minute = models.PositiveSmallIntegerField("Минута", null=True, blank=True, db_index=True)
+    extra_minute = models.PositiveSmallIntegerField("Добавленная минута", null=True, blank=True)
+
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.SET_NULL,
+        related_name="match_events",
+        null=True,
+        blank=True,
+        verbose_name="Команда",
+    )
+    team_external_id = models.PositiveBigIntegerField("ID команды", null=True, blank=True, db_index=True)
+    team_name = models.CharField("Команда", max_length=160, blank=True)
+    team_name_ru = models.CharField("Команда RU", max_length=160, blank=True)
+    team_side = models.CharField("Сторона", max_length=16, blank=True, db_index=True)
+
+    player_external_id = models.PositiveBigIntegerField("ID игрока", null=True, blank=True, db_index=True)
+    player_name = models.CharField("Игрок", max_length=160, blank=True)
+    player_name_ru = models.CharField("Игрок RU", max_length=160, blank=True)
+    assist_external_id = models.PositiveBigIntegerField("ID ассистента", null=True, blank=True)
+    assist_name = models.CharField("Ассистент", max_length=160, blank=True)
+    assist_name_ru = models.CharField("Ассистент RU", max_length=160, blank=True)
+
+    raw_data = models.JSONField(default=dict, blank=True)
+    fetched_at = models.DateTimeField("Получено", null=True, blank=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Событие матча"
+        verbose_name_plural = "События матчей"
+        ordering = ("match_id", "minute", "seq", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["match", "event_key"],
+                name="unique_match_event_key",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["match", "minute", "seq"], name="match_event_time_idx"),
+            models.Index(fields=["match", "event_type_code"], name="match_event_type_idx"),
+            models.Index(fields=["match", "team_side"], name="match_event_side_idx"),
+        ]
+
+    def __str__(self) -> str:
+        label = self.event_type_name_ru or self.event_type_name or self.event_type_code
+        minute = f"{self.minute}′ " if self.minute is not None else ""
+        return f"{self.match_id}: {minute}{label}"
+
+
+class MatchEventParticipant(models.Model):
+    event = models.ForeignKey(
+        MatchEvent,
+        on_delete=models.CASCADE,
+        related_name="participants_rows",
+        verbose_name="Событие",
+    )
+    role = models.CharField("Роль", max_length=64, blank=True, db_index=True)
+    player_external_id = models.PositiveBigIntegerField("ID игрока", null=True, blank=True, db_index=True)
+    player_name = models.CharField("Игрок", max_length=160, blank=True)
+    player_name_ru = models.CharField("Игрок RU", max_length=160, blank=True)
+    raw_data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Участник события матча"
+        verbose_name_plural = "Участники событий матчей"
+        ordering = ("event_id", "id")
+        indexes = [
+            models.Index(fields=["event", "role"], name="match_event_part_role_idx"),
+            models.Index(fields=["player_external_id"], name="match_event_part_player_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.event_id}: {self.role} {self.player_name_ru or self.player_name}".strip()
+
+
 class MatchOdds(models.Model):
     match = models.OneToOneField(Match, on_delete=models.CASCADE, related_name="odds")
     home_win_bet = models.FloatField(null=True, blank=True)
@@ -630,6 +787,78 @@ class MatchOdds(models.Model):
 
     def __str__(self) -> str:
         return f"Коэффициенты {self.match_id}"
+
+
+class ComparisonBookmaker(models.Model):
+    """Brand artwork for full-odds comparison; unrelated to back.Bookmaker."""
+
+    key = models.CharField("Имя из API (ключ)", max_length=320, unique=True, editable=False)
+    name = models.CharField("Название", max_length=160)
+    icon = models.ImageField("Иконка", upload_to="game/bookmakers/", blank=True)
+
+    class Meta:
+        ordering = ("name", "pk")
+        verbose_name = "Букмекер сравнения"
+        verbose_name_plural = "Букмекеры сравнения"
+
+    @staticmethod
+    def name_key(name):
+        return " ".join(str(name).casefold().split())
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.name_key(self.name)
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        key = self.key or self.name_key(self.name)
+        if type(self).objects.filter(key=key).exclude(pk=self.pk).exists():
+            raise ValidationError({"name": "Этот букмекер уже есть в справочнике сравнения."})
+
+    @property
+    def icon_url(self):
+        return image_field_url(self.icon)
+
+    def __str__(self):
+        return self.name
+
+
+class MatchOddsSnapshot(models.Model):
+    """Full v2 line, independent from the short MatchOdds used by coupons."""
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="odds_snapshots")
+    scope = models.CharField(max_length=8, choices=(("prematch", "Prematch"), ("live", "Live")))
+    available = models.BooleanField(default=False)
+    provider_updated_at = models.DateTimeField(null=True, blank=True)
+    requested_at = models.DateTimeField()
+    fetched_at = models.DateTimeField()
+    raw_data = models.JSONField(default=dict)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("match", "scope"), name="unique_match_full_odds_scope"),
+        ]
+
+
+class MatchBookmakerOdds(models.Model):
+    snapshot = models.ForeignKey(MatchOddsSnapshot, on_delete=models.CASCADE, related_name="bookmakers")
+    bookmaker_key = models.CharField(max_length=160)
+    external_id = models.CharField(max_length=64, blank=True)
+    external_pk = models.CharField(max_length=64, blank=True)
+    name = models.CharField(max_length=160)
+    # Keep original market IDs, names, periods, lines, team and outcome flags.
+    # Canonical comparison keys are a separate step; never merge by key alone.
+    markets = models.JSONField(default=list)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("snapshot", "bookmaker_key"), name="unique_full_odds_bookmaker"),
+        ]
+        ordering = ("name", "id")
+
+    def __str__(self):
+        return self.name
 
 
 class PredictionCoupon(models.Model):

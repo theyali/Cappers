@@ -106,6 +106,48 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             raise NeurokeffProviderError("Unexpected Neurokeff game predictions payload")
         return payload
 
+    def fetch_game_statistics(self, external_id: int) -> dict[str, Any]:
+        endpoint = getattr(
+            settings,
+            "NEUROKEFF_GAME_STATISTICS_ENDPOINT",
+            "games/statistics",
+        )
+        timeout = max(int(getattr(settings, "NEUROKEFF_GAME_STATISTICS_TIMEOUT", 5)), 1)
+        payload = self._request(
+            endpoint,
+            {"game_id": int(external_id), "lang": self.lang},
+            timeout=timeout,
+        )
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff game statistics payload")
+        return payload
+
+    def fetch_game_odds(self, external_id: int) -> dict[str, Any]:
+        payload = self._request(
+            getattr(settings, "NEUROKEFF_GAME_ODDS_ENDPOINT", "/api/v2/games/odds"),
+            {"game_id": int(external_id)},
+            timeout=max(int(getattr(settings, "NEUROKEFF_GAME_ODDS_TIMEOUT", 5)), 1),
+        )
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff full odds payload")
+        return payload
+
+    def fetch_game_events(self, external_id: int) -> dict[str, Any]:
+        endpoint = getattr(
+            settings,
+            "NEUROKEFF_GAME_EVENTS_ENDPOINT",
+            "games/events",
+        )
+        timeout = max(int(getattr(settings, "NEUROKEFF_GAME_EVENTS_TIMEOUT", 5)), 1)
+        payload = self._request(
+            endpoint,
+            {"game_id": int(external_id), "lang": self.lang},
+            timeout=timeout,
+        )
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff game events payload")
+        return payload
+
     def _fetch_matches(
         self,
         endpoint: str,
@@ -149,7 +191,7 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             seen_next_urls.add(next_url)
             page += 1
 
-    def _request(self, endpoint: str, params: dict[str, Any]) -> Any:
+    def _request(self, endpoint: str, params: dict[str, Any], *, timeout: int | None = None) -> Any:
         if not self.token:
             raise NeurokeffProviderError("NEUROKEFF_API_TOKEN is not configured")
 
@@ -163,7 +205,7 @@ class NeurokeffSportsProvider(BaseSportsProvider):
         )
 
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            with urlopen(request, timeout=timeout or self.timeout) as response:
                 body = response.read().decode("utf-8")
         except HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")

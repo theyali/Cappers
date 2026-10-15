@@ -336,6 +336,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "game.tasks.sync_stuck_live_matches",
         "schedule": timedelta(minutes=2),
     },
+    "refresh-live-match-statistics": {
+        "task": "game.tasks.refresh_live_match_statistics",
+        "schedule": timedelta(minutes=1),
+    },
+    "refresh-live-match-events": {
+        "task": "game.tasks.refresh_live_match_events",
+        "schedule": timedelta(minutes=1),
+    },
     "fetch-prematch-tennis-matches": {
         "task": "game.tasks.fetch_upcoming_tennis_matches",
         "schedule": timedelta(minutes=10),
@@ -477,6 +485,34 @@ NEUROKEFF_GAME_PREDICTIONS_STALE_SECONDS = env_int(
     "NEUROKEFF_GAME_PREDICTIONS_STALE_SECONDS",
     3600,
 )
+NEUROKEFF_GAME_STATISTICS_ENDPOINT = os.getenv(
+    "NEUROKEFF_GAME_STATISTICS_ENDPOINT",
+    "games/statistics",
+)
+NEUROKEFF_GAME_STATISTICS_STALE_SECONDS = env_int(
+    "NEUROKEFF_GAME_STATISTICS_STALE_SECONDS",
+    60,
+)
+NEUROKEFF_GAME_STATISTICS_TIMEOUT = env_int("NEUROKEFF_GAME_STATISTICS_TIMEOUT", 5)
+NEUROKEFF_GAME_ODDS_ENDPOINT = os.getenv("NEUROKEFF_GAME_ODDS_ENDPOINT", "/api/v2/games/odds")
+NEUROKEFF_GAME_ODDS_TIMEOUT = env_int("NEUROKEFF_GAME_ODDS_TIMEOUT", 5)
+NEUROKEFF_PREMATCH_ODDS_STALE_SECONDS = env_int("NEUROKEFF_PREMATCH_ODDS_STALE_SECONDS", 3600)
+NEUROKEFF_LIVE_ODDS_STALE_SECONDS = env_int("NEUROKEFF_LIVE_ODDS_STALE_SECONDS", 60)
+NEUROKEFF_GAME_EVENTS_ENDPOINT = os.getenv(
+    "NEUROKEFF_GAME_EVENTS_ENDPOINT",
+    "games/events",
+)
+NEUROKEFF_GAME_EVENTS_STALE_SECONDS = env_int(
+    "NEUROKEFF_GAME_EVENTS_STALE_SECONDS",
+    60,
+)
+NEUROKEFF_FINISHED_EVENTS_RETRY_SECONDS = env_int(
+    "NEUROKEFF_FINISHED_EVENTS_RETRY_SECONDS",
+    3600,
+)
+NEUROKEFF_GAME_EVENTS_TIMEOUT = env_int("NEUROKEFF_GAME_EVENTS_TIMEOUT", 5)
+NEUROKEFF_LIVE_EVENTS_LIMIT = env_int("NEUROKEFF_LIVE_EVENTS_LIMIT", 80)
+NEUROKEFF_LIVE_STATISTICS_LIMIT = env_int("NEUROKEFF_LIVE_STATISTICS_LIMIT", 10)
 NEUROKEFF_STUCK_LIVE_AFTER_MINUTES = env_int("NEUROKEFF_STUCK_LIVE_AFTER_MINUTES", 10)
 NEUROKEFF_STUCK_LIVE_LIMIT = env_int("NEUROKEFF_STUCK_LIVE_LIMIT", 500)
 NEUROKEFF_MATCH_SYNC_LOCK_SECONDS = env_int("NEUROKEFF_MATCH_SYNC_LOCK_SECONDS", 600)

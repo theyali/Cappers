@@ -1428,6 +1428,21 @@ class HomeBestExpertsAjaxTests(TestCase):
 
 
 class PredictionSortTests(SimpleTestCase):
+    def test_sort_and_view_switcher_share_actions_group_for_every_sort_label(self):
+        from .prediction_views import SORT_OPTIONS
+
+        for key, label in SORT_OPTIONS:
+            with self.subTest(sort=key):
+                html = render_to_string("front/includes/_prediction_matches_head.html", {
+                    "prediction_head": {"sort_url": f"/predictions/?sort={key}", "sort_label": label,
+                                        "show_content_view_switcher": True},
+                    "content_view_mode": "grid",
+                })
+                actions = html.split('<div class="matches-head-actions">', 1)[1].split('</div>', 1)[0]
+                self.assertIn('class="matches-head-ghost"', actions)
+                self.assertIn('class="content-view-switcher"', actions)
+                self.assertIn(label, actions)
+
     def test_requested_options_are_available(self):
         from .feed_views import FEED_SORT_OPTIONS
         from .prediction_views import SORT_OPTIONS

@@ -6,12 +6,18 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from game.models import (
+    ComparisonBookmaker,
     Country,
     League,
     LeagueSeason,
     Match,
+    MatchEvent,
+    MatchEventParticipant,
     MatchManualReview,
     MatchOdds,
+    MatchOddsSnapshot,
+    MatchBookmakerOdds,
+    MatchStatistic,
     Prediction,
     PredictionCoupon,
     PredictionCouponResultChange,
@@ -26,6 +32,45 @@ from game.models import (
 )
 from game.services.local_logos import sync_entity_logo
 from game.services.settlement import cancel_published_coupon, resettle_coupon, settle_coupon
+
+
+@admin.register(ComparisonBookmaker)
+class ComparisonBookmakerAdmin(admin.ModelAdmin):
+    list_display = ("name", "icon_preview", "key")
+    search_fields = ("name", "key")
+    readonly_fields = ("key", "icon_preview")
+    fields = ("name", "key", "icon", "icon_preview")
+
+    @admin.display(description="Иконка")
+    def icon_preview(self, obj):
+        return _local_media_preview(obj.icon_url) if obj else "—"
+
+
+class MatchBookmakerOddsInline(admin.TabularInline):
+    model = MatchBookmakerOdds
+    fields = ("name", "bookmaker_key", "external_id", "external_pk", "markets")
+    readonly_fields = fields
+    extra = 0
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(MatchOddsSnapshot)
+class MatchOddsSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("match", "scope", "available", "provider_updated_at", "fetched_at")
+    list_filter = ("scope", "available")
+    search_fields = ("match__slug", "match__external_id")
+    readonly_fields = ("match", "scope", "available", "provider_updated_at", "requested_at", "fetched_at", "raw_data")
+    inlines = (MatchBookmakerOddsInline,)
+    list_select_related = ("match",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 def _local_media_preview(url: str, *, size: int = 40):
@@ -258,7 +303,14 @@ class MatchAdmin(admin.ModelAdmin):
         "away_team__name",
         "away_team__name_ru",
     )
-    readonly_fields = ("created_at", "updated_at", "last_seen_at", "raw_data")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "last_seen_at",
+        "events_fetched_at",
+        "events_available",
+        "raw_data",
+    )
     autocomplete_fields = ("sport", "league", "league_season", "home_team", "away_team", "venue")
 
     def get_queryset(self, request):
@@ -360,6 +412,32 @@ class MatchOddsAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("match",)
     readonly_fields = ("raw_data", "extra_markets")
+
+
+@admin.register(MatchStatistic)
+class MatchStatisticAdmin(admin.ModelAdmin):
+    list_display = (
+        "match",
+        "period_code",
+        "stat_code",
+        "stat_name_ru",
+        "home_display",
+        "away_display",
+        "fetched_at",
+    )
+    list_filter = ("period_code", "stat_code", "match__sport", "match__sync_scope")
+    search_fields = (
+        "=match__external_id",
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+        "stat_code",
+        "stat_name",
+        "stat_name_ru",
+    )
+    autocomplete_fields = ("match",)
+    readonly_fields = ("raw_data", "updated_at")
 
 
 class PredictionItemInline(admin.TabularInline):
@@ -508,3 +586,44 @@ class PredictionItemAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         _settle_published_coupon_after_admin_edit(request, obj.coupon_id)
+class MatchEventParticipantInline(admin.TabularInline):
+    model = MatchEventParticipant
+    extra = 0
+    fields = ("role", "player_external_id", "player_name_ru", "player_name")
+    readonly_fields = ("role", "player_external_id", "player_name_ru", "player_name")
+    can_delete = False
+
+
+@admin.register(MatchEvent)
+class MatchEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "match",
+        "minute",
+        "extra_minute",
+        "event_type_name_ru",
+        "detail_name_ru",
+        "team_name_ru",
+        "player_name_ru",
+        "seq",
+        "fetched_at",
+    )
+    list_filter = ("event_type_code", "detail_code", "team_side", "provider", "fetched_at")
+    search_fields = (
+        "match__home_team__name",
+        "match__home_team__name_ru",
+        "match__away_team__name",
+        "match__away_team__name_ru",
+        "event_type_name",
+        "event_type_name_ru",
+        "detail_name",
+        "detail_name_ru",
+        "team_name",
+        "team_name_ru",
+        "player_name",
+        "player_name_ru",
+        "=external_id",
+        "=uid",
+    )
+    autocomplete_fields = ("match", "team")
+    readonly_fields = ("created_at", "updated_at", "fetched_at", "raw_data")
+    inlines = (MatchEventParticipantInline,)

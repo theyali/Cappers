@@ -47,7 +47,7 @@
         </div></div></div>
 
         <div class="matches-head-lane is-util"><div class="matches-head-pane"><div class="matches-head-inner">
-            <div class="matches-head-util">
+            <div class="matches-head-util is-predictions">
                 {% if head.prediction_types %}
                 <nav class="matches-head-seg" aria-label="Тип прогнозов">
                     {% for tab in head.prediction_types %}
@@ -60,16 +60,17 @@
                     <a class="{% if scope.active %}is-active{% endif %}" href="{{ scope.url }}" data-prediction-ajax-link{% if scope.active %} aria-current="page"{% endif %}>{{ scope.label }}</a>
                     {% endfor %}
                 </nav>
-                <span class="matches-head-grow"></span>
-                <a class="matches-head-ghost" href="{{ head.sort_url }}" title="Сменить сортировку" data-prediction-ajax-link>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M17 20V4M17 4l3 3"></path></svg>
-                    {{ head.sort_label }}
-                </a>
-                {% if head.show_content_view_switcher %}
-                <div class="matches-head-toggle">
-                    {% include "front/includes/_content_view_switcher.html" %}
+                <div class="matches-head-actions">
+                    <a class="matches-head-ghost" href="{{ head.sort_url }}" title="Сменить сортировку: {{ head.sort_label }}" data-prediction-ajax-link>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M7 20l-3-3M17 20V4M17 4l3 3"></path></svg>
+                        <span class="matches-head-sort-label">{{ head.sort_label }}</span>
+                    </a>
+                    {% if head.show_content_view_switcher %}
+                    <div class="matches-head-toggle">
+                        {% include "front/includes/_content_view_switcher.html" %}
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div></div></div>
     </div>

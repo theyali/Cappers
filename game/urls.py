@@ -47,5 +47,7 @@ urlpatterns = [
         name="match_list_filtered",
     ),
     path("<slug:slug>/predictions/", prediction_views.match_predictions, name="match_predictions"),
+    path("<slug:slug>/events/", match_detail_views.match_events, name="match_events"),
+    path("<slug:slug>/odds-comparison/", match_detail_views.match_odds_comparison, name="match_odds_comparison"),
     path("<slug:slug>/", match_detail_views.match_detail, name="match_detail"),
 ]

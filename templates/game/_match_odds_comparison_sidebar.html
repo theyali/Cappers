@@ -1,0 +1,28 @@
+<section class="match-v2-side-card match-comparison-leaders" data-comparison-sidebar{% if not comparison.visible %} hidden{% endif %} aria-label="Лучшие по рынкам">
+    <h2>Лучшие по рынкам</h2>
+    <p>{{ comparison.ranking_label }}</p>
+    {% if comparison.updated_at %}<p>Срез линии: <time datetime="{{ comparison.updated_at|date:'c' }}" data-comparison-updated>{{ comparison.updated_at|date:'d.m H:i' }}</time></p>{% endif %}
+    {% for section in comparison.sections %}
+    <div data-comparison-sidebar-section="{{ section.key }}"{% if not forloop.first %} hidden{% endif %}>
+        <h3>{{ section.title }}</h3>
+        <div data-comparison-best-summary>
+        {% if section.featured_offers %}
+            {% for offer in section.featured_offers %}
+            <a class="match-comparison-featured" href="#match-comparison" data-comparison-offer="{{ section.key }}" data-comparison-bookmaker="{{ offer.bookmaker.key }}" data-comparison-row-index="{{ offer.row_index }}">
+                {% include 'game/_comparison_bookmaker.html' with bookmaker=offer.bookmaker icon_only=True only %}
+                <span class="match-comparison-featured-copy">
+                    <strong>{{ offer.label }} за <b class="match-comparison-best">{{ offer.coefficient }}</b></strong>
+                    <small>{{ offer.bookmaker.name }} · {{ offer.context }}</small>
+                    <small>{{ offer.advantage }}</small>
+                </span>
+                <svg class="match-comparison-featured-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            {% endfor %}
+        {% else %}
+            <p class="match-comparison-empty">{% if comparison.archived %}В архиве нет предложений хотя бы двух БК на одинаковый исход.{% else %}Для выбора лучших нужны актуальные предложения хотя бы двух БК на одинаковый исход.{% endif %}</p>
+        {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    <a class="match-comparison-all" href="#match-comparison">Все букмекеры</a>
+</section>
