@@ -60,7 +60,12 @@ docker compose --profile live logs --tail=50 -f neurokeff-live
 Нужен активный Celery worker: обнаруженные неизвестные матчи и пропуски snapshot
 сверяются точечными запросами `games/info`, без синхронизации stats/events/odds.
 Для деплоя штатным скриптом: `DEPLOY_LIVE_WS=1 bash deploy/deploy.sh`.
+GitHub Actions передаёт `DEPLOY_LIVE_WS=1` на сервер автоматически: каждый деплой
+запускает или обновляет `neurokeff-live`, даже если остальные контейнеры приложения
+не требуют перезапуска. Для флага не нужны GitHub Secrets и запись в серверном `.env`:
+это переменная окружения deploy-скрипта, а не настройка Django.
 Остановка только потока: `docker compose --profile live stop neurokeff-live`.
+Следующий деплой через GitHub Actions снова запустит остановленный поток.
 
 Перезапуск beat загружает минутное расписание из settings. Если в админке Celery
 созданы дополнительные live-задачи с другими именами, их нужно отдельно отключить
