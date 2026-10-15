@@ -11,6 +11,13 @@ EXPERT_RANKING_REFRESH_MAX_PASSES = 3
 
 
 @shared_task
+def close_expert_award_months_task():
+    from .expert_awards import close_due_award_months
+
+    return close_due_award_months()
+
+
+@shared_task
 def refresh_expert_rankings_task(periods=None):
     """Rebuild the ranking snapshots; a request made during a rebuild gets one more pass after it."""
     from .expert_ranking import refresh_core_expert_rankings

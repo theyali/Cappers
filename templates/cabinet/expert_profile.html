@@ -34,6 +34,7 @@
                             </svg>
                         </span>
                         {% endif %}
+                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges variant="profile" more_count=leader_badges_more_count only %}
                     </div>
                     <div class="expert-public-meta">
                         <span class="expert-public-username">@{{ expert.username }}</span>
@@ -72,7 +73,6 @@
                     {% else %}
                         {{ expert_initials }}
                     {% endif %}
-                    {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges only %}
                 </span>
                     <div class="expert-public-social-wrap" aria-label="Социальные сети эксперта">
                 {% if analyst_profile.social_links %}
@@ -221,7 +221,7 @@
                     <span class="expert-public-latest-articles-label">Последние публикации</span>
                     <h2 id="expert-public-latest-articles-title">Статьи эксперта</h2>
                 </div>
-                <a class="expert-public-latest-articles-all" href="#articles" data-expert-public-tab="articles">Все статьи <span aria-hidden="true">→</span></a>
+                <a class="expert-public-latest-articles-all" href="#articles" data-expert-public-open-tab="articles">Все статьи <span aria-hidden="true">→</span></a>
             </div>
             <div class="expert-public-latest-articles-grid">
                 {% for article in expert_latest_articles %}
@@ -520,7 +520,7 @@
     </section>
 
     {% if expert_articles %}
-    <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" hidden>
+    <section class="expert-public-predictions expert-public-articles" data-expert-public-panel="articles" tabindex="-1" hidden>
         {% include "cabinet/includes/_capper_article_showcase.html" with heading_id="expert-public-articles-title" eyebrow="Публикации каппера" title="Статьи" total_count=expert_articles|length total_views=expert_articles_total_views articles=expert_articles public_list=True compact_total=True empty_text="У эксперта пока нет статей." only %}
     </section>
     {% endif %}

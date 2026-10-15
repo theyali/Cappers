@@ -3,7 +3,7 @@ import json
 
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Value
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -337,6 +337,7 @@ def _sport_tabs(
     express_only: bool,
     prediction_format: str,
     prediction_type: str,
+    active_status: str = "all",
     cache_scope: str | int = "",
 ):
     params = _clean_prediction_params(request.GET)
@@ -352,10 +353,14 @@ def _sport_tabs(
         express_only,
         prediction_format,
         prediction_type,
+        active_status,
         cache_scope,
     )
     cached = cache.get(cache_key)
     if cached is None:
+        status_filter = (
+            Q() if active_status == "all" else Q(coupon__state_status=active_status)
+        )
         single_items = _single_published_items(published_items)
         rows = list(
             single_items.exclude(match__sport_id__isnull=True)
@@ -365,11 +370,12 @@ def _sport_tabs(
                 "match__sport__name_ru",
                 "match__sport__name",
             )
-            .annotate(count=Count("coupon_id", distinct=True))
+            .annotate(count=Count("coupon_id", filter=status_filter, distinct=True))
             .order_by("match__sport__name_ru", "match__sport__name")
         )
-        all_count = published_items.values("coupon_id").distinct().count()
-        express_count = _express_published_items(published_items).values(
+        status_items = published_items.filter(status_filter)
+        all_count = status_items.values("coupon_id").distinct().count()
+        express_count = _express_published_items(status_items).values(
             "coupon_id"
         ).distinct().count()
         cached = {
@@ -835,6 +841,7 @@ def predictions(
         express_only=express_only,
         prediction_format=prediction_format,
         prediction_type=active_prediction_type,
+        active_status=active_status,
         cache_scope=request.user.pk if is_paid_predictions else "",
     )
     prediction_head = build_prediction_head(

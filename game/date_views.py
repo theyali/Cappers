@@ -19,6 +19,7 @@ from cabinet.roulette.models import RouletteSettings
 from cabinet.vip import plural_ru
 from game.models import Match, PredictionCoupon, Sport
 from game.services.bet_options import build_match_winner_odds
+from game.services.coupon_validation import predictable_matches
 from game.views import (
     _active_draft_coupon,
     _available_free_predictions,
@@ -628,7 +629,7 @@ def _apply_match_filter(queryset, active_match_filter: str):
     if active_match_filter == MATCH_FILTER_WITH_PREDICTIONS:
         return queryset.filter(predictions_count__gt=0)
     if active_match_filter == MATCH_FILTER_PREDICTABLE:
-        return queryset.filter(sync_scope=Match.SyncScope.PREMATCH)
+        return predictable_matches(queryset)
     return queryset
 
 
@@ -644,7 +645,7 @@ def _match_filter_tabs(
     counts = {
         MATCH_FILTER_ALL: matches_queryset.count(),
         MATCH_FILTER_WITH_PREDICTIONS: matches_queryset.filter(predictions_count__gt=0).count(),
-        MATCH_FILTER_PREDICTABLE: matches_queryset.filter(sync_scope=Match.SyncScope.PREMATCH).count(),
+        MATCH_FILTER_PREDICTABLE: predictable_matches(matches_queryset).count(),
     }
     return [
         {

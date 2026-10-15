@@ -1,18 +1,12 @@
-{% if leader_badges %}
-<span class="expert-leader-badges" aria-label="Рейтинговые бейджи">
-    {% for badge in leader_badges %}
-    <span class="expert-leader-badge is-{{ badge.kind }}" title="{{ badge.label }}" aria-label="{{ badge.label }}">
-        {% if badge.kind == "all-time" %}
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 8l4.5 4L12 5l4.5 7L21 8v11H3V8z"></path>
-            <path d="M3 19h18"></path>
-        </svg>
-        {% else %}
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 3l2.35 5.15 5.65.65-4.15 3.85 1.1 5.55L12 15.4 7.05 18.2l1.1-5.55L4 8.8l5.65-.65L12 3z"></path>
-        </svg>
-        {% endif %}
-    </span>
+{% load leader_badges %}
+{% leader_badges_display leader_badges variant|default:"avatar" more_count=more_count as display %}
+{% if display.badges or display.more_count %}
+<span class="expert-leader-badges is-{{ display.variant }}" aria-label="Лидерские знаки">
+    {% for badge in display.badges %}
+    {% include "front/includes/_expert_leader_badge.html" with badge=badge can_link=display.can_link only %}
     {% endfor %}
+    {% if display.more_count %}
+    <a class="expert-leader-badges-more" href="{{ display.more_url }}" data-expert-public-open-tab="achievements" aria-label="Показать остальные лидерские награды: {{ display.more_count }}">+{{ display.more_count }}</a>
+    {% endif %}
 </span>
 {% endif %}

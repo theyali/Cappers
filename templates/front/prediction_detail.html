@@ -55,7 +55,7 @@
           </div>
         </section>
         <div class="coupon-detail-author">
-          <a class="coupon-detail-author-avatar" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Профиль {{ expert_name }}">{% if expert_avatar_url %}<img src="{{ expert_avatar_url }}" width="44" height="44" alt="" loading="lazy">{% else %}{{ expert_initials }}{% endif %}{% capper_trust_badge expert_trust_index %}</a>
+          <a class="coupon-detail-author-avatar" href="{% url 'front:expert_profile' coupon.author.username %}" aria-label="Профиль {{ expert_name }}">{% if expert_avatar_url %}<img src="{{ expert_avatar_url }}" width="44" height="44" alt="" loading="lazy">{% else %}{{ expert_initials }}{% endif %}{% capper_trust_badge expert_trust_index %}{% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges variant="avatar" only %}</a>
           <span class="coupon-detail-author-info"><strong>{{ expert_name }}{% if expert_verified %} <span class="coupon-detail-verified" title="Проверенный эксперт">✦</span>{% endif %}</strong><small>Опубликован {{ coupon.published_at|default:coupon.created_at|date:"d.m.Y · H:i" }}</small></span>
           <a class="coupon-detail-author-link" href="{% url 'front:expert_profile' coupon.author.username %}">Профиль</a>
         </div>

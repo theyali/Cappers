@@ -145,6 +145,7 @@ summary:focus-visible,
   stroke: none;
 }
 
+html.expert-public-details-open,
 body.expert-public-details-open {
   overflow: hidden;
 }
@@ -284,6 +285,84 @@ body.expert-public-details-open {
   font-size: 15px;
   line-height: 1.7;
 }
+
+/* The read-only details dialog owns its scroll; the header and close stay visible.
+   The paid subscription dialog shares older classes, so keep this variant scoped. */
+#expert-public-details-modal {
+  --details-outer-gap: 24px;
+  --details-safe-top: max(var(--telegram-app-top, 0px), env(safe-area-inset-top, 0px));
+  --details-safe-bottom: max(var(--telegram-app-bottom, 0px), env(safe-area-inset-bottom, 0px));
+  inset: 0;
+  z-index: var(--z-profile-modal);
+  min-width: 0;
+  min-height: 0;
+  padding: calc(var(--details-safe-top) + var(--details-outer-gap)) max(var(--details-outer-gap), env(safe-area-inset-right, 0px)) calc(var(--details-safe-bottom) + var(--details-outer-gap)) max(var(--details-outer-gap), env(safe-area-inset-left, 0px));
+  overflow: hidden;
+}
+#expert-public-details-modal.is-open:not(.is-visible) { opacity: 0; }
+#expert-public-details-modal .expert-public-details-card {
+  min-width: 0;
+  min-height: 0;
+  max-height: min(760px, calc(100dvh - var(--details-safe-top) - var(--details-safe-bottom) - var(--details-outer-gap) - var(--details-outer-gap)));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+#expert-public-details-modal .expert-public-details-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  text-align: left;
+}
+#expert-public-details-modal .expert-public-details-head h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#expert-public-details-modal .expert-public-details-close {
+  position: static;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+#expert-public-details-modal .expert-public-details-close:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 3px;
+}
+.expert-public-details-body {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 0 24px 24px;
+  overflow-wrap: anywhere;
+}
+.expert-public-details-body:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+#expert-public-details-modal .expert-public-details-bio {
+  margin-top: 18px;
+  padding: 16px 0 0;
+}
+
+@media (max-width: 1024px) {
+  #expert-public-details-modal { --details-outer-gap: 12px; }
+}
+@media (max-width: 640px) {
+  #expert-public-details-modal .expert-public-details-head { padding: 16px; }
+  #expert-public-details-modal .expert-public-details-head h2 { font-size: 22px; }
+  .expert-public-details-body { padding: 0 16px 20px; }
+}
+
 @media (max-width: 980px) {
   .auth-form-grid,
   .game-grid,
@@ -4194,6 +4273,11 @@ body.expert-public-details-open {
 
   body:has(.wallet-topup-page) .site-main {
     padding: 0;
+  }
+  /* This screen hides the shell header, but still needs its Telegram safe area.
+     Apply it before messages too, not just before the wallet heading. */
+  body.is-telegram-app:has(.wallet-topup-page) {
+    padding-top: var(--telegram-app-top);
   }
   .wallet-topup-page .wallet-hero {
     grid-template-columns: 48px minmax(0, 1fr) auto;
@@ -8528,10 +8612,6 @@ body.expert-public-details-open {
   .predictions-content.articles-content {
     padding: 0;
   }
-.expert-public-shell {
-    display: grid;
-    padding: 0;
-}
 .cabinet-bonuses-page .bonus-center-layout{
     padding-top:0;
 }
@@ -8810,6 +8890,9 @@ body.expert-public-details-open {
   .match-table-meta {
     gap: 5px;
   }
+}
+
+@media (max-width: 1024px) {
   .prediction-table-row {
     display: contents;
   }
@@ -8823,6 +8906,8 @@ body.expert-public-details-open {
     display: grid;
     gap: 10px;
   }
+  .predictions-table-view .content-table-scroll { overflow-x: visible; }
+  .predictions-table-view .content-table-head { display: none; }
   .prediction-mobile-coupon {
     min-width: 0;
     display: grid;
@@ -8851,9 +8936,25 @@ body.expert-public-details-open {
   }
   .prediction-mobile-coupon-author strong {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .prediction-mobile-coupon-identity {
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .prediction-mobile-coupon-identity .expert-leader-badges {
+    position: static;
+    flex: 0 0 auto;
+  }
+  .prediction-mobile-coupon-identity .expert-leader-badges.is-avatar .expert-leader-badge { box-shadow: none; }
+  .prediction-mobile-coupon-identity .capper-verified-badge,
+  .prediction-mobile-coupon-identity .cappers-ranking-vip {
+    flex: 0 0 auto;
   }
   .prediction-mobile-coupon > .prediction-reactions {
     grid-column: 1 / -1;
@@ -8879,7 +8980,10 @@ body.expert-public-details-open {
   .prediction-mobile-coupon .prediction-reaction:disabled {
     cursor: not-allowed;
   }
+  .predictions-content.expert-public-shell { padding: 0; }
+}
 
+@media (max-width: 760px) {
   .predictions-index-page [data-content-view-current="table"] .prediction-type-tabs {
     width: 100%;
     display: flex;
@@ -9155,7 +9259,6 @@ body.expert-public-details-open {
     width: 100%;
     min-width: 0;
     overflow: visible;
-    padding: 0 0 92px;
   }
   .cappers-ranking-region {
     min-width: 0;
@@ -12894,13 +12997,6 @@ body.expert-public-details-open {
     display: none;
   }
 
-  .cappers-table-page {
-    width: 100%;
-    min-width: 0;
-    overflow: visible;
-    padding-bottom: 96px;
-  }
-
   .cappers-ranking-toolbar {
     min-width: 0;
   }
@@ -13042,7 +13138,7 @@ body.expert-public-details-open {
   }
 
   /* Search: mobile introduction and full-screen search/results. */
-  .home-search-hero { min-height: 0; margin-bottom: 18px; padding: 44px 18px 32px; border-radius: 22px; }
+  .home-search-hero { min-height: 0; margin-bottom: 18px; padding: 20px 0; border-radius: 22px; }
   .home-search-coupon-bg { padding: 0 8px; opacity: .6; }
   .home-search-coupon-col:nth-child(2),
   .home-search-coupon-col:nth-child(3) { display: none; }
@@ -13545,6 +13641,10 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 390px) {
+  .expert-mobile-card {
+    --expert-mobile-avatar-size: 144px;
+    --expert-mobile-avatar-offset: -40px;
+  }
   .expert-recent-performance-item {
     padding: 10px 8px;
   }
@@ -13642,7 +13742,7 @@ body.expert-public-details-open {
   .profile-avatar-modal-card {
     width: min(390px, calc(100dvw - 20px));
     max-width: 390px;
-    max-height: calc(100dvh - 28px - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 28px - var(--telegram-app-top, 0px) - max(var(--telegram-app-bottom, 0px), env(safe-area-inset-bottom, 0px)));
     min-height: 0;
     gap: 14px;
     padding: 10px 16px 16px;
@@ -13695,9 +13795,12 @@ body.expert-public-details-open {
   .profile-avatar-modal-body,
   .profile-avatar-upload-panel,
   .profile-avatar-crop-panel {
+    min-width: 0;
+    max-width: 100%;
     min-height: 0;
     flex: 1 1 auto;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding-right: 2px;
     scrollbar-width: none;
   }
@@ -13714,8 +13817,9 @@ body.expert-public-details-open {
     gap: 13px;
   }
   .profile-avatar-filter-tabs {
-    margin: 0 -16px;
-    padding: 0 16px 2px;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 0 2px;
     overflow-x: auto;
     scrollbar-width: none;
   }

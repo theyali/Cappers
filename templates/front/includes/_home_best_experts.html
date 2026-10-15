@@ -32,6 +32,7 @@
                             {{ expert.initials }}
                         {% endif %}
                         <b>{{ expert.trust_index|floatformat:"1u" }}</b>
+                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges variant="avatar" only %}
                     </span>
                     <span class="home-best-expert-leader-identity">
                         <strong>{{ expert.name }}</strong>
@@ -64,6 +65,7 @@
                             {{ expert.initials }}
                         {% endif %}
                         <b>{{ expert.trust_index|floatformat:"1u" }}</b>
+                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges variant="avatar" only %}
                     </span>
                     <span class="home-best-expert-row-copy">
                         <span class="home-best-expert-row-name">

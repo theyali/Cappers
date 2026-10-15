@@ -4,11 +4,13 @@
     data-expert-public-modal="details"
     aria-hidden="true"
 >
-    <div
+    <button
         class="profile-email-modal-backdrop expert-public-details-backdrop"
+        type="button"
         data-expert-public-details-close
+        tabindex="-1"
         aria-hidden="true"
-    ></div>
+    ></button>
 
     <section
         class="profile-email-modal-card expert-public-details-card"
@@ -18,21 +20,21 @@
         tabindex="-1"
         data-expert-public-details-dialog
     >
-        <button
-            class="profile-email-modal-close expert-public-details-close"
-            type="button"
-            data-expert-public-details-close
-            aria-label="Закрыть"
-        >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6 6 18"></path>
-            </svg>
-        </button>
-
         <header class="expert-public-details-head">
             <h2 id="expert-public-details-title">Подробнее</h2>
+            <button
+                class="profile-email-modal-close expert-public-details-close"
+                type="button"
+                data-expert-public-details-close
+                aria-label="Закрыть"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"></path>
+                </svg>
+            </button>
         </header>
 
+        <div class="expert-public-details-body" role="region" aria-label="Сведения о каппере" tabindex="0">
         <dl class="expert-public-details-list">
             <div class="expert-public-details-row">
                 <dt>Имя:</dt>
@@ -78,5 +80,6 @@
             <h3 id="expert-public-details-bio-title">О себе</h3>
             <p>{{ analyst_profile.bio|default:"Описание пока не добавлено."|linebreaksbr }}</p>
         </section>
+        </div>
     </section>
 </div>

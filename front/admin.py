@@ -1,8 +1,15 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.template.response import TemplateResponse
+
+from .forms import LeaderAwardCorrectionForm
 
 from .models import (
     Article,
     ArticleCategory,
+    ExpertAllTimeBadgeTenure,
+    ExpertMonthlyAward,
+    ExpertMonthlyAwardPeriod,
     News,
     NewsCategory,
     StaticPage,
@@ -13,6 +20,114 @@ from .models import (
     WikiVideoReaction,
     WikiVideoSection,
 )
+
+
+class LeaderRegistryAdmin(admin.ModelAdmin):
+    """Registry facts are immutable in ordinary admin forms."""
+
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        return tuple(field.name for field in self.model._meta.fields)
+
+
+@admin.register(ExpertMonthlyAwardPeriod)
+class ExpertMonthlyAwardPeriodAdmin(LeaderRegistryAdmin):
+    list_display = (
+        "month",
+        "finalized_at",
+        "revision",
+        "eligible_count",
+        "rules_version",
+    )
+    list_filter = ("finalized_at", "rules_version")
+    actions = ("correct_awards",)
+
+    @admin.action(
+        description="Пересчитать и исправить награды месяца…", permissions=("change",)
+    )
+    def correct_awards(self, request, queryset):
+        from .expert_awards import finalize_monthly_awards
+
+        if queryset.count() != 1:
+            self.message_user(request, "Выберите ровно один месяц.", level="error")
+            return
+        period = queryset.get()
+        form = LeaderAwardCorrectionForm(
+            request.POST if "confirm_correction" in request.POST else None,
+            initial={"expected_revision": period.revision},
+        )
+        if "confirm_correction" in request.POST and form.is_valid():
+            try:
+                finalized = finalize_monthly_awards(
+                    period.month,
+                    correction_reason=form.cleaned_data["reason"],
+                    actor=request.user,
+                    source="admin",
+                    expected_revision=form.cleaned_data["expected_revision"],
+                )
+            except ValidationError as exc:
+                form.add_error(None, exc)
+            else:
+                self.log_change(
+                    request,
+                    finalized,
+                    f"Исправление наград, редакция {finalized.revision}: {form.cleaned_data['reason']}",
+                )
+                self.message_user(
+                    request,
+                    f"Награды за {period} исправлены. Предыдущая редакция сохранена.",
+                )
+                return
+        return TemplateResponse(
+            request,
+            "admin/front/correct_leader_awards.html",
+            {
+                **self.admin_site.each_context(request),
+                "title": f"Исправить лидерские награды за {period}",
+                "opts": self.model._meta,
+                "period": period,
+                "form": form,
+            },
+        )
+
+
+@admin.register(ExpertMonthlyAward)
+class ExpertMonthlyAwardAdmin(LeaderRegistryAdmin):
+    list_display = (
+        "analyst",
+        "period",
+        "rank",
+        "revision",
+        "source",
+        "awarded_at",
+        "revoked_at",
+    )
+    list_filter = ("period", "rank", "source", "revoked_at")
+    search_fields = ("analyst__username",)
+    list_select_related = ("period", "analyst", "actor")
+
+
+@admin.register(ExpertAllTimeBadgeTenure)
+class ExpertAllTimeBadgeTenureAdmin(LeaderRegistryAdmin):
+    list_display = (
+        "analyst",
+        "tier",
+        "entry_rank",
+        "current_rank",
+        "started_at",
+        "ended_at",
+        "ranking_built_at",
+    )
+    list_filter = ("tier", "ended_at")
+    search_fields = ("analyst__username",)
+    list_select_related = ("analyst",)
 
 
 @admin.register(ArticleCategory)

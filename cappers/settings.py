@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / "logs"
@@ -312,6 +313,11 @@ CELERY_TASK_TIME_LIMIT = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 270
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
+    "close-expert-award-months": {
+        "task": "front.tasks.close_expert_award_months_task",
+        # Daily catch-up as well as the normal close on the 1st, project timezone.
+        "schedule": crontab(hour=3, minute=0),
+    },
     "fetch-live-tennis-matches": {
         "task": "game.tasks.fetch_live_tennis_matches",
         "schedule": timedelta(minutes=1),

@@ -15,6 +15,7 @@ from cabinet.presence import presence_payloads
 from game.models import PredictionCoupon, Sport
 
 from .expert_ranking import rank_experts, ranking_cache_version
+from .expert_awards import leader_badges_for_users, project_today
 
 
 GROUP_ALL = "all"
@@ -375,6 +376,9 @@ def _ranking_rows(
         row["rank"] = entry["rank"]
         row["ranking_reason"] = entry["ranking_reason"]
         rows.append(row)
+    badges_by_user = leader_badges_for_users(row["id"] for row in rows)
+    for row in rows:
+        row["leader_badges"] = badges_by_user.get(row["id"], [])
     return rows
 
 
@@ -537,6 +541,7 @@ def build_capper_table_context(
     requested_sport_code = (sport_code or ALL_SPORTS).strip().lower()
     cache_key = (
         f"capper-table:v{ranking_cache_version()}:"
+        f"badges-month={project_today():%Y-%m}:"
         f"group={selected_group}:period={requested_period}:sport={requested_sport_code}"
     )
     base_context = _cache_get(cache_key)

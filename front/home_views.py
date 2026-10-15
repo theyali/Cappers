@@ -29,10 +29,10 @@ from cabinet.models import AnalystProfile, User
 from cabinet.vip import plural_ru
 from front.expert_ranking import (
     current_month_top_expert_ids,
-    expert_leader_badges,
     ranked_expert_profiles,
 )
 from front.models import Article
+from front.expert_awards import leader_badges_for_users
 from front.prediction_metrics import annotate_author_roi
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.recommendations import personalized_recommended_experts
@@ -166,8 +166,6 @@ def _render_home_index(request):
     best_experts_context = _home_best_experts_context(request)
     all_time_profiles = ranked_expert_profiles(period_days=None)
     monthly_top_ids = current_month_top_expert_ids(top_experts_limit)
-    monthly_leader_id = monthly_top_ids[0] if monthly_top_ids else None
-    all_time_leader_id = all_time_profiles[0].user_id if all_time_profiles else None
     top_profiles, top_experts_scope = _top_home_profiles(
         all_time_profiles,
         monthly_top_ids,
@@ -191,8 +189,6 @@ def _render_home_index(request):
             "top_experts": _top_home_experts(
                 top_profiles,
                 limit=top_experts_limit,
-                monthly_leader_id=monthly_leader_id,
-                all_time_leader_id=all_time_leader_id,
             ),
             "top_experts_scope": top_experts_scope,
             "top_experts_scope_label": (
@@ -338,6 +334,7 @@ def _latest_home_predictions() -> list[dict]:
         .order_by("-published_at", "-created_at", "-id")[:HOME_PREDICTIONS_LIMIT]
     )
     cover_pools = _home_cover_pools()
+    badges_by_user = leader_badges_for_users(coupon.author_id for coupon in queryset)
 
     cards = []
     for prediction in queryset:
@@ -430,6 +427,7 @@ def _latest_home_predictions() -> list[dict]:
                 ),
                 "expert_verified": bool(profile and profile.is_verified),
                 "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
+                "leader_badges": badges_by_user.get(author.pk, []),
                 "status_label": status_label,
                 "status_key": status_key,
             }
@@ -565,12 +563,11 @@ def _top_home_experts(
     profiles,
     *,
     limit: int,
-    monthly_leader_id=None,
-    all_time_leader_id=None,
 ) -> list[dict]:
     if not profiles:
         return DEMO_EXPERTS
 
+    badges_by_user = leader_badges_for_users(profile.user_id for profile in profiles[:limit])
     experts = []
     for profile in profiles[:limit]:
         name = profile.display_name or profile.user.get_full_name() or profile.user.username
@@ -584,11 +581,7 @@ def _top_home_experts(
                 "verified": profile.is_verified,
                 "avatar_url": profile.user.avatar.url if profile.user.avatar else "",
                 "trust_index": profile.trust_index,
-                "leader_badges": expert_leader_badges(
-                    profile.user_id,
-                    monthly_leader_id=monthly_leader_id,
-                    all_time_leader_id=all_time_leader_id,
-                ),
+                "leader_badges": badges_by_user.get(profile.user_id, []),
             }
         )
     return experts
@@ -597,6 +590,7 @@ def _top_home_experts(
 def _best_home_experts(request, profiles) -> list[dict]:
     profiles = list(profiles[:HOME_EXPERTS_LIMIT])
     user_ids = [profile.user_id for profile in profiles]
+    badges_by_user = leader_badges_for_users(user_ids)
     following_ids = set()
     if request.user.is_authenticated:
         following_ids = set(
@@ -654,6 +648,7 @@ def _best_home_experts(request, profiles) -> list[dict]:
                 "win_rate_tone": "low" if win_rate < 50 else "high",
                 "sport_label": sport_label,
                 "recent_results": recent_results[profile.user_id],
+                "leader_badges": badges_by_user.get(profile.user_id, []),
                 "is_self": request.user.is_authenticated and request.user.id == profile.user_id,
                 "is_following": profile.user_id in following_ids,
             }

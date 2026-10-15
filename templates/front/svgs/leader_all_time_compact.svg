@@ -1,0 +1,10 @@
+<svg aria-hidden="true" class="expert-leader-badge-icon" focusable="false" height="{{ badge.height }}" viewBox="0 0 100 100" width="{{ badge.width }}">
+<circle cx="50" cy="50" fill="var(--leader-metal)" r="48">
+</circle>
+<circle cx="50" cy="50" fill="var(--leader-inner)" r="39">
+</circle>
+<g transform="translate(50 50) scale(.72) translate(-50 -50)">
+<path d="M50.0,29.0L55.3,42.7L70.0,43.5L58.6,52.8L62.3,67.0L50.0,59.0L37.7,67.0L41.4,52.8L30.0,43.5L44.7,42.7Z" fill="var(--leader-metal)">
+</path>
+</g>
+</svg>

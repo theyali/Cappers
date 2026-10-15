@@ -8,6 +8,7 @@ from typing import Any, Iterable
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db.models import BooleanField, Exists, F, Func, OuterRef, Q, Value
 from django.utils import timezone
 
 from cappers.ratelimit import rate_limited
@@ -15,7 +16,7 @@ from game.models import Match, MatchOdds, Provider
 from game.services.bet_options import bet_option_key, match_bet_options
 from game.services.match_sync import MatchSyncService
 from game.services.match_timing import prediction_window_open
-from game.services.odds import has_odds_payload, match_odds_defaults
+from game.services.odds import DIRECT_ODDS_KEYS, has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
 
@@ -31,6 +32,47 @@ MAX_ALLOWED_COEFFICIENT = Decimal("1000")
 # PredictionCoupon.possible_payout is DecimalField(max_digits=12, decimal_places=2):
 # the maximum stake multiplied by this value must still fit into it.
 MAX_TOTAL_COEFFICIENT = Decimal("9999")
+
+
+def predictable_matches(queryset, *, now=None):
+    """Prematches with an open prediction window and a usable short-line odd.
+
+    Filter in SQL before pagination; full bookmaker-comparison odds and markets
+    that cannot be settled must not make a match available for a prediction.
+    """
+    odds = MatchOdds.objects.filter(match_id=OuterRef("pk"))
+    available = Q(pk__in=[])
+    draw_fields = {"x_bet", "first_time_x_bet", "d_1x", "d_2x"}
+    not_basketball = ~Q(match__sport__code="basketball")
+    for field in sorted(DIRECT_ODDS_KEYS):
+        condition = Q(**{
+            f"{field}__gte": MIN_ALLOWED_COEFFICIENT,
+            f"{field}__lte": MAX_ALLOWED_COEFFICIENT,
+        })
+        available |= condition & not_basketball if field in draw_fields else condition
+
+    # These normalized JSON containers store coefficients at their leaves.
+    # Exclude team totals, half-time/full-time and extra markets: the coupon
+    # settlement engine does not accept them.
+    path = (
+        "strict $.** ? (@.type() == \"number\" && "
+        f"@ >= {MIN_ALLOWED_COEFFICIENT} && @ <= {MAX_ALLOWED_COEFFICIENT})"
+    )
+    for field in (
+        "totals_all", "double_chance_all", "handicaps_all", "btts_all",
+        "first_half_totals_all", "first_half_handicaps_all", "exact_score_all",
+    ):
+        alias = f"available_{field}"
+        odds = odds.alias(**{
+            alias: Func(F(field), Value(path), function="jsonb_path_exists", output_field=BooleanField()),
+        })
+        condition = Q(**{alias: True})
+        available |= condition & not_basketball if field == "double_chance_all" else condition
+
+    return queryset.filter(
+        sync_scope=Match.SyncScope.PREMATCH,
+        starts_at__gt=now or timezone.now(),
+    ).filter(Exists(odds.filter(available)))
 
 
 class CouponMatchVerificationError(RuntimeError):

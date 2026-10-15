@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<p>Месяц: <strong>{{ period }}</strong>. Текущая редакция: {{ period.revision }}.</p>
+<p>После подтверждения результаты будут пересчитаны по действующим правилам общего рейтинга. Предыдущие награды останутся в журнале как отозванные.</p>
+<form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="hidden" name="action" value="correct_awards">
+    <input type="hidden" name="_selected_action" value="{{ period.pk }}">
+    <button type="submit" name="confirm_correction" value="1">Пересчитать и исправить награды</button>
+    <a href="{% url 'admin:front_expertmonthlyawardperiod_changelist' %}">Отмена</a>
+</form>
+{% endblock %}

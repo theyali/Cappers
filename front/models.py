@@ -147,6 +147,165 @@ class ExpertRankingEntry(models.Model):
         return f"#{self.rank} · {self.analyst_id} · {self.snapshot}"
 
 
+class ExpertMonthlyAwardPeriod(models.Model):
+    month = models.DateField("Месяц", unique=True)
+    observed_automatically = models.BooleanField(
+        "Период наблюдения после запуска", default=False
+    )
+    finalized_at = models.DateTimeField("Закрыт", null=True, blank=True)
+    ranking_built_at = models.DateTimeField("Снимок рейтинга", null=True, blank=True)
+    eligible_count = models.PositiveIntegerField("Участников", default=0)
+    revision = models.PositiveIntegerField("Редакция", default=0)
+    rules_version = models.CharField(
+        "Версия правил", max_length=32, default="ranking-v1"
+    )
+    history = models.JSONField(
+        "Журнал закрытий и исправлений", default=list, blank=True
+    )
+    created_at = models.DateTimeField("Начало наблюдения", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Месяц лидерских наград"
+        verbose_name_plural = "Месяцы лидерских наград"
+        ordering = ("-month",)
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(month__day=1), name="award_period_month_start"
+            )
+        ]
+
+    def __str__(self):
+        return self.month.strftime("%Y-%m")
+
+
+class ExpertMonthlyAward(models.Model):
+    period = models.ForeignKey(
+        ExpertMonthlyAwardPeriod,
+        on_delete=models.PROTECT,
+        related_name="awards",
+        verbose_name="Месяц",
+    )
+    analyst = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="monthly_leader_awards",
+        verbose_name="Каппер",
+    )
+    rank = models.PositiveSmallIntegerField("Место")
+    revision = models.PositiveIntegerField("Редакция")
+    metrics = models.JSONField("Зафиксированные результаты", default=dict)
+    source = models.CharField(
+        "Источник",
+        max_length=16,
+        choices=(
+            ("auto", "Автоматически"),
+            ("admin", "Исправление"),
+            ("backfill", "Историческая выдача"),
+        ),
+    )
+    awarded_at = models.DateTimeField("Выдана")
+    reason = models.TextField("Основание", blank=True)
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leader_award_corrections",
+        verbose_name="Администратор",
+    )
+    revoked_at = models.DateTimeField("Отозвана", null=True, blank=True)
+    revocation_reason = models.TextField("Причина отзыва", blank=True)
+
+    class Meta:
+        verbose_name = "Месячная лидерская награда"
+        verbose_name_plural = "Месячные лидерские награды"
+        ordering = ("-period__month", "rank", "-revision")
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rank__gte=1, rank__lte=3),
+                name="monthly_award_rank_1_3",
+            ),
+            models.UniqueConstraint(
+                fields=("period", "rank"),
+                condition=models.Q(revoked_at__isnull=True),
+                name="monthly_award_active_rank",
+            ),
+            models.UniqueConstraint(
+                fields=("period", "analyst"),
+                condition=models.Q(revoked_at__isnull=True),
+                name="monthly_award_active_user",
+            ),
+            models.UniqueConstraint(
+                fields=("period", "revision", "rank"),
+                name="monthly_award_revision_rank",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.period} · #{self.rank} · {self.analyst_id} · v{self.revision}"
+
+
+class ExpertAllTimeBadgeTenure(models.Model):
+    class Tier(models.IntegerChoices):
+        LEGEND = 1, "Легенда · №1"
+        TOP_THREE = 3, "Топ-3"
+        TOP_TEN = 10, "Топ-10"
+
+    analyst = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="all_time_leader_tenures",
+        verbose_name="Каппер",
+    )
+    tier = models.PositiveSmallIntegerField("Уровень", choices=Tier.choices)
+    entry_rank = models.PositiveSmallIntegerField("Место при входе")
+    current_rank = models.PositiveSmallIntegerField("Последнее место")
+    metrics = models.JSONField("Результаты при входе", default=dict)
+    started_at = models.DateTimeField("Наблюдается с")
+    ended_at = models.DateTimeField("Завершён", null=True, blank=True)
+    ranking_built_at = models.DateTimeField("Последний снимок рейтинга")
+    rules_version = models.CharField(
+        "Версия правил", max_length=32, default="ranking-v1"
+    )
+
+    class Meta:
+        verbose_name = "Интервал лидерства за всё время"
+        verbose_name_plural = "Интервалы лидерства за всё время"
+        ordering = ("-started_at", "tier", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("analyst",),
+                condition=models.Q(ended_at__isnull=True),
+                name="all_time_one_open_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=("tier",),
+                condition=models.Q(ended_at__isnull=True, tier=1),
+                name="all_time_one_legend",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(tier__in=(1, 3, 10)), name="all_time_valid_tier"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    current_rank__gte=1,
+                    current_rank__lte=10,
+                    entry_rank__gte=1,
+                    entry_rank__lte=10,
+                ),
+                name="all_time_valid_ranks",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(ended_at__isnull=True)
+                | models.Q(ended_at__gte=models.F("started_at")),
+                name="all_time_valid_interval",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.analyst_id} · {self.get_tier_display()} · {self.started_at:%Y-%m-%d}"
+
+
 class Article(models.Model):
     title = models.CharField("Заголовок", max_length=220)
     slug = models.SlugField("Slug", max_length=240, unique=True)
