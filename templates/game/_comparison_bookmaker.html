@@ -1,0 +1,7 @@
+<span class="match-comparison-brand">
+    <span class="match-comparison-logo{% if bookmaker.icon %} has-image{% endif %}" aria-hidden="true">
+        {% if bookmaker.icon %}<img src="{{ bookmaker.icon }}" width="48" height="48" alt="" loading="lazy" data-comparison-logo>{% endif %}
+        <span>{{ bookmaker.initials }}</span>
+    </span>
+    {% if not icon_only %}<span class="match-comparison-brand-name">{{ bookmaker.name }}</span>{% endif %}
+</span>

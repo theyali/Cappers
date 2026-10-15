@@ -2,7 +2,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, F, IntegerField, Value
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -46,6 +46,13 @@ def _prediction_distribution(queryset) -> tuple[int, list[dict]]:
 @ensure_csrf_cookie
 def match_predictions(request, slug: str):
     match = get_object_or_404(Match, slug=slug)
+    # This URL also appears in saved links. Browser navigation should open the
+    # match's complete paginated feed, not expose the AJAX response as a document.
+    if (
+        "text/html" in request.headers.get("Accept", "")
+        and request.headers.get("X-Requested-With") != "XMLHttpRequest"
+    ):
+        return redirect(f"{match.get_absolute_url()}#match-predictions")
 
     base_queryset = Prediction.objects.filter(
         match=match,

@@ -122,6 +122,16 @@ class NeurokeffSportsProvider(BaseSportsProvider):
             raise NeurokeffProviderError("Unexpected Neurokeff game statistics payload")
         return payload
 
+    def fetch_game_odds(self, external_id: int) -> dict[str, Any]:
+        payload = self._request(
+            getattr(settings, "NEUROKEFF_GAME_ODDS_ENDPOINT", "/api/v2/games/odds"),
+            {"game_id": int(external_id)},
+            timeout=max(int(getattr(settings, "NEUROKEFF_GAME_ODDS_TIMEOUT", 5)), 1),
+        )
+        if not isinstance(payload, dict):
+            raise NeurokeffProviderError("Unexpected Neurokeff full odds payload")
+        return payload
+
     def fetch_game_events(self, external_id: int) -> dict[str, Any]:
         endpoint = getattr(
             settings,

@@ -789,6 +789,78 @@ class MatchOdds(models.Model):
         return f"Коэффициенты {self.match_id}"
 
 
+class ComparisonBookmaker(models.Model):
+    """Brand artwork for full-odds comparison; unrelated to back.Bookmaker."""
+
+    key = models.CharField("Имя из API (ключ)", max_length=320, unique=True, editable=False)
+    name = models.CharField("Название", max_length=160)
+    icon = models.ImageField("Иконка", upload_to="game/bookmakers/", blank=True)
+
+    class Meta:
+        ordering = ("name", "pk")
+        verbose_name = "Букмекер сравнения"
+        verbose_name_plural = "Букмекеры сравнения"
+
+    @staticmethod
+    def name_key(name):
+        return " ".join(str(name).casefold().split())
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.name_key(self.name)
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        key = self.key or self.name_key(self.name)
+        if type(self).objects.filter(key=key).exclude(pk=self.pk).exists():
+            raise ValidationError({"name": "Этот букмекер уже есть в справочнике сравнения."})
+
+    @property
+    def icon_url(self):
+        return image_field_url(self.icon)
+
+    def __str__(self):
+        return self.name
+
+
+class MatchOddsSnapshot(models.Model):
+    """Full v2 line, independent from the short MatchOdds used by coupons."""
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="odds_snapshots")
+    scope = models.CharField(max_length=8, choices=(("prematch", "Prematch"), ("live", "Live")))
+    available = models.BooleanField(default=False)
+    provider_updated_at = models.DateTimeField(null=True, blank=True)
+    requested_at = models.DateTimeField()
+    fetched_at = models.DateTimeField()
+    raw_data = models.JSONField(default=dict)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("match", "scope"), name="unique_match_full_odds_scope"),
+        ]
+
+
+class MatchBookmakerOdds(models.Model):
+    snapshot = models.ForeignKey(MatchOddsSnapshot, on_delete=models.CASCADE, related_name="bookmakers")
+    bookmaker_key = models.CharField(max_length=160)
+    external_id = models.CharField(max_length=64, blank=True)
+    external_pk = models.CharField(max_length=64, blank=True)
+    name = models.CharField(max_length=160)
+    # Keep original market IDs, names, periods, lines, team and outcome flags.
+    # Canonical comparison keys are a separate step; never merge by key alone.
+    markets = models.JSONField(default=list)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("snapshot", "bookmaker_key"), name="unique_full_odds_bookmaker"),
+        ]
+        ordering = ("name", "id")
+
+    def __str__(self):
+        return self.name
+
+
 class PredictionCoupon(models.Model):
     class PublishedStatus(models.TextChoices):
         DRAFT = "draft", "Черновик"

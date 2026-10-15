@@ -57,10 +57,29 @@ class MatchPredictionDistributionTests(TestCase):
         self.assertEqual(distribution[("total", "ТМ 2.5")]["percent"], 50.0)
         self.assertEqual(distribution[("winner", "Хозяева")]["count"], 2)
         self.assertEqual(distribution[("winner", "Хозяева")]["percent"], 50.0)
-        self.assertIn('class="content-table-row prediction-table-row"', payload["html"])
-        self.assertIn("data-prediction-reaction", payload["html"])
-        self.assertIn("prediction-like", payload["html"])
-        self.assertIn("prediction-favorite", payload["html"])
+        self.assertIn('class="match-v2-prediction"', payload["html"])
+        self.assertEqual(payload["html"].count("data-prediction-card="), 4)
+        self.assertIn('class="match-v2-prediction-open"', payload["html"])
+
+    def test_browser_navigation_opens_match_prediction_feed_instead_of_json(self):
+        response = self.client.get(
+            reverse("game:match_predictions", kwargs={"slug": self.match.slug}),
+            HTTP_ACCEPT="text/html,application/xhtml+xml,*/*;q=0.8",
+        )
+        self.assertRedirects(
+            response, f"{self.match.get_absolute_url()}#match-predictions",
+            fetch_redirect_response=False,
+        )
+
+    def test_ajax_still_returns_json_even_with_html_accept_header(self):
+        self._publish_prediction("winner", "Хозяева")
+        response = self.client.get(
+            reverse("game:match_predictions", kwargs={"slug": self.match.slug}),
+            HTTP_ACCEPT="text/html,*/*;q=0.8",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["total"], 1)
 
     def test_endpoint_lazy_pages_cover_every_published_coupon_for_match(self):
         predictions = [

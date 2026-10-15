@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
 from game.models import (
+    ComparisonBookmaker,
     Country,
     League,
     LeagueSeason,
@@ -20,6 +21,8 @@ from game.models import (
     MatchEvent,
     MatchEventParticipant,
     MatchOdds,
+    MatchOddsSnapshot,
+    MatchBookmakerOdds,
     MatchStatistic,
     Provider,
     Sport,
@@ -33,6 +36,7 @@ from game.models import (
 from game.services.local_logos import sync_entity_logo
 from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
+from game.services.providers.neurokeff import NeurokeffProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -1254,6 +1258,112 @@ class MatchSyncService:
             )
         )
         return team
+
+    def sync_match_bookmaker_odds(self, match: Match) -> dict:
+        requested_at = timezone.now()
+        payload = self.provider.fetch_game_odds(match.external_id)
+        if not isinstance(payload, dict) or str(payload.get("api_id")) != str(match.external_id):
+            raise NeurokeffProviderError("Full odds response has an unexpected match ID")
+        odds = payload.get("odds")
+        if not isinstance(odds, dict):
+            raise NeurokeffProviderError("Full odds response is missing odds")
+
+        # Validate the entire response before touching any saved line.
+        prepared = []
+        for scope in ("prematch", "live"):
+            block = odds.get(scope)
+            if block is None:
+                continue
+            if not isinstance(block, dict) or type(block.get("available")) is not bool:
+                raise NeurokeffProviderError(f"Invalid {scope} full odds availability")
+            available = block["available"]
+            bookmakers = block.get("bookmakers")
+            if not isinstance(bookmakers, list):
+                raise NeurokeffProviderError(f"Invalid {scope} bookmaker list")
+            updated = block.get("updated_at")
+            try:
+                updated_at = parse_datetime(updated) if isinstance(updated, str) else None
+            except ValueError:
+                updated_at = None
+            if updated and updated_at is None:
+                raise NeurokeffProviderError(f"Invalid {scope} odds timestamp")
+            if updated_at and timezone.is_naive(updated_at):
+                raise NeurokeffProviderError(f"Missing timezone in {scope} odds timestamp")
+            entries = []
+            keys = set()
+            for bookmaker in bookmakers:
+                if not isinstance(bookmaker, dict):
+                    raise NeurokeffProviderError("Invalid bookmaker")
+                external_pk = str(bookmaker.get("pk") if bookmaker.get("pk") is not None else "")
+                external_id = str(bookmaker.get("id") if bookmaker.get("id") is not None else "")
+                key = f"pk:{external_pk}" if external_pk else f"id:{external_id}"
+                name = bookmaker.get("name")
+                markets = bookmaker.get("markets")
+                if (not (external_pk or external_id) or key in keys
+                        or not isinstance(name, str) or not name.strip()
+                        or len(name) > 160 or len(external_pk) > 64 or len(external_id) > 64
+                        or not isinstance(markets, list)):
+                    raise NeurokeffProviderError("Invalid or duplicate bookmaker identity/markets")
+                for market in markets:
+                    if not isinstance(market, dict) or not isinstance(market.get("outcomes"), list):
+                        raise NeurokeffProviderError("Invalid full odds market")
+                    for outcome in market["outcomes"]:
+                        if not isinstance(outcome, dict):
+                            raise NeurokeffProviderError("Invalid full odds outcome")
+                        if outcome.get("odds") is None and (
+                            outcome.get("suspended") is True or market.get("suspended") is True
+                        ):
+                            continue
+                        try:
+                            odd = Decimal(str(outcome.get("odds")))
+                        except (InvalidOperation, ValueError):
+                            raise NeurokeffProviderError("Invalid full odds coefficient")
+                        if not odd.is_finite() or odd <= 0:
+                            raise NeurokeffProviderError("Invalid full odds coefficient")
+                keys.add(key)
+                entries.append((key, external_id, external_pk, name, markets))
+            prepared.append((scope, block, available, updated_at, entries))
+        if not prepared:
+            raise NeurokeffProviderError("Full odds response contains no scopes")
+
+        result = {"status": "ok", "match_id": match.pk, "scopes": {}}
+        with transaction.atomic():
+            # Serialize first creation and refreshes for this match. HTTP stays outside the lock.
+            Match.objects.select_for_update().get(pk=match.pk)
+            for scope, block, available, updated_at, entries in prepared:
+                snapshot = MatchOddsSnapshot.objects.filter(match=match, scope=scope).first()
+                if snapshot and (
+                    snapshot.requested_at > requested_at
+                    or (snapshot.provider_updated_at and (
+                        updated_at is None or updated_at < snapshot.provider_updated_at
+                    ))
+                ):
+                    result["scopes"][scope] = {"status": "skipped", "reason": "older_response"}
+                    continue
+                snapshot, _ = MatchOddsSnapshot.objects.update_or_create(
+                    match=match, scope=scope,
+                    defaults={
+                        "available": available,
+                        "provider_updated_at": updated_at,
+                        "requested_at": requested_at,
+                        "fetched_at": timezone.now(),
+                        "raw_data": block,
+                    },
+                )
+                if available:
+                    for key, external_id, external_pk, name, markets in entries:
+                        ComparisonBookmaker.objects.get_or_create(
+                            key=ComparisonBookmaker.name_key(name), defaults={"name": name},
+                        )
+                        MatchBookmakerOdds.objects.update_or_create(
+                            snapshot=snapshot, bookmaker_key=key,
+                            defaults={"external_id": external_id, "external_pk": external_pk,
+                                      "name": name, "markets": markets},
+                        )
+                    snapshot.bookmakers.exclude(bookmaker_key__in=[entry[0] for entry in entries]).delete()
+                result["scopes"][scope] = {"status": "ok", "available": available,
+                                           "bookmakers": snapshot.bookmakers.count()}
+        return result
 
     def _sync_odds(self, match: Match, payload: dict[str, Any]) -> None:
         if not has_odds_payload(payload):

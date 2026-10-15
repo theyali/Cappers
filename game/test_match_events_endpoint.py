@@ -48,6 +48,43 @@ class MatchEventsEndpointTests(TestCase):
             fetched_at=timezone.now(),
         )
 
+    @patch("game.match_detail_views.refresh_match_events.apply_async")
+    def test_missing_clock_uses_event_progress_in_endpoint_and_ssr_without_finishing_match(self, queue):
+        self.match.live_minute = None
+        self.match.live_minute_label = ""
+        self.match.save(update_fields=["live_minute", "live_minute_label"])
+        event = self.create_event(key="id:300010", minute=120, seq=1)
+        event.extra_minute = 1
+        event.save(update_fields=["extra_minute"])
+        state = self.client.get(self.url).json()["match"]
+        self.assertEqual(state["progress"], 100)
+        self.assertEqual(state["scope"], "live")
+        self.assertIsNone(state["minute"])
+        self.assertEqual(state["timeline_label"], "")
+        self.assertContains(self.client.get(self.match.get_absolute_url()), 'data-match-v2-progress="100"')
+        self.match.refresh_from_db()
+        self.assertEqual(self.match.sync_scope, "live")
+        self.assertIsNone(self.match.live_minute)
+
+    @patch("game.match_detail_views.refresh_match_events.apply_async")
+    def test_missing_clock_progress_uses_latest_event_not_first_and_stays_zero_without_events(self, queue):
+        self.match.live_minute = None
+        self.match.live_minute_label = ""
+        self.match.save(update_fields=["live_minute", "live_minute_label"])
+        self.assertEqual(self.client.get(self.url).json()["match"]["progress"], 0)
+        self.create_event(key="id:300011", minute=12, seq=1)
+        self.create_event(key="id:300012", minute=45, seq=2)
+        self.assertEqual(self.client.get(self.url).json()["match"]["progress"], 50)
+
+    @patch("game.match_detail_views.refresh_match_events.apply_async")
+    def test_known_clock_has_priority_over_events_and_prematch_never_advances(self, queue):
+        self.create_event(key="id:300013", minute=120, seq=1)
+        self.assertEqual(self.client.get(self.url).json()["match"]["progress"], 70)
+        self.match.sync_scope = "prematch"
+        self.match.live_minute = None
+        self.match.save(update_fields=["sync_scope", "live_minute"])
+        self.assertEqual(self.client.get(self.url).json()["match"]["progress"], 0)
+
     @patch("game.services.match_sync.MatchSyncService.sync_match_events")
     @patch("game.match_detail_views.refresh_match_events.apply_async")
     def test_returns_db_backed_match_state_events_and_participants(

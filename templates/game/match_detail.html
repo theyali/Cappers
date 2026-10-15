@@ -121,7 +121,9 @@
                 class="match-v2-events is-{{ match_page.events.state }}"
                 data-match-events-panel
                 data-events-state="{{ match_page.events.state }}"
+                data-event-duration="{{ match_page.event_duration }}"
                 aria-labelledby="match-events-title"
+                {% if match_page.events.state == 'unavailable' and not match_page.events.items %}hidden{% endif %}
             >
                 <header class="match-v2-events-head">
                     <div>
@@ -139,14 +141,19 @@
                     <li
                         class="match-v2-event is-{{ item.presentation.side }} is-{{ item.presentation.kind }}"
                         data-event-key="{{ item.key }}"
+                        data-event-minute="{{ item.time.minute|default_if_none:'' }}"
+                        data-event-extra="{{ item.time.extra|default_if_none:'' }}"
                     >
-                        <div class="match-v2-event-copy">
+                        <button class="match-v2-event-marker" type="button" aria-describedby="match-event-{{ item.id }}" aria-label="{{ item.time.label }} · {{ item.type.name_ru|default:item.type.name }} · {{ item.player.name_ru|default:item.player.name }}">
+                            <i aria-hidden="true">{{ item.presentation.icon }}</i>
+                            <time>{{ item.time.label|default:'—' }}</time>
+                        </button>
+                        <div class="match-v2-event-copy" id="match-event-{{ item.id }}" role="tooltip">
                             <span class="match-v2-event-type"><i aria-hidden="true">{{ item.presentation.icon }}</i>{{ item.type.name_ru|default:item.type.name|default:item.type.code|default:"Событие" }}</span>
                             <strong>{{ item.player.name_ru|default:item.player.name|default:item.team.name_ru|default:item.team.name|default:"Событие матча" }}</strong>
                             {% if item.assist.name_ru or item.assist.name %}<small>Ассист: {{ item.assist.name_ru|default:item.assist.name }}</small>{% endif %}
                             {% if item.detail.name_ru or item.detail.name %}<small>{{ item.detail.name_ru|default:item.detail.name }}</small>{% endif %}
                         </div>
-                        <time>{{ item.time.label|default:"—" }}</time>
                     </li>
                     {% endfor %}
                 </ol>
@@ -168,6 +175,7 @@
         <nav class="match-v2-tabs" aria-label="Разделы матча">
             <a class="is-active" href="#match-overview" aria-current="page">Обзор</a>
             {% if match_page.compact_odds %}<a href="#match-odds">Коэффициенты</a>{% endif %}
+            <a href="#match-comparison" data-comparison-tab{% if not match_page.comparison.visible %} hidden{% endif %}>Сравнение КФ</a>
             <a href="#match-predictions">Прогнозы <span data-match-predictions-total>{{ match_predictions_total|default:0 }}</span></a>
             {% if match_page.stats_rows %}<a href="#match-stats">Статистика</a>{% endif %}
             {% if match_page.h2h.items %}<a href="#match-h2h">Личные встречи</a>{% endif %}
@@ -200,7 +208,7 @@
                     <div class="match-v2-odds-grid">
                         {% for odd in group.odds %}
                         <button
-                            class="match-v2-odd odds-button{% if forloop.first and forloop.parentloop.counter != 1 %} is-best{% endif %}"
+                            class="match-v2-odd odds-button"
                             type="button"
                             data-market="{{ odd.market }}"
                             data-selection="{{ odd.selection }}"
@@ -217,7 +225,6 @@
                             {% if not can_write_coupon or match.sync_scope != "prematch" or not odd.bettable %}
                             <span class="match-v2-odd-lock" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" only %}</span>
                             {% endif %}
-                            {% if forloop.first and forloop.parentloop.counter != 1 %}<em>Лучший</em>{% endif %}
                             <span>{{ odd.label }}</span>
                             <b>{{ odd.coefficient }}</b>
                             <small>{{ odd.description }}</small>
@@ -237,7 +244,7 @@
                                 <div class="match-v2-odds-grid">
                                     {% for odd in row.odds %}
                                     <button
-                                        class="match-v2-odd odds-button{% if odd.is_best %} is-best{% endif %}"
+                                        class="match-v2-odd odds-button"
                                         type="button"
                                         data-market="{{ odd.market }}"
                                         data-selection="{{ odd.selection }}"
@@ -254,7 +261,6 @@
                                         {% if not can_write_coupon or match.sync_scope != "prematch" or not odd.bettable %}
                                         <span class="match-v2-odd-lock" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" only %}</span>
                                         {% endif %}
-                                        {% if odd.is_best %}<em>Лучший</em>{% endif %}
                                         <span>{{ odd.label }}</span>
                                         <b>{{ odd.coefficient }}</b>
                                         <small>{{ odd.description }}</small>
@@ -271,6 +277,18 @@
             </section>
             {% endif %}
 
+            <section id="match-comparison" class="match-v2-panel match-comparison"
+                data-match-comparison data-url="{% url 'game:match_odds_comparison' slug=match.slug %}"
+                data-comparison-archived="{{ match_page.comparison.archived|yesno:'true,false' }}"
+                data-expires-at="{{ match_page.comparison.expires_at }}"
+                aria-labelledby="match-comparison-title"{% if not match_page.comparison.visible %} hidden{% endif %}>
+                <div class="match-v2-panel-head">
+                    <h2 id="match-comparison-title">Сравнение коэффициентов</h2>
+                    <button class="match-v2-panel-link" type="button" data-comparison-retry hidden>Повторить</button>
+                </div>
+                {% include "game/_match_odds_comparison_body.html" with comparison=match_page.comparison only %}
+            </section>
+
             <section
                 id="match-predictions"
                 class="match-v2-panel match-v2-predictions"
@@ -282,7 +300,7 @@
                     <h2>Прогнозы на этот матч</h2>
                     <span class="match-v2-panel-actions">
                         <span><b data-match-predictions-total>{{ match_predictions_total|default:0 }}</b> капперов</span>
-                        <a href="{% url 'game:match_predictions' slug=match.slug %}">Все прогнозы →</a>
+                        <a href="#match-predictions">Все прогнозы →</a>
                     </span>
                 </div>
                 <div class="match-v2-prediction-list" data-match-predictions-block data-skeleton-block>
@@ -338,6 +356,7 @@
 
         <aside class="match-v2-side" aria-label="Прогноз и показатели">
             {% include "game/_coupon_sidebar.html" %}
+            {% include "game/_match_odds_comparison_sidebar.html" with comparison=match_page.comparison only %}
 
             {% if match_page.votes.items %}
             <section class="match-v2-side-card" aria-label="Как голосуют капперы">
@@ -360,21 +379,6 @@
             </section>
             {% endif %}
 
-            {% if match_page.compact_odds and match_page.compact_odds.0.odds %}
-            <section class="match-v2-side-card" aria-label="Лучший коэффициент">
-                <h2>Лучший коэффициент</h2>
-                {% with odd=match_page.compact_odds.0.odds.0 %}
-                <div class="match-v2-best-odd">
-                    <span>КФ</span>
-                    <div>
-                        <strong>{{ odd.label }} за {{ odd.coefficient }}</strong>
-                        <small>{{ odd.description }}</small>
-                    </div>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-                </div>
-                {% endwith %}
-            </section>
-            {% endif %}
         </aside>
     </div>
 </section>
@@ -388,6 +392,7 @@
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/match-predictions.js' %}" defer></script>
 <script src="{% static 'front/js/match-detail-v2.js' %}" defer></script>
+<script src="{% static 'front/js/match-odds-comparison.js' %}" defer></script>
 <script src="{% static 'front/js/matches.js' %}"></script>
 <script src="{% static 'front/js/mobile-coupon-sheet.js' %}"></script>
 {% endblock %}

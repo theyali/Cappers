@@ -130,9 +130,13 @@
         const row = document.createElement("li");
         row.className = `match-v2-event is-${side} is-${kind}${isNew ? " is-new" : ""}`;
         row.dataset.eventKey = String(item.key || item.id || "");
+        row.dataset.eventMinute = item?.time?.minute ?? "";
+        row.dataset.eventExtra = item?.time?.extra ?? "";
 
         const copy = document.createElement("div");
         copy.className = "match-v2-event-copy";
+        copy.id = `match-event-${item.id}`;
+        copy.setAttribute("role", "tooltip");
         const type = document.createElement("span");
         type.className = "match-v2-event-type";
         const icon = document.createElement("i");
@@ -160,9 +164,159 @@
 
         const time = document.createElement("time");
         time.textContent = item?.time?.label || "—";
-        row.append(copy, time);
+        const marker = document.createElement("button");
+        marker.type = "button";
+        marker.className = "match-v2-event-marker";
+        marker.setAttribute("aria-describedby", copy.id);
+        marker.setAttribute("aria-label", `${time.textContent} · ${localizedName(item.type) || 'Событие'} · ${primaryName}`);
+        const markerIcon = document.createElement("i");
+        markerIcon.setAttribute("aria-hidden", "true");
+        markerIcon.textContent = eventIcon(item, kind);
+        marker.append(markerIcon, time);
+        row.append(marker, copy);
         return row;
     };
+
+    const positionEventTooltip = row => {
+        if (!row || row.hidden) return;
+        const marker = row.querySelector('.match-v2-event-marker');
+        const copy = row.querySelector('.match-v2-event-copy');
+        const rect = marker.getBoundingClientRect();
+        const below = window.innerHeight - rect.bottom - 16;
+        const above = rect.top - 16;
+        const upwards = below < 120 && above > below;
+        const height = Math.max(60, Math.min(280, upwards ? above : below));
+        row.style.setProperty('--tooltip-height', `${height}px`);
+        row.style.setProperty('--tooltip-top', upwards
+            ? `${-Math.min(copy.scrollHeight, height) - 6}px`
+            : `${rect.height + 6}px`);
+    };
+
+    const layoutEvents = () => {
+        const rows = Array.from(eventsList.querySelectorAll('[data-event-key]:not([data-event-group])'))
+            .sort((a, b) => (Number(a.dataset.eventMinute === '' ? Infinity : a.dataset.eventMinute)
+                - Number(b.dataset.eventMinute === '' ? Infinity : b.dataset.eventMinute))
+                || Number(a.dataset.eventExtra || 0) - Number(b.dataset.eventExtra || 0));
+        const duration = Number(eventsPanel.dataset.eventDuration) || 90;
+        const total = Math.max(duration, ...rows.map(row => Number(row.dataset.eventMinute) || 0));
+        const width = eventsList.clientWidth;
+        if (!width) return;
+        const focusedKey = document.activeElement?.closest('[data-event-key]')?.dataset.eventKey;
+        const openKey = eventsList.querySelector('.is-open')?.dataset.eventKey;
+        eventsList.querySelectorAll('[data-event-group]').forEach(row => row.remove());
+        const minutes = new Map();
+        rows.forEach((row) => {
+            const minute = Number(row.dataset.eventMinute);
+            const hasMinute = row.dataset.eventMinute !== '' && Number.isFinite(minute);
+            const key = hasMinute ? minute : 'unknown';
+            if (!minutes.has(key)) minutes.set(key, {
+                position: hasMinute ? Math.max(22, Math.min(width - 22, width * minute / total)) : width - 22,
+                rows: [],
+            });
+            minutes.get(key).rows.push(row);
+        });
+        const lanes = [-Infinity, -Infinity];
+        const groups = [];
+        for (const group of minutes.values()) {
+            const lane = lanes.findIndex(end => group.position - end >= 44);
+            if (lane < 0) {
+                // Both rows are occupied: absorb the events into the closest
+                // existing marker rather than growing a third row.
+                const closest = groups.reduce((a, b) =>
+                    Math.abs(a.position - group.position) <= Math.abs(b.position - group.position) ? a : b);
+                closest.rows.push(...group.rows);
+            } else {
+                group.lane = lane;
+                lanes[lane] = group.position;
+                groups.push(group);
+            }
+        }
+        const fragment = document.createDocumentFragment();
+        for (const group of groups) {
+            const members = group.rows;
+            let row = members[0];
+            if (members.length > 1) {
+                row = document.createElement('li');
+                row.className = `match-v2-event is-group${members.some(member => member.classList.contains('is-new')) ? ' is-new' : ''}`;
+                row.dataset.eventGroup = '';
+                row.dataset.eventKey = members[0].dataset.eventKey;
+                row.dataset.eventKeys = JSON.stringify(members.map(member => member.dataset.eventKey));
+                const marker = members[0].querySelector('.match-v2-event-marker').cloneNode(true);
+                const copy = document.createElement('div');
+                copy.className = 'match-v2-event-copy';
+                copy.id = `${marker.getAttribute('aria-describedby')}-group`;
+                copy.setAttribute('role', 'tooltip');
+                copy.tabIndex = 0;
+                copy.setAttribute('aria-label', 'События группы');
+                marker.setAttribute('aria-describedby', copy.id);
+                marker.setAttribute('aria-label', `События: ${members.length} · ${members[0].querySelector('time').textContent} — ${members.at(-1).querySelector('time').textContent}`);
+                marker.querySelector('i').textContent = '⋯';
+                const count = appendText(marker, 'span', String(members.length), 'match-v2-event-count');
+                count.setAttribute('aria-hidden', 'true');
+                members.forEach(member => {
+                    const entry = document.createElement('div');
+                    entry.className = 'match-v2-event-group-entry';
+                    appendText(entry, 'time', member.querySelector('time').textContent);
+                    member.querySelector('.match-v2-event-copy').childNodes.forEach(node => entry.append(node.cloneNode(true)));
+                    copy.append(entry);
+                    member.hidden = true;
+                });
+                row.append(marker, copy);
+            } else {
+                row.hidden = false;
+            }
+            if (members.some(member => member.dataset.eventKey === openKey)) row.classList.add('is-open');
+            const position = group.position;
+            row.style.setProperty('--event-position', `${position}px`);
+            row.style.setProperty('--event-lane', group.lane);
+            const tooltipWidth = Math.min(220, width);
+            const tooltipLeft = Math.max(0, Math.min(width - tooltipWidth, position - tooltipWidth / 2));
+            row.style.setProperty('--tooltip-offset', `${tooltipLeft - position}px`);
+            fragment.append(row);
+        }
+        // Keep the untouched source nodes for regrouping after a resize.
+        rows.filter(row => row.hidden).forEach(row => fragment.append(row));
+        eventsList.replaceChildren(fragment);
+        Array.from(eventsList.children).forEach(positionEventTooltip);
+        if (focusedKey) {
+            Array.from(eventsList.children).find(row => !row.hidden && (
+                row.dataset.eventKey === focusedKey || JSON.parse(row.dataset.eventKeys || '[]').includes(focusedKey)
+            ))?.querySelector('.match-v2-event-marker')?.focus({ preventScroll: true });
+        }
+    };
+
+    eventsList.addEventListener('click', (event) => {
+        const marker = event.target.closest('.match-v2-event-marker');
+        if (!marker) return;
+        const row = marker.closest('[data-event-key]');
+        const wasOpen = row.classList.contains('is-open');
+        eventsList.querySelectorAll('.is-open').forEach(item => item.classList.remove('is-open'));
+        row.classList.toggle('is-open', !wasOpen);
+        row.classList.remove('is-dismissed');
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        eventsList.querySelectorAll('[data-event-key]').forEach(row => {
+            row.classList.remove('is-open');
+            row.classList.add('is-dismissed');
+        });
+    });
+    eventsList.addEventListener('pointerover', event => {
+        const row = event.target.closest('[data-event-key]');
+        row?.classList.remove('is-dismissed');
+        positionEventTooltip(row);
+    });
+    eventsList.addEventListener('focusin', event => positionEventTooltip(event.target.closest('[data-event-key]')));
+    window.addEventListener('scroll', () => {
+        eventsList.querySelectorAll('.is-open, :scope > li:hover, :scope > li:focus-within').forEach(positionEventTooltip);
+    }, { passive: true });
+    document.addEventListener('click', event => {
+        if (!eventsList.contains(event.target)) {
+            eventsList.querySelectorAll('.is-open').forEach(row => row.classList.remove('is-open'));
+        }
+    });
+    new ResizeObserver(layoutEvents).observe(eventsList);
+    layoutEvents();
 
     const stateCopy = (state, scope, hasEvents) => {
         if (state === "pending") {
@@ -190,6 +344,7 @@
 
     const updatePanelState = (payload, itemCount) => {
         const state = payload.events_state?.status || "invalid";
+        eventsPanel.hidden = state === 'unavailable' && itemCount === 0;
         eventsPanel.dataset.eventsState = state;
         eventsPanel.classList.remove("is-pending", "is-unavailable", "is-invalid", "is-empty", "is-ready", "is-error");
         eventsPanel.classList.add(`is-${state}`);
@@ -200,6 +355,8 @@
     };
 
     const updateEvents = (payload) => {
+        const focusedKey = document.activeElement?.closest('[data-event-key]')?.dataset.eventKey;
+        const openKey = eventsList.querySelector('.is-open')?.dataset.eventKey;
         const items = Array.isArray(payload.events) ? payload.events : [];
         const nextKeys = new Set(items.map((item) => String(item.key || item.id || "")));
         const newItems = currentVersion
@@ -208,12 +365,20 @@
         const fragment = document.createDocumentFragment();
         items.forEach((item) => {
             const key = String(item.key || item.id || "");
-            fragment.append(createEventItem(item, currentVersion !== "" && !knownEventKeys.has(key)));
+            const row = createEventItem(item, currentVersion !== "" && !knownEventKeys.has(key));
+            if (key === openKey) row.classList.add('is-open');
+            fragment.append(row);
         });
         eventsList.replaceChildren(fragment);
         eventsList.hidden = items.length === 0;
         emptyState.hidden = items.length > 0;
         eventsCount.textContent = String(items.length);
+        layoutEvents();
+        if (focusedKey) {
+            Array.from(eventsList.children).find(row => !row.hidden && (row.dataset.eventKey === focusedKey
+                || JSON.parse(row.dataset.eventKeys || '[]').includes(focusedKey)))
+                ?.querySelector('.match-v2-event-marker')?.focus({ preventScroll: true });
+        }
 
         if (newItems.length) {
             const latest = newItems[newItems.length - 1];

@@ -6748,6 +6748,10 @@ body.expert-public-details-open {
   .logo-transition span,
   .match-watch-card-shell.is-lazy-added,
   .match-v2-event.is-new .match-v2-event-copy,
+  .match-v2-event-copy,
+  .match-v2-event-marker,
+  .match-comparison-filters button,
+  .match-comparison-more,
   .match-v2-events.is-refreshing .match-v2-events-sync > i,
   .match-v2-score strong.is-updated,
   .matches-lazy-button,
@@ -13777,6 +13781,10 @@ body.expert-public-details-open {
 }
 
 /* Match list sticky head: the column width decides the layout, so it also fits next to the sidebars. */
+@container matches-list (max-width: 920px) {
+  .matches-head-util.is-predictions > .matches-head-seg { flex: 0 1 auto; }
+}
+
 @container matches-list (max-width: 860px) {
   .matches-head-util {
     flex-wrap: wrap;
@@ -14060,59 +14068,13 @@ body.expert-public-details-open {
     font-size: 10px;
   }
 
-  .match-v2-events {
-    margin: 0 -4px -2px;
-    padding: 12px;
-    border-radius: 14px;
-  }
-
-  .match-v2-events-head > div {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  html:root .match-v2-events-head h2 {
-    font-size: 14px;
-  }
-
-  .match-v2-events-list {
-    gap: 7px;
-    margin-top: 11px;
-  }
-
-  .match-v2-event {
-    grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr);
-    min-height: 50px;
-  }
-
-  .match-v2-event-copy {
-    padding: 8px 9px;
-  }
-
-  .match-v2-event-copy strong {
-    font-size: 10.5px;
-    white-space: normal;
-  }
-
-  .match-v2-event-copy small {
-    display: none;
-  }
-
-  .match-v2-event-type {
-    font-size: 8px;
-  }
-
-  .match-v2-event time {
-    min-width: 32px;
-    height: 22px;
-    font-size: 8px;
-  }
-
-  .match-v2-events-empty {
-    min-height: 72px;
-    padding: 10px;
-  }
+  .match-v2-events-list { margin-top: -34px; }
+  html:root .match-comparison .match-v2-panel-head h2 { font-size: 18px; }
+  .match-comparison-filters button { min-height: 40px; padding: 8px 10px; }
+  .match-comparison-table tr > th:first-child { min-width: 90px; max-width: 140px; }
+  .match-comparison-table th,
+  .match-comparison-table td { padding: 8px 6px; }
+  .match-v2-event-copy { padding: 12px; }
 
   .match-v2-tabs {
     grid-column: 1;
@@ -14136,7 +14098,6 @@ body.expert-public-details-open {
 
   .match-v2-panel,
   .match-v2-side-card {
-    width: 350px;
     max-width: 100%;
     padding: 16px;
     border-radius: 20px;
@@ -14296,6 +14257,26 @@ body.expert-public-details-open {
 @media (min-width: 1121px) {
   .matches-page .match-page-shell-v2 {
     grid-template-columns: 340px minmax(0, 1fr) minmax(320px, 350px);
+    height: auto;
+    align-items: start;
+  }
+
+  /* Match detail scrolls as one document, unlike the catalog's fixed columns. */
+  body:has(.match-page-v2) {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .match-page-v2 { height: auto; }
+
+  .matches-page .match-page-shell-v2 > .match-v2-content {
+    height: auto;
+    max-height: none;
+    align-self: start;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
   }
 
   .matches-page .match-page-shell-v2 > .match-v2-left-sidebar {
@@ -14306,5 +14287,9 @@ body.expert-public-details-open {
     background: transparent;
     box-shadow: none;
     animation: none;
+    height: auto;
+    max-height: none;
+    align-self: start;
+    overflow: visible;
   }
 }

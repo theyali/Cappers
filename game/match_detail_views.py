@@ -1,3 +1,4 @@
+import hashlib
 from datetime import timedelta
 
 from django.conf import settings
@@ -8,13 +9,15 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET
 
 from cabinet.models import MatchPredictionRequest, User
 from front.metrics import increment_match_views
 from game.models import Match, MatchEvent, MatchStatistic, Prediction, PredictionCoupon
 from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
-from game.tasks import refresh_match_events, refresh_match_provider_predictions, refresh_match_statistics
+from game.services.odds_comparison import build_match_odds_comparison_ui
+from game.tasks import refresh_match_events, refresh_match_provider_predictions, refresh_match_statistics, refresh_match_bookmaker_odds
 from game.templatetags.match_ui import live_status_label
 from notifications.models import MatchWatch
 
@@ -24,6 +27,48 @@ from . import views as legacy_views
 PROVIDER_REFRESH_QUEUE_TTL = 300
 STATISTICS_REFRESH_QUEUE_TTL = 120
 EVENTS_REFRESH_QUEUE_TTL = 120
+
+
+def _queue_odds_comparison_refresh(match, comparison):
+    if not comparison["supported"] or match.sync_scope not in {"prematch", "live"}:
+        return False
+    if comparison["status"] == "match_started":
+        return False
+    # Even an old provider line is fetched at most once per minute per match.
+    fetched = comparison["fetched_at"]
+    if fetched and (timezone.now() - parse_datetime(fetched)).total_seconds() < 60:
+        return False
+    key = f"match-odds-comparison-queue:{match.pk}"
+    try:
+        if not cache.add(key, "1", timeout=60):
+            return False
+        refresh_match_bookmaker_odds.apply_async(args=[match.pk], retry=False)
+        return True
+    except Exception:
+        try:
+            cache.delete(key)
+        except Exception:
+            pass
+        return False
+
+
+@require_GET
+def match_odds_comparison(request, slug):
+    match = get_object_or_404(Match.objects.select_related("sport"), slug=slug)
+    comparison = build_match_odds_comparison_ui(match)
+    queued = _queue_odds_comparison_refresh(match, comparison)
+    html = render_to_string("game/_match_odds_comparison_body.html", {"comparison": comparison})
+    sidebar_html = render_to_string("game/_match_odds_comparison_sidebar.html", {"comparison": comparison})
+    response = JsonResponse({
+        "ok": True, "visible": comparison["visible"], "html": html,
+        "sidebar_html": sidebar_html, "archived": comparison["archived"],
+        "version": hashlib.sha256((html + sidebar_html).encode()).hexdigest(),
+        "status": comparison["status"], "scope": match.sync_scope,
+        "supported": comparison["supported"], "expires_at": comparison["expires_at"],
+        "refresh_queued": queued,
+    })
+    response["Cache-Control"] = "private, no-cache"
+    return response
 
 
 def _provider_predictions_are_stale(match: Match) -> bool:
@@ -200,7 +245,7 @@ def _score_numbers(score: str) -> tuple[int, int] | None:
         return None
 
 
-def _live_progress(match: Match) -> int:
+def _live_progress(match: Match, event_minutes=()) -> int:
     if match.sync_scope == Match.SyncScope.FINISHED:
         return 100
     if match.sync_scope != Match.SyncScope.LIVE:
@@ -209,8 +254,10 @@ def _live_progress(match: Match) -> int:
         minute = int(match.live_minute or 0)
     except (TypeError, ValueError):
         minute = 0
-    if not minute:
-        return 0
+    if minute <= 0:
+        # Missing provider clock is not the start of the match. Events give a
+        # lower bound for progress, but never change the lifecycle or clock.
+        minute = max((value for value in event_minutes if value is not None), default=0)
     duration = 90
     if match.sport_code == "basketball":
         duration = 40
@@ -561,7 +608,7 @@ def match_events(request, slug: str):
                 "minute": match.live_minute,
                 "minute_label": match.live_minute_label,
                 "timeline_label": _timeline_marker_label(match),
-                "progress": _live_progress(match),
+                "progress": _live_progress(match, (event.minute for event in events)),
             },
             "events_state": {
                 "status": _match_events_state(match, len(events)),
@@ -773,6 +820,7 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
     score_parts = _score_parts(match.score)
     h2h = _h2h_matches(match)
     score_events = _score_events(match)
+    events = _match_events_ui(match)
     return {
         "home_code": _team_code(match.home_team_name, "Х"),
         "away_code": _team_code(match.away_team_name, "Г"),
@@ -783,8 +831,9 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
         "score_label": match.score if match.score else "VS",
         "score_meta": _score_meta_label(match),
         "score_events": score_events,
-        "events": _match_events_ui(match),
-        "live_progress": _live_progress(match),
+        "events": events,
+        "event_duration": {"basketball": 40, "hockey": 60}.get(match.sport_code, 90),
+        "live_progress": _live_progress(match, (item["time"]["minute"] for item in events["items"])),
         "timeline_marker_label": _timeline_marker_label(match),
         "show_timeline": _show_timeline(match, score_events),
         "status_label": live_status_label(match) if match.sync_scope == Match.SyncScope.LIVE else match.get_sync_scope_display(),
@@ -831,6 +880,8 @@ def match_detail(request, slug: str):
 
     odds_tabs = build_match_odds_tabs(match)
     match_page = _match_page_context(match, odds_tabs)
+    match_page["comparison"] = build_match_odds_comparison_ui(match)
+    _queue_odds_comparison_refresh(match, match_page["comparison"])
     match_page["has_predictions"] = True
     match_page["has_tabs"] = any(
         (

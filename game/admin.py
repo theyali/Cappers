@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from game.models import (
+    ComparisonBookmaker,
     Country,
     League,
     LeagueSeason,
@@ -14,6 +15,8 @@ from game.models import (
     MatchEventParticipant,
     MatchManualReview,
     MatchOdds,
+    MatchOddsSnapshot,
+    MatchBookmakerOdds,
     MatchStatistic,
     Prediction,
     PredictionCoupon,
@@ -29,6 +32,45 @@ from game.models import (
 )
 from game.services.local_logos import sync_entity_logo
 from game.services.settlement import cancel_published_coupon, resettle_coupon, settle_coupon
+
+
+@admin.register(ComparisonBookmaker)
+class ComparisonBookmakerAdmin(admin.ModelAdmin):
+    list_display = ("name", "icon_preview", "key")
+    search_fields = ("name", "key")
+    readonly_fields = ("key", "icon_preview")
+    fields = ("name", "key", "icon", "icon_preview")
+
+    @admin.display(description="Иконка")
+    def icon_preview(self, obj):
+        return _local_media_preview(obj.icon_url) if obj else "—"
+
+
+class MatchBookmakerOddsInline(admin.TabularInline):
+    model = MatchBookmakerOdds
+    fields = ("name", "bookmaker_key", "external_id", "external_pk", "markets")
+    readonly_fields = fields
+    extra = 0
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(MatchOddsSnapshot)
+class MatchOddsSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("match", "scope", "available", "provider_updated_at", "fetched_at")
+    list_filter = ("scope", "available")
+    search_fields = ("match__slug", "match__external_id")
+    readonly_fields = ("match", "scope", "available", "provider_updated_at", "requested_at", "fetched_at", "raw_data")
+    inlines = (MatchBookmakerOddsInline,)
+    list_select_related = ("match",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 def _local_media_preview(url: str, *, size: int = 40):

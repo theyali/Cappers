@@ -215,6 +215,20 @@ def refresh_match_statistics(match_id: int):
 
 
 @shared_task
+def refresh_match_bookmaker_odds(match_id: int):
+    match = Match.objects.filter(pk=match_id).first()
+    if match is None:
+        return {"status": "skipped", "reason": "match_not_found", "match_id": match_id}
+    try:
+        return _run_locked(
+            f"match-full-odds:{match_id}",
+            lambda: MatchSyncService().sync_match_bookmaker_odds(match),
+        )
+    except NeurokeffProviderError as exc:
+        return {"status": "error", "reason": "provider_error", "match_id": match_id, "message": str(exc)}
+
+
+@shared_task
 def refresh_match_events(match_id: int):
     match = Match.objects.filter(pk=match_id).first()
     if match is None:
