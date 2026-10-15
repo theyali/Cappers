@@ -34,6 +34,7 @@ from game.models import (
     team_logo_upload_path,
 )
 from game.services.local_logos import sync_entity_logo
+from game.services.live_stream_health import has_ws_priority
 from game.services.odds import has_odds_payload, match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
@@ -74,7 +75,8 @@ class MatchSyncService:
     """Provider-independent match synchronization facade."""
 
     PREMATCH_TIME_STATUSES = {"0"}
-    LIVE_TIME_STATUSES = {"1", "2"}
+    LIVE_TIME_STATUSES = {"1"}
+    CONNECTION_LOST_TIME_STATUSES = {"2"}
     FINISHED_TIME_STATUSES = {"3"}
     POSTPONED_TIME_STATUSES = {"4"}
     CANCELED_TIME_STATUSES = {"5"}
@@ -89,12 +91,17 @@ class MatchSyncService:
         | INTERRUPTED_TIME_STATUSES
         | ABANDONED_TIME_STATUSES
     )
+    LIVE_STATE_FIELDS = {"sync_scope", "time_status", "score", "live_minute", "live_minute_label"}
+    LIVE_RAW_KEYS = {"score", "time_status", "live_minute", "live_minute_str", "clock", "period",
+                     "periods", "point", "tennis_serve", "serving_team_pk", "live_stream",
+                     "first_time_score", "first_half_score", "ht_score"}
 
     def __init__(self, provider: NeurokeffSportsProvider | None = None) -> None:
         self.provider = provider or NeurokeffSportsProvider()
         self._sport_cache: dict[tuple[str, int | str], Sport] = {}
 
     def sync_upcoming(self, sport_code: str | None = None) -> dict:
+        observed_at = timezone.now()
         payloads = (
             self.provider.fetch_upcoming_matches(sport_code=sport_code)
             if sport_code
@@ -104,13 +111,15 @@ class MatchSyncService:
             Match.SyncScope.PREMATCH,
             payloads,
             derive_scope_from_payload=True,
+            observed_at=observed_at,
         )
-        result["expired"] = self._expire_past_prematches()
+        result["recheck_queued"] = self._flag_due_prematches()
         if sport_code:
             result["sport"] = sport_code
         return result
 
     def sync_live(self, sport_code: str | None = None) -> dict:
+        observed_at = timezone.now()
         payloads = (
             self.provider.fetch_live_matches(sport_code=sport_code)
             if sport_code
@@ -120,12 +129,14 @@ class MatchSyncService:
             Match.SyncScope.LIVE,
             payloads,
             derive_scope_from_payload=True,
+            observed_at=observed_at,
         )
         if sport_code:
             result["sport"] = sport_code
         return result
 
     def sync_finished(self, sport_code: str | None = None) -> dict:
+        observed_at = timezone.now()
         payloads = (
             self.provider.fetch_finished_matches(sport_code=sport_code)
             if sport_code
@@ -135,6 +146,7 @@ class MatchSyncService:
             Match.SyncScope.FINISHED,
             payloads,
             derive_scope_from_payload=True,
+            observed_at=observed_at,
         )
         if sport_code:
             result["sport"] = sport_code
@@ -270,10 +282,10 @@ class MatchSyncService:
         threshold = timezone.now() - stale_after
         matches = list(
             Match.objects.select_related("sport").filter(
-                Q(last_seen_at__lt=threshold)
-                | Q(time_status__in=self.TERMINAL_TIME_STATUSES),
+                (Q(sync_scope__in=[Match.SyncScope.LIVE, Match.SyncScope.CONNECTION_LOST]) & (
+                    Q(last_seen_at__lt=threshold) | Q(time_status__in=self.TERMINAL_TIME_STATUSES)
+                )) | Q(live_state_needs_refresh=True),
                 provider=Provider.NEUROKEFF,
-                sync_scope=Match.SyncScope.LIVE,
             ).order_by("last_seen_at", "id")[:limit]
         )
         external_ids = [match.external_id for match in matches]
@@ -287,6 +299,7 @@ class MatchSyncService:
                 "scopes": {},
             }
 
+        observed_at = timezone.now()
         payloads = self.provider.fetch_matches_info(external_ids)
         payload_by_id = {
             int(payload["id"]): payload
@@ -299,7 +312,8 @@ class MatchSyncService:
         now = timezone.now()
 
         with transaction.atomic():
-            for match in matches:
+            for candidate in matches:
+                match = Match.objects.select_for_update().get(pk=candidate.pk)
                 payload = payload_by_id.get(match.external_id)
                 if payload is None:
                     missing += 1
@@ -310,6 +324,7 @@ class MatchSyncService:
                     **self._match_defaults(payload, scope, sport_fallback=match.sport),
                     "last_seen_at": now,
                 }
+                defaults = self._ordered_live_defaults(match, defaults, observed_at)
                 for field, value in defaults.items():
                     setattr(match, field, value)
                 match.save(update_fields=[*defaults.keys(), "updated_at"])
@@ -317,7 +332,7 @@ class MatchSyncService:
                 self._sync_embedded_statistics(match, payload)
                 self._sync_embedded_events(match, payload)
                 updated += 1
-                scopes[scope] = scopes.get(scope, 0) + 1
+                scopes[match.sync_scope] = scopes.get(match.sync_scope, 0) + 1
 
         result = {
             "status": "ok",
@@ -337,6 +352,8 @@ class MatchSyncService:
         payloads: list[dict[str, Any]],
         *,
         derive_scope_from_payload: bool = False,
+        observed_at=None,
+        state_only: bool = False,
     ) -> dict:
         scope_value = getattr(scope, "value", scope)
         created = 0
@@ -344,6 +361,7 @@ class MatchSyncService:
         skipped = 0
         scopes: dict[str, int] = {}
         now = timezone.now()
+        observed_at = observed_at or now
 
         for payload in payloads:
             external_id = payload.get("id")
@@ -357,15 +375,27 @@ class MatchSyncService:
                 if derive_scope_from_payload
                 else scope_value
             )
-            match, was_created = Match.objects.update_or_create(
+            defaults = {**self._match_defaults(payload, match_scope), "last_seen_at": now}
+            if state_only:
+                defaults["raw_data"] = {key: value for key, value in payload.items()
+                                        if key in self.LIVE_RAW_KEYS | {"id", "sport_id", "_sport_meta", "teams", "league", "venue", "game_date_time"}}
+            match, was_created = Match.objects.select_for_update().get_or_create(
                 provider=Provider.NEUROKEFF,
                 external_id=external_id,
-                defaults={**self._match_defaults(payload, match_scope), "last_seen_at": now},
+                defaults={**defaults, "live_state_updated_at": observed_at},
             )
-            self._sync_odds(match, payload.get("odds") or {})
-            self._sync_embedded_statistics(match, payload)
-            self._sync_embedded_events(match, payload)
-            scopes[match_scope] = scopes.get(match_scope, 0) + 1
+            if not was_created:
+                if state_only:
+                    defaults["raw_data"] = {**(match.raw_data or {}), **{key: value for key, value in defaults["raw_data"].items() if key in self.LIVE_RAW_KEYS}}
+                defaults = self._ordered_live_defaults(match, defaults, observed_at)
+                for field, value in defaults.items():
+                    setattr(match, field, value)
+                match.save(update_fields=[*defaults, "updated_at"])
+            if not state_only:
+                self._sync_odds(match, payload.get("odds") or {})
+                self._sync_embedded_statistics(match, payload)
+                self._sync_embedded_events(match, payload)
+            scopes[match.sync_scope] = scopes.get(match.sync_scope, 0) + 1
             if was_created:
                 created += 1
             else:
@@ -384,11 +414,50 @@ class MatchSyncService:
         logger.info("Match sync completed: %s", result)
         return result
 
-    def _expire_past_prematches(self) -> int:
+    def _ordered_live_defaults(self, match, defaults, observed_at):
+        """Live WS owns its fields, regardless of when the REST request started."""
+        older = match.live_state_updated_at and match.live_state_updated_at > observed_at
+        reopens_finished = match.sync_scope == Match.SyncScope.FINISHED and defaults.get("sync_scope") in {
+            Match.SyncScope.LIVE, Match.SyncScope.CONNECTION_LOST, Match.SyncScope.PREMATCH,
+        }
+        if has_ws_priority(match) or older or reopens_finished:
+            for field in self.LIVE_STATE_FIELDS | {"last_seen_at"}:
+                defaults.pop(field, None)
+            raw = defaults["raw_data"] = dict(defaults["raw_data"])
+            current = match.raw_data if isinstance(match.raw_data, dict) else {}
+            for key in self.LIVE_RAW_KEYS:
+                if key in current:
+                    raw[key] = current[key]
+                else:
+                    raw.pop(key, None)
+        else:
+            # Accepted REST state is no longer owned by an old WS session.
+            raw = defaults["raw_data"] = dict(defaults["raw_data"])
+            stream = raw.get("live_stream")
+            if isinstance(stream, dict):
+                raw["live_stream"] = {**stream, "session_id": None}
+            defaults.update(live_state_updated_at=observed_at, live_state_needs_refresh=False)
+        return defaults
+
+    def sync_match_states(self, game_ids):
+        """Targeted reconciliation/discovery, without odds, events or statistics sync."""
+        observed_at = timezone.now()
+        payloads = self.provider.fetch_matches_info(game_ids)
+        allowed = set(game_ids)
+        payloads = [p for p in payloads if self._to_int(p.get("id")) in allowed
+                    and self._scope_from_payload(p, default=None) is not None]
+        return self._sync_scope(Match.SyncScope.LIVE, payloads, derive_scope_from_payload=True,
+                                observed_at=observed_at, state_only=True)
+
+    def _flag_due_prematches(self) -> int:
+        # A past kickoff is not evidence that the provider considers a game live.
+        # The existing reconciliation task will request its actual state.
         return Match.objects.filter(
+            provider=Provider.NEUROKEFF,
             sync_scope=Match.SyncScope.PREMATCH,
             starts_at__lt=timezone.now(),
-        ).update(sync_scope=Match.SyncScope.LIVE)
+            live_state_needs_refresh=False,
+        ).update(live_state_needs_refresh=True)
 
     def _match_predictions_are_stale(self, match: Match) -> bool:
         if not isinstance(match.provider_predictions, dict) or not match.provider_predictions:
@@ -1374,7 +1443,7 @@ class MatchSyncService:
         )
 
     @classmethod
-    def _scope_from_payload(cls, payload: dict[str, Any], default: str) -> str:
+    def _scope_from_payload(cls, payload: dict[str, Any], default: str | None) -> str | None:
         for value in cls._status_values(payload):
             scope = cls._scope_from_status(value)
             if scope is not None:
@@ -1413,6 +1482,8 @@ class MatchSyncService:
             return Match.SyncScope.PREMATCH
         if normalized in MatchSyncService.LIVE_TIME_STATUSES:
             return Match.SyncScope.LIVE
+        if normalized in MatchSyncService.CONNECTION_LOST_TIME_STATUSES or normalized == "connection_lost":
+            return Match.SyncScope.CONNECTION_LOST
         if normalized in MatchSyncService.FINISHED_TIME_STATUSES:
             return Match.SyncScope.FINISHED
         if normalized in MatchSyncService.POSTPONED_TIME_STATUSES:

@@ -7,6 +7,8 @@
     onclick="if (!event.target.closest('a, button')) window.location.href=this.dataset.couponUrl;"
     style="cursor:pointer;"
 >
+    {% include "front/includes/_prediction_mobile_coupon.html" %}
+    <div class="prediction-table-desktop">
     <a class="prediction-table-event" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
         <span class="prediction-table-event-copy">
             <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
@@ -129,5 +131,6 @@
                 <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
             </svg>
         </button>
+    </div>
     </div>
 </article>

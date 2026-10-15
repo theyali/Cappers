@@ -24,6 +24,15 @@ def sync_stuck_live_matches():
     return _run_sync("stuck-live", "all", _sync_stuck_live)
 
 
+@shared_task
+def refresh_live_match_states(game_ids):
+    """WS discovery/reconciliation must not touch stats, events or odds."""
+    ids = sorted({value for value in game_ids if type(value) is int and value > 0})
+    if not ids:
+        return {"status": "skipped", "reason": "empty_ids"}
+    return MatchSyncService().sync_match_states(ids)
+
+
 def _sync_stuck_live():
     result = MatchSyncService().sync_stuck_live_matches()
     result["settlement"] = _settle_live()

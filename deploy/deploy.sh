@@ -2,7 +2,9 @@
 set -euo pipefail
 
 compose() {
-  docker compose "$@"
+  # Include the service in the project model so --remove-orphans won't delete it.
+  # Starting it remains opt-in via DEPLOY_LIVE_WS below.
+  docker compose --profile live "$@"
 }
 
 DEPLOY_BUILD="${DEPLOY_BUILD:-0}"
@@ -10,6 +12,7 @@ DEPLOY_FULL_RECREATE="${DEPLOY_FULL_RECREATE:-0}"
 DEPLOY_RESTART_APP="${DEPLOY_RESTART_APP:-1}"
 DEPLOY_RESTART_NGINX="${DEPLOY_RESTART_NGINX:-0}"
 DEPLOY_PRUNE="${DEPLOY_PRUNE:-0}"
+DEPLOY_LIVE_WS="${DEPLOY_LIVE_WS:-0}"
 
 export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cappershub}"
 
@@ -33,6 +36,9 @@ compose run --rm migrate
 
 if [ "${DEPLOY_RESTART_APP}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ] || [ "${DEPLOY_BUILD}" = "1" ]; then
   compose up -d --build --remove-orphans web celery celery-beat telegram-bot
+  if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
+    compose up -d --build neurokeff-live
+  fi
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then

@@ -1,0 +1,31 @@
+{% load capper_trust %}
+<div class="expert-mobile-coupon prediction-mobile-coupon" data-state="{{ prediction.state_status|default:'pending' }}" data-sport="{{ prediction.match.sport.code }}">
+    <a class="expert-mobile-coupon-copy" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <span class="expert-mobile-coupon-meta">
+            <b>{% firstof prediction.match.sport.name_ru prediction.match.sport.name "Спорт" %}</b>{% if prediction.match.starts_at %} · {{ prediction.match.starts_at|date:"d.m, H:i" }}{% endif %}{% if prediction.match.score %} · {{ prediction.match.score }}{% endif %}
+        </span>
+        <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
+        <span>{{ prediction.market }} · {{ prediction.selection }}</span>
+    </a>
+    <a class="expert-mobile-coupon-result" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        <b>{{ prediction.coefficient|floatformat:2 }}</b>
+        <small class="is-{{ prediction.state_status|default:'pending' }}">
+            {% if prediction.state_status == "win" %}Выигрыш{% elif prediction.state_status == "lose" %}Проигрыш{% elif prediction.state_status == "refund" %}Возврат{% else %}В игре{% endif %}
+        </small>
+    </a>
+    <a class="prediction-mobile-coupon-author" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
+        <span class="prediction-table-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+            {% capper_trust_badge prediction.expert_trust_index %}
+            {% if prediction.expert_avatar_url %}
+                <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">
+            {% elif prediction.coupon.author.avatar %}
+                <img src="{{ prediction.coupon.author.avatar.url }}" width="30" height="30" loading="lazy" alt="">
+            {% else %}
+                {{ prediction.expert_initials }}
+            {% endif %}
+        </span>
+        <strong>{{ prediction.expert_name }}</strong>
+        {% if prediction.expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+    </a>
+    {% include "front/includes/_coupon_reactions.html" with coupon=prediction.coupon is_authenticated=request.user.is_authenticated is_own=prediction.is_own is_liked=prediction.is_liked likes_count=prediction.likes_count shares_count=prediction.shares_count comments_count=prediction.comments_count show_comments=True compact=True %}
+</div>

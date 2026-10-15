@@ -521,7 +521,6 @@ mark { color: var(--blue); background: 0 0; }
     font-size: 14px;
 }
 .article-content > :first-child,
-.expert-public-username + .public-presence-status,
 .prediction-card.feed-prediction-card .feed-prediction-cover-team.is-away,
 .prediction-card.feed-prediction-card .feed-prediction-cover-team.is-home,
 .prediction-table-body .prediction-table-row:first-child,
@@ -1425,9 +1424,7 @@ body.wiki-video-player-open {
         transform 0.2s,
         visibility 0.2s;
 }
-.vip-layout{
-    padding-top:30px;
-}
+
 .nav-profile-dropdown::before {
     top: -8px;
     right: 20px;
@@ -2557,6 +2554,8 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     text-decoration: none;
 }
 .expert-mobile-coupon[hidden] { display: none; }
+.prediction-mobile-coupon { display: none; }
+.prediction-table-desktop { display: contents; }
 .expert-mobile-coupon[data-sport*="football"],
 .expert-mobile-coupon[data-sport*="soccer"] { box-shadow: inset 3px 0 var(--green); }
 .expert-mobile-coupon[data-sport*="tennis"] { box-shadow: inset 3px 0 var(--blue); }
@@ -3597,6 +3596,8 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     gap: 8px;
 }
 .prediction-reaction {
+    -webkit-appearance: none;
+    appearance: none;
     min-height: 40px;
     display: inline-flex;
     align-items: center;
@@ -3606,12 +3607,11 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     border: 0;
     border-radius: 11px;
     color: var(--muted);
-    background: 0 0;
+    background: transparent;
     cursor: pointer;
     font-size: 11px;
     transition:
         color 0.18s,
-        background 0.18s,
         transform 0.18s,
         opacity 0.18s;
 }
@@ -5760,8 +5760,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     text-overflow: ellipsis;
 }
 .capper-pro-copy > span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
-.capper-pro-copy > .capper-pro-presence { display: inline-flex; margin-top: 6px; color: var(--muted); font-size: 11px; }
-.capper-pro-copy > .capper-pro-presence.is-online,
 .cappers-ranking-name .cappers-ranking-presence.is-online {
     color: #27b65f;
 }
@@ -9624,7 +9622,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 }
 .predictions-lazy button:disabled { cursor: default; opacity: 0.55; }
 .predictions-lazy span { min-height: 14px; color: var(--muted); font-size: 10px; }
-.predictions-table-view-flat { overflow: hidden; border-radius: 14px; background: var(--panel); }
+.predictions-table-view-flat { overflow: hidden; border-radius: 14px;}
 .cappers-admin #content,
 .coupon-detail-page .coupon-detail-panel,
 .predictions-table-view-flat .content-table-scroll {
@@ -11131,36 +11129,6 @@ body.register footer {
     font-weight: 600;
 }
 .user-public-badge span { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.45; }
-.public-presence-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    width: fit-content;
-    margin-top: 7px;
-    color: #707072;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
-}
-.public-presence-status.is-online { color: #1c8f49; }
-.public-presence-dot {
-    display: none;
-    width: 8px;
-    height: 8px;
-    flex: 0 0 8px;
-    border-radius: 50%;
-    background: #27b65f;
-}
-.public-presence-status.is-online .public-presence-dot { display: inline-block; animation: 1.8s ease-in-out infinite publicPresencePulse; }
-@keyframes publicPresencePulse {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(39, 182, 95, 0.12);
-    }
-    50% {
-        box-shadow: 0 0 0 5px rgba(39, 182, 95, 0.18);
-    }
-}
 .expert-public-page { display: grid; gap: 20px; }
 .expert-public-hero {
     position: relative;
@@ -11190,6 +11158,22 @@ body.register footer {
     flex-direction: column;
     justify-content: space-between;
     padding: 28px 30px;
+}
+.expert-public-hero--user {
+    height: auto;
+    min-height: 368px;
+}
+.expert-public-hero--user .expert-public-hero-content {
+    position: relative;
+    min-height: inherit;
+    gap: 24px;
+}
+.expert-public-hero--user .expert-public-hero-bottom {
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.expert-public-hero--user .expert-public-hero-metric {
+    flex: 0 1 220px;
 }
 .expert-public-hero-top {
     display: flex;
@@ -29154,4 +29138,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 }
 .match-v2-best-odd svg {
     color: #F6EC4E;
+}
+.vip-layout{
+    padding-top:30px!important;
 }

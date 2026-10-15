@@ -347,6 +347,7 @@ class Team(models.Model):
 class Match(models.Model):
     class SyncScope(models.TextChoices):
         LIVE = "live", "Идет"
+        CONNECTION_LOST = "connection_lost", "Нет связи со скаутом"
         PREMATCH = "prematch", "Скоро"
         FINISHED = "finished", "Завершен"
         POSTPONED = "postponed", "Отложен"
@@ -443,6 +444,8 @@ class Match(models.Model):
 
     raw_data = models.JSONField(default=dict, blank=True)
     last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+    live_state_updated_at = models.DateTimeField(null=True, blank=True)
+    live_state_needs_refresh = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
