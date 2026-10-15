@@ -36,9 +36,11 @@ compose run --rm migrate
 
 if [ "${DEPLOY_RESTART_APP}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ] || [ "${DEPLOY_BUILD}" = "1" ]; then
   compose up -d --build --remove-orphans web celery celery-beat telegram-bot
-  if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
-    compose up -d --build neurokeff-live
-  fi
+fi
+
+# Ensure the consumer is running even when this deploy does not restart the app.
+if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
+  compose up -d --build neurokeff-live
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then

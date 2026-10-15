@@ -177,6 +177,7 @@ jobs:
           DEPLOY_FULL_RECREATE: ${{ steps.scope.outputs.full_recreate }}
           DEPLOY_RESTART_APP: ${{ steps.scope.outputs.restart_app }}
           DEPLOY_RESTART_NGINX: ${{ steps.scope.outputs.restart_nginx }}
+          DEPLOY_LIVE_WS: "1"
         run: |
           set -euo pipefail
           DEPLOY_PATH="$(printf '%s' "${DEPLOY_PATH}" | tr -d '\r\n')"
@@ -189,6 +190,7 @@ jobs:
             DEPLOY_FULL_RECREATE="${DEPLOY_FULL_RECREATE}" \
             DEPLOY_RESTART_APP="${DEPLOY_RESTART_APP}" \
             DEPLOY_RESTART_NGINX="${DEPLOY_RESTART_NGINX}" \
+            DEPLOY_LIVE_WS="${DEPLOY_LIVE_WS}" \
             DEPLOY_PRUNE="1" \
             bash deploy/deploy.sh
           EOF
