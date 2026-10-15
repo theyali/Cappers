@@ -31,6 +31,7 @@
                 {% else %}
                     {{ prediction.expert_initials }}
                 {% endif %}
+                {% include "front/includes/_expert_leader_badges.html" with leader_badges=prediction.leader_badges variant="avatar" only %}
             </span>
             <span class="home-mobile-best-expert-name">{{ prediction.expert_name }}</span>
             {% capper_trust_badge prediction.expert_trust_index %}

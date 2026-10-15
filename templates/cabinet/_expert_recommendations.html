@@ -36,6 +36,7 @@
                 {% else %}
                     <strong>{{ recommendation.initials }}</strong>
                 {% endif %}
+                {% include "front/includes/_expert_leader_badges.html" with leader_badges=recommendation.leader_badges variant="avatar" only %}
             </a>
 
             <div class="expert-recommendation-body">

@@ -124,6 +124,7 @@
                                 {% else %}
                                     <strong>{{ expert.initials }}</strong>
                                 {% endif %}
+                                {% include "front/includes/_expert_leader_badges.html" with leader_badges=expert.leader_badges variant="avatar" only %}
                             </span>
                             <span class="cappers-ranking-name">
                                 <strong>

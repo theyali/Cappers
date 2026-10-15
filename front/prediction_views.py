@@ -323,6 +323,8 @@ def _attach_display_cover_urls(coupons: list[PredictionCoupon]) -> None:
 
 
 def _decorate_predictions(request, predictions, following_ids: set[int] | None = None):
+    from .expert_awards import leader_badges_for_users
+
     coupons = list(predictions)
     _attach_display_cover_urls(coupons)
     prediction_ids = [coupon.pk for coupon in coupons]
@@ -330,6 +332,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
     favorite_ids = set()
     following_ids = following_ids if following_ids is not None else _following_ids(request.user)
     author_ids = {coupon.author_id for coupon in coupons}
+    badges_by_user = leader_badges_for_users(author_ids)
     follower_counts = {
         row["analyst_id"]: row["total"]
         for row in AnalystFollow.objects.filter(analyst_id__in=author_ids)
@@ -370,6 +373,7 @@ def _decorate_predictions(request, predictions, following_ids: set[int] | None =
         card.expert_avatar_url = author.avatar.url if author.avatar else ""
         card.expert_verified = bool(profile and profile.is_verified)
         card.expert_trust_index = profile.trust_index if profile else Decimal("0.0")
+        card.leader_badges = badges_by_user.get(author.pk, [])
         card.followers_count = follower_counts.get(author.pk, 0)
         card.is_liked = coupon.pk in liked_ids
         card.is_favorite = coupon.pk in favorite_ids
@@ -908,6 +912,8 @@ def predictions(request, sport_code: str | None = None):
 
 @ensure_csrf_cookie
 def prediction_detail(request, prediction_id: int):
+    from .expert_awards import leader_badges_for_users
+
     detail_queryset = (
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -1076,6 +1082,7 @@ def prediction_detail(request, prediction_id: int):
             "expert_avatar_url": coupon.author.avatar.url if coupon.author.avatar else "",
             "expert_verified": bool(profile and profile.is_verified),
             "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
+            "leader_badges": leader_badges_for_users([author.pk]).get(author.pk, []),
             "is_liked": is_liked,
             "is_favorite": is_favorite,
             "initial_comments": initial_comments,

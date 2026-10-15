@@ -80,60 +80,7 @@
             {% include "front/includes/_mobile_quick_access_grid.html" %}
         </section>
 
-        <nav class="mobile-offcanvas-links" aria-label="Меню аккаунта">
-            <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="articles" %}</span>
-                <span>Статьи</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:sports_news' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="sports_news" %}</span>
-                <span>Новости спорта</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" %}</span>
-                <span>Турниры</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="how_it_works" %}</span>
-                <span>Как пользоваться</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:about' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="about" %}</span>
-                <span>О нас</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'cabinet:profile' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="profile" %}</span>
-                <span>Профиль</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'notifications:center' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="notifications" %}</span>
-                <span>Уведомления</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            {% if request.user.is_analyst %}
-            <a href="{% url 'cabinet:profile' %}?tab=predictions">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="predictions" %}</span>
-                <span>Мои прогнозы</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            {% endif %}
-            <a href="{% url 'front:following_feed' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="following_feed" %}</span>
-                <span>Моя лента</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:following_feed' %}?favorites=1">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="favorites" %}</span>
-                <span>Избранное</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-        </nav>
+        {% include "front/includes/_mobile_offcanvas_links.html" %}
 
         <form method="post" action="{% url 'cabinet:logout' %}" class="mobile-offcanvas-logout">
             {% csrf_token %}
@@ -144,42 +91,6 @@
             </button>
         </form>
     {% else %}
-        <nav class="mobile-offcanvas-links mobile-offcanvas-links-guest" aria-label="Меню">
-            <a href="{% url 'cabinet:login' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="login" %}</span>
-                <span>Войти</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'cabinet:register' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="register" %}</span>
-                <span>Регистрация</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:articles' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="articles" %}</span>
-                <span>Статьи</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:sports_news' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="sports_news" %}</span>
-                <span>Новости спорта</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'tournaments:index' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" %}</span>
-                <span>Турниры</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:how_it_works' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="how_it_works" %}</span>
-                <span>Как пользоваться</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-            <a href="{% url 'front:about' %}">
-                <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="about" %}</span>
-                <span>О нас</span>
-                <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
-            </a>
-        </nav>
+        {% include "front/includes/_mobile_offcanvas_links.html" %}
     {% endif %}
 </aside>

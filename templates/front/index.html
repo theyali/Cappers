@@ -86,16 +86,17 @@
                             <img class="forecast-vertical-feature-bg" src="{{ prediction.cover_url }}" alt="" width="1280" height="720" loading="{% if forloop.first %}eager{% else %}lazy{% endif %}" decoding="async">
                             {% endif %}
                             <div class="forecast-vertical-feature-top">
-                                <span class="forecast-vertical-author">
+                                <a class="forecast-vertical-author" href="{% url 'front:expert_profile' prediction.expert_username %}">
                                     <span class="forecast-vertical-author-avatar">
                                         {% if prediction.expert_avatar_url %}
                                         <img src="{{ prediction.expert_avatar_url }}" alt="" width="40" height="40" loading="lazy" decoding="async">
                                         {% else %}{{ prediction.expert_initials }}{% endif %}
+                                        {% include "front/includes/_expert_leader_badges.html" with leader_badges=prediction.leader_badges variant="avatar" only %}
                                     </span>
                                     <strong>{{ prediction.expert }}</strong>
                                     {% if prediction.expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
                                     <b class="forecast-vertical-rating">{{ prediction.expert_trust_index|floatformat:"1u" }}</b>
-                                </span>
+                                </a>
                                 <span class="forecast-vertical-top-info">
                                     <span class="forecast-vertical-reactions">
                                         <span title="Просмотры" aria-label="Просмотры: {{ prediction.views_count }}">
@@ -175,7 +176,7 @@
 
                 <div class="experts-list">
                     {% for expert in top_experts %}
-                    <div class="expert-row">
+                    <a class="expert-row" href="{% url 'front:expert_profile' expert.username %}">
                         <span class="expert-rank">{{ forloop.counter }}</span>
                         <div class="expert-avatar">
                             {% capper_trust_badge expert.trust_index %}
@@ -198,7 +199,7 @@
                             <span>подписчиков</span>
                         </div>
                         <span class="expert-arrow">›</span>
-                    </div>
+                    </a>
                     {% endfor %}
                 </div>
 

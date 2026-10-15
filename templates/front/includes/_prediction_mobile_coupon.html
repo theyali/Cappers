@@ -14,7 +14,7 @@
         </small>
     </a>
     <a class="prediction-mobile-coupon-author" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">
-        <span class="prediction-table-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+        <span class="prediction-table-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% capper_trust_badge prediction.expert_trust_index %}
             {% if prediction.expert_avatar_url %}
                 <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">
@@ -24,8 +24,12 @@
                 {{ prediction.expert_initials }}
             {% endif %}
         </span>
-        <strong>{{ prediction.expert_name }}</strong>
-        {% if prediction.expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+        <span class="prediction-mobile-coupon-identity">
+            <strong>{{ prediction.expert_name }}</strong>
+            {% if prediction.expert_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+            {% include "front/includes/_expert_leader_badges.html" with leader_badges=prediction.leader_badges variant="avatar" only %}
+            {% if prediction.coupon.author.is_vip %}<span class="cappers-ranking-vip">VIP</span>{% endif %}
+        </span>
     </a>
     {% include "front/includes/_coupon_reactions.html" with coupon=prediction.coupon is_authenticated=request.user.is_authenticated is_own=prediction.is_own is_liked=prediction.is_liked likes_count=prediction.likes_count shares_count=prediction.shares_count comments_count=prediction.comments_count show_comments=True compact=True %}
 </div>

@@ -36,7 +36,7 @@ SETTLED_EXPERT_STATES = (
 
 
 def current_month_start():
-    today = timezone.localdate()
+    today = timezone.localtime(timezone.now(), timezone.get_default_timezone()).date()
     return today.replace(day=1)
 
 
@@ -680,19 +680,20 @@ def rebuild_expert_ranking_snapshot(
     selected_month, selected_period = _resolve_period(period)
     selected_group = _resolve_group(group)
     selected_sport = (sport_code or ALL_SPORTS).strip().lower()
-    entries = _entries_for_build(
-        selected_month=selected_month,
-        selected_period=selected_period,
-        selected_sport=selected_sport,
-        selected_group=selected_group,
-        roi_period_days=roi_period_days,
-    )
-
     with transaction.atomic():
         snapshot, _ = ExpertRankingSnapshot.objects.select_for_update().get_or_create(
             period=selected_period,
             sport_code=selected_sport,
             group=selected_group,
+            roi_period_days=roi_period_days,
+        )
+        # Compute only after acquiring the snapshot lock: an older computation
+        # must not overwrite a newer published ranking or its badge generation.
+        entries = _entries_for_build(
+            selected_month=selected_month,
+            selected_period=selected_period,
+            selected_sport=selected_sport,
+            selected_group=selected_group,
             roi_period_days=roi_period_days,
         )
         snapshot.entries.all().delete()
@@ -742,6 +743,10 @@ def rebuild_expert_ranking_snapshot(
         ExpertRankingEntry.objects.bulk_create(rows, batch_size=500)
         snapshot.entries_count = len(rows)
         snapshot.save(update_fields=("entries_count", "built_at"))
+        if (selected_period, selected_sport, selected_group, roi_period_days) == (ALL_TIME, ALL_SPORTS, "all", None):
+            from .expert_awards import sync_all_time_badges
+
+            sync_all_time_badges(snapshot.pk, expected_built_at=snapshot.built_at)
     return snapshot
 
 
@@ -921,17 +926,3 @@ def current_month_top_expert_ids(limit: int = 1) -> list[int]:
         entry["profile"].user_id
         for entry in rank_experts(period=month, limit=limit)
     ]
-
-
-def expert_leader_badges(
-    user_id,
-    *,
-    monthly_leader_id=None,
-    all_time_leader_id=None,
-) -> list[dict]:
-    badges = []
-    if user_id and user_id == all_time_leader_id:
-        badges.append({"kind": "all-time", "label": "Лучший аналитик за все время"})
-    if user_id and user_id == monthly_leader_id:
-        badges.append({"kind": "month", "label": "Лучший прогнозист месяца"})
-    return badges

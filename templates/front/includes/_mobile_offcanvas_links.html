@@ -1,0 +1,87 @@
+<nav class="mobile-offcanvas-links{% if not request.user.is_authenticated %} mobile-offcanvas-links-guest{% endif %}" aria-label="Меню">
+    <a href="{% url 'front:cappers_table' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" %}</span>
+        <span>Капперы</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'tournaments:index' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" %}</span>
+        <span>Турниры</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:predictions' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="predictions" %}</span>
+        <span>Прогнозы</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'game:match_list' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="balls-bold" %}</span>
+        <span>Матчи</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:articles' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="articles" %}</span>
+        <span>Статьи</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:sports_news' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="sports_news" %}</span>
+        <span>Новости спорта</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    {% if request.user.is_authenticated %}
+    <a href="{% url 'cabinet:profile' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="profile" %}</span>
+        <span>Профиль</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'notifications:center' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="notifications" %}</span>
+        <span>Уведомления</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    {% if request.user.is_analyst %}
+    <a href="{% url 'cabinet:profile' %}?tab=predictions">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="predictions" %}</span>
+        <span>Мои прогнозы</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    {% endif %}
+    <a href="{% url 'front:following_feed' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="following_feed" %}</span>
+        <span>Моя лента</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:following_feed' %}?favorites=1">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="favorites" %}</span>
+        <span>Избранное</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    {% else %}
+    <a href="{% url 'cabinet:login' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="login" %}</span>
+        <span>Войти</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'cabinet:register' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="register" %}</span>
+        <span>Регистрация</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    {% endif %}
+    <a href="{% url 'front:about' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="about" %}</span>
+        <span>О нас</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:how_it_works' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="how_it_works" %}</span>
+        <span>Как пользоваться</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+    <a href="{% url 'front:wiki' %}">
+        <span class="mobile-offcanvas-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="wiki" %}</span>
+        <span>Википедия</span>
+        <span class="mobile-offcanvas-chevron" aria-hidden="true"></span>
+    </a>
+</nav>

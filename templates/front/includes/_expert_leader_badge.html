@@ -1,0 +1,9 @@
+{% if can_link and badge.detail_url %}
+<a class="expert-leader-badge is-{{ badge.kind }} is-{{ badge.metal }} is-size-{{ badge.size_variant }}{% if badge.historical %} is-historical{% endif %}{% if badge.full %} is-full{% endif %}"{% if not badge.full %} data-leader-badge{% endif %} href="{{ badge.detail_url }}" data-expert-public-open-tab="achievements" aria-label="{{ badge.label }}">
+    {% include badge.icon_template with badge=badge only %}
+</a>
+{% else %}
+<span class="expert-leader-badge is-{{ badge.kind }} is-{{ badge.metal }} is-size-{{ badge.size_variant }}{% if badge.historical %} is-historical{% endif %}{% if badge.full %} is-full{% endif %}"{% if not badge.full %} data-leader-badge{% endif %} role="img" aria-label="{{ badge.label }}">
+    {% include badge.icon_template with badge=badge only %}
+</span>
+{% endif %}

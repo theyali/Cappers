@@ -47,6 +47,17 @@
     --muted: #707072;
     --yellow: #fbf110;
     --text: #f7f8ff;
+    /* Leader sizes: SVG width/height attributes in leader_badges.py mirror these tokens. */
+    --leader-size-avatar: 20px;
+    --leader-size-rating: 28px;
+    --leader-size-card: 44px;
+    --leader-size-profile: 24px;
+    --leader-size-shelf-month: 62px;
+    --leader-size-shelf-all-time: 68px;
+    --leader-size-detail: 104px;
+    --leader-profile-gap: 9px;
+    --z-popover: 300;
+    --z-profile-modal: 1600;
 }
 .wiki-dictionary,
 .wiki-videos-section{
@@ -267,7 +278,6 @@ mark { color: var(--blue); background: 0 0; }
 .cookie-consent-button.is-accept,
 .coupon-option.is-active,
 .expert-follow-button.is-active,
-.expert-leader-badge.is-month,
 .expert-public-buy-button.is-active,
 .experts-bottom-action:hover,
 .home-articles-actions button.is-accent,
@@ -485,7 +495,7 @@ mark { color: var(--blue); background: 0 0; }
 .match-detail-sport-icon svg [fill]:not([fill="none"]),
 .matches-table-sport-icon svg [fill]:not([fill="none"]),
 .nav-icon svg [fill]:not([fill="none"]),
-.prediction-favorite.is-active svg,
+.prediction-favorite.is-active:not(.prediction-reaction) svg,
 .predictions-page .matches-sport-icon svg [fill]:not([fill="none"]),
 .site-footer-social-icon svg {
     fill: currentColor;
@@ -750,7 +760,6 @@ mark { color: var(--blue); background: 0 0; }
 .cappers-ranking-table tbody tr:nth-child(2) .cappers-ranking-position,
 .cappers-ranking-table tbody tr:nth-child(3) .cappers-ranking-position,
 .cappers-sport-filter.is-active,
-.expert-leader-badge.is-all-time,
 .expert-public-tab.is-active,
 .expert-public-tab[aria-selected="true"],
 .expert-result-item.is-open .expert-result-track i,
@@ -1836,6 +1845,10 @@ body.wiki-video-player-open {
 }
 .telegram-app-avatar img { max-width: 100%; max-height: 100%; object-fit: cover; }
 .is-telegram-app .mobile-offcanvas { padding-top: calc(var(--telegram-app-top) + 11px); }
+.is-telegram-app .profile-email-modal {
+    top: var(--telegram-app-top);
+    bottom: var(--telegram-app-bottom);
+}
 .is-telegram-app .mobile-app-nav-label { font-size: 10px; }
 /* The bottom menu wheel turns all the time and softly glows. */
 .mobile-nav-roulette-wheel {
@@ -2424,6 +2437,10 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .expert-mobile-path a { color: inherit; text-decoration: none; }
 .expert-mobile-path strong { color: #fff; font-weight: 800; }
 .expert-mobile-card {
+    --expert-mobile-avatar-size: 190px;
+    --expert-mobile-avatar-offset: -52px;
+    /* Visible avatar width + 12px gap, less the card's 16px right padding. */
+    --expert-mobile-avatar-clearance: calc(var(--expert-mobile-avatar-size) + var(--expert-mobile-avatar-offset) - 4px);
     position: relative;
     min-height: 262px;
     display: flex;
@@ -2441,9 +2458,9 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .expert-mobile-card .expert-mobile-avatar {
     position: absolute;
     top: 13px;
-    right: -52px;
-    width: 190px;
-    height: 190px;
+    right: var(--expert-mobile-avatar-offset);
+    width: var(--expert-mobile-avatar-size);
+    height: var(--expert-mobile-avatar-size);
     display: grid;
     place-items: center;
     border: 3px solid var(--yellow);
@@ -2452,14 +2469,16 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     font-family: var(--font-heading);
     font-size: 40px;
 }
-.expert-mobile-avatar img { width: 100%; height: 100%; border-radius: 23px; object-fit: cover; }
+.expert-mobile-avatar img { width: inherit; height: inherit; border-radius: 23px; object-fit: cover; }
 .expert-mobile-avatar .capper-trust-badge { top: -3px; left: 10px; width: auto; height: auto; padding: 3px 7px; border-radius: 7px; font-size: 12px; }
 .expert-mobile-kicker { margin: 0; color: var(--yellow); font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .expert-mobile-presence { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; padding: 4px 9px; border-radius: 8px; background: var(--ink); font-size: 11px; font-weight: 700; }
 .expert-mobile-presence::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .expert-mobile-presence.is-online::before { background: #4ade80; }
-.expert-mobile-name { max-width: 58%; margin-top: 10px; font-family: var(--font-heading); font-size: 23px; font-weight: 400; line-height: 1.05; }
-.expert-mobile-username { display: inline-flex; align-items: center; gap: 6px; max-width: 60%; margin-top: 8px; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 600; }
+.expert-mobile-name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; max-width: calc(100% - var(--expert-mobile-avatar-clearance)); min-width: 0; margin-top: 10px; }
+.expert-mobile-name { min-width: 0; max-width: 100%; font-family: var(--font-heading); font-size: 23px; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
+.expert-mobile-username { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; max-width: calc(100% - var(--expert-mobile-avatar-clearance)); min-width: 0; margin-top: 8px; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 600; }
+.expert-mobile-username-copy { min-width: 0; overflow-wrap: anywhere; }
 .expert-mobile-username .capper-verified-badge,
 .expert-mobile-compact-name .capper-verified-badge { flex: 0 0 auto; }
 .expert-mobile-stats { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; margin-top: auto; padding-top: 18px; }
@@ -2534,7 +2553,7 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     font-size: 12px;
     font-weight: 800;
 }
-.expert-mobile-compact-avatar img { width: 100%; height: 100%; border-radius: 10px; object-fit: cover; }
+.expert-mobile-compact-avatar img { width: inherit; height: inherit; border-radius: 10px; object-fit: cover; }
 .expert-mobile-compact-avatar.is-online::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; border: 2px solid var(--ink); border-radius: 50%; background: #4ade80; }
 .expert-mobile-compact-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .expert-mobile-compact-name strong { overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
@@ -2639,19 +2658,20 @@ html.is-expert-socials-open body { overflow: hidden; }
 .home-mobile-best-teams { display: grid; max-width: 64%; font-size: 16px; font-weight: 800; line-height: 1.15; }
 .home-mobile-best-expert { display: flex; align-items: center; gap: 8px; max-width: 70%; margin-top: 4px; }
 .home-mobile-best-avatar {
+    position: relative;
     width: 32px;
     height: 32px;
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 50%;
     background: var(--blue);
     color: #fff;
     font-size: 12px;
     font-weight: 800;
 }
-.home-mobile-best-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.home-mobile-best-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .home-mobile-best-expert-name { min-width: 0; overflow: hidden; font-size: 15px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .home-mobile-best .capper-trust-badge { position: static; flex: 0 0 auto; width: auto; height: auto; padding: 3px 7px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 800; }
 .home-mobile-best-result { display: flex; align-items: stretch; gap: 10px; margin-top: 6px; }
@@ -3622,7 +3642,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     opacity: 0.55;
     transform: none;
 }
-.prediction-reaction svg { width: 19px; height: 19px; flex: 0 0 auto; }
+.prediction-reaction svg { width: 19px; height: 19px; flex: 0 0 auto; fill: none; }
 .prediction-reaction b { min-width: 18px; color: #fff; font-size: 11px; }
 .prediction-reaction [data-share-count],
 .prediction-reaction span[data-comment-count] {
@@ -3632,7 +3652,8 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
-.prediction-reaction.prediction-like.is-active svg path { fill: red; }
+.prediction-reaction.prediction-like.is-active { color: var(--danger); }
+.prediction-reaction.prediction-favorite.is-active { color: var(--yellow); }
 .content-sport-accordion[data-sport-locked="true"] > .content-sport-summary,
 .prediction-views,
 .tournament-predict-page .match-card-main-static,
@@ -4218,11 +4239,14 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     align-items: center;
     padding: 7px 0;
     border-radius: 12px;
+    color: inherit;
+    text-decoration: none;
     transition:
         background 0.2s,
         padding 0.2s;
 }
 .expert-row:hover { padding-left: 9px; padding-right: 9px; background: #29292c; }
+.expert-row:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 .expert-rank { color: var(--muted); font-size: 12px; text-align: center; }
 .expert-avatar { width: 42px; height: 42px; border-radius: 50%; font-size: 10px; }
 .expert-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
@@ -5501,10 +5525,10 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 }
 .home-best-prediction-avatar img { width: inherit; height: inherit; display: block; object-fit: cover; border-radius: 50%; }
 .home-best-prediction-avatar .capper-trust-badge {
-    top: 84%;
-    right: -18px;
+    top: 5%;
+    right: auto;
     bottom: auto;
-    left: auto;
+    left: -10px;
     width: 30px;
     height: 21px;
     padding: 0 10px;
@@ -5514,7 +5538,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     font-size: 11px;
     font-weight: 700;
     line-height: 1;
-    transform: translateY(-50%);
 }
 .home-best-prediction-vip {
     min-width: 32px;
@@ -6066,8 +6089,8 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-best-expert-avatar b,
 .home-best-expert-row-avatar b {
     position: absolute;
-    bottom: -7px;
-    left: 50%;
+    top: -7px;
+    left: -7px;
     padding: 3px 5px;
     border-radius: 5px;
     color: var(--ink);
@@ -6075,7 +6098,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     font-size: 10px;
     font-weight: 700;
     line-height: 1;
-    transform: translateX(-50%);
 }
 .home-best-expert-leader-identity { min-width: 0; display: grid; gap: 5px; }
 .home-best-expert-leader-identity strong {
@@ -7812,12 +7834,11 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.prediction-like.is-active svg { fill:red; }
+.prediction-like.is-active:not(.prediction-reaction) svg { fill: red; }
 .prediction-table-action.prediction-like svg { fill: currentColor; stroke: none; }
 .prediction-table-action.prediction-like.is-active { color: var(--danger); }
 .prediction-table-action.prediction-favorite.is-active { color: var(--yellow); }
 .match-table-row .match-card-watch-button { width: 34px; height: 34px; min-width: 34px; min-height: 34px; }
-.expert-public-avatar .expert-leader-badge svg,
 .match-table-row .match-card-watch-button svg,
 .rich-prediction-coupon-remove svg {
     width: 18px;
@@ -11134,7 +11155,8 @@ body.register footer {
     position: relative;
     display: block;
     width: 100%;
-    height: 368px;
+    height: auto;
+    min-height: 368px;
     overflow: hidden;
     padding: 0;
     border: 0;
@@ -11152,21 +11174,13 @@ body.register footer {
     pointer-events: none;
 }
 .expert-public-hero-content {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    min-height: inherit;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 28px 30px;
-}
-.expert-public-hero--user {
-    height: auto;
-    min-height: 368px;
-}
-.expert-public-hero--user .expert-public-hero-content {
-    position: relative;
-    min-height: inherit;
     gap: 24px;
+    padding: 28px 30px;
 }
 .expert-public-hero--user .expert-public-hero-bottom {
     justify-content: space-between;
@@ -11262,9 +11276,8 @@ body.register footer {
     font-weight: 700;
 }
 .expert-public-since svg { flex: 0 0 15px; }
-.expert-public-name-row { display: flex; align-items: center; flex-wrap: nowrap; gap: 12px; width: 100%; min-width: 0; }
+.expert-public-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; width: 100%; min-width: 0; }
 .expert-public-hero .expert-public-name-row h1 {
-    overflow: hidden;
     max-width: 100%;
     min-width: 0;
     margin: 0;
@@ -11274,8 +11287,8 @@ body.register footer {
     font-weight: 800 !important;
     line-height: 1.05;
     letter-spacing: 0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 .expert-public-verified {
     display: grid;
@@ -11297,7 +11310,7 @@ body.register footer {
 }
 .expert-public-country { display: inline-flex; align-items: center; gap: 6px; }
 .expert-public-country img { width: 22px; height: 16px; object-fit: contain; }
-.expert-public-username { color: rgba(255, 255, 255, 0.82); }
+.expert-public-username { min-width: 0; overflow-wrap: anywhere; color: rgba(255, 255, 255, 0.82); }
 .expert-public-bio-block { max-width: 540px; }
 .expert-public-bio {
     max-width: 540px;
@@ -12901,7 +12914,7 @@ body.register footer {
 .profile-avatar-modal-card {
     box-sizing: border-box;
     width: min(800px, calc(100vw - 40px));
-    max-height: calc(100dvh - 40px);
+    max-height: calc(100dvh - 40px - var(--telegram-app-top, 0px) - var(--telegram-app-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 18px;
@@ -13003,6 +13016,7 @@ body.register footer {
     align-items: flex-start;
     gap: 24px;
 }
+.profile-avatar-modal-body { min-width: 0; max-width: 100%; overflow-x: clip; }
 .profile-avatar-modal-body,
 .profile-avatar-upload-panel,
 .profile-avatar-crop-panel {
@@ -13134,9 +13148,12 @@ body.register footer {
     gap: 14px;
 }
 .profile-avatar-filter-tabs {
+    min-width: 0;
+    max-width: 100%;
     display: flex;
     align-items: center;
     gap: 8px;
+    overflow-x: auto;
 }
 .profile-avatar-filter-tabs button {
     height: 34px;
@@ -17895,39 +17912,146 @@ body.register {
 .expert-public-avatar .capper-trust-badge { top: -11px; left: -11px; width: 34px; height: 34px; font-size: 14px; }
 .expert-leader-badges {
     position: absolute;
-    right: -7px;
-    bottom: -7px;
+    right: -4px;
+    bottom: -4px;
     z-index: 5;
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    pointer-events: none;
+    gap: 6px;
 }
 .expert-leader-badge {
-    width: 21px;
-    height: 21px;
+    --leader-metal: #F6EC4E;
+    --leader-metal-shadow: #CDBE2A;
+    --leader-inner: #141519;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--panel);
     border-radius: 50%;
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+    color: inherit;
+    background: transparent;
+    text-decoration: none;
 }
-.expert-leader-badge svg {
-    width: 13px;
-    height: 13px;
+.expert-leader-badge.is-size-avatar { --leader-size: var(--leader-size-avatar); position: relative; }
+/* Extend the parent profile link's hit area without enlarging the 20px artwork. */
+.expert-leader-badge.is-size-avatar::before { content: ""; position: absolute; inset: -6px; }
+.expert-leader-badge.is-size-rating { --leader-size: var(--leader-size-rating); }
+.expert-leader-badge.is-size-card { --leader-size: var(--leader-size-card); }
+.expert-leader-badge.is-size-profile { --leader-size: var(--leader-size-profile); min-width: 32px; min-height: 32px; }
+.expert-leader-badge.is-size-shelf.is-month { --leader-size: var(--leader-size-shelf-month); }
+.expert-leader-badge.is-size-shelf.is-all-time { --leader-size: var(--leader-size-shelf-all-time); }
+.expert-leader-badge.is-size-detail { --leader-size: var(--leader-size-detail); }
+.expert-leader-badge.is-full.is-month { --leader-ratio: 1.28; }
+.expert-leader-badge.is-full.is-all-time { --leader-ratio: 1.04; }
+.expert-leader-badge.is-silver {
+    --leader-metal: #C9CFDA;
+    --leader-metal-shadow: #9AA2B0;
+}
+.expert-leader-badge.is-bronze {
+    --leader-metal: #CE8E4D;
+    --leader-metal-shadow: #A06A33;
+}
+.expert-leader-badge.is-historical {
+    --leader-metal: #5A5E68;
+    --leader-metal-shadow: #44474F;
+}
+.expert-leader-badge.is-full { border-radius: 0; }
+.expert-leader-shelf { display: grid; gap: 24px; min-width: 0; }
+.expert-leader-shelf .profile-achievements-head h2 { font-size: 20px; }
+.expert-leader-shelf .profile-achievements-head p:last-child { color: #a3a6b0; }
+.expert-leader-shelf .profile-achievements-head > div { min-width: 0; overflow-wrap: anywhere; }
+.expert-leader-shelf-count { min-width: 0; overflow-wrap: anywhere; color: #a3a6b0; font-size: 14px; font-weight: 800; }
+.expert-leader-shelf-group { display: grid; gap: 12px; min-width: 0; }
+.expert-leader-shelf-group h3 { margin: 0; color: #a3a6b0; font-family: var(--font-body); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.expert-leader-shelf-group h3 small { margin-left: 8px; font-size: inherit; }
+.expert-leader-shelf-empty { margin: 0; color: #a3a6b0; font-size: 12px; line-height: 1.5; }
+.expert-leader-shelf-grid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+.expert-leader-award { flex: 0 1 auto; min-width: 68px; max-width: 100%; border-radius: 16px; scroll-margin-top: 100px; }
+.expert-leader-award[open] { flex-basis: 280px; padding: 16px; background: #171718; }
+.expert-leader-award summary { display: flex; flex-direction: column; align-items: center; gap: 7px; list-style: none; cursor: pointer; }
+.expert-leader-award summary::-webkit-details-marker { display: none; }
+.expert-leader-award summary:hover .expert-leader-award-label { color: var(--yellow); }
+.expert-leader-award summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
+.expert-leader-award-label { max-width: 150px; color: #a3a6b0; font-size: 11.5px; font-weight: 700; line-height: 1.4; text-align: center; overflow-wrap: anywhere; }
+.expert-leader-award-action { color: var(--text); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+.expert-leader-award .is-open,
+.expert-leader-award[open] .is-closed { display: none; }
+.expert-leader-award[open] .is-open { display: inline; }
+.expert-leader-award:target,
+.expert-leader-award:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.expert-leader-award-mark { display: flex; align-items: center; justify-content: center; }
+.expert-leader-award[open] .expert-leader-badge { --leader-size: var(--leader-size-detail); }
+.expert-leader-award-copy { display: grid; gap: 6px; min-width: 0; margin-top: 16px; overflow-wrap: anywhere; }
+.expert-leader-award:not([open]) .expert-leader-award-copy { display: none; }
+.expert-leader-award-copy h4 { margin: 0; font-size: 16px; line-height: 1.4; color: var(--text); }
+.expert-leader-award-copy strong { color: var(--yellow); font-size: 12px; }
+.expert-leader-award.is-historical .expert-leader-award-copy strong { color: #a3a6b0; }
+.expert-leader-award-copy p,
+.expert-leader-award-copy small { margin: 0; color: #a3a6b0; font-size: 12px; line-height: 1.5; }
+.expert-leader-shelf-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; font-size: 13px; }
+.expert-leader-shelf-pagination a { color: var(--text); cursor: pointer; padding: 10px; }
+.expert-leader-shelf-pagination a:hover { color: var(--yellow); }
+.expert-leader-shelf-pagination a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.expert-leader-badge-icon {
     display: block;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    flex: none;
+    max-width: none;
+    width: var(--leader-size);
+    height: calc(var(--leader-size) * var(--leader-ratio, 1));
+    overflow: visible;
 }
-.expert-avatar .expert-leader-badges { right: -8px; bottom: -8px; }
-.expert-avatar .expert-leader-badge { width: 18px; height: 18px; border-width: 1.5px; }
-.expert-avatar .expert-leader-badge svg { width: 11px; height: 11px; }
-.expert-public-avatar .expert-leader-badges { right: -10px; bottom: -9px; }
-.expert-public-avatar .expert-leader-badge { width: 30px; height: 30px; }
+.expert-leader-badges.is-profile,
+.expert-leader-badges.is-shelf,
+.expert-leader-badges.is-detail,
+.expert-leader-badges.is-card {
+    position: static;
+    flex: 0 0 auto;
+}
+.expert-leader-badges.is-shelf { flex-wrap: wrap; gap: 16px; }
+.expert-leader-badges.is-profile { max-width: 100%; flex-shrink: 1; flex-wrap: wrap; gap: var(--leader-profile-gap); }
+/* The reference separates an earned disk from the avatar with a flat surface ring. */
+.expert-leader-badges.is-avatar .expert-leader-badge { box-shadow: 0 0 0 2.5px var(--leader-avatar-surface, var(--panel)); }
+.expert-leader-badges-more {
+    min-height: 32px;
+    max-width: 100%;
+    min-width: min(32px, 100%);
+    overflow-wrap: anywhere;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 7px;
+    border-radius: 8px;
+    color: var(--soft);
+    background: var(--panel);
+    font-size: 11px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.expert-leader-badges-more:hover { color: var(--yellow); }
+.expert-leader-badge[href],
+.expert-leader-badges-more { cursor: pointer; }
+.expert-leader-badge[href]:focus-visible,
+.expert-leader-badges-more:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 4px;
+}
+.expert-leader-tooltip {
+    position: fixed;
+    z-index: var(--z-popover);
+    width: max-content;
+    max-width: min(280px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    overflow-wrap: anywhere;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--text);
+    background: var(--panel);
+    font-family: var(--font-body);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.expert-leader-tooltip[hidden] { display: none; }
 .coupon-author-avatar.is-vip,
 .expert-public-shell.is-vip .expert-public-avatar,
 .expert-recommendation-avatar.is-vip,
@@ -17973,6 +18097,13 @@ body.register {
     pointer-events: none;
 }
 .expert-recommendation-avatar.is-vip::after { right: -7px; bottom: -6px; min-width: 34px; height: 20px; font-size: 9px; }
+/* Keep every avatar leader bottom-right; leave VIP a separate bottom-left slot,
+   including on 30px avatars where two badges would otherwise overlap. */
+.is-vip:has(> .expert-leader-badges.is-avatar)::after {
+    right: auto;
+    left: -6px;
+    transform: translateX(-50%);
+}
 body:has([data-current-user-vip]) .nav-profile-dropdown-avatar,
 body:has([data-current-user-vip]) .nav-profile-icon {
     position: relative;
@@ -27188,21 +27319,24 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .forecast-vertical-feature-main,
 .forecast-vertical-feature-bottom { position: relative; z-index: 1; }
 .forecast-vertical-feature-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
-.forecast-vertical-author { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.forecast-vertical-author { min-width: 0; display: flex; align-items: center; gap: 9px; color: inherit; text-decoration: none; }
+.forecast-vertical-author:hover strong { color: var(--yellow); }
+.forecast-vertical-author:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 8px; }
 .forecast-vertical-author-avatar {
+    position: relative;
     flex: 0 0 38px;
     width: 38px;
     height: 38px;
     display: grid;
     place-items: center;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 50%;
     color: #fff;
     background: #111216;
     font-size: 11px;
     font-weight: 600;
 }
-.forecast-vertical-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.forecast-vertical-author-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .forecast-vertical-author strong { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .forecast-vertical-author .capper-verified-badge { flex: 0 0 auto; }
 .forecast-vertical-rating {

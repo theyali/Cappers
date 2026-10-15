@@ -34,7 +34,7 @@ def _local_datetime(value):
     if value is None:
         return None
     if timezone.is_aware(value):
-        return timezone.localtime(value)
+        return timezone.localtime(value, timezone.get_default_timezone())
     return value
 
 
@@ -74,7 +74,7 @@ def _next_month(month: date) -> date:
 def _aware_start(day: date):
     value = datetime.combine(day, time.min)
     if timezone.is_aware(timezone.now()):
-        return timezone.make_aware(value, timezone.get_current_timezone())
+        return timezone.make_aware(value, timezone.get_default_timezone())
     return value
 
 

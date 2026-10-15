@@ -14,30 +14,57 @@
         if (!modal || !triggers.length) return;
 
         const dialog = modal.querySelector("[data-expert-public-details-dialog]");
+        if (!dialog) return;
+        // Fixed dialogs must not be clipped by a profile/content stacking context.
+        document.body.appendChild(modal);
         const closeButtons = Array.from(modal.querySelectorAll("[data-expert-public-details-close]"));
         let lastFocused = null;
         let closeTimer = null;
+        let isOpen = false;
+        let background = [];
+
+        const isolateBackground = () => {
+            if (background.length) return;
+            background = Array.from(document.body.children)
+                .filter((element) => element instanceof HTMLElement && element !== modal)
+                .map((element) => ({ element, wasInert: element.inert }));
+            background.forEach(({ element }) => { element.inert = true; });
+        };
+
+        const restoreBackground = () => {
+            background.forEach(({ element, wasInert }) => { element.inert = wasInert; });
+            background = [];
+        };
 
         const focusDialog = () => {
             window.requestAnimationFrame(() => {
-                dialog?.focus({ preventScroll: true });
+                if (!isOpen) return;
+                const target = dialog.querySelector("button[data-expert-public-details-close]") || dialog;
+                target.focus({ preventScroll: true });
             });
         };
 
         const open = (event) => {
             event?.preventDefault();
+            if (isOpen) return;
             if (closeTimer) {
                 window.clearTimeout(closeTimer);
                 closeTimer = null;
             }
-            if (modal.classList.contains("is-open")) return;
-
-            lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            if (!modal.classList.contains("is-open")) {
+                lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                const body = dialog.querySelector(".expert-public-details-body");
+                if (body) body.scrollTop = 0;
+            }
+            isOpen = true;
+            isolateBackground();
             modal.classList.add("is-open");
             modal.setAttribute("aria-hidden", "false");
+            document.documentElement.classList.add("expert-public-details-open");
             document.body.classList.add("expert-public-details-open");
 
             window.requestAnimationFrame(() => {
+                if (!isOpen) return;
                 modal.classList.add("is-visible");
                 focusDialog();
             });
@@ -45,17 +72,20 @@
 
         const close = (event) => {
             event?.preventDefault();
-            if (!modal.classList.contains("is-open")) return;
+            if (!isOpen) return;
 
+            isOpen = false;
             modal.classList.remove("is-visible");
-            modal.setAttribute("aria-hidden", "true");
-            document.body.classList.remove("expert-public-details-open");
 
             closeTimer = window.setTimeout(() => {
                 modal.classList.remove("is-open");
                 closeTimer = null;
-                lastFocused?.focus({ preventScroll: true });
-            }, transitionMs);
+                restoreBackground();
+                document.documentElement.classList.remove("expert-public-details-open");
+                document.body.classList.remove("expert-public-details-open");
+                if (lastFocused?.isConnected) lastFocused.focus({ preventScroll: true });
+                modal.setAttribute("aria-hidden", "true");
+            }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : transitionMs);
         };
 
         const trapFocus = (event) => {
@@ -71,7 +101,7 @@
 
             const first = focusable[0];
             const last = focusable[focusable.length - 1];
-            if (event.shiftKey && document.activeElement === first) {
+            if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
                 event.preventDefault();
                 last.focus();
             } else if (!event.shiftKey && document.activeElement === last) {

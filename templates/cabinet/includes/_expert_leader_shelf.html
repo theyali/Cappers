@@ -1,0 +1,58 @@
+{% load leader_badges tz %}
+<section class="expert-leader-shelf" aria-labelledby="expert-leader-shelf-heading">
+    <div class="profile-achievements-head">
+        <div>
+            <p class="eyebrow">Рейтинг капперов</p>
+            <h2 id="expert-leader-shelf-heading">Лидерские знаки</h2>
+            <p>Медали месяца остаются навсегда. Знак за всё время показывает только текущий уровень в общем рейтинге.</p>
+        </div>
+        <span class="expert-leader-shelf-count">{{ leader_awards_count }}</span>
+    </div>
+    {% for group in leader_shelf_groups %}
+    {% if group.count or leader_awards_count %}
+    <section class="expert-leader-shelf-group is-{{ group.kind }}" aria-labelledby="leader-shelf-{{ group.kind }}">
+        <h3 id="leader-shelf-{{ group.kind }}">{{ group.title }} <small>{{ group.count }}</small></h3>
+        {% if group.count %}
+        <div class="expert-leader-shelf-grid">
+            {% leader_badges_display group.badges "shelf" as shelf %}
+            {% for badge in shelf.badges %}
+            <details class="expert-leader-award{% if badge.historical %} is-historical{% endif %}" id="{{ badge.anchor }}" tabindex="-1">
+                <summary aria-label="{{ badge.label }}">
+                    <span class="expert-leader-award-mark">
+                        {% include "front/includes/_expert_leader_badge.html" with badge=badge can_link=False only %}
+                    </span>
+                    <span class="expert-leader-award-label">{{ badge.shelf_caption }}</span>
+                    <span class="expert-leader-award-action"><span class="is-closed">Подробнее</span><span class="is-open">Свернуть</span></span>
+                </summary>
+                <div class="expert-leader-award-copy">
+                    <h4>{{ badge.title }}</h4>
+                    {% if badge.kind == "month" %}
+                    <strong>{{ badge.period_label }}</strong>
+                    <p>ROI {{ badge.metrics.roi|floatformat:1 }}% · {{ badge.metrics.settled_count }} рассчитанных прогнозов</p>
+                    <small>Выдана {{ badge.awarded_at|localtime|date:"d.m.Y" }}</small>
+                    {% else %}
+                    <strong>Текущее место: №{{ badge.rank }}</strong>
+                    <p>Общий рейтинг за всё время</p>
+                    <small>Переходящий знак. При смене уровня прежний знак не сохраняется в достижениях.</small>
+                    {% endif %}
+                </div>
+            </details>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="expert-leader-shelf-empty">{{ group.empty_label }}</p>
+        {% endif %}
+        {% if group.previous_url or group.next_url %}
+        <nav class="expert-leader-shelf-pagination" aria-label="{{ group.title }}: страницы">
+            {% if group.previous_url %}<a href="{{ group.previous_url }}">← Назад</a>{% endif %}
+            <span>{{ group.page_label }}</span>
+            {% if group.next_url %}<a href="{{ group.next_url }}">Далее →</a>{% endif %}
+        </nav>
+        {% endif %}
+    </section>
+    {% endif %}
+    {% endfor %}
+    {% if not leader_awards_count %}
+    <div class="profile-empty-state"><p>Лидерских знаков пока нет. Месячные медали выдаются после закрытия месяца, знаки за всё время — по общему рейтингу.</p></div>
+    {% endif %}
+</section>

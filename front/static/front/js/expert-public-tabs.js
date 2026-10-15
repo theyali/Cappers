@@ -23,7 +23,7 @@
     ).join(",");
 
     function initExpertTabs(root) {
-        const buttons = Array.from(root.querySelectorAll("[data-expert-public-tab]"));
+        const buttons = Array.from(root.querySelectorAll('[role="tab"][data-expert-public-tab]'));
         const panels = Array.from(root.querySelectorAll(MANAGED_PANEL_SELECTOR));
         if (!buttons.length) return;
 
@@ -41,7 +41,7 @@
             });
         };
 
-        const setActiveTab = (tabName, focusButton = false) => {
+        const setActiveTab = (tabName, focusButton = null, updateHash = false) => {
             if (!TAB_NAMES.includes(tabName)) return;
 
             root.dataset.activeTab = tabName;
@@ -52,40 +52,74 @@
                 button.classList.toggle("is-active", isActive);
                 button.setAttribute("aria-selected", isActive ? "true" : "false");
                 button.tabIndex = isActive ? 0 : -1;
-
-                if (isActive && focusButton) {
-                    button.focus();
-                }
             });
+            if (focusButton) focusButton.focus();
+            if (updateHash) window.history.replaceState(null, "", `#${tabName}`);
         };
 
-        buttons.forEach((button, index) => {
+        buttons.forEach((button) => {
             button.addEventListener("click", (event) => {
                 event.preventDefault();
-                setActiveTab(button.dataset.expertPublicTab);
+                setActiveTab(button.dataset.expertPublicTab, null, true);
             });
 
             button.addEventListener("keydown", (event) => {
+                if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+                const tablist = button.closest('[role="tablist"]');
+                const siblings = buttons.filter((candidate) => candidate.closest('[role="tablist"]') === tablist);
+                const index = siblings.indexOf(button);
                 let nextIndex = null;
 
                 if (event.key === "ArrowRight") {
-                    nextIndex = (index + 1) % buttons.length;
+                    nextIndex = (index + 1) % siblings.length;
                 } else if (event.key === "ArrowLeft") {
-                    nextIndex = (index - 1 + buttons.length) % buttons.length;
+                    nextIndex = (index - 1 + siblings.length) % siblings.length;
                 } else if (event.key === "Home") {
                     nextIndex = 0;
                 } else if (event.key === "End") {
-                    nextIndex = buttons.length - 1;
+                    nextIndex = siblings.length - 1;
+                } else if (event.key === " ") {
+                    nextIndex = index;
                 }
 
                 if (nextIndex === null) return;
 
                 event.preventDefault();
-                setActiveTab(buttons[nextIndex].dataset.expertPublicTab, true);
+                const nextButton = siblings[nextIndex];
+                setActiveTab(nextButton.dataset.expertPublicTab, nextButton, true);
             });
         });
 
-        setActiveTab(root.dataset.activeTab || "predictions");
+        root.addEventListener("click", (event) => {
+            const trigger = event.target.closest("[data-expert-public-open-tab]");
+            if (!trigger || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            const tabName = trigger.dataset.expertPublicOpenTab;
+            if (!TAB_NAMES.includes(tabName)) return;
+            const url = new URL(trigger.href, window.location.href);
+            // Other profiles and shelf pages must keep their native navigation.
+            if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search || trigger.hasAttribute("download") || (trigger.target && trigger.target !== "_self")) return;
+            event.preventDefault();
+            setActiveTab(tabName);
+            const hash = url.hash;
+            const target = (hash.startsWith("#leader-") && document.getElementById(hash.slice(1))) || root.querySelector((TAB_PANELS[tabName] || [])[0]);
+            if (target?.matches("details.expert-leader-award")) target.open = true;
+            if (hash) window.history.replaceState(null, "", hash);
+            target?.scrollIntoView({ block: "start", behavior: "auto" });
+            target?.focus({ preventScroll: true });
+        });
+
+        const openHashTarget = () => {
+            const hash = window.location.hash.slice(1);
+            const target = hash.startsWith("leader-") && document.getElementById(hash);
+            setActiveTab(hash.startsWith("leader-") ? "achievements" : TAB_NAMES.includes(hash) ? hash : root.dataset.activeTab || "predictions");
+            if (target) {
+                if (target.matches("details.expert-leader-award")) target.open = true;
+                target.scrollIntoView({ block: "start", behavior: "auto" });
+                target.focus({ preventScroll: true });
+            }
+        };
+        window.addEventListener("hashchange", openHashTarget);
+        openHashTarget();
     }
 
     const init = () => {

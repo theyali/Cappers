@@ -1,0 +1,49 @@
+{% load l10n %}<svg aria-hidden="true" class="expert-leader-badge-icon" focusable="false" height="{{ badge.height|unlocalize }}" viewBox="0 0 100 128" width="{{ badge.width|unlocalize }}">
+<path d="M30 60L17 124l17-10 16 12 16-12 17 10-13-64z" fill="var(--leader-metal-shadow)">
+</path>
+<path d="M30 60h40l-6 30H36z" fill="var(--leader-metal)" opacity=".35">
+</path>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(0.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(22.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(45.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(67.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(90.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(112.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(135.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(157.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(180.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(202.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(225.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(247.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(270.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(292.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(315.0 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<rect fill="var(--leader-metal)" height="7" rx="1.6" transform="rotate(337.5 50 50)" width="3.2" x="48.4" y="4">
+</rect>
+<circle cx="50" cy="50" fill="var(--leader-metal)" r="42">
+</circle>
+<circle cx="50" cy="50" fill="var(--leader-inner)" r="35">
+</circle>
+<circle cx="50" cy="50" fill="none" opacity=".55" r="32.5" stroke="var(--leader-metal)" stroke-width="1.6">
+</circle>
+<g transform="translate(50 30) scale(0.42) translate(-50 -50)">
+<path d="M14 72h72l5-40-22.5 14.5L50 20 31.5 46.5 9 32z" fill="var(--leader-metal)">
+</path>
+</g>
+<text fill="var(--leader-metal)" font-family="var(--font-display)" font-size="15" font-weight="800" letter-spacing="0.5" text-anchor="middle" x="50" y="62">{{ badge.month_short }}</text>
+</svg>

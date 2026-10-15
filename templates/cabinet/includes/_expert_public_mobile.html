@@ -28,9 +28,12 @@
             {% if profile_presence.is_online %}В сети{% else %}{{ profile_presence.label }}{% endif %}
         </span>
         {% endif %}
-        <strong class="expert-mobile-name">{{ expert_name }}</strong>
+        <div class="expert-mobile-name-row">
+            <strong class="expert-mobile-name">{{ expert_name }}</strong>
+            {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges variant="profile" more_count=leader_badges_more_count only %}
+        </div>
         <span class="expert-mobile-username">
-            @{{ expert.username }}
+            <span class="expert-mobile-username-copy">@{{ expert.username }}</span>
             {% if analyst_profile.is_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
         </span>
         <span class="expert-mobile-stats">
