@@ -82,6 +82,16 @@ class CapperSetupMixin:
 
 @override_settings(STORAGES=TEST_STORAGES)
 class ProfileSettingsAjaxTests(CapperSetupMixin, TestCase):
+    def test_personal_hero_uses_default_cover_for_every_role(self):
+        reader = User.objects.create_user(username="cover-reader", role=User.Role.READER)
+        for user in (self.user, reader):
+            with self.subTest(role=user.role):
+                self.client.force_login(user)
+                response = self.client.get(reverse("cabinet:profile"))
+                self.assertContains(response, 'class="profile-hero-cover"', count=1)
+                self.assertContains(response, 'src="/static/front/img/profile_default_cover.png"', count=1)
+                self.assertNotContains(response, "public_hero/publ_5")
+
     def test_ajax_save_returns_json_instead_of_redirect(self):
         response = self.client.post(
             reverse("cabinet:profile"),
@@ -155,6 +165,19 @@ class ProfileSettingsAjaxTests(CapperSetupMixin, TestCase):
         self.assertContains(response, "Азербайджан")
         self.assertContains(response, "country/flags/az.webp")
         self.assertContains(response, "Женский")
+        self.assertContains(response, 'class="expert-mobile expert-mobile--user"', count=1)
+        self.assertContains(response, 'class="expert-mobile-card-bg"', count=1)
+        self.assertContains(response, 'src="/static/front/img/profile_default_cover.png"', count=1)
+        self.assertContains(response, 'class="expert-public-hero-art"', count=1)
+        self.assertContains(response, 'aria-label="Активность пользователя"', count=1)
+        self.assertNotContains(response, 'class="expert-mobile-follow"')
+
+        self.client.force_login(reader)
+        self_response = self.client.get(
+            reverse("cabinet:user_profile", kwargs={"username": reader.username})
+        )
+        self.assertContains(self_response, 'class="expert-mobile-follow"', count=1)
+        self.assertContains(self_response, "Мой кабинет", count=2)
 
     def test_ajax_save_returns_errors_keyed_by_input_name(self):
         response = self.client.post(

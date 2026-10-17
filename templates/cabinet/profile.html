@@ -19,9 +19,7 @@
             <section class="profile-tab-panel {% if active_tab == 'profile' %}is-active{% endif %}" id="profile-tab-profile" data-profile-tab-panel="profile">
             <div class="profile-dashboard-head">
                 <div class="profile-hero{% if not request.user.is_analyst %} is-reader{% endif %}" id="profileHero">
-                    {% if request.user.is_analyst %}
-                        <img class="profile-hero-cover" src="{% static 'front/img/profile_default_cover.png' %}" alt="" width="1050" height="900" decoding="async">
-                    {% endif %}
+                    <img class="profile-hero-cover" src="{% static 'front/img/profile_default_cover.png' %}" alt="" width="1050" height="900" decoding="async">
                     <div class="profile-identity">
                         <div class="profile-avatar-wrap">
                             <div class="profile-avatar" id="profileAvatar" data-skeleton-image>

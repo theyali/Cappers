@@ -1,0 +1,43 @@
+{% load capper_trust static %}
+<section class="expert-mobile-card" data-expert-mobile-card aria-label="{% if public_is_capper %}Каппер{% else %}Пользователь{% endif %} {{ public_name }}">
+    <img class="expert-mobile-card-bg" src="{% static 'front/img/profile_default_cover.png' %}" alt="" width="1050" height="900" decoding="async">
+    <span class="expert-mobile-avatar">
+        {% if public_user.avatar %}
+            <img src="{{ public_user.avatar.url }}" alt="" width="190" height="190" decoding="async">
+        {% else %}
+            {{ public_initials }}
+        {% endif %}
+        {% if public_is_capper %}{% capper_trust_badge analyst_profile.trust_index %}{% endif %}
+    </span>
+    <p class="expert-mobile-kicker">{% if public_is_capper %}Эксперт{% else %}Пользователь{% endif %} КапперХаб</p>
+    {% if public_is_capper and profile_presence %}
+    <span class="expert-mobile-presence{% if profile_presence.is_online %} is-online{% endif %}">
+        {% if profile_presence.is_online %}В сети{% else %}{{ profile_presence.label }}{% endif %}
+    </span>
+    {% endif %}
+    <div class="expert-mobile-name-row">
+        <h1 class="expert-mobile-name">{{ public_name }}</h1>
+        {% if public_is_capper %}
+        {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges variant="profile" more_count=leader_badges_more_count only %}
+        {% endif %}
+    </div>
+    <span class="expert-mobile-username">
+        <span class="expert-mobile-username-copy">@{{ public_user.username }}</span>
+        {% if public_is_capper and analyst_profile.is_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
+    </span>
+    {% if not public_is_capper %}
+    <span class="expert-mobile-username">
+        <span class="expert-mobile-username-copy">На КапперХаб с {{ public_user.date_joined|date:"Y" }} года</span>
+        {% include "cabinet/includes/_public_profile_location.html" with public_user=public_user only %}
+    </span>
+    {% endif %}
+    <span class="expert-mobile-stats">
+        {% if public_is_capper %}
+        <span><b data-followers-count>{{ followers_count }}</b>подписчиков</span>
+        <span class="is-accent"><b>{{ win_rate|floatformat:1 }}%</b>проходимость</span>
+        <span><b>{{ predictions_count }}</b>прогнозов</span>
+        {% else %}
+        <span><b>{{ achievement_unlocked_count }}/{{ achievement_total }}</b>достижений открыто</span>
+        {% endif %}
+    </span>
+</section>

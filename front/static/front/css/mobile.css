@@ -13468,6 +13468,7 @@ body.expert-public-details-open {
   }
 
   .expert-public-shell .expert-public-hero,
+  .expert-public-hero--user,
   .expert-public-feed > .expert-public-section-head,
   .expert-public-feed .content-table-view {
     display: none;
@@ -13476,58 +13477,6 @@ body.expert-public-details-open {
   .expert-public-shell > .expert-public-page > .expert-public-stats-compact,
   .expert-public-body .breadcrumbs-container {
     display: none !important;
-  }
-
-  .expert-public-hero--user {
-    min-height: 0;
-    padding: 0;
-    border-radius: 22px;
-  }
-
-  .expert-public-hero--user .expert-public-hero-content {
-    padding: 24px 20px;
-  }
-
-  .expert-public-hero--user .expert-public-hero-top {
-    flex-direction: column-reverse;
-    align-items: center;
-    gap: 22px;
-  }
-
-  .expert-public-hero--user .expert-public-copy {
-    align-items: center;
-    text-align: center;
-    overflow-wrap: anywhere;
-  }
-
-  .expert-public-hero--user .expert-public-name-row,
-  .expert-public-hero--user .expert-public-meta,
-  .expert-public-hero--user .expert-public-tags {
-    justify-content: center;
-  }
-
-  .expert-public-hero--user .expert-public-name-row h1 {
-    font-size: 28px !important;
-    white-space: normal;
-  }
-
-  .expert-public-hero--user .expert-public-tags {
-    margin-top: 0;
-  }
-
-  .expert-public-hero--user .expert-public-side {
-    width: auto;
-    flex-basis: auto;
-  }
-
-  .expert-public-hero--user .expert-public-hero-metric {
-    flex: 1 1 120px;
-  }
-
-  .expert-public-hero--user .expert-public-buy-button {
-    min-width: 0;
-    padding: 0 16px;
-    font-size: 14px;
   }
 
   /* clip, unlike hidden, keeps the page scrolling on the root, so the tabs can stick. */
