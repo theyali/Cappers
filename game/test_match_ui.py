@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
-from django.test import SimpleTestCase
+from django.template.loader import render_to_string
+from django.test import SimpleTestCase, override_settings
 
 from game.templatetags.match_ui import live_status_label
 
@@ -74,3 +75,47 @@ class LiveStatusLabelTests(SimpleTestCase):
             live_status_label(self.match(sport_code="tennis", label="2")),
             "2-й сет",
         )
+
+
+@override_settings(STORAGES={
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class MatchOddsGroupMarkupTests(SimpleTestCase):
+    def render_group(self, *, count=16, can_write_coupon=False, scope="prematch", bettable=True):
+        return render_to_string("game/_match_v2_odds_group.html", {
+            "group": {
+                "title": "Фора",
+                "odds": [{
+                    "market": "handicap", "selection": f"Home ({index - 8:+})",
+                    "outcome_code": f"H{index}", "coefficient": "1.85",
+                    "key": f"handicap-{index}", "label": f"Ф1 ({index - 8:+})",
+                    "description": f"Хозяева с форой {index - 8:+}", "bettable": bettable,
+                } for index in range(count)],
+            },
+            "match": SimpleNamespace(sync_scope=scope),
+            "can_write_coupon": can_write_coupon,
+        })
+
+    def test_long_locked_row_remains_keyboard_scrollable_and_keeps_every_outcome(self):
+        html = self.render_group()
+        self.assertIn('class="match-v2-odds-grid" tabindex="0" role="region"', html)
+        self.assertIn('aria-label="Фора — коэффициенты"', html)
+        self.assertEqual(html.count('class="match-v2-odd odds-button"'), 16)
+        self.assertEqual(html.count('aria-disabled="true"'), 16)
+        self.assertNotIn("data-bet-option", html)
+        self.assertIn("Хозяева с форой -8", html)
+        self.assertIn("Хозяева с форой +7", html)
+
+    def test_available_outcomes_keep_existing_coupon_attributes(self):
+        html = self.render_group(count=3, can_write_coupon=True)
+        self.assertEqual(html.count("data-bet-option"), 3)
+        self.assertEqual(html.count("data-bet-key="), 3)
+        self.assertEqual(html.count("data-outcome-code="), 3)
+        self.assertNotIn('aria-disabled="true"', html)
+
+    def test_suspended_and_non_prematch_rows_stay_locked(self):
+        for scope, bettable in (("live", True), ("finished", True), ("prematch", False)):
+            with self.subTest(scope=scope, bettable=bettable):
+                html = self.render_group(count=2, can_write_coupon=True, scope=scope, bettable=bettable)
+                self.assertEqual(html.count('aria-disabled="true"'), 2)
+                self.assertNotIn("data-bet-option", html)
