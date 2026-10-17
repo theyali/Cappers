@@ -4,7 +4,7 @@
         <span class="mobile-offcanvas-quick-icon is-{{ item.key }}" aria-hidden="true">
             {% include "front/includes/_solar_icon.html" with name=item.key %}
             {% if item.key == "notifications" %}
-            <b class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
+            <b data-notification-any-section class="{% if not notification_section_badges %}is-empty{% endif %}"></b>
             {% endif %}
         </span>
         <span>{{ item.label }}</span>

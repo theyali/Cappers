@@ -6,7 +6,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <div class="coupon-mobile-title">
-            <strong>Купон #{{ coupon.id }}</strong>
+            <h1>{{ prediction_title }}</h1>
             <span class="coupon-mobile-state is-{{ coupon.state_status|default:'pending' }}">
                 {% if coupon.state_status == "win" %}Выигрыш{% elif coupon.state_status == "lose" %}Проигрыш{% elif coupon.state_status == "refund" %}Возврат{% else %}Опубликован{% endif %}
             </span>
@@ -69,10 +69,8 @@
         <span class="coupon-mobile-author-link">Профиль</span>
     </a>
 
-    <p class="coupon-mobile-lead">{{ coupon.headline|default:"Топовые матчи. Выверенная аналитика. Уверенная игра." }}</p>
-    {% if coupon.description %}
-        <p class="coupon-mobile-lead">{{ coupon.description|linebreaksbr }}</p>
-    {% endif %}
+    {% include "front/includes/_prediction_article.html" %}
+    {% if not prediction_article and not coupon.headline %}<p class="coupon-mobile-lead">Топовые матчи. Выверенная аналитика. Уверенная игра.</p>{% endif %}
 
     {% if positions %}
     <section class="home-mobile-slider coupon-mobile-events" data-home-mobile-slider aria-labelledby="coupon-mobile-events-title">

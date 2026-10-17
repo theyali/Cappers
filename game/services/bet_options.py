@@ -10,12 +10,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from types import SimpleNamespace
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist
 
 from game.models import Prediction, PredictionCoupon
-from game.services.odds import format_outcome_line, outcome_code_from_label
+from game.services.odds import format_outcome_line, outcome_code_from_label, short_match_odds_defaults
 
 
 # Markets the settlement engine can resolve automatically. Other markets are
@@ -83,7 +84,7 @@ def match_bet_options(match, odds=None) -> dict[tuple[str, str], BetOption]:
     ``odds`` lets callers pass a freshly loaded MatchOdds row; otherwise the
     match relation is used.
     """
-    odds = odds if odds is not None else _match_odds(match)
+    odds = _match_odds(match, odds)
     if not _match_odds_has_values(odds):
         return {}
 
@@ -116,11 +117,16 @@ def match_bet_options(match, odds=None) -> dict[tuple[str, str], BetOption]:
     return options
 
 
-def _match_odds(match):
-    try:
-        return match.odds
-    except (ObjectDoesNotExist, AttributeError):
-        return None
+def _match_odds(match, odds=None):
+    if odds is None:
+        try:
+            odds = match.odds
+        except (ObjectDoesNotExist, AttributeError):
+            return None
+    # Do not fetch a deliberately deferred JSON column in list/card renderers.
+    raw = getattr(odds, "__dict__", {}).get("raw_data")
+    defaults = short_match_odds_defaults(raw)
+    return SimpleNamespace(**defaults) if defaults is not None else odds
 
 
 # Quick coupon options (match cards and tables).
@@ -281,7 +287,7 @@ def _btts_yes_option(odds) -> dict[str, Any]:
 
 
 def build_match_coupon_options(match, odds=None) -> dict[str, Any]:
-    odds = odds if odds is not None else _match_odds(match)
+    odds = _match_odds(match, odds)
     sport_code = str(getattr(match, "sport_code", "football") or "football").lower()
 
     if sport_code == "hockey":
@@ -354,7 +360,7 @@ def build_match_winner_odds(match) -> dict:
 
 
 def build_match_odds_tabs(match, odds=None) -> list[dict]:
-    odds = odds if odds is not None else _match_odds(match)
+    odds = _match_odds(match, odds)
     if not _match_odds_has_values(odds):
         return _prediction_odds_tabs(match)
 
@@ -763,6 +769,53 @@ def pick_label(prediction) -> str:
     if not title or selection.lower().startswith(title.lower()):
         return selection
     return f"{title}: {selection}"
+
+
+def compact_pick_label(prediction) -> str:
+    """Selected outcome for compact cards, never the provider's market key."""
+    market = prediction.market
+    selection = str(prediction.selection or "").strip()
+    raw_code = str(prediction.outcome_code or "").strip()
+    first_half = market.startswith("first_half_")
+    if first_half:
+        selection = re.sub(r"^1-й\s+тайм:\s*", "", selection, flags=re.IGNORECASE)
+    code = outcome_code_from_label(market, raw_code or selection)
+    if not code and market == "both_score":
+        code = outcome_code_from_label(market, selection.rsplit(":", 1)[-1])
+    if not raw_code and selection and market in {"winner", "first_half_winner"}:
+        match = prediction.match
+        if selection == match.home_team_name:
+            code = "1"
+        elif selection == match.away_team_name:
+            code = "2"
+    if not code and market == "double_chance":
+        match = prediction.match
+        code = {
+            _normalized(f"{match.home_team_name} или ничья"): "1X",
+            _normalized(f"Ничья или {match.away_team_name}"): "X2",
+            _normalized(f"{match.home_team_name} или {match.away_team_name}"): "12",
+        }.get(_normalized(selection), "")
+
+    label = ""
+    if market in {"winner", "first_half_winner"} and code in {"1", "X", "2"}:
+        label = code
+    elif market == "double_chance" and code in {"1X", "X2", "12"}:
+        label = "2X" if code == "X2" else code
+    elif market in {"total", "first_half_total"}:
+        side, _, line = code.partition(" ")
+        if side in {"over", "under"} and line:
+            label = f"{line}{'Б' if side == 'over' else 'М'}"
+    elif market in {"handicap", "first_half_handicap"}:
+        side, _, line = code.partition(" ")
+        if side in {"home", "away"} and line:
+            label = f"Ф{'1' if side == 'home' else '2'}({line})"
+    elif market == "both_score" and code in {"yes", "no"}:
+        label = "ОЗ Да" if code == "yes" else "ОЗ Нет"
+    elif market == "exact_score":
+        label = code
+
+    label = label or human_market_label(selection)
+    return f"1Т · {label}" if first_half else label
 
 
 def human_market_label(value) -> str:

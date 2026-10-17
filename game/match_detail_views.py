@@ -708,21 +708,25 @@ def _h2h_matches(match: Match) -> dict:
     }
 
 
-def _compact_odds(odds_tabs: list[dict]) -> list[dict]:
+def _odds_groups(odds_tabs: list[dict]) -> list[dict]:
     groups = []
+    seen = set()
     for tab in odds_tabs:
         for section in tab.get("sections", []):
             for row in section.get("rows", []):
-                odds = row.get("odds", [])
+                odds = []
+                for odd in row.get("odds", []):
+                    key = (odd["market"], odd.get("outcome_code") or odd["selection"].casefold())
+                    if key not in seen:
+                        seen.add(key)
+                        odds.append(odd)
                 if odds:
                     groups.append(
                         {
                             "title": row.get("title") or section.get("title") or "Исход",
-                            "odds": odds[:3],
+                            "odds": odds,
                         }
                     )
-                if len(groups) >= 3:
-                    return groups
     return groups
 
 
@@ -821,6 +825,7 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
     h2h = _h2h_matches(match)
     score_events = _score_events(match)
     events = _match_events_ui(match)
+    odds_groups = _odds_groups(odds_tabs)
     return {
         "home_code": _team_code(match.home_team_name, "Х"),
         "away_code": _team_code(match.away_team_name, "Г"),
@@ -838,7 +843,8 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
         "show_timeline": _show_timeline(match, score_events),
         "status_label": live_status_label(match) if match.sync_scope == Match.SyncScope.LIVE else match.get_sync_scope_display(),
         "league_badge": _team_code(match.league_name, "Л"),
-        "compact_odds": _compact_odds(odds_tabs),
+        "compact_odds": odds_groups[:3],
+        "additional_odds": odds_groups[3:],
         "votes": _prediction_votes(match),
         "stats_rows": _match_stats_rows(match),
         "h2h": h2h,

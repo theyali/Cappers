@@ -931,7 +931,6 @@
                 class="profile-tab-panel {% if active_tab == 'followers' %}is-active{% endif %}"
                 id="profile-tab-followers"
                 data-profile-tab-panel="followers"
-                data-profile-section-read-url="{% url 'notifications:mark_section_read' 'followers' %}"
             >
                 {% include "cabinet/includes/_profile_social_panel.html" with profile_social=followers_social %}
             </section>

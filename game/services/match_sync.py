@@ -35,7 +35,7 @@ from game.models import (
 )
 from game.services.local_logos import sync_entity_logo
 from game.services.live_stream_health import has_ws_priority
-from game.services.odds import has_odds_payload, match_odds_defaults
+from game.services.odds import has_odds_payload, match_odds_defaults, short_match_odds_defaults
 from game.services.providers import NeurokeffSportsProvider
 from game.services.providers.neurokeff import NeurokeffProviderError
 
@@ -92,6 +92,7 @@ class MatchSyncService:
         | ABANDONED_TIME_STATUSES
     )
     LIVE_STATE_FIELDS = {"sync_scope", "time_status", "score", "live_minute", "live_minute_label"}
+    ODDS_OBSERVED_AT_KEY = "_cappers_odds_observed_at"
     LIVE_RAW_KEYS = {"score", "time_status", "live_minute", "live_minute_str", "clock", "period",
                      "periods", "point", "tennis_serve", "serving_team_pk", "live_stream",
                      "first_time_score", "first_half_score", "ht_score"}
@@ -328,7 +329,7 @@ class MatchSyncService:
                 for field, value in defaults.items():
                     setattr(match, field, value)
                 match.save(update_fields=[*defaults.keys(), "updated_at"])
-                self._sync_odds(match, payload.get("odds") or {})
+                self._sync_odds(match, payload.get("odds") or {}, observed_at=observed_at)
                 self._sync_embedded_statistics(match, payload)
                 self._sync_embedded_events(match, payload)
                 updated += 1
@@ -392,7 +393,7 @@ class MatchSyncService:
                     setattr(match, field, value)
                 match.save(update_fields=[*defaults, "updated_at"])
             if not state_only:
-                self._sync_odds(match, payload.get("odds") or {})
+                self._sync_odds(match, payload.get("odds") or {}, observed_at=observed_at)
                 self._sync_embedded_statistics(match, payload)
                 self._sync_embedded_events(match, payload)
             scopes[match.sync_scope] = scopes.get(match.sync_scope, 0) + 1
@@ -1328,7 +1329,9 @@ class MatchSyncService:
         )
         return team
 
-    def sync_match_bookmaker_odds(self, match: Match) -> dict:
+    def sync_match_bookmaker_odds(
+        self, match: Match, *, update_short: bool = False, allow_empty_short: bool = False,
+    ) -> dict:
         requested_at = timezone.now()
         payload = self.provider.fetch_game_odds(match.external_id)
         if not isinstance(payload, dict) or str(payload.get("api_id")) != str(match.external_id):
@@ -1395,16 +1398,35 @@ class MatchSyncService:
         if not prepared:
             raise NeurokeffProviderError("Full odds response contains no scopes")
 
+        short_defaults = None
+        if update_short:
+            short = odds.get("short")
+            if not isinstance(short, dict) or type(short.get("available")) is not bool:
+                raise NeurokeffProviderError("Invalid short odds availability")
+            if short["available"]:
+                short_defaults = short_match_odds_defaults(short)
+                if short_defaults is None or not any(
+                    value for key, value in short_defaults.items() if key not in {"raw_data", "extra_markets"}
+                ):
+                    if not allow_empty_short:
+                        raise NeurokeffProviderError("Short odds response contains no short line")
+                    short_defaults = {**match_odds_defaults({}), "raw_data": short}
+            elif allow_empty_short:
+                # An updated event can withdraw the line. Keep the authoritative
+                # availability flag, but never leave old prices bettable.
+                short_defaults = {**match_odds_defaults({}), "raw_data": short}
+
         result = {"status": "ok", "match_id": match.pk, "scopes": {}}
         with transaction.atomic():
             # Serialize first creation and refreshes for this match. HTTP stays outside the lock.
-            Match.objects.select_for_update().get(pk=match.pk)
+            locked_match = Match.objects.select_for_update().get(pk=match.pk)
             for scope, block, available, updated_at, entries in prepared:
                 snapshot = MatchOddsSnapshot.objects.filter(match=match, scope=scope).first()
                 if snapshot and (
                     snapshot.requested_at > requested_at
                     or (snapshot.provider_updated_at and (
-                        updated_at is None or updated_at < snapshot.provider_updated_at
+                        (updated_at is None and not (allow_empty_short and scope == "prematch" and not available))
+                        or (updated_at is not None and updated_at < snapshot.provider_updated_at)
                     ))
                 ):
                     result["scopes"][scope] = {"status": "skipped", "reason": "older_response"}
@@ -1432,15 +1454,48 @@ class MatchSyncService:
                     snapshot.bookmakers.exclude(bookmaker_key__in=[entry[0] for entry in entries]).delete()
                 result["scopes"][scope] = {"status": "ok", "available": available,
                                            "bookmakers": snapshot.bookmakers.count()}
+            if update_short:
+                prematch = result["scopes"].get("prematch", {})
+                if allow_empty_short and prematch.get("status") == "ok" and not prematch.get("available"):
+                    short_defaults = {**match_odds_defaults({}), "raw_data": {**short, "available": False}}
+                # Never restore a prematch short line after the game entered live,
+                # or overwrite a short line refreshed while HTTP was in flight.
+                if (short_defaults is not None and locked_match.sync_scope == Match.SyncScope.PREMATCH
+                        and prematch.get("status") == "ok" and (prematch.get("available") or allow_empty_short)
+                        and (locked_match.last_seen_at is None or locked_match.last_seen_at <= requested_at)):
+                    short_defaults["raw_data"] = {
+                        **short_defaults["raw_data"], self.ODDS_OBSERVED_AT_KEY: requested_at.isoformat(),
+                    }
+                    MatchOdds.objects.update_or_create(match=match, defaults=short_defaults)
+                    result["short_updated"] = True
+                else:
+                    result["short_updated"] = False
         return result
 
-    def _sync_odds(self, match: Match, payload: dict[str, Any]) -> None:
-        if not has_odds_payload(payload):
+    def _sync_odds(self, match: Match, payload: dict[str, Any], *, observed_at=None) -> None:
+        unavailable = isinstance(payload, dict) and payload.get("available") is False
+        if not unavailable and not has_odds_payload(payload):
             return
-        MatchOdds.objects.update_or_create(
-            match=match,
-            defaults=match_odds_defaults(payload),
-        )
+        observed_at = observed_at or timezone.now()
+        # Both callers hold the parent Match row lock. Compare the request's
+        # observation time, not its late commit: old polling must not undo a
+        # newer WS-triggered price change or restore a withdrawn short line.
+        current = MatchOdds.objects.select_for_update().filter(match=match).first()
+        previous = current.raw_data.get(self.ODDS_OBSERVED_AT_KEY) if current and isinstance(current.raw_data, dict) else None
+        try:
+            previous_at = parse_datetime(previous) if isinstance(previous, str) else None
+        except ValueError:
+            previous_at = None
+        if previous_at and timezone.is_aware(previous_at) and previous_at > observed_at:
+            return
+        defaults = short_match_odds_defaults(payload) if unavailable else match_odds_defaults(payload)
+        defaults["raw_data"] = {**payload, self.ODDS_OBSERVED_AT_KEY: observed_at.isoformat()}
+        if current is None:
+            MatchOdds.objects.create(match=match, **defaults)
+        else:
+            for field, value in defaults.items():
+                setattr(current, field, value)
+            current.save(update_fields=list(defaults))
 
     @classmethod
     def _scope_from_payload(cls, payload: dict[str, Any], default: str | None) -> str | None:

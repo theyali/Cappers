@@ -1225,6 +1225,45 @@ body.expert-public-details-open {
   .content-view-container{
     padding:0;
   }
+  .predictions-grid.is-rich > .prediction-card-rich {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 14px;
+  }
+  .prediction-card-rich-cover { min-height: 240px; }
+  .prediction-card-rich-body { gap: 14px; padding: 16px; }
+  .prediction-card-rich-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 0;
+    overflow-wrap: anywhere;
+  }
+  .prediction-card-rich-meta { align-items: center; flex-wrap: wrap; }
+  .prediction-card-rich-author { flex: 1 1 200px; }
+  .prediction-card-rich-author strong { white-space: normal; }
+  .prediction-card-rich-meta-copy { justify-content: flex-start; }
+  .prediction-card-rich-title { font-size: 19px; }
+  .prediction-card-rich-stats {
+    grid-column: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0;
+  }
+  .prediction-card-rich-stats > span { min-width: 0; padding: 10px; }
+  .prediction-card-rich-status svg { flex-shrink: 0; }
+  .prediction-card-rich-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 12px 0 0;
+  }
+  .prediction-card-rich-actions .feed-prediction-action {
+    min-width: 0;
+    min-height: 44px;
+    justify-content: center;
+    gap: 6px;
+  }
+  .prediction-card-rich-actions .feed-prediction-save { margin-left: 0; }
   .document-page .predictions-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1764,7 +1803,7 @@ body.expert-public-details-open {
     transform: none;
   }
 
-  .fixed-roulette {
+  .site-nav-actions .nav-roulette-link {
     display: none;
   }
 
@@ -3948,40 +3987,8 @@ body.expert-public-details-open {
     flex: 1 0 auto;
   }
 
-  .predictions-grid.is-rich > .prediction-card-rich {
-    grid-template-columns: minmax(0, 1fr);
-    border-radius: 14px;
-  }
-
-  .prediction-card-rich-cover {
-    min-height: 240px;
-  }
-
-  .prediction-card-rich-body {
-    padding: 15px;
-  }
-
-  .prediction-card-rich-meta {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .prediction-card-rich-meta-copy {
-    justify-content: flex-start;
-  }
-
-  .prediction-card-rich-title {
-    font-size: 19px;
-  }
-
   .prediction-card-rich-stats {
-    grid-column: auto;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    padding: 12px;
-  }
-
-  .prediction-card-rich-stats > span {
-    padding: 9px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .prediction-card-rich-stats strong {
@@ -3992,9 +3999,8 @@ body.expert-public-details-open {
     font-size: 18px;
   }
 
-  .prediction-card-rich-actions {
-    gap: 8px;
-  }
+  .prediction-card-rich-stats .prediction-card-rich-views { grid-column: 1 / -1; }
+  .prediction-card-rich-actions .feed-prediction-save span { display: none; }
 }
 
 @media (max-width: 1180px) {
@@ -4266,7 +4272,6 @@ body.expert-public-details-open {
   body:has(.wallet-topup-page) .site-header,
   body:has(.wallet-topup-page) .telegram-app-header,
   body:has(.wallet-topup-page) .mobile-app-nav,
-  body:has(.wallet-topup-page) .fixed-roulette,
   body:has(.wallet-topup-page) .fixed-tg-btn-wrapper {
     display: none !important;
   }
@@ -6468,15 +6473,6 @@ body.expert-public-details-open {
   .prediction-type-tabs {
     max-width: 100%;
     overflow-x: auto;
-  }
-
-  .predictions-grid.is-rich > .prediction-card-rich {
-    grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
-  }
-
-  .prediction-card-rich-stats {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -13167,7 +13163,6 @@ body.expert-public-details-open {
   body.site-search-page .site-header,
   body.site-search-page .site-topbar,
   body.site-search-page .mobile-app-nav,
-  body.site-search-page .fixed-roulette,
   body.site-search-page .fixed-tg-btn-wrapper { display: none !important; }
   body.site-search-page .site-main { min-height: 100dvh; padding: 0 0 24px; margin: 0; }
   .site-search-page-toolbar { position: relative; z-index: 30; gap: 9px; align-items: center; margin: 0 0 25px; padding-top: 14px; }
@@ -13319,6 +13314,7 @@ body.expert-public-details-open {
   .coupon-mobile {
     display: block;
   }
+  .coupon-mobile > .coupon-prediction-article { margin-top: 20px; }
   .coupon-detail-page { grid-template-columns: minmax(0, 1fr); }
 
   .coupon-detail-back,

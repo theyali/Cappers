@@ -258,32 +258,10 @@
     const tabLinks = Array.from(document.querySelectorAll("[data-profile-tab-link]"));
     const tabPanels = Array.from(document.querySelectorAll("[data-profile-tab-panel]"));
 
-    const markProfileSectionRead = async (panel) => {
-        if (!panel?.dataset.profileSectionReadUrl || panel.dataset.readSynced === "true") return;
-        panel.dataset.readSynced = "true";
-        try {
-            const response = await fetch(panel.dataset.profileSectionReadUrl, {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "X-CSRFToken": getCookie("csrftoken"),
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            });
-            const payload = await response.json().catch(() => ({}));
-            if (response.ok && payload?.ok) {
-                syncNotificationBadges(payload);
-                window.dispatchEvent(new Event("cappers:notifications-changed"));
-            }
-        } catch (error) {}
-    };
-
     const activateTab = (tab) => {
-        let activePanel = null;
         tabPanels.forEach((panel) => {
             const isActive = panel.dataset.profileTabPanel === tab;
             panel.classList.toggle("is-active", isActive);
-            if (isActive) activePanel = panel;
         });
 
         tabLinks.forEach((link) => {
@@ -291,7 +269,6 @@
             link.classList.toggle("is-active", target === tab);
         });
 
-        markProfileSectionRead(activePanel);
         window.dispatchEvent(new CustomEvent("profile:tab-activated", { detail: { tab } }));
     };
 
@@ -330,19 +307,7 @@
     window.CappersProfileApplyListFilters = applyProfileListFilters;
 
     const syncNotificationBadges = (payload = {}) => {
-        if (payload.section_badges) {
-            document.querySelectorAll("[data-notification-section-badge]").forEach((dot) => {
-                const section = dot.dataset.notificationSectionBadge || "";
-                dot.classList.toggle("is-empty", !payload.section_badges[section]);
-            });
-        }
-        if (Object.prototype.hasOwnProperty.call(payload, "unread_count")) {
-            const count = Math.max(0, Number.parseInt(payload.unread_count, 10) || 0);
-            document.querySelectorAll("[data-notification-badge]").forEach((badge) => {
-                badge.textContent = count > 99 ? "99+" : String(count);
-                badge.classList.toggle("is-empty", count === 0);
-            });
-        }
+        window.CappersNotifications?.sync(payload);
     };
 
     document.querySelectorAll("[data-profile-list-search]").forEach((searchInput) => {
@@ -364,7 +329,6 @@
 
             if (!nextActive || button.dataset.readSynced === "true" || !button.dataset.markReadUrl) return;
 
-            button.dataset.readSynced = "true";
             try {
                 const response = await fetch(button.dataset.markReadUrl, {
                     method: "POST",
@@ -376,6 +340,7 @@
                 });
                 const payload = await response.json().catch(() => ({}));
                 if (response.ok && payload?.ok) {
+                    button.dataset.readSynced = "true";
                     syncNotificationBadges(payload);
                     window.dispatchEvent(new Event("cappers:notifications-changed"));
                 }

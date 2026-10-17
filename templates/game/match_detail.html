@@ -200,79 +200,18 @@
             >
                 <div class="match-v2-panel-head">
                     <h2>Коэффициенты</h2>
-                    <button class="match-v2-panel-link" type="button" data-match-v2-odds-toggle aria-expanded="false">Все исходы →</button>
+                    {% if match_page.additional_odds %}<button class="match-v2-panel-link" type="button" data-match-v2-odds-toggle aria-controls="match-odds-all" aria-expanded="false">Все исходы →</button>{% endif %}
                 </div>
                 {% for group in match_page.compact_odds %}
-                <div class="match-v2-odds-group">
-                    <span>{{ group.title }}</span>
-                    <div class="match-v2-odds-grid">
-                        {% for odd in group.odds %}
-                        <button
-                            class="match-v2-odd odds-button"
-                            type="button"
-                            data-market="{{ odd.market }}"
-                            data-selection="{{ odd.selection }}"
-                            data-outcome-code="{{ odd.outcome_code }}"
-                            data-coefficient="{{ odd.coefficient }}"
-                            {% if can_write_coupon and match.sync_scope == "prematch" and odd.bettable %}
-                                data-bet-option
-                                data-bet-key="{{ odd.key }}"
-                            {% else %}
-                                disabled
-                                aria-disabled="true"
-                            {% endif %}
-                        >
-                            {% if not can_write_coupon or match.sync_scope != "prematch" or not odd.bettable %}
-                            <span class="match-v2-odd-lock" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" only %}</span>
-                            {% endif %}
-                            <span>{{ odd.label }}</span>
-                            <b>{{ odd.coefficient }}</b>
-                            <small>{{ odd.description }}</small>
-                        </button>
-                        {% endfor %}
-                    </div>
-                </div>
+                    {% include "game/_match_v2_odds_group.html" %}
                 {% endfor %}
+                {% if match_page.additional_odds %}
                 <div class="match-v2-odds-all" id="match-odds-all" data-match-v2-odds-all hidden>
-                    {% for tab in odds_tabs %}
-                    <div class="match-v2-odds-all-tab">
-                        <h3>{{ tab.title }}</h3>
-                        {% for section in tab.sections %}
-                            {% for row in section.rows %}
-                            <div class="match-v2-odds-group">
-                                <span>{{ row.title|default:section.title }}</span>
-                                <div class="match-v2-odds-grid">
-                                    {% for odd in row.odds %}
-                                    <button
-                                        class="match-v2-odd odds-button"
-                                        type="button"
-                                        data-market="{{ odd.market }}"
-                                        data-selection="{{ odd.selection }}"
-                                        data-outcome-code="{{ odd.outcome_code }}"
-                                        data-coefficient="{{ odd.coefficient }}"
-                                        {% if can_write_coupon and match.sync_scope == "prematch" and odd.bettable %}
-                                            data-bet-option
-                                            data-bet-key="{{ odd.key }}"
-                                        {% else %}
-                                            disabled
-                                            aria-disabled="true"
-                                        {% endif %}
-                                    >
-                                        {% if not can_write_coupon or match.sync_scope != "prematch" or not odd.bettable %}
-                                        <span class="match-v2-odd-lock" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" only %}</span>
-                                        {% endif %}
-                                        <span>{{ odd.label }}</span>
-                                        <b>{{ odd.coefficient }}</b>
-                                        <small>{{ odd.description }}</small>
-                                    </button>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% endfor %}
-                    </div>
+                    {% for group in match_page.additional_odds %}
+                        {% include "game/_match_v2_odds_group.html" %}
                     {% endfor %}
                 </div>
+                {% endif %}
                 <small class="match-v2-muted">Коэффициенты обновляются из сохранённой линии матча. Показаны первые доступные рынки.</small>
             </section>
             {% endif %}

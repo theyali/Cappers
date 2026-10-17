@@ -2,7 +2,7 @@ from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
 
-from game.models import Match
+from game.models import Match, Provider
 from game.services.live_settlement import settle_live_matches
 from game.services.match_sync import MatchSyncService
 from game.services.providers.neurokeff import NeurokeffProviderError
@@ -31,6 +31,57 @@ def refresh_live_match_states(game_ids):
     if not ids:
         return {"status": "skipped", "reason": "empty_ids"}
     return MatchSyncService().sync_match_states(ids)
+
+
+@shared_task(bind=True, autoretry_for=(NeurokeffProviderError,), retry_backoff=5, retry_kwargs={"max_retries": 3})
+def refresh_prematch_match_odds(self, game_id, sport_id, event_type="prematch.odds.available"):
+    """Prematch hint -> exact REST line. Existing match state is untouched."""
+    from game.services.odds_stream import ODDS_MESSAGE_TYPES, odds_sport_ids
+
+    if (type(game_id) is not int or game_id < 1 or type(sport_id) is not int
+            or sport_id not in odds_sport_ids() or event_type not in ODDS_MESSAGE_TYPES):
+        return {"status": "skipped", "reason": "invalid_identity"}
+    service = MatchSyncService()
+    match = Match.objects.filter(provider=Provider.NEUROKEFF, external_id=game_id).select_related("sport").first()
+    if match is None:
+        # The notification has no league, names or kickoff: discover via REST,
+        # without importing statistics/events or guessing a match's status.
+        service.sync_match_states([game_id])
+        match = Match.objects.filter(provider=Provider.NEUROKEFF, external_id=game_id).select_related("sport").first()
+    if match is None:
+        raise NeurokeffProviderError("Prematch odds game is not available in REST yet")
+    if match.sport is None or match.sport.external_id != sport_id:
+        return {"status": "skipped", "reason": "sport_mismatch"}
+    if match.sync_scope != Match.SyncScope.PREMATCH:
+        return {"status": "skipped", "reason": "not_prematch"}
+    result = _run_locked(
+        f"match-full-odds:{match.pk}",
+        lambda: service.sync_match_bookmaker_odds(
+            match, update_short=True, allow_empty_short=event_type == "prematch.odds.updated",
+        ),
+    )
+    if result.get("reason") == "already_running":
+        raise self.retry(countdown=5, max_retries=12)
+    if not result.get("short_updated"):
+        # The WS hint may beat the REST read replica; don't lose this one-shot hint.
+        match.refresh_from_db(fields=["sync_scope"])
+        if match.sync_scope == Match.SyncScope.PREMATCH:
+            raise NeurokeffProviderError("Prematch short odds are not available yet")
+    return result
+
+
+@shared_task(bind=True, autoretry_for=(NeurokeffProviderError,), retry_backoff=5, retry_kwargs={"max_retries": 3})
+def reconcile_prematch_odds(self, sport_id):
+    """No WS replay: refresh the ordinary prematch list on every connection."""
+    from game.services.odds_stream import odds_sport_ids
+
+    if type(sport_id) is not int or sport_id not in odds_sport_ids():
+        return {"status": "skipped", "reason": "invalid_sport"}
+    sport = next(s for s in settings.NEUROKEFF_SPORTS if int(s["id"]) == sport_id)
+    result = _fetch_upcoming_for_sport(sport["code"])
+    if result.get("reason") in {"already_running", "provider_error"}:
+        raise self.retry(countdown=30, max_retries=3)
+    return result
 
 
 def _sync_stuck_live():

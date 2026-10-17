@@ -170,11 +170,15 @@
     loadRealtimeNotifications(bell);
 
     skeleton?.loading(bell);
+    const notificationRevision = window.CappersNotifications?.revision();
     fetch("/notifications/summary/", { credentials: "same-origin", cache: "no-store" })
         .then((response) => response.ok ? response.json() : null)
         .then((payload) => {
             if (!payload?.ok) return;
-            setBadge(bell, payload.unread_count);
+            if (notificationRevision === window.CappersNotifications?.revision()) {
+                if (window.CappersNotifications) window.CappersNotifications.sync(payload);
+                else setBadge(bell, payload.unread_count);
+            }
             replaceHeaderAvatar(payload.avatar_url);
             replaceProfileAvatar(payload.avatar_url);
         })

@@ -110,6 +110,31 @@ def match_odds_defaults(payload: dict[str, Any]) -> dict[str, Any]:
     return defaults
 
 
+def short_match_odds_defaults(payload: Any) -> dict[str, Any] | None:
+    """Read the original short line without importing nested bookmaker markets."""
+    if not isinstance(payload, dict) or not payload:
+        return None
+    if payload.get("available") is False:
+        return _empty_defaults(payload)
+    known_keys = DIRECT_ODDS_KEYS | {alias for aliases in GROUP_ALIASES.values() for alias in aliases}
+    if not known_keys.intersection(payload) and not _extract_bookmakers(payload):
+        return None
+    short_payload = {key: payload.get(key) for key in DIRECT_ODDS_KEYS}
+    for field, aliases in GROUP_ALIASES.items():
+        values = _first_dict(payload, aliases)
+        if field in {"totals_all", "first_half_totals_all"}:
+            values = {
+                key: value for key, value in values.items()
+                if not isinstance(value, dict) or _normalize_text(key) in {
+                    "total", "totals", "ah", "asian handicap", "handicap", "handicaps",
+                }
+            }
+        short_payload[field] = values
+    defaults = _empty_defaults(payload)
+    _apply_legacy_payload(defaults, short_payload)
+    return defaults
+
+
 def has_odds_payload(payload: dict[str, Any]) -> bool:
     if not isinstance(payload, dict) or not payload:
         return False

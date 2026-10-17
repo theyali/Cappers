@@ -173,6 +173,7 @@
                 aria-pressed="{% if prediction.is_favorite %}true{% else %}false{% endif %}"
                 {% if prediction.is_own %}disabled aria-disabled="true"{% endif %}
                 title="{% if prediction.is_own %}Нельзя сохранять свой прогноз{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
+                aria-label="{% if prediction.is_own %}Нельзя сохранять свой прогноз{% elif prediction.is_favorite %}Убрать из избранного{% else %}Добавить в избранное{% endif %}"
             >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75A1.75 1.75 0 0 1 8.25 3h7.5a1.75 1.75 0 0 1 1.75 1.75v15L12 16.6l-5.5 3.15v-15Z"></path></svg>
                 <span>Сохранить</span>

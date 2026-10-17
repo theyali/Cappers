@@ -1,0 +1,13 @@
+{% if prediction_article %}
+<article class="coupon-prediction-article" aria-label="Текст прогноза">
+    {% if prediction_article.cover_url %}
+    <picture class="coupon-prediction-article-cover" data-skeleton-image>
+        <source media="(max-width: 1120px)" srcset="{{ prediction_article.mobile_cover_url }}">
+        <img src="{{ prediction_article.cover_url }}" width="640" height="400" alt="" decoding="async">
+    </picture>
+    {% endif %}
+    {% if prediction_article.description %}
+    <div class="coupon-prediction-article-text">{{ prediction_article.description|linebreaks }}</div>
+    {% endif %}
+</article>
+{% endif %}

@@ -400,7 +400,6 @@ mark { color: var(--blue); background: 0 0; }
         transform 0.24s,
         visibility 0s linear 0.24s;
 }
-.fixed-roulette,
 .fixed-tg-btn-wrapper {
     position: fixed;
     top: auto;
@@ -464,23 +463,6 @@ mark { color: var(--blue); background: 0 0; }
     text-overflow: ellipsis;
 }
 .fixed-tg-btn-wrapper { right: 24px; }
-.fixed-roulette {
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--green);
-    text-align: center;
-    left: 24px;
-    width: 72px;
-    height: 72px;
-    box-shadow:
-        rgba(0, 0, 0, 0.25) 0 54px 55px,
-        rgba(0, 0, 0, 0.12) 0 -12px 30px,
-        rgba(0, 0, 0, 0.12) 0 4px 6px,
-        rgba(0, 0, 0, 0.17) 0 12px 13px,
-        rgba(0, 0, 0, 0.09) 0 -3px 5px;
-}
 .fixed-tg-btn { display: grid; place-items: center; gap: 7px; background: #2b6eff; text-align: center; }
 .fixed-tg-icon,
 .match-card-sport-bookmaker .bookmaker-ref.is-compact {
@@ -2343,7 +2325,7 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     cursor: pointer;
 }
 .coupon-mobile-title { display: grid; justify-items: center; gap: 2px; min-width: 0; }
-.coupon-mobile-title strong { overflow: hidden; font-family: var(--font-heading); font-size: 20px; font-weight: 400; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.coupon-mobile-title h1 { min-width: 0; max-width: 100%; margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 400; line-height: 1.25; overflow-wrap: anywhere; text-align: center; }
 .coupon-mobile-state { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 12px; font-weight: 700; }
 .coupon-mobile-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .coupon-mobile-state.is-lose { color: #ff5a5a; }
@@ -9450,7 +9432,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .articles-content > * {
     min-width: 0;
 }
-.following-feed-content { align-content: start; grid-auto-rows: max-content; }
+.following-feed-content { align-content: start; grid-auto-rows: max-content; gap: 0; }
 .following-feed-content > *,
 .following-feed-content .content-view-container,
 .following-feed-content [data-content-view-root],
@@ -9514,6 +9496,22 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     display: grid;
     gap: 12px;
 }
+.predictions-sidebar-top-toggle {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+}
+.predictions-sidebar-top-toggle .matches-table-scope-copy { min-width: 0; }
+.predictions-sidebar-top-toggle b { color: var(--muted); font-size: 12px; }
+.predictions-sidebar-top-toggle:hover .matches-table-scope-copy { color: var(--yellow); }
+.predictions-sidebar-top-toggle input:focus-visible + span {
+    outline: 2px solid var(--yellow);
+    outline-offset: 3px;
+}
+.predictions-sidebar-top-toggle input:disabled + span { cursor: wait; opacity: 0.6; }
 .prediction-filter-sidebar .prediction-filters,
 .predictions-filter-sidebar .prediction-filters {
     display: grid;
@@ -9901,7 +9899,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     min-width: 0;
     display: grid;
     gap: 14px;
-    padding: 18px 18px 16px;
+    padding: 0 10px;
 }
 .following-stories-head,
 .following-stories-heading {
@@ -17230,6 +17228,16 @@ body.register {
     text-decoration: none;
 }
 .nav-notification-link:hover { color: #fff !important; transform: none !important; }
+.site-nav-actions .nav-roulette-link {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    padding: 0;
+    border-radius: 50%;
+}
+.nav-roulette-link > svg { display: block; width: 42px; height: 42px; pointer-events: none; }
+.site-nav-actions .nav-roulette-link:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 .nav-notification-link svg {
     width: 22px;
     height: 22px;
@@ -21814,7 +21822,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-back .solar-icon { width: 18px; height: 18px; flex: 0 0 18px; }
 .coupon-detail-heading { grid-column: 1 / -1; margin-bottom: 14px; }
 .coupon-detail-heading-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-.coupon-detail-heading h1 { margin: 0; font-family: var(--font-heading); font-size: 34px; font-weight: 700; line-height: 1.15; }
+.coupon-detail-heading h1 { min-width: 0; max-width: 100%; margin: 0; font-family: var(--font-heading); font-size: 34px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
 .coupon-detail-heading p { margin: 10px 0 0; color: #a5a6b1; font-size: 15px; font-weight: 600; }
 .coupon-detail-kind { color: #858692; font-size: 13px; font-weight: 600; }
 .coupon-detail-state { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; gap: 5px; padding: 9px 13px; border-radius: 9px; color: #a9baff; background: #1e2b58; font-size: 12px; font-weight: 700; white-space: nowrap; }
@@ -21822,6 +21830,28 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-state.is-win { color: #52e993; background: #123521; }
 .coupon-detail-state.is-refund { color: #f2d878; background: #39321c; }
 .coupon-detail-events { grid-column: 1; grid-row: 3; min-width: 0; }
+.coupon-prediction-article {
+    min-width: 0;
+    display: grid;
+    gap: 18px;
+    margin-bottom: 24px;
+    overflow-wrap: anywhere;
+}
+.coupon-prediction-article-cover {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 16px;
+}
+.coupon-prediction-article-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.coupon-prediction-article-text { min-width: 0; color: var(--text); font-size: 16px; line-height: 1.7; }
+.coupon-prediction-article-text p { margin: 0 0 1em; }
+.coupon-prediction-article-text p:last-child { margin-bottom: 0; }
 .coupon-detail-events-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; margin-bottom: 13px; }
 .coupon-detail-events-head h2 { margin: 0; font-family: var(--font-heading); font-size: 21px; font-weight: 700; line-height: 1.1; }
 .coupon-detail-events-head h2 span { margin-left: 6px; color: #81818c; font-family: var(--font-body); font-size: 12px; font-weight: 600; }
