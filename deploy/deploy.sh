@@ -2,8 +2,8 @@
 set -euo pipefail
 
 compose() {
-  # Include the service in the project model so --remove-orphans won't delete it.
-  # Starting it remains opt-in via DEPLOY_LIVE_WS below.
+  # Include both WS consumers so --remove-orphans won't delete them.
+  # Starting them remains opt-in via DEPLOY_LIVE_WS below.
   docker compose --profile live "$@"
 }
 
@@ -14,7 +14,8 @@ DEPLOY_RESTART_NGINX="${DEPLOY_RESTART_NGINX:-0}"
 DEPLOY_PRUNE="${DEPLOY_PRUNE:-0}"
 DEPLOY_LIVE_WS="${DEPLOY_LIVE_WS:-0}"
 
-export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cappershub}"
+# Project name comes from docker-compose.yml, just like manual compose commands.
+# An explicit COMPOSE_PROJECT_NAME in the shell/.env can still override it.
 
 if [ ! -f ".env" ]; then
   echo ".env is missing in $(pwd). Create it before deploying." >&2
@@ -38,9 +39,9 @@ if [ "${DEPLOY_RESTART_APP}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ] || [
   compose up -d --build --remove-orphans web celery celery-beat telegram-bot
 fi
 
-# Ensure the consumer is running even when this deploy does not restart the app.
+# Ensure both consumers run even when this deploy does not restart the app.
 if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
-  compose up -d --build neurokeff-live
+  compose up -d --build neurokeff-live neurokeff-odds
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then

@@ -1,0 +1,29 @@
+<div class="match-v2-odds-group">
+    <span>{{ group.title }}</span>
+    <div class="match-v2-odds-grid">
+        {% for odd in group.odds %}
+        <button
+            class="match-v2-odd odds-button"
+            type="button"
+            data-market="{{ odd.market }}"
+            data-selection="{{ odd.selection }}"
+            data-outcome-code="{{ odd.outcome_code }}"
+            data-coefficient="{{ odd.coefficient }}"
+            {% if can_write_coupon and match.sync_scope == "prematch" and odd.bettable %}
+                data-bet-option
+                data-bet-key="{{ odd.key }}"
+            {% else %}
+                disabled
+                aria-disabled="true"
+            {% endif %}
+        >
+            {% if not can_write_coupon or match.sync_scope != "prematch" or not odd.bettable %}
+            <span class="match-v2-odd-lock" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" only %}</span>
+            {% endif %}
+            <span>{{ odd.label }}</span>
+            <b>{{ odd.coefficient }}</b>
+            <small>{{ odd.description }}</small>
+        </button>
+        {% endfor %}
+    </div>
+</div>

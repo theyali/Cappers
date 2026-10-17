@@ -1,4 +1,4 @@
-# Neurokeff: live WebSocket + REST fallback
+# Neurokeff: live и prematch odds WebSocket + REST fallback
 
 Документация протокола: https://sports.api-neurokeff.ru/api/docs/websockets
 
@@ -8,7 +8,8 @@
 спорта из `NEUROKEFF_SPORTS`, либо из `NEUROKEFF_LIVE_WS_SPORTS`.
 
 REST live-задачи четырёх видов спорта остаются страховкой и запускаются раз в
-минуту. Расписания/сервисы статистики, событий и коэффициентов не изменены.
+минуту. Расписания/сервисы статистики и событий не изменены. Prematch-опрос остаётся
+раз в 10 минут; отдельный odds-канал ускоряет появление КФ и последующие изменения.
 Существующие запросы фронтенда к нашему Django также остаются: это не запросы к
 Neurokeff. WebSocket используется между нашим сервером и поставщиком.
 
@@ -37,12 +38,21 @@ REST-запроса новее времени snapshot. Дубликаты вн�
 
 ## Включение
 
+Общее имя проекта задано в `docker-compose.yml`: `cappershub`. На сервере с этим
+стеком флаг `-p cappershub` больше не нужен ни для deploy, ни для ручных команд.
+`COMPOSE_PROJECT_NAME` в окружении/`.env` может переопределить имя; для уже
+существующей локальной установки `cappers-*` используйте в локальном `.env`
+`COMPOSE_PROJECT_NAME=cappers`, не создавая второй стек.
+
 Необязательные параметры `.env` (значения URL и фильтра по умолчанию уже в коде):
 
 ```dotenv
 NEUROKEFF_LIVE_WS_URL=wss://sports.api-neurokeff.ru/ws/v1/live/
 # Только разрешённые подпиской PK; пусто = NEUROKEFF_SPORTS.
 NEUROKEFF_LIVE_WS_SPORTS=
+NEUROKEFF_ODDS_WS_URL=wss://sports.api-neurokeff.ru/ws/v1/odds/
+# Независимый фильтр, пусто = NEUROKEFF_SPORTS.
+NEUROKEFF_ODDS_WS_SPORTS=
 ```
 
 Сначала собрать образы, применить миграции и перезапустить обычные worker/beat:
@@ -52,20 +62,37 @@ docker compose build
 docker compose run --rm migrate
 docker compose up -d web celery celery-beat
 docker compose exec -T web python manage.py run_neurokeff_live --check
-docker compose --profile live up -d --build neurokeff-live
-docker compose --profile live logs --tail=50 -f neurokeff-live
+docker compose exec -T web python manage.py run_neurokeff_odds --check
+docker compose --profile live up -d --build neurokeff-live neurokeff-odds
+docker compose --profile live logs --tail=50 -f neurokeff-live neurokeff-odds
 ```
 
-`--check` проверяет подключение и схему первого snapshot **без записей в БД**.
+`run_neurokeff_live --check` проверяет подключение и схему первого snapshot
+**без записей в БД**. `run_neurokeff_odds --check` проверяет handshake и protocol
+pong без очередей и записей: availability-канал начального snapshot не отправляет.
 Нужен активный Celery worker: обнаруженные неизвестные матчи и пропуски snapshot
 сверяются точечными запросами `games/info`, без синхронизации stats/events/odds.
 Для деплоя штатным скриптом: `DEPLOY_LIVE_WS=1 bash deploy/deploy.sh`.
 GitHub Actions передаёт `DEPLOY_LIVE_WS=1` на сервер автоматически: каждый деплой
-запускает или обновляет `neurokeff-live`, даже если остальные контейнеры приложения
+запускает или обновляет `neurokeff-live` и `neurokeff-odds`, даже если остальные контейнеры приложения
 не требуют перезапуска. Для флага не нужны GitHub Secrets и запись в серверном `.env`:
 это переменная окружения deploy-скрипта, а не настройка Django.
-Остановка только потока: `docker compose --profile live stop neurokeff-live`.
+Остановка одного потока: `docker compose --profile live stop neurokeff-odds`
+(или `neurokeff-live` для состояния матчей).
 Следующий деплой через GitHub Actions снова запустит остановленный поток.
+
+После создания контейнеров можно использовать обычные команды:
+
+```sh
+docker compose restart web celery celery-beat
+docker compose restart neurokeff-live neurokeff-odds
+docker compose logs --tail=50 -f neurokeff-odds
+```
+
+`restart` не создаёт отсутствующий `neurokeff-odds`. Первый запуск только нового
+consumer при уже работающих зависимостях: `docker compose up -d --no-deps --build neurokeff-odds`.
+Явное указание этого сервиса автоматически активирует его профиль. При изменении
+`.env`/Compose нужен `up -d --force-recreate`, а не только `restart`.
 
 Перезапуск beat загружает минутное расписание из settings. Если в админке Celery
 созданы дополнительные live-задачи с другими именами, их нужно отдельно отключить
@@ -100,3 +127,72 @@ WebSocket не является источником истины поверх �
 Если сам Neurokeff продолжает отдавать статус `1`, завершение не выдумывается по
 давности матча или последнему событию. Уже застрявшие записи сверяются через
 snapshot и существующую задачу `sync_stuck_live_matches`.
+
+## Появление и обновление prematch-коэффициентов
+
+✅ Отдельный процесс `run_neurokeff_odds` подписывается на `/ws/v1/odds/` с тем же
+серверным token. Рабочие сигналы — `prematch.odds.available` и `prematch.odds.updated` с
+`game_pk`, `sport_pk`, `bookmaker_pk`, `phase=prematch`, `occurred_at`, UUID `event_id`.
+`available` сообщает первое появление, `updated` — изменение цен, рынков, блокировок,
+короткой линии или состава БК. `changed` — информационный список полей, не patch:
+оба сигнала вызывают полную REST-загрузку, а не частичное применение WS-данных.
+У `updated` допускается пустой `bookmaker_pk`, если БК больше нет.
+Значения PK, фаза, timestamp и спорт проверяются. Событие не содержит цены и
+не изменяет счёт, время, статус, события или статистику существующего матча.
+
+`bookmaker_pk` не ограничивает загружаемую линию.
+Celery-задача `refresh_prematch_match_odds` получает полный REST-ответ через уже
+используемый в проекте `/api/v2/games/odds?game_id=…`. Это v2-представление линии,
+которую документация WS также предлагает получать через `/api/v1/games/{pk}/odds/`.
+В одном запросе доступны отдельный блок `short` и линии БК. Короткие КФ сохраняются
+только из `short`, БК — в `MatchOddsSnapshot`/`MatchBookmakerOdds`, без смешивания.
+Обычное обновление сравнения по-прежнему не перезаписывает короткую линию.
+При `updated` пустая или явно недоступная короткая линия убирает прежние КФ;
+`available` при ещё не готовом `short` сохраняет прежнюю линию и повторяет REST.
+`suspended` сохраняется в полных рынках и исключается из сравнения. Для короткой
+линии REST должен возвращать `null` для снятых/заблокированных shortcuts либо
+`short.available=false` для всей недоступной линии: цены разных БК в неё не смешиваются.
+
+Нет локального матча — сначала точечная загрузка `games/info` для метаданных.
+Неизвестный матч не создаётся из неполного WS-сигнала. Если он уже live/завершён,
+запоздалое событие prematch пропускается. Повторная проверка под блокировкой не
+позволяет восстановить prematch-КФ после перехода в live во время REST-запроса.
+Снимок, начатый/обновлённый раньше сохранённого, не откатывает линию; более поздний
+обычный REST refresh также защищён от уже выполняющегося availability-запроса.
+В `MatchOdds.raw_data._cappers_odds_observed_at` сохраняется начало принятого
+REST-запроса. Обычный polling, начавшийся раньше новой WS-загрузки, не может
+вернуть прежние цены или восстановить уже снятую линию поздним ответом.
+
+UUID события дедуплицируется на сутки **после** успешной публикации задачи.
+Разные UUID одной игры не объединяются на 60 секунд: каждое изменение ставит
+REST-задачу, даже если предыдущая ещё выполняется. Общая блокировка сериализует
+точечные HTTP-запросы; занятая задача повторяется, не теряя более поздний сигнал.
+При ошибке публикации в Celery сигнал не помечается обработанным, соединение
+пересоздаётся. REST-ошибка или ещё не готовая короткая линия повторяется до трёх раз
+с backoff. Блокировка точечного REST-запроса общая с обновлением сравнения; при
+занятом lock задача повторяется, а не теряет одноразовый сигнал.
+
+У odds-канала собственный Redis lease, reconnect до 30 секунд и protocol ping/pong.
+Его тишина нормальна: правило live-канала «90 секунд без состояния» здесь не применяется.
+После первого подключения и каждого reconnect в Celery ставится стандартная REST
+prematch-синхронизация выбранных видов спорта. Reconnect-шторм объединяет эти задачи
+на 60 секунд; штатный 10-минутный опрос сохраняется независимо от WS.
+
+🟡 Наличие кода и успешный `--check` не подтверждает работу нового daemon на production.
+После деплоя проверьте `neurokeff-odds`, регистрацию новых задач в перезапущенном
+Celery worker и лог `Prematch odds REST refresh queued: game_pk=…`.
+
+### Контракт публикации на стороне API
+
+- По обновлённому контракту API сигналы публикуются после commit и готовности REST
+  `prematch`/`short` через transactional outbox; доставка at least once сохраняет
+  тот же `event_id`. Обработчик не использует UUID как номер версии линии.
+- По сообщению владельца API отправка outbox проверяется раз в 5 секунд, порядок
+  одной игры сохраняется; изменение только времени опроса не создаёт `updated`.
+  Это не обещание нулевой задержки: добавляются доставка, очередь Celery и REST.
+- Хранение доставленных outbox-записей на стороне API не означает WS replay.
+  Сверка после reconnect и периодический polling остаются обязательными.
+- Для short-блокировок контракт REST должен исключать непригодные значения, как
+  описано выше. По одному положительному числу нельзя определить `suspended`.
+- Опциональное будущее улучшение — `odds_updated_at`/монотонная версия линии и
+  REST-запрос изменений с cursor; текущая интеграция этого не требует.

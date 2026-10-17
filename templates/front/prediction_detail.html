@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 {% load capper_trust static site_extras prediction_reactions %}
 
-{% block title %}{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Купон{% endif %} #{{ coupon.id }} — КапперХаб{% endblock %}
+{% block title %}{{ prediction_title }} — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="coupon-detail-layout-page container" aria-label="Купон #{{ coupon.id }}">
+<section class="coupon-detail-layout-page container" aria-label="{{ prediction_title }}">
   <div class="coupon-detail-content">
     <section class="coupon-detail-page" aria-label="Подробности купона #{{ coupon.id }}">
       {% include "front/includes/_coupon_detail_mobile.html" %}
       <a class="coupon-detail-back" href="{% url 'front:predictions' %}">{% include "front/includes/_solar_icon.html" with name="coupon_arrow_left_linear" %}Вернуться в ленту</a>
       <header class="coupon-detail-heading">
         <div class="coupon-detail-heading-top">
-          <h1>Купон #{{ coupon.id }}</h1>
+          <h1>{{ prediction_title }}</h1>
           <span class="coupon-detail-state is-{{ coupon.state_status }}">{% if coupon.state_status == 'win' %}✓ Выигрыш{% elif coupon.state_status == 'lose' %}× Проигрыш{% elif coupon.state_status == 'refund' %}↩ Возврат{% else %}◷ Ожидает{% endif %}</span>
           <span class="coupon-detail-kind">{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Ординар{% endif %}</span>
         </div>
-        <p>{{ coupon.headline|default:"Топовые матчи. Выверенная аналитика. Уверенная игра." }}</p>
+        {% if not prediction_article and not coupon.headline %}<p>Топовые матчи. Выверенная аналитика. Уверенная игра.</p>{% endif %}
       </header>
       <section class="coupon-detail-events" data-coupon-slider aria-labelledby="coupon-detail-events-title">
+        {% include "front/includes/_prediction_article.html" %}
         <div class="coupon-detail-events-head">
           <h2 id="coupon-detail-events-title">События <span>{{ positions|length }}</span></h2>
           {% if positions|length > 1 %}

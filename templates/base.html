@@ -44,25 +44,6 @@
         </ul>
     {% endif %}
 
-    {% if request.resolver_match.app_name != 'cabinet' and not is_telegram_app and not hide_site_chrome %}
-        <a
-            href="{% url 'cabinet:bonuses' %}"
-            class="fixed-roulette"
-            aria-label="Ежедневная рулетка{% if roulette_available_spins %}. Доступно попыток: {{ roulette_available_spins }}{% endif %}"
-            data-fixed-roulette
-            data-roulette-available-spins="{{ roulette_available_spins|default:0 }}"
-        >
-            <svg width="100%" height="72" pointer-events="none" focusable="false" aria-hidden="true">
-                <g transform="translate(0 0) scale(.06)" pointer-events="all">
-                    {% include "front/svgs/roulette.svg" %}
-                </g>
-            </svg>
-            {% if roulette_available_spins %}
-                <span class="nav-notification-badge" data-roulette-badge>{{ roulette_available_spins }}</span>
-            {% endif %}
-        </a>
-    {% endif %}
-
     {% if request.website_settings.fixed_tg_enable and request.website_settings.fixed_tg_link and not is_telegram_app and not hide_site_chrome %}
         <div class="fixed-tg-btn-wrapper">
             <a href="{{ request.website_settings.fixed_tg_link }}"
@@ -174,6 +155,10 @@
 
     <script src="{% static 'front/js/skeleton.js' %}" defer></script>
     <script src="{% static 'front/js/fixed-roulette.js' %}" defer></script>
+    {% if request.user.is_authenticated %}
+    {{ notification_section_visit|json_script:"notification-section-visit" }}
+    <script src="{% static 'notifications/js/realtime.js' %}" data-notification-realtime-script defer></script>
+    {% endif %}
     <script src="{% static 'front/js/profile-menu.js' %}" defer></script>
     {% if request.resolver_match.view_name == 'cabinet:profile' %}
     <script src="{% static 'front/js/profile-layout.js' %}" defer></script>

@@ -1,3 +1,102 @@
+// Shared section visits also run in the Mini App, without a desktop bell/menu.
+(() => {
+    const configNode = document.getElementById("notification-section-visit");
+    if (!configNode) return;
+    const config = JSON.parse(configNode.textContent || "null");
+    if (!config) return;
+
+    let revision = 0;
+    let queue = Promise.resolve();
+    const pending = new Map();
+    let currentSection = config.section || "";
+    if (config.profile_sections.length) {
+        const activeTab = document.querySelector("[data-profile-tab-panel].is-active")?.dataset.profileTabPanel;
+        currentSection = config.profile_sections.includes(activeTab) ? activeTab : "";
+    }
+    let needsRead = Boolean(currentSection);
+
+    const sync = (payload = {}) => {
+        if (payload.section_badges) {
+            document.querySelectorAll("[data-notification-section-badge]").forEach((dot) => {
+                dot.classList.toggle("is-empty", !payload.section_badges[dot.dataset.notificationSectionBadge]);
+            });
+            document.querySelectorAll("[data-notification-any-section]").forEach((dot) => {
+                dot.classList.toggle("is-empty", !Object.values(payload.section_badges).some(Boolean));
+            });
+        }
+        if (Object.prototype.hasOwnProperty.call(payload, "unread_count")) {
+            const count = Math.max(0, Number.parseInt(payload.unread_count, 10) || 0);
+            document.querySelectorAll("[data-notification-badge]").forEach((badge) => {
+                badge.textContent = count > 99 ? "99+" : String(count);
+                badge.classList.toggle("is-empty", count === 0);
+            });
+            document.querySelectorAll("[data-notification-nav]").forEach((nav) => {
+                nav.setAttribute("aria-label", count ? `Уведомления, непрочитанных: ${count}` : "Уведомления");
+            });
+        }
+    };
+
+    const markSectionRead = (section) => {
+        const url = config.urls?.[section];
+        if (!url) return Promise.resolve(false);
+        if (pending.has(section)) return pending.get(section);
+        const task = queue.then(async () => {
+            revision += 1;
+            try {
+                const token = document.cookie.split(";").map((item) => item.trim()).find((item) => item.startsWith("csrftoken="));
+                const response = await fetch(url, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": token ? decodeURIComponent(token.slice("csrftoken=".length)) : "",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                });
+                const payload = await response.json().catch(() => null);
+                return response.ok && payload?.ok ? payload : null;
+            } catch (error) {
+                return null;
+            } finally {
+                revision += 1;
+            }
+        }).then((payload) => {
+            if (!payload) return false;
+            sync(payload);
+            window.dispatchEvent(new Event("cappers:notifications-changed"));
+            return true;
+        }).finally(() => pending.delete(section));
+        pending.set(section, task);
+        queue = task.catch(() => false);
+        return task;
+    };
+
+    const readCurrentSection = () => {
+        if (!needsRead || document.hidden) return;
+        const section = currentSection;
+        needsRead = false;
+        markSectionRead(section).then((ok) => {
+            if (!ok && currentSection === section) needsRead = true;
+        });
+    };
+
+    window.CappersNotifications = { sync, markSectionRead, revision: () => revision };
+    window.addEventListener("profile:tab-activated", (event) => {
+        const tab = event.detail?.tab || "";
+        currentSection = config.profile_sections.includes(tab) ? tab : "";
+        needsRead = Boolean(currentSection);
+        readCurrentSection();
+    });
+    document.addEventListener("visibilitychange", readCurrentSection);
+    window.addEventListener("online", readCurrentSection);
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            needsRead = Boolean(currentSection);
+            readCurrentSection();
+        }
+    });
+    readCurrentSection();
+})();
+
 (() => {
     const nav = document.querySelector("[data-notification-nav]");
     if (!nav) return;
@@ -173,6 +272,7 @@
         if (inFlight) return;
         inFlight = true;
         if (immediate) window.clearTimeout(timer);
+        const revision = window.CappersNotifications?.revision();
 
         try {
             const url = new URL(summaryUrl, window.location.origin);
@@ -195,8 +295,14 @@
             const data = await response.json();
             if (!data || !data.ok) return;
 
-            setBadge(data.unread_count);
-            setSectionBadges(data.section_badges || {});
+            // A summary started before a read must not bring an old dot back.
+            if (revision === window.CappersNotifications?.revision()) {
+                if (window.CappersNotifications) window.CappersNotifications.sync(data);
+                else {
+                    setBadge(data.unread_count);
+                    setSectionBadges(data.section_badges || {});
+                }
+            }
 
             const serverLatestId = Number.parseInt(data.latest_id, 10) || 0;
             if (cursorId !== null && serverLatestId < cursorId) {

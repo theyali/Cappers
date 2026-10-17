@@ -37,7 +37,7 @@ from cabinet.paid_predictions import user_can_view_paid_predictions
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.cover_images import active_cover_ids
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage, Sport
-from game.services.bet_options import pick_label, picked_side
+from game.services.bet_options import compact_pick_label, pick_label, picked_side
 
 from .expert_ranking import ranked_expert_profiles
 from .metrics import (
@@ -226,6 +226,7 @@ def _prediction_card(coupon: PredictionCoupon):
         coupon=coupon,
         match=item.match,
         market=market,
+        bet_label=market if count > 1 else compact_pick_label(item),
         selection=selection,
         coefficient=combined_coefficient,
         state_status=coupon.state_status,
@@ -918,7 +919,7 @@ def prediction_detail(request, prediction_id: int):
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
         )
-        .select_related("author", "author__analyst_profile", "metrics")
+        .select_related("author", "author__analyst_profile", "metrics", "cover_image")
         .prefetch_related(
             Prefetch("predictions", queryset=_positions_queryset(), to_attr="detail_positions")
         )
@@ -975,6 +976,18 @@ def prediction_detail(request, prediction_id: int):
     coupon.comments_count = metrics.comments_count
     coupon.views_count = metrics.views_count
     coupon.shares_count = metrics.shares_count
+    prediction_article = None
+    if coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH or coupon.description:
+        cover = coupon.cover_image
+        custom_cover_url = _cover_url_from_field(coupon.custom_cover_image)
+        desktop_cover_url = custom_cover_url or _cover_url_from_field(cover.image if cover else None)
+        mobile_cover_url = custom_cover_url or _cover_url_from_field(cover.mobile_image if cover else None)
+        if coupon.description or desktop_cover_url or mobile_cover_url:
+            prediction_article = {
+                "description": coupon.description,
+                "cover_url": desktop_cover_url or mobile_cover_url,
+                "mobile_cover_url": mobile_cover_url or desktop_cover_url,
+            }
     positions = list(getattr(coupon, "detail_positions", []) or [])
     for position in positions:
         cover = position.cover_image if position.cover_image_id else None
@@ -1075,6 +1088,8 @@ def prediction_detail(request, prediction_id: int):
             "page_class": "coupon-detail-body",
             "breadcrumbs": [],
             "coupon": coupon,
+            "prediction_title": coupon.headline.strip() or f"Купон #{coupon.id}",
+            "prediction_article": prediction_article,
             "positions": positions,
             "total_coefficient": total_coefficient,
             "expert_name": expert_name,

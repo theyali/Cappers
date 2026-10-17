@@ -78,8 +78,8 @@
             </div>
         </div>
 
-        <a class="feed-prediction-bet" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Ставка {{ prediction.market }} с коэффициентом {{ prediction.coefficient|floatformat:2 }}">
-            <span>{{ prediction.market }}</span>
+        <a class="feed-prediction-bet" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Ставка {{ prediction.bet_label }} с коэффициентом {{ prediction.coefficient|floatformat:2 }}">
+            <span>{{ prediction.bet_label }}</span>
             <strong>{{ prediction.coefficient|floatformat:2 }}</strong>
         </a>
     </div>

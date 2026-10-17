@@ -189,6 +189,10 @@
                 document.dispatchEvent(new CustomEvent("predictions:updated"));
                 initPredictionsLazy($nextLayout.get(0));
 
+                if (options.focusTopExperts) {
+                    $nextLayout.find("[data-top-experts-tab]").get(0)?.focus({ preventScroll: true });
+                }
+
                 if (options.preserveScroll) {
                     window.requestAnimationFrame(() => {
                         window.scrollTo({ top: preservedScrollY, left: window.scrollX, behavior: "auto" });
@@ -414,6 +418,11 @@
 
     $(document).on("change", "[data-prediction-sort]", function () {
         loadPredictions(sortUrl(this.value), { sortChange: true });
+    });
+
+    $(document).on("change", "[data-prediction-filter-url]", function () {
+        this.disabled = true;
+        loadPredictions(this.dataset.predictionFilterUrl, { focusTopExperts: true, preserveScroll: true });
     });
 
     $(document).on(
