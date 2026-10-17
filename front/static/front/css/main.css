@@ -2402,6 +2402,9 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .expert-mobile-tabs,
 .expert-mobile-feed { display: none; }
 .expert-mobile { order: 12; min-width: 0; }
+.expert-mobile--user { order: 0; }
+.expert-mobile--user .expert-mobile-card { margin-top: 0; }
+.expert-mobile--user .expert-mobile-stats { grid-template-columns: minmax(0, 1fr); }
 .expert-mobile-bar { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 10px; }
 .expert-mobile-icon {
     width: 36px;
@@ -2458,7 +2461,7 @@ html.is-roulette-sheet-open body { overflow: hidden; }
 .expert-mobile-presence::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
 .expert-mobile-presence.is-online::before { background: #4ade80; }
 .expert-mobile-name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; max-width: calc(100% - var(--expert-mobile-avatar-clearance)); min-width: 0; margin-top: 10px; }
-.expert-mobile-name { min-width: 0; max-width: 100%; font-family: var(--font-heading); font-size: 23px; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
+.expert-mobile-name { min-width: 0; max-width: 100%; margin: 0; font-family: var(--font-heading); font-size: 23px; font-weight: 400; line-height: 1.15; overflow-wrap: anywhere; }
 .expert-mobile-username { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; max-width: calc(100% - var(--expert-mobile-avatar-clearance)); min-width: 0; margin-top: 8px; color: rgba(255, 255, 255, 0.78); font-size: 13px; font-weight: 600; }
 .expert-mobile-username-copy { min-width: 0; overflow-wrap: anywhere; }
 .expert-mobile-username .capper-verified-badge,
@@ -12200,10 +12203,6 @@ body.register footer {
     overflow: hidden;
     border-radius: 22px;
     background-color: #171718;
-    background-image: url("../img/public_hero/publ_5.png");
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
 }
 .profile-hero.tournament-detail-hero { position: relative; display: block; padding: 20px; overflow: hidden; }
 .profile-page .profile-identity { min-width: 0; max-width: 650px; display: flex; gap: 20px; }
@@ -26877,8 +26876,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1.55;
 }
 .site-footer-copyright { margin-top: 5px !important; color: #b6b6b8 !important; }
-.profile-page .profile-hero { position: relative; overflow: hidden; }
-.profile-page .profile-hero:has(.profile-hero-cover) { background-image: none; }
 .profile-page .profile-hero > :not(.profile-hero-cover) { position: relative; z-index: 2; }
 .profile-page .profile-hero > .profile-hero-cover {
     position: absolute;

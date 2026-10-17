@@ -15,6 +15,14 @@
 
         <div class="predictions-content">
             <section class="expert-public-page" aria-label="Публичный профиль пользователя">
+                <div class="expert-mobile expert-mobile--user">
+                    {% include "cabinet/includes/_public_profile_mobile_card.html" with public_user=profile_user public_name=display_name public_initials=initials public_is_capper=False %}
+                    {% if is_self %}
+                    <div class="expert-mobile-actions">
+                        <a class="expert-mobile-follow" href="{% url 'cabinet:profile' %}">Мой кабинет</a>
+                    </div>
+                    {% endif %}
+                </div>
                 <section class="expert-public-hero expert-public-hero--user" aria-label="{{ display_name }}">
                     {% include "cabinet/includes/_public_profile_hero_art.html" %}
                     <div class="expert-public-hero-content">

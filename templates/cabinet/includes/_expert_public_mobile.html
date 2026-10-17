@@ -1,4 +1,4 @@
-{% load capper_trust static %}
+{% load static %}
 {# Profile top for phones and the Telegram Mini App; the wide hero, stat cards and old tab bar are hidden there. #}
 {% url 'front:cappers_table' as cappers_url %}
 <div class="expert-mobile" data-expert-mobile data-follow-card>
@@ -12,36 +12,7 @@
         </button>
     </header>
 
-    <section class="expert-mobile-card" data-expert-mobile-card aria-label="Каппер {{ expert_name }}">
-        <img class="expert-mobile-card-bg" src="{% static 'front/img/profile_default_cover.png' %}" alt="" width="1050" height="900" decoding="async">
-        <span class="expert-mobile-avatar">
-            {% if expert.avatar %}
-                <img src="{{ expert.avatar.url }}" alt="" width="190" height="190" decoding="async">
-            {% else %}
-                {{ expert_initials }}
-            {% endif %}
-            {% capper_trust_badge analyst_profile.trust_index %}
-        </span>
-        <p class="expert-mobile-kicker">Эксперт КапперХаб</p>
-        {% if profile_presence %}
-        <span class="expert-mobile-presence{% if profile_presence.is_online %} is-online{% endif %}">
-            {% if profile_presence.is_online %}В сети{% else %}{{ profile_presence.label }}{% endif %}
-        </span>
-        {% endif %}
-        <div class="expert-mobile-name-row">
-            <strong class="expert-mobile-name">{{ expert_name }}</strong>
-            {% include "front/includes/_expert_leader_badges.html" with leader_badges=leader_badges variant="profile" more_count=leader_badges_more_count only %}
-        </div>
-        <span class="expert-mobile-username">
-            <span class="expert-mobile-username-copy">@{{ expert.username }}</span>
-            {% if analyst_profile.is_verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}
-        </span>
-        <span class="expert-mobile-stats">
-            <span><b data-followers-count>{{ followers_count }}</b>подписчиков</span>
-            <span class="is-accent"><b>{{ win_rate|floatformat:1 }}%</b>проходимость</span>
-            <span><b>{{ predictions_count }}</b>прогнозов</span>
-        </span>
-    </section>
+    {% include "cabinet/includes/_public_profile_mobile_card.html" with public_user=expert public_name=expert_name public_initials=expert_initials public_is_capper=True %}
 
     <div class="expert-mobile-actions">
         {% include "cabinet/includes/_expert_follow_button.html" with follow_class="expert-mobile-follow" %}

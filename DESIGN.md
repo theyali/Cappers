@@ -164,10 +164,15 @@ API `notifications:mark_section_read`. Гасится только посещё�
 в том числе через front/svgs/comment.svg: без заливки, со скруглёнными соединениями
 и явной толщиной контура.
 Дополнительный public-presence-status в карточках и под именем профиля не выводится.
-Hero обычного пользователя переиспользует структуру expert-public-hero и общий фон
-_public_profile_hero_art.html. На ПК текст слева и аватар справа; на mobile/tablet
-аватар над текстом. Hero пользователя не скрывается вместе с десктопным hero эксперта.
-Высота пользовательского hero определяется содержимым; показатели активности ниже сохранены.
+В личном кабинете всех ролей `.profile-hero-cover` использует
+`front/img/profile_default_cover.png`; CSS-фон стадиона не применяется.
+Публичные desktop-профили пользователей и капперов используют `expert-public-hero`
+с общим SVG `expert-public-hero-art` из `_public_profile_hero_art.html`.
+На mobile/tablet до 1120 px оба типа профиля используют общий компонент
+`_public_profile_mobile_card.html`: `.expert-mobile-card .expert-mobile-card-bg`
+с той же PNG-обложкой. Десктопный hero в этом диапазоне скрыт; мобильный скрыт на ПК.
+Высота карточки определяется содержимым. Читатель сохраняет собственные достижения,
+активность и переход в кабинет; показатели каппера, trust и лидерские знаки ему не добавляются.
 
 Лидерские знаки используют SVG-геометрию из BG1/BG2 через общий
 _expert_leader_badges.html и presentation tag leader_badges_display (без запросов к БД).
