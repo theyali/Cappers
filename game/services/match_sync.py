@@ -312,19 +312,22 @@ class MatchSyncService:
         scopes: dict[str, int] = {}
         now = timezone.now()
 
-        with transaction.atomic():
-            for candidate in matches:
-                match = Match.objects.select_for_update().get(pk=candidate.pk)
-                payload = payload_by_id.get(match.external_id)
-                if payload is None:
-                    missing += 1
-                    continue
+        for candidate in matches:
+            payload = payload_by_id.get(candidate.external_id)
+            if payload is None:
+                missing += 1
+                continue
 
-                scope = self._scope_from_payload(payload, default=Match.SyncScope.LIVE)
-                defaults = {
-                    **self._match_defaults(payload, scope, sport_fallback=match.sport),
-                    "last_seen_at": now,
-                }
+            scope = self._scope_from_payload(payload, default=Match.SyncScope.LIVE)
+            # Reference rows commit before the match lock, just like ordinary
+            # polling. Never hold one match while acquiring countries/teams or
+            # another match: those inverted locks caused production deadlocks.
+            defaults = {
+                **self._match_defaults(payload, scope, sport_fallback=candidate.sport),
+                "last_seen_at": now,
+            }
+            with transaction.atomic():
+                match = Match.objects.select_for_update().get(pk=candidate.pk)
                 defaults = self._ordered_live_defaults(match, defaults, observed_at)
                 for field, value in defaults.items():
                     setattr(match, field, value)
@@ -346,7 +349,6 @@ class MatchSyncService:
         logger.info("Stuck live match sync completed: %s", result)
         return result
 
-    @transaction.atomic
     def _sync_scope(
         self,
         scope: str,
@@ -380,22 +382,26 @@ class MatchSyncService:
             if state_only:
                 defaults["raw_data"] = {key: value for key, value in payload.items()
                                         if key in self.LIVE_RAW_KEYS | {"id", "sport_id", "_sport_meta", "teams", "league", "venue", "game_date_time"}}
-            match, was_created = Match.objects.select_for_update().get_or_create(
-                provider=Provider.NEUROKEFF,
-                external_id=external_id,
-                defaults={**defaults, "live_state_updated_at": observed_at},
-            )
-            if not was_created:
-                if state_only:
-                    defaults["raw_data"] = {**(match.raw_data or {}), **{key: value for key, value in defaults["raw_data"].items() if key in self.LIVE_RAW_KEYS}}
-                defaults = self._ordered_live_defaults(match, defaults, observed_at)
-                for field, value in defaults.items():
-                    setattr(match, field, value)
-                match.save(update_fields=[*defaults, "updated_at"])
-            if not state_only:
-                self._sync_odds(match, payload.get("odds") or {}, observed_at=observed_at)
-                self._sync_embedded_statistics(match, payload)
-                self._sync_embedded_events(match, payload)
+            # Commit reference updates independently; keep only this match and
+            # its addons atomic. A whole-list transaction locks shared reference
+            # rows in provider order across different sports and sync scopes.
+            with transaction.atomic():
+                match, was_created = Match.objects.select_for_update().get_or_create(
+                    provider=Provider.NEUROKEFF,
+                    external_id=external_id,
+                    defaults={**defaults, "live_state_updated_at": observed_at},
+                )
+                if not was_created:
+                    if state_only:
+                        defaults["raw_data"] = {**(match.raw_data or {}), **{key: value for key, value in defaults["raw_data"].items() if key in self.LIVE_RAW_KEYS}}
+                    defaults = self._ordered_live_defaults(match, defaults, observed_at)
+                    for field, value in defaults.items():
+                        setattr(match, field, value)
+                    match.save(update_fields=[*defaults, "updated_at"])
+                if not state_only:
+                    self._sync_odds(match, payload.get("odds") or {}, observed_at=observed_at)
+                    self._sync_embedded_statistics(match, payload)
+                    self._sync_embedded_events(match, payload)
             scopes[match.sync_scope] = scopes.get(match.sync_scope, 0) + 1
             if was_created:
                 created += 1
@@ -1422,14 +1428,28 @@ class MatchSyncService:
             locked_match = Match.objects.select_for_update().get(pk=match.pk)
             for scope, block, available, updated_at, entries in prepared:
                 snapshot = MatchOddsSnapshot.objects.filter(match=match, scope=scope).first()
+                preserve_archive = (
+                    scope == "prematch" and snapshot and snapshot.bookmakers.exists()
+                    and (locked_match.sync_scope != Match.SyncScope.PREMATCH
+                         or (locked_match.starts_at and locked_match.starts_at <= requested_at))
+                    and (not available or not entries)
+                )
                 if snapshot and (
                     snapshot.requested_at > requested_at
-                    or (snapshot.provider_updated_at and (
+                    or (not preserve_archive and snapshot.provider_updated_at and (
                         (updated_at is None and not (allow_empty_short and scope == "prematch" and not available))
                         or (updated_at is not None and updated_at < snapshot.provider_updated_at)
                     ))
                 ):
                     result["scopes"][scope] = {"status": "skipped", "reason": "older_response"}
+                    continue
+                if preserve_archive:
+                    # Withdrawal at kickoff must not erase the last saved slice.
+                    # Record the final check, retaining the actual line timestamp.
+                    snapshot.requested_at = requested_at
+                    snapshot.fetched_at = timezone.now()
+                    snapshot.save(update_fields=["requested_at", "fetched_at"])
+                    result["scopes"][scope] = {"status": "skipped", "reason": "prematch_archive"}
                     continue
                 snapshot, _ = MatchOddsSnapshot.objects.update_or_create(
                     match=match, scope=scope,

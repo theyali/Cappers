@@ -80,6 +80,39 @@ class LoginLimitTests(TestCase):
             self.client.logout()
             self.assertEqual(self._login("safe-test-password").status_code, 302)
 
+    def test_guest_can_still_open_login_form(self):
+        response = self.client.get(reverse("cabinet:login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="username"')
+
+    def test_signed_in_users_skip_login_on_get_and_post(self):
+        for role in (User.Role.READER, User.Role.ANALYST):
+            self.user.role = role
+            self.user.save(update_fields=["role"])
+            self.client.force_login(self.user)
+            for method in (self.client.get, self.client.post):
+                with self.subTest(role=role, method=method.__name__):
+                    response = method(reverse("cabinet:login"))
+                    self.assertRedirects(response, reverse("cabinet:dashboard"), fetch_redirect_response=False)
+                    self.assertEqual(self.client.session["_auth_user_id"], str(self.user.pk))
+
+    def test_signed_in_user_keeps_safe_next_destination(self):
+        self.client.force_login(self.user)
+        destination = reverse("cabinet:profile") + "?tab=settings"
+        response = self.client.get(reverse("cabinet:login"), {"next": destination})
+        self.assertRedirects(response, destination, fetch_redirect_response=False)
+
+    def test_unsafe_and_self_referencing_next_fall_back_to_cabinet(self):
+        self.client.force_login(self.user)
+        for destination in (
+            "https://evil.example/", "//evil.example/", reverse("cabinet:login"),
+            reverse("cabinet:login") + "?next=/", "http://testserver/cabinet/login/",
+            reverse("cabinet:login").rstrip("/"),
+        ):
+            with self.subTest(next=destination):
+                response = self.client.get(reverse("cabinet:login"), {"next": destination})
+                self.assertRedirects(response, reverse("cabinet:dashboard"), fetch_redirect_response=False)
+
 
 class PasswordResetLimitTests(TestCase):
     def test_reset_emails_are_limited_per_account(self):

@@ -1,7 +1,9 @@
 import json
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone as datetime_timezone
 from threading import Barrier
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
@@ -93,6 +95,37 @@ class RouletteApiTests(TestCase):
         self.assertIn("current_days", payload["streak"])
         self.assertIn("progress_percent", payload["level_progress"])
         self.assertIsInstance(payload["recent_gifts"], list)
+
+    def test_state_reports_24_hour_cooldown_instead_of_old_midnight_reset(self):
+        RouletteSettings.objects.filter(pk=1).update(daily_free_spins=1)
+        spun_at = datetime(2026, 10, 17, 16, tzinfo=datetime_timezone.utc)  # 20:00 Baku.
+        UserRouletteState.objects.create(
+            user=self.user, available_spins=0, last_spin_at=spun_at,
+            last_daily_grant_at=spun_at - timedelta(hours=20),
+            next_spin_at=spun_at + timedelta(hours=4),
+        )
+        with patch("django.utils.timezone.now", return_value=spun_at + timedelta(hours=4)):
+            payload = self.client.get(reverse("cabinet:roulette_state")).json()
+        self.assertEqual(payload["available_spins"], 0)
+        self.assertEqual(datetime.fromisoformat(payload["next_spin_at"]), spun_at + timedelta(hours=24))
+
+    def test_retry_of_old_operation_returns_current_cooldown_without_another_spin(self):
+        RouletteSettings.objects.filter(pk=1).update(daily_free_spins=1)
+        self.create_prize(reward_type=RoulettePrize.RewardType.NOTHING, reward_value=0)
+        UserRouletteState.objects.create(user=self.user, available_spins=2)
+        first_id, second_id = uuid.uuid4(), uuid.uuid4()
+        now = datetime(2026, 10, 17, 16, tzinfo=datetime_timezone.utc)
+        with patch("django.utils.timezone.now", return_value=now):
+            first = self.post_spin(first_id)
+        with patch("django.utils.timezone.now", return_value=now + timedelta(hours=1)):
+            second = self.post_spin(second_id)
+        with patch("django.utils.timezone.now", return_value=now + timedelta(hours=2)):
+            retried = self.post_spin(first_id)
+        self.assertEqual((first.status_code, second.status_code, retried.status_code), (200, 200, 200))
+        self.assertEqual(retried.json()["spin_id"], first.json()["spin_id"])
+        self.assertEqual(retried.json()["available_spins"], 1)
+        self.assertEqual(datetime.fromisoformat(retried.json()["next_spin_at"]), now + timedelta(hours=25))
+        self.assertEqual(RouletteSpin.objects.filter(user=self.user).count(), 2)
 
     def test_state_limits_canvas_to_ten_active_sectors(self):
         for sector_order in range(12):
@@ -410,3 +443,51 @@ class RouletteConcurrentApiTests(TransactionTestCase):
         state = UserRouletteState.objects.get(user=self.user)
         self.assertEqual(state.available_spins, 0)
         self.assertEqual(state.total_spins, 1)
+
+    def _request_after_barrier(self, method, barrier):
+        close_old_connections()
+        try:
+            client = Client()
+            user = get_user_model().objects.get(pk=self.user.pk)
+            client.force_login(user)
+            barrier.wait(timeout=5)
+            if method == "spin":
+                response = client.post(
+                    reverse("cabinet:roulette_spin"),
+                    data=json.dumps({"operation_id": str(uuid.uuid4())}),
+                    content_type="application/json",
+                )
+            else:
+                response = client.get(reverse("cabinet:roulette_state"))
+            return response.status_code, response.json()
+        finally:
+            close_old_connections()
+
+    def test_parallel_state_reads_grant_only_one_free_allowance(self):
+        RouletteSettings.objects.filter(pk=1).update(daily_free_spins=1)
+        UserRouletteState.objects.filter(user=self.user).update(available_spins=0)
+        barrier = Barrier(2)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(self._request_after_barrier, "state", barrier) for _ in range(2)]
+            responses = [future.result(timeout=10) for future in futures]
+        self.assertEqual([status for status, _ in responses], [200, 200])
+        self.assertEqual([payload["available_spins"] for _, payload in responses], [1, 1])
+        self.assertEqual(UserRouletteState.objects.get(user=self.user).available_spins, 1)
+
+    def test_state_read_racing_with_spin_does_not_restore_the_spent_attempt(self):
+        RouletteSettings.objects.filter(pk=1).update(daily_free_spins=1)
+        now = datetime(2026, 10, 18, 16, tzinfo=datetime_timezone.utc)
+        UserRouletteState.objects.filter(user=self.user).update(
+            available_spins=0, last_spin_at=now - timedelta(hours=24),
+            last_daily_grant_at=now - timedelta(hours=25), next_spin_at=now,
+        )
+        barrier = Barrier(2)
+        with patch("django.utils.timezone.now", return_value=now), ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(self._request_after_barrier, method, barrier) for method in ("state", "spin")]
+            responses = [future.result(timeout=10) for future in futures]
+        self.assertEqual([status for status, _ in responses], [200, 200])
+        state = UserRouletteState.objects.get(user=self.user)
+        self.assertEqual(state.available_spins, 0)
+        self.assertEqual(state.total_spins, 1)
+        self.assertEqual(state.next_spin_at, now + timedelta(hours=24))
+        self.assertEqual(RouletteSpin.objects.filter(user=self.user).count(), 1)

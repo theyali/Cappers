@@ -242,27 +242,41 @@ class BestOddsTests(ComparisonGroupingTests):
         self.assertTrue(any(group["best_coefficient"] for group in result["groups"]))
         self.match.sync_scope = "prematch"
         self.match.starts_at = self.now - timedelta(seconds=1)
-        self.assert_unranked("match_started")
+        result = self.compare()
+        self.assertEqual(result["status"], "archived")
+        self.assertTrue(result["archived"])
+        self.assertTrue(result["groups"][0]["best_coefficient"])
 
-    def test_prematch_is_not_a_fallback_for_missing_live_line(self):
+    def test_live_match_defaults_to_prematch_without_mixing_live_prices(self):
         self.match.sync_scope = "live"
         result = self.compare()
-        self.assertEqual(result["scope"], "live")
-        self.assertEqual(result["status"], "missing")
-        self.assertEqual(result["groups"], [])
-        result = build_match_odds_comparison(self.match, scope="prematch", now=self.now)
-        self.assertEqual(result["status"], "scope_mismatch")
-        self.assertIsNone(result["groups"][0]["best_coefficient"])
+        self.assertEqual(result["scope"], "prematch")
+        self.assertEqual(result["status"], "archived")
+        self.assertEqual(result["groups"][0]["best_coefficient"], "2.05")
+        self.snapshot.scope = "live"
+        self.snapshot.save(update_fields=["scope"])
+        self.assertEqual(self.compare()["status"], "missing")
 
     def test_live_has_shorter_freshness_window(self):
         self.match.sync_scope = "live"
         self.snapshot.scope = "live"
         self.snapshot.provider_updated_at = self.now - timedelta(seconds=61)
         self.snapshot.save(update_fields=["scope", "provider_updated_at"])
-        self.assert_unranked("stale")
+        result = build_match_odds_comparison(self.match, scope="live", now=self.now)
+        self.assertEqual(result["status"], "stale")
+        self.assertIsNone(result["groups"][0]["best_coefficient"])
         self.snapshot.provider_updated_at = self.now - timedelta(seconds=60)
         self.snapshot.save(update_fields=["provider_updated_at"])
-        self.assertEqual(self.compare()["status"], "ready")
+        self.assertEqual(build_match_odds_comparison(self.match, scope="live", now=self.now)["status"], "ready")
+
+    def test_withdrawn_prematch_is_hidden_before_start_but_preserved_as_archive(self):
+        self.snapshot.available = False
+        self.snapshot.save(update_fields=["available"])
+        self.assertEqual(self.compare()["status"], "unavailable")
+        self.match.sync_scope = "live"
+        result = self.compare()
+        self.assertEqual(result["status"], "archived")
+        self.assertEqual(result["groups"][0]["best_coefficient"], "2.05")
 
     def test_suspended_highest_offer_is_excluded(self):
         top = self.snapshot.bookmakers.get(bookmaker_key="1")

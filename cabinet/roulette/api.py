@@ -3,6 +3,7 @@ from json import JSONDecodeError
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.storage import default_storage
+from django.db import transaction
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
@@ -175,6 +176,7 @@ def _recent_roulette_wins(request, user) -> list[dict]:
 
 @never_cache
 @require_GET
+@transaction.atomic
 def roulette_state(request):
     if not request.user.is_authenticated:
         return _error_response(
@@ -183,6 +185,9 @@ def roulette_state(request):
             status=401,
         )
 
+    # This read also lazily creates allowance/reward/wallet rows. Keep their
+    # lock order consistent with spin_roulette, including foreign-key checks.
+    request.user.__class__.objects.select_for_update().get(pk=request.user.pk)
     now = timezone.now()
     roulette_settings = RouletteSettings.load()
     state = get_user_roulette_state(request.user, now=now)
@@ -267,7 +272,8 @@ def roulette_spin(request):
         related_model=spin._meta.label_lower,
         related_id=spin.pk,
     ).first()
-    live_state = build_bonus_live_state(request.user)
+    state = get_user_roulette_state(request.user)
+    live_state = build_bonus_live_state(request.user, roulette_state=state)
 
     return JsonResponse(
         {
@@ -282,7 +288,7 @@ def roulette_spin(request):
             "reward_status": spin.reward_status,
             "coin_balance": coin_balance,
             "available_spins": live_state["available_spins"],
-            "next_spin_at": _iso(spin.next_spin_at),
+            "next_spin_at": _iso(state.next_spin_at),
             "server_time": _iso(timezone.now()),
             "bonus_event": _serialize_bonus_event(bonus_event),
             "daily_tasks_summary": live_state["daily_tasks_summary"],

@@ -17,7 +17,8 @@ from front.metrics import increment_match_views
 from game.models import Match, MatchEvent, MatchStatistic, Prediction, PredictionCoupon
 from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
 from game.services.odds_comparison import build_match_odds_comparison_ui
-from game.tasks import refresh_match_events, refresh_match_provider_predictions, refresh_match_statistics, refresh_match_bookmaker_odds
+from game.services.odds_stream import queue_match_odds_refresh
+from game.tasks import refresh_match_events, refresh_match_provider_predictions, refresh_match_statistics
 from game.templatetags.match_ui import live_status_label
 from notifications.models import MatchWatch
 
@@ -30,25 +31,18 @@ EVENTS_REFRESH_QUEUE_TTL = 120
 
 
 def _queue_odds_comparison_refresh(match, comparison):
-    if not comparison["supported"] or match.sync_scope not in {"prematch", "live"}:
+    if not comparison["supported"]:
         return False
-    if comparison["status"] == "match_started":
-        return False
-    # Even an old provider line is fetched at most once per minute per match.
+    now = timezone.now()
     fetched = comparison["fetched_at"]
-    if fetched and (timezone.now() - parse_datetime(fetched)).total_seconds() < 60:
+    if comparison["archived"] and comparison["visible"] and not comparison["archive_needs_refresh"]:
+        return False  # Final prematch check already completed after kickoff.
+    # Even an old provider line is fetched at most once per minute per match.
+    if fetched and (now - parse_datetime(fetched)).total_seconds() < 60:
         return False
-    key = f"match-odds-comparison-queue:{match.pk}"
     try:
-        if not cache.add(key, "1", timeout=60):
-            return False
-        refresh_match_bookmaker_odds.apply_async(args=[match.pk], retry=False)
-        return True
+        return queue_match_odds_refresh(match.pk)
     except Exception:
-        try:
-            cache.delete(key)
-        except Exception:
-            pass
         return False
 
 
@@ -62,6 +56,7 @@ def match_odds_comparison(request, slug):
     response = JsonResponse({
         "ok": True, "visible": comparison["visible"], "html": html,
         "sidebar_html": sidebar_html, "archived": comparison["archived"],
+        "archive_needs_refresh": comparison["archive_needs_refresh"],
         "version": hashlib.sha256((html + sidebar_html).encode()).hexdigest(),
         "status": comparison["status"], "scope": match.sync_scope,
         "supported": comparison["supported"], "expires_at": comparison["expires_at"],

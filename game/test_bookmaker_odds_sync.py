@@ -20,7 +20,7 @@ def bookmaker(pk=1, price=1.91):
 
 class FullBookmakerOddsSyncTests(TestCase):
     def setUp(self):
-        self.match = Match.objects.create(external_id=862214)
+        self.match = Match.objects.create(external_id=862214, sync_scope="prematch")
         self.short = MatchOdds.objects.create(match=self.match, home_win_bet=2.5)
         self.payload = {"api_id": 862214, "odds": {
             "short": {"available": True, "home_win_bet": 7.0},
@@ -104,6 +104,31 @@ class FullBookmakerOddsSyncTests(TestCase):
         snapshot = self.match.odds_snapshots.get(scope="prematch")
         with patch("game.services.match_sync.timezone.now", return_value=snapshot.requested_at - timedelta(seconds=1)):
             self.assertEqual(self.service.sync_match_bookmaker_odds(self.match)["scopes"]["prematch"]["reason"], "older_response")
+
+    def test_live_and_finished_withdrawal_cannot_erase_prematch_archive(self):
+        self.service.sync_match_bookmaker_odds(self.match)
+        before = self.match.odds_snapshots.get(scope="prematch")
+        block = self.payload["odds"]["prematch"]
+        for phase in ("live", "finished"):
+            self.match.sync_scope = phase
+            self.match.save(update_fields=["sync_scope"])
+            for available in (False, True):
+                block.update(available=available, bookmakers=[], updated_at=None)
+                result = self.service.sync_match_bookmaker_odds(self.match)
+                self.assertEqual(result["scopes"]["prematch"]["reason"], "prematch_archive")
+                after = self.match.odds_snapshots.get(scope="prematch")
+                self.assertEqual(after.raw_data, before.raw_data)
+                self.assertEqual(after.provider_updated_at, before.provider_updated_at)
+                self.assertGreaterEqual(after.fetched_at, before.fetched_at)
+                self.assertEqual(after.bookmakers.count(), 2)
+
+    def test_missing_prematch_archive_can_be_loaded_after_finish_without_touching_short(self):
+        self.match.sync_scope = "finished"
+        self.match.save(update_fields=["sync_scope"])
+        self.service.sync_match_bookmaker_odds(self.match)
+        self.assertEqual(self.match.odds_snapshots.get(scope="prematch").bookmakers.count(), 2)
+        self.short.refresh_from_db()
+        self.assertEqual(self.short.home_win_bet, 2.5)
 
     def test_provider_failure_preserves_line(self):
         self.service.sync_match_bookmaker_odds(self.match)
