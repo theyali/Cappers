@@ -1,6 +1,6 @@
 <div class="match-v2-odds-group">
     <span>{{ group.title }}</span>
-    <div class="match-v2-odds-grid">
+    <div class="match-v2-odds-grid" tabindex="0" role="region" aria-label="{{ group.title }} — коэффициенты">
         {% for odd in group.odds %}
         <button
             class="match-v2-odd odds-button"

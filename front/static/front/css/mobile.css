@@ -8296,7 +8296,7 @@ body.expert-public-details-open {
     }
 
     .matches-page:not(.profile-page) .matches-list-panel {
-        padding: 0 10px;
+        padding: 0;
     }
 
     .matches-mobile-scope-panel {
@@ -14206,8 +14206,7 @@ body.expert-public-details-open {
   }
 
   .match-v2-odds-grid {
-    display: flex;
-    gap: 10px;
+    --match-v2-odd-min-width: 112px;
   }
 
   .match-v2-odds-all {
