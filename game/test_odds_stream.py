@@ -11,16 +11,18 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from game.management.commands.run_neurokeff_odds import websocket_url
-from game.models import Match, MatchOdds, Sport
+from game.models import Match, MatchBookmakerOdds, MatchOdds, MatchOddsSnapshot, Sport
 from game.services.match_sync import MatchSyncService
 from game.services.odds_stream import (
     OddsMessageError,
     odds_sport_ids,
     queue_odds_message,
     queue_prematch_reconciliation,
+    queue_match_odds_refresh,
+    queue_missing_prematch_odds,
     validate_odds_message,
 )
-from game.tasks import reconcile_prematch_odds, refresh_prematch_match_odds
+from game.tasks import _fetch_upcoming_for_sport, reconcile_prematch_odds, refresh_prematch_match_odds
 
 
 def notification(**changes):
@@ -369,3 +371,89 @@ class PrematchAvailabilitySyncTests(TestCase):
         refresh_prematch_match_odds.run(999, 2)
         factory.return_value.sync_match_states.assert_called_once_with([999])
         self.assertTrue(factory.return_value.sync_match_bookmaker_odds.called)
+
+
+@override_settings(**ODDS_SETTINGS, NEUROKEFF_PREMATCH_FULL_ODDS_BATCH_SIZE=100,
+                   NEUROKEFF_PREMATCH_FULL_ODDS_REFRESH_SECONDS=900, NEUROKEFF_FINISHED_DAYS_BACK=2)
+class PrematchOddsRecoveryTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.sport = Sport.objects.create(external_id=2, code="football", name="Football")
+        self.now = timezone.now()
+
+    def match(self, game_id, *, phase="prematch", starts_at=None):
+        return Match.objects.create(external_id=game_id, sport=self.sport, sync_scope=phase,
+            starts_at=starts_at or self.now + timedelta(hours=2))
+
+    def snapshot(self, match, *, minutes_ago=0, has_line=True):
+        stamp = self.now - timedelta(minutes=minutes_ago)
+        snapshot = MatchOddsSnapshot.objects.create(match=match, scope="prematch", available=has_line,
+            requested_at=stamp, fetched_at=stamp, provider_updated_at=stamp)
+        if has_line:
+            MatchBookmakerOdds.objects.create(snapshot=snapshot, bookmaker_key="7", name="BK", markets=[])
+        return snapshot
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    def test_recovers_missing_and_stale_lines_but_not_fresh_or_existing_archives(self, queue):
+        missing = self.match(501)
+        stale = self.match(502)
+        self.snapshot(stale, minutes_ago=16)
+        self.snapshot(self.match(503))
+        self.snapshot(self.match(504, phase="live", starts_at=self.now - timedelta(hours=1)), minutes_ago=60)
+        live = self.match(505, phase="live", starts_at=self.now - timedelta(hours=1))
+        finished = self.match(506, phase="finished", starts_at=self.now - timedelta(hours=3))
+        self.match(507, phase="finished", starts_at=self.now - timedelta(days=3))
+        needs_final_check = self.match(509, phase="live", starts_at=self.now - timedelta(hours=1))
+        self.snapshot(needs_final_check, minutes_ago=90)
+        hockey = Sport.objects.create(external_id=3, code="hockey", name="Hockey")
+        Match.objects.create(external_id=508, sport=hockey, sync_scope="prematch", starts_at=self.now + timedelta(hours=1))
+        with self.assertNumQueries(1):
+            self.assertEqual(queue_missing_prematch_odds("football"), 5)
+        self.assertEqual({call.kwargs["args"][0] for call in queue.call_args_list},
+                         {missing.pk, stale.pk, live.pk, finished.pk, needs_final_check.pk})
+        self.assertEqual(queue_missing_prematch_odds("football"), 0)
+
+    @override_settings(NEUROKEFF_PREMATCH_FULL_ODDS_BATCH_SIZE=2)
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    def test_bounded_batches_advance_past_unavailable_games(self, queue):
+        matches = [self.match(501 + i) for i in range(5)]
+        self.assertEqual(queue_missing_prematch_odds(), 2)
+        self.assertEqual([call.kwargs["args"][0] for call in queue.call_args_list], [m.pk for m in matches[:2]])
+        for match in matches[:2]:
+            self.snapshot(match, has_line=False)
+        queue.reset_mock()
+        self.assertEqual(queue_missing_prematch_odds(), 2)
+        self.assertEqual([call.kwargs["args"][0] for call in queue.call_args_list], [m.pk for m in matches[2:4]])
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.MatchSyncService")
+    def test_both_periodic_polling_and_reconnect_queue_full_rest_recovery(self, factory, queue):
+        match = self.match(501)
+        factory.return_value.sync_upcoming.return_value = {"status": "ok"}
+        for run in (lambda: _fetch_upcoming_for_sport("football"), lambda: reconcile_prematch_odds.run(2)):
+            cache.clear()
+            result = run()
+            self.assertEqual(result["full_odds_queued"], 1)
+        self.assertEqual(queue.call_count, 2)
+        queue.assert_called_with(args=[match.pk], retry=False)
+        factory.return_value.sync_match_bookmaker_odds.assert_not_called()
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.MatchSyncService")
+    def test_failed_list_sync_does_not_launch_another_batch(self, factory, queue):
+        from game.services.providers.neurokeff import NeurokeffProviderError
+
+        self.match(501)
+        factory.return_value.sync_upcoming.side_effect = NeurokeffProviderError("provider unavailable")
+        self.assertEqual(_fetch_upcoming_for_sport("football")["status"], "error")
+        queue.assert_not_called()
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async", side_effect=RuntimeError("broker unavailable"))
+    def test_failed_full_line_enqueue_releases_shared_queue_gate(self, queue):
+        match = self.match(501)
+        with self.assertRaises(RuntimeError):
+            queue_match_odds_refresh(match.pk)
+        self.assertIsNone(cache.get(f"match-odds-comparison-queue:{match.pk}"))
+        queue.side_effect = None
+        self.assertTrue(queue_match_odds_refresh(match.pk))
+        self.assertFalse(queue_match_odds_refresh(match.pk))

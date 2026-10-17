@@ -5,6 +5,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Exists, F, OuterRef, Q, Subquery
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -93,4 +94,53 @@ def queue_prematch_reconciliation(sport_ids):
             cache.delete(key)
             raise
         queued += 1
+    return queued
+
+
+def queue_match_odds_refresh(match_id):
+    """One queue gate shared by page refreshes and missed-event recovery."""
+    from game.tasks import refresh_match_bookmaker_odds
+
+    key = f"match-odds-comparison-queue:{match_id}"
+    if not cache.add(key, 1, timeout=60):
+        return False
+    try:
+        refresh_match_bookmaker_odds.apply_async(args=[match_id], retry=False)
+    except Exception:
+        cache.delete(key)
+        raise
+    return True
+
+
+def queue_missing_prematch_odds(sport_code=None):
+    """Bounded REST backfill, also run by ordinary periodic prematch polling.
+
+    Recover missing/old upcoming lines, plus missing archives of recent games.
+    Each game runs as a separate task, not a long HTTP loop in a list-sync task.
+    Oldest fetches go first, so successive batches advance rather than repeatedly
+    requesting unavailable games. The full table is never fetched by a view.
+    """
+    from game.models import Match, MatchBookmakerOdds, MatchOddsSnapshot, Provider
+
+    now = timezone.now()
+    cutoff = now - timedelta(seconds=max(60, settings.NEUROKEFF_PREMATCH_FULL_ODDS_REFRESH_SECONDS))
+    recent = now - timedelta(days=max(1, settings.NEUROKEFF_FINISHED_DAYS_BACK))
+    snapshots = MatchOddsSnapshot.objects.filter(match_id=OuterRef("pk"), scope="prematch")
+    saved_books = MatchBookmakerOdds.objects.filter(snapshot__match_id=OuterRef("pk"), snapshot__scope="prematch")
+    matches = Match.objects.filter(provider=Provider.NEUROKEFF, sport__external_id__in=odds_sport_ids())
+    if sport_code:
+        matches = matches.filter(sport__code=sport_code)
+    upcoming = Q(sync_scope="prematch") & (Q(starts_at__gt=now) | Q(starts_at__isnull=True))
+    matches = matches.filter(upcoming | Q(starts_at__gte=recent, starts_at__lte=now)).annotate(
+        full_odds_fetched_at=Subquery(snapshots.values("fetched_at")[:1]),
+        has_prematch_line=Exists(saved_books),
+    ).filter(
+        Q(full_odds_fetched_at__isnull=True) | Q(full_odds_fetched_at__lt=cutoff),
+    ).filter(upcoming | Q(has_prematch_line=False) | Q(full_odds_fetched_at__lt=F("starts_at"))).order_by(
+        F("full_odds_fetched_at").asc(nulls_first=True), "starts_at", "pk",
+    )
+    limit = max(1, settings.NEUROKEFF_PREMATCH_FULL_ODDS_BATCH_SIZE)
+    queued = 0
+    for match_id in matches.values_list("pk", flat=True)[:limit]:
+        queued += int(queue_match_odds_refresh(match_id))
     return queued

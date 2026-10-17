@@ -20,10 +20,10 @@ class RouletteSettings(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
     )
     reset_hour = models.PositiveSmallIntegerField(
-        "Час ежедневного обновления",
+        "Час обновления суточных лимитов призов",
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Час по часовому поясу проекта, когда становятся доступны ежедневные попытки.",
+        help_text="Используется для суточных лимитов выдачи призов. Бесплатные попытки доступны через 24 часа после последней прокрутки независимо от этого часа.",
     )
     # Limits match the coupon stake limits in game.services.coupon_validation.
     free_prediction_stake = models.PositiveIntegerField(

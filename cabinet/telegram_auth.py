@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import time
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qsl, urlsplit
 
 from django.conf import settings
 from django.contrib import messages
@@ -56,6 +56,13 @@ def _telegram_bot_id() -> str:
 class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
     authentication_form = LoginForm
+    redirect_authenticated_user = True
+
+    def get_redirect_url(self):
+        next_url = super().get_redirect_url()
+        if urlsplit(next_url).path.rstrip("/") == self.request.path.rstrip("/"):
+            return ""
+        return next_url
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

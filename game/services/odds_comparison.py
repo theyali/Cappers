@@ -224,8 +224,9 @@ def build_match_odds_comparison(match, scope=None, *, now=None):
     Stale active lines remain unranked; finished games compare their saved slice.
     """
     now = now or timezone.now()
-    explicit_scope = scope is not None
-    scope = scope or ("live" if match.sync_scope == "live" else "prematch")
+    # The public comparison is always prematch, including during/after a game.
+    # Live is an explicit internal opt-in, never a fallback for a missing archive.
+    scope = scope or "prematch"
     if scope not in {"prematch", "live"}:
         raise ValueError("Odds comparison scope must be prematch or live")
     stale_seconds = max(1, int(getattr(
@@ -234,19 +235,20 @@ def build_match_odds_comparison(match, scope=None, *, now=None):
         60 if scope == "live" else 3600,
     )))
     snapshot = match.odds_snapshots.filter(scope=scope).prefetch_related("bookmakers").first()
-    if match.sync_scope == "finished" and not explicit_scope and (snapshot is None or not snapshot.available):
-        live_snapshot = match.odds_snapshots.filter(scope="live", available=True).prefetch_related("bookmakers").first()
-        if live_snapshot:
-            snapshot, scope = live_snapshot, "live"
+    archived = match.sync_scope == "finished" or (scope == "prematch" and (
+        match.sync_scope != "prematch" or (match.starts_at and match.starts_at <= now)
+    ))
     result = {"status": "missing", "scope": scope, "stale_seconds": stale_seconds,
-              "provider_updated_at": None, "fetched_at": None, "groups": []}
+              "provider_updated_at": None, "fetched_at": None, "groups": [], "archived": bool(archived),
+              "archive_needs_refresh": bool(archived and match.starts_at and match.starts_at <= now
+                                            and (snapshot is None or snapshot.fetched_at < match.starts_at))}
     if snapshot is None:
         return result
     result.update(
         provider_updated_at=snapshot.provider_updated_at.isoformat() if snapshot.provider_updated_at else None,
         fetched_at=snapshot.fetched_at.isoformat(),
     )
-    if not snapshot.available:
+    if not snapshot.available and not (archived and snapshot.bookmakers.all()):
         result["status"] = "unavailable"
         return result
     groups = _comparison_groups(match, snapshot)
@@ -254,10 +256,10 @@ def build_match_odds_comparison(match, scope=None, *, now=None):
         status = "invalid_timestamp"
     elif match.sync_scope == "finished":
         status = "finished"
+    elif archived:
+        status = "archived"
     elif match.sync_scope != scope:
         status = "scope_mismatch"
-    elif scope == "prematch" and match.starts_at and match.starts_at <= now:
-        status = "match_started"
     elif snapshot.provider_updated_at is None:
         status = "unknown_freshness"
     elif (now - snapshot.fetched_at).total_seconds() > stale_seconds or (
@@ -272,7 +274,7 @@ def build_match_odds_comparison(match, scope=None, *, now=None):
         # Repeated feed records for the same named BK do not count as competitors.
         bookmaker_count = len({_text(offer["bookmaker"]) for offer in offers})
         has_comparison = bookmaker_count >= 2
-        eligible = status in {"ready", "finished"} and has_comparison
+        eligible = status in {"ready", "archived", "finished"} and has_comparison
         best = max(Decimal(offer["coefficient"]) for offer in offers) if eligible else None
         winners = []
         for offer in offers:
@@ -404,7 +406,7 @@ def build_match_odds_comparison_ui(match):
         "unknown_freshness": "Время обновления неизвестно · лучшие коэффициенты не отмечены",
         "invalid_timestamp": "Актуальность не подтверждена · лучшие коэффициенты не отмечены",
         "finished": "Матч завершён · лучшие значения сохранённой линии",
-        "match_started": "Матч уже начался · ожидаем live-линию",
+        "archived": "Сохранённая предматчевая линия · не текущие предложения",
         "scope_mismatch": "Режим линии изменился · ожидаем обновление",
     }
     result.pop("groups")
@@ -415,10 +417,12 @@ def build_match_odds_comparison_ui(match):
         if result["scope"] == "prematch" and match.starts_at:
             expires = min(expires, match.starts_at)
     result.update(sections=sections, visible=bool(sections), updated_at=updated,
-                  archived=result["status"] == "finished",
                   ranking_label=("Архив предматчевой линии · не текущие предложения" if result["scope"] == "prematch"
-                                 else "Архив live-линии · не текущие предложения") if result["status"] == "finished"
-                                else "Максимальные коэффициенты среди актуальных предложений БК",
+                                 else "Архив live-линии · не текущие предложения") if result["archived"]
+                                else "Максимальные предматчевые коэффициенты среди актуальных предложений БК",
+                  note=("Сравниваются одинаковые исходы сохранённой предматчевой линии. Это не текущие предложения для ставок."
+                        if result["archived"] else
+                        "Сравниваются одинаковые исходы предматчевой линии. Лучшие значения отмечены среди доступных БК; ставки добавляются в купон в блоке выше."),
                   expires_at=expires.isoformat() if expires else "",
                   message=messages.get(result["status"], ""), match_scope=match.sync_scope,
                   supported=match.sport_code == "football")

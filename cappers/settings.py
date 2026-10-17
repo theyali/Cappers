@@ -129,8 +129,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Activates the user's timezone; every "day" (streaks, daily tasks, roulette)
-    # must be counted after it.
+    # Activates the user's timezone for calendar days (streaks, tasks and prize
+    # award limits). The free roulette refill uses an elapsed 24-hour cooldown.
     "cappers.user_context_middleware.UserContextMiddleware",
     "cabinet.middleware.DailyVisitStreakMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -504,6 +504,8 @@ NEUROKEFF_GAME_ODDS_ENDPOINT = os.getenv("NEUROKEFF_GAME_ODDS_ENDPOINT", "/api/v
 NEUROKEFF_GAME_ODDS_TIMEOUT = env_int("NEUROKEFF_GAME_ODDS_TIMEOUT", 5)
 NEUROKEFF_PREMATCH_ODDS_STALE_SECONDS = env_int("NEUROKEFF_PREMATCH_ODDS_STALE_SECONDS", 3600)
 NEUROKEFF_LIVE_ODDS_STALE_SECONDS = env_int("NEUROKEFF_LIVE_ODDS_STALE_SECONDS", 60)
+NEUROKEFF_PREMATCH_FULL_ODDS_REFRESH_SECONDS = env_int("NEUROKEFF_PREMATCH_FULL_ODDS_REFRESH_SECONDS", 900)
+NEUROKEFF_PREMATCH_FULL_ODDS_BATCH_SIZE = env_int("NEUROKEFF_PREMATCH_FULL_ODDS_BATCH_SIZE", 100)
 NEUROKEFF_GAME_EVENTS_ENDPOINT = os.getenv(
     "NEUROKEFF_GAME_EVENTS_ENDPOINT",
     "games/events",

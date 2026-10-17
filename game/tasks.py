@@ -11,7 +11,7 @@ from game.services.settlement import settle_finished_matches
 
 @shared_task
 def fetch_upcoming_matches():
-    return _run_sync("prematch", "all", lambda: MatchSyncService().sync_upcoming())
+    return _fetch_upcoming_for_sport()
 
 
 @shared_task
@@ -95,12 +95,17 @@ def fetch_finished_matches():
     return _run_sync("finished", "all", _sync_finished_all)
 
 
-def _fetch_upcoming_for_sport(sport_code: str):
-    return _run_sync(
+def _fetch_upcoming_for_sport(sport_code: str | None = None):
+    from game.services.odds_stream import queue_missing_prematch_odds
+
+    result = _run_sync(
         "prematch",
-        sport_code,
+        sport_code or "all",
         lambda: MatchSyncService().sync_upcoming(sport_code=sport_code),
     )
+    if result.get("status") == "ok":
+        result["full_odds_queued"] = queue_missing_prematch_odds(sport_code)
+    return result
 
 
 def _fetch_live_for_sport(sport_code: str):

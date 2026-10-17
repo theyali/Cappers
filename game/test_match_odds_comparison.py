@@ -26,7 +26,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
             }])
         self.url = reverse("game:match_odds_comparison", kwargs={"slug": self.match.slug})
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     @patch("game.services.match_sync.MatchSyncService.sync_match_bookmaker_odds")
     def test_fresh_endpoint_is_db_backed_and_marks_best(self, sync, queue):
         response = self.client.get(self.url)
@@ -42,7 +42,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         queue.assert_not_called()
         sync.assert_not_called()
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     def test_stale_data_is_not_best_and_queue_is_deduplicated(self, queue):
         self.snapshot.fetched_at = timezone.now() - timedelta(hours=2)
         self.snapshot.save(update_fields=["fetched_at"])
@@ -54,7 +54,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertFalse(second["refresh_queued"])
         queue.assert_called_once_with(args=[self.match.pk], retry=False)
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async", side_effect=RuntimeError("broker unavailable"))
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async", side_effect=RuntimeError("broker unavailable"))
     def test_missing_data_and_broker_failure_do_not_break_page(self, queue):
         self.snapshot.delete()
         response = self.client.get(self.url)
@@ -63,7 +63,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertFalse(response.json()["refresh_queued"])
         self.assertIsNone(cache.get(f"match-odds-comparison-queue:{self.match.pk}"))
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     def test_finished_match_is_archived_without_refresh(self, queue):
         self.match.sync_scope = "finished"
         self.match.save(update_fields=["sync_scope"])
@@ -98,16 +98,65 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertNotIn("Лучшие по рынкам", main)
         self.assertIn("Лучшие по рынкам", sidebar)
 
-    def test_finished_without_prematch_uses_honestly_labelled_live_archive(self):
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    def test_finished_without_prematch_never_substitutes_live_and_queues_recovery(self, queue):
         self.match.sync_scope = "finished"
         self.match.save(update_fields=["sync_scope"])
         self.snapshot.scope = "live"
         self.snapshot.save(update_fields=["scope"])
         data = self.client.get(self.url).json()
         self.assertTrue(data["archived"])
-        self.assertIn("Архив live-линии", data["sidebar_html"])
-        self.assertNotIn("Архив предматчевой линии", data["sidebar_html"])
-        self.assertIn('class="is-best"', data["html"])
+        self.assertFalse(data["visible"])
+        self.assertNotIn("Архив live-линии", data["sidebar_html"])
+        self.assertNotIn('class="is-best"', data["html"])
+        self.assertTrue(data["refresh_queued"])
+        queue.assert_called_once_with(args=[self.match.pk], retry=False)
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    def test_live_page_and_ajax_keep_old_prematch_comparison_and_do_not_use_live(self, queue):
+        self.match.sync_scope = "live"
+        self.match.starts_at = timezone.now() - timedelta(hours=1)
+        self.match.save(update_fields=["sync_scope", "starts_at"])
+        self.snapshot.provider_updated_at -= timedelta(days=3)
+        self.snapshot.save(update_fields=["provider_updated_at"])
+        live = MatchOddsSnapshot.objects.create(match=self.match, scope="live", available=True,
+            fetched_at=timezone.now(), requested_at=timezone.now(), provider_updated_at=timezone.now())
+        MatchBookmakerOdds.objects.create(snapshot=live, bookmaker_key="live", name="Live BK",
+            markets=self.snapshot.bookmakers.first().markets)
+        data = self.client.get(self.url).json()
+        self.assertEqual(data["status"], "archived")
+        self.assertTrue(data["archived"])
+        self.assertTrue(data["visible"])
+        self.assertIn("Архив предматчевой линии", data["sidebar_html"])
+        self.assertIn("2.05", data["html"])
+        self.assertNotIn("Live BK", data["html"])
+        self.assertFalse(data["expires_at"])
+        self.assertFalse(data["refresh_queued"])
+        html = self.client.get(self.match.get_absolute_url()).content.decode()
+        self.assertIn("Архив предматчевой линии", html)
+        self.assertNotIn("Live BK", html)
+        queue.assert_not_called()
+
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
+    def test_live_archive_is_visible_while_final_prematch_check_is_queued(self, queue):
+        self.match.sync_scope = "live"
+        self.match.starts_at = timezone.now() - timedelta(hours=1)
+        self.match.save(update_fields=["sync_scope", "starts_at"])
+        self.snapshot.fetched_at = timezone.now() - timedelta(hours=2)
+        self.snapshot.save(update_fields=["fetched_at"])
+        data = self.client.get(self.url).json()
+        self.assertTrue(data["visible"])
+        self.assertTrue(data["archived"])
+        self.assertIn("2.05", data["html"])
+        self.assertTrue(data["refresh_queued"])
+        self.assertTrue(data["archive_needs_refresh"])
+        pending = self.client.get(self.url).json()
+        self.assertFalse(pending["refresh_queued"])
+        self.assertTrue(pending["archive_needs_refresh"])
+        queue.assert_called_once_with(args=[self.match.pk], retry=False)
+        self.snapshot.fetched_at = timezone.now()
+        self.snapshot.save(update_fields=["fetched_at"])
+        self.assertFalse(self.client.get(self.url).json()["archive_needs_refresh"])
 
     def test_registry_icons_and_renamed_brands_render_in_table_and_summary(self):
         first = self.client.get(self.url).json()["version"]
@@ -233,7 +282,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertEqual(self.client.post(self.url).status_code, 405)
         self.assertEqual(self.client.get(reverse("game:match_odds_comparison", kwargs={"slug": "missing-match"})).status_code, 404)
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     def test_ssr_comparison_has_no_bet_controls_or_fake_sidebar_best(self, queue):
         response = self.client.get(self.match.get_absolute_url())
         self.assertEqual(response.status_code, 200)
@@ -246,7 +295,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         table = html.split('id="match-comparison"', 1)[1].split('id="match-predictions"', 1)[0]
         self.assertNotIn("data-bet-option", table)
 
-    @patch("game.match_detail_views.refresh_match_bookmaker_odds.apply_async")
+    @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     def test_comparison_navigation_tab_is_visible_only_with_data(self, queue):
         response = self.client.get(self.match.get_absolute_url())
         self.assertContains(response, '<a href="#match-comparison" data-comparison-tab>Сравнение КФ</a>', html=True)

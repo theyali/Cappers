@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone as datetime_timezone
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -8,8 +8,11 @@ from django.utils import timezone
 from .models import RouletteSettings
 
 
+FREE_SPIN_INTERVAL = timedelta(hours=24)
+
+
 def roulette_daily_window(roulette_settings: RouletteSettings, now=None):
-    """Return the current daily grant window start and the next reset time."""
+    """Return the calendar window for prize award limits, not free spin grants."""
     now = now or timezone.now()
     local_now = timezone.localtime(now)
     current_tz = local_now.tzinfo
@@ -92,40 +95,45 @@ class UserRouletteState(models.Model):
         return state
 
     def refresh_daily_spins(self, *, now=None, roulette_settings=None, save=True) -> int:
-        """Grant the configured daily spins once per reset window.
+        """Refill free spins no sooner than 24 hours after the last spin.
 
-        Missed days are not accumulated. If the user does not open the roulette for
-        several days, the next request grants only the current day's allowance.
-        Existing bonus/extra spins are preserved because the daily allowance is added
-        to the current balance instead of replacing it.
+        An untouched allowance does not refill again or start a cooldown on reads.
+        Extra spins remain spendable during the cooldown and are never removed.
+        Every successful spin restarts the refill clock, including an extra spin.
         """
         now = now or timezone.now()
         roulette_settings = roulette_settings or RouletteSettings.load()
 
-        if not roulette_settings.is_enabled:
+        if not roulette_settings.is_enabled or roulette_settings.daily_free_spins <= 0:
             if self.next_spin_at is not None:
                 self.next_spin_at = None
                 if save:
                     self.save(update_fields=("next_spin_at", "updated_at"))
             return 0
 
-        window_start, next_reset = roulette_daily_window(roulette_settings, now)
+        next_refill = (
+            self.last_spin_at.astimezone(datetime_timezone.utc) + FREE_SPIN_INTERVAL
+            if self.last_spin_at else None
+        )
         granted = 0
         changed = False
 
         already_granted = (
-            self.last_daily_grant_at is not None
-            and self.last_daily_grant_at >= window_start
+            self.available_spins > 0
+            and self.last_daily_grant_at is not None
+            and (self.last_spin_at is None or self.last_daily_grant_at > self.last_spin_at)
         )
 
-        if roulette_settings.daily_free_spins > 0 and not already_granted:
+        if not already_granted and (next_refill is None or now >= next_refill):
             granted = int(roulette_settings.daily_free_spins)
             self.available_spins += granted
-            self.last_daily_grant_at = window_start
+            self.last_daily_grant_at = now
+            already_granted = True
             changed = True
 
-        if self.next_spin_at != next_reset:
-            self.next_spin_at = next_reset
+        next_spin_at = None if already_granted else next_refill
+        if self.next_spin_at != next_spin_at:
+            self.next_spin_at = next_spin_at
             changed = True
 
         if changed and save:
@@ -179,6 +187,10 @@ class UserRouletteState(models.Model):
         self.available_spins -= 1
         self.total_spins += 1
         self.last_spin_at = now
+        self.next_spin_at = (
+            now.astimezone(datetime_timezone.utc) + FREE_SPIN_INTERVAL
+            if roulette_settings.daily_free_spins > 0 else None
+        )
 
         if save:
             self.save(

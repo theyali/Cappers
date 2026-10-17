@@ -133,8 +133,11 @@
             }
             panel.dataset.expiresAt = data.expires_at || '';
             setExpiry(panel.dataset.expiresAt);
-            stopped = !data.supported || data.scope === 'finished';
-            schedule(data.refresh_queued || data.status === 'missing' ? 5000 : data.scope === 'live' ? 15000 : 60000);
+            // An archive needs no live polling, but a missing prematch slice may
+            // still be loading in Celery. Wait for that first REST result.
+            const awaitingArchive = Boolean(data.archive_needs_refresh);
+            stopped = !data.supported || (archived && !awaitingArchive && !data.refresh_queued && data.status !== 'missing');
+            schedule(awaitingArchive || data.refresh_queued || data.status === 'missing' ? 5000 : 60000);
         } catch (error) {
             if (current !== sequence || (error.name === 'AbortError' && !timedOut)) return;
             failures += 1;
