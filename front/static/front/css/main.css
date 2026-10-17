@@ -3682,11 +3682,10 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .match-card-odds-row.without-bookmaker,
 .matches-shell:not(:has(.coupon-sidebar)),
 .prediction-card-text-preview:not(:has(.prediction-card-text-cover)),
-.profile-dashboard-head.is-reader,
-.profile-page .profile-hero.is-reader,
 body.layout-columns-center_only .predictions-layout {
     grid-template-columns: minmax(0, 1fr);
 }
+
 .prediction-card-head { align-items: center; justify-content: space-between; gap: 12px; }
 .prediction-author-row { min-width: 0; flex: 1 1 auto; gap: 10px; }
 .prediction-author-row .prediction-expert { min-width: 0; flex: 1 1 auto; }
