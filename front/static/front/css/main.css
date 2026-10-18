@@ -14371,6 +14371,24 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-social-copy em.is-negative,
 .profile-social-roi.is-negative { color: #ff6e78; }
 .profile-social-paid { color: var(--yellow); }
+.profile-social-subscription {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    margin-top: 5px;
+    color: #9b9ba6;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+.profile-social-subscription b { color: var(--text); }
+.profile-social-subscription .profile-social-paid {
+    overflow: visible;
+    font-size: inherit;
+    line-height: inherit;
+    text-overflow: clip;
+    white-space: normal;
+}
 .profile-social-roi {
     min-height: 22px;
     display: inline-flex;
@@ -14416,6 +14434,10 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     color: #aaaab4;
     background: transparent;
 }
+.profile-social-action:hover:not(:disabled) { color: #fff; background: var(--blue); }
+.profile-social-action:active:not(:disabled) { opacity: 0.8; }
+.profile-social-action:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.profile-social-action:disabled { cursor: wait; opacity: 0.62; }
 .profile-social-more-button {
     width: 100%;
     min-height: 46px;
@@ -14484,6 +14506,28 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     border-color: rgba(255, 242, 0, 0.34);
     background: rgba(255, 242, 0, 0.1);
 }
+.profile-social-side-card > .profile-social-paid-preview {
+    display: block;
+    margin-bottom: 0;
+}
+.profile-social-subscriptions {
+    display: grid;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.profile-social-subscriptions > li { min-width: 0; }
+.profile-social-subscriptions > li > a {
+    color: var(--text);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+.profile-social-subscriptions > li > a:hover { color: var(--yellow); }
+.profile-social-subscriptions > li > a:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 4px;
+}
 .profile-social-empty {
     min-height: 220px;
     display: grid;
@@ -14514,6 +14558,10 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-social.is-updating .profile-social-list {
     opacity: 0.62;
 }
+.profile-social-status { margin: 0 0 12px; color: #9b9ba6; font-size: 13px; }
+.profile-social-status.is-error { color: #ff6e78; }
+.profile-social-status:empty { display: none; }
+.profile-social-more-button:disabled { cursor: wait; opacity: 0.62; }
 @media (max-width: 1180px) {
     .profile-social-head {
         grid-template-columns: minmax(0, 1fr);
@@ -23219,7 +23267,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 350px);
     gap: 14px;
     align-items: start;
-    padding-top: 20px;
 }
 .cabinet-bonuses-page .bonus-banners-aside {
     display: grid;
@@ -24286,7 +24333,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     border-radius: 16px;
     background: var(--panel);
 }
-.referrals-hero { position: relative; min-height: 220px; padding: 28px; overflow: hidden; }
+
+.referrals-hero { position: relative; min-height: 220px; padding: 0 28px; overflow: hidden; }
 .referrals-hero-copy { position: relative; z-index: 1; width: 56%; max-width: 570px; }
 .referrals-hero-kicker { display: block; margin-bottom: 22px; color: #8b8d94; font-size: 11px; }
 .referrals-hero h1 { margin: 0; color: #f7f7f8; font-size: 17px; line-height: 1.25; }
@@ -27728,7 +27776,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     gap: 0;
     box-sizing: border-box;
     width: 100%;
-    padding: 24px 0;
+    padding: 0;
     color: #fff;
 }
 .profile-comments-preview {
@@ -29330,6 +29378,9 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .match-v2-best-odd svg {
     color: #F6EC4E;
 }
-.vip-layout{
-    padding-top:30px!important;
+.profile-tab-panel.is-active,
+.referrals-simple,
+.bonus-center-layout,
+.profile-comments-card{
+    padding-top:20px;
 }

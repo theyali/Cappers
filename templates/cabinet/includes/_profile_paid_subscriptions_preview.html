@@ -1,0 +1,12 @@
+{% if profile_social_paid_preview %}
+<ul class="profile-social-subscriptions">
+    {% for subscription in profile_social_paid_preview %}
+    <li>
+        <a href="{{ subscription.url }}">{{ subscription.name }}</a>
+        {% include "cabinet/includes/_paid_subscription_details.html" with details=subscription.details only %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>У вас пока нет активных платных подписок.</p>
+{% endif %}

@@ -985,6 +985,23 @@
     const root = document.querySelector(".profile-page");
     if (!root || !root.querySelector("[data-profile-social]")) return;
 
+    const updateSubscriptionCountdowns = () => {
+        if (document.hidden) return;
+        root.querySelectorAll("[data-paid-subscription-expires]").forEach((element) => {
+            const remaining = Date.parse(element.dataset.paidSubscriptionExpires) - Date.now();
+            if (!Number.isFinite(remaining)) return;
+            if (remaining <= 0) element.textContent = "Подписка завершена";
+            else if (remaining < 3600000) element.textContent = "Осталось менее часа";
+            else {
+                const hours = Math.floor(remaining / 3600000);
+                element.textContent = `Осталось: ${Math.floor(hours / 24)} дн. ${hours % 24} ч.`;
+            }
+        });
+    };
+    updateSubscriptionCountdowns();
+    window.setInterval(updateSubscriptionCountdowns, 60000);
+    document.addEventListener("visibilitychange", updateSubscriptionCountdowns);
+
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
 
@@ -1006,29 +1023,57 @@
     };
 
     const initSocialAjax = ($) => {
+        const pendingRequests = new WeakMap();
+        const pendingFollows = new Set();
         const csrf = () => {
             const cookie = document.cookie.split(";").map((item) => item.trim()).find((item) => item.startsWith("csrftoken="));
             return cookie ? decodeURIComponent(cookie.slice("csrftoken=".length)) : "";
         };
 
-        const requestSocial = ($block, { append = false } = {}) => {
+        const requestSocial = ($block, { append = false, keepLoaded = false } = {}) => {
+            const block = $block[0];
+            const previous = pendingRequests.get(block);
+            if (append && previous) return previous.request;
+            const state = {};
+            pendingRequests.set(block, state);
+            previous?.request?.abort();
             const $form = $block.find("[data-profile-social-form]");
+            const $results = $block.find("[data-profile-social-results]");
+            const $status = $block.find("[data-profile-social-status]");
             const url = $block.data("profile-social-url");
             const payload = $form.serializeArray();
             payload.push({ name: "offset", value: append ? ($block.attr("data-profile-social-next-offset") || 0) : 0 });
+            if (keepLoaded) payload.push({ name: "limit", value: $block.find("[data-profile-social-row]").length });
 
             $block.addClass("is-updating");
-            return $.ajax({
+            $results.attr("aria-busy", "true");
+            $status.removeClass("is-error").text("");
+            $block.find("[data-profile-social-more]").prop("disabled", true);
+            state.request = $.ajax({
                 url,
                 method: "GET",
                 data: $.param(payload),
                 dataType: "json",
+                timeout: 15000,
                 headers: { "X-Requested-With": "XMLHttpRequest" },
             }).done((response) => {
-                if (!response?.ok) return;
-                const $results = $block.find("[data-profile-social-results]");
+                if (pendingRequests.get(block) !== state) return;
+                if (!response?.ok) {
+                    $status.addClass("is-error").text("Не удалось обновить список. Повторите поиск или выберите фильтр ещё раз.");
+                    return;
+                }
                 if (append) $results.append(response.html);
                 else $results.html(response.html);
+                if (typeof response.paid_preview_html === "string") {
+                    $block.find("[data-profile-paid-preview]").html(response.paid_preview_html);
+                }
+                if (response.heading) $block.find("[data-profile-social-heading]").text(response.heading);
+                if (response.list_title) $block.find("[data-profile-social-list-title]").text(response.list_title);
+                $block.find("[data-profile-social-follow-url]").each(function updatePendingFollow() {
+                    this.disabled = pendingFollows.has(this.dataset.profileSocialFollowUrl);
+                    this.setAttribute("aria-busy", String(this.disabled));
+                });
+                updateSubscriptionCountdowns();
 
                 $block.attr("data-profile-social-next-offset", response.next_offset || 0);
                 $block.attr("data-profile-social-has-more", response.has_more ? "true" : "false");
@@ -1045,9 +1090,18 @@
                     });
                     $block.find(`[data-profile-social-count="${key}"]`).text(value);
                 });
+            }).fail((_request, reason) => {
+                if (reason !== "abort" && pendingRequests.get(block) === state) {
+                    $status.addClass("is-error").text("Не удалось обновить список. Повторите поиск или выберите фильтр ещё раз.");
+                }
             }).always(() => {
+                if (pendingRequests.get(block) !== state) return;
+                pendingRequests.delete(block);
                 $block.removeClass("is-updating");
+                $results.attr("aria-busy", "false");
+                $block.find("[data-profile-social-more]").prop("disabled", false);
             });
+            return state.request;
         };
 
         $("[data-profile-social]").each(function initBlock() {
@@ -1080,38 +1134,65 @@
                 requestSocial($block, { append: true });
             });
 
-            $block.on("click", "[data-follow-url]", function onFollowClick(event) {
+            $block.on("click", "[data-profile-social-follow-url]", function onFollowClick(event) {
                 event.preventDefault();
                 const button = this;
-                if (button.disabled) return;
-                const $button = $(button);
-                const original = $button.text();
-                button.disabled = true;
-                $button.text("Подписываем...");
+                const url = button.dataset.profileSocialFollowUrl;
+                if (button.disabled || pendingFollows.has(url)) return;
+                const restoreFocus = document.activeElement === button;
+                const desired = button.dataset.profileSocialFollowing !== "true";
+                const matchingButtons = () => Array.from(root.querySelectorAll("[data-profile-social-follow-url]"))
+                    .filter((node) => node.dataset.profileSocialFollowUrl === url);
+                const setBusy = (busy) => matchingButtons().forEach((node) => {
+                    node.disabled = busy;
+                    node.setAttribute("aria-busy", String(busy));
+                });
+                const $status = $block.find("[data-profile-social-status]");
+                $status.removeClass("is-error").text("");
+                pendingFollows.add(url);
+                setBusy(true);
                 $.ajax({
-                    url: button.dataset.followUrl,
+                    url,
                     method: "POST",
+                    data: { active: desired ? "1" : "0" },
                     dataType: "json",
+                    timeout: 15000,
                     headers: {
                         "X-CSRFToken": csrf(),
                         "X-Requested-With": "XMLHttpRequest",
                     },
                 }).done((response) => {
-                    if (!response?.ok) {
-                        $button.text(response?.error || "Ошибка");
-                        window.setTimeout(() => {
-                            button.disabled = false;
-                            $button.text(original);
-                        }, 1600);
+                    if (!response?.ok || typeof response.active !== "boolean") {
+                        $status.addClass("is-error").text(response?.error || "Не удалось подтвердить изменение подписки. Повторите действие.");
                         return;
                     }
-                    $button.addClass("is-muted").removeAttr("data-follow-url").html("<span aria-hidden=\"true\">✓</span><span>Вы подписаны</span>");
+                    matchingButtons().forEach((node) => {
+                        const active = response.active;
+                        node.dataset.profileSocialFollowing = String(active);
+                        node.classList.toggle("is-muted", active);
+                        node.querySelector("span:first-child").textContent = active ? "−" : "+";
+                        node.querySelector("span:last-child").textContent = active ? "Отписаться" : "Подписаться";
+                        node.setAttribute("aria-label", `${active ? "Отписаться от" : "Подписаться на"} @${node.dataset.profileSocialUsername}`);
+                    });
+                    $("[data-profile-social]").each(function refreshSocialBlock() {
+                        const refresh = requestSocial($(this), { keepLoaded: true });
+                        if (this !== $block[0]) return;
+                        refresh.done(() => {
+                            if (!$status.hasClass("is-error")) $status.text(response.message || (response.active ? "Вы подписаны." : "Подписка отменена."));
+                            if (restoreFocus && (!document.activeElement || document.activeElement === document.body)) {
+                                const replacement = matchingButtons().find((node) => node.closest("[data-profile-social]") === $block[0]);
+                                (replacement || $block.find("[data-profile-social-filter].is-active")[0])?.focus({ preventScroll: true });
+                            }
+                        });
+                    });
                 }).fail(() => {
-                    $button.text("Ошибка");
-                    window.setTimeout(() => {
-                        button.disabled = false;
-                        $button.text(original);
-                    }, 1600);
+                    $status.addClass("is-error").text("Не удалось подтвердить изменение подписки. Повторите действие.");
+                }).always(() => {
+                    pendingFollows.delete(url);
+                    setBusy(false);
+                    if (restoreFocus && (!document.activeElement || document.activeElement === document.body) && button.isConnected) {
+                        button.focus({ preventScroll: true });
+                    }
                 });
             });
         });

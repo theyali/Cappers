@@ -52,6 +52,7 @@
     let lastFocus = null;
     // Bumped on close, so a request or animation still running knows the sheet is gone.
     let session = 0;
+    let stateRequest = 0;
 
     const plural = (value, one, few, many) => {
         const number = Math.abs(Number(value) || 0);
@@ -468,6 +469,7 @@
 
     async function loadState() {
         const current = session;
+        const request = ++stateRequest;
         try {
             const response = await fetch(sheet.dataset.stateUrl, {
                 credentials: "same-origin",
@@ -475,7 +477,7 @@
             });
             const payload = await response.json().catch(() => null);
             if (!response.ok || !payload?.ok) throw new Error(payload?.error || "Не удалось загрузить колесо.");
-            if (current !== session) return;
+            if (current !== session || request !== stateRequest || phase === "spinning") return;
 
             syncClock(payload.server_time);
             enabled = Boolean(payload.enabled);
@@ -486,7 +488,7 @@
             buildWheel();
             showIdle();
         } catch (error) {
-            if (current !== session) return;
+            if (current !== session || request !== stateRequest || phase === "spinning") return;
             phase = "idle";
             setCopy({ text: error.message || "Не удалось загрузить колесо." });
             noteNode.textContent = "";
@@ -645,6 +647,7 @@
         confetti.stop();
         stopCountdown();
         phase = "spinning";
+        stateRequest += 1;
         sheet.classList.remove("is-won");
         setCopy({ text: "Крутим колесо…" });
         renderControls();
@@ -665,11 +668,11 @@
         syncClock(payload.server_time);
         nextSpinAt = payload.next_spin_at || null;
         setSpins(payload.available_spins);
-        updateWalletBalance(payload.coin_balance ?? payload.reward_result?.coin_balance);
         const index = winnerIndex(payload);
         if (index >= 0) await spinTo(index, current);
         if (current !== session) return;
         showWin(payload);
+        updateWalletBalance(payload.coin_balance ?? payload.reward_result?.coin_balance);
     };
 
     const copyCode = async () => {

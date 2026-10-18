@@ -607,7 +607,7 @@
 
     const updateWalletBalance = (value) => {
         const balance = Number(value);
-        if (!Number.isFinite(balance)) return;
+        if (value === undefined || value === null || !Number.isFinite(balance)) return;
         const display = Math.trunc(balance).toLocaleString('ru-RU');
         document.querySelectorAll('[data-wallet-balance]').forEach((node) => {
             node.dataset.walletBalanceVisible = display;
@@ -654,7 +654,10 @@
 
     const applyStatePayload = async (payload) => {
         syncServerClock(payload.server_time);
-        updateWalletBalance(payload.coin_balance);
+        if (spinPhase !== 'requesting' && spinPhase !== 'animating'
+            && !document.querySelector('[data-roulette-sheet].is-open')) {
+            updateWalletBalance(payload.coin_balance);
+        }
         enabled = Boolean(payload.enabled);
         availableSpins = Math.max(0, Number(payload.available_spins) || 0);
         nextSpinAt = payload.next_spin_at || null;
@@ -1296,7 +1299,6 @@
         try {
             const payload = await requestSpin();
             syncServerClock(payload.server_time);
-            updateWalletBalance(payload.coin_balance ?? payload.reward_result?.coin_balance);
             availableSpins = Math.max(0, Number(payload.available_spins) || 0);
             nextSpinAt = payload.next_spin_at || null;
             countdownRefreshAfterPerfMs = 0;
@@ -1315,6 +1317,7 @@
             await winnerIconPromise;
             await animateWinCard(payload, winner);
             spinPhase = 'showing_result';
+            updateWalletBalance(payload.coin_balance ?? payload.reward_result?.coin_balance);
             appendRecentWin(payload);
             if (Array.isArray(payload.recent_gifts)) {
                 renderBonusEvents(payload.recent_gifts);

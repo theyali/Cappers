@@ -34,6 +34,7 @@ from front.expert_ranking import (
 from front.models import Article
 from front.expert_awards import leader_badges_for_users
 from front.prediction_metrics import annotate_author_roi
+from front.popular_matches import build_home_popular_links
 from front.prediction_views import _decorate_predictions, _published_queryset
 from front.recommendations import personalized_recommended_experts
 from front.views import DEMO_EXPERTS, _initials
@@ -199,6 +200,7 @@ def _render_home_index(request):
             "latest_articles": latest_articles,
             "recommended_experts": recommended_experts,
             "important_matches": _important_home_matches(request, can_write_coupon),
+            "popular_search_links": build_home_popular_links(all_time_profiles[0] if all_time_profiles else None),
             "can_write_coupon": can_write_coupon,
             "hide_footer": False,
         },

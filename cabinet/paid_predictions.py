@@ -1,7 +1,11 @@
 from decimal import Decimal, InvalidOperation
+from datetime import timezone as datetime_timezone
 
 from django.db import transaction
+from django.db.models import OuterRef, Subquery, Sum
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 
 from back.models import WebsiteSettings
 
@@ -131,24 +135,68 @@ def active_paid_subscription_analyst_ids(user) -> set[int]:
     if not getattr(user, "is_authenticated", False):
         return set()
     return set(
-        AnalystPaidSubscription.objects.filter(
-            subscriber=user,
-            expires_at__gt=timezone.now(),
-        ).values_list("analyst_id", flat=True)
+        active_paid_subscriptions(user).values_list("analyst_id", flat=True)
     )
 
 
-def active_paid_subscriptions_by_analyst(user, analyst_ids: list[int] | set[int]):
+def active_paid_subscriptions(user, *, with_payments=False):
+    """Only the viewer's own active access, never the capper's audience."""
+    if not getattr(user, "is_authenticated", False):
+        return AnalystPaidSubscription.objects.none()
+    subscriptions = AnalystPaidSubscription.objects.filter(subscriber=user, expires_at__gt=timezone.now())
+    if with_payments:
+        payments = AnalystPaidSubscriptionPayment.objects.filter(
+            subscription_id=OuterRef("pk"), subscriber=user,
+        ).order_by().values("subscription_id").annotate(total=Sum("price"))
+        subscriptions = subscriptions.annotate(total_paid=Subquery(payments.values("total")[:1]))
+    return subscriptions
+
+
+def active_paid_subscriptions_by_analyst(user, analyst_ids: list[int] | set[int], *, with_payments=False):
     if not getattr(user, "is_authenticated", False) or not analyst_ids:
         return {}
     return {
         subscription.analyst_id: subscription
-        for subscription in AnalystPaidSubscription.objects.filter(
-            subscriber=user,
-            analyst_id__in=analyst_ids,
-            expires_at__gt=timezone.now(),
-        )
+        for subscription in active_paid_subscriptions(user, with_payments=with_payments).filter(analyst_id__in=analyst_ids)
     }
+
+
+def paid_subscription_display(subscription, *, at=None):
+    """Saved payment facts and an absolute-time countdown; no current plan price."""
+    now = at or timezone.now()
+    seconds = (subscription.expires_at.astimezone(datetime_timezone.utc) - now.astimezone(datetime_timezone.utc)).total_seconds()
+    if seconds <= 0:
+        remaining = "Подписка завершена"
+    elif seconds < 3600:
+        remaining = "Осталось менее часа"
+    else:
+        days, hours = divmod(int(seconds // 3600), 24)
+        remaining = f"Осталось: {days} дн. {hours} ч."
+    total_paid = getattr(subscription, "total_paid", None)
+    return {
+        "amount_caption": "Всего оплачено" if total_paid is not None else "Стоимость подписки",
+        "amount_label": format_money(total_paid if total_paid is not None else subscription.price),
+        "expires_label": date_format(timezone.localtime(subscription.expires_at), "j E Y, H:i"),
+        "expires_iso": subscription.expires_at.isoformat(),
+        "remaining_label": remaining,
+    }
+
+
+def build_paid_subscriptions_preview(user, *, limit=3):
+    subscriptions = active_paid_subscriptions(user, with_payments=True).select_related(
+        "analyst__analyst_profile",
+    ).order_by("expires_at", "pk")[:limit]
+    result = []
+    for subscription in subscriptions:
+        analyst = subscription.analyst
+        profile = getattr(analyst, "analyst_profile", None)
+        result.append({
+            "username": analyst.username,
+            "name": (profile.display_name if profile else "") or analyst.get_full_name() or analyst.username,
+            "url": reverse("front:expert_profile", kwargs={"username": analyst.username}),
+            "details": paid_subscription_display(subscription),
+        })
+    return result
 
 
 def _resolve_paid_plan(analyst: User, plan: AnalystPaidPlan | int | None):

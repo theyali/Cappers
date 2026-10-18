@@ -1,0 +1,5 @@
+<span class="profile-social-subscription">
+    <span>{{ details.amount_caption }}: <b>{{ details.amount_label }} ₽</b></span>
+    <span>Действует до <time datetime="{{ details.expires_iso }}">{{ details.expires_label }}</time></span>
+    <span class="profile-social-paid" data-paid-subscription-expires="{{ details.expires_iso }}">{{ details.remaining_label }}</span>
+</span>

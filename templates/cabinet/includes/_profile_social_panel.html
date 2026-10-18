@@ -11,14 +11,14 @@
             <p class="profile-social-kicker">
                 {% if social.profile_social_kind == "followers" %}Подписчики{% else %}Подписки{% endif %}
             </p>
-            <h2>{% if social.profile_social_kind == "followers" %}Кто следит за вами{% else %}На кого вы подписаны{% endif %}</h2>
+            <h2 data-profile-social-heading>{{ social.profile_social_heading }}</h2>
         </div>
-        <form class="profile-social-controls" action="{% url 'cabinet:profile_social' %}" method="get" data-profile-social-form>
+        <form class="profile-social-controls" action="{% url 'cabinet:profile_social' %}" method="get" novalidate data-profile-social-form>
             <input type="hidden" name="kind" value="{{ social.profile_social_kind }}">
             <input type="hidden" name="filter" value="{{ social.profile_social_filter|default:'all' }}" data-profile-social-filter-input>
             <label class="profile-social-search">
                 {% include "front/includes/_solar_icon.html" with name="search-bold" only %}
-                <input type="search" name="q" value="{{ social.profile_social_query }}" placeholder="Поиск по username" autocomplete="off" data-profile-social-search>
+                <input type="search" name="q" value="{{ social.profile_social_query }}" placeholder="Поиск по username" aria-label="Поиск по имени или username" autocomplete="off" data-profile-social-search>
             </label>
             <label class="profile-social-sort">
                 {% include "front/includes/_solar_icon.html" with name="match_filters" only %}
@@ -51,7 +51,7 @@
             <strong data-profile-social-count="mutual">{{ social.profile_social_metrics.mutual }}</strong>
         </button>
         <button type="button" data-profile-social-filter="paid">
-            <span>Платные подписчики</span>
+            <span>{{ social.profile_social_paid_label }}</span>
             <strong data-profile-social-count="paid">{{ social.profile_social_metrics.paid }}</strong>
         </button>
         <button type="button" data-profile-social-filter="vip">
@@ -61,8 +61,9 @@
 
     <div class="profile-social-layout">
         <div class="profile-social-main">
+            <p class="profile-social-status" role="status" data-profile-social-status></p>
             <section class="profile-social-group" aria-labelledby="profile-social-new-{{ social.profile_social_kind }}">
-                <h3 id="profile-social-new-{{ social.profile_social_kind }}">Новые за неделю · <span data-profile-social-metric="week">{{ social.profile_social_metrics.week }}</span></h3>
+                <h3 id="profile-social-new-{{ social.profile_social_kind }}" data-profile-social-list-title>{{ social.profile_social_list_title }}</h3>
                 <div class="profile-social-list" data-profile-social-results>
                     {% include "cabinet/includes/_profile_social_rows.html" with profile_social_rows=social.profile_social_rows %}
                 </div>
@@ -81,14 +82,14 @@
             <section class="profile-social-side-card">
                 <div>
                     <h3>{% if social.profile_social_kind == "followers" %}Ваша аудитория{% else %}Ваши подписки{% endif %}</h3>
-                    <a href="{% url 'cabinet:profile' %}?tab=earnings">Отчёт</a>
+                    <a href="{{ social.profile_social_report_url }}">{{ social.profile_social_report_label }}</a>
                 </div>
                 <dl>
                     <dt>{% if social.profile_social_kind == "followers" %}Всего подписчиков{% else %}Всего подписок{% endif %}</dt>
                     <dd data-profile-social-metric="total">{{ social.profile_social_metrics.total }}</dd>
                     <dt>За последние 7 дней</dt>
                     <dd class="is-positive" data-profile-social-metric="week" data-profile-social-signed>+{{ social.profile_social_metrics.week }}</dd>
-                    <dt>Платных подписчиков</dt>
+                    <dt>{{ social.profile_social_paid_metric_label }}</dt>
                     <dd data-profile-social-metric="paid">{{ social.profile_social_metrics.paid }}</dd>
                     <dt>Взаимных подписок</dt>
                     <dd data-profile-social-metric="mutual">{{ social.profile_social_metrics.mutual }}</dd>
@@ -96,9 +97,15 @@
             </section>
             <section class="profile-social-side-card is-accent">
                 <div>
-                    <h3>Платные подписчики</h3>
+                    <h3>{{ social.profile_social_paid_label }}</h3>
                 </div>
+                {% if social.profile_social_kind == "following" %}
+                <div class="profile-social-paid-preview" data-profile-paid-preview>
+                    {% include "cabinet/includes/_profile_paid_subscriptions_preview.html" with profile_social_paid_preview=social.profile_social_paid_preview only %}
+                </div>
+                {% else %}
                 <p>Здесь показываются пользователи с активным доступом к вашим платным прогнозам.</p>
+                {% endif %}
             </section>
         </aside>
     </div>

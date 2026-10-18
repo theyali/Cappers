@@ -74,9 +74,13 @@ from .models import (
     User,
 )
 from .paid_predictions import (
+    active_paid_subscriptions,
+    active_paid_subscriptions_by_analyst,
+    build_paid_subscriptions_preview,
     build_paid_checkout_context,
     get_active_paid_plans,
     profile_paid_predictions_enabled,
+    paid_subscription_display,
     subscribe_to_paid_predictions,
 )
 from .referrals import mark_referral_registration
@@ -212,21 +216,17 @@ def _profile_social_base_queryset(user, kind: str):
         )
 
     if kind == "following":
-        return User.objects.filter(analyst_followers__follower=user).annotate(
-            social_created_at=F("analyst_followers__created_at"),
+        follows = AnalystFollow.objects.filter(follower=user, analyst_id=OuterRef("pk"))
+        paid = active_paid_subscriptions(user).filter(analyst_id=OuterRef("pk"))
+        return User.objects.filter(Exists(follows) | Exists(paid)).annotate(
+            social_created_at=Coalesce(Subquery(follows.values("created_at")[:1]), Subquery(paid.values("starts_at")[:1])),
             social_is_mutual=Exists(
                 AnalystFollow.objects.filter(
                     follower_id=OuterRef("pk"),
                     analyst=user,
                 )
             ),
-            social_is_paid=Exists(
-                AnalystPaidSubscription.objects.filter(
-                    subscriber=user,
-                    analyst_id=OuterRef("pk"),
-                    expires_at__gt=now,
-                )
-            ),
+            social_is_paid=Exists(paid),
         )
 
     if kind == "paid":
@@ -256,8 +256,21 @@ def _profile_social_base_queryset(user, kind: str):
 
 
 def _profile_social_queryset(user, *, kind: str, filter_key: str, query: str, sort: str):
-    queryset = _profile_social_base_queryset(user, kind).select_related("analyst_profile")
+    if filter_key == "vip":
+        outgoing = AnalystFollow.objects.filter(follower=user, analyst_id=OuterRef("pk"))
+        incoming = AnalystFollow.objects.filter(follower_id=OuterRef("pk"), analyst=user)
+        queryset = User.objects.filter(is_active=True).filter(
+            Q(role=User.Role.READER) | Q(role=User.Role.ANALYST, analyst_profile__is_public=True),
+        ).annotate(
+            social_is_mutual=Exists(outgoing) & Exists(incoming),
+            social_is_paid=Exists(active_paid_subscriptions(user).filter(analyst_id=OuterRef("pk"))),
+        )
+    else:
+        queryset = _profile_social_base_queryset(user, kind)
+    queryset = queryset.select_related("analyst_profile")
     queryset = annotate_vip_status(queryset, user_outer_ref="pk")
+    if filter_key == "vip":
+        queryset = queryset.annotate(social_created_at=F("vip_activated_at"))
     queryset = annotate_author_roi(
         queryset,
         author_outer_ref="pk",
@@ -317,7 +330,7 @@ def _profile_social_queryset(user, *, kind: str, filter_key: str, query: str, so
     return queryset.distinct().order_by(*order_map.get(sort, order_map["new"]))
 
 
-def _profile_social_row(user, person, *, kind: str, following_ids: set[int]) -> dict:
+def _profile_social_row(user, person, *, kind: str, following_ids: set[int], paid_subscription=None) -> dict:
     profile = getattr(person, "analyst_profile", None)
     display_name = (
         profile.display_name
@@ -370,18 +383,19 @@ def _profile_social_row(user, person, *, kind: str, following_ids: set[int]) -> 
             "j E",
         ) if expires_at else "",
         "paid_price_label": format_money(getattr(person, "social_paid_price", 0) or 0),
+        "paid_subscription": paid_subscription_display(paid_subscription) if paid_subscription else None,
         "follow_url": (
-            reverse("cabinet:follow_analyst", kwargs={"user_id": person.pk})
-            if user.role == User.Role.ANALYST
-            and is_analyst
-            and person.pk not in following_ids
+            reverse("cabinet:toggle_follow", kwargs={"user_id": person.pk})
+            if is_analyst and person.is_active and profile and profile.is_public and person.pk != user.pk
             else ""
         ),
+        "follow_label": "Отписаться" if person.pk in following_ids else "Подписаться",
+        "follow_aria_label": f"Отписаться от @{person.username}" if person.pk in following_ids else f"Подписаться на @{person.username}",
         "kind": kind,
     }
 
 
-def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort="new", offset=0) -> dict:
+def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort="new", offset=0, limit=PROFILE_SOCIAL_PAGE_SIZE) -> dict:
     if filter_key not in {"all", "cappers", "mutual", "vip", "paid"}:
         filter_key = "all"
     if sort not in {"new", "old", "roi", "followers"}:
@@ -390,6 +404,10 @@ def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort
         offset = max(0, int(offset or 0))
     except (TypeError, ValueError):
         offset = 0
+    try:
+        limit = max(PROFILE_SOCIAL_PAGE_SIZE, min(int(limit), 200))
+    except (TypeError, ValueError):
+        limit = PROFILE_SOCIAL_PAGE_SIZE
 
     query = (query or "").strip()
     following_ids = set(user.analyst_follows.values_list("analyst_id", flat=True))
@@ -416,15 +434,20 @@ def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort
         sort=sort,
     )
     total = queryset.count()
-    users = list(queryset[offset : offset + PROFILE_SOCIAL_PAGE_SIZE + 1])
-    has_more = len(users) > PROFILE_SOCIAL_PAGE_SIZE
-    users = users[:PROFILE_SOCIAL_PAGE_SIZE]
+    users = list(queryset[offset : offset + limit + 1])
+    has_more = len(users) > limit
+    users = users[:limit]
+    paid_by_analyst = (
+        active_paid_subscriptions_by_analyst(user, [person.pk for person in users], with_payments=True)
+        if kind == "following" or filter_key == "vip" else {}
+    )
     rows = [
         _profile_social_row(
             user,
             person,
             kind=kind,
             following_ids=following_ids,
+            paid_subscription=paid_by_analyst.get(person.pk),
         )
         for person in users
     ]
@@ -438,8 +461,15 @@ def _profile_social_context(user, *, kind: str, filter_key="all", query="", sort
         "profile_social_remaining": max(0, total - (offset + len(rows))),
         "profile_social_has_more": has_more,
         "profile_social_total": total,
+        "profile_social_heading": "VIP-пользователи" if filter_key == "vip" else "Кто следит за вами" if kind == "followers" else "На кого вы подписаны",
+        "profile_social_list_title": f"VIP-пользователи · {total}" if filter_key == "vip" else f"Новые за неделю · {metrics['week']}",
         "profile_social_rows": rows,
         "profile_social_metrics": metrics,
+        "profile_social_paid_label": "Платные подписки" if kind == "following" else "Платные подписчики",
+        "profile_social_paid_metric_label": "Платных подписок" if kind == "following" else "Платных подписчиков",
+        "profile_social_paid_preview": build_paid_subscriptions_preview(user) if kind == "following" else [],
+        "profile_social_report_url": reverse("cabinet:profile") + ("?tab=wallet" if kind == "following" else "?tab=earnings"),
+        "profile_social_report_label": "Баланс" if kind == "following" else "Отчёт",
     }
 
 
@@ -1774,6 +1804,7 @@ def profile_social(request):
         query=request.GET.get("q", ""),
         sort=request.GET.get("sort", "new"),
         offset=request.GET.get("offset", 0),
+        limit=request.GET.get("limit", PROFILE_SOCIAL_PAGE_SIZE),
     )
     html = render_to_string(
         "cabinet/includes/_profile_social_rows.html",
@@ -1785,9 +1816,14 @@ def profile_social(request):
             "ok": True,
             "html": html,
             "total": context["profile_social_total"],
+            "heading": context["profile_social_heading"],
+            "list_title": context["profile_social_list_title"],
             "metrics": context["profile_social_metrics"],
             "has_more": context["profile_social_has_more"],
             "next_offset": context["profile_social_next_offset"],
+            "paid_preview_html": render_to_string(
+                "cabinet/includes/_profile_paid_subscriptions_preview.html", context, request=request,
+            ) if kind == "following" else "",
         }
     )
 
