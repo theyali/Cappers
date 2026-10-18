@@ -45,6 +45,39 @@ if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then
+  NGINX_SOURCE_CONFIG="deploy/nginx/cuppershub.com.conf"
+  NGINX_ACTIVE_CONFIG="${NGINX_SITE_CONFIG:-}"
+
+  if [ -z "${NGINX_ACTIVE_CONFIG}" ]; then
+    NGINX_ACTIVE_CONFIG="$(
+      sudo nginx -T 2>/dev/null | awk '
+        /^# configuration file / {
+          current = $4
+          sub(/:$/, "", current)
+        }
+        /server_name .*capper-hub\.com/ {
+          print current
+          exit
+        }
+      '
+    )"
+  fi
+
+  if [ -z "${NGINX_ACTIVE_CONFIG}" ]; then
+    echo "Could not find the active capper-hub.com nginx config." >&2
+    exit 1
+  fi
+
+  NGINX_ACTIVE_CONFIG="$(readlink -f "${NGINX_ACTIVE_CONFIG}")"
+  case "${NGINX_ACTIVE_CONFIG}" in
+    /etc/nginx/*) ;;
+    *)
+      echo "Refusing to replace nginx config outside /etc/nginx: ${NGINX_ACTIVE_CONFIG}" >&2
+      exit 1
+      ;;
+  esac
+
+  sudo install -m 0644 "${NGINX_SOURCE_CONFIG}" "${NGINX_ACTIVE_CONFIG}"
   sudo nginx -t
   sudo systemctl reload nginx
 fi
