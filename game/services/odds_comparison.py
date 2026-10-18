@@ -20,6 +20,7 @@ from game.services.odds import format_outcome_line, outcome_code_from_label
 
 
 NORMALIZATION_VERSION = 1
+DENSE_MARKET_LINE_LIMIT = 3
 
 
 def _text(value):
@@ -335,6 +336,64 @@ def _featured_bookmaker_offers(groups, rows, brand_info):
     return featured
 
 
+def _compact_dense_market_groups(kind, groups):
+    """Keep a useful, stable subset of line-based markets for the comparison UI."""
+    if kind not in {"total", "handicap"}:
+        return groups
+
+    slots = {}
+    for group in groups:
+        key = (group["period"], group["settlement"], group["team"], group["line"])
+        slots.setdefault(key, []).append(group)
+
+    context_order = (
+        (("full_time", "regular_time"), ("first_half", "regular_time"), ("second_half", "regular_time"))
+        if kind == "total"
+        else (("full_time", "asian"), ("full_time", "european"),
+              ("first_half", "asian"), ("first_half", "european"),
+              ("second_half", "asian"), ("second_half", "european"))
+    )
+    selected_context = next(
+        (context for context in context_order if any(key[:2] == context for key in slots)),
+        None,
+    )
+    candidate_keys = [key for key in slots if selected_context is None or key[:2] == selected_context]
+
+    def line_value(key):
+        return Decimal(key[3])
+
+    selected_keys = []
+    if kind == "total":
+        remaining = set(candidate_keys)
+        for target in (Decimal("0.5"), Decimal("2.5"), Decimal("3.5")):
+            if not remaining:
+                break
+            closest = min(
+                remaining,
+                key=lambda key: (
+                    abs(line_value(key) - target),
+                    -len({group["selection"] for group in slots[key]}),
+                    line_value(key),
+                ),
+            )
+            selected_keys.append(closest)
+            remaining.remove(closest)
+    else:
+        selected_keys = sorted(
+            candidate_keys,
+            key=lambda key: (
+                abs(line_value(key)),
+                line_value(key),
+                -len({group["selection"] for group in slots[key]}),
+            ),
+        )[:DENSE_MARKET_LINE_LIMIT]
+
+    selected = set(selected_keys)
+    return [group for group in groups if (
+        group["period"], group["settlement"], group["team"], group["line"]
+    ) in selected]
+
+
 def build_match_odds_comparison_ui(match):
     """Presentation for the read-only comparison panel, shared by SSR and refresh."""
     result = build_match_odds_comparison(match)
@@ -352,6 +411,7 @@ def build_match_odds_comparison_ui(match):
     sections = []
     for kind, title in titles.items():
         groups = [g for g in result["groups"] if g["market"] == kind]
+        groups = _compact_dense_market_groups(kind, groups)
         if not groups:
             continue
         books = {}
@@ -363,7 +423,8 @@ def build_match_odds_comparison_ui(match):
         ordered_groups = sorted(groups, key=lambda g: (
             {"full_time": 0, "first_half": 1, "second_half": 2}.get(g["period"], 3),
             g["settlement"], Decimal(g["line"] or "0"),
-            {"1": 0, "X": 1, "2": 2, "over": 0, "under": 1}.get(g["selection"], 3), g["selection"],
+            {"1": 0, "X": 1, "2": 2, "home": 0, "draw": 1, "away": 2,
+             "over": 0, "under": 1}.get(g["selection"], 3), g["selection"],
         ))
         for group in ordered_groups:
             selection = group["selection"]
