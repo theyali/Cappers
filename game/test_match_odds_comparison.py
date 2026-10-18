@@ -96,8 +96,8 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertIn("не текущие предложения", data["sidebar_html"])
         html = self.client.get(self.match.get_absolute_url()).content.decode()
         main, sidebar = html.split('<aside class="match-v2-side"', 1)
-        self.assertNotIn("Лучшие по рынкам", main)
-        self.assertIn("Лучшие по рынкам", sidebar)
+        self.assertNotIn("<h2>Лучшие коэффициенты</h2>", main)
+        self.assertIn("<h2>Лучшие коэффициенты</h2>", sidebar)
 
     @patch("game.tasks.refresh_match_bookmaker_odds.apply_async")
     def test_finished_without_prematch_never_substitutes_live_and_queues_recovery(self, queue):
@@ -168,8 +168,8 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertNotEqual(first, data["version"])
         self.assertIn("Название из админки", data["html"])
         self.assertIn("game/bookmakers/bk1.png", data["html"])
-        self.assertNotIn("Лучшие по рынкам", data["html"])
-        self.assertIn("Лучшие по рынкам", data["sidebar_html"])
+        self.assertNotIn("<h2>Лучшие коэффициенты</h2>", data["html"])
+        self.assertIn("<h2>Лучшие коэффициенты</h2>", data["sidebar_html"])
         self.assertIn("Название из админки", data["sidebar_html"])
         section = build_match_odds_comparison_ui(self.match)["sections"][0]
         self.assertEqual(section["rows"][0]["winner_brands"][0]["name"], brand.name)
@@ -188,19 +188,20 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.assertFalse(section["has_best"])
         self.assertEqual(section["rows"][0]["winner_brands"], [])
 
-    def test_featured_sidebar_caps_tied_bookmakers_at_three_without_hiding_table_winners(self):
+    def test_sidebar_keeps_one_p1_offer_while_table_shows_all_tied_winners(self):
         for index in range(2, 6):
             source = self.snapshot.bookmakers.get(bookmaker_key="1")
             MatchBookmakerOdds.objects.create(snapshot=self.snapshot, bookmaker_key=str(index),
                 name=f"BK {index}", markets=source.markets)
-        section = build_match_odds_comparison_ui(self.match)["sections"][0]
-        featured = section["featured_offers"]
-        self.assertEqual(len(featured), 3)
-        self.assertEqual(len({offer["bookmaker"]["key"] for offer in featured}), 3)
-        self.assertTrue(all(offer["advantage"] == "Один из лучших коэффициентов" for offer in featured))
+        comparison = build_match_odds_comparison_ui(self.match)
+        section = comparison["sections"][0]
+        featured = comparison["sidebar_offers"]
+        self.assertEqual(len(featured), 1)
+        self.assertEqual(featured[0]["label"], "П1")
+        self.assertEqual(featured[0]["advantage"], "Один из лучших коэффициентов")
         self.assertEqual(sum(cell["is_best"] for cell in section["rows"][0]["cells"]), 5)
         sidebar = self.client.get(self.url).json()["sidebar_html"]
-        self.assertEqual(sidebar.count('class="match-comparison-featured"'), 3)
+        self.assertEqual(sidebar.count('class="match-comparison-featured"'), 1)
         self.assertIn("Все букмекеры", sidebar)
 
     def test_featured_advantage_uses_next_same_outcome_price(self):
@@ -215,7 +216,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
         self.snapshot.save(update_fields=["fetched_at"])
         self.assertEqual(build_match_odds_comparison_ui(self.match)["sections"][0]["featured_offers"], [])
 
-    def test_featured_selects_one_offer_per_brand_by_relative_edge(self):
+    def test_sidebar_always_uses_full_time_p1_draw_p2_in_outcome_order(self):
         self.snapshot.bookmakers.all().delete()
         for index, prices in enumerate(((2, 2, 2), (2, 2, 2), (4, 2, 2), (2, 6, 2), (2, 2, 8))):
             MatchBookmakerOdds.objects.create(snapshot=self.snapshot, bookmaker_key=str(index), name=f"BK {index}",
@@ -224,10 +225,16 @@ class MatchOddsComparisonEndpointTests(TestCase):
                         for label, key, price in zip(("Home", "Draw", "Away"), ("home", "draw", "away"), prices)]},
                     {"name": "First Half Winner", "key": "three_way", "period": "first_half", "line": None,
                      "outcomes": [{"name": "Home", "key": "home", "odds": 12 if index == 4 else 2, "line": None}]}])
-        offers = build_match_odds_comparison_ui(self.match)["sections"][0]["featured_offers"]
-        self.assertEqual([offer["bookmaker"]["name"] for offer in offers], ["BK 4", "BK 3", "BK 2"])
-        self.assertEqual(offers[0]["advantage"], "на 500% выше, чем у BK 0")
-        self.assertEqual(offers[0]["row_index"], 3)
+        comparison = build_match_odds_comparison_ui(self.match)
+        offers = comparison["sidebar_offers"]
+        self.assertEqual([offer["label"] for offer in offers], ["П1", "Х", "П2"])
+        self.assertEqual([offer["bookmaker"]["name"] for offer in offers], ["BK 2", "BK 3", "BK 4"])
+        self.assertEqual(offers[0]["advantage"], "на 100% выше, чем у BK 0")
+        self.assertEqual([offer["row_index"] for offer in offers], [0, 1, 2])
+        sidebar = self.client.get(self.url).json()["sidebar_html"]
+        self.assertNotIn("data-comparison-sidebar-section", sidebar)
+        self.assertLess(sidebar.index("П1 за"), sidebar.index("Х за"))
+        self.assertLess(sidebar.index("Х за"), sidebar.index("П2 за"))
 
     def test_registry_has_own_game_admin_and_stable_key(self):
         from django.contrib import admin

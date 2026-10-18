@@ -27,10 +27,6 @@
             const more = section.querySelector('[data-comparison-more]');
             if (more) more.hidden = rows.length <= limit;
         });
-        sidebar?.querySelectorAll('[data-comparison-sidebar-section]').forEach(section => {
-            const key = section.dataset.comparisonSidebarSection;
-            section.hidden = key !== active;
-        });
         findAll('[data-comparison-updated]').forEach(time => {
             const date = new Date(time.dateTime);
             if (!Number.isNaN(date.getTime())) {
@@ -105,7 +101,9 @@
                 const focusedFilter = document.activeElement?.dataset.comparisonFilter;
                 const focusedScroller = document.activeElement?.classList.contains('match-comparison-scroll');
                 const focusedSidebar = sidebar?.contains(document.activeElement);
-                const focusedBookmaker = focusedSidebar ? document.activeElement?.closest('[data-comparison-offer]')?.dataset.comparisonBookmaker : null;
+                const focusedOffer = focusedSidebar ? document.activeElement?.closest('[data-comparison-offer]') : null;
+                const focusedBookmaker = focusedOffer?.dataset.comparisonBookmaker;
+                const focusedOutcome = focusedOffer?.dataset.comparisonRowIndex;
                 const scroll = panel.querySelector(`[data-comparison-section="${active}"] .match-comparison-scroll`)?.scrollLeft || 0;
                 const parsed = new DOMParser().parseFromString(data.html, 'text/html');
                 const content = parsed.querySelector('[data-comparison-content]');
@@ -126,7 +124,8 @@
                 else if (focusedScroller) scroller?.focus({ preventScroll: true });
                 else if (focusedSidebar) {
                     const nextOffer = Array.from(sidebar.querySelectorAll('[data-comparison-offer]')).find(offer =>
-                        offer.dataset.comparisonOffer === active && offer.dataset.comparisonBookmaker === focusedBookmaker);
+                        offer.dataset.comparisonBookmaker === focusedBookmaker
+                        && offer.dataset.comparisonRowIndex === focusedOutcome);
                     (nextOffer || sidebar.querySelector('.match-comparison-all'))?.focus({ preventScroll: true });
                 }
                 version = data.version;
