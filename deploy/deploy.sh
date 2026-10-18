@@ -45,7 +45,50 @@ if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then
-  sudo nginx -t
+  NGINX_SOURCE_CONFIG="deploy/nginx/cuppershub.com.conf"
+  NGINX_ACTIVE_CONFIG="${NGINX_SITE_CONFIG:-}"
+
+  if [ -z "${NGINX_ACTIVE_CONFIG}" ]; then
+    for candidate in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*.conf; do
+      if [ -f "${candidate}" ] && grep -Eq 'server_name .*capper-hub\.com' "${candidate}"; then
+        NGINX_ACTIVE_CONFIG="${candidate}"
+        break
+      fi
+    done
+  fi
+
+  if [ -z "${NGINX_ACTIVE_CONFIG}" ]; then
+    echo "Could not find the active capper-hub.com nginx config." >&2
+    exit 1
+  fi
+
+  NGINX_ACTIVE_CONFIG="$(readlink -f "${NGINX_ACTIVE_CONFIG}")"
+  case "${NGINX_ACTIVE_CONFIG}" in
+    /etc/nginx/*) ;;
+    *)
+      echo "Refusing to replace nginx config outside /etc/nginx: ${NGINX_ACTIVE_CONFIG}" >&2
+      exit 1
+      ;;
+  esac
+
+  NGINX_ACTIVE_RELATIVE="${NGINX_ACTIVE_CONFIG#/etc/nginx/}"
+  docker run --rm \
+    --entrypoint /bin/sh \
+    -e NGINX_ACTIVE_RELATIVE="${NGINX_ACTIVE_RELATIVE}" \
+    -v "$(pwd)/${NGINX_SOURCE_CONFIG}:/source.conf:ro" \
+    -v /etc/nginx:/target \
+    postgres:16-alpine \
+    -c 'set -e; cp "/target/${NGINX_ACTIVE_RELATIVE}" "/target/${NGINX_ACTIVE_RELATIVE}.cappers-backup"; cp /source.conf "/target/${NGINX_ACTIVE_RELATIVE}"; chmod 0644 "/target/${NGINX_ACTIVE_RELATIVE}"'
+  if ! sudo nginx -t; then
+    docker run --rm \
+      --entrypoint /bin/sh \
+      -e NGINX_ACTIVE_RELATIVE="${NGINX_ACTIVE_RELATIVE}" \
+      -v /etc/nginx:/target \
+      postgres:16-alpine \
+      -c 'cp "/target/${NGINX_ACTIVE_RELATIVE}.cappers-backup" "/target/${NGINX_ACTIVE_RELATIVE}"'
+    echo "nginx config validation failed; the previous config was restored." >&2
+    exit 1
+  fi
   sudo systemctl reload nginx
 fi
 
