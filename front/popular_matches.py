@@ -1,14 +1,22 @@
 from datetime import timedelta
 from types import SimpleNamespace
+from urllib.parse import urlencode
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
+from django.db.models import Case, Count, F, FloatField, Q, Value, When
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, NullIf, Replace
+from django.urls import reverse
 from django.utils import timezone
 
 from game.models import Match, PredictionCoupon
 
 
 POPULAR_MATCHES_SCAN_LIMIT = 500
+LEAGUE_RATING_PATHS = (
+    ("rating",), ("league_rating",), ("league_rank",), ("rank",), ("priority",), ("popularity",),
+    ("league", "rating"), ("data", "rating"),
+)
 
 _ODDS_SCALAR_FIELDS = (
     "home_win_bet",
@@ -59,29 +67,45 @@ def _nested_value(data, *path):
 
 
 def league_rating(match: Match) -> float:
-    """Return provider league popularity without coupling the UI to one payload shape."""
+    """Use the configured top-league weight, otherwise provider popularity."""
     league = getattr(match, "league", None)
     if not league:
         return 0.0
+    if league.is_top:
+        return _safe_number(league.top_order)
 
     direct_rating = _safe_number(getattr(league, "rating", None))
     if direct_rating > 0:
         return direct_rating
 
     raw = league.raw_data if isinstance(league.raw_data, dict) else {}
-    for path in (
-        ("rating",),
-        ("league_rating",),
-        ("rank",),
-        ("priority",),
-        ("popularity",),
-        ("league", "rating"),
-        ("data", "rating"),
-    ):
+    for path in LEAGUE_RATING_PATHS:
         rating = _safe_number(_nested_value(raw, *path))
         if rating > 0:
             return rating
     return 0.0
+
+
+def _league_rating_expression():
+    # Rank BEFORE limiting the candidate scan: a league rated 20 must not
+    # disappear behind 500 earlier games from leagues rated 10.
+    ratings = []
+    for path in LEAGUE_RATING_PATHS:
+        lookup = "league__raw_data__" + "__".join(path)
+        text_value = F("league__raw_data")
+        for key in path:
+            text_value = KeyTextTransform(key, text_value)
+        number = Case(
+            When(**{lookup + "__regex": r"^[0-9]{1,6}([.,][0-9]{1,6})?$"},
+                 then=Cast(Replace(text_value, Value(","), Value(".")), FloatField())),
+            default=Value(None), output_field=FloatField(),
+        )
+        ratings.append(NullIf(number, Value(0.0)))
+    return Case(
+        When(league__is_top=True, then=Cast(F("league__top_order"), FloatField())),
+        default=Coalesce(*ratings, Value(0.0), output_field=FloatField()),
+        output_field=FloatField(),
+    )
 
 
 def _contains_coefficient(value) -> bool:
@@ -168,6 +192,7 @@ def build_popular_matches(limit: int = 5) -> list:
             "odds",
         )
         .annotate(
+            popular_league_rating=_league_rating_expression(),
             published_predictions_count=Count(
                 "predictions__coupon",
                 filter=Q(
@@ -177,11 +202,8 @@ def build_popular_matches(limit: int = 5) -> list:
                 distinct=True,
             )
         )
-        .order_by("starts_at", "id")[:POPULAR_MATCHES_SCAN_LIMIT]
+        .order_by("-popular_league_rating", "starts_at", "id")[:POPULAR_MATCHES_SCAN_LIMIT]
     )
-
-    for match in candidates:
-        match.popular_league_rating = league_rating(match)
 
     popular = sorted(
         (match for match in candidates if match.popular_league_rating > 0),
@@ -207,3 +229,21 @@ def build_popular_matches(limit: int = 5) -> list:
     _append_unique(selected, with_odds, selected_ids, safe_limit)
 
     return [_serialize_match(match) for match in selected]
+
+
+def build_home_popular_links(best_expert=None):
+    """Real home suggestions, sharing match selection and the all-time ranking."""
+    links = []
+    matches = build_popular_matches(limit=1)
+    if matches:
+        match = matches[0]
+        if match.league_name:
+            links.append({"label": match.league_name,
+                          "url": reverse("front:search") + "?" + urlencode({"q": match.league_name})})
+        links.append({"label": f"{match.home_name} — {match.away_name}", "url": match.url})
+    if best_expert is not None:
+        user = best_expert.user
+        links.append({"label": best_expert.display_name or user.get_full_name() or user.username,
+                      "url": reverse("front:expert_profile", kwargs={"username": user.username})})
+    links.append({"label": "Экспрессы на сегодня", "url": reverse("front:prediction_expresses")})
+    return links

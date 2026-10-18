@@ -76,12 +76,18 @@ def toggle_follow(request, user_id: int):
             status=400,
         )
 
+    # Explicit desired state makes in-place actions safe to retry. Older callers
+    # without this field retain the existing toggle contract.
+    desired = request.POST.get("active")
+    if desired not in {None, "1", "0"}:
+        return JsonResponse({"ok": False, "error": "Некорректное состояние подписки."}, status=400)
     existing_follow = AnalystFollow.objects.filter(
         follower=request.user,
         analyst=analyst,
     ).first()
-    if existing_follow is not None:
-        existing_follow.delete()
+    if desired == "0" or (desired is None and existing_follow is not None):
+        if existing_follow is not None:
+            existing_follow.delete()
         return JsonResponse(
             {
                 "ok": True,
@@ -95,7 +101,7 @@ def toggle_follow(request, user_id: int):
         follower=request.user,
         analyst=analyst,
     )
-    active = created
+    active = True
     if created:
         mark_referral_subscription(request, analyst)
 

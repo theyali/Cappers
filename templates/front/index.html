@@ -16,10 +16,9 @@
             {% include "front/includes/_site_search_form.html" with search_input_id="home-search-input" only %}
             <div class="home-search-popular" aria-label="Популярные запросы">
                 <span>Популярно:</span>
-                <a href="{% url 'front:search' %}?q=Лига%20чемпионов">Лига чемпионов</a>
-                <a href="{% url 'front:search' %}?q=Арсенал%20—%20Челси">Арсенал — Челси</a>
-                <a href="{% url 'front:search' %}?q=Kirill%20Pavlenko">Kirill Pavlenko</a>
-                <a href="{% url 'front:prediction_expresses' %}">Экспрессы на сегодня</a>
+                {% for link in popular_search_links %}
+                <a href="{{ link.url }}">{{ link.label }}</a>
+                {% endfor %}
             </div>
         </div>
         <nav class="home-search-sports" aria-label="Поиск прогнозов по видам спорта">

@@ -6276,6 +6276,9 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 1000px) {
+.profile-tab-panel.is-active{
+    padding-top:0;
+}
   .profile-layout {
     grid-template-columns: 1fr;
   }

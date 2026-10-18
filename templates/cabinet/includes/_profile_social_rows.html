@@ -20,7 +20,9 @@
             <em class="{% if row.roi_positive %}is-positive{% else %}is-negative{% endif %}">
                 {{ row.meta }}
             </em>
-            {% if row.is_paid and row.paid_expires_label %}
+            {% if row.paid_subscription %}
+                {% include "cabinet/includes/_paid_subscription_details.html" with details=row.paid_subscription only %}
+            {% elif row.is_paid and row.paid_expires_label %}
                 <span class="profile-social-paid">до {{ row.paid_expires_label }} · {{ row.paid_price_label }} ₽</span>
             {% endif %}
         </span>
@@ -31,14 +33,22 @@
     {% endif %}
 
     {% if row.follow_url %}
-        <button class="profile-social-action" type="button" data-follow-url="{{ row.follow_url }}">
-            <span aria-hidden="true">+</span>
-            <span>Подписаться</span>
+        <button class="profile-social-action{% if row.is_following %} is-muted{% endif %}" type="button"
+                data-profile-social-follow-url="{{ row.follow_url }}"
+                data-profile-social-following="{{ row.is_following|yesno:'true,false' }}"
+                data-profile-social-username="{{ row.username }}" aria-label="{{ row.follow_aria_label }}">
+            <span aria-hidden="true">{% if row.is_following %}−{% else %}+{% endif %}</span>
+            <span>{{ row.follow_label }}</span>
         </button>
     {% elif row.is_following %}
         <a class="profile-social-action is-muted" href="{{ row.profile_url }}">
             <span aria-hidden="true">✓</span>
             <span>Вы подписаны</span>
+        </a>
+    {% elif row.paid_subscription %}
+        <a class="profile-social-action is-muted" href="{{ row.profile_url }}">
+            <span aria-hidden="true">✓</span>
+            <span>Платный доступ</span>
         </a>
     {% else %}
         <a class="profile-social-action is-ghost" href="{{ row.profile_url }}">

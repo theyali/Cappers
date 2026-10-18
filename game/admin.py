@@ -222,7 +222,7 @@ class LeagueAdmin(admin.ModelAdmin):
     autocomplete_fields = ("sport", "country")
     readonly_fields = ("remote_logo_url", "logo_preview")
     actions = ("refresh_local_logos",)
-    ordering = ("-is_top", "top_order", "name_ru", "name", "id")
+    ordering = ("-is_top", "-top_order", "name_ru", "name", "id")
 
     @admin.display(description="Лого")
     def logo_preview(self, obj):
