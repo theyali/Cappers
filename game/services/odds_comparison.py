@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from game.models import ComparisonBookmaker
+from game.services.match_time_display import format_match_start_label
 from game.services.odds import format_outcome_line, outcome_code_from_label
 
 
@@ -397,7 +398,33 @@ def build_match_odds_comparison_ui(match):
                          "best": _display_coefficient(group["best_coefficient"]) if group["best_coefficient"] else None, "winners": ", ".join(winners),
                          "winner_brands": [brand_info(_text(name), name) for name in winners],
                          "single": not group["has_comparison"]})
+        bookmaker_rows = []
+        for column_index, bookmaker in enumerate(columns):
+            cells = []
+            for outcome_index, row in enumerate(rows):
+                cell = dict(row["cells"][column_index])
+                cell.update(label=row["label"], context=row["context"], outcome_index=outcome_index)
+                cells.append(cell)
+
+            margin = None
+            if kind == "winner":
+                full_time_cells = [
+                    cell for cell in cells
+                    if cell["context"] == periods["full_time"] and cell["label"] in {"П1", "Х", "П2"}
+                    and cell["value"] != "—"
+                ]
+                if len(full_time_cells) == 3:
+                    overround = (sum(Decimal("1") / Decimal(cell["value"]) for cell in full_time_cells) - 1) * 100
+                    margin = format(overround.quantize(Decimal("0.1")), "f")
+
+            bookmaker_rows.append({
+                "bookmaker": bookmaker,
+                "cells": cells,
+                "margin": margin,
+                "margin_label": f"{margin} %" if margin is not None else "—",
+            })
         sections.append({"key": kind, "title": title, "columns": columns, "rows": rows,
+                         "bookmaker_rows": bookmaker_rows,
                          "featured_offers": _featured_bookmaker_offers(ordered_groups, rows, brand_info),
                          "has_best": any(row["best"] for row in rows)})
     messages = {
@@ -417,6 +444,8 @@ def build_match_odds_comparison_ui(match):
         if result["scope"] == "prematch" and match.starts_at:
             expires = min(expires, match.starts_at)
     result.update(sections=sections, visible=bool(sections), updated_at=updated,
+                  match_title=f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+                  match_meta=" · ".join(filter(None, (match.league_name, format_match_start_label(match.starts_at)))),
                   ranking_label=("Архив предматчевой линии · не текущие предложения" if result["scope"] == "prematch"
                                  else "Архив live-линии · не текущие предложения") if result["archived"]
                                 else "Максимальные предматчевые коэффициенты среди актуальных предложений БК",

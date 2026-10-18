@@ -286,7 +286,7 @@ class MatchOddsComparisonEndpointTests(TestCase):
     def test_ssr_comparison_has_no_bet_controls_or_fake_sidebar_best(self, queue):
         response = self.client.get(self.match.get_absolute_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Сравнение коэффициентов")
+        self.assertContains(response, "Коэффициенты букмекеров")
         self.assertContains(response, "data-match-comparison")
         self.assertContains(response, "match-odds-comparison")
         self.assertNotContains(response, '<section class="match-v2-side-card" aria-label="Лучший коэффициент">')

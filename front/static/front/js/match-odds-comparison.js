@@ -179,7 +179,8 @@
         limits.set(key, Math.max(limits.get(key) || 20, Math.ceil((index + 1) / 20) * 20));
         syncControls();
         const section = panel.querySelector(`[data-comparison-section="${key}"]`);
-        const row = section?.querySelectorAll('[data-comparison-row]')[index];
+        const cell = section?.querySelector(`[data-comparison-outcome-index="${index}"]`);
+        const row = cell?.closest('[data-comparison-row]');
         if (!row) return;
         event.preventDefault();
         row.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });

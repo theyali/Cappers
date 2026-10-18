@@ -222,7 +222,7 @@
                 data-expires-at="{{ match_page.comparison.expires_at }}"
                 aria-labelledby="match-comparison-title"{% if not match_page.comparison.visible %} hidden{% endif %}>
                 <div class="match-v2-panel-head">
-                    <h2 id="match-comparison-title">Сравнение коэффициентов</h2>
+                    <h2 id="match-comparison-title">Коэффициенты букмекеров</h2>
                     <button class="match-v2-panel-link" type="button" data-comparison-retry hidden>Повторить</button>
                 </div>
                 {% include "game/_match_odds_comparison_body.html" with comparison=match_page.comparison only %}
