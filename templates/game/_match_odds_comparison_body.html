@@ -1,9 +1,13 @@
 <div data-comparison-content>
     <div class="match-comparison-meta">
-        <span data-comparison-status role="status">{{ comparison.message }}</span>
+        <span class="match-comparison-match">{{ comparison.match_title }}{% if comparison.match_meta %}<small>· {{ comparison.match_meta }}</small>{% endif %}</span>
+        <span class="match-comparison-updated" data-comparison-status role="status">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-1.6 5.6M20 5v6h-6"></path></svg>
+            {{ comparison.message }}
         {% if comparison.updated_at %}
-        <span>Обновлено <time datetime="{{ comparison.updated_at|date:'c' }}" data-comparison-updated>{{ comparison.updated_at|date:'d.m H:i' }}</time></span>
+            · <time datetime="{{ comparison.updated_at|date:'c' }}" data-comparison-updated>{{ comparison.updated_at|date:'d.m H:i' }}</time>
         {% endif %}
+        </span>
     </div>
     {% if comparison.sections %}
     <div class="match-comparison-filters" aria-label="Группа ставок">
@@ -13,34 +17,58 @@
     </div>
     {% for section in comparison.sections %}
     <div id="comparison-{{ section.key }}" data-comparison-section="{{ section.key }}"{% if not forloop.first %} hidden{% endif %}>
-      <div class="match-comparison-layout">
-       <div class="match-comparison-line">
+        <div class="match-comparison-best-list" data-comparison-best-summary aria-label="Лучшие коэффициенты">
+            {% for row in section.rows|slice:":3" %}
+            {% if row.best and row.winner_brands.0 %}
+            <div class="match-comparison-best-card">
+                <span>{{ row.label }}</span>
+                <strong>{{ row.best }}</strong>
+                <span class="match-comparison-best-bookmaker">
+                    {% include 'game/_comparison_bookmaker.html' with bookmaker=row.winner_brands.0 icon_only=True only %}
+                    <b>{{ row.winner_brands.0.name }}</b>
+                </span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
         <div class="match-comparison-scroll" tabindex="0" role="region" aria-label="{{ section.title }}: сравнение букмекеров">
             <table class="match-comparison-table">
                 <caption>{{ section.title }} — коэффициенты букмекеров</caption>
-                <thead><tr>
-                    <th scope="col">Исход</th>
-                    {% for bookmaker in section.columns %}<th scope="col">{% include 'game/_comparison_bookmaker.html' %}</th>{% endfor %}
-                </tr></thead>
+                <thead>
+                    <tr>
+                        <th class="match-comparison-rank" scope="col"><span class="visually-hidden">Место</span></th>
+                        <th class="match-comparison-bookmaker-column" scope="col">Букмекер</th>
+                        {% for row in section.rows %}
+                        <th scope="col"><strong>{{ row.label }}</strong><small>{{ row.context }}</small></th>
+                        {% endfor %}
+                        <th class="match-comparison-margin" scope="col">Маржа</th>
+                    </tr>
+                </thead>
                 <tbody>
-                {% for row in section.rows %}
+                {% for row in section.bookmaker_rows %}
                 <tr data-comparison-row{% if forloop.counter > 20 %} hidden{% endif %}>
-                    <th scope="row"><strong>{{ row.label }}</strong><small>{{ row.context }}</small></th>
+                    <td class="match-comparison-rank">{{ forloop.counter }}</td>
+                    <th class="match-comparison-bookmaker-column" scope="row">
+                        {% include 'game/_comparison_bookmaker.html' with bookmaker=row.bookmaker only %}
+                        <small>{% if row.margin %}маржа {{ row.margin_label }}{% endif %}</small>
+                    </th>
                     {% for cell in row.cells %}
-                    <td{% if cell.is_best %} class="is-best" title="Лучший коэффициент: {{ cell.bookmaker }}"{% endif %}>
-                        <span class="match-comparison-price">{{ cell.value }}{% if cell.is_best %}<span data-comparison-best-marker aria-label="Лучший коэффициент"> ✓</span>{% endif %}</span>
+                    <td data-comparison-outcome-index="{{ cell.outcome_index }}"{% if cell.is_best %} class="is-best" title="Лучший коэффициент: {{ cell.bookmaker }}"{% endif %}>
+                        <span class="match-comparison-price">{{ cell.value }}{% if cell.is_best %}<span class="visually-hidden" data-comparison-best-marker> — лучший коэффициент</span>{% endif %}</span>
                     </td>
                     {% endfor %}
+                    <td class="match-comparison-margin">{{ row.margin_label }}</td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% if section.rows|length > 20 %}<button class="match-comparison-more" type="button" data-comparison-more>Показать ещё 20</button>{% endif %}
-       </div>
-      </div>
+        {% if section.bookmaker_rows|length > 20 %}<button class="match-comparison-more" type="button" data-comparison-more>Показать ещё 20</button>{% endif %}
     </div>
     {% endfor %}
-    <p class="match-comparison-note">{{ comparison.note }}</p>
+    <p class="match-comparison-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.8v.2"></path></svg>
+        {{ comparison.note }}
+    </p>
     {% endif %}
 </div>

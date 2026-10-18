@@ -397,12 +397,12 @@ def _score_events(match: Match) -> list[dict]:
     return _period_score_events(match)
 
 
-def _show_timeline(match: Match, score_events: list[dict]) -> bool:
+def _show_timeline(match: Match, events) -> bool:
     if match.sync_scope == Match.SyncScope.PREMATCH:
         return False
     if match.sync_scope == Match.SyncScope.LIVE:
         return True
-    return bool(score_events)
+    return bool(events)
 
 
 def _event_time_label(event: MatchEvent) -> str:
@@ -604,6 +604,7 @@ def match_events(request, slug: str):
                 "minute_label": match.live_minute_label,
                 "timeline_label": _timeline_marker_label(match),
                 "progress": _live_progress(match, (event.minute for event in events)),
+                "show_timeline": _show_timeline(match, events),
             },
             "events_state": {
                 "status": _match_events_state(match, len(events)),
@@ -835,7 +836,7 @@ def _match_page_context(match: Match, odds_tabs: list[dict]) -> dict:
         "event_duration": {"basketball": 40, "hockey": 60}.get(match.sport_code, 90),
         "live_progress": _live_progress(match, (item["time"]["minute"] for item in events["items"])),
         "timeline_marker_label": _timeline_marker_label(match),
-        "show_timeline": _show_timeline(match, score_events),
+        "show_timeline": _show_timeline(match, events["items"]),
         "status_label": live_status_label(match) if match.sync_scope == Match.SyncScope.LIVE else match.get_sync_scope_display(),
         "league_badge": _team_code(match.league_name, "Л"),
         "compact_odds": odds_groups[:3],

@@ -429,8 +429,7 @@
 
         if (timeline && timelineProgress && timelineLabel) {
             const progress = Math.max(0, Math.min(100, Number(match.progress) || 0));
-            const shouldShow = match.scope === "live" || (match.scope === "finished" && knownEventKeys.size > 0);
-            timeline.hidden = !shouldShow;
+            timeline.hidden = !match.show_timeline;
             timeline.dataset.matchV2Progress = String(progress);
             timeline.style.setProperty("--match-v2-progress", `${progress}%`);
             timelineProgress.value = progress;

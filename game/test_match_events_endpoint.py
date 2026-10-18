@@ -120,6 +120,7 @@ class MatchEventsEndpointTests(TestCase):
         self.assertEqual(payload["match"]["score"], {"display": "2:1", "home": "2", "away": "1"})
         self.assertEqual(payload["match"]["minute"], 63)
         self.assertEqual(payload["match"]["timeline_label"], "63′")
+        self.assertTrue(payload["match"]["show_timeline"])
         self.assertGreater(payload["match"]["progress"], 0)
         self.assertEqual(
             payload["events_state"],
@@ -149,6 +150,24 @@ class MatchEventsEndpointTests(TestCase):
         self.assertEqual(first["participants"][0]["role"], "booked")
         queue_refresh.assert_not_called()
         sync_match_events.assert_not_called()
+
+    @patch("game.match_detail_views.refresh_match_events.apply_async")
+    def test_interrupted_match_keeps_server_rendered_timeline_after_ajax_refresh(self, queue_refresh):
+        self.match.sync_scope = Match.SyncScope.INTERRUPTED
+        self.match.save(update_fields=["sync_scope"])
+        self.create_event(key="id:300020", minute=66, seq=1, event_type="substitution")
+
+        page = self.client.get(self.match.get_absolute_url())
+        payload = self.client.get(self.url).json()
+
+        self.assertContains(page, 'data-match-timeline data-match-v2-progress="0"')
+        self.assertNotContains(
+            page,
+            'data-match-timeline data-match-v2-progress="0" aria-label="Ход матча" hidden',
+        )
+        self.assertEqual(payload["match"]["scope"], Match.SyncScope.INTERRUPTED)
+        self.assertTrue(payload["match"]["show_timeline"])
+        queue_refresh.assert_not_called()
 
     @patch("game.services.match_sync.MatchSyncService.sync_match_events")
     @patch("game.match_detail_views.refresh_match_events.apply_async")
