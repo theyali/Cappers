@@ -1,4 +1,5 @@
 from datetime import timedelta
+from copy import deepcopy
 from unittest.mock import patch
 
 from django.core.cache import cache
@@ -277,6 +278,73 @@ class MatchOddsComparisonEndpointTests(TestCase):
         table = build_match_odds_comparison_ui(self.match)["sections"][0]
         self.assertEqual(len(table["columns"]), 2)
         self.assertEqual(table["rows"][0]["best"], "2.005")
+
+    def test_totals_show_three_preferred_match_lines_and_keep_over_under_pairs(self):
+        markets = [{
+            "name": "Goals Over/Under",
+            "period": "full_time",
+            "outcomes": [
+                {"name": f"{selection} {line}", "odds": "1.90", "line": line}
+                for line in ("0.5", "1.5", "2.5", "3.5", "4.5")
+                for selection in ("Over", "Under")
+            ],
+        }]
+        for book in self.snapshot.bookmakers.all():
+            book.markets = deepcopy(markets)
+            book.save(update_fields=["markets"])
+
+        section = build_match_odds_comparison_ui(self.match)["sections"][0]
+
+        self.assertEqual(section["key"], "total")
+        self.assertEqual(
+            [row["label"] for row in section["rows"]],
+            ["ТБ 0.5", "ТМ 0.5", "ТБ 2.5", "ТМ 2.5", "ТБ 3.5", "ТМ 3.5"],
+        )
+        self.assertTrue(all(row["context"] == "Матч" for row in section["rows"]))
+
+    def test_totals_replace_missing_preferred_line_with_nearest_available(self):
+        markets = [{
+            "name": "Goals Over/Under",
+            "period": "full_time",
+            "outcomes": [
+                {"name": f"{selection} {line}", "odds": "1.90", "line": line}
+                for line in ("1.0", "2.5", "3.5", "4.5")
+                for selection in ("Over", "Under")
+            ],
+        }]
+        for book in self.snapshot.bookmakers.all():
+            book.markets = deepcopy(markets)
+            book.save(update_fields=["markets"])
+
+        section = build_match_odds_comparison_ui(self.match)["sections"][0]
+
+        self.assertEqual(
+            [row["label"] for row in section["rows"]],
+            ["ТБ 1", "ТМ 1", "ТБ 2.5", "ТМ 2.5", "ТБ 3.5", "ТМ 3.5"],
+        )
+
+    def test_handicaps_show_only_three_match_lines_nearest_zero(self):
+        markets = [{
+            "name": "Asian Handicap",
+            "period": "full_time",
+            "outcomes": [
+                {"name": f"{selection} {line}", "odds": "1.90", "line": line}
+                for line in ("-2.5", "-1.5", "0", "1.5", "2.5")
+                for selection in ("Home", "Away")
+            ],
+        }]
+        for book in self.snapshot.bookmakers.all():
+            book.markets = deepcopy(markets)
+            book.save(update_fields=["markets"])
+
+        section = build_match_odds_comparison_ui(self.match)["sections"][0]
+
+        self.assertEqual(section["key"], "handicap")
+        self.assertEqual(
+            [row["label"] for row in section["rows"]],
+            ["Ф1 (-1.5)", "Ф2 (+1.5)", "Ф1 (0)", "Ф2 (0)", "Ф1 (+1.5)", "Ф2 (-1.5)"],
+        )
+        self.assertTrue(all(row["context"] == "Матч · Азиатская" for row in section["rows"]))
 
     def test_get_only_and_not_found(self):
         self.assertEqual(self.client.post(self.url).status_code, 405)
