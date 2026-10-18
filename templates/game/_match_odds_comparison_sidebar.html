@@ -1,14 +1,13 @@
-<section class="match-v2-side-card match-comparison-leaders" data-comparison-sidebar{% if not comparison.visible %} hidden{% endif %} aria-label="Лучшие по рынкам">
-    <h2>Лучшие по рынкам</h2>
+<section class="match-v2-side-card match-comparison-leaders" data-comparison-sidebar{% if not comparison.visible %} hidden{% endif %} aria-label="Лучшие коэффициенты исхода матча">
+    <h2>Лучшие коэффициенты</h2>
     <p>{{ comparison.ranking_label }}</p>
     {% if comparison.updated_at %}<p>Срез линии: <time datetime="{{ comparison.updated_at|date:'c' }}" data-comparison-updated>{{ comparison.updated_at|date:'d.m H:i' }}</time></p>{% endif %}
-    {% for section in comparison.sections %}
-    <div data-comparison-sidebar-section="{{ section.key }}"{% if not forloop.first %} hidden{% endif %}>
-        <h3>{{ section.title }}</h3>
+    <div>
+        <h3>Исход матча</h3>
         <div data-comparison-best-summary>
-        {% if section.featured_offers %}
-            {% for offer in section.featured_offers %}
-            <a class="match-comparison-featured" href="#match-comparison" data-comparison-offer="{{ section.key }}" data-comparison-bookmaker="{{ offer.bookmaker.key }}" data-comparison-row-index="{{ offer.row_index }}">
+        {% if comparison.sidebar_offers %}
+            {% for offer in comparison.sidebar_offers %}
+            <a class="match-comparison-featured" href="#match-comparison" data-comparison-offer="winner" data-comparison-bookmaker="{{ offer.bookmaker.key }}" data-comparison-row-index="{{ offer.row_index }}">
                 {% include 'game/_comparison_bookmaker.html' with bookmaker=offer.bookmaker icon_only=True only %}
                 <span class="match-comparison-featured-copy">
                     <strong>{{ offer.label }} за <b class="match-comparison-best">{{ offer.coefficient }}</b></strong>
@@ -23,6 +22,5 @@
         {% endif %}
         </div>
     </div>
-    {% endfor %}
     <a class="match-comparison-all" href="#match-comparison">Все букмекеры</a>
 </section>

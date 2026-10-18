@@ -299,41 +299,31 @@ def _display_coefficient(value):
     return whole + "." + fraction.ljust(2, "0")
 
 
-def _featured_bookmaker_offers(groups, rows, brand_info):
-    """Up to three distinct brands, ordered by edge over the next same-outcome price."""
-    candidates = []
+def _match_winner_sidebar_offers(groups, rows, brand_info):
+    """Best full-time P1/X/P2 offers; independent from the active table filter."""
+    offers = []
     for index, (group, row) in enumerate(zip(groups, rows)):
-        if not group["best_coefficient"]:
+        if group["period"] != "full_time" or row["label"] not in {"П1", "Х", "П2"}:
+            continue
+        if not group["best_coefficient"] or not row["winner_brands"]:
             continue
         best = Decimal(group["best_coefficient"])
-        for brand in row["winner_brands"]:
-            competitor = max(
-                (offer for offer in group["offers"] if _text(offer["bookmaker"]) != brand["key"]),
-                key=lambda offer: Decimal(offer["coefficient"]),
-            )
-            runner_up = Decimal(competitor["coefficient"])
-            edge = (best / runner_up - 1) * 100
-            advantage = "Один из лучших коэффициентов"
-            if edge > 0:
-                percent = format(edge.quantize(Decimal("0.1"), rounding=ROUND_DOWN), "f").rstrip("0").rstrip(".").replace(".", ",")
-                percent = f"на {percent}%" if percent != "0" else "менее чем на 0,1%"
-                competitor_name = brand_info(_text(competitor["bookmaker"]), competitor["bookmaker"])["name"]
-                advantage = f"{percent} выше, чем у {competitor_name}"
-            candidates.append({"bookmaker": brand, "label": row["label"], "context": row["context"],
-                               "coefficient": row["best"], "advantage": advantage, "edge": edge,
-                               "row_index": index})
-    featured = []
-    seen = set()
-    for candidate in sorted(candidates, key=lambda c: (-c["edge"], c["row_index"], c["bookmaker"]["key"])):
-        key = candidate["bookmaker"]["key"]
-        if key in seen:
-            continue
-        seen.add(key)
-        candidate.pop("edge")
-        featured.append(candidate)
-        if len(featured) == 3:
-            break
-    return featured
+        brand = min(row["winner_brands"], key=lambda item: (item["name"].casefold(), item["key"]))
+        competitor = max(
+            (offer for offer in group["offers"] if _text(offer["bookmaker"]) != brand["key"]),
+            key=lambda offer: Decimal(offer["coefficient"]),
+        )
+        runner_up = Decimal(competitor["coefficient"])
+        edge = (best / runner_up - 1) * 100
+        advantage = "Один из лучших коэффициентов"
+        if edge > 0:
+            percent = format(edge.quantize(Decimal("0.1"), rounding=ROUND_DOWN), "f").rstrip("0").rstrip(".").replace(".", ",")
+            percent = f"на {percent}%" if percent != "0" else "менее чем на 0,1%"
+            competitor_name = brand_info(_text(competitor["bookmaker"]), competitor["bookmaker"])["name"]
+            advantage = f"{percent} выше, чем у {competitor_name}"
+        offers.append({"bookmaker": brand, "label": row["label"], "context": row["context"],
+                       "coefficient": row["best"], "advantage": advantage, "row_index": index})
+    return sorted(offers, key=lambda offer: {"П1": 0, "Х": 1, "П2": 2}[offer["label"]])
 
 
 def _compact_dense_market_groups(kind, groups):
@@ -486,7 +476,8 @@ def build_match_odds_comparison_ui(match):
             })
         sections.append({"key": kind, "title": title, "columns": columns, "rows": rows,
                          "bookmaker_rows": bookmaker_rows,
-                         "featured_offers": _featured_bookmaker_offers(ordered_groups, rows, brand_info),
+                         "featured_offers": (_match_winner_sidebar_offers(ordered_groups, rows, brand_info)
+                                             if kind == "winner" else []),
                          "has_best": any(row["best"] for row in rows)})
     messages = {
         "ready": "Актуальные коэффициенты",
@@ -504,7 +495,9 @@ def build_match_odds_comparison_ui(match):
         expires = min(updated, parse_datetime(result["fetched_at"])) + timedelta(seconds=result["stale_seconds"])
         if result["scope"] == "prematch" and match.starts_at:
             expires = min(expires, match.starts_at)
+    winner_section = next((section for section in sections if section["key"] == "winner"), None)
     result.update(sections=sections, visible=bool(sections), updated_at=updated,
+                  sidebar_offers=winner_section["featured_offers"] if winner_section else [],
                   match_title=f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
                   match_meta=" · ".join(filter(None, (match.league_name, format_match_start_label(match.starts_at)))),
                   ranking_label=("Архив предматчевой линии · не текущие предложения" if result["scope"] == "prematch"
