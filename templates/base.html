@@ -37,7 +37,7 @@
     {% endif %}
 
     {% if messages %}
-        <ul class="messages" role="status" aria-live="polite">
+        <ul class="messages container" role="status" aria-live="polite">
             {% for message in messages %}
                 <li class="message-item {{ message.tags|default:'info' }}">{{ message }}</li>
             {% endfor %}
@@ -59,18 +59,8 @@
     {% endif %}
 
     <main class="site-main {{ page_class|default:'' }} {{ page_layout_class|default:'' }}">
-        {% if breadcrumbs and page_class != 'profile' and not is_telegram_app and not hide_site_chrome %}
-            <div class="container breadcrumbs-container">
-                <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
-                    {% for crumb in breadcrumbs %}
-                        {% if crumb.url and not forloop.last %}
-                            <a href="{{ crumb.url }}">{{ crumb.title }}</a>
-                        {% else %}
-                            <span {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.title }}</span>
-                        {% endif %}
-                    {% endfor %}
-                </nav>
-            </div>
+        {% if breadcrumbs and not breadcrumbs_inside_content and page_class != 'profile' and not is_telegram_app and not hide_site_chrome %}
+            {% include "front/includes/_content_breadcrumbs.html" %}
         {% endif %}
 
         {% block content %}{% endblock %}
@@ -167,6 +157,9 @@
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
     <script src="{% static 'front/js/active-scroll-tabs.js' %}" defer></script>
     <script src="{% static 'front/js/leader-badges.js' %}" defer></script>
+    {% if request.user.is_authenticated and request.user.is_analyst %}
+    <script src="{% static 'front/js/coupon-draft.js' %}" data-user-id="{{ request.user.pk }}" data-state-url="{% url 'game:coupon_draft_state' %}" defer></script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
     <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>
     {% if request.user.is_authenticated %}

@@ -1,5 +1,6 @@
 import hashlib
 import json
+from urllib.parse import urlencode
 
 from django.core.cache import cache
 from django.core.paginator import Paginator
@@ -10,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from cabinet.models import AnalystPaidPlan
 from cabinet.paid_predictions import active_paid_subscription_analyst_ids
 from cabinet.vip import annotate_vip_status
 from game.models import Prediction, PredictionCoupon
@@ -208,24 +210,68 @@ def _express_published_items(published_items):
     )
 
 
-def _paid_access_q(user) -> Q:
-    if not getattr(user, "is_authenticated", False):
-        return Q(pk__isnull=True)
-    paid_analyst_ids = active_paid_subscription_analyst_ids(user)
-    return Q(author_id=user.pk) | Q(author_id__in=paid_analyst_ids)
-
-
 def apply_prediction_type_scope(queryset, active_prediction_type: str, user):
     if active_prediction_type == PREDICTION_TYPE_PAID:
-        return queryset.filter(
-            _paid_access_q(user),
-            audience=PredictionCoupon.Audience.PAID,
-        )
+        # The paid catalog is public: access controls protect the coupon payload,
+        # not discovery. Locked cards are rendered with deliberately redacted data.
+        return queryset.filter(audience=PredictionCoupon.Audience.PAID)
     queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
     if active_prediction_type == PREDICTION_TYPE_VIP:
         queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
         queryset = queryset.filter(is_vip_active=True)
     return queryset
+
+
+def _attach_paid_catalog_access(cards, request) -> None:
+    paid_cards = [
+        card
+        for card in cards
+        if card.coupon.audience == PredictionCoupon.Audience.PAID
+    ]
+    if not paid_cards:
+        return
+
+    accessible_analyst_ids = active_paid_subscription_analyst_ids(request.user)
+    author_ids = {card.coupon.author_id for card in paid_cards}
+    first_plan_by_author = {}
+    for plan in AnalystPaidPlan.objects.filter(
+        analyst_id__in=author_ids,
+        is_active=True,
+        price__gt=0,
+        duration_days__gt=0,
+    ).order_by("analyst_id", "order", "duration_days", "id"):
+        first_plan_by_author.setdefault(plan.analyst_id, plan)
+
+    for card in paid_cards:
+        author = card.coupon.author
+        card.is_paid_locked = not (
+            getattr(request.user, "is_authenticated", False)
+            and (
+                request.user.pk == author.pk
+                or author.pk in accessible_analyst_ids
+            )
+        )
+        card.is_paid_purchase_closed = (
+            card.coupon.state_status != PredictionCoupon.StateStatus.PENDING
+        )
+        if not card.is_paid_locked:
+            continue
+
+        plan = first_plan_by_author.get(author.pk)
+        profile = getattr(author, "analyst_profile", None)
+        card.paid_access_price = (
+            plan.price
+            if plan is not None
+            else getattr(profile, "paid_predictions_price", 0)
+        )
+        card.paid_access_period = plan.period_label if plan is not None else "30 дней"
+        checkout_path = reverse(
+            "cabinet:paid_predictions_subscribe",
+            kwargs={"user_id": author.pk},
+        )
+        card.paid_checkout_url = (
+            f"{checkout_path}?{urlencode({'next': request.get_full_path()})}"
+        )
 
 
 def _catalog_meta_queryset(*, include_paid: bool = False):
@@ -656,6 +702,13 @@ def predictions(
     valid_statuses = {key for key, _ in PREDICTION_STATUS_FILTERS}
     if active_status not in valid_statuses:
         active_status = "all"
+    if is_paid_predictions:
+        if "status" in request.GET:
+            params = request.GET.copy()
+            params.pop("status", None)
+            params.pop("page", None)
+            return HttpResponseRedirect(_url_with_query(request.path, params))
+        active_status = "all"
 
     active_sort = request.GET.get("sort", "new")
     valid_sorts = {key for key, _ in SORT_OPTIONS}
@@ -774,6 +827,8 @@ def predictions(
         page_obj.object_list,
         following_ids=following_ids,
     )
+    if is_paid_predictions:
+        _attach_paid_catalog_access(page_obj.object_list, request)
 
     sports, leagues, cappers = _filter_options(
         published_items,
@@ -833,7 +888,7 @@ def predictions(
         if prediction_type_context["uses_prediction_type_query"]
         else _prediction_sport_path()
     )
-    status_tabs = _status_tabs(request, counts, active_status)
+    status_tabs = [] if is_paid_predictions else _status_tabs(request, counts, active_status)
     sport_tabs = _sport_tabs(
         request,
         published_items,
@@ -899,6 +954,7 @@ def predictions(
             "mobile_match_scope_tabs": build_mobile_prediction_match_scope_tabs(request),
             "adv_placement": "sidebar",
             "predictions_filter_collapsed": prediction_filter_collapsed(request),
+            "breadcrumbs_inside_content": True,
             **prediction_type_context,
             **seo_context,
         },

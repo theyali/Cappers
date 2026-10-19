@@ -1264,6 +1264,12 @@ body.expert-public-details-open {
     gap: 6px;
   }
   .prediction-card-rich-actions .feed-prediction-save { margin-left: 0; }
+  .predictions-grid.is-rich > .paid-prediction-locked-card {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .paid-prediction-locked-art { min-height: 250px; }
+  .paid-prediction-locked-body { padding: 16px; }
   .document-page .predictions-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -5593,162 +5599,6 @@ body.expert-public-details-open {
     width: 100%;
   }
 
-  #profile-tab-copybetting .profile-list-card {
-    padding: 0;
-    background: transparent;
-    outline:0;
-  }
-  #profile-tab-copybetting .profile-section-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-  #profile-tab-copybetting .profile-section-heading h2 {
-    font-size: 27px;
-    font-weight: 600;
-    line-height: 1;
-  }
-  #profile-tab-copybetting .profile-save-button {
-    width: 100%;
-    min-height: 46px;
-    border-radius: 12px;
-  }
-  #profile-tab-copybetting .profile-copy-audience-summary {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  #profile-tab-copybetting .profile-wallet-card {
-    min-height: 88px;
-    padding: 14px;
-    border-radius: 15px;
-  }
-  #profile-tab-copybetting .profile-wallet-card > span,
-  #profile-tab-copybetting .profile-wallet-card small {
-    font-size: 11px;
-  }
-  #profile-tab-copybetting .profile-wallet-card strong {
-    font-size: 22px;
-    font-weight: 600;
-  }
-  #profile-tab-copybetting .profile-copy-table {
-    overflow: visible;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-  #profile-tab-copybetting .profile-copy-table-head {
-    display: none;
-  }
-  #profile-tab-copybetting .profile-copy-table-row {
-    min-width: 0;
-    min-height: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "user status"
-      "bank stake"
-      "copied profit"
-      "actions actions";
-    align-items: center;
-    gap: 11px 10px;
-    padding: 12px;
-    border-radius: 16px;
-    background: #1d1d1f;
-  }
-  #profile-tab-copybetting .profile-copy-table-row > .profile-coupon-main {
-    grid-area: user;
-    min-width: 0;
-    gap: 9px;
-  }
-  #profile-tab-copybetting .profile-copy-table-row > .profile-coupon-status,
-  #profile-tab-copybetting .profile-copy-status-cell {
-    grid-area: status;
-    justify-self: end;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell.is-bank {
-    grid-area: bank;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell.is-stake {
-    grid-area: stake;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell.is-copied {
-    grid-area: copied;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell.is-profit {
-    grid-area: profit;
-  }
-  #profile-tab-copybetting .profile-copy-actions {
-    grid-area: actions;
-    width: 100%;
-  }
-  #profile-tab-copybetting .profile-copy-table .nav-profile-dropdown-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 11px;
-  }
-  #profile-tab-copybetting .profile-coupon-copy {
-    min-width: 0;
-  }
-  #profile-tab-copybetting .profile-coupon-copy strong {
-    font-size: 13px;
-    font-weight: 600;
-  }
-  #profile-tab-copybetting .profile-coupon-copy span {
-    font-size: 10px;
-  }
-  #profile-tab-copybetting .profile-coupon-status {
-    min-height: 30px;
-    padding: 0 9px;
-    border-radius: 9px;
-    font-size: 10px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  #profile-tab-copybetting .profile-copy-status-cell {
-    max-width: 118px;
-    justify-content: flex-end;
-    gap: 5px;
-  }
-  #profile-tab-copybetting .profile-copy-status-cell small {
-    width: 100%;
-    overflow: hidden;
-    color: var(--muted);
-    font-size: 9px;
-    text-align: right;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  #profile-tab-copybetting .profile-copy-status-actions {
-    margin-left: 0;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell {
-    min-width: 0;
-    padding: 10px;
-    border-radius: 12px;
-    background: #161617;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell > span {
-    font-size: 8px;
-  }
-  #profile-tab-copybetting .profile-copy-table-cell > strong {
-    margin-top: 4px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  #profile-tab-copybetting .profile-row-action {
-    width: 100%;
-    min-height: 42px;
-    border-radius: 12px;
-  }
-  #profile-tab-copybetting .profile-copy-history-head {
-    align-items: flex-start;
-    margin: 18px 0 10px;
-  }
-  #profile-tab-copybetting .profile-copy-history-head h2 {
-    font-size: 22px;
-    font-weight: 600;
-    line-height: 1.05;
-  }
   .bonus-cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -5969,6 +5819,12 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 480px) {
+  .paid-prediction-offers { grid-template-columns: minmax(0, 1fr); }
+  .paid-prediction-locked-author-row { align-items: flex-start; }
+  .paid-prediction-locked-badge { display: none; }
+  .paid-prediction-locked-art { min-height: 220px; }
+  .paid-prediction-locked-art img { width: min(66%, 220px); }
+
   .user-public-stats {
     grid-template-columns: 1fr 1fr;
   }
@@ -6753,7 +6609,6 @@ body.expert-public-details-open {
   }
 
   .expert-public-bank {
-    padding: 10px;
     border-radius: 16px;
   }
 
@@ -10707,7 +10562,9 @@ body.expert-public-details-open {
   .cabinet-vip-page .matches-mobile-scope-panel {
     display: block;
   }
-
+  .vip-hero{
+    padding: 0;
+  }
   .vip-hero,
   .vip-plan-grid {
     grid-template-columns: 1fr;
@@ -13209,13 +13066,13 @@ body.expert-public-details-open {
 /* Phones open the wheel from the bottom menu, so the bonuses page has no wheel of its own. */
 @media (max-width: 1120px) {
   /* Keep the existing phone/tablet predictions layout unchanged. */
-  #profile-tab-predictions .profile-predictions-feature { display: contents; }
-  #profile-tab-predictions .profile-header-sort { display: flex; }
-  #profile-tab-predictions .profile-desktop-sort-toolbar { display: none; }
-  #profile-tab-predictions .profile-predictions-insights,
-  #profile-tab-predictions .profile-desktop-feature-empty,
-  #profile-tab-predictions .profile-desktop-list-head { display: none; }
-  #profile-tab-predictions .profile-best-coupons-slider .home-mobile-card { height: auto; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-predictions-feature { display: contents; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-header-sort { display: flex; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort-toolbar { display: none; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-predictions-insights,
+  :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-feature-empty,
+  :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-list-head { display: none; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-card { height: auto; }
   .profile-list-card{
     border-radius: 0;
   }
@@ -13228,11 +13085,11 @@ body.expert-public-details-open {
     display: block;
   }
 
-  #profile-tab-predictions .profile-coupons-desktop-list {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-coupons-desktop-list {
     display: none;
   }
 
-  #profile-tab-predictions .profile-best-coupons-slider {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider {
     width: 100%;
     max-width: 100vw;
     overflow: hidden;
@@ -13241,7 +13098,7 @@ body.expert-public-details-open {
     border-radius: 0;
   }
 
-  #profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-track {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-slider-track {
     display: grid;
     gap: 12px;
     grid-auto-flow: column;
@@ -13249,7 +13106,7 @@ body.expert-public-details-open {
     justify-content: start;
   }
 
-  #profile-tab-predictions .profile-best-coupons-slider .home-mobile-card {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-card {
     width: 100%;
     min-width: 0;
     flex: none;
@@ -13258,16 +13115,16 @@ body.expert-public-details-open {
     border-radius: 26px;
   }
 
-  #profile-tab-predictions .profile-mobile-coupons-feed,
-  #profile-tab-predictions .profile-mobile-load-more-wrap {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-mobile-coupons-feed,
+  :is(#profile-tab-predictions, .expert-public-page) .profile-mobile-load-more-wrap {
     display: block;
   }
 
-  #profile-tab-predictions .profile-mobile-block-head {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-mobile-block-head {
     margin: 0 0 12px;
   }
 
-  #profile-tab-predictions .profile-mobile-block-head h3 {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-mobile-block-head h3 {
     margin: 0;
     color: #fff;
     font-family: var(--font-heading);
@@ -13276,15 +13133,15 @@ body.expert-public-details-open {
     line-height: 0.95;
   }
 
-  #profile-tab-predictions .profile-mobile-coupons-feed.is-loading {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-mobile-coupons-feed.is-loading {
     opacity: 0.82;
   }
 
-  #profile-tab-predictions .expert-mobile-feed-all[hidden] {
+  :is(#profile-tab-predictions, .expert-public-page) .expert-mobile-feed-all[hidden] {
     display: none;
   }
 
-  #profile-tab-predictions .expert-mobile-feed-all:disabled {
+  :is(#profile-tab-predictions, .expert-public-page) .expert-mobile-feed-all:disabled {
     cursor: wait;
     opacity: 0.65;
   }
@@ -14420,4 +14277,299 @@ body.expert-public-details-open {
     align-self: start;
     overflow: visible;
   }
+}
+
+@media (max-width: 1120px) {
+  :is(#profile-tab-predictions, .expert-public-page) .profile-coupon-feed .profile-desktop-list-head {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-coupon-feed .profile-desktop-sort-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-coupon-feed .profile-coupons-desktop-list { display: none; }
+  :is(#profile-tab-predictions, .expert-public-page) .profile-coupon-feed .profile-desktop-sort { display: flex; flex-wrap: wrap; }
+}
+
+@media (max-width: 1120px) {
+  .profile-mobile-coupons-feed .profile-coupon-locked { margin-bottom: 12px; }
+  .profile-coupon-lock-heading { gap: 9px; padding: 14px; }
+  .profile-coupon-lock-heading > img { flex-basis: 44px; width: 44px; height: 44px; }
+  .profile-coupon-lock-heading strong { font-size: 14px; }
+}
+
+@media (max-width: 599px) {
+  .profile-coupon-access-modal { --coupon-modal-gap: 12px; }
+  .profile-coupon-access-modal .profile-coupon-access-card { padding: 22px 16px; }
+  .profile-coupon-access-head h2 { font-size: 19px; }
+  .profile-coupon-access-card .paid-prediction-offers { grid-template-columns: 1fr; }
+}
+
+@container copybetting (max-width: 1000px) {
+  .copybetting-heading { flex-wrap: wrap; }
+  .copybetting-heading-actions { width: 100%; }
+  .copybetting-content-grid.is-bets { grid-template-columns: minmax(0, 1fr); }
+  .copybetting-top { display: none; }
+}
+@container copybetting (max-width: 850px) {
+  .copybetting-surface { padding: 16px; }
+  .copybetting-audience-head { display: none; }
+  .copybetting-audience-list [data-copy-rows] { display: grid; gap: 10px; }
+  .copybetting-person { grid-template-columns: minmax(0, 1fr) auto 32px; gap: 14px 10px; padding: 14px; border-radius: 16px; background: var(--ink); box-shadow: none; }
+  .copybetting-person :is(.copybetting-person-start, .copybetting-person-stop, .copybetting-person-duration) { display: none; }
+  .copybetting-person .copybetting-person-mobile-date { display: block; }
+  .copybetting-person-stake { grid-row: 2; grid-column: 1; text-align: left; }
+  .copybetting-person-profit { grid-row: 2; grid-column: 2 / -1; text-align: right; }
+  .copybetting-person-stake > small, .copybetting-person-profit > small { display: block; margin-bottom: 5px; color: #a3a6b0; font-size: 9px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+  .copybetting-person-actions { grid-column: 3; grid-row: 1; }
+  .copybetting-pagination > span, .copybetting-pagination > nav { display: none; }
+  .copybetting-pagination .copybetting-load-more { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; border-radius: 12px; color: var(--text); background: var(--ink); font-weight: 800; }
+  .copybetting-filters { gap: 8px; }
+  .copybetting-search { max-width: none; flex-basis: 100%; }
+  .copybetting-state-filters { gap: 6px; }
+  .copybetting-state-filters button { padding: 0 10px; font-size: 11px; }
+  .copybetting-period select { max-width: 140px; font-size: 11px; padding: 0 8px; }
+  .copybetting-export { display: none; }
+  .copybetting-empty-intro { align-items: flex-start; gap: 18px; }
+  .copybetting-empty-art { flex-basis: 80px; }
+  .copybetting-empty-art svg { width: 80px; height: 80px; }
+  .copybetting-empty-steps { grid-template-columns: 1fr; }
+}
+@container copybetting (max-width: 600px) {
+  .copybetting-panel .copybetting-heading h2 { font-size: 20px; }
+  .copybetting-heading p { font-size: 12.5px; }
+  .copybetting-heading-actions { gap: 8px; }
+  .copybetting-heading-actions .copybetting-button { padding: 0 12px; font-size: 11px; min-height: 38px; }
+  .copybetting-summary { grid-template-columns: 1fr; gap: 10px; }
+  .copybetting-summary-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 2px 12px; padding: 14px 16px; border-radius: 16px; }
+  .copybetting-summary-icon { grid-row: 1 / 3; width: 34px; height: 34px; border-radius: 11px; }
+  .copybetting-summary-label { font-size: 12px; }
+  .copybetting-summary-card > p { grid-column: 2; grid-row: 2; font-size: 10.5px; }
+  .copybetting-summary-card > strong { grid-column: 3; grid-row: 1 / 3; font-size: 23px; letter-spacing: -.5px; }
+  .copybetting-summary-growth { display: none; }
+  .copybetting-tabs { width: 100%; }
+  .copybetting-tabs a { flex: 1; padding: 0 10px; font-size: 11.5px; }
+  .copybetting-surface-head h3 { font-size: 14px; }
+  .copybetting-surface-head > span { font-size: 10px; }
+  .copybetting-surface { padding: 14px; }
+  .copybetting-bets-head { display: none; }
+  .copybetting-bet { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+  .copybetting-bet > a { grid-column: 1; grid-row: 1; }
+  .copybetting-bet > .copybetting-status { grid-column: 2; grid-row: 1; }
+  .copybetting-bet-readers { justify-content: flex-start; padding-left: 6px; }
+  .copybetting-bet-amount { grid-column: 2; grid-row: 2; }
+  .copybetting-empty-intro { flex-direction: column; }
+  .copybetting-checklist li { padding: 13px 12px; gap: 10px; }
+  .copybetting-checklist-label { font-size: 12px; }
+  .copybetting-checklist b { max-width: 34%; font-size: 11px; }
+
+  .copybetting-empty h3 { font-size: 19px; }
+  .copybetting-empty-actions { flex-direction: column; }
+  .copybetting-person { padding: 12px; }
+  .copybetting-person-identity { gap: 8px; }
+  .copybetting-person-identity strong { font-size: 12px; }
+  .copybetting-status { padding: 4px 8px; font-size: 10px; }
+  .copybetting-person-stake strong, .copybetting-person-profit strong { font-size: 13px; }
+}
+@media (max-width: 599px) {
+  .copybetting-how-modal { align-items: end; padding: 0; }
+  .copybetting-how-modal .copybetting-how-dialog { width: 100%; max-height: calc(100dvh - max(var(--telegram-app-top, 0px), env(safe-area-inset-top, 0px)) - 12px); padding: 12px 20px max(20px, env(safe-area-inset-bottom, 0px), var(--telegram-app-bottom, 0px)); border-radius: 24px 24px 0 0; }
+  .copybetting-how-modal:not(.is-visible) .copybetting-how-dialog { transform: translateY(40px); }
+  .copybetting-sheet-handle { display: block; align-self: center; flex: none; width: 40px; height: 4px; margin: 0 0 14px; border-radius: 4px; background: var(--muted); }
+  .copybetting-how-dialog .copybetting-how-head h2 { font-size: 18px; }
+  .copybetting-how-head p { font-size: 12.5px; }
+  .copybetting-how-head { gap: 8px; }
+  .copybetting-how-steps { grid-template-columns: 1fr; gap: 10px; }
+  .copybetting-how-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 5px 12px; padding: 14px; }
+  .copybetting-how-steps li > div { display: contents; }
+  .copybetting-how-steps b { grid-row: 1 / 4; }
+  .copybetting-how-steps small, .copybetting-how-steps strong, .copybetting-how-steps p { grid-column: 2; }
+  .copybetting-example { padding: 16px; }
+  .copybetting-example > header { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .copybetting-example-cards { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .copybetting-example-arrow { justify-self: center; transform: rotate(90deg); }
+  .copybetting-how-footer .copybetting-button { flex: 1; padding: 0 12px; font-size: 12px; }
+  .copybetting-how-footer .is-primary { min-width: 0; }
+  .copybetting-how-rules { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .copybetting-person-menu { transition: none; }
+  .copybetting-search-result.is-appended { animation: none; }
+}
+
+@container copybetting (max-width: 1000px) {
+  .copybetting-reader-table thead { display: none; }
+  .copybetting-reader-table tbody { display: grid; gap: 12px; }
+  .copybetting-reader-row { grid-template-columns: minmax(80px, 1fr) minmax(0, 1fr) 58px auto; gap: 0; padding: 14px; border-radius: 18px; background: var(--panel); box-shadow: none; }
+  .copybetting-reader-person { grid-row: 1; grid-column: 1 / 4; }
+  .copybetting-reader-status { grid-row: 1; grid-column: 4; }
+  .copybetting-reader-row .copybetting-reader-stake { grid-row: 2; grid-column: 1; margin-top: 12px; padding: 11px 0 11px 12px; border-radius: 12px 0 0 12px; text-align: left; background: var(--ink); }
+  .copybetting-reader-row .copybetting-reader-profit { grid-row: 2; grid-column: 2 / 4; margin-top: 12px; padding: 11px 0; text-align: left; background: var(--ink); }
+  .copybetting-reader-row .copybetting-reader-trend { grid-row: 2; grid-column: 4; align-self: stretch; display: flex; align-items: center; margin-top: 12px; padding: 0 12px 0 0; border-radius: 0 12px 12px 0; background: var(--ink); }
+  .copybetting-reader-trend > svg { width: 58px; height: 26px; }
+  .copybetting-reader-stake > small, .copybetting-reader-profit > small { display: block; margin-bottom: 3px; color: #a3a6b0; font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+  .copybetting-reader-stake strong, .copybetting-reader-profit strong { justify-content: flex-start; font-family: var(--font-display); font-size: 14px; }
+  .copybetting-reader-date { grid-row: 3; grid-column: 1 / -1; margin-top: 12px; }
+  .copybetting-reader-date time { display: flex; align-items: center; gap: 5px; color: #a3a6b0; font-size: 11px; }
+  .copybetting-reader-date time::before { content: 'с'; }
+  .copybetting-reader-date small::before { content: '· '; }
+  .copybetting-reader-date .copybetting-reader-date-at { display: none; }
+  .copybetting-reader-actions { grid-row: 4; grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 12px; }
+  .copybetting-reader-actions form { flex: 1; }
+  .copybetting-reader-actions form button { width: 100%; height: 40px; }
+  .copybetting-reader-actions button > span { display: inline; }
+  .copybetting-reader-actions > a, .copybetting-reader-actions > details > summary { flex: 0 0 40px; width: 40px; height: 40px; }
+  .copybetting-reader-person a { padding-right: 10px; }
+  .copybetting-reader .copybetting-reader-surface { padding: 0; background: transparent; }
+  .copybetting-reader-more { width: 100%; }
+  .copybetting-reader-filters .copybetting-search { max-width: none; }
+  .copybetting-reader-filters .copybetting-state-filters { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: 4px; }
+  .copybetting-reader-filters .copybetting-state-filters button { flex: none; white-space: nowrap; }
+  .copybetting-reader-bets > article { grid-template-columns: 1fr auto; gap: 12px; padding: 14px; margin-bottom: 12px; border-radius: 18px; background: var(--ink); box-shadow: none; }
+  .copybetting-reader-bets > article > a { grid-column: 1 / -1; }
+}
+@container copybetting (max-width: 600px) {
+  .copybetting-reader-description-desktop { display: none; }
+  .copybetting-reader-description-mobile { display: inline; }
+  .copybetting-reader .copybetting-surface-head { display: none; }
+  .copybetting-reader .copybetting-heading { flex-wrap: nowrap; align-items: center; }
+  .copybetting-reader .copybetting-heading-actions { width: auto; flex-wrap: nowrap; }
+  .copybetting-reader .copybetting-heading-actions .copybetting-button { width: 36px; padding: 0; }
+  .copybetting-reader .copybetting-heading-actions span { display: none; }
+  .copybetting-reader .copybetting-reader-turnover { display: none; }
+  .copybetting-reader-paused { grid-column: 2; grid-row: 2; font-size: 10.5px; }
+  .copybetting-reader .copybetting-summary-card.is-active > p { display: none; }
+  .copybetting-reader .copybetting-reader-person strong { font-size: 13.5px; }
+  .copybetting-reader-status .copybetting-status { min-height: 24px; padding: 0 8px; font-size: 10.5px; }
+  .copybetting-reader-avatar .capper-trust-badge { height: 16px; min-height: 16px; padding: 0 4px; border-radius: 5px; font-size: 8.5px; line-height: 16px; }
+  .copybetting-reader .copybetting-reader-filters .copybetting-state-filters button { min-height: 36px; padding: 0 12px; font-size: 12px; }
+  .copybetting-reader-filters { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 10px 8px; }
+  .copybetting-reader-filters .copybetting-state-filters { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+  .copybetting-reader-filters .copybetting-search { grid-column: 1; grid-row: 2; width: 100%; min-width: 0; }
+  .copybetting-reader-filters .copybetting-period { grid-column: 2; grid-row: 2; min-width: 0; margin-left: 0; }
+  .copybetting-reader-filters .copybetting-period select { width: 100%; max-width: none; min-height: 42px; padding: 0 10px; font-size: 12px; }
+  .copybetting-reader-filters .copybetting-apply { display: none; }
+}
+
+@media (max-width: 1000px) {
+  .copybetting-setup-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .copybetting-setup-aside { display: contents; }
+  .copybetting-setup-cap-summary { order: 1; }
+  .copybetting-setup-fields { order: 2; }
+  .copybetting-history-preview { order: 3; }
+  .copybetting-setup-actions { order: 4; }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .copybetting-search-result { grid-template-columns: minmax(140px, 1fr) auto 104px; gap: 12px; }
+  .copybetting-search-metrics { gap: 10px; }
+  .copybetting-search-metrics strong { font-size: 12px; }
+  .copybetting-search-metrics .copybetting-search-joined { display: none; }
+  .copybetting-search-copying { width: 104px; }
+}
+
+@media (max-width: 599px) {
+  .copybetting-search-modal { align-items: end; padding: 0; }
+  .copybetting-search-modal .copybetting-search-dialog { width: 100%; max-height: min(620px, calc(100dvh - max(var(--telegram-app-top, 0px), env(safe-area-inset-top, 0px)) - 64px)); gap: 14px; padding: 18px 16px max(20px, env(safe-area-inset-bottom, 0px), var(--telegram-app-bottom, 0px)); border-radius: 22px 22px 0 0; }
+  .copybetting-search-modal:not(.is-visible) .copybetting-search-dialog { transform: translateY(40px); }
+  .copybetting-search-dialog .copybetting-sheet-handle { display: block; align-self: center; flex: none; width: 44px; height: 4px; margin: 0; border-radius: 4px; background: var(--muted); }
+  .copybetting-search-head { align-items: center; gap: 12px; }
+  .copybetting-search-emblem { flex-basis: 36px; width: 36px; height: 36px; border-radius: 12px; }
+  .copybetting-search-emblem svg { width: 19px; height: 19px; }
+  .copybetting-search-subtitle-desktop, .copybetting-sort-desktop { display: none; }
+  .copybetting-search-subtitle-mobile, .copybetting-sort-mobile { display: inline; }
+  .copybetting-search-dialog .copybetting-search-head h2 { margin-bottom: 2px; font-size: 16px; }
+  .copybetting-search-head p { font-size: 11px; }
+  .copybetting-discovery-query { min-height: 48px; }
+  .copybetting-discovery-query input { font-size: 15px; }
+  .copybetting-discovery-query kbd, .copybetting-discovery-hint, .copybetting-discovery-footer { display: none; }
+  .copybetting-search-result { grid-template-columns: minmax(0, 1fr) 104px; gap: 6px 11px; padding: 11px 0; }
+  .copybetting-search-result .copybetting-cap-identity { grid-column: 1; grid-row: 1 / 3; align-items: flex-start; gap: 11px; }
+  .copybetting-search-result .copybetting-cap-identity > span:last-child { padding-bottom: 20px; }
+  .copybetting-search-result .copybetting-cap-identity strong { overflow: hidden; white-space: nowrap; overflow-wrap: normal; font-size: 13px; }
+  .copybetting-search-result .copybetting-cap-identity small { display: none; }
+  .copybetting-search-metrics { grid-column: 1; grid-row: 2; margin-left: 49px; gap: 6px; align-self: end; pointer-events: none; }
+  .copybetting-search-metrics > span { display: inline-flex; align-items: baseline; gap: 2px; }
+  .copybetting-search-metrics strong { font-family: var(--font-body); font-size: 10.5px; }
+  .copybetting-search-metrics > span:first-child strong { font-size: 11px; }
+  .copybetting-search-metrics > span:first-child small, .copybetting-search-metrics .copybetting-search-joined { display: none; }
+  .copybetting-search-metrics small { font-size: 9px; }
+  .copybetting-search-result > .copybetting-button, .copybetting-search-copying { grid-column: 2; grid-row: 1 / 3; width: 104px; min-height: 34px; font-size: 12px; }
+  .copybetting-discovery-tools { flex-wrap: nowrap; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; margin: 0; padding: 2px 0 4px; scrollbar-width: none; }
+  .copybetting-discovery-tools::-webkit-scrollbar { display: none; }
+  .copybetting-search-dialog .copybetting-discovery-results { display: flex; flex-direction: column; min-height: 0; max-height: 372px; padding: 0; overflow: hidden; scrollbar-gutter: auto; box-shadow: none; }
+  .copybetting-discovery-count { flex: none; margin-bottom: 10px; }
+  .copybetting-discovery-results > [data-copy-discovery-rows] { display: grid; gap: 14px; flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .copybetting-discovery-results > [data-copy-discovery-pagination] { flex: none; }
+  .copybetting-discovery-more { min-height: 40px; }
+  .copybetting-search-metrics .copybetting-search-wins-label { display: none; }
+  .copybetting-discovery-sort, .copybetting-discovery-separator, .copybetting-discovery-chips [data-copy-sort="followers"] { display: none; }
+  .copybetting-discovery-chips button, .copybetting-discovery-verified { min-height: 34px; }
+  .copybetting-discovery-verified > span { display: none; }
+  .copybetting-setup-page { padding: 20px; }
+  .copybetting-setup-header { align-items: center; gap: 12px; margin-bottom: 14px; }
+  .copybetting-setup-header > a { flex-basis: 36px; width: 36px; height: 36px; border-radius: 11px; }
+  .copybetting-setup-page .copybetting-setup-header h1 { font-size: 16px; }
+  .copybetting-setup-header p { font-size: 11px; }
+  .copybetting-setup-fields > .copybetting-setup-surface { padding: 16px; gap: 16px; }
+  .copybetting-setup-cap-summary { padding: 18px; }
+  .copybetting-setup-step-detail, .copybetting-setup-profile-link { display: none; }
+  .copybetting-setup-pair { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .copybetting-percentage { grid-template-columns: minmax(80px, 120px) minmax(0, 1fr); }
+  .copybetting-percentage-presets { gap: 6px; }
+  .copybetting-percentage-presets button { min-height: 46px; font-size: 12px; }
+  .copybetting-calculation { padding: 18px 20px; }
+  .copybetting-coefficient-input, .copybetting-type-picker .copybetting-choice-chips { width: 100%; }
+  .copybetting-cap-stats > span { padding: 12px 8px; }
+  .copybetting-preview-rows > article { gap: 10px; }
+  .copybetting-setup-actions { padding: 12px; gap: 10px; border-radius: 16px; }
+  .copybetting-setup-actions > button { min-height: 48px; font-size: 14px; }
+  .copybetting-setup-actions > a { display: none; }
+}
+
+@media (max-width: 374px) {
+  .copybetting-percentage { grid-template-columns: 80px minmax(0, 1fr); }
+  .copybetting-percentage-presets { gap: 4px; }
+  .copybetting-percentage-presets button { font-size: 11px; }
+  .copybetting-cap-stats { gap: 6px; }
+  .copybetting-cap-stats b { font-size: 14px; }
+  .copybetting-setup-cap-head .copybetting-cap-identity { gap: 9px; }
+}
+
+@media (max-width: 1120px) {
+  .expert-copy-strip.is-desktop { display: none; }
+  .expert-copy-strip.is-mobile { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; gap: 14px 11px; margin-top: 14px; padding: 16px; border-radius: 18px; }
+  .expert-copy-dot { width: 9px; height: 9px; box-shadow: none; }
+  .expert-copy-description { grid-column: 2; min-width: 0; gap: 3px; }
+  .expert-copy-description > strong { font-size: 13.5px; }
+  .expert-copy-description > small { font-size: 11.5px; }
+  .expert-copy-desktop-label, .expert-copy-sparkline { display: none; }
+  .expert-copy-mobile-label { display: inline; }
+  .expert-copy-profit { grid-column: 3; }
+  .expert-copy-profit > small { font-size: 9.5px; letter-spacing: 0; }
+  .expert-copy-profit > strong { font-size: 15px; }
+  .expert-copy-controls { grid-column: 1 / -1; gap: 8px; padding-left: 0; box-shadow: none; }
+  .expert-copy-controls > form { flex: 1; }
+  .expert-copy-controls form > button { width: 100%; padding: 0 10px; font-size: 12.5px; }
+  .expert-copy-controls :is(.is-pause, .is-stop) > span { display: inline; }
+  .expert-copy-controls > .expert-copy-cta { flex: 1; font-size: 12px; }
+  .expert-copy-strip.is-none { grid-template-columns: 40px minmax(0, 1fr); gap: 12px; }
+  .expert-copy-emblem { width: 40px; height: 40px; border-radius: 12px; }
+  .expert-copy-strip.is-none > .expert-copy-cta { grid-column: 1 / -1; min-height: 44px; font-size: 13.5px; }
+  .expert-copy-strip.is-none > .expert-copy-help { display: none; }
+  .expert-mobile-actions:has(.expert-copy-button) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .expert-mobile-actions .expert-copy-button { min-height: 48px; padding: 0 12px; font-size: 13px; }
+  .expert-mobile-actions:has(.expert-copy-button) .expert-mobile-socials-button { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expert-copy-more[open] > nav { animation: none; }
+}
+
+@media (max-width: 374px) {
+  .expert-copy-strip.is-paused .expert-copy-controls .is-stop > span,
+  .expert-copy-strip.is-paused .expert-copy-controls .is-resume > svg { display: none; }
+  .expert-copy-strip.is-paused .expert-copy-controls form:has(.is-stop) { flex: none; }
+  .expert-copy-profit > strong { font-size: 13px; }
 }

@@ -1,0 +1,9 @@
+<header class="copybetting-discovery-count" data-copy-discovery-count><strong>Найдено {{ search_total }} капперов</strong><span>Показаны {{ search_end }}</span></header>
+<div data-copy-discovery-rows>
+{% for capper in search_cappers %}<article class="copybetting-search-result">
+    {% include "wallets/includes/_copybetting_capper_identity.html" %}
+    <div class="copybetting-search-metrics"><span class="{% if capper.roi_positive %}is-profit{% else %}is-loss{% endif %}"><strong>{{ capper.roi }}</strong><small>ROI</small></span><span><strong>{{ capper.win_rate }}%</strong><small class="copybetting-search-wins-label">побед</small></span><span><strong>{{ capper.coupons }}</strong><small><span class="copybetting-sort-desktop">прогнозов</span><span class="copybetting-sort-mobile">прогн.</span></small></span><span class="copybetting-search-joined"><strong>{{ capper.joined|date:"M Y" }}</strong><small>с нами</small></span></div>
+    {% if capper.copying %}<span class="copybetting-search-copying">✓ Копирую</span>{% else %}<a class="copybetting-button is-primary" href="{{ capper.setup_url }}">Копировать</a>{% endif %}
+</article>{% empty %}<p class="copybetting-search-placeholder">Капперы не найдены. Проверьте ник или введите полный адрес почты.</p>{% endfor %}
+</div>
+<div data-copy-discovery-pagination>{% if search_has_more %}<button type="button" class="copybetting-discovery-more" data-copy-discovery-more data-next-page="{{ search_next_page }}">Показать ещё</button>{% endif %}</div>

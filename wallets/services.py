@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
+from types import SimpleNamespace
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
@@ -669,7 +670,7 @@ def activate_copybetting(
     stake_percent,
     stop_loss_amount=0,
     max_single_stake=0,
-    min_total_coefficient=0,
+    min_total_coefficient=Decimal("1.01"),
     copy_regular_coupons=True,
     copy_tournament_coupons=True,
     allowed_sports=None,
@@ -690,8 +691,9 @@ def activate_copybetting(
         raise ValidationError("Укажите банк для копирования.")
     if not Decimal("0.01") <= stake_percent <= Decimal("100.00"):
         raise ValidationError("Процент от банка должен быть от 0.01 до 100.")
-    if min_total_coefficient < 0:
-        raise ValidationError("Минимальный коэффициент не может быть отрицательным.")
+    if min_total_coefficient < Decimal("1.01"):
+        raise ValidationError("Минимальный коэффициент — 1.01.")
+    validate_copybetting_stake(bank_amount=bank_amount, stake_percent=stake_percent, max_single_stake=max_single_stake)
     if not copy_regular_coupons and not copy_tournament_coupons:
         raise ValidationError("Выберите хотя бы один тип прогнозов для копирования.")
 
@@ -910,7 +912,8 @@ def _copy_coupon_for_subscription(
             return None
 
         stake = _copy_stake(locked_subscription)
-        if stake <= 0:
+        from game.services.coupon_validation import PREDICTION_STAKE_MIN_COINS
+        if stake < PREDICTION_STAKE_MIN_COINS:
             return None
         if not _copybetting_allows_coupon(locked_subscription, coupon):
             return None
@@ -1414,7 +1417,20 @@ def _copy_stake(subscription: CopyBettingSubscription) -> Decimal:
     return Decimal(_rounded_coin_amount(stake))
 
 
-def _copybetting_allows_coupon(subscription: CopyBettingSubscription, coupon) -> bool:
+def validate_copybetting_stake(*, bank_amount, stake_percent, max_single_stake):
+    from game.services.coupon_validation import PREDICTION_STAKE_MIN_COINS
+
+    stake = _copy_stake(SimpleNamespace(bank_amount=bank_amount, stake_percent=stake_percent, max_single_stake=max_single_stake))
+    if stake < PREDICTION_STAKE_MIN_COINS:
+        raise ValidationError(f"Минимальная сумма копируемой ставки — {int(PREDICTION_STAKE_MIN_COINS)} коинов. Увеличьте банк, процент или максимум на одну ставку.")
+    return stake
+
+
+def _copybetting_allows_coupon(subscription: CopyBettingSubscription, coupon, *, positions=None) -> bool:
+    if coupon.audience == "paid":
+        from cabinet.paid_predictions import user_has_paid_prediction_subscription
+        if not user_has_paid_prediction_subscription(subscription.user, coupon.author_id):
+            return False
     is_tournament_coupon = _coupon_is_tournament(coupon)
     if is_tournament_coupon and not subscription.copy_tournament_coupons:
         return False
@@ -1422,7 +1438,7 @@ def _copybetting_allows_coupon(subscription: CopyBettingSubscription, coupon) ->
         return False
 
     coupon_coefficient = _coupon_total_coefficient(coupon)
-    if subscription.min_total_coefficient > 0 and coupon_coefficient < subscription.min_total_coefficient:
+    if coupon_coefficient < max(subscription.min_total_coefficient, Decimal("1.01")):
         return False
 
     allowed_sport_codes = set(subscription.allowed_sports.values_list("code", flat=True))
@@ -1431,7 +1447,7 @@ def _copybetting_allows_coupon(subscription: CopyBettingSubscription, coupon) ->
 
     coupon_sport_codes = {
         prediction.match.sport_code
-        for prediction in coupon.predictions.select_related("match__sport")
+        for prediction in (positions if positions is not None else coupon.predictions.select_related("match__sport"))
         if prediction.match_id
     }
     if not coupon_sport_codes:

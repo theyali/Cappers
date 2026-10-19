@@ -1,6 +1,5 @@
 import json
 import logging
-from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -18,6 +17,13 @@ from cabinet.roulette.models import RouletteSettings
 from cabinet.roulette.rewards import UserRouletteRewardState
 from cabinet.services.daily_tasks import record_daily_task_action
 from game.forms import RichPredictionCouponForm
+from game.services.coupon_draft import (
+    CouponDraftConflict, lock_current_draft,
+    active_draft_coupon as _active_draft_coupon,
+    delete_expired_draft_coupons as _delete_expired_draft_coupons,
+    draft_for_update as _draft_for_update,
+    serialize_draft_coupon as _serialize_draft_coupon,
+)
 from game.models import Match, Prediction, PredictionCoupon
 from game.services.bet_options import (
     build_match_odds_tabs,
@@ -45,6 +51,7 @@ from game.services.prediction_editor import (
     build_prediction_editor_context,
     create_rich_prediction,
     update_rich_prediction,
+    remove_draft_prediction,
 )
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
@@ -57,10 +64,7 @@ from wallets.services import (
 
 
 logger = logging.getLogger(__name__)
-DRAFT_SESSION_MAX_AGE_SECONDS = max(
-    int(getattr(settings, "SESSION_COOKIE_AGE", 1209600)),
-    1,
-)
+RICH_PREDICTION_PUBLISHED_SESSION_KEY = "rich_prediction_published_coupon_id"
 
 SCOPE_FILTERS = (
     ("all", "Все"),
@@ -187,6 +191,19 @@ def rich_prediction_create(request):
     if not request.user.is_analyst or not request.user.is_vip:
         raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
 
+    published_coupon = None
+    if request.method == "GET":
+        published_coupon_id = request.session.pop(
+            RICH_PREDICTION_PUBLISHED_SESSION_KEY,
+            None,
+        )
+        if published_coupon_id:
+            published_coupon = PredictionCoupon.objects.filter(
+                pk=published_coupon_id,
+                author=request.user,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            ).first()
+
     source_coupon = _active_draft_coupon(request.user)
     context = build_prediction_editor_context(request, coupon=source_coupon)
     form = RichPredictionCouponForm(
@@ -210,9 +227,13 @@ def rich_prediction_create(request):
             # Publish checks may refresh coefficients in the draft: show the current ones.
             context = build_prediction_editor_context(request, coupon=_active_draft_coupon(request.user))
         else:
+            if coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
+                request.session[RICH_PREDICTION_PUBLISHED_SESSION_KEY] = coupon.pk
+                return redirect("game:rich_prediction_create")
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 
     context["form"] = form
+    context["published_coupon"] = published_coupon
     return render(request, "game/rich_prediction_form.html", context)
 
 
@@ -225,6 +246,7 @@ def rich_prediction_edit(request, coupon_id):
         PredictionCoupon.objects.select_related("cover_image"),
         pk=coupon_id,
     )
+    was_published = coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED
     context = build_prediction_editor_context(request, coupon=coupon)
     form = RichPredictionCouponForm(
         request.POST or None,
@@ -248,10 +270,27 @@ def rich_prediction_edit(request, coupon_id):
             coupon.refresh_from_db()
             context = build_prediction_editor_context(request, coupon=coupon)
         else:
+            if (
+                not was_published
+                and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED
+            ):
+                request.session[RICH_PREDICTION_PUBLISHED_SESSION_KEY] = coupon.pk
+                return redirect("game:rich_prediction_create")
             return redirect("game:rich_prediction_edit", coupon_id=coupon.pk)
 
     context["form"] = form
     return render(request, "game/rich_prediction_form.html", context)
+
+
+@login_required
+@require_POST
+def rich_prediction_remove(request, coupon_id, prediction_id):
+    coupon = get_object_or_404(PredictionCoupon, pk=coupon_id, author=request.user)
+    try:
+        result = remove_draft_prediction(request.user, coupon.pk, prediction_id)
+    except ValidationError as exc:
+        return JsonResponse({"ok": False, "error": " ".join(exc.messages)}, status=400)
+    return JsonResponse({"ok": True, **result})
 
 
 @login_required
@@ -284,21 +323,16 @@ def create_coupon(request):
 
     coupon_id = _to_positive_int(payload.get("coupon_id"))
     if autosave and not items:
-        if coupon_id:
-            PredictionCoupon.objects.filter(
-                pk=coupon_id,
-                author=request.user,
-                published_status=PredictionCoupon.PublishedStatus.DRAFT,
-                prediction_format=PredictionCoupon.PredictionFormat.QUICK,
-            ).delete()
-        return JsonResponse(
-            {
-                "ok": True,
-                "draft_id": None,
-                "message": "Пустой Купон удален.",
-                "autosaved": True,
-            }
-        )
+        with transaction.atomic():
+            try:
+                coupon = lock_current_draft(request.user, coupon_id,
+                    revision=payload.get("base_revision"), check_revision="base_revision" in payload)
+            except CouponDraftConflict as exc:
+                return JsonResponse(exc.payload, status=409)
+            if coupon is not None:
+                coupon.delete()
+        return JsonResponse({"ok": True, "draft_id": None, "draft": None,
+            "message": "Пустой купон удалён.", "autosaved": True})
 
     try:
         match_ids = extract_match_ids(items)
@@ -373,7 +407,11 @@ def create_coupon(request):
     coupon_created = False
 
     with transaction.atomic():
-        coupon = _draft_for_update(request.user, coupon_id)
+        try:
+            coupon = lock_current_draft(request.user, coupon_id,
+                revision=payload.get("base_revision"), check_revision="base_revision" in payload)
+        except CouponDraftConflict as exc:
+            return JsonResponse(exc.payload, status=409)
         if coupon is None:
             coupon = PredictionCoupon(
                 author=request.user,
@@ -475,51 +513,6 @@ def create_coupon(request):
     return JsonResponse(response)
 
 
-def _draft_for_update(user: User, coupon_id: int | None) -> PredictionCoupon | None:
-    _delete_expired_draft_coupons(user)
-    cutoff = _draft_session_cutoff()
-    queryset = PredictionCoupon.objects.select_for_update().filter(
-        author=user,
-        published_status=PredictionCoupon.PublishedStatus.DRAFT,
-        prediction_format=PredictionCoupon.PredictionFormat.QUICK,
-        updated_at__gte=cutoff,
-    )
-    if coupon_id is not None:
-        return queryset.filter(pk=coupon_id).first()
-    return queryset.order_by("-updated_at", "-id").first()
-
-
-def _active_draft_coupon(user: User) -> PredictionCoupon | None:
-    _delete_expired_draft_coupons(user)
-    return (
-        PredictionCoupon.objects.filter(
-            author=user,
-            published_status=PredictionCoupon.PublishedStatus.DRAFT,
-            prediction_format=PredictionCoupon.PredictionFormat.QUICK,
-            updated_at__gte=_draft_session_cutoff(),
-        )
-        .prefetch_related("predictions__match__league__country", "predictions__match__home_team", "predictions__match__away_team")
-        .order_by("-updated_at", "-id")
-        .first()
-    )
-
-
-def _draft_session_cutoff():
-    return timezone.now() - timedelta(seconds=DRAFT_SESSION_MAX_AGE_SECONDS)
-
-
-def _delete_expired_draft_coupons(user: User) -> int:
-    # Drafts that still carry followers' copied stakes (coupons unpublished before
-    # that was forbidden) are kept until those stakes are refunded.
-    deleted, _ = PredictionCoupon.objects.filter(
-        author=user,
-        published_status=PredictionCoupon.PublishedStatus.DRAFT,
-        updated_at__lt=_draft_session_cutoff(),
-        copied_bets__isnull=True,
-    ).delete()
-    return deleted
-
-
 def _available_free_predictions(user: User) -> int:
     if not getattr(user, "is_authenticated", False):
         return 0
@@ -543,58 +536,6 @@ def _consume_free_prediction(user: User) -> UserRouletteRewardState:
     reward_state.free_predictions -= 1
     reward_state.save(update_fields=("free_predictions", "updated_at"))
     return reward_state
-
-
-def _serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
-    predictions = list(coupon.predictions.all())
-    stake = coupon.total_stake if coupon.total_stake and coupon.total_stake > 0 else None
-
-    return {
-        "id": coupon.id,
-        "stake": _decimal_string(stake) if stake is not None else "",
-        "confidence": coupon.confidence,
-        "audience": coupon.audience,
-        "items": [_serialize_prediction(prediction) for prediction in predictions],
-    }
-
-
-def _serialize_prediction(prediction: Prediction) -> dict:
-    match = prediction.match
-    starts_at = (
-        timezone.localtime(match.starts_at).strftime("%d.%m %H:%M")
-        if match.starts_at
-        else "Время не указано"
-    )
-    return {
-        "matchId": str(match.id),
-        "matchTitle": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
-        "league": match.league_name or "Лига не указана",
-        "time": starts_at,
-        "betKey": "restored",
-        "market": prediction.market,
-        "selection": prediction.selection,
-        "shortLabel": _prediction_short_label(prediction),
-        "outcomeCode": prediction.outcome_code,
-        "coefficient": _decimal_string(prediction.coefficient),
-        "lastSeen": match.last_seen_at.isoformat() if match.last_seen_at else "",
-    }
-
-
-def _prediction_short_label(prediction: Prediction) -> str:
-    match = prediction.match
-    selection = prediction.selection
-    if prediction.market == "winner":
-        if selection == "Ничья":
-            return "X"
-        if selection == match.home_team_name:
-            return "1"
-        if selection == match.away_team_name:
-            return "2"
-    if prediction.market == "total":
-        return selection[:10]
-    if prediction.market == "both_score":
-        return "ОЗ"
-    return selection[:10]
 
 
 def _latest_predictions():
@@ -707,13 +648,6 @@ def _provider_metric_label(metric: dict) -> str:
     label = labels.get(code, human_market_label(code))
     subject_label = subject_labels.get(subject)
     return f"{label} {subject_label}" if subject_label else label
-
-
-def _decimal_string(value: Decimal | None) -> str:
-    if value is None:
-        return ""
-    text = format(value, "f")
-    return text.rstrip("0").rstrip(".") if "." in text else text
 
 
 def _to_positive_int(value) -> int | None:

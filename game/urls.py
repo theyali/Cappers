@@ -2,6 +2,7 @@ from django.urls import path
 
 from . import (
     date_views,
+    coupon_draft_views,
     demand_views,
     match_detail_views,
     prediction_views,
@@ -13,6 +14,7 @@ app_name = "game"
 
 urlpatterns = [
     path("", date_views.match_list, name="match_list"),
+    path("coupon/state/", coupon_draft_views.coupon_draft_state, name="coupon_draft_state"),
     path("coupon/create/", views.create_coupon, name="create_coupon"),
     path(
         "predictions/new/",
@@ -23,6 +25,11 @@ urlpatterns = [
         "predictions/<int:coupon_id>/edit/",
         views.rich_prediction_edit,
         name="rich_prediction_edit",
+    ),
+    path(
+        "predictions/<int:coupon_id>/positions/<int:prediction_id>/remove/",
+        views.rich_prediction_remove,
+        name="rich_prediction_remove",
     ),
     path("timing/", timing_views.match_timing, name="match_timing"),
     path(

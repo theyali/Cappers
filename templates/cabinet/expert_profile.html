@@ -152,6 +152,7 @@
                         <span>Подписаться</span>
                     </a>
                 {% endif %}
+                {% include "cabinet/includes/_expert_copybetting_button.html" %}
                 <a class="expert-public-action-icon" href="{{ request.get_full_path }}" role="button" aria-label="Поделиться профилем" data-expert-share>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 8l4-4 4 4M5 15v4h14v-4"></path></svg>
                     <span data-expert-share-label>Поделиться профилем</span>
@@ -161,6 +162,8 @@
             </div>
         </div>
     </section>
+
+    {% include "cabinet/includes/_expert_copybetting_bar.html" with copy_variant="desktop" %}
 
     <section class="expert-public-stats expert-public-stats-compact" aria-label="Главные показатели эксперта">
         <article class="expert-public-stat-card is-followers">
@@ -525,7 +528,7 @@
     </section>
     {% endif %}
 
-    <section class="expert-public-predictions expert-public-feed">
+    <section class="expert-public-predictions expert-public-feed" id="profile-tab-predictions" data-expert-public-panel="predictions" tabindex="-1" hidden>
         <div class="expert-public-section-head">
             <div>
                 <p class="expert-public-kicker">Последние публикации</p>
@@ -567,25 +570,10 @@
                 {% endif %}
             </article>
         </div>
-        {% elif latest_predictions %}
-        {% include "cabinet/includes/_expert_public_mobile_feed.html" %}
-        <div class="content-table-view predictions-table-view predictions-table-view-flat">
-            <div class="content-table-scroll">
-                <div class="content-table-head prediction-table-head" aria-hidden="true">
-                    <span>Матч</span>
-                    <span>Каппер</span>
-                    <span>Прогноз</span>
-                    <span>КФ</span>
-                    <span>Статус</span>
-                    <span></span>
-                </div>
-                <div class="prediction-table-body">
-                    {% for prediction in latest_predictions %}
-                        {% include "front/includes/_prediction_table_row.html" %}
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+        {% elif coupon_feed_available %}
+        {% include "cabinet/includes/_profile_predictions_feature.html" with feature_id="expert-predictions" feature_stats_title="Статистика" %}
+        {% url 'front:expert_coupons' expert.username as coupon_feed_url %}
+        {% include "cabinet/includes/_profile_coupon_feed.html" %}
         {% else %}
         <div class="expert-public-empty">
             <strong>Прогнозов пока нет</strong>
@@ -593,14 +581,27 @@
         </div>
         {% endif %}
     </section>
+    <section data-expert-public-panel="overview" class="expert-public-best-predictions">
+        {% include "cabinet/includes/_profile_predictions_feature.html" with feature_id="expert-overview" feature_stats_title="Статистика" %}
+        <a class="expert-mobile-feed-all" href="#predictions" data-expert-public-open-tab="predictions">Все прогнозы каппера <span aria-hidden="true">→</span></a>
+    </section>
+
+    {% include "cabinet/_expert_recommendations.html" %}
+
+
 </section>
 
+{% if public_copybetting.visible %}{% include "modals/copybetting_how.html" with copybetting_reader_help=True %}{% endif %}
 {% include "modals/expert_public_details.html" %}
 {% include "modals/expert_paid_subscribe.html" %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'front/js/mobile-slider.js' %}" defer></script>
+<script src="{% static 'front/js/profile-coupon-sort.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
+<script src="{% static 'front/js/expert-copybetting.js' %}" defer></script>
 <script src="{% static 'front/js/expert-stats.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-follow.js' %}" defer></script>

@@ -112,7 +112,7 @@
     <div class="home-card-slider-window" data-home-card-window>
         <div class="home-card-slider-track home-wiki-videos-grid profile-fields-grid" data-home-card-track>
             {% for video in home_wiki_videos %}
-                {% include "front/includes/_wiki_video_card.html" with video=video only %}
+                {% include "front/includes/_wiki_video_card.html" with video=video title_only=True only %}
             {% endfor %}
         </div>
     </div>

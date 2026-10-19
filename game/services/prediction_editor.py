@@ -1,12 +1,18 @@
 from decimal import Decimal
+from types import SimpleNamespace
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from game.models import Prediction, PredictionCoupon, PredictionCoverImage
-from game.services.bet_options import bet_option_key
+from front.popular_matches import build_popular_matches
+from cabinet.paid_predictions import profile_paid_predictions_enabled
+from game.services.coupon_draft import CouponDraftConflict, check_draft_revision, serialize_draft_coupon
+from game.cover_images import prediction_editor_covers
+from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
+from game.services.bet_options import bet_option_key, build_match_winner_odds
+from game.services.match_timing import match_timing_payload
 from game.services.coupon_validation import (
     CouponMatchVerificationError,
     CouponOddsChangedError,
@@ -20,6 +26,7 @@ from wallets.services import charge_prediction_stake
 
 
 MAX_RICH_PREDICTION_ITEMS = 15
+MIN_PAID_DESCRIPTION_LENGTH = 300
 
 
 def can_use_rich_prediction_fields(user) -> bool:
@@ -30,29 +37,59 @@ def can_use_rich_prediction_fields(user) -> bool:
     )
 
 
+def validate_paid_prediction_settings(user, coupon=None):
+    existing_paid = coupon is not None and _is_published(coupon) and coupon.audience == PredictionCoupon.Audience.PAID
+    if not existing_paid and not profile_paid_predictions_enabled(user):
+        raise ValidationError({"is_paid": "Включите платные прогнозы и настройте тариф в настройках профиля."})
+
+
+def validate_paid_prediction_content(headline, description):
+    errors = {}
+    if not (headline or "").strip():
+        errors["headline"] = "Для платного прогноза обязательно укажите заголовок."
+    if len((description or "").strip()) < MIN_PAID_DESCRIPTION_LENGTH:
+        errors["description"] = f"Для платного прогноза добавьте описание от {MIN_PAID_DESCRIPTION_LENGTH} символов."
+    if errors:
+        raise ValidationError(errors)
+
+
+def build_editor_positions(coupon):
+    predictions = _coupon_predictions(coupon) if coupon is not None else []
+    moment = timezone.now()
+    prediction_timing = {}
+    for prediction in predictions:
+        timing = match_timing_payload(prediction.match, now=moment)
+        prediction.editor_prediction_closed = not timing["prediction_open"] and not _is_published(coupon)
+        prediction.editor_timing_message = (
+            "Время начала не указано — публикация недоступна."
+            if not timing["starts_at"] else "Матч уже начался или завершён — публикация недоступна."
+        )
+        if not _is_published(coupon):
+            prediction_timing[str(prediction.match_id)] = timing
+    coupon_timing_blocked = any(item.editor_prediction_closed for item in predictions)
+    return predictions, prediction_timing, coupon_timing_blocked
+
+
 def build_prediction_editor_context(request, coupon=None) -> dict:
     _ensure_editor_access(request.user)
     if coupon is not None:
         _ensure_coupon_access(request.user, coupon)
 
     can_use_rich_fields = can_use_rich_prediction_fields(request.user)
-    predictions = _coupon_predictions(coupon) if coupon is not None else []
+    predictions, prediction_timing, coupon_timing_blocked = build_editor_positions(coupon)
     has_coupon_positions = 1 <= len(predictions) <= MAX_RICH_PREDICTION_ITEMS
     available_covers = []
     if can_use_rich_fields:
-        available_covers = list(
-            PredictionCoverImage.objects.filter(
-                is_active=True,
-                placement=PredictionCoverImage.Placement.GRID,
-            )
-            .select_related("sport")
-            .order_by("cover_type", "sport__name_ru", "sport__name", "id")
-        )
+        available_covers = list(prediction_editor_covers())
 
     preview_prediction = _build_preview_prediction(coupon)
+    suggested_matches = []
+    if not has_coupon_positions:
+        suggested_matches = _build_suggested_matches()
     form_initial = {}
     if coupon is not None:
         form_initial = {
+            "draft_revision": coupon.updated_at.isoformat(),
             "total_stake": coupon.total_stake,
             "confidence": coupon.confidence,
             "is_paid": preview_prediction["is_paid"],
@@ -65,6 +102,13 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
 
     return {
         "coupon": coupon,
+        "draft_coupon": serialize_draft_coupon(coupon) if coupon and coupon.prediction_format == PredictionCoupon.PredictionFormat.QUICK else None,
+        "can_publish_paid": can_use_rich_fields and profile_paid_predictions_enabled(request.user),
+        "paid_settings_url": reverse("cabinet:profile") + "?tab=settings#paid-predictions-settings",
+        "shared_coupon_draft": coupon is None or coupon.prediction_format == PredictionCoupon.PredictionFormat.QUICK,
+        "rich_prediction_timing": prediction_timing,
+        "coupon_timing_blocked": coupon_timing_blocked,
+        "paid_description_min_length": MIN_PAID_DESCRIPTION_LENGTH,
         "can_use_rich_fields": can_use_rich_fields,
         "vip_upgrade_url": reverse("cabinet:profile"),
         "vip_locked_label": "Доступно VIP-капперам",
@@ -79,7 +123,87 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
         "coupon_total_coefficient": _coupon_total_coefficient(predictions),
         "rich_prediction_max_items": MAX_RICH_PREDICTION_ITEMS,
         "selected_cover_id": str(coupon.cover_image_id) if coupon and coupon.cover_image_id else "",
+        "suggested_matches": suggested_matches,
+        "predictable_matches_url": (
+            reverse(
+                "game:match_list_filtered",
+                kwargs={
+                    "sport": "all",
+                    "scope": "all",
+                    "selected_date": timezone.localdate().isoformat(),
+                },
+            )
+            + "?match_filter=predictable"
+        ),
     }
+
+
+def _build_suggested_matches() -> list:
+    """Use the same popular, future, odds-backed matches as the public match list."""
+    popular_matches = build_popular_matches(limit=12)
+
+    matches_by_id = {
+        match.pk: match
+        for match in Match.objects.filter(pk__in=[item.id for item in popular_matches])
+        .select_related("sport", "league", "odds")
+    }
+    suggestions = []
+    used_ids = set()
+    for item in popular_matches:
+        match = matches_by_id.get(item.id)
+        if match is None:
+            continue
+        winner_odds = build_match_winner_odds(match)
+        if not winner_odds["has_any"]:
+            continue
+        item.winner_odds = winner_odds
+        item.primary_odd = (
+            winner_odds["home"] or winner_odds["away"] or winner_odds["draw"]
+        )
+        item.sport_image = match.sport.image_url if match.sport else ""
+        suggestions.append(item)
+        used_ids.add(match.pk)
+        if len(suggestions) == 3:
+            break
+
+    if len(suggestions) < 3:
+        fallback_matches = (
+            Match.objects.filter(
+                sync_scope=Match.SyncScope.PREMATCH,
+                starts_at__gte=timezone.now(),
+            )
+            .exclude(pk__in=used_ids)
+            .select_related("sport", "league", "odds")
+            .order_by("starts_at", "id")[:200]
+        )
+        for match in fallback_matches:
+            winner_odds = build_match_winner_odds(match)
+            if not winner_odds["has_any"]:
+                continue
+            local_start = timezone.localtime(match.starts_at)
+            suggestions.append(
+                SimpleNamespace(
+                    id=match.pk,
+                    url=match.get_absolute_url(),
+                    starts_at=local_start,
+                    date_label=(
+                        "сегодня"
+                        if local_start.date() == timezone.localdate()
+                        else local_start.strftime("%d.%m")
+                    ),
+                    league_name=match.league_name,
+                    home_name=match.home_team_name,
+                    away_name=match.away_team_name,
+                    sport_image=match.sport.image_url if match.sport else "",
+                    winner_odds=winner_odds,
+                    primary_odd=(
+                        winner_odds["home"] or winner_odds["away"] or winner_odds["draw"]
+                    ),
+                )
+            )
+            if len(suggestions) == 3:
+                break
+    return suggestions
 
 
 def create_rich_prediction(user, data, files, *, source_coupon=None) -> PredictionCoupon:
@@ -96,10 +220,20 @@ def create_rich_prediction(user, data, files, *, source_coupon=None) -> Predicti
         prediction_format=PredictionCoupon.PredictionFormat.QUICK,
     )
     if _resolve_published_status(data, source_coupon, is_new=True) == PredictionCoupon.PublishedStatus.PUBLISHED:
-        _confirm_coupon_for_publish(draft_coupons.get(), data)
+        current = draft_coupons.first()
+        if current is None:
+            raise ValidationError("Купон уже опубликован или очищен. Обновите страницу.")
+        _confirm_coupon_for_publish(current, data)
 
     with transaction.atomic():
-        coupon = draft_coupons.select_for_update().get()
+        coupon = draft_coupons.select_for_update().first()
+        if coupon is None:
+            raise ValidationError("Купон уже опубликован или очищен. Обновите страницу.")
+        if data.get("draft_revision"):
+            try:
+                check_draft_revision(coupon, data["draft_revision"])
+            except CouponDraftConflict:
+                raise ValidationError("Состав купона изменён в другой вкладке. Проверьте матчи и повторите публикацию.")
         return _save_rich_prediction(user, coupon, data, files, is_new=True)
 
 
@@ -116,6 +250,28 @@ def update_rich_prediction(user, coupon, data, files) -> PredictionCoupon:
         coupon = PredictionCoupon.objects.select_for_update().get(pk=coupon.pk)
         _ensure_coupon_edit_access(user, coupon)
         return _save_rich_prediction(user, coupon, data, files, is_new=False)
+
+
+@transaction.atomic
+def remove_draft_prediction(user, coupon_id, prediction_id) -> dict:
+    _ensure_editor_access(user)
+    coupon = PredictionCoupon.objects.select_for_update().filter(pk=coupon_id).first()
+    if coupon is None:
+        raise ValidationError("Купон уже опубликован или очищен. Обновите страницу.")
+    _ensure_coupon_access(user, coupon)
+    if coupon.published_status != PredictionCoupon.PublishedStatus.DRAFT:
+        raise ValidationError("Позиции опубликованного прогноза изменить нельзя.")
+    predictions = list(coupon.predictions.order_by("id"))
+    target = next((item for item in predictions if item.pk == prediction_id), None)
+    if target is not None:
+        if len(predictions) <= 1:
+            raise ValidationError("В купоне должна остаться минимум одна позиция.")
+        target.delete()
+        predictions = [item for item in predictions if item is not target]
+    coefficient = _coupon_total_coefficient(predictions)
+    coupon.possible_payout = coupon.total_stake * coefficient
+    coupon.save(update_fields=["possible_payout", "updated_at"])
+    return {"positions_count": len(predictions), "total_coefficient": str(coefficient)}
 
 
 def _confirm_coupon_for_publish(coupon: PredictionCoupon, data) -> None:
@@ -185,7 +341,8 @@ def _store_current_odds(coupon: PredictionCoupon, predictions: list, changes: li
         PredictionCoupon.objects.filter(pk=coupon.pk).update(
             possible_payout=coupon.total_stake * coupon_total_coefficient(
                 [{"coefficient": prediction.coefficient} for prediction in predictions]
-            )
+            ),
+            updated_at=timezone.now(),
         )
 
 
@@ -253,10 +410,9 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
         raise ValidationError({"is_paid": "Тип доступа опубликованного прогноза изменить нельзя."})
     if audience == PredictionCoupon.Audience.PAID and not can_use_rich_fields:
         raise ValidationError({"is_paid": "Платные прогнозы доступны VIP-капперам."})
-    if audience == PredictionCoupon.Audience.PAID and not description:
-        raise ValidationError(
-            {"description": "Для платного прогноза обязательно добавьте описание."}
-        )
+    if audience == PredictionCoupon.Audience.PAID:
+        validate_paid_prediction_settings(user, coupon)
+        validate_paid_prediction_content(headline, description)
 
     tags = _normalize_tags(data.get("tags", [] if is_new else coupon.tags))
     status = _resolve_published_status(data, coupon, is_new=is_new)
@@ -355,11 +511,7 @@ def _resolve_cover_image(value) -> PredictionCoverImage | None:
     except (TypeError, ValueError):
         raise ValidationError({"cover_image": "Выберите корректную обложку."})
 
-    cover = PredictionCoverImage.objects.filter(
-        pk=cover_id,
-        is_active=True,
-        placement=PredictionCoverImage.Placement.GRID,
-    ).first()
+    cover = prediction_editor_covers().filter(pk=cover_id).first()
     if cover is None:
         raise ValidationError({"cover_image": "Эта обложка недоступна."})
     return cover

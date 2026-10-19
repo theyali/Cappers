@@ -1,20 +1,25 @@
+from urllib.parse import urlsplit
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.cache import never_cache
+from django.template.loader import render_to_string
 
 from back.models import WebsiteSettings
 from cabinet.models import User
 from cabinet.telegram_auth import in_telegram_app
 from payments.utils import build_payment_options
 
+from .copybetting_ui import build_capper_search_context, build_setup_context
 from .forms import CopyBettingForm
 from .context_processors import BALANCE_HIDDEN_SESSION_KEY
-from .models import CoinPackage, CopyBettingSubscription
+from .models import CoinPackage, CoinWallet, CopyBettingSubscription
 from .services import (
     InsufficientBalance,
     activate_copybetting,
@@ -169,6 +174,7 @@ def copybetting_setup(request, analyst_id: int):
     if profile:
         expert_name = profile.display_name or analyst.get_full_name() or analyst.username
 
+    wallet = ensure_coin_wallet(request.user)
     return render(
         request,
         "wallets/copybetting_setup.html",
@@ -177,63 +183,53 @@ def copybetting_setup(request, analyst_id: int):
             "analyst": analyst,
             "expert_name": expert_name,
             "subscription": subscription,
-            "coin_wallet": ensure_coin_wallet(request.user),
+            "coin_wallet": wallet,
+            **build_setup_context(request.user, analyst, form, balance=wallet.balance),
         },
     )
 
 
 @login_required
 @require_POST
-def copybetting_stop(request, subscription_id: int):
+@never_cache
+def copybetting_status(request, subscription_id: int, action: str):
     _ensure_copybetting_reader(request.user)
     subscription = get_object_or_404(
-        CopyBettingSubscription,
-        pk=subscription_id,
-        user=request.user,
+        CopyBettingSubscription.objects.select_related("analyst", "analyst__analyst_profile"),
+        pk=subscription_id, user=request.user,
     )
-    subscription = stop_copybetting(subscription)
-    if subscription.pending_status == CopyBettingSubscription.Status.STOPPED:
-        messages.success(
-            request,
-            "Остановка запланирована. Она применится после расчета уже начавшихся купонов.",
-        )
+    ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+    try:
+        subscription = {"pause": pause_copybetting, "stop": stop_copybetting, "resume": resume_copybetting}[action](subscription)
+    except ValidationError as exc:
+        if ajax:
+            return JsonResponse({"error": _error_message(exc)}, status=400)
+        messages.error(request, _error_message(exc))
     else:
-        messages.success(request, "Копибеттинг остановлен.")
-    return redirect(f"{reverse('cabinet:profile')}?tab=copybetting")
-
-
-@login_required
-@require_POST
-def copybetting_pause(request, subscription_id: int):
-    _ensure_copybetting_reader(request.user)
-    subscription = get_object_or_404(
-        CopyBettingSubscription,
-        pk=subscription_id,
-        user=request.user,
-    )
-    subscription = pause_copybetting(subscription)
-    if subscription.pending_status == CopyBettingSubscription.Status.PAUSED:
-        messages.success(
-            request,
-            "Пауза запланирована. Она включится после расчета уже начавшихся купонов.",
-        )
-    else:
-        messages.success(request, "Копибеттинг поставлен на паузу.")
-    return redirect(f"{reverse('cabinet:profile')}?tab=copybetting")
-
-
-@login_required
-@require_POST
-def copybetting_resume(request, subscription_id: int):
-    _ensure_copybetting_reader(request.user)
-    subscription = get_object_or_404(
-        CopyBettingSubscription,
-        pk=subscription_id,
-        user=request.user,
-    )
-    resume_copybetting(subscription)
-    messages.success(request, "Копибеттинг возобновлен.")
-    return redirect(f"{reverse('cabinet:profile')}?tab=copybetting")
+        notice = {
+            "pause": "Копибеттинг поставлен на паузу.",
+            "stop": "Копибеттинг остановлен.",
+            "resume": "Копибеттинг возобновлен.",
+        }[action]
+        if subscription.pending_status:
+            notice = f"{subscription.get_pending_status_display()} — после расчёта уже начавшихся купонов."
+        if ajax:
+            from cabinet.services.copybetting import build_public_copybetting_context, build_reader_copybetting_context
+            payload = {"message": notice, "status": subscription.status, "pending_status": subscription.pending_status}
+            if request.POST.get("surface") == "reader":
+                params = QueryDict(urlsplit(request.POST.get("next", "")).query)
+                context = build_reader_copybetting_context(request.user, params)
+                payload["reader_html"] = render_to_string("cabinet/includes/_copybetting_reader_content.html", context, request=request)
+                payload["summary_html"] = render_to_string("cabinet/includes/_copybetting_reader_summary.html", context, request=request)
+            else:
+                context = build_public_copybetting_context(request.user, subscription.analyst)
+                context["expert_name"] = subscription.analyst.analyst_profile.display_name or subscription.analyst.username
+                for variant in ("desktop", "mobile"):
+                    payload[f"{variant}_html"] = render_to_string("cabinet/includes/_expert_copybetting_bar.html", {**context, "copy_variant": variant}, request=request)
+                    payload[f"{variant}_button_html"] = render_to_string("cabinet/includes/_expert_copybetting_button.html", {**context, "copy_mobile": variant == "mobile"}, request=request)
+            return JsonResponse(payload)
+        messages.success(request, notice)
+    return redirect(_safe_next(request, f"{reverse('cabinet:profile')}?tab=copybetting"))
 
 
 def _safe_next(request, fallback: str) -> str:
@@ -251,3 +247,26 @@ def _error_message(exc) -> str:
     if isinstance(exc, ValidationError):
         return exc.messages[0] if exc.messages else str(exc)
     return str(exc)
+
+
+@login_required
+@require_POST
+@never_cache
+def copybetting_search(request):
+    _ensure_copybetting_reader(request.user)
+    context = build_capper_search_context(request.user, request.POST)
+    return JsonResponse({"html": render_to_string("wallets/includes/_copybetting_search_results.html", context, request=request)})
+
+
+@login_required
+@require_POST
+@never_cache
+def copybetting_preview(request, analyst_id):
+    _ensure_copybetting_reader(request.user)
+    analyst = get_object_or_404(User, pk=analyst_id, role=User.Role.ANALYST, is_active=True)
+    form = CopyBettingForm(request.POST)
+    balance = CoinWallet.objects.filter(user=request.user).values_list("balance", flat=True).first() or 0
+    context = build_setup_context(request.user, analyst, form, balance=balance)
+    return JsonResponse({"html": render_to_string("wallets/includes/_copybetting_setup_preview.html", context, request=request),
+                         "calculation": render_to_string("wallets/includes/_copybetting_calculation.html", context, request=request),
+                         "valid": form.is_valid(), "errors": context["setup_validation_errors"]})

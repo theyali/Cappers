@@ -141,6 +141,14 @@
             if (node.classList.contains("is-timing-locked") !== blocked) {
                 node.classList.toggle("is-timing-locked", blocked);
             }
+            const richWarning = node.querySelector("[data-rich-match-warning]");
+            if (richWarning) {
+                richWarning.hidden = !blocked;
+                const message = !startDate
+                    ? "Время начала не указано — публикация недоступна."
+                    : "Матч уже начался или завершён — публикация недоступна.";
+                if (richWarning.textContent !== message) richWarning.textContent = message;
+            }
             if (blocked) {
                 if (node.title !== "Матч уже начался — опубликовать прогноз нельзя") {
                     node.title = "Матч уже начался — опубликовать прогноз нельзя";
@@ -162,6 +170,24 @@
             } else if (submit.title === "Удалите матч, который уже начался") {
                 submit.removeAttribute("title");
             }
+        });
+        document.querySelectorAll(".rich-prediction-form").forEach((form) => {
+            const page = form.closest(".rich-prediction-page");
+            const blocked = Boolean(form.querySelector("[data-rich-coupon-item].is-timing-locked:not([hidden])"));
+            const warning = form.querySelector("[data-rich-timing-warning]");
+            if (warning) warning.hidden = !blocked;
+            page?.querySelectorAll("[data-rich-publish]").forEach((button) => {
+                if (blocked) {
+                    button.dataset.timingDisabled = "true";
+                    button.disabled = true;
+                    button.title = "Удалите недоступные матчи из купона";
+                } else if (button.dataset.timingDisabled === "true"
+                    && form.dataset.removingPrediction !== "true" && form.getAttribute("aria-busy") !== "true") {
+                    delete button.dataset.timingDisabled;
+                    button.disabled = false;
+                    button.removeAttribute("title");
+                }
+            });
         });
     };
 
@@ -264,12 +290,27 @@
     };
 
     const start = () => {
+        const seed = document.getElementById("rich-prediction-timing-data");
+        if (seed) {
+            try {
+                Object.entries(JSON.parse(seed.textContent)).forEach(([id, timing]) => cache.set(id, timing));
+            } catch (_error) { /* The timing endpoint remains the fallback. */ }
+        }
+        renderAll();
         localizePredictionTimes(document);
-        fetchTimings(false);
+        fetchTimings(true);
         window.setInterval(renderAll, 1000);
         window.setInterval(() => fetchTimings(true), 30000);
 
         document.addEventListener("matches:appended", scheduleScan);
+        document.addEventListener("rich:coupon-updated", updateCouponSubmit, true);
+        window.addEventListener("coupon:draft-changed", (event) => {
+            Object.entries(event.detail.timings || {}).forEach(([id, timing]) => cache.set(id, timing));
+            renderAll();
+        });
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) { fetchTimings(true); renderAll(); }
+        });
         const observer = new MutationObserver((mutations) => {
             if (mutations.some((mutation) => mutation.addedNodes.length)) scheduleScan();
         });

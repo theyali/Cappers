@@ -16,7 +16,8 @@
     >
         {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="predictions-filter" filter_label="Фильтры прогнозов" filter_total=filtered_predictions reset_url=all_predictions_url sport_tabs="" %}
 
-        <div class="predictions-content matches-list-panel" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
+        <div class="predictions-content matches-list-panel{% if is_paid_predictions %} is-paid-catalog{% endif %}" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
+            {% include "front/includes/_content_breadcrumbs.html" with breadcrumbs_class="predictions-content-breadcrumbs" %}
             <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
             {% include "front/includes/_prediction_matches_head.html" %}
             {% if page_obj.object_list %}

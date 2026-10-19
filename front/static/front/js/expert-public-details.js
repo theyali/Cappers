@@ -10,8 +10,8 @@
         "[tabindex]:not([tabindex='-1'])",
     ].join(",");
 
-    const initModal = (modal, triggers) => {
-        if (!modal || !triggers.length) return;
+    const initModal = (modal) => {
+        if (!modal) return;
 
         const dialog = modal.querySelector("[data-expert-public-details-dialog]");
         if (!dialog) return;
@@ -39,14 +39,21 @@
         const focusDialog = () => {
             window.requestAnimationFrame(() => {
                 if (!isOpen) return;
-                const target = dialog.querySelector("button[data-expert-public-details-close]") || dialog;
+                const target = dialog.querySelector("[data-modal-autofocus]") || dialog.querySelector("button[data-expert-public-details-close]") || dialog;
                 target.focus({ preventScroll: true });
             });
         };
 
-        const open = (event) => {
+        const open = (event, trigger) => {
             event?.preventDefault();
             if (isOpen) return;
+            const slot = dialog.querySelector("[data-expert-public-modal-slot]");
+            if (slot) {
+                const source = trigger.closest(".profile-coupon-card")?.querySelector("template[data-expert-public-modal-content]");
+                if (!source) return;
+                slot.replaceChildren(source.content.cloneNode(true));
+                dialog.scrollTop = 0;
+            }
             if (closeTimer) {
                 window.clearTimeout(closeTimer);
                 closeTimer = null;
@@ -110,8 +117,12 @@
             }
         };
 
-        triggers.forEach((trigger) => {
-            trigger.addEventListener("click", open);
+        // Delegation also covers cards inserted by filters and infinite scrolling.
+        document.addEventListener("click", (event) => {
+            const trigger = event.target.closest?.("[data-expert-public-modal-open]");
+            if (trigger?.dataset.expertPublicModalOpen === modal.dataset.expertPublicModal) {
+                open(event, trigger);
+            }
         });
         closeButtons.forEach((button) => {
             button.addEventListener("click", close);
@@ -129,10 +140,6 @@
     };
 
     document.querySelectorAll("[data-expert-public-modal]").forEach((modal) => {
-        const modalKey = modal.dataset.expertPublicModal;
-        const triggers = Array.from(
-            document.querySelectorAll(`[data-expert-public-modal-open="${modalKey}"]`)
-        );
-        initModal(modal, triggers);
+        initModal(modal);
     });
 })();

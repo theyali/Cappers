@@ -27,6 +27,7 @@
             data-content-view-root
             data-content-view-current="{{ content_view_mode }}"
         >
+            {% include "front/includes/_content_breadcrumbs.html" with breadcrumbs_class="predictions-content-breadcrumbs" %}
             <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
             {% include "game/includes/_match_list_hero.html" %}
             {% include "game/includes/_match_list_content.html" %}

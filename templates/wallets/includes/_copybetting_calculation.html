@@ -1,0 +1,5 @@
+<div class="copybetting-calculation-head">Расчёт ставки</div>
+<div class="copybetting-calculation-equation"><b>{{ setup_bank }}</b><span>×</span><b>{{ setup_percent }}%</b><span>=</span><strong>{{ setup_stake }} {% include "front/includes/_coin_icon.html" %}</strong><small>на каждый прогноз</small></div>
+<p>{% if setup_stake_too_low %}Минимальная сумма копируемой ставки — {{ setup_min_stake }} коинов. Увеличьте банк, процент или максимум на одну ставку.{% elif setup_valid %}{% if setup_capped %}Сумма ограничена максимумом на одну ставку.{% else %}Сумма не превышает заданный максимум.{% endif %} {% if setup_balance_short %}На балансе недостаточно коинов для такой ставки.{% else %}Текущего баланса хватит на {{ setup_max_stakes }} ставок без учёта выигрышей.{% endif %}{% else %}Укажите банк, процент ставки и проверьте параметры — здесь появится расчёт.{% endif %}</p>
+
+{% if not setup_stake_too_low %}{% for error in setup_validation_errors %}<p class="copybetting-validation-error">{{ error }}</p>{% endfor %}{% endif %}

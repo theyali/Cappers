@@ -1,0 +1,10 @@
+<div class="copybetting-person-menu" id="copybetting-person-menu-{{ person.id }}" data-copy-menu hidden>
+    <header>{% include "cabinet/includes/_copybetting_avatar.html" with person=person only %}<span><strong>@{{ person.username }}</strong><small>с {{ person.started_at|date:"d E" }} · {{ person.stake }} на ставку</small></span></header>
+    <a href="{{ person.profile_url }}">{% include "cabinet/includes/_copybetting_icon.html" with name="profile" only %}<span>Открыть профиль</span></a>
+    <a href="{{ person.bets_url }}" data-copy-nav>{% include "cabinet/includes/_copybetting_icon.html" with name="bets" only %}<span>Его скопированные ставки<small>Какие ваши ставки он повторил</small></span></a>
+    <a href="{{ person.stats_url }}" data-copy-nav>{% include "cabinet/includes/_copybetting_icon.html" with name="stats" only %}<span>Статистика по пользователю<small>Его результат на ваших прогнозах</small></span></a>
+    <button type="button" disabled>{% include "cabinet/includes/_copybetting_icon.html" with name="message" only %}<span>Написать сообщение<small>Личные сообщения пока недоступны</small></span></button>
+    <div class="copybetting-menu-divider"></div>
+    <button type="button" data-copy-hide="{{ person.id }}">{% include "cabinet/includes/_copybetting_icon.html" with name="hide" only %}<span>Скрыть из списка<small>Останется в общей статистике</small></span></button>
+    <button type="button" class="is-danger" disabled>{% include "cabinet/includes/_copybetting_icon.html" with name="ban" only %}<span>Запретить копировать меня<small>Скоро: остановка и запрет копирования</small></span></button>
+</div>

@@ -1,0 +1,60 @@
+                    <div class="profile-predictions-feature">
+                    {% if profile_best_mobile_coupons %}
+                    <section class="home-mobile-slider profile-best-coupons-slider" data-home-mobile-slider aria-labelledby="{{ feature_id|default:"profile" }}-best-coupons-title">
+                        <div class="profile-mobile-block-head">
+                            <p class="eyebrow">Лучшие прогнозы</p>
+                            <h3 id="{{ feature_id|default:"profile" }}-best-coupons-title">Высокие коэффициенты</h3>
+                        </div>
+                        <div class="home-mobile-slider-track" data-home-mobile-track tabindex="0" role="region" aria-label="Лучшие прогнозы">
+                            {% for prediction in profile_best_mobile_coupons %}
+                                {% url 'front:prediction_detail' prediction.id as prediction_href %}
+                                {% if forloop.first %}
+                                    {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href card_loading="eager" only %}
+                                {% else %}
+                                    {% include "front/includes/_home_mobile_prediction_card.html" with card=prediction card_href=prediction_href only %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="home-mobile-slider-dots" aria-hidden="true">
+                            {% for prediction in profile_best_mobile_coupons %}
+                                <span class="{% if forloop.first %}is-active{% endif %}" data-home-mobile-dot></span>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% else %}
+                    <div class="profile-desktop-feature-empty">Выигрышные прогнозы с высокими коэффициентами пока не появились.</div>
+                    {% endif %}
+                    <aside class="profile-predictions-insights" aria-label="Статистика прогнозов">
+                        <section class="profile-predictions-stats" aria-labelledby="{{ feature_id|default:"profile" }}-coupon-stats-title">
+                            <div class="profile-predictions-side-head">
+                                <h3 id="{{ feature_id|default:"profile" }}-coupon-stats-title">{{ feature_stats_title|default:"Моя статистика" }}</h3>
+                                <span>За всё время</span>
+                            </div>
+                            <div class="profile-predictions-stat-grid">
+                                <div><span>Всего купонов</span><strong>{{ profile_coupon_stats.total }}</strong></div>
+                                <div><span>Победы</span><strong class="is-win">{{ profile_coupon_stats.wins }}</strong></div>
+                                <div><span>Поражения</span><strong class="is-lose">{{ profile_coupon_stats.losses }}</strong></div>
+                                <div><span>Проходимость</span><strong>{{ profile_coupon_stats.win_rate }}%</strong></div>
+                            </div>
+                        </section>
+                        <section class="profile-predictions-expresses" aria-labelledby="{{ feature_id|default:"profile" }}-expresses-title">
+                            <div class="profile-predictions-side-head">
+                                <h3 id="{{ feature_id|default:"profile" }}-expresses-title">Лучшие экспрессы</h3>
+                                <span>Топ за всё время</span>
+                            </div>
+                            {% if profile_best_expresses %}
+                            <div class="profile-predictions-expresses-list">
+                                {% for coupon in profile_best_expresses %}
+                                <a href="{% url 'front:prediction_detail' coupon.id %}">
+                                    <span class="profile-predictions-express-rank">{{ forloop.counter }}</span>
+                                    <span class="profile-predictions-express-copy"><strong>{{ coupon.coefficient }}</strong><small>{{ coupon.positions_count }} игр · {{ coupon.created_at|date:"d.m" }}</small></span>
+                                    <span aria-hidden="true">›</span>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="profile-predictions-express-empty">Выигрышных экспрессов пока нет.</p>
+                            {% endif %}
+                        </section>
+                    </aside>
+                    </div>

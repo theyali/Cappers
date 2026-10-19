@@ -100,9 +100,7 @@
     const autosaveEnabled = root.dataset.autosave !== "false";
     const minConfidence = Math.max(0, Math.min(100, Number.parseInt(root.dataset.minConfidence || "0", 10) || 0));
     const couponTypeRule = root.dataset.couponTypeRule || "any";
-    const csrfCookie = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)?.[1] || "session";
-    const userKey = root.dataset.userId || csrfCookie;
-    const storageKey = `cappers:coupon-draft:${userKey}`;
+    const sharedDraft = autosaveEnabled ? window.CappersCouponDraft : null;
     const items = new Map();
 
     let draftId = null;
@@ -110,6 +108,10 @@
     let autosaveRequest = null;
     let manualRequest = null;
     let restoring = true;
+    let editVersion = 0;
+    let syncGeneration = 0;
+    let dirty = false;
+    let renderedRevision = null;
 
     const toNumber = (value, fallback = 0) => {
         const parsed = Number.parseFloat(String(value ?? "").replace(",", "."));
@@ -335,26 +337,8 @@
         return true;
     };
 
-    const saveLocalSnapshot = (dirty = true) => {
-        if (!canWrite) return;
-        const snapshot = {
-            id: draftId,
-            stake: stakeInput?.value || "",
-            useFreePrediction: useFreePrediction(),
-            confidence: currentConfidence(),
-            items: [...items.values()],
-            dirty,
-            savedAt: Date.now(),
-        };
-        try {
-            if (!snapshot.items.length && !snapshot.stake) {
-                localStorage.removeItem(storageKey);
-            } else {
-                localStorage.setItem(storageKey, JSON.stringify(snapshot));
-            }
-        } catch (error) {
-            // Local storage is only a fast reload fallback; DB autosave remains primary.
-        }
+    const markDraftChanged = (changed = true) => {
+        if (changed) { ++editVersion; dirty = true; }
     };
 
     const renderItem = (item) => {
@@ -388,7 +372,7 @@
             items.delete(item.matchId);
             node.remove();
             updateState();
-            saveLocalSnapshot(true);
+            markDraftChanged(true);
             setNote(items.size ? "Изменения сохраняются..." : "Прогноз пуст.");
             syncDraft(false);
         });
@@ -431,6 +415,7 @@
 
     const payloadFromState = (autosave) => ({
         coupon_id: draftId,
+        ...(sharedDraft ? { base_revision: sharedDraft.get()?.revision || null } : {}),
         autosave,
         stake: stakeInput?.value || "",
         confidence: currentConfidence(),
@@ -447,12 +432,12 @@
 
     const applyServerDraft = (draft) => {
         if (!draft) {
-            draftId = null;
-            saveLocalSnapshot(false);
+            replaceCanonicalDraft(null);
             return;
         }
 
         draftId = draft.id || draftId;
+        renderedRevision = draft.revision || null;
         if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
         const serverItems = new Map((draft.items || []).map((rawItem) => {
             const item = normalizeDraftItem(rawItem);
@@ -467,7 +452,7 @@
             }
         });
         updateConfidenceVisual();
-        saveLocalSnapshot(false);
+        markDraftChanged(false);
         return oddsUpdated;
     };
 
@@ -482,11 +467,9 @@
         manualStake = "";
         if (freePredictionInput) freePredictionInput.checked = false;
         if (confidenceInput) confidenceInput.value = "50";
-        try {
-            localStorage.removeItem(storageKey);
-        } catch (error) {
-            // Local storage cleanup is best-effort.
-        }
+        dirty = false;
+        renderedRevision = null;
+        sharedDraft?.accept(null);
         updateState();
     };
 
@@ -521,15 +504,17 @@
         }
 
         if (manual) {
-            if (autosaveRequest) {
-                autosaveRequest.abort();
-                autosaveRequest = null;
-            }
-            if (manualRequest) return;
+            if (autosaveRequest) return autosaveRequest.then(() => syncDraft(true), () => setSubmitLoading(false));
+            if (manualRequest) return manualRequest;
+        } else if (autosaveRequest) {
+            return autosaveRequest;
         } else if (!items.size && !draftId) {
+            dirty = false;
             return;
         }
 
+        const sentVersion = editVersion;
+        const generation = syncGeneration;
         const request = window.jQuery.ajax({
             url: createUrl,
             method: "POST",
@@ -544,11 +529,11 @@
         if (manual) {
             manualRequest = request;
         } else {
-            if (autosaveRequest) autosaveRequest.abort();
             autosaveRequest = request;
         }
 
         request.done((result) => {
+            if (generation !== syncGeneration) { sharedDraft?.refresh(); return; }
             if (!result?.ok) {
                 setNote(result?.error || (manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."), "error");
                 return;
@@ -560,7 +545,10 @@
                 setNote(result.message || "Прогноз опубликован.", "success");
             } else {
                 draftId = result.draft_id || null;
-                const oddsUpdated = applyServerDraft(result.draft || null);
+                renderedRevision = result.draft?.revision || null;
+                sharedDraft?.accept(result.draft || null);
+                dirty = sentVersion !== editVersion;
+                const oddsUpdated = dirty ? false : applyServerDraft(result.draft || null);
                 if (oddsUpdated) {
                     setNote("Коэффициенты в купоне обновлены по текущей линии.");
                 } else if (items.size) {
@@ -571,12 +559,16 @@
 
         request.fail((xhr, statusText) => {
             if (statusText === "abort") return;
+            if (xhr?.responseJSON?.draft_conflict) {
+                sharedDraft?.accept(xhr.responseJSON.draft || null, { broadcast: false });
+                replaceCanonicalDraft(xhr.responseJSON.draft || null);
+            }
             const oddsChanged = xhr?.responseJSON?.odds_changed;
             if (Array.isArray(oddsChanged) && oddsChanged.length) {
                 oddsChanged.forEach((change) => {
                     applyItemOdds(change.match_id, change.market, change.selection, change.coefficient, change.outcome_code);
                 });
-                saveLocalSnapshot(true);
+                markDraftChanged(true);
             }
             setNote(
                 responseError(xhr, manual ? "Не удалось сохранить прогноз." : "Не удалось сохранить купон."),
@@ -590,14 +582,18 @@
                 setSubmitLoading(false);
             } else {
                 autosaveRequest = null;
+                if (generation === syncGeneration && sentVersion !== editVersion && dirty) {
+                    syncDraft(false);
+                }
             }
             updateState();
         });
+        return request;
     };
 
     const scheduleDraftSync = () => {
         if (!canWrite || restoring) return;
-        saveLocalSnapshot(true);
+        markDraftChanged(true);
         if (autosaveTimer) window.clearTimeout(autosaveTimer);
         autosaveTimer = window.setTimeout(() => syncDraft(false), 500);
     };
@@ -637,63 +633,61 @@
         }
 
         updateState();
-        saveLocalSnapshot(true);
+        markDraftChanged(true);
         syncDraft(false);
         itemsRoot.scrollIntoView({ behavior: "smooth", block: "nearest" });
     };
 
-    const restoreDraft = () => {
-        let serverDraft = null;
-        const script = document.getElementById("coupon-draft-data");
-        if (script) {
-            try {
-                serverDraft = JSON.parse(script.textContent || "null");
-            } catch (error) {
-                serverDraft = null;
-            }
-        }
-
-        let localDraft = null;
-        try {
-            localDraft = JSON.parse(localStorage.getItem(storageKey) || "null");
-        } catch (error) {
-            localDraft = null;
-        }
-
-        const localHasUnsavedChanges = Boolean(
-            localDraft
-            && localDraft.dirty === true
-            && Array.isArray(localDraft.items)
-            && localDraft.items.length
-        );
-        const draft = localHasUnsavedChanges ? localDraft : (serverDraft || localDraft);
-        if (!draft || !Array.isArray(draft.items) || !draft.items.length) {
-            restoring = false;
-            updateState();
-            return;
-        }
-
-        draftId = draft.id || null;
-        if (stakeInput) stakeInput.value = draft.stake || "";
-        if (freePredictionInput) freePredictionInput.checked = Boolean(draft.useFreePrediction);
+    const replaceCanonicalDraft = (draft) => {
+        ++syncGeneration;
+        if (autosaveTimer) { window.clearTimeout(autosaveTimer); autosaveTimer = null; }
+        dirty = false;
+        draftId = draft?.id || null;
+        renderedRevision = draft?.revision || null;
+        items.clear();
+        itemsRoot.replaceChildren();
+        if (stakeInput) stakeInput.value = draft?.stake || "";
+        if (freePredictionInput) freePredictionInput.checked = false;
         syncFreePredictionStake();
-        if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft.confidence));
-        draft.items.forEach((rawItem) => {
+        if (confidenceInput) confidenceInput.value = String(normalizeConfidence(draft?.confidence));
+        (draft?.items || []).forEach((rawItem) => {
             const item = normalizeDraftItem(rawItem);
             items.set(item.matchId, item);
             renderItem(item);
         });
-
         restoring = false;
         updateState();
-        saveLocalSnapshot(localHasUnsavedChanges);
-        if (localHasUnsavedChanges) {
-            setNote("Сохраняем последние изменения...", "success");
-            syncDraft(false);
-        } else {
-            setNote("Купоны восстановлены.", "success");
-        }
     };
+
+    const restoreDraft = () => {
+        let draft = sharedDraft?.get();
+        if (!sharedDraft) {
+            try { draft = JSON.parse(document.getElementById("coupon-draft-data")?.textContent || "null"); }
+            catch (_error) { draft = null; }
+        }
+        replaceCanonicalDraft(draft);
+        if (draft) setNote("Купон восстановлен.", "success");
+    };
+    window.addEventListener("coupon:draft-changed", (event) => {
+        if (!sharedDraft) return;
+        const draft = event.detail.draft;
+        if ((draft?.id || null) === draftId && (draft?.revision || null) === renderedRevision) return;
+        replaceCanonicalDraft(draft);
+        setNote(draft ? "Купон обновлён." : "Купон пуст.");
+    });
+    richAction?.addEventListener("click", async (event) => {
+        if (!sharedDraft) return;
+        event.preventDefault();
+        try {
+            while (dirty || autosaveRequest) {
+                const request = autosaveRequest || syncDraft(false);
+                if (!request) break;
+                const result = await request;
+                if (!result?.ok) return;
+            }
+            if (!dirty && draftId && items.size) window.location.assign(richAction.href);
+        } catch (_error) { setNote("Не удалось сохранить купон. Повторите переход после сохранения.", "error"); }
+    });
 
     stakeInput?.addEventListener("input", () => {
         stakeInput.closest(".coupon-field")?.classList.toggle(
@@ -752,7 +746,7 @@
             return;
         }
 
-        saveLocalSnapshot(true);
+        markDraftChanged(true);
         const checking = [...items.values()].some(itemNeedsRemoteCheck);
         setSubmitLoading(true, checking);
         setNote(checking ? "Проверяем актуальное состояние матчей..." : "Сохраняем прогноз...");

@@ -7,6 +7,7 @@ from . import (
     avatar_views,
     bonus_views,
     capper_views,
+    copybetting_views,
     dashboard_views,
     demand_views,
     earnings_views,
@@ -26,6 +27,8 @@ urlpatterns = [
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("profile/copybetting/", copybetting_views.audience, name="copybetting_audience"),
+    path("profile/copybetting/reader/", copybetting_views.reader, name="copybetting_reader"),
     path("profile/comments/", views.profile_comments, name="profile_comments"),
     path(
         "profile/predictions/mobile-coupons/",

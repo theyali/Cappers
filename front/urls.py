@@ -3,6 +3,7 @@ from django.views.generic import TemplateView
 
 from back.content_view import content_view_state
 from cabinet import expert_profile_views as cabinet_expert_profile_views
+from cabinet import coupon_views
 from cabinet import referral_views as cabinet_referral_views
 
 from . import (
@@ -124,6 +125,7 @@ urlpatterns = [
         cabinet_expert_profile_views.capper_article_detail,
         name="capper_article_detail",
     ),
+    path("experts/<str:username>/predictions/", coupon_views.expert_coupons, name="expert_coupons"),
     path("experts/<str:username>/", cabinet_expert_profile_views.expert_profile, name="expert_profile"),
     path("cappers-table/", capper_views.cappers_table, name="cappers_table"),
     path(

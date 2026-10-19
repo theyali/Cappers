@@ -119,16 +119,15 @@ def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list,
     }
 
 
+def user_has_paid_prediction_subscription(user, analyst_id: int) -> bool:
+    """Copying requires the author's subscription, never a one-off coupon unlock."""
+    return active_paid_subscriptions(user).filter(analyst_id=analyst_id, starts_at__lte=timezone.now()).exists()
+
+
 def user_can_view_paid_predictions(user, analyst: User) -> bool:
     if not getattr(user, "is_authenticated", False):
         return False
-    if user.pk == analyst.pk:
-        return True
-    return AnalystPaidSubscription.objects.filter(
-        subscriber=user,
-        analyst=analyst,
-        expires_at__gt=timezone.now(),
-    ).exists()
+    return user.pk == analyst.pk or user_has_paid_prediction_subscription(user, analyst.pk)
 
 
 def active_paid_subscription_analyst_ids(user) -> set[int]:

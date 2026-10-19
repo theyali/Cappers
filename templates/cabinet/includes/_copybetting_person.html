@@ -1,0 +1,12 @@
+<article class="copybetting-person" data-copy-person="{{ person.id }}"{% if not compact %} role="row"{% endif %}>
+    <div{% if not compact %} role="cell"{% endif %}><a class="copybetting-person-identity" href="{{ person.profile_url }}">{% include "cabinet/includes/_copybetting_avatar.html" with person=person only %}<span><strong>@{{ person.username }}</strong><small class="copybetting-person-duration">{{ person.duration }}</small><small class="copybetting-person-mobile-date">с {{ person.started_at|date:"d E" }}</small></span></a></div>
+    <time {% if not compact %}role="cell" {% endif %}class="copybetting-person-start" datetime="{{ person.started_at|date:'c' }}">{{ person.started_at|date:"d E" }}</time>
+    <span {% if not compact %}role="cell" {% endif %}class="copybetting-person-stop">{% if person.stopped_at %}<time datetime="{{ person.stopped_at|date:'c' }}">{{ person.stopped_at|date:"d E" }}</time>{% else %}—{% endif %}</span>
+    <span {% if not compact %}role="cell" {% endif %}class="copybetting-status is-{{ person.status }}">{{ person.status_label }}</span>
+    <span {% if not compact %}role="cell" {% endif %}class="copybetting-person-stake"><small>Сумма ставки</small><strong>{{ person.stake }} {% include "front/includes/_coin_icon.html" %}</strong></span>
+    <span {% if not compact %}role="cell" {% endif %}class="copybetting-person-profit {% if person.profit_positive %}is-profit{% else %}is-loss{% endif %}"><small>Заработал на вас</small><strong>{{ person.profit }} {% include "front/includes/_coin_icon.html" %}</strong></span>
+    {% if not compact %}<div {% if not compact %}role="cell" {% endif %}class="copybetting-person-actions">
+        <button type="button" class="copybetting-menu-trigger" data-copy-menu-trigger aria-label="Действия для @{{ person.username }}" aria-expanded="false" aria-controls="copybetting-person-menu-{{ person.id }}" aria-haspopup="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        {% include "cabinet/includes/_copybetting_menu.html" with person=person only %}
+    </div>{% endif %}
+</article>

@@ -60,7 +60,7 @@
             </a>
         </nav>
 
-        <section class="profile-completion-card profile-settings-completion profile-edit-completion profile-field-full" aria-label="Заполненность профиля">
+        <section class="profile-completion-card profile-settings-completion profile-edit-completion profile-field-full" aria-label="Заполненность профиля"{% if profile_completion >= 100 %} hidden{% endif %}>
             <div>
                 <span>Заполненность профиля</span>
                 <strong>{{ profile_completion }}%</strong>
@@ -280,7 +280,7 @@
 
             <section class="profile-edit-section profile-field-full">
                 <div class="profile-edit-section-grid">
-                    <div class="profile-visibility profile-field-full" data-paid-predictions-toggle>
+                    <div class="profile-visibility profile-field-full" id="paid-predictions-settings" data-paid-predictions-toggle>
                         <div>
                             <strong>{{ analyst_form.paid_predictions_enabled.label }}</strong>
                             <small>Включите продажу платных прогнозов и настройте доступные периоды ниже.</small>

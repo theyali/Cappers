@@ -33,7 +33,9 @@
             });
             window.setInterval(() => {
                 if (!desktop.matches || reducedMotion.matches || paused || document.hidden) return;
-                if (!slider.closest(".profile-tab-panel")?.classList.contains("is-active")) return;
+                const profilePanel = slider.closest(".profile-tab-panel");
+                const publicPanel = slider.closest("[data-expert-public-panel]");
+                if (profilePanel ? !profilePanel.classList.contains("is-active") : !publicPanel || publicPanel.hidden) return;
                 const step = cards[1].offsetLeft - cards[0].offsetLeft;
                 if (!step) return;
                 const current = Math.round(track.scrollLeft / step);

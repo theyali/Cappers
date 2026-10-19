@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from html.parser import HTMLParser
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -40,6 +40,7 @@ from .expert_ranking import (
     rank_experts,
     recommended_experts_for_user,
 )
+from .context_processors import HOME_WIKI_CACHE_KEY, _home_wiki_videos
 
 
 class _PromoBannerNestingParser(HTMLParser):
@@ -306,6 +307,66 @@ class WikiVideoBackendTests(TestCase):
         self.assertEqual(progress.duration_seconds, 100)
         self.assertTrue(progress.completed)
         self.assertEqual(response.json()["percent"], 95)
+
+class WikiVideoCardTemplateTests(SimpleTestCase):
+    @staticmethod
+    def video():
+        return SimpleNamespace(
+            pk=7,
+            video=SimpleNamespace(url="/media/wiki/video.mp4"),
+            preview_image=None,
+            wiki_duration_label="2:15",
+            title="Как получить синюю галочку",
+            section=SimpleNamespace(name="Аккаунт"),
+            wiki_author_name="КапперХаб",
+            views_count=25,
+            wiki_views_label="25",
+            wiki_added_label="сегодня",
+            wiki_user_progress=None,
+            description="Описание",
+            tag_list=[],
+        )
+
+    def test_title_only_variant_hides_home_video_metadata_and_actions(self):
+        html = render_to_string(
+            "front/includes/_wiki_video_card.html",
+            {"video": self.video(), "title_only": True},
+        )
+
+        self.assertIn("Как получить синюю галочку", html)
+        self.assertIn("wiki-video-copy is-title-only", html)
+        self.assertIn("data-wiki-video-duration >2:15</span>", html)
+        self.assertNotIn("wiki-brand-logo", html)
+        self.assertNotIn("КапперХаб · Аккаунт", html)
+        self.assertNotIn("25 просмотров · сегодня", html)
+        self.assertNotIn("data-wiki-card-share", html)
+
+    def test_default_variant_keeps_wiki_video_metadata_and_actions(self):
+        html = render_to_string(
+            "front/includes/_wiki_video_card.html",
+            {"video": self.video()},
+        )
+
+        self.assertIn("wiki-brand-logo", html)
+        self.assertIn("КапперХаб · Аккаунт", html)
+        self.assertIn("25 просмотров · сегодня", html)
+        self.assertIn("data-wiki-card-share", html)
+
+    def test_home_videos_receive_the_same_duration_label_as_wiki_videos(self):
+        video = self.video()
+        video.duration = "3:05"
+        queryset = MagicMock()
+        queryset.select_related.return_value.order_by.return_value.__getitem__.return_value = [video]
+
+        with (
+            patch("front.context_processors._cache_get", return_value=None),
+            patch("front.context_processors._cache_set") as cache_set,
+            patch("front.context_processors.WikiVideo.objects.filter", return_value=queryset),
+        ):
+            home_videos = _home_wiki_videos()
+
+        self.assertEqual(home_videos[0].wiki_duration_label, "3:05")
+        cache_set.assert_called_once_with(HOME_WIKI_CACHE_KEY, home_videos, 120)
 
 
 class HomeMobileBookmakersTemplateTests(SimpleTestCase):

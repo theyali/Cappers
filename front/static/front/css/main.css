@@ -159,8 +159,8 @@
     --heading-h4-line-height: 1.12;
     --heading-h5-line-height: 1.18;
     --heading-h6-line-height: 1.2;
-    --danger: #fd1a01;
-    --green: #5ea731;
+    --danger: #ff7a7f;
+    --green: #5be38a;
     --soft: rgba(255, 255, 255, 0.72);
     --line: rgba(255, 255, 255, 0.12);
     --brand-logo-size: 60px;
@@ -366,7 +366,6 @@ mark { color: var(--blue); background: 0 0; }
 .prediction-results-head .content-view-toolbar,
 .profile .site-header,
 .profile-copy-actions form,
-.profile-copy-status-actions form,
 .referrals-step p,
 .referrals-step strong,
 .related-articles-head h2,
@@ -2487,7 +2486,7 @@ html.is-roulette-sheet-open body { overflow: hidden; }
     text-decoration: none;
     cursor: pointer;
 }
-.expert-mobile-follow { background: var(--yellow); color: var(--ink); }
+.expert-mobile-follow { background: var(--blue); color: #fff; }
 .expert-mobile-follow.is-active { background: var(--panel); color: #fff; }
 .expert-mobile-follow.is-active svg,
 .expert-mobile-follow.is-compact svg { display: none; }
@@ -2753,11 +2752,10 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     background: var(--panel);
 }
 .messages {
-    width: min(1680px, calc(100% - 32px));
     display: grid;
     gap: 10px;
-    margin: 14px auto 0;
-    padding: 0;
+    margin: auto;
+    padding: 10px 0;
     list-style: none;
 }
 .message-item {
@@ -2914,7 +2912,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     font-size: 15px;
 }
 .prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-track { height: 5px; }
-.profile-copy-history-head { margin-top: 10px; }
 .home-about {
     width: 100%;
     min-width: 0;
@@ -2983,8 +2980,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .matches-table-live-date-note > div,
 .matches-table-scope-list,
 .matches-table-sport-list,
-.prediction-table-event-copy,
-.profile-copy-table-cell {
+.prediction-table-event-copy{
     min-width: 0;
     display: grid;
     gap: 3px;
@@ -5368,8 +5364,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .home-best-featured-status-pill { color: #fff; background: #2f3236; font-size: 15px; }
 .expert-confidence-row.is-danger .expert-confidence-bars .is-actual,
 .home-best-featured-status-pill.is-lose,
-.home-best-prediction-status.is-lose,
-.profile-copy-icon-btn.is-stop:hover {
+.home-best-prediction-status.is-lose{
     background: var(--danger);
 }
 .cabinet-bonuses-page .bonus-task-progress span.is-done,
@@ -8554,12 +8549,12 @@ html:has(.matches-head) { overflow-anchor: none; }
     display: grid;
     gap: 12px;
 }
-#profile-tab-predictions .profile-list-card {
+:is(#profile-tab-predictions, .expert-public-page) .profile-list-card {
     padding: 0;
     background: 0 0;
     outline: 0;
 }
-#profile-tab-predictions .profile-section-heading { align-items: center; margin-bottom: 18px; padding: 0 4px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-section-heading { align-items: center; margin-bottom: 18px; padding: 0 4px; }
 .profile-coupon-row {
     min-width: 0;
     display: grid;
@@ -9423,6 +9418,13 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     grid-column: 2;
 }
 .predictions-content { min-width: 0; display: grid; gap: 18px; grid-column: 2; }
+.predictions-content.is-paid-catalog { gap: 0; }
+.predictions-content-breadcrumbs {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 0 4px 14px;
+}
 .articles-content {
     align-items: start;
     align-content: start;
@@ -11204,6 +11206,7 @@ body.register footer {
 }
 .expert-public-hero-bottom {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
 }
@@ -11237,7 +11240,7 @@ body.register footer {
     outline: 3px solid #f6ec4e;
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
 }
-.expert-public-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.expert-public-avatar img { width: 100%; height: inherit; object-fit: cover; border-radius: inherit; }
 .expert-public-kicker { margin: 0 0 7px; color: #ffe500; font-size: 13px; font-weight: 600; }
 .expert-public-hero .expert-public-kicker {
     margin: 0;
@@ -11435,7 +11438,7 @@ body.register footer {
 .expert-public-social-icon img { filter: grayscale(1) brightness(0) invert(1); }
 .expert-public-social-empty { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 13px; }
 .expert-public-hero-metrics {
-    flex: 1;
+    flex: 1 1 400px;
     display: flex;
     min-width: 0;
     gap: 10px;
@@ -11523,7 +11526,7 @@ body.register footer {
     line-height: 1.3;
 }
 .expert-public-kpi-grid strong.is-positive { color: #5be38a; }
-.expert-public-kpi-grid strong.is-negative { color: #ff7a7f; }
+.expert-public-kpi-grid strong.is-negative { color: var(--danger); }
 .expert-public-bank { gap: 0; border-radius: 24px; }
 .expert-public-bank-layout { display: grid; grid-template-columns: minmax(420px, 0.86fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
 .expert-public-bank-hero {
@@ -11689,7 +11692,7 @@ body.register footer {
 }
 .expert-profit-total { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 9px; }
 .expert-profit-total strong {
-    color: #ff7a7f;
+    color: var(--danger);
     font-family: var(--font-heading);
     font-size: clamp(25px, 2.6vw, 32px);
     font-weight: 700;
@@ -11736,12 +11739,12 @@ body.register footer {
 .expert-profit-chart-card.is-positive .expert-profit-area { fill: rgba(91, 227, 138, .1); }
 .expert-profit-line {
     fill: none;
-    stroke: #ff7a7f;
+    stroke: var(--danger);
     stroke-width: 2.5;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-.expert-profit-point { fill: #ff7a7f; }
+.expert-profit-point { fill: var(--danger); }
 .expert-profit-chart-card.is-positive .expert-profit-point { fill: #5be38a; }
 .expert-profit-axis { display: flex; justify-content: space-between; color: #747680; font-size: 10px; }
 .expert-profit-tooltip {
@@ -11773,7 +11776,7 @@ body.register footer {
 .expert-period-card > span { color: #a3a6b0; font-size: 10px; font-weight: 700; }
 .expert-period-card > strong { color: #fff; font-family: var(--font-heading); font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
 .expert-period-card.is-positive > strong { color: #5be38a; }
-.expert-period-card.is-negative > strong { color: #ff7a7f; }
+.expert-period-card.is-negative > strong { color: var(--danger); }
 .expert-period-card > small { color: #747680; font-size: 9px; font-weight: 600; line-height: 1.35; }
 .expert-confidence-summary {
     display: flex;
@@ -11791,7 +11794,7 @@ body.register footer {
     display: grid;
     place-items: center;
     border-radius: 9px;
-    color: #ff7a7f;
+    color: var(--danger);
     background: #25171b;
     font-weight: 800;
 }
@@ -11803,7 +11806,7 @@ body.register footer {
 .expert-confidence-card.is-success .expert-confidence-summary span { color: #adf4c5; }
 .expert-confidence-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: #777982; font-size: 9px; }
 .expert-confidence-legend > span { display: inline-flex; align-items: center; gap: 5px; }
-.expert-confidence-legend > span::before { content: ""; display: block; width: 11px; height: 5px; border-radius: 3px; background: #ff7a7f; }
+.expert-confidence-legend > span::before { content: ""; display: block; width: 11px; height: 5px; border-radius: 3px; background: var(--danger); }
 .expert-confidence-legend .is-declared::before { width: 2px; height: 11px; background: #fff; border-radius: 0; }
 .expert-confidence-legend .is-higher::before { background: #5be38a; }
 .expert-confidence-list { display: grid; gap: 12px; }
@@ -11847,9 +11850,9 @@ body.register footer {
 .expert-confidence-row-detail,
 .expert-performance-row-detail { justify-content: space-between; color: #747680; font-size: 10px; font-weight: 600; }
 .expert-confidence-row-detail strong.is-positive { color: #5be38a; }
-.expert-confidence-row-detail strong.is-negative { color: #ff7a7f; }
+.expert-confidence-row-detail strong.is-negative { color: var(--danger); }
 .expert-confidence-bars { display: block; width: 100%; height: 10px; overflow: visible; border-radius: 5px; background: #24262e; }
-.expert-confidence-bars .is-actual { fill: #ff7a7f; }
+.expert-confidence-bars .is-actual { fill: var(--danger); }
 .expert-confidence-row.is-success .expert-confidence-bars .is-actual { fill: #5be38a; }
 .expert-confidence-bars .is-declared { stroke: #fff; stroke-width: .8; }
 .expert-performance-list { display: grid; gap: 12px; }
@@ -11858,7 +11861,7 @@ body.register footer {
 .expert-performance-track { display: block; width: 100%; height: 7px; border-radius: 4px; background: #24262e; }
 .expert-performance-track rect { fill: #305bff; }
 .expert-performance-track.is-high rect { fill: #5be38a; }
-.expert-performance-track.is-low rect { fill: #ff7a7f; }
+.expert-performance-track.is-low rect { fill: var(--danger); }
 .expert-performance-track.is-muted rect { fill: #3a3c45; }
 .expert-public-chart-card { gap: 16px; }
 .expert-public-muted,
@@ -12570,6 +12573,7 @@ body.register footer {
 }
 .profile-edit-grid { gap: 14px; }
 .profile-edit-completion { margin: 0 0 18px; }
+.profile-edit-completion[hidden] { display: none; }
 .profile-edit-section { display: grid; gap: 16px; }
 .profile-edit-section[hidden] { display: none; }
 .profile-edit-section.is-entering { animation: profileEditPanelIn 0.18s ease both; }
@@ -13962,8 +13966,6 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     font-size: 11px;
 }
 .profile-info-list dd { margin: 0; overflow-wrap: anywhere; text-align: right; color: rgba(255, 255, 255, 0.78); font-size: 11px; }
-.profile-copy-table-cell > span,
-.profile-copy-table-cell > strong,
 .profile-user-row strong,
 .profile-wallet-card strong {
     overflow: hidden;
@@ -14305,7 +14307,7 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 }
 .profile-social-avatar img {
     width: 100%;
-    height: 100%;
+    height: inherit;
     border-radius: inherit;
     object-fit: cover;
 }
@@ -14581,7 +14583,6 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-wallet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 22px; }
 .profile-wallet-card { min-width: 0; display: grid; gap: 12px; padding: 16px; border-radius: 16px; }
 .profile-wallet-card strong { color: var(--yellow); font-size: 26px; line-height: 1; }
-.profile-copy-audience-summary { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 #profile-tab-wallet .wallet-dashboard {
     display: grid;
     gap: 16px;
@@ -14757,6 +14758,7 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .wallet-history-layout {
     min-width: 0;
     display: grid;
+    grid-template-rows: max-content minmax(0, 1fr);
     gap: 16px;
 }
 .wallet-history-page .matches-shell {
@@ -15335,7 +15337,6 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     background: #171718;
 }
 .profile-transaction-row span { margin-top: 4px; color: #707072; font-size: 10px; }
-.profile-copy-table-cell > span,
 .profile-copy-table-head {
     color: var(--muted);
     letter-spacing: 0.06em;
@@ -15357,28 +15358,7 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-copy-table-row { min-height: 56px; padding: 8px 12px; border-radius: 14px; }
 .profile-copy-table-row:hover { background: #1d1d1f; }
 .profile-copy-table .nav-profile-dropdown-avatar { width: 36px; height: 36px; border-radius: 10px; }
-.profile-copy-table-cell > span { font-size: 9px; }
-.profile-copy-table-cell > strong { color: var(--text); font-size: 13px; font-weight: 500; }
 .profile-copy-status-cell { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.profile-copy-status-actions { display: flex; align-items: center; gap: 6px; margin-left: 2px; }
-.profile-copy-icon-btn {
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.72);
-    background: #303033;
-    cursor: pointer;
-    transition:
-        background 0.16s,
-        color 0.16s;
-}
-.profile-copy-icon-btn:hover { color: #fff; background: #3a3a3e; }
-.profile-copy-icon-btn svg { width: 14px; height: 14px; display: block; fill: currentColor; }
 .profile-coupon-status.is-active { background: var(--yellow); color: #000; }
 .profile-empty-state {
     min-height: 180px;
@@ -15681,14 +15661,14 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .expert-recent-performance-summary span { color: #a3a6b0; font-size: 12px; font-weight: 700; }
 .expert-recent-performance-bar { display: block; width: 100%; height: 14px; overflow: hidden; border-radius: 8px; background: #24262e; }
 .expert-recent-performance-bar .is-win { fill: #5be38a; }
-.expert-recent-performance-bar .is-loss { fill: #ff7a7f; }
+.expert-recent-performance-bar .is-loss { fill: var(--danger); }
 .expert-recent-performance-bar .is-refund { fill: #777982; }
 .expert-recent-performance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .expert-recent-performance-item { min-width: 0; display: grid; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--ink); }
 .expert-recent-performance-item span { display: flex; align-items: center; gap: 7px; color: #a3a6b0; font-size: 11px; font-weight: 700; }
 .expert-recent-performance-item span::before { content: ""; flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; background: #777982; }
 .expert-recent-performance-item.is-win span::before { background: #5be38a; }
-.expert-recent-performance-item.is-loss span::before { background: #ff7a7f; }
+.expert-recent-performance-item.is-loss span::before { background: var(--danger); }
 .expert-recent-performance-item strong { font-family: var(--font-heading); font-size: 18px; font-weight: 700; line-height: 1.1; }
 .expert-recent-performance-item.is-refund strong { color: #a3a6b0; }
 .expert-recent-performance-history { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -15696,7 +15676,7 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .expert-recent-performance-states { display: flex; gap: 5px; min-width: 0; }
 .expert-recent-performance-states span { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 6px; background: #777982; }
 .expert-recent-performance-states .is-win { background: #5be38a; }
-.expert-recent-performance-states .is-lose { background: #ff7a7f; }
+.expert-recent-performance-states .is-lose { background: var(--danger); }
 body.auth,
 body.register {
     background-position: center;
@@ -17881,6 +17861,8 @@ body.register {
 .expert-public-shell .expert-sport-profit { order: 60; }
 .expert-public-shell .expert-monthly-stats { order: 70; }
 .expert-public-shell .expert-recommendations { order: 80; }
+/* The page wrapper uses display: contents; its blocks follow this grid order. */
+.expert-public-shell .expert-public-best-predictions { order: 75; }
 .fixed-tg-btn {
     width: 50px;
     min-width: 50px;
@@ -19079,7 +19061,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     background: 0 0;
 }
 .profile-title-block h1 { font-size: 20px !important; }
-.profile-copybetting-action-btns { display: flex; align-items: center; justify-content: center; }
 .wiki-youtube-page.site-main {
     min-height: 100vh;
     padding: 0;
@@ -19442,6 +19423,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     gap: 12px;
     align-items: start;
 }
+.wiki-video-copy.is-title-only { grid-template-columns: minmax(0, 1fr); }
 .wiki-video-text { min-width: 0; }
 .wiki-video-title {
     margin: 0 0 6px;
@@ -21843,8 +21825,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .forecast-result.is-lose,
 .match-prediction-status.is-lose,
 .prediction-table-status.is-lose,
-.profile-copy-icon-btn.is-stop,
-.profile-copy-icon-btn.pause,
 .profile-coupon-status.is-canceled,
 .profile-coupon-status.is-lose,
 .profile-coupon-status.is-lost,
@@ -21987,9 +21967,9 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page .prediction-comments-empty strong { color: #fff; font-size: 14px; }
 .coupon-detail-page .prediction-comments-empty span { font-size: 12px; }
 
-.expert-sport-result-bar .is-win { background: #32a852; }
-.expert-sport-result-bar .is-loss { background: #ef3131; }
-.expert-public-stats-compact .is-winrate .expert-public-stat-icon { background: #5bb940; }
+.expert-sport-result-bar .is-win { background: var(--green); }
+.expert-sport-result-bar .is-loss { background: var(--danger); }
+.expert-public-stats-compact .is-winrate .expert-public-stat-icon { background: var(--green); }
 .prediction-card.feed-prediction-card .feed-prediction-cover {
     position: relative;
     display: block;
@@ -22482,7 +22462,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 #profile-tab-settings,
 .capper-article-showcase-head,
 { margin-top: 20px; }
-.profile .matches-page .matches-shell > .matches-list-panel { gap: 0; }
+.profile .matches-page .matches-shell > .matches-list-panel:not(.wallet-history-layout) { gap: 0; }
 .profile-sidebar-modern {
     gap: 14px;
     padding: 0;
@@ -23997,6 +23977,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
     align-items: start;
     gap: 24px;
+    padding:20px 0;
 }
 .vip-hero-copy h1 {
     margin: 0 0 16px;
@@ -24640,342 +24621,497 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 10px;
     font-weight: 600;
 }
-.rich-prediction-page { margin: 0 auto; padding: 28px 24px 34px; color: #f5f6fa; }
-.rich-prediction-shell { display: grid; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; gap: 16px; }
-.rich-prediction-editor { display: grid; align-content: start; gap: 12px; }
-.rich-prediction-back { width: max-content; color: #a5a8b1; font-size: 13px; font-weight: 600; }
-.rich-prediction-back::before { content: "\2190"; margin-right: 8px; }
-.rich-prediction-editor-head,
-.rich-prediction-preview-card,
-.rich-prediction-section {
-    background: linear-gradient(145deg, rgba(35, 37, 41, 0.94), rgba(18, 19, 21, 0.94));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.04),
-        0 18px 48px rgba(0, 0, 0, 0.24);
+.rich-prediction-page {
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 24px;
+    color: #fff;
+    font-family: var(--font-body);
 }
-.rich-prediction-editor-head {
-    position: relative;
+.rich-prediction-header {
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.rich-prediction-back {
+    width: 40px;
+    height: 40px;
+    flex: none;
     display: grid;
-    gap: 7px;
-    padding: 0 0 12px;
-    background: 0 0;
-    box-shadow: none;
+    place-items: center;
+    border-radius: 12px;
+    color: #d7d9e0;
+    background: #17181e;
+    box-shadow: inset 0 0 0 1px #24262e;
 }
-.rich-prediction-editor-head h1 { margin: 0; color: #fff; font-size: 17px; line-height: 1.2; font-weight: 600; }
-.rich-prediction-editor-head p { max-width: 720px; margin: 0; color: #90939c; font-size: 13px; line-height: 1.45; }
-.rich-prediction-editor-status {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 7px 10px;
-    border-radius: 999px;
-    color: #090a0c;
-    background: #fff200;
-    font-size: 11px;
-    font-weight: 600;
+.rich-prediction-back svg,
+.rich-prediction-coupon-remove svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.1;
+    stroke-linecap: round;
 }
-.rich-prediction-form-errors { padding: 12px 14px; border-radius: 8px; color: #fff; background: #3a2020; font-size: 12px; }
-.capper-field-errors ul,
-.rich-prediction-form-errors ul {
+.rich-prediction-heading { min-width: 0; display: grid; gap: 3px; }
+.rich-prediction-heading h1 {
     margin: 0;
-    padding: 0;
-    list-style: none;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
 }
-.rich-prediction-section { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; padding: 18px 20px; border-radius: 14px; }
-.rich-prediction-section.is-locked { background: linear-gradient(145deg, rgba(33, 34, 38, 0.82), rgba(18, 19, 21, 0.86)); }
-.rich-prediction-step {
+.rich-prediction-heading p { margin: 0; color: #6b6e78; font-size: 12.5px; font-weight: 700; }
+.rich-prediction-mobile-status,
+.rich-prediction-preview-link { display: none; }
+.rich-prediction-header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.rich-prediction-cancel,
+.rich-prediction-publish,
+.rich-prediction-preview-link {
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #a3a6b0;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #24262e;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.rich-prediction-publish { color: #0e0f12; background: #f6ec4e; box-shadow: none; font-size: 13.5px; }
+.rich-prediction-publish:disabled { color: #6b6e78; background: #1a1b21; box-shadow: inset 0 0 0 1px #24262e; cursor: default; }
+.rich-prediction-mobile-progress { display: none; }
+.rich-prediction-published {
+    width: 1120px;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    color: #d7d9e0;
+    background: #142219;
+    box-shadow: inset 0 0 0 1px #285d39;
+}
+.rich-prediction-published-icon { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 50%; color: #06220f; background: #5be38a; }
+.rich-prediction-published-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.rich-prediction-published > div { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.rich-prediction-published h2 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 14px; font-weight: 800; }
+.rich-prediction-published p { overflow: hidden; margin: 0; color: #8dad97; font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.rich-prediction-published > a { height: 40px; padding: 0 16px; border-radius: 11px; display: inline-flex; align-items: center; gap: 8px; color: #0e0f12; background: #f6ec4e; font-size: 12.5px; font-weight: 800; }
+.rich-prediction-shell { display: grid; grid-template-columns: auto 352px; align-items: start; gap: 24px; }
+.rich-prediction-form { display: grid; gap: 16px; }
+.rich-prediction-section,
+.rich-prediction-preview-card,
+.rich-prediction-checklist,
+.rich-prediction-empty-hero,
+.rich-prediction-suggestions {
+    box-sizing: border-box;
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.rich-prediction-section {padding: 22px; }
+.rich-prediction-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.rich-prediction-section-head h2,
+.rich-prediction-section-head > strong {
+    margin: 0;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 800;
+}
+.rich-prediction-section-head > strong,
+.rich-prediction-section-head > span { color: #6b6e78; font-size: 12px; }
+.rich-prediction-section-note { margin: -8px 0 0; color: #6b6e78; font-size: 12.5px; font-weight: 600; }
+.rich-prediction-card-progress { height: 6px; margin: 12px 0 4px; overflow: hidden; border-radius: 999px; background: #24262e; }
+.rich-prediction-card-progress span { width: 31%; height: 100%; display: block; border-radius: inherit; background: #f6ec4e; }
+.rich-prediction-form [hidden] { display: none !important; }
+.rich-prediction-coupon-list { display: grid; gap: 0; }
+.rich-prediction-coupon-item {
+    min-width: 0;
+    min-height: 70px;
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 146px 58px 34px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    box-shadow: inset 0 -1px 0 #24262e;
+}
+.rich-prediction-coupon-item.is-mobile-extra.is-timing-locked { display: grid; }
+.rich-prediction-coupon-item.is-timing-locked {
+    padding-left: 10px;
+    border-radius: 10px;
+    background: rgba(255, 107, 107, .09);
+    box-shadow: inset 3px 0 #ff6b6b;
+}
+.rich-prediction-coupon-item.is-timing-locked .rich-prediction-coupon-copy > strong,
+.rich-prediction-coupon-item .rich-prediction-match-warning,
+.rich-prediction-timing-warning { color: #ff8b8b; }
+.rich-prediction-timing-warning { margin: 12px 0; font-size: 13px; }
+.rich-prediction-coupon-item .rich-prediction-match-warning { white-space: normal; }
+.rich-prediction-item-number { color: #6b6e78; font-family: var(--font-display); font-size: 11px; font-weight: 800; text-align: center; }
+.rich-prediction-coupon-match { min-width: 0; display: flex; align-items: center; gap: 11px; color: #fff; }
+.rich-prediction-coupon-logo {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--ink);
+    font-size: 16px;
+}
+.rich-prediction-coupon-logo img { width: 26px; height: 26px; object-fit: contain; }
+.rich-prediction-coupon-copy { min-width: 0; display: grid; gap: 3px; }
+.rich-prediction-coupon-copy strong,
+.rich-prediction-selection strong {
+    overflow: hidden;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rich-prediction-coupon-copy small,
+.rich-prediction-selection small { color: #6b6e78; font-size: 10.5px; font-weight: 700; }
+.rich-prediction-selection { min-width: 0; display: grid; gap: 3px; }
+.rich-prediction-coupon-odd {
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: #fff;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 800;
+}
+.rich-prediction-coupon-remove {
     width: 34px;
     height: 34px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    color: #f4f5f7;
-    background: #3a3d43;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    font-size: 14px;
-    font-weight: 600;
-}
-.rich-prediction-section-body { min-width: 0; display: grid; gap: 14px; }
-.rich-prediction-section-head h2 { margin: 0; color: #f5f6fa; font-size: 16px; line-height: 1.25; font-weight: 600; }
-.rich-prediction-section-head p { margin: 0; color: #92959e; font-size: 12px; line-height: 1.4; }
-.rich-prediction-section-head .rich-prediction-vip-cta { margin-top: 8px; justify-self: start; }
-.coupon-extended-action,
-.rich-prediction-vip-cta {
-    min-height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 12px;
-    border-radius: 8px;
-    color: #090a0c;
-    background: #fff200;
-    font-size: 11px;
-    font-weight: 600;
-}
-.rich-prediction-access-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.rich-prediction-access-option {
-    min-width: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 13px;
-    min-height: 74px;
-    padding: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    background: rgba(40, 42, 47, 0.78);
-    cursor: pointer;
-}
-.rich-prediction-access-option:has(input:checked) { border-color: #176bff; box-shadow: inset 0 0 0 1px rgba(23, 107, 255, 0.38); }
-.rich-prediction-access-option.is-locked { opacity: 0.55; cursor: not-allowed; }
-.rich-prediction-access-option input { width: 18px; height: 18px; margin-top: 2px; accent-color: #176bff; }
-.prediction-card-rich-author strong,
-.rich-prediction-access-option strong {
-    font-size: 13px;
-    font-weight: 600;
-}
-.rich-prediction-access-option small { color: #8f929a; font-size: 11px; line-height: 1.4; }
-.rich-prediction-actions { display: flex; align-items: center; gap: 12px; padding-top: 8px; }
-.rich-prediction-submit {
-    min-height: 52px;
-    padding: 0 26px;
-    border: 0;
-    border-radius: 10px;
-    color: #fff;
-    background: #2a2c31;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-.rich-prediction-submit.is-primary { background: #176bff; box-shadow: 0 12px 28px rgba(23, 107, 255, 0.32); }
-.rich-prediction-preview { position: sticky; top: 96px; min-width: 0; }
-.rich-prediction-preview-card { overflow: hidden; border-radius: 14px; padding: 18px; }
-.rich-prediction-preview-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.rich-prediction-preview-title strong { color: #f4f5f7; font-size: 14px; font-weight: 600; }
-.rich-prediction-preview-eye {
-    width: 32px;
-    height: 32px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    color: #d5d7dc;
-    background: #3a3d43;
-    font-size: 11px;
-}
-.rich-prediction-preview-cover { aspect-ratio: 1/0.88; overflow: hidden; border-radius: 0; background: #101114; }
-.rich-prediction-preview-cover img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 0.18s; }
-.rich-prediction-preview-cover:hover img { transform: scale(1.04); }
-.rich-prediction-preview-cover-empty {
-    height: 100%;
-    display: grid;
-    place-content: center;
-    gap: 5px;
-    padding: 20px;
-    color: #8f929a;
-    text-align: center;
-}
-.rich-prediction-empty strong,
-.rich-prediction-preview-cover-empty strong,
-.site-footer-support > strong {
-    color: #fff;
-    font-size: 16px;
-    font-weight: 600;
-}
-.rich-prediction-preview-body { display: grid; gap: 12px; padding: 14px 0 0; }
-.rich-prediction-preview-meta span {
-    min-height: 24px;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 10px;
-    border-radius: 8px;
-    color: #090a0c;
-    background: #fff200;
-    font-size: 10px;
-    font-weight: 600;
-}
-.rich-prediction-coupon-away strong,
-.rich-prediction-coupon-match strong,
-.rich-prediction-preview-meta strong {
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-}
-.rich-prediction-preview-body h2 { margin: 0; color: #fff; font-size: 17px; line-height: 1.25; font-weight: 600; }
-.rich-prediction-preview-match,
-.rich-prediction-preview-pick{
-    margin: 0;
-    line-height: 1.5;
-}
-.rich-prediction-preview-match { color: #8f929a; font-size: 12px; }
-.rich-prediction-preview-pick {
-    margin-top: 14px;
-    padding: 18px;
-    border-radius: 8px;
-    color: #9fa2aa;
-    background: rgba(255, 255, 255, 0.06);
-    font-size: 12px;
-    line-height: 1.4;
-    text-align: center;
-}
-.rich-prediction-preview-tags span {
-    padding: 7px 11px;
-    border-radius: 999px;
-    color: #fff;
-    background: #34363c;
-    font-size: 11px;
-    font-weight: 600;
-}
-.coupon-extended-action { width: 100%; margin-bottom: 10px; }
-.coupon-panel .coupon-extended-action { margin: 2px 0 0; background: #303033; color: #fff; }
-.rich-prediction-coupon-item {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 0.9fr) 74px 42px;
-    align-items: center;
-    gap: 12px;
-    min-height: 84px;
-    padding: 13px 16px;
-    border-radius: 10px;
-    background: rgba(42, 44, 49, 0.72);
-}
-.rich-prediction-coupon-match {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
-    color: #fff;
-}
-.rich-prediction-coupon-logo {
-    width: 46px;
-    height: 46px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 10px;
-    color: #090a0c;
-    background: #fff200;
-    font-size: 14px;
-    font-weight: 600;
-}
-.rich-prediction-coupon-match small { color: #92959e; font-size: 11px; }
-.rich-prediction-coupon-versus { color: #8f929a; font-size: 12px; font-weight: 600; text-align: center; }
-.rich-prediction-coupon-odd { color: #fff200; font-size: 17px; font-weight: 600; text-align: center; }
-.rich-prediction-coupon-remove {
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    border: 0;
-    border-radius: 9px;
-    color: #fff;
-    background: #e12929;
-    cursor: pointer;
-}
-.rich-prediction-coupon-remove:hover { color: #fff; background: #ff3434; transform: translateY(-1px); }
-.rich-prediction-page .capper-field { position: relative; min-width: 0; display: grid; gap: 8px; padding: 0; }
-.rich-prediction-page .capper-field input,
-.rich-prediction-page .capper-field select,
-.rich-prediction-page .capper-field textarea {
-    width: 100%;
-    min-height: 48px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 9px;
-    color: #fff;
-    background: rgba(10, 11, 13, 0.72);
-    font-size: 14px;
-}
-.rich-prediction-page .capper-field input[type="range"] {
-    min-height: 8px;
     padding: 0;
     border: 0;
-    border-radius: 999px;
-    accent-color: #fff200;
-    background: #383a40;
-}
-.rich-prediction-page .capper-field textarea { min-height: 100px; resize: vertical; }
-.rich-prediction-page .capper-field-help { color: #858893; font-size: 11px; line-height: 1.4; }
-.rich-prediction-counter { justify-self: end; margin-top: -3px; color: #858893; font-size: 11px; }
-.rich-prediction-empty { display: grid; gap: 10px; padding: 18px; border-radius: 10px; background: rgba(42, 44, 49, 0.72); }
-.rich-prediction-empty span { max-width: 620px; color: #92959e; font-size: 13px; line-height: 1.5; }
-.rich-prediction-empty a {
-    min-height: 42px;
-    width: max-content;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
     border-radius: 9px;
-    color: #090a0c;
-    background: #fff200;
-    font-size: 12px;
-    font-weight: 600;
+    color: #6b6e78;
+    background: transparent;
+    cursor: pointer;
 }
-.rich-cover-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; overflow-anchor: none; contain: layout paint; }
+.rich-prediction-coupon-remove:hover { color: #fff; background: #252731; }
+.rich-prediction-coupon-remove svg { width: 15px; height: 15px; }
+.rich-prediction-more-matches { display: none; }
+.rich-prediction-coupon-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; }
+.rich-prediction-coupon-totals { min-width: 0; flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; }
+.rich-prediction-coupon-totals > span { color: #a3a6b0; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.rich-prediction-coupon-totals > span strong { margin-left: 5px; color: #fff; font-family: var(--font-display); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rich-prediction-coupon-totals > span:first-child strong,
+.rich-prediction-coupon-totals > span:last-child strong { color: #f6ec4e; }
+.rich-prediction-coin-value { display: inline-flex !important; align-items: center; gap: 4px !important; white-space: nowrap; }
+.rich-prediction-coin-value .coin-icon,
+.rich-prediction-input-unit .coin-icon { width: 14px; height: 14px; flex-basis: 14px; }
+.rich-prediction-coin-value > span:last-child { display: inline; }
+.rich-prediction-coupon-summary a { height: 38px; padding: 0 14px; border-radius: 11px; display: inline-flex; align-items: center; gap: 8px; color: #0e0f12; background: #f6ec4e; font-size: 12.5px; font-weight: 800; }
+.rich-prediction-add-icon { font-size: 18px; line-height: 1; }
+.rich-prediction-add-mobile { display: none; }
+.rich-prediction-money-card { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.rich-prediction-page .capper-field { min-width: 0; display: grid; gap: 8px; padding: 0; }
+.rich-prediction-page .capper-field-label { color: #fff; font-size: 13.5px; font-weight: 800; }
+.rich-prediction-field-note { margin-top: -6px; color: #6b6e78; font-size: 11.5px; font-weight: 600; }
+.rich-prediction-page .capper-field input:not([type="range"]):not([type="file"]),
+.rich-prediction-page .capper-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    color: #fff;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px #24262e;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+.rich-prediction-page .capper-field input:not([type="range"]):not([type="file"]) { height: 46px; padding: 0 14px; }
+.rich-prediction-input-unit { position: relative; display: block; }
+.rich-prediction-input-unit input { padding-right: 38px !important; }
+.rich-prediction-input-unit b { position: absolute; right: 14px; top: 50%; display: inline-flex; align-items: center; color: #6b6e78; transform: translateY(-50%); }
+.rich-prediction-confidence { display: grid; gap: 12px; padding: 0; background: transparent; }
+.coupon-confidence-head { display: flex; align-items: center; justify-content: space-between; }
+.coupon-confidence-head span { color: #fff; font-size: 13.5px; font-weight: 800; }
+.coupon-confidence-head strong { color: #f6ec4e; font-family: var(--font-display); font-size: 15px; font-weight: 800; }
+.rich-prediction-page .coupon-confidence-range { width: 100%; height: 6px; margin: 8px 0 0; padding: 0; border: 0; accent-color: #f6ec4e; cursor: ew-resize; }
+.rich-prediction-range-labels { display: flex; justify-content: space-between; color: #6b6e78; font-size: 10.5px; font-weight: 700; }
+.rich-prediction-copy-card { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; }
+.rich-prediction-counter { justify-self: end; margin-top: -4px; color: #6b6e78; font-size: 10.5px; font-weight: 700; }
+.rich-prediction-page .capper-field-help { margin-top: -4px; color: #6b6e78; font-size: 10.5px; font-weight: 600; }
+.rich-prediction-description-card { display: grid; gap: 12px; }
+.rich-prediction-editor-toolbar { height: 38px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-radius: 11px; color: #a3a6b0; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.rich-prediction-editor-toolbar > * { width: 31px; text-align: center; font-size: 12px; font-style: normal; }
+.rich-prediction-page .capper-field textarea { min-height: 138px; padding: 14px; resize: vertical; line-height: 1.5; }
+.rich-prediction-vip-cta { width: max-content; color: #f6ec4e; font-size: 11px; font-weight: 800; }
+.rich-prediction-cover-picker { display: grid; gap: 14px; }
+.rich-cover-grid {
+    display: grid;
+    grid-template-columns: auto repeat(3, auto);
+    gap: 10px;
+}
+
+
 .rich-cover-option {
     position: relative;
-    min-width: 0;
+    width: 100%;
+    height: 125px;
     display: grid;
     place-items: center;
-    gap: 7px;
-    min-height: 150px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    background: rgba(10, 11, 13, 0.72);
-    cursor: pointer;
-    overflow-anchor: none;
-}
-.rich-cover-option input {
-    position: absolute;
-    inset: 8px 8px auto auto;
-    width: 18px !important;
-    height: 18px;
-    min-height: 18px !important;
-    accent-color: #176bff;
-    z-index: 2;
-}
-.rich-cover-option-image { position: absolute; inset: 0; display: block; overflow: hidden; border-radius: inherit; }
-.rich-cover-upload { padding: 12px; text-align: center; }
-.rich-cover-upload input {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-.rich-cover-upload-icon { color: #aeb2bc; font-size: 17px; }
-.rich-cover-option-image img {
-    width: 100%;
-    height: 100%;
-    min-height: 92px;
-    display: block;
-    object-fit: cover;
-    transition: transform 0.18s;
-}
-.rich-cover-option:hover .rich-cover-option-image img { transform: scale(1.08); }
-.rich-cover-option:has(input:checked) { border-color: #176bff; box-shadow: 0 0 0 2px rgba(23, 107, 255, 0.5); }
-.rich-cover-option strong {
-    min-width: 0;
     overflow: hidden;
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.rich-cover-more {
-    min-height: 34px;
-    width: max-content;
-    border: 0;
-    border-radius: 9px;
-    padding: 0 14px;
-    color: #090a0c;
-    background: #fff200;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 600;
+    border-radius: 12px;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
     cursor: pointer;
+}
+.rich-cover-option input { position: absolute; opacity: 0; pointer-events: none; }
+.rich-cover-option-image,
+.rich-cover-option-image img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.rich-cover-option:has(input:checked) { box-shadow: inset 0 0 0 2px #f6ec4e; }
+.rich-cover-upload { gap: 2px; color: #a3a6b0; text-align: center; }
+.rich-cover-upload input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: auto; cursor: pointer; }
+.rich-cover-upload-icon { color: #f6ec4e; font-size: 22px; line-height: 1; }
+.rich-cover-upload strong { font-size: 10.5px; font-weight: 800; }
+.rich-cover-more { padding: 0; border: 0; color: #f6ec4e; background: transparent; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.rich-prediction-access-card { display: grid; gap: 14px; }
+.rich-prediction-access-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rich-prediction-access-option {
+    position: relative;
+    min-width: 0;
+    min-height: 72px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px #24262e;
+    cursor: pointer;
+}
+.rich-prediction-access-option input { position: absolute; opacity: 0; pointer-events: none; }
+.rich-prediction-radio { width: 20px; height: 20px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 2px #24262e; }
+.rich-prediction-access-icon { color: #a3a6b0; }
+.rich-prediction-access-icon svg { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rich-prediction-access-option > span:last-child { min-width: 0; display: grid; gap: 2px; }
+.rich-prediction-access-option strong { color: #fff; font-size: 14px; font-weight: 800; }
+.rich-prediction-access-option small { color: #6b6e78; font-size: 12px; font-weight: 600; }
+.rich-prediction-access-option:has(input:checked) { box-shadow: inset 0 0 0 1.5px #f6ec4e; }
+.rich-prediction-access-option:has(input:checked) .rich-prediction-radio { display: grid; place-items: center; background: #f6ec4e; box-shadow: none; }
+.rich-prediction-access-option:has(input:checked) .rich-prediction-radio::after { content: "✓"; color: #0e0f12; font-size: 12px; font-weight: 900; }
+.rich-prediction-access-option:has(input:checked) .rich-prediction-access-icon { color: #f6ec4e; }
+.rich-prediction-access-option.is-locked { opacity: .5; cursor: not-allowed; }
+.rich-prediction-mobile-actions { display: none; }
+.rich-prediction-preview { position: sticky; top: 96px; display: grid; gap: 16px; }
+.rich-prediction-preview-card { width: 352px; padding: 22px; }
+.rich-prediction-preview-title { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.rich-prediction-preview-title h2 { margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 800; }
+.rich-prediction-preview-title span { display: inline-flex; align-items: center; gap: 6px; color: #6b6e78; font-size: 11.5px; font-weight: 800; }
+.rich-prediction-preview-title svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rich-prediction-preview-cover { position: relative; width: auto; height: 92px; overflow: hidden; border-radius: 14px; background: #127a40; }
+.rich-prediction-preview-cover::before { content: ""; position: absolute; inset: -50%; background: repeating-linear-gradient(-27deg, transparent 0 24px, rgba(255,255,255,.09) 24px 40px); }
+.rich-prediction-preview-cover img { position: relative; width: 100%; height: 100%; display: block; object-fit: cover; }
+.rich-prediction-preview-cover-empty { position: relative; height: 100%; display: grid; place-items: center; color: rgba(255,255,255,.82); font-size: 12px; font-weight: 800; }
+.rich-prediction-paid-badge { position: absolute; left: 10px; top: 10px; height: 26px; padding: 0 10px; border-radius: 8px; display: inline-flex; align-items: center; color: #0e0f12; background: #f6ec4e; font-size: 11.5px; font-weight: 800; }
+.rich-prediction-preview-body { display: grid; gap: 12px; padding-top: 12px; }
+.rich-prediction-preview-body h3 { margin: 0; color: #fff; font-size: 15px; font-weight: 800; line-height: 1.3; }
+.rich-prediction-preview-author { display: flex; align-items: center; gap: 9px; }
+.rich-prediction-preview-avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #0e7490; font-size: 12px; font-weight: 800; }
+.rich-prediction-preview-author > span:last-child { display: grid; gap: 1px; }
+.rich-prediction-preview-author strong { color: #fff; font-size: 12.5px; font-weight: 800; }
+.rich-prediction-preview-author small { color: #6b6e78; font-size: 10.5px; font-weight: 700; }
+.rich-prediction-preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.rich-prediction-preview-stats > span { display: grid; gap: 2px; }
+.rich-prediction-preview-stats small { color: #6b6e78; font-size: 10.5px; font-weight: 800; letter-spacing: .4px; }
+.rich-prediction-preview-stats strong { overflow: hidden; color: #fff; font-family: var(--font-display); font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.rich-prediction-preview-stats span:first-child strong { color: #f6ec4e; }
+.rich-prediction-preview-stats span:last-child strong { color: #5be38a; }
+.rich-prediction-preview-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.rich-prediction-preview-tags span { color: #6b6e78; font-size: 11px; font-weight: 800; }
+.rich-prediction-checklist { width: 352px; padding: 20px; display: grid; gap: 14px; }
+.rich-prediction-checklist ul { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.rich-prediction-checklist li { display: flex; align-items: center; gap: 10px; color: #6b6e78; font-size: 12.5px; font-weight: 700; }
+.rich-prediction-checklist li::before { content: ""; width: 18px; height: 18px; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #24262e; }
+.rich-prediction-checklist li.is-done { color: #d7d9e0; }
+.rich-prediction-checklist li.is-done::before { content: "✓"; display: grid; place-items: center; color: #06220f; background: #5be38a; box-shadow: none; font-size: 11px; font-weight: 900; }
+.rich-prediction-checklist button { height: 48px; border: 0; border-radius: 12px; color: #0e0f12; background: #f6ec4e; font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; }
+.rich-prediction-form-errors { padding: 12px 14px; border-radius: 12px; color: #fff; background: #4a2024; font-size: 12px; }
+.rich-prediction-form-errors ul { margin: 0; padding: 0; list-style: none; }
+.capper-field-errors { color: #ff7479; font-size: 11px; }
+
+/* Empty coupon */
+.rich-prediction-empty-layout { display: grid; gap: 20px; }
+.rich-prediction-empty-hero {padding: 26px; display: grid; gap: 20px; }
+.rich-prediction-empty-copy { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px 0 6px; text-align: center; }
+.rich-prediction-empty-illustration { width: 150px; height: 150px; }
+.rich-prediction-empty-illustration rect:first-child { fill: #121318; stroke: #24262e; stroke-width: 2; }
+.rich-prediction-empty-illustration > path:first-of-type { fill: none; stroke: #24262e; stroke-width: 2; stroke-dasharray: 5 6; }
+.rich-prediction-empty-illustration rect:not(:first-child) { fill: #252832; }
+.rich-prediction-empty-illustration circle { fill: #f6ec4e; }
+.rich-prediction-empty-illustration > path:last-child { fill: none; stroke: #0e0f12; stroke-width: 5; stroke-linecap: round; }
+.rich-prediction-empty-copy h2 { margin: 0; font-family: var(--font-display); font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+.rich-prediction-empty-copy > p { width: 560px; max-width: 100%; margin: 0; color: #a3a6b0; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.rich-prediction-empty-actions { display: flex; gap: 12px; margin-top: 6px; }
+.rich-prediction-empty-actions a { height: 52px; padding: 0 20px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #d7d9e0; box-shadow: inset 0 0 0 1px #24262e; font-size: 15px; font-weight: 800; }
+.rich-prediction-empty-actions svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.rich-prediction-empty-actions a.is-primary { color: #0e0f12; background: #f6ec4e; box-shadow: none; }
+.rich-prediction-empty-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 6px; }
+.rich-prediction-empty-steps article { display: grid; gap: 8px; padding: 18px 20px; border-radius: 16px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.rich-prediction-empty-steps b { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #6b6e78; box-shadow: inset 0 0 0 1.5px #24262e; font-family: var(--font-display); font-size: 12px; }
+.rich-prediction-empty-steps article:first-child b { color: #f6ec4e; background: #2a2a14; box-shadow: inset 0 0 0 1.5px #f6ec4e; }
+.rich-prediction-empty-steps strong { color: #fff; font-size: 14.5px; font-weight: 800; }
+.rich-prediction-empty-steps span { color: #6b6e78; font-size: 12.5px; font-weight: 600; line-height: 1.4; }
+.rich-prediction-empty-mobile-tips,
+.rich-prediction-locked-placeholders,
+.rich-prediction-empty-bottom { display: none; }
+.rich-prediction-suggestions {padding: 22px; display: grid; gap: 12px; }
+.rich-prediction-suggestions-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.rich-prediction-suggestions-head h2 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 800; }
+.rich-prediction-suggestions-head p { margin: 5px 0 0; color: #6b6e78; font-size: 11.5px; font-weight: 600; }
+.rich-prediction-suggestions-head > a { color: #f6ec4e; font-size: 12px; font-weight: 800; }
+.suggestions-mobile-title { display: none; }
+.rich-prediction-suggestions-labels,
+.rich-prediction-suggestion { display: grid; grid-template-columns: minmax(0,1fr) 86px 86px 86px 38px; align-items: center; gap: 10px; }
+.rich-prediction-suggestions-labels { padding: 0 0 4px 43px; color: #6b6e78; font-size: 10px; font-weight: 800; text-align: center; }
+.rich-prediction-suggestions-labels span:first-child { text-align: left; }
+.rich-prediction-suggestions-list { display: grid; }
+.rich-prediction-suggestion { min-height: 62px; position: relative; padding: 8px 0 8px 43px; box-shadow: inset 0 -1px 0 #24262e; }
+.rich-prediction-suggestion:last-child { box-shadow: none; }
+.rich-prediction-suggestion-sport { position: absolute; left: 5px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+.rich-prediction-suggestion-sport img { width: 18px; height: 18px; display: block; object-fit: contain; }
+.rich-prediction-suggestion > a:first-of-type { min-width: 0; display: grid; gap: 3px; }
+.rich-prediction-suggestion strong { overflow: hidden; color: #fff; font-size: 12.5px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.rich-prediction-suggestion small { color: #6b6e78; font-size: 10.5px; font-weight: 700; }
+.rich-prediction-suggestion-odd { height: 34px; display: grid; place-items: center; border-radius: 9px; color: #fff; background: #121318; box-shadow: inset 0 0 0 1px #24262e; font-family: var(--font-display); font-size: 12px; font-weight: 800; }
+.rich-prediction-suggestion-add { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: #0e0f12; background: #f6ec4e; }
+.rich-prediction-suggestion-add svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+.rich-prediction-no-suggestions { margin: 8px 0 0; color: #6b6e78; font-size: 12px; }
+
+@media (max-width: 767px) {
+    .rich-prediction-page { width: 390px; padding: 20px; }
+    .rich-prediction-header { width: 350px; gap: 12px; margin-bottom: 14px; }
+    .rich-prediction-back { width: 36px; height: 36px; border-radius: 11px; }
+    .rich-prediction-back svg { width: 17px; height: 17px; }
+    .rich-prediction-heading { flex: 1; }
+    .rich-prediction-heading h1 { font-size: 16px; }
+    .rich-prediction-heading p { font-size: 11px; }
+    .rich-prediction-desktop-status,
+    .rich-prediction-cancel,
+    .rich-prediction-publish { display: none; }
+    .rich-prediction-mobile-status,
+    .rich-prediction-preview-link { display: block; }
+    .rich-prediction-header-actions { margin-left: 0; }
+    .rich-prediction-preview-link { height: 32px; padding: 0 12px; border-radius: 10px; color: #a3a6b0; font-size: 11.5px; }
+    .rich-prediction-mobile-progress { width: 350px; height: 5px; display: block; margin: -4px 0 14px; overflow: hidden; border-radius: 999px; background: #24262e; }
+    .rich-prediction-mobile-progress span { width: 66%; height: 100%; display: block; border-radius: inherit; background: #f6ec4e; }
+    .rich-prediction-shell { display: block; }
+    .rich-prediction-form { gap: 12px; }
+    .rich-prediction-section { width: 350px; padding: 16px; border-radius: 20px; }
+    .rich-prediction-section-head h2,
+    .rich-prediction-section-head > strong { font-size: 13.5px; }
+    .rich-prediction-card-progress { height: 5px; margin-top: 10px; }
+    .rich-prediction-coupon-item { min-height: 62px; grid-template-columns: 20px minmax(0,1fr) 52px 30px; gap: 8px; padding: 8px 0; }
+    .rich-prediction-coupon-item.is-mobile-extra { display: none; }
+    .rich-prediction-coupon-logo { width: 30px; height: 30px; border-radius: 9px; }
+    .rich-prediction-coupon-logo img { width: 22px; height: 22px; }
+    .rich-prediction-coupon-copy strong { font-size: 11.5px; }
+    .rich-prediction-coupon-copy small { font-size: 9.5px; }
+    .rich-prediction-selection { display: none; }
+    .rich-prediction-coupon-odd { height: 32px; font-size: 11px; }
+    .rich-prediction-coupon-remove { width: 30px; height: 30px; }
+    .rich-prediction-more-matches { width: 100%; height: 34px; display: block; padding: 0; border: 0; color: #a3a6b0; background: transparent; font: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer; }
+    .rich-prediction-coupon-summary { padding-top: 10px; }
+    .rich-prediction-coupon-totals { gap: 5px 12px; }
+    .rich-prediction-coupon-totals > span { font-size: 10.5px; }
+    .rich-prediction-coupon-totals > span strong { margin-left: 3px; font-size: 11.5px; }
+    .rich-prediction-coupon-totals > span:last-child { width: 100%; }
+    .rich-prediction-coupon-summary a { height: 34px; padding: 0 11px; }
+    .rich-prediction-add-desktop { display: none; }
+    .rich-prediction-add-mobile { display: inline; }
+    .rich-prediction-money-card { grid-template-columns: 1fr; gap: 14px; }
+    .rich-prediction-money-card .rich-prediction-confidence-field { padding-top: 14px; box-shadow: inset 0 1px 0 #24262e; }
+    .rich-prediction-copy-card { grid-template-columns: 1fr; gap: 14px; }
+    .rich-prediction-copy-card .capper-field + .capper-field { padding-top: 14px; box-shadow: inset 0 1px 0 #24262e; }
+    .rich-prediction-description-card { gap: 10px; }
+    .rich-prediction-description-card .rich-prediction-section-head > span { font-size: 10px; }
+    .rich-prediction-editor-toolbar { height: 36px; }
+    .rich-prediction-page .capper-field textarea { min-height: 122px; }
+    .rich-cover-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .rich-cover-option { width: auto; height: 58px; }
+    .rich-cover-option:nth-child(n+5) { display: none; }
+    .rich-prediction-access-options { grid-template-columns: 1fr; gap: 10px; }
+    .rich-prediction-access-option { min-height: 68px; }
+    .rich-prediction-mobile-actions { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: #17181e; box-shadow: inset 0 0 0 1px #24262e; }
+    .rich-prediction-mobile-actions > div { flex: 1; min-width: 0; display: grid; gap: 2px; }
+    .rich-prediction-mobile-actions strong { color: #fff; font-size: 12.5px; font-weight: 800; }
+    .rich-prediction-mobile-actions small { color: #6b6e78; font-size: 11px; font-weight: 700; }
+    .rich-prediction-mobile-actions button { height: 44px; padding: 0 18px; border: 0; border-radius: 12px; color: #0e0f12; background: #f6ec4e; font: inherit; font-size: 13.5px; font-weight: 800; }
+    .rich-prediction-preview { display: none; }
+
+    .rich-prediction-published { width: 350px; align-items: flex-start; gap: 11px; margin-bottom: 14px; padding: 14px; }
+    .rich-prediction-published-icon { width: 34px; height: 34px; }
+    .rich-prediction-published h2 { font-size: 12.5px; }
+    .rich-prediction-published p { font-size: 10.5px; white-space: normal; }
+    .rich-prediction-published > a { height: 36px; padding: 0 12px; font-size: 11px; white-space: nowrap; }
+
+    .rich-prediction-page.is-empty .rich-prediction-header-actions { display: none; }
+    .rich-prediction-empty-layout { gap: 14px; }
+    .rich-prediction-empty-hero { width: 350px; padding: 18px; gap: 14px; }
+    .rich-prediction-empty-copy { gap: 14px; padding: 0; }
+    .rich-prediction-empty-illustration { width: 112px; height: 112px; }
+    .rich-prediction-empty-copy h2 { font-size: 19px; letter-spacing: 0; }
+    .rich-prediction-empty-copy > p { width: auto; font-size: 13.5px; line-height: 1.45; }
+    .rich-prediction-empty-actions { width: 100%; margin: 0; }
+    .rich-prediction-empty-actions a { display: none; }
+    .rich-prediction-empty-actions a.is-primary { width: 100%; height: 50px; box-sizing: border-box; display: inline-flex; font-size: 14px; }
+    .rich-prediction-empty-steps { display: none; }
+    .rich-prediction-empty-mobile-tips { display: grid; gap: 9px; }
+    .rich-prediction-empty-mobile-tips span { display: flex; align-items: center; gap: 10px; color: #a3a6b0; font-size: 13px; font-weight: 700; }
+    .rich-prediction-empty-mobile-tips svg { width: 15px; height: 15px; flex: none; fill: none; stroke: #f6ec4e; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+    .rich-prediction-suggestions { width: 350px; padding: 16px; gap: 12px; }
+    .rich-prediction-suggestions-head h2 { font-size: 14px; }
+    .rich-prediction-suggestions-head p { margin-top: 4px; font-size: 11.5px; }
+    .suggestions-desktop-title { display: none; }
+    .suggestions-mobile-title { display: inline; }
+    .rich-prediction-suggestions-labels { display: none; }
+    .rich-prediction-suggestion { min-height: 58px; grid-template-columns: minmax(0,1fr) 52px 34px; gap: 10px; padding: 7px 0 7px 27px; }
+    .rich-prediction-suggestion-sport { left: 0; font-size: 17px; }
+    .rich-prediction-suggestion strong { font-size: 12.5px; }
+    .rich-prediction-suggestion small { font-size: 10.5px; }
+    .rich-prediction-suggestion-odd { height: 34px; font-size: 11px; }
+    .rich-prediction-suggestion-odd + .rich-prediction-suggestion-odd { display: none; }
+    .rich-prediction-suggestion-add { width: 34px; height: 34px; }
+    .rich-prediction-locked-placeholders { display: grid; gap: 10px; }
+    .rich-prediction-locked-placeholders article { width: 350px; box-sizing: border-box; display: grid; grid-template-columns: 15px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 18px 22px; border-radius: 20px; opacity: .45; background: #17181e; box-shadow: inset 0 0 0 1px #24262e; }
+    .rich-prediction-locked-placeholders article > span { color: #6b6e78; }
+    .rich-prediction-locked-placeholders article > span svg { width: 15px; height: 15px; display: block; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+    .rich-prediction-locked-placeholders strong { color: #fff; font-size: 13.5px; font-weight: 800; }
+    .rich-prediction-locked-placeholders small { color: #6b6e78; font-size: 11.5px; font-weight: 700; }
+    .rich-prediction-locked-placeholders i { grid-column: 1 / -1; height: 44px; border-radius: 12px; background: #121318; box-shadow: inset 0 0 0 1px #24262e; }
+    .rich-prediction-empty-bottom { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: #17181e; box-shadow: inset 0 0 0 1px #24262e; }
+    .rich-prediction-empty-bottom > div { flex: 1; display: grid; gap: 2px; }
+    .rich-prediction-empty-bottom strong { font-size: 12.5px; font-weight: 800; }
+    .rich-prediction-empty-bottom small { color: #6b6e78; font-size: 11px; font-weight: 700; }
+    .rich-prediction-empty-bottom a { height: 44px; padding: 0 20px; border-radius: 12px; display: inline-flex; align-items: center; color: #0e0f12; background: #f6ec4e; font-size: 13.5px; font-weight: 800; }
 }
 .prediction-type-tabs { display: inline-flex; align-items: center; gap: 6px; padding: 4px; border-radius: 11px; }
 .prediction-type-tab {
@@ -25153,7 +25289,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .prediction-card-rich-actions .feed-prediction-action b { color: var(--soft); font-size: 13px; font-weight: 600; }
 .prediction-card-rich-stats { display: grid; align-content: start; gap: 10px; }
 .prediction-card-rich-stats > span {
-    display: grid;
+    display: flex;
     gap: 5px;
     align-content: center;
     padding: 10px 11px;
@@ -25175,6 +25311,184 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 }
 .prediction-card-rich-views { min-height: 32px !important; padding-top: 0 !important; padding-bottom: 0 !important; background: 0 0 !important; }
 .prediction-card-rich-views strong { color: #7c7c7c; font-weight: 500; font-size: 12px; text-align: end; }
+.predictions-grid.is-rich > .paid-prediction-locked-card {
+    min-height: 306px;
+    grid-template-columns: minmax(300px, 39%) minmax(0, 1fr);
+    background: var(--panel);
+    outline: rgba(255, 255, 255, 0.07) solid 1px;
+}
+.paid-prediction-locked-art {
+    position: relative;
+    min-height: 306px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    isolation: isolate;
+    background: #101114;
+}
+.paid-prediction-locked-pattern {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    width: 74px;
+    height: 86px;
+    z-index: 0;
+    opacity: 0.5;
+    filter: blur(12px);
+    background: #0b56fa;
+    box-shadow:
+        88px 8px 0 #433247,
+        176px -10px 0 #176850,
+        250px 18px 0 #65470f,
+        18px 104px 0 #502a51,
+        112px 92px 0 #153a72,
+        206px 112px 0 #6d2d2d,
+        274px 94px 0 #244d3e,
+        -8px 200px 0 #1e457b,
+        90px 190px 0 #6b4b17,
+        184px 210px 0 #43245c,
+        270px 190px 0 #145b48;
+}
+.paid-prediction-locked-art img {
+    position: relative;
+    z-index: 1;
+    width: min(72%, 252px);
+    height: auto;
+    filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42));
+    transition: transform 0.2s ease;
+}
+.paid-prediction-locked-art:hover img { transform: translateY(-3px) scale(1.015); }
+.paid-prediction-locked-art:focus-visible { outline: 2px solid #58e596; outline-offset: -4px; }
+.paid-prediction-locked-label {
+    position: absolute;
+    z-index: 2;
+    left: 14px;
+    bottom: 14px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: #dfffea;
+    background: rgba(9, 24, 16, 0.82);
+    box-shadow: inset 0 0 0 1px rgba(88, 229, 150, 0.28);
+    font-size: 11px;
+    font-weight: 800;
+}
+.paid-prediction-locked-body {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+}
+.paid-prediction-locked-author-row {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.paid-prediction-locked-author-row .prediction-card-rich-author { max-width: min(100%, 320px); }
+.paid-prediction-locked-badge {
+    min-height: 28px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    color: #a9acb5;
+    background: #242529;
+    font-size: 11px;
+    font-weight: 700;
+}
+.paid-prediction-locked-copy { display: grid; gap: 2px; }
+.paid-prediction-locked-copy > span {
+    color: #58e596;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.paid-prediction-locked-copy-title { color: #fff; font-size: 18px; font-weight: 800; line-height: 1.2; }
+.paid-prediction-purchase-closed {
+    align-self: stretch;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 9px;
+    padding: 18px;
+    border-radius: 12px;
+    background: #111216;
+    box-shadow: inset 0 0 0 1px #292b31;
+}
+.paid-prediction-purchase-closed strong { color: #f7f8ff; font-size: 16px; }
+.paid-prediction-purchase-closed p { max-width: 480px; margin: 0; color: #a3a6b0; font-size: 12px; line-height: 1.5; }
+.paid-prediction-purchase-closed a {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    color: #f7f8ff;
+    background: #292b31;
+    font-size: 11px;
+    font-weight: 800;
+}
+.paid-prediction-purchase-closed a:hover { color: var(--yellow); background: #33353b; }
+.paid-prediction-purchase-closed a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.paid-prediction-offers { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.paid-prediction-offer {
+    position: relative;
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 9px;
+    padding: 13px;
+    border-radius: 12px;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px #292b31;
+}
+.paid-prediction-offer.is-subscription { box-shadow: inset 0 0 0 1px #58e596; }
+.paid-prediction-offer > div { min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 7px; }
+.paid-prediction-offer > div > span { width: 100%; color: #d9dbe2; font-size: 12px; font-weight: 700; }
+.paid-prediction-offer > div > strong { color: #fff45c; font-size: 22px; line-height: 1; }
+.paid-prediction-offer.is-subscription > div > strong { color: #58e596; }
+.paid-prediction-offer > div > small { color: #7d808a; font-size: 10px; font-weight: 600; }
+.paid-prediction-offer ul { margin: 0; padding: 0; display: grid; gap: 5px; list-style: none; }
+.paid-prediction-offer li { position: relative; padding-left: 16px; color: #b7bac3; font-size: 11px; line-height: 1.3; }
+.paid-prediction-offer li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: #58e596;
+    font-weight: 900;
+}
+.paid-prediction-offer a,
+.paid-prediction-offer-soon {
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 800;
+}
+.paid-prediction-offer a { color: #07130c; background: #58e596; cursor: pointer; }
+.paid-prediction-offer a:hover { background: #72eda7; transform: translateY(-1px); }
+.paid-prediction-offer a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.paid-prediction-offer-soon { color: #777a83; background: #1d1e22; cursor: default; }
+.paid-prediction-offer-value {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 7px;
+    border-radius: 7px;
+    color: #07130c;
+    background: #58e596;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
 .rich-prediction-cover-picker .rich-prediction-fields-grid { align-items: end; }
 .capper-article-form .capper-field input[type="file"],
 .rich-prediction-cover-picker .capper-field input[type="file"] {
@@ -26948,65 +27262,65 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 
 
 /* Desktop predictions tab: high-odds carousel, stats, and compact coupon cards. */
-#profile-tab-predictions .profile-predictions-feature {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-feature {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     gap: 16px;
     margin: 0 0 22px;
 }
-#profile-tab-predictions .profile-best-coupons-slider,
-#profile-tab-predictions .profile-desktop-feature-empty {
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-feature-empty {
     display: block;
     min-width: 0;
     padding: 18px;
     border-radius: 18px;
     background: var(--panel);
 }
-#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head { margin: 0 0 14px; }
-#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head .eyebrow {
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .profile-mobile-block-head { margin: 0 0 14px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .profile-mobile-block-head .eyebrow {
     margin: 0 0 6px;
     color: var(--yellow);
     font-size: 11px;
 }
-#profile-tab-predictions .profile-best-coupons-slider .profile-mobile-block-head h3 {
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .profile-mobile-block-head h3 {
     margin: 0;
     color: #fff;
     font-size: 20px;
     font-weight: 600;
 }
-#profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-track { gap: 0; }
-#profile-tab-predictions .profile-best-coupons-slider .home-mobile-card {
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-slider-track { gap: 0; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-card {
     flex: 0 0 100%;
     min-width: 100%;
     height: clamp(255px, 23vw, 320px);
     aspect-ratio: auto;
     border-radius: 14px;
 }
-#profile-tab-predictions .profile-best-coupons-slider .home-mobile-slider-dots { padding-top: 14px; }
-#profile-tab-predictions .profile-desktop-feature-empty { color: var(--muted); font-size: 13px; }
-#profile-tab-predictions .profile-predictions-insights { min-width: 0; display: grid; gap: 12px; }
-#profile-tab-predictions .profile-predictions-stats,
-#profile-tab-predictions .profile-predictions-expresses {
+:is(#profile-tab-predictions, .expert-public-page) .profile-best-coupons-slider .home-mobile-slider-dots { padding-top: 14px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-feature-empty { color: var(--muted); font-size: 13px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-insights { min-width: 0; display: grid; gap: 12px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stats,
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-expresses {
     min-width: 0;
     padding: 18px;
     border-radius: 18px;
     background: var(--panel);
 }
-#profile-tab-predictions .profile-predictions-side-head {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-side-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 12px;
 }
-#profile-tab-predictions .profile-predictions-side-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
-#profile-tab-predictions .profile-predictions-side-head > span { color: var(--muted); font-size: 11px; white-space: nowrap; }
-#profile-tab-predictions .profile-predictions-stat-grid {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-side-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-side-head > span { color: var(--muted); font-size: 11px; white-space: nowrap; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 8px;
 }
-#profile-tab-predictions .profile-predictions-stat-grid > div {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid > div {
     display: grid;
     align-content: center;
     gap: 6px;
@@ -27016,16 +27330,16 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     border-radius: 12px;
     background: #29292c;
 }
-#profile-tab-predictions .profile-predictions-stat-grid span { color: var(--muted); font-size: 10px; }
-#profile-tab-predictions .profile-predictions-stat-grid strong { color: #fff; font-size: 22px; font-weight: 600; line-height: 1; }
-#profile-tab-predictions .profile-predictions-stat-grid strong.is-win { color: #5fd17a; }
-#profile-tab-predictions .profile-predictions-stat-grid strong.is-lose { color: #ff6b6b; }
-#profile-tab-predictions .profile-predictions-expresses-list {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid span { color: var(--muted); font-size: 10px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid strong { color: #fff; font-size: 22px; font-weight: 600; line-height: 1; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid strong.is-win { color: #5fd17a; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-stat-grid strong.is-lose { color: #ff6b6b; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-expresses-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 8px;
 }
-#profile-tab-predictions .profile-predictions-expresses-list a {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-expresses-list a {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -27036,7 +27350,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     color: #fff;
     text-decoration: none;
 }
-#profile-tab-predictions .profile-predictions-express-rank {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-express-rank {
     flex: 0 0 26px;
     display: grid;
     place-items: center;
@@ -27047,31 +27361,31 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 15px;
     font-weight: 600;
 }
-#profile-tab-predictions .profile-predictions-express-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
-#profile-tab-predictions .profile-predictions-express-copy strong { font-size: 14px; font-weight: 600; }
-#profile-tab-predictions .profile-predictions-express-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-#profile-tab-predictions .profile-predictions-expresses-list a > span:last-child { color: var(--muted); }
-#profile-tab-predictions .profile-predictions-express-empty { margin: 0; color: var(--muted); font-size: 12px; }
-#profile-tab-predictions .profile-desktop-list-head {
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-express-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-express-copy strong { font-size: 14px; font-weight: 600; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-express-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-expresses-list a > span:last-child { color: var(--muted); }
+:is(#profile-tab-predictions, .expert-public-page) .profile-predictions-express-empty { margin: 0; color: var(--muted); font-size: 12px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-list-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 12px;
 }
-#profile-tab-predictions .profile-desktop-list-head h3 { margin: 0; font-size: 23px; font-weight: 600; }
-#profile-tab-predictions .profile-header-sort { display: none; }
-#profile-tab-predictions .profile-desktop-sort-toolbar {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-list-head h3 { margin: 0; font-size: 23px; font-weight: 600; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-header-sort { display: none; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort-toolbar {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 14px;
 }
-#profile-tab-predictions .profile-desktop-sort-label { color: var(--muted); font-size: 12px; }
-#profile-tab-predictions .profile-desktop-sort { flex-wrap: wrap; }
-#profile-tab-predictions .profile-desktop-sort button { min-height: 34px; padding: 0 12px; font-size: 12px; }
-#profile-tab-predictions .profile-desktop-coupon-filters { display: flex; flex-wrap: wrap; gap: 7px; }
-#profile-tab-predictions .profile-desktop-coupon-filters button {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort-label { color: var(--muted); font-size: 12px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort { flex-wrap: wrap; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort button { min-height: 34px; padding: 0 12px; font-size: 12px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters button {
     min-height: 34px;
     padding: 0 12px;
     border: 0;
@@ -27082,29 +27396,31 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 12px;
     cursor: pointer;
 }
-#profile-tab-predictions .profile-desktop-coupon-filters button.is-active { background: var(--yellow); color: var(--ink); }
-#profile-tab-predictions .profile-coupons-desktop-list {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters button.is-active { background: var(--yellow); color: var(--ink); }
+:is(#profile-tab-predictions, .expert-public-page) .profile-coupons-desktop-list {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 375px), 1fr));
     gap: 12px;
 }
-#profile-tab-predictions .profile-desktop-coupon {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon {
     position: relative;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    height: 178px;
     min-height: 178px;
+    align-self: start;
     border-radius: 16px;
     background: var(--panel);
     overflow: hidden;
     box-shadow: inset 4px 0 rgba(255, 255, 255, 0.12);
 }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="football"],
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="soccer"] { box-shadow: inset 4px 0 var(--green); }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="tennis"] { box-shadow: inset 4px 0 var(--blue); }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="basketball"] { box-shadow: inset 4px 0 #f28c28; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="hockey"] { box-shadow: inset 4px 0 #4fc3f7; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport="express"] { box-shadow: none; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport="express"]::before {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="football"],
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="soccer"] { box-shadow: inset 4px 0 var(--green); }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="tennis"] { box-shadow: inset 4px 0 var(--blue); }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="basketball"] { box-shadow: inset 4px 0 #f28c28; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="hockey"] { box-shadow: inset 4px 0 #4fc3f7; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport="express"] { box-shadow: none; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport="express"]::before {
     content: "";
     position: absolute;
     inset: 0 auto 0 0;
@@ -27118,8 +27434,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     );
     pointer-events: none;
 }
-#profile-tab-predictions .profile-desktop-coupon[hidden] { display: none; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[hidden] { display: none; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon {
     flex: 1 1 auto;
     align-items: flex-start;
     width: 100%;
@@ -27130,10 +27446,10 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     background: transparent;
     box-shadow: none;
 }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-copy { gap: 5px; padding-right: 87px; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-meta { display: flex; align-items: center; gap: 8px; min-height: 24px; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-meta b { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-#profile-tab-predictions .profile-desktop-coupon-sport {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-copy { gap: 5px; padding-right: 87px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-meta { display: flex; align-items: center; gap: 8px; min-height: 24px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-meta b { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-sport {
     flex: 0 0 24px;
     width: 24px;
     height: 24px;
@@ -27143,23 +27459,23 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     background: #f1f3f6;
     color: var(--ink);
 }
-#profile-tab-predictions .profile-desktop-coupon-sport svg { display: block; width: 15px; height: 15px; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="tennis"] .profile-desktop-coupon-sport { background: #a5dd24; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="basketball"] .profile-desktop-coupon-sport { background: #f28c28; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport*="hockey"] .profile-desktop-coupon-sport { background: #4fc3f7; }
-#profile-tab-predictions .profile-desktop-coupon[data-sport="express"] .profile-desktop-coupon-sport { background: var(--yellow); }
-#profile-tab-predictions .profile-desktop-coupon-date { color: var(--muted); font-size: 11px; font-weight: 600; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result { position: absolute; top: 14px; right: 16px; gap: 10px; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-sport svg { display: block; width: 15px; height: 15px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="tennis"] .profile-desktop-coupon-sport { background: #a5dd24; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="basketball"] .profile-desktop-coupon-sport { background: #f28c28; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport*="hockey"] .profile-desktop-coupon-sport { background: #4fc3f7; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon[data-sport="express"] .profile-desktop-coupon-sport { background: var(--yellow); }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-date { color: var(--muted); font-size: 11px; font-weight: 600; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-result { position: absolute; top: 14px; right: 16px; gap: 10px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-result small {
     padding: 5px 9px;
     border-radius: 8px;
     background: #303033;
     color: #c2c2c7;
     font-size: 11px;
 }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small.is-win { background: #24492c; color: #a8eab5; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result small.is-lose { background: #542626; color: #ffaaaa; }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-copy strong {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-result small.is-win { background: #24492c; color: #a8eab5; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-result small.is-lose { background: #542626; color: #ffaaaa; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-copy strong {
     display: -webkit-box;
     overflow: hidden;
     font-size: 14px;
@@ -27167,20 +27483,20 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
 }
-#profile-tab-predictions .profile-desktop-coupon .expert-mobile-coupon-result b { font-size: 18px; font-weight: 600; }
-#profile-tab-predictions .profile-desktop-coupon-footer {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon .expert-mobile-coupon-result b { font-size: 18px; font-weight: 600; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     padding: 0 14px 12px 20px;
 }
-#profile-tab-predictions .profile-desktop-coupon-reactions,
-#profile-tab-predictions .profile-desktop-coupon-reactions > span,
-#profile-tab-predictions .profile-desktop-coupon-actions { display: flex; align-items: center; }
-#profile-tab-predictions .profile-desktop-coupon-reactions { gap: 13px; min-width: 0; color: var(--muted); font-size: 11px; }
-#profile-tab-predictions .profile-desktop-coupon-reactions > span { gap: 4px; white-space: nowrap; }
-#profile-tab-predictions .profile-desktop-coupon-reactions svg {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions > span,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-actions { display: flex; align-items: center; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions { gap: 13px; min-width: 0; color: var(--muted); font-size: 11px; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions > span { gap: 4px; white-space: nowrap; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions svg {
     width: 16px;
     height: 16px;
     fill: none;
@@ -27189,9 +27505,9 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-#profile-tab-predictions .profile-desktop-coupon-actions { gap: 8px; flex: 0 0 auto; }
-#profile-tab-predictions .profile-desktop-coupon-view,
-#profile-tab-predictions .profile-desktop-coupon-share {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-actions { gap: 8px; flex: 0 0 auto; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-view,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-share {
     min-height: 34px;
     display: inline-flex;
     align-items: center;
@@ -27207,10 +27523,10 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     text-decoration: none;
     cursor: pointer;
 }
-#profile-tab-predictions .profile-desktop-coupon-view:hover,
-#profile-tab-predictions .profile-desktop-coupon-share:hover { background: #3a3a3d; }
-#profile-tab-predictions .profile-desktop-coupon-share { width: 36px; padding: 0; }
-#profile-tab-predictions .profile-desktop-coupon-share svg {
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-view:hover,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-share:hover { background: #3a3a3d; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-share { width: 36px; padding: 0; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-share svg {
     width: 18px;
     height: 18px;
     fill: none;
@@ -27219,7 +27535,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
-#profile-tab-predictions .profile-desktop-coupon-share:disabled { cursor: wait; opacity: 0.6; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-share:disabled { cursor: wait; opacity: 0.6; }
 
 /* Desktop home: vertical forecast feed. Mobile uses its own home-mobile-slider. */
 .forecast-area { min-width: 0; }
@@ -29432,3 +29748,1297 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .profile-comments-card{
     padding-top:20px;
 }
+
+.paid-coupon-paywall {
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 24px;
+    color: #fff;
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.paid-coupon-paywall svg {
+    display: block;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.paid-coupon-paywall__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.paid-coupon-paywall__back {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #a3a6b0;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+}
+.paid-coupon-paywall__back svg {
+    width: 16px;
+    height: 16px;
+}
+.paid-coupon-paywall__back-mobile,
+.paid-coupon-paywall__tagline-mobile {
+    display: none;
+}
+.paid-coupon-paywall__title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.paid-coupon-paywall__title-row h1 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+}
+.paid-coupon-paywall__state,
+.paid-coupon-paywall__paid-badge,
+.paid-coupon-hero__eyebrow {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    color: #f6ec4e;
+    font-size: 12.5px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.paid-coupon-paywall__state,
+.paid-coupon-hero__eyebrow {
+    background: #2a2a14;
+}
+.paid-coupon-paywall__kind {
+    color: #6b6e78;
+    font-size: 13px;
+    font-weight: 700;
+}
+.paid-coupon-paywall__paid-badge {
+    margin-left: auto;
+    gap: 7px;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.paid-coupon-paywall__paid-badge svg,
+.paid-coupon-hero__eyebrow svg {
+    width: 13px;
+    height: 13px;
+}
+.paid-coupon-paywall__tagline {
+    margin: 0;
+    color: #a3a6b0;
+    font-size: 14px;
+    font-weight: 600;
+}
+.paid-coupon-hero,
+.paid-coupon-events,
+.paid-coupon-mobile-subscription,
+.paid-coupon-mobile-unlock {
+    box-sizing: border-box;
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.paid-coupon-hero {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    grid-template-areas:
+        "copy author"
+        "social author";
+    column-gap: 28px;
+    row-gap: 14px;
+    align-items: center;
+}
+.paid-coupon-hero__locked-mobile {
+    display: none;
+}
+.paid-coupon-hero__copy {
+    grid-area: copy;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+}
+.paid-coupon-hero__eyebrow {
+    height: 28px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+.paid-coupon-hero__copy h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+}
+.paid-coupon-hero__copy > p {
+    width: min(520px, 100%);
+    margin: 0;
+    color: #a3a6b0;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+.paid-coupon-hero__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+.paid-coupon-button {
+    box-sizing: border-box;
+    height: 52px;
+    padding: 0 20px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14.5px;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+}
+.paid-coupon-button svg {
+    width: 18px;
+    height: 18px;
+}
+.paid-coupon-button--primary {
+    color: #0e0f12;
+    background: #f6ec4e;
+}
+.paid-coupon-button--subscription {
+    color: #5be38a;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #5be38a;
+}
+.paid-coupon-author {
+    grid-area: author;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.paid-coupon-author__identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+}
+.paid-coupon-author__avatar {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    flex: 0 0 54px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: #2f5bff;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+}
+.paid-coupon-author__avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+.paid-coupon-author__avatar > b {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    min-width: 30px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #0e0f12;
+    background: #f6ec4e;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 800;
+}
+.paid-coupon-author__copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.paid-coupon-author__copy strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+}
+.paid-coupon-author__copy small {
+    overflow: hidden;
+    color: #6b6e78;
+    font-size: 12px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.paid-coupon-author__verified {
+    width: 15px;
+    height: 15px;
+}
+.paid-coupon-author__verified path:first-child {
+    fill: #2f6bff;
+    stroke: none;
+}
+.paid-coupon-author__verified path:last-child {
+    stroke: #fff;
+}
+.paid-coupon-author__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.paid-coupon-author__metrics > span {
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.paid-coupon-author__metrics b {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.paid-coupon-author__metrics b.is-positive {
+    color: #5be38a;
+}
+.paid-coupon-author__metrics small {
+    color: #6b6e78;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.paid-coupon-author__social {
+    grid-area: social;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #a3a6b0;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+.paid-coupon-author__social b {
+    color: #fff;
+}
+.paid-coupon-author__social-dots {
+    display: flex;
+    padding-left: 2px;
+}
+.paid-coupon-author__social-avatar {
+    width: 26px;
+    height: 26px;
+    margin-left: -8px;
+    border: 2px solid #17181e;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: #2f5bff;
+    font-size: 8px;
+    font-weight: 800;
+}
+.paid-coupon-author__social-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.paid-coupon-author__social-avatar:first-child {
+    margin-left: 0;
+    background: #0e5fa8;
+}
+.paid-coupon-author__social-avatar:last-child {
+    background: #7b3fc6;
+}
+.paid-coupon-author__benefits,
+.paid-coupon-mobile-subscription ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.paid-coupon-author__benefits li,
+.paid-coupon-mobile-subscription li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #d7d9e0;
+    font-size: 13px;
+    font-weight: 700;
+}
+.paid-coupon-author__benefits i,
+.paid-coupon-mobile-subscription li i {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex: 0 0 20px;
+    display: grid;
+    place-items: center;
+    color: #5be38a;
+    background: #10231a;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 900;
+}
+.paid-coupon-events {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.paid-coupon-events__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.paid-coupon-events__heading h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 800;
+}
+.paid-coupon-events__heading > span {
+    margin-left: auto;
+    color: #6b6e78;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+.paid-coupon-events__count,
+.paid-coupon-events__mobile-title {
+    display: none;
+}
+.paid-coupon-events__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.paid-coupon-event {
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--ink);
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.paid-coupon-event__cover {
+    position: relative;
+    height: 104px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #4338ca;
+}
+.paid-coupon-event:nth-child(3n + 2) .paid-coupon-event__cover {
+    background: #127a40;
+}
+.paid-coupon-event:nth-child(3n) .paid-coupon-event__cover {
+    background: #b95818;
+}
+.paid-coupon-event__symbol {
+    position: absolute;
+    right: -16px;
+    bottom: -26px;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #141519;
+    background: #d9f24b;
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 800;
+    opacity: 0.9;
+}
+.paid-coupon-event__blurred {
+    position: absolute;
+    inset: 0;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    filter: blur(9px);
+}
+.paid-coupon-event__blurred > span {
+    align-self: flex-start;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    color: #fff;
+    background: rgba(8, 9, 12, 0.55);
+    font-size: 11px;
+    font-weight: 800;
+}
+.paid-coupon-event__blurred strong {
+    margin-top: auto;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.paid-coupon-event__blurred small {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 12px;
+    font-weight: 700;
+}
+.paid-coupon-event__pick {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.paid-coupon-event__lock {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    flex: 0 0 30px;
+    display: grid;
+    place-items: center;
+    color: #6b6e78;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
+}
+.paid-coupon-event__lock svg {
+    width: 15px;
+    height: 15px;
+}
+.paid-coupon-event__hidden-pick {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.paid-coupon-event__hidden-pick small {
+    color: #6b6e78;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.paid-coupon-event__hidden-pick i {
+    width: min(190px, 100%);
+    height: 11px;
+    border-radius: 6px;
+    background: #121318;
+}
+.paid-coupon-event__pick > b {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    color: #6b6e78;
+    background: #121318;
+    box-shadow: inset 0 0 0 1px #24262e;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+}
+.paid-coupon-events__empty {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #a3a6b0;
+    font-size: 13px;
+}
+.paid-coupon-events__summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.paid-coupon-events__summary > span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.paid-coupon-events__summary b {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+}
+.paid-coupon-events__summary small {
+    color: #6b6e78;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+.paid-coupon-mobile-subscription,
+.paid-coupon-mobile-unlock {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .paid-coupon-paywall {
+        width: min(390px, 100%);
+        padding: 20px;
+        gap: 14px;
+    }
+    .paid-coupon-paywall__heading {
+        gap: 10px;
+    }
+    .paid-coupon-paywall__back {
+        font-size: 12.5px;
+    }
+    .paid-coupon-paywall__back svg {
+        width: 15px;
+        height: 15px;
+    }
+    .paid-coupon-paywall__back-desktop,
+    .paid-coupon-paywall__tagline-desktop,
+    .paid-coupon-paywall__paid-badge,
+    .paid-coupon-paywall__kind,
+    .paid-coupon-hero__copy,
+    .paid-coupon-author__benefits,
+    .paid-coupon-events__desktop-title,
+    .paid-coupon-events__summary {
+        display: none;
+    }
+    .paid-coupon-paywall__back-mobile,
+    .paid-coupon-paywall__tagline-mobile,
+    .paid-coupon-events__mobile-title {
+        display: inline;
+    }
+    .paid-coupon-paywall__title-row {
+        gap: 10px;
+    }
+    .paid-coupon-paywall__title-row h1 {
+        font-size: 21px;
+        letter-spacing: 0;
+    }
+    .paid-coupon-paywall__state {
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 8px;
+        font-size: 11.5px;
+    }
+    .paid-coupon-paywall__tagline {
+        font-size: 12.5px;
+    }
+    .paid-coupon-hero {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+    .paid-coupon-author__social {
+        order: 3;
+    }
+    .paid-coupon-hero__locked-mobile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .paid-coupon-hero__lock-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        flex: 0 0 38px;
+        display: grid;
+        place-items: center;
+        color: #0e0f12;
+        background: #f6ec4e;
+    }
+    .paid-coupon-hero__lock-mark svg {
+        width: 19px;
+        height: 19px;
+    }
+    .paid-coupon-hero__locked-mobile > span:last-child {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .paid-coupon-hero__locked-mobile strong {
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 15px;
+        font-weight: 800;
+    }
+    .paid-coupon-hero__locked-mobile small {
+        color: #6b6e78;
+        font-size: 11.5px;
+        font-weight: 700;
+    }
+    .paid-coupon-author__avatar {
+        width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+    }
+    .paid-coupon-author__metric-count {
+        display: flex;
+    }
+    .paid-coupon-author__metrics > span {
+        padding: 12px 14px;
+    }
+    .paid-coupon-author__social {
+        font-size: 12.5px;
+    }
+    .paid-coupon-events {
+        padding: 0;
+        gap: 12px;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    .paid-coupon-events__heading h2 {
+        font-size: 15px;
+    }
+    .paid-coupon-events__count {
+        display: inline;
+        color: #6b6e78;
+        font-size: 12px;
+        font-weight: 800;
+    }
+    .paid-coupon-events__heading > span {
+        font-size: 11.5px;
+    }
+    .paid-coupon-events__grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .paid-coupon-event:nth-child(n + 3) {
+        display: none;
+    }
+    .paid-coupon-event__cover {
+        height: 104px;
+    }
+    .paid-coupon-mobile-subscription {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .paid-coupon-mobile-subscription__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .paid-coupon-mobile-subscription__head strong {
+        color: #fff;
+        font-size: 13.5px;
+        font-weight: 800;
+    }
+    .paid-coupon-mobile-subscription__head b {
+        color: #5be38a;
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .paid-coupon-mobile-subscription .paid-coupon-button {
+        width: 100%;
+        height: 44px;
+        font-size: 13.5px;
+    }
+    .paid-coupon-mobile-unlock {
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 18px;
+    }
+    .paid-coupon-mobile-unlock > span {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .paid-coupon-mobile-unlock > span b {
+        color: #f6ec4e;
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 800;
+    }
+    .paid-coupon-mobile-unlock > span small {
+        color: #6b6e78;
+        font-size: 10.5px;
+        font-weight: 700;
+    }
+    .paid-coupon-mobile-unlock .paid-coupon-button {
+        height: 46px;
+        padding: 0 20px;
+        font-size: 13.5px;
+    }
+    .paid-coupon-mobile-unlock .paid-coupon-button svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Public predictions reuse the cabinet coupon cards at every viewport. */
+.expert-public-page .profile-coupons-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 375px), 1fr));
+    gap: 12px;
+}
+.expert-public-best-predictions { min-width: 0; }
+.expert-public-best-predictions .profile-predictions-feature { margin-bottom: 0; }
+.expert-public-page .home-mobile-slider-track { scrollbar-width: thin; }
+.expert-public-page .home-mobile-slider-track::-webkit-scrollbar { display: block; height: 6px; }
+
+/* Shared paged predictions list: the same controls and loading states on both profiles. */
+.profile-coupon-feed { min-width: 0; }
+.profile-coupon-feed-more { display: flex; justify-content: center; min-height: 46px; margin-top: 16px; }
+.profile-coupon-feed-more .expert-mobile-feed-all { width: auto; min-width: 180px; margin: 0; }
+.profile-coupon-feed-status { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.profile-coupon-feed-empty { padding: 20px 0; color: var(--muted); }
+.profile-coupon-feed [hidden] { display: none !important; }
+.profile-coupon-feed button:disabled { cursor: wait; opacity: .6; }
+.profile-coupon-feed button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.profile-coupon-feed button:hover:not(:disabled) { filter: brightness(1.15); }
+
+.rich-prediction-preview-cover [hidden] { display: none !important; }
+
+/* Compact paid coupons keep offers in the shared access dialog. */
+.profile-coupon-paid-marker { display: inline-flex; flex: 0 0 18px; align-items: center; vertical-align: middle; }
+.profile-coupon-paid-marker img { display: block; width: 18px; height: 18px; object-fit: contain; }
+:is(#profile-tab-predictions, .expert-public-page) .profile-coupon-locked { box-shadow: none; }
+.profile-coupon-lock-heading { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 16px; color: var(--text); background: #18191d; }
+.profile-coupon-lock-heading > img { flex: 0 0 56px; width: 56px; height: 56px; object-fit: contain; }
+.profile-coupon-lock-heading > span:not(.paid-prediction-locked-badge) { display: grid; gap: 4px; min-width: 0; }
+.profile-coupon-lock-heading strong { font-size: 16px; }
+.profile-coupon-lock-heading small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #a3a6b0; font-size: 11px; overflow-wrap: anywhere; }
+.profile-coupon-lock-heading .paid-prediction-locked-badge { margin-left: auto; }
+.profile-coupon-lock-action { display: flex; justify-content: flex-end; align-items: flex-end; flex: 1; padding: 12px 16px 16px; }
+.profile-coupon-purchase { min-height: 36px; padding: 0 20px; border: 0; border-radius: 10px; color: #07130c; background: #58e596; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.profile-coupon-purchase:hover { background: #72eda7; }
+.profile-coupon-purchase:active { transform: translateY(1px); }
+.profile-coupon-purchase:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.profile-coupon-access-modal {
+    --coupon-modal-gap: 18px;
+    --coupon-modal-safe-top: max(var(--telegram-app-top, 0px), env(safe-area-inset-top, 0px));
+    --coupon-modal-safe-bottom: max(var(--telegram-app-bottom, 0px), env(safe-area-inset-bottom, 0px));
+    z-index: var(--z-profile-modal);
+    padding: calc(var(--coupon-modal-safe-top) + var(--coupon-modal-gap)) max(var(--coupon-modal-gap), env(safe-area-inset-right, 0px)) calc(var(--coupon-modal-safe-bottom) + var(--coupon-modal-gap)) max(var(--coupon-modal-gap), env(safe-area-inset-left, 0px));
+}
+.profile-coupon-access-modal .profile-coupon-access-card {
+    width: min(560px, 100%);
+    max-height: calc(100dvh - var(--coupon-modal-safe-top) - var(--coupon-modal-safe-bottom) - var(--coupon-modal-gap) - var(--coupon-modal-gap));
+    box-sizing: border-box;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 26px;
+    border-radius: 24px;
+    outline: none;
+    background: var(--ink);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px #24262e, 0 32px 80px rgba(0, 0, 0, .6);
+}
+.profile-coupon-access-modal.is-open:not(.is-visible) { opacity: 0; }
+.profile-coupon-access-modal:not(.is-visible) .profile-coupon-access-card { opacity: 0; transform: translateY(16px) scale(.985); }
+.profile-coupon-access-card > [data-expert-public-modal-slot] { display: grid; gap: 16px; }
+.profile-coupon-access-modal .profile-coupon-access-close { top: 8px; right: 8px; width: 36px; height: 36px; border-radius: 12px; color: #a3a6b0; background: transparent; cursor: pointer; }
+.profile-coupon-access-close:hover { color: #fff; background: #24262e; }
+.profile-coupon-access-close:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.profile-coupon-access-head { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.profile-coupon-access-lock { display: grid; place-items: center; width: 56px; height: 56px; flex: none; border-radius: 18px; color: #0e0f12; background: #f6ec4e; }
+.profile-coupon-access-head h2 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1.4; }
+.profile-coupon-access-head p { max-width: 420px; margin: 0; color: #a3a6b0; font-size: 14px; font-weight: 600; line-height: 1.45; }
+.profile-coupon-access-card .paid-prediction-locked-body { padding: 0; grid-template-rows: auto auto; gap: 16px; }
+.profile-coupon-access-card .paid-prediction-locked-copy,
+.profile-coupon-access-card .paid-prediction-locked-badge { display: none; }
+.profile-coupon-access-card .paid-prediction-locked-author-row { padding: 14px 16px; border-radius: 14px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.profile-coupon-access-card .prediction-card-rich-author { max-width: 100%; }
+.profile-coupon-access-card .prediction-card-rich-author strong { font-size: 15px; overflow-wrap: anywhere; }
+.profile-coupon-access-card .prediction-card-rich-author small { color: #a3a6b0; font-size: 12px; }
+.profile-coupon-access-card .prediction-card-rich-avatar { flex-basis: 46px; }
+.profile-coupon-access-card .prediction-card-rich-avatar,
+.profile-coupon-access-card .prediction-card-rich-avatar img { width: 100%; height: 100%; border-radius:12px; }
+.profile-coupon-access-card .paid-prediction-offers { gap: 12px; }
+.profile-coupon-access-card .paid-prediction-offer { padding: 18px; border-radius: 16px; gap: 12px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.profile-coupon-access-card .paid-prediction-offer.is-subscription { box-shadow: inset 0 0 0 1.5px #58e596; }
+.profile-coupon-access-card .paid-prediction-offer > div > span { font-size: 14px; }
+.profile-coupon-access-card .paid-prediction-offer > div > strong { font-family: var(--font-display); font-size: 28px; line-height: 1.3; overflow-wrap: anywhere; }
+.profile-coupon-access-card .paid-prediction-offer > div > small { color: #a3a6b0; font-size: 11.5px; }
+.profile-coupon-access-card .paid-prediction-offer-value { top: 18px; right: 18px; font-size: 8px; }
+.profile-coupon-access-card .paid-prediction-offer.is-subscription > div > span { padding-right: 65px; }
+.profile-coupon-access-card .paid-prediction-offer li { padding-left: 30px; color: #d7d9e0; font-size: 13px; line-height: 20px; }
+.profile-coupon-access-card .paid-prediction-offer ul { gap: 8px; align-content: start; }
+.profile-coupon-access-card .paid-prediction-offer li::before { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #10231a; }
+.profile-coupon-access-card .paid-prediction-offer a,
+.profile-coupon-access-card .paid-prediction-offer-soon { min-height: 42px; border-radius: 12px; font-size: 13px; }
+
+
+.rich-prediction-paid-settings-note { margin: 12px 0 0; color: #a3a6b0; font-size: 12px; line-height: 1.6; }
+.rich-prediction-paid-settings-note a { color: var(--yellow); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+.rich-prediction-paid-settings-note a:hover { color: var(--text); }
+.rich-prediction-paid-settings-note a:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+#paid-predictions-settings { scroll-margin-top: 100px; }
+
+/* Copybetting audience: CB1–CB4 references, with the project's surface tokens. */
+.copybetting-panel { container: copybetting / inline-size; display: grid; gap: 18px; min-width: 0; color: var(--text); }
+.copybetting-panel [hidden], .copybetting-person-menu[hidden] { display: none; }
+.copybetting-heading { display: flex; align-items: flex-start; gap: 16px; }
+.copybetting-heading > div:first-child { flex: 1; min-width: 0; }
+.copybetting-panel .copybetting-heading h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+.copybetting-heading p { margin: 0; color: #a3a6b0; font-size: 13.5px; font-weight: 600; line-height: 1.45; }
+.copybetting-heading-actions, .copybetting-empty-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.copybetting-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--panel); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.copybetting-button.is-quiet { background: transparent; color: #a3a6b0; box-shadow: inset 0 0 0 1px var(--panel); }
+.copybetting-button.is-primary { background: var(--yellow); color: var(--ink); }
+.copybetting-panel :is(a, button):hover, .copybetting-how-dialog :is(a, button):hover { filter: brightness(1.15); }
+.copybetting-panel :is(button, a, select):focus-visible,
+.copybetting-person-menu :is(a, button):focus-visible,
+.copybetting-how-dialog :is(a, button, summary):focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.copybetting-panel button:disabled { cursor: wait; opacity: .6; }
+.copybetting-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.copybetting-summary-card { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; align-items: center; padding: 20px 22px; border-radius: 18px; background: var(--panel); }
+.copybetting-summary-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--ink); }
+.copybetting-summary-label { color: #a3a6b0; font-size: 13px; font-weight: 800; }
+.copybetting-summary-card > strong { grid-column: 1 / -1; font-family: var(--font-display); font-size: 30px; font-weight: 800; letter-spacing: -1px; overflow-wrap: anywhere; }
+.copybetting-summary-card > p { grid-column: 1 / -1; margin: 0; color: #a3a6b0; font-size: 12px; line-height: 1.35; }
+.copybetting-summary-card.is-active > strong, .copybetting-summary-card.is-active .copybetting-summary-icon { color: var(--yellow); }
+.copybetting-summary-growth { grid-column: 1 / -1; color: var(--green); font-size: 12px; font-weight: 800; }
+.copybetting-panel .is-profit, .copybetting-how-dialog .is-profit { color: var(--green); }
+.copybetting-panel .is-loss { color: var(--danger); }
+.copybetting-feedback { margin: 0; color: #a3a6b0; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.copybetting-feedback:empty { display: none; }
+.copybetting-panel [data-copy-content] { display: grid; gap: 18px; min-width: 0; }
+.copybetting-tabs { display: inline-flex; justify-self: start; gap: 6px; padding: 5px; border-radius: 14px; background: var(--panel); max-width: 100%; }
+.copybetting-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 18px; border-radius: 10px; color: #a3a6b0; font-size: 13.5px; font-weight: 800; text-align: center; }
+.copybetting-tabs a.is-active { background: var(--yellow); color: var(--ink); }
+.copybetting-content-grid { display: grid; min-width: 0; gap: 16px; }
+.copybetting-content-grid.is-bets { grid-template-columns: minmax(0, 2.15fr) minmax(250px, 1fr); align-items: start; }
+.copybetting-surface { min-width: 0; padding: 22px; border-radius: 20px; background: var(--panel); }
+.copybetting-surface-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.copybetting-surface-head h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 800; line-height: 1.4; }
+.copybetting-surface-head > :is(span, a) { color: #a3a6b0; font-size: 12px; white-space: nowrap; }
+.copybetting-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.copybetting-search { display: flex; align-items: center; gap: 10px; flex: 1 1 200px; max-width: 260px; min-width: 140px; height: 42px; padding: 0 14px; border-radius: 12px; color: #a3a6b0; background: var(--ink); }
+.copybetting-search input { width: 100%; min-width: 0; padding: 0; border: 0; outline: none; color: var(--text); background: transparent; font: inherit; font-size: 13.5px; }
+.copybetting-search:focus-within { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.copybetting-search svg { flex: none; }
+.copybetting-state-filters { display: flex; gap: 10px; }
+.copybetting-state-filters button, .copybetting-period select, .copybetting-apply { min-height: 38px; padding: 0 13px; border: 0; border-radius: 10px; color: #a3a6b0; background: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.copybetting-state-filters button.is-active { background: var(--yellow); color: var(--ink); }
+.copybetting-period { margin-left: auto; }
+.copybetting-period select { max-width: 180px; color-scheme: dark; }
+.copybetting-export { min-height: 38px; padding: 0 13px; background: var(--ink); font-size: 12.5px; }
+.copybetting-apply { color: var(--yellow); }
+.copybetting-audience-head, .copybetting-person {
+    display: grid;     grid-template-columns: minmax(140px, 1fr) 111px 100px 100px 100px 159px 32px; align-items: center; gap: 14px;
+}
+.copybetting-audience-head { padding: 0 0 12px; color: #a3a6b0; font-size: 10px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+.copybetting-audience-head > :nth-child(5), .copybetting-audience-head > :nth-child(6) { text-align: right; }
+.copybetting-person { padding: 11px 0; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-person-identity { display: flex; align-items: center; min-width: 0; gap: 11px; color: var(--text); }
+.copybetting-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; overflow: hidden; border-radius: 50%; color: var(--yellow); background: var(--ink); font-size: 13px; font-weight: 800; }
+.copybetting-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.copybetting-person-identity > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.copybetting-person-identity strong { color: var(--text); font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
+.copybetting-person-identity small { color: #a3a6b0; font-size: 11px; font-weight: 600; }
+.copybetting-person .copybetting-person-mobile-date { display: none; }
+.copybetting-person-start, .copybetting-person-stop { color: #a3a6b0; font-size: 12.5px; }
+.copybetting-status { display: inline-flex; align-items: center; justify-content: center; justify-self: start; width: fit-content; max-width: 100%; min-height: 28px; padding: 4px 10px; border-radius: 9px; background: var(--ink); color: #a3a6b0; font-size: 11.5px; font-weight: 800; line-height: 1.3; }
+.copybetting-status:is(.is-active, .is-win) { color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--ink)); }
+.copybetting-status.is-lose { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--ink)); }
+.copybetting-status:is(.is-paused, .is-pending, .is-refund) { color: var(--yellow); }
+.copybetting-person-stake, .copybetting-person-profit { min-width: 0; text-align: right; }
+.copybetting-person-stake > small, .copybetting-person-profit > small { display: none; }
+.copybetting-person-stake strong, .copybetting-person-profit strong { display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 13.5px; font-weight: 800; white-space: nowrap; }
+.copybetting-panel .coin-icon, .copybetting-how-dialog .coin-icon { display: inline-block; width: 15px; height: 15px; vertical-align: middle; }
+.copybetting-menu-trigger { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 10px; color: #a3a6b0; background: var(--ink); cursor: pointer; }
+.copybetting-menu-trigger:hover, .copybetting-menu-trigger[aria-expanded="true"] { color: var(--yellow); }
+.copybetting-no-results { padding: 28px 0; margin: 0; color: #a3a6b0; font-size: 13px; }
+.copybetting-no-results a { color: var(--yellow); }
+.copybetting-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: #a3a6b0; font-size: 12px; }
+.copybetting-pagination nav { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.copybetting-pagination nav :is(a, span) { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 0 8px; border-radius: 9px; color: #a3a6b0; }
+.copybetting-pagination a.is-active { background: var(--yellow); color: var(--ink); }
+.copybetting-pagination .copybetting-load-more { display: none; }
+.copybetting-bets-head, .copybetting-bet { display: grid; grid-template-columns: minmax(140px, 1fr) 110px 100px 85px; align-items: center; gap: 14px; }
+.copybetting-bets-head { padding-bottom: 10px; color: #a3a6b0; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.copybetting-bet { padding: 12px 0; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-bet > a { display: grid; gap: 3px; min-width: 0; color: var(--text); }
+.copybetting-bet > a strong { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+.copybetting-bet > a small { color: #a9c2ff; font-size: 11.5px; font-weight: 700; }
+.copybetting-bet-readers { display: flex; align-items: center; justify-content: flex-end; }
+.copybetting-bet-readers .copybetting-avatar { width: 24px; height: 24px; flex-basis: 24px; margin-left: -6px; box-shadow: 0 0 0 2px var(--panel); font-size: 10px; }
+.copybetting-bet-readers b { margin-left: 8px; font-size: 12px; }
+.copybetting-bet-amount { display: flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 13px; white-space: nowrap; }
+.copybetting-bet > .copybetting-status { justify-self: end; }
+.copybetting-top .copybetting-person { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin-bottom: 10px; padding: 14px; border-radius: 14px; background: var(--ink); box-shadow: none; }
+.copybetting-top .copybetting-person :is(.copybetting-person-start, .copybetting-person-stop, .copybetting-person-duration) { display: none; }
+.copybetting-top .copybetting-person .copybetting-person-mobile-date { display: block; }
+.copybetting-top .copybetting-person :is(.copybetting-person-stake, .copybetting-person-profit) { text-align: left; }
+.copybetting-top .copybetting-person :is(.copybetting-person-stake, .copybetting-person-profit) > small { display: block; margin-bottom: 5px; color: #a3a6b0; font-size: 9px; text-transform: uppercase; }
+.copybetting-selected { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 16px; border-radius: 16px; background: var(--panel); color: #a3a6b0; font-size: 12px; }
+.copybetting-selected > div { display: flex; align-items: center; gap: 10px; }
+.copybetting-selected h3 { margin: 0; color: var(--text); font-size: 14px; }
+.copybetting-selected a { margin-left: auto; color: var(--yellow); }
+.copybetting-hidden-note { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #a3a6b0; font-size: 12px; }
+.copybetting-hidden-note button { padding: 8px 12px; border: 0; border-radius: 8px; color: var(--yellow); background: var(--panel); cursor: pointer; }
+.copybetting-empty { display: grid; gap: 24px; }
+.copybetting-empty-intro { display: flex; align-items: center; gap: 30px; }
+.copybetting-empty-art { display: block; flex: 0 0 118px; }
+.copybetting-empty-art svg { display: block; width: 118px; height: 118px; }
+.copybetting-empty h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 22px; font-weight: 800; }
+.copybetting-empty-intro p { margin: 0 0 16px; color: #a3a6b0; font-size: 14.5px; line-height: 1.45; }
+.copybetting-empty-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.copybetting-empty-steps li { display: grid; align-content: start; gap: 8px; padding: 18px; border-radius: 16px; background: var(--ink); }
+.copybetting-empty-steps b { color: var(--yellow); font-family: var(--font-display); font-size: 22px; }
+.copybetting-empty-steps strong { font-size: 13px; }
+.copybetting-empty-steps span { color: #a3a6b0; font-size: 12px; line-height: 1.45; }
+.copybetting-checklist { display: flex; flex-direction: column; gap: 14px; }
+.copybetting-panel .copybetting-checklist h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 800; line-height: 1.4; }
+.copybetting-checklist ul { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.copybetting-checklist li { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: 14px; background: var(--ink); }
+.copybetting-checklist-marker { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line); }
+.copybetting-checklist .is-complete .copybetting-checklist-marker { color: var(--ink); background: var(--green); box-shadow: none; }
+.copybetting-checklist-label { flex: 1; min-width: 0; color: #a3a6b0; font-size: 13.5px; font-weight: 700; line-height: 1.4; }
+.copybetting-checklist .is-complete .copybetting-checklist-label { color: var(--text); }
+.copybetting-checklist b { max-width: 40%; color: #a3a6b0; font-size: 12px; font-weight: 800; line-height: 1.4; text-align: right; }
+.copybetting-checklist .is-complete b { color: var(--green); }
+/* The row menu is portalled to body, outside scroll and stacking contexts. */
+.copybetting-person-menu { position: fixed; z-index: var(--z-profile-modal); width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 8px; border-radius: 16px; color: var(--text); background: var(--panel); box-shadow: 0 24px 60px rgba(0, 0, 0, .65), inset 0 0 0 1px var(--ink); opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top right; transition: opacity .18s ease, transform .18s ease; }
+.copybetting-person-menu.is-open { opacity: 1; transform: translateY(0) scale(1); }
+.copybetting-person-menu > header { display: flex; align-items: center; gap: 10px; padding: 8px 12px 10px; margin-bottom: 4px; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-person-menu > header .copybetting-avatar { width: 32px; height: 32px; flex-basis: 32px; }
+.copybetting-person-menu > header > span { display: grid; gap: 2px; min-width: 0; }
+.copybetting-person-menu > header strong { font-size: 13px; overflow-wrap: anywhere; }
+.copybetting-person-menu > :is(a, button) { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 10px 12px; border: 0; border-radius: 11px; color: var(--text); background: transparent; font: inherit; font-size: 13.5px; font-weight: 700; text-align: left; text-decoration: none; cursor: pointer; }
+.copybetting-person-menu > :is(a, button) > svg { flex: none; color: #a3a6b0; }
+.copybetting-person-menu > :is(a, button) > span { display: grid; gap: 2px; }
+.copybetting-person-menu small { display: block; color: #a3a6b0; font-size: 10.5px; font-weight: 600; line-height: 1.45; }
+.copybetting-person-menu > :is(a, button):hover:not(:disabled) { background: var(--ink); }
+.copybetting-person-menu button:disabled { cursor: not-allowed; opacity: .6; }
+.copybetting-person-menu > .is-danger, .copybetting-person-menu > .is-danger > svg { color: var(--danger); }
+.copybetting-menu-divider { height: 1px; margin: 4px 0; background: var(--ink); }
+/* CH1 / CH3 share the existing modal controller, focus trap and scroll lock. */
+.copybetting-how-modal { z-index: var(--z-profile-modal); }
+.copybetting-how-modal .copybetting-how-dialog { display: flex; flex-direction: column; gap: 0; width: min(720px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; padding: 26px; border-radius: 24px; color: var(--text); background: var(--ink); outline: none; box-shadow: 0 32px 80px rgba(0, 0, 0, .6); }
+.copybetting-how-modal.is-open:not(.is-visible) { opacity: 0; }
+.copybetting-how-modal:not(.is-visible) .copybetting-how-dialog { opacity: 0; transform: translateY(16px) scale(.985); }
+.copybetting-sheet-handle { display: none; }
+.copybetting-how-head { display: flex; align-items: flex-start; flex: none; gap: 16px; padding-bottom: 18px; }
+.copybetting-how-head > div { flex: 1; }
+.copybetting-how-dialog .copybetting-how-head h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 21px; font-weight: 800; line-height: 1.35; }
+.copybetting-how-head p { margin: 0; color: #a3a6b0; font-size: 13.5px; line-height: 1.4; }
+.copybetting-how-close { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: 11px; color: #a3a6b0; background: var(--panel); cursor: pointer; }
+.copybetting-how-dialog .copybetting-how-body { display: grid; gap: 18px; min-height: 0; padding: 0 4px 0 0; overflow-y: auto; overscroll-behavior: contain; }
+.copybetting-how-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.copybetting-how-steps li { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: var(--panel); }
+.copybetting-how-steps li > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--green); }
+.copybetting-how-steps li:first-child > div { color: var(--yellow); }
+.copybetting-how-steps b { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; color: var(--ink); background: var(--green); font-family: var(--font-display); font-size: 12px; }
+.copybetting-how-steps li:first-child b { background: var(--yellow); }
+.copybetting-how-steps small { font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.copybetting-how-steps strong { font-size: 14.5px; font-weight: 800; line-height: 1.25; }
+.copybetting-how-steps p { margin: 0; color: #a3a6b0; font-size: 12.5px; line-height: 1.45; }
+.copybetting-example { display: grid; gap: 14px; padding: 18px; border-radius: 16px; background: var(--panel); }
+.copybetting-example > header { display: flex; align-items: baseline; gap: 10px; }
+.copybetting-example > header strong { font-size: 13.5px; }
+.copybetting-example > header span, .copybetting-example > p { margin: 0; color: #a3a6b0; font-size: 12.5px; line-height: 1.45; }
+.copybetting-example-cards { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); align-items: center; gap: 12px; }
+.copybetting-example-card { display: grid; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--ink); }
+.copybetting-example-card > header { display: flex; align-items: center; gap: 10px; }
+.copybetting-example-card header > b { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--yellow); color: var(--ink); }
+.copybetting-example-card header > span { display: grid; gap: 2px; font-size: 13px; }
+.copybetting-example-card small { color: #a3a6b0; font-size: 10.5px; }
+.copybetting-example-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.copybetting-example-card dt { margin-bottom: 3px; color: #a3a6b0; font-size: 10.5px; font-weight: 800; text-transform: uppercase; }
+.copybetting-example-card dd { display: flex; align-items: center; gap: 5px; margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 800; white-space: nowrap; }
+.copybetting-example-arrow { color: #a3a6b0; font-size: 22px; }
+.copybetting-how-notes { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.copybetting-how-notes li { display: flex; align-items: flex-start; gap: 12px; }
+.copybetting-how-notes li > span { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 10px; color: var(--yellow); background: var(--panel); }
+.copybetting-how-notes strong { font-size: 13.5px; }
+.copybetting-how-notes p { margin: 3px 0 0; color: #a3a6b0; font-size: 12.5px; line-height: 1.4; }
+.copybetting-faq { display: grid; gap: 10px; }
+.copybetting-faq details { padding: 14px 16px; border-radius: 13px; background: var(--panel); }
+.copybetting-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; cursor: pointer; font-size: 13.5px; font-weight: 800; }
+.copybetting-faq summary::-webkit-details-marker { display: none; }
+.copybetting-faq summary::after { content: '+'; color: #a3a6b0; font-size: 20px; }
+.copybetting-faq details[open] summary::after { content: '−'; }
+.copybetting-faq p { margin: 10px 0 0; color: #a3a6b0; font-size: 12.5px; line-height: 1.5; }
+.copybetting-how-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; flex: none; padding-top: 18px; }
+.copybetting-how-footer .is-primary { min-width: 160px; }
+.copybetting-how-rules { margin-left: auto; color: #a3a6b0; font-size: 12px; }
+
+.copybetting-panel .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* Reader copybetting (CU2 / CU4). Shared surfaces and controls live above. */
+.copybetting-reader-description-mobile { display: none; }
+.copybetting-reader-paused { grid-column: 1 / -1; color: var(--yellow); font-size: 12px; font-weight: 800; }
+.copybetting-reader-filters .copybetting-search { max-width: 250px; }
+.copybetting-reader-filters .copybetting-state-filters { gap: 8px; }
+.copybetting-reader-filters .copybetting-state-filters button { padding: 0 12px; }
+.copybetting-reader-table { display: block; width: 100%; border-collapse: collapse; }
+.copybetting-reader-table thead, .copybetting-reader-table tbody { display: block; }
+.copybetting-reader-table thead tr, .copybetting-reader-row { display: grid; grid-template-columns: minmax(150px, 1fr) 115px 105px 115px 84px 104px 160px; align-items: center; gap: 14px; }
+.copybetting-reader-table th { padding: 0 0 12px; color: #a3a6b0; font-size: 10px; font-weight: 800; letter-spacing: .5px; text-align: left; text-transform: uppercase; }
+.copybetting-reader-table th:nth-child(3), .copybetting-reader-table th:nth-child(4) { text-align: right; }
+.copybetting-reader-table th:nth-child(5) { text-align: center; }
+.copybetting-reader-row { padding: 11px 0; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-reader-row > td { min-width: 0; padding: 0; }
+.copybetting-reader-person > a { display: flex; align-items: center; gap: 11px; color: var(--text); }
+.copybetting-reader-avatar { position: relative; display: inline-flex; flex: 0 0 38px; width: 38px; height: 38px; }
+.copybetting-reader-avatar .copybetting-avatar { flex-basis: 38px; width: 38px; height: 38px; }
+.copybetting-reader-avatar .capper-trust-badge { position: absolute; inset: -3px auto auto -3px; width: auto; min-width: 0; height: 17px; min-height: 17px; padding: 0 5px; border-radius: 6px; background: var(--yellow); color: var(--ink); font-family: var(--font-display); font-size: 9px; font-weight: 800; line-height: 17px; box-shadow: none; }
+.copybetting-reader-person a > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.copybetting-reader-person strong { display: flex; align-items: center; gap: 5px; color: var(--text); font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
+.copybetting-reader-person strong > svg { flex: none; }
+.copybetting-reader-person small { color: #a3a6b0; font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+.copybetting-reader-date time { display: grid; gap: 2px; color: var(--text); font-size: 12px; font-weight: 700; }
+.copybetting-reader-date small { color: #a3a6b0; font-size: 11px; }
+.copybetting-reader-stake, .copybetting-reader-profit { text-align: right; }
+.copybetting-reader-stake > small, .copybetting-reader-profit > small { display: none; }
+.copybetting-reader-stake strong, .copybetting-reader-profit strong { display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 13.5px; font-weight: 800; white-space: nowrap; }
+.copybetting-reader-profit strong { font-family: var(--font-display); font-size: 14.5px; }
+.copybetting-reader-trend > svg { display: block; max-width: 100%; height: 30px; margin: auto; }
+.copybetting-reader-status .copybetting-status { gap: 7px; min-height: 28px; padding: 0 10px; white-space: nowrap; }
+.copybetting-reader-status .copybetting-status::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.copybetting-reader-status > small { display: block; margin-top: 5px; color: #a3a6b0; font-size: 10px; line-height: 1.4; }
+.copybetting-reader-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.copybetting-reader-actions form { margin: 0; }
+.copybetting-reader-actions > a, .copybetting-reader-actions form > button, .copybetting-reader-actions summary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 10px; color: #a3a6b0; background: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.copybetting-reader-actions > a:hover, .copybetting-reader-actions form > button:hover, .copybetting-reader-actions summary:hover { background: color-mix(in srgb, var(--ink), var(--text) 8%); }
+.copybetting-reader-actions .is-pause { color: var(--yellow); }
+.copybetting-reader-actions .is-stop { color: var(--danger); }
+.copybetting-reader-actions .is-resume { color: var(--green); }
+.copybetting-reader-actions button > span { display: none; }
+.copybetting-reader .copybetting-reader-pagination { gap: 14px; }
+.copybetting-reader-pagination .copybetting-reader-more { display: flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 16px; border-radius: 11px; background: var(--ink); color: var(--text); font-size: 12.5px; font-weight: 800; }
+.copybetting-reader-empty td { display: block; padding: 28px 0; color: #a3a6b0; font-size: 13px; line-height: 1.5; }
+.copybetting-reader-empty a { color: var(--yellow); }
+.copybetting-reader-bets { display: grid; }
+.copybetting-reader-bets > article { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 16px; padding: 16px 0; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-reader-bets > article > a { display: grid; gap: 4px; color: var(--text); font-size: 13px; }
+.copybetting-reader-bets small { display: block; margin-bottom: 4px; color: #a3a6b0; font-size: 11px; }
+.copybetting-reader-bets .coin-icon { width: 15px; height: 15px; }
+
+/* AD1 / AD3: capper discovery reuses the existing modal owner. */
+.copybetting-search-modal { z-index: var(--z-profile-modal); }
+.copybetting-search-modal .copybetting-search-dialog { display: flex; flex-direction: column; gap: 16px; width: min(840px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; padding: 24px; border-radius: 24px; outline: none; color: var(--text); background: var(--ink); box-shadow: 0 32px 80px rgba(0, 0, 0, .6); }
+.copybetting-search-modal.is-open:not(.is-visible) { opacity: 0; }
+.copybetting-search-modal:not(.is-visible) .copybetting-search-dialog { opacity: 0; transform: translateY(16px) scale(.985); }
+.copybetting-search-head { display: flex; align-items: flex-start; flex: none; gap: 16px; }
+.copybetting-search-emblem { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; color: var(--ink); background: var(--yellow); }
+.copybetting-search-emblem svg { width: 22px; height: 22px; }
+.copybetting-search-head > div { flex: 1; min-width: 0; }
+.copybetting-search-subtitle-mobile, .copybetting-sort-mobile { display: none; }
+.copybetting-search-dialog .copybetting-search-head h2 { margin: 0 0 5px; font-family: var(--font-display); font-size: 20px; font-weight: 800; line-height: 1.35; }
+.copybetting-search-head p { margin: 0; color: #a3a6b0; font-size: 13px; font-weight: 600; line-height: 1.4; }
+.copybetting-discovery-form { display: grid; gap: 10px; flex: none; }
+.copybetting-discovery-query { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 14px; border-radius: 12px; color: #a3a6b0; background: var(--panel); }
+.copybetting-discovery-query input { flex: 1; min-width: 0; padding: 0; border: 0; outline: none; color: var(--text); background: transparent; font: inherit; font-size: 16px; font-weight: 700; }
+.copybetting-discovery-query button { display: grid; place-items: center; flex: none; width: 24px; height: 28px; padding: 0; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 22px; cursor: pointer; }
+.copybetting-discovery-query input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.copybetting-discovery-query kbd { padding: 4px 7px; border-radius: 6px; background: var(--ink); font: inherit; font-size: 10px; }
+.copybetting-discovery-hint { color: #a3a6b0; font-size: 11.5px; }
+.copybetting-discovery-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.copybetting-discovery-sort { flex: none; }
+.copybetting-discovery-tools select { width: 236px; height: 42px; padding: 0 14px; border: 0; border-radius: 12px; color: var(--text); background: var(--panel); font: inherit; font-size: 13px; font-weight: 800; color-scheme: dark; cursor: pointer; }
+.copybetting-discovery-separator { width: 1px; height: 26px; background: var(--panel); }
+.copybetting-discovery-chips { display: contents; }
+.copybetting-discovery-chips button, .copybetting-discovery-verified { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 6px; min-height: 38px; padding: 0 13px; border: 0; border-radius: 10px; color: #a3a6b0; background: var(--panel); font: inherit; font-size: 12.5px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.copybetting-discovery-chips button[aria-pressed="true"], .copybetting-discovery-verified:has(input:checked) { color: var(--ink); background: var(--yellow); }
+.copybetting-discovery-verified:has(input:focus-visible) { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.copybetting-discovery-retry[hidden] { display: none; }
+.copybetting-reader-add-link { padding: 0; border: 0; color: var(--yellow); background: transparent; font: inherit; text-decoration: underline; cursor: pointer; }
+.copybetting-discovery-status { margin: 0; color: #a3a6b0; font-size: 12px; }
+.copybetting-discovery-status:empty { display: none; }
+.copybetting-search-dialog .copybetting-discovery-results { flex: 0 1 auto; min-height: 120px; padding: 12px 4px 0 0; box-shadow: inset 0 1px var(--panel); }
+.copybetting-discovery-count { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #a3a6b0; font-size: 12px; }
+.copybetting-discovery-count strong { color: var(--text); font-size: 13px; }
+.copybetting-search-result { display: grid; grid-template-columns: minmax(200px, 1fr) auto 126px; align-items: center; gap: 16px; padding: 12px 0; box-shadow: inset 0 -1px var(--panel); }
+.copybetting-cap-identity { display: flex; align-items: center; gap: 13px; min-width: 0; color: var(--text); }
+.copybetting-cap-identity > span:last-child { display: grid; gap: 3px; min-width: 0; }
+.copybetting-cap-identity strong { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
+.copybetting-cap-identity small { color: #a3a6b0; font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+.copybetting-cap-verified { display: grid; place-items: center; flex: 0 0 13px; width: 13px; height: 13px; border-radius: 50%; color: #fff; background: var(--blue); font-size: 9px; }
+.copybetting-search-metrics { display: flex; align-items: center; gap: 18px; }
+.copybetting-search-metrics > span { display: grid; gap: 4px; text-align: center; }
+.copybetting-search-metrics strong { font-family: var(--font-display); font-size: 14px; font-weight: 800; }
+.copybetting-search-metrics small { color: #a3a6b0; font-size: 10.5px; }
+.copybetting-search-dialog .is-profit, .copybetting-setup-page .is-profit { color: var(--green); }
+.copybetting-search-dialog .is-loss, .copybetting-setup-page .is-loss { color: var(--danger); }
+.copybetting-search-copying { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 126px; min-height: 38px; border-radius: 10px; color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--panel)); font-size: 12px; font-weight: 800; }
+.copybetting-search-result > .copybetting-button { min-height: 38px; padding: 0 12px; font-size: 13px; }
+.copybetting-discovery-more { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 42px; margin-top: 12px; padding: 0 20px; border: 0; border-radius: 12px; color: var(--text); background: var(--panel); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.copybetting-search-result.is-appended { animation: copybettingResultIn .22s ease-out both; }
+@keyframes copybettingResultIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.copybetting-discovery-more:disabled { cursor: wait; opacity: .6; }
+.copybetting-search-placeholder { padding: 28px 0; color: #a3a6b0; font-size: 13px; line-height: 1.5; }
+.copybetting-discovery-footer { flex: none; color: #a3a6b0; font-size: 11px; text-align: center; }
+.copybetting-search-dialog .sr-only, .copybetting-setup-page .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.copybetting-search-dialog :is(a, button, select):focus-visible, .copybetting-setup-page :is(a, button):focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.copybetting-discovery-query:focus-within { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.copybetting-search-dialog :is(a, button):hover:not(:disabled), .copybetting-setup-page :is(a, button):hover:not(:disabled) { filter: brightness(1.15); }
+/* AD2 / AD4: replaces the old inline setup stylesheet. */
+.copybetting-setup-page { width: 100%; margin: 0 auto; padding: 24px; color: var(--text); }
+.copybetting-setup-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+.copybetting-setup-header > a { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 12px; color: var(--text); background: var(--panel); font-size: 22px; }
+.copybetting-setup-page .copybetting-setup-header h1 { margin: 0 0 5px; font-family: var(--font-display); font-size: 24px; font-weight: 800; letter-spacing: -.5px; line-height: 1.4; }
+.copybetting-setup-header p { margin: 0; color: #a3a6b0; font-size: 13px; }
+.copybetting-setup-grid { display: grid; grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr); align-items: start; gap: 16px; width: 100%; }
+.copybetting-setup-fields, .copybetting-setup-aside { display: grid; gap: 16px; min-width: 0; }
+.copybetting-setup-surface { display: grid; gap: 16px; min-width: 0; padding: 22px; border-radius: 20px; background: var(--panel); }
+.copybetting-setup-page .copybetting-setup-divider { display: flex; align-items: center; gap: 12px; margin: 0; padding-top: 2px; color: var(--muted); font-family: var(--font-body); font-size: 11.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+.copybetting-setup-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.copybetting-setup-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.copybetting-setup-field { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.copybetting-setup-field > label, .copybetting-setup-page legend { margin: 0; padding: 0; color: var(--text); font-size: 13px; font-weight: 800; }
+.copybetting-setup-input { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 14px; border-radius: 12px; background: var(--ink); }
+.copybetting-setup-input input { flex: 1; width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 0; outline: none; box-shadow: none; appearance: textfield; color: var(--text); background: transparent; font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+.copybetting-setup-input input::-webkit-inner-spin-button, .copybetting-setup-input input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
+.copybetting-setup-input > span { display: flex; align-items: center; gap: 6px; flex: none; color: var(--yellow); font-size: 12.5px; font-weight: 800; }
+.copybetting-setup-page .coin-icon { width: 17px; height: 17px; }
+.copybetting-setup-field > small, .copybetting-setup-page fieldset > small { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.copybetting-setup-input:focus-within { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.copybetting-percentage { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 10px; min-width: 0; }
+.copybetting-percentage > .copybetting-setup-input > span, .copybetting-coefficient-input > span { color: var(--muted); }
+.copybetting-percentage-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.copybetting-percentage-presets button { min-width: 0; min-height: 46px; padding: 0; border: 0; border-radius: 10px; color: #a3a6b0; background: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.copybetting-percentage-presets button.is-active { color: var(--ink); background: var(--yellow); }
+.copybetting-calculation { display: grid; gap: 12px; padding: 18px 20px; border-radius: 16px; background: color-mix(in srgb, var(--yellow) 7%, var(--ink)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yellow) 18%, transparent); }
+.copybetting-calculation-head { color: var(--yellow); font-size: 12px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+.copybetting-calculation-equation { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.copybetting-calculation-equation > b { font-family: var(--font-display); font-size: 20px; font-weight: 800; }
+.copybetting-calculation-equation > span { color: #a3a6b0; font-size: 15px; }
+.copybetting-calculation-equation > strong { display: inline-flex; align-items: center; gap: 7px; color: var(--yellow); font-family: var(--font-display); font-size: 24px; font-weight: 800; }
+.copybetting-calculation-equation > small { color: #a3a6b0; font-size: 12.5px; }
+.copybetting-calculation > p { margin: 0; color: #c9b27a; font-size: 12px; line-height: 1.45; }
+.copybetting-coefficient-input { width: min(180px, 100%); }
+.copybetting-setup-page legend { margin-bottom: 9px; }
+.copybetting-setup-page fieldset { display: grid; gap: 9px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.copybetting-choice-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.copybetting-choice-chips label { position: relative; display: block; cursor: pointer; }
+.copybetting-choice-chips label > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.copybetting-choice-chips label > span, .copybetting-choice-chips > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 11px; color: #a3a6b0; background: var(--ink); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.copybetting-choice-chips input:checked + span, .copybetting-choice-chips > button.is-active { color: var(--ink); background: var(--yellow); }
+.copybetting-choice-chips label:focus-within { outline: 2px solid var(--yellow); outline-offset: 3px; border-radius: 10px; }
+.copybetting-type-picker .copybetting-choice-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: min(420px, 100%); padding: 4px; border-radius: 13px; background: var(--ink); }
+.copybetting-type-picker .copybetting-choice-chips label > span { width: 100%; padding: 0 8px; border-radius: 10px; background: transparent; }
+.copybetting-sport-icon { display: inline-flex; flex: none; width: 18px; height: 18px; }
+.copybetting-sport-icon :is(span, svg) { display: block; width: 100%; height: 100%; }
+.copybetting-sport-icon > svg { fill: none; stroke: currentColor; stroke-width: 2; }
+.copybetting-setup-cap-summary { gap: 14px; padding: 18px; border-radius: 18px; }
+.copybetting-setup-cap-head { display: flex; align-items: center; gap: 13px; min-width: 0; }
+.copybetting-setup-cap-head > .copybetting-cap-identity { flex: 1; }
+.copybetting-setup-profile-link { display: inline-flex; align-items: center; justify-content: center; flex: none; min-height: 34px; padding: 0 20px; border-radius: 12px; color: var(--text); background: var(--ink); font-size: 12px; font-weight: 800; }
+.copybetting-setup-cap-summary .copybetting-reader-avatar, .copybetting-setup-cap-summary .copybetting-avatar { width: 48px; height: 48px; flex-basis: 48px; }
+.copybetting-setup-cap-summary .capper-trust-badge { height: 20px; min-height: 20px; padding: 0 6px; border-radius: 7px; font-size: 10px; }
+.copybetting-setup-cap-summary .copybetting-cap-identity strong { font-size: 15px; }
+.copybetting-cap-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.copybetting-cap-stats > span { display: grid; gap: 3px; min-width: 0; padding: 12px 14px; border-radius: 13px; background: var(--ink); }
+.copybetting-cap-stats b { font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+.copybetting-cap-stats small { color: var(--muted); font-size: 11px; }
+.copybetting-history-preview { gap: 10px; padding: 20px; }
+.copybetting-history-preview > header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.copybetting-setup-page .copybetting-history-preview h2 { margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 800; line-height: 1.4; }
+.copybetting-history-preview header > small { color: #a3a6b0; font-size: 11.5px; }
+.copybetting-preview-rows > article { display: flex; align-items: center; gap: 12px; padding: 11px 0; box-shadow: inset 0 -1px var(--ink); }
+.copybetting-preview-rows > article:last-child { box-shadow: none; }
+.copybetting-preview-marker { display: grid; place-items: center; flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; color: #a3a6b0; background: var(--ink); font-size: 12px; }
+.copybetting-preview-rows .is-eligible .copybetting-preview-marker { background: var(--green); color: var(--ink); }
+.copybetting-preview-rows article > div { flex: 1; min-width: 0; }
+.copybetting-preview-rows strong { display: block; color: var(--text); font-size: 13px; font-weight: 800; }
+.copybetting-preview-rows small { display: block; margin-top: 2px; color: #a3a6b0; font-size: 11px; font-weight: 700; }
+.copybetting-preview-rows b { max-width: 34%; color: #a3a6b0; font-size: 12px; font-weight: 800; text-align: right; }
+.copybetting-preview-rows .is-eligible b { color: var(--yellow); }
+.copybetting-preview-footnote { margin: 0; padding-top: 10px; box-shadow: inset 0 1px var(--ink); color: #a3a6b0; font-size: 11.5px; line-height: 1.45; }
+.copybetting-setup-actions { gap: 12px; padding: 20px; }
+.copybetting-setup-actions > button { min-height: 50px; font-size: 14.5px; }
+.copybetting-setup-actions > a { min-height: 44px; color: #a3a6b0; background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.copybetting-setup-actions > small, .copybetting-setup-actions > p { margin: 0; color: #a3a6b0; font-size: 11.5px; line-height: 1.45; }
+.copybetting-setup-actions > p:empty { display: none; }
+.copybetting-setup-error, .copybetting-setup-page .errorlist { margin: 0; padding: 12px; border-radius: 10px; color: var(--danger); background: var(--ink); font-size: 12px; list-style: none; }
+.copybetting-setup-error { display: grid; gap: 6px; }
+
+/* PR1–PR4: copying controls on the public capper profile. */
+.expert-copy-button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 9px; min-height: 50px; padding: 0 20px; border-radius: 12px; color: var(--ink); background: var(--yellow); font-size: 14.5px; font-weight: 800; text-decoration: none; }
+.expert-copy-button.is-active { color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--ink)); box-shadow: inset 0 0 0 1.5px var(--green); }
+.expert-copy-button.is-paused { color: var(--yellow); background: var(--ink); box-shadow: inset 0 0 0 1.5px var(--yellow); }
+.expert-copy-button svg { width: 20px; height: 20px; flex: none; }
+.expert-copy-strip { --copy-state-color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 18px; min-width: 0; padding: 16px 22px; border-radius: 20px; background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); scroll-margin-top: 110px; }
+.expert-copy-strip[hidden], .expert-copy-strip.is-mobile { display: none; }
+.expert-copy-strip.is-active { --copy-state-color: var(--green); background: color-mix(in srgb, var(--green) 10%, var(--ink)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 24%, var(--ink)); }
+.expert-copy-strip.is-paused { --copy-state-color: var(--yellow); background: color-mix(in srgb, var(--yellow) 9%, var(--ink)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--yellow) 22%, var(--ink)); }
+.expert-copy-strip.is-none { padding: 18px 22px; background: var(--panel); }
+.expert-copy-emblem { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; border-radius: 14px; color: var(--yellow); background: var(--ink); }
+.expert-copy-emblem svg { width: 24px; height: 24px; }
+.expert-copy-dot { flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; color: var(--copy-state-color); background: currentColor; box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 13%, transparent); }
+.expert-copy-description { display: grid; flex: 1; gap: 4px; min-width: 180px; }
+.expert-copy-description > strong { color: var(--copy-state-color); font-size: 15px; font-weight: 800; line-height: 1.35; }
+.expert-copy-strip.is-none .expert-copy-description > strong { color: var(--text); }
+.expert-copy-description > small { color: var(--soft); font-size: 12.5px; font-weight: 600; line-height: 1.45; }
+.expert-copy-description .expert-copy-pending { color: var(--yellow); }
+.expert-copy-mobile-label { display: none; }
+.expert-copy-cta, .expert-copy-help { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-height: 46px; padding: 0 20px; border: 0; border-radius: 12px; color: var(--ink); background: var(--yellow); font: inherit; font-size: 14px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.expert-copy-help { color: var(--soft); background: transparent; box-shadow: inset 0 0 0 1px var(--line); font-size: 13.5px; }
+.expert-copy-profit { display: grid; flex: none; gap: 2px; text-align: right; }
+.expert-copy-profit > small { color: var(--muted); font-size: 10.5px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; }
+.expert-copy-profit > strong { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; font-family: var(--font-display); font-size: 18px; font-weight: 800; white-space: nowrap; }
+.expert-copy-profit .coin-icon { width: 1em; height: 1em; flex-basis: 1em; }
+.expert-copy-strip .is-profit, .expert-copy-sparkline { color: var(--green); }
+.expert-copy-strip .is-loss { color: var(--danger); }
+.expert-copy-sparkline { flex: none; }
+.expert-copy-controls { display: flex; align-items: center; flex: none; gap: 8px; padding-left: 18px; box-shadow: -1px 0 color-mix(in srgb, var(--copy-state-color) 24%, var(--ink)); }
+.expert-copy-controls form { display: flex; margin: 0; }
+.expert-copy-controls :is(form > button, a, summary) { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 8px; min-width: 40px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 11px; color: var(--soft); background: var(--ink); font: inherit; font-size: 13px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.expert-copy-controls form > .is-pause { color: var(--yellow); }
+.expert-copy-controls form > .is-stop { color: var(--danger); }
+.expert-copy-controls form > .is-resume { color: var(--green); }
+.expert-copy-controls :is(.is-pause, .is-stop) > span { display: none; }
+.expert-copy-controls > .expert-copy-cta { color: var(--ink); background: var(--yellow); }
+.expert-copy-more { position: relative; }
+.expert-copy-more > summary { list-style: none; }
+.expert-copy-more > summary::-webkit-details-marker { display: none; }
+.expert-copy-more > nav { position: absolute; z-index: 30; top: calc(100% + 10px); right: 0; display: grid; gap: 4px; width: 270px; padding: 8px; border-radius: 14px; background: var(--panel); box-shadow: 0 12px 36px rgba(0, 0, 0, .35), inset 0 0 0 1px var(--line); }
+.expert-copy-more[open] > nav { animation: expertCopyMenuIn .18s ease-out; }
+.expert-copy-more nav :is(a, button) { display: flex; justify-content: flex-start; gap: 10px; width: 100%; min-height: 42px; padding: 10px; border: 0; border-radius: 8px; color: var(--text); background: transparent; text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
+.expert-copy-more nav :is(a, button):hover { background: var(--ink); }
+.expert-copy-more nav svg { flex: none; }
+.expert-copy-button:focus-visible, .expert-copy-strip :is(a, button, summary):focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+@keyframes expertCopyMenuIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+.expert-copy-feedback { flex-basis: 100%; grid-column: 1 / -1; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.4; }
+.expert-copy-feedback:empty { display: none; }
+[data-copy-status-form] button:disabled { cursor: wait; opacity: .6; }

@@ -101,7 +101,6 @@ from front.prediction_metrics import annotate_author_roi
 
 
 WALLET_OPERATION_PAGE_SIZE = 20
-PROFILE_MOBILE_COUPONS_PAGE_SIZE = 6
 PROFILE_BEST_COUPONS_LIMIT = 5
 PROFILE_SOCIAL_PAGE_SIZE = 8
 PROFILE_COMMENTS_PAGE_SIZE = 10
@@ -1158,57 +1157,6 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
     return cards
 
 
-def _profile_mobile_coupon_page(user, *, sort_key="date", direction="desc", offset=0):
-    queryset = _sort_profile_coupons(
-        _profile_coupons_queryset(user),
-        sort_key,
-        direction,
-    )
-    rows = list(queryset[offset : offset + PROFILE_MOBILE_COUPONS_PAGE_SIZE + 1])
-    visible = rows[:PROFILE_MOBILE_COUPONS_PAGE_SIZE]
-    has_more = len(rows) > PROFILE_MOBILE_COUPONS_PAGE_SIZE
-    return _expert_mobile_coupon_cards(visible), has_more, offset + len(visible)
-
-
-def _copybetting_audience_context(user) -> dict:
-    if not getattr(user, "is_analyst", False):
-        return {
-            "copybetting_audience_subscriptions": [],
-            "copybetting_audience_active_count": 0,
-            "copybetting_audience_total_count": 0,
-            "copybetting_audience_profit": 0,
-            "copybetting_audience_profit_display": "0",
-            "copybetting_audience_copied_bets_count": 0,
-            "copybetting_audience_copied_bets": [],
-        }
-
-    audience_subscriptions = list(
-        CopyBettingSubscription.objects.filter(analyst=user)
-        .exclude(status=CopyBettingSubscription.Status.STOPPED)
-        .select_related("user", "user__analyst_profile")
-        .prefetch_related("allowed_sports")
-        .annotate(copied_bets_count=Count("copied_bets", distinct=True))
-        .order_by("status", "-updated_at", "-started_at", "-id")
-    )
-    all_audience = CopyBettingSubscription.objects.filter(analyst=user)
-    active_count = all_audience.filter(status=CopyBettingSubscription.Status.ACTIVE).count()
-    audience_profit = all_audience.aggregate(profit=Sum("total_profit"))["profit"] or 0
-    audience_copied_bets_count = CopiedBet.objects.filter(analyst=user).count()
-
-    return {
-        "copybetting_audience_subscriptions": audience_subscriptions,
-        "copybetting_audience_active_count": active_count,
-        "copybetting_audience_total_count": all_audience.count(),
-        "copybetting_audience_profit": audience_profit,
-        "copybetting_audience_profit_display": format_coins(int(audience_profit)),
-        "copybetting_audience_copied_bets_count": audience_copied_bets_count,
-        "copybetting_audience_copied_bets": (
-            CopiedBet.objects.filter(analyst=user)
-            .select_related("user", "user__analyst_profile", "source_coupon")
-            .order_by("-created_at", "-id")[:20]
-        ),
-    }
-
 
 def _wallet_operation_cursor(operation) -> str:
     return f"{operation.created_at.isoformat()}|{operation.pk}"
@@ -1504,17 +1452,6 @@ def profile(request):
         if request.user.role == User.Role.ANALYST
         else []
     )
-    copybetting_subscriptions = (
-        CopyBettingSubscription.objects.filter(user=request.user)
-        .select_related("analyst", "analyst__analyst_profile")
-        .prefetch_related("allowed_sports")
-        .order_by("-started_at", "-id")
-    )
-    copied_bets = (
-        CopiedBet.objects.filter(user=request.user)
-        .select_related("analyst", "analyst__analyst_profile", "source_coupon")
-        .order_by("-created_at", "-id")[:20]
-    )
 
     earnings_context = {}
     active_paid_subscriber_ids = set()
@@ -1563,44 +1500,29 @@ def profile(request):
             (Notification.Kind.NEW_FOLLOWER,),
         )
 
-    my_coupons = []
     profile_best_mobile_coupons = []
-    profile_desktop_coupons = []
     profile_best_expresses = []
     profile_coupon_stats = {"total": 0, "wins": 0, "losses": 0, "win_rate": 0}
-    profile_mobile_coupons = []
-    profile_mobile_has_more = False
-    profile_mobile_next_offset = 0
     coupons_count = 0
     predictions_count = 0
     if request.user.role == User.Role.ANALYST:
         _delete_expired_draft_coupons(request.user)
         base_coupons = _profile_coupons_queryset(request.user)
-        my_coupons = list(base_coupons.order_by("-created_at", "-id"))
-        for coupon in my_coupons:
-            coupon.result_key, coupon.result_label = _coupon_result(coupon)
-
-        coupons_count = len(my_coupons)
+        counts = base_coupons.aggregate(
+            total=Count("pk", distinct=True),
+            wins=Count("pk", filter=Q(state_status=PredictionCoupon.StateStatus.WIN), distinct=True),
+            losses=Count("pk", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE), distinct=True),
+        )
+        coupons_count = counts["total"]
         predictions_count = coupons_count
-        wins = sum(coupon.state_status == PredictionCoupon.StateStatus.WIN for coupon in my_coupons)
-        losses = sum(coupon.state_status == PredictionCoupon.StateStatus.LOSE for coupon in my_coupons)
         profile_coupon_stats = {
-            "total": coupons_count,
-            "wins": wins,
-            "losses": losses,
-            "win_rate": round(wins * 100 / coupons_count) if coupons_count else 0,
+            **counts,
+            "win_rate": round(counts["wins"] * 100 / coupons_count) if coupons_count else 0,
         }
-        profile_desktop_coupons = _expert_mobile_coupon_cards(my_coupons)
-        winning_expresses = sorted(
-            (
-                coupon
-                for coupon in my_coupons
-                if coupon.state_status == PredictionCoupon.StateStatus.WIN
-                and coupon.predictions_count > 1
-            ),
-            key=lambda coupon: (coupon.combined_coefficient, coupon.created_at, coupon.id),
-            reverse=True,
-        )[:3]
+        winning_expresses = base_coupons.filter(
+            state_status=PredictionCoupon.StateStatus.WIN,
+            predictions_count__gt=1,
+        ).order_by("-combined_coefficient", "-created_at", "-id")[:3]
         profile_best_expresses = _expert_mobile_coupon_cards(winning_expresses)
         best_coupons = list(
             base_coupons.filter(state_status=PredictionCoupon.StateStatus.WIN)
@@ -1609,11 +1531,7 @@ def profile(request):
             ]
         )
         profile_best_mobile_coupons = _mobile_coupon_cards(best_coupons, request.user)
-        (
-            profile_mobile_coupons,
-            profile_mobile_has_more,
-            profile_mobile_next_offset,
-        ) = _profile_mobile_coupon_page(request.user)
+
 
     achievement_overview = build_achievement_overview(
         request.user,
@@ -1669,14 +1587,9 @@ def profile(request):
         "active_paid_subscriber_ids": active_paid_subscriber_ids,
         "followers_social": followers_social_context,
         "following_social": following_social_context,
-        "my_coupons": my_coupons,
         "profile_best_mobile_coupons": profile_best_mobile_coupons,
-        "profile_desktop_coupons": profile_desktop_coupons,
         "profile_best_expresses": profile_best_expresses,
         "profile_coupon_stats": profile_coupon_stats,
-        "profile_mobile_coupons": profile_mobile_coupons,
-        "profile_mobile_has_more": profile_mobile_has_more,
-        "profile_mobile_next_offset": profile_mobile_next_offset,
         "coupons_count": coupons_count,
         "predictions_count": predictions_count,
         "achievement_overview": achievement_overview,
@@ -1696,10 +1609,11 @@ def profile(request):
         "delete_account_blockers": account_deletion_blockers(request.user),
         "coin_transactions": coin_transactions,
         "real_transactions": real_transactions,
-        "copybetting_subscriptions": copybetting_subscriptions,
-        "copied_bets": copied_bets,
         "page_class": "profile",
     }
+    if request.user.role == User.Role.ANALYST:
+        from .services.profile_coupon_feed import build_coupon_feed_context
+        context.update(build_coupon_feed_context(request.user, request.GET, offset=0))
     if focus_form is not None:
         context.update(
             {
@@ -1710,7 +1624,8 @@ def profile(request):
                 "league_search_url": reverse("cabinet:league_search"),
             }
         )
-    context.update(_copybetting_audience_context(request.user))
+    from cabinet.services.copybetting import build_copybetting_context
+    context.update(build_copybetting_context(request.user, request.GET))
     if request.user.role == User.Role.ANALYST:
         context.update(build_dashboard_context(request.user))
         context.update(earnings_context)
@@ -1758,34 +1673,9 @@ def profile_mobile_coupons(request):
     if request.user.role != User.Role.ANALYST:
         return JsonResponse({"ok": False, "message": "Недоступно."}, status=403)
 
-    sort_key = request.GET.get("sort", "date")
-    direction = request.GET.get("direction", "desc")
-    if direction not in {"asc", "desc"}:
-        direction = "desc"
-    try:
-        offset = max(0, int(request.GET.get("offset", 0)))
-    except (TypeError, ValueError):
-        offset = 0
+    from .services.profile_coupon_feed import build_coupon_feed_context, build_coupon_feed_payload
 
-    mobile_coupons, has_more, next_offset = _profile_mobile_coupon_page(
-        request.user,
-        sort_key=sort_key,
-        direction=direction,
-        offset=offset,
-    )
-    html = render_to_string(
-        "cabinet/includes/_profile_mobile_coupon_items.html",
-        {"mobile_coupons": mobile_coupons},
-        request=request,
-    )
-    return JsonResponse(
-        {
-            "ok": True,
-            "html": html,
-            "has_more": has_more,
-            "next_offset": next_offset,
-        }
-    )
+    return JsonResponse(build_coupon_feed_payload(request, build_coupon_feed_context(request.user, request.GET)))
 
 
 @login_required
