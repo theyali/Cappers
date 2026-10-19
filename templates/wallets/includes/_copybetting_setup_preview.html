@@ -1,0 +1,3 @@
+<header><h2>Как это сработало бы</h2><small>Последние 3 прогноза</small></header>
+<div class="copybetting-preview-rows">{% for item in setup_history %}<article class="{% if item.eligible %}is-eligible{% endif %}"><span class="copybetting-preview-marker" aria-hidden="true">{% if item.eligible %}✓{% else %}−{% endif %}</span><div><strong>{{ item.title }}</strong><small>{{ item.subtitle }}</small></div><b>{{ item.result }}</b></article>{% empty %}<p>Пока нет доступных вам прогнозов для примера.</p>{% endfor %}</div>
+<p class="copybetting-preview-footnote">Проверка на истории — реальные ставки начнутся со следующего прогноза каппера. Это пример применения фильтров, а не обещание результата.</p>

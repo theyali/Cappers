@@ -1,0 +1,3 @@
+{% if public_copybetting.visible %}
+<a data-copy-hero-button="{% if copy_mobile %}mobile{% else %}desktop{% endif %}" class="expert-copy-button is-{{ public_copybetting.status }}" href="{% if copy_mobile %}{{ public_copybetting.hero_mobile_url }}{% else %}{{ public_copybetting.hero_url }}{% endif %}">{% include "cabinet/includes/_copybetting_reader_icon.html" with name=public_copybetting.hero_icon only %}<span>{{ public_copybetting.hero_label }}</span></a>
+{% endif %}

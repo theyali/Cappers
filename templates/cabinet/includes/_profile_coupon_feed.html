@@ -1,0 +1,37 @@
+<div class="profile-coupon-feed" data-profile-coupon-feed data-url="{{ coupon_feed_url }}" data-sort="{{ coupon_feed_sort }}" data-direction="{{ coupon_feed_direction }}" data-filter="{{ coupon_feed_filter }}" aria-busy="false">
+    <div class="profile-desktop-list-head">
+        <h3>Все прогнозы</h3>
+        <div class="profile-desktop-coupon-filters" role="group" aria-label="Фильтр по результату">
+            <button type="button" data-profile-coupon-filter="all" class="{% if coupon_feed_filter == 'all' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'all' %}true{% else %}false{% endif %}">Все</button>
+            <button type="button" data-profile-coupon-filter="win" class="{% if coupon_feed_filter == 'win' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'win' %}true{% else %}false{% endif %}">Выигрыш</button>
+            <button type="button" data-profile-coupon-filter="lose" class="{% if coupon_feed_filter == 'lose' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'lose' %}true{% else %}false{% endif %}">Проигрыш</button>
+            <button type="button" data-profile-coupon-filter="pending" class="{% if coupon_feed_filter == 'pending' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'pending' %}true{% else %}false{% endif %}">В игре</button>
+            <button type="button" data-profile-coupon-filter="refund" class="{% if coupon_feed_filter == 'refund' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'refund' %}true{% else %}false{% endif %}">Возврат</button>
+        </div>
+    </div>
+    <div class="profile-desktop-sort-toolbar">
+        <span class="profile-desktop-sort-label">Сортировка</span>
+        {% include "cabinet/includes/_profile_coupon_sort.html" with sort_class="profile-desktop-sort" coupons_count=coupon_feed_total coupon_feed_sort=coupon_feed_sort coupon_feed_direction=coupon_feed_direction only %}
+    </div>
+    <div class="profile-coupons-list profile-coupons-desktop-list" data-coupon-feed-desktop>
+        {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=coupon_feed_items desktop=True only %}
+    </div>
+    <div class="profile-mobile-coupons-feed" data-coupon-feed-mobile>
+        {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=coupon_feed_items only %}
+    </div>
+    <p class="profile-coupon-feed-empty" data-coupon-feed-empty{% if coupon_feed_items %} hidden{% endif %}>По выбранному фильтру прогнозов нет.</p>
+    <p class="profile-coupon-feed-status" data-coupon-feed-status role="status" aria-live="polite"></p>
+    <div class="profile-coupon-feed-more" data-coupon-feed-sentinel>
+        <button class="expert-mobile-feed-all" type="button" data-coupon-feed-more data-next-offset="{{ coupon_feed_next_offset }}"{% if not coupon_feed_has_more %} hidden{% endif %}>Показать ещё</button>
+    </div>
+</div>
+
+<div class="profile-email-modal expert-public-details-modal profile-coupon-access-modal" id="profile-coupon-access-modal" data-expert-public-modal="coupon-access" aria-hidden="true">
+    <button type="button" class="profile-email-modal-backdrop expert-public-details-backdrop" data-expert-public-details-close tabindex="-1" aria-label="Закрыть"></button>
+    <section class="profile-email-modal-card expert-public-details-card profile-coupon-access-card" role="dialog" aria-modal="true" aria-label="Доступ к платному прогнозу" tabindex="-1" data-expert-public-details-dialog>
+        <button type="button" class="profile-email-modal-close profile-coupon-access-close" data-expert-public-details-close aria-label="Закрыть">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+        <div data-expert-public-modal-slot></div>
+    </section>
+</div>

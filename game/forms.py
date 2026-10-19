@@ -1,10 +1,11 @@
 from decimal import Decimal
 
 from django import forms
-from django.db.models import Q
+from django.core.exceptions import ValidationError
 
+from game.cover_images import prediction_editor_covers
 from game.models import PredictionCoupon, PredictionCoverImage
-from game.services.prediction_editor import can_use_rich_prediction_fields
+from game.services.prediction_editor import can_use_rich_prediction_fields, validate_paid_prediction_content, validate_paid_prediction_settings
 
 
 MAX_CUSTOM_COVER_SIZE = 5 * 1024 * 1024
@@ -38,6 +39,7 @@ class RichPredictionCouponForm(forms.Form):
             }
         ),
     )
+    draft_revision = forms.CharField(required=False, widget=forms.HiddenInput)
     remove_prediction_ids = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -87,39 +89,7 @@ class RichPredictionCouponForm(forms.Form):
 
         covers = PredictionCoverImage.objects.none()
         if self.can_use_rich_fields:
-            covers = PredictionCoverImage.objects.filter(
-                is_active=True,
-                placement=PredictionCoverImage.Placement.GRID,
-            )
-            if sport is not None:
-                sport_id = getattr(sport, "pk", sport)
-                covers = covers.filter(
-                    Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
-                    | Q(
-                        cover_type=PredictionCoverImage.CoverType.SPORT,
-                        sport_id=sport_id,
-                    )
-                )
-            elif coupon is not None:
-                sport_ids = set(
-                    coupon.predictions.filter(match__sport_id__isnull=False)
-                    .values_list("match__sport_id", flat=True)
-                )
-                if len(sport_ids) == 1:
-                    sport_id = next(iter(sport_ids))
-                    covers = covers.filter(
-                        Q(cover_type=PredictionCoverImage.CoverType.EXPRESS)
-                        | Q(
-                            cover_type=PredictionCoverImage.CoverType.SPORT,
-                            sport_id=sport_id,
-                        )
-                    )
-            covers = covers.select_related("sport").order_by(
-                "cover_type",
-                "sport__name_ru",
-                "sport__name",
-                "id",
-            )
+            covers = prediction_editor_covers()
         self.fields["cover_image"].queryset = covers
 
         if not self.can_use_rich_fields:
@@ -199,10 +169,18 @@ class RichPredictionCouponForm(forms.Form):
                 "is_paid",
                 "Платные прогнозы доступны VIP-капперам",
             )
-        if is_paid and not description and self.can_use_rich_fields:
-            self.add_error(
-                "description",
-                "Для платного прогноза обязательно добавьте описание.",
-            )
+        if is_paid and self.can_use_rich_fields:
+            try:
+                validate_paid_prediction_settings(self.user, self.coupon)
+            except ValidationError as exc:
+                for field, messages in exc.message_dict.items():
+                    for message in messages:
+                        self.add_error(field, message)
+            try:
+                validate_paid_prediction_content(cleaned_data.get("headline"), description)
+            except ValidationError as exc:
+                for field, messages in exc.message_dict.items():
+                    for message in messages:
+                        self.add_error(field, message)
 
         return cleaned_data

@@ -1,0 +1,32 @@
+<div class="profile-email-modal expert-public-details-modal copybetting-how-modal" id="copybetting-how-modal" data-expert-public-modal="copybetting-how" aria-hidden="true">
+    <button type="button" class="profile-email-modal-backdrop expert-public-details-backdrop" data-expert-public-details-close tabindex="-1" aria-label="Закрыть"></button>
+    <section class="profile-email-modal-card expert-public-details-card copybetting-how-dialog" role="dialog" aria-modal="true" aria-labelledby="copybetting-how-title" tabindex="-1" data-expert-public-details-dialog>
+        <span class="copybetting-sheet-handle" aria-hidden="true"></span>
+        <header class="copybetting-how-head"><div><h2 id="copybetting-how-title">Как работает копибеттинг</h2><p>{% if copybetting_reader_help %}Повторяйте прогнозы каппера со своей суммой и лимитами{% else %}Другие пользователи повторяют ваши ставки автоматически{% endif %}</p></div><button type="button" class="copybetting-how-close" data-expert-public-details-close aria-label="Закрыть"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+        <div class="copybetting-how-body expert-public-details-body">
+            <ol class="copybetting-how-steps">
+                <li><div><b>1</b><small>{% if copybetting_reader_help %}Каппер{% else %}Вы{% endif %}</small></div><strong>{% if copybetting_reader_help %}Каппер публикует прогноз{% else %}Вы публикуете прогноз{% endif %}</strong><p>Исход и коэффициент фиксируются в момент публикации</p></li>
+                <li><div><b>2</b><small>Копирующий</small></div><strong>Пользователь включает копирование</strong><p>Задаёт свою сумму на ставку и лимиты</p></li>
+                <li><div><b>3</b><small>Копирующий</small></div><strong>Ставка повторяется сама</strong><p>В его масштабе — пропорционально его сумме</p></li>
+            </ol>
+            <section class="copybetting-example"><header><strong>Пример</strong><span>Манчестер Сити — Арсенал · П1 · кф 1.95</span></header>
+                <div class="copybetting-example-cards">
+                    <div class="copybetting-example-card"><header><b>В</b><span><strong>{% if copybetting_reader_help %}Каппер{% else %}Вы{% endif %}</strong><small>Исходный прогноз</small></span></header><dl><div><dt>Ставка</dt><dd>2 500 {% include "front/includes/_coin_icon.html" %}</dd></div><div><dt>Результат</dt><dd class="is-profit">+2 375</dd></div></dl></div>
+                    <span class="copybetting-example-arrow" aria-hidden="true">→</span>
+                    <div class="copybetting-example-card"><header><b>К</b><span><strong>Копирующий</strong><small>Повторяет ваш прогноз</small></span></header><dl><div><dt>Ставка</dt><dd>500 {% include "front/includes/_coin_icon.html" %}</dd></div><div><dt>Результат</dt><dd class="is-profit">+475</dd></div></dl></div>
+                </div><p>Сумма у каждого своя — копирующий сам задаёт размер ставки. Копирование учитывает его настройки и лимиты.</p>
+            </section>
+            <ul class="copybetting-how-notes">
+                <li><span>{% include "cabinet/includes/_copybetting_icon.html" with name="profit" only %}</span><div>{% if copybetting_reader_help %}<strong>Каппер не управляет вашим балансом</strong><p>Копирование использует ваши коины платформы и учитывает ваши настройки.</p>{% else %}<strong>Деньги копирующего не проходят через вас</strong><p>Вы не управляете его балансом. Копирование использует коины платформы.</p>{% endif %}</div></li>
+                <li><span>{% include "cabinet/includes/_copybetting_icon.html" with name="users" only %}</span><div>{% if copybetting_reader_help %}<strong>Вы выбираете свою сумму</strong><p>Банк, процент, ограничения и виды спорта задаются отдельно для каждого каппера.</p>{% else %}<strong>Вы видите аудиторию, но не её кошелёк</strong><p>Доступны ник, даты, сумма ставки и результат — никаких платёжных данных</p>{% endif %}</div></li>
+                <li><span>{% include "cabinet/includes/_copybetting_icon.html" with name="copy" only %}</span><div><strong>Пользователь может остановить копирование</strong><p>Пауза и остановка доступны в его настройках. Запрет со стороны автора появится позже.</p></div></li>
+            </ul>
+            {% if copybetting_reader_help %}<div class="copybetting-faq"><details open><summary>Когда начнут копироваться прогнозы?</summary><p>После сохранения настроек копируются только новые публикации. Прогнозы из примера не добавляются задним числом.</p></details><details><summary>Что будет с уже начавшимися ставками при остановке?</summary><p>Они будут рассчитаны. Если есть начавшиеся купоны, пауза или остановка применится после их расчёта.</p></details><details><summary>Доступны ли платные прогнозы?</summary><p>Для них нужен отдельный платный доступ к прогнозам автора. Копирование не открывает закрытые прогнозы.</p></details></div>{% else %}<div class="copybetting-faq">
+                <details open><summary>Влияет ли копирование на мой индекс доверия?</summary><p>Нет. Индекс считается по вашим собственным прогнозам — количество копирующих и результаты их ставок в него не входят.</p></details>
+                <details><summary>Получаю ли я деньги за то, что меня копируют?</summary><p>За сам факт копирования начислений нет. Подписки на платные прогнозы оплачиваются отдельно.</p></details>
+                <details><summary>Можно ли запретить копировать мои прогнозы?</summary><p>Пока запрет со стороны автора недоступен. Мы добавили эту возможность в план развития копибеттинга.</p></details>
+            </div>{% endif %}
+        </div>
+        <footer class="copybetting-how-footer"><button type="button" class="copybetting-button is-primary" data-expert-public-details-close>Понятно</button>{% if copybetting_reader_help %}<a class="copybetting-button" href="{{ public_copybetting.setup_url }}">Настроить копирование</a>{% else %}<a class="copybetting-button" href="{% url 'cabinet:profile' %}?tab=settings">Настройки профиля</a>{% endif %}<a class="copybetting-how-rules" href="{% url 'front:rules' %}">Правила платформы →</a></footer>
+    </section>
+</div>

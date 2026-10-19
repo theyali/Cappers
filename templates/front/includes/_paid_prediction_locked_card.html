@@ -1,0 +1,18 @@
+{% load static capper_trust money %}
+<article
+    class="prediction-card prediction-card-rich paid-prediction-locked-card"
+    data-prediction-card="{{ prediction.coupon.id }}"
+    data-analyst-id="{{ prediction.coupon.author_id }}"
+>
+    <a
+        class="paid-prediction-locked-art"
+        href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}"
+        aria-label="Открыть условия доступа к платному прогнозу автора {{ prediction.expert_name }}"
+    >
+        <span class="paid-prediction-locked-pattern" aria-hidden="true"></span>
+        <img src="{% static 'front/img/real_coin.png' %}" width="360" height="360" alt="" loading="lazy">
+        <span class="paid-prediction-locked-label">Платный прогноз</span>
+    </a>
+
+    {% include "front/includes/_paid_prediction_locked_body.html" %}
+</article>

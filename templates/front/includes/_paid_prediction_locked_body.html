@@ -1,0 +1,72 @@
+{% load capper_trust money %}
+    <div class="paid-prediction-locked-body">
+        <header class="paid-prediction-locked-author-row">
+            <a
+                class="prediction-card-rich-author"
+                href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}"
+            >
+                <span class="prediction-card-rich-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url %} data-skeleton-image{% endif %}>
+                    {% capper_trust_badge prediction.expert_trust_index %}
+                    {% if prediction.expert_avatar_url %}
+                        <img src="{{ prediction.expert_avatar_url }}" width="40" height="40" alt="" loading="lazy">
+                    {% else %}
+                        {{ prediction.expert_initials }}
+                    {% endif %}
+                </span>
+                <span>
+                    <strong>{{ prediction.expert_name }}</strong>
+                    <small>{% if in_modal %}@{{ prediction.coupon.author.username }}{% else %}{{ prediction.created_at|timesince }} назад{% endif %}</small>
+                </span>
+                {% if prediction.expert_verified %}
+                    <span class="capper-verified-badge prediction-card-rich-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                            <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
+                            <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
+                        </svg>
+                    </span>
+                {% endif %}
+            </a>
+            <span class="paid-prediction-locked-badge">Закрытый</span>
+        </header>
+
+        <div class="paid-prediction-locked-copy">
+            <span>{% if prediction.is_paid_purchase_closed %}Архив платных прогнозов{% else %}Доступ к прогнозу{% endif %}</span>
+            <div class="paid-prediction-locked-copy-title">{% if prediction.is_paid_purchase_closed %}Прогноз завершён{% else %}Выберите удобный вариант{% endif %}</div>
+        </div>
+
+        {% if prediction.is_paid_purchase_closed %}
+        <div class="paid-prediction-purchase-closed">
+            <strong>Покупка закрыта</strong>
+            <p>Рассчитанный купон нельзя покупать задним числом. Новые прогнозы автора доступны в его профиле.</p>
+            <a href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}">Перейти к автору</a>
+        </div>
+        {% else %}
+        <div class="paid-prediction-offers">
+            <section class="paid-prediction-offer is-single" aria-label="Разовая покупка прогноза">
+                <div>
+                    <span>Этот прогноз</span>
+                    <strong>Скоро</strong>
+                </div>
+                <ul>
+                    <li>Один прогноз</li>
+                    <li>Доступ навсегда</li>
+                </ul>
+                <span class="paid-prediction-offer-soon">Разовая покупка готовится</span>
+            </section>
+
+            <section class="paid-prediction-offer is-subscription" aria-label="Подписка на платные прогнозы автора">
+                <span class="paid-prediction-offer-value">Выгоднее</span>
+                <div>
+                    <span>Подписка</span>
+                    <strong>{% if prediction.paid_access_price %}{{ prediction.paid_access_price|money }} ₽{% else %}Тарифы автора{% endif %}</strong>
+                    <small>{% if prediction.paid_access_price %}за {{ prediction.paid_access_period }}{% endif %}</small>
+                </div>
+                <ul>
+                    <li>Все прогнозы автора</li>
+                    <li>Закрытая аналитика</li>
+                </ul>
+                <a href="{{ prediction.paid_checkout_url }}">Выбрать подписку</a>
+            </section>
+        </div>
+        {% endif %}
+    </div>

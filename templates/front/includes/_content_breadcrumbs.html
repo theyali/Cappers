@@ -1,0 +1,13 @@
+{% if breadcrumbs and not is_telegram_app and not hide_site_chrome %}
+            <div class="container breadcrumbs-container {{ breadcrumbs_class }}">
+                <nav class="site-breadcrumbs" aria-label="Навигационная цепочка">
+                    {% for crumb in breadcrumbs %}
+                        {% if crumb.url and not forloop.last %}
+                            <a href="{{ crumb.url }}">{{ crumb.title }}</a>
+                        {% else %}
+                            <span {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.title }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </nav>
+            </div>
+{% endif %}

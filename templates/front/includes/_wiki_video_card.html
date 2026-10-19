@@ -40,18 +40,24 @@
         </span>
     </button>
 
-    <div class="wiki-video-copy">
-        <span class="wiki-brand-logo" aria-hidden="true">
-            <img src="{% static 'front/img/logo.png' %}" width="37" height="37" alt="">
-        </span>
+    <div class="wiki-video-copy{% if title_only %} is-title-only{% endif %}">
+        {% if not title_only %}
+            <span class="wiki-brand-logo" aria-hidden="true">
+                <img src="{% static 'front/img/logo.png' %}" width="37" height="37" alt="">
+            </span>
+        {% endif %}
         <div class="wiki-video-text">
             <div class="wiki-video-title">{{ video.title }}</div>
-            <p>{{ video.wiki_author_name }} · {{ video.section.name }}</p>
-            <p>{{ video.wiki_views_label }} просмотров · {{ video.wiki_added_label }}</p>
+            {% if not title_only %}
+                <p>{{ video.wiki_author_name }} · {{ video.section.name }}</p>
+                <p>{{ video.wiki_views_label }} просмотров · {{ video.wiki_added_label }}</p>
+            {% endif %}
         </div>
-        <button class="wiki-video-more" type="button" aria-label="Поделиться видео" data-wiki-card-share>
-            {% include "front/includes/_solar_icon.html" with name="coupon_upload_linear" only %}
-        </button>
+        {% if not title_only %}
+            <button class="wiki-video-more" type="button" aria-label="Поделиться видео" data-wiki-card-share>
+                {% include "front/includes/_solar_icon.html" with name="coupon_upload_linear" only %}
+            </button>
+        {% endif %}
     </div>
 
     <div class="wiki-video-description" hidden>{{ video.description|safe }}</div>

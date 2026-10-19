@@ -324,7 +324,7 @@ class CopyBettingSubscription(models.Model):
     stake_percent = models.DecimalField("Процент от банка на ставку", max_digits=5, decimal_places=2)
     stop_loss_amount = models.DecimalField("Стоп-лосс", max_digits=12, decimal_places=2, default=0)
     max_single_stake = models.DecimalField("Максимум на одну ставку", max_digits=12, decimal_places=2, default=0)
-    min_total_coefficient = models.DecimalField("Минимальный общий коэффициент", max_digits=8, decimal_places=2, default=0)
+    min_total_coefficient = models.DecimalField("Минимальный общий коэффициент", max_digits=8, decimal_places=2, default=Decimal("1.01"), validators=[MinValueValidator(Decimal("1.01"))])
     copy_regular_coupons = models.BooleanField("Копировать обычные прогнозы", default=True)
     copy_tournament_coupons = models.BooleanField("Копировать турнирные прогнозы", default=True)
     allowed_sports = models.ManyToManyField(
@@ -352,7 +352,7 @@ class CopyBettingSubscription(models.Model):
             models.CheckConstraint(check=Q(stake_percent__lte=100), name="copybetting_stake_percent_max"),
             models.CheckConstraint(check=Q(stop_loss_amount__gte=0), name="copybetting_stop_loss_non_negative"),
             models.CheckConstraint(check=Q(max_single_stake__gte=0), name="copybetting_max_stake_non_negative"),
-            models.CheckConstraint(check=Q(min_total_coefficient__gte=0), name="copybetting_min_coefficient_non_negative"),
+            models.CheckConstraint(check=Q(min_total_coefficient__gte=Decimal("1.01")), name="copybetting_min_coefficient_valid"),
         ]
         indexes = [
             models.Index(fields=["analyst", "status", "started_at"]),

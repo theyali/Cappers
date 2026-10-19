@@ -219,6 +219,7 @@
                 if (response.profile_name) $("[data-profile-name]").text(response.profile_name);
                 if (typeof response.profile_completion === "number") {
                     const percent = `${response.profile_completion}%`;
+                    $(".profile-edit-completion").prop("hidden", response.profile_completion >= 100);
                     $(".profile-edit-completion strong").text(percent);
                     $(".profile-completion-progress").val(response.profile_completion).text(percent);
                 }

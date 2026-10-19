@@ -1,0 +1,19 @@
+<section class="copybetting-empty copybetting-surface">
+    <div class="copybetting-empty-intro">
+        <span class="copybetting-empty-art">{% include "cabinet/includes/_copybetting_empty_art.html" %}</span>
+        <div><h3>Вас пока никто не копирует</h3><p>Копибеттинг включается, когда другие пользователи подписываются на вашу стратегию: их ставки повторяют ваши автоматически. Чем длиннее и стабильнее история — тем охотнее вас выбирают.</p><div class="copybetting-empty-actions"><button type="button" class="copybetting-button is-primary" data-copy-share>{% include "cabinet/includes/_copybetting_icon.html" with name="share" only %}Поделиться профилем</button><a class="copybetting-button" href="{% url 'game:rich_prediction_create' %}">Опубликовать прогноз</a></div></div>
+    </div>
+    <ol class="copybetting-empty-steps"><li><b>01</b><strong>Публикуете прогноз</strong><span>Он попадает в ленту и в вашу открытую статистику</span></li><li><b>02</b><strong>Пользователь включает копирование</strong><span>Выбирает сумму на ставку и лимиты</span></li><li><b>03</b><strong>Ставки повторяются сами</strong><span>Здесь появятся те, кто вас копирует, и их результат</span></li></ol>
+</section>
+<section class="copybetting-checklist copybetting-surface" aria-labelledby="copybetting-checklist-title">
+    <h3 id="copybetting-checklist-title">Что повышает шанс, что вас начнут копировать</h3>
+    <ul>
+        {% for item in copybetting_checklist %}
+        <li{% if item.complete %} class="is-complete"{% endif %}>
+            <span class="copybetting-checklist-marker" aria-hidden="true">{% if item.complete %}<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>{% endif %}</span>
+            <span class="copybetting-checklist-label">{{ item.label }}<span class="sr-only">{% if item.complete %} — выполнено{% else %} — пока не выполнено{% endif %}</span></span>
+            <b>{% if item.last_publication %}последняя {{ item.last_publication|timesince }} назад{% else %}{{ item.value }}{% endif %}</b>
+        </li>
+        {% endfor %}
+    </ul>
+</section>

@@ -1,0 +1,12 @@
+                    {% for prediction in predictions %}
+                    <article class="rich-prediction-coupon-item{% if prediction.editor_prediction_closed %} is-timing-locked{% endif %}{% if forloop.counter > 3 %} is-mobile-extra{% endif %}" data-rich-coupon-item tabindex="-1"{% if not is_published %} data-coupon-match-id="{{ prediction.match_id }}"{% endif %} data-prediction-id="{{ prediction.id }}" data-coefficient="{{ prediction.coefficient }}">
+                        <span class="rich-prediction-item-number">{{ forloop.counter }}</span>
+                        <a class="rich-prediction-coupon-match" href="{{ prediction.match.get_absolute_url }}">
+                            <span class="rich-prediction-coupon-logo" aria-hidden="true">{% if prediction.match.sport and prediction.match.sport.image_url %}<img src="{{ prediction.match.sport.image_url }}" width="26" height="26" alt="" loading="lazy">{% else %}⚽{% endif %}</span>
+                            <span class="rich-prediction-coupon-copy"><strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong><small>{{ prediction.match.league_name|default:"Лига" }} · {{ prediction.match.starts_at|date:"d.m H:i" }}</small><small class="rich-prediction-match-warning" data-rich-match-warning{% if not prediction.editor_prediction_closed %} hidden{% endif %}>{{ prediction.editor_timing_message }}</small></span>
+                        </a>
+                        <span class="rich-prediction-selection"><small>Ваш выбор</small><strong>{{ prediction.selection }}</strong></span>
+                        <strong class="rich-prediction-coupon-odd">{{ prediction.coefficient }}</strong>
+                        {% if not is_published %}<button class="rich-prediction-coupon-remove" type="button" data-rich-remove-prediction="{{ prediction.id }}" data-remove-url="{% url 'game:rich_prediction_remove' coupon.id prediction.id %}" aria-label="Убрать матч"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>{% endif %}
+                    </article>
+                    {% endfor %}

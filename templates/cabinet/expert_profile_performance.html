@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<section class="predictions-page predictions-scroll-page container" data-expert-public-tabs data-active-tab="predictions">
+<section class="predictions-page predictions-scroll-page container" data-expert-public-tabs data-active-tab="overview">
     <div class="predictions-layout">
         <aside class="predictions-filter-sidebar matches-table-filter-sidebar" aria-label="Разделы профиля эксперта">
             <section class="matches-table-filter-group expert-panel" aria-labelledby="expert-public-sidebar-title">
@@ -29,7 +29,6 @@
             {% expert_public_bank expert %}
             {% include "cabinet/_expert_public_achievements.html" %}
             {% include "cabinet/_expert_public_tournaments.html" %}
-            {% include "cabinet/_expert_recommendations.html" %}
         </section>
 
         {% bookmakers_sidebar True True %}

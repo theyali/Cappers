@@ -1,201 +1,154 @@
 (() => {
-    const desktopLists = Array.from(document.querySelectorAll("[data-profile-coupon-sort-list]"));
-    const controls = document.querySelectorAll("[data-profile-coupon-sort-controls]");
-    const mobileFeed = document.querySelector("[data-profile-mobile-coupons]");
-    if ((!desktopLists.length && !mobileFeed) || !controls.length) return;
+    const feeds = document.querySelectorAll('[data-profile-coupon-feed]');
+    if (!feeds.length) return;
 
     const loadJQuery = () => {
         if (window.jQuery) return Promise.resolve(window.jQuery);
-
         return new Promise((resolve, reject) => {
-            let script = document.querySelector("script[data-profile-jquery]");
+            let script = document.querySelector('script[data-profile-jquery]');
             if (!script) {
-                script = document.createElement("script");
-                script.src = "https://code.jquery.com/jquery-3.7.1.min.js";
-                script.dataset.profileJquery = "true";
-                script.async = true;
+                script = document.createElement('script');
+                script.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+                script.dataset.profileJquery = 'true';
                 document.head.appendChild(script);
             }
-
-            const finish = () => {
-                if (window.jQuery) resolve(window.jQuery);
-                else reject(new Error("jQuery не загрузился."));
-            };
-
-            if (window.jQuery) {
-                finish();
-                return;
-            }
-
-            script.addEventListener("load", finish, { once: true });
-            script.addEventListener(
-                "error",
-                () => reject(new Error("Не удалось загрузить jQuery.")),
-                { once: true },
-            );
+            script.addEventListener('load', () => window.jQuery ? resolve(window.jQuery) : reject(), { once: true });
+            script.addEventListener('error', reject, { once: true });
         });
     };
 
-    const parseNumber = (value) => {
-        const normalized = String(value ?? "0")
-            .replace(/\s+/g, "")
-            .replace(",", ".")
-            .replace(/[^0-9.-]/g, "");
-        const number = Number.parseFloat(normalized);
-        return Number.isFinite(number) ? number : 0;
-    };
+    loadJQuery().then(($) => feeds.forEach((feed) => {
+        const panel = feed.closest('#profile-tab-predictions') || feed;
+        const desktop = feed.querySelector('[data-coupon-feed-desktop]');
+        const mobile = feed.querySelector('[data-coupon-feed-mobile]');
+        const more = feed.querySelector('[data-coupon-feed-more]');
+        const sentinel = feed.querySelector('[data-coupon-feed-sentinel]');
+        const status = feed.querySelector('[data-coupon-feed-status]');
+        const empty = feed.querySelector('[data-coupon-feed-empty]');
+        const sortButtons = panel.querySelectorAll('[data-profile-coupon-sort]');
+        const filterButtons = feed.querySelectorAll('[data-profile-coupon-filter]');
+        let sort = feed.dataset.sort || 'date';
+        let direction = feed.dataset.direction || 'desc';
+        let filter = feed.dataset.filter || 'all';
+        let request = null;
+        let version = 0;
+        let loading = false;
+        let autoPaused = false;
+        let retryReplace = false;
 
-    loadJQuery()
-        .then(($) => {
-            const $buttons = $(controls).find("[data-profile-coupon-sort]");
-            const mobileList = mobileFeed?.querySelector("[data-profile-mobile-coupons-list]");
-            const moreButton = mobileFeed?.querySelector("[data-profile-mobile-coupons-more]");
-            const $mobileFeed = mobileFeed ? $(mobileFeed) : null;
-            let activeKey = "date";
-            let activeFilter = "all";
-            let direction = "desc";
-            let isLoading = false;
-
-            const getSortData = (item) => {
-                const dataNode = item.querySelector("[data-profile-coupon-sort-data]");
-                return dataNode ? dataNode.dataset : {};
-            };
-
-            const getDesktopItems = (list) => (
-                $(list).children(".profile-coupon-row, .profile-coupon-card").get()
-            );
-
-            const updateControls = () => {
-                $buttons.each(function () {
-                    const $button = $(this);
-                    const key = String($button.data("profile-coupon-sort") || "");
-                    const isActive = key === activeKey;
-                    $button.toggleClass("is-active", isActive);
-                    $button.attr("aria-pressed", isActive ? "true" : "false");
-
-                    const $arrow = $button.find("[data-sort-arrow]");
-                    if ($arrow.length) {
-                        $arrow.text(isActive ? (direction === "asc" ? "↑" : "↓") : "");
-                    }
-                });
-            };
-
-            const sortDesktopRows = () => {
-                desktopLists.forEach((list) => {
-                    const $list = $(list);
-                    const items = getDesktopItems(list);
-                    items.sort((left, right) => {
-                        const leftData = getSortData(left);
-                        const rightData = getSortData(right);
-                        const dataKey = `sort${activeKey.charAt(0).toUpperCase()}${activeKey.slice(1)}`;
-                        const leftValue = parseNumber(leftData[dataKey]);
-                        const rightValue = parseNumber(rightData[dataKey]);
-
-                        if (leftValue === rightValue) {
-                            const leftId = parseNumber(leftData.couponId);
-                            const rightId = parseNumber(rightData.couponId);
-                            return direction === "asc" ? leftId - rightId : rightId - leftId;
-                        }
-
-                        return direction === "asc"
-                            ? leftValue - rightValue
-                            : rightValue - leftValue;
-                    });
-
-                    items.forEach((item) => $list.append(item));
-                });
-            };
-
-            const filterDesktopRows = () => {
-                desktopLists.forEach((list) => {
-                    getDesktopItems(list).forEach((item) => {
-                        item.hidden = activeFilter !== "all" && item.dataset.state !== activeFilter;
-                    });
-                });
-            };
-
-            document.querySelectorAll("[data-profile-coupon-filter]").forEach((button) => {
-                button.addEventListener("click", () => {
-                    activeFilter = button.dataset.profileCouponFilter;
-                    document.querySelectorAll("[data-profile-coupon-filter]").forEach((control) => {
-                        const selected = control.dataset.profileCouponFilter === activeFilter;
-                        control.classList.toggle("is-active", selected);
-                        control.setAttribute("aria-pressed", String(selected));
-                    });
-                    filterDesktopRows();
-                });
+        const updateControls = () => {
+            sortButtons.forEach((button) => {
+                const active = button.dataset.profileCouponSort === sort;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', String(active));
+                const arrow = button.querySelector('[data-sort-arrow]');
+                if (arrow) arrow.textContent = active ? (direction === 'asc' ? '↑' : '↓') : '';
             });
-
-            const setMobileLoading = (loading) => {
-                isLoading = loading;
-                if (mobileFeed) mobileFeed.classList.toggle("is-loading", loading);
-                if (moreButton) moreButton.disabled = loading;
-            };
-
-            const renderMobileCoupons = (payload, append) => {
-                if (!mobileList || !payload || !payload.ok) return;
-
-                const $nodes = $(payload.html || "").hide();
+            filterButtons.forEach((button) => {
+                const active = button.dataset.profileCouponFilter === filter;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+        };
+        const persist = () => {
+            const url = new URL(window.location.href);
+            [['coupon_sort', sort, 'date'], ['coupon_direction', direction, 'desc'], ['coupon_filter', filter, 'all']].forEach(([key, value, fallback]) => {
+                if (value === fallback) url.searchParams.delete(key);
+                else url.searchParams.set(key, value);
+            });
+            window.history.replaceState(null, '', url);
+        };
+        const visible = () => {
+            const rect = sentinel.getBoundingClientRect();
+            return sentinel.getClientRects().length > 0 && rect.top < window.innerHeight + 160 && rect.bottom > 0;
+        };
+        const loadMoreIfVisible = () => {
+            if (!loading && !autoPaused && !more.hidden && visible()) load(true);
+        };
+        const load = (append = false) => {
+            if (append && loading) return;
+            if (append && retryReplace) append = false;
+            const current = ++version;
+            if (request) request.abort();
+            loading = true;
+            autoPaused = false;
+            feed.setAttribute('aria-busy', 'true');
+            more.disabled = true;
+            status.textContent = 'Загружаем прогнозы…';
+            request = $.ajax({
+                url: feed.dataset.url,
+                method: 'GET',
+                dataType: 'json',
+                timeout: 15000,
+                data: { sort, direction, state: filter, offset: append ? Number(more.dataset.nextOffset || 0) : 0 },
+            }).done((payload) => {
+                if (current !== version) return;
+                if (!payload.ok || typeof payload.desktop_html !== 'string' || typeof payload.html !== 'string') {
+                    failed();
+                    return;
+                }
                 if (append) {
-                    $(mobileList).append($nodes);
-                    $nodes.slideDown(180);
+                    $(desktop).append(payload.desktop_html);
+                    $(mobile).append(payload.html);
                 } else {
-                    $(mobileList).empty().append($nodes);
-                    $nodes.fadeIn(160);
+                    $(desktop).html(payload.desktop_html);
+                    $(mobile).html(payload.html);
                 }
-
-                if (moreButton) {
-                    moreButton.dataset.nextOffset = String(payload.next_offset || 0);
-                    moreButton.hidden = !payload.has_more;
-                }
-            };
-
-            const loadMobileCoupons = ({ append = false, offset = 0 } = {}) => {
-                if (!$mobileFeed || !mobileList || isLoading) {
-                    return $.Deferred().resolve().promise();
-                }
-
-                setMobileLoading(true);
-                return $.ajax({
-                    url: String($mobileFeed.data("url") || ""),
-                    method: "GET",
-                    dataType: "json",
-                    data: {
-                        sort: activeKey,
-                        direction,
-                        offset,
-                    },
-                })
-                    .done((payload) => renderMobileCoupons(payload, append))
-                    .always(() => setMobileLoading(false));
-            };
-
-            $buttons.on("click", function () {
-                const key = String($(this).data("profile-coupon-sort") || "");
-                if (!key) return;
-
-                if (key === activeKey) {
-                    direction = direction === "desc" ? "asc" : "desc";
-                } else {
-                    activeKey = key;
-                    direction = "desc";
-                }
-
-                sortDesktopRows();
-                updateControls();
-                loadMobileCoupons({ append: false, offset: 0 });
+                more.dataset.nextOffset = String(payload.next_offset);
+                more.hidden = !payload.has_more;
+                more.textContent = 'Показать ещё';
+                empty.hidden = payload.total !== 0;
+                panel.querySelectorAll('.profile-coupon-count').forEach((count) => { count.textContent = payload.total; });
+                retryReplace = false;
+                status.textContent = `Показано ${payload.next_offset} из ${payload.total}`;
+            }).fail((_xhr, reason) => {
+                if (current === version && reason !== 'abort') failed();
+            }).always(() => {
+                if (current !== version) return;
+                request = null;
+                loading = false;
+                more.disabled = false;
+                feed.setAttribute('aria-busy', 'false');
+                window.requestAnimationFrame(loadMoreIfVisible);
             });
-
-            if (moreButton) {
-                moreButton.addEventListener("click", () => {
-                    loadMobileCoupons({
-                        append: true,
-                        offset: parseNumber(moreButton.dataset.nextOffset),
-                    });
-                });
+            function failed() {
+                autoPaused = true;
+                retryReplace = !append;
+                more.hidden = false;
+                more.textContent = 'Повторить загрузку';
+                status.textContent = append
+                    ? 'Не удалось загрузить ещё прогнозы. Нажмите «Повторить загрузку».'
+                    : 'Не удалось обновить список. Показаны прежние прогнозы. Нажмите «Повторить загрузку».';
             }
-
-            updateControls();
-        })
-        .catch((error) => console.error(error));
+        };
+        sortButtons.forEach((button) => button.addEventListener('click', () => {
+            const key = button.dataset.profileCouponSort;
+            direction = sort === key && direction === 'desc' ? 'asc' : 'desc';
+            sort = key;
+            updateControls(); persist(); load();
+        }));
+        filterButtons.forEach((button) => button.addEventListener('click', () => {
+            filter = button.dataset.profileCouponFilter;
+            updateControls(); persist(); load();
+        }));
+        more.addEventListener('click', () => load(true));
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(loadMoreIfVisible, { rootMargin: '160px' }).observe(sentinel);
+        }
+        // Also handles a short first page, panel activation and a column's own scroll.
+        document.addEventListener('scroll', loadMoreIfVisible, { passive: true, capture: true });
+        window.addEventListener('resize', loadMoreIfVisible, { passive: true });
+        window.addEventListener('popstate', () => {
+            const params = new URL(window.location.href).searchParams;
+            sort = params.get('coupon_sort') || 'date';
+            direction = params.get('coupon_direction') || 'desc';
+            filter = params.get('coupon_filter') || 'all';
+            updateControls(); load();
+        });
+        updateControls();
+    })).catch(() => {
+        feeds.forEach((feed) => {
+            feed.querySelector('[data-coupon-feed-status]').textContent = 'Не удалось загрузить управление списком. Обновите страницу.';
+        });
+    });
 })();

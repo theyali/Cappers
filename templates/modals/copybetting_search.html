@@ -1,0 +1,27 @@
+<div class="profile-email-modal expert-public-details-modal copybetting-search-modal" id="copybetting-search-modal" data-expert-public-modal="copybetting-search" aria-hidden="true">
+    <button type="button" class="profile-email-modal-backdrop expert-public-details-backdrop" data-expert-public-details-close tabindex="-1" aria-label="Закрыть"></button>
+    <section class="profile-email-modal-card expert-public-details-card copybetting-search-dialog" role="dialog" aria-modal="true" aria-labelledby="copybetting-search-title" tabindex="-1" data-expert-public-details-dialog data-copy-discovery data-url="{% url 'wallets:copybetting_search' %}">
+        <span class="copybetting-sheet-handle" aria-hidden="true"></span>
+        <header class="copybetting-search-head"><span class="copybetting-search-emblem">{% include "cabinet/includes/_copybetting_reader_icon.html" with name="add" only %}</span><div><h2 id="copybetting-search-title">Добавить каппера</h2><p><span class="copybetting-search-subtitle-desktop">Найдите каппера по нику, имени или почте — и настройте копирование</span><span class="copybetting-search-subtitle-mobile">Поиск по нику, имени или почте</span></p></div><button class="copybetting-how-close" type="button" data-expert-public-details-close aria-label="Закрыть">×</button></header>
+        <form class="copybetting-discovery-form" data-copy-discovery-form method="post" action="{% url 'wallets:copybetting_search' %}">
+            {% csrf_token %}
+            <label class="copybetting-discovery-query"><span class="sr-only">Ник, имя или полный адрес почты каппера</span><input type="search" name="q" placeholder="@username, имя или e-mail" maxlength="150" autocomplete="off" data-modal-autofocus><button type="button" data-copy-query-clear aria-label="Очистить поиск">×</button><kbd>ESC</kbd></label>
+            <div class="copybetting-discovery-hint">Можно вставить @username, имя или e-mail целиком</div>
+            <div class="copybetting-discovery-tools">
+                <label class="copybetting-discovery-sort"><span class="sr-only">Сортировка капперов</span><select name="sort" aria-label="Сортировка капперов"><option value="roi">По ROI за 3 месяца</option><option value="trust">По индексу доверия</option><option value="date">По дате регистрации</option><option value="followers">По подписчикам</option></select></label>
+                <span class="copybetting-discovery-separator" aria-hidden="true"></span>
+                <div class="copybetting-discovery-chips" role="group" aria-label="Сортировать капперов">
+                    <button type="button" data-copy-sort="roi" aria-pressed="true"><span class="copybetting-sort-desktop">ROI</span><span class="copybetting-sort-mobile">По ROI</span></button>
+                    <button type="button" data-copy-sort="trust" aria-pressed="false"><span class="copybetting-sort-desktop">Индекс доверия</span><span class="copybetting-sort-mobile">По индексу</span></button>
+                    <button type="button" data-copy-sort="date" aria-pressed="false"><span class="copybetting-sort-desktop">Дата регистрации</span><span class="copybetting-sort-mobile">По дате</span></button>
+                    <button type="button" data-copy-sort="followers" aria-pressed="false">Подписчики</button>
+                </div>
+                <label class="copybetting-discovery-verified"><input class="sr-only" type="checkbox" name="verified" value="1"><span>✓</span> Проверенные</label>
+            </div>
+        </form>
+        <p class="copybetting-discovery-status" data-copy-discovery-status role="status" aria-live="polite"></p>
+        <button type="button" class="copybetting-discovery-retry copybetting-button" data-copy-discovery-retry hidden>Повторить поиск</button>
+        <div class="copybetting-discovery-results expert-public-details-body" data-copy-discovery-results data-skeleton-block aria-busy="false"><p class="copybetting-search-placeholder">Найдите каппера или выберите из списка.</p></div>
+        <footer class="copybetting-discovery-footer">Настройки и лимиты задаются отдельно для каждого каппера.</footer>
+    </section>
+</div>

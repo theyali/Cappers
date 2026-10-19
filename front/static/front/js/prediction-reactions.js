@@ -186,10 +186,126 @@
     const initSubmitLocks = () => {
         document.querySelectorAll("form[data-disable-on-submit]").forEach((form) => {
             form.addEventListener("submit", (event) => {
+                const blockedMatch = form.querySelector("[data-rich-coupon-item].is-timing-locked:not([hidden])");
+                if (blockedMatch) {
+                    event.preventDefault();
+                    showFormError(form, "Удалите отмеченные красным недоступные матчи перед публикацией.");
+                    blockedMatch.focus();
+                    return;
+                }
+                if (form.dataset.removingPrediction === "true") {
+                    event.preventDefault();
+                    showFormError(form, "Дождитесь удаления матча из купона.");
+                    return;
+                }
                 showFormError(form, "");
                 lockFormSubmit(form, event.submitter);
             });
         });
+    };
+
+    const initRichSharedDraft = () => {
+        const page = document.querySelector("[data-shared-coupon-page]");
+        const form = page?.querySelector("[data-shared-coupon-editor]");
+        if (!page || !window.CappersCouponDraft) return;
+        let revision = window.CappersCouponDraft.get()?.revision || form?.dataset.draftRevision;
+        window.addEventListener("coupon:draft-changed", (event) => {
+            const payload = event.detail;
+            if (!form) {
+                if (payload.draft?.items?.length) window.location.reload();
+                return;
+            }
+            const paid = form.querySelector("[data-rich-paid-option]");
+            const settingsNote = form.querySelector("[data-rich-paid-settings-note]");
+            if (typeof payload.paid_available === "boolean") {
+                if (paid) {
+                    paid.disabled = !payload.paid_available;
+                    paid.closest("label")?.classList.toggle("is-locked", !payload.paid_available);
+                    if (!payload.paid_available && paid.checked) {
+                        const free = form.querySelector('[name="is_paid"][value=""]');
+                        if (free) free.checked = true;
+                    }
+                }
+                if (settingsNote) settingsNote.hidden = payload.paid_available;
+                form.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            const draft = payload.draft;
+            if (!draft || String(draft.id) !== form.dataset.couponId) {
+                window.location.reload();
+                return;
+            }
+            if (draft.revision === revision) return;
+            if (typeof payload.editor_html !== "string") { window.CappersCouponDraft.refresh(); return; }
+            revision = draft.revision;
+            const revisionInput = form.querySelector("#id_draft_revision");
+            if (revisionInput) revisionInput.value = revision;
+            const list = form.querySelector(".rich-prediction-coupon-list");
+            if (list) list.innerHTML = payload.editor_html;
+            const removed = form.querySelector("#id_remove_prediction_ids");
+            if (removed) removed.value = "";
+            form.dispatchEvent(new Event("rich:coupon-replaced"));
+        });
+    };
+
+    const initRichPredictionPreview = () => {
+        const form = document.querySelector(".rich-prediction-form");
+        if (!form) return;
+        const headline = form.querySelector("#id_headline");
+        const description = form.querySelector("#id_description");
+        const stake = form.querySelector("#id_total_stake");
+        const confidence = form.querySelector("[data-rich-confidence]");
+        const minimum = Number(form.dataset.paidDescriptionMinLength) || 300;
+        const previewHeadline = document.querySelector("[data-rich-preview-headline]");
+        const paidBadge = document.querySelector("[data-rich-preview-paid]");
+        const isPaid = () => Boolean(form.querySelector('[name="is_paid"]:checked')?.value);
+        const descriptionLength = () => Array.from(description?.value.trim() || "").length;
+        const sync = () => {
+            const paid = isPaid();
+            if (previewHeadline) previewHeadline.textContent = headline?.value.trim() || "Заголовок вашего прогноза";
+            if (paidBadge) paidBadge.hidden = !paid;
+            [headline, description].forEach((field) => {
+                if (!field) return;
+                field.required = paid;
+                field.setAttribute("aria-required", String(paid));
+            });
+            if (description) description.minLength = paid ? minimum : 0;
+            const checks = {
+                matches: Array.from(form.querySelectorAll("[data-rich-coupon-item]")).some((item) => !item.hidden),
+                stake: Number(stake?.value) >= 100 && Number(stake?.value) <= 1000000
+                    && confidence?.value !== "" && Number(confidence?.value) >= 0 && Number(confidence?.value) <= 100,
+                headline: Boolean(headline?.value.trim()),
+                description: descriptionLength() >= minimum,
+                cover: Boolean(form.querySelector('[data-rich-cover-radio]:checked') || form.querySelector('#id_custom_cover_image')?.files?.length
+                    || document.querySelector('[data-rich-cover-preview-image]')),
+            };
+            document.querySelectorAll("[data-rich-check]").forEach((item) => {
+                const done = Boolean(checks[item.dataset.richCheck]);
+                item.classList.toggle("is-done", done);
+                item.setAttribute("aria-label", `${item.textContent.trim()}: ${done ? "готово" : "не заполнено"}`);
+            });
+            if (!paid || headline?.value.trim()) headline?.removeAttribute("aria-invalid");
+            if (!paid || descriptionLength() >= minimum) description?.removeAttribute("aria-invalid");
+        };
+        form.addEventListener("input", sync);
+        form.addEventListener("change", sync);
+        form.addEventListener("rich:coupon-updated", sync);
+        // Capture runs before the shared submit lock, including external publish buttons.
+        form.addEventListener("submit", (event) => {
+            if (!isPaid()) return;
+            const missingHeadline = !headline?.value.trim();
+            const shortDescription = descriptionLength() < minimum;
+            if (!missingHeadline && !shortDescription) return;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const field = missingHeadline ? headline : description;
+            field?.setAttribute("aria-invalid", "true");
+            showFormError(form, missingHeadline
+                ? "Для платного прогноза обязательно укажите заголовок."
+                : `Для платного прогноза добавьте описание от ${minimum} символов.`);
+            field?.setAttribute("aria-describedby", "rich-prediction-client-error");
+            field?.focus();
+        }, true);
+        sync();
     };
 
     const initRichCoverPreview = () => {
@@ -302,10 +418,12 @@
         const hiddenInput = form.querySelector("#id_remove_prediction_ids");
         const stakeInput = form.querySelector("#id_total_stake");
         const confidenceInput = form.querySelector("[data-rich-confidence]");
-        const confidenceValue = form.querySelector("[data-rich-confidence-value]");
-        const totalCoefficientNode = form.querySelector("[data-rich-total-coefficient]");
-        const positionsCountNode = form.querySelector("[data-rich-positions-count]");
-        const payoutNode = form.querySelector("[data-rich-payout]");
+        const confidenceValues = document.querySelectorAll("[data-rich-confidence-value]");
+        const totalCoefficientNodes = document.querySelectorAll("[data-rich-total-coefficient]");
+        const positionsCountNodes = document.querySelectorAll("[data-rich-positions-count]");
+        const stakeSummaryNodes = document.querySelectorAll("[data-rich-stake-summary]");
+        const payoutNodes = document.querySelectorAll("[data-rich-payout]");
+        const moreMatchesButton = form.querySelector(".rich-prediction-more-matches");
 
         const parseNumber = (value) => {
             const number = Number.parseFloat(String(value ?? "").replace(",", ".").replace(/\s+/g, ""));
@@ -321,28 +439,54 @@
             form.querySelectorAll("[data-rich-coupon-item]")
         ).filter((item) => !item.hidden);
 
+        let matchesExpanded = false;
         const recalcCouponSummary = () => {
             const visibleItems = visibleCouponItems();
+            visibleItems.forEach((item, index) => {
+                const number = item.querySelector(".rich-prediction-item-number");
+                if (number) number.textContent = String(index + 1);
+                item.classList.toggle("is-mobile-extra", !matchesExpanded && index >= 3);
+            });
+            if (moreMatchesButton) {
+                moreMatchesButton.hidden = matchesExpanded || visibleItems.length <= 3;
+                moreMatchesButton.textContent = `Показать ещё (${Math.max(0, visibleItems.length - 3)})`;
+            }
             const totalCoefficient = visibleItems.reduce(
                 (product, item) => product * Math.max(parseNumber(item.dataset.coefficient), 0),
                 visibleItems.length ? 1 : 0
             );
             const stake = parseNumber(stakeInput?.value);
-            if (totalCoefficientNode) totalCoefficientNode.textContent = formatNumber(totalCoefficient, 2);
-            if (positionsCountNode) positionsCountNode.textContent = String(visibleItems.length);
-            if (payoutNode) payoutNode.textContent = formatNumber(stake * totalCoefficient, 0);
+            totalCoefficientNodes.forEach((node) => {
+                node.textContent = formatNumber(totalCoefficient, 2);
+            });
+            positionsCountNodes.forEach((node) => {
+                node.textContent = String(visibleItems.length);
+            });
+            stakeSummaryNodes.forEach((node) => {
+                node.textContent = formatNumber(stake, 0);
+            });
+            payoutNodes.forEach((node) => {
+                node.textContent = formatNumber(stake * totalCoefficient, 0);
+            });
+            form.dispatchEvent(new Event("rich:coupon-updated"));
         };
 
-        if (confidenceInput && confidenceValue) {
+        if (confidenceInput && confidenceValues.length) {
             const syncConfidence = () => {
-                confidenceValue.textContent = `${confidenceInput.value || 0}%`;
+                confidenceValues.forEach((node) => { node.textContent = `${confidenceInput.value || 0}%`; });
             };
             confidenceInput.addEventListener("input", syncConfidence);
             syncConfidence();
         }
 
+        form.addEventListener("rich:coupon-replaced", recalcCouponSummary);
         stakeInput?.addEventListener("input", recalcCouponSummary);
         recalcCouponSummary();
+
+        moreMatchesButton?.addEventListener("click", () => {
+            matchesExpanded = true;
+            recalcCouponSummary();
+        });
 
         if (!hiddenInput) return;
 
@@ -357,13 +501,13 @@
             hiddenInput.value = Array.from(removed).join(",");
         };
 
-        form.addEventListener("click", (event) => {
+        form.addEventListener("click", async (event) => {
             const button = event.target.closest("[data-rich-remove-prediction]");
             if (!button) return;
 
             event.preventDefault();
             const predictionId = button.dataset.richRemovePrediction;
-            if (!predictionId) return;
+            if (!predictionId || form.dataset.removingPrediction === "true") return;
 
             const item = button.closest("[data-rich-coupon-item]");
             const visibleItems = visibleCouponItems();
@@ -372,12 +516,40 @@
                 return;
             }
 
-            removed.add(predictionId);
-            syncRemoved();
-
-            if (item) item.hidden = true;
+            form.dataset.removingPrediction = "true";
+            const buttons = Array.from(document.querySelectorAll(
+                '.rich-prediction-form button[type="submit"], button[form="rich-prediction-form"], [data-rich-remove-prediction]'
+            )).filter((control) => !control.disabled);
+            buttons.forEach((control) => { control.disabled = true; });
+            button.setAttribute("aria-busy", "true");
             showFormError(form, "");
-            recalcCouponSummary();
+            try {
+                const response = await fetch(button.dataset.removeUrl, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": form.querySelector('[name="csrfmiddlewaretoken"]')?.value || decodeURIComponent(getCookie("csrftoken")),
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+                const payload = await response.json();
+                if (!response.ok || !payload.ok) throw new Error(payload.error || "Не удалось удалить матч.");
+                removed.add(predictionId);
+                syncRemoved();
+                item?.remove();
+                recalcCouponSummary();
+                if (form.hasAttribute("data-shared-coupon-editor")) window.CappersCouponDraft?.changed();
+            } catch (error) {
+                showFormError(form, error instanceof SyntaxError
+                    ? "Не удалось удалить матч. Обновите страницу и повторите попытку."
+                    : error.message || "Не удалось удалить матч. Попробуйте ещё раз.");
+            } finally {
+                form.dataset.removingPrediction = "false";
+                button.removeAttribute("aria-busy");
+                buttons.forEach((control) => { control.disabled = false; });
+                form.dispatchEvent(new Event("rich:coupon-updated"));
+            }
         });
     };
 
@@ -459,4 +631,6 @@
     initSubmitLocks();
     initRichCoverPreview();
     initRichPredictionCouponEditor();
+    initRichPredictionPreview();
+    initRichSharedDraft();
 })();

@@ -1,9 +1,13 @@
+<a class="{{ public_tab_link_class }} is-active" href="#overview" role="tab" aria-selected="true" tabindex="0" data-expert-public-tab="overview">
+    <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %}</span>
+    <span class="matches-table-scope-copy">Обзор</span>
+</a>
 <a
-    class="{{ public_tab_link_class }} is-active"
+    class="{{ public_tab_link_class }}"
     href="#predictions"
     role="tab"
-    aria-selected="true"
-    tabindex="0"
+    aria-selected="false"
+    tabindex="-1"
     data-expert-public-tab="predictions"
 >
     <span class="matches-table-scope-icon" aria-hidden="true">

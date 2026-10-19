@@ -1,6 +1,6 @@
 from math import ceil
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -8,6 +8,7 @@ from django.utils.formats import date_format
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import never_cache
 
 from front.capper_stats_service import CapperStatsService
 from front.expert_ranking import (
@@ -28,6 +29,7 @@ from achievements.evaluators import user_achievement_metrics
 from .achievements import build_achievement_badges
 from .models import AnalystFollow, AnalystProfile, CapperArticle, CapperMonthlyStat, User
 from .services.capper_articles import decorate_capper_articles
+from .services.copybetting import build_public_copybetting_context
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
     build_paid_checkout_context,
@@ -469,6 +471,7 @@ def _feed_subtitle(card) -> str:
     return f"{title} · {card.selection}"
 
 
+@never_cache
 @ensure_csrf_cookie
 def expert_profile(request, username: str):
     profile = get_object_or_404(
@@ -493,6 +496,7 @@ def expert_profile(request, username: str):
 
     service = CapperStatsService(request.user)
     context = service.build_expert_profile_context(profile)
+    context.update(build_public_copybetting_context(request.user, profile.user))
     context["profile_presence"] = presence_payload(profile.user)
     context["expert_public_tags"] = _profile_tag_list(
         profile.favorite_sports,
@@ -568,15 +572,39 @@ def expert_profile(request, username: str):
         )
         .order_by("-published_at", "-created_at", "-id")[:12]
     )
+    from .views import _profile_coupons_queryset, _mobile_coupon_cards, _expert_mobile_coupon_cards
+
+    public_coupons = _profile_coupons_queryset(profile.user).filter(
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+        audience=PredictionCoupon.Audience.FREE,
+    ).select_related("cover_image")
+    best_coupons = list(public_coupons.filter(
+        state_status=PredictionCoupon.StateStatus.WIN,
+    ).order_by("-combined_coefficient", "-created_at", "-id")[:5])
+    context["profile_best_mobile_coupons"] = _mobile_coupon_cards(best_coupons, profile.user)
+    context["profile_best_expresses"] = _expert_mobile_coupon_cards(
+        public_coupons.filter(state_status=PredictionCoupon.StateStatus.WIN,
+                              coupon_type=PredictionCoupon.CouponType.EXPRESS)
+        .order_by("-combined_coefficient", "-created_at", "-id")[:3]
+    )
+    coupon_stats = public_coupons.aggregate(
+        total=Count("pk", distinct=True),
+        wins=Count("pk", filter=Q(state_status=PredictionCoupon.StateStatus.WIN), distinct=True),
+        losses=Count("pk", filter=Q(state_status=PredictionCoupon.StateStatus.LOSE), distinct=True),
+    )
+    coupon_stats["win_rate"] = round(coupon_stats["wins"] * 100 / coupon_stats["total"]) if coupon_stats["total"] else 0
+    context["profile_coupon_stats"] = coupon_stats
     context["latest_predictions"] = _decorate_predictions(request, latest_coupons)
     for card in context["latest_predictions"]:
         card.feed_subtitle = _feed_subtitle(card)
     socials_count = len(profile.social_links)
     context["socials_label"] = f"{socials_count} {plural_ru(socials_count, 'ссылка', 'ссылки', 'ссылок')}"
+    from .services.profile_coupon_feed import build_coupon_feed_context
+    context.update(build_coupon_feed_context(profile.user, request.GET, public=True, offset=0, viewer=request.user))
     context["page_class"] = "expert-public-body"
     context["paid_predictions_locked"] = (
         context["paid_predictions_enabled"]
-        and not context["latest_predictions"]
+        and not context["coupon_feed_available"]
     )
     context["recommended_experts"] = _recommended_experts(request, profile)
 

@@ -1,11 +1,12 @@
 (() => {
     const TAB_PANELS = {
-        predictions: [
+        overview: [
             ".expert-public-hero",
             ".expert-public-stats-compact",
             ".expert-public-latest-articles",
-            ".expert-public-predictions:not([data-expert-public-panel])",
+            '[data-expert-public-panel="overview"]',
         ],
+        predictions: ['[data-expert-public-panel="predictions"]'],
         stats: [
             ".expert-recent-performance",
             ".expert-public-analytics",
@@ -111,7 +112,7 @@
         const openHashTarget = () => {
             const hash = window.location.hash.slice(1);
             const target = hash.startsWith("leader-") && document.getElementById(hash);
-            setActiveTab(hash.startsWith("leader-") ? "achievements" : TAB_NAMES.includes(hash) ? hash : root.dataset.activeTab || "predictions");
+            setActiveTab(hash.startsWith("leader-") ? "achievements" : TAB_NAMES.includes(hash) ? hash : root.dataset.activeTab || "overview");
             if (target) {
                 if (target.matches("details.expert-leader-award")) target.open = true;
                 target.scrollIntoView({ block: "start", behavior: "auto" });

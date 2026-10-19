@@ -20,6 +20,7 @@
             {% include "front/includes/_prediction_filter_sidebar.html" with filter_id_prefix="following-feed-filter" filter_variant="following-feed-filter-sidebar" filter_label="Фильтры моей ленты" filter_total=feed_total_count reset_url=filter_action_url show_favorites_filter=True %}
 
             <div class="predictions-content following-feed-content matches-list-panel" data-predictions-content data-content-view-root data-content-view-current="{{ content_view_mode }}">
+                {% include "front/includes/_content_breadcrumbs.html" with breadcrumbs_class="predictions-content-breadcrumbs" %}
                 <section class="following-stories" aria-labelledby="following-stories-title">
                     <div class="following-stories-head">
                         <div class="following-stories-heading">
@@ -120,6 +121,8 @@
         </div>
 
         {% else %}
+        <div class="predictions-content matches-list-panel">
+        {% include "front/includes/_content_breadcrumbs.html" with breadcrumbs_class="predictions-content-breadcrumbs" %}
         <div class="following-feed-onboarding">
             <span class="following-feed-onboarding-icon" aria-hidden="true">+</span>
             <div>
@@ -131,6 +134,7 @@
                 <a class="is-primary" href="{% url 'front:cappers_table' %}">Найти капперов</a>
                 <a href="{% url 'front:predictions' %}">Все прогнозы</a>
             </div>
+        </div>
         </div>
         {% endif %}
     </section>

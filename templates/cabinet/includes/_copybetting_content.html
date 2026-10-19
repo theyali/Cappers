@@ -1,0 +1,58 @@
+<nav class="copybetting-tabs" aria-label="Данные копибеттинга">
+    <a href="{{ copybetting_audience_url }}" data-copy-nav class="{% if copybetting_view == 'audience' %}is-active{% endif %}"{% if copybetting_view == 'audience' %} aria-current="page"{% endif %}>История аудитории</a>
+    <a href="{{ copybetting_bets_url }}" data-copy-nav class="{% if copybetting_view == 'bets' %}is-active{% endif %}"{% if copybetting_view == 'bets' %} aria-current="page"{% endif %}>Скопированные с вас ставки</a>
+</nav>
+{% if not copybetting_audience_active_count and copybetting_view == 'audience' and not copybetting_filters.copy_q and not copybetting_selected %}
+    {% include "cabinet/includes/_copybetting_empty.html" %}
+{% endif %}
+{% if copybetting_selected %}
+<section class="copybetting-selected">
+    <div>{% include "cabinet/includes/_copybetting_avatar.html" with person=copybetting_selected only %}<h3>@{{ copybetting_selected.username }}</h3></div>
+    <span>Скопировано: <strong>{{ copybetting_selected.copied_count }}</strong></span><span>Сумма ставок: <strong>{{ copybetting_selected.total_staked }}</strong></span><span>Результат: <strong>{{ copybetting_selected.profit }}</strong></span>
+    <a href="{{ copybetting_reset_url }}" data-copy-nav>Вся аудитория →</a>
+</section>
+{% endif %}
+<div class="copybetting-content-grid{% if copybetting_view == 'bets' %} is-bets{% endif %}">
+<section class="copybetting-surface" aria-label="{% if copybetting_view == 'bets' %}Скопированные ставки{% else %}История аудитории{% endif %}">
+    <header class="copybetting-surface-head"><h3>{% if copybetting_view == 'bets' %}Скопированные с вас ставки{% else %}История аудитории{% endif %}</h3><span>{{ copybetting_end }} из {{ copybetting_filtered_count }} записей</span></header>
+    <form class="copybetting-filters" method="get" action="{% url 'cabinet:profile' %}" data-copy-filters>
+        <input type="hidden" name="tab" value="copybetting"><input type="hidden" name="copy_view" value="{{ copybetting_view }}"><input type="hidden" name="copy_status" value="{{ copybetting_filters.copy_status }}">
+        {% if copybetting_filters.copy_user %}<input type="hidden" name="copy_user" value="{{ copybetting_filters.copy_user }}">{% endif %}
+        <label class="copybetting-search"><span class="sr-only">Поиск по нику</span><input type="search" name="copy_q" placeholder="Поиск по нику" value="{{ copybetting_filters.copy_q }}" maxlength="100" autocomplete="off"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></label>
+        <div class="copybetting-state-filters" role="group" aria-label="Статус копирования">
+            <button type="submit" name="copy_status" value="all" class="{% if copybetting_filters.copy_status == 'all' %}is-active{% endif %}" aria-pressed="{% if copybetting_filters.copy_status == 'all' %}true{% else %}false{% endif %}">Все</button>
+            <button type="submit" name="copy_status" value="active" class="{% if copybetting_filters.copy_status == 'active' %}is-active{% endif %}" aria-pressed="{% if copybetting_filters.copy_status == 'active' %}true{% else %}false{% endif %}">Копируют</button>
+            <button type="submit" name="copy_status" value="stopped" class="{% if copybetting_filters.copy_status == 'stopped' %}is-active{% endif %}" aria-pressed="{% if copybetting_filters.copy_status == 'stopped' %}true{% else %}false{% endif %}">Остановились</button>
+        </div>
+        <label class="copybetting-period"><span class="sr-only">Период {% if copybetting_view == 'audience' %}начала копирования{% else %}ставок{% endif %}</span><select name="copy_period" aria-label="Период {% if copybetting_view == 'audience' %}начала копирования{% else %}ставок{% endif %}"><option value="all"{% if copybetting_filters.copy_period == 'all' %} selected{% endif %}>За всё время</option><option value="30"{% if copybetting_filters.copy_period == '30' %} selected{% endif %}>За месяц</option><option value="7"{% if copybetting_filters.copy_period == '7' %} selected{% endif %}>За неделю</option></select></label>
+        {% if copybetting_view == 'audience' %}<a class="copybetting-button copybetting-export" href="{{ copybetting_export_url }}" download>CSV ↓</a>{% endif %}
+        <button class="copybetting-apply" type="submit">Найти</button>
+    </form>
+    {% if copybetting_view == 'audience' %}
+    <div class="copybetting-audience-list" role="table" aria-label="История аудитории">
+        <div class="copybetting-audience-head" role="row"><span role="columnheader">Пользователь</span><span role="columnheader">Начал</span><span role="columnheader">Остановился</span><span role="columnheader">Статус</span><span role="columnheader">Сумма ставки</span><span role="columnheader">Заработал на вас</span><span class="sr-only" role="columnheader">Действия</span></div>
+        <div data-copy-rows role="rowgroup">
+        {% for person in copybetting_people %}{% include "cabinet/includes/_copybetting_person.html" with person=person only %}{% empty %}<p class="copybetting-no-results">По выбранным условиям пользователей нет. <a href="{{ copybetting_reset_url }}" data-copy-nav>Сбросить фильтры</a></p>{% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="copybetting-bets-list">
+        <div class="copybetting-bets-head"><span>Ставка</span><span>Кто скопировал</span><span>Их сумма</span><span>Результат</span></div>
+        <div data-copy-rows>
+        {% for bet in copybetting_bets %}<article class="copybetting-bet">
+            <a href="{{ bet.url }}"><strong>{{ bet.title }}</strong><small>{{ bet.selection }} · кф {{ bet.coefficient }}</small></a>
+            <span class="copybetting-bet-readers" aria-label="Скопировали {{ bet.count }} пользователей">{% for person in bet.people %}{% include "cabinet/includes/_copybetting_avatar.html" with person=person only %}{% endfor %}{% if bet.extra %}<b>+{{ bet.extra }}</b>{% endif %}</span>
+            <strong class="copybetting-bet-amount">{{ bet.amount }} {% include "front/includes/_coin_icon.html" %}</strong><span class="copybetting-status is-{{ bet.status }}">{{ bet.result }}</span>
+        </article>{% empty %}<p class="copybetting-no-results">Скопированных ставок по выбранным условиям пока нет.</p>{% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    <footer class="copybetting-pagination" data-copy-pagination>
+        <span>Показаны {{ copybetting_start }}–{{ copybetting_end }}</span>
+        <nav aria-label="Страницы копибеттинга">{% for page in copybetting_pages %}{% if page.url %}<a href="{{ page.url }}" data-copy-nav class="{% if page.active %}is-active{% endif %}"{% if page.active %} aria-current="page"{% endif %}>{{ page.label }}</a>{% else %}<span>{{ page.label }}</span>{% endif %}{% endfor %}{% if copybetting_has_more %}<a href="{{ copybetting_next_url }}" data-copy-nav>Дальше →</a>{% endif %}</nav>
+        {% if copybetting_has_more %}<a class="copybetting-load-more" href="{{ copybetting_next_url }}" data-copy-more>Показать ещё</a>{% endif %}
+    </footer>
+</section>
+{% if copybetting_view == 'bets' %}<aside class="copybetting-surface copybetting-top"><header class="copybetting-surface-head"><h3>Топ аудитории</h3><a href="{{ copybetting_reset_url }}" data-copy-nav>Все {{ copybetting_audience_total_count }} →</a></header>{% for person in copybetting_top %}{% include "cabinet/includes/_copybetting_person.html" with person=person compact=True only %}{% empty %}<p class="copybetting-no-results">Аудитория появится после первого копирования.</p>{% endfor %}</aside>{% endif %}
+</div>
+<div class="copybetting-hidden-note" data-copy-hidden-note hidden><span>Часть пользователей скрыта в этом браузере. Общая статистика сохранена.</span><button type="button" data-copy-show-hidden>Показать скрытых</button></div>

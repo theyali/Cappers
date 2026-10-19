@@ -9,13 +9,14 @@ from django.urls import NoReverseMatch, reverse
 from back.models import Bookmaker, FooterButton, FooterLink, FooterLinkGroup, WebsiteSettings
 from cabinet.telegram_auth import in_telegram_app
 from front.models import WikiVideo
+from front.wiki_video_metadata import wiki_video_duration_label
 
 
 GLOBAL_CONTEXT_CACHE_KEY = "website-context:v2"
 GLOBAL_CONTEXT_CACHE_SECONDS = 120
 BOOKMAKERS_CONTEXT_CACHE_KEY = "bookmakers-context:v2"
 BOOKMAKERS_CONTEXT_CACHE_SECONDS = 120
-HOME_WIKI_CACHE_KEY = "home-wiki-videos:v1"
+HOME_WIKI_CACHE_KEY = "home-wiki-videos:v2"
 HOME_WIKI_CACHE_SECONDS = 120
 ROULETTE_SETTINGS_CACHE_KEY = "roulette-settings:v1"
 ROULETTE_SETTINGS_CACHE_SECONDS = 60
@@ -197,6 +198,8 @@ def _home_wiki_videos() -> list:
         .select_related("section")
         .order_by("sort_order", "id")[:2]
     )
+    for video in videos:
+        video.wiki_duration_label = wiki_video_duration_label(video)
     _cache_set(HOME_WIKI_CACHE_KEY, videos, HOME_WIKI_CACHE_SECONDS)
     return videos
 
@@ -405,6 +408,7 @@ def website_settings(request):
         "bookmakers": bookmakers_context["bookmakers"],
         "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
+        "breadcrumbs_inside_content": request.resolver_match is not None and request.resolver_match.view_name in {"front:predictions", "front:following_feed", "game:match_list"},
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),

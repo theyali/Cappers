@@ -1,4 +1,20 @@
+{% load static %}
 {% for coupon in mobile_coupons %}
+{% if coupon.is_paid_locked %}
+<article class="profile-coupon-card profile-desktop-coupon profile-coupon-locked" data-coupon-id="{{ coupon.id }}">
+    <div class="profile-coupon-lock-heading">
+        <img src="{% static 'front/img/real_coin.png' %}" width="56" height="56" alt="" loading="lazy">
+        <span><strong>Платный прогноз</strong><small>Доступ к прогнозам {{ coupon.locked_prediction.expert_name }}</small></span>
+        <span class="paid-prediction-locked-badge">Закрытый</span>
+    </div>
+    <div class="profile-coupon-lock-action">
+        <button type="button" class="profile-coupon-purchase" data-expert-public-modal-open="coupon-access" aria-haspopup="dialog" aria-controls="profile-coupon-access-modal">Приобрести</button>
+    </div>
+    <template data-expert-public-modal-content>
+        {% include "cabinet/includes/_profile_coupon_access.html" with prediction=coupon.locked_prediction only %}
+    </template>
+</article>
+{% else %}
 {% if desktop %}
 <article class="profile-coupon-card profile-desktop-coupon" data-state="{{ coupon.state_status }}" data-sport="{% if coupon.is_express %}express{% else %}{{ coupon.sport_code }}{% endif %}">
 {% endif %}
@@ -34,6 +50,7 @@
             {% else %}
             <b>{{ coupon.sport_name }}</b>{% if coupon.starts_at %} · {{ coupon.starts_at|date:"d.m, H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}
             {% endif %}
+            {% if coupon.is_paid %}<span class="profile-coupon-paid-marker"><img src="{% static 'front/img/real_coin.png' %}" width="18" height="18" alt="Платный прогноз" loading="lazy"></span>{% endif %}
         </span>
         {% if desktop %}
         <span class="profile-desktop-coupon-date">{% if coupon.starts_at %}{{ coupon.starts_at|date:"d.m.Y · H:i" }}{% endif %}{% if coupon.score %} · {{ coupon.score }}{% endif %}</span>
@@ -86,5 +103,6 @@
             </span>
         </div>
 </article>
+{% endif %}
 {% endif %}
 {% endfor %}

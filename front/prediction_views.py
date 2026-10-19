@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal, InvalidOperation
 from types import SimpleNamespace
+from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -33,7 +34,10 @@ from cabinet.comments.services import (
 )
 from cabinet.models import AnalystFollow, DailyTask
 from cabinet.services.daily_tasks import record_daily_task_action
-from cabinet.paid_predictions import user_can_view_paid_predictions
+from cabinet.paid_predictions import (
+    get_active_paid_plans,
+    user_can_view_paid_predictions,
+)
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.cover_images import active_cover_ids
 from game.models import Prediction, PredictionCoupon, PredictionCoverImage, Sport
@@ -69,6 +73,95 @@ SORT_OPTIONS = (
     ("discussed", "Самые обсуждаемые"),
 )
 PREDICTION_FILTER_COLLAPSED_SESSION_KEY = "front.prediction_filter_collapsed"
+
+
+def _paid_prediction_paywall_context(request, coupon: PredictionCoupon) -> dict:
+    """Build a public, deliberately redacted view of a paid coupon."""
+    author = coupon.author
+    profile = getattr(author, "analyst_profile", None)
+    expert_name = (
+        profile.display_name
+        if profile and profile.display_name
+        else author.get_full_name() or author.username
+    )
+    positions = list(getattr(coupon, "detail_positions", []) or [])
+    # Never serialize paid event metadata into the public response. CSS blur is only
+    # decoration and cannot protect text, attributes or image paths from DevTools.
+    safe_events = [{"number": number} for number in range(1, min(len(positions), 3) + 1)]
+
+    author_stats = PredictionCoupon.objects.filter(
+        author=author,
+        published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).aggregate(
+        predictions_count=Count("id"),
+        settled_count=Count(
+            "id",
+            filter=Q(
+                state_status__in=(
+                    PredictionCoupon.StateStatus.WIN,
+                    PredictionCoupon.StateStatus.LOSE,
+                )
+            ),
+        ),
+        wins_count=Count(
+            "id",
+            filter=Q(state_status=PredictionCoupon.StateStatus.WIN),
+        ),
+    )
+    settled_count = author_stats["settled_count"] or 0
+    win_rate = round((author_stats["wins_count"] or 0) * 100 / settled_count) if settled_count else 0
+    followers = AnalystFollow.objects.filter(analyst=author).select_related("follower")
+    followers_count = followers.count()
+    social_avatars = []
+    for follow in followers[:4]:
+        follower = follow.follower
+        follower_name = follower.get_full_name() or follower.username
+        social_avatars.append(
+            {
+                "url": follower.avatar.url if follower.avatar else "",
+                "initials": _initials(follower_name),
+            }
+        )
+
+    paid_plans = list(get_active_paid_plans(author))
+    selected_plan = paid_plans[0] if paid_plans else None
+    access_price = (
+        selected_plan.price
+        if selected_plan is not None
+        else getattr(profile, "paid_predictions_price", Decimal("0"))
+    )
+    is_purchase_closed = coupon.state_status != PredictionCoupon.StateStatus.PENDING
+    access_available = bool(access_price and access_price > 0 and not is_purchase_closed)
+    checkout_url = reverse("cabinet:paid_predictions_subscribe", kwargs={"user_id": author.pk})
+    if access_available:
+        checkout_url = f"{checkout_url}?{urlencode({'next': request.get_full_path()})}"
+    else:
+        checkout_url = reverse("front:expert_profile", kwargs={"username": author.username})
+
+    roi = getattr(coupon, "paywall_author_roi", Decimal("0")) or Decimal("0")
+    return {
+        "page_class": "paid-coupon-paywall-body",
+        "breadcrumbs": [],
+        "coupon": coupon,
+        "positions_count": len(positions),
+        "safe_events": safe_events,
+        "expert_name": expert_name,
+        "expert_initials": _initials(expert_name),
+        "expert_avatar_url": author.avatar.url if author.avatar else "",
+        "expert_verified": bool(profile and profile.is_verified),
+        "expert_trust_index": profile.trust_index if profile else Decimal("0.0"),
+        "expert_roi": roi,
+        "expert_roi_positive": roi >= 0,
+        "expert_win_rate": win_rate,
+        "expert_predictions_count": author_stats["predictions_count"] or 0,
+        "followers_count": followers_count,
+        "social_avatars": social_avatars,
+        "access_price": access_price,
+        "access_period": selected_plan.period_label if selected_plan else "30 дней",
+        "access_available": access_available,
+        "is_purchase_closed": is_purchase_closed,
+        "checkout_url": checkout_url,
+    }
 
 
 def _sort_prediction_queryset(queryset, active_sort, *, default_ordering, popular_ordering=None):
@@ -952,6 +1045,12 @@ def prediction_detail(request, prediction_id: int):
         )
     )
     detail_queryset = annotate_vip_status(detail_queryset, user_outer_ref="author_id")
+    detail_queryset = annotate_author_roi(
+        detail_queryset,
+        author_outer_ref="author_id",
+        annotation_name="paywall_author_roi",
+        period_days=90,
+    )
     coupon = get_object_or_404(
         detail_queryset,
         pk=prediction_id,
@@ -961,7 +1060,11 @@ def prediction_detail(request, prediction_id: int):
         coupon.audience == PredictionCoupon.Audience.PAID
         and not user_can_view_paid_predictions(request.user, coupon.author)
     ):
-        raise Http404("Прогноз не найден.")
+        return render(
+            request,
+            "front/paid_prediction_paywall.html",
+            _paid_prediction_paywall_context(request, coupon),
+        )
 
     if request.user.is_authenticated:
         record_daily_task_action(

@@ -45,8 +45,10 @@
         if (!link || event.defaultPrevented || isModifiedClick(event)) return;
         if (link.target && link.target !== "_self") return;
         if (link.hasAttribute("download")) return;
+        if (link.hasAttribute("data-expert-public-modal-open")) return;
         if (link.hasAttribute("data-profile-tab-link")) return;
         if (link.hasAttribute("data-prediction-ajax-link")) return;
+        if (link.hasAttribute("data-copy-nav") || link.hasAttribute("data-copy-more")) return;
         if (link.closest(".matches-table-filter-sidebar, .matches-head, .matches-sport-tabs, .feed-sport-tabs, .matches-tabs, .matches-date-filter, .cappers-period-filter, .home-best-experts-periods")) return;
         if (link.hasAttribute("data-mobile-coupon-toggle")) {
             event.preventDefault();

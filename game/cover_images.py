@@ -10,6 +10,14 @@ COVER_IDS_CACHE_TTL = 300
 COVER_IDS_VERSION_KEY = "prediction-cover-ids:version"
 
 
+def prediction_editor_covers():
+    """The manually selectable gallery, shared by rendering and validation."""
+    return PredictionCoverImage.objects.filter(
+        is_active=True,
+        placement=PredictionCoverImage.Placement.GRID,
+    ).select_related("sport").order_by("cover_type", "sport__name_ru", "sport__name", "id")
+
+
 def _cover_ids_version() -> int:
     try:
         cache.add(COVER_IDS_VERSION_KEY, 1, timeout=None)
