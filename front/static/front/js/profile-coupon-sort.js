@@ -27,6 +27,8 @@
         const empty = feed.querySelector('[data-coupon-feed-empty]');
         const sortButtons = panel.querySelectorAll('[data-profile-coupon-sort]');
         const filterButtons = feed.querySelectorAll('[data-profile-coupon-filter]');
+        const purchaseButtons = feed.closest('.profile-purchases-page')?.querySelectorAll('[data-profile-purchase-status]') || [];
+        let purchaseStatus = feed.dataset.purchaseStatus || 'paid';
         let sort = feed.dataset.sort || 'date';
         let direction = feed.dataset.direction || 'desc';
         let filter = feed.dataset.filter || 'all';
@@ -37,6 +39,12 @@
         let retryReplace = false;
 
         const updateControls = () => {
+            purchaseButtons.forEach((button) => {
+                const active = button.dataset.profilePurchaseStatus === purchaseStatus;
+                button.classList.toggle('is-active', active);
+                if (active) button.setAttribute('aria-current', 'page');
+                else button.removeAttribute('aria-current');
+            });
             sortButtons.forEach((button) => {
                 const active = button.dataset.profileCouponSort === sort;
                 button.classList.toggle('is-active', active);
@@ -50,13 +58,18 @@
                 button.setAttribute('aria-pressed', String(active));
             });
         };
-        const persist = () => {
+        const persist = (push = false) => {
             const url = new URL(window.location.href);
+            if (purchaseButtons.length) {
+                url.searchParams.set('status', purchaseStatus);
+                url.searchParams.delete('page');
+                url.searchParams.delete('offset');
+            }
             [['coupon_sort', sort, 'date'], ['coupon_direction', direction, 'desc'], ['coupon_filter', filter, 'all']].forEach(([key, value, fallback]) => {
                 if (value === fallback) url.searchParams.delete(key);
                 else url.searchParams.set(key, value);
             });
-            window.history.replaceState(null, '', url);
+            window.history[push ? 'pushState' : 'replaceState'](null, '', url);
         };
         const visible = () => {
             const rect = sentinel.getBoundingClientRect();
@@ -80,7 +93,8 @@
                 method: 'GET',
                 dataType: 'json',
                 timeout: 15000,
-                data: { sort, direction, state: filter, offset: append ? Number(more.dataset.nextOffset || 0) : 0 },
+                data: { sort, direction, state: filter, offset: append ? Number(more.dataset.nextOffset || 0) : 0,
+                    ...(purchaseButtons.length ? { status: purchaseStatus } : {}) },
             }).done((payload) => {
                 if (current !== version) return;
                 if (!payload.ok || typeof payload.desktop_html !== 'string' || typeof payload.html !== 'string') {
@@ -99,6 +113,8 @@
                 more.textContent = 'Показать ещё';
                 empty.hidden = payload.total !== 0;
                 panel.querySelectorAll('.profile-coupon-count').forEach((count) => { count.textContent = payload.total; });
+                if (payload.title) feed.querySelector('[data-coupon-feed-title]').textContent = payload.title;
+                feed.dataset.purchaseStatus = purchaseStatus;
                 retryReplace = false;
                 status.textContent = `Показано ${payload.next_offset} из ${payload.total}`;
             }).fail((_xhr, reason) => {
@@ -131,6 +147,15 @@
             filter = button.dataset.profileCouponFilter;
             updateControls(); persist(); load();
         }));
+        $(purchaseButtons).on('click', (event) => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || (event.button && event.button !== 0)) return;
+            event.preventDefault();
+            const next = event.currentTarget.dataset.profilePurchaseStatus;
+            if (next === purchaseStatus) return;
+            purchaseStatus = next;
+            filter = 'all';
+            updateControls(); persist(true); load();
+        });
         more.addEventListener('click', () => load(true));
         if ('IntersectionObserver' in window) {
             new IntersectionObserver(loadMoreIfVisible, { rootMargin: '160px' }).observe(sentinel);
@@ -143,6 +168,7 @@
             sort = params.get('coupon_sort') || 'date';
             direction = params.get('coupon_direction') || 'desc';
             filter = params.get('coupon_filter') || 'all';
+            purchaseStatus = params.get('status') === 'refunded' ? 'refunded' : 'paid';
             updateControls(); load();
         });
         updateControls();

@@ -6,9 +6,9 @@
 {% block content %}
 <section class="coupon-detail-layout-page container" aria-label="{{ prediction_title }}"{% if request.user.is_authenticated and request.user.pk != coupon.author_id %} data-coupon-open-url="{% url 'front:prediction_open' prediction_id=coupon.id %}" data-coupon-id="{{ coupon.id }}"{% endif %}>
   <div class="coupon-detail-content">
-    <section class="coupon-detail-page" aria-label="Подробности купона #{{ coupon.id }}">
+    <section class="coupon-detail-page{% if coupon.prediction_format == 'rich' %} is-rich{% endif %}" aria-label="Подробности купона #{{ coupon.id }}">
       {% include "front/includes/_coupon_detail_mobile.html" %}
-      <a class="coupon-detail-back" href="{% url 'front:predictions' %}">{% include "front/includes/_solar_icon.html" with name="coupon_arrow_left_linear" %}Вернуться в ленту</a>
+      <a class="coupon-detail-back" href="{{ coupon_back_url }}" data-coupon-back>{% include "front/includes/_solar_icon.html" with name="coupon_arrow_left_linear" %}{{ coupon_back_label }}</a>
       <header class="coupon-detail-heading">
         {% include "front/includes/_coupon_open_count.html" with count=coupon.unique_opens_count coupon_id=coupon.id only %}
         <div class="coupon-detail-heading-top">
@@ -19,7 +19,7 @@
         {% if not prediction_article and not coupon.headline %}<p>Топовые матчи. Выверенная аналитика. Уверенная игра.</p>{% endif %}
       </header>
       <section class="coupon-detail-events" data-coupon-slider aria-labelledby="coupon-detail-events-title">
-        {% include "front/includes/_prediction_article.html" %}
+        {% include "front/includes/_prediction_article.html" with article_variant="desktop" %}
         <div class="coupon-detail-events-head">
           <h2 id="coupon-detail-events-title">События <span>{{ positions|length }}</span></h2>
           {% if positions|length > 1 %}
@@ -98,6 +98,7 @@
                     </header>
 
                     {% if request.user.is_authenticated %}
+                    <div class="prediction-comment-composer">
                     <form class="prediction-comment-form" data-comment-form novalidate>
                         <span class="prediction-comment-avatar"{% if request.user.avatar %} data-skeleton-image{% endif %}>
                             {% if request.user.avatar %}
@@ -115,7 +116,6 @@
                             placeholder="{% if comments_total_count %}Напишите комментарий...{% else %}Будьте первым — напишите комментарий{% endif %}"
                             data-comment-text
                         ></textarea>
-                        <p class="prediction-comment-feedback" data-comment-feedback role="status" aria-live="polite" hidden></p>
                         <p class="prediction-comment-replying" data-comment-replying hidden>
                             Ответ пользователю <strong data-comment-replying-name></strong>
                             <button type="button" data-comment-reply-cancel>Отменить</button>
@@ -131,6 +131,8 @@
                             <span>Отправить</span>
                         </button>
                     </form>
+                    <div class="prediction-comment-notice" data-comment-notice><div><p class="prediction-comment-feedback" data-comment-feedback role="status" aria-live="polite" aria-atomic="true"></p></div></div>
+                    </div>
                     {% else %}
                     <div class="prediction-comments-auth">
                         <strong>Хотите участвовать в обсуждении?</strong>

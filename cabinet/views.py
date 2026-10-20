@@ -956,9 +956,13 @@ def _combined_coefficient_expression():
     )
 
 
-def _profile_coupons_queryset(user):
+def _profile_coupons_queryset(user, *, purchased_coupon_ids=None):
+    if purchased_coupon_ids is not None:
+        coupons = PredictionCoupon.objects.filter(pk__in=purchased_coupon_ids)
+    else:
+        coupons = PredictionCoupon.objects.filter(author=user)
     return (
-        PredictionCoupon.objects.filter(author=user)
+        coupons
         .exclude(published_status=PredictionCoupon.PublishedStatus.DRAFT)
         .select_related("metrics")
         .annotate(
@@ -1927,24 +1931,6 @@ def follow_analyst(request, user_id):
             related_obj=follow,
         )
     return JsonResponse({"ok": True, "message": "Вы подписаны."})
-
-
-@login_required
-@require_POST
-def decline_paid_predictions_view(request, user_id):
-    analyst = get_object_or_404(User, pk=user_id, role=User.Role.ANALYST)
-    if analyst.pk != request.user.pk:
-        AnalystFollow.objects.filter(follower=request.user, analyst=analyst).delete()
-        messages.success(request, "Вы отписались от каппера.")
-
-    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or ""
-    if not url_has_allowed_host_and_scheme(
-        next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        next_url = reverse("front:following_feed")
-    return redirect(next_url)
 
 
 @login_required

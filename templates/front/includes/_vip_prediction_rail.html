@@ -1,0 +1,26 @@
+<section class="vip-prediction-rail" aria-label="Последние VIP прогнозы">
+    <header class="vip-prediction-rail-head">
+        {% include "front/includes/_vip_crown.html" only %}
+        <div>VIP прогнозы</div>
+        <span>последние 10</span>
+    </header>
+    <div class="vip-prediction-rail-list">
+        {% for row in vip_rail.rows %}
+        <a class="vip-prediction-rail-row" href="{{ row.url }}">
+            <span class="vip-prediction-rail-sport is-{{ row.sport }}">
+                {% include "front/includes/_sport_icon.html" with code=row.sport size=16 only %}
+            </span>
+            <span class="vip-prediction-rail-copy">
+                <strong title="{{ row.title }}">{{ row.title }}</strong>
+                <span class="vip-prediction-rail-meta"><i class="is-{{ row.state }}" role="img" aria-label="{{ row.status_label }}" title="{{ row.status_label }}"></i><span title="{{ row.meta }}">{{ row.meta }}</span></span>
+            </span>
+            <span class="vip-prediction-rail-odds">{{ row.coefficient|floatformat:2 }}</span>
+        </a>
+        {% empty %}
+        <p class="vip-prediction-rail-empty">VIP прогнозов пока нет.</p>
+        {% endfor %}
+    </div>
+    <footer class="vip-prediction-rail-footer">
+        <a href="{{ vip_rail.all_url }}">Все VIP прогнозы<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 7l5 5-5 5"/></svg></a>
+    </footer>
+</section>

@@ -1,4 +1,52 @@
+{% load money %}
 {% if prediction_article %}
+{% if prediction_article.is_rich %}
+<article class="coupon-prediction-article is-rich is-{{ prediction_article.size }}" aria-label="Текст прогноза" data-prediction-article>
+    <div class="coupon-prediction-article-hero is-{{ prediction_article.sport_key }}">
+        {% if prediction_article.cover_url %}
+        <picture class="coupon-prediction-article-cover" data-skeleton-image>
+            <source media="(max-width: 1120px)" srcset="{{ prediction_article.mobile_cover_url }}">
+            <img src="{{ prediction_article.cover_url }}" width="736" height="330" alt="" decoding="async">
+        </picture>
+        {% else %}
+        <svg class="coupon-prediction-article-pattern" viewBox="0 0 736 330" preserveAspectRatio="none" aria-hidden="true">
+            <defs><pattern id="article-stripes-{{ coupon.id }}-{{ article_variant }}" width="52" height="52" patternUnits="userSpaceOnUse" patternTransform="rotate(56)"><path d="M0 0V52" stroke="#fff" stroke-opacity=".08" stroke-width="18"/></pattern></defs>
+            <rect width="736" height="330" fill="url(#article-stripes-{{ coupon.id }}-{{ article_variant }})"/>
+        </svg>
+        <div class="coupon-prediction-article-art" aria-hidden="true">{% include "game/includes/_match_sport_tile_art.html" with key=prediction_article.sport_key code=article_variant only %}</div>
+        {% endif %}
+        <div class="coupon-prediction-article-panel">
+            <div class="coupon-prediction-article-badges">
+                <span class="coupon-prediction-article-badge is-access">{% if coupon.audience == 'paid' %}Платный{% if coupon.single_purchase_price %} · {{ coupon.single_purchase_price|money }} ₽{% endif %}{% else %}Бесплатный{% endif %}</span>
+                <span class="coupon-prediction-article-badge is-status is-{{ coupon.state_status }}">{{ coupon.get_state_status_display }}</span>
+                <span class="coupon-prediction-article-badge is-kind">{% if coupon.coupon_type == 'express' %}Экспресс{% else %}Ординар{% endif %}</span>
+            </div>
+            <h2 class="coupon-prediction-article-title">{{ prediction_article.title }}</h2>
+            {% if prediction_article.description %}
+            <p class="coupon-prediction-article-preview" data-article-preview>{{ prediction_article.description }}</p>
+            <button class="coupon-prediction-article-read" type="button" data-article-expand aria-controls="coupon-article-full-{{ coupon.id }}-{{ article_variant }}" aria-expanded="false" hidden>Читать полностью <span>· {{ prediction_article.character_count }} знаков</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+            {% endif %}
+            <div class="coupon-prediction-article-stats">
+                <div class="coupon-prediction-article-stat is-coefficient"><span><span class="is-desktop">Коэффициент</span><span class="is-mobile">КФ</span></span><strong>{{ total_coefficient|floatformat:2 }}</strong></div>
+                <div class="coupon-prediction-article-stat"><span>Ставка</span><strong>{{ coupon.total_stake|money }}{% include "front/includes/_coin_icon.html" %}</strong></div>
+                <div class="coupon-prediction-article-stat is-payout"><span>Выплата</span><strong>{{ coupon.possible_payout|money }}{% include "front/includes/_coin_icon.html" %}</strong></div>
+                <div class="coupon-prediction-article-stat is-confidence"><span>Уверенность</span><strong>{{ coupon.confidence }}%</strong><progress value="{{ coupon.confidence }}" max="100" aria-label="Уверенность {{ coupon.confidence }}%"></progress></div>
+            </div>
+        </div>
+    </div>
+    {% if prediction_article.description %}
+    <details class="coupon-prediction-article-full" id="coupon-article-full-{{ coupon.id }}-{{ article_variant }}" data-article-full>
+        <summary>Разбор от автора</summary>
+        <div class="coupon-prediction-article-full-head"><h3>Разбор от автора</h3><span>{{ prediction_article.character_count }} знаков · {{ prediction_article.reading_minutes }} мин чтения</span></div>
+        <div class="coupon-prediction-article-text">{{ prediction_article.description|linebreaks }}</div>
+        <footer class="coupon-prediction-article-full-footer">
+            <button class="coupon-prediction-article-read" type="button" data-article-collapse>Свернуть</button>
+            <span>{% if expert_avatar_url %}<img src="{{ expert_avatar_url }}" width="26" height="26" alt="" loading="lazy">{% endif %}{{ expert_name }} · {{ coupon.published_at|default:coupon.created_at|date:"d.m, H:i" }}</span>
+        </footer>
+    </details>
+    {% endif %}
+</article>
+{% else %}
 <article class="coupon-prediction-article" aria-label="Текст прогноза">
     {% if prediction_article.cover_url %}
     <picture class="coupon-prediction-article-cover" data-skeleton-image>
@@ -10,4 +58,5 @@
     <div class="coupon-prediction-article-text">{{ prediction_article.description|linebreaks }}</div>
     {% endif %}
 </article>
+{% endif %}
 {% endif %}

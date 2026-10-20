@@ -1,0 +1,17 @@
+{% if code == 'express' %}
+{% include "front/svgs/coupon.svg" %}
+{% elif code == 'football' or code == 'soccer' or key == 'f' %}
+{% include "front/svgs/soccer.svg" %}
+{% elif code == 'tennis' or key == 't' %}
+{% include "front/svgs/tennis.svg" %}
+{% elif code == 'basketball' or key == 'b' %}
+{% include "front/svgs/basketball.svg" %}
+{% elif code == 'hockey' or code == 'ice-hockey' or code == 'ice_hockey' or key == 'h' %}
+{% include "front/svgs/hockey.svg" %}
+{% elif code == 'esports' %}
+{% include "game/includes/_match_sport_glyph.html" with key="e" size=size|default:16 only %}
+{% elif code == 'volleyball' %}
+{% include "game/includes/_match_sport_glyph.html" with key="v" size=size|default:16 only %}
+{% else %}
+{% include "game/includes/_match_sport_glyph.html" with key=key size=size|default:16 only %}
+{% endif %}

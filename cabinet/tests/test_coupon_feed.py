@@ -6,7 +6,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import AnalystPaidSubscription, User
+from cabinet.models import AnalystPaidSubscription, PaidPredictionPurchase, User
 from game.models import Match, Prediction, PredictionCoupon
 
 
@@ -72,10 +72,28 @@ class CouponFeedTests(TestCase):
         for html in (payload["html"], payload["desktop_html"]):
             self.assertIn("profile-coupon-locked", html)
             self.assertIn("real_coin.png", html)
-            self.assertIn("paid-prediction-locked-body", html)
+            self.assertIn("paid-prediction-access-body", html)
             self.assertNotIn("СЕКРЕТНЫЙ", html)
             self.assertNotIn(">3,71<", html)
             self.assertNotIn('data-sort-stake="101', html)
+
+    def test_locked_coupon_shows_lifecycle_status_on_mobile_and_desktop(self):
+        for state, settled_at, label in [
+            ("pending", None, "Активный"),
+            ("win", None, "Завершён"),
+            ("lose", None, "Завершён"),
+            ("refund", None, "Завершён"),
+            ("pending", timezone.now(), "Завершён"),
+        ]:
+            with self.subTest(state=state, settled_at=settled_at):
+                PredictionCoupon.objects.filter(pk=self.paid.pk).update(state_status=state, settled_at=settled_at)
+                payload = self.public(sort="stake", direction="desc").json()
+                for html in (payload["html"], payload["desktop_html"]):
+                    card = re.search(r'<article[^>]*profile-coupon-locked.*?</article>', html, re.S).group()
+                    self.assertIn("profile-coupon-lock-status", card)
+                    self.assertIn(label, card)
+                    self.assertNotIn("СЕКРЕТНЫЙ", card)
+                    self.assertEqual("is-completed" in card, label == "Завершён")
 
     def test_private_feed_requires_author_login_and_includes_own_paid_coupons(self):
         url = reverse("cabinet:profile_mobile_coupons")
@@ -87,6 +105,64 @@ class CouponFeedTests(TestCase):
         self.assertNotIn(self.draft.pk, self.ids(payload))
         self.client.force_login(self.other)
         self.assertEqual(self.client.get(url).json()["total"], 1)
+
+    def test_purchases_feed_filters_sorts_pages_and_preserves_buyer_access(self):
+        buyer = User.objects.create_user(username="coupon-buyer")
+        stranger = User.objects.create_user(username="coupon-stranger")
+        coupons = []
+        now = timezone.now()
+        for number in range(14):
+            coupon = self.coupon(self.author, "win" if number % 2 else "pending", number + 200, audience="paid")
+            coupons.append(coupon)
+            PaidPredictionPurchase.objects.create(
+                buyer=buyer, analyst=self.author, coupon=coupon, status="paid", price=number + 50,
+                platform_fee_percent=0, platform_fee_amount=0, capper_income=number + 50,
+                paid_at=now + timedelta(minutes=number),
+            )
+        self.client.force_login(buyer)
+        url = reverse("cabinet:coupon_purchases")
+        response = self.client.get(url)
+        self.assertContains(response, "profile-desktop-list-head")
+        self.assertContains(response, "profile-desktop-sort-toolbar")
+        self.assertContains(response, 'data-profile-coupon-sort="price"')
+        self.assertContains(response, f"#{coupons[-1].pk}")
+        self.assertContains(response, 'profile-sidebar-link is-active')
+
+        def fetch(**params):
+            return self.client.get(url, params, HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()
+
+        first = fetch(sort="price", direction="asc")
+        second = fetch(sort="price", direction="asc", offset=first["next_offset"])
+        self.assertEqual(first["total"], 14)
+        self.assertTrue(first["has_more"])
+        self.assertFalse(second["has_more"])
+        self.assertEqual(self.ids(first) + self.ids(second), [coupon.pk for coupon in coupons])
+        self.assertNotIn("profile-coupon-locked", first["html"])
+        self.assertNotIn("profile-coupon-locked", first["desktop_html"])
+        self.assertEqual(self.ids(fetch(sort="date"))[0], coupons[-1].pk)
+        self.assertEqual(fetch(state="win")["total"], 7)
+        PaidPredictionPurchase.objects.filter(buyer=buyer, coupon=coupons[0]).update(status="refunded", refunded_at=now)
+        self.assertNotIn(coupons[0].pk, self.ids(fetch(sort="price", direction="asc")))
+        refunded_page = self.client.get(url, {"status": "refunded"})
+        self.assertContains(refunded_page, "profile-desktop-sort-toolbar")
+        self.assertContains(refunded_page, 'data-purchase-status="refunded"')
+        self.assertNotContains(refunded_page, "profile-purchases-table")
+        self.assertContains(refunded_page, 'data-profile-purchase-status="refunded" class="is-active"')
+        refunds = fetch(status="refunded")
+        self.assertEqual(refunds["total"], 1)
+        self.assertEqual(self.ids(refunds), [coupons[0].pk])
+        for html in (refunds["html"], refunds["desktop_html"]):
+            self.assertIn("Возвращено", html)
+            self.assertIn("profile-coupon-card profile-desktop-coupon", html)
+            self.assertNotIn("Хозяева", html)
+            self.assertNotIn('data-sort-stake=', html)
+        self.assertEqual(fetch(status="refunded", state="win")["total"], 0)
+        self.assertEqual(fetch(status="refunded", sort="price", direction="asc")["total"], 1)
+        self.client.force_login(stranger)
+        self.assertEqual(fetch()["total"], 0)
+        self.assertEqual(fetch(status="refunded")["total"], 0)
+        self.client.logout()
+        self.assertEqual(self.client.get(url, HTTP_X_REQUESTED_WITH="XMLHttpRequest").status_code, 302)
 
     def test_author_and_active_subscriber_see_paid_card_without_lock(self):
         viewer = User.objects.create_user(username="feed-subscriber")
@@ -150,7 +226,7 @@ class CouponFeedTests(TestCase):
             self.assertIn('data-expert-public-modal-open="coupon-access"', visible)
             self.assertIn('aria-controls="profile-coupon-access-modal"', visible)
             self.assertIn("Приобрести", visible)
-            self.assertNotIn("paid-prediction-locked-body", visible)
+            self.assertNotIn("paid-prediction-access-body", visible)
             self.assertNotIn("paid-prediction-offer", visible)
             self.assertNotIn("<a ", visible)
             self.assertIn("Этот прогноз платный", template)
@@ -172,7 +248,7 @@ class CouponFeedTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-profile-coupon-feed")
         self.assertContains(response, "profile-coupon-locked")
-        self.assertContains(response, "paid-prediction-locked-body")
+        self.assertContains(response, "paid-prediction-access-body")
         self.assertNotContains(response, "СЕКРЕТНЫЙ")
 
     def test_empty_invalid_parameters_and_private_profile(self):

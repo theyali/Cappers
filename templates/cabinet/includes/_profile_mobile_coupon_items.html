@@ -1,13 +1,36 @@
-{% load static %}
+{% load static money %}
 {% for coupon in mobile_coupons %}
-{% if coupon.is_paid_locked %}
+{% if coupon.is_refunded %}
+<article class="profile-coupon-card profile-desktop-coupon profile-coupon-locked" data-coupon-id="{{ coupon.id }}">
+    <div class="profile-coupon-lock-heading">
+        <img src="{% static 'front/img/real_coin.png' %}" width="56" height="56" alt="" loading="lazy">
+        <span><strong>Купон #{{ coupon.id }}</strong><small>@{{ coupon.purchase_author }}</small></span>
+        <span class="paid-prediction-access-badge">Возврат оплаты</span>
+    </div>
+    <div class="profile-coupon-lock-action">
+        <span class="profile-coupon-lock-status is-completed">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v4H4m4 0a8 8 0 1 1-2 6"/></svg>
+            Возвращено {{ coupon.purchase_price|money }} ₽
+        </span>
+        <small class="profile-coupon-purchase-meta">{{ coupon.purchase_refunded_at|date:"d.m.Y" }}</small>
+        <a class="profile-coupon-purchase" href="{% url 'front:prediction_detail' prediction_id=coupon.id %}">Подробнее</a>
+    </div>
+</article>
+{% elif coupon.is_paid_locked %}
 <article class="profile-coupon-card profile-desktop-coupon profile-coupon-locked" data-coupon-id="{{ coupon.id }}">
     <div class="profile-coupon-lock-heading">
         <img src="{% static 'front/img/real_coin.png' %}" width="56" height="56" alt="" loading="lazy">
         <span><strong>Платный прогноз</strong><small>Доступ к прогнозам {{ coupon.locked_prediction.expert_name }}</small></span>
-        <span class="paid-prediction-locked-badge">Закрытый</span>
+        <span class="paid-prediction-access-badge">Закрытый</span>
     </div>
     <div class="profile-coupon-lock-action">
+        <span class="profile-coupon-lock-status{% if coupon.is_completed %} is-completed{% endif %}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                {% if coupon.is_completed %}<path d="m8 12 3 3 5-6"/>{% else %}<path d="M12 7v5l3 2"/>{% endif %}
+            </svg>
+            {{ coupon.status_label }}
+        </span>
         {% include "front/includes/_coupon_open_count.html" with count=coupon.locked_prediction.unique_opens_count coupon_id=coupon.id only %}
         <button type="button" class="profile-coupon-purchase" data-expert-public-modal-open="coupon-access" aria-haspopup="dialog" aria-controls="profile-coupon-access-modal">Приобрести</button>
     </div>
@@ -59,6 +82,7 @@
         {% endif %}
         <strong>{{ coupon.title }}</strong>
         <span>{{ coupon.subtitle }}</span>
+        {% if coupon.purchase_author %}<small class="profile-coupon-purchase-meta">#{{ coupon.id }} · @{{ coupon.purchase_author }} · {{ coupon.purchase_price|money }} ₽ · {{ coupon.purchase_paid_at|date:"d.m.Y" }}</small>{% endif %}
     </span>
     <span class="expert-mobile-coupon-result">
         {% if desktop %}<small class="is-{{ coupon.state_status|default:'pending' }}">{{ coupon.state_label }}</small>{% endif %}
@@ -97,11 +121,7 @@
                         data-share-url="{% url 'front:prediction_detail' prediction_id=coupon.id %}"
                         data-share-endpoint="{% url 'front:prediction_share' prediction_id=coupon.id %}"
                         aria-label="Поделиться прогнозом" title="Поделиться прогнозом">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 16V4"></path>
-                        <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
-                        <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
-                    </svg>
+                    {% include "front/includes/_solar_icon.html" with name="share-bold-duotone" only %}
                 </button>
             </span>
         </div>

@@ -153,6 +153,7 @@
     {% if request.resolver_match.view_name == 'cabinet:profile' %}
     <script src="{% static 'front/js/profile-layout.js' %}" defer></script>
     {% endif %}
+    {% if not request.user.is_authenticated %}{% include "front/includes/_cookie_consent.html" %}{% endif %}
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-app-nav.js' %}" defer></script>

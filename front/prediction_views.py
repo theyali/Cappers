@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal, InvalidOperation
 from types import SimpleNamespace
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -22,6 +22,7 @@ from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
@@ -52,7 +53,7 @@ from .metrics import (
 )
 from .models import PredictionFavorite, PredictionLike
 from .prediction_metrics import annotate_author_roi
-from .sport_tabs import build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
+from .sport_tabs import SPORT_TILE_KEYS, build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
 from .views import PREDICTION_STATUS_FILTERS, _initials
 
 
@@ -211,14 +212,17 @@ def _following_ids(user) -> set[int]:
     )
 
 
-def _positions_queryset():
+def _positions_queryset(*, include_match_raw_data=False):
     return Prediction.objects.select_related(
         "cover_image",
         "match__sport",
         "match__league__country",
         "match__home_team",
         "match__away_team",
-    ).defer(*PREDICTION_MATCH_DEFER_FIELDS).order_by("id")
+    ).defer(*[
+        field for field in PREDICTION_MATCH_DEFER_FIELDS
+        if not (include_match_raw_data and field == "match__raw_data")
+    ]).order_by("id")
 
 
 def _combined_coefficient_expression():
@@ -242,7 +246,7 @@ def _normalized_coefficient(value) -> Decimal:
         return Decimal("0.00")
 
 
-def _published_queryset(*, include_paid: bool = False):
+def _published_queryset(*, include_paid: bool = False, include_match_raw_data=False):
     queryset = (
         PredictionCoupon.objects.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -254,7 +258,7 @@ def _published_queryset(*, include_paid: bool = False):
             "metrics",
         )
         .prefetch_related(
-            Prefetch("predictions", queryset=_positions_queryset(), to_attr="card_positions")
+            Prefetch("predictions", queryset=_positions_queryset(include_match_raw_data=include_match_raw_data), to_attr="card_positions")
         )
         .annotate(
             likes_count=Coalesce(
@@ -1094,6 +1098,7 @@ def prediction_detail(request, prediction_id: int):
         mobile_cover_url = custom_cover_url or _cover_url_from_field(cover.mobile_image if cover else None)
         if coupon.description or desktop_cover_url or mobile_cover_url:
             prediction_article = {
+                "is_rich": coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
                 "description": coupon.description,
                 "cover_url": desktop_cover_url or mobile_cover_url,
                 "mobile_cover_url": mobile_cover_url or desktop_cover_url,
@@ -1113,6 +1118,20 @@ def prediction_detail(request, prediction_id: int):
     for position in positions:
         total_coefficient *= position.coefficient
     total_coefficient = _normalized_coefficient(total_coefficient if positions else 0)
+    if prediction_article and prediction_article["is_rich"]:
+        text_length = len(coupon.description.strip())
+        first_position = positions[0] if positions else None
+        match = first_position.match if first_position else None
+        article_title = coupon.headline.strip()
+        if not article_title and first_position:
+            article_title = f"{match.home_team_name} — {match.away_team_name} · {first_position.pick_label}"
+        prediction_article.update({
+            "title": article_title or f"Купон #{coupon.pk}",
+            "sport_key": SPORT_TILE_KEYS.get(match.sport_code if match else "", "x"),
+            "character_count": text_length,
+            "reading_minutes": max(1, (len(coupon.description.split()) + 179) // 180),
+            "size": "short" if text_length <= 120 else "long" if text_length > 350 else "normal",
+        })
 
     author = coupon.author
     profile = getattr(author, "analyst_profile", None)
@@ -1191,11 +1210,25 @@ def prediction_detail(request, prediction_id: int):
             }
         )
 
+    coupon_back_url = request.META.get("HTTP_REFERER", "")
+    if (
+        not url_has_allowed_host_and_scheme(
+            coupon_back_url, allowed_hosts={request.get_host()}, require_https=request.is_secure(),
+        )
+        or urlsplit(coupon_back_url).path == request.path
+    ):
+        coupon_back_url = reverse("front:predictions")
+        coupon_back_label = "К прогнозам"
+    else:
+        coupon_back_label = "Назад"
+
     return render(
         request,
         "front/prediction_detail.html",
         {
             "page_class": "coupon-detail-body",
+            "coupon_back_url": coupon_back_url,
+            "coupon_back_label": coupon_back_label,
             "breadcrumbs": [],
             "coupon": coupon,
             "prediction_title": coupon.headline.strip() or f"Купон #{coupon.id}",

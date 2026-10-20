@@ -67,3 +67,54 @@
     window.addEventListener("pageshow", record);
     record();
 })();
+
+// Each responsive copy owns its reader so opening one never changes the other.
+(() => {
+    document.querySelectorAll("[data-prediction-article]").forEach((article) => {
+        const preview = article.querySelector("[data-article-preview]");
+        const full = article.querySelector("[data-article-full]");
+        const expand = article.querySelector("[data-article-expand]");
+        const collapse = article.querySelector("[data-article-collapse]");
+        if (!preview || !full || !expand || !collapse) return;
+        const title = article.querySelector(".coupon-prediction-article-title");
+        const hero = article.querySelector(".coupon-prediction-article-hero");
+        article.dataset.articleEnhanced = "true";
+        const sync = () => {
+            if (!hero.getClientRects().length) return;
+            const clipped = preview.scrollHeight > preview.clientHeight + 1;
+            const short = !clipped && preview.scrollHeight <= parseFloat(getComputedStyle(preview).lineHeight) * 2 + 1
+                && title.scrollHeight <= parseFloat(getComputedStyle(title).lineHeight) + 3;
+            article.classList.toggle("is-long", clipped);
+            article.classList.toggle("is-short", short);
+            expand.hidden = !clipped;
+            if (!clipped) full.open = false;
+            expand.setAttribute("aria-expanded", String(full.open));
+        };
+        expand.addEventListener("click", () => {
+            full.open = !full.open;
+            expand.setAttribute("aria-expanded", String(full.open));
+        });
+        collapse.addEventListener("click", () => {
+            full.open = false;
+            expand.setAttribute("aria-expanded", "false");
+            expand.focus({ preventScroll: true });
+        });
+        full.addEventListener("toggle", () => expand.setAttribute("aria-expanded", String(full.open)));
+        if (typeof ResizeObserver !== "undefined") new ResizeObserver(sync).observe(hero);
+        window.addEventListener("resize", sync, { passive: true });
+        document.fonts?.ready.then(sync);
+        sync();
+    });
+})();
+
+(() => {
+    document.querySelectorAll("[data-coupon-back]").forEach((link) => {
+        link.addEventListener("click", (event) => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            if (window.history.length > 1 && document.referrer && link.href === document.referrer) {
+                event.preventDefault();
+                window.history.back();
+            }
+        });
+    });
+})();

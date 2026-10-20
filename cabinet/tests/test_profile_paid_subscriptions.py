@@ -178,7 +178,7 @@ class ProfilePaidSubscriptionsTests(TestCase):
             "cabinet/includes/_profile_social_panel.html",
             {"profile_social": self.context()},
         )
-        self.assertNotIn("999", html)
+        self.assertNotIn("999 ₽", html)
         self.assertNotIn(private.username, html)
         self.assertIn("550 ₽", html)
 

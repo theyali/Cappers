@@ -1,4 +1,4 @@
 {% load static %}
-<svg class="solar-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+<svg class="solar-icon" width="{{ icon_size|default:24 }}" height="{{ icon_size|default:24 }}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <use href="{% static 'front/svgs/solar-icons.svg' %}#{{ name }}"></use>
 </svg>

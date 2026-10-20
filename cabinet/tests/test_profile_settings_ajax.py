@@ -331,6 +331,48 @@ class ProfileAvatarTests(CapperSetupMixin, TestCase):
         self.user.gender = User.Gender.MALE
         self.user.save(update_fields=["gender"])
 
+    def test_pending_capper_can_choose_avatar_in_first_onboarding_step(self):
+        self.user.role = User.Role.READER
+        self.user.save(update_fields=["role"])
+        self.profile.is_public = False
+        self.profile.save(update_fields=["is_public"])
+        preset = self.create_preset("Аватар для каппера")
+        inactive = self.create_preset("Неактивный аватар", active=False)
+        url = reverse("cabinet:capper_onboarding", kwargs={"step": 1})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-avatar-modal-open')
+        self.assertContains(response, 'id="profile-avatar-modal"', count=1)
+        self.assertContains(response, f'data-avatar-id="{preset.pk}"')
+        self.assertNotContains(response, f'data-avatar-id="{inactive.pk}"')
+        self.assertContains(response, 'front/js/profile.js')
+        self.assertContains(response, "Профиль каппера")
+        html = response.content.decode()
+        self.assertLess(html.index('</form>', html.index('capper-onboarding-form')), html.index('id="profile-avatar-modal"'))
+        saved = self.client.post(reverse("cabinet:avatar_upload"), {"preset_id": preset.pk})
+        self.assertEqual(saved.status_code, 200)
+        self.user.refresh_from_db()
+        saved_name = self.user.avatar.name
+        self.assertTrue(saved_name)
+        self.assertEqual(self.user.role, User.Role.READER)
+        next_step = self.client.post(url, {"first_name": "Иван", "last_name": "Иванов", "display_name": "Новый каппер"})
+        self.assertRedirects(next_step, reverse("cabinet:capper_onboarding", kwargs={"step": 2}), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.avatar.name, saved_name)
+        self.assertNotContains(self.client.get(reverse("cabinet:capper_onboarding", kwargs={"step": 2})), 'id="profile-avatar-modal"')
+
+    def test_pending_capper_can_upload_own_avatar(self):
+        self.user.role = User.Role.READER
+        self.user.save(update_fields=["role"])
+        self.profile.is_public = False
+        self.profile.save(update_fields=["is_public"])
+        response = self.client.post(reverse("cabinet:avatar_upload"), {"avatar": self.image_upload("onboarding.png")})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["avatar_url"])
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.avatar.name)
+        self.assertEqual(self.user.role, User.Role.READER)
+
     @staticmethod
     def image_upload(name="avatar.png"):
         image = BytesIO()
@@ -345,16 +387,17 @@ class ProfileAvatarTests(CapperSetupMixin, TestCase):
             image=self.image_upload(f"{title}.png"),
         )
 
-    def test_modal_shows_only_gender_appropriate_presets(self):
+    def test_modal_shows_all_active_presets_with_gender_filters(self):
         male = self.create_preset()
         self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
         self.create_preset("Универсальный", gender=PresetAvatar.Gender.ALL)
         response = self.client.get(reverse("cabinet:profile"), {"tab": "profile"})
         self.assertContains(response, 'id="profile-avatar-modal"')
-        self.assertContains(response, 'href="#profile-avatar-modal"')
+        self.assertContains(response, 'data-avatar-modal-open')
         self.assertContains(response, male.title)
         self.assertContains(response, "Универсальный")
-        self.assertNotContains(response, ">Женский</span>")
+        self.assertContains(response, 'data-avatar-filter="female"')
+        self.assertContains(response, 'title="Женский"')
 
     def test_preset_image_is_copied_and_custom_upload_still_works(self):
         preset = self.create_preset()
@@ -365,8 +408,8 @@ class ProfileAvatarTests(CapperSetupMixin, TestCase):
         self.user.refresh_from_db()
         previous_image = self.user.avatar.name
         self.assertNotEqual(previous_image, preset.image.name)
-        with self.user.avatar.open("rb") as saved:
-            self.assertEqual(saved.read(), self.image_upload().read())
+        with self.user.avatar.open("rb") as saved, preset.image.open("rb") as original:
+            self.assertEqual(saved.read(), original.read())
 
         response = self.client.post(endpoint, {"avatar": self.image_upload("own.png")})
         self.assertEqual(response.status_code, 200)
@@ -375,17 +418,18 @@ class ProfileAvatarTests(CapperSetupMixin, TestCase):
         self.assertTrue(self.user.avatar.storage.exists(self.user.avatar.name))
         self.assertFalse(self.user.avatar.storage.exists(previous_image))
 
-    def test_rejects_inactive_wrong_gender_and_invalid_preset(self):
+    def test_rejects_inactive_and_invalid_presets_but_allows_any_gender(self):
         female = self.create_preset("Женский", gender=PresetAvatar.Gender.FEMALE)
         inactive = self.create_preset("Скрытый", active=False)
         endpoint = reverse("cabinet:avatar_upload")
-        for preset_id in (str(female.pk), str(inactive.pk), "bad", "9" * 100):
+        for preset_id in (str(inactive.pk), "bad", "9" * 100):
             with self.subTest(preset_id=preset_id):
                 response = self.client.post(endpoint, {"preset_id": preset_id})
                 self.assertEqual(response.status_code, 400)
                 self.assertFalse(response.json()["ok"])
         self.user.refresh_from_db()
         self.assertFalse(bool(self.user.avatar))
+        self.assertEqual(self.client.post(endpoint, {"preset_id": str(female.pk)}).status_code, 200)
 
     def test_reader_can_change_avatar_and_unset_gender_sees_all(self):
         reader = User.objects.create_user(
@@ -394,8 +438,8 @@ class ProfileAvatarTests(CapperSetupMixin, TestCase):
         self.client.force_login(reader)
         preset = self.create_preset("Любой", gender=PresetAvatar.Gender.FEMALE)
         response = self.client.get(reverse("cabinet:profile"))
-        self.assertContains(response, 'href="#profile-avatar-modal"')
-        self.assertContains(response, ">Любой</span>")
+        self.assertContains(response, 'data-avatar-modal-open')
+        self.assertContains(response, f'data-avatar-id="{preset.pk}"')
         response = self.client.post(reverse("cabinet:avatar_upload"), {"preset_id": str(preset.pk)})
         self.assertEqual(response.status_code, 200)
         reader.refresh_from_db()

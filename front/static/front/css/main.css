@@ -26,8 +26,7 @@
 .home-match-odd,
 .home-match-score,
 .matches-date-option,
-.matches-hero-meta,
-.prediction-score-center{
+.matches-hero-meta {
     align-content: center;
 }
 .odds-button b,
@@ -296,9 +295,6 @@ mark { color: var(--blue); background: 0 0; }
 .notification-toast-close:hover,
 .odds-button.is-active,
 .odds-main-tab.is-active,
-.prediction-follow-button.is-active,
-.prediction-owner-label,
-.prediction-status-paid,
 .prediction-table-coefficient,
 .predictions-filter-sidebar .predictions-tab-top.is-active,
 .predictions-lazy.is-loading button,
@@ -317,7 +313,7 @@ mark { color: var(--blue); background: 0 0; }
 .site-nav-center a.is-active,
 .slider-arrow-accent,
 .tournament-detail-title-panel .verified-badge,
-.tournament-match-expand:hover{
+.tournament-match-expand:hover {
     color: var(--ink);
     background: var(--yellow);
 }
@@ -361,8 +357,6 @@ mark { color: var(--blue); background: 0 0; }
 .page-promo-banner-copy span,
 .paid-checkout-head h1,
 .paid-checkout-head p,
-.paid-upgrade-card-copy h3,
-.paid-upgrade-card-copy p,
 .prediction-results-head .content-view-toolbar,
 .profile .site-header,
 .profile-copy-actions form,
@@ -380,7 +374,7 @@ mark { color: var(--blue); background: 0 0; }
 .wallet-topup-page .wallet-method-copy p,
 .wallet-topup-page .wallet-withdraw-card h2,
 .wallet-topup-page .wallet-withdraw-card p,
-.wallet-topup-page .wallet-withdraw-card small{
+.wallet-topup-page .wallet-withdraw-card small {
     margin: 0;
 }
 .logo-transition {
@@ -570,7 +564,6 @@ mark { color: var(--blue); background: 0 0; }
 .wallet-form-card { display: grid; gap: 22px; padding: 24px; border-radius: 18px; background: var(--panel); }
 .capper-landing-actions,
 .paid-checkout-actions,
-.paid-upgrade-actions,
 .wallet-form-actions {
     display: flex;
     flex-wrap: wrap;
@@ -756,7 +749,6 @@ mark { color: var(--blue); background: 0 0; }
 .match-demand-button.is-active,
 .match-prediction-status.is-refund,
 .prediction-filter-toggle input:checked + span,
-.prediction-status-refund,
 .prediction-table-status.is-refund,
 .predictions-filter-sidebar .predictions-tab-top,
 .predictions-tabs a.predictions-tab-top.is-active b,
@@ -770,7 +762,7 @@ mark { color: var(--blue); background: 0 0; }
 .wallet-topup-page .wallet-method.is-featured button,
 .wiki-dictionary-filter.is-active,
 .wiki-video-filter.is-active,
-.wiki-video-filter.is-active:hover{
+.wiki-video-filter.is-active:hover {
     color: #fff;
     background: var(--blue);
 }
@@ -1143,53 +1135,47 @@ body.wiki-video-player-open {
             0 0;
     }
 }
-.cookie-consent {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    left: 18px;
-    z-index: 1200;
-    width: min(760px, calc(100% - 36px));
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 16px 18px;
-    border-radius: 16px;
-    background: var(--panel);
-    box-shadow: 0 18px 52px rgba(0, 0, 0, 0.36);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(18px);
-    transition:
-        opacity 0.2s,
-        transform 0.2s,
-        visibility 0.2s;
-}
-.cookie-consent.is-visible { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0); }
-.cookie-consent-copy strong { display: block; color: var(--text); font-size: 14px; font-weight: 700; }
-.cookie-consent-copy p { max-width: 500px; margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
-.cookie-consent-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
-.cookie-consent-button {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    border: 0;
-    border-radius: 10px;
-    color: var(--text);
-    background: #2a2a2d;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition:
-        transform 0.16s,
-        background 0.16s;
-}
-.cookie-consent-button:hover { transform: translateY(-1px); background: #313134; }
+.cookie-consent { position: fixed; right: 24px; bottom: 24px; left: 24px; z-index: 1200; display: flex; align-items: center; gap: 20px; width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 20px 24px; border-radius: 20px; color: #fff; background: var(--panel); box-shadow: inset 0 0 0 1px #24262e, 0 24px 60px rgba(0,0,0,.55); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(18px); transition: opacity .28s ease, transform .32s ease, visibility .32s; }
+.cookie-consent.is-visible { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+.cookie-consent-handle { display: none; }
+.cookie-consent-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; border-radius: 14px; color: var(--ink); background: var(--yellow); }
+.cookie-consent-copy { flex: 1; min-width: 0; }
+.cookie-consent-heading strong { display: block; font-size: 15px; font-weight: 800; line-height: 1.35; }
+.cookie-consent-heading > span { display: none; }
+.cookie-consent-copy p { margin: 4px 0 0; color: #a3a6b0; font-size: 13px; font-weight: 500; line-height: 1.5; }
+.cookie-consent-copy a { color: var(--yellow); font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
+.cookie-consent-actions { display: flex; flex: none; align-items: center; gap: 10px; }
+.cookie-consent-button { display: inline-flex; align-items: center; justify-content: center; flex: none; min-height: 44px; padding: 10px 20px; border: 0; border-radius: 12px; color: #d7d9e0; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; font: inherit; font-size: 13.5px; font-weight: 800; line-height: 1.35; text-align: center; cursor: pointer; transition: background .2s, transform .2s; }
+.cookie-consent-button.is-settings { background: transparent; }
+.cookie-consent-button.is-accept { color: var(--ink); background: var(--yellow); box-shadow: none; }
+.cookie-consent-button:hover { transform: translateY(-1px); }
+.cookie-consent-button:focus-visible,
+.cookie-preferences-close:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.cookie-preferences { width: min(640px, calc(100% - 32px)); max-height: calc(100svh - 32px); padding: 24px; overflow: auto; border: 0; border-radius: 22px; color: #fff; background: var(--panel); box-shadow: inset 0 0 0 1px #24262e, 0 28px 70px rgba(0,0,0,.6); }
+.cookie-preferences::backdrop { background: rgba(0,0,0,.65); }
+.cookie-preferences[open] { animation: cookie-preferences-enter .24s ease both; }
+@keyframes cookie-preferences-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.cookie-preferences-head { display: flex; align-items: flex-start; gap: 14px; }
+.cookie-preferences-head > div { flex: 1; min-width: 0; }
+.cookie-preferences-head h2 { margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 800; line-height: 1.4; }
+.cookie-preferences-head p { margin: 4px 0 0; color: #6b6e78; font-size: 12.5px; font-weight: 600; }
+.cookie-preferences-close { display: grid; place-items: center; flex: none; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 11px; color: #a3a6b0; background: #121318; box-shadow: inset 0 0 0 1px #24262e; font-size: 24px; cursor: pointer; }
+.cookie-preferences-options { margin: 16px 0; }
+.cookie-preferences-option { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; box-shadow: inset 0 -1px 0 #24262e; cursor: pointer; }
+.cookie-preferences-option:last-child { box-shadow: none; }
+.cookie-preferences-option > span:first-child { display: grid; flex: 1; min-width: 0; gap: 6px; }
+.cookie-preferences-option strong { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 14.5px; font-weight: 800; }
+.cookie-preferences-option small { padding: 4px 8px; border-radius: 7px; color: #6b6e78; background: #121318; font-size: 10.5px; font-weight: 800; text-transform: uppercase; }
+.cookie-preferences-option > span > span { color: #d7d9e0; font-size: 13.5px; line-height: 1.55; }
+.cookie-preferences-option .switch-control { flex: none; width: 46px; height: 26px; }
+.cookie-preferences-option .switch-control input:checked + span { background: #16301f; box-shadow: inset 0 0 0 1.5px #5be38a; }
+.cookie-preferences-option .switch-control input:checked + span::after { background: #5be38a; }
+.cookie-preferences-option .switch-control span::after { top: 3px; left: 3px; }
+.cookie-preferences-option .switch-control input:disabled + span { background: var(--ink); box-shadow: inset 0 0 0 1.5px #6b6e78; }
+.cookie-preferences-option .switch-control input:disabled + span::after { background: #6b6e78; }
+.cookie-preferences-option .switch-control input:focus-visible + span { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.cookie-preferences-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cookie-preferences-actions .cookie-consent-button { flex: 1; min-width: 0; padding: 10px 14px; font-size: 12.5px; }
 /* .auth-form-alert.success > span,
 .capper-register-choice.is-user,
 .cookie-consent-button.is-accept:hover,
@@ -1219,11 +1205,10 @@ body.wiki-video-player-open {
 .bonuses-page .bonus-offer-image img,
 .home-best-expert-avatar img,
 .home-best-expert-row-avatar img,
-.prediction-card-text-cover img,
 .prediction-card.feed-prediction-card .feed-prediction-cover-image img,
 .prediction-comment-avatar img,
 .profile-page .profile-avatar img,
-.wiki-video-preview img{
+.wiki-video-preview img {
     width: 100%;
     height: 100%;
     display: block;
@@ -1257,7 +1242,6 @@ body.wiki-video-player-open {
 }
 .site-nav .brand { justify-self: start; min-width: 0; }
 .capper-spotlight-name,
-.prediction-card-rich-status small,
 .site-nav-actions,
 .site-nav-center {
     display: flex;
@@ -1357,8 +1341,7 @@ body.wiki-video-player-open {
 .nav-profile-menu { position: relative; flex: 0 0 auto; --profile-dropdown-width: 324px; }
 .nav-profile-menu::after { content: ""; position: absolute; top: 100%; z-index: 59; height: 18px; }
 .content-view-button:hover,
-.matches-table-date-link:hover,
-.site-nav-actions .nav-profile {
+.matches-table-date-link:hover{
     color: var(--text);
     background: var(--yellow);
 }
@@ -1489,10 +1472,8 @@ body.wiki-video-player-open {
 .coupon-slip-league strong,
 .nav-profile-dropdown-head span,
 .nav-profile-dropdown-head strong,
-.prediction-league-info span,
-.prediction-league-info strong,
 .profile-coupon-copy span,
-.profile-coupon-copy strong{
+.profile-coupon-copy strong {
     display: block;
     overflow: hidden;
     white-space: nowrap;
@@ -1735,10 +1716,6 @@ body.wiki-video-player-open {
 .notification-copy strong,
 .notification-watch-list span,
 .notification-watch-list strong,
-.prediction-follow-button [data-follow-icon="subscribe"],
-.prediction-follow-button.is-active [data-follow-icon="unsubscribe"],
-.prediction-pick-rich small,
-.prediction-pick-rich strong,
 .profile-next-achievement-progress span,
 .profile-next-achievement-progress strong,
 .profile-next-achievement > div > small,
@@ -1754,7 +1731,7 @@ body.wiki-video-player-open {
 .user-public-activity-row strong,
 .user-public-activity-row time,
 .user-public-badge span,
-.user-public-badge strong{
+.user-public-badge strong {
     display: block;
 }
 .forecast-coefficient small,
@@ -2811,7 +2788,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .experts-card .verified-mark,
 .forecast-expert .capper-verified-badge,
 .forecast-expert .forecast-verified,
-.prediction-expert .capper-verified-badge,
 .prediction-verified {
     width: 20px !important;
     height: 20px !important;
@@ -2846,7 +2822,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .auth-field-row,
 .cappers-admin-panel-head,
 .coupon-confidence-head,
-.prediction-confidence-head,
 .profile-achievements-overall > div:first-child {
     display: flex;
     align-items: center;
@@ -2860,42 +2835,24 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .league-picker-trigger small,
 .match-score span,
 .matches-date-current-copy span,
-.prediction-card-rich-author small,
-.prediction-card-rich-stats small,
-.prediction-confidence-head span,
+.paid-access-author small,
 .prediction-results-head > div span,
-.profile-achievements-overall span{
+.profile-achievements-overall span {
     color: var(--muted);
     font-size: 11px;
 }
-.coupon-confidence-head strong,
-.prediction-confidence-head strong {
+.coupon-confidence-head strong {
     color: var(--yellow);
     font-size: 15px;
     font-weight: 800;
 }
-.prediction-confidence-track { width: 100%; height: 6px; overflow: hidden; border-radius: 99px; background: #303033; }
 .capper-progress span,
-.confidence-bar span,
-.prediction-confidence-track span {
+.confidence-bar span {
     height: 100%;
     display: block;
     border-radius: inherit;
     background: var(--blue);
 }
-.prediction-card.prediction-card-rich .prediction-card-money { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; padding: 13px 14px; border-radius: 14px; background: #171718; }
-.prediction-card.prediction-card-rich .prediction-card-money > .prediction-card-money-item { padding: 0; border-radius: 0; background: 0 0; }
-.prediction-card.prediction-card-rich .prediction-card-money-confidence {
-    grid-column: 1/-1;
-    display: grid;
-    gap: 7px;
-    min-width: 0;
-    padding: 2px 0 0;
-    border-radius: 0;
-    background: 0 0;
-    text-align: left;
-}
-.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-head span,
 .rich-prediction-preview-cover-empty span {
     font-size: 10px;
 }
@@ -2903,14 +2860,12 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .content-sport-summary strong,
 .home-article-copy > p,
 .how-role-tab strong,
-.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-head strong,
 .prediction-comment-reply-item .prediction-comment-meta strong,
 .prediction-comment-reply-item .prediction-comment-reaction,
 .prediction-comment-reply-item .prediction-comment-reply,
-.prediction-comment-reply-item .prediction-comment-text{
+.prediction-comment-reply-item .prediction-comment-text {
     font-size: 15px;
 }
-.prediction-card.prediction-card-rich .prediction-card-money-confidence .prediction-confidence-track { height: 5px; }
 .home-about {
     width: 100%;
     min-width: 0;
@@ -2933,18 +2888,8 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .match-card-head,
 .match-league,
 .match-team,
-.prediction-author-row,
-.prediction-card-head,
-.prediction-expert,
-.prediction-expert-name-row,
-.prediction-league-info,
 .prediction-league-row,
-.prediction-odd-value,
-.prediction-open-match,
-.prediction-pick.prediction-pick-rich,
-.prediction-published-at,
-.prediction-scoreboard,
-.prediction-team{
+.prediction-published-at {
     display: flex;
     align-items: center;
 }
@@ -2962,8 +2907,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 }
 .feed-prediction-cover-league img,
 .home-about-logo img,
-.prediction-card.feed-prediction-card .feed-prediction-cover-team img,
-.prediction-team-logo img {
+.prediction-card.feed-prediction-card .feed-prediction-cover-team img {
     width: 78%;
     height: 78%;
     object-fit: contain;
@@ -3267,41 +3211,19 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
 }
-.match-prediction-card {
-    min-width: 0;
-    display: grid;
-    gap: 14px;
-    padding: 18px;
-    border-radius: 16px;
-    background: #171718;
-}
-.match-predictions-feed .prediction-card.prediction-card-rich.match-prediction-card { background: #121213; outline: rgba(255, 255, 255, 0.08) solid 2px; }
-.capper-discovery-section.is-rising,
-.match-predictions-feed .prediction-card-rich .prediction-match-visual,
-.match-predictions-feed .prediction-card.prediction-card-rich.match-prediction-card:hover,
-.prediction-card.prediction-card-rich.match-prediction-card .prediction-match-visual,
-.prediction-card.prediction-card-rich.match-prediction-card:hover {
+.capper-discovery-section.is-rising {
     background: #171718;
 }
 .cappers-ranking-table tbody tr:hover td,
-.match-predictions-feed .prediction-card-rich .prediction-pick-rich,
-.prediction-card.prediction-card-rich.match-prediction-card .prediction-pick-rich,
 .tournament-match-row.is-expanded {
     background: #2a2a2d;
 }
 .prediction-league-row { justify-content: space-between; gap: 14px; }
-.prediction-league-info,
-.prediction-team{
-    min-width: 0;
-    gap: 10px;
-}
 .capper-preview-avatar img,
 .home-layout .forecast-avatar > img,
 .home-match-country img,
-.paid-upgrade-avatar img,
-.prediction-expert-avatar img,
 .profile-user-row.is-profile-link .profile-user-avatar img,
-.team-logo .home-match-country img{
+.team-logo .home-match-country img {
     width: inherit;
     height: inherit;
     object-fit: cover;
@@ -3314,23 +3236,12 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     border-radius: inherit;
 }
 .coupon-item-title span { margin-top: 3px; color: var(--muted); font-size: 11px; }
-.prediction-pick-rich strong{
-    margin-top: 5px;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 16px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
 .home-best-experts-proof small,
 .matches-table-filter-head small,
 .matches-table-filter-title small,
-.prediction-card-money span,
 .prediction-filter-sidebar-actions > span,
-.prediction-odd-value span,
-.prediction-pick-rich small,
 .profile-copy-status-cell small,
-.related-article-card > div > span{
+.related-article-card > div > span {
     color: var(--muted);
     font-size: 10px;
 }
@@ -3357,8 +3268,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 }
 .coupon-sidebar:empty,
 .match-predictions-loader[hidden],
-.prediction-follow-button [data-follow-icon="unsubscribe"],
-.prediction-follow-button.is-active [data-follow-icon="subscribe"],
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-audience,
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-confidence-global,
 [data-coupon-page]:not(.has-coupon) .coupon-sidebar-editor .coupon-free-option,
@@ -3514,8 +3423,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .articles-pagination a,
 .coupon-slip-empty strong,
 .match-provider-predictions-head h2,
-.paid-upgrade-card-copy h3,
-.paid-upgrade-card-top strong,
 .prediction-comment-reply:hover,
 .prediction-comment-replying strong,
 .prediction-comments-empty strong,
@@ -3579,13 +3486,6 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     background: #242426;
 }
 .provider-metric-item b { flex: 0 0 auto; color: var(--text); font-size: 12px; }
-.prediction-expert-link {
-    color: inherit;
-    transition:
-        opacity 0.18s,
-        transform 0.18s;
-}
-.prediction-expert-link:hover { opacity: 0.92; transform: translateY(-1px); }
 .capper-profile-demo-name,
 .home-layout .slider-dots,
 .prediction-reactions,
@@ -3607,7 +3507,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
     border: 0;
     border-radius: 11px;
     color: var(--muted);
-    background: transparent;
+    background: var(--panel);
     cursor: pointer;
     font-size: 11px;
     transition:
@@ -3615,13 +3515,14 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
         transform 0.18s,
         opacity 0.18s;
 }
-.prediction-reaction:hover { color: var(--text); background: #333336; transform: translateY(-1px); }
+.prediction-reaction:hover { color: var(--text); background: var(--panel); transform: translateY(-1px); }
 .matches-lazy-button:disabled,
 .prediction-reaction:disabled {
     cursor: wait;
     opacity: 0.55;
     transform: none;
 }
+.prediction-reactions.is-own-prediction .prediction-reaction:disabled { opacity: 1; cursor: not-allowed; }
 .prediction-reaction svg { width: 19px; height: 19px; flex: 0 0 auto; fill: none; }
 .prediction-reaction b { min-width: 18px; color: #fff; font-size: 11px; }
 .prediction-reaction [data-share-count],
@@ -3643,83 +3544,27 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 }
 .prediction-views:hover { color: var(--muted); background: #2a2a2d; transform: none; }
 .prediction-card.prediction-card-rich { display: flex; flex-direction: column; gap: 14px; border-radius: 18px; }
-.prediction-card-text-preview {
-    display: grid;
-    grid-template-columns: 112px minmax(0, 1fr);
-    gap: 12px;
-    align-items: center;
-    padding: 10px;
-    border-radius: 14px;
-    background: #262629;
-    transition:
-        background 0.18s,
-        transform 0.18s;
-}
-.prediction-card-text-preview:hover { background: #2d2d30; transform: translateY(-1px); }
-.prediction-card-text-cover { width: 112px; aspect-ratio: 16/10; overflow: hidden; border-radius: 10px; background: #1f1f21; }
 .feed-prediction-event,
-.notification-toast-copy,
-.prediction-card-text-copy {
+.notification-toast-copy {
     min-width: 0;
     display: grid;
     gap: 5px;
 }
-.prediction-card-text-copy strong { color: #fff; font-size: 14px; font-weight: 700; line-height: 1.22; }
-.prediction-card-text-copy span {
-    display: -webkit-box;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.68);
-    font-size: 12px;
-    line-height: 1.35;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-}
 .match-card-odds-row.without-bookmaker,
 .matches-shell:not(:has(.coupon-sidebar)),
-.prediction-card-text-preview:not(:has(.prediction-card-text-cover)),
 body.layout-columns-center_only .predictions-layout {
     grid-template-columns: minmax(0, 1fr);
-}
-
-.prediction-card-head { align-items: center; justify-content: space-between; gap: 12px; }
-.prediction-author-row { min-width: 0; flex: 1 1 auto; gap: 10px; }
-.prediction-author-row .prediction-expert { min-width: 0; flex: 1 1 auto; }
-.prediction-expert { gap: 10px; color: var(--text); }
-.prediction-expert-avatar {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    border-radius: 14px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 12px;
-    font-weight: 700;
 }
 .cabinet-bonuses-page .bonus-level-row-copy,
 .cabinet-bonuses-page .bonus-level-row-meta,
 .capper-pro-calibration > div,
 .capper-pro-foot > div,
-.prediction-expert-copy,
 .profile-coupon-metric,
-.profile-email-control > div{
+.profile-email-control > div {
     min-width: 0;
     display: grid;
     gap: 4px;
 }
-.prediction-expert-name-row { min-width: 0; flex-wrap: wrap; gap: 7px; }
-.prediction-expert-name-row > strong,
-.prediction-team strong {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.15;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-.prediction-expert-copy > span { overflow: hidden; color: var(--muted); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
 .cabinet-bonuses-page .bonus-card-icon.is-blue,
 .cabinet-bonuses-page .bonus-hero-copy h1 span,
 .cabinet-bonuses-page .bonus-task-card-status.is-completed,
@@ -3740,8 +3585,7 @@ body.layout-columns-center_only .predictions-layout {
 .predictions-tabs a.predictions-tab-top.is-active .predictions-tab-top-icon {
     color: var(--blue);
 }
-.capper-pro-roi,
-.prediction-author-roi {
+.capper-pro-roi {
     min-height: 22px;
     flex: 0 0 auto;
     display: inline-flex;
@@ -3757,183 +3601,49 @@ body.layout-columns-center_only .predictions-layout {
 }
 .capper-pro-roi.is-positive,
 .coupon-slip-match-state.is-prematch,
-.match-status.match-status-countdown,
-.prediction-author-roi.is-positive,
-.prediction-status-win {
+.match-status.match-status-countdown {
     color: #fff;
     background: var(--green);
 }
 .capper-pro-roi.is-negative,
 .latest-prediction-status.is-lose,
-.prediction-author-roi.is-negative,
-.prediction-status-lose,
 .profile-telegram-disconnect {
     color: #fff;
     background: var(--danger);
 }
-.prediction-follow-button,
-.prediction-owner-label {
-    min-height: 32px;
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 11px;
-    border: 0;
-    border-radius: 9px;
-    font-size: 10px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-.prediction-follow-button {
-    color: #fff;
-    background: var(--blue);
-    cursor: pointer;
-    transition:
-        transform 0.18s,
-        background 0.18s,
-        opacity 0.18s;
-}
-.prediction-follow-button:hover { color: #fff; transform: translateY(-1px); background: #2168ff; }
-.prediction-follow-button:disabled { cursor: wait; opacity: 0.58; transform: none; }
-.prediction-status {
-    min-height: 32px;
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 10px;
-    border-radius: 9px;
-    color: rgba(255, 255, 255, 0.72);
-    background: #303033;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-.prediction-league-logo,
-.prediction-team-logo {
-    font-weight: 700;
-    overflow: hidden;
-    place-items: center;
-}
-.prediction-match-visual {
-    display: grid;
-    gap: 16px;
-    padding: 14px;
-    border-radius: 16px;
-    background: #171718;
-    color: var(--text);
-}
-.prediction-league-logo {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 auto;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    border-radius: 11px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 12px;
-}
-.coupon-slip-team-logo img,
-.prediction-league-logo img {
+.coupon-slip-team-logo img {
     width: 82%;
     height: 82%;
     object-fit: contain;
 }
-.prediction-league-info strong,
-.profile-telegram-state strong{
+.profile-telegram-state strong {
     color: var(--text);
     font-size: 13px;
 }
-.prediction-league-info span,
-.prediction-league-row time{
+.prediction-league-row time {
     margin-top: 3px;
     color: var(--muted);
     font-size: 10px;
 }
 .prediction-league-row time { flex: 0 0 auto; margin-top: 0; white-space: nowrap; }
-.prediction-scoreboard { display: grid; grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr); gap: 12px; align-items: center; }
-.prediction-team-away { flex-direction: row-reverse; text-align: right; }
-.prediction-team-logo {
-    width: 54px;
-    height: 54px;
-    flex: 0 0 auto;
-    display: grid;
-    border-radius: 15px;
-    color: var(--yellow);
-    background: #252527;
-    font-size: 15px;
-}
-.prediction-score-center {
-    min-height: 62px;
-    display: grid;
-    place-items: center;
-    gap: 4px;
-    padding: 8px;
-    border-radius: 14px;
-    background: #202022;
-    text-align: center;
-}
-.prediction-score-center strong { color: var(--text); font-size: 22px; line-height: 1; letter-spacing: -0.02em; }
-.prediction-score-center span { color: var(--muted); font-size: 9px; line-height: 1.2; }
-.prediction-pick.prediction-pick-rich {
-    min-height: 72px;
-    justify-content: space-between;
-    gap: 14px;
-    margin-top: 0;
-    padding: 14px;
-    border-radius: 14px;
-    background: #2a2a2d;
-}
-.prediction-odd-value { flex: 0 0 auto; gap: 8px; }
-.prediction-odd-value b,
-.profile-demand-count strong{
+.profile-demand-count strong {
     color: var(--yellow);
     font-size: 24px;
     line-height: 1;
 }
 .league-picker-results,
-.prediction-card-money,
 .prediction-filter-sidebar .prediction-filter-coefficients,
 .predictions-filter-sidebar .prediction-filter-coefficients {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
-.prediction-card-money > div {
-    min-width: 0;
-    display: grid;
-    gap: 5px;
-    padding: 11px 12px;
-    border-radius: 12px;
-    background: #171718;
-}
-.prediction-card-money > div:last-child,
 .profile-transaction-row > div:last-child {
     text-align: right;
 }
-.prediction-card-money strong { overflow: hidden; color: var(--text); font-size: 15px; white-space: nowrap; text-overflow: ellipsis; }
 .prediction-card.prediction-card-rich .prediction-comment { min-height: 36px; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.5; }
 .prediction-published-at { justify-content: space-between; gap: 12px; color: var(--muted); font-size: 10px; }
 .prediction-published-at time { color: rgba(255, 255, 255, 0.6); }
-.prediction-open-match {
-    min-height: 52px;
-    justify-content: center;
-    gap: 10px;
-    margin-top: auto;
-    padding: 0 18px;
-    border-radius: 14px;
-    color: #fff;
-    background: var(--blue);
-    font-size: 15px;
-    font-weight: 600;
-    transition:
-        transform 0.18s,
-        filter 0.18s;
-}
-.prediction-open-match:hover { color: #fff; transform: translateY(-1px); filter: brightness(1.04); }
-.prediction-card.prediction-card-rich.match-prediction-card { gap: 14px; padding: 16px; background: #121213; outline: rgba(255, 255, 255, 0.08) solid 2px; }
 .match-detail-shell:not(:has(.coupon-sidebar)) { grid-template-columns: minmax(220px, 252px) minmax(0, 1fr); }
 .coupon-panel { display: grid; gap: 5px; background: var(--panel); margin-bottom: 20px; }
 .coupon-head {
@@ -4065,7 +3775,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .content-league-summary.profile-row-action,
 .forecast-team-logo img,
 .home-match-league-logo img,
-.prediction-card-rich-team > span img,
 .profile-demand-team-logo img,
 .rich-prediction-coupon-logo img {
     width: 100%;
@@ -4309,7 +4018,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     font-size: 17px;
 }
 .home-trusted-bookmakers-list,
-.paid-upgrade-card,
 .profile-email-modal-form {
     display: grid;
     gap: 16px;
@@ -5456,9 +5164,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     object-fit: contain;
 }
 .home-best-prediction-match-copy,
-.home-best-prediction-pick,
-.paid-upgrade-card-copy,
-.paid-upgrade-card-top > div{
+.home-best-prediction-pick {
     display: grid;
     gap: 5px;
 }
@@ -5654,14 +5360,12 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .coupon-panel .coupon-extended-action:hover,
 .feed-prediction-cover-status.is-refund,
 .home-layout .forecast-matchup:hover .forecast-team strong,
-.prediction-card-rich-status.is-pending small,
-.prediction-card-rich-status.is-pending strong,
 .profile-daily-tasks-link:hover,
 .profile-user-copy strong,
 .rich-prediction-back:hover,
 .site-footer-links a:hover,
 .site-footer-social:hover .site-footer-social-label,
-.site-footer-support a:hover{
+.site-footer-support a:hover {
     color: #fff;
 }
 .cappers-roi-period-select {
@@ -7738,7 +7442,11 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .match-table-odd-placeholder { pointer-events: none; cursor: default; }
 .match-table-odd-placeholder strong { color: var(--muted); font-size: 9px; letter-spacing: 0.08em; }
 .matches-table-lazy-sentinel { margin: 8px 0 2px; background: #202022; }
+.prediction-paid-marker { display: block; flex: none; width: 20px; height: 20px; object-fit: contain; }
+.prediction-mobile-coupon-author > .prediction-paid-marker { margin-left: auto; }
+.prediction-table-event > svg { flex: none; color: var(--yellow); }
 .prediction-table-expert { min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--text); }
+.prediction-table-expert .cappers-ranking-vip { flex: none; min-height: 16px; padding: 0 4px; }
 .prediction-table-avatar {
     width: 30px;
     height: 30px;
@@ -8038,6 +7746,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .matches-sport-chip.is-v { color: #b45309; }
 .matches-sport-chip.is-x { color: var(--mh-grey); }
 .matches-sport-chip-glyph { display: flex; }
+.matches-sport-chip-glyph > svg { display: block; flex: none; width: 17px; height: 17px; }
 .matches-sport-chip-nm { color: #fff; }
 .matches-sport-chip-q {
     color: var(--mh-dim);
@@ -8643,8 +8352,7 @@ html:has(.matches-head) { overflow-anchor: none; }
 .coupon-slip-overview-row.is-payout span{
     font-size: 12px;
 }
-.coupon-slip-overview-row.is-payout strong,
-.prediction-card-rich-coefficient strong {
+.coupon-slip-overview-row.is-payout strong {
     color: var(--yellow);
     font-size: 17px;
 }
@@ -9499,6 +9207,48 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     display: grid;
     gap: 12px;
 }
+.vip-prediction-rail {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+    padding: 18px;
+    border-radius: 18px;
+    background: var(--panel);
+    color: #fff;
+    font-family: var(--font-body);
+}
+.vip-prediction-rail-head { display: flex; align-items: center; gap: 9px; padding-bottom: 14px; }
+.vip-prediction-rail-head > svg { flex: none; display: block; color: #f6ec4e; }
+.vip-prediction-rail-head > div { flex: 1; font-family: var(--font-display); font-size: 15px; font-weight: 800; white-space: nowrap; }
+.vip-prediction-rail-head > span { flex: none; font-size: 11.5px; font-weight: 700; color: #6b6e78; white-space: nowrap; }
+.vip-prediction-rail-list { min-width: 0; }
+.vip-prediction-rail-row { display: flex; align-items: center; gap: 11px; padding: 11px 0; color: #fff; text-decoration: none; box-shadow: inset 0 -1px 0 #1e2026; }
+.vip-prediction-rail-row:last-child { box-shadow: none; }
+.vip-prediction-rail-sport { display: flex; align-items: center; justify-content: center; flex: none; width: 30px; height: 30px; border-radius: 9px; color: #fff; background: #30333c; }
+.vip-prediction-rail-sport.is-football { background: #127a40; }
+.vip-prediction-rail-sport.is-tennis { background: #4338ca; }
+.vip-prediction-rail-sport.is-basketball { background: #6a2be0; }
+.vip-prediction-rail-sport.is-hockey { background: #0e5fa8; }
+.vip-prediction-rail-sport.is-esports { background: #9f1239; }
+.vip-prediction-rail-sport.is-express { background: var(--blue); }
+.vip-prediction-rail-sport svg { flex: none; display: block; width: 16px; height: 16px; }
+.vip-prediction-rail-sport svg [fill]:not([fill="none"]) { fill: currentColor; }
+.vip-prediction-rail-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px; }
+.vip-prediction-rail-copy > strong { overflow: hidden; color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.vip-prediction-rail-meta { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.vip-prediction-rail-meta > i { width: 6px; height: 6px; flex: none; border-radius: 50%; background: #a3a6b0; }
+.vip-prediction-rail-meta > .is-live { background: #f2a33c; }
+.vip-prediction-rail-meta > .is-win { background: #5be38a; }
+.vip-prediction-rail-meta > .is-lose { background: #ff7a7f; }
+.vip-prediction-rail-meta > span { overflow: hidden; color: #6b6e78; font-size: 11px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.vip-prediction-rail-odds { flex: none; color: #f6ec4e; font-family: var(--font-display); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.vip-prediction-rail-footer { padding-top: 14px; }
+.vip-prediction-rail-footer a { display: flex; align-items: center; justify-content: center; gap: 7px; height: 40px; border-radius: 11px; background: #121318; color: #f6ec4e; text-decoration: none; font-size: 12.5px; font-weight: 800; }
+.vip-prediction-rail-footer svg { display: block; flex: none; }
+.vip-prediction-rail a:focus-visible { outline: 2px solid #f6ec4e; outline-offset: 3px; }
+.vip-prediction-rail-empty { margin: 0; color: #6b6e78; font-size: 12px; line-height: 1.45; }
 .predictions-sidebar-top-toggle {
     min-height: 44px;
     display: flex;
@@ -9507,6 +9257,8 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     gap: 12px;
     cursor: pointer;
 }
+.matches-head-util.is-predictions:has(> .predictions-sidebar-top-toggle) { flex-wrap: wrap; }
+.matches-head-util > .predictions-sidebar-top-toggle { flex: none; gap: 8px; font-size: 12px; white-space: nowrap; }
 .predictions-sidebar-top-toggle .matches-table-scope-copy { min-width: 0; }
 .predictions-sidebar-top-toggle b { color: var(--muted); font-size: 12px; }
 .predictions-sidebar-top-toggle:hover .matches-table-scope-copy { color: var(--yellow); }
@@ -10196,8 +9948,8 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .feed-prediction-author-name strong,
 .feed-prediction-meta span,
 .feed-prediction-meta time,
-.prediction-card-rich-author small,
-.prediction-card-rich-author strong,
+.paid-access-author small,
+.paid-access-author strong,
 .rich-prediction-coupon-away strong,
 .rich-prediction-coupon-match small,
 .rich-prediction-coupon-match strong {
@@ -10229,6 +9981,14 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     white-space: nowrap;
 }
 .feed-prediction-bet strong { color: var(--ink); background: var(--yellow); font-size: 14px; }
+.feed-prediction-bet.is-locked svg { flex: none; }
+.feed-prediction-cover-format { position: absolute; top: 16px; left: 50%; z-index: 3; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; color: #fff; background: rgb(19 19 19 / 82%); transform: translateX(-50%); }
+.feed-prediction-cover-format.is-vip { color: var(--yellow); }
+.feed-prediction-purchase { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; min-height: 46px; margin-top: auto; padding: 12px 16px; border: 0; border-radius: 14px; color: var(--ink); background: var(--yellow); font: inherit; font-size: 16px; font-weight: 800; line-height: 1.25; text-align: center; text-decoration: none; cursor: pointer; }
+.feed-prediction-purchase svg { flex: none; }
+.feed-prediction-purchase:hover { filter: brightness(1.05); }
+.feed-prediction-purchase:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.feed-prediction-purchase:disabled { color: var(--muted); background: var(--panel); cursor: default; filter: none; }
 .feed-prediction-author {
     min-width: 0;
     display: grid;
@@ -10237,6 +9997,8 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     gap: 10px;
     color: var(--text);
 }
+.feed-prediction-author.is-paid { grid-template-columns: max-content minmax(0, 1fr) 32px; }
+.feed-prediction-author > .prediction-paid-marker { width: 32px; height: 32px; }
 .feed-prediction-avatar {
     position: relative;
     inline-size: 2.25rem;
@@ -10305,60 +10067,21 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .paid-feed-block { display: grid; gap: 14px; margin-bottom: 18px; }
 .paid-feed-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .paid-feed-head h2 { margin: 0; color: var(--text); font-size: 24px; line-height: 1.12; }
-.paid-feed-head > strong,
-.paid-upgrade-avatar {
+.paid-feed-head > strong {
     color: var(--ink);
     background: var(--yellow);
     place-items: center;
 }
 .paid-feed-head > strong { min-width: 44px; min-height: 34px; display: inline-grid; border-radius: 10px; }
-.paid-upgrade-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.paid-upgrade-card-top,
 .profile-telegram-head {
     display: flex;
     align-items: center;
     gap: 12px;
 }
-.paid-upgrade-avatar {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
-    display: inline-grid;
-    border-radius: 14px;
-    font-size: 13px;
-    font-weight: 900;
-    text-decoration: none;
-}
 .expert-monthly-hit,
-.expert-public-empty span,
-.paid-upgrade-card-copy p,
-.paid-upgrade-card-copy small,
-.paid-upgrade-card-top span {
+.expert-public-empty span {
     color: var(--muted);
 }
-.paid-upgrade-actions form,
-.paid-upgrade-actions > a {
-    min-width: 160px;
-    flex: 1 1 160px;
-}
-.paid-upgrade-actions button,
-.paid-upgrade-actions > a {
-    width: 100%;
-    min-height: 42px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 10px;
-    color: #fff;
-    background: var(--blue);
-    cursor: pointer;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    text-decoration: none;
-}
-.paid-upgrade-actions button.is-secondary { color: var(--text); background: rgba(255, 255, 255, 0.08); outline: rgba(255, 255, 255, 0.1) solid 1px; }
 .capper-pro-paid {
     width: fit-content;
     display: inline-flex;
@@ -11953,11 +11676,8 @@ body.register footer {
     width: 25px;
     height: 25px;
     display: block;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
 .expert-public-stats-compact .expert-public-stat-card span:not(.expert-public-stat-icon) { color: rgba(255, 255, 255, 0.58); font-size: 12px; font-weight: 500; }
 .expert-public-stats-compact .expert-public-stat-card strong {
@@ -12157,8 +11877,7 @@ body.register footer {
 .expert-public-articles .profile-user-row { color: inherit; text-decoration: none; }
 .expert-achievements { display: grid; gap: 8px; margin-top: 16px; }
 .expert-achievements-list,
-.league-picker-selected,
-.prediction-card-rich-tags {
+.league-picker-selected {
     display: flex;
     flex-wrap: wrap;
     gap: 7px;
@@ -14081,8 +13800,6 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .expert-public-shell.is-vip .expert-public-avatar > img,
 .expert-recommendation-avatar.is-vip > img,
 .following-capper-avatar.is-vip > img,
-.prediction-expert-avatar.is-vip > img,
-.prediction-table-avatar.is-vip > img,
 .profile-user-avatar img {
     border-radius: inherit;
 }
@@ -17887,10 +17604,8 @@ body.register {
 .expert-recommendation-avatar,
 .forecast-avatar,
 .nav-profile-dropdown-avatar,
-.paid-upgrade-avatar,
-.prediction-expert-avatar,
 .prediction-table-avatar,
-.profile-user-avatar{
+.profile-user-avatar {
     position: relative;
     overflow: visible !important;
 }
@@ -18091,9 +17806,7 @@ body.register {
 .coupon-author-avatar.is-vip,
 .expert-public-shell.is-vip .expert-public-avatar,
 .expert-recommendation-avatar.is-vip,
-.following-capper-avatar.is-vip,
-.prediction-expert-avatar.is-vip,
-.prediction-table-avatar.is-vip {
+.following-capper-avatar.is-vip {
     position: relative;
     overflow: visible !important;
     box-shadow: 0 0 0 2px var(--yellow);
@@ -18101,17 +17814,13 @@ body.register {
 .coupon-author-avatar.is-vip:not(:has(img)),
 .expert-public-shell.is-vip .expert-public-avatar:not(:has(img)),
 .expert-recommendation-avatar.is-vip:not(:has(img)),
-.following-capper-avatar.is-vip:not(:has(img)),
-.prediction-expert-avatar.is-vip:not(:has(img)),
-.prediction-table-avatar.is-vip:not(:has(img)) {
+.following-capper-avatar.is-vip:not(:has(img)) {
     color: var(--yellow) !important;
     background: var(--ink) !important;
 }
 .coupon-author-avatar.is-vip::after,
 .expert-recommendation-avatar.is-vip::after,
-.following-capper-avatar.is-vip::after,
-.prediction-expert-avatar.is-vip::after,
-.prediction-table-avatar.is-vip::after {
+.following-capper-avatar.is-vip::after {
     content: "VIP";
     position: absolute;
     right: -6px;
@@ -18204,7 +17913,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .bookmaker-ref.is-compact .bookmaker-ref-logo { width: 32px; height: 32px; padding: 3px; border-radius: 8px; }
 .bookmaker-ref.is-compact img { width: 26px; height: 26px; display: block; object-fit: contain; }
 .bookmaker-ref-logo > strong { font-size: 10px; font-weight: 800; }
-.prediction-pick-rich { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; }
 .prediction-bookmaker-links { display: inline-flex; align-items: center; justify-content: center; margin: 0; }
 .prediction-bookmaker-links.is-table { margin: 0 2px 0 0; }
 .match-card-odds-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: stretch; gap: 7px; }
@@ -18998,10 +18706,7 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     overflow: hidden;
     background: var(--ink);
 }
-.bonuses-page .bonus-offer-image,
-.prediction-card-rich-cover-fallback,
-.prediction-card-rich-cover-image,
-.prediction-card-rich-cover-image img {
+.bonuses-page .bonus-offer-image {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -21878,6 +21583,64 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-prediction-article-text { min-width: 0; color: var(--text); font-size: 16px; line-height: 1.7; }
 .coupon-prediction-article-text p { margin: 0 0 1em; }
 .coupon-prediction-article-text p:last-child { margin-bottom: 0; }
+.coupon-prediction-article.is-rich { gap: 14px; font-family: var(--font-body); }
+.coupon-prediction-article-hero { position: relative; isolation: isolate; min-width: 0; min-height: 300px; padding: 18px; overflow: hidden; border-radius: 20px; background: var(--blue); }
+.coupon-prediction-article.is-short .coupon-prediction-article-hero { min-height: 250px; }
+.coupon-prediction-article.is-long .coupon-prediction-article-hero { min-height: 330px; }
+.coupon-prediction-article-hero.is-f { background: #127a40; }
+.coupon-prediction-article-hero.is-t { background: #4338ca; }
+.coupon-prediction-article-hero.is-b { background: #6a2be0; }
+.coupon-prediction-article-hero.is-h { background: #0e5fa8; }
+.coupon-prediction-article-hero.is-e { background: #9f1239; }
+.coupon-prediction-article-hero.is-v { background: #b45309; }
+.coupon-prediction-article-pattern,
+.coupon-prediction-article-art,
+.coupon-prediction-article.is-rich .coupon-prediction-article-cover { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: 0; pointer-events: none; }
+.coupon-prediction-article.is-rich .coupon-prediction-article-cover img { object-fit: cover; }
+.coupon-prediction-article-art .matches-sport-tile-pat { display: none; }
+.coupon-prediction-article-art .matches-sport-tile-art { top: 18px; right: -24px; bottom: auto; width: 276px; opacity: .95; }
+.coupon-prediction-article-art .matches-sport-tile-art > svg { display: block; width: 100%; height: auto; }
+.coupon-prediction-article-panel { display: flex; flex-direction: column; gap: 12px; width: min(100%, 471px); min-width: 0; min-height: 264px; padding: 18px; border-radius: 16px; color: #fff; background: rgba(8, 9, 12, .78); }
+.coupon-prediction-article.is-short .coupon-prediction-article-panel { min-height: 214px; }
+.coupon-prediction-article.is-long .coupon-prediction-article-panel { min-height: 294px; }
+.coupon-prediction-article-badges { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; }
+.coupon-prediction-article-badge { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; padding: 5px 12px; border-radius: 9px; color: #fff; background: rgba(8, 9, 12, .55); font-size: 12px; font-weight: 800; line-height: 18px; }
+.coupon-prediction-article-badge.is-access { color: var(--ink); background: var(--yellow); }
+.coupon-prediction-article-badge.is-status::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--yellow); }
+.coupon-prediction-article-badge.is-win::before { background: #5be38a; }
+.coupon-prediction-article-badge.is-lose::before { background: #ff7a7f; }
+.coupon-prediction-article-title { display: -webkit-box; flex: none; margin: 0; padding-bottom: 2px; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: #fff; font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -.4px; line-height: 28px; }
+.coupon-prediction-article-preview { display: -webkit-box; flex: none; margin: 0; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; color: rgba(255, 255, 255, .86); font-size: 13.5px; font-weight: 600; line-height: 1.55; white-space: pre-line; }
+.coupon-prediction-article-read { display: inline-flex; flex: none; align-items: center; align-self: flex-start; flex-wrap: wrap; gap: 7px; min-width: 0; padding: 0; border: 0; color: var(--yellow); background: transparent; font: inherit; font-size: 12.5px; font-weight: 800; line-height: 1.5; text-align: left; cursor: pointer; }
+.coupon-prediction-article-read[hidden] { display: none; }
+.coupon-prediction-article-read > span { color: rgba(255, 255, 255, .45); font-weight: 700; }
+.coupon-prediction-article-read > svg { flex: none; }
+.coupon-prediction-article-read:focus-visible,
+.coupon-prediction-article-full > summary:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.coupon-prediction-article-stats { display: grid; flex: none; grid-template-columns: 86fr 108fr 108fr 100fr; align-items: end; gap: 16px; margin-top: auto; padding-top: 2px; }
+.coupon-prediction-article-stat { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.coupon-prediction-article-stat > span { color: rgba(255, 255, 255, .5); font-size: 10px; font-weight: 800; letter-spacing: .6px; line-height: 1.3; text-transform: uppercase; }
+.coupon-prediction-article-stat > strong { display: flex; align-items: center; gap: 6px; min-width: 0; color: #fff; font-family: var(--font-display); font-size: 17px; font-weight: 800; line-height: 1.25; white-space: nowrap; }
+.coupon-prediction-article-stat .coin-icon { flex: none; width: 16px; height: 16px; }
+.coupon-prediction-article-stat .coin-icon svg { display: block; width: 100%; height: 100%; }
+.coupon-prediction-article-stat.is-coefficient > strong { color: var(--yellow); }
+.coupon-prediction-article-stat.is-payout > strong { color: #5be38a; }
+.coupon-prediction-article-stat .is-mobile { display: none; }
+.coupon-prediction-article-stat progress { display: block; width: 100%; height: 4px; margin-top: 2px; overflow: hidden; appearance: none; border: 0; border-radius: 2px; color: var(--yellow); background: rgba(255, 255, 255, .18); }
+.coupon-prediction-article-stat progress::-webkit-progress-bar { border-radius: 2px; background: rgba(255, 255, 255, .18); }
+.coupon-prediction-article-stat progress::-webkit-progress-value { border-radius: 2px; background: var(--yellow); }
+.coupon-prediction-article-stat progress::-moz-progress-bar { border-radius: 2px; background: var(--yellow); }
+.coupon-prediction-article-full { min-width: 0; padding: 20px 22px; border-radius: 18px; color: var(--text); background: var(--panel); }
+.coupon-prediction-article-full > summary { color: var(--yellow); font-size: 13px; font-weight: 800; cursor: pointer; }
+.coupon-prediction-article[data-article-enhanced] .coupon-prediction-article-full:not([open]),
+.coupon-prediction-article[data-article-enhanced] .coupon-prediction-article-full > summary { display: none; }
+.coupon-prediction-article-full-head { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; margin-bottom: 14px; box-shadow: 0 1px 0 rgba(255, 255, 255, .04); }
+.coupon-prediction-article-full-head h3 { flex: 1; margin: 0; color: #fff; font-family: var(--font-display); font-size: 16px; font-weight: 800; line-height: 1.4; }
+.coupon-prediction-article-full-head > span { color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.coupon-prediction-article.is-rich .coupon-prediction-article-text { color: #d7d9e0; font-size: 14px; font-weight: 600; line-height: 1.65; }
+.coupon-prediction-article-full-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; padding-top: 14px; box-shadow: 0 -1px 0 rgba(255, 255, 255, .04); }
+.coupon-prediction-article-full-footer > span { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.coupon-prediction-article-full-footer img { flex: none; width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
 .coupon-detail-events-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; margin-bottom: 13px; }
 .coupon-detail-events-head h2 { margin: 0; font-family: var(--font-heading); font-size: 21px; font-weight: 700; line-height: 1.1; }
 .coupon-detail-events-head h2 span { margin-left: 6px; color: #81818c; font-family: var(--font-body); font-size: 12px; font-weight: 600; }
@@ -21901,6 +21664,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-event-pick b { flex: 0 0 auto; min-width: 90px; padding: 11px 14px; border-radius: 11px; color: #111; background: var(--yellow); font-size: 20px; font-weight: 700; text-align: center; }
 .coupon-detail-event-empty { margin: 0; padding: 38px 15px; color: #aaa; }
 .coupon-detail-aside { grid-column: 2; grid-row: 3 / span 3; display: grid; align-content: start; gap: 14px; min-width: 0; padding-top: 41px; }
+.coupon-detail-page.is-rich .coupon-detail-aside { padding-top: 0; }
 .coupon-detail-summary { display: grid; gap: 17px; min-width: 0; padding: 24px; border-radius: 20px; color: #121212; background: var(--yellow); }
 .coupon-detail-summary-top { display: flex; align-items: start; justify-content: space-between; gap: 8px; min-width: 0; }
 .coupon-detail-summary-top > div:first-child { display: grid; align-content: start; min-width: 0; }
@@ -21951,7 +21715,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .coupon-detail-page > .prediction-reactions .prediction-reaction { min-width: 46px; min-height: 40px; border-radius: 10px; background: var(--panel); }
 .coupon-detail-page > .prediction-reactions .prediction-reaction svg { width: 17px; height: 17px; }
 .coupon-detail-page > .prediction-reactions .prediction-comment-metric { text-decoration: none; }
-.coupon-detail-page > .prediction-reactions .prediction-views { margin-left: auto; background: none; }
+.coupon-detail-page > .prediction-reactions .prediction-views { margin-left: auto; background: var(--panel); }
 .coupon-detail-page > .prediction-reactions .prediction-like.is-active { color: #ff747d; }
 .coupon-detail-page > .prediction-comments { grid-column: 1; grid-row: 5; gap: 14px; padding: 20px; border-radius: 18px; background: var(--panel); }
 .coupon-detail-page .prediction-comments-head { justify-content: flex-start; gap: 7px; }
@@ -21979,6 +21743,15 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     outline: 0;
 }
 .prediction-card.feed-prediction-card .feed-prediction-cover-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.feed-prediction-cover-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    opacity: .68;
+    pointer-events: none;
+    transition: opacity .25s ease;
+}
 .prediction-card.feed-prediction-card:hover .feed-prediction-cover-image img { transform: none; filter: none; }
 .prediction-card.feed-prediction-card .feed-prediction-cover-center {
     position: absolute;
@@ -22212,7 +21985,11 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1.4;
 }
 
-.prediction-comment-feedback { grid-column: 2; padding-right: 58px; }
+.prediction-comment-notice { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(-5px); transition: grid-template-rows .26s ease, opacity .22s ease, transform .26s ease; }
+.prediction-comment-notice.is-visible { grid-template-rows: 1fr; opacity: 1; transform: none; }
+.prediction-comment-notice > div { min-height: 0; overflow: hidden; }
+.prediction-comment-feedback { margin: 10px 0 0; padding: 12px 16px; border-radius: 12px; background: var(--ink); }
+.prediction-comment-feedback.is-success::before { content: "✓"; margin-right: 8px; font-weight: 800; }
 .prediction-comment-replying {
     grid-column: 2;
     display: flex;
@@ -22594,7 +22371,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     display: contents;
 }
 .cappers-admin-app-card-copy,
-.prediction-card-rich-author > span:nth-child(2),
+.paid-access-author > span:nth-child(2),
 .profile-daily-task-copy {
     min-width: 0;
     display: grid;
@@ -23942,8 +23719,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.cabinet-bonuses-page .bonus-level-row-meta,
-.prediction-card-rich-team:last-child {
+.cabinet-bonuses-page .bonus-level-row-meta {
     justify-items: end;
     text-align: right;
 }
@@ -25127,86 +24903,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     white-space: nowrap;
 }
 .prediction-type-tab:hover { color: #fff; background: #343437; }
-.predictions-grid.is-rich { grid-template-columns: minmax(0, 1fr) !important; gap: 10px; }
-.predictions-grid.is-rich > .prediction-card-rich {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(320px, 41.5%) minmax(0, 1fr);
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-    overflow: hidden;
-    border-radius: 8px;
-    background: var(--panel);
-}
-.prediction-card-rich-cover { position: relative; min-height: 244px; overflow: hidden; color: #fff; background: var(--ink); }
-.prediction-card-rich-cover-image img { display: block; object-fit: cover; }
-.prediction-card-rich-cover-fallback { background: #202023; }
-.prediction-card-rich-cover-meta,
-.prediction-card-rich-cover-teams{
-    position: absolute;
-    z-index: 2;
-}
-.prediction-card-rich-cover-meta {
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-.prediction-card-rich-cover-meta span,
-.prediction-card-rich-cover-meta time {
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 9px;
-    border-radius: 8px;
-    color: #fff;
-    background: rgba(19, 19, 19, 0.86);
-    font-size: 11px;
-    font-weight: 600;
-}
-.prediction-card-rich-cover-meta time { flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px; min-height: 44px; }
-.prediction-card-rich-cover-meta time small { color: rgba(255, 255, 255, 0.76); font-size: 10px; font-weight: 600; }
-.prediction-card-rich-cover-teams {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
-    align-items: end;
-    gap: 8px;
-}
-.prediction-card-rich-cover-teams > b { align-self: center; color: rgba(255, 255, 255, 0.64); font-size: 15px; text-align: center; }
-.prediction-card-rich-team { min-width: 0; display: grid; gap: 6px; justify-content: center; }
-.prediction-card-rich-team > span {
-    width: 48px;
-    height: 48px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 14px;
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 600;
-    margin: auto;
-}
-.prediction-card-rich-team strong {
-    max-width: 100%;
-    overflow: hidden;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.prediction-card-rich-body { min-width: 0; display: flex; flex-direction: column; padding: 0; background: #19191b; }
-.prediction-card-rich-main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 156px; gap: 16px; padding: 14px 13px 0 15px; }
-.prediction-card-rich-content { min-width: 0; display: grid; align-content: start; gap: 9px; }
-.prediction-card-rich-meta { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.prediction-card-rich-author {
+.paid-access-author {
     min-width: 0;
     display: grid;
     grid-template-columns: 36px minmax(0, 1fr) auto;
@@ -25214,7 +24911,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     gap: 8px;
     color: #fff;
 }
-.prediction-card-rich-avatar {
+.paid-access-avatar {
     position: relative;
     width: 36px;
     height: 36px;
@@ -25227,43 +24924,11 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 12px;
     font-weight: 600;
 }
-.prediction-card-rich-author em {
-    padding: 5px 8px;
-    border-radius: 8px;
-    color: var(--ink);
-    background: var(--yellow);
-    font-size: 10px;
-    font-style: normal;
-    font-weight: 600;
-}
-.prediction-card-rich-verified,
-.prediction-card-rich-verified svg {
+
+.paid-access-verified,
+.paid-access-verified svg {
     width: 15px;
     height: 15px;
-}
-.prediction-card-rich-meta-copy { flex: 0 0 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.prediction-card-rich-meta-copy span,
-.prediction-card-rich-meta-copy time {
-    min-height: 28px;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 9px;
-    border-radius: 8px;
-    color: var(--muted);
-    background: #262629;
-    font-size: 11px;
-    font-weight: 600;
-}
-.prediction-card-rich-title { display: block; color: #fff; font-size: 17px; font-weight: 600; line-height: 1.22; }
-.prediction-card-rich-description {
-    display: -webkit-box;
-    margin: 0;
-    overflow: hidden;
-    color: rgba(255, 255, 255, 0.68);
-    font-size: 13px;
-    line-height: 1.38;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
 }
 .cappers-admin,
 .cappers-admin #header,
@@ -25273,120 +24938,22 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .cappers-admin #user-tools a {
     color: var(--admin-text);
 }
-.prediction-card-rich-tags span { padding: 5px 9px; border-radius: 9px; color: rgba(255, 255, 255, 0.82); background: #2a2a2d; font-size: 11px; }
-.prediction-card-rich-actions {
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    margin: auto 13px 0 15px;
-    padding: 9px 0 10px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-.prediction-card-rich-actions .feed-prediction-save { margin-left: auto; gap: 8px; }
-.prediction-card-rich-actions .feed-prediction-save span { color: rgba(255, 255, 255, 0.76); font-size: 13px; font-weight: 600; }
-.prediction-card-rich-actions .feed-prediction-action b { color: var(--soft); font-size: 13px; font-weight: 600; }
-.prediction-card-rich-stats { display: grid; align-content: start; gap: 10px; }
-.prediction-card-rich-stats > span {
-    display: flex;
-    gap: 5px;
-    align-content: center;
-    padding: 10px 11px;
-    border-radius: 8px;
-    background: #262629;
-}
-.prediction-card-rich-status.is-lose { background: var(--danger); color: #fff; display: flex; align-items: center; justify-content: center; }
-.prediction-card-rich-stats strong { color: #fff; font-size: 14px; font-weight: 600; }
-.prediction-card-rich-status.is-win strong { color: #42d782; }
-.prediction-card-rich-status.is-pending { background: #2d8b3a; }
-.prediction-card-rich-status svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
-    stroke: white;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.prediction-card-rich-views { min-height: 32px !important; padding-top: 0 !important; padding-bottom: 0 !important; background: 0 0 !important; }
-.prediction-card-rich-views strong { color: #7c7c7c; font-weight: 500; font-size: 12px; text-align: end; }
-.predictions-grid.is-rich > .paid-prediction-locked-card {
-    min-height: 306px;
-    grid-template-columns: minmax(300px, 39%) minmax(0, 1fr);
-    background: var(--panel);
-    outline: rgba(255, 255, 255, 0.07) solid 1px;
-}
-.paid-prediction-locked-art {
-    position: relative;
-    min-height: 306px;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    isolation: isolate;
-    background: #101114;
-}
-.paid-prediction-locked-pattern {
-    position: absolute;
-    top: 28px;
-    left: 28px;
-    width: 74px;
-    height: 86px;
-    z-index: 0;
-    opacity: 0.5;
-    filter: blur(12px);
-    background: #0b56fa;
-    box-shadow:
-        88px 8px 0 #433247,
-        176px -10px 0 #176850,
-        250px 18px 0 #65470f,
-        18px 104px 0 #502a51,
-        112px 92px 0 #153a72,
-        206px 112px 0 #6d2d2d,
-        274px 94px 0 #244d3e,
-        -8px 200px 0 #1e457b,
-        90px 190px 0 #6b4b17,
-        184px 210px 0 #43245c,
-        270px 190px 0 #145b48;
-}
-.paid-prediction-locked-art img {
-    position: relative;
-    z-index: 1;
-    width: min(72%, 252px);
-    height: auto;
-    filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42));
-    transition: transform 0.2s ease;
-}
-.paid-prediction-locked-art:hover img { transform: translateY(-3px) scale(1.015); }
-.paid-prediction-locked-art:focus-visible { outline: 2px solid #58e596; outline-offset: -4px; }
-.paid-prediction-locked-label {
-    position: absolute;
-    z-index: 2;
-    left: 14px;
-    bottom: 14px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    color: #dfffea;
-    background: rgba(9, 24, 16, 0.82);
-    box-shadow: inset 0 0 0 1px rgba(88, 229, 150, 0.28);
-    font-size: 11px;
-    font-weight: 800;
-}
-.paid-prediction-locked-body {
+.paid-prediction-access-body {
     min-width: 0;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr);
     gap: 12px;
     padding: 16px;
 }
-.paid-prediction-locked-author-row {
+.paid-prediction-access-author-row {
     min-width: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
-.paid-prediction-locked-author-row .prediction-card-rich-author { max-width: min(100%, 320px); }
-.paid-prediction-locked-badge {
+.paid-prediction-access-author-row .paid-access-author { max-width: min(100%, 320px); }
+.paid-prediction-access-badge {
     min-height: 28px;
     padding: 0 10px;
     display: inline-flex;
@@ -25397,15 +24964,15 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 11px;
     font-weight: 700;
 }
-.paid-prediction-locked-copy { display: grid; gap: 2px; }
-.paid-prediction-locked-copy > span {
+.paid-prediction-access-copy { display: grid; gap: 2px; }
+.paid-prediction-access-copy > span {
     color: #58e596;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
-.paid-prediction-locked-copy-title { color: #fff; font-size: 18px; font-weight: 800; line-height: 1.2; }
+.paid-prediction-access-copy-title { color: #fff; font-size: 18px; font-weight: 800; line-height: 1.2; }
 .paid-prediction-purchase-closed {
     align-self: stretch;
     display: grid;
@@ -25414,7 +24981,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     gap: 9px;
     padding: 18px;
     border-radius: 12px;
-    background: #111216;
+    background: var(--ink);
     box-shadow: inset 0 0 0 1px #292b31;
 }
 .paid-prediction-purchase-closed strong { color: #f7f8ff; font-size: 16px; }
@@ -27383,8 +26950,12 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort-label { color: var(--muted); font-size: 12px; }
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort { flex-wrap: wrap; }
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-sort button { min-height: 34px; padding: 0 12px; font-size: 12px; }
-:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters { display: flex; flex-wrap: wrap; gap: 7px; }
-:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters button {
+.profile-desktop-coupon-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+.profile-desktop-coupon-filters :is(button, a) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     min-height: 34px;
     padding: 0 12px;
     border: 0;
@@ -27395,7 +26966,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-size: 12px;
     cursor: pointer;
 }
-:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-filters button.is-active { background: var(--yellow); color: var(--ink); }
+.profile-desktop-coupon-filters :is(button, a).is-active { background: var(--blue); color: white; }
 :is(#profile-tab-predictions, .expert-public-page) .profile-coupons-desktop-list {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 375px), 1fr));
     gap: 12px;
@@ -30536,12 +30107,15 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 :is(#profile-tab-predictions, .expert-public-page) .profile-coupon-locked { box-shadow: none; }
 .profile-coupon-lock-heading { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 16px; color: var(--text); background: #18191d; }
 .profile-coupon-lock-heading > img { flex: 0 0 56px; width: 56px; height: 56px; object-fit: contain; }
-.profile-coupon-lock-heading > span:not(.paid-prediction-locked-badge) { display: grid; gap: 4px; min-width: 0; }
+.profile-coupon-lock-heading > span:not(.paid-prediction-access-badge) { display: grid; gap: 4px; min-width: 0; }
 .profile-coupon-lock-heading strong { font-size: 16px; }
 .profile-coupon-lock-heading small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #a3a6b0; font-size: 11px; overflow-wrap: anywhere; }
-.profile-coupon-lock-heading .paid-prediction-locked-badge { margin-left: auto; }
-.profile-coupon-lock-action { display: flex; justify-content: flex-end; align-items: flex-end; flex: 1; padding: 12px 16px 16px; }
-.profile-coupon-purchase { min-height: 36px; padding: 0 20px; border: 0; border-radius: 10px; color: #07130c; background: #58e596; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.profile-coupon-lock-heading .paid-prediction-access-badge { margin-left: auto; }
+.profile-coupon-lock-action { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center; flex: 1; padding: 12px 16px 16px; }
+.profile-coupon-lock-status { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; color: var(--yellow); font-size: 12px; font-weight: 700; }
+.profile-coupon-lock-status.is-completed { color: var(--muted); }
+.profile-coupon-lock-status svg { flex: none; }
+.profile-coupon-purchase { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-height: 36px; padding: 0 20px; border: 0; border-radius: 10px; color: #07130c; background: #58e596; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .profile-coupon-purchase:hover { background: #72eda7; }
 .profile-coupon-purchase:active { transform: translateY(1px); }
 .profile-coupon-purchase:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
@@ -30576,16 +30150,16 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .profile-coupon-access-lock { display: grid; place-items: center; width: 56px; height: 56px; flex: none; border-radius: 18px; color: #0e0f12; background: #f6ec4e; }
 .profile-coupon-access-head h2 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1.4; }
 .profile-coupon-access-head p { max-width: 420px; margin: 0; color: #a3a6b0; font-size: 14px; font-weight: 600; line-height: 1.45; }
-.profile-coupon-access-card .paid-prediction-locked-body { padding: 0; grid-template-rows: auto auto; gap: 16px; }
-.profile-coupon-access-card .paid-prediction-locked-copy,
-.profile-coupon-access-card .paid-prediction-locked-badge { display: none; }
-.profile-coupon-access-card .paid-prediction-locked-author-row { padding: 14px 16px; border-radius: 14px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
-.profile-coupon-access-card .prediction-card-rich-author { max-width: 100%; }
-.profile-coupon-access-card .prediction-card-rich-author strong { font-size: 15px; overflow-wrap: anywhere; }
-.profile-coupon-access-card .prediction-card-rich-author small { color: #a3a6b0; font-size: 12px; }
-.profile-coupon-access-card .prediction-card-rich-avatar { flex-basis: 46px; }
-.profile-coupon-access-card .prediction-card-rich-avatar,
-.profile-coupon-access-card .prediction-card-rich-avatar img { width: 100%; height: 100%; border-radius:12px; }
+.profile-coupon-access-card .paid-prediction-access-body { padding: 0; grid-template-rows: auto auto; gap: 16px; }
+.profile-coupon-access-card .paid-prediction-access-copy,
+.profile-coupon-access-card .paid-prediction-access-badge { display: none; }
+.profile-coupon-access-card .paid-prediction-access-author-row { padding: 14px 16px; border-radius: 14px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
+.profile-coupon-access-card .paid-access-author { max-width: 100%; }
+.profile-coupon-access-card .paid-access-author strong { font-size: 15px; overflow-wrap: anywhere; }
+.profile-coupon-access-card .paid-access-author small { color: #a3a6b0; font-size: 12px; }
+.profile-coupon-access-card .paid-access-avatar { flex-basis: 46px; }
+.profile-coupon-access-card .paid-access-avatar,
+.profile-coupon-access-card .paid-access-avatar img { width: 100%; height: 100%; border-radius:12px; }
 .profile-coupon-access-card .paid-prediction-offers { gap: 12px; }
 .profile-coupon-access-card .paid-prediction-offer { padding: 18px; border-radius: 16px; gap: 12px; background: var(--ink); box-shadow: inset 0 0 0 1px #24262e; }
 .profile-coupon-access-card .paid-prediction-offer.is-subscription { box-shadow: inset 0 0 0 1.5px #58e596; }
@@ -31056,16 +30630,18 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 /* The same unique-reader aggregate is used in cards, detail and the access dialog. */
 .coupon-open-count { max-width: 100%; overflow: hidden; color: #a3a6b0; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .coupon-open-count[hidden] { display: none; }
-.profile-coupon-lock-action > .coupon-open-count { margin-right: auto; }
+.profile-coupon-lock-action > .coupon-open-count { margin-right: 0; }
 
+.profile-coupon-purchase-meta { display: block; color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+.profile-purchases-page #profile-tab-predictions .profile-coupon-card { height: auto; }
 .profile-purchases-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; padding: 24px; }
 .profile-purchases-table-scroll { max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #3a3a3d transparent; }
 .profile-purchases-table { width: 100%; border-collapse: collapse; text-align: left; }
 .profile-purchases-table th, .profile-purchases-table td { padding: 12px; white-space: nowrap; }
 .profile-purchases-table th { color: #a3a6b0; font-size: 12px; }
 .profile-purchases-table td { background: var(--panel); }
-.profile-purchases-page a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
-.profile-purchases-page a:hover, .profile-purchases-page a[aria-current="page"] { color: var(--yellow); }
+.profile-purchases-page > nav a, .profile-purchases-table a { color: var(--text); }
+.profile-purchases-table a:hover { color: var(--yellow); }
 .profile-purchases-page a:focus-visible, .profile-purchases-table-scroll:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 .profile-desktop-coupon-reactions > .coupon-open-count { min-width: 0; flex: 0 1 auto; }
 
@@ -31269,14 +30845,14 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .expert-tariff-coupon-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; color: var(--text); background: var(--green); }
 .expert-tariff-coupon-icon svg { width: 20px; height: 20px; }
 .expert-tariff-coupon-copy { display: grid; gap: 5px; flex: 1; min-width: 0; }
-.expert-tariff-coupon-copy h3 { margin: 0; overflow: hidden; color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.expert-tariff-coupon-title { margin: 0; overflow: hidden; color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
 .expert-tariff-coupon-copy p { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin: 0; color: var(--muted); font-size: 11.5px; font-weight: 700; }
 .expert-tariff-coupon-private { color: var(--soft); }
 .expert-tariff-coupon-lock { flex: none; color: var(--muted); font-size: 18px; }
 .expert-tariff-coupon-lock svg { width: 16px; height: 16px; }
 .expert-tariff-coupon-action { display: contents; }
 .expert-tariff-coupon-pick { display: none; }
-.expert-tariff-coupon-action > a { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 76px; min-height: 38px; padding: 8px 14px; border-radius: 12px; color: var(--yellow); background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; font-weight: 800; text-decoration: none; }
+.expert-tariff-coupon-action > a { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 76px; min-height: 38px; padding: 8px 14px; border-radius: 12px; color: white; background: var(--blue); font-size: 13px; font-weight: 800; text-decoration: none; }
 .expert-tariffs-subscription { display: flex; flex-direction: column; gap: 16px; border-radius: 22px; }
 .expert-tariffs-subscription-head { display: flex; align-items: center; gap: 10px; }
 .expert-tariffs-subscription-head h2 { flex: 1; margin: 0; color: var(--text); font-family: var(--font-display); font-size: 17px; font-weight: 800; }
@@ -31304,3 +30880,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .expert-tariffs-all { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 0; color: var(--yellow); font-size: 12px; font-weight: 800; text-decoration: none; }
 .expert-tariffs-panel a:focus-visible, .expert-tariffs-period:has(input:focus-visible) { outline: 2px solid var(--yellow); outline-offset: 4px; }
 .expert-tariffs-mobile, .expert-tariffs-panel[hidden], .expert-tariffs-panel [hidden] { display: none !important; }
+
+.capper-onboarding-avatar-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.capper-onboarding-avatar { display: grid; place-items: center; flex: none; width: 72px; height: 72px; overflow: hidden; border-radius: 50%; color: var(--text); background: var(--panel); font-family: var(--font-heading); font-size: 28px; }
+.capper-onboarding-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }

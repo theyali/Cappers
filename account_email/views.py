@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST, require_http_methods
 
+from cabinet.services.capper_onboarding import get_pending_capper_onboarding_url
+
 from .forms import EmailAddressForm, EmailCodeForm
 from .models import EmailChangeRequest
 from .services import (
@@ -171,7 +173,7 @@ def verify_registration_email(request, token: str):
     else:
         if request.user.is_authenticated and request.user.pk == flow.user_id:
             messages.success(request, "Почта подтверждена.")
-            return redirect(_profile_settings_url())
+            return redirect(get_pending_capper_onboarding_url(request.user) or _profile_settings_url())
         messages.success(request, "Почта подтверждена. Теперь вы можете войти в аккаунт.")
     return redirect("cabinet:login")
 

@@ -2,7 +2,7 @@
 {# Coupon page for phones and the Telegram Mini App; the wide showcase, stats and slip are hidden there. #}
 <div class="coupon-mobile">
     <header class="coupon-mobile-bar">
-        <a class="coupon-mobile-icon" href="{% url 'front:predictions' %}" aria-label="Вернуться к прогнозам">
+        <a class="coupon-mobile-icon" href="{{ coupon_back_url }}" aria-label="{{ coupon_back_label }}" data-coupon-back>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <div class="coupon-mobile-title">
@@ -20,7 +20,7 @@
             data-share-endpoint="{% url 'front:prediction_share' prediction_id=coupon.id %}"
             aria-label="Поделиться прогнозом"
         >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+            {% include "front/includes/_solar_icon.html" with name="share-bold-duotone" icon_size=20 only %}
         </button>
     </header>
 
@@ -70,7 +70,7 @@
         <span class="coupon-mobile-author-link">Профиль</span>
     </a>
 
-    {% include "front/includes/_prediction_article.html" %}
+    {% include "front/includes/_prediction_article.html" with article_variant="mobile" %}
     {% if not prediction_article and not coupon.headline %}<p class="coupon-mobile-lead">Топовые матчи. Выверенная аналитика. Уверенная игра.</p>{% endif %}
 
     {% if positions %}

@@ -1,5 +1,5 @@
 (() => {
-    const page = document.querySelector(".profile-page");
+    const page = document.querySelector(".profile-page, .capper-onboarding[data-avatar-upload-url]");
     const input = document.getElementById("avatarUploadInput");
     const status = document.getElementById("profileAvatarStatus");
 

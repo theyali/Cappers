@@ -1,3 +1,7 @@
+import re
+from urllib.parse import urlsplit
+
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -87,7 +91,7 @@ class SportLeaguePreferenceTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("cabinet:capper_onboarding", kwargs={"step": 1}),
+            reverse("cabinet:register_done"),
         )
         user = User.objects.get(username="registered-capper")
         profile = AnalystProfile.objects.get(user=user)
@@ -106,6 +110,27 @@ class SportLeaguePreferenceTests(TestCase):
         )
         self.assertEqual(profile.favorite_sports, "Футбол")
         self.assertEqual(profile.favorite_leagues, "Премьер-лига")
+        self.assertEqual(user.role, User.Role.READER)
+        self.assertFalse(profile.is_public)
+        self.assertContains(self.client.get(reverse("cabinet:register_done")), "настройку профиля каппера")
+        verification_url = re.search(r"https?://[^\s]+", mail.outbox[-1].body).group()
+        self.assertRedirects(self.client.get(urlsplit(verification_url).path), reverse("cabinet:login"))
+        user.refresh_from_db()
+        self.assertTrue(user.email_verified)
+        login = self.client.post(reverse("cabinet:login"), {
+            "username": user.username, "password": "safe-test-password-123",
+        })
+        self.assertRedirects(login, reverse("cabinet:capper_onboarding", kwargs={"step": 1}))
+        about = self.client.post(reverse("cabinet:capper_onboarding", kwargs={"step": 2}), {
+            "specialization": "Футбольная аналитика", "bio": "Публикую прогнозы на футбольные матчи.",
+        })
+        self.assertRedirects(about, reverse("cabinet:capper_onboarding", kwargs={"step": 3}))
+        activate = self.client.post(reverse("cabinet:capper_onboarding", kwargs={"step": 5}), {"action": "profile"})
+        self.assertRedirects(activate, reverse("front:expert_profile", kwargs={"username": user.username}), fetch_redirect_response=False)
+        user.refresh_from_db(); profile.refresh_from_db()
+        self.assertEqual(user.role, User.Role.ANALYST)
+        self.assertTrue(profile.is_public)
+        self.assertIsNotNone(profile.onboarding_completed_at)
 
     def test_capper_onboarding_step_three_replaces_preferences(self):
         tennis_league = League.objects.create(
@@ -270,3 +295,21 @@ class SportLeaguePreferenceTests(TestCase):
             [second.id, first.id],
         )
         self.assertTrue(all(item["is_top"] for item in payload["results"]))
+
+    def test_pending_capper_login_and_register_page_resume_setup(self):
+        user = User.objects.create_user(username="pending-capper-login", password="PendingPass123!", email="pending@example.com")
+        profile = AnalystProfile.objects.create(user=user, display_name="Каппер", is_public=False)
+        target = reverse("cabinet:capper_onboarding", kwargs={"step": 1})
+        response = self.client.post(reverse("cabinet:login"), {"username": user.username, "password": "PendingPass123!"})
+        self.assertRedirects(response, target, fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse("cabinet:register")), target, fetch_redirect_response=False)
+        user.refresh_from_db(); profile.refresh_from_db()
+        self.assertEqual(user.role, User.Role.READER)
+        self.assertFalse(profile.is_public)
+
+    def test_reader_login_keeps_selected_destination(self):
+        user = User.objects.create_user(username="reader-login-destination", password="ReaderPass123!")
+        target = reverse("front:predictions") + "?view_mode=table"
+        response = self.client.post(reverse("cabinet:login"), {"username": user.username, "password": "ReaderPass123!", "next": target})
+        self.assertRedirects(response, target, fetch_redirect_response=False)
+        self.assertFalse(AnalystProfile.objects.filter(user=user).exists())

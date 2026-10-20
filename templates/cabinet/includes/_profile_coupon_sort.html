@@ -1,7 +1,11 @@
 <div class="profile-demand-sort {{ sort_class }}" data-profile-coupon-sort-controls role="group" aria-label="Сортировать купоны">
     <button class="{% if coupon_feed_sort|default:'date' == 'date' %}is-active{% endif %}" type="button" data-profile-coupon-sort="date" aria-pressed="{% if coupon_feed_sort|default:'date' == 'date' %}true{% else %}false{% endif %}">Дата <span data-sort-arrow>↓</span></button>
     <button class="{% if coupon_feed_sort|default:'date' == 'stake' %}is-active{% endif %}" type="button" data-profile-coupon-sort="stake" aria-pressed="{% if coupon_feed_sort|default:'date' == 'stake' %}true{% else %}false{% endif %}">Сумма <span data-sort-arrow></span></button>
+    {% if purchased %}
+    <button class="{% if coupon_feed_sort == 'price' %}is-active{% endif %}" type="button" data-profile-coupon-sort="price" aria-pressed="{% if coupon_feed_sort == 'price' %}true{% else %}false{% endif %}">Цена покупки <span data-sort-arrow></span></button>
+    {% else %}
     <button class="{% if coupon_feed_sort|default:'date' == 'payout' %}is-active{% endif %}" type="button" data-profile-coupon-sort="payout" aria-pressed="{% if coupon_feed_sort|default:'date' == 'payout' %}true{% else %}false{% endif %}">Стоимость <span data-sort-arrow></span></button>
+    {% endif %}
     <button class="{% if coupon_feed_sort|default:'date' == 'likes' %}is-active{% endif %}" type="button" data-profile-coupon-sort="likes" aria-pressed="{% if coupon_feed_sort|default:'date' == 'likes' %}true{% else %}false{% endif %}">Лайки <span data-sort-arrow></span></button>
     <button class="{% if coupon_feed_sort|default:'date' == 'favorites' %}is-active{% endif %}" type="button" data-profile-coupon-sort="favorites" aria-pressed="{% if coupon_feed_sort|default:'date' == 'favorites' %}true{% else %}false{% endif %}">Сохранили <span data-sort-arrow></span></button>
     <span class="profile-coupon-count" title="Всего купонов">{{ coupons_count }}</span>

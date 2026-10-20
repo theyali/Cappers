@@ -1,7 +1,7 @@
-<div class="profile-coupon-feed" data-profile-coupon-feed data-url="{{ coupon_feed_url }}" data-sort="{{ coupon_feed_sort }}" data-direction="{{ coupon_feed_direction }}" data-filter="{{ coupon_feed_filter }}" aria-busy="false">
+<div class="profile-coupon-feed" data-profile-coupon-feed data-url="{{ coupon_feed_url }}" data-sort="{{ coupon_feed_sort }}" data-direction="{{ coupon_feed_direction }}" data-filter="{{ coupon_feed_filter }}"{% if coupon_feed_purchased %} data-purchase-status="{{ coupon_feed_purchase_status }}"{% endif %} aria-busy="false">
     {% if coupon_opens_started_at %}<p class="coupon-open-count">Уникальные открытия учитываются с {{ coupon_opens_started_at|date:"d.m.Y" }}.</p>{% endif %}
     <div class="profile-desktop-list-head">
-        <h3>Все прогнозы</h3>
+        <h3 data-coupon-feed-title>{{ coupon_feed_title|default:'Все прогнозы' }}</h3>
         <div class="profile-desktop-coupon-filters" role="group" aria-label="Фильтр по результату">
             <button type="button" data-profile-coupon-filter="all" class="{% if coupon_feed_filter == 'all' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'all' %}true{% else %}false{% endif %}">Все</button>
             <button type="button" data-profile-coupon-filter="win" class="{% if coupon_feed_filter == 'win' %}is-active{% endif %}" aria-pressed="{% if coupon_feed_filter == 'win' %}true{% else %}false{% endif %}">Выигрыш</button>
@@ -12,7 +12,7 @@
     </div>
     <div class="profile-desktop-sort-toolbar">
         <span class="profile-desktop-sort-label">Сортировка</span>
-        {% include "cabinet/includes/_profile_coupon_sort.html" with sort_class="profile-desktop-sort" coupons_count=coupon_feed_total coupon_feed_sort=coupon_feed_sort coupon_feed_direction=coupon_feed_direction only %}
+        {% include "cabinet/includes/_profile_coupon_sort.html" with sort_class="profile-desktop-sort" coupons_count=coupon_feed_total coupon_feed_sort=coupon_feed_sort coupon_feed_direction=coupon_feed_direction purchased=coupon_feed_purchased only %}
     </div>
     <div class="profile-coupons-list profile-coupons-desktop-list" data-coupon-feed-desktop>
         {% include "cabinet/includes/_profile_mobile_coupon_items.html" with mobile_coupons=coupon_feed_items desktop=True only %}

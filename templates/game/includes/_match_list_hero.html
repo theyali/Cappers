@@ -47,7 +47,7 @@
                 <span class="matches-head-sep" aria-hidden="true"></span>
                 {% for sport in head.sports %}
                 <a class="matches-sport-chip is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}"{% if sport.active %} aria-current="page"{% endif %}>
-                    <span class="matches-sport-chip-glyph">{% include "game/includes/_match_sport_glyph.html" with key=sport.tile_key size=17 %}</span>
+                    <span class="matches-sport-chip-glyph">{% include "front/includes/_sport_icon.html" with key=sport.tile_key code=sport.code size=17 only %}</span>
                     <span class="matches-sport-chip-nm">{{ sport.label }}</span>
                     <span class="matches-sport-chip-q">{{ sport.count }}</span>
                 </a>

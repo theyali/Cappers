@@ -1,3 +1,4 @@
+{% if profile_best_mobile_coupons or profile_best_expresses %}
                     <div class="profile-predictions-feature">
                     {% if profile_best_mobile_coupons %}
                     <section class="home-mobile-slider profile-best-coupons-slider" data-home-mobile-slider aria-labelledby="{{ feature_id|default:"profile" }}-best-coupons-title">
@@ -58,3 +59,4 @@
                         </section>
                     </aside>
                     </div>
+{% endif %}
