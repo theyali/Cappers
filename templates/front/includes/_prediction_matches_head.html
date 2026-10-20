@@ -38,7 +38,7 @@
                 <span class="matches-head-sep" aria-hidden="true"></span>
                 {% for sport in head.sports %}
                 <a class="matches-sport-chip is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}" data-prediction-ajax-link{% if sport.active %} aria-current="page"{% endif %}>
-                    <span class="matches-sport-chip-glyph">{% include "game/includes/_match_sport_glyph.html" with key=sport.tile_key size=17 %}</span>
+                    <span class="matches-sport-chip-glyph">{% include "front/includes/_sport_icon.html" with key=sport.tile_key code=sport.code size=17 only %}</span>
                     <span class="matches-sport-chip-nm">{{ sport.label }}</span>
                     <span class="matches-sport-chip-q">{{ sport.count }}</span>
                 </a>
@@ -61,6 +61,15 @@
                     <a class="{% if scope.active %}is-active{% endif %}" href="{{ scope.url }}" data-prediction-ajax-link{% if scope.active %} aria-current="page"{% endif %}>{{ scope.label }}</a>
                     {% endfor %}
                 </nav>
+                {% endif %}
+                {% if top_experts_tab %}
+                <label class="predictions-sidebar-top-toggle">
+                    <span class="matches-table-scope-copy">Топовые эксперты <b>{{ top_experts_tab.count }}</b></span>
+                    <span class="switch-control">
+                        <input type="checkbox" role="switch" aria-label="Топовые эксперты" data-top-experts-tab data-prediction-filter-url="{{ top_experts_tab.href }}"{% if top_experts_tab.active %} checked{% endif %}>
+                        <span aria-hidden="true"></span>
+                    </span>
+                </label>
                 {% endif %}
                 <div class="matches-head-actions">
                     <a class="matches-head-ghost" href="{{ head.sort_url }}" title="Сменить сортировку: {{ head.sort_label }}" data-prediction-ajax-link>

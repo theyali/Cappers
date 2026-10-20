@@ -21,9 +21,6 @@
             <div class="matches-head-sentinel" data-matches-head-sentinel aria-hidden="true"></div>
             {% include "front/includes/_prediction_matches_head.html" %}
             {% if page_obj.object_list %}
-                {% if is_rich_predictions %}
-                    {% include "front/includes/_prediction_grid_view.html" with feed_card_view=True %}
-                {% else %}
                 <div>
                     <div class="content-view-container" data-content-view-container>
                         <div data-content-view-panel="grid"{% if content_view_mode != 'grid' %} hidden{% endif %}>
@@ -34,7 +31,6 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
 
                 <div
                     class="predictions-lazy"

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from html.parser import HTMLParser
 from types import SimpleNamespace
@@ -1386,6 +1386,114 @@ class WikiPageNavigationTests(TestCase):
         self.assertEqual(response.json()["filtered_count"], 1)
 
 
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class FollowingFeedPaidDiscoveryTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from cabinet.models import AnalystFollow
+
+        cls.reader = User.objects.create_user(username="locked-feed-reader", role=User.Role.READER)
+        cls.author = User.objects.create_user(username="locked-feed-author", role=User.Role.ANALYST)
+        cls.follow = AnalystFollow.objects.create(follower=cls.reader, analyst=cls.author)
+        cls.sport = Sport.objects.create(code="football", name="Football", name_ru="Футбол")
+        cls.match = Match.objects.create(external_id=950151, sport=cls.sport, sync_scope="prematch", starts_at=timezone.now() + timedelta(days=1), raw_data={"teams": {"home": {"name": "СЕКРЕТНЫЙ МАТЧ"}}})
+        cls.coupon = cls.make_coupon(cls.author)
+        outsider = User.objects.create_user(username="locked-feed-outsider", role=User.Role.ANALYST)
+        cls.foreign_coupon = cls.make_coupon(outsider)
+
+    @classmethod
+    def make_coupon(cls, author, **fields):
+        coupon = PredictionCoupon.objects.create(author=author, published_status="published", audience=fields.pop("audience", "paid"), total_stake=100, possible_payout="837.00", headline="СЕКРЕТНЫЙ ЗАГОЛОВОК", description="СЕКРЕТНЫЙ РАЗБОР", published_at=timezone.now(), **fields)
+        Prediction.objects.create(coupon=coupon, match=cls.match, market="winner", selection="СЕКРЕТНЫЙ ИСХОД", coefficient="8.37", stake=100)
+        return coupon
+
+    def setUp(self):
+        cache.clear()
+        self.client.force_login(self.reader)
+
+    def feed(self, **params):
+        return self.client.get(reverse("front:following_feed"), {"prediction_type": "paid", **params})
+
+    def test_followed_paid_coupon_is_discovered_locked_in_grid_table_and_mobile(self):
+        response = self.feed()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["feed_total_count"], 1)
+        self.assertEqual([card.id for card in response.context["page_obj"]], [self.coupon.pk])
+        self.assertTrue(response.context["page_obj"][0].is_paid_locked)
+        self.assertContains(response, "is-paid-locked")
+        for secret in ("СЕКРЕТНЫЙ ИСХОД", "СЕКРЕТНЫЙ ЗАГОЛОВОК", "СЕКРЕТНЫЙ РАЗБОР"):
+            self.assertNotContains(response, secret)
+        self.assertNotContains(response, "paid-upgrade")
+        self.assertNotContains(response, "Капперы стали платными")
+        from cabinet.models import AnalystFollow
+        self.assertTrue(AnalystFollow.objects.filter(pk=self.follow.pk).exists())
+        default = self.client.get(reverse("front:following_feed"))
+        self.assertEqual(default.context["feed_total_count"], 1)
+        self.assertContains(default, "is-paid-locked")
+        for secret in ("СЕКРЕТНЫЙ ИСХОД", "СЕКРЕТНЫЙ ЗАГОЛОВОК", "СЕКРЕТНЫЙ РАЗБОР"):
+            self.assertNotContains(default, secret)
+        ajax = self.client.get(reverse("front:following_feed"), {"prediction_type": "paid"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        for secret in ("СЕКРЕТНЫЙ ИСХОД", "СЕКРЕТНЫЙ ЗАГОЛОВОК", "СЕКРЕТНЫЙ РАЗБОР"):
+            self.assertNotContains(ajax, secret)
+
+    def test_access_is_granted_by_paid_plan_and_by_single_purchase(self):
+        from cabinet.models import AnalystPaidSubscription, PaidPredictionPurchase
+
+        subscription = AnalystPaidSubscription.objects.create(subscriber=self.reader, analyst=self.author, price=100, expires_at=timezone.now() + timedelta(days=1))
+        response = self.feed()
+        self.assertFalse(response.context["page_obj"][0].is_paid_locked)
+        self.assertContains(response, "СЕКРЕТНЫЙ ИСХОД")
+        subscription.expires_at = timezone.now() - timedelta(days=1)
+        subscription.save(update_fields=["expires_at"])
+        self.assertTrue(self.feed().context["page_obj"][0].is_paid_locked)
+        PaidPredictionPurchase.objects.create(buyer=self.reader, analyst=self.author, coupon=self.coupon, status="paid", price=50, platform_fee_percent=0, platform_fee_amount=0, capper_income=50, paid_at=timezone.now())
+        self.assertFalse(self.feed().context["page_obj"][0].is_paid_locked)
+
+    def test_default_feed_combines_all_formats_and_payment_types(self):
+        created = []
+        for audience, prediction_format in [("free", "quick"), ("free", "rich"), ("paid", "rich")]:
+            coupon = self.make_coupon(self.author, audience=audience, prediction_format=prediction_format)
+            if audience == "free":
+                coupon.predictions.update(selection="Открытый исход")
+            created.append(coupon)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertEqual(response.context["feed_total_count"], 4)
+        cards = {card.id: card for card in response.context["page_obj"]}
+        self.assertEqual(set(cards), {self.coupon.pk, *(coupon.pk for coupon in created)})
+        self.assertTrue(cards[self.coupon.pk].is_paid_locked)
+        self.assertTrue(cards[created[-1].pk].is_paid_locked)
+        self.assertEqual([tab["key"] for tab in response.context["prediction_head"]["prediction_types"]], ["classic", "vip"])
+        self.assertTrue(response.context["prediction_head"]["prediction_types"][0]["active"])
+        self.assertNotContains(response, "СЕКРЕТНЫЙ ИСХОД")
+        self.assertNotContains(response, "paid-feed-title")
+        from front.models import PredictionFavorite
+        PredictionFavorite.objects.create(user=self.reader, prediction=self.coupon)
+        cache.clear()
+        favorites = self.client.get(reverse("front:following_feed"), {"favorites": "1"})
+        self.assertEqual(favorites.context["feed_total_count"], 1)
+        self.assertTrue(favorites.context["page_obj"][0].is_paid_locked)
+
+    def test_locked_coupons_are_filtered_and_paginated_before_rendering(self):
+        for number in range(25):
+            self.make_coupon(self.author, prediction_format="rich" if number % 2 else "quick")
+        won = self.make_coupon(self.author, state_status="win", prediction_format="rich")
+        response = self.feed()
+        self.assertEqual(response.context["feed_total_count"], 27)
+        first = {card.id for card in response.context["page_obj"]}
+        second = {card.id for card in self.feed(page=2).context["page_obj"]}
+        self.assertEqual(len(first), 24)
+        self.assertEqual(len(second), 3)
+        self.assertFalse(first & second)
+        filtered = self.feed(status="win")
+        self.assertEqual(filtered.context["feed_total_count"], 1)
+        self.assertEqual(filtered.context["page_obj"][0].id, won.pk)
+        for secret in ("СЕКРЕТНЫЙ ИСХОД", "СЕКРЕТНЫЙ ЗАГОЛОВОК", "СЕКРЕТНЫЙ РАЗБОР"):
+            self.assertNotContains(filtered, secret)
+
+
 class VipStoriesPresentationTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1438,6 +1546,72 @@ class VipStoriesPresentationTests(TestCase):
         self.notification.save(update_fields=["is_read"])
         stories, _ = _vip_story_payloads(self.reader)
         self.assertEqual(stories[0]["unread_count"], 0)
+
+    def test_vip_sidebar_uses_latest_ten_public_free_coupons_without_n_plus_one(self):
+        from datetime import timedelta
+        from front.prediction_catalog_views import build_vip_prediction_rail_context
+
+        sport = Sport.objects.create(code="football", name="Football", name_ru="Футбол")
+        match = Match.objects.create(
+            external_id=930103, sport=sport, starts_at=timezone.now(),
+            raw_data={"teams": {"home": {"name": "Милан"}, "away": {"name": "Интер"}}},
+        )
+        coupons = []
+        for number in range(13):
+            coupon = PredictionCoupon.objects.create(
+                author=self.author, published_status="published", total_stake=100, possible_payout=192,
+                published_at=timezone.now() - timedelta(minutes=number),
+            )
+            Prediction.objects.create(coupon=coupon, match=match, market="winner", selection="П1", coefficient="1.92", stake=100)
+            coupons.append(coupon)
+        coupons[0].audience = "paid"
+        coupons[0].save(update_fields=["audience"])
+        coupons[1].published_status = "draft"
+        coupons[1].save(update_fields=["published_status"])
+        PredictionCoupon.objects.create(author=self.author, published_status="published", total_stake=100)
+        outsider = User.objects.create_user(username="sidebar-non-vip", role=User.Role.ANALYST)
+        other = PredictionCoupon.objects.create(author=outsider, published_status="published", total_stake=100)
+        Prediction.objects.create(coupon=other, match=match, market="winner", selection="П1", coefficient=2, stake=100)
+        with self.assertNumQueries(2):
+            context = build_vip_prediction_rail_context()
+        self.assertEqual([row["id"] for row in context["rows"]], [coupon.pk for coupon in coupons[2:12]])
+        self.assertEqual(context["rows"][0]["title"], "Милан — Интер")
+        self.assertEqual(context["rows"][0]["coefficient"], Decimal("1.92"))
+        self.assertIn("сегодня", context["rows"][0]["meta"])
+        html = render_to_string("front/includes/_vip_prediction_rail.html", {"vip_rail": context})
+        self.assertEqual(html.count('class="vip-prediction-rail-row"'), 10)
+        self.assertIn("?prediction_type=vip", html)
+        self.assertNotIn("П1", html)
+        express_match = Match.objects.create(external_id=930104, sport=sport, starts_at=timezone.now())
+        Prediction.objects.create(coupon=coupons[2], match=express_match, market="total",
+            selection="ТБ 2.5", coefficient="1.5", stake=100)
+        with self.assertNumQueries(2):
+            express_context = build_vip_prediction_rail_context()
+        self.assertEqual(express_context["rows"][0]["sport"], "express")
+        express_html = render_to_string("front/includes/_vip_prediction_rail.html", {"vip_rail": express_context})
+        self.assertIn('class="vip-prediction-rail-sport is-express"', express_html)
+        self.author.analyst_profile.is_public = False
+        self.author.analyst_profile.save(update_fields=["is_public"])
+        self.assertEqual(build_vip_prediction_rail_context()["rows"], [])
+
+    @override_settings(STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    })
+    def test_vip_sidebar_preserves_filters_for_mobile_and_promos(self):
+        context = {
+            "filter_variant": "following-feed-filter-sidebar", "filter_id_prefix": "test-vip",
+            "vip_prediction_rail": {"rows": [], "all_url": "/predictions/?prediction_type=vip"},
+            "left_promo_banners": [{"image": {"url": "/media/left-promo.png"}, "button_url": "/promo/", "variant": "blue"}],
+        }
+        html = render_to_string("front/includes/_prediction_filter_sidebar.html", context)
+        self.assertIn("vip-prediction-rail", html)
+        self.assertIn('class="filter_matches"', html)
+        self.assertIn("/media/left-promo.png", html)
+        self.assertIn("prediction-filter-promos", html)
+        self.client.force_login(self.reader)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertContains(response, "vip-prediction-rail")
 
 
 class HomeBestExpertsAjaxTests(TestCase):

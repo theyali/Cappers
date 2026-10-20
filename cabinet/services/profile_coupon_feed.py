@@ -2,7 +2,7 @@
 from types import SimpleNamespace
 from urllib.parse import urlencode
 
-from django.db.models import Min
+from django.db.models import Min, OuterRef, Subquery
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -15,13 +15,13 @@ SORT_KEYS = {"date", "stake", "payout", "likes", "favorites"}
 STATES = {"all", "win", "lose", "pending", "refund"}
 
 
-def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer=None):
+def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer=None, purchased=False, refunded=False):
     from cabinet.views import _profile_coupons_queryset, _sort_profile_coupons, _expert_mobile_coupon_cards
 
     sort = params.get("coupon_sort", params.get("sort", "date"))
     direction = params.get("coupon_direction", params.get("direction", "desc"))
     state = params.get("coupon_filter", params.get("state", "all"))
-    sort = sort if sort in SORT_KEYS else "date"
+    sort = sort if sort in (SORT_KEYS | {"price"} if purchased else SORT_KEYS) else "date"
     direction = direction if direction in {"asc", "desc"} else "desc"
     state = state if state in STATES else "all"
     if offset is None:
@@ -29,7 +29,24 @@ def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer
             offset = max(0, int(params.get("offset", 0)))
         except (TypeError, ValueError):
             offset = 0
-    queryset = _profile_coupons_queryset(user)
+    purchase_rows = None
+    if purchased:
+        from cabinet.paid_predictions import paid_coupon_purchases
+        if refunded:
+            from cabinet.models import PaidPredictionPurchase
+            purchase_rows = PaidPredictionPurchase.objects.filter(buyer=user, status=PaidPredictionPurchase.Status.REFUNDED)
+        else:
+            purchase_rows = paid_coupon_purchases(user)
+    queryset = _profile_coupons_queryset(user, purchased_coupon_ids=purchase_rows.values("coupon_id") if purchased else None)
+    if purchased:
+        purchases = purchase_rows.filter(coupon_id=OuterRef("pk")).order_by("-paid_at", "-pk")
+        queryset = queryset.select_related("author").annotate(
+            purchase_price=Subquery(purchases.values("price")[:1]),
+            purchase_paid_at=Subquery(purchases.values("paid_at")[:1]),
+            purchase_refunded_at=Subquery(purchases.values("refunded_at")[:1]),
+        )
+        if refunded:
+            queryset = queryset.prefetch_related(None)
     if public:
         queryset = queryset.filter(
             published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
@@ -38,23 +55,40 @@ def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer
     if state != "all":
         queryset = queryset.filter(state_status=state)
     total = queryset.count()
-    rows = list(_sort_profile_coupons(queryset, sort, direction)[offset:offset + PAGE_SIZE + 1])
+    if purchased and sort in {"date", "price"}:
+        prefix = "" if direction == "asc" else "-"
+        field = ("purchase_refunded_at" if refunded else "purchase_paid_at") if sort == "date" else "purchase_price"
+        queryset = queryset.order_by(f"{prefix}{field}", f"{prefix}pk")
+    else:
+        queryset = _sort_profile_coupons(queryset, sort, direction)
+    rows = list(queryset[offset:offset + PAGE_SIZE + 1])
     visible = rows[:PAGE_SIZE]
     accessible_ids = accessible_paid_coupon_ids(viewer if public else user, visible)
-    accessible = [row for row in visible if row.audience != PredictionCoupon.Audience.PAID or row.pk in accessible_ids]
+    accessible = [] if refunded else [row for row in visible if row.audience != PredictionCoupon.Audience.PAID or row.pk in accessible_ids]
     by_id = {card["id"]: card for card in _expert_mobile_coupon_cards(accessible)}
     locked_context = None
     cards = []
     from cabinet.paid_prediction_purchases import single_coupon_offer
     for row in visible:
-        row.author = user
+        if not purchased:
+            row.author = user
         is_paid = row.audience == PredictionCoupon.Audience.PAID
+        if refunded:
+            cards.append({
+                "id": row.pk, "is_refunded": True, "purchase_author": row.author.username,
+                "purchase_price": row.purchase_price, "purchase_paid_at": row.purchase_paid_at,
+                "purchase_refunded_at": row.purchase_refunded_at,
+            })
+            continue
         if is_paid and row.pk not in accessible_ids:
             if locked_context is None:
                 locked_context = build_locked_coupon_author_context(user)
+            is_completed = row.state_status != PredictionCoupon.StateStatus.PENDING or row.settled_at is not None
             # No match, pick, odds, stake or payout is put into a locked card.
             cards.append({
                 "id": row.pk, "is_paid": True, "is_paid_locked": True,
+                "is_completed": is_completed,
+                "status_label": "Завершён" if is_completed else "Активный",
                 "locked_prediction": SimpleNamespace(
                     **locked_context,
                     **single_coupon_offer(row),
@@ -65,8 +99,14 @@ def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer
                 ),
             })
         elif row.pk in by_id:
-            cards.append({**by_id[row.pk], "is_paid": is_paid, "is_paid_locked": False})
+            card = {**by_id[row.pk], "is_paid": is_paid, "is_paid_locked": False}
+            if purchased:
+                card.update(purchase_price=row.purchase_price, purchase_paid_at=row.purchase_paid_at, purchase_author=row.author.username)
+            cards.append(card)
     return {
+        "coupon_feed_purchased": purchased,
+        "coupon_feed_purchase_status": "refunded" if refunded else "paid",
+        "coupon_feed_title": "Возвраты" if refunded else "Купленные купоны" if purchased else "Все прогнозы",
         "coupon_feed_show_zero_opens": not public,
         "coupon_opens_started_at": queryset.aggregate(start=Min("metrics__unique_opens_started_at"))["start"] if not public else None,
         "coupon_feed_items": cards,
@@ -113,6 +153,7 @@ def build_coupon_feed_payload(request, context):
         "has_more": context["coupon_feed_has_more"],
         "next_offset": context["coupon_feed_next_offset"],
         "total": context["coupon_feed_total"],
+        "title": context["coupon_feed_title"],
     }
 
 

@@ -1,4 +1,4 @@
-{% load capper_trust %}
+{% load capper_trust money %}
 <article
     class="content-table-row prediction-table-row{% if prediction.is_own %} is-own-prediction{% endif %}"
     data-prediction-card="{{ prediction.coupon.id }}"
@@ -10,6 +10,10 @@
     {% include "front/includes/_prediction_mobile_coupon.html" %}
     <div class="prediction-table-desktop">
     <a class="prediction-table-event" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        {% if prediction.coupon.author.is_vip %}
+        {% include "front/includes/_vip_crown.html" only %}
+        {% endif %}
+        {% if prediction.coupon.audience == "paid" %}{% include "front/includes/_paid_prediction_marker.html" only %}{% endif %}
         <span class="prediction-table-event-copy">
             <strong>{{ prediction.match.home_team_name|default:"Хозяева" }} — {{ prediction.match.away_team_name|default:"Гости" }}</strong>
             <span>
@@ -26,7 +30,7 @@
         onmouseenter="this.querySelector('strong').style.color='var(--yellow)'"
         onmouseleave="this.querySelector('strong').style.color=''"
     >
-        <span class="prediction-table-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
+        <span class="prediction-table-avatar"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% capper_trust_badge prediction.expert_trust_index %}
             {% if prediction.expert_avatar_url %}
                 <img src="{{ prediction.expert_avatar_url }}" width="30" height="30" loading="lazy" alt="">
@@ -46,15 +50,25 @@
             </svg>
         </span>
         {% endif %}
+        {% if prediction.coupon.author.is_vip %}<span class="cappers-ranking-vip">VIP</span>{% endif %}
     </a>
 
     <a class="prediction-table-pick" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
+        {% if prediction.is_paid_locked %}
+        <span>Платный прогноз</span>
+        <strong>Исход скрыт</strong>
+        {% else %}
         <span>{{ prediction.market }}</span>
         <strong>{{ prediction.selection }}</strong>
+        {% endif %}
     </a>
 
     <a class="prediction-table-coefficient" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}">
-        {{ prediction.coefficient|floatformat:2 }}
+        {% if prediction.is_paid_locked %}
+            {% if prediction.single_purchase_price %}{{ prediction.single_purchase_price|money }} ₽{% else %}Платный{% endif %}
+        {% else %}
+            {{ prediction.coefficient|floatformat:2 }}
+        {% endif %}
     </a>
 
     <span
@@ -126,11 +140,7 @@
             aria-label="Поделиться прогнозом"
             title="Поделиться прогнозом"
         >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 16V4"></path>
-                <path d="m7.5 8.5 4.5-4.5 4.5 4.5"></path>
-                <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"></path>
-            </svg>
+            {% include "front/includes/_solar_icon.html" with name="share-bold-duotone" only %}
         </button>
     </div>
     </div>

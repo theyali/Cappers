@@ -15,9 +15,12 @@ from notifications.models import Notification
 
 from .prediction_metrics import annotate_author_roi
 from .prediction_catalog_views import (
+    PREDICTION_TYPE_CLASSIC,
     PREDICTION_TYPE_PAID,
     PREDICTION_TYPE_VIP,
     build_prediction_type_context,
+    build_vip_prediction_rail_context,
+    _attach_paid_catalog_access,
 )
 from .prediction_head import apply_prediction_status, build_prediction_head, prediction_sport_counts
 from .prediction_views import (
@@ -38,7 +41,6 @@ from .views import PREDICTION_STATUS_FILTERS
 
 
 FEED_SORT_OPTIONS = tuple(option for option in SORT_OPTIONS if option[0] != "roi")
-PAID_FEED_LIMIT = 12
 VIP_STORIES_LIMIT = 30
 FEED_META_CACHE_TTL = 60
 
@@ -47,7 +49,7 @@ def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
     import hashlib
 
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
-    return f"front:feed:{namespace}:v3:{user_id}:{signature}"
+    return f"front:feed:{namespace}:v5:{user_id}:{signature}"
 
 
 def _feed_url(request, params) -> str:
@@ -202,57 +204,6 @@ def _feed_status_count(counts: dict, active_status: str) -> int:
     return counts.get(key, 0) or 0
 
 
-def _feed_author_counts(
-    user_id: int,
-    *,
-    following_ids: set[int],
-    paid_upgrade_ids: list[int],
-    prediction_format: str,
-) -> tuple[dict[int, int], dict[int, int]]:
-    cache_key = _feed_cache_key(
-        user_id,
-        "author-counts",
-        tuple(sorted(following_ids)),
-        tuple(sorted(paid_upgrade_ids)),
-        prediction_format,
-    )
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return cached["author_counts"], cached["locked_paid_counts"]
-
-    locked_paid_counts = {
-        row["author_id"]: row["total"]
-        for row in PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            audience=PredictionCoupon.Audience.PAID,
-            author_id__in=paid_upgrade_ids,
-            prediction_format=prediction_format,
-        )
-        .values("author_id")
-        .annotate(total=Count("id"))
-    }
-    author_counts = {
-        row["author_id"]: row["total"]
-        for row in PredictionCoupon.objects.filter(
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-            audience=PredictionCoupon.Audience.FREE,
-            author_id__in=following_ids,
-            prediction_format=prediction_format,
-        )
-        .values("author_id")
-        .annotate(total=Count("id"))
-    }
-    cache.set(
-        cache_key,
-        {
-            "author_counts": author_counts,
-            "locked_paid_counts": locked_paid_counts,
-        },
-        FEED_META_CACHE_TTL,
-    )
-    return author_counts, locked_paid_counts
-
-
 @login_required
 @ensure_csrf_cookie
 def following_feed(request):
@@ -296,6 +247,7 @@ def following_feed(request):
         .order_by("-expires_at", "-id")
     )
     paid_analyst_ids = {subscription.analyst_id for subscription in paid_subscriptions}
+    paid_source_ids = following_ids | paid_analyst_ids
     paid_usernames = {subscription.analyst.username for subscription in paid_subscriptions}
     vip_stories, vip_stories_count = _vip_story_payloads(request.user)
 
@@ -333,39 +285,37 @@ def following_feed(request):
             audience=PredictionCoupon.Audience.FREE,
             author_ids=None if favorites_only else following_ids,
             favorites_user=request.user if favorites_only else None,
-        ).filter(prediction_format=prediction_format),
+        ),
         selected_capper=selected_capper,
         selected_sport=None,
         only_live=only_live,
         only_today=only_today,
         match_scope=active_match_scope,
     )
+    if active_prediction_type != PREDICTION_TYPE_CLASSIC:
+        free_meta_queryset = free_meta_queryset.filter(prediction_format=prediction_format)
     if is_vip_predictions_tab:
         free_meta_queryset = annotate_vip_status(free_meta_queryset, user_outer_ref="author_id")
         free_meta_queryset = free_meta_queryset.filter(is_vip_active=True)
     paid_meta_queryset = _apply_feed_filters(
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.PAID,
-            author_ids=None if favorites_only else paid_analyst_ids,
+            author_ids=None if favorites_only else paid_source_ids,
             favorites_user=request.user if favorites_only else None,
-        ).filter(prediction_format=prediction_format),
+        ),
         selected_capper=selected_capper,
         selected_sport=None,
         only_live=only_live,
         only_today=only_today,
+        match_scope=active_match_scope,
     )
     free_count_queryset = free_meta_queryset
     paid_count_queryset = paid_meta_queryset
-    if favorites_only:
-        sport_count_querysets = (paid_meta_queryset,) if is_paid_predictions_tab else (free_meta_queryset,)
-    else:
-        sport_count_querysets = (
-            (paid_meta_queryset,)
-            if is_paid_predictions_tab
-            else (free_meta_queryset,)
-            if is_vip_predictions_tab
-            else (free_meta_queryset, paid_meta_queryset)
-        )
+    sport_count_querysets = (
+        (paid_meta_queryset,) if is_paid_predictions_tab
+        else (free_meta_queryset,) if is_vip_predictions_tab
+        else (free_meta_queryset, paid_meta_queryset)
+    )
     sport_counts_by_code, _sport_single_total = prediction_sport_counts(
         tuple(queryset.exclude(coupon_type=PredictionCoupon.CouponType.EXPRESS) for queryset in sport_count_querysets),
         active_status=active_status,
@@ -425,7 +375,7 @@ def following_feed(request):
     )
     if is_paid_predictions_tab:
         counts = paid_counts
-    elif is_vip_predictions_tab or favorites_only:
+    elif is_vip_predictions_tab:
         counts = free_counts
     else:
         counts = {
@@ -434,175 +384,29 @@ def following_feed(request):
         }
     status_tabs = _status_tabs(request, counts, active_status)
 
-    # Full querysets are evaluated only for the cards that will actually render.
-    if favorites_only:
-        queryset = _apply_feed_filters(
-            _published_queryset(include_paid=is_paid_predictions_tab)
-            .filter(
-                favorites__user=request.user,
-                prediction_format=prediction_format,
-            )
-            .distinct(),
-            selected_capper=selected_capper,
-            selected_sport=selected_sport,
-            only_live=only_live,
-            only_today=only_today,
-            express_only=active_express,
-        )
-        if is_paid_predictions_tab:
-            queryset = queryset.filter(audience=PredictionCoupon.Audience.PAID)
-        else:
-            queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
-    else:
-        queryset = _apply_feed_filters(
-            _published_queryset(include_paid=is_paid_predictions_tab).filter(
-                author_id__in=following_ids,
-                prediction_format=prediction_format,
-            ),
-            selected_capper=selected_capper,
-            selected_sport=selected_sport,
-            only_live=only_live,
-            only_today=only_today,
-            express_only=active_express,
-        )
-    if is_paid_predictions_tab and not favorites_only:
-        queryset = _apply_feed_filters(
-            _published_queryset(include_paid=True).filter(
-                audience=PredictionCoupon.Audience.PAID,
-                author_id__in=paid_analyst_ids,
-                prediction_format=prediction_format,
-            ),
-            selected_capper=selected_capper,
-            selected_sport=selected_sport,
-            only_live=only_live,
-            only_today=only_today,
-            express_only=active_express,
-        )
+    # All formats share one paginated list; discovery does not grant paid access.
+    if is_paid_predictions_tab:
+        source_filter = Q(pk__in=paid_count_queryset.values("pk"))
     elif is_vip_predictions_tab:
-        queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
-        queryset = queryset.filter(is_vip_active=True)
-    if favorites_only:
-        paid_queryset = PredictionCoupon.objects.none()
+        source_filter = Q(pk__in=free_count_queryset.values("pk"))
     else:
-        paid_queryset = _apply_feed_filters(
-            _published_queryset(include_paid=True).filter(
-                audience=PredictionCoupon.Audience.PAID,
-                author_id__in=paid_analyst_ids,
-                prediction_format=prediction_format,
-            ),
-            selected_capper=selected_capper,
-            selected_sport=selected_sport,
-            only_live=only_live,
-            only_today=only_today,
-            express_only=active_express,
-        )
-    if favorites_only or is_paid_predictions_tab or is_vip_predictions_tab:
-        paid_queryset = paid_queryset.none()
-
-    if active_status == "pending":
-        queryset = queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
-    elif active_status != "all":
-        queryset = queryset.filter(state_status=active_status)
-    if active_status == "pending":
-        paid_queryset = paid_queryset.filter(state_status=PredictionCoupon.StateStatus.PENDING)
-    elif active_status != "all":
-        paid_queryset = paid_queryset.filter(state_status=active_status)
-
-    sort_kwargs = {
-        "default_ordering": ("-favorites__created_at", "-created_at") if favorites_only else ("-published_at", "-created_at"),
-        "popular_ordering": ("-likes_count", "-favorites_count", "-published_at", "-created_at"),
-    }
-    queryset = _sort_prediction_queryset(queryset, active_sort, **sort_kwargs)
-    paid_queryset = _sort_prediction_queryset(paid_queryset, active_sort, **sort_kwargs)
-
-    free_predictions_count = _feed_status_count(
-        paid_counts if is_paid_predictions_tab else free_counts,
-        active_status,
+        source_filter = Q(pk__in=free_count_queryset.values("pk")) | Q(pk__in=paid_count_queryset.values("pk"))
+    queryset = _published_queryset(include_paid=True).filter(source_filter)
+    if favorites_only:
+        queryset = queryset.filter(favorites__user=request.user).distinct()
+    queryset = apply_prediction_status(queryset, active_status)
+    queryset = _sort_prediction_queryset(
+        queryset, active_sort,
+        default_ordering=("-favorites__created_at", "-created_at") if favorites_only else ("-published_at", "-created_at"),
+        popular_ordering=("-likes_count", "-favorites_count", "-published_at", "-created_at"),
     )
+    feed_total_count = _feed_status_count(counts, active_status)
     paginator = Paginator(queryset, PREDICTIONS_PAGE_SIZE)
-    # Paginator otherwise calls COUNT() on the fully annotated card queryset.
-    # We already have the exact count from the lightweight cached aggregate.
-    paginator.__dict__["count"] = free_predictions_count
+    paginator.__dict__["count"] = feed_total_count
     page_obj = paginator.get_page(request.GET.get("page"))
-    free_coupons = list(page_obj.object_list)
-    paid_coupons = list(paid_queryset[:PAID_FEED_LIMIT])
-    decorated = _decorate_predictions(
-        request,
-        [*free_coupons, *paid_coupons],
-        following_ids=following_ids,
-    )
-    decorated_by_id = {card.id: card for card in decorated}
-    page_obj.object_list = [
-        decorated_by_id[coupon.pk]
-        for coupon in free_coupons
-        if coupon.pk in decorated_by_id
-    ]
-    paid_predictions = [
-        decorated_by_id[coupon.pk]
-        for coupon in paid_coupons
-        if coupon.pk in decorated_by_id
-    ]
-    paid_predictions_count = (
-        0
-        if favorites_only or is_paid_predictions_tab or is_vip_predictions_tab
-        else _feed_status_count(paid_counts, active_status)
-    )
-    feed_total_count = paginator.count + paid_predictions_count
+    page_obj.object_list = _decorate_predictions(request, page_obj.object_list, following_ids=following_ids)
+    _attach_paid_catalog_access(page_obj.object_list, request)
 
-    paid_upgrade_follows = (
-        []
-        if is_paid_predictions_tab or is_vip_predictions_tab
-        or favorites_only
-        else [
-            follow
-            for follow in following
-            if follow.analyst_id not in paid_analyst_ids
-            and getattr(follow.analyst, "analyst_profile", None) is not None
-            and follow.analyst.analyst_profile.paid_predictions_enabled
-            and follow.analyst.analyst_profile.paid_predictions_price > 0
-            and (not selected_capper or follow.analyst.username == selected_capper)
-        ]
-    )
-    paid_upgrade_ids = [follow.analyst_id for follow in paid_upgrade_follows]
-    author_counts, locked_paid_counts = _feed_author_counts(
-        request.user.pk,
-        following_ids=following_ids,
-        paid_upgrade_ids=paid_upgrade_ids,
-        prediction_format=prediction_format,
-    )
-    paid_upgrade_follows = [
-        follow
-        for follow in paid_upgrade_follows
-        if locked_paid_counts.get(follow.analyst_id, 0)
-    ]
-
-    capper_params = request.GET.copy()
-    capper_params.pop("page", None)
-    capper_params.pop("capper", None)
-    feed_all_cappers_url = _feed_url(request, capper_params)
-
-    for follow in following:
-        profile = getattr(follow.analyst, "analyst_profile", None)
-        follow.feed_name = (
-            profile.display_name
-            if profile and profile.display_name
-            else follow.analyst.get_full_name() or follow.analyst.username
-        )
-        follow.feed_avatar_url = follow.analyst.avatar.url if follow.analyst.avatar else ""
-        follow.feed_trust_index = profile.trust_index if profile else 0
-        follow.feed_initial = (follow.feed_name or follow.analyst.username or "К")[0].upper()
-        follow.feed_predictions_count = author_counts.get(follow.analyst_id, 0)
-        follow.feed_locked_paid_count = locked_paid_counts.get(follow.analyst_id, 0)
-        follow.feed_profile_url = reverse(
-            "front:expert_profile",
-            kwargs={"username": follow.analyst.username},
-        )
-
-        follow_params = capper_params.copy()
-        follow_params["capper"] = follow.analyst.username
-        follow.feed_filter_url = _feed_url(request, follow_params)
-
-    feed_all_cappers_count = sum(author_counts.values())
     params_without_page = request.GET.copy()
     params_without_page.pop("page", None)
     pagination_query = params_without_page.urlencode()
@@ -646,14 +450,11 @@ def following_feed(request):
             "vip_stories_count": vip_stories_count,
             "vip_stories_count_label": f"{vip_stories_count} {plural_ru(vip_stories_count, 'эксперт', 'эксперта', 'экспертов')}",
             "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
+            "vip_prediction_rail": build_vip_prediction_rail_context(),
             "paid_subscriptions": paid_subscriptions,
             "has_feed_sources": bool(following or paid_subscriptions or vip_stories or favorites_only or feed_total_count),
             "following_count": len(following),
             "paid_subscriptions_count": len(paid_subscriptions),
-            "paid_predictions": paid_predictions,
-            "paid_predictions_count": paid_predictions_count,
-            "paid_upgrade_offers": paid_upgrade_follows,
-            "paid_upgrade_offers_count": len(paid_upgrade_follows),
             "feed_total_count": feed_total_count,
             "feed_predictions_count": paginator.count,
             "sport_filter_tabs": sport_filter_tabs,
@@ -669,7 +470,7 @@ def following_feed(request):
                 prediction_type_tabs=prediction_type_context["prediction_type_tabs"],
                 active_sort=active_sort,
                 sort_options=FEED_SORT_OPTIONS,
-                show_content_view_switcher=not prediction_type_context["is_rich_predictions"],
+                show_content_view_switcher=True,
             ),
             "status_tabs": status_tabs,
             "active_status": active_status,
@@ -683,8 +484,6 @@ def following_feed(request):
             "favorites_filter_url": favorites_filter_url,
             "pagination_query": pagination_query,
             "active_filter_count": active_filter_count,
-            "feed_all_cappers_url": feed_all_cappers_url,
-            "feed_all_cappers_count": feed_all_cappers_count,
             "filter_action_url": prediction_type_context["prediction_type_reset_url"],
             "mobile_filter_tabs": build_mobile_prediction_filter_tabs(
                 request,

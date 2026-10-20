@@ -270,7 +270,6 @@ ACTION_ROUTES = {
     "cabinet:avatar_upload",
     "cabinet:follow_analyst",
     "cabinet:paid_predictions_subscribe",
-    "cabinet:paid_predictions_decline",
     "cabinet:toggle_follow",
     "cabinet:league_search",
     "cabinet:telegram_login",

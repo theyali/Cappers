@@ -1,0 +1,25 @@
+<section class="cookie-consent" data-cookie-banner role="region" aria-label="Использование cookie">
+    <span class="cookie-consent-handle" aria-hidden="true"></span>
+    <span class="cookie-consent-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.7 12.6A8.8 8.8 0 1 1 11.4 3.3a4.4 4.4 0 0 0 5.3 5.3 4.4 4.4 0 0 0 4 4Z"/><path d="M7.5 9h.01M8.5 15h.01M13 17h.01M14 12h.01" stroke-width="3"/></svg></span>
+    <div class="cookie-consent-copy">
+        <div class="cookie-consent-heading"><strong>Мы используем cookie</strong><span>Обязательные нужны для входа</span></div>
+        <p><span class="cookie-consent-required-copy">Обязательные нужны для входа в аккаунт. </span>Остальные помогают понимать, какими разделами пользуются чаще. <a href="{% url 'front:static_page' slug='cookie-policy' %}">Подробнее</a></p>
+    </div>
+    <div class="cookie-consent-actions">
+        <button class="cookie-consent-button is-settings" type="button" data-cookie-settings>Настроить</button>
+        <button class="cookie-consent-button is-necessary" type="button" data-cookie-choice="declined">Только обязательные</button>
+        <button class="cookie-consent-button is-accept" type="button" data-cookie-choice="accepted">Принять все</button>
+    </div>
+</section>
+<dialog class="cookie-preferences" data-cookie-preferences aria-labelledby="cookie-preferences-title">
+    <form method="dialog" data-cookie-preferences-form>
+        <header class="cookie-preferences-head"><div><h2 id="cookie-preferences-title">Настройки cookie</h2><p>Выберите, какие cookie разрешить</p></div><button class="cookie-preferences-close" type="button" data-cookie-close aria-label="Закрыть настройки cookie">×</button></header>
+        <div class="cookie-preferences-options">
+            <label class="cookie-preferences-option"><span><strong>Обязательные <small>Всегда включены</small></strong><span>Вход в аккаунт и защита запросов.</span></span><span class="switch-control"><input type="checkbox" checked disabled aria-label="Обязательные cookie всегда включены"><span aria-hidden="true"></span></span></label>
+            <label class="cookie-preferences-option"><span><strong>Аналитические</strong><span>Обезличенная статистика посещений.</span></span><span class="switch-control"><input type="checkbox" data-cookie-category="analytics" aria-label="Аналитические cookie"><span aria-hidden="true"></span></span></label>
+            <label class="cookie-preferences-option"><span><strong>Функциональные</strong><span>Запоминают фильтры и настройки интерфейса.</span></span><span class="switch-control"><input type="checkbox" data-cookie-category="functional" aria-label="Функциональные cookie"><span aria-hidden="true"></span></span></label>
+            <label class="cookie-preferences-option"><span><strong>Рекламные</strong><span>Оценка переходов к букмекерам.</span></span><span class="switch-control"><input type="checkbox" data-cookie-category="advertising" aria-label="Рекламные cookie"><span aria-hidden="true"></span></span></label>
+        </div>
+        <footer class="cookie-preferences-actions"><button class="cookie-consent-button is-accept" type="submit">Сохранить выбор</button><button class="cookie-consent-button" type="button" data-cookie-choice="accepted">Принять все</button><button class="cookie-consent-button" type="button" data-cookie-choice="declined">Только обязательные</button></footer>
+    </form>
+</dialog>

@@ -44,6 +44,11 @@
     <section class="profile-sidebar-card profile-sidebar-nav-group" aria-labelledby="profile-sidebar-finance-title">
         <div id="profile-sidebar-finance-title">Финансы</div>
         <nav class="profile-sidebar-nav" aria-label="Финансы">
+            <a class="profile-sidebar-link{% if active_tab == 'purchases' %} is-active{% endif %}" href="{% url 'cabinet:coupon_purchases' %}"{% if active_tab == 'purchases' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="ticket-bold" %}</span>
+                <span>Купленные купоны</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
             <a class="profile-sidebar-link{% if active_tab == 'wallet' %} is-active{% endif %}" href="{% url 'cabinet:profile' %}?tab=wallet" data-profile-tab-link{% if active_tab == 'wallet' %} aria-current="page"{% endif %}>
                 <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="wallet" %}</span>
                 <span>Баланс</span>

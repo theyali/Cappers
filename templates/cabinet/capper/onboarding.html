@@ -5,7 +5,7 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<section class="capper-onboarding" aria-label="Настройка профиля каппера">
+<section class="capper-onboarding" aria-label="Настройка профиля каппера"{% if step == 1 %} data-avatar-upload-url="{% url 'cabinet:avatar_upload' %}"{% endif %}>
     <div class="capper-onboarding-shell">
         <div class="capper-onboarding-top">
             <div>
@@ -30,12 +30,26 @@
                 {% include "cabinet/includes/_sport_league_preferences.html" %}
             {% else %}
                 {% for field in form %}
+                    {% if step == 1 and field.name == 'avatar' %}
+                    <div class="capper-field">
+                        <span class="capper-field-label">{{ field.label }}</span>
+                        <div class="capper-onboarding-avatar-picker">
+                            <span class="capper-onboarding-avatar" id="profileAvatar">
+                                {% if request.user.avatar %}<img id="profileAvatarImage" src="{{ request.user.avatar.url }}" width="72" height="72" alt="Ваш аватар">{% else %}<span id="profileAvatarFallback">{{ request.user.username|first|upper }}</span>{% endif %}
+                            </span>
+                            <button class="capper-growth-link is-blue" type="button" data-avatar-modal-open>Выбрать аватар</button>
+                        </div>
+                        {% if field.help_text %}<span class="capper-field-help">{{ field.help_text }}</span>{% endif %}
+                        {% if field.errors %}<span class="capper-field-errors">{{ field.errors|striptags }}</span>{% endif %}
+                    </div>
+                    {% else %}
                     <label class="capper-field">
                         <span class="capper-field-label">{{ field.label }}</span>
                         {{ field }}
                         {% if field.help_text %}<span class="capper-field-help">{{ field.help_text }}</span>{% endif %}
                         {% if field.errors %}<span class="capper-field-errors">{{ field.errors|striptags }}</span>{% endif %}
                     </label>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
 
@@ -90,9 +104,14 @@
         {% endif %}
     </div>
 </section>
+{% if step == 1 %}{% include "cabinet/includes/_avatar_modal.html" with analyst_profile=profile %}{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+    {% if step == 1 %}
+        <script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
+        <script src="{% static 'front/js/profile.js' %}" defer></script>
+    {% endif %}
     {% if step == 3 %}
         <script src="{% static 'front/js/league-picker.js' %}" defer></script>
     {% endif %}

@@ -5,4 +5,4 @@
     <h2>Этот прогноз платный</h2>
     <p>{% if prediction.is_paid_purchase_closed %}Купон #{{ prediction.coupon.id }} уже рассчитан. Покупка этого прогноза закрыта.{% else %}Чтобы увидеть исходы и аналитику купона #{{ prediction.coupon.id }}, выберите разовую покупку или подписку на автора.{% endif %}</p>
 </header>
-{% include "front/includes/_paid_prediction_locked_body.html" with prediction=prediction in_modal=True only %}
+{% include "front/includes/_paid_prediction_access_offers.html" with prediction=prediction in_modal=True only %}

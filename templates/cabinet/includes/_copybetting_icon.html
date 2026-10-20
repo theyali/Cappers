@@ -1,9 +1,4 @@
-{% if name == "share" %}<svg aria-hidden="true" fill="none" focusable="false" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="20">
-<path d="M12 3.5v11M8.4 7.1L12 3.5l3.6 3.6">
-</path>
-<path d="M5 14v4.5a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5V14">
-</path>
-</svg>
+{% if name == "share" %}{% include "front/includes/_solar_icon.html" with name="share-bold-duotone" icon_size=20 only %}
 {% elif name == "info" %}<svg aria-hidden="true" fill="none" focusable="false" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="20">
 <circle cx="12" cy="12" r="9">
 </circle>

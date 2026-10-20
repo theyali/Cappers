@@ -2,11 +2,11 @@ import re
 from urllib.parse import urlsplit
 
 from django.core import mail
-from django.test import Client, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from cabinet.forms import UserProfileForm
-from cabinet.models import User
+from cabinet.models import AnalystProfile, User
 
 from .models import EmailChangeRequest, EmailVerificationRequest, PasswordResetRequest
 
@@ -159,6 +159,22 @@ class AccountEmailFlowTests(TestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.email, "updated@example.com")
 
+
+
+    def test_verifying_pending_capper_while_signed_in_resumes_setup(self):
+        from account_email.services import start_email_verification
+
+        self.user.email = "pending-email-capper@example.com"
+        self.user.save(update_fields=["email"])
+        AnalystProfile.objects.create(user=self.user, display_name="Каппер", is_public=False)
+        start_email_verification(self.user, request=RequestFactory().get("/"))
+        verification_url = re.search(r"https?://[^\s]+", mail.outbox[-1].body).group()
+        self.client.force_login(self.user)
+        response = self.client.get(urlsplit(verification_url).path)
+        self.assertRedirects(response, reverse("cabinet:capper_onboarding", kwargs={"step": 1}), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+        self.assertEqual(self.user.role, User.Role.READER)
 
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",

@@ -19,7 +19,7 @@ from .capper_forms import (
     CapperSocialsForm,
 )
 from .forms import RegistrationForm
-from .models import AnalystProfile, User
+from .models import AnalystProfile, PresetAvatar, User
 from .referrals import mark_referral_registration
 from .services.registration_guard import (
     captcha_client_key,
@@ -28,6 +28,7 @@ from .services.registration_guard import (
     registration_limit_reached,
 )
 from .services.preferences import sync_user_sport_league_preferences
+from .services.capper_onboarding import get_pending_capper_onboarding_url
 
 
 ACCOUNT_READER = "user"
@@ -98,7 +99,7 @@ def _first_incomplete_step(profile: AnalystProfile) -> int | None:
 @require_http_methods(["GET", "POST"])
 def register(request):
     if request.user.is_authenticated:
-        return redirect("cabinet:profile")
+        return redirect(get_pending_capper_onboarding_url(request.user) or "cabinet:profile")
 
     selected_type = _account_type_from_request(request)
     form = None
@@ -148,6 +149,7 @@ def register(request):
                 mark_referral_registration(request, user)
             start_email_verification(user, request=request)
             request.session["registration_email"] = user.email
+            request.session["registration_account_type"] = selected_type
             return redirect("cabinet:register_done")
 
     return render(
@@ -179,6 +181,7 @@ def register_done(request):
         "cabinet/auth/register_done.html",
         {
             "registration_email": email,
+            "registration_is_capper": request.session.get("registration_account_type") == ACCOUNT_CAPPER,
             "page_class": "register",
         },
     )
@@ -381,6 +384,14 @@ def capper_onboarding(request, step: int):
         "progress_percent": round(step / TOTAL_ONBOARDING_STEPS * 100),
         "first_prediction_exists": first_prediction_exists,
     }
+    if step == 1:
+        presets = PresetAvatar.objects.filter(is_active=True).order_by("sort_order", "pk")
+        context["preset_avatars"] = presets[:60]
+        context["preset_avatar_counts"] = presets.aggregate(
+            all=Count("pk"),
+            male=Count("pk", filter=Q(gender=PresetAvatar.Gender.MALE)),
+            female=Count("pk", filter=Q(gender=PresetAvatar.Gender.FEMALE)),
+        )
     if step == 3:
         context.update(
             {

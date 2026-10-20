@@ -8,7 +8,7 @@
         <article class="expert-tariff-coupon">
             <div class="expert-tariff-coupon-head">
                 <span class="expert-tariff-coupon-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="balls-bold" %}</span>
-                <div class="expert-tariff-coupon-copy"><h3>{{ row.title }}</h3><p>{{ row.league }}{% if row.league %} · {% endif %}{{ row.starts_label }}{% if row.is_completed %}<span>Завершён</span>{% endif %}<span class="expert-tariffs-desktop expert-tariff-coupon-private">{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}</span></p></div>
+                <div class="expert-tariff-coupon-copy"><div class="expert-tariff-coupon-title">{{ row.title }}</div><p>{{ row.league }}{% if row.league %} · {% endif %}{{ row.starts_label }}{% if row.is_completed %}<span>Завершён</span>{% endif %}<span class="expert-tariffs-desktop expert-tariff-coupon-private">{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}</span></p></div>
                 <span class="expert-tariff-coupon-lock" aria-label="{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}">{% if row.accessible %}✓{% else %}{% include "front/includes/_solar_icon.html" with name="lock-bold" %}{% endif %}</span>
             </div>
             <div class="expert-tariff-coupon-action">

@@ -1,11 +1,11 @@
 {% load capper_trust money %}
-    <div class="paid-prediction-locked-body">
-        <header class="paid-prediction-locked-author-row">
+    <div class="paid-prediction-access-body">
+        <header class="paid-prediction-access-author-row">
             <a
-                class="prediction-card-rich-author"
+                class="paid-access-author"
                 href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}"
             >
-                <span class="prediction-card-rich-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url %} data-skeleton-image{% endif %}>
+                <span class="paid-access-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url %} data-skeleton-image{% endif %}>
                     {% capper_trust_badge prediction.expert_trust_index %}
                     {% if prediction.expert_avatar_url %}
                         <img src="{{ prediction.expert_avatar_url }}" width="40" height="40" alt="" loading="lazy">
@@ -18,7 +18,7 @@
                     <small>{% if in_modal %}@{{ prediction.coupon.author.username }}{% else %}{{ prediction.created_at|timesince }} назад{% endif %}</small>
                 </span>
                 {% if prediction.expert_verified %}
-                    <span class="capper-verified-badge prediction-card-rich-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
+                    <span class="capper-verified-badge paid-access-verified" title="Проверенный эксперт" aria-label="Проверенный эксперт">
                         <svg viewBox="0 0 16 16" aria-hidden="true">
                             <path class="capper-verified-bg" d="M10.067.87a2.89 2.89 0 0 0-4.134 0l-.622.638-.89-.011a2.89 2.89 0 0 0-2.924 2.924l.01.89-.636.622a2.89 2.89 0 0 0 0 4.134l.637.622-.011.89a2.89 2.89 0 0 0 2.924 2.924l.89-.01.622.636a2.89 2.89 0 0 0 4.134 0l.622-.637.89.011a2.89 2.89 0 0 0 2.924-2.924l-.01-.89.636-.622a2.89 2.89 0 0 0 0-4.134l-.637-.622.011-.89a2.89 2.89 0 0 0-2.924-2.924l-.89.01z"></path>
                             <path class="capper-verified-check" d="M10.354 6.854a.5.5 0 0 0-.708-.708L7 8.793 5.854 7.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"></path>
@@ -26,12 +26,12 @@
                     </span>
                 {% endif %}
             </a>
-            <span class="paid-prediction-locked-badge">Закрытый</span>
+            <span class="paid-prediction-access-badge">Закрытый</span>
         </header>
 
-        <div class="paid-prediction-locked-copy">
+        <div class="paid-prediction-access-copy">
             <span>{% if prediction.is_paid_purchase_closed %}Архив платных прогнозов{% else %}Доступ к прогнозу{% endif %}</span>
-            <div class="paid-prediction-locked-copy-title">{% if prediction.is_paid_purchase_closed %}Прогноз завершён{% else %}Выберите удобный вариант{% endif %}</div>
+            <div class="paid-prediction-access-copy-title">{% if prediction.is_paid_purchase_closed %}Прогноз завершён{% else %}Выберите удобный вариант{% endif %}</div>
         </div>
 
         {% include "front/includes/_coupon_open_count.html" with count=prediction.unique_opens_count coupon_id=prediction.coupon.id only %}

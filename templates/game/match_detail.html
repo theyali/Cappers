@@ -67,7 +67,7 @@
                         </button>
                         {% endif %}
                         <button class="match-v2-icon-button" type="button" data-share-url="{{ request.build_absolute_uri }}" aria-label="Поделиться матчем">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12M12 4L8 8M12 4l4 4"></path><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="share-bold-duotone" only %}
                         </button>
                     </div>
                 </header>

@@ -30,6 +30,12 @@ summary:focus-visible,
   display: none;
 }
 
+@media (min-width: 1121px) {
+  .vip-prediction-rail { display: flex; }
+  .prediction-filter-sidebar:has(.vip-prediction-rail) > .filter_matches { display: none; }
+  .prediction-filter-sidebar > .vip-prediction-rail { margin-bottom: 12px; }
+}
+
 .mobile-menu-toggle,
 .mobile-offcanvas {
   display: none;
@@ -607,18 +613,7 @@ body.expert-public-details-open {
   }
 }
 
-@media (max-width: 1240px) {
-  .prediction-scoreboard {
-    grid-template-columns: minmax(0, 1fr) 76px minmax(0, 1fr);
-  }
-  .prediction-team-logo {
-    width: 48px;
-    height: 48px;
-  }
-  .prediction-team strong {
-    font-size: 13px;
-  }
-}
+
 
 @media (min-width: 1121px) {
   .matches-page .matches-shell:has(> .coupon-sidebar-auth) {
@@ -1229,51 +1224,9 @@ body.expert-public-details-open {
   .content-view-container{
     padding:0;
   }
-  .predictions-grid.is-rich > .prediction-card-rich {
-    grid-template-columns: minmax(0, 1fr);
-    border-radius: 14px;
-  }
-  .prediction-card-rich-cover { min-height: 240px; }
-  .prediction-card-rich-body { gap: 14px; padding: 16px; }
-  .prediction-card-rich-main {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    padding: 0;
-    overflow-wrap: anywhere;
-  }
-  .prediction-card-rich-meta { align-items: center; flex-wrap: wrap; }
-  .prediction-card-rich-author { flex: 1 1 200px; }
-  .prediction-card-rich-author strong { white-space: normal; }
-  .prediction-card-rich-meta-copy { justify-content: flex-start; }
-  .prediction-card-rich-title { font-size: 19px; }
-  .prediction-card-rich-stats {
-    grid-column: auto;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 0;
-  }
-  .prediction-card-rich-stats > span { min-width: 0; padding: 10px; }
-  .prediction-card-rich-status svg { flex-shrink: 0; }
-  .prediction-card-rich-actions {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    margin: 0;
-    padding: 12px 0 0;
-  }
-  .prediction-card-rich-actions .feed-prediction-action {
-    min-width: 0;
-    min-height: 44px;
-    justify-content: center;
-    gap: 6px;
-  }
-  .prediction-card-rich-actions .feed-prediction-save { margin-left: 0; }
-  .predictions-grid.is-rich > .paid-prediction-locked-card {
-    min-height: 0;
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .paid-prediction-locked-art { min-height: 250px; }
-  .paid-prediction-locked-body { padding: 16px; }
+  .paid-access-author { flex: 1 1 200px; }
+  .paid-access-author strong { white-space: normal; }
+  .paid-prediction-access-body { padding: 16px; }
   .document-page .predictions-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1287,9 +1240,6 @@ body.expert-public-details-open {
         background: transparent;
         outline: 0;
     }
-  .cookie-consent {
-    bottom: calc(88px + env(safe-area-inset-bottom));
-  }
   .site-topbar {
     display: none;
   }
@@ -4001,21 +3951,6 @@ body.expert-public-details-open {
   .prediction-type-tab {
     flex: 1 0 auto;
   }
-
-  .prediction-card-rich-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .prediction-card-rich-stats strong {
-    font-size: 11px;
-  }
-
-  .prediction-card-rich-coefficient strong {
-    font-size: 18px;
-  }
-
-  .prediction-card-rich-stats .prediction-card-rich-views { grid-column: 1 / -1; }
-  .prediction-card-rich-actions .feed-prediction-save span { display: none; }
 }
 
 @media (max-width: 1180px) {
@@ -4758,36 +4693,6 @@ body.expert-public-details-open {
   .prediction-card.prediction-card-rich {
     padding: 14px;
   }
-  .prediction-author-row,
-  .prediction-card-head {
-    align-items: flex-start;
-  }
-  .prediction-follow-button,
-  .prediction-owner-label {
-    margin-left: 56px;
-  }
-  .prediction-match-visual {
-    padding: 12px;
-  }
-  .prediction-scoreboard {
-    grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr);
-    gap: 8px;
-  }
-  .prediction-team {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .prediction-team-away {
-    align-items: flex-end;
-    text-align: right;
-  }
-  .prediction-team-logo {
-    width: 46px;
-    height: 46px;
-  }
-  .prediction-score-center {
-    min-height: 58px;
-  }
   .matches-lazy-sentinel {
     min-height: 64px;
     margin-top: 12px;
@@ -5107,37 +5012,8 @@ body.expert-public-details-open {
     width: 100%;
     padding: 0 10px;
   }
-  .prediction-reaction-label {
-    max-width: 76px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-  .prediction-expert-name-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .prediction-author-roi {
-    min-height: 20px;
-    font-size: 9px;
-  }
-  .prediction-card-head {
-    gap: 8px;
-  }
-  .prediction-status {
-    min-height: 28px;
-    padding: 0 8px;
-    font-size: 9px;
-  }
   .coupon-detail-page {
     gap: 16px;
-  }
-  .prediction-card-text-preview {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .prediction-card-text-cover {
-    width: 100%;
   }
   .coupon-detail-heading h1 {
     font-size: 36px;
@@ -5829,10 +5705,8 @@ body.expert-public-details-open {
 
 @media (max-width: 480px) {
   .paid-prediction-offers { grid-template-columns: minmax(0, 1fr); }
-  .paid-prediction-locked-author-row { align-items: flex-start; }
-  .paid-prediction-locked-badge { display: none; }
-  .paid-prediction-locked-art { min-height: 220px; }
-  .paid-prediction-locked-art img { width: min(66%, 94px); }
+  .paid-prediction-access-author-row { align-items: flex-start; }
+  .paid-prediction-access-badge { display: none; }
 
   .user-public-stats {
     grid-template-columns: 1fr 1fr;
@@ -6884,9 +6758,6 @@ body.expert-public-details-open {
   .match-predictions-feed-head {
     align-items: flex-start;
     flex-direction: column;
-  }
-  .match-prediction-card {
-    padding: 14px;
   }
   .forecast-bottom {
     grid-template-columns: 1fr;
@@ -8541,22 +8412,22 @@ body.expert-public-details-open {
     font-weight: 500;
   }
 
-  .cookie-consent {
-    right: 12px;
-    left: 12px;
-    width: auto;
-    align-items: stretch;
-    flex-direction: column;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 14px;
-  }
-  .cookie-consent-actions {
-    width: 100%;
-  }
-  .cookie-consent-button {
-    flex: 1 1 0;
-  }
+  .cookie-consent { right: 12px; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px 12px; width: auto; max-height: calc(100svh - 24px); padding: 18px 16px; overflow-y: auto; border-radius: 20px; }
+  .cookie-consent-handle { display: block; grid-column: 1 / -1; justify-self: center; width: 40px; height: 4px; margin-bottom: 0; border-radius: 2px; background: #24262e; }
+  .cookie-consent-icon { width: 40px; height: 40px; border-radius: 13px; }
+  .cookie-consent-copy { display: contents; }
+  .cookie-consent-heading { align-self: center; }
+  .cookie-consent-heading strong { font-size: 15px; }
+  .cookie-consent-heading > span { display: block; margin-top: 4px; color: #6b6e78; font-size: 12.5px; font-weight: 600; }
+  .cookie-consent-copy p { grid-column: 1 / -1; margin: 0; font-size: 13.5px; line-height: 1.55; }
+  .cookie-consent-required-copy { display: none; }
+  .cookie-consent-actions { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 10px; width: 100%; }
+  .cookie-consent-actions .is-accept { order: -1; flex: 0 0 100%; min-height: 46px; font-size: 15px; }
+  .cookie-consent-actions .is-necessary { order: 0; flex: 1 1 0; padding: 4px 14px; }
+  .cookie-consent-actions .is-settings { order: 1; flex: 1 1 0; max-width: 110px; padding: 4px 14px; }
+  .cookie-consent-button { min-width: 0; padding: 10px 14px; }
+  .cookie-preferences { padding: 20px 18px; }
+  .cookie-preferences-actions .is-accept { flex-basis: 100%; }
   .home-about {
     gap: 18px;
     padding: 0;
@@ -8927,14 +8798,6 @@ body.expert-public-details-open {
   }
   .predictions-index-page [data-content-view-current="table"] .content-table-scroll {
     overflow: visible;
-  }
-
-  .prediction-card-text-preview {
-    grid-template-columns: 92px minmax(0, 1fr);
-    gap: 10px;
-  }
-  .prediction-card-text-cover {
-    width: 92px;
   }
   .profile-coupon-row {
     grid-template-columns: minmax(0, 1fr) auto 26px;
@@ -9616,10 +9479,6 @@ body.expert-public-details-open {
     font-size: 10px;
     line-height: 1;
     color: var(--yellow);
-  }
-  .prediction-pick-rich {
-    grid-template-columns: minmax(0, 1fr) 32px auto;
-    gap: 7px;
   }
   .match-detail-scoreboard > .match-detail-bookmaker-strip {
     grid-template-columns: 62px minmax(0, 1fr) 62px;
@@ -13204,6 +13063,27 @@ body.expert-public-details-open {
     display: block;
   }
   .coupon-mobile > .coupon-prediction-article { margin-top: 20px; }
+  .coupon-prediction-article.is-rich .coupon-prediction-article-hero { display: flex; align-items: flex-end; min-height: 340px; padding: 14px; border-radius: 18px; }
+  .coupon-prediction-article-art .matches-sport-tile-art { top: -16px; right: -22px; width: 224px; }
+  .coupon-prediction-article.is-rich .coupon-prediction-article-panel { width: 100%; min-height: 0; gap: 10px; padding: 16px; border-radius: 15px; background: rgba(8, 9, 12, .82); }
+  .coupon-prediction-article-badges { gap: 7px; }
+  .coupon-prediction-article-badge.is-kind { display: none; }
+  .coupon-prediction-article-title { font-size: 17px; line-height: 23px; }
+  .coupon-prediction-article-preview { font-size: 12.5px; }
+  .coupon-prediction-article-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .coupon-prediction-article-stat { gap: 3px; }
+  .coupon-prediction-article-stat > span { font-size: 9.5px; letter-spacing: .5px; }
+  .coupon-prediction-article-stat > strong { gap: 5px; font-size: 15px; }
+  .coupon-prediction-article-stat .coin-icon { width: 14px; height: 14px; }
+  .coupon-prediction-article-stat .is-desktop { display: none; }
+  .coupon-prediction-article-stat .is-mobile { display: inline; }
+  .coupon-prediction-article-stat.is-confidence { display: grid; grid-column: 1 / -1; grid-template-columns: max-content minmax(0, 1fr) max-content; align-items: center; gap: 10px; }
+  .coupon-prediction-article-stat.is-confidence > strong { grid-column: 3; grid-row: 1; color: var(--yellow); font-family: var(--font-body); font-size: 12px; }
+  .coupon-prediction-article-stat.is-confidence > progress { grid-column: 2; grid-row: 1; margin: 0; }
+  .coupon-prediction-article-full { padding: 18px 16px; border-radius: 16px; }
+  .coupon-prediction-article-full-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .coupon-prediction-article-full-head h3 { font-size: 15px; }
+
   .coupon-detail-page { grid-template-columns: minmax(0, 1fr); }
 
   .coupon-detail-back,
@@ -14600,7 +14480,7 @@ body.expert-public-details-open {
 }
 
 @media (max-width: 760px) {
-  .profile-purchases-page { padding: 16px; gap: 16px; }
+  .profile-purchases-page { padding: 0; gap: 16px; }
 }
 
 @media (max-width: 900px) {
@@ -14690,7 +14570,7 @@ body.expert-public-details-open {
   .expert-tariff-coupon-icon { width: 34px; height: 34px; border-radius: 10px; }
   .expert-tariff-coupon-icon svg { width: 17px; height: 17px; }
   .expert-tariff-coupon-copy { gap: 3px; }
-  .expert-tariff-coupon-copy h3 { font-size: 13.5px; }
+  .expert-tariff-coupon-title { font-size: 13.5px; }
   .expert-tariff-coupon-copy p { display: block; font-size: 11px; }
   .expert-tariff-coupon-lock svg { width: 15px; height: 15px; }
   .expert-tariff-coupon-action { display: flex; align-items: center; gap: 10px; }
@@ -14700,4 +14580,22 @@ body.expert-public-details-open {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-app-nav, .mobile-app-nav.is-scroll-hidden { transition: none; }
+  .feed-prediction-cover-image::after { transition: none; }
+}
+
+@media (hover: hover) {
+  .feed-prediction-cover:hover .feed-prediction-cover-image::after { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prediction-comment-notice { transition: none; transform: none; }
+}
+
+@media (min-width: 761px) and (max-width: 1200px) {
+  .cookie-consent { flex-wrap: wrap; }
+  .cookie-consent-actions { justify-content: flex-end; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cookie-consent, .cookie-consent-button { transition: none; }
+  .cookie-preferences[open] { animation: none; }
 }

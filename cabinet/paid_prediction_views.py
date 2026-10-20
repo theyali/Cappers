@@ -81,7 +81,15 @@ def purchases(request, *, sales=False):
         raise PermissionDenied
     refunded = request.GET.get("status") == "refunded"
     rows, totals = coupon_purchase_history(request.user, sales=sales, refunded=refunded)
+    feed_context = {}
+    if not sales:
+        from cabinet.services.profile_coupon_feed import build_coupon_feed_context, build_coupon_feed_payload
+        feed_context = build_coupon_feed_context(request.user, request.GET, purchased=True, refunded=refunded)
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse(build_coupon_feed_payload(request, feed_context))
     return render(request, "cabinet/coupon_purchases.html", {
+        **feed_context,
+        "coupon_feed_url": reverse("cabinet:coupon_purchases"),
         "seo_meta": {"robots": "noindex,nofollow"},
         "page_obj": Paginator(rows, 20).get_page(request.GET.get("page")),
         "sales": sales, "refunded": refunded, "totals": totals,

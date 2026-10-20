@@ -1,0 +1,152 @@
+<div class="profile-email-modal" id="profile-avatar-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="profile-avatar-modal-title">
+    <button class="profile-email-modal-backdrop" type="button" data-avatar-modal-close aria-label="Закрыть"></button>
+    <section class="profile-email-modal-card profile-avatar-modal-card">
+        <span class="profile-avatar-modal-handle" aria-hidden="true"></span>
+        <div class="profile-avatar-modal-head">
+            <div>
+                <h2 id="profile-avatar-modal-title">Фото профиля</h2>
+                <p>Выберите готовую аватарку или загрузите своё фото</p>
+            </div>
+            <button class="profile-email-modal-close" type="button" data-avatar-modal-close aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+            </button>
+        </div>
+
+        <div class="profile-avatar-mode-tabs" role="tablist" aria-label="Способ выбора аватара">
+            <button class="is-active" type="button" data-avatar-mode="ready">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M4 18l5.5-5 4 3.5 3-2.5L20 18"></path></svg>
+                <span class="profile-avatar-mode-full">Готовые аватарки</span>
+                <span class="profile-avatar-mode-short">Готовые</span>
+            </button>
+            <button type="button" data-avatar-mode="upload">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M12 4 7 9M12 4l5 5"></path><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
+                <span class="profile-avatar-mode-full">Загрузить фото</span>
+                <span class="profile-avatar-mode-short">Загрузить</span>
+            </button>
+        </div>
+
+        <div class="profile-avatar-modal-body" data-avatar-panel="ready">
+            <aside class="profile-avatar-preview-column">
+                <span class="profile-avatar-modal-preview" data-avatar-current>
+                    {% if request.user.avatar %}
+                        <img src="{{ request.user.avatar.url }}" width="148" height="148" alt="Ваш текущий аватар">
+                    {% else %}
+                        {{ request.user.username|first|upper }}
+                    {% endif %}
+                </span>
+                <div class="profile-avatar-preview-copy">
+                    <strong>
+                        {% if analyst_profile and analyst_profile.display_name %}
+                            {{ analyst_profile.display_name }}
+                        {% elif request.user.get_full_name %}
+                            {{ request.user.get_full_name }}
+                        {% else %}
+                            {{ request.user.username }}
+                        {% endif %}
+                    </strong>
+                    <span>Так вас увидят в списках и в профиле</span>
+                </div>
+                <div class="profile-avatar-mini-card">
+                    <span data-avatar-current-mini>
+                        {% if request.user.avatar %}
+                            <img src="{{ request.user.avatar.url }}" width="36" height="36" alt="">
+                        {% else %}
+                            {{ request.user.username|first|upper }}
+                        {% endif %}
+                    </span>
+                    <div>
+                        <strong>{{ request.user.username }}</strong>
+                        <small>{% if analyst_profile or request.user.is_analyst %}Профиль каппера{% else %}Профиль пользователя{% endif %}</small>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="profile-avatar-ready-panel">
+                <div class="profile-avatar-filter-tabs" aria-label="Фильтр аватаров">
+                    <button class="is-active" type="button" data-avatar-filter="all">Все <span>{{ preset_avatar_counts.all }}</span></button>
+                    <button type="button" data-avatar-filter="male">Мужские <span>{{ preset_avatar_counts.male }}</span></button>
+                    <button type="button" data-avatar-filter="female">Женские <span>{{ preset_avatar_counts.female }}</span></button>
+                    <small data-avatar-selected-label>Выбрано: 0</small>
+                </div>
+                <form id="profileAvatarPresetForm" method="post" action="{% url 'cabinet:avatar_upload' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="preset_id" data-avatar-preset-input>
+                    <div class="profile-avatar-choice-grid">
+                        {% for preset in preset_avatars %}
+                            <button
+                                class="profile-avatar-choice"
+                                type="button"
+                                data-avatar-choice
+                                data-avatar-gender="{{ preset.gender }}"
+                                data-avatar-id="{{ preset.pk }}"
+                                data-avatar-src="{{ preset.image.url }}"
+                                title="{{ preset.title }}"
+                            >
+                                <img src="{{ preset.image.url }}" width="76" height="76" alt="{{ preset.title }}" loading="lazy">
+                                <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7"></path></svg></span>
+                            </button>
+                        {% empty %}
+                            <p class="profile-email-modal-copy profile-avatar-empty">Готовые аватары пока не добавлены. Вы можете загрузить своё фото.</p>
+                        {% endfor %}
+                    </div>
+                </form>
+                <p class="profile-avatar-count-note">Показаны {{ preset_avatars|length }} из {{ preset_avatar_counts.all }} — прокрутите, чтобы увидеть остальные</p>
+            </div>
+        </div>
+
+        <div class="profile-avatar-upload-panel" data-avatar-panel="upload" hidden>
+            <label class="profile-avatar-upload-drop" for="avatarUploadInput">
+                <span class="profile-avatar-upload-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 16V4M12 4 7 9M12 4l5 5"></path><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"></path></svg>
+                </span>
+                <strong>Загрузите фото</strong>
+                <small>JPG, PNG или WebP · до 5 МБ</small>
+                <span>Выбрать файл</span>
+            </label>
+        </div>
+
+        <div class="profile-avatar-crop-panel" data-avatar-panel="crop" hidden>
+            <div class="profile-avatar-crop-layout">
+                <aside class="profile-avatar-preview-column">
+                    <span class="profile-avatar-modal-preview" data-avatar-crop-preview>
+                        {% if request.user.avatar %}
+                            <img src="{{ request.user.avatar.url }}" width="148" height="148" alt="">
+                        {% else %}
+                            {{ request.user.username|first|upper }}
+                        {% endif %}
+                    </span>
+                    <div class="profile-avatar-preview-copy">
+                        <strong>Кадрирование</strong>
+                        <span>Так фото будет выглядеть в профиле</span>
+                    </div>
+                </aside>
+                <div class="profile-avatar-crop-workspace">
+                    <div class="profile-avatar-crop-stage" data-avatar-crop-stage>
+                        <img alt="" data-avatar-crop-image>
+                        <span aria-hidden="true">Квадратная область будет сохранена как аватар</span>
+                    </div>
+                    <label class="profile-avatar-zoom-control">
+                        <span>Масштаб</span>
+                        <input type="range" min="1" max="2.5" step="0.01" value="1" data-avatar-zoom>
+                    </label>
+                    <div class="profile-avatar-crop-actions">
+                        <button type="button" data-avatar-mode="upload">Выбрать другое</button>
+                        <button type="button" data-avatar-crop-save>Готово</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input id="avatarUploadInput" class="avatar-upload-input" type="file" accept="image/jpeg,image/png,image/webp">
+        <div class="avatar-upload-status" id="profileAvatarStatus" role="status" aria-live="polite"></div>
+        <div class="profile-avatar-modal-divider"></div>
+        <div class="profile-avatar-modal-actions">
+            <span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6Z"></path><path d="m8.6 12.3 2.4 2.4 4.4-4.7"></path></svg>
+                Аватарка видна всем. Загруженные фото проходят модерацию.
+            </span>
+            <button type="button" data-avatar-modal-close>Отмена</button>
+            <button type="button" data-avatar-save>Сохранить</button>
+        </div>
+    </section>
+</div>

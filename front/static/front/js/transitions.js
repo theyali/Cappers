@@ -93,89 +93,67 @@
 })();
 
 (() => {
+    const banner = document.querySelector("[data-cookie-banner]");
+    const dialog = document.querySelector("[data-cookie-preferences]");
+    if (!banner || !dialog) return;
     const COOKIE_NAME = "capperhub_cookie_consent";
     const STORAGE_KEY = "capperhub.cookieConsent";
-    const VALID_CHOICES = new Set(["accepted", "declined"]);
-
-    const readCookie = () => {
-        const prefix = `${COOKIE_NAME}=`;
-        const value = document.cookie
-            .split(";")
-            .map((item) => item.trim())
-            .find((item) => item.startsWith(prefix))
-            ?.slice(prefix.length) || "";
-        return VALID_CHOICES.has(value) ? value : "";
-    };
-
-    const readChoice = () => {
-        const cookieChoice = readCookie();
-        if (cookieChoice) return cookieChoice;
-        try {
-            const stored = sessionStorage.getItem(STORAGE_KEY) || "";
-            return VALID_CHOICES.has(stored) ? stored : "";
-        } catch (error) {
-            return "";
+    const PREFERENCES_KEY = "capperhub.cookiePreferences";
+    const PREFERENCES_COOKIE = "capperhub_cookie_preferences";
+    const categories = ["analytics", "functional", "advertising"];
+    const controls = Array.from(dialog.querySelectorAll("[data-cookie-category]"));
+    const readCookie = (name) => document.cookie.split(";").map((item) => item.trim())
+        .find((item) => item.startsWith(name + "="))?.slice(name.length + 1) || "";
+    const readStorage = (key) => {
+        for (const storage of [() => localStorage, () => sessionStorage]) {
+            try { const value = storage().getItem(key); if (value) return value; } catch (_) { /* Try the next available storage. */ }
         }
+        return "";
     };
-
-    const exposeChoice = (choice) => {
-        if (!choice) return;
-        document.documentElement.dataset.cookieConsent = choice;
+    const choice = readCookie(COOKIE_NAME) || readStorage(STORAGE_KEY);
+    let preferences = Object.fromEntries(categories.map((key) => [key, choice === "accepted"]));
+    try {
+        const stored = JSON.parse(decodeURIComponent(readCookie(PREFERENCES_COOKIE) || readStorage(PREFERENCES_KEY) || "{}"));
+        categories.forEach((key) => { if (typeof stored[key] === "boolean") preferences[key] = stored[key]; });
+    } catch (_) { /* Keep the conservative defaults if storage is unavailable or malformed. */ }
+    const exposeChoice = (value) => {
+        document.documentElement.dataset.cookieConsent = value;
+        document.documentElement.dataset.cookieAnalytics = String(preferences.analytics);
+        document.documentElement.dataset.cookieFunctional = String(preferences.functional);
+        document.documentElement.dataset.cookieAdvertising = String(preferences.advertising);
     };
-
-    const existingChoice = readChoice();
-    if (existingChoice) {
-        exposeChoice(existingChoice);
-        return;
-    }
-
-    const banner = document.createElement("section");
-    banner.className = "cookie-consent";
-    banner.dataset.cookieConsent = "";
-    banner.setAttribute("role", "dialog");
-    banner.setAttribute("aria-live", "polite");
-    banner.setAttribute("aria-label", "Настройки cookies");
-    banner.innerHTML = `
-        <div class="cookie-consent-copy">
-            <strong>Cookies на КапперХаб</strong>
-            <p>Используем технические cookies для работы сайта. Необязательные cookies можно принять или отклонить.</p>
-        </div>
-        <div class="cookie-consent-actions">
-            <button class="cookie-consent-button" type="button" data-cookie-choice="declined">Отклонить</button>
-            <button class="cookie-consent-button is-accept" type="button" data-cookie-choice="accepted">Принять</button>
-        </div>`;
-    document.body.appendChild(banner);
-
-    const saveChoice = (choice) => {
-        document.cookie = `${COOKIE_NAME}=${choice}; Path=/; SameSite=Lax`;
-        try {
-            sessionStorage.setItem(STORAGE_KEY, choice);
-        } catch (error) {
-            // Session cookie remains the primary storage when sessionStorage is unavailable.
-        }
-        exposeChoice(choice);
-        document.dispatchEvent(new CustomEvent("cookie-consent:changed", {
-            detail: { choice },
-        }));
-    };
-
-    const closeBanner = () => {
+    if (["accepted", "declined", "custom"].includes(choice)) exposeChoice(choice);
+    else window.requestAnimationFrame(() => banner.classList.add("is-visible"));
+    const persist = (value, selected) => {
+        preferences = selected;
+        const suffix = "; Path=/; Max-Age=31536000; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
+        document.cookie = COOKIE_NAME + "=" + value + suffix;
+        document.cookie = PREFERENCES_COOKIE + "=" + encodeURIComponent(JSON.stringify(selected)) + suffix;
+        try { localStorage.setItem(STORAGE_KEY, value); localStorage.setItem(PREFERENCES_KEY, JSON.stringify(selected)); sessionStorage.setItem(STORAGE_KEY, value); } catch (_) { /* The persistent cookie remains the primary storage. */ }
+        exposeChoice(value);
+        document.dispatchEvent(new CustomEvent("cookie-consent:changed", { detail: { choice: value, preferences: { ...selected, necessary: true } } }));
+        if (dialog.open) dialog.close();
         banner.classList.remove("is-visible");
-        window.setTimeout(() => banner.remove(), 210);
     };
-
-    banner.addEventListener("click", (event) => {
-        if (!(event.target instanceof Element)) return;
+    const handleChoice = (event) => {
         const button = event.target.closest("[data-cookie-choice]");
         if (!button) return;
-        const choice = button.dataset.cookieChoice;
-        if (!VALID_CHOICES.has(choice)) return;
-        saveChoice(choice);
-        closeBanner();
-    });
-
-    window.requestAnimationFrame(() => {
-        banner.classList.add("is-visible");
+        const value = button.dataset.cookieChoice;
+        if (!["accepted", "declined"].includes(value)) return;
+        persist(value, Object.fromEntries(categories.map((key) => [key, value === "accepted"])));
+    };
+    banner.addEventListener("click", handleChoice);
+    dialog.addEventListener("click", handleChoice);
+    document.querySelectorAll("[data-cookie-settings]").forEach((button) => button.addEventListener("click", () => {
+        controls.forEach((input) => { input.checked = preferences[input.dataset.cookieCategory]; });
+        if (!dialog.open) dialog.showModal();
+    }));
+    dialog.querySelector("[data-cookie-close]").addEventListener("click", () => dialog.close());
+    dialog.querySelector("[data-cookie-preferences-form]").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const selected = Object.fromEntries(controls.map((input) => [input.dataset.cookieCategory, input.checked]));
+        const values = Object.values(selected);
+        persist(values.every(Boolean) ? "accepted" : values.some(Boolean) ? "custom" : "declined", selected);
     });
 })();
 

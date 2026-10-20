@@ -8,6 +8,9 @@
     const submitButton = root.querySelector("[data-comment-submit]");
     const lengthNode = root.querySelector("[data-comment-length]");
     const feedback = root.querySelector("[data-comment-feedback]");
+    const feedbackNotice = root.querySelector("[data-comment-notice]");
+    let feedbackTimer;
+    let feedbackClearTimer;
     const replyingNode = root.querySelector("[data-comment-replying]");
     const replyingNameNode = root.querySelector("[data-comment-replying-name]");
     const replyCancelButton = root.querySelector("[data-comment-reply-cancel]");
@@ -54,11 +57,19 @@
 
     const setFeedback = (message = "", kind = "") => {
         if (!feedback) return;
+        window.clearTimeout(feedbackTimer);
+        window.clearTimeout(feedbackClearTimer);
+        if (!message) {
+            feedbackNotice?.classList.remove("is-visible");
+            feedbackClearTimer = window.setTimeout(() => { feedback.textContent = ""; }, 280);
+            return;
+        }
         feedback.textContent = message;
-        feedback.hidden = !message;
         feedback.classList.toggle("is-error", kind === "error");
         feedback.classList.toggle("is-rate-limit", kind === "rate");
         feedback.classList.toggle("is-success", kind === "success");
+        feedbackNotice?.classList.add("is-visible");
+        if (kind === "success") feedbackTimer = window.setTimeout(() => setFeedback(), 3500);
     };
 
     const setLoadError = (message = "") => {

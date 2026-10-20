@@ -20,6 +20,7 @@ from notifications.telegram_bot import (
     find_linked_user_by_chat_id,
 )
 
+from .services.capper_onboarding import get_pending_capper_onboarding_url
 from .forms import LoginForm
 from .models import User
 from .referrals import mark_referral_registration
@@ -57,6 +58,9 @@ class TelegramAwareLoginView(auth_views.LoginView):
     template_name = "cabinet/auth/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return get_pending_capper_onboarding_url(self.request.user) or super().get_success_url()
 
     def get_redirect_url(self):
         next_url = super().get_redirect_url()
